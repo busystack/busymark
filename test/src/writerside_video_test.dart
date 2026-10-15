@@ -44,7 +44,7 @@ After.
     expect(video.attributes, containsPair('height', '360'));
     expect(video.attributes, containsPair('mini-player', 'true'));
     expect(video.attributes, containsPair('border-effect', 'rounded'));
-    expect(video.preserveRaw, isTrue);
+    expect(video.preserveRaw, isFalse);
     expect(video.sourceSpan?.startLine, 3);
     expect(
       const BusyMarkMarkdownSerializer().serialize(parsed.busyDocument),

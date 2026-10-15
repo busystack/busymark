@@ -60,6 +60,40 @@ class WritersideDocumentSerializer {
   }
 
   String _serializeElement(WritersideElementNode element) {
+    final originalAttributes = {
+      for (final a in element.qualifiedAttributes) a.name: a.value,
+    };
+    final opening = _originalOpening(element.rawSource);
+    final originalName = RegExp(
+      r'^<([^\s/>]+)',
+    ).firstMatch(element.rawSource)?.group(1);
+    if (opening != null && originalName == element.qualifiedName) {
+      final patched = _patchOpening(element, opening, originalAttributes);
+      if (patched != null) {
+        if (opening.endsWith('/>') && element.children.isEmpty) return patched;
+        if (!opening.endsWith('/>')) {
+          final closing = RegExp(
+            r'</[^>]+>\s*$',
+            dotAll: true,
+          ).firstMatch(element.rawSource)?.group(0);
+          if (closing != null) {
+            return '$patched${element.children.map(_serializeNode).join()}$closing';
+          }
+        }
+      }
+    }
+    if (opening != null &&
+        !opening.endsWith('/>') &&
+        originalName == element.qualifiedName &&
+        _sameStringMap(element.attributes, originalAttributes)) {
+      final closing = RegExp(
+        r'</[^>]+>\s*$',
+        dotAll: true,
+      ).firstMatch(element.rawSource)?.group(0);
+      if (closing != null) {
+        return '$opening${element.children.map(_serializeNode).join()}$closing';
+      }
+    }
     final attributes = _serializeAttributes(element);
     if (element.children.isEmpty &&
         RegExp(r'/\s*>$').hasMatch(element.rawSource.trim())) {
@@ -68,6 +102,72 @@ class WritersideDocumentSerializer {
     final children = element.children.map(_serializeNode).join();
     return '<${element.qualifiedName}$attributes>'
         '$children</${element.qualifiedName}>';
+  }
+
+  String? _originalOpening(String source) {
+    if (!source.startsWith('<')) return null;
+    String? quote;
+    for (var i = 1; i < source.length; i++) {
+      final c = source[i];
+      if (quote != null) {
+        if (c == quote) quote = null;
+      } else if (c == '"' || c == "'") {
+        quote = c;
+      } else if (c == '>') {
+        return source.substring(0, i + 1);
+      }
+    }
+    return null;
+  }
+
+  // Existing parser spans delimit values, so editing one attribute preserves
+  // other authored bytes, namespace declarations, quote style and spacing.
+  String? _patchOpening(
+    WritersideElementNode element,
+    String opening,
+    Map<String, String> original,
+  ) {
+    final edits = <({int start, int end, String value})>[];
+    for (final attribute in element.qualifiedAttributes) {
+      final name = attribute.name;
+      if (element.attributes[name] == original[name]) continue;
+      final span = element.attributeSpans[name];
+      if (span == null) return null;
+      final start = span.startOffset - element.span.startOffset;
+      final end = span.endOffset - element.span.startOffset;
+      if (start < 1 || end >= opening.length) return null;
+      if (element.attributes.containsKey(name)) {
+        final quote = opening[start - 1];
+        final value = _escapeText(
+          element.attributes[name]!,
+        ).replaceAll(quote, quote == "'" ? '&apos;' : '&quot;');
+        edits.add((start: start, end: end, value: value));
+      } else {
+        final prefix = opening.substring(0, start - 1);
+        final match = RegExp(r'\s+[^\s=]+\s*=\s*$').firstMatch(prefix);
+        if (match == null) return null;
+        edits.add((start: match.start, end: end + 1, value: ''));
+      }
+    }
+    final additions = element.attributes.entries
+        .where((entry) => !original.containsKey(entry.key))
+        .map((entry) => ' ${entry.key}="${_escapeAttribute(entry.value)}"')
+        .join();
+    if (additions.isNotEmpty) {
+      var at = opening.endsWith('/>') ? opening.length - 2 : opening.length - 1;
+      // Keep authored closing whitespace after the new attribute. Removing the
+      // override after reparsing then removes only its own separator.
+      while (at > 1 && RegExp(r'\s').hasMatch(opening[at - 1])) {
+        at--;
+      }
+      edits.add((start: at, end: at, value: additions));
+    }
+    edits.sort((a, b) => b.start.compareTo(a.start));
+    var result = opening;
+    for (final edit in edits) {
+      result = result.replaceRange(edit.start, edit.end, edit.value);
+    }
+    return result;
   }
 
   String _serializeAttributes(WritersideElementNode element) {

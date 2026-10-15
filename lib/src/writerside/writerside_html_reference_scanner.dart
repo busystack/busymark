@@ -46,6 +46,89 @@ class WritersideAuthoredHtmlAnchorReference {
 class WritersideAuthoredHtmlReferenceScanner {
   const WritersideAuthoredHtmlReferenceScanner();
 
+  List<({String destination, SourceSpan span})> scanMarkdownMedia({
+    required String filePath,
+    required String source,
+    required List<bool> protectedSource,
+  }) {
+    final candidates = <({String destination, SourceSpan span})>[];
+    final tokenizer = HtmlTokenizer(
+      source,
+      generateSpans: true,
+      attributeSpans: true,
+    );
+    while (tokenizer.moveNext()) {
+      final token = tokenizer.current;
+      if (token is! StartTagToken ||
+          !{'img', 'video', 'source', 'audio'}.contains(token.name)) {
+        continue;
+      }
+      for (final attribute in token.attributeSpans ?? []) {
+        if (!{'src', 'preview-src', 'poster'}.contains(attribute.name)) {
+          continue;
+        }
+        final start = attribute.startValue, end = attribute.endValue;
+        if (start == null ||
+            end == null ||
+            start >= end ||
+            _rangeIsProtected(protectedSource, start, end)) {
+          continue;
+        }
+        candidates.add((
+          destination: attribute.value,
+          span: SourceSpan.fromOffsets(
+            filePath: filePath,
+            source: source,
+            startOffset: start,
+            endOffset: end,
+          ),
+        ));
+      }
+    }
+    var probed = source;
+    final probes = <String>{};
+    for (var i = candidates.length - 1; i >= 0; i--) {
+      final probe = 'https://busymark-media-$i.invalid/asset.png';
+      probes.add(probe);
+      probed = probed.replaceRange(
+        candidates[i].span.startOffset,
+        candidates[i].span.endOffset,
+        probe,
+      );
+    }
+    final rendered = <String>{};
+    void inline(BusyInline value) {
+      if (value.kind == BusyInlineKind.image && value.destination != null) {
+        rendered.add(value.destination!);
+      }
+      value.children.forEach(inline);
+    }
+
+    void block(BusyBlock value) {
+      for (final name in ['src', 'preview-src', 'poster']) {
+        if (value.attributes[name] case final String destination) {
+          rendered.add(destination);
+        }
+      }
+      value.inlines.forEach(inline);
+      value.children.forEach(block);
+    }
+
+    const MarkdownAstAdapter()
+        .parse(
+          filePath: filePath,
+          source: probed,
+          mode: MarkdownMode.commonMark,
+        )
+        .blocks
+        .forEach(block);
+    return [
+      for (var i = 0; i < candidates.length; i++)
+        if (rendered.contains('https://busymark-media-$i.invalid/asset.png'))
+          candidates[i],
+    ];
+  }
+
   List<WritersideAuthoredHtmlAnchorReference> scanMarkdownAnchors({
     required String filePath,
     required String source,

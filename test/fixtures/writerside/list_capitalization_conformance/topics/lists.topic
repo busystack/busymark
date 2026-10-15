@@ -1,0 +1,16 @@
+<topic id="lists" title="XML lists and capitalization">
+<p id="caret">Caret A</p>
+<chapter id="absent" title="a journey through HTTP and APIs"><p>Chapter body.</p></chapter>
+<chapter id="title-case" title="a journey through HTTP and APIs" caps="title"><p>Body.</p></chapter>
+<chapter id="sentence-case" title="a journey through HTTP and APIs" caps="sentence"><p>Body.</p></chapter>
+<chapter id="as-written" title="a journey through HTTP and APIs" caps="aswritten"><p>Body.</p></chapter>
+<chapter id="upper-case" title="a journey through HTTP and APIs" caps="upper"><p>Body.</p></chapter>
+<chapter id="variable-case" title="a journey through HTTP and APIs" caps="%case%"><p>Body.</p></chapter>
+<chapter id="folded" title="Folded chapter" collapsible="true"><p>Hidden body.</p></chapter>
+<code-block id="code" lang="text">Code B</code-block>
+<img id="image" src="logo.png" alt="Image B"/>
+<list id="letters" type="alpha-lower" start="3" columns="2" sorted="asc"><li id="letter-one"><p>Zebra</p></li><li><p>Alpha</p></li></list>
+<list id="checkbox" type="checkbox"><li checked="true"><p>Done</p></li><li><p>Pending</p></li></list>
+<list id="markerless" type="none" sorted="desc"><li><p>Alpha</p></li><li><p>Zebra</p></li></list>
+<list id="xml-parent" type="decimal" start="3"><li><p>Parent item</p><list id="xml-nested" type="alpha-lower" start="4"><li><p>Nested item</p></li></list></li><li><p>Sibling item</p></li></list>
+</topic>

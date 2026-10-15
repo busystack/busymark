@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:convert';
 
 import 'package:markdown/markdown.dart' as md;
 
@@ -7,8 +8,53 @@ import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
 import 'markdown_source_annotation.dart';
 import 'math_syntax.dart';
+import 'writerside_authoring_syntax.dart';
+import 'writerside_variable_syntax.dart';
 
 export 'markdown_source_annotation.dart';
+
+/// Translate a boundary in a projected fragment back to authored source.
+/// Native list and quote projections remove prefixes independently per line.
+int? markdownProjectedSourceOffset(
+  BusyBlock block,
+  int local, {
+  bool inline = false,
+}) {
+  final raw = inline
+      ? block.attributes['busymark-native-inline-source'] ?? block.rawSource
+      : block.rawSource;
+  if (raw == null || local < 0 || local > raw.length) return null;
+  final encoded = inline
+      ? block.attributes['busymark-native-inline-source-map'] ??
+            block.attributes['busymark-native-source-map']
+      : block.attributes['busymark-native-source-map'];
+  if (encoded == null) {
+    final start = block.sourceSpan?.startOffset;
+    return start == null ? null : start + local;
+  }
+  try {
+    final segments = jsonDecode(encoded) as List<dynamic>;
+    int? result;
+    var previous = -1;
+    for (final segment in segments) {
+      if (segment is! List ||
+          segment.length != 2 ||
+          segment[0] is! int ||
+          segment[1] is! int) {
+        return null;
+      }
+      final start = segment[0] as int;
+      if (start <= previous || start < 0 || segment[1] < 0) return null;
+      previous = start;
+      if (start <= local) result = (segment[1] as int) + local - start;
+    }
+    return result;
+  } on FormatException {
+    return null;
+  } on TypeError {
+    return null;
+  }
+}
 
 void _setSourceMappingAttributes(
   md.Element element, {
@@ -415,6 +461,73 @@ class _SourceMappingCodeSyntax extends md.CodeSyntax {
   }
 }
 
+// Inspector-only mappings. The authored grammar and its serialization stay
+// unchanged; delegate semantic elements to the existing Writerside syntax.
+class _SourceMappingWritersideParser extends md.InlineParser {
+  _SourceMappingWritersideParser(md.InlineParser parser)
+    : super(parser.source, parser.document) {
+    pos = parser.pos;
+    start = parser.start;
+  }
+
+  final nodes = <md.Node>[];
+
+  @override
+  void addNode(md.Node node) => nodes.add(node);
+}
+
+class _SourceMappingWritersideSemanticSyntax
+    extends WritersideSemanticInlineSyntax {
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final recording = _SourceMappingWritersideParser(parser);
+    if (!super.onMatch(recording, match)) return false;
+    final end = recording.pos + match[0]!.length;
+    final element = recording.nodes.single as md.Element;
+    void translate(md.Node node) {
+      if (node is! md.Element) return;
+      for (final name in [
+        busyMarkSourceMappingStartAttribute,
+        busyMarkSourceMappingEndAttribute,
+        busyMarkSourceMappingLabelStartAttribute,
+        busyMarkSourceMappingLabelEndAttribute,
+        busyMarkSourceMappingTitleStartAttribute,
+        busyMarkSourceMappingTitleEndAttribute,
+        busyMarkSourceMappingLineBreakOffsetAttribute,
+      ]) {
+        final offset = int.tryParse(node.attributes[name] ?? '');
+        if (offset != null) node.attributes[name] = '${match.end + offset}';
+      }
+      node.children?.forEach(translate);
+    }
+
+    element.children?.forEach(translate);
+    _setSourceMappingAttributes(
+      element,
+      start: match.start,
+      end: end,
+      opening: match[0],
+      closing: match[0]!.endsWith('/>') ? '' : '</${match[1]}>',
+    );
+    parser.addNode(element);
+    parser.consume(end - match.end);
+    return true;
+  }
+}
+
+class _SourceMappingWritersideVariableSyntax extends md.InlineSyntax {
+  _SourceMappingWritersideVariableSyntax() : super(r'%([\w.-]+)%');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final element = md.Element.text('var', match[1]!);
+    element.attributes['reference'] = match[1]!;
+    _setSourceMappingAttributes(element, start: match.start, end: match.end);
+    parser.addNode(element);
+    return true;
+  }
+}
+
 List<md.InlineSyntax> _sourceMappingInlineSyntaxes(
   _SourceMappingEmailAutolinkSyntax emailSyntax,
 ) {
@@ -445,6 +558,8 @@ class BusyMarkInlineParserContext {
   final md.Document _document;
   final md.Document _mappingDocument;
   final Map<String, md.LinkReference> _referenceDefinitions;
+  Map<String, md.LinkReference> get referenceDefinitions =>
+      _referenceDefinitions;
   final _SourceMappingEmailAutolinkSyntax _emailSyntax;
 
   int parseInvocations = 0;
@@ -1358,6 +1473,7 @@ class MarkdownSourceMapper {
   BusyMarkInlineParserContext createInlineParserContext({
     required String documentSource,
     required MarkdownMode mode,
+    bool mapWritersideReferences = false,
   }) {
     final referenceDocument = busyMarkMarkdownDocument(mode)
       ..parse(documentSource);
@@ -1366,7 +1482,15 @@ class MarkdownSourceMapper {
     final emailSyntax = _SourceMappingEmailAutolinkSyntax();
     final mappingDocument = busyMarkMarkdownDocument(
       mode,
-      leadingInlineSyntaxes: _sourceMappingInlineSyntaxes(emailSyntax),
+      leadingInlineSyntaxes: [
+        ..._sourceMappingInlineSyntaxes(emailSyntax),
+        if (mapWritersideReferences &&
+            mode == MarkdownMode.writersideMarkdown) ...[
+          WritersideLiteralPercentSyntax(),
+          _SourceMappingWritersideSemanticSyntax(),
+          _SourceMappingWritersideVariableSyntax(),
+        ],
+      ],
     )..linkReferences.addAll(referenceDocument.linkReferences);
     return BusyMarkInlineParserContext._(
       document: document,

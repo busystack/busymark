@@ -123,8 +123,17 @@ const mermaidManifest = JSON.parse(
 )
 
 await build({
-  entryPoints: [entryPoint],
-  outfile,
+  entryPoints: {
+    'render-engines': entryPoint,
+    'mermaid-engine': path.join(path.dirname(entryPoint), 'mermaid_renderer.js'),
+    'plantuml-engine': path.join(path.dirname(entryPoint), 'plantuml_renderer.js'),
+    'openapi-engine': path.join(path.dirname(entryPoint), 'openapi_renderer.js'),
+    'math-engine': path.join(path.dirname(entryPoint), 'mathjax_renderer.js'),
+  },
+  outdir: path.dirname(outfile),
+  // Fixed names keep the private resource allowlist exact, without admitting
+  // arbitrary paths or build-generated chunk names. No runtime dependency.
+  external: ['./mermaid-engine.js', './plantuml-engine.js', './openapi-engine.js', './math-engine.js'],
   bundle: true,
   format: 'esm',
   platform: 'browser',

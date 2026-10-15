@@ -229,6 +229,7 @@ struct TitleInheritance {
   GtkWidget* topic_entry;
   GtkWidget* instance_entry;
   GtkWidget* toc_entry;
+  bool instance_effective;
 };
 
 void update_title_inheritance(GtkEditable*, gpointer user_data) {
@@ -240,7 +241,10 @@ void update_title_inheritance(GtkEditable*, gpointer user_data) {
   gtk_entry_set_placeholder_text(GTK_ENTRY(inheritance->instance_entry),
                                  topic);
   gtk_entry_set_placeholder_text(GTK_ENTRY(inheritance->toc_entry),
-                                 instance[0] == '\0' ? topic : instance);
+                                 !inheritance->instance_effective ||
+                                         instance[0] == '\0'
+                                     ? topic
+                                     : instance);
 }
 
 void update_title_validity(GtkEditable* editable, gpointer user_data) {
@@ -322,10 +326,20 @@ void show_edit_title(DialogHandlerData* data,
   gtk_entry_set_activates_default(GTK_ENTRY(instance_entry), TRUE);
   gtk_entry_set_activates_default(GTK_ENTRY(toc_entry), TRUE);
   gint row = 0;
-  add_title_field(GTK_GRID(grid), &row,
-                  lookup_string(args, "instanceTitleLabel"), instance_entry,
-                  wrapping_explanation(
-                      lookup_string(args, "instanceExplanation")));
+  FlValue* editable_arg = fl_value_lookup_string(args, "instanceTitleEditable");
+  const bool instance_editable = editable_arg == nullptr ||
+      (fl_value_get_type(editable_arg) == FL_VALUE_TYPE_BOOL &&
+       fl_value_get_bool(editable_arg));
+  gtk_editable_set_editable(GTK_EDITABLE(instance_entry), instance_editable);
+  if (instance_editable || std::strlen(lookup_string(args, "initialInstanceTitle")) > 0) {
+    add_title_field(GTK_GRID(grid), &row,
+                    lookup_string(args, "instanceTitleLabel"), instance_entry,
+                    wrapping_explanation(lookup_string(args, "instanceExplanation")));
+  } else {
+    gtk_grid_attach(GTK_GRID(grid),
+                    wrapping_explanation(lookup_string(args, "instanceExplanation")),
+                    0, row++, 2, 1);
+  }
   GtkWidget* toc_explanation_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
   gtk_box_pack_start(
@@ -343,7 +357,10 @@ void show_edit_title(DialogHandlerData* data,
   gtk_container_add(GTK_CONTAINER(advanced), grid);
   gtk_box_pack_start(GTK_BOX(content), advanced, FALSE, FALSE, 0);
 
-  TitleInheritance inheritance = {topic_entry, instance_entry, toc_entry};
+  if (gtk_widget_get_parent(instance_entry) == nullptr) {
+    g_object_ref_sink(instance_entry);
+  }
+  TitleInheritance inheritance = {topic_entry, instance_entry, toc_entry, instance_editable};
   g_signal_connect(topic_entry, "changed",
                    G_CALLBACK(update_title_inheritance), &inheritance);
   g_signal_connect(instance_entry, "changed",
@@ -369,7 +386,12 @@ void show_edit_title(DialogHandlerData* data,
   g_autofree gchar* toc = response == GTK_RESPONSE_OK
                               ? g_strdup(gtk_entry_get_text(GTK_ENTRY(toc_entry)))
                               : nullptr;
+  const bool instance_unparented =
+      gtk_widget_get_parent(instance_entry) == nullptr;
   gtk_widget_destroy(dialog);
+  if (instance_unparented) {
+    g_object_unref(instance_entry);
+  }
   if (data->view != nullptr && gtk_widget_get_realized(data->view)) {
     gtk_widget_grab_focus(data->view);
   }

@@ -488,9 +488,9 @@ class _ProbeState extends State<_Probe> {
         '02-document-select-all',
         expectedRange: globalRange,
         needles: const [
-          '/mnt/Media/Linguality/gateway',
-          '/mnt/Media/Linguality/learner_client',
-          'not the final integration result.',
+          '/opt/example/gateway',
+          '/opt/example/desktop_client',
+          'must preserve its final punctuation.',
         ],
       );
       await _key(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
@@ -502,7 +502,7 @@ class _ProbeState extends State<_Probe> {
       await _key(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
       final paragraphIndex = blocks.indexWhere(
         (b) => b.plainText.contains(
-          'The client must work before corpus population finishes.',
+          'The editor preserves selection across paragraph boundaries.',
         ),
       );
       await _jump(paragraphIndex - 1);
@@ -547,7 +547,7 @@ class _ProbeState extends State<_Probe> {
         ),
       );
       final listIndex = blocks.indexWhere(
-        (b) => b.plainText == '/mnt/Media/Linguality/gateway',
+        (b) => b.plainText == '/opt/example/gateway',
       );
       await _jump(listIndex - 1);
       await _drag(
@@ -565,8 +565,8 @@ class _ProbeState extends State<_Probe> {
           blocks[listIndex + 2].plainText.length,
         ),
         needles: [
-          '/mnt/Media/Linguality/gateway',
-          '/mnt/Media/Linguality/learner_client',
+          '/opt/example/gateway',
+          '/opt/example/desktop_client',
           blocks[listIndex + 2].plainText,
         ],
       );
@@ -618,8 +618,8 @@ class _ProbeState extends State<_Probe> {
         ),
         needles: [
           paragraph.plainText,
-          '/mnt/Media/Linguality/gateway',
-          '/mnt/Media/Linguality/learner_client',
+          '/opt/example/gateway',
+          '/opt/example/desktop_client',
           for (final cell in cells) cell.plainText,
         ],
       );

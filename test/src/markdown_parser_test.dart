@@ -1320,8 +1320,8 @@ void main() {
           '<a href="javascript:alert(1)">bad</a>\n'
           '<img src="vbscript:alert(1)">\n'
           '<img src="data:image/png;base64,AAAA">\n'
-          '<img src="/home/albert/private.png">\n'
-          '<img src="file:///home/albert/private.png">\n'
+          '<img src="/home/example/private.png">\n'
+          '<img src="file:///home/example/private.png">\n'
           '<a href="ftp://example.com/private.md">ftp</a>\n'
           '<a href="docs://topic/intro">custom</a>\n'
           '<a href="//example.com/path">protocol relative</a>\n',

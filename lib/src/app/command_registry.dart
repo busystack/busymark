@@ -251,6 +251,7 @@ abstract final class BusyMarkCommandIds {
   static const back = 'navigation.back';
   static const search = 'search.find';
   static const keyboardShortcuts = 'help.keyboardShortcuts';
+  static const quickOpen = 'workspace.quickOpen';
   static const commandPalette = 'view.commandPalette';
   static const syntaxReference = 'help.syntaxReference';
   static const settings = 'application.settings';
@@ -259,6 +260,7 @@ abstract final class BusyMarkCommandIds {
   static const closeTab = 'tabs.close';
   static const closeAllTabs = 'tabs.closeAll';
   static const toggleSidebar = 'view.toggleSidebar';
+  static const elementProperties = 'view.elementProperties';
   static const viewEditor = 'view.editor';
   static const viewSource = 'view.source';
   static const viewReading = 'view.reading';
@@ -276,6 +278,7 @@ abstract final class BusyMarkCommandIds {
   static const textEscape = 'text.escape';
   static const editorRefineWithAi = 'editor.refineWithAi';
   static const checkSpelling = 'spelling.check';
+  static const references = 'sidebar.references';
   static const sidebarFiles = 'sidebar.files';
   static const sidebarToc = 'sidebar.toc';
   static const sidebarOutline = 'sidebar.outline';
@@ -330,6 +333,18 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
+      command(
+        id: BusyMarkCommandIds.elementProperties,
+        label: (context) => context.l10n.wsElementProperties,
+        category: (context) => context.l10n.viewMode,
+        scope: BusyMarkCommandScope.documentView,
+      ),
+      command(
+        id: BusyMarkCommandIds.references,
+        label: (context) => context.l10n.references,
+        category: (context) => context.l10n.shortcutGroupSidebar,
+        scope: BusyMarkCommandScope.sidebar,
+      ),
       for (final action in BusyMarkAppShortcutAction.values)
         command(
           id: _appId(action),
@@ -459,6 +474,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.fullScreen => BusyMarkCommandIds.fullScreen,
     BusyMarkAppShortcutAction.back => BusyMarkCommandIds.back,
     BusyMarkAppShortcutAction.search => BusyMarkCommandIds.search,
+    BusyMarkAppShortcutAction.quickOpen => BusyMarkCommandIds.quickOpen,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       BusyMarkCommandIds.keyboardShortcuts,
     BusyMarkAppShortcutAction.commandPalette =>
@@ -484,6 +500,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
     BusyMarkAppShortcutAction.back => context.l10n.back,
     BusyMarkAppShortcutAction.search => context.l10n.search,
+    BusyMarkAppShortcutAction.quickOpen => context.l10n.quickOpen,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.keyboardShortcuts,
     BusyMarkAppShortcutAction.commandPalette => context.l10n.commandPalette,

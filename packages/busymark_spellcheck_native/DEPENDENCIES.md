@@ -7,7 +7,7 @@ BusyMark embeds Hunspell instead of using a host installation.
 - Source: `https://github.com/hunspell/hunspell/archive/refs/tags/v1.7.3.tar.gz`
 - SHA-256: `933be3dac6fd55f6e752331a170efb7e33800e40fae1156d8434cc8c85379a1b`
 - Vendored component: `third_party/hunspell/src/hunspell/` plus upstream
-  license files
+  license files; unused Autotools inputs are excluded
 
 The package build hook compiles the vendored engine and BusyMark wrapper into
 one bundled native code asset. Pango and GLib come from the GTK SDK/runtime used

@@ -5,7 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
-import '../assets/document_media_context.dart';
+import '../assets/document_media_resolver.dart';
 import '../core/atomic_file_writer.dart';
 import '../nextcloud_notes/data/notes_attachment_references.dart';
 
@@ -20,6 +20,8 @@ class MarkdownCopyExportService {
     required String destinationPath,
     required DocumentMediaContext media,
     bool overwrite = false,
+    void Function(String reference)? onMissing,
+    bool Function()? isCancelled,
   }) async {
     final occurrences = await scanNotesAttachmentReferences(source);
     final references = occurrences.map((r) => r.reference).toSet();
@@ -36,6 +38,9 @@ class MarkdownCopyExportService {
       final assets = Directory(p.join(staging.path, 'assets'));
       await assets.create();
       for (final reference in references) {
+        if (isCancelled?.call() == true) {
+          throw const FileSystemException('Export cancelled.');
+        }
         final uri = Uri.tryParse(reference);
         if (uri?.scheme == 'https' ||
             uri?.scheme == 'http' ||
@@ -44,6 +49,13 @@ class MarkdownCopyExportService {
         }
         final path = await media.resolve(reference);
         if (path == null) {
+          if (onMissing != null &&
+              (occurrences.any((r) => r.reference == reference && r.image) ||
+                  reference.startsWith('busymark-attachment:') ||
+                  RegExp(r'^\.attachments\.\d+/').hasMatch(reference))) {
+            onMissing(reference);
+            continue;
+          }
           if (reference.startsWith('busymark-attachment:') ||
               RegExp(r'^\.attachments\.\d+/').hasMatch(reference)) {
             throw const FileSystemException(
@@ -59,11 +71,11 @@ class MarkdownCopyExportService {
             'The note attachments exceed the export size limit.',
           );
         }
-        final bytes = await file.readAsBytes();
-        totalBytes += bytes.length;
+        totalBytes += size;
+        final digest = await sha256.bind(file.openRead()).first;
         final extension = p.extension(path).toLowerCase();
-        final name = '${sha256.convert(bytes)}$extension';
-        await File(p.join(assets.path, name)).writeAsBytes(bytes, flush: true);
+        final name = '$digest$extension';
+        await file.copy(p.join(assets.path, name));
         final replacement = Uri(pathSegments: [folderName, name]).toString();
         replacements[reference] = replacement;
       }
@@ -75,6 +87,9 @@ class MarkdownCopyExportService {
       if (replacements.isNotEmpty) {
         await assets.rename(published.path);
         ownsPublished = true;
+      }
+      if (isCancelled?.call() == true) {
+        throw const FileSystemException('Export cancelled.');
       }
       await const AtomicFileWriter().writeBytes(
         destination,

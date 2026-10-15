@@ -1,3 +1,10 @@
+import 'package:busymark/src/nextcloud_notes/domain/notes_retrieval.dart';
+import 'package:busymark/src/nextcloud_notes/data/server_uri.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_offline_controller.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_search_controller.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_transfer_service.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -11,6 +18,15 @@ import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_capabilities.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
+import 'package:busymark/src/nextcloud_notes/domain/notes_conflict.dart';
+
+class _HeldWrite {
+  _HeldWrite(this.status);
+  final int status;
+  final started = Completer<void>();
+  final release = Completer<void>();
+  int? executedId;
+}
 
 class _Connection extends http.BaseClient {
   _Connection(this._client);
@@ -18,6 +34,11 @@ class _Connection extends http.BaseClient {
   bool offline = false;
   bool loseNextCreateResponse = false;
   bool discardNextCreate = false;
+  bool loseNextSettingsResponse = false;
+  bool loseNextUploadResponse = false;
+  int? nextCollectionFailure;
+  bool rejectNextPutCredentials = false;
+  String? nextPutRetryAfter;
   Map<String, dynamic>? discardedCreation;
   int attachmentUploads = 0;
   int noteUpdates = 0;
@@ -25,9 +46,44 @@ class _Connection extends http.BaseClient {
   final attachmentUploadsById = <int, int>{};
   int noteCreates = 0;
   int chunkRequests = 0;
+  _HeldWrite? holdNextWrite;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (offline) throw http.ClientException('Intentional offline acceptance.');
+    if (rejectNextPutCredentials &&
+        request.method == 'PUT' &&
+        request.url.path.contains('/v1/notes/')) {
+      rejectNextPutCredentials = false;
+      // Real server authentication rejection with intentionally invalid fixture
+      // credentials, confined to this one write. Never logged or persisted.
+      request.headers['Authorization'] = nextcloudAuthorization(
+        'invalid-review-fixture',
+        'invalid-review-password',
+      );
+    }
+    if (request.method == 'GET' &&
+        request.url.path.endsWith('/v1/notes') &&
+        nextCollectionFailure != null) {
+      final status = nextCollectionFailure!;
+      nextCollectionFailure = null;
+      return http.StreamedResponse(
+        Stream.value(utf8.encode('{}')),
+        status,
+        request: request,
+      );
+    }
+    if (request.method == 'PUT' &&
+        request.url.path.contains('/v1/notes/') &&
+        nextPutRetryAfter != null) {
+      final deadline = nextPutRetryAfter!;
+      nextPutRetryAfter = null;
+      return http.StreamedResponse(
+        Stream.value(utf8.encode('{}')),
+        429,
+        headers: {'Retry-After': deadline},
+        request: request,
+      );
+    }
     if (request.url.queryParameters.containsKey('chunkCursor')) chunkRequests++;
     final creation =
         request.method == 'POST' && request.url.path.endsWith('/v1/notes');
@@ -37,7 +93,7 @@ class _Connection extends http.BaseClient {
       final id = int.parse(request.url.pathSegments.last);
       attachmentUploadsById.update(id, (v) => v + 1, ifAbsent: () => 1);
     }
-    if (request.method == 'PUT' && request.url.path.contains('/notes/')) {
+    if (request.method == 'PUT' && request.url.path.contains('/v1/notes/')) {
       noteUpdates++;
       final id = int.parse(request.url.pathSegments.last);
       noteUpdatesById.update(id, (v) => v + 1, ifAbsent: () => 1);
@@ -50,7 +106,54 @@ class _Connection extends http.BaseClient {
         'Intentional nondelivery of creation request.',
       );
     }
+    final held =
+        creation ||
+            (request.method == 'PUT' && request.url.path.contains('/v1/notes/'))
+        ? holdNextWrite
+        : null;
+    if (held != null) {
+      holdNextWrite = null;
+      held.started.complete();
+      await held.release.future;
+      if (held.status == 429) {
+        // Definitive rejection: deliberately do not execute this fixture write.
+        return http.StreamedResponse(
+          Stream.value(utf8.encode('{}')),
+          429,
+          headers: {'Retry-After': '10'},
+          request: request,
+        );
+      }
+    }
     final response = await _client.send(request);
+    if (held?.status == 503) {
+      // Simulate a server failure after a real successful write. A POST outcome
+      // remains uncertain; its known test-owned ID is retained only for cleanup.
+      final bytes = await response.stream.toBytes();
+      _require(
+        response.statusCode == 200,
+        'Held fixture write was not successful.',
+      );
+      held!.executedId = (jsonDecode(utf8.decode(bytes)) as Map)['id'] as int;
+      return http.StreamedResponse(
+        Stream.value(utf8.encode('{}')),
+        503,
+        request: request,
+      );
+    }
+    if ((loseNextSettingsResponse &&
+            request.method == 'PUT' &&
+            request.url.path.endsWith('/v1/settings')) ||
+        (loseNextUploadResponse &&
+            request.method == 'POST' &&
+            request.url.path.contains('/attachment/'))) {
+      loseNextSettingsResponse = false;
+      loseNextUploadResponse = false;
+      await response.stream.drain<void>();
+      throw http.ClientException(
+        'Intentional lost response after a real server write.',
+      );
+    }
     if (creation && loseNextCreateResponse) {
       loseNextCreateResponse = false;
       await response.stream.drain<void>();
@@ -95,6 +198,8 @@ Future<void> main(List<String> arguments) async {
   final checks = <String, Object?>{};
   NotesRepository? repository;
   final createdIds = <int>{};
+  NotesSettings? originalSettings;
+  DateTime? editClock;
   try {
     final capabilities = await fetchNotesCapabilities(
       client: connection,
@@ -123,6 +228,13 @@ Future<void> main(List<String> arguments) async {
       final result = NotesRepository(
         store: store,
         clientForAccount: (value) async => api(value),
+        clock: () => editClock ?? DateTime.now(),
+        fetchCapabilities: (value) => fetchNotesCapabilities(
+          client: connection,
+          server: value.server,
+          loginName: value.loginName,
+          appPassword: password,
+        ),
       );
       await result.initialize();
       return result;
@@ -130,6 +242,110 @@ Future<void> main(List<String> arguments) async {
 
     repository = await reopen();
     await repository.upsertAccount(account);
+    originalSettings = await api(account).getSettings();
+    final linked = await repository.create(
+      account.id,
+      title: 'References portable target',
+      category: 'References/Scoped',
+      content: '# Target\nconfirmed portable identity',
+    );
+    await repository.synchronize(account.id);
+    final target = repository.noteById(linked.localId)!;
+    createdIds.add(target.serverId!);
+    final first = await api(account).retrieve(target.serverId!);
+    final conditional = await api(
+      account,
+    ).retrieve(target.serverId!, cached: (first as NotesReturned).note);
+    if (conditional is! NotesNotModified) {
+      throw StateError('Single-note conditional GET did not return 304.');
+    }
+    checks['referencesConditionalSingleNote200And304'] = true;
+    final projected = await api(account).query(
+      NotesRetrievalScope(
+        category: 'References/Scoped',
+        exclude: {'content', 'title'},
+      ),
+      chunkSize: 1,
+    );
+    if (!projected.notes.any((n) => n.id == target.serverId) ||
+        projected.notes.any((n) => n.has('content') || n.has('title'))) {
+      throw StateError('Filtered/projected live response semantics differed.');
+    }
+    checks['referencesFilteredProjectedRetrieval'] = true;
+    final unidentified = await api(account).query(
+      NotesRetrievalScope(
+        category: 'References/Scoped',
+        exclude: {'id', 'content'},
+      ),
+      chunkSize: 1,
+    );
+    final singleProjection = await api(account).getProjection(
+      target.serverId!,
+      NotesRetrievalScope(exclude: {'id', 'content'}),
+    );
+    if (unidentified.notes.isEmpty ||
+        unidentified.notes.any((n) => n.id != null || n.has('content')) ||
+        singleProjection.id != null ||
+        singleProjection.has('content')) {
+      throw StateError('Excluded identifiers were not represented as omitted.');
+    }
+    checks['referencesExcludedIdentifiersAndSingleProjection'] = true;
+    final checkpoint = repository.accountById(account.id)!.listEtag;
+    await repository.save(target.localId, content: 'pending local edit');
+    final refreshed = await repository.refreshLinkedNote(
+      account.id,
+      target.serverId!,
+    );
+    if (refreshed.content != 'pending local edit' ||
+        !refreshed.hasPendingChanges ||
+        repository.accountById(account.id)!.listEtag != checkpoint) {
+      throw StateError('304 changed pending local state.');
+    }
+    checks['referencesConditionalReadPreservesPendingAndCheckpoint'] = true;
+    final url = nextcloudNoteUrl(
+      account.server,
+      target.serverId!,
+      pretty: await repository.confirmNoteWebRoute(account.id),
+    );
+    final source = await repository.create(
+      account.id,
+      title: 'References link source',
+      content: '[portable target]($url)',
+    );
+    await repository.synchronize(account.id);
+    final sourceId = repository.noteById(source.localId)!.serverId!;
+    createdIds.add(sourceId);
+    if (!(await api(account).get(sourceId)).content.contains(url.toString())) {
+      throw StateError('Portable link publication failed.');
+    }
+    checks['referencesPortableUrlPublished'] = true;
+
+    await _protocolChecks(
+      repository,
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory,
+      (value) => editClock = value,
+    );
+    await _reviewCorrections(
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory,
+    );
+    await _metadataRaceChecks(
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory,
+    );
     if (credentials['lockedNoteId'] case final int lockedId) {
       await repository.synchronize(account.id);
       final locked = repository.notes.firstWhere((n) => n.serverId == lockedId);
@@ -529,6 +745,23 @@ Future<void> main(List<String> arguments) async {
       'Explicit online deletion failed.',
     );
     checks['explicitFreshCheckedDeletion'] = true;
+    await _everydayWorkspaceChecks(
+      repository,
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory.path,
+    );
+    await _workspaceCorrectionChecks(
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory.path,
+    );
     await File(arguments[1]).writeAsString(
       const JsonEncoder.withIndent(
         '  ',
@@ -538,12 +771,13 @@ Future<void> main(List<String> arguments) async {
     stdout.writeln(
       'Live Nextcloud Notes acceptance passed (${checks.length} checks).',
     );
-  } on Object catch (error) {
+  } on Object catch (error, stack) {
     await File(arguments[1]).writeAsString(
       const JsonEncoder.withIndent('  ').convert({
         'ok': false,
         'checks': checks,
         'failureType': error.runtimeType.toString(),
+        'failureStack': stack.toString(),
         'failure': error is NotesException
             ? error.message
             : error is StateError
@@ -556,6 +790,19 @@ Future<void> main(List<String> arguments) async {
     exitCode = 1;
   } finally {
     connection.offline = false;
+    if (originalSettings != null &&
+        repository != null &&
+        repository.accounts.isNotEmpty) {
+      try {
+        await NotesApiClient(
+          client: connection,
+          account: repository.accounts.first,
+          appPassword: password,
+        ).updateSettings(originalSettings.toJson());
+      } on Object {
+        /* Fixture teardown still bounds cleanup. */
+      }
+    }
     // Every destructive cleanup target was created by this isolated test run.
     for (final id in createdIds) {
       try {
@@ -578,5 +825,988 @@ Future<void> main(List<String> arguments) async {
     await repository?.dispose();
     connection.close();
     await directory.delete(recursive: true);
+  }
+}
+
+Future<void> _protocolChecks(
+  NotesRepository repository,
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> createdIds,
+  Map<String, Object?> checks,
+  Directory directory,
+  void Function(DateTime?) setClock,
+) async {
+  final settings = await repository.getSettings(account.id);
+  final changed = await repository.changeSettings(account.id, settings, {
+    'fileSuffix': '.busyacceptance',
+  });
+  _require(
+    changed.fileSuffix == '.busyacceptance' &&
+        changed.notesPath == settings.notesPath,
+    'Custom suffix/partial settings update failed.',
+  );
+  final normalized = await repository.changeSettings(account.id, changed, {
+    'fileSuffix': 'md',
+  });
+  _require(
+    normalized.fileSuffix.startsWith('.'),
+    'Server suffix normalization was not adopted.',
+  );
+  await repository.changeSettings(account.id, normalized, {
+    'fileSuffix': settings.fileSuffix,
+  });
+  checks['settingsPartialCustomSuffixNormalization'] = true;
+  connection.loseNextSettingsResponse = true;
+  final lost = await repository.changeSettings(account.id, settings, {
+    'notesPath': 'BusyMark Protocol isolated collection',
+  });
+  _require(
+    lost.notesPath == 'BusyMark Protocol isolated collection' &&
+        repository.accounts.single.settingsAttempt == null &&
+        repository.accounts.single.listEtag == null,
+    'Lost settings response did not reconcile by read/reset checkpoint.',
+  );
+  await repository.changeSettings(account.id, lost, {
+    'notesPath': settings.notesPath,
+  });
+  checks['lostSettingsResponseReconciledRealWrite'] = true;
+  await repository.synchronize(account.id, allowWrites: false);
+  _require(
+    repository.accounts.single.lastServerCheck != null,
+    'Complete server check timestamp missing.',
+  );
+  await repository.maintainCapabilities(account.id, force: true);
+  _require(
+    repository.accounts.single.appVersion == account.appVersion,
+    'Capabilities were not maintained without reconnect.',
+  );
+  checks['maintainedCapabilitiesAndServerCheck'] = true;
+
+  final editTime = DateTime.now().toUtc().subtract(const Duration(days: 3));
+  setClock(editTime);
+  final draft = await repository.create(
+    account.id,
+    title: 'Protocol timestamp and filenames',
+    category: 'BusyMarkAcceptance',
+    content: '# Edit time',
+  );
+  final captured = draft.localActivityMicros;
+  setClock(editTime.add(const Duration(days: 2)));
+  await repository.synchronize(account.id);
+  var note = repository.noteById(draft.localId)!;
+  createdIds.add(note.serverId!);
+  _require(
+    (await api(account).get(note.serverId!)).modified ==
+            editTime.millisecondsSinceEpoch ~/ 1000 &&
+        note.localActivityMicros == captured,
+    'Delayed creation changed the local edit time.',
+  );
+  checks['delayedPublicationTimestampFidelity'] = true;
+  setClock(null);
+  final names = [
+    'é 日本.txt',
+    'literal%.txt',
+    'space # (1).txt',
+    '%2F.txt',
+    '%2e%2e.txt',
+  ];
+  for (final filename in names) {
+    final bytes = Uint8List.fromList(utf8.encode('fixture:$filename'));
+    final attachment = await repository.addAttachment(
+      note.localId,
+      filename: filename,
+      bytes: bytes,
+    );
+    await repository.save(
+      note.localId,
+      content:
+          '${repository.noteById(note.localId)!.content}\n[file](${attachment.reference})',
+    );
+    await repository.synchronize(account.id);
+    final stored = (await repository.attachments(
+      note.localId,
+    )).singleWhere((a) => a.id == attachment.id);
+    _require(
+      stored.remotePath != null &&
+          repository
+              .noteById(note.localId)!
+              .content
+              .contains(attachmentMarkdownReference(stored.remotePath!)),
+      'Raw filename was not durably published into Markdown.',
+    );
+    final file = await api(account).fetchAttachment(
+      note.serverId!,
+      stored.remotePath!,
+      destination: File('${directory.path}/filename-${attachment.id}'),
+    );
+    _require(
+      base64Encode(await file.readAsBytes()) == base64Encode(bytes),
+      'Filename upload/Markdown/download round trip failed.',
+    );
+  }
+  checks['unicodePercentSpaceHashParenthesesAttachmentRoundTrips'] = true;
+  await repository.save(
+    note.localId,
+    content: '${repository.noteById(note.localId)!.content}\nPending edit',
+  );
+  connection.nextCollectionFailure = 404;
+  await repository.synchronize(account.id);
+  _require(
+    repository.noteById(note.localId)!.syncState !=
+            NoteSyncState.deletedRemotely &&
+        repository.noteById(note.localId)!.hasPendingChanges,
+    'Injected collection 404 poisoned pending work.',
+  );
+  connection.nextPutRetryAfter = '3600';
+  await repository.synchronize(account.id);
+  note = repository.noteById(note.localId)!;
+  _require(
+    note.syncState == NoteSyncState.throttled && note.retryNotBefore != null,
+    'Injected throttle did not preserve a deadline.',
+  );
+  final updates = connection.noteUpdates;
+  await repository.synchronize(account.id);
+  _require(
+    connection.noteUpdates == updates &&
+        repository.noteById(note.localId)!.hasPendingChanges,
+    'Write retried before the throttle deadline.',
+  );
+  setClock(note.retryNotBefore!.add(const Duration(seconds: 1)));
+  await repository.synchronize(account.id);
+  setClock(null);
+  checks['simulatedCollection404AndThrottlingAroundRealRequests'] = true;
+  final staged = await repository.addAttachment(
+    note.localId,
+    filename: 'lost-upload.txt',
+    bytes: Uint8List.fromList([1, 2, 3]),
+  );
+  await repository.save(
+    note.localId,
+    content:
+        '${repository.noteById(note.localId)!.content}\n[lost](${staged.reference})',
+  );
+  connection.loseNextUploadResponse = true;
+  await repository.synchronize(account.id);
+  final uploads = connection.attachmentUploads;
+  await repository.synchronize(account.id);
+  _require(
+    connection.attachmentUploads == uploads &&
+        (await repository.attachments(
+              note.localId,
+            )).singleWhere((a) => a.id == staged.id).state ==
+            'uncertain',
+    'Lost upload was repeated automatically.',
+  );
+  checks['lostRealUploadResponsePreservesUncertainty'] = true;
+  // Explicitly remove the note; uncertain attachment bytes remain in local recovery.
+  await repository.delete(note.localId);
+  createdIds.remove(note.serverId!);
+}
+
+Future<void> _reviewCorrections(
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> createdIds,
+  Map<String, Object?> checks,
+  Directory directory,
+) async {
+  var now = DateTime.now();
+  Future<NotesRepository> open() async {
+    final r = NotesRepository(
+      store: await NotesStore.open(path: '${directory.path}/review.sqlite3'),
+      clientForAccount: (a) async => api(a),
+      clock: () => now,
+    );
+    await r.initialize();
+    if (r.accounts.isEmpty) await r.upsertAccount(account);
+    return r;
+  }
+
+  var r = await open();
+  Future<void> restart() async {
+    await r.dispose();
+    r = await open();
+  }
+
+  try {
+    final owned = await r.create(
+      account.id,
+      title: 'Review auth and Unicode',
+      category: 'BusyMarkReview',
+      content: 'body',
+    );
+    await r.synchronize(account.id);
+    final id = owned.localId;
+    createdIds.add(r.noteById(id)!.serverId!);
+    await r.save(id, content: 'durable authenticated edit');
+    connection.rejectNextPutCredentials = true;
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.syncState == NoteSyncState.reconnectRequired,
+      'Real invalid-credential PUT did not produce an authentication block.',
+    );
+    await restart();
+    // The account identity and valid app password came from the verified Login
+    // Flow; this authenticated read verifies the restored credential boundary.
+    await api(account).list();
+    await r.upsertAccount(account, reconnect: true);
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.syncState == NoteSyncState.synced &&
+          (await api(account).get(r.noteById(id)!.serverId!)).content ==
+              'durable authenticated edit',
+      'Restart/reconnect did not resume the real authenticated write.',
+    );
+    checks['real401RestartVerifiedReconnectResumesWrite'] = true;
+
+    await r.save(id, content: 'first throttled edit');
+    connection.nextPutRetryAfter = '600';
+    await r.synchronize(account.id);
+    final deadline = r.noteById(id)!.retryNotBefore!;
+    final updates = connection.noteUpdates;
+    await r.save(id, content: 'content edited while throttled');
+    await r.patchMetadata(
+      r.metadataSnapshot(id),
+      category: 'BusyMarkReview/Edited',
+    );
+    await restart();
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.retryNotBefore == deadline &&
+          connection.noteUpdates == updates,
+      'Content/metadata editing or restart bypassed injected Retry-After.',
+    );
+    now = deadline;
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.syncState == NoteSyncState.synced &&
+          connection.noteUpdates == updates + 1,
+      'Expired throttle did not publish the edited revision.',
+    );
+    checks['simulated429ContentMetadataRestartDeadlineExpiryRealPublication'] =
+        true;
+    now = DateTime.now();
+
+    final bytes = Uint8List.fromList([1, 2, 3, 4]);
+    final attachment = await r.addAttachment(
+      id,
+      filename: 'café.png',
+      bytes: bytes,
+    );
+    await r.save(id, content: '![unicode](${attachment.reference})');
+    await r.synchronize(account.id);
+    final path = (await r.attachments(
+      id,
+    )).singleWhere((a) => a.id == attachment.id).remotePath!;
+    await r.save(id, content: '<img src="$path">');
+    await r.synchronize(account.id);
+    for (final destination in [path, attachmentMarkdownReference(path)]) {
+      final file = await r.resolveMedia(account.id, id, destination);
+      _require(
+        file != null &&
+            base64Encode(await File(file).readAsBytes()) == base64Encode(bytes),
+        'Literal/encoded Unicode HTML media failed.',
+      );
+    }
+    final downloaded = await api(account).fetchAttachment(
+      r.noteById(id)!.serverId!,
+      path,
+      destination: File('${directory.path}/unicode-review.png'),
+    );
+    _require(
+      base64Encode(await downloaded.readAsBytes()) == base64Encode(bytes),
+      'Real Unicode download did not round trip.',
+    );
+    checks['literalAndEncodedUnicodeHtmlUploadPublicationDownload'] = true;
+
+    var sequence = 0;
+    final prefix = DateTime.now().microsecondsSinceEpoch;
+    for (final draft in [false, true]) {
+      for (final resolution in [
+        NoteConflictResolution.takeRemote,
+        NoteConflictResolution.keepLocal,
+        NoteConflictResolution.merge,
+        NoteConflictResolution.saveAsNew,
+      ]) {
+        final suffix = '$prefix-${sequence++}';
+        final a = 'A-$suffix', b = 'B-$suffix', c = 'C-$suffix';
+        final note = await r.create(
+          account.id,
+          title: a,
+          category: 'BusyMarkReview/Choices',
+          content: 'choice body',
+        );
+        if (!draft) {
+          await r.synchronize(account.id);
+          createdIds.add(r.noteById(note.localId)!.serverId!);
+        }
+        final snapshot = r.metadataSnapshot(note.localId);
+        await r.patchMetadata(snapshot, title: b);
+        await r.patchMetadata(snapshot, title: c);
+        await restart();
+        await r.resolveConflict(
+          note.localId,
+          resolution,
+          metadataChoices: {NotesMergeAttribute.title: NotesMergeChoice.remote},
+        );
+        final chosen = resolution == NoteConflictResolution.saveAsNew
+            ? r.notes.singleWhere(
+                (n) =>
+                    n.localId != note.localId &&
+                    n.title == c &&
+                    n.serverId == null,
+              )
+            : r.noteById(note.localId)!;
+        await r.synchronize(account.id);
+        final published = r.noteById(chosen.localId)!;
+        createdIds.add(published.serverId!);
+        final expected =
+            resolution == NoteConflictResolution.takeRemote ||
+                resolution == NoteConflictResolution.merge
+            ? b
+            : c;
+        _require(
+          published.title == expected &&
+              (await api(account).get(published.serverId!)).title == expected,
+          'Reviewed local choice was substituted during real server synchronization.',
+        );
+      }
+    }
+    checks['serverAndDraftEveryReviewedMetadataChoiceRestartRealSync'] = true;
+  } finally {
+    await r.dispose();
+  }
+}
+
+Future<void> _metadataRaceChecks(
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> createdIds,
+  Map<String, Object?> checks,
+  Directory directory,
+) async {
+  var now = DateTime.now();
+  Future<NotesRepository> open() async {
+    final r = NotesRepository(
+      store: await NotesStore.open(
+        path: '${directory.path}/metadata-race.sqlite3',
+      ),
+      clientForAccount: (a) async => api(a),
+      clock: () => now,
+    );
+    await r.initialize();
+    if (r.accounts.isEmpty) await r.upsertAccount(account);
+    return r;
+  }
+
+  var r = await open();
+  Future<void> restart() async {
+    await r.dispose();
+    r = await open();
+  }
+
+  var sequence = 0;
+  final prefix = DateTime.now().microsecondsSinceEpoch;
+  try {
+    for (final draft in [false, true]) {
+      for (final status in [200, 429, 503]) {
+        for (final choice in [
+          NoteConflictResolution.takeRemote,
+          NoteConflictResolution.keepLocal,
+        ]) {
+          now = DateTime.now();
+          final suffix = '$prefix-${sequence++}';
+          final a = 'Race A-$suffix',
+              b = 'Race B-$suffix',
+              c = 'Race C-$suffix';
+          final note = await r.create(
+            account.id,
+            title: a,
+            category: 'BusyMarkRace',
+            content: 'race body',
+          );
+          if (!draft) {
+            await r.synchronize(account.id);
+            createdIds.add(r.noteById(note.localId)!.serverId!);
+          }
+          final snapshot = r.metadataSnapshot(note.localId);
+          await r.patchMetadata(snapshot, title: b);
+          final sent = r.noteById(note.localId)!;
+          final held = _HeldWrite(status);
+          connection.holdNextWrite = held;
+          final sending = r.synchronize(account.id);
+          late int revision, requests;
+          try {
+            await Future.any([
+              held.started.future,
+              sending.then<void>((_) => throw StateError('No held write.')),
+            ]);
+            await r.patchMetadata(snapshot, title: c);
+            revision = r.noteById(note.localId)!.revision;
+            requests = connection.noteUpdates + connection.noteCreates;
+          } finally {
+            held.release.complete();
+          }
+          await sending;
+          if (held.executedId != null) createdIds.add(held.executedId!);
+          var current = r.noteById(note.localId)!;
+          if (current.serverId != null) createdIds.add(current.serverId!);
+          _require(
+            current.revision == revision &&
+                current.ackRevision ==
+                    (status == 200 ? sent.revision : sent.ackRevision) &&
+                current.title == c &&
+                current.metadataConflict?.alternative.title == b,
+            'Older held response lost the reviewed revision or alternatives.',
+          );
+          now = now.add(const Duration(minutes: 1));
+          await r.synchronize(account.id);
+          await restart();
+          await r.synchronize(account.id);
+          _require(
+            connection.noteUpdates + connection.noteCreates == requests,
+            'Unresolved metadata published after response/retry/restart.',
+          );
+          await r.resolveConflict(note.localId, choice);
+          final expected = choice == NoteConflictResolution.takeRemote ? b : c;
+          current = r.noteById(note.localId)!;
+          _require(
+            current.title == expected,
+            'Explicit metadata choice was substituted.',
+          );
+          if (draft && status == 503) {
+            await r.synchronize(account.id);
+            _require(
+              connection.noteUpdates + connection.noteCreates == requests &&
+                  r.noteById(note.localId)!.syncState ==
+                      NoteSyncState.creationUncertain,
+              'Metadata resolution released an uncertain real creation.',
+            );
+            final candidate = r
+                .uncertainCreationCandidates(note.localId)
+                .singleWhere((n) => n.serverId == held.executedId);
+            await r.resolveConflict(
+              note.localId,
+              NoteConflictResolution.useServerNote,
+              creationCandidateServerId: candidate.serverId,
+              creationReview: r.creationReview(note.localId, candidate.base!),
+            );
+          } else if (current.syncState == NoteSyncState.conflict) {
+            // A simulated failed response may follow a real accepted PUT. Review
+            // that actual server observation separately from the B/C decision.
+            await r.resolveConflict(
+              note.localId,
+              NoteConflictResolution.keepLocal,
+            );
+          }
+          await r.synchronize(account.id);
+          current = r.noteById(note.localId)!;
+          createdIds.add(current.serverId!);
+          _require(
+            current.syncState == NoteSyncState.synced &&
+                current.title == expected &&
+                (await api(account).get(current.serverId!)).title == expected,
+            'Selected race alternative did not synchronize to the real server.',
+          );
+        }
+      }
+    }
+    checks['heldPutPostResponsesMetadataAlternativesRetryRestartRealSync'] =
+        true;
+    checks['heldPossiblyExecutedPostRequiresSeparateCreationDecision'] = true;
+  } finally {
+    await r.dispose();
+  }
+}
+
+Future<void> _everydayWorkspaceChecks(
+  NotesRepository r,
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> owned,
+  Map<String, Object?> checks,
+  String root,
+) async {
+  connection.offline = true;
+  final draft = await r.create(
+    account.id,
+    title: 'M2 portable 同じ',
+    category: 'M2/子/Sub',
+    content: 'pending alpha beta café 中文 foo_bar',
+  );
+  final attachment = await r.addAttachment(
+    draft.localId,
+    filename: 'café%20.png',
+    bytes: Uint8List.fromList([1, 2, 3]),
+  );
+  await r.save(
+    draft.localId,
+    content:
+        'pending alpha beta café 中文 foo_bar\n![image](${attachment.reference})\n<img src="${attachment.reference}">',
+  );
+  final second = await r.create(
+    account.id,
+    title: draft.title,
+    category: draft.category,
+    content: 'duplicate alpha beta',
+  );
+  final outcomes = await r.patchMetadataBatch([
+    r.metadataSnapshot(draft.localId),
+    r.metadataSnapshot(second.localId),
+  ], favorite: true);
+  _require(
+    outcomes.every((o) => o.status == NotesBatchStatus.changed),
+    'Offline batch did not persist every reviewed note.',
+  );
+  final search = NotesSearchController(r.store, account.id);
+  await search.search('"alpha beta" category:"M2/子"');
+  _require(
+    search.state.error == null &&
+        search.state.hits.any((h) => h.localId == draft.localId),
+    'Indexed pending note search failed.',
+  );
+  await search.dispose();
+  connection.offline = false;
+  await r.synchronize(account.id);
+  for (final note in [draft, second]) {
+    final published = r.noteById(note.localId)!;
+    if (published.serverId != null) owned.add(published.serverId!);
+    _require(
+      published.syncState == NoteSyncState.synced,
+      'Offline organization did not synchronize: ${published.syncState.name}; ${published.errorMessage}; deadline=${published.retryNotBefore}; scope=${published.failureScope}',
+    );
+    final actual = await api(account).get(published.serverId!);
+    _require(
+      actual.favorite && actual.category == 'M2/子/Sub',
+      'Server metadata did not match the batch.',
+    );
+  }
+  checks['m2OfflineBatchIndexedPendingTextRealSync'] = true;
+  var offline = NotesOfflineController(r, account.id);
+  await offline.initialize();
+  await offline.setRequirement('category', 'M2');
+  await offline.reconcile();
+  final published = r.noteById(draft.localId)!;
+  _require(
+    (await offline.inspect(published)).available,
+    'Category retention is incomplete.',
+  );
+  connection.offline = true;
+  final media = await r.attachmentAvailability(draft.localId);
+  _require(
+    media.required.isNotEmpty &&
+        media.available.length == media.required.length,
+    'Retained bytes unavailable offline.',
+  );
+  final export = await NotesTransferService(r).exportSnapshot(
+    notes: [published, r.noteById(second.localId)!],
+    destination: root,
+    cancellation: NotesTransferCancellation(),
+  );
+  _require(export.complete, 'Portable snapshot silently omitted media.');
+  final review = await NotesTransferService(r).review(export.path, account.id);
+  _require(
+    review.items.length == 2 && review.items.every((i) => i.collision),
+    'Import review lost duplicate title collisions.',
+  );
+  final imported = await NotesTransferService(r).importReviewed(
+    review,
+    account.id,
+    cancellation: NotesTransferCancellation(),
+  );
+  _require(imported.every((i) => i.noteId != null), 'Portable import failed.');
+  final repeated = await NotesTransferService(r).importReviewed(
+    review,
+    account.id,
+    cancellation: NotesTransferCancellation(),
+  );
+  _require(
+    repeated.every((i) => i.alreadyImported),
+    'Resume duplicated a completed import.',
+  );
+  checks['m2RetainedCategoryPortableMarkdownHtmlMediaDuplicateRoundTrip'] =
+      true;
+  await offline.dispose();
+  connection.offline = false;
+  await r.delete(draft.localId);
+  owned.remove(published.serverId);
+  final recovered = await r.recoverAsNew(draft.localId);
+  _require(
+    recovered.localId != draft.localId && recovered.serverId == null,
+    'Recovery overwrote an existing identity.',
+  );
+  await r.synchronize(account.id);
+  for (final id in [recovered.localId, ...imported.map((i) => i.noteId!)]) {
+    final note = r.noteById(id)!;
+    if (note.serverId != null) owned.add(note.serverId!);
+    _require(
+      note.syncState == NoteSyncState.synced,
+      'Recovered/imported media did not synchronize.',
+    );
+    final actual = await api(account).get(note.serverId!);
+    _require(
+      actual.favorite && actual.category == 'M2/子/Sub',
+      'Round trip lost exact organization metadata.',
+    );
+  }
+  checks['m2DeletedNoteRetainedMediaRecoveryAndImportedRealPublication'] = true;
+}
+
+Future<void> _workspaceCorrectionChecks(
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> owned,
+  Map<String, Object?> checks,
+  String root,
+) async {
+  late NotesRepository r;
+  Future<void> open() async {
+    r = NotesRepository(
+      store: await NotesStore.open(path: '$root/corrections.sqlite3'),
+      clientForAccount: (account) async => api(account),
+    );
+    await r.initialize();
+    if (r.accounts.isEmpty) await r.upsertAccount(account);
+  }
+
+  Future<void> restart() async {
+    await r.dispose();
+    await open();
+  }
+
+  Future<void> synchronize() async {
+    await r.synchronize(account.id);
+    owned.addAll(
+      r.notes
+          .where(
+            (n) =>
+                n.title.startsWith('Correction') ||
+                n.category.startsWith('Correction'),
+          )
+          .map((n) => n.serverId)
+          .whereType<int>(),
+    );
+  }
+
+  await open();
+  try {
+    connection.offline = true;
+    const token = 'correctionneedle';
+    final expected = <(String, int?, int?)>{};
+    for (var n = 0; n < 10; n++) {
+      final note = await r.create(
+        account.id,
+        title: 'Correction paging $n',
+        category: 'Correction/Paging',
+        content: List.filled(32, token).join(' '),
+      );
+      expected.addAll([
+        for (var i = 0; i < 32; i++)
+          (
+            note.localId,
+            i * (token.length + 1),
+            i * (token.length + 1) + token.length,
+          ),
+      ]);
+    }
+    final forty = await r.create(
+      account.id,
+      title: 'Correction forty',
+      category: 'Correction/Paging',
+      content: List.filled(40, 'fortyneedle').join(' '),
+    );
+    await restart();
+    final search = NotesSearchController(r.store, account.id);
+    for (final limit in [80, 160, 240, 320, 400]) {
+      await search.search(token, limit: limit);
+      final actual = search.state.hits
+          .map((h) => (h.localId, h.start, h.end))
+          .toSet();
+      _require(
+        actual.length == limit.clamp(0, 320) &&
+            actual.length == search.state.hits.length &&
+            expected.containsAll(actual) &&
+            search.state.truncated == (limit < 320),
+        'Indexed occurrence continuation omitted or duplicated results.',
+      );
+      if (limit >= 320) {
+        _require(
+          actual.containsAll(expected),
+          'Indexed continuation lost final identities.',
+        );
+      }
+    }
+    await search.search('fortyneedle');
+    _require(
+      search.state.hits.length == 40 &&
+          search.state.hits.every((h) => h.localId == forty.localId) &&
+          !search.state.truncated,
+      'Occurrences beyond 32 were omitted.',
+    );
+    await search.dispose();
+    connection.offline = false;
+    await synchronize();
+    checks['correctionCompleteOccurrenceAndDocumentContinuationAfterRestartAndSync'] =
+        true;
+
+    final source = await Directory('$root/correction-source').create();
+    final document = File('${source.path}/Correction-import.md');
+    await document.writeAsString(
+      '![image](./images/caf%C3%A9%2520.png)\n\n<img src="./images/caf%C3%A9%2520.png">',
+    );
+    var service = NotesTransferService(r);
+    var review = await service.review(document.path, account.id);
+    review.items.single.category = 'Correction/Import';
+    _require(
+      review.items.single.issues.isNotEmpty,
+      'Missing media was not reported.',
+    );
+    final first = await service.importReviewed(
+      review,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    await synchronize();
+    await Directory('${source.path}/images').create();
+    await File('${source.path}/images/café%20.png').writeAsBytes([1, 2, 3]);
+    await restart();
+    service = NotesTransferService(r);
+    review = await service.review(document.path, account.id);
+    review.items.single.category = 'Correction/New/子';
+    _require(
+      review.items.single.issues.isEmpty &&
+          review.items.single.media.isNotEmpty,
+      'Safe ./ media was rejected.',
+    );
+    final fresh = await service.importReviewed(
+      review,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    _require(
+      !fresh.single.alreadyImported &&
+          fresh.single.noteId != first.single.noteId &&
+          r.noteById(fresh.single.noteId!)!.category == 'Correction/New/子',
+      'A deliberately new import reused an old association.',
+    );
+    await synchronize();
+    _require(
+      (await r.attachmentAvailability(fresh.single.noteId!)).available.length ==
+          1,
+      'Repaired media was not staged/published for Markdown and HTML.',
+    );
+    checks['correctionNewImportHonorsReviewedCategoryAndRepairedRelativeMedia'] =
+        true;
+
+    await Directory('${source.path}/chapters').create();
+    await File('${source.path}/chapters/Correction-nested.md').writeAsString(
+      '![image](../images/caf%C3%A9%2520.png)\n\n<img src="../images/caf%C3%A9%2520.png">',
+    );
+    await File('$root/outside.png').writeAsBytes([9, 9, 9]);
+    await File(
+      '${source.path}/Correction-escape.md',
+    ).writeAsString('![image](../outside.png)\n\n<img src="../outside.png">');
+    final paths = await service.review(
+      source.path,
+      account.id,
+      category: 'Correction/Relative',
+    );
+    final nested = paths.items.singleWhere(
+      (i) => i.title == 'Correction-nested',
+    );
+    final escape = paths.items.singleWhere(
+      (i) => i.title == 'Correction-escape',
+    );
+    _require(
+      nested.media.isNotEmpty &&
+          nested.issues.isEmpty &&
+          escape.media.isEmpty &&
+          escape.issues.isNotEmpty,
+      'Local-import containment failed.',
+    );
+    for (final item in paths.items) {
+      item.selected = identical(item, nested);
+    }
+    final importedPaths = await service.importReviewed(
+      paths,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    await synchronize();
+    _require(
+      r.noteById(importedPaths.single.noteId!)!.syncState ==
+          NoteSyncState.synced,
+      'Safe nested relative media did not synchronize.',
+    );
+    checks['correctionRelativeMarkdownHtmlInsideRootAndOutsideRootBoundary'] =
+        true;
+
+    final resumeSource = await Directory('$root/correction-resume').create();
+    for (var n = 0; n < 3; n++) {
+      await File(
+        '${resumeSource.path}/Correction-$n.md',
+      ).writeAsString('resumable $n');
+    }
+    final original = await service.review(
+      resumeSource.path,
+      account.id,
+      category: 'Correction/Resume',
+    );
+    final cancellation = NotesTransferCancellation();
+    final partial = await service.importReviewed(
+      original,
+      account.id,
+      cancellation: cancellation,
+      onProgress: (_, _) => cancellation.cancel(),
+    );
+    await restart();
+    service = NotesTransferService(r);
+    final resumed = await service.resumeImport(
+      original.operationId,
+      account.id,
+    );
+    final finished = await service.importReviewed(
+      resumed,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    _require(
+      finished.length == 3 &&
+          finished.first.alreadyImported &&
+          finished.first.noteId == partial.single.noteId &&
+          finished.map((o) => o.noteId).toSet().length == 3,
+      'Restarting an import duplicated its durable items.',
+    );
+    await synchronize();
+    checks['correctionDurableReviewedOperationResumesExactlyOnce'] = true;
+
+    final liveId = fresh.single.noteId!;
+    final published = r.noteById(liveId)!;
+    final reference = (await r.attachments(liveId)).first.remotePath!;
+    if (account.supportsAttachmentDeletion) {
+      await r.deleteAttachment(
+        liveId,
+        attachmentMarkdownReference(reference),
+        retainForHistory: true,
+      );
+    } else {
+      // 6.0.2 has no remote DELETE contract: exercise the ordinary local draft
+      // deletion boundary, which retains the same recovery-only tombstone.
+      final draft = await r.create(
+        account.id,
+        title: 'Correction local tombstone',
+        category: 'Correction/Offline',
+      );
+      final file = await r.addAttachment(
+        draft.localId,
+        filename: 'local.png',
+        bytes: Uint8List.fromList([1, 2, 3]),
+      );
+      await r.save(draft.localId, content: '![image](${file.reference})');
+      await r.deleteAttachment(
+        draft.localId,
+        file.reference,
+        retainForHistory: true,
+      );
+      final availability = await r.attachmentAvailability(draft.localId);
+      _require(
+        availability.required.length == 1 &&
+            availability.available.isEmpty &&
+            await r.store.attachmentBytes(file.id) != null,
+        'Local recovery tombstone counted as live offline media.',
+      );
+    }
+    if (account.supportsAttachmentDeletion) {
+      final availability = await r.attachmentAvailability(liveId);
+      _require(
+        availability.available.isEmpty &&
+            (await r.attachments(liveId)).any((a) => a.state == 'deleted'),
+        'Remote recovery tombstone counted as live offline media.',
+      );
+      connection.offline = true;
+      await restart();
+      final offline = NotesOfflineController(r, account.id);
+      await offline.initialize();
+      await offline.setRequirement('note', liveId);
+      _require(
+        !(await offline.inspect(r.noteById(liveId)!)).available &&
+            await r.resolveCachedMedia(
+                  account.id,
+                  liveId,
+                  attachmentMarkdownReference(reference),
+                ) ==
+                null,
+        'Restart resurrected deleted media.',
+      );
+      await offline.dispose();
+      final replacement = await r.addAttachment(
+        liveId,
+        filename: 'café%20.png',
+        bytes: Uint8List.fromList([7, 8, 9]),
+      );
+      await r.save(liveId, content: '![image](${replacement.reference})');
+      connection.offline = false;
+      await synchronize();
+      _require(
+        (await r.attachmentAvailability(liveId)).available.length == 1 &&
+            await r.resolveCachedMedia(
+                  account.id,
+                  liveId,
+                  attachmentMarkdownReference(reference),
+                ) !=
+                null,
+        'Legitimate replacement upload did not supersede the tombstone.',
+      );
+    }
+    checks['correctionLiveOfflineEligibilitySeparateFromRecoveryBytes'] = true;
+
+    await r.delete(published.localId);
+    owned.remove(published.serverId);
+    await restart();
+    final recovery = NotesSearchController(r.store, account.id, recovery: true);
+    await recovery.search('title:Correction-import');
+    _require(
+      recovery.state.hits.any((h) => h.localId == published.localId),
+      'Recovery cannot search its retained deleted records.',
+    );
+    final live = NotesSearchController(r.store, account.id);
+    await live.search('title:Correction-import');
+    _require(
+      live.state.hits.every((h) => h.localId != published.localId),
+      'Deleted recovery record leaked into live search.',
+    );
+    final restored = await r.recoverAsNew(published.localId);
+    _require(
+      restored.localId != published.localId,
+      'Recovery search overwrote the retained note.',
+    );
+    await synchronize();
+    _require(
+      r.noteById(restored.localId)!.syncState == NoteSyncState.synced,
+      'Recovered search result did not synchronize.',
+    );
+    await recovery.dispose();
+    await live.dispose();
+    checks['correctionRecoveryScopedSearchPreviewDataAndNewIdentityPublication'] =
+        true;
+  } finally {
+    connection.offline = false;
+    owned.addAll(
+      r.notes
+          .where(
+            (n) =>
+                n.title.startsWith('Correction') ||
+                n.category.startsWith('Correction'),
+          )
+          .map((n) => n.serverId)
+          .whereType<int>(),
+    );
+    await r.dispose();
   }
 }

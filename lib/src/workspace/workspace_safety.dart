@@ -25,6 +25,9 @@ XTypeGroup _markdownSaveType(BuildContext context) => XTypeGroup(
 );
 
 Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
+  if (!ref.read(workspaceControllerProvider.notifier).propertyEdits.flush()) {
+    return false;
+  }
   final state = ref.read(workspaceControllerProvider);
   if (!state.hasUnsavedChanges) {
     return true;
@@ -92,6 +95,9 @@ Future<bool> confirmSafeToCloseActiveDocument(
   BuildContext context,
   WidgetRef ref,
 ) async {
+  if (!ref.read(workspaceControllerProvider.notifier).propertyEdits.flush()) {
+    return false;
+  }
   final active = ref.read(workspaceControllerProvider).activeBuffer;
   if (active == null || !active.isDirty) {
     return true;
@@ -360,6 +366,9 @@ Future<bool> saveOrConfirmSafeToChangeActiveFile(
   BuildContext context,
   WidgetRef ref,
 ) async {
+  if (!ref.read(workspaceControllerProvider.notifier).propertyEdits.flush()) {
+    return false;
+  }
   final state = ref.read(workspaceControllerProvider);
   if (!state.isDirty) {
     return true;
@@ -378,6 +387,7 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   ActiveDocumentSaveTarget? target,
 }) async {
   final controller = ref.read(workspaceControllerProvider.notifier);
+  if (!controller.propertyEdits.flush()) return false;
   final operationTarget =
       target ?? controller.captureActiveDocumentSaveTarget();
   if (operationTarget == null ||

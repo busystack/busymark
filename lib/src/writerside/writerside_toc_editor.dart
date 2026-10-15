@@ -228,8 +228,8 @@ class WritersideTocEditor {
     final parent = _elementAtPath(session.root, nodePath, role: 'source');
     if (!identity.matches(parent)) throw _invalidPath(nodePath, role: 'source');
     final children = parent.childElements.toList();
-    // The original build deletes non-TOC sub-tags when sorting. The handoff
-    // requires preserving embedded structures, so reject this case explicitly.
+    // Reordering must not discard non-TOC child structures. Reject parents
+    // containing them before replacing the TOC child slots.
     if (children.any((element) => element.name.local != 'toc-element') ||
         permutation.length != children.length ||
         permutation.toSet().length != children.length ||

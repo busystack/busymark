@@ -119,12 +119,12 @@ class WritersideDocumentParser {
           qualifiedName: event.name,
           attributes: {
             for (final attribute in event.attributes)
-              _localName(attribute.name): attribute.value,
+              _attributeName(attribute.name): attribute.value,
           },
           qualifiedAttributes: [
             for (final attribute in event.attributes)
               WritersideQualifiedAttribute(
-                name: _localName(attribute.name),
+                name: _attributeName(attribute.name),
                 qualifiedName: attribute.name,
                 value: attribute.value,
               ),
@@ -420,7 +420,7 @@ Map<String, SourceSpan> _attributeSpans({
     );
     final valueStart = quoteOffset + 1;
     final valueEnd = valueStart + match.group(3)!.length;
-    result[_localName(match.group(1)!)] = SourceSpan.fromOffsets(
+    result[_attributeName(match.group(1)!)] = SourceSpan.fromOffsets(
       filePath: filePath,
       source: fullSource,
       startOffset: openingOffset + valueStart,
@@ -431,6 +431,11 @@ Map<String, SourceSpan> _attributeSpans({
 }
 
 String _localName(String value) => value.split(':').last.toLowerCase();
+
+// Attributes in different namespaces can share a local name. Their authored
+// identities must remain distinct when a sibling or parent is modified.
+String _attributeName(String value) =>
+    value.contains(':') ? value : _localName(value);
 
 String? _safeSubstring(String value, int start, int end) {
   if (start < 0 || end < start || end > value.length) {

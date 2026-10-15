@@ -63,6 +63,24 @@ Unknown/malformed/prerelease app versions conservatively disable DELETE. An
 unsupported cleanup attempt explains the limitation before queuing any operation;
 notes and attachment upload/download remain available.
 
+## Retrieval coverage
+
+[API coverage](nextcloud-notes-api-coverage.md) records the supported request
+scopes. Single-note conditional retrieval returns a distinct not-modified result
+with its complete cached server representation. Linked-note opening benefits
+from this path; it does not add a synchronization poller. A 304 does not
+acknowledge pending writes, clear conflicts, or replace dirty content. Cached
+notes open offline and an uncached linked ID uses the existing authenticated
+repository boundary. Account and base generations fence asynchronous replies.
+
+Optional category/projection queries retain their immutable request scope and
+all pagination parameters. Missing fields remain absent, including an explicitly
+excluded ID; reduced payloads never become complete NoteState objects. These
+reads use no collection validator/checkpoint and never infer account deletions.
+The authoritative full-account list strategy and local category/search workflows
+remain unchanged. Portable note URLs and reference workflows are described in
+[the user guide](../references.md).
+
 ## Authentication and credential boundary
 
 Anonymous Login Flow v2 opens the returned URL with `url_launcher` in the default
@@ -101,12 +119,16 @@ Parser labels are logical identifiers only. Remote workspaces install no disk
 watchers, discover no Git repository and expose no path/file-manager actions.
 
 `NotesStore` uses direct `sqlite3` 3.7.0 in a dedicated isolate under application
-support storage. Schema version 2 includes accounts, notes, a coalesced per-note
+support storage. Schema version 3 includes accounts, notes, a coalesced per-note
 outbox and attachment metadata/bytes. The v1 → v2 migration retains existing
 records and adds optional creation-attempt metadata in note/outbox JSON; the
 version fence prevents older clients from discarding it. Existing uncertain
 creations without that metadata remain unresolved. Migrations use transactions and reject
-newer unsupported schemas. SQLite uses WAL, `synchronous=FULL`, foreign keys and
+newer unsupported schemas. The v2 → v3 transaction fences new failure states,
+retry deadlines/budgets, settings attempts, media validation and local activity.
+Missing historical edit times remain missing; server modified time is the ordering
+fallback. Ambiguous legacy creation histories require deliberate recovery.
+SQLite uses WAL, `synchronous=FULL`, foreign keys and
 a busy timeout. Notes content, revision, base state, outbox and synchronization
 checkpoint commit atomically. The Notes directory is mode 0700 and database
 0600 on Linux. Managed attachment paths reject traversal and symbolic links.
@@ -125,11 +147,23 @@ copy in session/recovery JSON. A clean shutdown may retain a durable outbox.
 
 `NotesApiClient` takes an injectable HTTP client. `NotesRepository` serializes
 local mutations and runs at most one synchronization pass per account. The
-controller requests a subsequent pass when another local save commits during
-an upload. Transient network/server/lock failures receive six delayed retry
-attempts (5, 10, 20, 40, 80, 160 seconds), then explicit Refresh remains available.
-Conflicts, uncertain creation, authentication and forbidden errors require
-deliberate resolution.
+`NotesSyncCoordinator` routes opening, committed edits, manual Refresh and desktop
+lifecycle events through that same mechanism. It coalesces one follow-up when
+local work arrives during a pass; manual Refresh is awaitable. Visible active
+workspaces check every 60 seconds, including authenticated read-side connectivity
+recovery. Inactive-but-visible windows keep polling; hidden/minimized windows and
+other screens suspend healthy polling. Focus/resume coalesces checks completed
+within ten seconds. Timers/listeners are disposed and account generations fenced.
+Transient writes receive six delayed retries (5, 10, 20, 40, 80, 160 seconds).
+Healthy reads/focus never reset their durable exhausted budgets. Successful read-side
+connectivity recovery releases only network failures. Valid Retry-After delta/date
+deadlines are durable and never shortened. Conflicts, uncertain outcomes,
+authentication, permissions, quota and permanent rejection require correction;
+a relevant edit or deliberate Retry can release a rejected operation. Separate
+last-successful-server-check time means a complete GET/304, not all writes/media
+having synchronized. Local activity uses an injectable microsecond clock and
+writable API modified uses Unix seconds; internal attachment publication retains
+the human edit time. Read-only favorite writes still contain only favorite.
 
 List synchronization sends `If-None-Match`, the **previous server
 Last-Modified** as `pruneBefore`, `chunkSize` and the opaque chunk cursor. Header
@@ -216,16 +250,22 @@ are rejected and repeated confirmation reuses that replacement. The original
 uncertain draft remains recoverable and blocked. Cancel and dismissal leave it
 untouched. No suspected server duplicate is automatically deleted. Legacy
 uncertain records without creation evidence cannot be adopted by guessing;
-the existing database migrations and startup recovery remain unchanged.
+schema migration and startup recovery preserve their uncertainty and work.
 
 Read-only notes block content/title/category editing while favorite remains
 writable under the documented contract. A note becoming read-only does not
 discard edits already captured locally. `error: true` responses carry unavailable
 state; their exception-text content never replaces known-good cached content.
 
-Errors are classified as reconnect required (401), forbidden/read-only (403),
-missing/deleted (404), conflict (412), locked (423), insufficient storage (507),
-transport/offline, server errors and safely reported unknown responses. A locked
+Errors carry operation scope as well as rejection/transient/uncertain classification.
+Only individual-note absence or a completed authoritative ID set establishes note
+deletion. Collection/settings/capability and attachment 404s preserve notes,
+bases, revisions, outbox and bytes. Legacy poisoned server edits reconcile against
+remote ETags, using the existing conflict workflow for divergence. Positive durable
+never-sent evidence permits draft recovery; ambiguous old creation histories retain
+work and require deliberate separate-note recovery. A 429 preserves a not-before
+deadline; rejected 4xx operations do not loop. Lock/network/5xx/invalid write
+responses remain conservative uncertain create/upload outcomes. A locked
 note retains its content and outbox and does not prevent unrelated notes from
 synchronizing. Issue 1940 describes locks retained by Notes/Text editing sessions;
 the client cannot remove those server locks or claim live collaboration.
@@ -263,6 +303,10 @@ Only actual Markdown/HTML destinations are rewritten; namespace text in prose or
 code remains literal. History restoration can restage deleted attachment bytes,
 and recovery as a new note clones managed bytes under the new logical identity.
 Neither operation reuses another note's attachment ownership.
+API paths/filenames are raw strings. Markdown destinations are decoded exactly
+once and raw segments encoded exactly once; literal percent sequences remain
+filename characters. Upload response paths commit durably before reference
+replacement, so later local failures cannot cause a second upload.
 
 Attachment downloads have a dedicated streaming path and share the existing local
 asset ingestion limit, `maximumManagedAssetBytes` (**100 MiB**). Advertised
@@ -300,6 +344,34 @@ Diagram source attachments use bounded provider-resolved UTF-8 text. Preview,
 WYSIWYG, HTML and PDF share this resource boundary. Filesystem/Writerside project exports and
 workspace-wide search/replace are explicitly unavailable for Notes; per-note
 search/replace uses the normal editor and save pipeline.
+
+## Settings and maintained capabilities
+
+The account settings screen loads the server Notes application's notesPath and
+fileSuffix, with explicit Save/Cancel, partial updates, custom suffixes and returned
+normalization. These preferences affect other clients; path changes do not migrate
+files and suffix changes do not rename existing notes. Dirty buffers save through
+the normal boundary before transitions. Pending notes/conflicts/attachment work
+block collection-affecting settings changes; synchronization is serialized and
+mutations fenced. A durable exact settings attempt survives a lost PUT response
+and is reconciled by GET before success/retry. Relevant changes reset the old
+checkpoint and perform a full authoritative read.
+
+Capabilities refresh on first connected use per process, explicit Refresh,
+reconnect and hourly active use. OCS and case-insensitive X-Notes-API-Versions
+headers share version parsing. API advertisement is separate from application
+version evidence; a header never independently enables attachment deletion.
+Verified unsupported advertisements block remote operations while retaining local
+editing/recovery. Transient refresh failure retains verified metadata. Updates
+merge onto current account/checkpoint state and pre-reconnect responses are fenced.
+
+Managed media validates after observed remote note changes, on explicit Refresh
+for cached attachments used by the active note (including 304), and becomes stale
+after five minutes while displayed. Both repository bytes and document contexts
+refresh. Failed refresh retains usable old bytes without advancing validation.
+Requests coalesce; late downloads are fenced by account/ownership/deletion/media
+generation. Materializations use content identity and remove superseded files.
+No whole-library uncached media prefetch is performed.
 
 ## Verification
 
@@ -346,6 +418,61 @@ mocked tests alone do not establish live server compatibility. Keep the
 checkpoint, revision, explicit-adoption and attachment ownership invariants
 above covered, and remove temporary acceptance data when finished.
 
+For repeatable performance measurements, build the existing real-SQLite corpus
+harness with the pinned Dart SDK and dependency lock. Use an empty corpus
+directory outside the checkout:
+
+```bash
+performance_dir="$(mktemp -d)"
+dart build cli -t tools/nextcloud_notes_performance.dart \
+  -o "$performance_dir/build"
+"$performance_dir/build/bundle/bin/nextcloud_notes_performance" \
+  "$performance_dir/corpus"
+```
+
+The harness measures index rebuilding, warm queries, concurrent saves/imports
+and reference indexing with durable notes and cached attachments. Compare its
+`report.json` under equivalent machine/load conditions; it is a benchmark,
+not a timing assertion in the regression suite.
+
+### Native desktop integration
+
+Build the reusable native target with:
+
+```sh
+flutter build linux --release -t tools/nextcloud_notes_desktop_acceptance.dart
+GDK_BACKEND=x11 build/linux/x64/release/bundle/busymark \
+  /private/app-credentials.json /private/test-ca.pem /private/desktop-output \
+  disposable-nextcloud-container --full
+```
+
+Use a disposable XDG profile/display and an isolated HTTPS account. The target
+runs production UI/controllers with connectivity loss injected around real
+requests. `--full` additionally replaces an owned image inside the named Docker
+container to verify refresh without a changed note ETag.
+
+| Scenario | Coverage |
+| --- | --- |
+| `--full` (default) | Metadata races, authentication/retry, settings, idle/focus polling, media refresh, and workspace workflows. |
+| `--workspace` | Category creation, Quick Open/search, batch review, offline media, recovery, and export/import. |
+| `--offline-start`, then `--offline-resume` | Pending text/media, category retention, history and search across a real process restart, native shortcuts, and switching to local Markdown/Writerside. |
+| `--references`, then `--references-resume` | Portable note links, reviewed rename/category changes, missing targets, and cached ID navigation after restart. |
+| `--local-references`, then `--local-references-resume` | Local Markdown link creation, reviewed moves, and media/link navigation after restart. |
+| `--writerside-references` | Native Writerside link creation, reference discovery, and reviewed refactoring. |
+| `--recovery-start`, then `--recovery-resume` | Search pagination, reviewed/repaired imports, interrupted-import resume, deleted-media isolation, and recovery across restart. |
+| `--performance` | Quick Open during reference indexing and durable edits during search in an existing profile with at least 10,000 notes. |
+
+Use a fresh output directory for each scenario or start/resume pair. Resume with
+the same credentials, CA and output directory; start modes retain only the
+resources needed for their second process. The performance mode requires a
+prepopulated `notes.sqlite3` with an account matching the private credentials;
+use the standalone corpus benchmark above for reproducible SQLite measurements.
+Each run exits nonzero on failure and writes `report-SCENARIO.json`, plus
+captures and journey state, outside the repository. Unknown scenarios fail
+before reading credentials or creating output. Rebuild the default application
+entry point after running a custom target, and remove the isolated account,
+container, profile and output after inspection.
+
 ## Explicit non-goals
 
 No Nextcloud Files, WebDAV, automatic protocol fallback, file browsing, embedded
@@ -355,3 +482,116 @@ The current [Text source](https://github.com/nextcloud/text) and
 describe web-editor ownership and internal collaborative machinery, not a
 documented supported external native collaboration API. A future official
 native API would require a separate product decision.
+
+## Everyday Notes workspace
+
+The existing sidebar offers All notes, Favorites, Uncategorized, Recovery and a
+collapsible category tree. Category counts and selections include descendants;
+New note creates directly in the selected category. Categories come from notes,
+so there are no persistent empty server folders. Sort by local editing activity
+(newest or oldest), or by title. Click selects and opens; Ctrl-click toggles,
+Shift-click extends a range, and Ctrl+A selects the current list. The checkbox
+marks selection, the edge marks focus, and the document icon marks the open note.
+The Selected action and a row's context menu review the exact target titles
+before setting/removing favorites or moving notes. A move can introduce a category.
+Read-only notes support favorite changes. Partial results retain successes and
+identify skipped, conflicting or failed notes; resolve conflicts through the
+existing review workflow.
+
+Ctrl+P opens Quick Open for the active workspace. Cached unopened Notes titles
+and categories participate alongside local Markdown/Writerside files in their
+own workspaces. Exact and prefix title matches rank first. Arrow keys choose,
+Enter opens, and Escape dismisses. Ctrl+Shift+P still opens the command palette.
+
+The sidebar Search control and workspace search use one indexed Notes search
+workflow. Terms combine with AND; quote a phrase, use `title:meeting` or
+`category:"Work/Team"`, and select Whole word when needed. Ordinary punctuation,
+SQL/FTS operators and wildcard characters are literal. Partial terms, short
+queries, Unicode and decomposed accents are supported. Results include local
+unsynchronized text and overlay dirty open buffers without saving. Results show
+context, individual occurrences, loading/indexing/errors and Show more when
+truncated. Opening a changed result rechecks its revision and content digest and
+relocates the match. The Source location button explicitly selects source for
+syntax that the rendered view cannot represent. Remote workspace replacement
+remains disabled. A missing derived index rebuilds without changing notes/outbox.
+
+Make available offline retains an individual note or a category and descendants.
+Individual and category requirements are independent and survive restart. Moving
+notes into a retained category or adding supported managed references schedules
+those bytes through the existing download machinery. Status shows text, required
+media counts, missing items and failures. Cancel stops that requirement (a note
+cancellation also stops category-derived work for that note); Retry deliberately
+resumes. Completed downloads remain retained. Removing a requirement removes no
+notes, remote attachments or pending sole copies. External URLs are identified
+but never downloaded automatically. Available offline describes local bytes;
+last server check describes freshness; Saved locally / sync pending describes
+unacknowledged changes. These states can coexist.
+
+Recovery lists fully deleted local records for the current account. Deletion
+conflicts with pending work stay in the normal list and conflict workflow.
+Recovery previews retained text and Local History revisions, checks actual media
+availability and recovers as a new identity. It never overwrites an existing
+note. History settings/retention still apply; unavailable history is explained.
+This is local recovery, not Nextcloud server trash or server history.
+
+## Portable Notes snapshots and import
+
+The sidebar destination menu exports the current category/subtree or whole
+account. The existing per-note Save local copy remains available. Dirty buffers
+in scope must save successfully through the normal save workflow before export.
+A cancelled/failed save produces no completed export. Documents represent the
+captured local working version, including saved unsynchronized changes; exporting
+a conflict does not resolve it. Choose a parent directory: BusyMark stages then
+publishes a new unique `BusyMark-notes-…` directory, without overwriting existing
+files. Cancelling or a filesystem failure removes unpublished staging. Missing
+managed bytes and unsupported/external dependencies are listed as omissions.
+If attachment bytes refresh or the account is removed during capture/copying,
+publication stops and asks for a fresh snapshot; a mixed snapshot is not published.
+
+Each snapshot contains ordinary `.md` documents in category directories and
+companion media. Only recognized attachment destinations are rewritten; prose,
+code, external URLs and unrelated document links remain unchanged. Sanitized,
+UTF-8-bounded, collision-safe names are mapped to exact original metadata in
+`busymark-notes.json`. The manifest has `format: "busymark-notes"`, `version: 1`,
+`capturedAt`, `complete` and a `documents` array. Each document records `file`
+(relative Markdown path), exact `title`, `category`, `favorite`, `activityMicros`
+(local editing time), `serverModified` (server seconds), `workingVersion`,
+`unresolvedConflict` and `omissions`. It contains no credentials, local/server
+identities, outbox or full history. No proprietary front matter is inserted.
+Markdown and media remain usable without BusyMark.
+
+Import accepts a Markdown file, a folder, or a version-1 snapshot directory. The
+review shows selected documents, editable target categories, recognized media,
+missing/unsafe references and collisions. Uncheck an item to skip it; a collision
+imports a distinct new note. Existing notes are never overwritten. Source paths,
+symlinks, versions, size limits and reviewed file digests are validated. Companion
+files must remain inside the selected source directory (the document's containing
+directory for a single-file import); external URLs are not fetched. Unsafe or
+missing media remains an explicit incomplete item for review.
+
+Imports commit each new local identity, attachment bytes, outbox and source-item
+association together. Resuming a specific interrupted operation after
+cancellation/restart does not duplicate successful items. A new reviewed import
+creates distinct notes even when the source content is unchanged.
+Imported locally means durable local content; waiting to synchronize means
+publication has not been acknowledged. The existing uncertain-create/upload
+workflow applies to interrupted publication. One failed item retains the others.
+
+### Import operations and Recovery search
+
+Each confirmed import is a separate operation. Selecting the same source again
+creates distinct notes and uses the newly reviewed categories and media. When
+an interrupted operation exists for that source, choose **Start a new import**
+or **Resume interrupted import** explicitly. Resume reloads the persisted review
+and identifies completed items as **Already imported in this operation**; it
+does not repeat their creation or publication. Successful items keep their
+original identities even when another item fails. Safe relative images such as
+`./images/photo.png` and `../images/photo.png` are imported when their resolved
+files stay inside the selected source folder; symlinks and outside references
+remain excluded.
+
+Search in **Recovery** searches retained deleted records for the current account
+and opens their recovery preview. Ordinary Notes search excludes these records.
+The preview continues to offer retained Local History revisions and recovery
+as a new note; it does not access server history or trash. Deleted attachments
+retained for recovery do not count as live offline availability.

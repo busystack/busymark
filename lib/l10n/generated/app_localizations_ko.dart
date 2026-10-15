@@ -11,6 +11,94 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => '모듈의 대소문자 설정은 게시되지 않습니다.';
+
+  @override
+  String get wsTitleOverridesAction => '인스턴스 및 목차 제목…';
+
+  @override
+  String get wsHeadingNotPublished => '이 빌더에서는 게시되지 않습니다.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '고정된 빌더는 Markdown 주제의 인스턴스 제목을 게시하지 않습니다. 기존 마크업은 보존됩니다. 소스에서 확인하세요.';
+
+  @override
+  String get wsTopicIdentity => '주제 ID';
+
+  @override
+  String get wsElementAnchor => '요소 앵커';
+
+  @override
+  String get wsHeadingText => '제목 텍스트';
+
+  @override
+  String get wsDefaultTitle => '기본 제목';
+
+  @override
+  String get wsTopicNavigation => '주제 탐색';
+
+  @override
+  String get wsHeadingOptions => '제목 속성';
+
+  @override
+  String get wsDocumentOptions => '문서 설정';
+
+  @override
+  String get wsSettingsPresent => '작성된 설정 있음';
+
+  @override
+  String get wsTitleOverrideExplanation => '게시 제목을 재정의하며 제목 텍스트는 변경하지 않습니다.';
+
+  @override
+  String get wsIgnoreVariables => '변수를 리터럴 텍스트로 처리';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '활성화하면 변수처럼 보이는 텍스트를 치환하지 않습니다.';
+
+  @override
+  String get wsInstanceSelection => '도움말 인스턴스';
+
+  @override
+  String get wsInstanceExplanation => '이름, 그룹, 목록, 제외 또는 식으로 도움말 출력을 선택합니다.';
+
+  @override
+  String get wsFilterExplanation =>
+      '조건에 따라 재사용 콘텐츠를 필터링하며 도움말 인스턴스를 선택하지 않습니다.';
+
+  @override
+  String get wsContextHelp => '상황별 도움말 ID';
+
+  @override
+  String get wsCapitalization => '대소문자';
+
+  @override
+  String get wsLibraryTopic => '라이브러리 주제';
+
+  @override
+  String get wsLastModified => '최종 수정';
+
+  @override
+  String get wsMissingTopicHeading => '주제 H1이 없습니다. 소스에서 추가하세요.';
+
+  @override
+  String get wsMultipleTopicHeadings => '첫 H1이 주제 제목을 결정합니다. 이후 H1은 별도 제목입니다.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      '루트 id가 파일명 기반 주제 ID와 다릅니다. 주제 파일 이름 바꾸기 또는 소스를 사용하세요.';
+
+  @override
+  String get wsUnsupportedProperties => '지원하지 않는 속성은 보존됩니다. 소스에서 확인하세요.';
+
+  @override
+  String get wsGeneratedAnchor => '생성된 앵커이며 값을 입력하면 재정의됩니다.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '고정된 빌더는 H1 속성을 게시하지 않습니다. 속성은 XML 루트가 아닌 제목에 속합니다.';
+
+  @override
   String get closeOtherTabs => '다른 탭 닫기';
 
   @override
@@ -4650,4 +4738,510 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '첫 요청으로 서버 노트가 이미 만들어졌을 수 있습니다. 보존된 로컬 작업으로 별도 노트를 만듭니다. 중복으로 의심되는 노트는 삭제하지 않습니다.';
+
+  @override
+  String get wsSemanticFormats => '의미 기반 서식';
+
+  @override
+  String get wsUiControl => 'UI 컨트롤';
+
+  @override
+  String get wsFilePath => '파일 / 경로';
+
+  @override
+  String get wsUiPath => 'UI 경로';
+
+  @override
+  String get wsDefinitionList => '정의 목록';
+
+  @override
+  String get wsIncludeContent => '재사용 가능한 콘텐츠 포함';
+
+  @override
+  String get wsVariableReference => '변수 참조';
+
+  @override
+  String get wsConvertList => '목록을 절차로 변환';
+
+  @override
+  String get wsElementProperties => '요소 속성';
+
+  @override
+  String get wsTopicProperties => '주제 속성';
+
+  @override
+  String get wsCollapsible => '접기 가능';
+
+  @override
+  String get wsPublishedState => '게시 시 초기 상태';
+
+  @override
+  String get wsExpanded => '펼침';
+
+  @override
+  String get wsCollapsed => '접힘';
+
+  @override
+  String get wsCollapsedTitle => '접힌 제목';
+
+  @override
+  String get wsTerm => '용어';
+
+  @override
+  String get wsListLayout => '목록 레이아웃';
+
+  @override
+  String get wsSyncGroup => '동기화 그룹';
+
+  @override
+  String get wsTabKey => '탭 키';
+
+  @override
+  String get wsSwitcherLabel => '전환 레이블';
+
+  @override
+  String get wsNavigationElements => '탐색 요소';
+
+  @override
+  String get wsNavigationDepth => '탐색 깊이';
+
+  @override
+  String get wsAddItem => '항목 추가';
+
+  @override
+  String get wsStep => '단계';
+
+  @override
+  String get wsPropertyInvalid => '잘못된 속성 값';
+
+  @override
+  String get wsFilter => '필터';
+
+  @override
+  String get wsIdentifier => '요소 ID';
+
+  @override
+  String get wsTldr => '요약 (TLDR)';
+
+  @override
+  String get wsFullLayout => '전체 너비';
+
+  @override
+  String get wsMediumLayout => '중간 (1:2)';
+
+  @override
+  String get wsNarrowLayout => '좁은 용어 열';
+
+  @override
+  String get wsTitle => '제목';
+
+  @override
+  String get wsSwitcherKey => '전환 키';
+
+  @override
+  String get nextcloudServerSettings => '서버 Notes 설정';
+
+  @override
+  String get nextcloudNotesPath => '노트 폴더 경로';
+
+  @override
+  String get nextcloudFileSuffix => '새 노트의 파일 확장자';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      '이 서버 Notes 설정은 다른 클라이언트에도 적용됩니다. 경로를 변경해도 파일이 이동하지 않으며 확장자를 변경해도 기존 노트의 이름이 바뀌지 않습니다.';
+
+  @override
+  String get nextcloudSettingsSaved => '서버 설정 저장됨';
+
+  @override
+  String get nextcloudSettingsNormalized => '서버에서 정규화한 값으로 저장됨';
+
+  @override
+  String get nextcloudPendingUpload => '첨부 파일 업로드 대기 중';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '마지막 서버 확인: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => '서버 설정을 불러오는 중';
+
+  @override
+  String get nextcloudSettingsSaving => '서버 설정을 저장하는 중';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '이전 로컬 편집';
+
+  @override
+  String get nextcloudUsePreviousEdit => '이전 편집 사용';
+
+  @override
+  String get quickOpen => '빠른 열기';
+
+  @override
+  String get notesAll => '모든 노트';
+
+  @override
+  String get notesUncategorized => '미분류';
+
+  @override
+  String get notesRecovery => '복구';
+
+  @override
+  String get notesRecentlyEdited => '최근 편집순';
+
+  @override
+  String get notesOldestEdited => '오래된 편집순';
+
+  @override
+  String get notesTitleAscending => '제목 오름차순';
+
+  @override
+  String get notesTitleDescending => '제목 내림차순';
+
+  @override
+  String get notesMove => '범주로 이동';
+
+  @override
+  String get notesRemoveFavorite => '즐겨찾기 해제';
+
+  @override
+  String get notesOffline => '오프라인 사용 설정';
+
+  @override
+  String get notesOfflineRemove => '오프라인 보존 해제';
+
+  @override
+  String get notesIndexing => '노트 색인 생성 중…';
+
+  @override
+  String get notesSearchHelp =>
+      '검색어는 AND로 결합합니다. \"인용 구문\", title:, category:를 사용하세요.';
+
+  @override
+  String get notesSourceLocation => '소스 위치';
+
+  @override
+  String get notesRecoveryHelp =>
+      '보존된 로컬 노트와 로컬 기록만 표시합니다. 서버 휴지통과 기록은 사용할 수 없습니다.';
+
+  @override
+  String get notesImport => '노트 가져오기';
+
+  @override
+  String get notesExport => '노트 내보내기';
+
+  @override
+  String get notesImportDistinct => '별도 노트로 가져오기';
+
+  @override
+  String get notesAvailableOffline => '오프라인 사용 가능';
+
+  @override
+  String get notesIncomplete => '불완전';
+
+  @override
+  String get notesSelected => '선택한 노트';
+
+  @override
+  String get notesNoHistory => '보존된 버전이 없습니다. 기록이 비활성화되었거나 만료 또는 삭제되었을 수 있습니다.';
+
+  @override
+  String get notesTextAvailable => '텍스트를 로컬에서 사용 가능';
+
+  @override
+  String get notesLocalVersion => '로컬 작업 버전';
+
+  @override
+  String get notesAttachments => '첨부 파일';
+
+  @override
+  String get notesSkipped => '건너뜀';
+
+  @override
+  String get notesFailed => '실패';
+
+  @override
+  String get notesCompleted => '완료';
+
+  @override
+  String get notesImportNew => '새 가져오기 시작';
+
+  @override
+  String get notesImportResume => '중단된 가져오기 재개';
+
+  @override
+  String get notesImportAlreadyImported => '이 작업에서 이미 가져옴';
+
+  @override
+  String get references => '참조';
+
+  @override
+  String get referenceIncoming => '들어오는 참조';
+
+  @override
+  String get referenceOutgoing => '나가는 참조';
+
+  @override
+  String get referenceChooseTarget => '링크 대상 선택';
+
+  @override
+  String get referenceWholeDocument => '전체 문서';
+
+  @override
+  String get referenceSourceLocation => '원본 위치';
+
+  @override
+  String get referenceTargetLocation => '대상 위치';
+
+  @override
+  String get referenceResolved => '해결됨';
+
+  @override
+  String get referenceMissing => '없음';
+
+  @override
+  String get referenceAmbiguous => '모호함';
+
+  @override
+  String get referenceUnavailable => '이 맥락에서 사용할 수 없음';
+
+  @override
+  String get referenceUnsupported => '지원되지 않음';
+
+  @override
+  String get referenceNoPortableId => '이 대상에는 확인된 이식 가능한 노트 URL이 없습니다.';
+
+  @override
+  String get wsIncludeLines => '줄 포함';
+
+  @override
+  String get wsIncludeSymbol => '기호 포함';
+
+  @override
+  String get wsEmphasizeLines => '표시된 줄 강조';
+
+  @override
+  String get wsPropertiesReadOnly => '이 보기에서 속성은 읽기 전용입니다.';
+
+  @override
+  String get wsPropertiesProtected => '보호된 요소입니다. 소스를 편집하세요.';
+
+  @override
+  String get wsPropertiesConflict => '문서 또는 요소가 변경되었습니다. 초안을 되돌리고 다시 선택하세요.';
+
+  @override
+  String get wsPropertiesUnresolved => '현재 참조를 확인할 수 없습니다.';
+
+  @override
+  String get wsUseDefault => '기본값 사용';
+
+  @override
+  String get wsPropertiesSelection => '요소 하나를 선택하세요.';
+
+  @override
+  String get wsImageDisplay => '이미지 표시';
+
+  @override
+  String get wsImageThumbnail => '클릭 가능한 미리 보기';
+
+  @override
+  String get wsEnabled => '사용';
+
+  @override
+  String get wsDisabled => '사용 안 함';
+
+  @override
+  String get wsWidth => '너비';
+
+  @override
+  String get wsHeight => '높이';
+
+  @override
+  String get wsPropertiesInactive => '게시된 접기가 꺼져 있으면 이 속성은 적용되지 않습니다.';
+
+  @override
+  String get wsNavigationAll => '제목이 있는 모든 요소';
+
+  @override
+  String get wsNavigationNone => '탐색 없음';
+
+  @override
+  String get wsNavigationCustom => '사용자 지정 탐색';
+
+  @override
+  String get wsTitleOverride => '제목 재정의';
+
+  @override
+  String get wsCompactLayout => '간결';
+
+  @override
+  String get wsWideLayout => '넓게';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'src를 설정하기 전에 이 블록에 작성된 코드를 이동하거나 제거하세요. Writerside는 소스 참조가 있는 비어 있지 않은 코드 블록을 허용하지 않습니다.';
+
+  @override
+  String get wsInherited => '목록에서 상속';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside는 외부 이미지 크기를 안정적으로 설정하지 못합니다. 기존 크기는 확인하거나 제거할 수 있습니다.';
+
+  @override
+  String get wsPropertiesNotSerialized => '이 변경 사항은 소스에 반영되지 않았습니다. 초안은 유지됩니다.';
+
+  @override
+  String get wsListItem => '목록 항목';
+
+  @override
+  String get wsSourceFile => '소스 파일';
+
+  @override
+  String get wsLinkTarget => '링크 대상';
+
+  @override
+  String get wsPreviewImage => '미리보기 이미지';
+
+  @override
+  String get wsIncludedElement => '포함할 요소';
+
+  @override
+  String get wsHelpModule => '도움말 모듈';
+
+  @override
+  String get wsActionId => '액션 ID';
+
+  @override
+  String get wsKeymapHelpInstance => '키맵 도움말 인스턴스';
+
+  @override
+  String get wsShowInSource => '소스에서 표시';
+
+  @override
+  String get wsOriginElement => '요소 재정의';
+
+  @override
+  String get wsOriginAncestor => '상위 요소';
+
+  @override
+  String get wsOriginModule => '모듈 기본값';
+
+  @override
+  String get wsOriginBuiltIn => '내장 기본값';
+
+  @override
+  String get wsOriginUnresolved => '확인되지 않음';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '적용 값: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => '요소';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '생성된 값: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '기본값: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '기본값: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '해석된 값: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '미해결';
+
+  @override
+  String get wsModule => '모듈';
+
+  @override
+  String get wsParent => '부모 요소';
+
+  @override
+  String get wsListType => '목록 유형';
+
+  @override
+  String get wsStartingNumber => '시작 번호';
+
+  @override
+  String get wsListSorting => '정렬';
+
+  @override
+  String get wsLetteredList => '알파벳 목록';
+
+  @override
+  String get wsCheckboxList => '체크박스 목록';
+
+  @override
+  String get wsMarkerlessList => '표시 없는 목록';
+
+  @override
+  String get wsAscending => '오름차순';
+
+  @override
+  String get wsDescending => '내림차순';
+
+  @override
+  String get wsNoSorting => '정렬 안 함';
+
+  @override
+  String get wsAsWritten => '작성된 대로';
+
+  @override
+  String get wsSentenceCase => '문장 형식';
+
+  @override
+  String get wsTitleCase => '제목 형식';
+
+  @override
+  String get wsLowerCase => '소문자';
+
+  @override
+  String get wsUpperCase => '대문자';
+
+  @override
+  String get wsNativeMarkers => 'Markdown 표시';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '시작 표시: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '수준 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '고정된 빌더는 모듈의 <caps> 규칙을 무시합니다. 로컬 caps 속성 또는 default-property를 사용하세요.';
+
+  @override
+  String get wsInsertElements => '요소 삽입';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '안내 및 인용';
+
+  @override
+  String get wsSemanticText => '의미 텍스트';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      '검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.';
 }

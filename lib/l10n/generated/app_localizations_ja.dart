@@ -11,6 +11,93 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'モジュールの大文字・小文字設定は公開されません。';
+
+  @override
+  String get wsTitleOverridesAction => 'インスタンスと目次のタイトル…';
+
+  @override
+  String get wsHeadingNotPublished => 'このビルダーでは公開されません。';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '固定バージョンのビルダーは Markdown トピックのインスタンス別タイトルを公開しません。既存のマークアップは保持されます。ソースで確認してください。';
+
+  @override
+  String get wsTopicIdentity => 'トピック ID';
+
+  @override
+  String get wsElementAnchor => '要素アンカー';
+
+  @override
+  String get wsHeadingText => '見出しテキスト';
+
+  @override
+  String get wsDefaultTitle => '既定のタイトル';
+
+  @override
+  String get wsTopicNavigation => 'トピックナビゲーション';
+
+  @override
+  String get wsHeadingOptions => '見出しの属性';
+
+  @override
+  String get wsDocumentOptions => '文書設定';
+
+  @override
+  String get wsSettingsPresent => '明示的な設定あり';
+
+  @override
+  String get wsTitleOverrideExplanation => '公開タイトルを上書きします。見出しテキストは変わりません。';
+
+  @override
+  String get wsIgnoreVariables => '変数をリテラルテキストとして扱う';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '有効にすると、変数のようなテキストは置換されません。';
+
+  @override
+  String get wsInstanceSelection => 'ヘルプインスタンス';
+
+  @override
+  String get wsInstanceExplanation => '名前、グループ、リスト、除外、式でヘルプ出力を選択します。';
+
+  @override
+  String get wsFilterExplanation => '再利用する内容を条件で絞り込みます。ヘルプインスタンスの選択ではありません。';
+
+  @override
+  String get wsContextHelp => 'コンテキストヘルプ ID';
+
+  @override
+  String get wsCapitalization => '大文字・小文字';
+
+  @override
+  String get wsLibraryTopic => 'ライブラリトピック';
+
+  @override
+  String get wsLastModified => '最終更新';
+
+  @override
+  String get wsMissingTopicHeading => 'トピックの H1 がありません。ソースで追加してください。';
+
+  @override
+  String get wsMultipleTopicHeadings => '最初の H1 がトピックタイトルです。後続の H1 は別の見出しです。';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'ルート id がファイル名によるトピック ID と異なります。トピックファイルの名前変更かソースを使用してください。';
+
+  @override
+  String get wsUnsupportedProperties => '未対応の属性は保持されます。ソースで確認してください。';
+
+  @override
+  String get wsGeneratedAnchor => '自動生成アンカー。値の入力で上書きします。';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '固定バージョンのビルダーは H1 属性を公開しません。属性の所有者は見出しであり、XML ルートではありません。';
+
+  @override
   String get closeOtherTabs => '他のタブを閉じる';
 
   @override
@@ -4655,4 +4742,508 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '最初のリクエストですでにサーバーノートが作成された可能性があります。保持したローカル作業から別のノートを作成します。重複の疑いがあるノートは削除されません。';
+
+  @override
+  String get wsSemanticFormats => '意味に基づく書式';
+
+  @override
+  String get wsUiControl => 'UI コントロール';
+
+  @override
+  String get wsFilePath => 'ファイル / パス';
+
+  @override
+  String get wsUiPath => 'UI パス';
+
+  @override
+  String get wsDefinitionList => '定義リスト';
+
+  @override
+  String get wsIncludeContent => '再利用可能なコンテンツを含める';
+
+  @override
+  String get wsVariableReference => '変数参照';
+
+  @override
+  String get wsConvertList => 'リストを手順に変換';
+
+  @override
+  String get wsElementProperties => '要素のプロパティ';
+
+  @override
+  String get wsTopicProperties => 'トピックのプロパティ';
+
+  @override
+  String get wsCollapsible => '折りたたみ可能';
+
+  @override
+  String get wsPublishedState => '公開時の初期状態';
+
+  @override
+  String get wsExpanded => '展開';
+
+  @override
+  String get wsCollapsed => '折りたたみ';
+
+  @override
+  String get wsCollapsedTitle => '折りたたみ時のタイトル';
+
+  @override
+  String get wsTerm => '用語';
+
+  @override
+  String get wsListLayout => 'リストのレイアウト';
+
+  @override
+  String get wsSyncGroup => '同期グループ';
+
+  @override
+  String get wsTabKey => 'タブのキー';
+
+  @override
+  String get wsSwitcherLabel => '切り替えラベル';
+
+  @override
+  String get wsNavigationElements => 'ナビゲーション要素';
+
+  @override
+  String get wsNavigationDepth => 'ナビゲーションの深さ';
+
+  @override
+  String get wsAddItem => '項目を追加';
+
+  @override
+  String get wsStep => 'ステップ';
+
+  @override
+  String get wsPropertyInvalid => '無効なプロパティ値';
+
+  @override
+  String get wsFilter => 'フィルター';
+
+  @override
+  String get wsIdentifier => '要素 ID';
+
+  @override
+  String get wsTldr => '要約 (TLDR)';
+
+  @override
+  String get wsFullLayout => '全幅';
+
+  @override
+  String get wsMediumLayout => '中幅 (1:2)';
+
+  @override
+  String get wsNarrowLayout => '狭い用語列';
+
+  @override
+  String get wsTitle => 'タイトル';
+
+  @override
+  String get wsSwitcherKey => '切り替えキー';
+
+  @override
+  String get nextcloudServerSettings => 'サーバーのNotes設定';
+
+  @override
+  String get nextcloudNotesPath => 'ノートフォルダーのパス';
+
+  @override
+  String get nextcloudFileSuffix => '新しいノートの拡張子';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'このサーバーのNotes設定は他のクライアントにも影響します。パスを変更してもファイルは移動せず、拡張子を変更しても既存のノートの名前は変わりません。';
+
+  @override
+  String get nextcloudSettingsSaved => 'サーバー設定を保存しました';
+
+  @override
+  String get nextcloudSettingsNormalized => 'サーバーが正規化した値で保存しました';
+
+  @override
+  String get nextcloudPendingUpload => '添付ファイルのアップロード待ち';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '前回のサーバー確認: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'サーバー設定を読み込み中';
+
+  @override
+  String get nextcloudSettingsSaving => 'サーバー設定を保存中';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '以前のローカル編集';
+
+  @override
+  String get nextcloudUsePreviousEdit => '以前の編集を使用';
+
+  @override
+  String get quickOpen => 'クイックオープン';
+
+  @override
+  String get notesAll => 'すべてのノート';
+
+  @override
+  String get notesUncategorized => '未分類';
+
+  @override
+  String get notesRecovery => '復元';
+
+  @override
+  String get notesRecentlyEdited => '最近編集した順';
+
+  @override
+  String get notesOldestEdited => '古い編集順';
+
+  @override
+  String get notesTitleAscending => 'タイトル昇順';
+
+  @override
+  String get notesTitleDescending => 'タイトル降順';
+
+  @override
+  String get notesMove => 'カテゴリに移動';
+
+  @override
+  String get notesRemoveFavorite => 'お気に入りを解除';
+
+  @override
+  String get notesOffline => 'オフラインで利用可能にする';
+
+  @override
+  String get notesOfflineRemove => 'オフライン保持を解除';
+
+  @override
+  String get notesIndexing => 'ノートを索引作成中…';
+
+  @override
+  String get notesSearchHelp =>
+      '語句は AND で結合します。\"引用句\"、title:、category: を使えます。';
+
+  @override
+  String get notesSourceLocation => 'ソース位置';
+
+  @override
+  String get notesRecoveryHelp => '保持されたローカルノートとローカル履歴のみ。サーバーのごみ箱や履歴は利用できません。';
+
+  @override
+  String get notesImport => 'ノートをインポート';
+
+  @override
+  String get notesExport => 'ノートをエクスポート';
+
+  @override
+  String get notesImportDistinct => '別のノートとしてインポート';
+
+  @override
+  String get notesAvailableOffline => 'オフラインで利用可能';
+
+  @override
+  String get notesIncomplete => '不完全';
+
+  @override
+  String get notesSelected => '選択したノート';
+
+  @override
+  String get notesNoHistory => '保持された版がありません。履歴は無効、期限切れ、または消去済みの場合があります。';
+
+  @override
+  String get notesTextAvailable => 'テキストはローカルで利用可能';
+
+  @override
+  String get notesLocalVersion => 'ローカルの作業版';
+
+  @override
+  String get notesAttachments => '添付ファイル';
+
+  @override
+  String get notesSkipped => 'スキップ';
+
+  @override
+  String get notesFailed => '失敗';
+
+  @override
+  String get notesCompleted => '完了';
+
+  @override
+  String get notesImportNew => '新しいインポートを開始';
+
+  @override
+  String get notesImportResume => '中断したインポートを再開';
+
+  @override
+  String get notesImportAlreadyImported => 'この操作ではインポート済み';
+
+  @override
+  String get references => '参照';
+
+  @override
+  String get referenceIncoming => '被参照';
+
+  @override
+  String get referenceOutgoing => '参照先';
+
+  @override
+  String get referenceChooseTarget => 'リンク先を選択';
+
+  @override
+  String get referenceWholeDocument => '文書全体';
+
+  @override
+  String get referenceSourceLocation => '参照元の位置';
+
+  @override
+  String get referenceTargetLocation => '参照先の位置';
+
+  @override
+  String get referenceResolved => '解決済み';
+
+  @override
+  String get referenceMissing => '見つかりません';
+
+  @override
+  String get referenceAmbiguous => '曖昧';
+
+  @override
+  String get referenceUnavailable => 'このコンテキストでは利用できません';
+
+  @override
+  String get referenceUnsupported => '未対応';
+
+  @override
+  String get referenceNoPortableId => 'この参照先には確認済みの移植可能なノートURLがありません。';
+
+  @override
+  String get wsIncludeLines => '行を含める';
+
+  @override
+  String get wsIncludeSymbol => 'シンボルを含める';
+
+  @override
+  String get wsEmphasizeLines => '表示された行を強調';
+
+  @override
+  String get wsPropertiesReadOnly => 'この表示ではプロパティは読み取り専用です。';
+
+  @override
+  String get wsPropertiesProtected => 'この要素は保護されています。ソースを編集してください。';
+
+  @override
+  String get wsPropertiesConflict => '文書または要素が変わりました。下書きを戻して再選択してください。';
+
+  @override
+  String get wsPropertiesUnresolved => '現在、参照を解決できません。';
+
+  @override
+  String get wsUseDefault => '既定値を使用';
+
+  @override
+  String get wsPropertiesSelection => '単一の要素を選択してください。';
+
+  @override
+  String get wsImageDisplay => '画像の表示';
+
+  @override
+  String get wsImageThumbnail => 'クリック可能なサムネイル';
+
+  @override
+  String get wsEnabled => '有効';
+
+  @override
+  String get wsDisabled => '無効';
+
+  @override
+  String get wsWidth => '幅';
+
+  @override
+  String get wsHeight => '高さ';
+
+  @override
+  String get wsPropertiesInactive => '公開時の折りたたみが無効の場合、このプロパティは作用しません。';
+
+  @override
+  String get wsNavigationAll => 'タイトルのあるすべての要素';
+
+  @override
+  String get wsNavigationNone => 'ナビゲーションなし';
+
+  @override
+  String get wsNavigationCustom => 'カスタムナビゲーション';
+
+  @override
+  String get wsTitleOverride => 'タイトルの上書き';
+
+  @override
+  String get wsCompactLayout => 'コンパクト';
+
+  @override
+  String get wsWideLayout => 'ワイド';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'src を設定する前に、このブロック内に記述したコードを移動または削除してください。Writerside はソース参照がある空でないコードブロックを拒否します。';
+
+  @override
+  String get wsInherited => 'リストから継承';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside は外部画像のサイズを確実には設定できません。既存の寸法は確認して削除できます。';
+
+  @override
+  String get wsPropertiesNotSerialized => 'この変更はソースに反映されませんでした。下書きは保持されています。';
+
+  @override
+  String get wsListItem => 'リスト項目';
+
+  @override
+  String get wsSourceFile => 'ソースファイル';
+
+  @override
+  String get wsLinkTarget => 'リンク先';
+
+  @override
+  String get wsPreviewImage => 'プレビュー画像';
+
+  @override
+  String get wsIncludedElement => 'インクルードする要素';
+
+  @override
+  String get wsHelpModule => 'ヘルプモジュール';
+
+  @override
+  String get wsActionId => 'アクション ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'キーマップのヘルプインスタンス';
+
+  @override
+  String get wsShowInSource => 'ソースで表示';
+
+  @override
+  String get wsOriginElement => '要素の指定値';
+
+  @override
+  String get wsOriginAncestor => '親要素';
+
+  @override
+  String get wsOriginModule => 'モジュールの既定値';
+
+  @override
+  String get wsOriginBuiltIn => '組み込みの既定値';
+
+  @override
+  String get wsOriginUnresolved => '未解決';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '有効値: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => '要素';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '生成値: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '既定値: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '既定値: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '解決値: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '未解決';
+
+  @override
+  String get wsModule => 'モジュール';
+
+  @override
+  String get wsParent => '親要素';
+
+  @override
+  String get wsListType => 'リストの種類';
+
+  @override
+  String get wsStartingNumber => '開始番号';
+
+  @override
+  String get wsListSorting => '並べ替え';
+
+  @override
+  String get wsLetteredList => '英字リスト';
+
+  @override
+  String get wsCheckboxList => 'チェックボックスリスト';
+
+  @override
+  String get wsMarkerlessList => 'マーカーなしのリスト';
+
+  @override
+  String get wsAscending => '昇順';
+
+  @override
+  String get wsDescending => '降順';
+
+  @override
+  String get wsNoSorting => '並べ替えなし';
+
+  @override
+  String get wsAsWritten => '記述どおり';
+
+  @override
+  String get wsSentenceCase => '文頭のみ大文字';
+
+  @override
+  String get wsTitleCase => 'タイトル形式';
+
+  @override
+  String get wsLowerCase => '小文字';
+
+  @override
+  String get wsUpperCase => '大文字';
+
+  @override
+  String get wsNativeMarkers => 'Markdown マーカー';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '開始マーカー: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '階層 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '固定されたビルダーはモジュールの <caps> ルールを無視します。ローカルの caps 属性または default-property を使用してください。';
+
+  @override
+  String get wsInsertElements => '要素を挿入';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '注意書きと引用';
+
+  @override
+  String get wsSemanticText => 'セマンティックテキスト';
+
+  @override
+  String get wsPropertiesUnavailable => '確認中の要素は利用できません。続行するには要素を確認してください。';
 }

@@ -11,6 +11,103 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Modul-Großschreibung wird nicht veröffentlicht.';
+
+  @override
+  String get wsTitleOverridesAction => 'Instanz- und Inhaltsverzeichnistitel…';
+
+  @override
+  String get wsHeadingNotPublished =>
+      'Wird von diesem Builder nicht veröffentlicht.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Der festgelegte Builder veröffentlicht keine instanzspezifischen Titel in Markdown-Themen. Bestehendes Markup bleibt erhalten; prüfen Sie es im Quelltext.';
+
+  @override
+  String get wsTopicIdentity => 'Themen-ID';
+
+  @override
+  String get wsElementAnchor => 'Elementanker';
+
+  @override
+  String get wsHeadingText => 'Überschriftentext';
+
+  @override
+  String get wsDefaultTitle => 'Standardtitel';
+
+  @override
+  String get wsTopicNavigation => 'Themennavigation';
+
+  @override
+  String get wsHeadingOptions => 'Überschriftenattribute';
+
+  @override
+  String get wsDocumentOptions => 'Dokumenteinstellungen';
+
+  @override
+  String get wsSettingsPresent => 'Explizite Einstellungen vorhanden';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Überschreibt den veröffentlichten Titel; der Überschriftentext bleibt erhalten.';
+
+  @override
+  String get wsIgnoreVariables => 'Variablentext wörtlich behandeln';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Bei Aktivierung wird variablenähnlicher Text nicht ersetzt.';
+
+  @override
+  String get wsInstanceSelection => 'Hilfeinstanzen';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Hilfeausgaben über Namen, Gruppen, Listen, Ausschlüsse oder Ausdrücke auswählen.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Wiederverwendbare Inhalte nach Kriterien filtern; dies wählt keine Hilfeinstanz aus.';
+
+  @override
+  String get wsContextHelp => 'Kontexthilfe-ID';
+
+  @override
+  String get wsCapitalization => 'Groß- und Kleinschreibung';
+
+  @override
+  String get wsLibraryTopic => 'Bibliotheksthema';
+
+  @override
+  String get wsLastModified => 'Zuletzt geändert';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Keine Themenüberschrift H1 vorhanden. Fügen Sie sie im Quelltext hinzu.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Die erste H1 bestimmt den Thementitel. Weitere H1 sind eigene Überschriften.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Die Root-ID weicht von der dateibasierten Themen-ID ab. Verwenden Sie Thema umbenennen oder den Quelltext.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Nicht unterstützte Attribute bleiben erhalten. Prüfen Sie sie im Quelltext.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Generierter Anker; ein eingegebener Wert erstellt eine Überschreibung.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Der festgelegte Builder veröffentlicht keine H1-Attribute. Sie gehören zur Überschrift, nicht zur XML-Root.';
+
+  @override
   String get closeOtherTabs => 'Andere Tabs schließen';
 
   @override
@@ -4831,4 +4928,521 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Die erste Anfrage hat möglicherweise bereits eine Servernotiz erstellt. Dies erstellt eine separate Notiz mit Ihrer behaltenen lokalen Arbeit. Vermutete Duplikate werden nicht gelöscht.';
+
+  @override
+  String get wsSemanticFormats => 'Semantische Formatierung';
+
+  @override
+  String get wsUiControl => 'UI-Steuerelement';
+
+  @override
+  String get wsFilePath => 'Datei / Pfad';
+
+  @override
+  String get wsUiPath => 'UI-Pfad';
+
+  @override
+  String get wsDefinitionList => 'Definitionsliste';
+
+  @override
+  String get wsIncludeContent => 'Wiederverwendbaren Inhalt einbinden';
+
+  @override
+  String get wsVariableReference => 'Variablenreferenz';
+
+  @override
+  String get wsConvertList => 'Liste in Prozedur umwandeln';
+
+  @override
+  String get wsElementProperties => 'Elementeigenschaften';
+
+  @override
+  String get wsTopicProperties => 'Themeneigenschaften';
+
+  @override
+  String get wsCollapsible => 'Einklappbar';
+
+  @override
+  String get wsPublishedState => 'Anfangszustand bei Veröffentlichung';
+
+  @override
+  String get wsExpanded => 'Ausgeklappt';
+
+  @override
+  String get wsCollapsed => 'Eingeklappt';
+
+  @override
+  String get wsCollapsedTitle => 'Titel im eingeklappten Zustand';
+
+  @override
+  String get wsTerm => 'Begriff';
+
+  @override
+  String get wsListLayout => 'Listenlayout';
+
+  @override
+  String get wsSyncGroup => 'Synchronisierungsgruppe';
+
+  @override
+  String get wsTabKey => 'Registerschlüssel';
+
+  @override
+  String get wsSwitcherLabel => 'Beschriftung des Umschalters';
+
+  @override
+  String get wsNavigationElements => 'Navigationselemente';
+
+  @override
+  String get wsNavigationDepth => 'Navigationstiefe';
+
+  @override
+  String get wsAddItem => 'Element hinzufügen';
+
+  @override
+  String get wsStep => 'Schritt';
+
+  @override
+  String get wsPropertyInvalid => 'Ungültiger Eigenschaftswert';
+
+  @override
+  String get wsFilter => 'Inhaltsfilter';
+
+  @override
+  String get wsIdentifier => 'Element-ID';
+
+  @override
+  String get wsTldr => 'Kurzfassung (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Volle Breite';
+
+  @override
+  String get wsMediumLayout => 'Mittel (1:2)';
+
+  @override
+  String get wsNarrowLayout => 'Schmale Begriffsspalte';
+
+  @override
+  String get wsTitle => 'Titel';
+
+  @override
+  String get wsSwitcherKey => 'Umschaltschlüssel';
+
+  @override
+  String get nextcloudServerSettings => 'Notes-Einstellungen auf dem Server';
+
+  @override
+  String get nextcloudNotesPath => 'Pfad des Notizordners';
+
+  @override
+  String get nextcloudFileSuffix => 'Dateiendung neuer Notizen';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Diese Notes-Einstellungen gelten auch für andere Clients. Ein Pfadwechsel verschiebt keine Dateien; eine neue Endung benennt bestehende Notizen nicht um.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Servereinstellungen gespeichert';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Mit vom Server normalisierten Werten gespeichert';
+
+  @override
+  String get nextcloudPendingUpload => 'Anhang wartet auf Upload';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Letzte Serverprüfung: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Servereinstellungen werden geladen';
+
+  @override
+  String get nextcloudSettingsSaving =>
+      'Servereinstellungen werden gespeichert';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Vorherige lokale Änderung';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Vorherige Änderung verwenden';
+
+  @override
+  String get quickOpen => 'Schnell öffnen';
+
+  @override
+  String get notesAll => 'Alle Notizen';
+
+  @override
+  String get notesUncategorized => 'Ohne Kategorie';
+
+  @override
+  String get notesRecovery => 'Wiederherstellung';
+
+  @override
+  String get notesRecentlyEdited => 'Zuletzt bearbeitet';
+
+  @override
+  String get notesOldestEdited => 'Älteste Bearbeitung';
+
+  @override
+  String get notesTitleAscending => 'Titel A–Z';
+
+  @override
+  String get notesTitleDescending => 'Titel Z–A';
+
+  @override
+  String get notesMove => 'In Kategorie verschieben';
+
+  @override
+  String get notesRemoveFavorite => 'Favorit entfernen';
+
+  @override
+  String get notesOffline => 'Offline verfügbar machen';
+
+  @override
+  String get notesOfflineRemove => 'Offline-Aufbewahrung entfernen';
+
+  @override
+  String get notesIndexing => 'Notizen werden indiziert…';
+
+  @override
+  String get notesSearchHelp =>
+      'Begriffe verwenden UND. Verwenden Sie \"Wortgruppen\", title: und category:.';
+
+  @override
+  String get notesSourceLocation => 'Quellposition';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Nur lokal aufbewahrte Notizen und lokaler Verlauf. Server-Papierkorb und Server-Verlauf sind nicht verfügbar.';
+
+  @override
+  String get notesImport => 'Notizen importieren';
+
+  @override
+  String get notesExport => 'Notizen exportieren';
+
+  @override
+  String get notesImportDistinct => 'Als eigene Notiz importieren';
+
+  @override
+  String get notesAvailableOffline => 'Offline verfügbar';
+
+  @override
+  String get notesIncomplete => 'Unvollständig';
+
+  @override
+  String get notesSelected => 'Ausgewählte Notizen';
+
+  @override
+  String get notesNoHistory =>
+      'Keine aufbewahrten Versionen. Der Verlauf kann deaktiviert, abgelaufen oder gelöscht sein.';
+
+  @override
+  String get notesTextAvailable => 'Text lokal verfügbar';
+
+  @override
+  String get notesLocalVersion => 'Lokale Arbeitsversion';
+
+  @override
+  String get notesAttachments => 'Anhänge';
+
+  @override
+  String get notesSkipped => 'Übersprungen';
+
+  @override
+  String get notesFailed => 'Fehlgeschlagen';
+
+  @override
+  String get notesCompleted => 'Abgeschlossen';
+
+  @override
+  String get notesImportNew => 'Neuen Import starten';
+
+  @override
+  String get notesImportResume => 'Unterbrochenen Import fortsetzen';
+
+  @override
+  String get notesImportAlreadyImported =>
+      'In diesem Vorgang bereits importiert';
+
+  @override
+  String get references => 'Verweise';
+
+  @override
+  String get referenceIncoming => 'Eingehend';
+
+  @override
+  String get referenceOutgoing => 'Ausgehend';
+
+  @override
+  String get referenceChooseTarget => 'Linkziel auswählen';
+
+  @override
+  String get referenceWholeDocument => 'Gesamtes Dokument';
+
+  @override
+  String get referenceSourceLocation => 'Quellposition';
+
+  @override
+  String get referenceTargetLocation => 'Zielposition';
+
+  @override
+  String get referenceResolved => 'Aufgelöst';
+
+  @override
+  String get referenceMissing => 'Fehlt';
+
+  @override
+  String get referenceAmbiguous => 'Mehrdeutig';
+
+  @override
+  String get referenceUnavailable => 'In diesem Kontext nicht verfügbar';
+
+  @override
+  String get referenceUnsupported => 'Nicht unterstützt';
+
+  @override
+  String get referenceNoPortableId =>
+      'Dieses Ziel hat keine bestätigte portable Notiz-URL.';
+
+  @override
+  String get wsIncludeLines => 'Zeilen einschließen';
+
+  @override
+  String get wsIncludeSymbol => 'Symbol einschließen';
+
+  @override
+  String get wsEmphasizeLines => 'Angezeigte Zeilen hervorheben';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Eigenschaften sind in dieser Ansicht schreibgeschützt.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Dieses Element ist geschützt. Bearbeiten Sie seine Quelle.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokument oder Element geändert. Entwurf zurücksetzen und erneut auswählen.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'Der Verweis kann derzeit nicht aufgelöst werden.';
+
+  @override
+  String get wsUseDefault => 'Standard verwenden';
+
+  @override
+  String get wsPropertiesSelection => 'Ein einzelnes Element auswählen.';
+
+  @override
+  String get wsImageDisplay => 'Bilddarstellung';
+
+  @override
+  String get wsImageThumbnail => 'Anklickbare Miniaturansicht';
+
+  @override
+  String get wsEnabled => 'Aktiviert';
+
+  @override
+  String get wsDisabled => 'Deaktiviert';
+
+  @override
+  String get wsWidth => 'Breite';
+
+  @override
+  String get wsHeight => 'Höhe';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Ohne veröffentlichtes Einklappen hat diese Eigenschaft keine Wirkung.';
+
+  @override
+  String get wsNavigationAll => 'Alle Elemente mit Titel';
+
+  @override
+  String get wsNavigationNone => 'Keine Navigation';
+
+  @override
+  String get wsNavigationCustom => 'Benutzerdefinierte Navigation';
+
+  @override
+  String get wsTitleOverride => 'Titel überschreiben';
+
+  @override
+  String get wsCompactLayout => 'Kompakt';
+
+  @override
+  String get wsWideLayout => 'Breit';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Verschieben oder entfernen Sie den Code in diesem Block, bevor Sie src setzen. Writerside lehnt nicht leere Codeblöcke mit einer Quellreferenz ab.';
+
+  @override
+  String get wsInherited => 'Von Liste erben';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside skaliert extern gehostete Bilder nicht zuverlässig. Vorhandene Maße können geprüft und entfernt werden.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Diese Änderung wurde nicht in den Quelltext übernommen. Der Entwurf wurde beibehalten.';
+
+  @override
+  String get wsListItem => 'Listeneintrag';
+
+  @override
+  String get wsSourceFile => 'Quelldatei';
+
+  @override
+  String get wsLinkTarget => 'Linkziel';
+
+  @override
+  String get wsPreviewImage => 'Vorschaubild';
+
+  @override
+  String get wsIncludedElement => 'Eingebundenes Element';
+
+  @override
+  String get wsHelpModule => 'Hilfemodul';
+
+  @override
+  String get wsActionId => 'Aktions-ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Hilfeinstanz der Tastaturbelegung';
+
+  @override
+  String get wsShowInSource => 'Im Quelltext anzeigen';
+
+  @override
+  String get wsOriginElement => 'Elementüberschreibung';
+
+  @override
+  String get wsOriginAncestor => 'Übergeordnetes Element';
+
+  @override
+  String get wsOriginModule => 'Modulstandard';
+
+  @override
+  String get wsOriginBuiltIn => 'Integrierter Standard';
+
+  @override
+  String get wsOriginUnresolved => 'Nicht aufgelöst';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effektiv: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Element';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Generiert: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Standard: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Standard: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Aufgelöst: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Nicht aufgelöst';
+
+  @override
+  String get wsModule => 'Modul';
+
+  @override
+  String get wsParent => 'Übergeordnetes Element';
+
+  @override
+  String get wsListType => 'Listentyp';
+
+  @override
+  String get wsStartingNumber => 'Startnummer';
+
+  @override
+  String get wsListSorting => 'Sortierung';
+
+  @override
+  String get wsLetteredList => 'Buchstabenliste';
+
+  @override
+  String get wsCheckboxList => 'Liste mit Kontrollkästchen';
+
+  @override
+  String get wsMarkerlessList => 'Liste ohne Aufzählungszeichen';
+
+  @override
+  String get wsAscending => 'Aufsteigend';
+
+  @override
+  String get wsDescending => 'Absteigend';
+
+  @override
+  String get wsNoSorting => 'Keine Sortierung';
+
+  @override
+  String get wsAsWritten => 'Wie geschrieben';
+
+  @override
+  String get wsSentenceCase => 'Satzschreibung';
+
+  @override
+  String get wsTitleCase => 'Titelschreibung';
+
+  @override
+  String get wsLowerCase => 'Kleinbuchstaben';
+
+  @override
+  String get wsUpperCase => 'Großbuchstaben';
+
+  @override
+  String get wsNativeMarkers => 'Markdown-Listenzeichen';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Listenbeginn: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Ebene $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Der festgelegte Builder ignoriert <caps>-Regeln des Moduls. Verwenden Sie ein lokales caps-Attribut oder default-property.';
+
+  @override
+  String get wsInsertElements => 'Elemente einfügen';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Hinweise und Zitate';
+
+  @override
+  String get wsSemanticText => 'Semantischer Text';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Das betrachtete Element ist nicht verfügbar. Wählen Sie ein Element zum Fortfahren.';
 }

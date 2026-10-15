@@ -1,6 +1,28 @@
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import 'markdown_model.dart';
+import '../writerside/writerside_document.dart';
+
+const busyMarkXmlBindingAttribute = 'busymark-xml-binding';
+const busyMarkWritersideContainerAttribute = 'busymark-writerside-container';
+
+bool busyMarkIsWritersideContainer(BusyBlock block) =>
+    block.attributes[busyMarkWritersideContainerAttribute] == 'true';
+
+bool busyMarkIsSemanticInline(BusyInlineKind kind) => const {
+  BusyInlineKind.writersideControl,
+  BusyInlineKind.writersidePath,
+  BusyInlineKind.writersideUiPath,
+  BusyInlineKind.writersideShortcut,
+}.contains(kind);
+
+String? busyMarkSemanticInlineTag(BusyInlineKind kind) => switch (kind) {
+  BusyInlineKind.writersideControl => 'control',
+  BusyInlineKind.writersidePath => 'path',
+  BusyInlineKind.writersideUiPath => 'ui-path',
+  BusyInlineKind.writersideShortcut => 'shortcut',
+  _ => null,
+};
 
 /// Marks an empty WYSIWYG paragraph that must remain a source blank line.
 const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
@@ -33,14 +55,16 @@ const busyMarkWritersideCodeBlockSourceFormAttribute =
 const busyMarkWritersideCodeBlockElementSourceForm = 'element';
 
 bool busyMarkWritersideIsCollapsible(Map<String, String> attributes) {
-  return attributes[busyMarkWritersideCollapsibleAttribute]
+  return (attributes['busymark-effective-collapsible'] ??
+              attributes[busyMarkWritersideCollapsibleAttribute])
           ?.trim()
           .toLowerCase() ==
       'true';
 }
 
 bool busyMarkWritersideInitiallyExpanded(Map<String, String> attributes) {
-  return attributes[busyMarkWritersideDefaultStateAttribute]
+  return (attributes['busymark-effective-default-state'] ??
+              attributes[busyMarkWritersideDefaultStateAttribute])
           ?.trim()
           .toLowerCase() ==
       'expanded';
@@ -85,6 +109,7 @@ class BusyDocument {
     this.frontMatter = const {},
     this.rawFrontMatter,
     this.source,
+    this.authoredXml,
   });
 
   final String filePath;
@@ -96,6 +121,12 @@ class BusyDocument {
   final String? rawFrontMatter;
   final String? source;
 
+  /// The unresolved authored XML tree. Presentation resolution never owns saves.
+  final WritersideDocument? authoredXml;
+  bool get isXmlTopic => authoredXml != null;
+  bool get isWriterside =>
+      isXmlTopic || mode == MarkdownMode.writersideMarkdown;
+
   BusyDocument copyWith({
     String? title,
     List<BusyBlock>? blocks,
@@ -103,6 +134,7 @@ class BusyDocument {
     Map<String, String>? frontMatter,
     String? rawFrontMatter,
     String? source,
+    WritersideDocument? authoredXml,
   }) {
     return BusyDocument(
       filePath: filePath,
@@ -113,6 +145,7 @@ class BusyDocument {
       frontMatter: frontMatter ?? this.frontMatter,
       rawFrontMatter: rawFrontMatter ?? this.rawFrontMatter,
       source: source ?? this.source,
+      authoredXml: authoredXml ?? this.authoredXml,
     );
   }
 }
@@ -215,6 +248,10 @@ enum BusyInlineKind {
   hardBreak,
   html,
   writersideVariable,
+  writersideControl,
+  writersidePath,
+  writersideUiPath,
+  writersideShortcut,
   unknown,
 }
 

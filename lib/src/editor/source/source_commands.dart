@@ -364,18 +364,23 @@ abstract final class SourceCommands {
   static TextEditingValue insertLink(
     TextEditingValue value, {
     required String labelPlaceholder,
+    String destination = 'url',
+    String? origin,
   }) {
     final selection = _normalizedSelection(value);
     final selected = selection.textInside(value.text);
     final label = selected.isEmpty ? labelPlaceholder : selected;
-    final replacement = '[$label](url)';
+    final attrs = origin == null
+        ? ''
+        : '{origin="${origin.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}"}';
+    final replacement = '[$label]($destination)$attrs';
     final urlStart = selection.start + label.length + 3;
     return _replaceSelection(
       value,
       replacement,
       selection: TextSelection(
         baseOffset: urlStart,
-        extentOffset: urlStart + 3,
+        extentOffset: urlStart + destination.length,
       ),
     );
   }

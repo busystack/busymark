@@ -1,3 +1,5 @@
+import '../link_destination.dart';
+import '../wysiwyg/writerside_editing_adapter.dart';
 import '../../assets/document_media_context.dart';
 import 'dart:async';
 import 'dart:io';
@@ -112,6 +114,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.documentFormat,
     this.markdownMode,
     this.onAssetSaveRequired,
+    this.onChooseLink,
     this.spellingAnnotations = const [],
     this.onCheckSpelling,
     this.readSpellingMenuItems,
@@ -156,6 +159,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final SourceDocumentFormat? documentFormat;
   final MarkdownMode? markdownMode;
   final VoidCallback? onAssetSaveRequired;
+  final Future<LinkDestination?> Function()? onChooseLink;
   final List<SpellingAnnotation> spellingAnnotations;
   final VoidCallback? onCheckSpelling;
   final BusyMarkEditorSpellingMenuReader? readSpellingMenuItems;
@@ -2612,6 +2616,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _applyInlineCommand(SourceInlineCommand command) {
+    if (command == SourceInlineCommand.link && widget.onChooseLink != null) {
+      unawaited(_chooseLink());
+      return;
+    }
     _applyFullEditingValue(
       SourceCommands.applyInlineCommand(
         _fullEditingValue(),
@@ -2619,6 +2627,53 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         placeholder: command == SourceInlineCommand.code
             ? context.l10n.editorPlaceholderCode
             : context.l10n.editorPlaceholderText,
+      ),
+    );
+  }
+
+  Future<void> _chooseLink() async {
+    if (DocumentReadOnlyScope.of(context)) return;
+    final target = _fullEditingValue();
+    final id = widget.documentId;
+    final revision = widget.editRevision;
+    final path = widget.filePath;
+    final destination = await widget.onChooseLink!();
+    if (!mounted ||
+        widget.documentId != id ||
+        widget.filePath != path ||
+        widget.editRevision != revision ||
+        _fullEditingValue() != target ||
+        destination == null ||
+        DocumentReadOnlyScope.of(context) ||
+        destination.href.trim().isEmpty) {
+      return;
+    }
+    if (_documentFormat == SourceDocumentFormat.writersideXmlTopic) {
+      final result = const WritersideEditingAdapter().insertSourceLink(
+        filePath: path ?? '',
+        source: target.text,
+        start: target.selection.start,
+        end: target.selection.end,
+        destination: destination.href.trim(),
+        origin: destination.origin,
+        placeholder: context.l10n.editorPlaceholderText,
+      );
+      if (result != null) {
+        _applyFullEditingValue(
+          TextEditingValue(
+            text: result,
+            selection: TextSelection.collapsed(offset: target.selection.start),
+          ),
+        );
+      }
+      return;
+    }
+    _applyFullEditingValue(
+      SourceCommands.insertLink(
+        target,
+        labelPlaceholder: context.l10n.editorPlaceholderText,
+        destination: destination.href.trim(),
+        origin: destination.origin,
       ),
     );
   }

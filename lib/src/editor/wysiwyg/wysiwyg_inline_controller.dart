@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
@@ -150,6 +151,7 @@ class BusyInlineStyleRange {
     required this.kind,
     this.destination,
     this.attributes = const {},
+    this.referenceIndex,
   });
 
   final int start;
@@ -157,6 +159,10 @@ class BusyInlineStyleRange {
   final BusyInlineKind kind;
   final String? destination;
   final Map<String, String> attributes;
+
+  /// Owning reference's ordinal within this block snapshot. Empty references
+  /// can share text boundaries, so offsets alone are not their identity.
+  final int? referenceIndex;
 }
 
 class BusyInlineSemanticAnchor {
@@ -164,6 +170,41 @@ class BusyInlineSemanticAnchor {
 
   final int offset;
   final BusyInline inline;
+}
+
+/// One range per owning reference, independent of formatting in its caption.
+/// Styling still uses [busyInlineStyleRanges]'s individual text segments.
+/// References without a label retain their editable source position.
+List<BusyInlineStyleRange> busyInlineReferenceRanges(List<BusyInline> inlines) {
+  final ranges = <BusyInlineStyleRange>[];
+  var offset = 0;
+  void visit(BusyInline inline) {
+    if ({
+      BusyInlineKind.link,
+      BusyInlineKind.image,
+      BusyInlineKind.writersideVariable,
+      BusyInlineKind.writersideShortcut,
+    }.contains(inline.kind)) {
+      ranges.add(
+        BusyInlineStyleRange(
+          start: offset,
+          end: offset + inline.plainText.length,
+          kind: inline.kind,
+          destination: inline.destination,
+          attributes: inline.attributes,
+          referenceIndex: ranges.length,
+        ),
+      );
+    }
+    if (inline.children.isNotEmpty) {
+      inline.children.forEach(visit);
+    } else {
+      offset += inline.plainText.length;
+    }
+  }
+
+  inlines.forEach(visit);
+  return ranges;
 }
 
 List<BusyInlineSemanticAnchor> busyInlineSemanticAnchors(
@@ -304,13 +345,19 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       BusyInlineKind.strikethrough => baseStyle.copyWith(
         decoration: TextDecoration.lineThrough,
       ),
-      BusyInlineKind.code => baseStyle.copyWith(
+      BusyInlineKind.code ||
+      BusyInlineKind.writersidePath ||
+      BusyInlineKind.writersideUiPath ||
+      BusyInlineKind.writersideShortcut => baseStyle.copyWith(
         fontFamily: BusyMarkTypography.monoFontFamily,
         backgroundColor: colors.control,
       ),
       BusyInlineKind.link => baseStyle.copyWith(
         color: colorScheme.primary,
         decoration: TextDecoration.underline,
+      ),
+      BusyInlineKind.writersideControl => baseStyle.copyWith(
+        fontWeight: FontWeight.w600,
       ),
       BusyInlineKind.image => baseStyle.copyWith(
         color: colorScheme.primary,
@@ -446,15 +493,17 @@ class _InheritedInlineStyle {
 }
 
 bool _styledKind(BusyInlineKind kind) {
-  return {
-    BusyInlineKind.strong,
-    BusyInlineKind.emphasis,
-    BusyInlineKind.underline,
-    BusyInlineKind.strikethrough,
-    BusyInlineKind.code,
-    BusyInlineKind.link,
-    BusyInlineKind.image,
-  }.contains(kind);
+  return busyMarkIsSemanticInline(kind) ||
+      kind == BusyInlineKind.writersideVariable ||
+      {
+        BusyInlineKind.strong,
+        BusyInlineKind.emphasis,
+        BusyInlineKind.underline,
+        BusyInlineKind.strikethrough,
+        BusyInlineKind.code,
+        BusyInlineKind.link,
+        BusyInlineKind.image,
+      }.contains(kind);
 }
 
 bool _inlineStyleRangesEqual(
@@ -473,7 +522,8 @@ bool _inlineStyleRangesEqual(
     if (left.start != right.start ||
         left.end != right.end ||
         left.kind != right.kind ||
-        left.destination != right.destination) {
+        left.destination != right.destination ||
+        !mapEquals(left.attributes, right.attributes)) {
       return false;
     }
   }

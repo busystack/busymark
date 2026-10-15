@@ -139,6 +139,174 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// No description provided for @wsModuleCapsNotPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Module capitalization is not published.'**
+  String get wsModuleCapsNotPublished;
+
+  /// Opens the existing instance-specific and TOC title workflow, separate from the default title.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance and TOC titles…'**
+  String get wsTitleOverridesAction;
+
+  /// Compact property-specific publishing limitation; full explanation remains in contextual help.
+  ///
+  /// In en, this message translates to:
+  /// **'Not published by this builder.'**
+  String get wsHeadingNotPublished;
+
+  /// Pinned-builder limitation shown in the existing instance/TOC title workflow.
+  ///
+  /// In en, this message translates to:
+  /// **'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.'**
+  String get wsMarkdownInstanceTitleLimitation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic ID'**
+  String get wsTopicIdentity;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Element anchor'**
+  String get wsElementAnchor;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading text'**
+  String get wsHeadingText;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Default title'**
+  String get wsDefaultTitle;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic navigation'**
+  String get wsTopicNavigation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading attributes'**
+  String get wsHeadingOptions;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Document settings'**
+  String get wsDocumentOptions;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Authored settings present'**
+  String get wsSettingsPresent;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Overrides the published heading title; the heading text remains unchanged.'**
+  String get wsTitleOverrideExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Treat variable text literally'**
+  String get wsIgnoreVariables;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, variable-looking text is not substituted.'**
+  String get wsIgnoreVariablesExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Help instances'**
+  String get wsInstanceSelection;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select help outputs with names, groups, lists, exclusions, or expressions.'**
+  String get wsInstanceExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter reusable content by criteria; this does not select a help instance.'**
+  String get wsFilterExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Context help ID'**
+  String get wsContextHelp;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Capitalization'**
+  String get wsCapitalization;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Library topic'**
+  String get wsLibraryTopic;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Last modified'**
+  String get wsLastModified;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'No topic H1 is authored. Add the topic heading in Source.'**
+  String get wsMissingTopicHeading;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The first H1 owns the topic title. Later H1s are separate headings.'**
+  String get wsMultipleTopicHeadings;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The authored root id differs from the filename-derived Topic ID. Use Rename topic file or inspect Source.'**
+  String get wsTopicIdentityMismatch;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported authored attributes are preserved. Inspect them in Source.'**
+  String get wsUnsupportedProperties;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated anchor; setting a value authors an override.'**
+  String get wsGeneratedAnchor;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The pinned builder does not publish topic H1 attributes: inline attributes render literally and separate-line attributes are ignored. These belong to the heading, not the XML root.'**
+  String get wsHeadingBuilderLimitation;
+
   /// Document tab context menu action that closes every other document and comparison tab while retaining this document.
   ///
   /// In en, this message translates to:
@@ -8117,6 +8285,972 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.'**
   String get nextcloudCreateSeparateWarning;
+
+  /// No description provided for @wsSemanticFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic formatting'**
+  String get wsSemanticFormats;
+
+  /// No description provided for @wsUiControl.
+  ///
+  /// In en, this message translates to:
+  /// **'UI Control'**
+  String get wsUiControl;
+
+  /// No description provided for @wsFilePath.
+  ///
+  /// In en, this message translates to:
+  /// **'File / Path'**
+  String get wsFilePath;
+
+  /// No description provided for @wsUiPath.
+  ///
+  /// In en, this message translates to:
+  /// **'UI Path'**
+  String get wsUiPath;
+
+  /// No description provided for @wsDefinitionList.
+  ///
+  /// In en, this message translates to:
+  /// **'Definition List'**
+  String get wsDefinitionList;
+
+  /// No description provided for @wsIncludeContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Include Reusable Content'**
+  String get wsIncludeContent;
+
+  /// No description provided for @wsVariableReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Variable Reference'**
+  String get wsVariableReference;
+
+  /// No description provided for @wsConvertList.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert List to Procedure'**
+  String get wsConvertList;
+
+  /// No description provided for @wsElementProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Properties'**
+  String get wsElementProperties;
+
+  /// No description provided for @wsTopicProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic Properties'**
+  String get wsTopicProperties;
+
+  /// No description provided for @wsCollapsible.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsible'**
+  String get wsCollapsible;
+
+  /// No description provided for @wsPublishedState.
+  ///
+  /// In en, this message translates to:
+  /// **'Published initial state'**
+  String get wsPublishedState;
+
+  /// No description provided for @wsExpanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Expanded'**
+  String get wsExpanded;
+
+  /// No description provided for @wsCollapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsed'**
+  String get wsCollapsed;
+
+  /// No description provided for @wsCollapsedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsed title'**
+  String get wsCollapsedTitle;
+
+  /// No description provided for @wsTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Term'**
+  String get wsTerm;
+
+  /// No description provided for @wsListLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'List layout'**
+  String get wsListLayout;
+
+  /// No description provided for @wsSyncGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization group'**
+  String get wsSyncGroup;
+
+  /// No description provided for @wsTabKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Tab key'**
+  String get wsTabKey;
+
+  /// No description provided for @wsSwitcherLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Switcher label'**
+  String get wsSwitcherLabel;
+
+  /// No description provided for @wsNavigationElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation elements'**
+  String get wsNavigationElements;
+
+  /// No description provided for @wsNavigationDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation depth'**
+  String get wsNavigationDepth;
+
+  /// No description provided for @wsAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get wsAddItem;
+
+  /// No description provided for @wsStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step'**
+  String get wsStep;
+
+  /// No description provided for @wsPropertyInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid property value'**
+  String get wsPropertyInvalid;
+
+  /// No description provided for @wsFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get wsFilter;
+
+  /// No description provided for @wsIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Element ID'**
+  String get wsIdentifier;
+
+  /// No description provided for @wsTldr.
+  ///
+  /// In en, this message translates to:
+  /// **'TLDR'**
+  String get wsTldr;
+
+  /// No description provided for @wsFullLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Full width'**
+  String get wsFullLayout;
+
+  /// No description provided for @wsMediumLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium (1:2)'**
+  String get wsMediumLayout;
+
+  /// No description provided for @wsNarrowLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow term'**
+  String get wsNarrowLayout;
+
+  /// No description provided for @wsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get wsTitle;
+
+  /// No description provided for @wsSwitcherKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Switcher key'**
+  String get wsSwitcherKey;
+
+  /// No description provided for @nextcloudServerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Notes settings'**
+  String get nextcloudServerSettings;
+
+  /// No description provided for @nextcloudNotesPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes folder path'**
+  String get nextcloudNotesPath;
+
+  /// No description provided for @nextcloudFileSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'New-note file suffix'**
+  String get nextcloudFileSuffix;
+
+  /// No description provided for @nextcloudServerSettingsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These server Notes settings affect other clients. Changing the path does not migrate files; changing the suffix does not rename existing notes.'**
+  String get nextcloudServerSettingsExplanation;
+
+  /// No description provided for @nextcloudSettingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Server settings saved'**
+  String get nextcloudSettingsSaved;
+
+  /// No description provided for @nextcloudSettingsNormalized.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved with server-normalized values'**
+  String get nextcloudSettingsNormalized;
+
+  /// No description provided for @nextcloudPendingUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment upload pending'**
+  String get nextcloudPendingUpload;
+
+  /// No description provided for @nextcloudServerCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Last server check: {time}'**
+  String nextcloudServerCheck(String time);
+
+  /// Accessible progress label while reading server Notes settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading server settings'**
+  String get nextcloudSettingsLoading;
+
+  /// Accessible progress label while writing server Notes settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving server settings'**
+  String get nextcloudSettingsSaving;
+
+  /// Label for the competing accepted local metadata edit, distinct from server state.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous local edit'**
+  String get nextcloudPreviousLocalEdit;
+
+  /// Conflict action that keeps the exact previously reviewed local metadata values.
+  ///
+  /// In en, this message translates to:
+  /// **'Use previous edit'**
+  String get nextcloudUsePreviousEdit;
+
+  /// No description provided for @quickOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Open'**
+  String get quickOpen;
+
+  /// No description provided for @notesAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All notes'**
+  String get notesAll;
+
+  /// No description provided for @notesUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get notesUncategorized;
+
+  /// No description provided for @notesRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get notesRecovery;
+
+  /// No description provided for @notesRecentlyEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently edited'**
+  String get notesRecentlyEdited;
+
+  /// No description provided for @notesOldestEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest edited'**
+  String get notesOldestEdited;
+
+  /// No description provided for @notesTitleAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Title A–Z'**
+  String get notesTitleAscending;
+
+  /// No description provided for @notesTitleDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Title Z–A'**
+  String get notesTitleDescending;
+
+  /// No description provided for @notesMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to category'**
+  String get notesMove;
+
+  /// No description provided for @notesRemoveFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove favorite'**
+  String get notesRemoveFavorite;
+
+  /// No description provided for @notesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Make available offline'**
+  String get notesOffline;
+
+  /// No description provided for @notesOfflineRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove offline requirement'**
+  String get notesOfflineRemove;
+
+  /// No description provided for @notesIndexing.
+  ///
+  /// In en, this message translates to:
+  /// **'Indexing notes…'**
+  String get notesIndexing;
+
+  /// No description provided for @notesSearchHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms use AND. Use \"quoted phrases\", title: and category:.'**
+  String get notesSearchHelp;
+
+  /// No description provided for @notesSourceLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source location'**
+  String get notesSourceLocation;
+
+  /// No description provided for @notesRecoveryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Retained local notes and Local History only. Server trash and history are unavailable.'**
+  String get notesRecoveryHelp;
+
+  /// No description provided for @notesImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import notes'**
+  String get notesImport;
+
+  /// No description provided for @notesExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export notes'**
+  String get notesExport;
+
+  /// No description provided for @notesImportDistinct.
+  ///
+  /// In en, this message translates to:
+  /// **'Import as a distinct note'**
+  String get notesImportDistinct;
+
+  /// No description provided for @notesAvailableOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline'**
+  String get notesAvailableOffline;
+
+  /// No description provided for @notesIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Incomplete'**
+  String get notesIncomplete;
+
+  /// No description provided for @notesSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected notes'**
+  String get notesSelected;
+
+  /// No description provided for @notesNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No retained revisions. History may be disabled, expired or cleared.'**
+  String get notesNoHistory;
+
+  /// No description provided for @notesTextAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Text available locally'**
+  String get notesTextAvailable;
+
+  /// No description provided for @notesLocalVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Local working version'**
+  String get notesLocalVersion;
+
+  /// No description provided for @notesAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get notesAttachments;
+
+  /// No description provided for @notesSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get notesSkipped;
+
+  /// No description provided for @notesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get notesFailed;
+
+  /// No description provided for @notesCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get notesCompleted;
+
+  /// No description provided for @notesImportNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new import'**
+  String get notesImportNew;
+
+  /// No description provided for @notesImportResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume interrupted import'**
+  String get notesImportResume;
+
+  /// No description provided for @notesImportAlreadyImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Already imported in this operation'**
+  String get notesImportAlreadyImported;
+
+  /// No description provided for @references.
+  ///
+  /// In en, this message translates to:
+  /// **'References'**
+  String get references;
+
+  /// No description provided for @referenceIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get referenceIncoming;
+
+  /// No description provided for @referenceOutgoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get referenceOutgoing;
+
+  /// No description provided for @referenceChooseTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose link target'**
+  String get referenceChooseTarget;
+
+  /// No description provided for @referenceWholeDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole document'**
+  String get referenceWholeDocument;
+
+  /// No description provided for @referenceSourceLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source location'**
+  String get referenceSourceLocation;
+
+  /// No description provided for @referenceTargetLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Target location'**
+  String get referenceTargetLocation;
+
+  /// No description provided for @referenceResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get referenceResolved;
+
+  /// No description provided for @referenceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get referenceMissing;
+
+  /// No description provided for @referenceAmbiguous.
+  ///
+  /// In en, this message translates to:
+  /// **'Ambiguous'**
+  String get referenceAmbiguous;
+
+  /// No description provided for @referenceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable in this context'**
+  String get referenceUnavailable;
+
+  /// No description provided for @referenceUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported'**
+  String get referenceUnsupported;
+
+  /// No description provided for @referenceNoPortableId.
+  ///
+  /// In en, this message translates to:
+  /// **'This target has no verified portable note URL.'**
+  String get referenceNoPortableId;
+
+  /// No description provided for @wsIncludeLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Include lines'**
+  String get wsIncludeLines;
+
+  /// No description provided for @wsIncludeSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Include symbol'**
+  String get wsIncludeSymbol;
+
+  /// No description provided for @wsEmphasizeLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Emphasize displayed lines'**
+  String get wsEmphasizeLines;
+
+  /// No description provided for @wsPropertiesReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Properties are read-only in this view.'**
+  String get wsPropertiesReadOnly;
+
+  /// No description provided for @wsPropertiesProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'This element is protected. Edit its source to change properties.'**
+  String get wsPropertiesProtected;
+
+  /// No description provided for @wsPropertiesConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The document or element changed. Revert this draft and inspect the current element.'**
+  String get wsPropertiesConflict;
+
+  /// No description provided for @wsPropertiesUnresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'The reference cannot currently be resolved.'**
+  String get wsPropertiesUnresolved;
+
+  /// No description provided for @wsUseDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default'**
+  String get wsUseDefault;
+
+  /// No description provided for @wsPropertiesSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a single element to inspect its properties.'**
+  String get wsPropertiesSelection;
+
+  /// No description provided for @wsImageDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Image display'**
+  String get wsImageDisplay;
+
+  /// No description provided for @wsImageThumbnail.
+  ///
+  /// In en, this message translates to:
+  /// **'Clickable thumbnail'**
+  String get wsImageThumbnail;
+
+  /// No description provided for @wsEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get wsEnabled;
+
+  /// No description provided for @wsDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get wsDisabled;
+
+  /// No description provided for @wsWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get wsWidth;
+
+  /// No description provided for @wsHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get wsHeight;
+
+  /// No description provided for @wsPropertiesInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'This property has no effect while published collapse is disabled.'**
+  String get wsPropertiesInactive;
+
+  /// No description provided for @wsNavigationAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All titled elements'**
+  String get wsNavigationAll;
+
+  /// No description provided for @wsNavigationNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No navigation'**
+  String get wsNavigationNone;
+
+  /// No description provided for @wsNavigationCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom navigation'**
+  String get wsNavigationCustom;
+
+  /// No description provided for @wsTitleOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Title override'**
+  String get wsTitleOverride;
+
+  /// No description provided for @wsCompactLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get wsCompactLayout;
+
+  /// No description provided for @wsWideLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Wide'**
+  String get wsWideLayout;
+
+  /// No description provided for @wsCodeSourceConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Move or remove the code authored in this block before setting src. Writerside rejects a nonempty code block with a source reference.'**
+  String get wsCodeSourceConflict;
+
+  /// No description provided for @wsInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherit from list'**
+  String get wsInherited;
+
+  /// No description provided for @wsExternalImageSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.'**
+  String get wsExternalImageSize;
+
+  /// No description provided for @wsPropertiesNotSerialized.
+  ///
+  /// In en, this message translates to:
+  /// **'This change did not reach the source. The draft has been retained.'**
+  String get wsPropertiesNotSerialized;
+
+  /// No description provided for @wsListItem.
+  ///
+  /// In en, this message translates to:
+  /// **'List item'**
+  String get wsListItem;
+
+  /// No description provided for @wsSourceFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Source file'**
+  String get wsSourceFile;
+
+  /// No description provided for @wsLinkTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Link target'**
+  String get wsLinkTarget;
+
+  /// No description provided for @wsPreviewImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview image'**
+  String get wsPreviewImage;
+
+  /// No description provided for @wsIncludedElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Included element'**
+  String get wsIncludedElement;
+
+  /// No description provided for @wsHelpModule.
+  ///
+  /// In en, this message translates to:
+  /// **'Help module'**
+  String get wsHelpModule;
+
+  /// No description provided for @wsActionId.
+  ///
+  /// In en, this message translates to:
+  /// **'Action ID'**
+  String get wsActionId;
+
+  /// No description provided for @wsKeymapHelpInstance.
+  ///
+  /// In en, this message translates to:
+  /// **'Keymap help instance'**
+  String get wsKeymapHelpInstance;
+
+  /// No description provided for @wsShowInSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Source'**
+  String get wsShowInSource;
+
+  /// No description provided for @wsOriginElement.
+  ///
+  /// In en, this message translates to:
+  /// **'element override'**
+  String get wsOriginElement;
+
+  /// No description provided for @wsOriginAncestor.
+  ///
+  /// In en, this message translates to:
+  /// **'parent element'**
+  String get wsOriginAncestor;
+
+  /// No description provided for @wsOriginModule.
+  ///
+  /// In en, this message translates to:
+  /// **'module default'**
+  String get wsOriginModule;
+
+  /// No description provided for @wsOriginBuiltIn.
+  ///
+  /// In en, this message translates to:
+  /// **'built-in default'**
+  String get wsOriginBuiltIn;
+
+  /// No description provided for @wsOriginUnresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'unresolved'**
+  String get wsOriginUnresolved;
+
+  /// Effective Writerside property value and its localized origin. Attribute names are displayed separately without translation.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective: {value} — {origin}'**
+  String wsEffectiveProperty(String value, String origin);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Element'**
+  String get wsElementSelector;
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated: {anchor}'**
+  String wsGeneratedAnchorValue(String anchor);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {value}'**
+  String wsDefaultProperty(String value);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {value} · {origin}'**
+  String wsDefaultPropertyOrigin(String value, String origin);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved: {value}'**
+  String wsResolvedProperty(String value);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Unresolved'**
+  String get wsPropertyUnresolved;
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Module'**
+  String get wsModule;
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get wsParent;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'List type'**
+  String get wsListType;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting number'**
+  String get wsStartingNumber;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting'**
+  String get wsListSorting;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Lettered list'**
+  String get wsLetteredList;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkbox list'**
+  String get wsCheckboxList;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'List without markers'**
+  String get wsMarkerlessList;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get wsAscending;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get wsDescending;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'No sorting'**
+  String get wsNoSorting;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'As written'**
+  String get wsAsWritten;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence case'**
+  String get wsSentenceCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Title case'**
+  String get wsTitleCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase'**
+  String get wsLowerCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Uppercase'**
+  String get wsUpperCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown markers'**
+  String get wsNativeMarkers;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker start: {number}'**
+  String wsListMarkerStart(String number);
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level}'**
+  String wsListLevel(String level);
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'The pinned builder ignores module <caps> rules. Use a local caps override or default-property.'**
+  String get wsModuleCapsIgnored;
+
+  /// No description provided for @wsInsertElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert elements'**
+  String get wsInsertElements;
+
+  /// No description provided for @wsAdmonitionsAndQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Admonitions and quotes'**
+  String get wsAdmonitionsAndQuotes;
+
+  /// No description provided for @wsSemanticText.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic text'**
+  String get wsSemanticText;
+
+  /// No description provided for @wsPropertiesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The inspected element is unavailable. Inspect an element to continue.'**
+  String get wsPropertiesUnavailable;
 }
 
 class _AppLocalizationsDelegate

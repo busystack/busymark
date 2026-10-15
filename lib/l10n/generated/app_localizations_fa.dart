@@ -11,6 +11,101 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'سبک حروف ماژول منتشر نمی‌شود.';
+
+  @override
+  String get wsTitleOverridesAction => 'عنوان‌های نمونه و فهرست…';
+
+  @override
+  String get wsHeadingNotPublished => 'این سازنده آن را منتشر نمی‌کند.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'سازنده تثبیت‌شده عنوان نمونه را در موضوع‌های Markdown منتشر نمی‌کند. نشانه‌گذاری موجود حفظ می‌شود؛ منبع را بررسی کنید.';
+
+  @override
+  String get wsTopicIdentity => 'شناسه موضوع';
+
+  @override
+  String get wsElementAnchor => 'لنگر عنصر';
+
+  @override
+  String get wsHeadingText => 'متن عنوان';
+
+  @override
+  String get wsDefaultTitle => 'عنوان پیش‌فرض';
+
+  @override
+  String get wsTopicNavigation => 'پیمایش موضوع';
+
+  @override
+  String get wsHeadingOptions => 'ویژگی‌های عنوان';
+
+  @override
+  String get wsDocumentOptions => 'تنظیمات سند';
+
+  @override
+  String get wsSettingsPresent => 'تنظیمات صریح موجود است';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'عنوان منتشرشده را بازنویسی می‌کند؛ متن عنوان تغییر نمی‌کند.';
+
+  @override
+  String get wsIgnoreVariables => 'متغیرها را متن لفظی در نظر بگیر';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'وقتی فعال باشد، متن شبیه متغیر جایگزین نمی‌شود.';
+
+  @override
+  String get wsInstanceSelection => 'نمونه‌های راهنما';
+
+  @override
+  String get wsInstanceExplanation =>
+      'خروجی را با نام، گروه، فهرست، استثنا یا عبارت انتخاب کنید.';
+
+  @override
+  String get wsFilterExplanation =>
+      'محتوای قابل استفاده مجدد را با معیارها فیلتر می‌کند؛ نمونه راهنما را انتخاب نمی‌کند.';
+
+  @override
+  String get wsContextHelp => 'شناسه راهنمای زمینه‌ای';
+
+  @override
+  String get wsCapitalization => 'بزرگی حروف';
+
+  @override
+  String get wsLibraryTopic => 'موضوع کتابخانه';
+
+  @override
+  String get wsLastModified => 'آخرین تغییر';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'H1 موضوع وجود ندارد. آن را در منبع اضافه کنید.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'اولین H1 عنوان موضوع را تعیین می‌کند. H1های بعدی مستقل‌اند.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'id ریشه با شناسه مشتق از نام فایل متفاوت است. فایل موضوع را تغییر نام دهید یا منبع را بررسی کنید.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'ویژگی‌های پشتیبانی‌نشده حفظ می‌شوند. در منبع بررسی کنید.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'لنگر تولیدشده؛ وارد کردن مقدار آن را بازنویسی می‌کند.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'سازنده تثبیت‌شده ویژگی‌های H1 را منتشر نمی‌کند. متعلق به عنوان هستند، نه ریشه XML.';
+
+  @override
   String get closeOtherTabs => 'بستن زبانه‌های دیگر';
 
   @override
@@ -4826,4 +4921,517 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'ممکن است درخواست نخست قبلاً یک یادداشت سرور ایجاد کرده باشد. این کار یک یادداشت جداگانه با کار محلی حفظ‌شدهٔ شما ایجاد می‌کند. هیچ یادداشت مشکوک به تکراری بودن حذف نمی‌شود.';
+
+  @override
+  String get wsSemanticFormats => 'قالب‌بندی معنایی';
+
+  @override
+  String get wsUiControl => 'کنترل رابط کاربری';
+
+  @override
+  String get wsFilePath => 'فایل / مسیر';
+
+  @override
+  String get wsUiPath => 'مسیر رابط کاربری';
+
+  @override
+  String get wsDefinitionList => 'فهرست تعریف‌ها';
+
+  @override
+  String get wsIncludeContent => 'درج محتوای قابل استفاده مجدد';
+
+  @override
+  String get wsVariableReference => 'ارجاع به متغیر';
+
+  @override
+  String get wsConvertList => 'تبدیل فهرست به رویه';
+
+  @override
+  String get wsElementProperties => 'ویژگی‌های عنصر';
+
+  @override
+  String get wsTopicProperties => 'ویژگی‌های موضوع';
+
+  @override
+  String get wsCollapsible => 'قابل جمع شدن';
+
+  @override
+  String get wsPublishedState => 'حالت اولیه هنگام انتشار';
+
+  @override
+  String get wsExpanded => 'باز';
+
+  @override
+  String get wsCollapsed => 'جمع شده';
+
+  @override
+  String get wsCollapsedTitle => 'عنوان در حالت جمع شده';
+
+  @override
+  String get wsTerm => 'اصطلاح';
+
+  @override
+  String get wsListLayout => 'چیدمان فهرست';
+
+  @override
+  String get wsSyncGroup => 'گروه همگام‌سازی';
+
+  @override
+  String get wsTabKey => 'کلید زبانه';
+
+  @override
+  String get wsSwitcherLabel => 'برچسب تغییر‌دهنده';
+
+  @override
+  String get wsNavigationElements => 'عناصر پیمایش';
+
+  @override
+  String get wsNavigationDepth => 'عمق پیمایش';
+
+  @override
+  String get wsAddItem => 'افزودن مورد';
+
+  @override
+  String get wsStep => 'گام';
+
+  @override
+  String get wsPropertyInvalid => 'مقدار ویژگی نامعتبر';
+
+  @override
+  String get wsFilter => 'فیلتر';
+
+  @override
+  String get wsIdentifier => 'شناسه عنصر';
+
+  @override
+  String get wsTldr => 'خلاصه (TLDR)';
+
+  @override
+  String get wsFullLayout => 'عرض کامل';
+
+  @override
+  String get wsMediumLayout => 'متوسط (1:2)';
+
+  @override
+  String get wsNarrowLayout => 'ستون باریک اصطلاح';
+
+  @override
+  String get wsTitle => 'عنوان';
+
+  @override
+  String get wsSwitcherKey => 'کلید انتخابگر';
+
+  @override
+  String get nextcloudServerSettings => 'تنظیمات Notes سرور';
+
+  @override
+  String get nextcloudNotesPath => 'مسیر پوشهٔ یادداشت‌ها';
+
+  @override
+  String get nextcloudFileSuffix => 'پسوند فایل یادداشت‌های جدید';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'این تنظیمات Notes روی کارخواه‌های دیگر هم اثر می‌گذارد. تغییر مسیر فایل‌ها را جابه‌جا نمی‌کند؛ تغییر پسوند نام یادداشت‌های موجود را تغییر نمی‌دهد.';
+
+  @override
+  String get nextcloudSettingsSaved => 'تنظیمات سرور ذخیره شد';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'با مقادیر نرمال‌شدهٔ سرور ذخیره شد';
+
+  @override
+  String get nextcloudPendingUpload => 'بارگذاری پیوست در انتظار است';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'آخرین بررسی سرور: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'در حال بارگیری تنظیمات سرور';
+
+  @override
+  String get nextcloudSettingsSaving => 'در حال ذخیره تنظیمات سرور';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'ویرایش محلی قبلی';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'استفاده از ویرایش قبلی';
+
+  @override
+  String get quickOpen => 'باز کردن سریع';
+
+  @override
+  String get notesAll => 'همه یادداشت‌ها';
+
+  @override
+  String get notesUncategorized => 'بدون دسته';
+
+  @override
+  String get notesRecovery => 'بازیابی';
+
+  @override
+  String get notesRecentlyEdited => 'تازه ویرایش‌شده';
+
+  @override
+  String get notesOldestEdited => 'قدیمی‌ترین ویرایش';
+
+  @override
+  String get notesTitleAscending => 'عنوان صعودی';
+
+  @override
+  String get notesTitleDescending => 'عنوان نزولی';
+
+  @override
+  String get notesMove => 'انتقال به دسته';
+
+  @override
+  String get notesRemoveFavorite => 'حذف از علاقه‌مندی‌ها';
+
+  @override
+  String get notesOffline => 'در دسترس کردن آفلاین';
+
+  @override
+  String get notesOfflineRemove => 'حذف نگهداری آفلاین';
+
+  @override
+  String get notesIndexing => 'در حال نمایه‌سازی یادداشت‌ها…';
+
+  @override
+  String get notesSearchHelp =>
+      'واژه‌ها با AND ترکیب می‌شوند. از \"عبارت نقل‌شده\" و title: و category: استفاده کنید.';
+
+  @override
+  String get notesSourceLocation => 'موقعیت در منبع';
+
+  @override
+  String get notesRecoveryHelp =>
+      'فقط یادداشت‌های محلی نگهداری‌شده و تاریخچه محلی. زباله‌دان و تاریخچه سرور در دسترس نیست.';
+
+  @override
+  String get notesImport => 'وارد کردن یادداشت‌ها';
+
+  @override
+  String get notesExport => 'صادر کردن یادداشت‌ها';
+
+  @override
+  String get notesImportDistinct => 'وارد کردن به عنوان یادداشت جدا';
+
+  @override
+  String get notesAvailableOffline => 'در دسترس آفلاین';
+
+  @override
+  String get notesIncomplete => 'ناقص';
+
+  @override
+  String get notesSelected => 'یادداشت‌های انتخاب‌شده';
+
+  @override
+  String get notesNoHistory =>
+      'نسخه نگهداری‌شده‌ای نیست. تاریخچه ممکن است غیرفعال، منقضی یا پاک شده باشد.';
+
+  @override
+  String get notesTextAvailable => 'متن به صورت محلی در دسترس است';
+
+  @override
+  String get notesLocalVersion => 'نسخهٔ کاری محلی';
+
+  @override
+  String get notesAttachments => 'پیوست‌ها';
+
+  @override
+  String get notesSkipped => 'رد شد';
+
+  @override
+  String get notesFailed => 'ناموفق';
+
+  @override
+  String get notesCompleted => 'تکمیل شد';
+
+  @override
+  String get notesImportNew => 'شروع وارد کردن جدید';
+
+  @override
+  String get notesImportResume => 'ادامه وارد کردن متوقف‌شده';
+
+  @override
+  String get notesImportAlreadyImported => 'قبلاً در این عملیات وارد شده است';
+
+  @override
+  String get references => 'ارجاع‌ها';
+
+  @override
+  String get referenceIncoming => 'ورودی';
+
+  @override
+  String get referenceOutgoing => 'خروجی';
+
+  @override
+  String get referenceChooseTarget => 'انتخاب مقصد پیوند';
+
+  @override
+  String get referenceWholeDocument => 'کل سند';
+
+  @override
+  String get referenceSourceLocation => 'مکان منبع';
+
+  @override
+  String get referenceTargetLocation => 'مکان مقصد';
+
+  @override
+  String get referenceResolved => 'حل‌شده';
+
+  @override
+  String get referenceMissing => 'یافت نشد';
+
+  @override
+  String get referenceAmbiguous => 'مبهم';
+
+  @override
+  String get referenceUnavailable => 'در این زمینه در دسترس نیست';
+
+  @override
+  String get referenceUnsupported => 'پشتیبانی نمی‌شود';
+
+  @override
+  String get referenceNoPortableId =>
+      'این مقصد نشانی قابل‌انتقال و تأییدشده‌ای برای یادداشت ندارد.';
+
+  @override
+  String get wsIncludeLines => 'شامل کردن خط‌ها';
+
+  @override
+  String get wsIncludeSymbol => 'شامل کردن نماد';
+
+  @override
+  String get wsEmphasizeLines => 'برجسته کردن خط‌های نمایش داده‌شده';
+
+  @override
+  String get wsPropertiesReadOnly => 'ویژگی‌ها در این نما فقط خواندنی هستند.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'این عنصر محافظت شده است. منبع آن را ویرایش کنید.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'سند یا عنصر تغییر کرد. پیش‌نویس را برگردانید و دوباره انتخاب کنید.';
+
+  @override
+  String get wsPropertiesUnresolved => 'مرجع اکنون قابل حل نیست.';
+
+  @override
+  String get wsUseDefault => 'استفاده از پیش‌فرض';
+
+  @override
+  String get wsPropertiesSelection => 'یک عنصر را انتخاب کنید.';
+
+  @override
+  String get wsImageDisplay => 'نمایش تصویر';
+
+  @override
+  String get wsImageThumbnail => 'تصویر بندانگشتی قابل کلیک';
+
+  @override
+  String get wsEnabled => 'فعال';
+
+  @override
+  String get wsDisabled => 'غیرفعال';
+
+  @override
+  String get wsWidth => 'عرض';
+
+  @override
+  String get wsHeight => 'ارتفاع';
+
+  @override
+  String get wsPropertiesInactive =>
+      'این ویژگی تنها با فعال بودن جمع‌شدن در انتشار اثر دارد.';
+
+  @override
+  String get wsNavigationAll => 'همه عناصر دارای عنوان';
+
+  @override
+  String get wsNavigationNone => 'بدون پیمایش';
+
+  @override
+  String get wsNavigationCustom => 'پیمایش سفارشی';
+
+  @override
+  String get wsTitleOverride => 'بازنویسی عنوان';
+
+  @override
+  String get wsCompactLayout => 'فشرده';
+
+  @override
+  String get wsWideLayout => 'عریض';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'پیش از تنظیم src، کد نوشته‌شده در این بلوک را منتقل یا حذف کنید. Writerside بلوک کد غیرخالی با ارجاع منبع را نمی‌پذیرد.';
+
+  @override
+  String get wsInherited => 'ارث‌بری از فهرست';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside اندازه تصاویر خارجی را به‌طور قابل اتکا تنظیم نمی‌کند. اندازه‌های موجود قابل بررسی و حذف هستند.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'این تغییر در متن منبع اعمال نشد. پیش‌نویس حفظ شده است.';
+
+  @override
+  String get wsListItem => 'مورد فهرست';
+
+  @override
+  String get wsSourceFile => 'فایل منبع';
+
+  @override
+  String get wsLinkTarget => 'مقصد پیوند';
+
+  @override
+  String get wsPreviewImage => 'تصویر پیش‌نمایش';
+
+  @override
+  String get wsIncludedElement => 'عنصر گنجانده‌شده';
+
+  @override
+  String get wsHelpModule => 'ماژول راهنما';
+
+  @override
+  String get wsActionId => 'شناسهٔ عمل';
+
+  @override
+  String get wsKeymapHelpInstance => 'نمونهٔ راهنمای نگاشت کلید';
+
+  @override
+  String get wsShowInSource => 'نمایش در منبع';
+
+  @override
+  String get wsOriginElement => 'بازنویسی عنصر';
+
+  @override
+  String get wsOriginAncestor => 'عنصر والد';
+
+  @override
+  String get wsOriginModule => 'پیش‌فرض ماژول';
+
+  @override
+  String get wsOriginBuiltIn => 'پیش‌فرض داخلی';
+
+  @override
+  String get wsOriginUnresolved => 'حل‌نشده';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'مقدار مؤثر: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'عنصر';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'تولیدشده: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'پیش‌فرض: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'پیش‌فرض: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'مقدار حل‌شده: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'حل‌نشده';
+
+  @override
+  String get wsModule => 'ماژول';
+
+  @override
+  String get wsParent => 'عنصر والد';
+
+  @override
+  String get wsListType => 'نوع فهرست';
+
+  @override
+  String get wsStartingNumber => 'شمارهٔ آغاز';
+
+  @override
+  String get wsListSorting => 'مرتب‌سازی';
+
+  @override
+  String get wsLetteredList => 'فهرست حروفی';
+
+  @override
+  String get wsCheckboxList => 'فهرست کادرهای انتخاب';
+
+  @override
+  String get wsMarkerlessList => 'فهرست بدون نشانگر';
+
+  @override
+  String get wsAscending => 'صعودی';
+
+  @override
+  String get wsDescending => 'نزولی';
+
+  @override
+  String get wsNoSorting => 'بدون مرتب‌سازی';
+
+  @override
+  String get wsAsWritten => 'همان‌طور که نوشته شده';
+
+  @override
+  String get wsSentenceCase => 'حالت حروف جمله';
+
+  @override
+  String get wsTitleCase => 'حالت حروف عنوان';
+
+  @override
+  String get wsLowerCase => 'حروف کوچک';
+
+  @override
+  String get wsUpperCase => 'حروف بزرگ';
+
+  @override
+  String get wsNativeMarkers => 'نشانگرهای Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'نشانگر آغاز: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'سطح $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'سازندهٔ ثابت قواعد <caps> ماژول را نادیده می‌گیرد. از ویژگی caps محلی یا default-property استفاده کنید.';
+
+  @override
+  String get wsInsertElements => 'درج عناصر';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'یادآوری‌ها و نقل‌قول‌ها';
+
+  @override
+  String get wsSemanticText => 'متن معنایی';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.';
 }

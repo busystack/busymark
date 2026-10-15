@@ -3414,7 +3414,7 @@ void main() {}
                   vertical: BusyMarkSpacing.sm,
                 ),
         );
-        expect(toolbarScrollView.clipBehavior, Clip.none);
+        expect(toolbarScrollView.clipBehavior, Clip.hardEdge);
         expect(toolbarScrollView.hitTestBehavior, HitTestBehavior.deferToChild);
         final shownFieldRect = tester.getRect(find.byType(TextField).first);
         if (topHorizontalToolbar) {
@@ -5120,21 +5120,63 @@ void main() {}
       await tester.pump();
 
       expect(find.byType(Image), findsOneWidget);
-      expect(find.text('rpi_1.jpg'), findsNothing);
-      expect(find.byType(TextField), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('wysiwyg-document-content')),
+          matching: find.text('rpi_1.jpg'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('wysiwyg-document-content')),
+          matching: find.byType(TextField),
+        ),
+        findsNothing,
+      );
 
       await tester.tap(find.byKey(const ValueKey('wysiwyg-image-block-image')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Image'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkModalEditorScaffold),
+          matching: find.text('Image'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Apply'), findsOneWidget);
       expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
       expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
       expect(find.byType(BusyMarkEditorHeader), findsOneWidget);
-      expect(find.byType(BusyMarkGroupedList), findsOneWidget);
-      expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(2));
-      expect(find.byType(TextFormField), findsNWidgets(2));
-      expect(find.byType(YaruListTile), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkModalEditorScaffold),
+          matching: find.byType(BusyMarkGroupedList),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkModalEditorScaffold),
+          matching: find.byType(BusyMarkGroupedTextEntry),
+        ),
+        findsNWidgets(2),
+      );
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkModalEditorScaffold),
+          matching: find.byType(TextFormField),
+        ),
+        findsNWidgets(2),
+      );
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkModalEditorScaffold),
+          matching: find.byType(YaruListTile),
+        ),
+        findsNWidgets(2),
+      );
       expect(find.byType(BusyMarkDialogShell), findsNothing);
       expect(find.byType(BusyMarkDialogButton), findsNothing);
       expect(find.byType(YaruDialogTitleBar), findsNothing);

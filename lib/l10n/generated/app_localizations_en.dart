@@ -11,6 +11,102 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Module capitalization is not published.';
+
+  @override
+  String get wsTitleOverridesAction => 'Instance and TOC titles…';
+
+  @override
+  String get wsHeadingNotPublished => 'Not published by this builder.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.';
+
+  @override
+  String get wsTopicIdentity => 'Topic ID';
+
+  @override
+  String get wsElementAnchor => 'Element anchor';
+
+  @override
+  String get wsHeadingText => 'Heading text';
+
+  @override
+  String get wsDefaultTitle => 'Default title';
+
+  @override
+  String get wsTopicNavigation => 'Topic navigation';
+
+  @override
+  String get wsHeadingOptions => 'Heading attributes';
+
+  @override
+  String get wsDocumentOptions => 'Document settings';
+
+  @override
+  String get wsSettingsPresent => 'Authored settings present';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Overrides the published heading title; the heading text remains unchanged.';
+
+  @override
+  String get wsIgnoreVariables => 'Treat variable text literally';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'When enabled, variable-looking text is not substituted.';
+
+  @override
+  String get wsInstanceSelection => 'Help instances';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Select help outputs with names, groups, lists, exclusions, or expressions.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filter reusable content by criteria; this does not select a help instance.';
+
+  @override
+  String get wsContextHelp => 'Context help ID';
+
+  @override
+  String get wsCapitalization => 'Capitalization';
+
+  @override
+  String get wsLibraryTopic => 'Library topic';
+
+  @override
+  String get wsLastModified => 'Last modified';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'No topic H1 is authored. Add the topic heading in Source.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'The first H1 owns the topic title. Later H1s are separate headings.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'The authored root id differs from the filename-derived Topic ID. Use Rename topic file or inspect Source.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Unsupported authored attributes are preserved. Inspect them in Source.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Generated anchor; setting a value authors an override.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'The pinned builder does not publish topic H1 attributes: inline attributes render literally and separate-line attributes are ignored. These belong to the heading, not the XML root.';
+
+  @override
   String get closeOtherTabs => 'Close other tabs';
 
   @override
@@ -4802,4 +4898,519 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.';
+
+  @override
+  String get wsSemanticFormats => 'Semantic formatting';
+
+  @override
+  String get wsUiControl => 'UI Control';
+
+  @override
+  String get wsFilePath => 'File / Path';
+
+  @override
+  String get wsUiPath => 'UI Path';
+
+  @override
+  String get wsDefinitionList => 'Definition List';
+
+  @override
+  String get wsIncludeContent => 'Include Reusable Content';
+
+  @override
+  String get wsVariableReference => 'Variable Reference';
+
+  @override
+  String get wsConvertList => 'Convert List to Procedure';
+
+  @override
+  String get wsElementProperties => 'Element Properties';
+
+  @override
+  String get wsTopicProperties => 'Topic Properties';
+
+  @override
+  String get wsCollapsible => 'Collapsible';
+
+  @override
+  String get wsPublishedState => 'Published initial state';
+
+  @override
+  String get wsExpanded => 'Expanded';
+
+  @override
+  String get wsCollapsed => 'Collapsed';
+
+  @override
+  String get wsCollapsedTitle => 'Collapsed title';
+
+  @override
+  String get wsTerm => 'Term';
+
+  @override
+  String get wsListLayout => 'List layout';
+
+  @override
+  String get wsSyncGroup => 'Synchronization group';
+
+  @override
+  String get wsTabKey => 'Tab key';
+
+  @override
+  String get wsSwitcherLabel => 'Switcher label';
+
+  @override
+  String get wsNavigationElements => 'Navigation elements';
+
+  @override
+  String get wsNavigationDepth => 'Navigation depth';
+
+  @override
+  String get wsAddItem => 'Add item';
+
+  @override
+  String get wsStep => 'Step';
+
+  @override
+  String get wsPropertyInvalid => 'Invalid property value';
+
+  @override
+  String get wsFilter => 'Filter';
+
+  @override
+  String get wsIdentifier => 'Element ID';
+
+  @override
+  String get wsTldr => 'TLDR';
+
+  @override
+  String get wsFullLayout => 'Full width';
+
+  @override
+  String get wsMediumLayout => 'Medium (1:2)';
+
+  @override
+  String get wsNarrowLayout => 'Narrow term';
+
+  @override
+  String get wsTitle => 'Title';
+
+  @override
+  String get wsSwitcherKey => 'Switcher key';
+
+  @override
+  String get nextcloudServerSettings => 'Server Notes settings';
+
+  @override
+  String get nextcloudNotesPath => 'Notes folder path';
+
+  @override
+  String get nextcloudFileSuffix => 'New-note file suffix';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'These server Notes settings affect other clients. Changing the path does not migrate files; changing the suffix does not rename existing notes.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Server settings saved';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Saved with server-normalized values';
+
+  @override
+  String get nextcloudPendingUpload => 'Attachment upload pending';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Last server check: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Loading server settings';
+
+  @override
+  String get nextcloudSettingsSaving => 'Saving server settings';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Previous local edit';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Use previous edit';
+
+  @override
+  String get quickOpen => 'Quick Open';
+
+  @override
+  String get notesAll => 'All notes';
+
+  @override
+  String get notesUncategorized => 'Uncategorized';
+
+  @override
+  String get notesRecovery => 'Recovery';
+
+  @override
+  String get notesRecentlyEdited => 'Recently edited';
+
+  @override
+  String get notesOldestEdited => 'Oldest edited';
+
+  @override
+  String get notesTitleAscending => 'Title A–Z';
+
+  @override
+  String get notesTitleDescending => 'Title Z–A';
+
+  @override
+  String get notesMove => 'Move to category';
+
+  @override
+  String get notesRemoveFavorite => 'Remove favorite';
+
+  @override
+  String get notesOffline => 'Make available offline';
+
+  @override
+  String get notesOfflineRemove => 'Remove offline requirement';
+
+  @override
+  String get notesIndexing => 'Indexing notes…';
+
+  @override
+  String get notesSearchHelp =>
+      'Terms use AND. Use \"quoted phrases\", title: and category:.';
+
+  @override
+  String get notesSourceLocation => 'Source location';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Retained local notes and Local History only. Server trash and history are unavailable.';
+
+  @override
+  String get notesImport => 'Import notes';
+
+  @override
+  String get notesExport => 'Export notes';
+
+  @override
+  String get notesImportDistinct => 'Import as a distinct note';
+
+  @override
+  String get notesAvailableOffline => 'Available offline';
+
+  @override
+  String get notesIncomplete => 'Incomplete';
+
+  @override
+  String get notesSelected => 'Selected notes';
+
+  @override
+  String get notesNoHistory =>
+      'No retained revisions. History may be disabled, expired or cleared.';
+
+  @override
+  String get notesTextAvailable => 'Text available locally';
+
+  @override
+  String get notesLocalVersion => 'Local working version';
+
+  @override
+  String get notesAttachments => 'Attachments';
+
+  @override
+  String get notesSkipped => 'Skipped';
+
+  @override
+  String get notesFailed => 'Failed';
+
+  @override
+  String get notesCompleted => 'Completed';
+
+  @override
+  String get notesImportNew => 'Start a new import';
+
+  @override
+  String get notesImportResume => 'Resume interrupted import';
+
+  @override
+  String get notesImportAlreadyImported => 'Already imported in this operation';
+
+  @override
+  String get references => 'References';
+
+  @override
+  String get referenceIncoming => 'Incoming';
+
+  @override
+  String get referenceOutgoing => 'Outgoing';
+
+  @override
+  String get referenceChooseTarget => 'Choose link target';
+
+  @override
+  String get referenceWholeDocument => 'Whole document';
+
+  @override
+  String get referenceSourceLocation => 'Source location';
+
+  @override
+  String get referenceTargetLocation => 'Target location';
+
+  @override
+  String get referenceResolved => 'Resolved';
+
+  @override
+  String get referenceMissing => 'Missing';
+
+  @override
+  String get referenceAmbiguous => 'Ambiguous';
+
+  @override
+  String get referenceUnavailable => 'Unavailable in this context';
+
+  @override
+  String get referenceUnsupported => 'Unsupported';
+
+  @override
+  String get referenceNoPortableId =>
+      'This target has no verified portable note URL.';
+
+  @override
+  String get wsIncludeLines => 'Include lines';
+
+  @override
+  String get wsIncludeSymbol => 'Include symbol';
+
+  @override
+  String get wsEmphasizeLines => 'Emphasize displayed lines';
+
+  @override
+  String get wsPropertiesReadOnly => 'Properties are read-only in this view.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'This element is protected. Edit its source to change properties.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'The document or element changed. Revert this draft and inspect the current element.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'The reference cannot currently be resolved.';
+
+  @override
+  String get wsUseDefault => 'Use default';
+
+  @override
+  String get wsPropertiesSelection =>
+      'Select a single element to inspect its properties.';
+
+  @override
+  String get wsImageDisplay => 'Image display';
+
+  @override
+  String get wsImageThumbnail => 'Clickable thumbnail';
+
+  @override
+  String get wsEnabled => 'Enabled';
+
+  @override
+  String get wsDisabled => 'Disabled';
+
+  @override
+  String get wsWidth => 'Width';
+
+  @override
+  String get wsHeight => 'Height';
+
+  @override
+  String get wsPropertiesInactive =>
+      'This property has no effect while published collapse is disabled.';
+
+  @override
+  String get wsNavigationAll => 'All titled elements';
+
+  @override
+  String get wsNavigationNone => 'No navigation';
+
+  @override
+  String get wsNavigationCustom => 'Custom navigation';
+
+  @override
+  String get wsTitleOverride => 'Title override';
+
+  @override
+  String get wsCompactLayout => 'Compact';
+
+  @override
+  String get wsWideLayout => 'Wide';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Move or remove the code authored in this block before setting src. Writerside rejects a nonempty code block with a source reference.';
+
+  @override
+  String get wsInherited => 'Inherit from list';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'This change did not reach the source. The draft has been retained.';
+
+  @override
+  String get wsListItem => 'List item';
+
+  @override
+  String get wsSourceFile => 'Source file';
+
+  @override
+  String get wsLinkTarget => 'Link target';
+
+  @override
+  String get wsPreviewImage => 'Preview image';
+
+  @override
+  String get wsIncludedElement => 'Included element';
+
+  @override
+  String get wsHelpModule => 'Help module';
+
+  @override
+  String get wsActionId => 'Action ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Keymap help instance';
+
+  @override
+  String get wsShowInSource => 'Show in Source';
+
+  @override
+  String get wsOriginElement => 'element override';
+
+  @override
+  String get wsOriginAncestor => 'parent element';
+
+  @override
+  String get wsOriginModule => 'module default';
+
+  @override
+  String get wsOriginBuiltIn => 'built-in default';
+
+  @override
+  String get wsOriginUnresolved => 'unresolved';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effective: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Element';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Generated: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Default: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Default: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Resolved: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Unresolved';
+
+  @override
+  String get wsModule => 'Module';
+
+  @override
+  String get wsParent => 'Parent';
+
+  @override
+  String get wsListType => 'List type';
+
+  @override
+  String get wsStartingNumber => 'Starting number';
+
+  @override
+  String get wsListSorting => 'Sorting';
+
+  @override
+  String get wsLetteredList => 'Lettered list';
+
+  @override
+  String get wsCheckboxList => 'Checkbox list';
+
+  @override
+  String get wsMarkerlessList => 'List without markers';
+
+  @override
+  String get wsAscending => 'Ascending';
+
+  @override
+  String get wsDescending => 'Descending';
+
+  @override
+  String get wsNoSorting => 'No sorting';
+
+  @override
+  String get wsAsWritten => 'As written';
+
+  @override
+  String get wsSentenceCase => 'Sentence case';
+
+  @override
+  String get wsTitleCase => 'Title case';
+
+  @override
+  String get wsLowerCase => 'Lowercase';
+
+  @override
+  String get wsUpperCase => 'Uppercase';
+
+  @override
+  String get wsNativeMarkers => 'Markdown markers';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Marker start: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Level $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'The pinned builder ignores module <caps> rules. Use a local caps override or default-property.';
+
+  @override
+  String get wsInsertElements => 'Insert elements';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Admonitions and quotes';
+
+  @override
+  String get wsSemanticText => 'Semantic text';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'The inspected element is unavailable. Inspect an element to continue.';
 }

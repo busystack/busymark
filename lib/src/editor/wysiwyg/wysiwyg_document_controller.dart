@@ -1,16 +1,28 @@
+import '../../writerside/writerside_property_validation.dart';
+import 'dart:convert';
+import '../../core/source_span.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/document_outline.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_source_map.dart';
 import '../../markdown/markdown_parser.dart';
+import '../../markdown/markdown_front_matter.dart';
 import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
 import '../../spellcheck/spelling_replacement.dart';
 import '../inline_semantics.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_inline_controller.dart';
+import 'writerside_editing_adapter.dart';
+import '../../writerside/writerside_schema.dart';
+import '../../writerside/writerside_project.dart';
+import '../../writerside/writerside_document_parser.dart';
+import '../../writerside/writerside_document_serializer.dart';
+import '../../writerside/writerside_document.dart';
 
 BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   BusyInline snapshotInline(BusyInline inline) {
@@ -52,7 +64,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyMarkWysiwygDocumentController({
     required BusyDocument document,
     BusyMarkMarkdownSerializer serializer = const BusyMarkMarkdownSerializer(),
-  }) : _document = _ensureEditableDocument(document),
+  }) : _document = _ensureEditableDocument(
+         busyMarkWysiwygBindMarkdownReferences(document),
+       ),
        _serializer = serializer;
 
   BusyDocument _document;
@@ -61,7 +75,143 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   BusyDocument get document => _document;
 
-  String get markdown => _serializer.serialize(_document);
+  String get markdown => _document.isXmlTopic
+      ? const WritersideEditingAdapter().serializeXml(_document)
+      : _serializer.serialize(_document);
+
+  void rebaseCommittedSource(String source) {
+    if (_document.isXmlTopic) {
+      _document = const WritersideEditingAdapter().rebaseXml(_document, source);
+    } else if (_document.isWriterside) {
+      // Every Writerside editing projection needs current authored positions,
+      // including a topic containing only headings and paragraphs. List
+      // ownership reparsing remains limited to the structural cases below.
+      final current = _document;
+      bool needsOwnership(List<BusyBlock> blocks, BusyBlock? owner) {
+        for (final b in blocks) {
+          if (_isListItemKind(b.kind) &&
+              !b.attributes.containsKey('element') &&
+              owner?.attributes['busymark-list-form'] != 'markdown') {
+            return true;
+          }
+          if (b.attributes['busymark-list-form'] == 'markdown' &&
+              (b.children.any((c) => !_isListItemKind(c.kind)) ||
+                  b.attributes['busymark-native-members'] !=
+                      jsonEncode(b.children.map((c) => c.id).toList()))) {
+            return true;
+          }
+          if (b.dirty &&
+              b.attributes.containsKey('element') &&
+              b.attributes['busymark-list-form'] != 'markdown' &&
+              (b.rawSource == null ||
+                  b.rawSource!.trimLeft().startsWith('<'))) {
+            return true;
+          }
+          if (needsOwnership(b.children, b)) return true;
+        }
+        return false;
+      }
+
+      final hasListItems = _flattenBlocks(
+        current.blocks,
+      ).any((b) => _isListItemKind(b.kind));
+      var rebased = hasListItems && needsOwnership(current.blocks, null)
+          ? _reparseNativeListOwnership(source)
+          : const MarkdownParser().rebindSourceMetadata(current, source);
+      final generatedAnchors = {
+        for (final heading in rebased.outline)
+          if (heading.editorBlockId != null) heading.editorBlockId!: heading.id,
+      };
+      BusyBlock commit(BusyBlock block) {
+        final attrs = {...block.attributes}
+          ..remove('busymark-property-edits')
+          ..remove('busymark-property-line-ending');
+        if (block.kind == BusyBlockKind.heading &&
+            !attrs.containsKey('element') &&
+            attrs['generatedId'] == 'true' &&
+            generatedAnchors.containsKey(block.id)) {
+          attrs['id'] = generatedAnchors[block.id]!;
+        }
+        if (block.attributes.containsKey(
+              'busymark-writerside-source-attributes',
+            ) ||
+            WritersideEditingAdapter.sourceAttributes(block).isNotEmpty) {
+          attrs['busymark-writerside-source-attributes'] = jsonEncode(
+            WritersideEditingAdapter.sourceAttributes(block),
+          );
+        }
+        return block.copyWith(
+          attributes: attrs,
+          dirty: false,
+          children: block.children.map(commit).toList(),
+        );
+      }
+
+      rebased = rebased.copyWith(blocks: rebased.blocks.map(commit).toList());
+      _document = busyMarkWysiwygBindMarkdownReferences(rebased);
+    }
+  }
+
+  BusyDocument _reparseNativeListOwnership(String source) {
+    final parsed = busyMarkWysiwygBindMarkdownReferences(
+      const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument,
+    );
+    bool member(BusyBlock b) =>
+        !b.isSourceOnly &&
+        b.kind != BusyBlockKind.frontMatter &&
+        b.attributes['busymark-list-form'] != 'markdown';
+    final before = _flattenBlocks(_document.blocks).where(member).toList();
+    final after = _flattenBlocks(parsed.blocks).where(member).toList();
+    // Reparse our own transaction, retaining editing identities only when the
+    // complete authored member sequence agrees. Replacement buffers do not use
+    // this reconciliation and pending property sessions stay revision-bound.
+    if (before.length != after.length ||
+        Iterable.generate(before.length).any(
+          (i) =>
+              (before[i].kind != after[i].kind &&
+                  !(_isListItemKind(before[i].kind) &&
+                      _isListItemKind(after[i].kind))) ||
+              WritersideEditingAdapter.tagForBlock(before[i]) !=
+                  WritersideEditingAdapter.tagForBlock(after[i]) ||
+              before[i].plainText != after[i].plainText,
+        )) {
+      return parsed;
+    }
+    final identities = {
+      for (var i = 0; i < before.length; i++) after[i].id: before[i].id,
+    };
+    final owners = {
+      for (final b in _flattenBlocks(_document.blocks))
+        if (b.attributes['busymark-list-form'] == 'markdown')
+          jsonEncode(b.children.map((c) => c.id).toList()): b.id,
+    };
+    BusyBlock rekey(BusyBlock b) {
+      final children = b.children.map(rekey).toList();
+      final native = b.attributes['busymark-list-form'] == 'markdown';
+      final signature = jsonEncode(children.map((c) => c.id).toList());
+      final id = native
+          ? owners[signature] ?? _nextGeneratedBlockId('list')
+          : identities[b.id] ?? b.id;
+      return b.copyWith(
+        id: id,
+        children: children,
+        attributes: {
+          ...b.attributes,
+          if (b.attributes.containsKey('busymark-native-members'))
+            'busymark-native-members': signature,
+        },
+      );
+    }
+
+    return parsed.copyWith(blocks: parsed.blocks.map(rekey).toList());
+  }
 
   @override
   void notifyListeners() {
@@ -70,13 +220,1556 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void replaceDocument(BusyDocument document) {
-    _document = _ensureEditableDocument(document);
+    _document = _ensureEditableDocument(
+      busyMarkWysiwygBindMarkdownReferences(document),
+    );
     notifyListeners();
   }
 
   String blockText(String blockId) {
     final block = blockById(blockId);
     return block == null ? '' : busyMarkWysiwygEditableText(block);
+  }
+
+  List<BusyBlock> elementPath(String blockId) {
+    List<BusyBlock>? find(List<BusyBlock> blocks) {
+      for (final block in blocks) {
+        if (block.id == blockId) return [block];
+        final path = find(block.children);
+        if (path != null) return [block, ...path];
+      }
+      return null;
+    }
+
+    final path = find(_document.blocks) ?? [];
+    if (!_document.isXmlTopic && path.isNotEmpty) {
+      final rootIndex = _document.blocks.indexWhere(
+        (b) => b.id == path.first.id,
+      );
+      final headings = <BusyBlock>[];
+      for (final candidate in _document.blocks.take(rootIndex + 1)) {
+        if (candidate.kind != BusyBlockKind.heading) continue;
+        final level = int.tryParse(candidate.attributes['level'] ?? '') ?? 1;
+        headings.removeWhere(
+          (h) => (int.tryParse(h.attributes['level'] ?? '') ?? 1) >= level,
+        );
+        if (candidate.id != blockId) headings.add(candidate);
+      }
+      return [...headings, ...path];
+    }
+    return path;
+  }
+
+  List<String> availableVariableReferences(
+    WritersideProjectIndex index,
+    String moduleId,
+    String blockId,
+  ) {
+    final target = blockById(blockId);
+    if (target == null) {
+      return const [];
+    }
+    final names = <String>{
+      for (final s in index.symbols)
+        if (s.moduleId == moduleId &&
+            s.kind == WritersideSymbolKind.variable &&
+            s.scopeSpan == null)
+          s.name,
+    };
+    // Read local declarations from authored parents, avoiding stale index
+    // offsets after structural edits. Markdown root declarations share topic
+    // scope, while a declaration inside a tab/chapter remains in that parent.
+    final scopes = [
+      if (!_document.isXmlTopic) _document.blocks,
+      for (final parent in elementPath(blockId)) parent.children,
+    ];
+    for (final children in scopes) {
+      for (final child in children) {
+        final name = child.attributes['name'];
+        if (child.attributes['element'] == 'var' && name != null) {
+          names.add(name);
+        }
+      }
+    }
+    return names.toList()..sort();
+  }
+
+  bool canInsertWriterside(
+    BusyWritersideInsertCommand command,
+    String? blockId,
+  ) {
+    if (!_document.isWriterside || blockId == null) return false;
+    final target = blockById(blockId);
+    if (target == null ||
+        target.preserveRaw ||
+        target.isSourceProtected ||
+        target.isGenerated) {
+      return false;
+    }
+    if (command == BusyWritersideInsertCommand.variable) {
+      return !busyMarkIsWritersideContainer(target) &&
+          target.kind == BusyBlockKind.paragraph;
+    }
+    if (command == BusyWritersideInsertCommand.convertListToProcedure) {
+      return _listToProcedureSelection(blockId) != null;
+    }
+    final parent = _insertionParent(target);
+    final tag = switch (command) {
+      BusyWritersideInsertCommand.procedure => 'procedure',
+      BusyWritersideInsertCommand.tabs => 'tabs',
+      BusyWritersideInsertCommand.definitionList => 'deflist',
+      BusyWritersideInsertCommand.include => 'include',
+      BusyWritersideInsertCommand.video => 'video',
+      BusyWritersideInsertCommand.tldr => 'tldr',
+      _ => '',
+    };
+    final parentTag = parent == null
+        ? 'topic'
+        : parent.attributes['element'] ?? 'chapter';
+    if (!WritersideSchema.childElementNames(parentTag).contains(tag)) {
+      return false;
+    }
+    if (command == BusyWritersideInsertCommand.tldr) {
+      if (!{'topic', 'chapter'}.contains(parentTag)) return false;
+      final siblings = parent?.children ?? _document.blocks;
+      if (_document.isXmlTopic ||
+          parent != null && busyMarkIsWritersideContainer(parent)) {
+        if (siblings.any((b) => b.attributes['element'] == 'tldr')) {
+          return false;
+        }
+      } else if (_document.blocks.any(
+        (b) =>
+            b.attributes['element'] == 'tldr' &&
+            elementPath(b.id)
+                    .where((p) => p.kind == BusyBlockKind.heading)
+                    .lastOrNull
+                    ?.id ==
+                parent?.id,
+      )) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  BusyBlock? _insertionParent(BusyBlock target) {
+    if (!_document.isXmlTopic && target.kind == BusyBlockKind.heading) {
+      return target;
+    }
+    if (busyMarkIsWritersideContainer(target) &&
+        !{
+          'tabs',
+          'deflist',
+          'list',
+          'procedure',
+        }.contains(target.attributes['element'])) {
+      return target;
+    }
+    final path = elementPath(target.id);
+    for (final parent in path.reversed.skip(1)) {
+      if (busyMarkIsWritersideContainer(parent)) return parent;
+      if (!_document.isXmlTopic && parent.kind == BusyBlockKind.heading) {
+        return parent;
+      }
+    }
+    return null;
+  }
+
+  BusyBlock _newWritersideElement(
+    String tag, {
+    String title = '',
+    Map<String, String> attributes = const {},
+    List<BusyBlock> children = const [],
+  }) {
+    final container = WritersideEditingAdapter.containers.contains(tag);
+    return BusyBlock(
+      id: _nextGeneratedBlockId(tag),
+      kind: switch (tag) {
+        'procedure' => BusyBlockKind.writersideProcedure,
+        'tabs' || 'tab' => BusyBlockKind.writersideTabs,
+        'video' => BusyBlockKind.video,
+        'p' => BusyBlockKind.paragraph,
+        _ => BusyBlockKind.writersideRawXml,
+      },
+      inlines: WritersideEditingAdapter.titleElements.contains(tag)
+          ? [BusyInline(kind: BusyInlineKind.text, text: title)]
+          : const [],
+      children: children,
+      dirty: true,
+      attributes: {
+        'element': tag,
+        ...attributes,
+        if (container) busyMarkWritersideContainerAttribute: 'true',
+        if (WritersideEditingAdapter.titleElements.contains(tag))
+          'title': title,
+      },
+    );
+  }
+
+  String? insertWriterside(
+    BusyWritersideInsertCommand command,
+    String blockId, {
+    required String title,
+    Map<String, String> attributes = const {},
+  }) {
+    if (!canInsertWriterside(command, blockId)) return null;
+    if (command == BusyWritersideInsertCommand.convertListToProcedure) {
+      return convertListToProcedure(blockId, title: title);
+    }
+    final tag = switch (command) {
+      BusyWritersideInsertCommand.procedure => 'procedure',
+      BusyWritersideInsertCommand.tabs => 'tabs',
+      BusyWritersideInsertCommand.definitionList => 'deflist',
+      BusyWritersideInsertCommand.include => 'include',
+      BusyWritersideInsertCommand.video => 'video',
+      BusyWritersideInsertCommand.tldr => 'tldr',
+      _ => '',
+    };
+    if (tag.isEmpty) return null;
+    for (final required in WritersideSchema.requiredAttributesFor(tag)) {
+      if ((attributes[required] ?? '').trim().isEmpty) return null;
+    }
+    final itemTag = switch (tag) {
+      'procedure' => 'step',
+      'tabs' => 'tab',
+      'deflist' => 'def',
+      _ => null,
+    };
+    final inserted = _newWritersideElement(
+      tag,
+      title: title,
+      attributes: attributes,
+      children: itemTag == null
+          ? tag == 'tldr'
+                ? [_newWritersideElement('p')]
+                : []
+          : [
+              _newWritersideElement(
+                itemTag,
+                title: title,
+                children: [_newWritersideElement('p')],
+              ),
+            ],
+    );
+    final target = blockById(blockId)!;
+    final parent = _insertionParent(target);
+    if (parent != null && busyMarkIsWritersideContainer(parent)) {
+      _replaceBlock(parent.id, (block) {
+        final children = [...block.children];
+        var index = children.indexWhere((b) => b.id == target.id);
+        if (tag == 'tldr') {
+          index = children.indexWhere(
+            (b) => !b.isSourceOnly && b.attributes['element'] != 'title',
+          );
+          children.insert(index < 0 ? children.length : index, inserted);
+        } else {
+          children.insert(index < 0 ? children.length : index + 1, inserted);
+        }
+        return block.copyWith(children: children, dirty: true);
+      });
+    } else {
+      final anchor = tag == 'tldr' && parent != null ? parent.id : blockId;
+      _document = _document.copyWith(
+        blocks: _insertBlocksAfter(_document.blocks, anchor, [inserted]),
+      );
+      notifyListeners();
+    }
+    return inserted.id;
+  }
+
+  ({BusyBlock? list, List<BusyBlock> items, BusyBlockKind kind})?
+  _listToProcedureSelection(String blockId) {
+    final target = elementPath(
+      blockId,
+    ).where((b) => _isListItemKind(b.kind)).lastOrNull;
+    if (target == null || target.kind == BusyBlockKind.taskListItem) {
+      return null;
+    }
+    final path = elementPath(target.id);
+    final list = path
+        .where((b) => b.attributes['element'] == 'list')
+        .lastOrNull;
+    final siblings =
+        list?.children ??
+        (path.length > 1 && busyMarkIsWritersideContainer(path[path.length - 2])
+            ? path[path.length - 2].children
+            : _document.blocks);
+    final index = siblings.indexWhere((b) => b.id == target.id);
+    if (index < 0) return null;
+    var start = index, end = index + 1;
+    while (start > 0 && siblings[start - 1].kind == target.kind) {
+      start--;
+    }
+    while (end < siblings.length && siblings[end].kind == target.kind) {
+      end++;
+    }
+    final items = list == null
+        ? siblings.sublist(start, end)
+        : siblings.where((b) => !b.isSourceOnly).toList();
+    if (items.any(
+      (b) =>
+          !_isListItemKind(b.kind) ||
+          b.preserveRaw ||
+          b.isSourceProtected ||
+          WritersideEditingAdapter.sourceAttributes(b).keys.any(
+            (a) => !WritersideSchema.attributesFor('step').contains(a),
+          ),
+    )) {
+      return null;
+    }
+    if (list != null &&
+        WritersideEditingAdapter.sourceAttributes(list).keys.any(
+          (a) =>
+              a != 'type' &&
+              !WritersideSchema.attributesFor('procedure').contains(a),
+        )) {
+      return null;
+    }
+    final parentPath = elementPath(list?.id ?? target.id);
+    final parent = parentPath.length > 1
+        ? parentPath[parentPath.length - 2]
+        : null;
+    final parentTag = parent == null
+        ? 'topic'
+        : parent.kind == BusyBlockKind.heading && !_document.isXmlTopic
+        ? 'chapter'
+        : WritersideEditingAdapter.tagForBlock(parent);
+    if (!WritersideSchema.childElementNames(parentTag).contains('procedure')) {
+      return null;
+    }
+    return (list: list, items: items, kind: target.kind);
+  }
+
+  String? convertListToProcedure(String blockId, {required String title}) {
+    final selection = _listToProcedureSelection(blockId);
+    if (selection == null) return null;
+    final list = selection.list;
+    final items = selection.items;
+    final steps = [
+      for (final item in items)
+        _newWritersideElement(
+          'step',
+          attributes: WritersideEditingAdapter.sourceAttributes(item),
+          children: [
+            if (item.inlines.isNotEmpty)
+              BusyBlock(
+                id: _nextGeneratedBlockId('p'),
+                kind: BusyBlockKind.paragraph,
+                inlines: item.inlines,
+                dirty: true,
+              ),
+            ...item.children,
+          ],
+        ),
+    ];
+    final procedure = _newWritersideElement(
+      'procedure',
+      title: title,
+      attributes: {
+        if (list != null) ...{
+          for (final e in WritersideEditingAdapter.sourceAttributes(
+            list,
+          ).entries)
+            if (WritersideSchema.attributesFor('procedure').contains(e.key) &&
+                e.key != 'type')
+              e.key: e.value,
+        },
+        'type': selection.kind == BusyBlockKind.orderedListItem
+            ? 'steps'
+            : 'choices',
+      },
+      children: list == null
+          ? steps
+          : [
+              for (final child in list.children)
+                if (child.isSourceOnly) child else steps[items.indexOf(child)],
+            ],
+    );
+    if (list != null) {
+      _document = _document.copyWith(
+        blocks: _replaceBlockWithMany(_document.blocks, list.id, [procedure]),
+      );
+    } else {
+      var blocks = _document.blocks;
+      for (final item in items) {
+        blocks = _replaceBlockWithMany(
+          blocks,
+          item.id,
+          item == items.first ? [procedure] : [],
+        );
+      }
+      _document = _document.copyWith(blocks: blocks);
+    }
+    notifyListeners();
+    return procedure.id;
+  }
+
+  bool updateWritersideProperty(
+    String blockId,
+    String attribute,
+    String? value,
+  ) {
+    final block = blockById(blockId);
+    if (!_document.isWriterside ||
+        block == null ||
+        block.isSourceProtected ||
+        block.preserveRaw) {
+      return false;
+    }
+    final tag = WritersideEditingAdapter.propertyTag(_document, block);
+    final name = attribute == 'language' ? 'lang' : attribute;
+    if (!(block.kind == BusyBlockKind.heading &&
+            !_document.isXmlTopic &&
+            {'id', 'title'}.contains(attribute) &&
+            (value == null || value.isEmpty)) &&
+        validateWritersideProperty(
+              tag,
+              attribute,
+              value,
+              attributes: block.attributes,
+              applicableAttributes: WritersideEditingAdapter.propertyAttributes(
+                _document,
+                block,
+              ),
+              hasTitleChild: block.children.any(
+                (b) => b.attributes['element'] == 'title',
+              ),
+              inlineCode: block.kind == BusyBlockKind.codeBlock
+                  ? block.plainText
+                  : null,
+            ) !=
+            null) {
+      return false;
+    }
+    if (name == 'id' &&
+        value != null &&
+        value.isNotEmpty &&
+        _flatten(_document.blocks).any(
+          (b) =>
+              b.id != blockId &&
+              b.attributes['id'] == value &&
+              b.attributes['generatedId'] != 'true',
+        )) {
+      return false;
+    }
+    if (block.kind == BusyBlockKind.heading &&
+        !_document.isXmlTopic &&
+        WritersideEditingAdapter.topicHeading(_document)?.id == block.id &&
+        {'collapsible', 'default-state'}.contains(name)) {
+      return false;
+    }
+    if (!WritersideEditingAdapter.propertyAttributes(
+          _document,
+          block,
+        ).contains(name) ||
+        tag == 'topic' && name == 'id') {
+      return false;
+    }
+    if (value != null &&
+        value.isNotEmpty &&
+        WritersideSchema.invalidAttributeValue(tag, name, value) != null) {
+      return false;
+    }
+    if ((value == null || value.isEmpty && name != 'alt') &&
+        WritersideSchema.requiredAttributesFor(tag).contains(name) &&
+        !(name == 'title' &&
+            block.children.any((b) => b.attributes['element'] == 'title')) &&
+        !(block.kind == BusyBlockKind.heading &&
+            !_document.isXmlTopic &&
+            {'id', 'title'}.contains(name))) {
+      return false;
+    }
+    if (block.attributes[attribute] == value ||
+        (value == null || value.isEmpty && attribute != 'alt') &&
+            !block.attributes.containsKey(attribute)) {
+      return true;
+    }
+    // Markdown's list attribute line applies to the list, never to a li.
+    // An item override therefore requires the existing semantic XML form.
+    if (!_document.isXmlTopic &&
+        _isListItemKind(block.kind) &&
+        !block.attributes.containsKey('element') &&
+        !_materializeNativeList(blockId)) {
+      return false;
+    }
+    final imageRange = block.kind == BusyBlockKind.image
+        ? busyInlineReferenceRanges(
+            block.inlines,
+          ).where((r) => r.kind == BusyInlineKind.image).firstOrNull
+        : null;
+    final imageSource = imageRange == null
+        ? null
+        : _patchNativeReferenceProperty(block, imageRange, attribute, value);
+    _replaceBlock(blockId, (block) {
+      final attrs = {...block.attributes};
+      if (!_document.isXmlTopic &&
+          block.rawSource != null &&
+          (!block.dirty ||
+              block.attributes.containsKey('busymark-property-edits')) &&
+          (block.attributes.containsKey('element') ||
+              {
+                BusyBlockKind.paragraph,
+                BusyBlockKind.heading,
+                BusyBlockKind.codeBlock,
+                BusyBlockKind.table,
+                BusyBlockKind.image,
+                BusyBlockKind.blockquote,
+              }.contains(block.kind))) {
+        final old = block.attributes['busymark-property-edits'];
+        attrs['busymark-property-line-ending'] =
+            (_document.source?.contains('\r\n') ?? false) ? '\r\n' : '\n';
+        attrs['busymark-property-edits'] = imageSource != null
+            ? old ?? '{}'
+            : jsonEncode({
+                if (old != null) ...(jsonDecode(old) as Map<String, dynamic>),
+                attribute: value,
+              });
+      }
+      if (value == null || value.isEmpty && attribute != 'alt') {
+        attrs.remove(attribute);
+      } else {
+        attrs[attribute] = value;
+      }
+      if (attribute == 'checked' && block.kind == BusyBlockKind.taskListItem) {
+        attrs['task'] = value ?? 'false';
+      }
+      if (attribute == 'language' &&
+          (attrs['element'] == 'code-block' || attrs.containsKey('lang'))) {
+        if (value == null || value.isEmpty) {
+          attrs.remove('lang');
+        } else {
+          attrs['lang'] = value;
+        }
+      }
+      if (attribute == 'id' && block.kind == BusyBlockKind.heading) {
+        attrs['generatedId'] = 'false';
+      }
+      return block.copyWith(
+        rawSource: imageSource ?? block.rawSource,
+        attributes: attrs,
+        dirty: true,
+        inlines:
+            block.kind == BusyBlockKind.image &&
+                WritersideSchema.attributesFor('img').contains(attribute)
+            ? block.inlines
+                  .map((inline) => _imageProperty(inline, attribute, value))
+                  .toList()
+            : attribute == 'title' && busyMarkIsWritersideContainer(block)
+            ? [BusyInline(kind: BusyInlineKind.text, text: value ?? '')]
+            : block.inlines,
+      );
+    });
+    if (tag == 'def' && attribute != 'title' && !_document.isXmlTopic) {
+      final list = elementPath(
+        blockId,
+      ).where((b) => b.attributes['element'] == 'deflist').lastOrNull;
+      if (list?.attributes['busymark-definition-form'] == 'markdown') {
+        _replaceBlock(
+          list!.id,
+          (b) => b.copyWith(
+            attributes: {...b.attributes}..remove('busymark-definition-form'),
+            dirty: true,
+          ),
+        );
+      }
+    }
+    return true;
+  }
+
+  bool _materializeNativeList(String blockId) {
+    final path = elementPath(blockId);
+    // Markdown chapter ancestry is structural navigation, not child ownership.
+    final parent = path
+        .where((b) => b.children.any((child) => child.id == blockId))
+        .lastOrNull;
+    final nativeList = parent?.attributes['busymark-list-form'] == 'markdown';
+    if (nativeList &&
+        WritersideEditingAdapter.nativeListHasMixedMarkers(parent!)) {
+      return false;
+    }
+    final siblings = parent?.children ?? _document.blocks;
+    final index = siblings.indexWhere((b) => b.id == blockId);
+    if (index < 0) return false;
+    var start = index, end = index + 1;
+    if (nativeList) {
+      // The parser's owner includes mixed task/non-task and loose items.
+      start = 0;
+      end = siblings.length;
+    } else {
+      // Adjacency cannot establish an authored list boundary.
+      return false;
+    }
+    final items = siblings.sublist(start, end);
+    bool convertible(BusyBlock b) =>
+        !b.isSourceProtected &&
+        !b.preserveRaw &&
+        (_isListItemKind(b.kind) ||
+            b.kind == BusyBlockKind.paragraph ||
+            b.kind == BusyBlockKind.codeBlock ||
+            busyMarkIsWritersideContainer(b)) &&
+        (b.attributes['busymark-list-form'] == 'markdown' ||
+            !b.children.any((child) => _isListItemKind(child.kind))) &&
+        b.children.every(convertible);
+    if (!items.every(convertible)) return false;
+
+    Map<String, String> listAttributes(
+      List<BusyBlock> members, [
+      Map<String, String> authored = const {},
+    ]) {
+      final first = members.first;
+      final markerStart = RegExp(
+        r'^([0-9]+)[.)]$',
+      ).firstMatch(first.attributes['marker'] ?? '')?.group(1);
+      return {
+        ...authored,
+        'type':
+            authored['type'] ??
+            (first.kind == BusyBlockKind.orderedListItem
+                ? 'decimal'
+                : first.kind == BusyBlockKind.taskListItem
+                ? 'checkbox'
+                : 'bullet'),
+        // An explicit Writerside start overrides Markdown marker numbering.
+        // Infer only an absent override, separately for each list level.
+        if (!authored.containsKey('start') &&
+            first.kind == BusyBlockKind.orderedListItem &&
+            markerStart != null &&
+            markerStart != '1')
+          'start': markerStart,
+      };
+    }
+
+    BusyBlock convert(BusyBlock b) {
+      if (b.attributes['busymark-list-form'] == 'markdown') {
+        return _newWritersideElement(
+          'list',
+          attributes: listAttributes(
+            b.children,
+            WritersideEditingAdapter.sourceAttributes(b),
+          ),
+          children: b.children.map(convert).toList(),
+        ).copyWith(id: b.id);
+      }
+      if (busyMarkIsWritersideContainer(b)) return b;
+      final children = <BusyBlock>[];
+      if (_isListItemKind(b.kind) && b.inlines.isNotEmpty) {
+        children.add(
+          BusyBlock(
+            id: _nextGeneratedBlockId('p'),
+            kind: BusyBlockKind.paragraph,
+            inlines: b.inlines,
+            attributes: const {'element': 'p'},
+            dirty: true,
+          ),
+        );
+      }
+      children.addAll(b.children.map(convert));
+      return BusyBlock(
+        id: b.id,
+        kind: b.kind,
+        inlines: _isListItemKind(b.kind) ? const [] : b.inlines,
+        children: children,
+        dirty: true,
+        attributes: {
+          ...b.attributes,
+          if (b.kind == BusyBlockKind.taskListItem &&
+              b.attributes['task'] == 'true')
+            'checked': 'true',
+          'element': WritersideEditingAdapter.tagForBlock(b),
+          if (_isListItemKind(b.kind))
+            busyMarkWritersideContainerAttribute: 'true',
+          if (b.kind == BusyBlockKind.codeBlock &&
+              b.attributes['language'] != null)
+            'lang': b.attributes['language']!,
+        },
+      );
+    }
+
+    final source = _document.source;
+    final first = items.first.sourceSpan, last = items.last.sourceSpan;
+    final span = source == null || first == null || last == null
+        ? null
+        : SourceSpan.fromOffsets(
+            filePath: _document.filePath,
+            source: source,
+            startOffset: first.startOffset,
+            endOffset: last.endOffset,
+          );
+    final list = _newWritersideElement(
+      'list',
+      attributes: listAttributes(
+        items,
+        nativeList
+            ? WritersideEditingAdapter.sourceAttributes(parent!)
+            : const {},
+      ),
+      children: items.map(convert).toList(),
+    ).copyWith(sourceSpan: nativeList ? parent!.sourceSpan : span);
+    if (nativeList) {
+      _document = _document.copyWith(
+        blocks: _replaceInBlocks(
+          _document.blocks,
+          parent!.id,
+          (_) => list.copyWith(id: parent.id),
+        ),
+      );
+      return true;
+    }
+    final replacement = [...siblings.take(start), list, ...siblings.skip(end)];
+    _document = _document.copyWith(
+      blocks: parent == null
+          ? replacement
+          : _replaceInBlocks(
+              _document.blocks,
+              parent.id,
+              (b) => b.copyWith(children: replacement, dirty: true),
+            ),
+    );
+    return true;
+  }
+
+  BusyInline _imageProperty(BusyInline inline, String name, String? value) {
+    if (inline.kind == BusyInlineKind.image) {
+      final attributes = {
+        ...inline.attributes,
+        if (!_document.isXmlTopic) 'busymark-writerside-attributes': 'true',
+      };
+      if (value == null || value.isEmpty && name != 'alt') {
+        attributes.remove(name);
+      } else {
+        attributes[name] = value;
+      }
+      return inline.copyWith(
+        text: name == 'alt' ? value ?? '' : inline.text,
+        destination: name == 'src' ? value ?? '' : inline.destination,
+        attributes: attributes,
+      );
+    }
+    return inline.copyWith(
+      children: inline.children
+          .map((i) => _imageProperty(i, name, value))
+          .toList(),
+    );
+  }
+
+  /// Reference tuples are validated together and published as one model edit.
+  bool updateIncludeReference(
+    String blockId, {
+    required String from,
+    required String elementId,
+    String? origin,
+  }) {
+    final block = blockById(blockId);
+    if (!_document.isWriterside ||
+        block == null ||
+        block.attributes['element'] != 'include' ||
+        block.isSourceProtected ||
+        block.preserveRaw ||
+        from.trim().isEmpty ||
+        elementId.trim().isEmpty) {
+      return false;
+    }
+    final attrs = {...block.attributes, 'from': from, 'element-id': elementId}
+      ..remove('origin');
+    if (origin?.isNotEmpty == true) attrs['origin'] = origin!;
+    _replaceBlock(blockId, (b) => b.copyWith(attributes: attrs, dirty: true));
+    return true;
+  }
+
+  bool resetTopicNavigation() {
+    if (!_document.isWriterside ||
+        !WritersideEditingAdapter.topicNavigationEditable(_document)) {
+      return false;
+    }
+    final root = _document.blocks
+        .where((b) => b.attributes['element'] == 'topic')
+        .firstOrNull;
+    final nodes = (root?.children ?? _document.blocks)
+        .where((b) => b.attributes['element'] == 'show-structure')
+        .toList();
+    if (nodes.isEmpty) return true;
+    if (nodes.length != 1 ||
+        nodes.single.attributes.keys.any(
+          {'instance', 'filter', 'switcher-key'}.contains,
+        )) {
+      return false;
+    }
+    if (root != null) {
+      _replaceBlock(
+        root.id,
+        (b) => b.copyWith(
+          children: b.children.where((c) => c.id != nodes.single.id).toList(),
+          dirty: true,
+        ),
+      );
+    } else {
+      // A removed block cannot mark itself dirty. The Markdown serializer's
+      // unchanged-source fast path would otherwise retain the declaration.
+      // Locate its authored span in the current serialized generation, then
+      // reparse through the existing adapter to keep all following locations
+      // and inline bindings in the same coordinate system.
+      final source = markdown;
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final declaration = parsed.blocks
+          .where((b) => b.attributes['element'] == 'show-structure')
+          .singleOrNull;
+      final span = declaration?.sourceSpan;
+      if (span == null) return false;
+      final next = source.replaceRange(span.startOffset, span.endOffset, '');
+      if (!_publishMarkdownNavigationSource(next, removedId: nodes.single.id)) {
+        return false;
+      }
+      notifyListeners();
+    }
+    return true;
+  }
+
+  bool manageWritersideItem(
+    String containerId, {
+    String? itemId,
+    int? direction,
+    bool remove = false,
+    required String title,
+  }) {
+    final group = blockById(containerId);
+    final tag = switch (group?.attributes['element']) {
+      'tabs' => 'tab',
+      'procedure' => 'step',
+      'deflist' => 'def',
+      _ => null,
+    };
+    if (group == null ||
+        tag == null ||
+        tag == 'tab' &&
+            group.children.any((b) => b.kind == BusyBlockKind.codeBlock) &&
+            !group.children.any((b) => b.attributes['element'] == 'tab') ||
+        group.preserveRaw ||
+        group.isSourceProtected) {
+      return false;
+    }
+    final children = [...group.children];
+    if (itemId == null) {
+      children.add(
+        _newWritersideElement(
+          tag,
+          title: title,
+          children: [_newWritersideElement('p')],
+        ),
+      );
+    } else {
+      final index = children.indexWhere(
+        (b) => b.id == itemId && b.attributes['element'] == tag,
+      );
+      if (index < 0) return false;
+      if (remove) {
+        if (children.where((b) => b.attributes['element'] == tag).length < 2) {
+          return false;
+        }
+        children.removeAt(index);
+      } else {
+        final items = children
+            .where((b) => b.attributes['element'] == tag)
+            .toList();
+        final ordinal = items.indexWhere((b) => b.id == itemId);
+        final next = ordinal + (direction ?? 0);
+        if (next < 0 || next >= items.length || next == ordinal) return false;
+        final other = children.indexOf(items[next]);
+        children[index] = items[next];
+        children[other] = items[ordinal];
+      }
+    }
+    _replaceBlock(
+      containerId,
+      (b) => b.copyWith(children: children, dirty: true),
+    );
+    return true;
+  }
+
+  void insertVariableReference(
+    String blockId,
+    String name,
+    int start,
+    int end,
+  ) {
+    final block = blockById(blockId);
+    if (block == null ||
+        !canInsertWriterside(BusyWritersideInsertCommand.variable, blockId)) {
+      return;
+    }
+    final value = BusyInline(
+      kind: BusyInlineKind.writersideVariable,
+      text: name,
+      attributes: {'reference': name},
+    );
+    final before = busyMarkWysiwygClipboardInlineSlice(block.inlines, 0, start);
+    final after = busyMarkWysiwygClipboardInlineSlice(
+      block.inlines,
+      end,
+      block.plainText.length,
+    );
+    _replaceBlock(
+      blockId,
+      (b) => b.copyWith(inlines: [...before, value, ...after], dirty: true),
+    );
+  }
+
+  bool updateTopicSwitcherLabel(String value) {
+    if (_document.isXmlTopic) {
+      final root = _document.blocks
+          .where((b) => b.attributes['element'] == 'topic')
+          .firstOrNull;
+      return root != null &&
+          updateWritersideProperty(root.id, 'switcher-label', value);
+    }
+    if (!_document.isWriterside) {
+      return false;
+    }
+    if (_document.frontMatter['switcher-label'] == value ||
+        value.isEmpty && !_document.frontMatter.containsKey('switcher-label')) {
+      return true;
+    }
+    final raw = _document.rawFrontMatter;
+    final newline = _document.source?.contains('\r\n') == true ? '\r\n' : '\n';
+    final line = 'switcher-label: ${encodeWritersideSwitcherLabel(value)}';
+    final labelPattern = RegExp(r'^switcher-label:[^\r\n]*', multiLine: true);
+    final nextRaw = value.isEmpty
+        ? (raw ?? '').replaceFirst(
+            RegExp(r'^switcher-label:[^\r\n]*(?:\r?\n|$)', multiLine: true),
+            '',
+          )
+        : raw == null
+        ? '---$newline$line$newline---$newline'
+        : labelPattern.hasMatch(raw)
+        ? raw.replaceFirst(labelPattern, line)
+        : raw.replaceFirstMapped(
+            RegExp(r'^---[ \t]*\r?\n'),
+            (m) => '${m[0]}$line$newline',
+          );
+    final source = markdown;
+    final nextSource = raw == null
+        ? '$nextRaw$newline$source'
+        : source.replaceFirst(raw, nextRaw);
+    _document = _document.copyWith(
+      source: nextSource,
+      rawFrontMatter: nextRaw,
+      frontMatter: {
+        for (final entry in _document.frontMatter.entries)
+          if (entry.key != 'switcher-label') entry.key: entry.value,
+        if (value.isNotEmpty) 'switcher-label': value,
+      },
+    );
+    notifyListeners();
+    return true;
+  }
+
+  bool updateTopicNavigation(String attribute, String value) {
+    if (!{'for', 'depth'}.contains(attribute)) return false;
+    final root = _document.blocks
+        .where((b) => b.attributes['element'] == 'topic')
+        .firstOrNull;
+    final existing = (root?.children ?? _document.blocks)
+        .where((b) => b.attributes['element'] == 'show-structure')
+        .firstOrNull;
+    return setTopicNavigation(
+      present: true,
+      forElements: attribute == 'for'
+          ? value
+          : existing?.attributes['for'] ?? '',
+      depth: attribute == 'depth' ? value : existing?.attributes['depth'] ?? '',
+    );
+  }
+
+  /// Publish a complete unscoped declaration as one document transaction.
+  /// Absence, an empty declaration and an explicit configuration are distinct.
+  bool setTopicNavigation({
+    required bool present,
+    String forElements = '',
+    String depth = '',
+  }) {
+    if (!_document.isWriterside ||
+        !WritersideEditingAdapter.topicNavigationEditable(_document) ||
+        validateWritersideProperty('show-structure', 'depth', depth) != null ||
+        validateWritersideProperty('show-structure', 'for', forElements) !=
+            null) {
+      return false;
+    }
+    final root = _document.blocks
+        .where((b) => b.attributes['element'] == 'topic')
+        .firstOrNull;
+    final siblings = root?.children ?? _document.blocks;
+    final declarations = siblings
+        .where((b) => b.attributes['element'] == 'show-structure')
+        .toList();
+    if (declarations.length > 1 ||
+        declarations.any(
+          (b) => b.attributes.keys.any(
+            {'instance', 'filter', 'switcher-key'}.contains,
+          ),
+        )) {
+      return false;
+    }
+    final existing = declarations.firstOrNull;
+    if (!present) return resetTopicNavigation();
+    final attrs = {...?existing?.attributes}
+      ..remove('for')
+      ..remove('depth');
+    if (forElements.isNotEmpty) attrs['for'] = forElements;
+    if (depth.isNotEmpty) attrs['depth'] = depth;
+    if (existing != null) {
+      if (mapEquals(attrs, existing.attributes)) return true;
+      _replaceBlock(
+        existing.id,
+        (b) => b.copyWith(attributes: attrs, dirty: true),
+      );
+      return true;
+    }
+    final node = _newWritersideElement(
+      'show-structure',
+      attributes: attrs,
+    ).copyWith(isSourceOnly: _document.isXmlTopic);
+    if (root != null) {
+      _replaceBlock(
+        root.id,
+        (b) => b.copyWith(children: [node, ...b.children], dirty: true),
+      );
+    } else {
+      final source = markdown;
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final heading = WritersideEditingAdapter.topicHeading(parsed);
+      final offset =
+          heading?.sourceSpan?.endOffset ?? parsed.rawFrontMatter?.length ?? 0;
+      final newline = source.contains('\r\n') ? '\r\n' : '\n';
+      final fragment = _serializer.serializeBlock(node);
+      final next = source.replaceRange(
+        offset,
+        offset,
+        '${offset == 0 ? '' : '$newline$newline'}$fragment${offset == source.length ? newline : ''}',
+      );
+      if (!_publishMarkdownNavigationSource(next, inserted: node)) return false;
+      notifyListeners();
+    }
+    return true;
+  }
+
+  /// Navigation changes one known top-level owner. Rebase locations through
+  /// the existing parser while retaining the editor identities of every other
+  /// block, including its nested children. Reject a changed structural shape.
+  bool _publishMarkdownNavigationSource(
+    String source, {
+    String? removedId,
+    BusyBlock? inserted,
+  }) {
+    final parsed = _ensureEditableDocument(
+      const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument,
+    );
+    final previous = _document.blocks
+        .where(
+          (b) =>
+              b.id != removedId && b.attributes['element'] != 'show-structure',
+        )
+        .toList();
+    var index = 0;
+    BusyBlock? retain(BusyBlock fresh, BusyBlock old) {
+      if (fresh.kind != old.kind ||
+          fresh.plainText != old.plainText ||
+          fresh.children.length != old.children.length) {
+        return null;
+      }
+      final children = <BusyBlock>[];
+      for (var i = 0; i < fresh.children.length; i++) {
+        final child = retain(fresh.children[i], old.children[i]);
+        if (child == null) return null;
+        children.add(child);
+      }
+      return fresh.copyWith(
+        id: old.id,
+        children: children,
+        attributes: {
+          ...fresh.attributes,
+          if (fresh.attributes.containsKey('editorBlockId'))
+            'editorBlockId': old.id,
+        },
+      );
+    }
+
+    final blocks = <BusyBlock>[];
+    for (final block in parsed.blocks) {
+      if (block.attributes['element'] == 'show-structure') {
+        if (inserted == null) return false;
+        blocks.add(block.copyWith(id: inserted.id));
+      } else {
+        if (index >= previous.length) return false;
+        final retained = retain(block, previous[index++]);
+        if (retained == null) return false;
+        blocks.add(retained);
+      }
+    }
+    if (index != previous.length) return false;
+    _document = busyMarkWysiwygBindMarkdownReferences(
+      parsed.copyWith(blocks: blocks),
+    );
+    return true;
+  }
+
+  bool updateInlineReference(
+    String blockId,
+    BusyInlineStyleRange target,
+    String attribute,
+    String value,
+  ) {
+    final block = blockById(blockId);
+    if (block == null || block.preserveRaw) {
+      return false;
+    }
+    final ranges = busyInlineReferenceRanges(block.inlines);
+    final index = ranges.indexWhere(
+      (r) =>
+          r.start == target.start &&
+          r.end == target.end &&
+          r.kind == target.kind &&
+          (target.referenceIndex == null ||
+              r.referenceIndex == target.referenceIndex) &&
+          mapEquals(r.attributes, target.attributes),
+    );
+    if (index < 0) return false;
+    final range = ranges[index];
+    if (range.kind == BusyInlineKind.writersideVariable) {
+      if (value.trim().isEmpty) {
+        return false;
+      }
+      final before = busyMarkWysiwygClipboardInlineSlice(
+        block.inlines,
+        0,
+        range.start,
+      );
+      final after = busyMarkWysiwygClipboardInlineSlice(
+        block.inlines,
+        range.end,
+        block.plainText.length,
+      );
+      final inlines = [
+        ...before,
+        BusyInline(
+          kind: range.kind,
+          text: value,
+          attributes: {...range.attributes, 'reference': value},
+        ),
+        ...after,
+      ];
+      if (block.attributes.containsKey('busymark-native-source-map')) {
+        return _publishMappedNativeReference(
+          block,
+          range,
+          attribute,
+          value,
+          inlines,
+        );
+      }
+      _replaceBlock(blockId, (b) => b.copyWith(inlines: inlines, dirty: true));
+      return true;
+    }
+    final tag = switch (range.kind) {
+      BusyInlineKind.link => 'a',
+      BusyInlineKind.image => 'img',
+      BusyInlineKind.writersideShortcut => 'shortcut',
+      _ => null,
+    };
+    if (tag == null ||
+        validateWritersideProperty(
+              tag,
+              attribute,
+              value,
+              attributes: range.attributes,
+            ) !=
+            null ||
+        value.isNotEmpty &&
+            WritersideSchema.invalidAttributeValue(tag, attribute, value) !=
+                null ||
+        attribute == 'key' && value.isEmpty && range.start == range.end) {
+      return false;
+    }
+    if (range.attributes[attribute] == value ||
+        value.isEmpty &&
+            attribute != 'alt' &&
+            !range.attributes.containsKey(attribute)) {
+      return true;
+    }
+    final patchedSource =
+        block.attributes.containsKey('busymark-native-source-map')
+        ? null
+        : _patchNativeReferenceProperty(block, range, attribute, value);
+    var offset = 0;
+    var replaced = false;
+    var referenceIndex = 0;
+    BusyInline replace(BusyInline inline) {
+      final start = offset;
+      final ordinal =
+          {
+            BusyInlineKind.link,
+            BusyInlineKind.image,
+            BusyInlineKind.writersideVariable,
+            BusyInlineKind.writersideShortcut,
+          }.contains(inline.kind)
+          ? referenceIndex++
+          : null;
+      if (!replaced &&
+          inline.kind == range.kind &&
+          ordinal == range.referenceIndex &&
+          start == range.start &&
+          start + inline.plainText.length == range.end &&
+          mapEquals(inline.attributes, range.attributes)) {
+        offset += inline.plainText.length;
+        replaced = true;
+        final attributes = {
+          ...inline.attributes,
+          if (!_document.isXmlTopic) 'busymark-writerside-attributes': 'true',
+        };
+        if (attribute == 'href') attributes.remove('busymark-ignored-href');
+        if (value.isEmpty && attribute != 'alt') {
+          attributes.remove(attribute);
+        } else {
+          attributes[attribute] = value;
+        }
+        return inline.copyWith(
+          attributes: attributes,
+          destination: {'src', 'href'}.contains(attribute)
+              ? value
+              : inline.destination,
+          text: attribute == 'alt' ? value : inline.text,
+        );
+      }
+      if (inline.children.isNotEmpty) {
+        return inline.copyWith(children: inline.children.map(replace).toList());
+      }
+      offset += inline.plainText.length;
+      return inline;
+    }
+
+    final inlines = block.inlines.map(replace).toList();
+    if (!replaced) return false;
+    if (block.attributes.containsKey('busymark-native-source-map')) {
+      return _publishMappedNativeReference(
+        block,
+        range,
+        attribute,
+        value,
+        inlines,
+      );
+    }
+    _replaceBlock(
+      blockId,
+      (b) => b.copyWith(
+        inlines: inlines,
+        dirty: true,
+        rawSource: patchedSource ?? b.rawSource,
+        attributes: {
+          ...b.attributes,
+          if (patchedSource != null)
+            'busymark-property-edits':
+                b.attributes['busymark-property-edits'] ?? '{}',
+        },
+      ),
+    );
+    return true;
+  }
+
+  /// A property edit in transformed list content must publish its mapped span,
+  /// not serialize the containing loose list or XML island. Reuse the parser
+  /// and our existing transaction rebind to retain the actual member identities.
+  bool _publishMappedNativeReference(
+    BusyBlock block,
+    BusyInlineStyleRange range,
+    String attribute,
+    String value,
+    List<BusyInline> inlines,
+  ) {
+    final source = _document.source;
+    if (source == null || source != markdown) return false;
+    final occurrence =
+        WritersideEditingAdapter.authoredInlineRanges(_document, source, block)
+            .where(
+              (e) =>
+                  e.range.kind == range.kind &&
+                  e.range.start == range.start &&
+                  e.range.end == range.end &&
+                  e.range.referenceIndex == range.referenceIndex,
+            )
+            .singleOrNull;
+    if (occurrence == null) return false;
+    var begin = occurrence.begin;
+    var end = occurrence.end;
+    String replacement;
+    if (range.kind == BusyInlineKind.writersideVariable) {
+      replacement = '%$value%';
+    } else if (block.attributes.containsKey('element') ||
+        occurrence.xmlSource ||
+        range.kind == BusyInlineKind.writersideShortcut) {
+      final normalized =
+          block.attributes['busymark-native-inline-source'] ?? block.rawSource;
+      if (normalized == null ||
+          occurrence.localBegin < 0 ||
+          occurrence.localEnd > normalized.length) {
+        return false;
+      }
+      final raw = normalized.substring(
+        occurrence.localBegin,
+        occurrence.localEnd,
+      );
+      final parsed = const WritersideDocumentParser().parseXml(
+        filePath: '',
+        source: raw,
+      );
+      final element = parsed.nodes.singleOrNull;
+      if (!parsed.isWellFormed || element is! WritersideElementNode) {
+        return false;
+      }
+      final attributes = {...element.attributes};
+      if (value.isEmpty && attribute != 'alt') {
+        attributes.remove(attribute);
+      } else {
+        attributes[attribute] = value;
+      }
+      final changed = const WritersideDocumentSerializer().serialize(
+        parsed.copyWith(nodes: [element.copyWith(attributes: attributes)]),
+      );
+      if (changed == raw) return true;
+      // Adding a physical line inside a transformed fragment would require a
+      // new Markdown prefix with no authored mapping. Reject before staging.
+      if (value.contains('\n') || value.contains('\r')) return false;
+      var first = 0;
+      while (first < raw.length &&
+          first < changed.length &&
+          raw[first] == changed[first]) {
+        first++;
+      }
+      var suffix = 0;
+      while (suffix < raw.length - first &&
+          suffix < changed.length - first &&
+          raw[raw.length - suffix - 1] ==
+              changed[changed.length - suffix - 1]) {
+        suffix++;
+      }
+      // Removing an attribute must retain its separating newlines (and their
+      // Markdown prefixes). Narrow deletion to the authored name/value tokens.
+      if (value.isEmpty &&
+          attribute != 'alt' &&
+          raw.substring(first, raw.length - suffix).contains('\n')) {
+        while (first < raw.length - suffix &&
+            RegExp(r'\s').hasMatch(raw[first])) {
+          first++;
+        }
+      }
+      final localStart = occurrence.localBegin + first;
+      final localStop = occurrence.localBegin + raw.length - suffix;
+      final mappedStart = markdownProjectedSourceOffset(
+        block,
+        localStart,
+        inline: true,
+      );
+      final mappedStop = markdownProjectedSourceOffset(
+        block,
+        localStop,
+        inline: true,
+      );
+      if (mappedStart == null || mappedStop == null) return false;
+      // A lexical replacement cannot consume removed Markdown prefixes. Check
+      // every interior boundary as well as both ends before publication.
+      for (var i = localStart; i <= localStop; i++) {
+        if (markdownProjectedSourceOffset(block, i, inline: true) !=
+            mappedStart + i - localStart) {
+          return false;
+        }
+      }
+      begin = mappedStart;
+      end = mappedStop;
+      replacement = changed.substring(
+        first.clamp(0, changed.length - suffix),
+        changed.length - suffix,
+      );
+    } else {
+      final raw =
+          block.attributes['busymark-native-inline-source'] ?? block.rawSource;
+      if (raw == null) return false;
+      final changed = _patchNativeReferenceProperty(
+        block.copyWith(rawSource: raw),
+        range,
+        attribute,
+        value,
+      );
+      if (changed == null) return false;
+      var first = 0;
+      while (first < raw.length &&
+          first < changed.length &&
+          raw[first] == changed[first]) {
+        first++;
+      }
+      var suffix = 0;
+      while (suffix < raw.length - first &&
+          suffix < changed.length - first &&
+          raw[raw.length - suffix - 1] ==
+              changed[changed.length - suffix - 1]) {
+        suffix++;
+      }
+      final start = markdownProjectedSourceOffset(block, first, inline: true);
+      final stop = markdownProjectedSourceOffset(
+        block,
+        raw.length - suffix,
+        inline: true,
+      );
+      if (start == null || stop == null) return false;
+      begin = start;
+      end = stop;
+      replacement = changed.substring(first, changed.length - suffix);
+    }
+    if (begin < 0 || end < begin || end > source.length) return false;
+    final nextSource = source.replaceRange(begin, end, replacement);
+    final previous = _document;
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(
+        _document.blocks,
+        block.id,
+        (b) => b.copyWith(inlines: inlines),
+      ),
+    );
+    final rebound = _reparseNativeListOwnership(nextSource);
+    final retained = _flattenBlocks(
+      rebound.blocks,
+    ).where((b) => b.id == block.id).singleOrNull;
+    if (retained == null ||
+        retained.plainText != inlines.map((i) => i.plainText).join()) {
+      _document = previous;
+      return false;
+    }
+    _document = busyMarkWysiwygBindMarkdownReferences(rebound);
+    notifyListeners();
+    return true;
+  }
+
+  // Use the established positioned parser to preserve the occurrence, link
+  // wrapper, reference definition and surrounding formatting. Writerside's
+  // native attribute syntax permits local image src/alt overrides. Link href
+  // overrides are ignored by the builder, so change only that native link.
+  String? _patchNativeReferenceProperty(
+    BusyBlock block,
+    BusyInlineStyleRange range,
+    String attribute,
+    String? value,
+  ) {
+    if (_document.mode != MarkdownMode.writersideMarkdown ||
+        _document.isXmlTopic ||
+        block.attributes.containsKey('element') ||
+        block.rawSource == null ||
+        block.dirty &&
+            !block.attributes.containsKey('busymark-property-edits') ||
+        !{BusyInlineKind.image, BusyInlineKind.link}.contains(range.kind)) {
+      return null;
+    }
+    final raw = block.rawSource!;
+    final mapped = const MarkdownSourceMapper()
+        .createInlineParserContext(
+          documentSource: _document.source ?? markdown,
+          mode: _document.mode,
+        )
+        .parseMapped(raw);
+    final peers = busyInlineReferenceRanges(
+      block.inlines,
+    ).where((r) => r.kind == range.kind).toList();
+    final candidates =
+        mapped.ranges.entries.where((e) => e.key.kind == range.kind).toList()
+          ..sort((a, b) => a.value.start.compareTo(b.value.start));
+    final ordinal = peers.indexWhere(
+      (r) =>
+          r.start == range.start &&
+          r.end == range.end &&
+          r.referenceIndex == range.referenceIndex,
+    );
+    if (ordinal < 0 || candidates.length != peers.length) return null;
+    final positioned = candidates[ordinal].value;
+    final end = positioned.end;
+    if (range.kind == BusyInlineKind.link &&
+        attribute == 'href' &&
+        value != null) {
+      final destination = value
+          .replaceAll('\\', '\\\\')
+          .replaceAll('(', '\\(')
+          .replaceAll(')', '\\)')
+          .replaceAll(' ', '%20')
+          .replaceAll('\r', '%0D')
+          .replaceAll('\n', '%0A');
+      final labelEnd = positioned.labelEnd;
+      final labelStart = positioned.labelStart;
+      if (labelEnd == null || labelStart == null) return null;
+      var title = '';
+      if (positioned.titleStart != null && positioned.titleEnd != null) {
+        var start = positioned.titleStart! - 1;
+        while (start > labelEnd + 2 && RegExp(r'\s').hasMatch(raw[start - 1])) {
+          start--;
+        }
+        title = raw.substring(start, positioned.titleEnd! + 1);
+      } else if (range.attributes['title']?.isNotEmpty == true) {
+        final original = range.attributes['title']!.replaceAll('"', '&quot;');
+        title = ' "$original"';
+      }
+      final label = positioned.isAutolink
+          ? '[${raw.substring(labelStart, labelEnd)}]'
+          : raw.substring(positioned.start, labelEnd + 1);
+      final cleaned =
+          _patchNativeReferenceProperty(block, range, 'href', null) ?? raw;
+      return cleaned.replaceRange(
+        positioned.start,
+        end,
+        '$label($destination$title)',
+      );
+    }
+    final suffix = RegExp(
+      r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
+    ).firstMatch(raw.substring(end));
+    var attributes = suffix == null
+        ? ''
+        : suffix[0]!.substring(1, suffix.end - 1);
+    final pattern = RegExp(
+      '(?:^|\\s+)${RegExp.escape(attribute)}\\s*=\\s*"[^"]*"',
+    );
+    final escaped = (value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+    final replacement = value == null || value.isEmpty && attribute != 'alt'
+        ? ''
+        : '$attribute="$escaped"';
+    if (pattern.hasMatch(attributes)) {
+      attributes = attributes.replaceFirstMapped(
+        pattern,
+        (m) =>
+            '${m[0]!.startsWith(' ') && replacement.isNotEmpty ? ' ' : ''}$replacement',
+      );
+    } else if (replacement.isNotEmpty) {
+      attributes = '${attributes.trimRight()} $replacement';
+    }
+    final ending = attributes.trim().isEmpty ? '' : '{${attributes.trim()}}';
+    return raw.replaceRange(end, end + (suffix?.end ?? 0), ending);
   }
 
   String _blockStructurePrefix(BusyBlock block) {
@@ -108,6 +1801,20 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (current == null) {
       return null;
     }
+    List<BusyBlock> fieldBlocks(BusyDocument parsed) {
+      final blocks = parsed.blocks
+          .where((b) => b.kind != BusyBlockKind.frontMatter && !b.isSourceOnly)
+          .toList();
+      // The source fragment's first parser-owned list represents the existing
+      // item's owner, which remains in the destination tree. Replace members
+      // of that owner, rather than nesting an artificial copy inside the item.
+      if (_isListItemKind(current.kind) &&
+          blocks.firstOrNull?.attributes['busymark-list-form'] == 'markdown') {
+        return [...blocks.first.children, ...blocks.skip(1)];
+      }
+      return blocks;
+    }
+
     final structuralPrefix = _blockStructurePrefix(current);
     final parsed = const MarkdownParser().parse(
       filePath: _document.filePath,
@@ -115,12 +1822,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       mode: _document.mode,
       validateLocalReferences: false,
     );
-    final parsedBlocks = parsed.busyDocument.blocks
-        .where(
-          (block) =>
-              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
-        )
-        .toList(growable: false);
+    final parsedBlocks = fieldBlocks(parsed.busyDocument);
     List<int>? descendantOwnerPath;
     if (replacementScope == BusyWysiwygReplacementScope.fieldContent &&
         current.children.isNotEmpty) {
@@ -134,12 +1836,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         mode: _document.mode,
         validateLocalReferences: false,
       );
-      final anchoredBlocks = anchored.busyDocument.blocks
-          .where(
-            (block) =>
-                block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
-          )
-          .toList(growable: false);
+      final anchoredBlocks = fieldBlocks(anchored.busyDocument);
       descendantOwnerPath = _blockPathContainingText(
         anchoredBlocks,
         ownerMarker,
@@ -200,12 +1897,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         mode: _document.mode,
         validateLocalReferences: false,
       );
-      final markedBlocks = marked.busyDocument.blocks
-          .where(
-            (block) =>
-                block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
-          )
-          .toList(growable: false);
+      final markedBlocks = fieldBlocks(marked.busyDocument);
       final located = _blockPathContainingText(markedBlocks, marker);
       if (located != null) {
         destinationPath = located.path;
@@ -439,6 +2131,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   String? insertDisplayMathAfter(String blockId, {String expression = 'x'}) {
+    if (_document.isXmlTopic) return null;
     if (blockById(blockId) == null) {
       return null;
     }
@@ -868,6 +2561,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (allowListExit &&
         _isListItemKind(block.kind) &&
         normalizedText.trim().isEmpty) {
+      if (_wouldDiscardNativeListOwner(blockId)) return null;
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
     }
@@ -951,7 +2645,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   void applyBlockCommand(String blockId, BusyWysiwygBlockCommand command) {
     final block = blockById(blockId);
-    if (block == null || !busyMarkWysiwygCanApplyBlockCommand(block, command)) {
+    if (block == null || !canApplyBlockCommand(block, command)) {
+      return;
+    }
+    if (_document.isXmlTopic) {
+      _replaceBlock(blockId, (b) => _xmlBlockWithCommand(b, command));
       return;
     }
     if (command == BusyWysiwygBlockCommand.thematicBreak) {
@@ -985,8 +2683,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     final eligibleIds = ids.where((id) {
       final block = blockById(id);
-      return block != null &&
-          busyMarkWysiwygCanApplyBlockCommand(block, command);
+      return block != null && canApplyBlockCommand(block, command);
     }).toList();
     if (eligibleIds.isEmpty) {
       return;
@@ -996,7 +2693,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return;
     }
     final idSet = eligibleIds.toSet();
+    if (!_isListItemKind(blockKindForCommand(command)) &&
+        _flattenBlocks(_document.blocks).any(
+          (b) =>
+              b.attributes['busymark-list-form'] == 'markdown' &&
+              WritersideEditingAdapter.sourceAttributes(b).isNotEmpty &&
+              b.children.every((child) => idSet.contains(child.id)),
+        )) {
+      return;
+    }
     final replaced = _replaceBlocksByIds(_document.blocks, idSet, (block) {
+      if (_document.isXmlTopic) return _xmlBlockWithCommand(block, command);
       return _blockWithCommand(
         block,
         command,
@@ -1011,6 +2718,90 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool canApplyBlockCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
+    if (!busyMarkWysiwygCanApplyBlockCommand(block, command)) return false;
+    if (!_isListItemKind(blockKindForCommand(command)) &&
+        _wouldDiscardNativeListOwner(block.id)) {
+      return false;
+    }
+    if (!_document.isXmlTopic) return true;
+    final tag = switch (blockKindForCommand(command)) {
+      BusyBlockKind.heading => 'chapter',
+      BusyBlockKind.codeBlock => 'code-block',
+      BusyBlockKind.unorderedListItem ||
+      BusyBlockKind.orderedListItem ||
+      BusyBlockKind.taskListItem => 'list',
+      BusyBlockKind.blockquote => 'quote',
+      BusyBlockKind.paragraph => 'p',
+      BusyBlockKind.image => 'img',
+      _ => '',
+    };
+    final parent = elementPath(block.id).reversed.skip(1).firstOrNull;
+    if (parent == null ||
+        !WritersideSchema.childElementNames(
+          parent.attributes['element'] ?? '',
+        ).contains(tag)) {
+      return false;
+    }
+    if (tag == 'chapter' &&
+        block.inlines.any(
+          (i) =>
+              i.kind != BusyInlineKind.text &&
+              i.kind != BusyInlineKind.softBreak,
+        )) {
+      return false;
+    }
+    return true;
+  }
+
+  BusyBlock _xmlBlockWithCommand(
+    BusyBlock block,
+    BusyWysiwygBlockCommand command,
+  ) {
+    final kind = blockKindForCommand(command);
+    if (_isListItemKind(kind)) {
+      return _newWritersideElement(
+        'list',
+        attributes: {
+          'type': kind == BusyBlockKind.orderedListItem
+              ? 'decimal'
+              : kind == BusyBlockKind.taskListItem
+              ? 'checkbox'
+              : 'bullet',
+        },
+        children: [
+          _newWritersideElement('li', children: [block]).copyWith(
+            kind: kind,
+            attributes: {
+              'element': 'li',
+              busyMarkWritersideContainerAttribute: 'true',
+              'marker': kind == BusyBlockKind.orderedListItem ? '1.' : '-',
+            },
+          ),
+        ],
+      );
+    }
+    if (kind == BusyBlockKind.blockquote) {
+      return _xmlAdmonitionStyle(block, BusyAdmonitionStyle.quote);
+    }
+    final attrs = {
+      ...block.attributes,
+      'element': kind == BusyBlockKind.heading
+          ? 'chapter'
+          : kind == BusyBlockKind.codeBlock
+          ? 'code-block'
+          : 'p',
+    }..remove(busyMarkWritersideContainerAttribute);
+    if (kind == BusyBlockKind.heading) {
+      attrs.addAll({
+        busyMarkWritersideContainerAttribute: 'true',
+        'title': block.plainText,
+        'level': '2',
+      });
+    }
+    return block.copyWith(kind: kind, attributes: attrs, dirty: true);
+  }
+
   void applyAdmonitionStyle(String blockId, BusyAdmonitionStyle style) {
     final block = blockById(blockId);
     if (block == null || !busyMarkWysiwygCanApplyAdmonitionStyle(block)) {
@@ -1020,15 +2811,45 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: _replaceInBlocks(
         _document.blocks,
         blockId,
-        (block) => _blockWithAdmonitionStyle(
-          block,
-          style,
-          nextId: () => _nextGeneratedBlockId('paragraph'),
-        ),
+        (block) => _document.isXmlTopic
+            ? _xmlAdmonitionStyle(block, style)
+            : _blockWithAdmonitionStyle(
+                block,
+                style,
+                nextId: () => _nextGeneratedBlockId('paragraph'),
+              ),
       ),
     );
     notifyListeners();
   }
+
+  BusyBlock _xmlAdmonitionStyle(BusyBlock block, BusyAdmonitionStyle style) =>
+      block.copyWith(
+        kind: BusyBlockKind.writersideAdmonition,
+        attributes: {
+          ...block.attributes,
+          'element': style.name,
+          'style': style.name,
+          busyMarkWritersideContainerAttribute: 'true',
+          busyMarkWritersideAdmonitionAttribute: 'true',
+          busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+        },
+        inlines: const [],
+        children: busyMarkIsWritersideContainer(block)
+            ? block.children
+            : [
+                if (block.inlines.isNotEmpty)
+                  BusyBlock(
+                    id: _nextGeneratedBlockId('p'),
+                    kind: BusyBlockKind.paragraph,
+                    inlines: block.inlines,
+                    dirty: true,
+                  ),
+                ...block.children,
+              ],
+        dirty: true,
+        preserveRaw: false,
+      );
 
   void applyAdmonitionStyleToBlocks(
     Iterable<String> blockIds,
@@ -1047,11 +2868,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: _replaceBlocksByIds(
         _document.blocks,
         ids,
-        (block) => _blockWithAdmonitionStyle(
-          block,
-          style,
-          nextId: () => _nextGeneratedBlockId('paragraph'),
-        ),
+        (block) => _document.isXmlTopic
+            ? _xmlAdmonitionStyle(block, style)
+            : _blockWithAdmonitionStyle(
+                block,
+                style,
+                nextId: () => _nextGeneratedBlockId('paragraph'),
+              ),
       ),
     );
     notifyListeners();
@@ -1087,7 +2910,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             attributes: {'src': trimmedSource, 'alt': trimmedAlt},
           ),
         ],
-        attributes: {...block.attributes, 'src': trimmedSource},
+        attributes: {
+          ...block.attributes,
+          'src': trimmedSource,
+          if (_document.isXmlTopic) ...{'element': 'img', 'alt': trimmedAlt},
+        },
         dirty: true,
       ),
     );
@@ -1101,6 +2928,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String alt,
     required String fallbackAltText,
   }) {
+    if (_document.isXmlTopic &&
+        blockById(blockId)?.kind != BusyBlockKind.paragraph) {
+      return;
+    }
     final trimmedSource = source.trim();
     if (trimmedSource.isEmpty) {
       return;
@@ -1178,6 +3009,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String Function(int columnNumber) headerTextForColumn,
     required String cellText,
   }) {
+    if (_document.isXmlTopic) return null;
     if (blockById(blockId) == null) {
       return null;
     }
@@ -1205,6 +3037,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   String? insertRawHtmlBlockAfter(String blockId, String rawSource) {
+    if (_document.isXmlTopic) return null;
     if (blockById(blockId) == null) {
       return null;
     }
@@ -1622,6 +3455,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   void applyCodeBlockLanguage(String blockId, String language) {
     final trimmedLanguage = language.trim();
+    if (_document.isWriterside &&
+        blockById(blockId)?.kind == BusyBlockKind.codeBlock) {
+      updateWritersideProperty(blockId, 'language', trimmedLanguage);
+      return;
+    }
     _replaceBlock(blockId, (block) {
       final attributes = {...block.attributes}
         ..remove('level')
@@ -1653,7 +3491,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         }
         final checked = block.attributes['task'] == 'true';
         return block.copyWith(
-          attributes: {...block.attributes, 'task': '${!checked}'},
+          attributes: {
+            ...block.attributes,
+            'task': '${!checked}',
+            if (block.attributes['element'] == 'li') 'checked': '${!checked}',
+            if (block.attributes['element'] == 'li' &&
+                block.attributes['busymark-property-edits'] != null)
+              'busymark-property-edits': jsonEncode({
+                ...(jsonDecode(block.attributes['busymark-property-edits']!)
+                    as Map<String, dynamic>),
+                'checked': '${!checked}',
+              }),
+          },
           dirty: true,
         );
       }),
@@ -1663,6 +3512,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   bool indentListItems(Iterable<String> blockIds) {
     final ids = blockIds.toSet();
+    if (ids.any(
+      (id) => elementPath(
+        id,
+      ).any((b) => b.attributes['busymark-list-form'] == 'markdown'),
+    )) {
+      return _indentNativeListItems(ids);
+    }
     if (ids.isEmpty) {
       return false;
     }
@@ -1712,6 +3568,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   bool outdentListItems(Iterable<String> blockIds) {
     final ids = blockIds.toSet();
+    if (ids.any(
+      (id) => elementPath(
+        id,
+      ).any((b) => b.attributes['busymark-list-form'] == 'markdown'),
+    )) {
+      return _outdentNativeListItems(ids);
+    }
     if (ids.isEmpty) {
       return false;
     }
@@ -1762,6 +3625,155 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
     notifyListeners();
     return true;
+  }
+
+  bool _indentNativeListItems(Set<String> ids) {
+    var changed = false;
+    List<BusyBlock> visit(List<BusyBlock> blocks) => [
+      for (final block in blocks)
+        (() {
+          if (block.isSourceProtected) return block;
+          var children = visit(block.children);
+          if (block.attributes['busymark-list-form'] == 'markdown') {
+            final members = <BusyBlock>[];
+            for (final item in children) {
+              if (!ids.contains(item.id) ||
+                  item.isSourceProtected ||
+                  members.isEmpty ||
+                  !_isListItemKind(item.kind) ||
+                  members.last.isSourceProtected) {
+                members.add(item);
+                continue;
+              }
+              final parent = members.removeLast();
+              final last = parent.children.lastOrNull;
+              final sameList =
+                  last?.attributes['busymark-list-form'] == 'markdown' &&
+                  last!.children.firstOrNull?.attributes['ordered'] ==
+                      item.attributes['ordered'];
+              if (sameList && last.isSourceProtected) {
+                members.addAll([parent, item]);
+                continue;
+              }
+              final nestedMembers = sameList ? last.children : <BusyBlock>[];
+              final nested = _numberIndentedListItem(
+                item.copyWith(dirty: true),
+                nestedMembers,
+              );
+              final owner = sameList
+                  ? last.copyWith(
+                      children: [...nestedMembers, nested],
+                      dirty: true,
+                    )
+                  : BusyBlock(
+                      id: _nextGeneratedBlockId('list-indent'),
+                      kind: BusyBlockKind.writersideRawXml,
+                      children: [nested],
+                      attributes: {
+                        'element': 'list',
+                        busyMarkWritersideContainerAttribute: 'true',
+                        'busymark-list-form': 'markdown',
+                        'busymark-native-list-type':
+                            item.attributes['ordered'] == 'true'
+                            ? 'decimal'
+                            : 'bullet',
+                        'busymark-native-list-start': '1',
+                      },
+                      dirty: true,
+                    );
+              members.add(
+                parent.copyWith(
+                  children: [
+                    ...parent.children.take(
+                      parent.children.length - (sameList ? 1 : 0),
+                    ),
+                    owner,
+                  ],
+                  dirty: true,
+                ),
+              );
+              changed = true;
+            }
+            children = members;
+          }
+          return listEquals(children, block.children)
+              ? block
+              : block.copyWith(children: children, dirty: true);
+        })(),
+    ];
+    final blocks = visit(_document.blocks);
+    if (!changed) return false;
+    _document = _document.copyWith(
+      blocks: _normalizeOrderedListMarkers(blocks),
+    );
+    notifyListeners();
+    return true;
+  }
+
+  bool _outdentNativeListItems(Set<String> ids) {
+    // Work on a staged tree so any protected owner rejects the entire action.
+    var blocks = _document.blocks;
+    var changed = false;
+    final selected = _flattenBlocks(
+      blocks,
+    ).where((b) => ids.contains(b.id)).toList();
+    for (final id in selected.reversed.map((b) => b.id)) {
+      final path = _actualElementPath(blocks, id);
+      if (path.length < 4) continue;
+      final owner = path[path.length - 2];
+      final parent = path[path.length - 3];
+      final outer = path[path.length - 4];
+      if (owner.attributes['busymark-list-form'] != 'markdown' ||
+          !_isListItemKind(parent.kind) ||
+          outer.attributes['busymark-list-form'] != 'markdown') {
+        continue;
+      }
+      if (path.any((b) => b.isSourceProtected)) return false;
+      final kept = owner.children.where((b) => b.id != id).toList();
+      // An empty owner cannot retain authored list properties in native source.
+      if (kept.isEmpty &&
+          WritersideEditingAdapter.sourceAttributes(owner).isNotEmpty) {
+        return false;
+      }
+      final item = path.last.copyWith(dirty: true);
+      final updatedParent = parent.copyWith(
+        children: [
+          for (final child in parent.children)
+            if (child.id != owner.id)
+              child
+            else if (kept.isNotEmpty)
+              owner.copyWith(children: kept, dirty: true),
+        ],
+        dirty: true,
+      );
+      blocks = _replaceInBlocks(
+        blocks,
+        outer.id,
+        (b) => b.copyWith(
+          children: [
+            for (final child in b.children)
+              if (child.id != parent.id) child else ...[updatedParent, item],
+          ],
+          dirty: true,
+        ),
+      );
+      changed = true;
+    }
+    if (!changed) return false;
+    _document = _document.copyWith(
+      blocks: _normalizeOrderedListMarkers(blocks),
+    );
+    notifyListeners();
+    return true;
+  }
+
+  List<BusyBlock> _actualElementPath(List<BusyBlock> blocks, String id) {
+    for (final b in blocks) {
+      if (b.id == id) return [b];
+      final path = _actualElementPath(b.children, id);
+      if (path.isNotEmpty) return [b, ...path];
+    }
+    return [];
   }
 
   String? splitBlockAt(String blockId, int offset) =>
@@ -1833,6 +3845,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (block == null) {
       return null;
     }
+    if (_document.isXmlTopic &&
+        busyMarkIsWritersideContainer(block) &&
+        WritersideEditingAdapter.titleElements.contains(
+          block.attributes['element'],
+        )) {
+      final paragraph = _newWritersideElement('p');
+      _replaceBlock(
+        blockId,
+        (b) => b.copyWith(children: [...b.children, paragraph], dirty: true),
+      );
+      return BusyWysiwygTextSplitResult(blockId: paragraph.id, offset: 0);
+    }
     if (block.kind == BusyBlockKind.codeBlock) {
       final text = block.plainText;
       final safeOffset = offset.clamp(0, text.length).toInt();
@@ -1858,6 +3882,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       );
     }
     if (_isListItemKind(block.kind) && block.plainText.trim().isEmpty) {
+      if (_wouldDiscardNativeListOwner(blockId)) return null;
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
     }
@@ -1909,7 +3934,22 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   BusyWysiwygTextSplitResult? applyBackspaceAtStart(String blockId) {
-    final blocks = _document.blocks;
+    final path = elementPath(blockId);
+    final owner = path.length < 2 ? null : path[path.length - 2];
+    final native = owner?.attributes['busymark-list-form'] == 'markdown';
+    final blocks = native ? owner!.children : _document.blocks;
+    void publish(List<BusyBlock> members) {
+      _document = _document.copyWith(
+        blocks: native
+            ? _replaceInBlocks(
+                _document.blocks,
+                owner!.id,
+                (b) => b.copyWith(children: members, dirty: true),
+              )
+            : members,
+      );
+    }
+
     final index = blocks.indexWhere((block) => block.id == blockId);
     if (index <= 0) {
       return null;
@@ -1942,13 +3982,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         previous.copyWith(inlines: mergedInlines, children: mergedChildren),
         dirty: true,
       );
-      _document = _document.copyWith(
-        blocks: [
-          ...blocks.take(index - 1),
-          updatedPrevious,
-          ...blocks.skip(index + 1),
-        ],
-      );
+      publish([
+        ...blocks.take(index - 1),
+        updatedPrevious,
+        ...blocks.skip(index + 1),
+      ]);
       notifyListeners();
       return BusyWysiwygTextSplitResult(
         blockId: previous.id,
@@ -1963,14 +4001,20 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       attributes: previous.attributes,
       dirty: true,
     );
-    _document = _document.copyWith(
-      blocks: [...blocks.take(index - 1), merged, ...blocks.skip(index + 1)],
-    );
+    publish([...blocks.take(index - 1), merged, ...blocks.skip(index + 1)]);
     notifyListeners();
     return BusyWysiwygTextSplitResult(
       blockId: merged.id,
       offset: previousText.length,
     );
+  }
+
+  bool _wouldDiscardNativeListOwner(String blockId) {
+    final path = elementPath(blockId);
+    final owner = path.length < 2 ? null : path[path.length - 2];
+    return owner?.attributes['busymark-list-form'] == 'markdown' &&
+        owner!.children.length == 1 &&
+        WritersideEditingAdapter.sourceAttributes(owner).isNotEmpty;
   }
 
   BusyWysiwygTextSplitResult? deleteTextSelection({
@@ -2117,6 +4161,57 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final block = blockById(blockId);
     if (block == null || block.preserveRaw) {
       return null;
+    }
+    if (_document.isXmlTopic) {
+      if (block.kind != BusyBlockKind.paragraph) return null;
+      bool supportedInline(BusyInline inline) =>
+          inline.kind != BusyInlineKind.math &&
+          (inline.kind != BusyInlineKind.html ||
+              inline.attributes.containsKey('xml-raw')) &&
+          inline.children.every(supportedInline);
+      bool supportedBlock(BusyBlock block) {
+        if (block.preserveRaw || block.isSourceProtected) {
+          final raw = block.rawSource?.trimLeft();
+          return raw != null &&
+              (raw.startsWith('<') || block.isSourceOnly && raw.isEmpty);
+        }
+        if ({
+              BusyBlockKind.table,
+              BusyBlockKind.math,
+              BusyBlockKind.htmlBlock,
+            }.contains(block.kind) ||
+            !busyMarkIsWritersideContainer(block) &&
+                {
+                  BusyBlockKind.heading,
+                  BusyBlockKind.orderedListItem,
+                  BusyBlockKind.unorderedListItem,
+                  BusyBlockKind.taskListItem,
+                }.contains(block.kind)) {
+          return false;
+        }
+        return block.inlines.every(supportedInline) &&
+            block.children.every(supportedBlock);
+      }
+
+      if (blocks.any(
+        (b) => !supportedBlock(busyMarkWysiwygClipboardBlock(b)),
+      )) {
+        return null;
+      }
+      for (final styled in blocks) {
+        final command = switch (styled.completeBlock?.attributes['element']) {
+          'procedure' => BusyWritersideInsertCommand.procedure,
+          'tabs' => BusyWritersideInsertCommand.tabs,
+          'deflist' => BusyWritersideInsertCommand.definitionList,
+          'tldr' => BusyWritersideInsertCommand.tldr,
+          'include' => BusyWritersideInsertCommand.include,
+          'video' => BusyWritersideInsertCommand.video,
+          _ => null,
+        };
+        if (command != null && !canInsertWriterside(command, blockId)) {
+          return null;
+        }
+      }
     }
     final text = block.plainText;
     final start = selectionStart.clamp(0, text.length).toInt();
@@ -2641,7 +4736,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     int selectionStart,
     int selectionEnd, {
     String? destination,
+    Map<String, String> linkAttributes = const {},
   }) {
+    if (_document.isXmlTopic &&
+        blockById(blockId)?.kind != BusyBlockKind.paragraph) {
+      return;
+    }
     if (selectionStart == selectionEnd) {
       return;
     }
@@ -2655,6 +4755,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         start,
         end,
         destination: destination,
+        linkAttributes: linkAttributes,
       ),
     );
   }
@@ -2670,6 +4771,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     _document = _document.copyWith(
       blocks: _replaceBlocksByIds(_document.blocks, idSet, (block) {
+        if (_document.isXmlTopic && block.kind != BusyBlockKind.paragraph) {
+          return block;
+        }
         final length = block.plainText.length;
         if (length == 0) {
           return block;
@@ -2688,7 +4792,21 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   void _replaceBlock(String blockId, BusyBlock Function(BusyBlock) replace) {
     _document = _document.copyWith(
-      blocks: _replaceInBlocks(_document.blocks, blockId, replace),
+      blocks: _replaceInBlocks(_document.blocks, blockId, (block) {
+        final next = replace(block);
+        if (next.attributes['busymark-property-edits'] != null &&
+            next.rawSource == block.rawSource &&
+            next.attributes['busymark-property-edits'] ==
+                block.attributes['busymark-property-edits'] &&
+            (!identical(next.inlines, block.inlines) ||
+                !identical(next.children, block.children) ||
+                next.kind != block.kind)) {
+          return next.copyWith(
+            attributes: {...next.attributes}..remove('busymark-property-edits'),
+          );
+        }
+        return next;
+      }),
     );
     notifyListeners();
   }
@@ -2732,7 +4850,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       }
       return [
         ...blocks.take(index),
-        block.copyWith(children: children),
+        block.copyWith(
+          children: children,
+          attributes: {...block.attributes}..remove('busymark-property-edits'),
+        ),
         ...blocks.skip(index + 1),
       ];
     }
@@ -2786,7 +4907,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         continue;
       }
       changed = true;
-      if (block.kind == BusyBlockKind.blockquote &&
+      if ((block.kind == BusyBlockKind.blockquote ||
+              block.attributes['busymark-list-form'] == 'markdown') &&
           block.children.isNotEmpty &&
           children.isEmpty &&
           block.inlines.isEmpty) {
@@ -2901,7 +5023,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       children: List.unmodifiable([
         for (final child in block.children) _cloneClipboardBlock(child),
       ]),
-      attributes: Map.unmodifiable(block.attributes),
+      attributes: Map.unmodifiable(
+        {...block.attributes}..remove(busyMarkXmlBindingAttribute),
+      ),
       rawSource: block.rawSource,
       preserveRaw: block.preserveRaw,
       isSourceOnly: block.isSourceOnly,
@@ -4298,6 +6422,7 @@ BusyBlock _blockWithAdmonitionStyle(
     ..['style'] = style.name;
   if (semanticElement) {
     attributes['element'] = style.name;
+    if (block.attributes['id'] case final id?) attributes['id'] = id;
   } else {
     attributes.remove('element');
   }
@@ -4452,6 +6577,7 @@ BusyBlock _blockWithInlineCommand(
   int selectionStart,
   int selectionEnd, {
   String? destination,
+  Map<String, String> linkAttributes = const {},
 }) {
   final text = block.plainText;
   final safeStart = selectionStart.clamp(0, text.length).toInt();
@@ -4477,6 +6603,9 @@ BusyBlock _blockWithInlineCommand(
         start: safeStart,
         end: safeEnd,
         kind: inlineKind,
+        attributes: command == BusyWysiwygInlineCommand.link
+            ? linkAttributes
+            : const {},
         destination: command == BusyWysiwygInlineCommand.link
             ? destination
             : null,
@@ -4583,7 +6712,11 @@ bool _isTypingInlineKind(BusyInlineKind kind) {
     BusyInlineKind.emphasis ||
     BusyInlineKind.underline ||
     BusyInlineKind.strikethrough ||
-    BusyInlineKind.code => true,
+    BusyInlineKind.code ||
+    BusyInlineKind.writersideControl ||
+    BusyInlineKind.writersidePath ||
+    BusyInlineKind.writersideUiPath ||
+    BusyInlineKind.writersideShortcut => true,
     _ => false,
   };
 }
@@ -4620,7 +6753,156 @@ String _incrementOrderedMarker(String? marker, int offset) {
   return '${value + offset}$suffix';
 }
 
+// The authored Markdown parser retains interpolation tokens for the preview
+// resolver. Bind those tokens to the editor's reference representation on
+// loading, without changing source, dirty flags, or the preview projection.
+BusyDocument busyMarkWysiwygBindMarkdownReferences(BusyDocument document) {
+  if (document.mode != MarkdownMode.writersideMarkdown || document.isXmlTopic) {
+    return document;
+  }
+  bool ignores(Map<String, String> attributes, bool inherited) =>
+      switch (attributes['ignore-vars']) {
+        'true' => true,
+        'false' => false,
+        _ => inherited,
+      };
+  List<BusyInline> bind(List<BusyInline> inlines, bool inherited) {
+    final result = <BusyInline>[];
+    for (final inline in inlines) {
+      final ignore = ignores(inline.attributes, inherited);
+      if (ignore ||
+          {
+            BusyInlineKind.code,
+            BusyInlineKind.math,
+            BusyInlineKind.html,
+            BusyInlineKind.writersideVariable,
+          }.contains(inline.kind)) {
+        result.add(inline);
+      } else if (inline.kind == BusyInlineKind.text) {
+        final parts = const WritersideEditingAdapter().textInlines(inline.text);
+        if (!parts.any((p) => p.kind == BusyInlineKind.writersideVariable)) {
+          result.add(inline);
+        } else {
+          result.addAll(
+            parts.map(
+              (part) => part.kind == BusyInlineKind.writersideVariable
+                  ? part.copyWith(
+                      attributes: {...inline.attributes, ...part.attributes},
+                    )
+                  : inline.copyWith(text: part.text),
+            ),
+          );
+        }
+      } else if (inline.children.isNotEmpty) {
+        final children = bind(inline.children, ignore);
+        result.add(
+          listEquals(children, inline.children)
+              ? inline
+              : inline.copyWith(children: children),
+        );
+      } else {
+        result.add(inline);
+      }
+    }
+    return result;
+  }
+
+  BusyBlock visit(BusyBlock block, bool inherited) {
+    if (block.isSourceProtected || block.preserveRaw || block.isSourceOnly) {
+      return block;
+    }
+    final ignore = ignores(block.attributes, inherited);
+    final inlines =
+        {
+              BusyBlockKind.paragraph,
+              BusyBlockKind.heading,
+              BusyBlockKind.unorderedListItem,
+              BusyBlockKind.orderedListItem,
+              BusyBlockKind.taskListItem,
+            }.contains(block.kind) &&
+            !WritersideEditingAdapter.titleElements.contains(
+              block.attributes['element'],
+            )
+        ? bind(block.inlines, ignore)
+        : block.inlines;
+    final children = block.children.map((b) => visit(b, ignore)).toList();
+    if (listEquals(inlines, block.inlines) &&
+        listEquals(children, block.children)) {
+      return block;
+    }
+    return block.copyWith(
+      inlines: inlines,
+      children: children,
+      dirty: block.dirty,
+    );
+  }
+
+  final blocks = document.blocks.map((b) => visit(b, false)).toList();
+  return listEquals(blocks, document.blocks)
+      ? document
+      : document.copyWith(blocks: blocks);
+}
+
 BusyDocument _ensureEditableDocument(BusyDocument document) {
+  if (document.isXmlTopic) return document;
+  if (document.isWriterside) {
+    // Split only an existing parser-owned container when an explicit editing
+    // operation promotes a member to ordinary content. Never join neighbors
+    // merely because their kinds happen to agree.
+    List<BusyBlock> owners(List<BusyBlock> blocks) {
+      final result = <BusyBlock>[];
+      for (final block in blocks) {
+        final children = owners(block.children);
+        if (block.attributes['busymark-list-form'] != 'markdown' ||
+            children.every((b) => _isListItemKind(b.kind))) {
+          result.add(
+            listEquals(children, block.children)
+                ? block
+                : block.copyWith(children: children),
+          );
+          continue;
+        }
+        var first = true;
+        final run = <BusyBlock>[];
+        void flush() {
+          if (run.isEmpty) return;
+          result.add(
+            BusyBlock(
+              id: first ? block.id : 'list-part-${run.first.id}',
+              kind: block.kind,
+              children: [...run],
+              attributes: first
+                  ? block.attributes
+                  : const {
+                      'element': 'list',
+                      busyMarkWritersideContainerAttribute: 'true',
+                      'busymark-list-form': 'markdown',
+                    },
+              dirty: true,
+            ),
+          );
+          run.clear();
+          first = false;
+        }
+
+        for (final child in children) {
+          if (_isListItemKind(child.kind)) {
+            run.add(child);
+          } else {
+            flush();
+            result.add(child);
+          }
+        }
+        flush();
+      }
+      return result;
+    }
+
+    final normalized = owners(document.blocks);
+    if (!listEquals(normalized, document.blocks)) {
+      document = document.copyWith(blocks: normalized);
+    }
+  }
   // Commit source-form changes before notifying listeners, within the edit's
   // existing transaction. Include dirty imported fragments as well as newly
   // reconstructed prose; untouched source-backed blocks retain their source.
@@ -4894,7 +7176,11 @@ bool _canMergeInlineStyles(BusyInline left, BusyInline right) {
         BusyInlineKind.emphasis ||
         BusyInlineKind.underline ||
         BusyInlineKind.strikethrough ||
-        BusyInlineKind.link => true,
+        BusyInlineKind.link ||
+        BusyInlineKind.writersideControl ||
+        BusyInlineKind.writersidePath ||
+        BusyInlineKind.writersideUiPath ||
+        BusyInlineKind.writersideShortcut => true,
         _ => false,
       };
 }

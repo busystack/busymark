@@ -1130,6 +1130,9 @@ void main() {
           expect(source, '$url\n\n');
           final fields = tester
               .widgetList<TextField>(find.byType(TextField))
+              .where(
+                (field) => field.controller is BusyMarkWysiwygTextController,
+              )
               .toList();
           expect(fields, hasLength(2));
           expect(fields.last.controller!.text, '');
@@ -1209,7 +1212,15 @@ void main() {
           await tester.sendKeyEvent(LogicalKeyboardKey.enter);
           await tester.pumpAndSettle();
           expect(live!.blocks.first.plainText, text);
-          final next = tester.widget<TextField>(find.byType(TextField).last);
+          final next = tester.widget<TextField>(
+            find
+                .byWidgetPredicate(
+                  (w) =>
+                      w is TextField &&
+                      w.controller is BusyMarkWysiwygTextController,
+                )
+                .last,
+          );
           expect(next.focusNode!.hasFocus, isTrue);
           expect(
             next.controller!.selection,
@@ -1309,7 +1320,15 @@ void main() {
           }
 
           check(live!);
-          final next = tester.widget<TextField>(find.byType(TextField).last);
+          final next = tester.widget<TextField>(
+            find
+                .byWidgetPredicate(
+                  (w) =>
+                      w is TextField &&
+                      w.controller is BusyMarkWysiwygTextController,
+                )
+                .last,
+          );
           expect(next.focusNode!.hasFocus, isTrue);
           expect(
             next.controller!.selection,
@@ -1667,13 +1686,26 @@ void main() {
                 )
                 .busyDocument;
             expect(
-              parsed.blocks.where((block) => block.kind == blockCase.kind),
+              parsed.blocks
+                  .expand(
+                    (block) =>
+                        block.attributes['busymark-list-form'] == 'markdown'
+                        ? block.children
+                        : [block],
+                  )
+                  .where((block) => block.kind == blockCase.kind),
               hasLength(1),
               reason:
                   '${blockCase.kind.name} was flattened at paragraph offset $position: $result',
             );
             expect(
               parsed.blocks
+                  .expand(
+                    (block) =>
+                        block.attributes['busymark-list-form'] == 'markdown'
+                        ? block.children
+                        : [block],
+                  )
                   .singleWhere((block) => block.kind == blockCase.kind)
                   .plainText,
               blockCase.text,
@@ -2077,7 +2109,11 @@ void main() {
 
         final pasted = result;
         expect(pasted, isNot(original));
-        expect(RegExp(r'Existing').allMatches(pasted), hasLength(1));
+        expect(
+          RegExp(r'Existing').allMatches(pasted),
+          hasLength(1),
+          reason: pasted,
+        );
         final parsed = _parser
             .parse(filePath: '/math-list.md', source: pasted)
             .busyDocument;
@@ -4507,7 +4543,10 @@ void main() {
       systemData = {'text': 'Pasted'};
       var result = '| A |\n| --- |\n| Cell |\n';
       await mount(tester, 'composing-cell', result, (value) => result = value);
-      final cell = tester.widgetList<TextField>(find.byType(TextField)).last;
+      final cell = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .where((field) => field.controller is BusyMarkWysiwygTextController)
+          .last;
       cell.focusNode!.requestFocus();
       cell.controller!.value = const TextEditingValue(
         text: 'Cell',

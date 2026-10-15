@@ -11,6 +11,103 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Modulens bokstavstil publiseres ikke.';
+
+  @override
+  String get wsTitleOverridesAction =>
+      'Titler for instans og innholdsfortegnelse…';
+
+  @override
+  String get wsHeadingNotPublished => 'Publiseres ikke av denne byggeren.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Den fastlåste byggeren publiserer ikke instanstitler i Markdown-emner. Eksisterende markering bevares; se kilden.';
+
+  @override
+  String get wsTopicIdentity => 'Emne-ID';
+
+  @override
+  String get wsElementAnchor => 'Elementanker';
+
+  @override
+  String get wsHeadingText => 'Overskriftstekst';
+
+  @override
+  String get wsDefaultTitle => 'Standardtittel';
+
+  @override
+  String get wsTopicNavigation => 'Emnenavigasjon';
+
+  @override
+  String get wsHeadingOptions => 'Overskriftsattributter';
+
+  @override
+  String get wsDocumentOptions => 'Dokumentinnstillinger';
+
+  @override
+  String get wsSettingsPresent => 'Eksplisitte innstillinger finnes';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Overstyrer publisert tittel; overskriftsteksten beholdes.';
+
+  @override
+  String get wsIgnoreVariables => 'Behandle variabeltekst bokstavelig';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Når aktivert erstattes ikke tekst som ligner variabler.';
+
+  @override
+  String get wsInstanceSelection => 'Hjelpeinstanser';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Velg hjelpeutgaver med navn, grupper, lister, unntak eller uttrykk.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtrer gjenbrukbart innhold etter kriterier; dette velger ikke en hjelpeinstans.';
+
+  @override
+  String get wsContextHelp => 'Konteksthjelp-ID';
+
+  @override
+  String get wsCapitalization => 'Store og små bokstaver';
+
+  @override
+  String get wsLibraryTopic => 'Bibliotekemne';
+
+  @override
+  String get wsLastModified => 'Sist endret';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Ingen H1 for emnet. Legg den til i kilden.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Den første H1 bestemmer emnetittelen. Senere H1 er egne overskrifter.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Rotens id avviker fra filnavnets emne-ID. Bruk Gi emnefil nytt navn eller se kilden.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Ustøttede attributter bevares. Se dem i kilden.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Generert anker; en verdi oppretter en overstyring.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Den fastlåste byggeren publiserer ikke H1-attributter. De tilhører overskriften, ikke XML-roten.';
+
+  @override
   String get closeOtherTabs => 'Lukk andre faner';
 
   @override
@@ -4791,4 +4888,518 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes.';
+
+  @override
+  String get wsSemanticFormats => 'Semantisk formatering';
+
+  @override
+  String get wsUiControl => 'UI-kontroll';
+
+  @override
+  String get wsFilePath => 'Fil / Sti';
+
+  @override
+  String get wsUiPath => 'UI-sti';
+
+  @override
+  String get wsDefinitionList => 'Definisjonsliste';
+
+  @override
+  String get wsIncludeContent => 'Inkluder gjenbrukbart innhold';
+
+  @override
+  String get wsVariableReference => 'Variabelreferanse';
+
+  @override
+  String get wsConvertList => 'Konverter liste til prosedyre';
+
+  @override
+  String get wsElementProperties => 'Elementegenskaper';
+
+  @override
+  String get wsTopicProperties => 'Emneegenskaper';
+
+  @override
+  String get wsCollapsible => 'Sammenleggbar';
+
+  @override
+  String get wsPublishedState => 'Publisert starttilstand';
+
+  @override
+  String get wsExpanded => 'Utvidet';
+
+  @override
+  String get wsCollapsed => 'Sammenlagt';
+
+  @override
+  String get wsCollapsedTitle => 'Sammenlagt tittel';
+
+  @override
+  String get wsTerm => 'Begrep';
+
+  @override
+  String get wsListLayout => 'Listeoppsett';
+
+  @override
+  String get wsSyncGroup => 'Synkroniseringsgruppe';
+
+  @override
+  String get wsTabKey => 'Fanenøkkel';
+
+  @override
+  String get wsSwitcherLabel => 'Bytteetikett';
+
+  @override
+  String get wsNavigationElements => 'Navigasjonselementer';
+
+  @override
+  String get wsNavigationDepth => 'Navigasjonsdybde';
+
+  @override
+  String get wsAddItem => 'Legg til element';
+
+  @override
+  String get wsStep => 'Trinn';
+
+  @override
+  String get wsPropertyInvalid => 'Ugyldig egenskapsverdi';
+
+  @override
+  String get wsFilter => 'Innholdsfilter';
+
+  @override
+  String get wsIdentifier => 'Element-ID';
+
+  @override
+  String get wsTldr => 'Sammendrag (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Full bredde';
+
+  @override
+  String get wsMediumLayout => 'Middels (1:2)';
+
+  @override
+  String get wsNarrowLayout => 'Smal termkolonne';
+
+  @override
+  String get wsTitle => 'Tittel';
+
+  @override
+  String get wsSwitcherKey => 'Byttenøkkel';
+
+  @override
+  String get nextcloudServerSettings => 'Notes-innstillinger på serveren';
+
+  @override
+  String get nextcloudNotesPath => 'Sti til notatmappen';
+
+  @override
+  String get nextcloudFileSuffix => 'Filendelse for nye notater';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Disse Notes-innstillingene påvirker andre klienter. Endring av stien flytter ikke filer; endring av filendelsen gir ikke eksisterende notater nye navn.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Serverinnstillinger lagret';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Lagret med verdier normalisert av serveren';
+
+  @override
+  String get nextcloudPendingUpload => 'Vedlegg venter på opplasting';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Siste serverkontroll: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Laster serverinnstillinger';
+
+  @override
+  String get nextcloudSettingsSaving => 'Lagrer serverinnstillinger';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Forrige lokale endring';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Bruk forrige endring';
+
+  @override
+  String get quickOpen => 'Hurtigåpning';
+
+  @override
+  String get notesAll => 'Alle notater';
+
+  @override
+  String get notesUncategorized => 'Uten kategori';
+
+  @override
+  String get notesRecovery => 'Gjenoppretting';
+
+  @override
+  String get notesRecentlyEdited => 'Nylig redigert';
+
+  @override
+  String get notesOldestEdited => 'Eldste redigering';
+
+  @override
+  String get notesTitleAscending => 'Tittel A–Z';
+
+  @override
+  String get notesTitleDescending => 'Tittel Z–A';
+
+  @override
+  String get notesMove => 'Flytt til kategori';
+
+  @override
+  String get notesRemoveFavorite => 'Fjern favoritt';
+
+  @override
+  String get notesOffline => 'Gjør tilgjengelig frakoblet';
+
+  @override
+  String get notesOfflineRemove => 'Fjern frakoblet oppbevaring';
+
+  @override
+  String get notesIndexing => 'Indekserer notater…';
+
+  @override
+  String get notesSearchHelp =>
+      'Ord bruker OG. Bruk \"siterte fraser\", title: og category:.';
+
+  @override
+  String get notesSourceLocation => 'Kildeplassering';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Kun beholdte lokale notater og lokal historikk. Serverens papirkurv og historikk er utilgjengelige.';
+
+  @override
+  String get notesImport => 'Importer notater';
+
+  @override
+  String get notesExport => 'Eksporter notater';
+
+  @override
+  String get notesImportDistinct => 'Importer som eget notat';
+
+  @override
+  String get notesAvailableOffline => 'Tilgjengelig frakoblet';
+
+  @override
+  String get notesIncomplete => 'Ufullstendig';
+
+  @override
+  String get notesSelected => 'Valgte notater';
+
+  @override
+  String get notesNoHistory =>
+      'Ingen beholdte revisjoner. Historikken kan være deaktivert, utløpt eller slettet.';
+
+  @override
+  String get notesTextAvailable => 'Tekst tilgjengelig lokalt';
+
+  @override
+  String get notesLocalVersion => 'Lokal arbeidsversjon';
+
+  @override
+  String get notesAttachments => 'Vedlegg';
+
+  @override
+  String get notesSkipped => 'Hoppet over';
+
+  @override
+  String get notesFailed => 'Mislyktes';
+
+  @override
+  String get notesCompleted => 'Fullført';
+
+  @override
+  String get notesImportNew => 'Start en ny import';
+
+  @override
+  String get notesImportResume => 'Fortsett avbrutt import';
+
+  @override
+  String get notesImportAlreadyImported =>
+      'Allerede importert i denne operasjonen';
+
+  @override
+  String get references => 'Referanser';
+
+  @override
+  String get referenceIncoming => 'Innkommende';
+
+  @override
+  String get referenceOutgoing => 'Utgående';
+
+  @override
+  String get referenceChooseTarget => 'Velg lenkemål';
+
+  @override
+  String get referenceWholeDocument => 'Hele dokumentet';
+
+  @override
+  String get referenceSourceLocation => 'Kildeplassering';
+
+  @override
+  String get referenceTargetLocation => 'Målplassering';
+
+  @override
+  String get referenceResolved => 'Løst';
+
+  @override
+  String get referenceMissing => 'Mangler';
+
+  @override
+  String get referenceAmbiguous => 'Tvetydig';
+
+  @override
+  String get referenceUnavailable => 'Utilgjengelig i denne konteksten';
+
+  @override
+  String get referenceUnsupported => 'Ikke støttet';
+
+  @override
+  String get referenceNoPortableId =>
+      'Dette målet har ingen bekreftet portabel notatadresse.';
+
+  @override
+  String get wsIncludeLines => 'Inkluder linjer';
+
+  @override
+  String get wsIncludeSymbol => 'Inkluder symbol';
+
+  @override
+  String get wsEmphasizeLines => 'Fremhev viste linjer';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Egenskapene er skrivebeskyttet i denne visningen.';
+
+  @override
+  String get wsPropertiesProtected => 'Elementet er beskyttet. Rediger kilden.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokument eller element endret. Tilbakestill utkastet og velg på nytt.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Referansen kan ikke løses nå.';
+
+  @override
+  String get wsUseDefault => 'Bruk standard';
+
+  @override
+  String get wsPropertiesSelection => 'Velg ett element.';
+
+  @override
+  String get wsImageDisplay => 'Bildevisning';
+
+  @override
+  String get wsImageThumbnail => 'Klikkbart miniatyrbilde';
+
+  @override
+  String get wsEnabled => 'Aktivert';
+
+  @override
+  String get wsDisabled => 'Deaktivert';
+
+  @override
+  String get wsWidth => 'Bredde';
+
+  @override
+  String get wsHeight => 'Høyde';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Egenskapen virker bare med publisert sammenfolding.';
+
+  @override
+  String get wsNavigationAll => 'Alle elementer med tittel';
+
+  @override
+  String get wsNavigationNone => 'Ingen navigasjon';
+
+  @override
+  String get wsNavigationCustom => 'Egendefinert navigasjon';
+
+  @override
+  String get wsTitleOverride => 'Overstyr tittel';
+
+  @override
+  String get wsCompactLayout => 'Kompakt';
+
+  @override
+  String get wsWideLayout => 'Bred';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Flytt eller fjern koden skrevet i denne blokken før du setter src. Writerside avviser en ikke-tom kodeblokk med en kildereferanse.';
+
+  @override
+  String get wsInherited => 'Arv fra listen';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside endrer ikke størrelsen på eksterne bilder pålitelig. Eksisterende mål kan ses og fjernes.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Denne endringen ble ikke skrevet til kilden. Utkastet er beholdt.';
+
+  @override
+  String get wsListItem => 'Listeelement';
+
+  @override
+  String get wsSourceFile => 'Kildefil';
+
+  @override
+  String get wsLinkTarget => 'Lenkemål';
+
+  @override
+  String get wsPreviewImage => 'Forhåndsvisningsbilde';
+
+  @override
+  String get wsIncludedElement => 'Inkludert element';
+
+  @override
+  String get wsHelpModule => 'Hjelpemodul';
+
+  @override
+  String get wsActionId => 'Handlings-ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Hjelpeinstans for tastaturkart';
+
+  @override
+  String get wsShowInSource => 'Vis i Kilde';
+
+  @override
+  String get wsOriginElement => 'Elementoverstyring';
+
+  @override
+  String get wsOriginAncestor => 'Overordnet element';
+
+  @override
+  String get wsOriginModule => 'Modulstandard';
+
+  @override
+  String get wsOriginBuiltIn => 'Innebygd standard';
+
+  @override
+  String get wsOriginUnresolved => 'Uavklart';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effektiv: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Element';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Generert: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Standard: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Standard: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Avklart: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Uavklart';
+
+  @override
+  String get wsModule => 'Modul';
+
+  @override
+  String get wsParent => 'Overordnet element';
+
+  @override
+  String get wsListType => 'Listetype';
+
+  @override
+  String get wsStartingNumber => 'Startnummer';
+
+  @override
+  String get wsListSorting => 'Sortering';
+
+  @override
+  String get wsLetteredList => 'Bokstavliste';
+
+  @override
+  String get wsCheckboxList => 'Liste med avkrysningsbokser';
+
+  @override
+  String get wsMarkerlessList => 'Liste uten markører';
+
+  @override
+  String get wsAscending => 'Stigende';
+
+  @override
+  String get wsDescending => 'Synkende';
+
+  @override
+  String get wsNoSorting => 'Ingen sortering';
+
+  @override
+  String get wsAsWritten => 'Som skrevet';
+
+  @override
+  String get wsSentenceCase => 'Stor forbokstav i setning';
+
+  @override
+  String get wsTitleCase => 'Store forbokstaver i tittel';
+
+  @override
+  String get wsLowerCase => 'Små bokstaver';
+
+  @override
+  String get wsUpperCase => 'Store bokstaver';
+
+  @override
+  String get wsNativeMarkers => 'Markdown-markører';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Første markør: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Nivå $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Den fastsatte byggeren ignorerer modulens <caps>-regler. Bruk et lokalt caps-attributt eller default-property.';
+
+  @override
+  String get wsInsertElements => 'Sett inn elementer';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Merknader og sitater';
+
+  @override
+  String get wsSemanticText => 'Semantisk tekst';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.';
 }

@@ -34,6 +34,7 @@ class DocumentUndoState {
     this.undo = const [],
     this.redo = const [],
     this.activeGroup,
+    this.restoredEntry,
   });
 
   static const historyLimit = 100;
@@ -41,6 +42,38 @@ class DocumentUndoState {
   final List<DocumentHistoryState> undo;
   final List<DocumentHistoryState> redo;
   final String? activeGroup;
+  final DocumentHistoryState? restoredEntry;
+
+  /// Identify an actual Undo/Redo traversal by the retained history objects.
+  /// Equal text, a new edit, or a grouped edit does not establish restoration.
+  DocumentHistoryState? restoredEntryFrom(DocumentUndoState previous) {
+    bool same(List<DocumentHistoryState> a, List<DocumentHistoryState> b) =>
+        a.length == b.length &&
+        Iterable.generate(a.length).every((i) => identical(a[i], b[i]));
+    bool appended(
+      List<DocumentHistoryState> before,
+      List<DocumentHistoryState> after,
+    ) =>
+        after.isNotEmpty &&
+        same(
+          before.skip(math.max(0, before.length + 1 - historyLimit)).toList(),
+          after.take(after.length - 1).toList(),
+        ) &&
+        !before.any((entry) => identical(entry, after.last));
+    if (previous.undo.isNotEmpty &&
+        identical(restoredEntry, previous.undo.last) &&
+        same(previous.undo.take(previous.undo.length - 1).toList(), undo) &&
+        appended(previous.redo, redo)) {
+      return previous.undo.last;
+    }
+    if (previous.redo.isNotEmpty &&
+        identical(restoredEntry, previous.redo.last) &&
+        same(previous.redo.take(previous.redo.length - 1).toList(), redo) &&
+        appended(previous.undo, undo)) {
+      return previous.redo.last;
+    }
+    return null;
+  }
 
   DocumentUndoState push(DocumentHistoryState state, {String? group}) {
     if (group != null && group == activeGroup && undo.isNotEmpty) {
@@ -57,6 +90,7 @@ class DocumentUndoState {
 
   DocumentUndoState afterUndo(DocumentHistoryState current) =>
       DocumentUndoState(
+        restoredEntry: undo.last,
         undo: List.unmodifiable(undo.take(undo.length - 1)),
         redo: List.unmodifiable(
           [...redo, current].skip(math.max(0, redo.length + 1 - historyLimit)),
@@ -66,6 +100,7 @@ class DocumentUndoState {
 
   DocumentUndoState afterRedo(DocumentHistoryState current) =>
       DocumentUndoState(
+        restoredEntry: redo.last,
         undo: List.unmodifiable(
           [...undo, current].skip(math.max(0, undo.length + 1 - historyLimit)),
         ),

@@ -24,6 +24,42 @@ enum BusyWysiwygInlineCommand {
   strikethrough,
   code,
   link,
+  uiControl,
+  filePath,
+  uiPath,
+  shortcut,
+}
+
+enum BusyWritersideInsertCommand {
+  procedure,
+  tabs,
+  definitionList,
+  include,
+  variable,
+  video,
+  tldr,
+  convertListToProcedure,
+}
+
+/// Distinct command categories share one menu without enum/string coercion.
+sealed class BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarCommand();
+}
+
+final class BusyWritersideToolbarInsert extends BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarInsert(this.command);
+  final BusyWritersideInsertCommand command;
+}
+
+final class BusyWritersideToolbarAdmonition
+    extends BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarAdmonition(this.style);
+  final BusyAdmonitionStyle style;
+}
+
+final class BusyWritersideToolbarSemantic extends BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarSemantic(this.command);
+  final BusyWysiwygInlineCommand command;
 }
 
 /// Whether [block] can safely be replaced by a generic block command.
@@ -41,6 +77,7 @@ bool busyMarkWysiwygCanApplyBlockCommand(
     return true;
   }
   if (block.preserveRaw ||
+      busyMarkIsWritersideContainer(block) ||
       block.isSourceOnly ||
       block.isGenerated ||
       block.isSourceProtected) {
@@ -144,5 +181,9 @@ BusyInlineKind inlineKindForCommand(BusyWysiwygInlineCommand command) {
     BusyWysiwygInlineCommand.strikethrough => BusyInlineKind.strikethrough,
     BusyWysiwygInlineCommand.code => BusyInlineKind.code,
     BusyWysiwygInlineCommand.link => BusyInlineKind.link,
+    BusyWysiwygInlineCommand.uiControl => BusyInlineKind.writersideControl,
+    BusyWysiwygInlineCommand.filePath => BusyInlineKind.writersidePath,
+    BusyWysiwygInlineCommand.uiPath => BusyInlineKind.writersideUiPath,
+    BusyWysiwygInlineCommand.shortcut => BusyInlineKind.writersideShortcut,
   };
 }

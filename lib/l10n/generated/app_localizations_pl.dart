@@ -11,6 +11,101 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Reguła wielkości liter modułu nie jest publikowana.';
+
+  @override
+  String get wsTitleOverridesAction => 'Tytuły instancji i spisu treści…';
+
+  @override
+  String get wsHeadingNotPublished => 'Ten generator tego nie publikuje.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Przypięty builder nie publikuje tytułów instancji w tematach Markdown. Istniejące znaczniki są zachowane; sprawdź źródło.';
+
+  @override
+  String get wsTopicIdentity => 'ID tematu';
+
+  @override
+  String get wsElementAnchor => 'Kotwica elementu';
+
+  @override
+  String get wsHeadingText => 'Tekst nagłówka';
+
+  @override
+  String get wsDefaultTitle => 'Tytuł domyślny';
+
+  @override
+  String get wsTopicNavigation => 'Nawigacja tematu';
+
+  @override
+  String get wsHeadingOptions => 'Atrybuty nagłówka';
+
+  @override
+  String get wsDocumentOptions => 'Ustawienia dokumentu';
+
+  @override
+  String get wsSettingsPresent => 'Obecne jawne ustawienia';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Zastępuje opublikowany tytuł; tekst nagłówka pozostaje bez zmian.';
+
+  @override
+  String get wsIgnoreVariables => 'Traktuj zmienne jako tekst dosłowny';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Po włączeniu tekst przypominający zmienne nie jest podstawiany.';
+
+  @override
+  String get wsInstanceSelection => 'Instancje pomocy';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Wybierz wyjścia pomocy za pomocą nazw, grup, list, wykluczeń lub wyrażeń.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtruje treść wielokrotnego użytku według kryteriów; nie wybiera instancji pomocy.';
+
+  @override
+  String get wsContextHelp => 'ID pomocy kontekstowej';
+
+  @override
+  String get wsCapitalization => 'Wielkość liter';
+
+  @override
+  String get wsLibraryTopic => 'Temat biblioteki';
+
+  @override
+  String get wsLastModified => 'Ostatnia zmiana';
+
+  @override
+  String get wsMissingTopicHeading => 'Brak H1 tematu. Dodaj go w źródle.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Pierwszy H1 określa tytuł tematu. Kolejne H1 są osobnymi nagłówkami.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Id korzenia różni się od ID z nazwy pliku. Użyj zmiany nazwy pliku tematu lub sprawdź źródło.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Nieobsługiwane atrybuty są zachowane. Sprawdź je w źródle.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Wygenerowana kotwica; wpisanie wartości tworzy nadpisanie.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Przypięty builder nie publikuje atrybutów H1. Należą do nagłówka, nie korzenia XML.';
+
+  @override
   String get closeOtherTabs => 'Zamknij pozostałe karty';
 
   @override
@@ -4844,4 +4939,518 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Pierwsze żądanie mogło już utworzyć notatkę na serwerze. Ta czynność tworzy osobną notatkę z zachowaną pracą lokalną. Żadne podejrzane duplikaty nie zostaną usunięte.';
+
+  @override
+  String get wsSemanticFormats => 'Formatowanie semantyczne';
+
+  @override
+  String get wsUiControl => 'Element interfejsu';
+
+  @override
+  String get wsFilePath => 'Plik / Ścieżka';
+
+  @override
+  String get wsUiPath => 'Ścieżka interfejsu';
+
+  @override
+  String get wsDefinitionList => 'Lista definicji';
+
+  @override
+  String get wsIncludeContent => 'Dołącz treść wielokrotnego użytku';
+
+  @override
+  String get wsVariableReference => 'Odwołanie do zmiennej';
+
+  @override
+  String get wsConvertList => 'Przekształć listę w procedurę';
+
+  @override
+  String get wsElementProperties => 'Właściwości elementu';
+
+  @override
+  String get wsTopicProperties => 'Właściwości tematu';
+
+  @override
+  String get wsCollapsible => 'Możliwość zwijania';
+
+  @override
+  String get wsPublishedState => 'Opublikowany stan początkowy';
+
+  @override
+  String get wsExpanded => 'Rozwinięty';
+
+  @override
+  String get wsCollapsed => 'Zwinięty';
+
+  @override
+  String get wsCollapsedTitle => 'Zwinięty tytuł';
+
+  @override
+  String get wsTerm => 'Termin';
+
+  @override
+  String get wsListLayout => 'Układ listy';
+
+  @override
+  String get wsSyncGroup => 'Grupa synchronizacji';
+
+  @override
+  String get wsTabKey => 'Klucz karty';
+
+  @override
+  String get wsSwitcherLabel => 'Etykieta przełącznika';
+
+  @override
+  String get wsNavigationElements => 'Elementy nawigacji';
+
+  @override
+  String get wsNavigationDepth => 'Głębokość nawigacji';
+
+  @override
+  String get wsAddItem => 'Dodaj element';
+
+  @override
+  String get wsStep => 'Krok';
+
+  @override
+  String get wsPropertyInvalid => 'Nieprawidłowa wartość właściwości';
+
+  @override
+  String get wsFilter => 'Filtr';
+
+  @override
+  String get wsIdentifier => 'Identyfikator elementu';
+
+  @override
+  String get wsTldr => 'Podsumowanie (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Pełna szerokość';
+
+  @override
+  String get wsMediumLayout => 'Średni (1:2)';
+
+  @override
+  String get wsNarrowLayout => 'Wąska kolumna terminu';
+
+  @override
+  String get wsTitle => 'Tytuł';
+
+  @override
+  String get wsSwitcherKey => 'Klucz przełącznika';
+
+  @override
+  String get nextcloudServerSettings => 'Ustawienia Notes na serwerze';
+
+  @override
+  String get nextcloudNotesPath => 'Ścieżka folderu notatek';
+
+  @override
+  String get nextcloudFileSuffix => 'Rozszerzenie nowych notatek';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Te ustawienia Notes dotyczą innych klientów. Zmiana ścieżki nie przenosi plików; zmiana rozszerzenia nie zmienia nazw istniejących notatek.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Zapisano ustawienia serwera';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Zapisano wartości znormalizowane przez serwer';
+
+  @override
+  String get nextcloudPendingUpload => 'Załącznik oczekuje na wysłanie';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Ostatnie sprawdzenie serwera: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Wczytywanie ustawień serwera';
+
+  @override
+  String get nextcloudSettingsSaving => 'Zapisywanie ustawień serwera';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Poprzednia lokalna zmiana';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Użyj poprzedniej zmiany';
+
+  @override
+  String get quickOpen => 'Szybkie otwieranie';
+
+  @override
+  String get notesAll => 'Wszystkie notatki';
+
+  @override
+  String get notesUncategorized => 'Bez kategorii';
+
+  @override
+  String get notesRecovery => 'Odzyskiwanie';
+
+  @override
+  String get notesRecentlyEdited => 'Ostatnio edytowane';
+
+  @override
+  String get notesOldestEdited => 'Najstarsza edycja';
+
+  @override
+  String get notesTitleAscending => 'Tytuł A–Z';
+
+  @override
+  String get notesTitleDescending => 'Tytuł Z–A';
+
+  @override
+  String get notesMove => 'Przenieś do kategorii';
+
+  @override
+  String get notesRemoveFavorite => 'Usuń z ulubionych';
+
+  @override
+  String get notesOffline => 'Udostępnij offline';
+
+  @override
+  String get notesOfflineRemove => 'Usuń przechowywanie offline';
+
+  @override
+  String get notesIndexing => 'Indeksowanie notatek…';
+
+  @override
+  String get notesSearchHelp =>
+      'Terminy używają ORAZ. Użyj \"cytowanych fraz\", title: i category:.';
+
+  @override
+  String get notesSourceLocation => 'Pozycja w źródle';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Tylko zachowane notatki lokalne i historia lokalna. Kosz i historia serwera są niedostępne.';
+
+  @override
+  String get notesImport => 'Importuj notatki';
+
+  @override
+  String get notesExport => 'Eksportuj notatki';
+
+  @override
+  String get notesImportDistinct => 'Importuj jako osobną notatkę';
+
+  @override
+  String get notesAvailableOffline => 'Dostępne offline';
+
+  @override
+  String get notesIncomplete => 'Niekompletne';
+
+  @override
+  String get notesSelected => 'Wybrane notatki';
+
+  @override
+  String get notesNoHistory =>
+      'Brak zachowanych wersji. Historia może być wyłączona, wygasła lub wyczyszczona.';
+
+  @override
+  String get notesTextAvailable => 'Tekst dostępny lokalnie';
+
+  @override
+  String get notesLocalVersion => 'Lokalna wersja robocza';
+
+  @override
+  String get notesAttachments => 'Załączniki';
+
+  @override
+  String get notesSkipped => 'Pominięto';
+
+  @override
+  String get notesFailed => 'Niepowodzenie';
+
+  @override
+  String get notesCompleted => 'Ukończono';
+
+  @override
+  String get notesImportNew => 'Rozpocznij nowy import';
+
+  @override
+  String get notesImportResume => 'Wznów przerwany import';
+
+  @override
+  String get notesImportAlreadyImported => 'Już zaimportowano w tej operacji';
+
+  @override
+  String get references => 'Odwołania';
+
+  @override
+  String get referenceIncoming => 'Przychodzące';
+
+  @override
+  String get referenceOutgoing => 'Wychodzące';
+
+  @override
+  String get referenceChooseTarget => 'Wybierz cel linku';
+
+  @override
+  String get referenceWholeDocument => 'Cały dokument';
+
+  @override
+  String get referenceSourceLocation => 'Lokalizacja źródła';
+
+  @override
+  String get referenceTargetLocation => 'Lokalizacja celu';
+
+  @override
+  String get referenceResolved => 'Rozwiązane';
+
+  @override
+  String get referenceMissing => 'Brak';
+
+  @override
+  String get referenceAmbiguous => 'Niejednoznaczne';
+
+  @override
+  String get referenceUnavailable => 'Niedostępne w tym kontekście';
+
+  @override
+  String get referenceUnsupported => 'Nieobsługiwane';
+
+  @override
+  String get referenceNoPortableId =>
+      'Ten cel nie ma zweryfikowanego przenośnego adresu URL notatki.';
+
+  @override
+  String get wsIncludeLines => 'Dołącz wiersze';
+
+  @override
+  String get wsIncludeSymbol => 'Dołącz symbol';
+
+  @override
+  String get wsEmphasizeLines => 'Wyróżnij wyświetlane wiersze';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'W tym widoku właściwości są tylko do odczytu.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Element jest chroniony. Edytuj jego źródło.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokument lub element zmieniono. Cofnij szkic i wybierz ponownie.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Nie można obecnie rozwiązać odwołania.';
+
+  @override
+  String get wsUseDefault => 'Użyj domyślnej wartości';
+
+  @override
+  String get wsPropertiesSelection => 'Wybierz jeden element.';
+
+  @override
+  String get wsImageDisplay => 'Wyświetlanie obrazu';
+
+  @override
+  String get wsImageThumbnail => 'Klikalna miniatura';
+
+  @override
+  String get wsEnabled => 'Włączone';
+
+  @override
+  String get wsDisabled => 'Wyłączone';
+
+  @override
+  String get wsWidth => 'Szerokość';
+
+  @override
+  String get wsHeight => 'Wysokość';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Ta właściwość działa tylko przy opublikowanym zwijaniu.';
+
+  @override
+  String get wsNavigationAll => 'Wszystkie elementy z tytułem';
+
+  @override
+  String get wsNavigationNone => 'Bez nawigacji';
+
+  @override
+  String get wsNavigationCustom => 'Własna nawigacja';
+
+  @override
+  String get wsTitleOverride => 'Zastąp tytuł';
+
+  @override
+  String get wsCompactLayout => 'Zwarty';
+
+  @override
+  String get wsWideLayout => 'Szeroki';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Przenieś lub usuń kod napisany w tym bloku przed ustawieniem src. Writerside odrzuca niepusty blok kodu z odwołaniem do źródła.';
+
+  @override
+  String get wsInherited => 'Dziedzicz z listy';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside nie ustawia niezawodnie rozmiaru obrazów zewnętrznych. Istniejące wymiary można sprawdzić i usunąć.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Ta zmiana nie została zapisana w źródle. Wersja robocza została zachowana.';
+
+  @override
+  String get wsListItem => 'Element listy';
+
+  @override
+  String get wsSourceFile => 'Plik źródłowy';
+
+  @override
+  String get wsLinkTarget => 'Cel linku';
+
+  @override
+  String get wsPreviewImage => 'Obraz podglądu';
+
+  @override
+  String get wsIncludedElement => 'Dołączany element';
+
+  @override
+  String get wsHelpModule => 'Moduł pomocy';
+
+  @override
+  String get wsActionId => 'ID akcji';
+
+  @override
+  String get wsKeymapHelpInstance => 'Instancja pomocy mapy klawiszy';
+
+  @override
+  String get wsShowInSource => 'Pokaż w Źródle';
+
+  @override
+  String get wsOriginElement => 'Wartość elementu';
+
+  @override
+  String get wsOriginAncestor => 'Element nadrzędny';
+
+  @override
+  String get wsOriginModule => 'Domyślna wartość modułu';
+
+  @override
+  String get wsOriginBuiltIn => 'Wbudowana wartość domyślna';
+
+  @override
+  String get wsOriginUnresolved => 'Nierozwiązane';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Efektywna wartość: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Element';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Wygenerowano: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Domyślnie: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Domyślnie: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Rozwiązano: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Nierozwiązane';
+
+  @override
+  String get wsModule => 'Moduł';
+
+  @override
+  String get wsParent => 'Element nadrzędny';
+
+  @override
+  String get wsListType => 'Typ listy';
+
+  @override
+  String get wsStartingNumber => 'Numer początkowy';
+
+  @override
+  String get wsListSorting => 'Sortowanie';
+
+  @override
+  String get wsLetteredList => 'Lista literowa';
+
+  @override
+  String get wsCheckboxList => 'Lista pól wyboru';
+
+  @override
+  String get wsMarkerlessList => 'Lista bez znaczników';
+
+  @override
+  String get wsAscending => 'Rosnąco';
+
+  @override
+  String get wsDescending => 'Malejąco';
+
+  @override
+  String get wsNoSorting => 'Bez sortowania';
+
+  @override
+  String get wsAsWritten => 'Jak napisano';
+
+  @override
+  String get wsSentenceCase => 'Wielkość liter zdania';
+
+  @override
+  String get wsTitleCase => 'Wielkość liter tytułu';
+
+  @override
+  String get wsLowerCase => 'Małe litery';
+
+  @override
+  String get wsUpperCase => 'Wielkie litery';
+
+  @override
+  String get wsNativeMarkers => 'Znaczniki Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Znacznik początkowy: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Poziom $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Przypięty kompilator ignoruje reguły <caps> modułu. Użyj lokalnego atrybutu caps lub default-property.';
+
+  @override
+  String get wsInsertElements => 'Wstaw elementy';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Uwagi i cytaty';
+
+  @override
+  String get wsSemanticText => 'Tekst semantyczny';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Sprawdzany element jest niedostępny. Sprawdź element, aby kontynuować.';
 }

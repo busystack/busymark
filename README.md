@@ -4,8 +4,13 @@ Markdown, Writerside, and Nextcloud Notes editor for Linux.
 
 [![busymark](https://snapcraft.io/busymark/badge.svg)](https://snapcraft.io/busymark)
 
-[![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/busymark)
-
+<a href="https://snapcraft.io/busymark">
+  <img
+    src="https://snapcraft.io/en/dark/install.svg"
+    alt="Get it from the Snap Store"
+    width="182"
+  />
+</a>
 <p align="center">
   <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view" width="900">
 </p>
@@ -15,6 +20,7 @@ Markdown, Writerside, and Nextcloud Notes editor for Linux.
 * **Markdown editing** — Source, Editor, Reading, and Split views with formatting tools, syntax highlighting, code folding, tables, images, links, code blocks, callouts, collapsible content, and document diagnostics.
 * **Writerside projects** — Open and create Writerside-compatible projects; edit Markdown and XML topics; manage instances, tables of contents, reusable TOC libraries, and project structure.
 * **Nextcloud Notes** — Connect to a Nextcloud server, create and edit notes offline, synchronize changes, search and filter notes, manage categories and favorites, and work with attachments.
+* **References and links** — Incoming/outgoing references, document/topic/heading target chooser, reviewed local Markdown rename/move, and portable Nextcloud note URLs. See [reference workflows](docs/references.md).
 * **Navigation and search** — Files, Topics, and Outline views, tabbed documents, command palette, keyboard shortcuts, document search and replace, reviewed replacement across local workspaces, and Markdown TOC generation.
 * **Technical documentation** — Local rendering of Mermaid, PlantUML, D2, fenced OpenAPI specifications, and MathJax mathematical expressions.
 * **PDF and HTML publishing** — Export Markdown documents and Writerside instances to configurable PDF or portable offline HTML, with controls for layout, typography, tables of contents, heading numbering, and HTML styling.
@@ -97,6 +103,7 @@ the current `snap/snapcraft.yaml` in a clean Ubuntu 24.04 amd64 Snapcraft build
 environment. The authoritative build sequence is:
 
 ```bash
+export SNAPCRAFT_BUILD_INFO=1
 snapcraft --version
 snapcraft expand-extensions
 snapcraft clean
@@ -108,6 +115,7 @@ Inspect and test the exact file emitted by the final `snapcraft` command. A
 failed build must not fall back to an older `.snap`. The `snap` job in
 [the Linux workflow](.github/workflows/flutter-linux.yml) follows this route,
 installs that selected artifact, and runs the strict-confinement smoke checks.
+Build information embeds the original recipe for the workflow's identity check.
 
 `tools/build_install_snap_local.sh` is intentionally different: it replaces
 the Flutter payload in an installed Snap scaffold for quick development and
@@ -203,11 +211,15 @@ Once connected, select **Nextcloud Notes** on the welcome screen to reopen the w
 ### Work with notes
 
 * **Create and edit:** Create notes from the Notes sidebar and edit them using the normal Markdown editor. Use each note’s menu to change its title, category, or favorite status, save a separate local copy, or delete the note.
-* **Find and organize:** Search notes by title, content, or category; filter by favorites or category; and see synchronization status in the note list and editor.
-* **Work offline:** Edits and new notes are saved to local storage before they are synchronized. Pending changes can survive an application restart. Synchronization runs when a connection is available; the sidebar’s **Refresh** control requests another pass.
+* **Find and organize:** Use All notes, Favorites, Uncategorized, Recovery, or a category and its descendants. Sort by activity or title. Ctrl-click toggles selection, Shift-click selects a range, and Ctrl+A selects the current list; the selected-notes action reviews batch favorite/category changes and reports partial outcomes.
+* **Quick Open and search:** Ctrl+P finds titles/categories, including unopened cached notes; Ctrl+Shift+P opens the command palette. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, whole words, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
+* **Work offline:** Edits and new notes are saved locally before synchronization and survive restart. **Make available offline** retains a note or category/subtree's supported managed media. Its status lists available/missing bytes and offers deliberate retry/cancellation. Offline availability, freshness, and acknowledged synchronization are separate states; external dependencies remain identified.
 * **Review conflicts:** If a note changes on the server while you have local edits, BusyMark preserves the competing versions for review instead of silently overwriting one. The comparison workflow supports choosing a version, merging changes, or recovering content as a separate note. Ambiguous note-creation results also require explicit review.
 * **Use attachments:** Add files to notes, view supported images and media, and include managed resources when exporting Markdown or HTML. PDF export includes supported images but does not embed arbitrary file attachments. New uploads are limited to **100 MiB per file**.
-* **Export or recover:** Export individual notes to PDF or offline HTML, use **Save As** to create an independent local Markdown copy, and restore earlier content through Local History.
+* **Export and import:** Keep per-note **Save local copy**, PDF, and offline HTML exports, or export a category/subtree or account as ordinary Markdown with companion media and a versioned metadata manifest. Dirty buffers must save first; missing media is listed explicitly. Import Markdown files/folders or these snapshots through a review of categories, media, and collisions. Imports create distinct notes and resume successful local items after interruption.
+* **Recover:** Recovery lists retained deleted notes and available Local History revisions, previews their content/media availability, and recovers as a new note. It uses local retention settings; Nextcloud server trash/history is unavailable.
+
+See the [Notes workspace guide](docs/development/nextcloud-notes.md#everyday-notes-workspace) for search syntax, offline requirements, recovery, and the portable snapshot format.
 
 ### Requirements and limitations
 
@@ -262,6 +274,10 @@ undo, crash recovery, and Git. Implementation and verification details are in
 Issues and focused pull requests are welcome.
 
 Changes should remain consistent with BusyMark's scope as a Linux desktop editor for Markdown, Writerside documentation, and Nextcloud Notes.
+
+Keep temporary execution reports, test-run screenshots, agent session notes, and
+acceptance diaries outside the repository; keep reusable tests, fixtures, tools,
+and maintained documentation in it.
 
 ## License
 

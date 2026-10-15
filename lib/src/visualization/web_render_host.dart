@@ -295,6 +295,10 @@ class PlatformWebRenderHost implements WebRenderHost {
     } on TimeoutException {
       cancel();
       rethrow;
+    } catch (_) {
+      // Native cancellation can finish before an in-flight WebKit callback.
+      cancellationToken.throwIfCancelled();
+      rethrow;
     } finally {
       cancellationToken.removeListener(cancel);
     }
