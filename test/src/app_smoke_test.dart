@@ -2444,6 +2444,23 @@ void main() {
     },
   );
 
+  testWidgets('settings readiness advances UI timers after real I/O', (
+    tester,
+  ) async {
+    var ioReady = false;
+    var uiReady = false;
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+      ioReady = true;
+    });
+    Timer(const Duration(milliseconds: 75), () => uiReady = true);
+    await _pumpUntilCondition(
+      tester,
+      () => ioReady && uiReady,
+      timeout: const Duration(seconds: 1),
+    );
+  });
+
   testWidgets(
     'default language persists only after dictionary installation succeeds',
     (tester) async {
@@ -2501,6 +2518,9 @@ void main() {
             'downloads=$downloadCount, '
             'installed=${harness.spelling.catalog?.installedById('fr-Test')}, '
             'catalog unavailable=${harness.spelling.catalog == null}, '
+            'phase=${harness.spelling.dictionaryInstallStatus?.phase}, '
+            'install error=${harness.spelling.dictionaryInstallStatus?.error}, '
+            'invalid=${harness.spelling.catalog?.invalidInstallations}, '
             'persisted=${settingsStore.value['defaultSpellingLanguage']}',
       );
 
@@ -16567,7 +16587,9 @@ Future<void> _pumpUntilCondition(
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 25)),
     );
-    await tester.pump();
+    // I/O progresses in runAsync; UI transitions and retry timers need the
+    // test frame clock to advance as well. A zero-duration pump freezes them.
+    await tester.pump(const Duration(milliseconds: 25));
   }
   expect(condition(), isTrue, reason: diagnostics?.call());
   await _pumpSettingsUi(tester);
