@@ -998,6 +998,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(l10n.createMarkdownFile), findsOneWidget);
         await tester.tap(find.text(l10n.createMarkdownFile));
+        await pumpUntil(tester, () {
+          final state = container.read(workspaceControllerProvider);
+          return state.documentBuffers.length == 1 &&
+              state.activeBuffer?.filePath == null &&
+              state.activeBufferId != oldId &&
+              !state.isLoading;
+        }, operation: 'Fresh Markdown workspace from Welcome');
         await tester.pumpAndSettle();
         final state = container.read(workspaceControllerProvider);
         expect(state.documentBuffers, hasLength(1));

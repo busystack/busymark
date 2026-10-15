@@ -20,6 +20,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/widget_async.dart';
+
 void main() {
   final l10n = AppLocalizationsEn();
 
@@ -1300,11 +1302,26 @@ void main() {
         if (operation == 'other') {
           await h.controller.createMarkdownFile();
         }
+        final history = h.ref.read(localHistoryControllerProvider.notifier);
+        bool? flushed;
+        bool? refreshed;
+        unawaited(() async {
+          flushed = await history.flushAll(
+            h.ref.read(workspaceControllerProvider).documentBuffers,
+          );
+          refreshed = await history.refresh();
+        }());
+        await pumpUntil(
+          tester,
+          () => refreshed != null,
+          operation: 'Initial history maintenance before comparison setup',
+        );
+        expect(flushed, isTrue);
+        expect(refreshed, isTrue);
         final before = h.ref.read(workspaceControllerProvider);
         targets.add(before.documentBuffers.last.id);
         final git = h.ref.read(gitControllerProvider.notifier);
         git.state = git.state.copyWith(openDiffFilePaths: ['comparison.md']);
-        final history = h.ref.read(localHistoryControllerProvider.notifier);
         history.state = history.state.copyWith(
           selectedRevisionId: 'revision-to-keep',
         );
