@@ -305,7 +305,7 @@ jobs:
           sudo snap install --dangerous
           "${{ steps.snap-artifact.outputs.snap }}"
 
-      - name: Verify GTK SVG icon loader
+      - name: Verify GTK SVG icon loader and portable icon caches
         run: |
           snap run --shell busymark -c '
             test ! -e \
@@ -313,6 +313,17 @@ jobs:
             query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
             loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
             "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
+            cache_tool="$SNAP_DESKTOP_RUNTIME/usr/bin/gtk-update-icon-cache"
+            test -x "$cache_tool"
+            for icon_theme in \
+              "$SNAP"/usr/share/icons/* "$SNAP"/share/icons/*; do
+              if [ -f "$icon_theme/index.theme" ]; then
+                if [ -f "$icon_theme/icon-theme.cache" ]; then
+                  "$cache_tool" --validate "$icon_theme"
+                fi
+              fi
+            done
+            test -s "$SNAP/usr/share/icons/Yaru/icon-theme.cache"
           '
 
       - name: Verify shared runtimes, packaged tools, media, and resources

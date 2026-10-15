@@ -4,6 +4,11 @@ The Snap Store build uses strict confinement. BusyMark bundles Git, OpenSSH,
 Typst, D2, WebKitGTK, and its other runtime dependencies rather than executing
 arbitrary host programs.
 
+The build generates and validates portable GTK icon-theme caches with the GNOME
+SDK. The GNOME launcher can reuse each bundled theme's index on first launch.
+These indices describe the packaged icons; graphics and media preparation still
+occurs in the confined application profile.
+
 The application plugs the standard desktop, display, audio, network, `home`,
 `removable-media`, `ssh-keys`, and `password-manager-service` interfaces. This
 supports documentation projects in ordinary home-directory locations and

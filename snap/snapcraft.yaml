@@ -195,3 +195,22 @@ parts:
         "$CRAFT_PRIME/share/metainfo/io.busystack.busymark.metainfo.xml"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
         "$CRAFT_PRIME/share/icons/hicolor/scalable/apps/io.busystack.busymark.svg"
+
+      # The GNOME launcher otherwise regenerates every bundled theme cache in
+      # each fresh profile. These are portable indices of packaged icons;
+      # generate and validate them with the existing GNOME SDK at build time.
+      icon_cache_tool=/snap/gnome-46-2404-sdk/current/usr/bin/gtk-update-icon-cache
+      test -x "$icon_cache_tool"
+      for icon_theme in \
+        "$CRAFT_PRIME"/usr/share/icons/* "$CRAFT_PRIME"/share/icons/*; do
+        if [ -f "$icon_theme/index.theme" ]; then
+          if [ ! -f "$icon_theme/icon-theme.cache" ]; then
+            "$icon_cache_tool" --force --quiet "$icon_theme"
+          fi
+          # Empty inherited themes contain no icons and emit no cache.
+          if [ -f "$icon_theme/icon-theme.cache" ]; then
+            "$icon_cache_tool" --validate "$icon_theme"
+          fi
+        fi
+      done
+      test -s "$CRAFT_PRIME/usr/share/icons/Yaru/icon-theme.cache"
