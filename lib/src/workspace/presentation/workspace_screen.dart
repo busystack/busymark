@@ -15449,10 +15449,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       return _cachedWysiwygDocument;
     }
     if (context.kind == DocumentKind.writersideXmlTopic) {
-      final document = const WritersideEditingAdapter().parseXml(
-        filePath: activePath,
-        source: buffer.text,
-      );
+      final authored = context.writersideTopic?.document;
+      final adapter = const WritersideEditingAdapter();
+      final document =
+          authored != null &&
+              p.equals(authored.filePath, activePath) &&
+              authored.source == buffer.text
+          ? adapter.fromAuthoredXml(authored)
+          : adapter.parseXml(filePath: activePath, source: buffer.text);
       _clearWysiwygCache();
       if (document != null) _cacheWysiwygDocument(buffer.id, document);
       return document;

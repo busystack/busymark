@@ -30,6 +30,43 @@ List<BusyBlock> lists(BusyDocument d) =>
 
 void main() {
   test(
+    'block lookup follows edits and replacement revisions with reused IDs',
+    () {
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse('# One\n\n## Two\n\nParagraph\n'),
+      );
+      addTearDown(c.dispose);
+      final target = c.document.blocks.last;
+      expect(c.elementPath(target.id).map((b) => b.plainText), [
+        'One',
+        'Two',
+        'Paragraph',
+      ]);
+      c.elementPath(target.id).clear();
+      expect(c.elementPath(target.id).last.plainText, 'Paragraph');
+      c.updateBlockText(target.id, 'Edited');
+      expect(c.blockById(target.id)!.plainText, 'Edited');
+      expect(c.elementPath(target.id).last.plainText, 'Edited');
+      final next = parse('# New owner\n\nReplacement\n');
+      c.replaceDocument(
+        next.copyWith(
+          blocks: [
+            next.blocks.first,
+            next.blocks.last.copyWith(id: target.id),
+          ],
+        ),
+      );
+      expect(c.blockById(target.id)!.plainText, 'Replacement');
+      expect(c.elementPath(target.id).map((b) => b.plainText), [
+        'New owner',
+        'Replacement',
+      ]);
+      expect(c.blockById('missing'), isNull);
+      expect(c.elementPath('missing'), isEmpty);
+    },
+  );
+
+  test(
     'deleting list members removes their empty owner and rejects the captured target',
     () {
       const source = 'Before\n\n- First\n- Second\n\n{id="owner"}\n\nAfter\n';
