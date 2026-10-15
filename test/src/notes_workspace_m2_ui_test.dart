@@ -23,6 +23,32 @@ Widget _app(Widget child) => MaterialApp(
   home: Scaffold(body: child),
 );
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const windowChannel = MethodChannel('yaru_window');
+  const windowEvents = EventChannel('yaru_window/events');
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  late int stateRequests;
+  setUp(() {
+    stateRequests = 0;
+    // The real Yaru dialog title bar subscribes to native window state. Keep
+    // this file independent of plugin registration and async completion timing.
+    messenger.setMockMethodCallHandler(windowChannel, (call) async {
+      if (call.method == 'state') {
+        stateRequests++;
+        return <String, Object?>{};
+      }
+      return null;
+    });
+    messenger.setMockStreamHandler(
+      windowEvents,
+      MockStreamHandler.inline(onListen: (_, _) {}, onCancel: (_) {}),
+    );
+  });
+  tearDown(() {
+    messenger.setMockMethodCallHandler(windowChannel, null);
+    messenger.setMockStreamHandler(windowEvents, null);
+  });
   test(
     'Quick Open ranks exact/prefix/title/path matches with stable identities',
     () {
@@ -83,6 +109,7 @@ void main() {
       );
       await tester.tap(find.text('launch'));
       await _drain(tester);
+      expect(stateRequests, greaterThan(0));
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();

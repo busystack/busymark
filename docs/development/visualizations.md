@@ -36,6 +36,58 @@ workspace. The interactive Scalar view receives bundled content with agent,
 telemetry, authentication persistence, proxying, API requests, remote fonts,
 and custom fetches disabled.
 
+## Linux host lifecycle
+
+Startup registers the channel and a lightweight host. A launch without a
+visualization request creates no visualization WebKit context, hidden view, or
+harness. There is no idle preloading or first-frame gate; the release smoke can
+still render before `runApp()`.
+
+The first accepted render operation queues initialization on the GTK main
+context. Requests share one ephemeral context, view, and harness load. The
+renderer moves through dormant, scheduled, loading, ready, failed, and stopped
+states. Loading includes the harness's asynchronous ready event and its existing
+15-second deadline. Dart's existing request deadlines include initialization.
+Malformed, oversized, unsupported, cancellation, and PNG clipboard operations
+do not start WebKit. Cancelling all scheduled requests avoids construction.
+
+The harness registers its dispatcher without evaluating an engine. The first
+operation imports a fixed, offline bundle for Mermaid, PlantUML, MathJax, or
+OpenAPI. SVG rasterization needs only the harness. PlantUML alone loads the
+bundled Graphviz script. Module evaluation is reused within the view, and
+concurrent imports share the browser's module registry. Engine load failures
+reject their request with `visualization.hostUnavailable` and retire the failed
+view and its module registry. Queued work and retries use a fresh restricted
+view in the same ephemeral context. Process recovery also creates a fresh
+registry. Each engine retains its existing validation,
+configuration, and dependencies. Math includes all offline NewCM font tables.
+First use still pays for the WebKit process, harness, and requested engine;
+subsequent requests reuse them. Those costs must be measured alongside plain
+startup when assessing performance, including preparation that an eager
+baseline completed before receiving its first request.
+
+Opening an interactive reference first creates the shared context and its
+visible view, without loading the offscreen harness. A later render uses that
+context. Reference windows retain their normal acceleration policy.
+
+Initialization failure fails the queue and releases the failed view; later
+requests can retry. Renderer-process termination recreates the hidden view with
+the same restrictions and offscreen acceleration policy. Cancellation marks
+active work as responded before cancelling its callback, preventing a late
+success. Shutdown removes scheduled work, cancels initialization and rendering,
+fails queued calls, closes reference windows, and disconnects view callbacks.
+Late channel calls return `visualization.hostUnavailable` until host disposal,
+which detaches the channel handler. Async
+callbacks retain the host until completion, check its state and view identity,
+and cannot recreate resources after shutdown. Private resource callbacks own
+their resource path independently of the host.
+
+Set `BUSYMARK_VISUALIZATION_TRACE=1` for opt-in monotonic timings on stderr:
+context construction, view construction, offscreen realization/show, harness
+dispatch, and request acceptance, start, JavaScript delivery, and completion. It logs no document source. Moving
+construction to first use removes unused startup work; it does not establish
+the cause or elimination of a rare WebKit construction stall.
+
 ## Dependencies and packaging
 
 Do not duplicate pinned versions or hashes in documentation. The authoritative
@@ -66,6 +118,10 @@ BUSYMARK_TYPST_PATH=build/linux/x64/debug/bundle/libexec/busymark/typst \
 Run the real WebKit and D2 corpus under X11:
 
 ```bash
+xvfb-run -a -s '-screen 0 1280x1024x24' \
+  env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
+  bash tools/test_web_render_host.sh
+
 xvfb-run -a -s '-screen 0 1280x1024x24' \
   env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
   /usr/bin/python3 -u tools/visualization_smoke.py \

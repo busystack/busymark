@@ -5,6 +5,76 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
+    'list type completion offers the independently verified checkbox value',
+    () {
+      const source = '<list type="';
+      final suggestions = const SourceAutocompleteProvider().suggestions(
+        document: SourceDocument(fullText: source),
+        fullOffset: source.length,
+        context: const SourceAutocompleteContext(),
+        limit: 100,
+      );
+      expect(suggestions.map((s) => s.insertText), contains('checkbox'));
+      expect(
+        suggestions.map((s) => s.insertText),
+        containsAll(['bullet', 'decimal', 'alpha-lower', 'none']),
+      );
+      expect(suggestions.map((s) => s.insertText), isNot(contains('invented')));
+    },
+  );
+  test(
+    'XML root completion uses the formal root set, not common capabilities',
+    () {
+      for (final tag in ['topic', 'p', 'chapter']) {
+        final source = '<$tag ';
+        final attrs = const SourceAutocompleteProvider()
+            .suggestions(
+              document: SourceDocument(fullText: source),
+              fullOffset: source.length,
+              context: const SourceAutocompleteContext(),
+              limit: 100,
+            )
+            .where((s) => s.kind == SourceAutocompleteKind.xmlAttribute)
+            .map((s) => s.insertText)
+            .toSet();
+        final expected = switch (tag) {
+          'topic' => {
+            'title',
+            'id',
+            'help-id',
+            'switcher-label',
+            'ignore-vars',
+            'is-library',
+            'last-modified',
+          },
+          'p' => {
+            'id',
+            'switcher-key',
+            'filter',
+            'help-id',
+            'ignore-vars',
+            'instance',
+          },
+          _ => {
+            'title',
+            'id',
+            'level',
+            'caps',
+            'collapsible',
+            'default-state',
+            'switcher-key',
+            'filter',
+            'help-id',
+            'ignore-vars',
+            'instance',
+          },
+        };
+        expect(attrs, expected, reason: tag);
+      }
+    },
+  );
+
+  test(
     'autocomplete prioritizes Writerside Markdown authoring suggestions',
     () {
       final suggestions = const SourceAutocompleteProvider().suggestions(

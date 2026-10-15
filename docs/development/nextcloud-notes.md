@@ -418,6 +418,61 @@ mocked tests alone do not establish live server compatibility. Keep the
 checkpoint, revision, explicit-adoption and attachment ownership invariants
 above covered, and remove temporary acceptance data when finished.
 
+For repeatable performance measurements, build the existing real-SQLite corpus
+harness with the pinned Dart SDK and dependency lock. Use an empty corpus
+directory outside the checkout:
+
+```bash
+performance_dir="$(mktemp -d)"
+dart build cli -t tools/nextcloud_notes_performance.dart \
+  -o "$performance_dir/build"
+"$performance_dir/build/bundle/bin/nextcloud_notes_performance" \
+  "$performance_dir/corpus"
+```
+
+The harness measures index rebuilding, warm queries, concurrent saves/imports
+and reference indexing with durable notes and cached attachments. Compare its
+`report.json` under equivalent machine/load conditions; it is a benchmark,
+not a timing assertion in the regression suite.
+
+### Native desktop integration
+
+Build the reusable native target with:
+
+```sh
+flutter build linux --release -t tools/nextcloud_notes_desktop_acceptance.dart
+GDK_BACKEND=x11 build/linux/x64/release/bundle/busymark \
+  /private/app-credentials.json /private/test-ca.pem /private/desktop-output \
+  disposable-nextcloud-container --full
+```
+
+Use a disposable XDG profile/display and an isolated HTTPS account. The target
+runs production UI/controllers with connectivity loss injected around real
+requests. `--full` additionally replaces an owned image inside the named Docker
+container to verify refresh without a changed note ETag.
+
+| Scenario | Coverage |
+| --- | --- |
+| `--full` (default) | Metadata races, authentication/retry, settings, idle/focus polling, media refresh, and workspace workflows. |
+| `--workspace` | Category creation, Quick Open/search, batch review, offline media, recovery, and export/import. |
+| `--offline-start`, then `--offline-resume` | Pending text/media, category retention, history and search across a real process restart, native shortcuts, and switching to local Markdown/Writerside. |
+| `--references`, then `--references-resume` | Portable note links, reviewed rename/category changes, missing targets, and cached ID navigation after restart. |
+| `--local-references`, then `--local-references-resume` | Local Markdown link creation, reviewed moves, and media/link navigation after restart. |
+| `--writerside-references` | Native Writerside link creation, reference discovery, and reviewed refactoring. |
+| `--recovery-start`, then `--recovery-resume` | Search pagination, reviewed/repaired imports, interrupted-import resume, deleted-media isolation, and recovery across restart. |
+| `--performance` | Quick Open during reference indexing and durable edits during search in an existing profile with at least 10,000 notes. |
+
+Use a fresh output directory for each scenario or start/resume pair. Resume with
+the same credentials, CA and output directory; start modes retain only the
+resources needed for their second process. The performance mode requires a
+prepopulated `notes.sqlite3` with an account matching the private credentials;
+use the standalone corpus benchmark above for reproducible SQLite measurements.
+Each run exits nonzero on failure and writes `report-SCENARIO.json`, plus
+captures and journey state, outside the repository. Unknown scenarios fail
+before reading credentials or creating output. Rebuild the default application
+entry point after running a custom target, and remove the isolated account,
+container, profile and output after inspection.
+
 ## Explicit non-goals
 
 No Nextcloud Files, WebDAV, automatic protocol fallback, file browsing, embedded
@@ -427,23 +482,6 @@ The current [Text source](https://github.com/nextcloud/text) and
 describe web-editor ownership and internal collaborative machinery, not a
 documented supported external native collaboration API. A future official
 native API would require a separate product decision.
-
-Milestone 1 implementation, regression names, fixture versions and acceptance
-results are maintained in [nextcloud-notes-milestone-1.md](nextcloud-notes-milestone-1.md).
-The native disposable acceptance target is built with:
-
-```sh
-flutter build linux --release -t tools/nextcloud_notes_desktop_acceptance.dart
-# Private credentials/CA/output and an explicitly disposable Docker container:
-WEBKIT_DISABLE_DMABUF_RENDERER=1 build/linux/x64/release/bundle/busymark \
-  /private/app-credentials.json /private/test-ca.pem /private/desktop-output \
-  disposable-nextcloud-container
-```
-
-Use a disposable XDG profile/display. The target drives production UI/controllers;
-connectivity loss is injected around real authenticated requests. Its same-path
-replacement writes only an owned image within the named disposable container.
-Rebuild the normal default release target afterward.
 
 ## Everyday Notes workspace
 

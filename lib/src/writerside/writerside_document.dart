@@ -76,6 +76,32 @@ class WritersideDocument {
   Iterable<WritersideElementNode> get elements =>
       walk().whereType<WritersideElementNode>();
 
+  /// Topic title children have a different owner from chapter title children.
+  /// Native Markdown headings establish that boundary without an XML root.
+  Iterable<WritersideElementNode> get topicTitleElements {
+    if (format == WritersideDocumentFormat.xmlTopic) {
+      return (rootElement?.children ?? const <WritersideDocumentNode>[])
+          .whereType<WritersideElementNode>()
+          .where((e) => e.name == 'title');
+    }
+    final headings = nodes.whereType<WritersideMarkdownBlockNode>().where(
+      (n) => n.block.kind == BusyBlockKind.heading,
+    );
+    final topic = headings
+        .where((n) => n.block.attributes['level'] == '1')
+        .firstOrNull;
+    final chapter = headings
+        .where(
+          (n) => topic == null || n.span.startOffset > topic.span.startOffset,
+        )
+        .firstOrNull;
+    return nodes.whereType<WritersideElementNode>().where(
+      (e) =>
+          e.name == 'title' &&
+          (chapter == null || e.span.startOffset < chapter.span.startOffset),
+    );
+  }
+
   WritersideElementNode? elementById(String id) {
     for (final element in elements) {
       if (element.attributes['id'] == id) {

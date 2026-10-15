@@ -41,9 +41,251 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  for (final change in ['session', 'source']) {
+    testWidgets(
+      'clean close validates source identity during $change updates',
+      (tester) async {
+        final service = _ClosingAutosaveWorkspaceService();
+        final creating = _createControllerHarness(service: service);
+        await tester.pump(Duration.zero);
+        final harness = await creating;
+        await harness.settingsController.setValidateOnEdit(false);
+        await harness.settingsController.setAutoSave(false);
+        final controller = harness.controller;
+        await controller.openPath(service.path);
+        final before = controller.state.activeBuffer!;
+        await controller.openActiveFile(service.bPath);
+        await controller.activateDocumentBuffer(before.id);
+        service.pauseActivation = true;
+        final closing = controller.closeDocumentBuffer(before.id);
+        await tester.pump();
+        expect(service.activationStarted.isCompleted, isTrue);
+        if (change == 'session') {
+          controller.updateActiveEditorState(
+            before.editorState.copyWith(
+              selection: const TextSelection.collapsed(offset: 2),
+            ),
+          );
+        } else {
+          controller.updateActiveSourceText('# New unsaved content\n');
+        }
+        service.releaseActivation.complete();
+        await tester.pump();
+        expect(await closing, change == 'session');
+        if (change == 'source') {
+          expect(controller.state.activeBuffer!.id, before.id);
+          expect(controller.state.activeText, '# New unsaved content\n');
+          expect(controller.state.activeBuffer!.isDirty, isTrue);
+        } else {
+          expect(
+            controller.state.documentBuffers.any((b) => b.id == before.id),
+            isFalse,
+          );
+        }
+      },
+    );
+  }
   _registerResponsivenessTests();
   _registerCorrectionBoundaryTests();
   _registerReferenceMoveTests();
+  for (final outerOverride in [false, true]) {
+    test(
+      'numbered item property preserves starts through buffer undo redo save close reopen ($outerOverride)',
+      () async {
+        final root = await _createWritableWritersideFixture(
+          'numbered-inspector',
+        );
+        addTearDown(() => root.delete(recursive: true));
+        final file = File(p.join(root.path, 'topics/numbered.md'));
+        final original =
+            '# Numbered\n\n3. Parent\n   4. Nested first\n   5. Nested second\n4. Sibling\n'
+            '${outerOverride ? '\n{start="10" id="numbered-list"}\n' : ''}';
+        await file.writeAsString(original);
+        final harness = await _createControllerHarness();
+        await harness.settingsController.setAutoSave(false);
+        final controller = harness.controller._notifier;
+        await controller.openPath(root.path);
+        await controller.openActiveFile(file.path);
+        final buffer = controller.state.activeBuffer!;
+        BusyDocument parseNumbered(String source) => const MarkdownParser()
+            .parse(
+              filePath: file.path,
+              source: source,
+              mode: MarkdownMode.writersideMarkdown,
+            )
+            .busyDocument;
+        final visual = BusyMarkWysiwygDocumentController(
+          document: parseNumbered(buffer.text),
+        );
+        addTearDown(visual.dispose);
+        final target = visual.document.blocks[1].children.first;
+        expect(
+          visual.updateWritersideProperty(target.id, 'id', 'parent-item'),
+          isTrue,
+        );
+        final converted = visual.markdown;
+        void verify(String source) {
+          final list = parseNumbered(
+            source,
+          ).blocks.singleWhere((b) => b.attributes['element'] == 'list');
+          expect(list.attributes['start'], outerOverride ? '10' : '3');
+          final item = list.children.firstWhere(
+            (b) => b.attributes['element'] == 'li',
+          );
+          expect(item.attributes['id'], 'parent-item');
+          expect(
+            item.children
+                .singleWhere((b) => b.attributes['element'] == 'list')
+                .attributes['start'],
+            '4',
+          );
+        }
+
+        expect(
+          controller.applyInspectorSource(
+            bufferId: buffer.id,
+            revision: buffer.revision,
+            expectedSource: original,
+            source: converted,
+            requiresSourceChange: true,
+          ),
+          isTrue,
+        );
+        expect(
+          controller.state.activeBuffer!.editorState.undoState.undo,
+          hasLength(1),
+        );
+        verify(controller.state.activeText);
+        expect(controller.undoActiveBuffer(), isTrue);
+        expect(controller.state.activeText, original);
+        expect(controller.redoActiveBuffer(), isTrue);
+        expect(controller.state.activeText, converted);
+        verify(controller.state.activeText);
+        expect(await controller.saveActive(), isTrue);
+        expect(await controller.closeDocumentBuffer(buffer.id), isTrue);
+        await controller.openActiveFile(file.path);
+        expect(controller.state.activeText, await file.readAsString());
+        verify(controller.state.activeText);
+      },
+    );
+  }
+  test(
+    'inspector pending text is flushed by Save and uses one buffer undo operation',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-inspector-save-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final file = File(p.join(root.path, 't.topic'));
+      const original = '<topic id="t" title="Title"><p>Text</p></topic>\n';
+      await file.writeAsString(original);
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(file.path);
+      final buffer = controller.state.activeBuffer!;
+      final draft = controller.propertyEdits.bind('id-target-generation', '', (
+        value,
+      ) {
+        final visual = BusyMarkWysiwygDocumentController(
+          document: const WritersideEditingAdapter().parseXml(
+            filePath: file.path,
+            source: buffer.text,
+          )!,
+        );
+        final paragraph = visual.document.blocks
+            .firstWhere((b) => b.attributes['element'] == 'topic')
+            .children
+            .firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+        final accepted =
+            visual.updateWritersideProperty(paragraph.id, 'id', value) &&
+            controller.applyInspectorSource(
+              bufferId: buffer.id,
+              revision: buffer.revision,
+              expectedSource: buffer.text,
+              source: visual.markdown,
+            );
+        visual.dispose();
+        return accepted;
+      });
+      controller.propertyEdits.edit(draft, 'intro');
+      expect(controller.state.activeText, original);
+      expect(await controller.saveActive(), isTrue);
+      expect(await file.readAsString(), contains('id="intro"'));
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        hasLength(1),
+      );
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, original);
+      expect(controller.redoActiveBuffer(), isTrue);
+      final live = controller.state.activeBuffer!;
+      expect(
+        controller.applyInspectorSource(
+          bufferId: live.id,
+          revision: live.revision,
+          expectedSource: live.text,
+          source: live.text,
+          requiresSourceChange: true,
+        ),
+        isFalse,
+        reason:
+            'An intended semantic change lost by serialization must not succeed',
+      );
+
+      expect(
+        controller.applyInspectorSource(
+          bufferId: buffer.id,
+          revision: buffer.revision,
+          expectedSource: buffer.text,
+          source: 'WRONG',
+        ),
+        isFalse,
+      );
+      expect(
+        controller.applyInspectorSource(
+          bufferId: live.id,
+          revision: live.revision,
+          expectedSource: live.text,
+          source: live.text,
+        ),
+        isTrue,
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        hasLength(1),
+      );
+    },
+  );
+  test(
+    'invalid property draft cancels Save, close, and view changes without losing text',
+    () async {
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final buffer = controller.state.activeBuffer!;
+      final draft = controller.propertyEdits.bind(
+        'captured',
+        'old',
+        (_) => false,
+      );
+      controller.propertyEdits.edit(draft, 'invalid');
+      expect(await controller.saveActive(), isFalse);
+      expect(
+        await controller.closeDocumentBuffer(buffer.id, discard: true),
+        isFalse,
+      );
+      controller.updateActiveEditorMode(DocumentViewModePreference.source);
+      expect(
+        controller.state.activeBuffer!.editorState.mode,
+        buffer.editorState.mode,
+      );
+      expect(draft.text, 'invalid');
+      controller.propertyEdits.revert(draft);
+      expect(controller.propertyEdits.flush(), isTrue);
+    },
+  );
   test(
     'XML visual edits use buffer history, save and reopen without Markdown conversion',
     () async {

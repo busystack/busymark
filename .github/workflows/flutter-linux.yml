@@ -165,6 +165,12 @@ jobs:
           BUSYMARK_TYPST_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/typst
         run: flutter test
 
+      - name: Exercise demand-driven native visualization lifecycle
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 NO_AT_BRIDGE=1 \
+            bash tools/test_web_render_host.sh
+
       - name: Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \

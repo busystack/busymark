@@ -55,14 +55,16 @@ const busyMarkWritersideCodeBlockSourceFormAttribute =
 const busyMarkWritersideCodeBlockElementSourceForm = 'element';
 
 bool busyMarkWritersideIsCollapsible(Map<String, String> attributes) {
-  return attributes[busyMarkWritersideCollapsibleAttribute]
+  return (attributes['busymark-effective-collapsible'] ??
+              attributes[busyMarkWritersideCollapsibleAttribute])
           ?.trim()
           .toLowerCase() ==
       'true';
 }
 
 bool busyMarkWritersideInitiallyExpanded(Map<String, String> attributes) {
-  return attributes[busyMarkWritersideDefaultStateAttribute]
+  return (attributes['busymark-effective-default-state'] ??
+              attributes[busyMarkWritersideDefaultStateAttribute])
           ?.trim()
           .toLowerCase() ==
       'expanded';

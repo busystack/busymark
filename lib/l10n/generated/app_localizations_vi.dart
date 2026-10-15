@@ -11,6 +11,101 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Quy tắc viết hoa của mô-đun không được xuất bản.';
+
+  @override
+  String get wsTitleOverridesAction => 'Tiêu đề phiên bản và mục lục…';
+
+  @override
+  String get wsHeadingNotPublished => 'Trình dựng này không xuất bản.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Builder cố định không xuất bản tiêu đề phiên bản trong chủ đề Markdown. Giữ nguyên đánh dấu hiện có; kiểm tra trong Nguồn.';
+
+  @override
+  String get wsTopicIdentity => 'ID chủ đề';
+
+  @override
+  String get wsElementAnchor => 'Neo phần tử';
+
+  @override
+  String get wsHeadingText => 'Văn bản tiêu đề';
+
+  @override
+  String get wsDefaultTitle => 'Tiêu đề mặc định';
+
+  @override
+  String get wsTopicNavigation => 'Điều hướng chủ đề';
+
+  @override
+  String get wsHeadingOptions => 'Thuộc tính tiêu đề';
+
+  @override
+  String get wsDocumentOptions => 'Thiết lập tài liệu';
+
+  @override
+  String get wsSettingsPresent => 'Có thiết lập được ghi rõ';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Ghi đè tiêu đề xuất bản; văn bản tiêu đề không đổi.';
+
+  @override
+  String get wsIgnoreVariables => 'Xử lý biến như văn bản nguyên dạng';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Khi bật, văn bản giống biến không được thay thế.';
+
+  @override
+  String get wsInstanceSelection => 'Phiên bản trợ giúp';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Chọn đầu ra theo tên, nhóm, danh sách, loại trừ hoặc biểu thức.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Lọc nội dung tái sử dụng theo tiêu chí; không chọn phiên bản trợ giúp.';
+
+  @override
+  String get wsContextHelp => 'ID trợ giúp ngữ cảnh';
+
+  @override
+  String get wsCapitalization => 'Kiểu chữ hoa';
+
+  @override
+  String get wsLibraryTopic => 'Chủ đề thư viện';
+
+  @override
+  String get wsLastModified => 'Sửa đổi lần cuối';
+
+  @override
+  String get wsMissingTopicHeading => 'Chưa có H1 chủ đề. Thêm trong Nguồn.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'H1 đầu tiên xác định tiêu đề chủ đề. Các H1 sau là tiêu đề riêng.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'id gốc khác ID theo tên tệp. Dùng Đổi tên tệp chủ đề hoặc kiểm tra Nguồn.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Thuộc tính không hỗ trợ được giữ lại. Kiểm tra trong Nguồn.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Neo được tạo tự động; nhập giá trị để ghi đè.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Builder cố định không xuất bản thuộc tính H1. Chúng thuộc tiêu đề, không thuộc gốc XML.';
+
+  @override
   String get closeOtherTabs => 'Đóng các thẻ khác';
 
   @override
@@ -4869,7 +4964,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsFullLayout => 'Toàn chiều rộng';
 
   @override
-  String get wsMediumLayout => 'Các cột bằng nhau';
+  String get wsMediumLayout => 'Trung bình (1:2)';
 
   @override
   String get wsNarrowLayout => 'Cột thuật ngữ hẹp';
@@ -5058,4 +5153,238 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Đích này không có URL ghi chú di động đã xác minh.';
+
+  @override
+  String get wsIncludeLines => 'Gồm các dòng';
+
+  @override
+  String get wsIncludeSymbol => 'Gồm ký hiệu';
+
+  @override
+  String get wsEmphasizeLines => 'Tô nổi các dòng hiển thị';
+
+  @override
+  String get wsPropertiesReadOnly => 'Thuộc tính chỉ đọc trong chế độ này.';
+
+  @override
+  String get wsPropertiesProtected => 'Phần tử được bảo vệ. Hãy sửa mã nguồn.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Tài liệu hoặc phần tử đã đổi. Hoàn nguyên bản nháp và chọn lại.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Hiện không thể phân giải tham chiếu.';
+
+  @override
+  String get wsUseDefault => 'Dùng mặc định';
+
+  @override
+  String get wsPropertiesSelection => 'Chọn một phần tử.';
+
+  @override
+  String get wsImageDisplay => 'Hiển thị ảnh';
+
+  @override
+  String get wsImageThumbnail => 'Ảnh thu nhỏ có thể nhấp';
+
+  @override
+  String get wsEnabled => 'Bật';
+
+  @override
+  String get wsDisabled => 'Tắt';
+
+  @override
+  String get wsWidth => 'Chiều rộng';
+
+  @override
+  String get wsHeight => 'Chiều cao';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Thuộc tính chỉ có tác dụng khi bật thu gọn lúc xuất bản.';
+
+  @override
+  String get wsNavigationAll => 'Mọi phần tử có tiêu đề';
+
+  @override
+  String get wsNavigationNone => 'Không điều hướng';
+
+  @override
+  String get wsNavigationCustom => 'Điều hướng tùy chỉnh';
+
+  @override
+  String get wsTitleOverride => 'Ghi đè tiêu đề';
+
+  @override
+  String get wsCompactLayout => 'Gọn';
+
+  @override
+  String get wsWideLayout => 'Rộng';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Di chuyển hoặc xóa mã được viết trong khối này trước khi đặt src. Writerside từ chối khối mã không trống có tham chiếu nguồn.';
+
+  @override
+  String get wsInherited => 'Kế thừa từ danh sách';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside không đặt kích thước ảnh bên ngoài một cách tin cậy. Có thể xem và xóa kích thước hiện có.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Thay đổi này chưa được ghi vào nguồn. Bản nháp đã được giữ lại.';
+
+  @override
+  String get wsListItem => 'Mục danh sách';
+
+  @override
+  String get wsSourceFile => 'Tệp nguồn';
+
+  @override
+  String get wsLinkTarget => 'Đích liên kết';
+
+  @override
+  String get wsPreviewImage => 'Ảnh xem trước';
+
+  @override
+  String get wsIncludedElement => 'Phần tử được đưa vào';
+
+  @override
+  String get wsHelpModule => 'Mô-đun trợ giúp';
+
+  @override
+  String get wsActionId => 'ID hành động';
+
+  @override
+  String get wsKeymapHelpInstance => 'Phiên bản trợ giúp sơ đồ phím';
+
+  @override
+  String get wsShowInSource => 'Hiện trong Nguồn';
+
+  @override
+  String get wsOriginElement => 'Giá trị ghi đè của phần tử';
+
+  @override
+  String get wsOriginAncestor => 'Phần tử cha';
+
+  @override
+  String get wsOriginModule => 'Mặc định của mô-đun';
+
+  @override
+  String get wsOriginBuiltIn => 'Mặc định tích hợp';
+
+  @override
+  String get wsOriginUnresolved => 'Chưa phân giải';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Hiệu lực: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Phần tử';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Được tạo: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Mặc định: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Mặc định: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Đã phân giải: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Chưa phân giải';
+
+  @override
+  String get wsModule => 'Mô-đun';
+
+  @override
+  String get wsParent => 'Phần tử cha';
+
+  @override
+  String get wsListType => 'Loại danh sách';
+
+  @override
+  String get wsStartingNumber => 'Số bắt đầu';
+
+  @override
+  String get wsListSorting => 'Sắp xếp';
+
+  @override
+  String get wsLetteredList => 'Danh sách chữ cái';
+
+  @override
+  String get wsCheckboxList => 'Danh sách hộp kiểm';
+
+  @override
+  String get wsMarkerlessList => 'Danh sách không dấu đầu dòng';
+
+  @override
+  String get wsAscending => 'Tăng dần';
+
+  @override
+  String get wsDescending => 'Giảm dần';
+
+  @override
+  String get wsNoSorting => 'Không sắp xếp';
+
+  @override
+  String get wsAsWritten => 'Theo văn bản gốc';
+
+  @override
+  String get wsSentenceCase => 'Viết hoa kiểu câu';
+
+  @override
+  String get wsTitleCase => 'Viết hoa kiểu tiêu đề';
+
+  @override
+  String get wsLowerCase => 'Chữ thường';
+
+  @override
+  String get wsUpperCase => 'Chữ hoa';
+
+  @override
+  String get wsNativeMarkers => 'Dấu Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Dấu bắt đầu: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Cấp $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Trình dựng cố định bỏ qua quy tắc <caps> của mô-đun. Dùng thuộc tính caps cục bộ hoặc default-property.';
+
+  @override
+  String get wsInsertElements => 'Chèn phần tử';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Lưu ý và trích dẫn';
+
+  @override
+  String get wsSemanticText => 'Văn bản ngữ nghĩa';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
 }

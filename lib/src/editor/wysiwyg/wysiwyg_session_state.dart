@@ -8,6 +8,8 @@ class WysiwygEditorSessionState {
     this.extentOffset = 0,
     this.viewportBlockId,
     this.viewportAlignment = 0,
+    this.sourceSignature,
+    this.sourceBindings = const {},
   });
 
   final String? activeBlockId;
@@ -19,6 +21,12 @@ class WysiwygEditorSessionState {
   final String? viewportBlockId;
   final double viewportAlignment;
 
+  // Writerside authoring IDs can differ after an exact saved source is reparsed.
+  // Bind caret/viewport locations to that representation, never to an ordinal.
+  final String? sourceSignature;
+  final Map<String, ({int start, int end, String kind, String tag})>
+  sourceBindings;
+
   Map<String, Object?> toJson() => {
     'activeBlockId': activeBlockId,
     'activeCellId': activeCellId,
@@ -28,6 +36,17 @@ class WysiwygEditorSessionState {
     'extentOffset': extentOffset,
     'viewportBlockId': viewportBlockId,
     'viewportAlignment': viewportAlignment,
+    if (sourceSignature != null) 'sourceSignature': sourceSignature,
+    if (sourceBindings.isNotEmpty)
+      'sourceBindings': {
+        for (final entry in sourceBindings.entries)
+          entry.key: {
+            'start': entry.value.start,
+            'end': entry.value.end,
+            'kind': entry.value.kind,
+            'tag': entry.value.tag,
+          },
+      },
   };
 
   factory WysiwygEditorSessionState.fromJson(Map<String, Object?> json) {
@@ -40,6 +59,24 @@ class WysiwygEditorSessionState {
       extentOffset: (json['extentOffset'] as num?)?.toInt() ?? 0,
       viewportBlockId: json['viewportBlockId']?.toString(),
       viewportAlignment: (json['viewportAlignment'] as num?)?.toDouble() ?? 0,
+      sourceSignature: json['sourceSignature'] as String?,
+      sourceBindings: {
+        if (json['sourceBindings'] case final Map bindings)
+          for (final entry in bindings.entries)
+            if (entry.key is String)
+              if (entry.value case {
+                'start': final num start,
+                'end': final num end,
+                'kind': final String kind,
+                'tag': final String tag,
+              })
+                entry.key as String: (
+                  start: start.toInt(),
+                  end: end.toInt(),
+                  kind: kind,
+                  tag: tag,
+                ),
+      },
     );
   }
 }

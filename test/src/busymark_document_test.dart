@@ -5120,7 +5120,13 @@ void main() {}
       await tester.pump();
 
       expect(find.byType(Image), findsOneWidget);
-      expect(find.text('rpi_1.jpg'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('wysiwyg-document-content')),
+          matching: find.text('rpi_1.jpg'),
+        ),
+        findsNothing,
+      );
       expect(
         find.descendant(
           of: find.byKey(const ValueKey('wysiwyg-document-content')),
@@ -5132,7 +5138,13 @@ void main() {}
       await tester.tap(find.byKey(const ValueKey('wysiwyg-image-block-image')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Image'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkModalEditorScaffold),
+          matching: find.text('Image'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Apply'), findsOneWidget);
       expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
       expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);

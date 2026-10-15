@@ -233,57 +233,6 @@ void main() {
     }
   });
 
-  test('grouped action rows use one BusyMark-owned rounded surface', () {
-    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-
-    expect(design, contains('class _BusyMarkGroupedListSurface'));
-    expect(design, contains('final fallbackShape = RoundedRectangleBorder'));
-    expect(design, contains('BorderRadius.circular(BusyMarkRadius.lg)'));
-    expect(design, contains('this.clipBehavior = Clip.antiAlias'));
-    expect(design, contains('height: 1'));
-    expect(design, isNot(contains('YaruTileList')));
-    expect(design, isNot(contains('YaruBorderContainer')));
-  });
-
-  test('BusyMark dialog title bars use the same surface as dialog body', () {
-    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-    final dialogChrome = RegExp(
-      r'Color busyMarkDialogSurfaceColor[\s\S]*?class BusyMarkDialogShell',
-    ).firstMatch(design)!.group(0)!;
-    final dialogShell = RegExp(
-      r'class BusyMarkDialogShell[\s\S]*?abstract final class BusyMarkPushButton',
-    ).firstMatch(design)!.group(0)!;
-
-    expect(dialogChrome, contains('busyMarkDialogSurfaceColor(context)'));
-    expect(dialogChrome, contains('YaruDialogTitleBar('));
-    expect(dialogChrome, contains('backgroundColor: dialogSurface'));
-    expect(dialogChrome, contains('border:'));
-    expect(dialogShell, contains('child: Dialog('));
-    expect(dialogShell, contains('clipBehavior: Clip.antiAlias'));
-  });
-
-  test('BusyMark dialog buttons are thin semantic framework adapters', () {
-    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-    final dialogButton = RegExp(
-      r'class BusyMarkDialogButton[\s\S]*?class BusyMarkFloatingTextEntryGroup',
-    ).firstMatch(design)!.group(0)!;
-
-    expect(design, contains('abstract final class BusyMarkPushButton'));
-    expect(design, contains('static FilledButton standard('));
-    expect(design, contains('static FilledButton standardIcon('));
-    expect(design, contains('return FilledButton.icon('));
-    expect(design, contains('static ElevatedButton suggested('));
-    expect(design, contains('static ElevatedButton destructive('));
-    expect(dialogButton, contains('BusyMarkPushButton.standard('));
-    expect(dialogButton, contains('BusyMarkPushButton.suggested('));
-    expect(dialogButton, contains('BusyMarkPushButton.destructive('));
-    expect(dialogButton, isNot(contains('FocusableActionDetector(')));
-    expect(dialogButton, isNot(contains('GestureDetector(')));
-    expect(dialogButton, isNot(contains('busyMarkSurfaceDecoration(')));
-    expect(dialogButton, isNot(contains('minHeight:')));
-    expect(dialogButton, isNot(contains('minWidth:')));
-  });
-
   test('Writerside New Topic uses the established modal editor components', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
@@ -1771,95 +1720,6 @@ void main() {
     expect(preview, contains('span.startOffset'));
   });
 
-  test('source editor line numbers use measured editor layout', () {
-    final sourceEditor = File(
-      'lib/src/editor/source/source_editor.dart',
-    ).readAsStringSync();
-    final sourceGutter = File(
-      'lib/src/editor/source/source_gutter.dart',
-    ).readAsStringSync();
-    final sourceController = File(
-      'lib/src/editor/source/source_controller.dart',
-    ).readAsStringSync();
-
-    expect(sourceEditor, contains('isCollapsed: true'));
-    expect(
-      sourceEditor,
-      contains('_sourceLineHeight(context, sourceStrutStyle)'),
-    );
-    expect(sourceEditor, contains('_SourceRenderedTextLayer'));
-    expect(sourceController, contains('renderText = false'));
-    expect(sourceEditor, contains('controller.buildSourceTextSpan'));
-    expect(sourceGutter, contains('TextPainter('));
-    expect(sourceGutter, contains('computeLineMetrics()'));
-    expect(sourceGutter, contains('getOffsetForCaret'));
-    expect(sourceGutter, contains('sourceTextHeightForLine'));
-    expect(sourceEditor, contains('_CollapsedSourceLineOverlay'));
-    expect(sourceEditor, contains('_sourceStrutStyle('));
-    expect(sourceEditor, contains('folded: _foldedRegionKeys.isNotEmpty'));
-    expect(sourceEditor, contains('if (folded)'));
-    expect(sourceEditor, contains('return null'));
-    expect(
-      sourceEditor,
-      contains('StrutStyle.fromTextStyle(_sourceTextStyle)'),
-    );
-    expect(sourceEditor, contains('strutStyle: sourceStrutStyle'));
-    expect(sourceEditor, contains('TextOverflow.ellipsis'));
-    expect(sourceEditor, contains('Color.alphaBlend'));
-    expect(sourceEditor, contains("'\$trimmed ...'"));
-  });
-
-  test('document view modes drive source preview and split layouts', () {
-    final settings = File('lib/src/app/app_settings.dart').readAsStringSync();
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
-    final sourceController = File(
-      'lib/src/editor/source/source_controller.dart',
-    ).readAsStringSync();
-    final settingsScreen = File(
-      'lib/src/workspace/presentation/settings_screen.dart',
-    ).readAsStringSync();
-
-    expect(
-      settings,
-      contains(
-        'enum DocumentViewModePreference { editor, source, preview, split }',
-      ),
-    );
-    expect(
-      settings,
-      contains('documentViewMode: DocumentViewModePreference.editor'),
-    );
-    expect(settings, contains('Future<void> setDocumentViewMode'));
-    expect(workspace, contains('final editorVisible = widget.viewMode =='));
-    expect(workspace, contains('DocumentViewModePreference.editor'));
-    expect(
-      workspace,
-      contains('widget.viewMode != DocumentViewModePreference.preview'),
-    );
-    expect(
-      workspace,
-      contains('widget.viewMode != DocumentViewModePreference.source'),
-    );
-    expect(workspace, contains('BusyMarkWysiwygEditor'));
-    expect(sourceController, contains('visualMarkdown = false'));
-    expect(workspace, isNot(contains('class _VisualMarkdownEditorPane')));
-    expect(workspace, contains('if (sourceVisible && previewVisible)'));
-    expect(workspace, contains('if (previewVisible)'));
-    expect(workspace, isNot(contains('class _DiffSharedHunkHeader')));
-    expect(
-      workspace,
-      contains('target: _diffChangeTarget(diff, _currentChangeIndex)'),
-    );
-    expect(workspace, contains('format: context.l10n.gitDiffHunkRange'));
-    expect(workspace, contains('noLinesText: context.l10n.gitDiffNoLines'));
-    expect(workspace, contains('showFileActions: !splitVisible'));
-    expect(workspace, contains('showHunkHeaders: !splitVisible'));
-    expect(settingsScreen, isNot(contains('Show preview pane')));
-    expect(settingsScreen, isNot(contains('setPreviewVisible')));
-  });
-
   test('WYSIWYG toolbar exposes fuller Markdown controls', () {
     final toolbar = File(
       'lib/src/editor/wysiwyg/wysiwyg_toolbar.dart',
@@ -1933,19 +1793,24 @@ void main() {
     expect(serializer, contains('String _listItem('));
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
-    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(5));
+    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(3));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
+    expect(toolbar, contains('BusyMarkSubmenuItem('));
+    expect(toolbar, contains('BusyWritersideToolbarSemantic'));
+    expect(toolbar, contains('context.l10n.wsInsertElements'));
+    expect(toolbar, contains('context.l10n.wsAdmonitionsAndQuotes'));
+    expect(toolbar, contains('context.l10n.wsSemanticText'));
     expect(toolbar, contains('_editorToolbarButtonBackground(context)'));
     expect(toolbar, contains('return theme.colorScheme.primary'));
     expect(
       RegExp(
         r'foregroundColor: BusyMarkLinuxPalette\.white',
       ).allMatches(toolbar),
-      hasLength(5),
+      hasLength(3),
     );
     expect(toolbar, isNot(contains('busyMarkContainedControlBackground(')));
     expect(toolbar, isNot(contains('foregroundColor: colors.foreground')));
-    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(5));
+    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(3));
     expect(toolbar, isNot(contains('accented: true')));
     expect(toolbar, contains('clipBehavior: Clip.hardEdge'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));

@@ -11,6 +11,92 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';
+
+  @override
+  String get wsTitleOverridesAction => '实例与目录标题…';
+
+  @override
+  String get wsHeadingNotPublished => '此构建器不会发布此属性。';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
+
+  @override
+  String get wsTopicIdentity => '主题 ID';
+
+  @override
+  String get wsElementAnchor => '元素锚点';
+
+  @override
+  String get wsHeadingText => '标题文本';
+
+  @override
+  String get wsDefaultTitle => '默认标题';
+
+  @override
+  String get wsTopicNavigation => '主题导航';
+
+  @override
+  String get wsHeadingOptions => '标题属性';
+
+  @override
+  String get wsDocumentOptions => '文档设置';
+
+  @override
+  String get wsSettingsPresent => '存在已编写设置';
+
+  @override
+  String get wsTitleOverrideExplanation => '覆盖发布的标题；标题文本保持不变。';
+
+  @override
+  String get wsIgnoreVariables => '将变量视为字面文本';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '启用时，不替换类似变量的文本。';
+
+  @override
+  String get wsInstanceSelection => '帮助实例';
+
+  @override
+  String get wsInstanceExplanation => '通过名称、组、列表、排除项或表达式选择帮助输出。';
+
+  @override
+  String get wsFilterExplanation => '按条件筛选可复用内容；这不会选择帮助实例。';
+
+  @override
+  String get wsContextHelp => '上下文帮助 ID';
+
+  @override
+  String get wsCapitalization => '大小写';
+
+  @override
+  String get wsLibraryTopic => '库主题';
+
+  @override
+  String get wsLastModified => '最后修改';
+
+  @override
+  String get wsMissingTopicHeading => '尚未编写主题 H1。请在源码中添加。';
+
+  @override
+  String get wsMultipleTopicHeadings => '第一个 H1 决定主题标题，后续 H1 是独立标题。';
+
+  @override
+  String get wsTopicIdentityMismatch => '根 id 与文件名派生的主题 ID 不同。请重命名主题文件或查看源码。';
+
+  @override
+  String get wsUnsupportedProperties => '保留不受支持的属性。请在源码中查看。';
+
+  @override
+  String get wsGeneratedAnchor => '自动生成的锚点；输入值可覆盖。';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
+
+  @override
   String get closeOtherTabs => '关闭其他标签页';
 
   @override
@@ -4666,7 +4752,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wsFullLayout => '全宽';
 
   @override
-  String get wsMediumLayout => '等宽列';
+  String get wsMediumLayout => '中等 (1:2)';
 
   @override
   String get wsNarrowLayout => '窄术语列';
@@ -4850,6 +4936,235 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
+
+  @override
+  String get wsIncludeLines => '包含行';
+
+  @override
+  String get wsIncludeSymbol => '包含符号';
+
+  @override
+  String get wsEmphasizeLines => '突出显示已显示的行';
+
+  @override
+  String get wsPropertiesReadOnly => '此视图中的属性为只读。';
+
+  @override
+  String get wsPropertiesProtected => '此元素受保护。请编辑其源代码。';
+
+  @override
+  String get wsPropertiesConflict => '文档或元素已更改。请还原草稿并重新选择。';
+
+  @override
+  String get wsPropertiesUnresolved => '目前无法解析此引用。';
+
+  @override
+  String get wsUseDefault => '使用默认值';
+
+  @override
+  String get wsPropertiesSelection => '请选择单个元素。';
+
+  @override
+  String get wsImageDisplay => '图像显示';
+
+  @override
+  String get wsImageThumbnail => '可点击缩略图';
+
+  @override
+  String get wsEnabled => '已启用';
+
+  @override
+  String get wsDisabled => '已禁用';
+
+  @override
+  String get wsWidth => '宽度';
+
+  @override
+  String get wsHeight => '高度';
+
+  @override
+  String get wsPropertiesInactive => '未启用发布折叠时，此属性无效。';
+
+  @override
+  String get wsNavigationAll => '所有有标题的元素';
+
+  @override
+  String get wsNavigationNone => '无导航';
+
+  @override
+  String get wsNavigationCustom => '自定义导航';
+
+  @override
+  String get wsTitleOverride => '覆盖标题';
+
+  @override
+  String get wsCompactLayout => '紧凑';
+
+  @override
+  String get wsWideLayout => '宽';
+
+  @override
+  String get wsCodeSourceConflict =>
+      '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
+
+  @override
+  String get wsInherited => '从列表继承';
+
+  @override
+  String get wsExternalImageSize => 'Writerside 无法可靠地调整外部托管图片的尺寸。可以查看和移除已有尺寸。';
+
+  @override
+  String get wsPropertiesNotSerialized => '此更改未写入源文本。草稿已保留。';
+
+  @override
+  String get wsListItem => '列表项';
+
+  @override
+  String get wsSourceFile => '源文件';
+
+  @override
+  String get wsLinkTarget => '链接目标';
+
+  @override
+  String get wsPreviewImage => '预览图像';
+
+  @override
+  String get wsIncludedElement => '包含的元素';
+
+  @override
+  String get wsHelpModule => '帮助模块';
+
+  @override
+  String get wsActionId => '操作 ID';
+
+  @override
+  String get wsKeymapHelpInstance => '键位映射帮助实例';
+
+  @override
+  String get wsShowInSource => '在源代码中显示';
+
+  @override
+  String get wsOriginElement => '元素覆盖值';
+
+  @override
+  String get wsOriginAncestor => '父元素';
+
+  @override
+  String get wsOriginModule => '模块默认值';
+
+  @override
+  String get wsOriginBuiltIn => '内置默认值';
+
+  @override
+  String get wsOriginUnresolved => '未解析';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '有效值：$value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => '元素';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '生成值：$anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '默认值：$value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '默认值：$value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '解析值：$value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '未解析';
+
+  @override
+  String get wsModule => '模块';
+
+  @override
+  String get wsParent => '父元素';
+
+  @override
+  String get wsListType => '列表类型';
+
+  @override
+  String get wsStartingNumber => '起始编号';
+
+  @override
+  String get wsListSorting => '排序';
+
+  @override
+  String get wsLetteredList => '字母列表';
+
+  @override
+  String get wsCheckboxList => '复选框列表';
+
+  @override
+  String get wsMarkerlessList => '无标记列表';
+
+  @override
+  String get wsAscending => '升序';
+
+  @override
+  String get wsDescending => '降序';
+
+  @override
+  String get wsNoSorting => '不排序';
+
+  @override
+  String get wsAsWritten => '按原文';
+
+  @override
+  String get wsSentenceCase => '句首大写';
+
+  @override
+  String get wsTitleCase => '标题大写';
+
+  @override
+  String get wsLowerCase => '小写';
+
+  @override
+  String get wsUpperCase => '大写';
+
+  @override
+  String get wsNativeMarkers => 'Markdown 标记';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '起始标记：$number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '层级 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
+
+  @override
+  String get wsInsertElements => '插入元素';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '提示和引用';
+
+  @override
+  String get wsSemanticText => '语义文本';
+
+  @override
+  String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -4857,6 +5172,92 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
 
   @override
+  String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';
+
+  @override
+  String get wsTitleOverridesAction => '实例与目录标题…';
+
+  @override
+  String get wsHeadingNotPublished => '此构建器不会发布此属性。';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
+
+  @override
+  String get wsTopicIdentity => '主题 ID';
+
+  @override
+  String get wsElementAnchor => '元素锚点';
+
+  @override
+  String get wsHeadingText => '标题文本';
+
+  @override
+  String get wsDefaultTitle => '默认标题';
+
+  @override
+  String get wsTopicNavigation => '主题导航';
+
+  @override
+  String get wsHeadingOptions => '标题属性';
+
+  @override
+  String get wsDocumentOptions => '文档设置';
+
+  @override
+  String get wsSettingsPresent => '存在已编写设置';
+
+  @override
+  String get wsTitleOverrideExplanation => '覆盖发布的标题；标题文本保持不变。';
+
+  @override
+  String get wsIgnoreVariables => '将变量视为字面文本';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '启用时，不替换类似变量的文本。';
+
+  @override
+  String get wsInstanceSelection => '帮助实例';
+
+  @override
+  String get wsInstanceExplanation => '通过名称、组、列表、排除项或表达式选择帮助输出。';
+
+  @override
+  String get wsFilterExplanation => '按条件筛选可复用内容；这不会选择帮助实例。';
+
+  @override
+  String get wsContextHelp => '上下文帮助 ID';
+
+  @override
+  String get wsCapitalization => '大小写';
+
+  @override
+  String get wsLibraryTopic => '库主题';
+
+  @override
+  String get wsLastModified => '最后修改';
+
+  @override
+  String get wsMissingTopicHeading => '尚未编写主题 H1。请在源码中添加。';
+
+  @override
+  String get wsMultipleTopicHeadings => '第一个 H1 决定主题标题，后续 H1 是独立标题。';
+
+  @override
+  String get wsTopicIdentityMismatch => '根 id 与文件名派生的主题 ID 不同。请重命名主题文件或查看源码。';
+
+  @override
+  String get wsUnsupportedProperties => '保留不受支持的属性。请在源码中查看。';
+
+  @override
+  String get wsGeneratedAnchor => '自动生成的锚点；输入值可覆盖。';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
+
+  @override
   String get closeOtherTabs => '关闭其他标签页';
 
   @override
@@ -9512,7 +9913,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wsFullLayout => '全宽';
 
   @override
-  String get wsMediumLayout => '等宽列';
+  String get wsMediumLayout => '中等 (1:2)';
 
   @override
   String get wsNarrowLayout => '窄术语列';
@@ -9696,4 +10097,233 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
+
+  @override
+  String get wsIncludeLines => '包含行';
+
+  @override
+  String get wsIncludeSymbol => '包含符号';
+
+  @override
+  String get wsEmphasizeLines => '突出显示已显示的行';
+
+  @override
+  String get wsPropertiesReadOnly => '此视图中的属性为只读。';
+
+  @override
+  String get wsPropertiesProtected => '此元素受保护。请编辑其源代码。';
+
+  @override
+  String get wsPropertiesConflict => '文档或元素已更改。请还原草稿并重新选择。';
+
+  @override
+  String get wsPropertiesUnresolved => '目前无法解析此引用。';
+
+  @override
+  String get wsUseDefault => '使用默认值';
+
+  @override
+  String get wsPropertiesSelection => '请选择单个元素。';
+
+  @override
+  String get wsImageDisplay => '图像显示';
+
+  @override
+  String get wsImageThumbnail => '可点击缩略图';
+
+  @override
+  String get wsEnabled => '已启用';
+
+  @override
+  String get wsDisabled => '已禁用';
+
+  @override
+  String get wsWidth => '宽度';
+
+  @override
+  String get wsHeight => '高度';
+
+  @override
+  String get wsPropertiesInactive => '未启用发布折叠时，此属性无效。';
+
+  @override
+  String get wsNavigationAll => '所有有标题的元素';
+
+  @override
+  String get wsNavigationNone => '无导航';
+
+  @override
+  String get wsNavigationCustom => '自定义导航';
+
+  @override
+  String get wsTitleOverride => '覆盖标题';
+
+  @override
+  String get wsCompactLayout => '紧凑';
+
+  @override
+  String get wsWideLayout => '宽';
+
+  @override
+  String get wsCodeSourceConflict =>
+      '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
+
+  @override
+  String get wsInherited => '从列表继承';
+
+  @override
+  String get wsExternalImageSize => 'Writerside 无法可靠地调整外部托管图片的尺寸。可以查看和移除已有尺寸。';
+
+  @override
+  String get wsPropertiesNotSerialized => '此更改未写入源文本。草稿已保留。';
+
+  @override
+  String get wsListItem => '列表项';
+
+  @override
+  String get wsSourceFile => '源文件';
+
+  @override
+  String get wsLinkTarget => '链接目标';
+
+  @override
+  String get wsPreviewImage => '预览图像';
+
+  @override
+  String get wsIncludedElement => '包含的元素';
+
+  @override
+  String get wsHelpModule => '帮助模块';
+
+  @override
+  String get wsActionId => '操作 ID';
+
+  @override
+  String get wsKeymapHelpInstance => '键位映射帮助实例';
+
+  @override
+  String get wsShowInSource => '在源代码中显示';
+
+  @override
+  String get wsOriginElement => '元素覆盖值';
+
+  @override
+  String get wsOriginAncestor => '父元素';
+
+  @override
+  String get wsOriginModule => '模块默认值';
+
+  @override
+  String get wsOriginBuiltIn => '内置默认值';
+
+  @override
+  String get wsOriginUnresolved => '未解析';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '有效值：$value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => '元素';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '生成值：$anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '默认值：$value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '默认值：$value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '解析值：$value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '未解析';
+
+  @override
+  String get wsModule => '模块';
+
+  @override
+  String get wsParent => '父元素';
+
+  @override
+  String get wsListType => '列表类型';
+
+  @override
+  String get wsStartingNumber => '起始编号';
+
+  @override
+  String get wsListSorting => '排序';
+
+  @override
+  String get wsLetteredList => '字母列表';
+
+  @override
+  String get wsCheckboxList => '复选框列表';
+
+  @override
+  String get wsMarkerlessList => '无标记列表';
+
+  @override
+  String get wsAscending => '升序';
+
+  @override
+  String get wsDescending => '降序';
+
+  @override
+  String get wsNoSorting => '不排序';
+
+  @override
+  String get wsAsWritten => '按原文';
+
+  @override
+  String get wsSentenceCase => '句首大写';
+
+  @override
+  String get wsTitleCase => '标题大写';
+
+  @override
+  String get wsLowerCase => '小写';
+
+  @override
+  String get wsUpperCase => '大写';
+
+  @override
+  String get wsNativeMarkers => 'Markdown 标记';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '起始标记：$number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '层级 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
+
+  @override
+  String get wsInsertElements => '插入元素';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '提示和引用';
+
+  @override
+  String get wsSemanticText => '语义文本';
+
+  @override
+  String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
 }

@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:xml/xml.dart';
+
+import 'math_syntax.dart';
 
 /// Supported metadata delimiters occupy an entire line. Horizontal whitespace
 /// and CRLF are accepted, but prefixes such as `---example` are ordinary text.
@@ -20,16 +23,15 @@ int frontMatterEndOffset(String source) {
       : closing.end;
 }
 
-/// Writerside publishes switcher front matter as literal text. Adding YAML
-/// single quotes changes the published label, so ordinary labels stay unquoted.
+/// The pinned builder inserts this literal into an XML attribute. YAML/JSON
+/// quoting does not escape its quotes; XML entities preserve the actual label.
 String encodeWritersideSwitcherLabel(String value) {
-  if (value.trim() != value ||
-      RegExp(r'[\x00-\x1f\x7f]').hasMatch(value) ||
-      value.startsWith('"') && value.endsWith('"') ||
-      value.startsWith("'") && value.endsWith("'")) {
-    return jsonEncode(value);
-  }
-  return value;
+  return busyMarkEncodeXmlMathText(value)
+      .replaceAll('"', '&quot;')
+      .replaceAll('\n', '&#10;')
+      .replaceAll('\r', '&#13;')
+      .replaceAll('\t', '&#9;')
+      .replaceAllMapped(RegExp(r'^ +| +$'), (m) => '&#32;' * m[0]!.length);
 }
 
 /// Decode only the topic switcher scalar; other metadata and the authored
@@ -48,5 +50,9 @@ String decodeWritersideSwitcherLabel(String scalar) {
       return scalar.substring(1, scalar.length - 1);
     }
   }
-  return scalar;
+  try {
+    return XmlDocumentFragment.parse(scalar).innerText;
+  } on XmlParserException {
+    return scalar;
+  }
 }

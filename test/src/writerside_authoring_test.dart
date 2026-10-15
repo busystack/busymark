@@ -137,11 +137,12 @@ void main() {
         'Operating System': 'Operating System',
         'النظام': 'النظام',
         'Platform: Choice': 'Platform: Choice',
-        r'Platform: "Desktop" \ Keys': r'Platform: "Desktop" \ Keys',
+        r'Platform: "Desktop" \ Keys': r'Platform: &quot;Desktop&quot; \ Keys',
         "Author's platform": "Author's platform",
         'true': 'true',
-        'Leading\nline': r'"Leading\nline"',
-        ' padded ': '" padded "',
+        'Leading\nline': 'Leading&#10;line',
+        ' padded ': '&#32;padded&#32;',
+        'R&D <Desktop>': 'R&amp;D &lt;Desktop&gt;',
       }.entries) {
         final c = BusyMarkWysiwygDocumentController(
           document: const MarkdownParser()
@@ -202,7 +203,10 @@ Text
       final c = BusyMarkWysiwygDocumentController(document: document);
       expect(c.markdown, source);
       expect(c.updateTopicSwitcherLabel("Author's: \"Desktop\""), isTrue);
-      expect(c.markdown, contains("switcher-label: Author's: \"Desktop\""));
+      expect(
+        c.markdown,
+        contains("switcher-label: Author's: &quot;Desktop&quot;"),
+      );
       expect(c.markdown, contains(r'custom: "kept\\raw"'));
       final ordinary = parser
           .parse(
@@ -217,6 +221,33 @@ Text
       );
     },
   );
+  test('switcher edits preserve CRLF and unrelated front matter bytes', () {
+    const source = '--- \r\ncustom: "untouched"\r\n---\r\n\r\n# Topic\r\n';
+    final c = BusyMarkWysiwygDocumentController(
+      document: const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument,
+    );
+    expect(c.updateTopicSwitcherLabel('A & "B"'), isTrue);
+    expect(
+      c.markdown,
+      source.replaceFirst(
+        '--- \r\n',
+        '--- \r\nswitcher-label: A &amp; &quot;B&quot;\r\n',
+      ),
+    );
+    expect(c.updateTopicSwitcherLabel('Next'), isTrue);
+    expect(
+      c.markdown,
+      contains('switcher-label: Next\r\ncustom: "untouched"\r\n'),
+    );
+    expect(c.updateTopicSwitcherLabel(''), isTrue);
+    expect(c.markdown, source);
+  });
   test(
     'clearing the topic switcher label restores the default without changing other metadata',
     () {
@@ -230,7 +261,7 @@ Text
             .busyDocument,
       );
       final original = c.markdown;
-      expect(c.updateTopicSwitcherLabel(''), isFalse);
+      expect(c.updateTopicSwitcherLabel(''), isTrue);
       expect(c.markdown, original);
       expect(c.updateTopicSwitcherLabel("Author's: Platform"), isTrue);
       expect(c.updateTopicSwitcherLabel(''), isTrue);
@@ -908,7 +939,7 @@ Text
       c.rebaseCommittedSource(saved);
       expect(c.blockById(p.id)!.attributes['e:id'], 'other');
       c.updateWritersideProperty(p.id, 'id', 'new');
-      expect(c.markdown, contains('id="new" e:id="other"'));
+      expect(c.markdown, contains("id='new' e:id=\"other\""));
     },
   );
   test(

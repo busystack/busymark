@@ -46,15 +46,15 @@ void main() {
       of: find.byType(BusyMarkModalEditorScaffold),
       matching: find.byType(TextFormField),
     );
-    await tester.enterText(fields.at(0), 'Albert Gee');
+    await tester.enterText(fields.at(0), 'Example Author');
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.enterText(fields.at(1), 'albert@example.com');
+    await tester.enterText(fields.at(1), 'author@example.com');
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
     expect(find.text('Git Author Identity'), findsNothing);
-    expect(result?.name, 'Albert Gee');
-    expect(result?.email, 'albert@example.com');
+    expect(result?.name, 'Example Author');
+    expect(result?.email, 'author@example.com');
     expect(result?.globally, isTrue);
   });
 
@@ -110,8 +110,8 @@ void main() {
       of: find.byType(BusyMarkModalEditorScaffold),
       matching: find.byType(TextFormField),
     );
-    await tester.enterText(fields.at(0), 'Albert Gee');
-    await tester.enterText(fields.at(1), 'albert@example.com');
+    await tester.enterText(fields.at(0), 'Example Author');
+    await tester.enterText(fields.at(1), 'author@example.com');
     await tester.pump();
     await tester.tap(find.text('Save and Commit'));
     await tester.pumpAndSettle();
@@ -120,8 +120,8 @@ void main() {
       'Document strict Git',
       'Document strict Git',
     ]);
-    expect(controller.configuredName, 'Albert Gee');
-    expect(controller.configuredEmail, 'albert@example.com');
+    expect(controller.configuredName, 'Example Author');
+    expect(controller.configuredEmail, 'author@example.com');
     expect(controller.configuredGlobally, isTrue);
   });
 }

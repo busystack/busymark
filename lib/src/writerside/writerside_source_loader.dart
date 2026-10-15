@@ -36,6 +36,49 @@ class WritersideSourceLoader {
   static String key(String topicPath, String reference) =>
       '$topicPath\u0000$reference';
 
+  /// Convert a chooser result to an authored reference using the same guarded
+  /// lookup as rendering. A snippet name is preferred only if it resolves to
+  /// this file (a topic-relative file may shadow it).
+  Future<String?> referenceForFile({
+    required String selectedPath,
+    required String documentPath,
+    required String workspaceRoot,
+    String? snippetsDirectory,
+  }) async {
+    try {
+      final anchor = await captureCanonicalDirectoryAnchor(workspaceRoot);
+      final selected = await resolveAnchoredPath(
+        anchor,
+        selectedPath,
+        allowRoot: false,
+      );
+      if (selected.type != FileSystemEntityType.file) return null;
+      final snippets = snippetsDirectory == null
+          ? null
+          : p.normalize(p.join(workspaceRoot, snippetsDirectory));
+      final candidates = <String>{
+        if (snippets != null && p.isWithin(snippets, selectedPath))
+          p.relative(selectedPath, from: snippets),
+        p.relative(selectedPath, from: p.dirname(documentPath)),
+      };
+      for (final reference in candidates) {
+        final loaded = await load(
+          reference: reference,
+          documentPath: documentPath,
+          workspaceRoot: workspaceRoot,
+          directories: [if (snippetsDirectory != null) snippetsDirectory],
+          readText: false,
+        );
+        if (loaded.path == selected.path) return reference;
+      }
+    } on FileSystemException {
+      return null;
+    } on AnchoredPathViolation {
+      return null;
+    }
+    return null;
+  }
+
   Future<WritersideSourceFile> load({
     required String reference,
     required String documentPath,

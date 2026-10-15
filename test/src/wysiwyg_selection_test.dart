@@ -196,26 +196,22 @@ void main() {
       await _key(tester, LogicalKeyboardKey.keyC);
       expect(
         clipboard.data.text,
-        contains('not the final integration result.'),
+        contains('must preserve its final punctuation.'),
       );
-      expect(clipboard.data.text, contains('/mnt/Media/Linguality/gateway'));
-      expect(
-        clipboard.data.text,
-        contains('/mnt/Media/Linguality/learner_client'),
-      );
+      expect(clipboard.data.text, contains('/opt/example/gateway'));
+      expect(clipboard.data.text, contains('/opt/example/desktop_client'));
       expect(clipboard.data.text, contains('A longer body cell'));
       expect(clipboard.data.text, contains('End!'));
+      expect(clipboard.data.sourceText, contains('`/opt/example/gateway`'));
       expect(
         clipboard.data.sourceText,
-        contains('`/mnt/Media/Linguality/gateway`'),
+        contains('`/opt/example/desktop_client`'),
       );
       expect(
         clipboard.data.sourceText,
-        contains('`/mnt/Media/Linguality/learner_client`'),
-      );
-      expect(
-        clipboard.data.sourceText,
-        contains('**The client must work before corpus population finishes.**'),
+        contains(
+          '**The editor preserves selection across paragraph boundaries.**',
+        ),
       );
       for (final block in tester.widgetList<BusyMarkWysiwygBlockField>(
         find.byType(BusyMarkWysiwygBlockField),
@@ -441,7 +437,7 @@ void main() {
         expect(clipboard.data.text, contains(middle.plainText));
         expect(
           clipboard.data.text,
-          contains('not the final integration result.'),
+          contains('must preserve its final punctuation.'),
         );
       });
     }
@@ -778,7 +774,7 @@ void main() {
         await _key(tester, LogicalKeyboardKey.keyC);
         expect(
           clipboard.data.text,
-          contains('not the final integration result.'),
+          contains('must preserve its final punctuation.'),
         );
         expect(clipboard.data.text, contains('End!'));
       }

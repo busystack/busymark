@@ -1,0 +1,56 @@
+<topic id="properties" title="Properties">
+<chapter id="chapter-absent" title="chapter-absent" ><p>Chapter body.</p></chapter>
+<chapter id="chapter-false" title="chapter-false" collapsible="false"><p>Chapter body.</p></chapter>
+<chapter id="chapter-true" title="chapter-true" collapsible="true"><p>Chapter body.</p></chapter>
+<chapter id="chapter-expanded" title="chapter-expanded" default-state="expanded"><p>Chapter body.</p></chapter>
+<chapter id="chapter-collapsed" title="chapter-collapsed" default-state="collapsed"><p>Chapter body.</p></chapter>
+<chapter id="chapter-false-expanded" title="chapter-false-expanded" collapsible="false" default-state="expanded"><p>Chapter body.</p></chapter>
+<chapter id="chapter-false-collapsed" title="chapter-false-collapsed" collapsible="false" default-state="collapsed"><p>Chapter body.</p></chapter>
+<procedure id="procedure-absent" title="procedure-absent" ><step>First step.</step></procedure>
+<procedure id="procedure-false" title="procedure-false" collapsible="false"><step>First step.</step></procedure>
+<procedure id="procedure-true" title="procedure-true" collapsible="true"><step>First step.</step></procedure>
+<procedure id="procedure-expanded" title="procedure-expanded" default-state="expanded"><step>First step.</step></procedure>
+<procedure id="procedure-collapsed" title="procedure-collapsed" default-state="collapsed"><step>First step.</step></procedure>
+<procedure id="procedure-false-expanded" title="procedure-false-expanded" collapsible="false" default-state="expanded"><step>First step.</step></procedure>
+<procedure id="procedure-false-collapsed" title="procedure-false-collapsed" collapsible="false" default-state="collapsed"><step>First step.</step></procedure>
+<code-block id="code-block-absent" lang="text" >first
+second</code-block>
+<code-block id="code-block-false" lang="text" collapsible="false">first
+second</code-block>
+<code-block id="code-block-true" lang="text" collapsible="true">first
+second</code-block>
+<code-block id="code-block-expanded" lang="text" default-state="expanded">first
+second</code-block>
+<code-block id="code-block-collapsed" lang="text" default-state="collapsed">first
+second</code-block>
+<code-block id="code-block-false-expanded" lang="text" collapsible="false" default-state="expanded">first
+second</code-block>
+<code-block id="code-block-false-collapsed" lang="text" collapsible="false" default-state="collapsed">first
+second</code-block>
+<deflist id="deflist-absent"  ><def title="Absent" id="deflist-absent-item-absent">Absent state.</def><def title="Inherited" id="deflist-absent-item-inherited" default-state="inherited">Inherited state.</def><def title="Expanded" id="deflist-absent-item-expanded" default-state="expanded">Expanded state.</def><def title="Collapsed" id="deflist-absent-item-collapsed" default-state="collapsed">Collapsed state.</def></deflist>
+<deflist id="deflist-false"  collapsible="false"><def title="Absent" id="deflist-false-item-absent">Absent state.</def><def title="Inherited" id="deflist-false-item-inherited" default-state="inherited">Inherited state.</def><def title="Expanded" id="deflist-false-item-expanded" default-state="expanded">Expanded state.</def><def title="Collapsed" id="deflist-false-item-item-collapsed" default-state="collapsed">Collapsed state.</def></deflist>
+<deflist id="deflist-true"  collapsible="true"><def title="Absent" id="deflist-true-item-absent">Absent state.</def><def title="Inherited" id="deflist-true-item-inherited" default-state="inherited">Inherited state.</def><def title="Expanded" id="deflist-true-item-expanded" default-state="expanded">Expanded state.</def><def title="Collapsed" id="deflist-true-item-collapsed" default-state="collapsed">Collapsed state.</def></deflist>
+<deflist id="deflist-expanded"  default-state="expanded"><def title="Absent" id="deflist-expanded-item-absent">Absent state.</def><def title="Inherited" id="deflist-expanded-item-inherited" default-state="inherited">Inherited state.</def><def title="Expanded" id="deflist-expanded-item-expanded" default-state="expanded">Expanded state.</def><def title="Collapsed" id="deflist-expanded-item-collapsed" default-state="collapsed">Collapsed state.</def></deflist>
+<deflist id="deflist-collapsed"  default-state="collapsed"><def title="Absent" id="deflist-collapsed-item-absent">Absent state.</def><def title="Inherited" id="deflist-collapsed-item-inherited" default-state="inherited">Inherited state.</def><def title="Expanded" id="deflist-collapsed-item-expanded" default-state="expanded">Expanded state.</def><def title="Collapsed" id="deflist-collapsed-item-collapsed" default-state="collapsed">Collapsed state.</def></deflist>
+<deflist id="deflist-false-expanded"  collapsible="false" default-state="expanded"><def title="Absent" id="deflist-false-expanded-item-absent">Absent state.</def><def title="Inherited" id="deflist-false-expanded-item-inherited" default-state="inherited">Inherited state.</def><def title="Expanded" id="deflist-false-expanded-item-expanded" default-state="expanded">Expanded state.</def><def title="Collapsed" id="deflist-false-expanded-item-collapsed" default-state="collapsed">Collapsed state.</def></deflist>
+<deflist id="deflist-false-collapsed"  collapsible="false" default-state="collapsed"><def title="Absent" id="deflist-false-collapsed-item-absent">Absent state.</def><def title="Inherited" id="deflist-false-collapsed-item-inherited" default-state="inherited">Inherited state.</def><def title="Expanded" id="deflist-false-collapsed-item-expanded" default-state="expanded">Expanded state.</def><def title="Collapsed" id="deflist-false-collapsed-item-collapsed" default-state="collapsed">Collapsed state.</def></deflist>
+<chapter id="chapter-true-expanded" title="chapter-true-expanded" collapsible="true" default-state="expanded"><p>Chapter body.</p></chapter>
+<chapter id="chapter-true-collapsed" title="chapter-true-collapsed" collapsible="true" default-state="collapsed"><p>Chapter body.</p></chapter>
+<procedure id="procedure-true-expanded" title="procedure-true-expanded" collapsible="true" default-state="expanded"><step>Step.</step></procedure>
+<procedure id="procedure-true-collapsed" title="procedure-true-collapsed" collapsible="true" default-state="collapsed"><step>Step.</step></procedure>
+<code-block id="code-block-true-expanded" lang="text" collapsible="true" default-state="expanded">first
+second</code-block>
+<code-block id="code-block-true-collapsed" lang="text" collapsible="true" default-state="collapsed">first
+second</code-block>
+<deflist id="deflist-true-expanded"  collapsible="true" default-state="expanded"><def title="Absent" id="deflist-true-expanded-item-absent">Absent.</def><def title="Inherited" id="deflist-true-expanded-item-inherited" default-state="inherited">Inherited.</def><def title="Collapsed" id="deflist-true-expanded-item-collapsed" default-state="collapsed">Collapsed.</def><def title="False" id="deflist-true-expanded-item-false" collapsible="false">False.</def></deflist>
+<deflist id="deflist-true-collapsed"  collapsible="true" default-state="collapsed"><def title="Absent" id="deflist-true-collapsed-item-absent">Absent.</def><def title="Inherited" id="deflist-true-collapsed-item-inherited" default-state="inherited">Inherited.</def><def title="Collapsed" id="deflist-true-collapsed-item-collapsed" default-state="collapsed">Collapsed.</def><def title="False" id="deflist-true-collapsed-item-false" collapsible="false">False.</def></deflist>
+<chapter id="formatted-title" title="Default title"><title instance="conformance">Install <b>now</b></title><p>Body.</p></chapter>
+<chapter id="child-title-only"><title>Child title only</title><p>Body.</p></chapter>
+<p id="image-paragraph">Before <img src="logo.png" alt="Inline Logo" width="16" style="inline"/> after.</p>
+<img id="image-xml" src="logo.png" alt="Logo" width="48" height="24" thumbnail="true" preview-src="logo.png"/>
+<img id="empty-alt-xml" src="logo.png" alt=""/><chapter id="chapter-variable" title="Variables" collapsible="%collapse%" default-state="%state%"><p>Variable attributes.</p></chapter>
+<code-block id="code-variable" lang="text" collapsible="%collapse%" default-state="%state%" ignore-vars="false">variable code</code-block>
+<deflist id="layout-default"><def title="Default layout"><p>Default body.</p></def></deflist>
+<deflist id="layout-wide" type="wide"><def title="Wide layout"><p>Wide body.</p></def></deflist>
+<deflist id="layout-full" type="full"><def title="Full layout"><p>Full body.</p></def></deflist>
+</topic>

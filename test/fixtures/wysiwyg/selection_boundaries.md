@@ -1,11 +1,11 @@
 Previous paragraph ends here.
 
-**The client must work before corpus population finishes.** Use synthetic published test books. A successful build of a mock-only UI is not the final integration result.
+**The editor preserves selection across paragraph boundaries.** Select text with bold formatting, inline code, and links. Copying the full paragraph must preserve its final punctuation.
 
 Following paragraph ends here.
 
-- `/mnt/Media/Linguality/gateway`
-- `/mnt/Media/Linguality/learner_client`
+- `/opt/example/gateway`
+- `/opt/example/desktop_client`
 - Ordinary list text ends here.
 
 **Bold** then plain; plain then **bold**; `code` then plain; plain then `code`; [link](https://example.test); *emphasis* ends here!

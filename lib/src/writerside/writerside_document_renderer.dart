@@ -1,3 +1,4 @@
+import 'writerside_effective_properties.dart';
 import 'dart:convert';
 import '../export/openapi_static_export_mapper.dart';
 import '../export/markdown_export_document.dart';
@@ -598,22 +599,37 @@ class _WritersideRenderSession {
             element.children,
             headingLevel: headingLevel,
           );
-          final inheritedCollapsible = element.attributes['collapsible'];
           result.add(
             BusyBlock(
               id: _nodeId(element),
               kind: BusyBlockKind.writersideRawXml,
               children: [
                 for (final child in children)
-                  inheritedCollapsible == null ||
-                          child.attributes.containsKey('collapsible')
-                      ? child
-                      : child.copyWith(
-                          attributes: {
-                            ...child.attributes,
-                            'collapsible': inheritedCollapsible,
-                          },
-                        ),
+                  child.copyWith(
+                    attributes: {
+                      ...child.attributes,
+                      'busymark-effective-collapsible':
+                          const WritersideEffectiveProperties()
+                              .resolve(
+                                'def',
+                                'collapsible',
+                                child.attributes,
+                                definitionList: element.attributes,
+                              )
+                              .value ??
+                          '',
+                      'busymark-effective-default-state':
+                          const WritersideEffectiveProperties()
+                              .resolve(
+                                'def',
+                                'default-state',
+                                child.attributes,
+                                definitionList: element.attributes,
+                              )
+                              .value ??
+                          '',
+                    },
+                  ),
               ],
               attributes: attributes,
               sourceSpan: element.span,

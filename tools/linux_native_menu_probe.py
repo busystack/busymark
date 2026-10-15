@@ -10,6 +10,7 @@ import ctypes
 import json
 import os
 import sys
+import subprocess
 import time
 
 target_gdk_backend = os.environ.get("GDK_BACKEND")
@@ -23,7 +24,7 @@ import gi
 
 gi.require_version("Atspi", "2.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Atspi, Gdk  # noqa: E402
+from gi.repository import Atspi, Gdk, GLib  # noqa: E402
 
 
 def app_for_pid(pid):
@@ -83,12 +84,47 @@ def main():
         raise RuntimeError("The Wayland probe requires an isolated enclosing X display")
     pid, command, *args = sys.argv[1:]
     app = app_for_pid(int(pid))
-    if command == "capture":
+    if command == "hold":
+        # Keep a client connected for the fixture's whole lifetime. GTK 3.24
+        # can free its current key listener when the last short-lived AT-SPI
+        # client exits during dispatch (GNOME/gtk merge request 10391).
+        # Accessibility stays enabled, and individual commands still inspect
+        # and activate the real native controls independently.
+        loop = GLib.MainLoop()
+        listener = Atspi.EventListener.new(lambda *_: None)
+        if not listener.register("object:state-changed"):
+            raise RuntimeError("Could not retain the native accessibility session")
+
+        def target_alive():
+            try:
+                os.kill(int(pid), 0)
+            except ProcessLookupError:
+                loop.quit()
+                return GLib.SOURCE_REMOVE
+            return GLib.SOURCE_CONTINUE
+
+        GLib.timeout_add(250, target_alive)
+        print("ready", flush=True)
+        loop.run()
+        listener.deregister("object:state-changed")
+    elif command == "capture":
         root = Gdk.get_default_root_window()
         capture = Gdk.pixbuf_get_from_window(root, 0, 0, root.get_width(), root.get_height())
         capture.savev(args[0], "png", [], [])
     elif command == "key":
         key(args[0])
+    elif command == "chord":
+        subprocess.run(["xdotool", "key", "--clearmodifiers", args[0]], check=True)
+        time.sleep(0.3)
+    elif command == "move-pointer":
+        subprocess.run(["xdotool", "mousemove", "--sync", str(int(args[0])), str(int(args[1]))], check=True)
+        time.sleep(0.3)
+    elif command == "click-pointer":
+        subprocess.run(["xdotool", "click", "--clearmodifiers", "1"], check=True)
+        time.sleep(0.3)
+    elif command == "type":
+        subprocess.run(["xdotool", "type", "--clearmodifiers", "--", args[0]], check=True)
+        time.sleep(0.3)
     elif command == "inspect":
         print(json.dumps([
             {"name": node.get_name(), "role": node.get_role_name(),

@@ -11,6 +11,102 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Kapitalisasi modul tidak diterbitkan.';
+
+  @override
+  String get wsTitleOverridesAction => 'Judul instans dan daftar isi…';
+
+  @override
+  String get wsHeadingNotPublished => 'Tidak diterbitkan oleh pembuat ini.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Builder yang dipatok tidak menerbitkan judul instans pada topik Markdown. Markup yang ada tetap disimpan; periksa di Sumber.';
+
+  @override
+  String get wsTopicIdentity => 'ID topik';
+
+  @override
+  String get wsElementAnchor => 'Jangkar elemen';
+
+  @override
+  String get wsHeadingText => 'Teks judul';
+
+  @override
+  String get wsDefaultTitle => 'Judul bawaan';
+
+  @override
+  String get wsTopicNavigation => 'Navigasi topik';
+
+  @override
+  String get wsHeadingOptions => 'Atribut judul';
+
+  @override
+  String get wsDocumentOptions => 'Pengaturan dokumen';
+
+  @override
+  String get wsSettingsPresent => 'Ada pengaturan tertulis';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Mengganti judul yang diterbitkan; teks judul tidak berubah.';
+
+  @override
+  String get wsIgnoreVariables => 'Perlakukan variabel sebagai teks literal';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Jika diaktifkan, teks yang menyerupai variabel tidak diganti.';
+
+  @override
+  String get wsInstanceSelection => 'Instans bantuan';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Pilih keluaran bantuan dengan nama, grup, daftar, pengecualian, atau ekspresi.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Menyaring konten pakai ulang menurut kriteria; tidak memilih instans bantuan.';
+
+  @override
+  String get wsContextHelp => 'ID bantuan kontekstual';
+
+  @override
+  String get wsCapitalization => 'Kapitalisasi';
+
+  @override
+  String get wsLibraryTopic => 'Topik pustaka';
+
+  @override
+  String get wsLastModified => 'Terakhir diubah';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Tidak ada H1 topik. Tambahkan di Sumber.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'H1 pertama menentukan judul topik. H1 berikutnya adalah judul terpisah.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'id akar berbeda dari ID berdasarkan nama berkas. Gunakan Ubah nama berkas topik atau periksa Sumber.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Atribut yang tidak didukung tetap disimpan. Periksa di Sumber.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Jangkar yang dihasilkan; memasukkan nilai membuat penimpaan.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Builder yang dipatok tidak menerbitkan atribut H1. Atribut milik judul, bukan akar XML.';
+
+  @override
   String get closeOtherTabs => 'Tutup tab lainnya';
 
   @override
@@ -4877,7 +4973,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get wsFullLayout => 'Lebar penuh';
 
   @override
-  String get wsMediumLayout => 'Kolom seimbang';
+  String get wsMediumLayout => 'Sedang (1:2)';
 
   @override
   String get wsNarrowLayout => 'Kolom istilah sempit';
@@ -5066,4 +5162,238 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Tujuan ini tidak memiliki URL catatan portabel yang terverifikasi.';
+
+  @override
+  String get wsIncludeLines => 'Sertakan baris';
+
+  @override
+  String get wsIncludeSymbol => 'Sertakan simbol';
+
+  @override
+  String get wsEmphasizeLines => 'Sorot baris yang ditampilkan';
+
+  @override
+  String get wsPropertiesReadOnly => 'Properti hanya baca pada tampilan ini.';
+
+  @override
+  String get wsPropertiesProtected => 'Elemen dilindungi. Edit sumbernya.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokumen atau elemen berubah. Kembalikan draf dan pilih lagi.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Referensi belum dapat diselesaikan.';
+
+  @override
+  String get wsUseDefault => 'Gunakan bawaan';
+
+  @override
+  String get wsPropertiesSelection => 'Pilih satu elemen.';
+
+  @override
+  String get wsImageDisplay => 'Tampilan gambar';
+
+  @override
+  String get wsImageThumbnail => 'Thumbnail yang dapat diklik';
+
+  @override
+  String get wsEnabled => 'Aktif';
+
+  @override
+  String get wsDisabled => 'Nonaktif';
+
+  @override
+  String get wsWidth => 'Lebar';
+
+  @override
+  String get wsHeight => 'Tinggi';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Properti hanya berlaku saat penciutan publikasi diaktifkan.';
+
+  @override
+  String get wsNavigationAll => 'Semua elemen berjudul';
+
+  @override
+  String get wsNavigationNone => 'Tanpa navigasi';
+
+  @override
+  String get wsNavigationCustom => 'Navigasi khusus';
+
+  @override
+  String get wsTitleOverride => 'Timpa judul';
+
+  @override
+  String get wsCompactLayout => 'Ringkas';
+
+  @override
+  String get wsWideLayout => 'Lebar';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Pindahkan atau hapus kode yang ditulis dalam blok ini sebelum menetapkan src. Writerside menolak blok kode yang tidak kosong dengan referensi sumber.';
+
+  @override
+  String get wsInherited => 'Warisi dari daftar';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside tidak mengatur ukuran gambar eksternal dengan andal. Ukuran yang ada dapat dilihat dan dihapus.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Perubahan ini tidak diterapkan ke sumber. Draf tetap disimpan.';
+
+  @override
+  String get wsListItem => 'Item daftar';
+
+  @override
+  String get wsSourceFile => 'Berkas sumber';
+
+  @override
+  String get wsLinkTarget => 'Tujuan tautan';
+
+  @override
+  String get wsPreviewImage => 'Gambar pratinjau';
+
+  @override
+  String get wsIncludedElement => 'Elemen yang disertakan';
+
+  @override
+  String get wsHelpModule => 'Modul bantuan';
+
+  @override
+  String get wsActionId => 'ID tindakan';
+
+  @override
+  String get wsKeymapHelpInstance => 'Instans bantuan peta tombol';
+
+  @override
+  String get wsShowInSource => 'Tampilkan di Sumber';
+
+  @override
+  String get wsOriginElement => 'Penggantian elemen';
+
+  @override
+  String get wsOriginAncestor => 'Elemen induk';
+
+  @override
+  String get wsOriginModule => 'Bawaan modul';
+
+  @override
+  String get wsOriginBuiltIn => 'Bawaan internal';
+
+  @override
+  String get wsOriginUnresolved => 'Belum teratasi';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Efektif: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Elemen';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Dihasilkan: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Default: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Default: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Diselesaikan: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Belum diselesaikan';
+
+  @override
+  String get wsModule => 'Modul';
+
+  @override
+  String get wsParent => 'Induk';
+
+  @override
+  String get wsListType => 'Jenis daftar';
+
+  @override
+  String get wsStartingNumber => 'Nomor awal';
+
+  @override
+  String get wsListSorting => 'Pengurutan';
+
+  @override
+  String get wsLetteredList => 'Daftar huruf';
+
+  @override
+  String get wsCheckboxList => 'Daftar kotak centang';
+
+  @override
+  String get wsMarkerlessList => 'Daftar tanpa penanda';
+
+  @override
+  String get wsAscending => 'Menaik';
+
+  @override
+  String get wsDescending => 'Menurun';
+
+  @override
+  String get wsNoSorting => 'Tanpa pengurutan';
+
+  @override
+  String get wsAsWritten => 'Sesuai tulisan';
+
+  @override
+  String get wsSentenceCase => 'Kapitalisasi kalimat';
+
+  @override
+  String get wsTitleCase => 'Kapitalisasi judul';
+
+  @override
+  String get wsLowerCase => 'Huruf kecil';
+
+  @override
+  String get wsUpperCase => 'Huruf besar';
+
+  @override
+  String get wsNativeMarkers => 'Penanda Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Penanda awal: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Tingkat $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Builder yang dipatok mengabaikan aturan <caps> modul. Gunakan atribut caps lokal atau default-property.';
+
+  @override
+  String get wsInsertElements => 'Sisipkan elemen';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Pemberitahuan dan kutipan';
+
+  @override
+  String get wsSemanticText => 'Teks semantik';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.';
 }

@@ -1,4 +1,59 @@
 {
+  "wsModuleCapsNotPublished": "Module capitalization is not published.",
+  "wsTitleOverridesAction": "Instance and TOC titles…",
+  "wsHeadingNotPublished": "Not published by this builder.",
+  "@wsTitleOverridesAction": {"description": "Opens the existing instance-specific and TOC title workflow, separate from the default title."},
+  "@wsHeadingNotPublished": {"description": "Compact property-specific publishing limitation; full explanation remains in contextual help."},
+  "wsMarkdownInstanceTitleLimitation": "The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.",
+  "@wsMarkdownInstanceTitleLimitation": {"description": "Pinned-builder limitation shown in the existing instance/TOC title workflow."},
+  "wsTopicIdentity": "Topic ID",
+  "@wsTopicIdentity": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsElementAnchor": "Element anchor",
+  "@wsElementAnchor": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsHeadingText": "Heading text",
+  "@wsHeadingText": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsDefaultTitle": "Default title",
+  "@wsDefaultTitle": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsTopicNavigation": "Topic navigation",
+  "@wsTopicNavigation": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsHeadingOptions": "Heading attributes",
+  "@wsHeadingOptions": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsDocumentOptions": "Document settings",
+  "@wsDocumentOptions": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsSettingsPresent": "Authored settings present",
+  "@wsSettingsPresent": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsTitleOverrideExplanation": "Overrides the published heading title; the heading text remains unchanged.",
+  "@wsTitleOverrideExplanation": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsIgnoreVariables": "Treat variable text literally",
+  "@wsIgnoreVariables": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsIgnoreVariablesExplanation": "When enabled, variable-looking text is not substituted.",
+  "@wsIgnoreVariablesExplanation": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsInstanceSelection": "Help instances",
+  "@wsInstanceSelection": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsInstanceExplanation": "Select help outputs with names, groups, lists, exclusions, or expressions.",
+  "@wsInstanceExplanation": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsFilterExplanation": "Filter reusable content by criteria; this does not select a help instance.",
+  "@wsFilterExplanation": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsContextHelp": "Context help ID",
+  "@wsContextHelp": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsCapitalization": "Capitalization",
+  "@wsCapitalization": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsLibraryTopic": "Library topic",
+  "@wsLibraryTopic": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsLastModified": "Last modified",
+  "@wsLastModified": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsMissingTopicHeading": "No topic H1 is authored. Add the topic heading in Source.",
+  "@wsMissingTopicHeading": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsMultipleTopicHeadings": "The first H1 owns the topic title. Later H1s are separate headings.",
+  "@wsMultipleTopicHeadings": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsTopicIdentityMismatch": "The authored root id differs from the filename-derived Topic ID. Use Rename topic file or inspect Source.",
+  "@wsTopicIdentityMismatch": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsUnsupportedProperties": "Unsupported authored attributes are preserved. Inspect them in Source.",
+  "@wsUnsupportedProperties": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsGeneratedAnchor": "Generated anchor; setting a value authors an override.",
+  "@wsGeneratedAnchor": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
+  "wsHeadingBuilderLimitation": "The pinned builder does not publish topic H1 attributes: inline attributes render literally and separate-line attributes are ignored. These belong to the heading, not the XML root.",
+  "@wsHeadingBuilderLimitation": {"description": "Writerside inspector source ownership, applicability, or field explanation."},
   "closeOtherTabs": "Close other tabs",
   "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Topic from Template...",
@@ -2886,7 +2941,7 @@
   "wsIdentifier": "Element ID",
   "wsTldr": "TLDR",
   "wsFullLayout": "Full width",
-  "wsMediumLayout": "Equal columns",
+  "wsMediumLayout": "Medium (1:2)",
   "wsNarrowLayout": "Narrow term",
   "wsTitle": "Title",
   "wsSwitcherKey": "Switcher key",
@@ -2955,5 +3010,152 @@
   "referenceAmbiguous": "Ambiguous",
   "referenceUnavailable": "Unavailable in this context",
   "referenceUnsupported": "Unsupported",
-  "referenceNoPortableId": "This target has no verified portable note URL."
+  "referenceNoPortableId": "This target has no verified portable note URL.",
+  "wsIncludeLines": "Include lines",
+  "wsIncludeSymbol": "Include symbol",
+  "wsEmphasizeLines": "Emphasize displayed lines",
+  "wsPropertiesReadOnly": "Properties are read-only in this view.",
+  "wsPropertiesProtected": "This element is protected. Edit its source to change properties.",
+  "wsPropertiesConflict": "The document or element changed. Revert this draft and inspect the current element.",
+  "wsPropertiesUnresolved": "The reference cannot currently be resolved.",
+  "wsUseDefault": "Use default",
+  "wsPropertiesSelection": "Select a single element to inspect its properties.",
+  "wsImageDisplay": "Image display",
+  "wsImageThumbnail": "Clickable thumbnail",
+  "wsEnabled": "Enabled",
+  "wsDisabled": "Disabled",
+  "wsWidth": "Width",
+  "wsHeight": "Height",
+  "wsPropertiesInactive": "This property has no effect while published collapse is disabled.",
+  "wsNavigationAll": "All titled elements",
+  "wsNavigationNone": "No navigation",
+  "wsNavigationCustom": "Custom navigation",
+  "wsTitleOverride": "Title override",
+  "wsCompactLayout": "Compact",
+  "wsWideLayout": "Wide",
+  "wsCodeSourceConflict": "Move or remove the code authored in this block before setting src. Writerside rejects a nonempty code block with a source reference.",
+  "wsInherited": "Inherit from list",
+  "wsExternalImageSize": "Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.",
+  "wsPropertiesNotSerialized": "This change did not reach the source. The draft has been retained.",
+  "wsListItem": "List item",
+  "wsSourceFile": "Source file",
+  "wsLinkTarget": "Link target",
+  "wsPreviewImage": "Preview image",
+  "wsIncludedElement": "Included element",
+  "wsHelpModule": "Help module",
+  "wsActionId": "Action ID",
+  "wsKeymapHelpInstance": "Keymap help instance",
+  "wsShowInSource": "Show in Source",
+  "wsOriginElement": "element override",
+  "wsOriginAncestor": "parent element",
+  "wsOriginModule": "module default",
+  "wsOriginBuiltIn": "built-in default",
+  "wsOriginUnresolved": "unresolved",
+  "wsEffectiveProperty": "Effective: {value} — {origin}",
+  "@wsEffectiveProperty": {
+    "description": "Effective Writerside property value and its localized origin. Attribute names are displayed separately without translation.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "wsElementSelector": "Element",
+  "wsGeneratedAnchorValue": "Generated: {anchor}",
+  "wsDefaultProperty": "Default: {value}",
+  "wsDefaultPropertyOrigin": "Default: {value} · {origin}",
+  "wsResolvedProperty": "Resolved: {value}",
+  "wsPropertyUnresolved": "Unresolved",
+  "wsModule": "Module",
+  "wsParent": "Parent",
+  "@wsElementSelector": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
+  },
+  "@wsGeneratedAnchorValue": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsDefaultProperty": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsDefaultPropertyOrigin": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsResolvedProperty": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsPropertyUnresolved": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
+  },
+  "@wsModule": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
+  },
+  "@wsParent": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
+  },
+  "wsListType": "List type",
+  "@wsListType": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsStartingNumber": "Starting number",
+  "@wsStartingNumber": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsListSorting": "Sorting",
+  "@wsListSorting": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsLetteredList": "Lettered list",
+  "@wsLetteredList": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsCheckboxList": "Checkbox list",
+  "@wsCheckboxList": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsMarkerlessList": "List without markers",
+  "@wsMarkerlessList": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsAscending": "Ascending",
+  "@wsAscending": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsDescending": "Descending",
+  "@wsDescending": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsNoSorting": "No sorting",
+  "@wsNoSorting": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsAsWritten": "As written",
+  "@wsAsWritten": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsSentenceCase": "Sentence case",
+  "@wsSentenceCase": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsTitleCase": "Title case",
+  "@wsTitleCase": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsLowerCase": "Lowercase",
+  "@wsLowerCase": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsUpperCase": "Uppercase",
+  "@wsUpperCase": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsNativeMarkers": "Markdown markers",
+  "@wsNativeMarkers": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsListMarkerStart": "Marker start: {number}",
+  "@wsListMarkerStart": {"description": "Writerside list ownership or verified capitalization presentation.", "placeholders": {"number": {"type": "String"}}},
+  "wsListLevel": "Level {level}",
+  "@wsListLevel": {"description": "Writerside list ownership or verified capitalization presentation.", "placeholders": {"level": {"type": "String"}}},
+  "wsModuleCapsIgnored": "The pinned builder ignores module <caps> rules. Use a local caps override or default-property.",
+  "@wsModuleCapsIgnored": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsInsertElements": "Insert elements",
+  "wsAdmonitionsAndQuotes": "Admonitions and quotes",
+  "wsSemanticText": "Semantic text",
+  "wsPropertiesUnavailable": "The inspected element is unavailable. Inspect an element to continue."
 }

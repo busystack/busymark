@@ -61,8 +61,10 @@ independent disclosure item:
 </deflist>
 ```
 
-Collapsible content is closed initially unless its element has
-`default-state="expanded"`. BusyMark preserves the original source and passes
-the same documented syntax to Writerside's official build pipeline.
+Published state follows authored values, module defaults and the pinned builder's
+element-specific rules. Inspect **Element Properties** to see authored overrides
+and effective defaults; local editor expansion is separate and source-neutral.
+See [Element Properties](element-properties.md) for state-only forms, explicit
+false and definition-item inheritance verified against builder `2026.08.0328`.
 
 The syntax follows JetBrains' [Writerside collapsible-elements documentation](https://www.jetbrains.com/help/writerside/collapsible-elements.html).

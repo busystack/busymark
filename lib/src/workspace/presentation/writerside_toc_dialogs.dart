@@ -138,6 +138,8 @@ class _WritersideTitleDialogState extends State<WritersideTitleDialog> {
   );
   late final _original = (_title.text, _instance.text, _toc.text);
   bool _advanced = false;
+  bool get _instanceEditable =>
+      widget.session.topic.format == WritersideTopicFormat.xml;
   @override
   void initState() {
     super.initState();
@@ -164,7 +166,9 @@ class _WritersideTitleDialogState extends State<WritersideTitleDialog> {
       context,
       WritersideTitleEdit(
         title: _title.text == _original.$1 ? null : _title.text,
-        instanceTitle: _instance.text == _original.$2 ? null : _instance.text,
+        instanceTitle: !_instanceEditable || _instance.text == _original.$2
+            ? null
+            : _instance.text,
         tocTitle: _toc.text == _original.$3 ? null : _toc.text,
       ),
     );
@@ -176,6 +180,7 @@ class _WritersideTitleDialogState extends State<WritersideTitleDialog> {
     String? hint,
     Widget? explanation,
     bool autofocus = false,
+    bool readOnly = false,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: BusyMarkSpacing.md),
     child: Column(
@@ -184,6 +189,7 @@ class _WritersideTitleDialogState extends State<WritersideTitleDialog> {
         TextField(
           controller: controller,
           autofocus: autofocus,
+          readOnly: readOnly,
           decoration: InputDecoration(labelText: label, hintText: hint),
           onSubmitted: (_) => _submit(),
         ),
@@ -226,16 +232,28 @@ class _WritersideTitleDialogState extends State<WritersideTitleDialog> {
         ),
       ),
       if (_advanced) ...[
-        _field(
-          context.l10n.tocInstanceTitleField(widget.session.instanceId),
-          _instance,
-          hint: _title.text,
-          explanation: Text(context.l10n.tocInstanceTitleExplanation),
-        ),
+        if (_instanceEditable || _instance.text.isNotEmpty)
+          _field(
+            context.l10n.tocInstanceTitleField(widget.session.instanceId),
+            _instance,
+            readOnly: !_instanceEditable,
+            explanation: Text(
+              _instanceEditable
+                  ? context.l10n.tocInstanceTitleExplanation
+                  : context.l10n.wsMarkdownInstanceTitleLimitation,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(bottom: BusyMarkSpacing.md),
+            child: Text(context.l10n.wsMarkdownInstanceTitleLimitation),
+          ),
         _field(
           context.l10n.tocOnlyTitleField,
           _toc,
-          hint: _instance.text.isEmpty ? _title.text : _instance.text,
+          hint: !_instanceEditable || _instance.text.isEmpty
+              ? _title.text
+              : _instance.text,
           explanation: Text.rich(
             TextSpan(
               children: [

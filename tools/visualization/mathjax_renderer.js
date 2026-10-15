@@ -21,8 +21,8 @@ import '@mathjax/src/js/input/tex/gensymb/GensymbConfiguration.js'
 import '@mathjax/src/js/input/tex/units/UnitsConfiguration.js'
 import '@mathjax/src/js/input/tex/upgreek/UpgreekConfiguration.js'
 
-// NewCM's dynamic SVG tables are all statically included in BusyMark's one
-// deterministic bundle. MathJax still uses its asynchronous retry path, but
+// NewCM's dynamic SVG tables are all statically included in BusyMark's dedicated
+// offline math bundle. MathJax still uses its asynchronous retry path, but
 // the loader below only activates already-bundled table registrations.
 import '@mathjax/mathjax-newcm-font/js/svg/dynamic/PUA.js'
 import '@mathjax/mathjax-newcm-font/js/svg/dynamic/accents-b-i.js'

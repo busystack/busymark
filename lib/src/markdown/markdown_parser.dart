@@ -13,6 +13,7 @@ import 'busymark_document.dart';
 import 'authored_html_diagnostics.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_fence.dart';
+import 'markdown_list_source.dart';
 import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
@@ -27,6 +28,14 @@ const int _backgroundParseThresholdBytes = 64 * 1024;
 
 class MarkdownParser {
   const MarkdownParser({this.preserveHtmlSemantics = false});
+
+  /// Rebind an already edited projection to its emitted source. This reuses
+  /// the ordinary positioned scanner; it does not infer lists from adjacency.
+  BusyDocument rebindSourceMetadata(BusyDocument document, String source) =>
+      _withScannedSourceMetadata(
+        document.copyWith(source: source),
+        document.diagnostics,
+      );
 
   /// Keeps cross-block reference context for the HTML export projection. The
   /// editor and source serializer retain their existing projection by default.
@@ -482,14 +491,14 @@ class MarkdownParser {
     BusyDocument document,
     List<Diagnostic> diagnostics,
   ) {
-    final sourceChunks = document.source == null
+    var sourceChunks = document.source == null
         ? const <_ScannedBlockSource>[]
         : _scannedBlockSources(
             document.filePath,
             document.source!,
             mode: document.mode,
           );
-    final contentBlocks = document.blocks
+    var contentBlocks = document.blocks
         .where(
           (block) =>
               block.kind != BusyBlockKind.frontMatter && !block.isGenerated,
@@ -537,6 +546,7 @@ class MarkdownParser {
                     headingSourceIndex < headingSourceChunks.length
                 ? headingSourceChunks[headingSourceIndex++]
                 : nextVerbatimChunk(block),
+            fullSource: document.source,
           ),
       ];
       if (sourceChunks.any((chunk) => chunk.protectEdits)) {
@@ -590,7 +600,11 @@ class MarkdownParser {
           if (chunk.sourceOnly)
             _sourceOnlyBlock(chunk)
           else
-            _blockWithScannedSourceMetadata(contentBlocks[blockIndex++], chunk),
+            _blockWithScannedSourceMetadata(
+              contentBlocks[blockIndex++],
+              chunk,
+              fullSource: document.source,
+            ),
         ...generatedBlocks,
       ],
     );
@@ -790,8 +804,37 @@ class MarkdownParser {
 
   BusyBlock _blockWithScannedSourceMetadata(
     BusyBlock block,
-    _ScannedBlockSource? sourceChunk,
-  ) {
+    _ScannedBlockSource? sourceChunk, {
+    String? fullSource,
+  }) {
+    if ((block.attributes['busymark-list-form'] == 'markdown' ||
+            block.kind == BusyBlockKind.blockquote &&
+                block.children.any(
+                  (b) => b.attributes['busymark-list-form'] == 'markdown',
+                )) &&
+        sourceChunk != null &&
+        fullSource != null) {
+      final positioned = bindNativeMarkdownListSource(
+        list: block,
+        source: fullSource,
+        span: sourceChunk.span,
+        scan: (source) => [
+          for (final c in _scannedBlockSources(
+            '',
+            source,
+            mode: MarkdownMode.writersideMarkdown,
+          ))
+            (
+              start: c.span.startOffset,
+              end: c.span.endOffset,
+              sourceOnly: c.sourceOnly,
+            ),
+        ],
+      );
+      return sourceChunk.protectEdits
+          ? _sourceProtectedTree(positioned)
+          : positioned;
+    }
     var updated = block;
     if (updated.kind != BusyBlockKind.frontMatter && sourceChunk != null) {
       // Semantic fragments are parsed independently. Their descendants carry
@@ -799,9 +842,28 @@ class MarkdownParser {
       BusyBlock positionChild(BusyBlock child) {
         final span = child.sourceSpan;
         final base = sourceChunk.span;
+        final previousBase = block.sourceSpan;
+        final rebound =
+            span != null &&
+                previousBase != null &&
+                span.filePath == base.filePath &&
+                fullSource != null
+            ? SourceSpan.fromOffsets(
+                filePath: base.filePath,
+                source: fullSource,
+                startOffset:
+                    base.startOffset +
+                    span.startOffset -
+                    previousBase.startOffset,
+                endOffset:
+                    base.startOffset +
+                    span.endOffset -
+                    previousBase.startOffset,
+              )
+            : span;
         return child.copyWith(
           sourceSpan: span == null || span.filePath.isNotEmpty
-              ? span
+              ? rebound
               : SourceSpan(
                   filePath: base.filePath,
                   startOffset: base.startOffset + span.startOffset,
@@ -972,6 +1034,37 @@ class MarkdownParser {
       }
 
       final listIndent = _listItemIndent(indexedLines[index].line);
+      if (listIndent != null && mode == MarkdownMode.writersideMarkdown) {
+        final markdownLines = [
+          for (final line in indexedLines.skip(index))
+            md.Line(_withoutCarriageReturn(line.line)),
+        ];
+        final parser = md.BlockParser(markdownLines, _markdownDocument());
+        final syntax = parser.blockSyntaxes
+            .whereType<md.ListSyntax>()
+            .where((syntax) => syntax.canParse(parser))
+            .firstOrNull;
+        if (syntax != null) {
+          syntax.parse(parser);
+          final consumed = _consumedLineCount(parser, markdownLines);
+          if (consumed > 0) {
+            index += consumed;
+            var attributes = index;
+            while (attributes < indexedLines.length &&
+                indexedLines[attributes].trimmed.isEmpty) {
+              attributes++;
+            }
+            if (attributes < indexedLines.length &&
+                _isWritersideCodeAttributeLine(
+                  indexedLines[attributes].trimmed,
+                )) {
+              index = attributes + 1;
+            }
+            addChunk(startIndex, index);
+            continue;
+          }
+        }
+      }
       if (listIndent != null) {
         index += 1;
         while (index < indexedLines.length) {
@@ -1013,6 +1106,19 @@ class MarkdownParser {
         }
         index += 1;
       }
+      if (mode == MarkdownMode.writersideMarkdown && startsWithBlockquote) {
+        var attributeIndex = index;
+        while (attributeIndex < indexedLines.length &&
+            indexedLines[attributeIndex].trimmed.isEmpty) {
+          attributeIndex++;
+        }
+        if (attributeIndex < indexedLines.length &&
+            _isWritersideCodeAttributeLine(
+              indexedLines[attributeIndex].trimmed,
+            )) {
+          index = attributeIndex + 1;
+        }
+      }
       addChunk(startIndex, index);
     }
     return chunks;
@@ -1020,7 +1126,7 @@ class MarkdownParser {
 
   bool _isWritersideCodeAttributeLine(String line) {
     return RegExp(
-      r'^\{[^{}]*(?:\bcollapsible\s*=\s*"true"|\bsrc\s*=\s*"[^"]+")[^{}]*\}\s*$',
+      r'^\{\s*[A-Za-z_:][-A-Za-z0-9_:.]*\s*=\s*"[^\r\n]*"[^{}]*\}\s*$',
       caseSensitive: false,
     ).hasMatch(line);
   }

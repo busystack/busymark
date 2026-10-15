@@ -9,6 +9,7 @@ import 'package:busymark/src/writerside/writerside_document.dart';
 import 'package:busymark/src/writerside/writerside_document_parser.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:busymark/src/writerside/writerside_title_editor.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -85,6 +86,42 @@ void main() {
     );
   }
 
+  test(
+    'instance and TOC title changes preserve qualified owners and unrelated attributes',
+    () async {
+      final root = await fixture(
+        '<ws:topic xmlns:ws="urn:writer" xmlns:ext="urn:extra" id="topic" title="Default"><ws:title instance="guide" filter="public" ext:note="keep">Old</ws:title><ws:title instance="other">Other <ws:b>formatted</ws:b></ws:title><ws:p>Body</ws:p></ws:topic>',
+        extension: 'topic',
+        tree:
+            '<instance-profile xmlns:ws="urn:writer" id="guide"><ws:toc-element topic="topic.topic"/></instance-profile>',
+      );
+      final current = await session(root);
+      await save(
+        current,
+        const WritersideTitleEdit(
+          instanceTitle: 'New & title',
+          tocTitle: 'New TOC',
+        ),
+      );
+      final source = await File(current.topic.filePath).readAsString();
+      expect(
+        source,
+        contains(
+          '<ws:title instance="guide" filter="public" ext:note="keep">New &amp; title</ws:title>',
+        ),
+      );
+      expect(
+        source,
+        contains(
+          '<ws:title instance="other">Other <ws:b>formatted</ws:b></ws:title>',
+        ),
+      );
+      expect(
+        await File(current.treePath).readAsString(),
+        contains('<ws:toc-element toc-title="New TOC" topic="topic.topic"/>'),
+      );
+    },
+  );
   test(
     'title edit preserves the resolved topic owner across modules',
     () async {
@@ -399,18 +436,28 @@ void main() {
     await tester.tap(find.text('Advanced Settings'));
     await tester.pumpAndSettle();
     final field = find.widgetWithText(TextField, "Title for 'guide':");
-    expect(
-      tester.widget<TextField>(field).controller!.text,
-      current.topic.titleOverrides
-              .where((t) => t.instance == 'guide')
-              .firstOrNull
-              ?.title ??
-          '',
-    );
+    final authored =
+        current.topic.titleOverrides
+            .where((t) => t.instance == 'guide')
+            .firstOrNull
+            ?.title ??
+        '';
+    if (current.topic.format == WritersideTopicFormat.xml ||
+        authored.isNotEmpty) {
+      expect(tester.widget<TextField>(field).controller!.text, authored);
+      expect(
+        tester.widget<TextField>(field).readOnly,
+        current.topic.format != WritersideTopicFormat.xml,
+      );
+    } else {
+      expect(field, findsNothing);
+    }
     if (inspectHelp) {
       expect(
         find.text(
-          'Used for the current instance only. By default, inherited from topic title.',
+          current.topic.format == WritersideTopicFormat.xml
+              ? 'Used for the current instance only. By default, inherited from topic title.'
+              : 'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.',
         ),
         findsOneWidget,
       );
@@ -441,7 +488,9 @@ void main() {
         'https://www.jetbrains.com/help/writerside/topics.html',
       );
     }
-    if (value != null) await tester.enterText(field, value);
+    if (value != null && current.topic.format == WritersideTopicFormat.xml) {
+      await tester.enterText(field, value);
+    }
     await tester.pumpAndSettle();
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
@@ -456,9 +505,12 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       const example =
-          '```xml\n<title instance="guide">Fenced &amp; example</title>\n```';
+          '<code-block><![CDATA[<title instance="guide">Fenced &amp; example</title>]]></code-block>';
       final root = (await tester.runAsync(
-        () => fixture('# Base\n\n$example\n'),
+        () => fixture(
+          '<topic id="topic" title="Base">$example</topic>',
+          extension: 'topic',
+        ),
       ))!;
       var current = (await tester.runAsync(() => session(root)))!;
       expect(current.topic.titleOverrides, isEmpty);
@@ -492,7 +544,7 @@ void main() {
   );
 
   testWidgets(
-    'single-quoted Markdown override reopens decoded and edits without touching example',
+    'single-quoted Markdown override stays inspectable and Source edits preserve escaping and examples',
     (tester) async {
       tester.view.physicalSize = const Size(1200, 1000);
       tester.view.devicePixelRatio = 1;
@@ -507,7 +559,18 @@ void main() {
       final current = (await tester.runAsync(() => session(root)))!;
       expect(current.topic.titleOverrides.single.title, 'A & B');
       final edit = (await showTitle(tester, current, value: 'A & B updated'))!;
+      expect(edit.instanceTitle, isNull);
       await tester.runAsync(() => save(current, edit));
+      final untouched = (await tester.runAsync(() => session(root)))!;
+      expect(untouched.topicLoad.text, current.topicLoad.text);
+      // Source remains available for authored markup; the inspector does not
+      // advertise this ignored builder mapping as a new supported control.
+      await tester.runAsync(
+        () => save(
+          current,
+          const WritersideTitleEdit(instanceTitle: 'A & B updated'),
+        ),
+      );
       final updated = (await tester.runAsync(() => session(root)))!;
       expect(updated.topic.titleOverrides.single.title, 'A & B updated');
       expect(updated.topicLoad.text, contains(example));

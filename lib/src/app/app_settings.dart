@@ -79,6 +79,8 @@ class AppSettings {
     required this.themeModePreference,
     required this.localeTag,
     required this.sidebarVisible,
+    this.elementPropertiesVisible = false,
+    this.elementPropertiesWidth = 320,
     required this.previewVisible,
     required this.documentViewMode,
     required this.editorFontSize,
@@ -172,6 +174,15 @@ class AppSettings {
         defaults.themeModePreference,
       ),
       localeTag: normalizeBusyMarkLocaleTag(json['localeTag']?.toString()),
+      elementPropertiesVisible:
+          json['elementPropertiesVisible'] as bool? ??
+          defaults.elementPropertiesVisible,
+      elementPropertiesWidth:
+          (json['elementPropertiesWidth'] as num?)?.toDouble().clamp(
+            260,
+            600,
+          ) ??
+          defaults.elementPropertiesWidth,
       sidebarVisible:
           json['sidebarVisible'] as bool? ?? defaults.sidebarVisible,
       previewVisible: documentViewMode != DocumentViewModePreference.source,
@@ -283,6 +294,8 @@ class AppSettings {
   final BusyMarkThemeModePreference themeModePreference;
   final String? localeTag;
   final bool sidebarVisible;
+  final bool elementPropertiesVisible;
+  final double elementPropertiesWidth;
   final bool previewVisible;
   final DocumentViewModePreference documentViewMode;
   final double editorFontSize;
@@ -326,6 +339,8 @@ class AppSettings {
     'themeModePreference': themeModePreference.name,
     'localeTag': localeTag,
     'sidebarVisible': sidebarVisible,
+    'elementPropertiesVisible': elementPropertiesVisible,
+    'elementPropertiesWidth': elementPropertiesWidth,
     'previewVisible': previewVisible,
     'documentViewMode': documentViewMode.name,
     'editorFontSize': editorFontSize,
@@ -408,6 +423,8 @@ class AppSettings {
     BusyMarkThemeModePreference? themeModePreference,
     Object? localeTag = _unset,
     bool? sidebarVisible,
+    bool? elementPropertiesVisible,
+    double? elementPropertiesWidth,
     bool? previewVisible,
     DocumentViewModePreference? documentViewMode,
     double? editorFontSize,
@@ -449,6 +466,10 @@ class AppSettings {
           ? this.localeTag
           : normalizeBusyMarkLocaleTag(localeTag as String?),
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
+      elementPropertiesVisible:
+          elementPropertiesVisible ?? this.elementPropertiesVisible,
+      elementPropertiesWidth:
+          elementPropertiesWidth ?? this.elementPropertiesWidth,
       previewVisible: previewVisible ?? this.previewVisible,
       documentViewMode: documentViewMode ?? this.documentViewMode,
       editorFontSize: editorFontSize ?? this.editorFontSize,
@@ -579,6 +600,16 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
 }
 
 class AppSettingsController extends Notifier<AppSettings> {
+  bool Function()? processPendingProperties;
+  Future<void> setElementPropertiesVisible(bool value) {
+    if (!value && processPendingProperties?.call() == false) {
+      return Future.value();
+    }
+    return _mutate((s) => s.copyWith(elementPropertiesVisible: value));
+  }
+
+  Future<void> setElementPropertiesWidth(double value) =>
+      _mutate((s) => s.copyWith(elementPropertiesWidth: value.clamp(260, 600)));
   late LocalSettingsStore _store;
   Future<void>? _lastSave;
   final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
@@ -653,6 +684,7 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> setDocumentViewMode(DocumentViewModePreference mode) {
+    if (processPendingProperties?.call() == false) return Future.value();
     return _mutate(
       (settings) => settings.copyWith(
         documentViewMode: mode,
@@ -942,6 +974,9 @@ class AppSettingsController extends Notifier<AppSettings> {
     } on Object {
       loaded = AppSettings.defaults();
     }
+    // Visibility belongs to this run; retain the preferred inspector width.
+    // Explicit requests made during hydration are applied below.
+    loaded = loaded.copyWith(elementPropertiesVisible: false);
     final hadPendingInitialMutations = _pendingInitialMutations.isNotEmpty;
     for (final mutation in _pendingInitialMutations) {
       loaded = mutation(loaded);

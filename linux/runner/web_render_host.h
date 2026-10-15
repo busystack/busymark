@@ -10,6 +10,9 @@ G_DECLARE_FINAL_TYPE(BusyMarkWebRenderHost,
                      WEB_RENDER_HOST,
                      GObject)
 
+// Creates only the channel host. WebKit resources are constructed on demand
+// on the GTK main context. The owner keeps application/parent_window alive
+// until shutdown; pending async callbacks retain the host until completion.
 BusyMarkWebRenderHost* busymark_web_render_host_new(
     GtkApplication* application,
     GtkWindow* parent_window);

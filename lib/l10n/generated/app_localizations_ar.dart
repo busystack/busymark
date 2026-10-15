@@ -11,6 +11,99 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'لا يُنشر تنسيق أحرف الوحدة.';
+
+  @override
+  String get wsTitleOverridesAction => 'عناوين المثيل وجدول المحتويات…';
+
+  @override
+  String get wsHeadingNotPublished => 'لا ينشرها هذا المنشئ.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'لا ينشر الباني المثبّت عناوين النسخ في مواضيع Markdown. تُحفظ العلامات الحالية؛ افحصها في المصدر.';
+
+  @override
+  String get wsTopicIdentity => 'معرّف الموضوع';
+
+  @override
+  String get wsElementAnchor => 'مرساة العنصر';
+
+  @override
+  String get wsHeadingText => 'نص العنوان';
+
+  @override
+  String get wsDefaultTitle => 'العنوان الافتراضي';
+
+  @override
+  String get wsTopicNavigation => 'تنقّل الموضوع';
+
+  @override
+  String get wsHeadingOptions => 'سمات العنوان';
+
+  @override
+  String get wsDocumentOptions => 'إعدادات المستند';
+
+  @override
+  String get wsSettingsPresent => 'توجد إعدادات مكتوبة';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'يتجاوز العنوان المنشور؛ يبقى نص العنوان كما هو.';
+
+  @override
+  String get wsIgnoreVariables => 'معاملة المتغيرات كنص حرفي';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'عند التفعيل، لا يُستبدل النص الذي يشبه المتغيرات.';
+
+  @override
+  String get wsInstanceSelection => 'نُسخ المساعدة';
+
+  @override
+  String get wsInstanceExplanation =>
+      'اختر المخرجات بالأسماء أو المجموعات أو القوائم أو الاستثناءات أو التعبيرات.';
+
+  @override
+  String get wsFilterExplanation =>
+      'يرشّح المحتوى المعاد استخدامه حسب المعايير؛ لا يختار نسخة مساعدة.';
+
+  @override
+  String get wsContextHelp => 'معرّف المساعدة السياقية';
+
+  @override
+  String get wsCapitalization => 'حالة الأحرف';
+
+  @override
+  String get wsLibraryTopic => 'موضوع مكتبة';
+
+  @override
+  String get wsLastModified => 'آخر تعديل';
+
+  @override
+  String get wsMissingTopicHeading => 'لا يوجد H1 للموضوع. أضفه في المصدر.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'يحدّد أول H1 عنوان الموضوع. عناوين H1 اللاحقة مستقلة.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'يختلف id الجذر عن معرّف الموضوع المشتق من اسم الملف. استخدم إعادة تسمية ملف الموضوع أو افحص المصدر.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'تُحفظ السمات غير المدعومة. افحصها في المصدر.';
+
+  @override
+  String get wsGeneratedAnchor => 'مرساة مولّدة؛ إدخال قيمة ينشئ تجاوزًا.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'لا ينشر الباني المثبّت سمات H1. تخص العنوان وليس جذر XML.';
+
+  @override
   String get closeOtherTabs => 'إغلاق علامات التبويب الأخرى';
 
   @override
@@ -4907,7 +5000,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsFullLayout => 'عرض كامل';
 
   @override
-  String get wsMediumLayout => 'أعمدة متساوية';
+  String get wsMediumLayout => 'متوسط (1:2)';
 
   @override
   String get wsNarrowLayout => 'مصطلح ضيق';
@@ -5096,4 +5189,238 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'ليس لهذا الهدف عنوان URL محمول ومُتحقَّق منه للملاحظة.';
+
+  @override
+  String get wsIncludeLines => 'تضمين الأسطر';
+
+  @override
+  String get wsIncludeSymbol => 'تضمين الرمز';
+
+  @override
+  String get wsEmphasizeLines => 'تمييز الأسطر المعروضة';
+
+  @override
+  String get wsPropertiesReadOnly => 'الخصائص للقراءة فقط في هذا العرض.';
+
+  @override
+  String get wsPropertiesProtected => 'هذا العنصر محمي. حرر مصدره.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'تغير المستند أو العنصر. تراجع عن المسودة وحدد العنصر مجدداً.';
+
+  @override
+  String get wsPropertiesUnresolved => 'لا يمكن حل المرجع حالياً.';
+
+  @override
+  String get wsUseDefault => 'استخدام الافتراضي';
+
+  @override
+  String get wsPropertiesSelection => 'حدد عنصراً واحداً.';
+
+  @override
+  String get wsImageDisplay => 'عرض الصورة';
+
+  @override
+  String get wsImageThumbnail => 'صورة مصغرة قابلة للنقر';
+
+  @override
+  String get wsEnabled => 'مفعّل';
+
+  @override
+  String get wsDisabled => 'معطّل';
+
+  @override
+  String get wsWidth => 'العرض';
+
+  @override
+  String get wsHeight => 'الارتفاع';
+
+  @override
+  String get wsPropertiesInactive =>
+      'لا تؤثر هذه الخاصية إلا عند تفعيل الطي المنشور.';
+
+  @override
+  String get wsNavigationAll => 'كل العناصر ذات العناوين';
+
+  @override
+  String get wsNavigationNone => 'بلا تنقل';
+
+  @override
+  String get wsNavigationCustom => 'تنقل مخصص';
+
+  @override
+  String get wsTitleOverride => 'تجاوز العنوان';
+
+  @override
+  String get wsCompactLayout => 'مضغوط';
+
+  @override
+  String get wsWideLayout => 'عريض';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'انقل أو أزل الشفرة المكتوبة في هذه الكتلة قبل تعيين src. يرفض Writerside كتلة شفرة غير فارغة لها مرجع مصدر.';
+
+  @override
+  String get wsInherited => 'وراثة من القائمة';
+
+  @override
+  String get wsExternalImageSize =>
+      'لا يحدد Writerside أبعاد الصور الخارجية بشكل موثوق. يمكنك فحص الأبعاد الحالية وإزالتها.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'لم يُطبّق هذا التغيير على المصدر. تم الاحتفاظ بالمسودة.';
+
+  @override
+  String get wsListItem => 'عنصر قائمة';
+
+  @override
+  String get wsSourceFile => 'ملف المصدر';
+
+  @override
+  String get wsLinkTarget => 'وجهة الرابط';
+
+  @override
+  String get wsPreviewImage => 'صورة المعاينة';
+
+  @override
+  String get wsIncludedElement => 'العنصر المُضمَّن';
+
+  @override
+  String get wsHelpModule => 'وحدة المساعدة';
+
+  @override
+  String get wsActionId => 'معرّف الإجراء';
+
+  @override
+  String get wsKeymapHelpInstance => 'نسخة مساعدة خريطة المفاتيح';
+
+  @override
+  String get wsShowInSource => 'إظهار في المصدر';
+
+  @override
+  String get wsOriginElement => 'تجاوز العنصر';
+
+  @override
+  String get wsOriginAncestor => 'العنصر الأب';
+
+  @override
+  String get wsOriginModule => 'القيمة الافتراضية للوحدة';
+
+  @override
+  String get wsOriginBuiltIn => 'القيمة الافتراضية المضمّنة';
+
+  @override
+  String get wsOriginUnresolved => 'غير محلول';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'القيمة الفعلية: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'العنصر';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'مُولَّد: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'الافتراضي: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'الافتراضي: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'القيمة المحلولة: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'غير محلول';
+
+  @override
+  String get wsModule => 'الوحدة';
+
+  @override
+  String get wsParent => 'العنصر الأب';
+
+  @override
+  String get wsListType => 'نوع القائمة';
+
+  @override
+  String get wsStartingNumber => 'رقم البداية';
+
+  @override
+  String get wsListSorting => 'الفرز';
+
+  @override
+  String get wsLetteredList => 'قائمة حرفية';
+
+  @override
+  String get wsCheckboxList => 'قائمة مربعات اختيار';
+
+  @override
+  String get wsMarkerlessList => 'قائمة دون علامات';
+
+  @override
+  String get wsAscending => 'تصاعدي';
+
+  @override
+  String get wsDescending => 'تنازلي';
+
+  @override
+  String get wsNoSorting => 'دون فرز';
+
+  @override
+  String get wsAsWritten => 'كما كُتب';
+
+  @override
+  String get wsSentenceCase => 'حالة أحرف الجملة';
+
+  @override
+  String get wsTitleCase => 'حالة أحرف العنوان';
+
+  @override
+  String get wsLowerCase => 'أحرف صغيرة';
+
+  @override
+  String get wsUpperCase => 'أحرف كبيرة';
+
+  @override
+  String get wsNativeMarkers => 'علامات Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'علامة البداية: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'المستوى $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'يتجاهل الباني المثبّت قواعد <caps> للوحدة. استخدم سمة caps محلية أو default-property.';
+
+  @override
+  String get wsInsertElements => 'إدراج عناصر';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'تنبيهات واقتباسات';
+
+  @override
+  String get wsSemanticText => 'نص دلالي';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.';
 }

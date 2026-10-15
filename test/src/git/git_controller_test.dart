@@ -427,14 +427,14 @@ void main() {
     await controller.refresh();
 
     final configured = await controller.configureAuthorIdentity(
-      name: 'Albert Gee',
-      email: 'albert@example.com',
+      name: 'Example Author',
+      email: 'author@example.com',
       globally: true,
     );
 
     expect(configured, isTrue);
-    expect(gateway.authorName, 'Albert Gee');
-    expect(gateway.authorEmail, 'albert@example.com');
+    expect(gateway.authorName, 'Example Author');
+    expect(gateway.authorEmail, 'author@example.com');
     expect(gateway.authorIdentityGlobal, isTrue);
   });
 

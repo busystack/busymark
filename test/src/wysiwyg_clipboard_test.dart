@@ -1686,13 +1686,26 @@ void main() {
                 )
                 .busyDocument;
             expect(
-              parsed.blocks.where((block) => block.kind == blockCase.kind),
+              parsed.blocks
+                  .expand(
+                    (block) =>
+                        block.attributes['busymark-list-form'] == 'markdown'
+                        ? block.children
+                        : [block],
+                  )
+                  .where((block) => block.kind == blockCase.kind),
               hasLength(1),
               reason:
                   '${blockCase.kind.name} was flattened at paragraph offset $position: $result',
             );
             expect(
               parsed.blocks
+                  .expand(
+                    (block) =>
+                        block.attributes['busymark-list-form'] == 'markdown'
+                        ? block.children
+                        : [block],
+                  )
                   .singleWhere((block) => block.kind == blockCase.kind)
                   .plainText,
               blockCase.text,
@@ -2096,7 +2109,11 @@ void main() {
 
         final pasted = result;
         expect(pasted, isNot(original));
-        expect(RegExp(r'Existing').allMatches(pasted), hasLength(1));
+        expect(
+          RegExp(r'Existing').allMatches(pasted),
+          hasLength(1),
+          reason: pasted,
+        );
         final parsed = _parser
             .parse(filePath: '/math-list.md', source: pasted)
             .busyDocument;

@@ -1494,7 +1494,7 @@ List<WritersideTopicTitleOverride> _topicTitleOverrides(
   return [
     // Only authored top-level semantic titles are overrides. Their text is
     // already XML-decoded; fenced examples remain Markdown blocks.
-    for (final element in document.nodes.whereType<WritersideElementNode>())
+    for (final element in document.topicTitleElements)
       if (element.name == 'title')
         if (_trimmedOrNull(element.attributes['instance']) case final instance?)
           WritersideTopicTitleOverride(

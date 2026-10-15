@@ -11,6 +11,102 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Правило регистра модуля не публикуется.';
+
+  @override
+  String get wsTitleOverridesAction => 'Заголовки экземпляра и оглавления…';
+
+  @override
+  String get wsHeadingNotPublished => 'Не публикуется этим сборщиком.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Закреплённый builder не публикует заголовки экземпляров в темах Markdown. Разметка сохраняется; проверьте исходник.';
+
+  @override
+  String get wsTopicIdentity => 'ID темы';
+
+  @override
+  String get wsElementAnchor => 'Якорь элемента';
+
+  @override
+  String get wsHeadingText => 'Текст заголовка';
+
+  @override
+  String get wsDefaultTitle => 'Заголовок по умолчанию';
+
+  @override
+  String get wsTopicNavigation => 'Навигация темы';
+
+  @override
+  String get wsHeadingOptions => 'Атрибуты заголовка';
+
+  @override
+  String get wsDocumentOptions => 'Настройки документа';
+
+  @override
+  String get wsSettingsPresent => 'Есть явные настройки';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Переопределяет опубликованный заголовок; текст заголовка не меняется.';
+
+  @override
+  String get wsIgnoreVariables => 'Считать переменные буквальным текстом';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Если включено, текст, похожий на переменные, не подставляется.';
+
+  @override
+  String get wsInstanceSelection => 'Экземпляры справки';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Выберите выпуски справки по именам, группам, спискам, исключениям или выражениям.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Фильтрует повторно используемое содержимое по критериям; не выбирает экземпляр справки.';
+
+  @override
+  String get wsContextHelp => 'ID контекстной справки';
+
+  @override
+  String get wsCapitalization => 'Регистр';
+
+  @override
+  String get wsLibraryTopic => 'Библиотечная тема';
+
+  @override
+  String get wsLastModified => 'Последнее изменение';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'H1 темы отсутствует. Добавьте его в исходнике.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Первый H1 определяет заголовок темы. Остальные H1 — отдельные заголовки.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Корневой id отличается от ID по имени файла. Используйте переименование файла темы или проверьте исходник.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Неподдерживаемые атрибуты сохраняются. Проверьте их в исходнике.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Сгенерированный якорь; значение создаёт переопределение.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Закреплённый builder не публикует атрибуты H1. Они принадлежат заголовку, а не корню XML.';
+
+  @override
   String get closeOtherTabs => 'Закрыть другие вкладки';
 
   @override
@@ -4936,7 +5032,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get wsFullLayout => 'Полная ширина';
 
   @override
-  String get wsMediumLayout => 'Равные столбцы';
+  String get wsMediumLayout => 'Средний (1:2)';
 
   @override
   String get wsNarrowLayout => 'Узкий столбец термина';
@@ -5125,4 +5221,239 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'У этой цели нет проверенного переносимого URL заметки.';
+
+  @override
+  String get wsIncludeLines => 'Включить строки';
+
+  @override
+  String get wsIncludeSymbol => 'Включить символ';
+
+  @override
+  String get wsEmphasizeLines => 'Выделить отображаемые строки';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'В этом режиме свойства доступны только для чтения.';
+
+  @override
+  String get wsPropertiesProtected => 'Элемент защищён. Измените исходный код.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Документ или элемент изменился. Отмените черновик и выберите заново.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Сейчас невозможно разрешить ссылку.';
+
+  @override
+  String get wsUseDefault => 'Использовать по умолчанию';
+
+  @override
+  String get wsPropertiesSelection => 'Выберите один элемент.';
+
+  @override
+  String get wsImageDisplay => 'Отображение изображения';
+
+  @override
+  String get wsImageThumbnail => 'Нажимаемая миниатюра';
+
+  @override
+  String get wsEnabled => 'Включено';
+
+  @override
+  String get wsDisabled => 'Выключено';
+
+  @override
+  String get wsWidth => 'Ширина';
+
+  @override
+  String get wsHeight => 'Высота';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Свойство действует только при сворачивании в публикации.';
+
+  @override
+  String get wsNavigationAll => 'Все элементы с заголовками';
+
+  @override
+  String get wsNavigationNone => 'Без навигации';
+
+  @override
+  String get wsNavigationCustom => 'Своя навигация';
+
+  @override
+  String get wsTitleOverride => 'Переопределить заголовок';
+
+  @override
+  String get wsCompactLayout => 'Компактный';
+
+  @override
+  String get wsWideLayout => 'Широкий';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Переместите или удалите код, написанный в этом блоке, прежде чем задать src. Writerside отклоняет непустой блок кода со ссылкой на источник.';
+
+  @override
+  String get wsInherited => 'Наследовать от списка';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside ненадёжно задаёт размеры внешних изображений. Существующие размеры можно просмотреть и удалить.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Это изменение не записано в исходный текст. Черновик сохранён.';
+
+  @override
+  String get wsListItem => 'Элемент списка';
+
+  @override
+  String get wsSourceFile => 'Исходный файл';
+
+  @override
+  String get wsLinkTarget => 'Цель ссылки';
+
+  @override
+  String get wsPreviewImage => 'Изображение предпросмотра';
+
+  @override
+  String get wsIncludedElement => 'Включаемый элемент';
+
+  @override
+  String get wsHelpModule => 'Модуль справки';
+
+  @override
+  String get wsActionId => 'ID действия';
+
+  @override
+  String get wsKeymapHelpInstance => 'Экземпляр справки раскладки';
+
+  @override
+  String get wsShowInSource => 'Показать в исходнике';
+
+  @override
+  String get wsOriginElement => 'Значение элемента';
+
+  @override
+  String get wsOriginAncestor => 'Родительский элемент';
+
+  @override
+  String get wsOriginModule => 'По умолчанию в модуле';
+
+  @override
+  String get wsOriginBuiltIn => 'Встроенное значение';
+
+  @override
+  String get wsOriginUnresolved => 'Не разрешено';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Действующее значение: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Элемент';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Сгенерировано: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'По умолчанию: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'По умолчанию: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Разрешено: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Не разрешено';
+
+  @override
+  String get wsModule => 'Модуль';
+
+  @override
+  String get wsParent => 'Родительский элемент';
+
+  @override
+  String get wsListType => 'Тип списка';
+
+  @override
+  String get wsStartingNumber => 'Начальный номер';
+
+  @override
+  String get wsListSorting => 'Сортировка';
+
+  @override
+  String get wsLetteredList => 'Буквенный список';
+
+  @override
+  String get wsCheckboxList => 'Список с флажками';
+
+  @override
+  String get wsMarkerlessList => 'Список без маркеров';
+
+  @override
+  String get wsAscending => 'По возрастанию';
+
+  @override
+  String get wsDescending => 'По убыванию';
+
+  @override
+  String get wsNoSorting => 'Без сортировки';
+
+  @override
+  String get wsAsWritten => 'Как написано';
+
+  @override
+  String get wsSentenceCase => 'Регистр предложения';
+
+  @override
+  String get wsTitleCase => 'Регистр заголовка';
+
+  @override
+  String get wsLowerCase => 'Строчные буквы';
+
+  @override
+  String get wsUpperCase => 'Прописные буквы';
+
+  @override
+  String get wsNativeMarkers => 'Маркеры Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Начальный маркер: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Уровень $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Закреплённый сборщик игнорирует правила <caps> модуля. Используйте локальный атрибут caps или default-property.';
+
+  @override
+  String get wsInsertElements => 'Вставить элементы';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Примечания и цитаты';
+
+  @override
+  String get wsSemanticText => 'Семантический текст';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Проверяемый элемент недоступен. Выберите элемент для продолжения.';
 }

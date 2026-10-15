@@ -48,6 +48,7 @@ md.Document busyMarkMarkdownDocument(
       ...leadingInlineSyntaxes,
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideSemanticInlineSyntax(),
+      if (mode == MarkdownMode.writersideMarkdown) WritersideAttributeSyntax(),
       _LiteralLessThanSyntax(),
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideLiteralPercentSyntax(),

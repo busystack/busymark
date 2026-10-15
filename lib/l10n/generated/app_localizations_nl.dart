@@ -11,6 +11,103 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Hoofdlettergebruik van de module wordt niet gepubliceerd.';
+
+  @override
+  String get wsTitleOverridesAction => 'Instantie- en inhoudsopgavetitels…';
+
+  @override
+  String get wsHeadingNotPublished =>
+      'Wordt niet gepubliceerd door deze bouwer.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'De vastgelegde builder publiceert geen instantietitels in Markdown-onderwerpen. Bestaande opmaak blijft behouden; bekijk de bron.';
+
+  @override
+  String get wsTopicIdentity => 'Onderwerp-ID';
+
+  @override
+  String get wsElementAnchor => 'Elementanker';
+
+  @override
+  String get wsHeadingText => 'Koptekst';
+
+  @override
+  String get wsDefaultTitle => 'Standaardtitel';
+
+  @override
+  String get wsTopicNavigation => 'Onderwerpnavigatie';
+
+  @override
+  String get wsHeadingOptions => 'Kopattributen';
+
+  @override
+  String get wsDocumentOptions => 'Documentinstellingen';
+
+  @override
+  String get wsSettingsPresent => 'Expliciete instellingen aanwezig';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Vervangt de gepubliceerde titel; de koptekst blijft gelijk.';
+
+  @override
+  String get wsIgnoreVariables => 'Variabeletekst letterlijk behandelen';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Indien ingeschakeld wordt tekst die op variabelen lijkt niet vervangen.';
+
+  @override
+  String get wsInstanceSelection => 'Helpinstanties';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Selecteer helpuitvoer via namen, groepen, lijsten, uitsluitingen of expressies.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filter herbruikbare inhoud op criteria; dit selecteert geen helpinstantie.';
+
+  @override
+  String get wsContextHelp => 'Contexthelp-ID';
+
+  @override
+  String get wsCapitalization => 'Hoofdlettergebruik';
+
+  @override
+  String get wsLibraryTopic => 'Bibliotheekonderwerp';
+
+  @override
+  String get wsLastModified => 'Laatst gewijzigd';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Geen onderwerp-H1 aanwezig. Voeg deze toe in de bron.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'De eerste H1 bepaalt de onderwerptitel. Latere H1’s zijn afzonderlijke koppen.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'De root-id verschilt van de bestands-ID. Gebruik Onderwerpbestand hernoemen of bekijk de bron.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Niet-ondersteunde attributen blijven behouden. Bekijk ze in de bron.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Gegenereerd anker; een waarde maakt een overschrijving.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'De vastgelegde builder publiceert geen H1-attributen. Ze horen bij de kop, niet bij de XML-root.';
+
+  @override
   String get closeOtherTabs => 'Andere tabbladen sluiten';
 
   @override
@@ -4925,7 +5022,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get wsFullLayout => 'Volledige breedte';
 
   @override
-  String get wsMediumLayout => 'Gelijke kolommen';
+  String get wsMediumLayout => 'Gemiddeld (1:2)';
 
   @override
   String get wsNarrowLayout => 'Smalle begripskolom';
@@ -5114,4 +5211,241 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Dit doel heeft geen geverifieerde overdraagbare notitie-URL.';
+
+  @override
+  String get wsIncludeLines => 'Regels opnemen';
+
+  @override
+  String get wsIncludeSymbol => 'Symbool opnemen';
+
+  @override
+  String get wsEmphasizeLines => 'Weergegeven regels markeren';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Eigenschappen zijn alleen-lezen in deze weergave.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Dit element is beschermd. Bewerk de bron.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Document of element gewijzigd. Herstel het concept en selecteer opnieuw.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'De verwijzing kan momenteel niet worden opgelost.';
+
+  @override
+  String get wsUseDefault => 'Standaard gebruiken';
+
+  @override
+  String get wsPropertiesSelection => 'Selecteer één element.';
+
+  @override
+  String get wsImageDisplay => 'Afbeeldingsweergave';
+
+  @override
+  String get wsImageThumbnail => 'Klikbare miniatuur';
+
+  @override
+  String get wsEnabled => 'Ingeschakeld';
+
+  @override
+  String get wsDisabled => 'Uitgeschakeld';
+
+  @override
+  String get wsWidth => 'Breedte';
+
+  @override
+  String get wsHeight => 'Hoogte';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Deze eigenschap werkt alleen bij gepubliceerd inklappen.';
+
+  @override
+  String get wsNavigationAll => 'Alle elementen met titel';
+
+  @override
+  String get wsNavigationNone => 'Geen navigatie';
+
+  @override
+  String get wsNavigationCustom => 'Aangepaste navigatie';
+
+  @override
+  String get wsTitleOverride => 'Titel overschrijven';
+
+  @override
+  String get wsCompactLayout => 'Compacte indeling';
+
+  @override
+  String get wsWideLayout => 'Breed';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Verplaats of verwijder de code in dit blok voordat u src instelt. Writerside weigert een niet-leeg codeblok met een bronverwijzing.';
+
+  @override
+  String get wsInherited => 'Overnemen van lijst';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside past het formaat van externe afbeeldingen niet betrouwbaar aan. Bestaande maten kunnen worden bekeken en verwijderd.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Deze wijziging is niet in de bron verwerkt. Het concept is behouden.';
+
+  @override
+  String get wsListItem => 'Lijstitem';
+
+  @override
+  String get wsSourceFile => 'Bronbestand';
+
+  @override
+  String get wsLinkTarget => 'Linkdoel';
+
+  @override
+  String get wsPreviewImage => 'Voorbeeldafbeelding';
+
+  @override
+  String get wsIncludedElement => 'Opgenomen element';
+
+  @override
+  String get wsHelpModule => 'Helpmodule';
+
+  @override
+  String get wsActionId => 'Actie-ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Helpinstantie van toetsindeling';
+
+  @override
+  String get wsShowInSource => 'Tonen in Bron';
+
+  @override
+  String get wsOriginElement => 'Elementoverschrijving';
+
+  @override
+  String get wsOriginAncestor => 'Bovenliggend element';
+
+  @override
+  String get wsOriginModule => 'Modulestandaard';
+
+  @override
+  String get wsOriginBuiltIn => 'Ingebouwde standaard';
+
+  @override
+  String get wsOriginUnresolved => 'Niet opgelost';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effectief: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Element';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Gegenereerd: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Standaard: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Standaard: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Opgelost: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Onopgelost';
+
+  @override
+  String get wsModule => 'Module';
+
+  @override
+  String get wsParent => 'Bovenliggend element';
+
+  @override
+  String get wsListType => 'Lijsttype';
+
+  @override
+  String get wsStartingNumber => 'Startnummer';
+
+  @override
+  String get wsListSorting => 'Sortering';
+
+  @override
+  String get wsLetteredList => 'Letterlijst';
+
+  @override
+  String get wsCheckboxList => 'Lijst met selectievakjes';
+
+  @override
+  String get wsMarkerlessList => 'Lijst zonder markeringen';
+
+  @override
+  String get wsAscending => 'Oplopend';
+
+  @override
+  String get wsDescending => 'Aflopend';
+
+  @override
+  String get wsNoSorting => 'Geen sortering';
+
+  @override
+  String get wsAsWritten => 'Zoals geschreven';
+
+  @override
+  String get wsSentenceCase => 'Zinskapitalisatie';
+
+  @override
+  String get wsTitleCase => 'Titelkapitalisatie';
+
+  @override
+  String get wsLowerCase => 'Kleine letters';
+
+  @override
+  String get wsUpperCase => 'Hoofdletters';
+
+  @override
+  String get wsNativeMarkers => 'Markdown-markeringen';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Beginmarkering: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Niveau $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'De vastgezette builder negeert <caps>-regels van de module. Gebruik een lokaal caps-attribuut of default-property.';
+
+  @override
+  String get wsInsertElements => 'Elementen invoegen';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Opmerkingen en citaten';
+
+  @override
+  String get wsSemanticText => 'Semantische tekst';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.';
 }

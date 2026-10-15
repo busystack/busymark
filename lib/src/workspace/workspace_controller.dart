@@ -1,3 +1,4 @@
+import '../editor/wysiwyg/writerside_property_session.dart';
 import '../references/markdown_move_service.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import 'dart:async';
@@ -227,6 +228,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   late WorkspaceService _service;
   late AppSettingsController _settingsController;
+  final propertyEdits = WritersidePropertySession();
+
+  /// The mounted workspace owns inspector transitions and focus restoration.
+  void Function()? toggleElementProperties;
+  Future<bool> Function(String topicPath)? renameInspectedTopic;
   late DocumentSessionStore _sessionStore;
   late DocumentRecoveryStore _recoveryStore;
   late WorkspaceFileMonitor _fileMonitor;
@@ -329,6 +335,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   WorkspaceState build() {
     _service = ref.read(workspaceServiceProvider);
     _settingsController = ref.read(appSettingsControllerProvider.notifier);
+    _settingsController.processPendingProperties = propertyEdits.flush;
     _sessionStore = ref.read(documentSessionStoreProvider);
     _recoveryStore = ref.read(documentRecoveryStoreProvider);
     _fileMonitor = ref.read(workspaceFileMonitorProvider);
@@ -352,6 +359,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
     });
     ref.onDispose(() {
+      _settingsController.processPendingProperties = null;
+      propertyEdits.dispose();
       _fileMonitorWorkspaceGeneration++;
       _removalOperationRevision++;
       _cancelPendingDerivedRefresh();
@@ -609,6 +618,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     List<DocumentSessionEntry>? restoredTabs,
     String? activeBufferId,
   }) async {
+    if (!propertyEdits.flush()) return false;
     if (state.hasUnsavedChanges) return false;
     final prior = state;
     final priorRevision = _activeDocumentRevision;
@@ -696,6 +706,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> openNextcloudNote(String localId) async {
+    if (!propertyEdits.flush()) return false;
     final repository = await _ensureNotesRepository();
     final note = repository.noteById(localId);
     final workspace = state.workspace;
@@ -762,6 +773,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String category = '',
     String content = '',
   }) async {
+    if (!propertyEdits.flush()) return false;
     try {
       final accountId = state.workspace?.nextcloudAccountId;
       if (accountId == null) return false;
@@ -3627,6 +3639,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> reloadBufferFromDisk(String bufferId) async {
+    if (!propertyEdits.flush()) return false;
     final buffer = state.documentBuffers
         .where((candidate) => candidate.id == bufferId)
         .firstOrNull;
@@ -3772,6 +3785,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   /// Starts a document from Welcome, replacing the previous workspace only
   /// after its buffers have been resolved and their history has been flushed.
   Future<bool> createMarkdownWorkspace() async {
+    if (!propertyEdits.flush()) return false;
     final previous = state;
     final previousOperation = _activeDocumentRevision;
     if (previous.hasUnsavedChanges || previous.isLoading) return false;
@@ -3806,6 +3820,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> createMarkdownFile() async {
+    if (!propertyEdits.flush()) return;
     if (state.workspace?.isRemote == true) {
       await createNextcloudNote();
       return;
@@ -3869,6 +3884,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> openPath(String path) async {
+    if (!propertyEdits.flush()) return;
     _invalidateFileMonitorWorkspace();
     _removalOperationRevision++;
     final closingBuffers = state.documentBuffers;
@@ -3953,6 +3969,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> createWritersideProject(
     WritersideProjectCreateRequest request,
   ) async {
+    if (!propertyEdits.flush()) return false;
     _invalidateFileMonitorWorkspace();
     _removalOperationRevision++;
     final closingBuffers = state.documentBuffers;
@@ -5036,6 +5053,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     DocumentBuffer? discardAuthorization,
     bool? preflushedHistorySettled,
   }) async {
+    if (!propertyEdits.flush()) return false;
     final workspace = state.workspace;
     if (workspace == null || !workspace.openFilePaths.contains(path)) {
       return false;
@@ -5139,6 +5157,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String bufferId, {
     bool discard = false,
   }) async {
+    if (!propertyEdits.flush()) return false;
     final closingWorkspace = state.workspace;
     _cancelAutoSave(bufferId);
     return _enqueueBufferWrite(bufferId, () async {
@@ -5483,6 +5502,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required List<DocumentBuffer> documentBuffers,
     required List<String> openFilePaths,
   }) async {
+    if (!propertyEdits.flush()) return false;
     _cancelPendingDerivedRefresh();
     final operationRevision = _invalidateActiveDocumentOperations();
     final workspaceId = workspace.id;
@@ -5610,7 +5630,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final live = liveBuffers
           .where((candidate) => candidate.id == removedId)
           .firstOrNull;
-      if (before != null && live != null && !identical(before, live)) {
+      if (before != null &&
+          live != null &&
+          !identical(before, live) &&
+          !_sameCleanClosingSource(before, live)) {
         return false;
       }
     }
@@ -5677,6 +5700,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
     return true;
   }
+
+  // Editor restoration can report a caret/folding session while activation of
+  // the next tab is awaiting parsing. A clean close owns no discarded edits;
+  // allow only that metadata refresh. Dirty discard and all source, filesystem
+  // identity, origin and permission changes still invalidate publication.
+  bool _sameCleanClosingSource(DocumentBuffer before, DocumentBuffer live) =>
+      !before.isDirty &&
+      !live.isDirty &&
+      before.id == live.id &&
+      before.revision == live.revision &&
+      before.text == live.text &&
+      before.lastSavedText == live.lastSavedText &&
+      before.filePath == live.filePath &&
+      before.untitledName == live.untitledName &&
+      identical(before.diskSnapshot, live.diskSnapshot) &&
+      identical(before.diskVersionSnapshot, live.diskVersionSnapshot) &&
+      before.diskState == live.diskState &&
+      before.diskVersionText == live.diskVersionText &&
+      identical(before.format, live.format) &&
+      before.remoteNote == live.remoteNote &&
+      before.remoteTitle == live.remoteTitle &&
+      identical(before.remoteEditBase, live.remoteEditBase) &&
+      before.readonly == live.readonly &&
+      before.recovered == live.recovered;
 
   void updateActiveEditorState(DocumentEditorState editorState) {
     final buffer = state.activeBuffer;
@@ -5834,6 +5881,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   void updateActiveEditorMode(DocumentViewModePreference mode) {
+    if (!propertyEdits.flush()) return;
     final buffer = state.activeBuffer;
     if (buffer == null || buffer.editorState.mode == mode) {
       return;
@@ -5937,6 +5985,33 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           state.activeBuffer?.editorState.mode !=
           DocumentViewModePreference.source,
     );
+  }
+
+  bool applyInspectorSource({
+    required String bufferId,
+    required int revision,
+    required String expectedSource,
+    required String source,
+    bool requiresSourceChange = false,
+  }) {
+    final buffer = state.activeBuffer;
+    if (buffer == null ||
+        buffer.id != bufferId ||
+        buffer.revision != revision ||
+        buffer.text != expectedSource ||
+        buffer.readonly ||
+        buffer.editorState.mode == DocumentViewModePreference.preview) {
+      return false;
+    }
+    if (source == expectedSource) return !requiresSourceChange;
+    updateActiveSourceText(
+      source,
+      sourceBufferId: bufferId,
+      sourceFilePath: buffer.filePath,
+      previousSelection: buffer.editorState.selection,
+      selection: buffer.editorState.selection,
+    );
+    return state.activeBuffer?.text == source;
   }
 
   void updateActiveSourceText(
@@ -6331,7 +6406,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     ActiveDocumentSaveTarget? target,
     LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
-    final operationTarget = target ?? captureActiveDocumentSaveTarget();
+    if (target != null && !isActiveDocumentSaveTargetCurrent(target)) {
+      return false;
+    }
+    if (!propertyEdits.flush()) return false;
+    final operationTarget = captureActiveDocumentSaveTarget();
     if (operationTarget == null ||
         !isActiveDocumentSaveTargetCurrent(operationTarget)) {
       return false;
@@ -6562,6 +6641,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     Map<String, LineEndingNormalization> mixedLineEndingNormalizations =
         const {},
   }) async {
+    if (!propertyEdits.flush()) {
+      return SaveAllResult(
+        savedBufferIds: const [],
+        failedBufferIds: [
+          if (state.activeBufferId != null) state.activeBufferId!,
+        ],
+        conflictBufferIds: const [],
+        normalizationRequiredBufferIds: const [],
+      );
+    }
     _cancelAllAutoSaves();
     final saved = <String>[];
     final failed = <String>[];
@@ -6696,7 +6785,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     bool overwriteExisting = false,
     LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
-    final operationTarget = target ?? captureActiveDocumentSaveTarget();
+    if (target != null && !isActiveDocumentSaveTargetCurrent(target)) {
+      return false;
+    }
+    if (!propertyEdits.flush()) return false;
+    final operationTarget = captureActiveDocumentSaveTarget();
     if (operationTarget == null ||
         !isActiveDocumentSaveTargetCurrent(operationTarget)) {
       return false;

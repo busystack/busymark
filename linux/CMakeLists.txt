@@ -112,6 +112,12 @@ set(VISUALIZATION_WEB_VERSION "${VISUALIZATION_WEB_DIR}/VERSION")
 set(VISUALIZATION_WEB_HARNESS "${VISUALIZATION_WEB_DIR}/harness.html")
 set(VISUALIZATION_WEB_BOOTSTRAP "${VISUALIZATION_WEB_DIR}/bootstrap.js")
 set(VISUALIZATION_WEB_ENGINES "${VISUALIZATION_WEB_DIR}/render-engines.js")
+set(VISUALIZATION_WEB_OPERATION_ENGINES
+  "${VISUALIZATION_WEB_DIR}/mermaid-engine.js"
+  "${VISUALIZATION_WEB_DIR}/plantuml-engine.js"
+  "${VISUALIZATION_WEB_DIR}/openapi-engine.js"
+  "${VISUALIZATION_WEB_DIR}/math-engine.js"
+)
 set(VISUALIZATION_WEB_SCALAR "${VISUALIZATION_WEB_DIR}/scalar.js")
 set(VISUALIZATION_WEB_VIZ "${VISUALIZATION_WEB_DIR}/viz-global.js")
 add_custom_command(
@@ -120,6 +126,7 @@ add_custom_command(
     "${VISUALIZATION_WEB_HARNESS}"
     "${VISUALIZATION_WEB_BOOTSTRAP}"
     "${VISUALIZATION_WEB_ENGINES}"
+    ${VISUALIZATION_WEB_OPERATION_ENGINES}
     "${VISUALIZATION_WEB_SCALAR}"
     "${VISUALIZATION_WEB_VIZ}"
   COMMAND
@@ -130,6 +137,9 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/package.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/package-lock.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/render_engines.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/mermaid_renderer.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/plantuml_renderer.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/openapi_renderer.js"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/mathjax_renderer.js"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/mermaid_math_disabled.js"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/build_render_engines.js"
@@ -147,6 +157,7 @@ add_custom_target(busymark_visualization_web ALL
     "${VISUALIZATION_WEB_HARNESS}"
     "${VISUALIZATION_WEB_BOOTSTRAP}"
     "${VISUALIZATION_WEB_ENGINES}"
+    ${VISUALIZATION_WEB_OPERATION_ENGINES}
     "${VISUALIZATION_WEB_SCALAR}"
     "${VISUALIZATION_WEB_VIZ}"
 )

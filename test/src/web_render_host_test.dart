@@ -145,6 +145,31 @@ void main() {
     },
   );
 
+  test('native cancellation error preserves token cancellation', () async {
+    final nativeResponse = Completer<Object?>();
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'renderMermaid') return nativeResponse.future;
+      if (call.method == 'cancelRender') return true;
+      throw MissingPluginException();
+    });
+    const host = PlatformWebRenderHost(channel: channel);
+    final token = VisualizationCancellationToken();
+    final operation = host.renderMermaid(
+      source: 'graph TD; A-->B',
+      theme: VisualizationTheme.light,
+      cancellationToken: token,
+    );
+    final assertion = expectLater(
+      operation,
+      throwsA(isA<VisualizationCancelledException>()),
+    );
+    token.cancel();
+    nativeResponse.completeError(
+      PlatformException(code: 'visualization.cancelled'),
+    );
+    await assertion;
+  });
+
   test('times out and requests native cancellation', () async {
     final renderCompleter = Completer<Object?>();
     String? renderRequestId;

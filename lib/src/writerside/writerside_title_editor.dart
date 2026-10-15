@@ -118,11 +118,7 @@ class WritersideTitleEditor {
       }
     }
     if (edit.instanceTitle != null) {
-      final scope = topic.format == WritersideTopicFormat.xml
-          ? document.rootElement!.children
-          : document.nodes;
-      final overrides = scope
-          .whereType<WritersideElementNode>()
+      final overrides = document.topicTitleElements
           .where(
             (node) =>
                 node.name == 'title' &&
@@ -133,11 +129,22 @@ class WritersideTitleEditor {
         throw const BusyMarkException('writerside.toc.path-invalid');
       }
       final value = edit.instanceTitle!;
+      final existing = overrides.firstOrNull;
+      final rootName = document.rootElement?.qualifiedName ?? '';
+      final prefix =
+          topic.format == WritersideTopicFormat.xml && rootName.contains(':')
+          ? '${rootName.split(':').first}:'
+          : '';
       final replacement = value.trim().isEmpty
           ? ''
           : XmlElement(
-              XmlName.parts('title'),
-              [XmlAttribute(XmlName.parts('instance'), instanceId)],
+              XmlName.parse(existing?.qualifiedName ?? '${prefix}title'),
+              existing == null
+                  ? [XmlAttribute(XmlName.parts('instance'), instanceId)]
+                  : [
+                      for (final a in existing.qualifiedAttributes)
+                        XmlAttribute(XmlName.parse(a.qualifiedName), a.value),
+                    ],
               [XmlText(value)],
             ).toXmlString();
       if (replacement.isNotEmpty) _validateXml(replacement);
@@ -229,7 +236,7 @@ class WritersideTitleEditor {
           );
         }
       } else if (value.trim().isNotEmpty) {
-        final offset = span.startOffset + '<toc-element'.length;
+        final offset = span.startOffset + 1 + root.qualifiedName.length;
         resultTree = treeSource.replaceRange(
           offset,
           offset,

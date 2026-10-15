@@ -15,6 +15,7 @@ are intentionally independent so they can be referenced directly.
 
 - [Supported content and limitations](writerside-support.md)
 - [Instances and TOC libraries](writerside-instances.md)
+- [Element Properties](element-properties.md): contextual Writerside properties, defaults, drafts, Source integration and navigation.
 - [Admonitions](admonitions.md)
 - [Collapsible elements](collapsible-elements.md)
 - [Videos](videos.md)

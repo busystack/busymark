@@ -11,6 +11,100 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'Modülün harf biçimi yayımlanmaz.';
+
+  @override
+  String get wsTitleOverridesAction => 'Örnek ve içindekiler başlıkları…';
+
+  @override
+  String get wsHeadingNotPublished => 'Bu oluşturucu tarafından yayımlanmaz.';
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Sabitlenmiş derleyici Markdown konularında örnek başlıklarını yayımlamaz. Mevcut işaretleme korunur; Kaynakta inceleyin.';
+
+  @override
+  String get wsTopicIdentity => 'Konu kimliği';
+
+  @override
+  String get wsElementAnchor => 'Öğe çapası';
+
+  @override
+  String get wsHeadingText => 'Başlık metni';
+
+  @override
+  String get wsDefaultTitle => 'Varsayılan başlık';
+
+  @override
+  String get wsTopicNavigation => 'Konu gezinmesi';
+
+  @override
+  String get wsHeadingOptions => 'Başlık öznitelikleri';
+
+  @override
+  String get wsDocumentOptions => 'Belge ayarları';
+
+  @override
+  String get wsSettingsPresent => 'Yazılmış ayarlar mevcut';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Yayımlanan başlığı geçersiz kılar; başlık metni değişmez.';
+
+  @override
+  String get wsIgnoreVariables => 'Değişkenleri düz metin olarak işle';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Etkinleştirildiğinde değişken benzeri metin değiştirilmez.';
+
+  @override
+  String get wsInstanceSelection => 'Yardım örnekleri';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Yardım çıktılarını adlar, gruplar, listeler, dışlamalar veya ifadelerle seçin.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Yeniden kullanılan içeriği ölçütlerle süzer; yardım örneği seçmez.';
+
+  @override
+  String get wsContextHelp => 'Bağlam yardımı kimliği';
+
+  @override
+  String get wsCapitalization => 'Büyük/küçük harf';
+
+  @override
+  String get wsLibraryTopic => 'Kitaplık konusu';
+
+  @override
+  String get wsLastModified => 'Son değiştirilme';
+
+  @override
+  String get wsMissingTopicHeading => 'Konu H1 başlığı yok. Kaynakta ekleyin.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'İlk H1 konu başlığını belirler. Sonraki H1’ler ayrı başlıklardır.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Kök id, dosya adından türetilen konu kimliğinden farklı. Konu dosyasını yeniden adlandırın veya kaynağı inceleyin.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Desteklenmeyen öznitelikler korunur. Kaynakta inceleyin.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Oluşturulmuş çapa; bir değer geçersiz kılma oluşturur.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Sabitlenmiş derleyici H1 özniteliklerini yayımlamaz. XML köküne değil başlığa aittirler.';
+
+  @override
   String get closeOtherTabs => 'Diğer sekmeleri kapat';
 
   @override
@@ -4879,7 +4973,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsFullLayout => 'Tam genişlik';
 
   @override
-  String get wsMediumLayout => 'Eşit sütunlar';
+  String get wsMediumLayout => 'Orta (1:2)';
 
   @override
   String get wsNarrowLayout => 'Dar terim sütunu';
@@ -5068,4 +5162,238 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Bu hedefin doğrulanmış taşınabilir not URL’si yok.';
+
+  @override
+  String get wsIncludeLines => 'Satırları dahil et';
+
+  @override
+  String get wsIncludeSymbol => 'Sembolü dahil et';
+
+  @override
+  String get wsEmphasizeLines => 'Görüntülenen satırları vurgula';
+
+  @override
+  String get wsPropertiesReadOnly => 'Bu görünümde özellikler salt okunurdur.';
+
+  @override
+  String get wsPropertiesProtected => 'Bu öğe korunuyor. Kaynağını düzenleyin.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Belge veya öğe değişti. Taslağı geri alın ve yeniden seçin.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Başvuru şu anda çözümlenemiyor.';
+
+  @override
+  String get wsUseDefault => 'Varsayılanı kullan';
+
+  @override
+  String get wsPropertiesSelection => 'Tek bir öğe seçin.';
+
+  @override
+  String get wsImageDisplay => 'Görüntü görünümü';
+
+  @override
+  String get wsImageThumbnail => 'Tıklanabilir küçük resim';
+
+  @override
+  String get wsEnabled => 'Etkin';
+
+  @override
+  String get wsDisabled => 'Devre dışı';
+
+  @override
+  String get wsWidth => 'Genişlik';
+
+  @override
+  String get wsHeight => 'Yükseklik';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Bu özellik yalnızca yayımlanan daraltma etkinken geçerlidir.';
+
+  @override
+  String get wsNavigationAll => 'Başlıklı tüm öğeler';
+
+  @override
+  String get wsNavigationNone => 'Gezinme yok';
+
+  @override
+  String get wsNavigationCustom => 'Özel gezinme';
+
+  @override
+  String get wsTitleOverride => 'Başlığı geçersiz kıl';
+
+  @override
+  String get wsCompactLayout => 'Kompakt';
+
+  @override
+  String get wsWideLayout => 'Geniş';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'src ayarlamadan önce bu blokta yazılan kodu taşıyın veya kaldırın. Writerside, kaynak başvurusu olan boş olmayan kod bloğunu reddeder.';
+
+  @override
+  String get wsInherited => 'Listeden devral';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside dış görüntülerin boyutunu güvenilir biçimde ayarlamaz. Mevcut boyutlar incelenebilir ve kaldırılabilir.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Bu değişiklik kaynağa uygulanmadı. Taslak korundu.';
+
+  @override
+  String get wsListItem => 'Liste öğesi';
+
+  @override
+  String get wsSourceFile => 'Kaynak dosya';
+
+  @override
+  String get wsLinkTarget => 'Bağlantı hedefi';
+
+  @override
+  String get wsPreviewImage => 'Önizleme resmi';
+
+  @override
+  String get wsIncludedElement => 'Dahil edilen öğe';
+
+  @override
+  String get wsHelpModule => 'Yardım modülü';
+
+  @override
+  String get wsActionId => 'Eylem kimliği';
+
+  @override
+  String get wsKeymapHelpInstance => 'Tuş eşlemesi yardım örneği';
+
+  @override
+  String get wsShowInSource => 'Kaynakta göster';
+
+  @override
+  String get wsOriginElement => 'Öğe geçersiz kılması';
+
+  @override
+  String get wsOriginAncestor => 'Üst öğe';
+
+  @override
+  String get wsOriginModule => 'Modül varsayılanı';
+
+  @override
+  String get wsOriginBuiltIn => 'Yerleşik varsayılan';
+
+  @override
+  String get wsOriginUnresolved => 'Çözümlenemedi';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Etkin: $value — $origin';
+  }
+
+  @override
+  String get wsElementSelector => 'Öğe';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Oluşturulan: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Varsayılan: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Varsayılan: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Çözümlenen: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Çözümlenmedi';
+
+  @override
+  String get wsModule => 'Modül';
+
+  @override
+  String get wsParent => 'Üst öğe';
+
+  @override
+  String get wsListType => 'Liste türü';
+
+  @override
+  String get wsStartingNumber => 'Başlangıç numarası';
+
+  @override
+  String get wsListSorting => 'Sıralama';
+
+  @override
+  String get wsLetteredList => 'Harfli liste';
+
+  @override
+  String get wsCheckboxList => 'Onay kutulu liste';
+
+  @override
+  String get wsMarkerlessList => 'İşaretsiz liste';
+
+  @override
+  String get wsAscending => 'Artan';
+
+  @override
+  String get wsDescending => 'Azalan';
+
+  @override
+  String get wsNoSorting => 'Sıralama yok';
+
+  @override
+  String get wsAsWritten => 'Yazıldığı gibi';
+
+  @override
+  String get wsSentenceCase => 'Cümle düzeni';
+
+  @override
+  String get wsTitleCase => 'Başlık düzeni';
+
+  @override
+  String get wsLowerCase => 'Küçük harf';
+
+  @override
+  String get wsUpperCase => 'Büyük harf';
+
+  @override
+  String get wsNativeMarkers => 'Markdown işaretleri';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'İlk işaret: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Düzey $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Sabitlenmiş derleyici modülün <caps> kurallarını yok sayar. Yerel caps özniteliği veya default-property kullanın.';
+
+  @override
+  String get wsInsertElements => 'Öğe ekle';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Uyarılar ve alıntılar';
+
+  @override
+  String get wsSemanticText => 'Anlamsal metin';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
 }

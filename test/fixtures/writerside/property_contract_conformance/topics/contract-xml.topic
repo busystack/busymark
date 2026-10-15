@@ -1,0 +1,15 @@
+<topic id="contract-xml" title="XML default topic" help-id="xml-topic-help" switcher-label="XML platform" last-modified="2026-10-12">
+  <!-- Default-title edits must leave this conditional formatted title intact. -->
+  <title instance="other">Other <b>topic title</b></title>
+  <show-structure for="chapter,procedure,tab,def" depth="2"/>
+  <chapter title="XML default chapter" id="xml-chapter" collapsible="true" default-state="expanded" switcher-key="One">
+    <title instance="other">Other <b>chapter title</b></title>
+    <p id="xml-paragraph" instance="conformance" filter="public" ignore-vars="true" help-id="xml-paragraph-help">Literal %product%.</p>
+    <p instance="!conformance">Excluded XML content.</p>
+  </chapter>
+  <chapter title="Second XML chapter" id="xml-second" switcher-key="Two"><p>Second content.</p></chapter>
+  <procedure title="XML procedure" id="xml-procedure"><step>Do this.</step></procedure>
+  <tabs><tab title="XML tab" id="xml-tab"><p>Tab body.</p></tab></tabs>
+  <deflist><def title="XML term" id="xml-term"><p>Definition body.</p></def></deflist>
+<table id="contract-sorting" sortable="true" sticky-header="true"><tr><td sortable="false">Item</td><td>Value</td></tr><tr><td>B</td><td>2</td></tr><tr><td>A</td><td>1</td></tr></table>
+</topic>

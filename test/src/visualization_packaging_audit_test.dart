@@ -115,6 +115,12 @@ void main() {
       expect(fetch, contains(r'mermaid@${MERMAID_VERSION}.tar.gz'));
       expect(fetch, contains('packages/mermaid'));
       expect(fetch, contains('build_render_engines.js'));
+      for (final engine in ['mermaid', 'plantuml', 'openapi', 'math']) {
+        expect(fetch, contains('$engine-engine.js'));
+        expect(webBuild, contains("'$engine-engine'"));
+        expect(webEngines, contains("import('./$engine-engine.js')"));
+        expect(cmake, contains('$engine-engine.js'));
+      }
       expect(webBuild, contains('katex: disabledMathModule'));
       expect(
         webBuild,
@@ -339,6 +345,12 @@ void main() {
         expect(html, isNot(contains('cdn.')));
       }
       expect(bootstrap, contains('createMemoryStorage'));
+      expect(harness, isNot(contains('viz-global.js')));
+      expect(reference, isNot(contains('viz-global.js')));
+      for (final engine in ['mermaid', 'plantuml', 'openapi', 'math']) {
+        expect(native, contains('"$engine-engine.js"'));
+        expect(harness, isNot(contains('$engine-engine.js')));
+      }
       expect(renderEngines, contains("case 'renderMathBatch':"));
       expect(math, contains("export const mathJaxVersion = '4.1.3'"));
       expect(math, contains("export const mathJaxFontVersion = '4.1.3'"));

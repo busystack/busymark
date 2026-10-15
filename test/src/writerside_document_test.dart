@@ -34,7 +34,9 @@ void main() {
           validateLocalReferences: false,
         );
         expect(
-          markdown.busyDocument.blocks.any((b) => b.isSourceOnly),
+          markdown.busyDocument.blocks.any(
+            (b) => b.isSourceOnly || b.isSourceProtected,
+          ),
           protectedSource,
         );
         final document = const WritersideDocumentParser().parseMarkdown(

@@ -75,8 +75,8 @@ void main() {
     final result = await creator.create(
       WritersideProjectCreateRequest(
         parentDirectoryPath: parent.path,
-        projectName: 'Linguality Docs',
-        directoryName: 'linguality-docs',
+        projectName: 'Guidelines Docs',
+        directoryName: 'example-docs',
         instanceName: 'User Guide',
         topicTitle: 'Introduction',
       ),
@@ -92,7 +92,7 @@ void main() {
     );
 
     final module = await moduleService.load(result.rootPath);
-    expect(module.config.moduleName, 'Linguality Docs');
+    expect(module.config.moduleName, 'Guidelines Docs');
     expect(module.instances.single.startPage, 'introduction.md');
     expect(module.topicsByFileName.keys, contains('introduction.md'));
   });

@@ -41,6 +41,27 @@ enum BusyWritersideInsertCommand {
   convertListToProcedure,
 }
 
+/// Distinct command categories share one menu without enum/string coercion.
+sealed class BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarCommand();
+}
+
+final class BusyWritersideToolbarInsert extends BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarInsert(this.command);
+  final BusyWritersideInsertCommand command;
+}
+
+final class BusyWritersideToolbarAdmonition
+    extends BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarAdmonition(this.style);
+  final BusyAdmonitionStyle style;
+}
+
+final class BusyWritersideToolbarSemantic extends BusyWritersideToolbarCommand {
+  const BusyWritersideToolbarSemantic(this.command);
+  final BusyWysiwygInlineCommand command;
+}
+
 /// Whether [block] can safely be replaced by a generic block command.
 ///
 /// Structured and source-preserved blocks need dedicated transformations. A

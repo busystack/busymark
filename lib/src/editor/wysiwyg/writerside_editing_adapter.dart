@@ -1,4 +1,6 @@
 import 'dart:convert';
+import '../../markdown/markdown_source_map.dart';
+import 'wysiwyg_inline_controller.dart';
 import 'package:xml/xml.dart';
 import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
@@ -14,6 +16,252 @@ import '../../writerside/writerside_schema.dart';
 /// titles. Unsupported nodes stay atomic and keep their original source.
 class WritersideEditingAdapter {
   const WritersideEditingAdapter();
+
+  static Iterable<
+    ({
+      BusyInlineStyleRange range,
+      int begin,
+      int end,
+      int localBegin,
+      int localEnd,
+      bool xmlSource,
+    })
+  >
+  authoredInlineRanges(
+    BusyDocument document,
+    String source,
+    BusyBlock block,
+  ) sync* {
+    if (block.sourceSpan == null) return;
+    if (document.isXmlTopic && document.authoredXml?.source != source) return;
+    final raw =
+        block.attributes['busymark-native-inline-source'] ??
+        block.rawSource ??
+        '';
+    if (block.children.isNotEmpty &&
+        !block.attributes.containsKey('element') &&
+        block.attributes.containsKey('busymark-native-source-map') &&
+        !block.attributes.containsKey('busymark-native-inline-source')) {
+      return;
+    }
+    if (!document.isXmlTopic && block.attributes.containsKey('element')) {
+      // Semantic XML islands retain bindings relative to their own authored
+      // fragment. Use that same adapter to map text occurrences, including
+      // variables, then translate back into the containing Markdown source.
+      const prefix = '<topic id="inspector" title="Inspector">';
+      final wrapped = '$prefix$raw</topic>';
+      final xml = const WritersideEditingAdapter().parseXml(
+        filePath: document.filePath,
+        source: wrapped,
+      );
+      final element = xml?.blocks.first.children
+          .where((b) => !b.isSourceOnly)
+          .singleOrNull;
+      if (xml != null && element?.plainText == block.plainText) {
+        final references = busyInlineReferenceRanges(block.inlines);
+        for (final entry in authoredInlineRanges(xml, wrapped, element!)) {
+          final owner = references
+              .where(
+                (r) =>
+                    r.kind == entry.range.kind &&
+                    r.start == entry.range.start &&
+                    r.end == entry.range.end &&
+                    r.referenceIndex == entry.range.referenceIndex,
+              )
+              .firstOrNull;
+          if (owner != null) {
+            final begin = markdownProjectedSourceOffset(
+              block,
+              entry.begin - prefix.length,
+              inline: true,
+            );
+            final end = markdownProjectedSourceOffset(
+              block,
+              entry.end - prefix.length,
+              inline: true,
+            );
+            if (begin == null || end == null) continue;
+            yield (
+              range: owner,
+              begin: begin,
+              end: end,
+              localBegin: entry.begin - prefix.length,
+              localEnd: entry.end - prefix.length,
+              xmlSource: entry.xmlSource,
+            );
+          }
+        }
+      }
+      return;
+    }
+    final mapped =
+        !document.isXmlTopic && !block.attributes.containsKey('element')
+        ? const MarkdownSourceMapper()
+              .createInlineParserContext(
+                documentSource: source,
+                mode: document.mode,
+                mapWritersideReferences: true,
+              )
+              .parseMapped(raw)
+        : null;
+    final mappedReferences = <BusyInline>[];
+    void collect(List<BusyInline> inlines, bool inheritedIgnore) {
+      for (final inline in inlines) {
+        final ignore = switch (inline.attributes['ignore-vars']) {
+          'true' => true,
+          'false' => false,
+          _ => inheritedIgnore,
+        };
+        if (inline.kind != BusyInlineKind.writersideVariable || !ignore) {
+          if (mapped!.ranges.containsKey(inline)) mappedReferences.add(inline);
+        }
+        collect(inline.children, ignore);
+      }
+    }
+
+    if (mapped != null) {
+      collect(mapped.inlines, block.attributes['ignore-vars'] == 'true');
+    }
+    final references = busyInlineReferenceRanges(block.inlines);
+    final xmlVariables = document.isXmlTopic
+        ? const WritersideEditingAdapter()
+              .xmlVariableSourceRanges(document, block)
+              .toList()
+        : const <({int start, int end, int sourceStart, int sourceEnd})>[];
+    for (final range in references) {
+      if (!{
+        BusyInlineKind.link,
+        BusyInlineKind.image,
+        BusyInlineKind.writersideVariable,
+        BusyInlineKind.writersideShortcut,
+      }.contains(range.kind)) {
+        continue;
+      }
+      final binding = range.attributes['xml-source-binding']?.split(':');
+      int? begin;
+      int? end;
+      int? localBegin;
+      int? localEnd;
+      var xmlSource = false;
+      if (document.isXmlTopic && binding?.length == 2) {
+        xmlSource = true;
+        begin = int.tryParse(binding![0]);
+        end = int.tryParse(binding[1]);
+        localBegin = begin == null
+            ? null
+            : begin - block.sourceSpan!.startOffset;
+        localEnd = end == null ? null : end - block.sourceSpan!.startOffset;
+      } else if (mapped != null) {
+        final peers = references.where((r) => r.kind == range.kind).toList();
+        final ordinal = peers.indexOf(range);
+        final candidates =
+            mappedReferences.where((e) => e.kind == range.kind).toList()..sort(
+              (a, b) =>
+                  mapped.ranges[a]!.start.compareTo(mapped.ranges[b]!.start),
+            );
+        if (ordinal >= 0 && candidates.length == peers.length) {
+          final positioned = mapped.ranges[candidates[ordinal]]!;
+          final attributes = RegExp(
+            r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
+          ).firstMatch(raw.substring(positioned.end));
+          xmlSource = positioned.rawHtmlFragment != null;
+          localBegin = positioned.start;
+          localEnd = positioned.end + (attributes?.end ?? 0);
+          begin = markdownProjectedSourceOffset(
+            block,
+            positioned.start,
+            inline: true,
+          );
+          end = markdownProjectedSourceOffset(
+            block,
+            positioned.end + (attributes?.end ?? 0),
+            inline: true,
+          );
+        }
+      } else if (document.isXmlTopic &&
+          range.kind == BusyInlineKind.writersideVariable) {
+        final occurrence = xmlVariables
+            .where((v) => v.start == range.start && v.end == range.end)
+            .singleOrNull;
+        if (occurrence != null) {
+          begin = occurrence.sourceStart;
+          end = occurrence.sourceEnd;
+          localBegin = begin - block.sourceSpan!.startOffset;
+          localEnd = end - block.sourceSpan!.startOffset;
+        }
+      }
+      if (begin != null &&
+          end != null &&
+          localBegin != null &&
+          localEnd != null) {
+        yield (
+          range: range,
+          begin: begin,
+          end: end,
+          localBegin: localBegin,
+          localEnd: localEnd,
+          xmlSource: xmlSource,
+        );
+      }
+    }
+  }
+
+  static bool isNativeHeading(BusyDocument document, BusyBlock block) =>
+      !document.isXmlTopic &&
+      block.kind == BusyBlockKind.heading &&
+      !block.attributes.containsKey('element');
+
+  /// The existing document interpretation uses the first top-level H1 as the
+  /// topic heading. Subsequent H1s retain their own heading/anchor ownership.
+  static BusyBlock? topicHeading(BusyDocument document) => document.blocks
+      .where(
+        (b) => isNativeHeading(document, b) && b.attributes['level'] == '1',
+      )
+      .firstOrNull;
+
+  static String propertyTag(BusyDocument document, BusyBlock block) =>
+      isNativeHeading(document, block) ? 'chapter' : tagForBlock(block);
+
+  static Iterable<String> propertyAttributes(
+    BusyDocument document,
+    BusyBlock block,
+  ) => WritersideSchema.attributesFor(propertyTag(document, block)).where(
+    (name) =>
+        !(topicHeading(document)?.id == block.id &&
+            !{'id', 'title'}.contains(name)),
+  );
+
+  /// Reuse the authored semantic parser to protect declarations that an opaque
+  /// editing block cannot safely expose as one unscoped navigation owner.
+  static bool topicNavigationEditable(BusyDocument document) {
+    final semantic =
+        document.authoredXml ??
+        const WritersideDocumentParser().parseMarkdown(
+          filePath: document.filePath,
+          source: document.source ?? '',
+          markdown: document,
+        );
+    final declarations = semantic.elements
+        .where((e) => e.name == 'show-structure')
+        .toList();
+    final topLevel = document.isXmlTopic
+        ? semantic.rootElement?.children
+                  .whereType<WritersideElementNode>()
+                  .where((e) => e.name == 'show-structure')
+                  .length ??
+              0
+        : semantic.nodes
+              .whereType<WritersideElementNode>()
+              .where((e) => e.name == 'show-structure')
+              .length;
+    return declarations.length < 2 &&
+        declarations.length == topLevel &&
+        !declarations.any(
+          (e) => e.attributes.keys.any(
+            {'instance', 'filter', 'switcher-key'}.contains,
+          ),
+        );
+  }
 
   /// Source authoring shares the semantic XML serializer and namespace rules.
   String? insertSourceLink({
@@ -211,7 +459,11 @@ class WritersideEditingAdapter {
     final tag = node.name;
     if (WritersideSchema.requiredAttributesFor(tag).any(
       (a) =>
-          !node.attributes.containsKey(a) ||
+          (!node.attributes.containsKey(a) &&
+              !(a == 'title' &&
+                  node.children.whereType<WritersideElementNode>().any(
+                    (child) => child.name == 'title',
+                  ))) ||
           a != 'title' && (node.attributes[a] ?? '').trim().isEmpty,
     )) {
       return BusyBlock(
@@ -242,6 +494,15 @@ class WritersideEditingAdapter {
     final attributes = <String, String>{
       ...node.attributes,
       'element': tag,
+      if (!node.attributes.containsKey('title') &&
+          titleElements.contains(tag) &&
+          node.children.whereType<WritersideElementNode>().any(
+            (child) => child.name == 'title',
+          ))
+        'busymark-title-label': node.children
+            .whereType<WritersideElementNode>()
+            .firstWhere((child) => child.name == 'title')
+            .plainText,
       if (node.qualifiedName != tag)
         'busymark-xml-element-prefix': node.qualifiedName.substring(
           0,
@@ -262,6 +523,8 @@ class WritersideEditingAdapter {
             busyMarkWritersideCodeBlockElementSourceForm,
       },
       if (tag == 'li') 'marker': listType == 'decimal' ? '1.' : '-',
+      if (tag == 'li' && listType == 'checkbox')
+        'task': node.attributes['checked'] ?? 'false',
       if (busyAdmonitionStyleFromName(tag) != null) ...{
         'style': tag,
         busyMarkWritersideAdmonitionAttribute: 'true',
@@ -286,6 +549,8 @@ class WritersideEditingAdapter {
       'li' =>
         listType == 'decimal'
             ? BusyBlockKind.orderedListItem
+            : listType == 'checkbox'
+            ? BusyBlockKind.taskListItem
             : BusyBlockKind.unorderedListItem,
       'video' => BusyBlockKind.video,
       'img' => BusyBlockKind.image,
@@ -338,8 +603,15 @@ class WritersideEditingAdapter {
     );
   }
 
-  List<BusyInline> textInlines(String text) {
+  List<BusyInline> textInlines(
+    String text, {
+    WritersideTextNode? authoredText,
+    Map<BusyInline, ({int start, int end})>? sourceBindings,
+  }) {
     final result = <BusyInline>[];
+    final positions = authoredText == null || sourceBindings == null
+        ? null
+        : _authoredTextPositions(authoredText);
     var end = 0;
     for (final match in RegExp(r'%([\w.-]+)%').allMatches(text)) {
       if (match.start > end) {
@@ -350,13 +622,18 @@ class WritersideEditingAdapter {
           ),
         );
       }
-      result.add(
-        BusyInline(
-          kind: BusyInlineKind.writersideVariable,
-          text: match.group(1)!,
-          attributes: {'reference': match.group(1)!},
-        ),
+      final variable = BusyInline(
+        kind: BusyInlineKind.writersideVariable,
+        text: match.group(1)!,
+        attributes: {'reference': match.group(1)!},
       );
+      result.add(variable);
+      if (positions != null) {
+        sourceBindings![variable] = (
+          start: positions[match.start].start,
+          end: positions[match.end - 1].end,
+        );
+      }
       end = match.end;
     }
     if (end < text.length) {
@@ -367,10 +644,17 @@ class WritersideEditingAdapter {
     return result;
   }
 
-  List<BusyInline> inlinesFromNodes(List<WritersideDocumentNode> nodes) => [
+  List<BusyInline> inlinesFromNodes(
+    List<WritersideDocumentNode> nodes, {
+    Map<BusyInline, ({int start, int end})>? sourceBindings,
+  }) => [
     for (final node in nodes)
       if (node is WritersideTextNode)
-        ...textInlines(node.text)
+        ...textInlines(
+          node.text,
+          authoredText: node,
+          sourceBindings: sourceBindings,
+        )
       else if (node is WritersideRawNode)
         BusyInline(
           kind: BusyInlineKind.html,
@@ -378,10 +662,13 @@ class WritersideEditingAdapter {
           attributes: {'xml-raw': node.rawSource},
         )
       else if (node is WritersideElementNode)
-        _inline(node),
+        _inline(node, sourceBindings: sourceBindings),
   ];
 
-  BusyInline _inline(WritersideElementNode node) {
+  BusyInline _inline(
+    WritersideElementNode node, {
+    Map<BusyInline, ({int start, int end})>? sourceBindings,
+  }) {
     final kind = switch (node.name) {
       'control' => BusyInlineKind.writersideControl,
       'path' => BusyInlineKind.writersidePath,
@@ -407,10 +694,11 @@ class WritersideEditingAdapter {
       destination: node.attributes['href'] ?? node.attributes['src'],
       children: kind == BusyInlineKind.html
           ? const []
-          : inlinesFromNodes(node.children),
+          : inlinesFromNodes(node.children, sourceBindings: sourceBindings),
       attributes: {
         ...node.attributes,
         'xml-name': node.qualifiedName,
+        'xml-source-binding': '${node.span.startOffset}:${node.span.endOffset}',
         if (kind == BusyInlineKind.html) 'xml-raw': node.rawSource,
       },
     );
@@ -421,6 +709,88 @@ class WritersideEditingAdapter {
         'xml-original-signature': _inlineSignature(inline),
       },
     );
+  }
+
+  // Bind tokens within their actual XML text node, including entity and CDATA
+  // spelling. A binding is emitted only when the decoded text agrees with the
+  // existing authored parser. Images, breaks and comments are separate nodes.
+  static List<({int start, int end})>? _authoredTextPositions(
+    WritersideTextNode node,
+  ) {
+    final cdata = node.rawSource.startsWith('<![CDATA[');
+    final raw = cdata
+        ? node.rawSource.substring(9, node.rawSource.length - 3)
+        : node.rawSource;
+    final base = node.span.startOffset + (cdata ? 9 : 0);
+    final decoded = StringBuffer();
+    final positions = <({int start, int end})>[];
+    for (var i = 0; i < raw.length;) {
+      var end = i + 1;
+      var value = raw.substring(i, end);
+      if (!cdata && raw[i] == '&') {
+        final closing = raw.indexOf(';', i + 1);
+        if (closing < 0) return null;
+        end = closing + 1;
+        try {
+          value = XmlDocumentFragment.parse(raw.substring(i, end)).innerText;
+        } on XmlParserException {
+          return null;
+        }
+      }
+      decoded.write(value);
+      for (var j = 0; j < value.length; j++) {
+        positions.add((start: base + i, end: base + end));
+      }
+      i = end;
+    }
+    return decoded.toString() == node.text ? positions : null;
+  }
+
+  /// Variable bindings in the editor's inline coordinate system. Reusing the
+  /// editing projection makes image alt text, breaks, wrappers and atomic
+  /// elements advance the position exactly as they do in the editor.
+  Iterable<({int start, int end, int sourceStart, int sourceEnd})>
+  xmlVariableSourceRanges(BusyDocument document, BusyBlock block) sync* {
+    final authored = document.authoredXml;
+    final binding = block.attributes[busyMarkXmlBindingAttribute];
+    if (authored == null || binding == null) return;
+    final node = authored
+        .walk()
+        .where((n) => '${n.span.startOffset}:${n.span.endOffset}' == binding)
+        .firstOrNull;
+    if (node == null) return;
+    final bindings = Map<BusyInline, ({int start, int end})>.identity();
+    final projected = node is WritersideTextNode
+        ? textInlines(node.text, authoredText: node, sourceBindings: bindings)
+        : node is WritersideElementNode
+        ? inlinesFromNodes(node.children, sourceBindings: bindings)
+        : const <BusyInline>[];
+    if (projected.map((i) => i.plainText).join() != block.plainText) return;
+    var offset = 0;
+    Iterable<({int start, int end, int sourceStart, int sourceEnd})> visit(
+      BusyInline inline,
+    ) sync* {
+      final position = bindings[inline];
+      if (position != null) {
+        yield (
+          start: offset,
+          end: offset + inline.plainText.length,
+          sourceStart: position.start,
+          sourceEnd: position.end,
+        );
+      }
+      if (inline.children.isNotEmpty) {
+        for (final child in inline.children) {
+          yield* visit(child);
+        }
+      } else {
+        offset += inline.plainText.length;
+      }
+    }
+
+    for (final inline in projected) {
+      yield* visit(inline);
+    }
   }
 
   static bool _protectedInline(BusyInline inline) =>
@@ -471,9 +841,15 @@ class WritersideEditingAdapter {
           ? _namespacePrefix(original.qualifiedName)
           : namespacePrefix;
       final attributes = sourceAttributes(block);
-      if (titleElements.contains(name)) attributes['title'] = block.plainText;
+      if (titleElements.contains(name) &&
+          (block.attributes.containsKey('title') ||
+              block.plainText.isNotEmpty)) {
+        attributes['title'] = block.plainText;
+      }
       if (name == 'code-block') {
-        attributes['lang'] = block.attributes['language'] ?? '';
+        if (block.attributes['language']?.isNotEmpty == true) {
+          attributes['lang'] = block.attributes['language']!;
+        }
       }
       if (name == 'img') {
         final image = block.inlines
@@ -481,7 +857,9 @@ class WritersideEditingAdapter {
             .firstOrNull;
         if (image != null) {
           attributes['src'] = image.destination ?? attributes['src'] ?? '';
-          attributes['alt'] = image.text;
+          if (attributes.containsKey('alt') || image.text.isNotEmpty) {
+            attributes['alt'] = image.text;
+          }
         }
       }
       final leafContent = block.attributes['busymark-xml-leaf-content'];
@@ -631,11 +1009,23 @@ class WritersideEditingAdapter {
 
   static bool hasDirtyContent(BusyBlock block) =>
       block.dirty || block.children.any(hasDirtyContent);
+
+  /// XML has one marker style per list. Materializing a mixed native owner
+  /// would turn ordinary items into tasks or lose task editing semantics.
+  static bool nativeListHasMixedMarkers(BusyBlock block) =>
+      block.attributes['busymark-list-form'] == 'markdown' &&
+          block.children.any((b) => b.kind == BusyBlockKind.taskListItem) &&
+          block.children.any((b) => b.kind != BusyBlockKind.taskListItem) ||
+      block.children.any(nativeListHasMixedMarkers);
   static const _projectionAttributes = {
     'element',
+    'htmlTag',
+    'htmlAttributes',
+    'editorBlockId',
     'level',
     'language',
     'marker',
+    'task',
     'ordered',
     'style',
     'generatedId',
@@ -647,21 +1037,23 @@ class WritersideEditingAdapter {
     busyMarkTransientTrailingParagraphAttribute,
     busyMarkPreserveEmptyParagraphAttribute,
   };
-  static bool _isProjectionAttribute(String key, BusyBlock block) =>
+  static bool isProjectionAttribute(String key, BusyBlockKind kind) =>
       key.startsWith('busymark-') ||
       _projectionAttributes.contains(key) &&
           (key != 'style' ||
-              block.kind == BusyBlockKind.writersideAdmonition ||
-              block.kind == BusyBlockKind.blockquote);
+              kind == BusyBlockKind.writersideAdmonition ||
+              kind == BusyBlockKind.blockquote);
   static Map<String, String> sourceAttributes(BusyBlock block) => {
     // Some authored attributes share names with the existing Markdown editing
     // metadata. Keep their original values independently of the projection.
-    if (block.attributes['busymark-xml-source-attributes'] case final source?)
+    if (block.attributes['busymark-xml-source-attributes'] ??
+            block.attributes['busymark-writerside-source-attributes']
+        case final source?)
       for (final entry in (jsonDecode(source) as Map<String, dynamic>).entries)
-        if (_isProjectionAttribute(entry.key, block))
+        if (isProjectionAttribute(entry.key, block.kind))
           entry.key: entry.value as String,
     for (final entry in block.attributes.entries)
-      if (!_isProjectionAttribute(entry.key, block)) entry.key: entry.value,
+      if (!isProjectionAttribute(entry.key, block.kind)) entry.key: entry.value,
   };
   static String tagForBlock(BusyBlock block) => switch (block.kind) {
     BusyBlockKind.paragraph => 'p',
@@ -669,6 +1061,7 @@ class WritersideEditingAdapter {
       block.attributes['element'] == 'topic' ? 'topic' : 'chapter',
     BusyBlockKind.codeBlock => 'code-block',
     BusyBlockKind.image => 'img',
+    BusyBlockKind.table => 'table',
     BusyBlockKind.video => 'video',
     BusyBlockKind.unorderedListItem ||
     BusyBlockKind.orderedListItem ||
@@ -744,6 +1137,7 @@ class WritersideEditingAdapter {
       final text = inline.kind == BusyInlineKind.writersideVariable
           ? '%${inline.attributes['reference'] ?? inline.text}%'
           : inline.text;
+      if (text.isEmpty) return const [];
       return [
         WritersideTextNode(
           text: text,
@@ -767,12 +1161,17 @@ class WritersideEditingAdapter {
         };
     final attrs = {
       for (final e in inline.attributes.entries)
-        if (!e.key.startsWith('xml-') && e.key != 'reference') e.key: e.value,
+        if (!e.key.startsWith('xml-') &&
+            !e.key.startsWith('busymark-') &&
+            e.key != 'reference')
+          e.key: e.value,
       if (inline.kind == BusyInlineKind.link && inline.destination != null)
         'href': inline.destination!,
       if (inline.kind == BusyInlineKind.image && inline.destination != null)
         'src': inline.destination!,
-      if (inline.kind == BusyInlineKind.image) 'alt': inline.text,
+      if (inline.kind == BusyInlineKind.image &&
+          (inline.text.isNotEmpty || inline.attributes.containsKey('alt')))
+        'alt': inline.text,
     };
     final qualifiedName = inline.attributes['xml-name'];
     final childPrefix = qualifiedName != null
@@ -804,6 +1203,16 @@ class WritersideEditingAdapter {
     ];
   }
 
+  static String serializeInlineElement(BusyInline inline) =>
+      const WritersideDocumentSerializer().serialize(
+        WritersideDocument(
+          filePath: '',
+          source: '',
+          format: WritersideDocumentFormat.xmlTopic,
+          nodes: inlineNodes(inline, ''),
+        ),
+      );
+
   String serializeMarkdownElement(BusyBlock block) {
     if (!hasDirtyContent(block) && block.rawSource != null) {
       return block.rawSource!;
@@ -812,11 +1221,28 @@ class WritersideEditingAdapter {
     final qualifiedName =
         '${block.attributes['busymark-xml-element-prefix'] ?? ''}$name';
     final attrs = sourceAttributes(block);
-    if (titleElements.contains(name)) attrs['title'] = block.plainText;
+    if (titleElements.contains(name) &&
+        (block.attributes.containsKey('title') || block.plainText.isNotEmpty)) {
+      attrs['title'] = block.plainText;
+    }
     final attributes = attrs.entries
         .map((e) => ' ${e.key}="${escape(e.value)}"')
         .join();
     if (!busyMarkIsWritersideContainer(block)) {
+      if ({'p', 'code-block'}.contains(name)) {
+        return const WritersideDocumentSerializer().serialize(
+          WritersideDocument(
+            filePath: '',
+            source: '',
+            format: WritersideDocumentFormat.xmlTopic,
+            nodes: [
+              elementNode(name, attrs, [
+                for (final inline in block.inlines) ...inlineNodes(inline, ''),
+              ], ''),
+            ],
+          ),
+        );
+      }
       final content = block.attributes['busymark-xml-leaf-content'];
       return content == null
           ? '<$qualifiedName$attributes/>'
@@ -824,7 +1250,11 @@ class WritersideEditingAdapter {
     }
     final content = block.children
         .map(
-          (child) => child.isSourceOnly
+          (child) => child.rawSource != null && !hasDirtyContent(child)
+              ? child.rawSource!
+              : child.attributes.containsKey('busymark-property-edits')
+              ? const BusyMarkMarkdownSerializer().serializeBlock(child)
+              : child.isSourceOnly
               ? child.rawSource ?? ''
               : busyMarkIsWritersideContainer(child)
               ? serializeMarkdownElement(child)

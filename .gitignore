@@ -37,6 +37,9 @@ migrate_working_dir/
 /delivery/
 /test-results/
 /evidence/
+/docs/development/evidence/
+/docs/development/element-properties*-acceptance.md
+/docs/development/nextcloud-notes-milestone-*.md
 .widget_preview/
 **/node_modules/
 linux/flutter/ephemeral/
