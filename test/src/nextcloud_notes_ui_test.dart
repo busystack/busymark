@@ -48,6 +48,15 @@ void main() {
   late NotesRepository repository;
   const accountId = '123e4567-e89b-42d3-a456-426614174000';
   setUp(() async {
+    // Recovery dialogs also use Yaru's window state stream. Give every widget
+    // test its own native boundary rather than inheriting a prior test's mock.
+    for (final channelName in ['yaru_window', 'yaru_window/events']) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            MethodChannel(channelName),
+            (call) async => call.method == 'state' ? <String, Object?>{} : null,
+          );
+    }
     root = await Directory.systemTemp.createTemp('notes-ui-test-');
     final store = await NotesStore.open(
       path: p.join(root.path, 'notes.sqlite3'),
@@ -295,6 +304,10 @@ void main() {
   tearDown(() async {
     await repository.dispose();
     await root.delete(recursive: true);
+    for (final channelName in ['yaru_window', 'yaru_window/events']) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(MethodChannel(channelName), null);
+    }
   });
 
   Future<void> pump(WidgetTester tester) async {

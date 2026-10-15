@@ -446,7 +446,9 @@ Future<({Process process, Map<String, Object?> message})> _startAssetProcess(
     'dart',
   );
   final process = await Process.start(dart, [
-    'run',
+    // This pure-Dart filesystem probe does not use native assets. Invoking
+    // `dart run` repeats unrelated spelling build hooks in every child.
+    '--packages=${p.absolute('.dart_tool', 'package_config.json')}',
     'test/support/asset_ingestion_process.dart',
     action,
     workspace,

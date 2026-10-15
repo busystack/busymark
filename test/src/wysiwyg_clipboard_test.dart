@@ -3632,8 +3632,11 @@ void main() {
 
       final pathRow = find.text(sourceFile.path).first;
       await tester.tap(pathRow);
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.tap(pathRow);
+      await tester.pump();
+      // This tests the panel's retention ownership, not its wall-clock double
+      // tap interval. Keyboard activation remains deterministic under suite
+      // load, which can exceed that interval between two tester.tap calls.
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await waitForImageIo(
         tester,
         () => find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
