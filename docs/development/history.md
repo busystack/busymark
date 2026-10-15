@@ -235,3 +235,10 @@ Retention commits its tombstones and retained index before removing expired
 revision files. Both capture-time retention and startup pruning await that
 transaction directly; they do not publish an identical second index after
 cleanup. Repair still consults the durable tombstones if deletion is interrupted.
+
+Startup maintenance and captures wait for saved settings before applying their
+policy. Defaults are presentation state during hydration and must not delete
+history governed by a longer saved policy or override disabled recording.
+Captures retain their cancellation generations across that wait. A superseded
+refresh returns before pruning; restoration still requests its own authoritative
+snapshot.

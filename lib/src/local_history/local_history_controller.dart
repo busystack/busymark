@@ -607,6 +607,15 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final generation = ++_loadGeneration;
     if (ref.mounted) state = state.copyWith(loading: true);
     try {
+      // Defaults are presentation state while settings hydrate. In particular,
+      // the default retention age must not delete history before a longer saved
+      // policy is known. A newer authoritative refresh supersedes this one
+      // before maintenance starts, rather than reusing its eventual snapshot.
+      await PerformanceTrace.async(
+        'history-policy-ready',
+        ref.read(appSettingsControllerProvider.notifier).waitUntilLoaded,
+      );
+      if (!ref.mounted || generation != _loadGeneration) return false;
       await PerformanceTrace.async(
         'history-prune',
         () => _store.prune(policy, _clock()),
@@ -4734,6 +4743,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         (requireProtection || retainedProtection
             ? _newPathOperationId()
             : null);
+    // Keep the accepted generations across hydration: disabling recording or
+    // clearing history while settings load must cancel this queued capture.
+    if (!_operationIsCurrent(
+      snapshot.bufferId,
+      captureHistoryGeneration,
+      captureBufferGeneration,
+    )) {
+      return !requireProtection;
+    }
+    await ref.read(appSettingsControllerProvider.notifier).waitUntilLoaded();
     if (!_operationIsCurrent(
       snapshot.bufferId,
       captureHistoryGeneration,
