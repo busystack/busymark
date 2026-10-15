@@ -10,6 +10,99 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'Recent retains old timestamps and twelve entries in each identity-qualified section',
+    () async {
+      final oldTime = DateTime.utc(2024, 1, 2);
+      final store = _MemorySettingsStore()
+        ..value = {
+          'recentWorkspaces': [
+            RecentWorkspace(
+              path: '/old/file.md',
+              kind: 'singleMarkdown',
+              lastOpenedAt: oldTime,
+            ).toJson(),
+          ],
+        };
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .single
+            .lastOpenedAt,
+        oldTime,
+      );
+      for (var i = 0; i < 13; i++) {
+        await controller.recordRecent(
+          RecentWorkspace(
+            path: '/docs/$i.md',
+            kind: 'markdown',
+            document: true,
+            lastOpenedAt: DateTime.utc(2026, 1, i + 1),
+          ),
+        );
+        await controller.recordOpenedWorkspace(
+          path: '/work/$i',
+          kind: 'markdownFolder',
+        );
+      }
+      var recent = container
+          .read(appSettingsControllerProvider)
+          .recentWorkspaces;
+      expect(recent.where((r) => r.isDocument), hasLength(12));
+      expect(recent.where((r) => !r.isDocument), hasLength(12));
+      for (final account in ['account-a', 'account-b', 'account-a']) {
+        await controller.recordRecent(
+          RecentWorkspace(
+            path: '',
+            kind: 'nextcloudNote',
+            document: true,
+            accountId: account,
+            localId: 'offline-local-id',
+            title: 'Same title',
+            lastOpenedAt: DateTime.now(),
+          ),
+        );
+      }
+      recent = container.read(appSettingsControllerProvider).recentWorkspaces;
+      expect(recent.where((r) => r.accountId != null), hasLength(2));
+      expect(recent.first.identity, 'account-a:offline-local-id');
+      expect(
+        AppSettings.fromJson(store.value).recentWorkspaces.first.localId,
+        'offline-local-id',
+      );
+      await controller.removeRecentAccount('account-a');
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .any((r) => r.accountId == 'account-a'),
+        isFalse,
+      );
+      await controller.moveRecentPath('/docs/12.md', '/docs/renamed.md');
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .any((r) => r.path == '/docs/renamed.md'),
+        isTrue,
+      );
+      await controller.removeRecentWorkspace('account-b:offline-local-id');
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .any((r) => r.accountId != null),
+        isFalse,
+      );
+    },
+  );
+  test(
     'inspector starts closed after loading an old visible preference',
     () async {
       final store = _MemorySettingsStore();

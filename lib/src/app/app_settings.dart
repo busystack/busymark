@@ -51,11 +51,23 @@ class RecentWorkspace {
     required this.path,
     required this.kind,
     required this.lastOpenedAt,
+    this.accountId,
+    this.accountLabel,
+    this.localId,
+    this.ownerRoot,
+    this.title,
+    this.document = false,
   });
 
   factory RecentWorkspace.fromJson(Map<String, Object?> json) {
     return RecentWorkspace(
       path: json['path']?.toString() ?? '',
+      accountId: json['accountId'] as String?,
+      accountLabel: json['accountLabel'] as String?,
+      localId: json['localId'] as String?,
+      ownerRoot: json['ownerRoot'] as String?,
+      title: json['title'] as String?,
+      document: json['document'] as bool? ?? json['kind'] == 'singleMarkdown',
       kind: json['kind']?.toString() ?? 'unknown',
       lastOpenedAt:
           DateTime.tryParse(json['lastOpenedAt']?.toString() ?? '') ??
@@ -66,10 +78,22 @@ class RecentWorkspace {
   final String path;
   final String kind;
   final DateTime lastOpenedAt;
+  final String? accountId, accountLabel, localId, ownerRoot, title;
+  final bool document;
+  bool get isDocument => document || kind == 'singleMarkdown';
+  String get identity => accountId == null
+      ? p.normalize(p.absolute(path))
+      : '$accountId:${localId ?? 'workspace'}';
 
   Map<String, Object?> toJson() => {
     'path': path,
     'kind': kind,
+    if (accountId != null) 'accountId': accountId,
+    if (accountLabel != null) 'accountLabel': accountLabel,
+    if (localId != null) 'localId': localId,
+    if (ownerRoot != null) 'ownerRoot': ownerRoot,
+    if (title != null) 'title': title,
+    'document': isDocument,
     'lastOpenedAt': lastOpenedAt.toIso8601String(),
   };
 }
@@ -285,7 +309,7 @@ class AppSettings {
                 .whereType<Map>()
                 .map((item) => item.cast<String, Object?>())
                 .map(RecentWorkspace.fromJson)
-                .where((item) => item.path.isNotEmpty)
+                .where((item) => item.path.isNotEmpty || item.accountId != null)
                 .toList()
           : defaults.recentWorkspaces,
     );
@@ -941,31 +965,129 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> recordOpenedWorkspace({
     required String path,
     required String kind,
+    String? accountId,
+    String? title,
   }) {
-    final openedAt = DateTime.now();
-    return _mutate((settings) {
-      final recent = [
-        RecentWorkspace(path: path, kind: kind, lastOpenedAt: openedAt),
-        ...settings.recentWorkspaces.where((item) => item.path != path),
-      ].take(12).toList();
-      return settings.copyWith(lastOpenedPath: path, recentWorkspaces: recent);
-    });
+    return recordRecent(
+      RecentWorkspace(
+        path: accountId == null ? p.normalize(p.absolute(path)) : '',
+        kind: kind,
+        accountId: accountId,
+        title: title,
+        document: kind == 'singleMarkdown',
+        lastOpenedAt: DateTime.now(),
+      ),
+      updateLastOpenedPath: accountId == null,
+    );
   }
 
-  Future<void> clearRecentWorkspaces() {
-    return _mutate((settings) => settings.copyWith(recentWorkspaces: []));
-  }
+  Future<void> recordRecent(
+    RecentWorkspace resource, {
+    bool updateLastOpenedPath = false,
+  }) => _mutate((settings) {
+    final ordered = [
+      resource,
+      ...settings.recentWorkspaces.where(
+        (r) => r.identity != resource.identity,
+      ),
+    ];
+    var documents = 0, workspaces = 0;
+    final retained = ordered
+        .where((r) => r.isDocument ? ++documents <= 12 : ++workspaces <= 12)
+        .toList();
+    return settings.copyWith(
+      recentWorkspaces: retained,
+      lastOpenedPath: updateLastOpenedPath
+          ? resource.path
+          : settings.lastOpenedPath,
+    );
+  });
 
-  Future<void> removeRecentWorkspace(String path) {
+  Future<void> clearRecentWorkspaces() =>
+      _mutate((settings) => settings.copyWith(recentWorkspaces: []));
+
+  Future<void> removeRecentWorkspace(String path) => _mutate(
+    (settings) => settings.copyWith(
+      recentWorkspaces: settings.recentWorkspaces
+          .where(
+            (r) =>
+                r.identity != path &&
+                !(r.accountId == null && p.equals(r.path, path)),
+          )
+          .toList(),
+    ),
+  );
+
+  Future<void> updateRecentNoteTitles(Map<(String, String), String> titles) {
+    if (!state.recentWorkspaces.any(
+      (r) =>
+          r.accountId != null &&
+          r.localId != null &&
+          titles[(r.accountId!, r.localId!)] != null &&
+          titles[(r.accountId!, r.localId!)] != r.title,
+    )) {
+      return Future.value();
+    }
     return _mutate(
       (settings) => settings.copyWith(
         recentWorkspaces: [
-          for (final item in settings.recentWorkspaces)
-            if (!p.equals(item.path, path)) item,
+          for (final r in settings.recentWorkspaces)
+            if (r.accountId != null &&
+                r.localId != null &&
+                titles[(r.accountId!, r.localId!)] != null)
+              RecentWorkspace(
+                path: r.path,
+                kind: r.kind,
+                lastOpenedAt: r.lastOpenedAt,
+                document: r.isDocument,
+                accountId: r.accountId,
+                accountLabel: r.accountLabel,
+                localId: r.localId,
+                title: titles[(r.accountId!, r.localId!)],
+                ownerRoot: r.ownerRoot,
+              )
+            else
+              r,
         ],
       ),
     );
   }
+
+  Future<void> removeRecentAccount(String accountId) => _mutate(
+    (settings) => settings.copyWith(
+      recentWorkspaces: settings.recentWorkspaces
+          .where((r) => r.accountId != accountId)
+          .toList(),
+    ),
+  );
+
+  Future<void> moveRecentPath(String from, String to) => _mutate(
+    (settings) => settings.copyWith(
+      recentWorkspaces: [
+        for (final r in settings.recentWorkspaces)
+          if (r.accountId == null &&
+              (p.equals(r.path, from) || p.isWithin(from, r.path)))
+            RecentWorkspace(
+              path: p.equals(r.path, from)
+                  ? to
+                  : p.join(to, p.relative(r.path, from: from)),
+              kind: r.kind,
+              lastOpenedAt: r.lastOpenedAt,
+              document: r.isDocument,
+              ownerRoot: r.ownerRoot == null
+                  ? null
+                  : p.equals(r.ownerRoot!, from)
+                  ? to
+                  : p.isWithin(from, r.ownerRoot!)
+                  ? p.join(to, p.relative(r.ownerRoot!, from: from))
+                  : r.ownerRoot,
+              title: r.title,
+            )
+          else
+            r,
+      ],
+    ),
+  );
 
   Future<void> _load() async {
     AppSettings loaded;
@@ -974,6 +1096,7 @@ class AppSettingsController extends Notifier<AppSettings> {
     } on Object {
       loaded = AppSettings.defaults();
     }
+    if (!ref.mounted) return;
     // Visibility belongs to this run; retain the preferred inspector width.
     // Explicit requests made during hydration are applied below.
     loaded = loaded.copyWith(elementPropertiesVisible: false);
