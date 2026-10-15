@@ -214,3 +214,24 @@ JSON reports for inspection. Its optional `--application` mode opens a supplied
 file in the full application and requires the exact synthetic table fixture
 checked by the driver; use an isolated application profile and disposable files
 for that mode.
+
+Session and recovery JSON publication restricts each staged inode before its
+atomic rename. On Linux, the focused `LinuxPrivatePermissions` helper opens the
+existing inode with `O_NOFOLLOW`/`O_CLOEXEC` and uses `fchmod`, avoiding a `chmod`
+subprocess at every transaction boundary. Rename retains those permissions;
+there is no second path-based chmod after publication. Permission failures still
+fail the transaction, and locking, flush, recovery adoption, and journal ordering
+remain mandatory. Other POSIX platforms retain their subprocess implementation.
+
+Opening publishes the existing editor after validated content and file monitoring
+are ready. The opening future still waits for recent-workspace settings to be
+published and reports a failed write. Settings mutations made during initial
+hydration share one publication with that completion; shutdown drains the settings
+queue before retiring recovery state. UI tests that create a controller in the
+widget clock must pump its initial settings hydration before awaiting file I/O
+inside `tester.runAsync`.
+
+Retention commits its tombstones and retained index before removing expired
+revision files. Both capture-time retention and startup pruning await that
+transaction directly; they do not publish an identical second index after
+cleanup. Repair still consults the durable tombstones if deletion is interrupted.

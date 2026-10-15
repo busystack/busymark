@@ -1037,6 +1037,64 @@ void main() {
   });
 
   test(
+    'retention publishes once and repair cannot resurrect evicted data',
+    () async {
+      final old = await store.capture(
+        request('expired', DateTime.utc(2020, 1, 1)),
+        policy,
+      );
+      final revision = File(
+        p.join(
+          root.path,
+          'revisions',
+          old.document.id,
+          '${old.revision!.id}.json',
+        ),
+      );
+      final bytes = await revision.readAsBytes();
+      final before = ids;
+      await store.prune(policy, DateTime.utc(2020, 2, 1));
+      // Only the tombstone and index staging identities are allocated: their
+      // publication precedes cleanup and needs no identical second transaction.
+      expect(ids - before, 2);
+      expect(await revision.exists(), isFalse);
+      expect(
+        jsonDecode(
+          await File(p.join(root.path, 'tombstones.json')).readAsString(),
+        ),
+        contains(old.revision!.id),
+      );
+      // Simulate interrupted cleanup followed by loss of the derived index.
+      await revision.parent.create(recursive: true);
+      await revision.writeAsBytes(bytes);
+      await File(p.join(root.path, 'index.json')).delete();
+      final repaired = await store.load();
+      expect(repaired.revisions, isEmpty);
+      expect(repaired.documents, isEmpty);
+    },
+  );
+
+  test(
+    'capture retention does not republish an unchanged retained index',
+    () async {
+      await store.capture(request('expired', DateTime.utc(2020, 1, 1)), policy);
+      final before = ids;
+      final current = await store.capture(
+        request('current', DateTime.utc(2020, 2, 1)),
+        policy,
+      );
+      // Revision identity/stage, initial index pair, then retained index pair.
+      expect(ids - before, 6);
+      final snapshot = await store.load();
+      expect(snapshot.revisions.map((r) => r.id), [current.revision!.id]);
+      expect(
+        (await store.readRevision(current.revision!.id))!.source,
+        'current',
+      );
+    },
+  );
+
+  test(
     'rename, directory move, delete, and per-document clearing retain lineage',
     () async {
       final result = await store.capture(

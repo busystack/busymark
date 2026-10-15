@@ -41,6 +41,28 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'opening reconciles a changed reread before publishing the editor model',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark-open-race-');
+      addTearDown(() => root.delete(recursive: true));
+      final file = File(p.join(root.path, 'race.md'));
+      await file.writeAsString('# Original\n');
+      final service = _ChangedDuringOpenService();
+      final harness = await _createControllerHarness(service: service);
+      await harness.controller.openPath(file.path);
+      final state = harness.controller.state;
+      expect(state.activeText, '# Changed externally\n');
+      expect(state.workspace!.markdown!.source, state.activeText);
+      expect(state.activeBuffer!.lastSavedText, state.activeText);
+      expect(
+        state.activeBuffer!.diskSnapshot!.contentHash,
+        (await service.fileSnapshot(file.path)).contentHash,
+      );
+      expect(state.activeBuffer!.isDirty, isFalse);
+    },
+  );
+
   for (final change in ['session', 'source']) {
     testWidgets(
       'clean close validates source identity during $change updates',
@@ -5840,6 +5862,15 @@ void _registerResponsivenessTests() {
   );
 }
 
+class _ChangedDuringOpenService extends WorkspaceService {
+  @override
+  Future<Workspace> openPath(String path) async {
+    final workspace = await super.openPath(path);
+    await File(path).writeAsString('# Changed externally\n');
+    return workspace;
+  }
+}
+
 class _GatedClosedSourcesService extends WorkspaceService {
   _GatedClosedSourcesService(responsiveness.CountingModule loader)
     : super(writersideService: loader);
@@ -6511,7 +6542,7 @@ void _registerCorrectionBoundaryTests() {
             '# Changed after model load\n',
           );
           expect(service.preparations, 1);
-          if (automatic) {
+          if (automatic || !creating) {
             expect(
               controller.state.workspace!.markdown!.source,
               '# Changed after model load\n',

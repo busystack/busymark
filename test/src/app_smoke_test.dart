@@ -94,6 +94,7 @@ import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
 
 import '../support/spelling_test_bundle.dart';
+import '../support/widget_async.dart';
 
 void main() {
   late _FallbackHeaderBarService headerBarService;
@@ -114,6 +115,83 @@ void main() {
     );
     headerBarService = _FallbackHeaderBarService();
   });
+
+  for (final fail in [false, true]) {
+    testWidgets(
+      'prepared editor is visible during recent persistence failure=$fail',
+      (tester) async {
+        final settings = _GatedRecentSettingsStore(fail: fail);
+        addTearDown(() {
+          if (!settings.release.isCompleted) settings.release.complete();
+        });
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(settings),
+            workspaceServiceProvider.overrideWithValue(
+              _StartupWorkspaceService(),
+            ),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+            startupPathProvider.overrideWithValue(
+              'test/fixtures/markdown/basic.md',
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await _pumpUntilFound(
+          tester,
+          find.byKey(const ValueKey('workspace-page-frame')),
+        );
+        expect(settings.entered.isCompleted, isTrue);
+        expect(settings.release.isCompleted, isFalse);
+        expect(container.read(workspaceControllerProvider).isLoading, isFalse);
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          '# Basic Markdown\n',
+        );
+        var shutdownComplete = false;
+        final shutdown = container
+            .read(workspaceControllerProvider.notifier)
+            .markCleanShutdown()
+            .then((_) => shutdownComplete = true);
+        await tester.pump();
+        expect(shutdownComplete, isFalse);
+        settings.release.complete();
+        await tester.pump();
+        if (fail) {
+          expect(
+            container.read(workspaceControllerProvider).message?.code,
+            WorkspaceMessageCode.openFailed,
+          );
+        } else {
+          expect(settings.value['recentWorkspaces'], isNotEmpty);
+        }
+        await pumpUntil(
+          tester,
+          () => shutdownComplete,
+          operation: 'settings shutdown barrier',
+        );
+        expect(shutdownComplete, isTrue);
+        await shutdown;
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
 
   test('editor shortcuts use documented cross-editor defaults', () {
     expect(
@@ -901,6 +979,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         final controller = container.read(workspaceControllerProvider.notifier);
+        await tester.pump();
         await tester.runAsync(
           () => controller.openPath('test/fixtures/markdown/basic.md'),
         );
@@ -16530,6 +16609,24 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _GatedRecentSettingsStore extends _MemorySettingsStore {
+  _GatedRecentSettingsStore({required this.fail});
+  final bool fail;
+  final entered = Completer<void>();
+  final release = Completer<void>();
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    if ((json['recentWorkspaces'] as List?)?.isNotEmpty == true) {
+      if (!entered.isCompleted) entered.complete();
+      await release.future;
+      if (fail) {
+        throw StateError('injected recent-workspace persistence failure');
+      }
+    }
+    await super.save(json);
   }
 }
 

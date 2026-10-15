@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import '../core/linux_private_permissions.dart';
+
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -738,7 +740,7 @@ Future<void> _writeAtomic(File target, Map<String, Object?> json) async {
     );
     await _setPrivatePermissions(staged, directory: false);
     await staged.rename(target.path);
-    await _setPrivatePermissions(target, directory: false);
+    // Rename publishes the already-private inode, preserving its permissions.
   } finally {
     try {
       if (await staged.exists()) {
@@ -762,6 +764,13 @@ Future<void> _setPrivatePermissions(
   required bool directory,
 }) async {
   if (Platform.isWindows) {
+    return;
+  }
+  if (Platform.isLinux) {
+    LinuxPrivatePermissions.instance.restrict(
+      entity.path,
+      directory: directory,
+    );
     return;
   }
   final result = await Process.run('chmod', [

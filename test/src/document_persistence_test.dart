@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/core/linux_private_permissions.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
@@ -13,6 +14,53 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test(
+    'Linux state permissions reject symlinks and preserve private publication',
+    () async {
+      if (!Platform.isLinux) return;
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-private-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final state = File(p.join(directory.path, 'state.json'));
+      await writeAtomicJson(state, {'revision': 1});
+      expect((await directory.stat()).mode & 511, 448);
+      expect((await state.stat()).mode & 511, 384);
+      await writeAtomicJson(state, {'revision': 2});
+      expect(jsonDecode(await state.readAsString()), {'revision': 2});
+      expect((await state.stat()).mode & 511, 384);
+      final outside = File(p.join(directory.path, 'outside'));
+      await outside.writeAsString('untouched');
+      final beforeMode = (await outside.stat()).mode;
+      final link = Link(p.join(directory.path, 'link'));
+      await link.create(outside.path);
+      expect(
+        () => LinuxPrivatePermissions.instance.restrict(
+          link.path,
+          directory: false,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect((await outside.stat()).mode, beforeMode);
+      expect(await outside.readAsString(), 'untouched');
+      expect(
+        () => LinuxPrivatePermissions.instance.restrict(
+          '${outside.path}\u0000/unexpected',
+          directory: false,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect((await outside.stat()).mode, beforeMode);
+      expect(
+        () => LinuxPrivatePermissions.instance.restrict(
+          p.join(directory.path, 'missing'),
+          directory: false,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+    },
+  );
+
   test('file-backed edits update final-newline metadata', () {
     final buffer = DocumentBuffer.file(
       id: 'file:note',

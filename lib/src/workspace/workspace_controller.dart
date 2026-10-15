@@ -3,6 +3,7 @@ import '../references/markdown_move_service.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import 'dart:async';
 import 'dart:io';
+import '../core/performance_trace.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
@@ -2565,6 +2566,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> _settleWritesForShutdown() async {
     _cancelAllAutoSaves();
     await _drainBufferWrites();
+    await _settingsController.flushPersistence();
     // A write that retained a newer dirty revision can schedule another
     // debounce while the queue is draining. Shutdown owns the final save or
     // recovery decision, so do not let that timer outlive it.
@@ -3883,7 +3885,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await _startMonitoring(state.workspace ?? workspace);
   }
 
-  Future<void> openPath(String path) async {
+  Future<void> openPath(String path) =>
+      PerformanceTrace.async('controller-open', () => _openPath(path));
+
+  Future<void> _openPath(String path) async {
     if (!propertyEdits.flush()) return;
     _invalidateFileMonitorWorkspace();
     _removalOperationRevision++;
@@ -3902,13 +3907,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
     }
     try {
-      final workspace = await _service.openPath(path);
+      final workspace = await PerformanceTrace.async(
+        'service-open',
+        () => _service.openPath(path),
+      );
       final active = workspace.activeFilePath;
       final load = active == null
           ? null
-          : await _service.loadTextWithSnapshot(active);
+          : await PerformanceTrace.async(
+              'active-file-reread',
+              () => _service.loadTextWithSnapshot(active),
+            );
       final text = load?.text ?? '';
-      final loadedWorkspace = load == null
+      var loadedWorkspace = load == null
           ? workspace
           : workspace.copyWith(activeFileSnapshot: load.snapshot);
       final buffer = load == null || active == null
@@ -3918,6 +3929,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               load,
               mode: _settingsController.state.documentViewMode,
             );
+      // The service model and this validated reread can straddle an external
+      // edit. Prepare the reread revision before publishing it, so the initial
+      // editor never synchronously reparses a mismatching model during build.
+      final markdown = loadedWorkspace.markdown;
+      if (buffer != null &&
+          (_writersideSourceMismatch(loadedWorkspace, buffer) ||
+              (markdown != null &&
+                  p.equals(markdown.filePath, active!) &&
+                  markdown.source != buffer.text))) {
+        loadedWorkspace = await _service.prepareDocument(
+          loadedWorkspace,
+          buffer,
+          {active!: buffer.text},
+        );
+      }
       final preview = buffer == null
           ? null
           : _safePreview(loadedWorkspace, buffer);
@@ -3925,6 +3951,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return;
       }
       state = WorkspaceState(
+        isLoading: true,
         workspace: loadedWorkspace,
         activeText: text,
         preview: preview,
@@ -3937,15 +3964,23 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           _writersideSourceMismatch(loadedWorkspace, buffer)) {
         _requestDerivedRefresh(rebuildPreview: true);
       }
-      await _startMonitoring(loadedWorkspace);
+      await PerformanceTrace.async(
+        'monitor-start',
+        () => _startMonitoring(loadedWorkspace),
+      );
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) return;
+      state = state.copyWith(isLoading: false);
       _schedulePersistence();
       _resetSaveTracking();
       final recentPath = workspace.kind == WorkspaceKind.singleMarkdown
           ? workspace.activeFilePath ?? workspace.rootPath
           : workspace.rootPath;
-      await _settingsController.recordOpenedWorkspace(
-        path: recentPath,
-        kind: workspace.kind.name,
+      await PerformanceTrace.async(
+        'recent-workspace',
+        () => _settingsController.recordOpenedWorkspace(
+          path: recentPath,
+          kind: workspace.kind.name,
+        ),
       );
     } on Object catch (error, stackTrace) {
       busyMarkDebugLogError(

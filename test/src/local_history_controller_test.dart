@@ -2076,6 +2076,9 @@ void main() {
       );
       addTearDown(container.dispose);
       final workspace = container.read(workspaceControllerProvider.notifier);
+      // Hydrate the fake-clock settings future before runAsync waits for the
+      // real opening operation's required recent-workspace publication.
+      await tester.pump();
       await tester.runAsync(() => workspace.openPath(currentPath));
       final history = container.read(localHistoryControllerProvider.notifier);
       await tester.runAsync(history.refresh);
@@ -2223,6 +2226,7 @@ void main() {
       );
       addTearDown(container.dispose);
       final workspace = container.read(workspaceControllerProvider.notifier);
+      await tester.pump();
       await tester.runAsync(() => workspace.openPath(root.path));
       await tester.runAsync(() => workspace.openActiveFile(bPath));
 
@@ -2372,6 +2376,7 @@ void main() {
       );
       addTearDown(container.dispose);
       final workspace = container.read(workspaceControllerProvider.notifier);
+      await tester.pump();
       await tester.runAsync(() => workspace.openPath(path));
 
       tester.view.physicalSize = const Size(300, 800);

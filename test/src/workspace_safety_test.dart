@@ -67,6 +67,7 @@ void main() {
       );
 
       final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await tester.pump();
       await tester.runAsync(() async {
         await controller.openPath('test/fixtures/markdown/other.md');
         controller.updateActiveText('# Dirty\n');
@@ -222,6 +223,7 @@ void main() {
       );
 
       final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await tester.pump();
       await tester.runAsync(() async {
         await controller.openPath('test/fixtures/markdown/other.md');
         controller.updateActiveText('# Dirty\n');

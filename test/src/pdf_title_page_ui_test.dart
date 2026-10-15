@@ -244,6 +244,8 @@ void main() {
             ),
           );
           final controller = ref.read(workspaceControllerProvider.notifier);
+          // Hydrate settings in the widget clock before awaiting real file I/O.
+          await tester.pump();
           if (writerside) {
             await tester.runAsync(
               () => controller.openPath(

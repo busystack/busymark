@@ -10,6 +10,35 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'recent workspace write failures propagate and leave the save queue usable',
+    () async {
+      final store = _FailingRecentSettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await expectLater(
+        controller.recordOpenedWorkspace(
+          path: '/fixture/first.md',
+          kind: 'singleMarkdown',
+        ),
+        throwsStateError,
+      );
+      store.fail = false;
+      await controller.recordOpenedWorkspace(
+        path: '/fixture/second.md',
+        kind: 'singleMarkdown',
+      );
+      expect(store.value['lastOpenedPath'], '/fixture/second.md');
+      expect(
+        container.read(appSettingsControllerProvider).recentWorkspaces,
+        hasLength(2),
+      );
+    },
+  );
+
+  test(
     'inspector starts closed after loading an old visible preference',
     () async {
       final store = _MemorySettingsStore();
@@ -559,7 +588,16 @@ void main() {
       );
 
       await Future<void>.delayed(Duration.zero);
-      expect(initialActionsCompleted, isTrue);
+      expect(initialActionsCompleted, isFalse);
+      expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .single
+            .path,
+        '/tmp/new.md',
+      );
 
       store.completeLoad(
         AppSettings.defaults()
@@ -576,6 +614,8 @@ void main() {
             .toJson(),
       );
       await store.saved;
+      await Future.wait([autoSaveFuture, recentFuture]);
+      expect(initialActionsCompleted, isTrue);
 
       final settings = container.read(appSettingsControllerProvider);
       expect(settings.wordWrap, isFalse);
@@ -810,5 +850,14 @@ class _DelayedSettingsStore implements LocalSettingsStore {
     if (!_saved.isCompleted) {
       _saved.complete();
     }
+  }
+}
+
+class _FailingRecentSettingsStore extends _MemorySettingsStore {
+  bool fail = true;
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    if (fail) throw StateError('injected settings write failure');
+    await super.save(json);
   }
 }

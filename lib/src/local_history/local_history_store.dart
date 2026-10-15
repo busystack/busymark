@@ -357,14 +357,13 @@ class FileLocalHistoryStore implements LocalHistoryStore {
           await _deleteFileBestEffort(target);
           throw const LocalHistoryCaptureCancelled();
         }
-        final retained = await _applyRetention(
+        await _applyRetention(
           root,
           index,
           policy,
           revisionId,
           request.capturedAt.toUtc(),
         );
-        if (!identical(retained, index)) await _publishIndex(root, retained);
         return LocalHistoryCaptureResult(document: document, revision: summary);
       });
     });
@@ -394,14 +393,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     (root) => _withFileLock(root, () async {
       policy.validate();
       final index = await _loadIndexUnlocked(root, repair: true);
-      final retained = await _applyRetention(
-        root,
-        index,
-        policy,
-        null,
-        now.toUtc(),
-      );
-      if (!identical(retained, index)) await _publishIndex(root, retained);
+      await _applyRetention(root, index, policy, null, now.toUtc());
     }),
   );
 
@@ -1077,7 +1069,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     }
   }
 
-  Future<_Index> _applyRetention(
+  Future<void> _applyRetention(
     Directory root,
     _Index index,
     LocalHistoryPolicy policy,
@@ -1111,7 +1103,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         if (retainedDocumentIds.contains(document.id)) document,
     ];
     if (removed.isEmpty && documents.length == index.documents.length) {
-      return index;
+      return;
     }
     final retained = index.copyWith(
       documents: documents,
@@ -1127,7 +1119,8 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         _revisionFile(root, revision.documentId, revision.id),
       );
     }
-    return retained;
+    // The retained index is already durable before deletion. Republishing the
+    // identical index afterward adds two flushes without another state change.
   }
 
   Future<void> _publishIndex(Directory root, _Index index) async {

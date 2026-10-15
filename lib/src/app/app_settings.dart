@@ -613,6 +613,7 @@ class AppSettingsController extends Notifier<AppSettings> {
   late LocalSettingsStore _store;
   Future<void>? _lastSave;
   final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
+  final _pendingInitialPersistence = <Completer<void>>[];
   var _loaded = false;
   late Future<void> _loadFuture;
 
@@ -625,6 +626,15 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> waitUntilLoaded() => _loadFuture;
+
+  Future<void> flushPersistence() async {
+    await waitUntilLoaded();
+    while (true) {
+      final pending = _lastSave;
+      await pending;
+      if (identical(pending, _lastSave)) return;
+    }
+  }
 
   Future<void> setPdfExportOptions(PdfExportOptions options) {
     options.validateOrThrow();
@@ -949,7 +959,7 @@ class AppSettingsController extends Notifier<AppSettings> {
         ...settings.recentWorkspaces.where((item) => item.path != path),
       ].take(12).toList();
       return settings.copyWith(lastOpenedPath: path, recentWorkspaces: recent);
-    });
+    }, propagateFailure: true);
   }
 
   Future<void> clearRecentWorkspaces() {
@@ -982,36 +992,64 @@ class AppSettingsController extends Notifier<AppSettings> {
       loaded = mutation(loaded);
     }
     _pendingInitialMutations.clear();
+    final completions = List<Completer<void>>.of(_pendingInitialPersistence);
+    _pendingInitialPersistence.clear();
     _loaded = true;
     state = loaded;
     if (hadPendingInitialMutations) {
-      await _save(loaded);
+      try {
+        // Initial actions share one publication, but opening callers retain
+        // its authoritative completion/error instead of a dispatch future.
+        await _save(loaded, propagateFailure: completions.isNotEmpty);
+        for (final completion in completions) {
+          completion.complete();
+        }
+      } on Object catch (error, stack) {
+        for (final completion in completions) {
+          completion.completeError(error, stack);
+        }
+      }
     }
   }
 
-  Future<void> _mutate(AppSettings Function(AppSettings) mutation) {
+  Future<void> _mutate(
+    AppSettings Function(AppSettings) mutation, {
+    bool propagateFailure = false,
+  }) {
     if (!_loaded) {
       _pendingInitialMutations.add(mutation);
       state = mutation(state);
+      if (propagateFailure) {
+        final completion = Completer<void>();
+        _pendingInitialPersistence.add(completion);
+        return completion.future;
+      }
       return Future<void>.value();
     }
-    return _save(mutation(state));
+    return _save(mutation(state), propagateFailure: propagateFailure);
   }
 
-  Future<void> _save(AppSettings next) async {
+  Future<void> _save(AppSettings next, {bool propagateFailure = false}) async {
     state = next;
     final json = next.toJson();
     final previousSave = _lastSave;
+    Object? failure;
+    StackTrace? failureStack;
     final save = () async {
       await previousSave;
       try {
         await _store.save(json);
-      } on Object {
+      } on Object catch (error, stack) {
+        failure = error;
+        failureStack = stack;
         // Keep the in-memory preference even when local persistence is unavailable.
       }
     }();
     _lastSave = save;
     await save;
+    if (propagateFailure && failure != null) {
+      Error.throwWithStackTrace(failure!, failureStack!);
+    }
   }
 }
 

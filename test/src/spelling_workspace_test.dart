@@ -1643,6 +1643,7 @@ Future<_Harness> _pumpWorkspace(
   );
   await tester.pumpAndSettle();
   final controller = container.read(workspaceControllerProvider.notifier);
+  await tester.pump();
   if (source != null) {
     await tester.runAsync(() async {
       final topicName = writersideXml ? 'document.topic' : 'document.md';
