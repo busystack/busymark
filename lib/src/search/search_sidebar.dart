@@ -432,6 +432,18 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
   final _keys = <int, GlobalKey>{};
   final _focusNodes = <int, FocusNode>{};
   @override
+  void initState() {
+    super.initState();
+    final selected = widget.selected;
+    final results = widget.results;
+    if (selected >= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_reveal(selected, results, restoreFocus: false));
+      });
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant SearchResultList oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.results, widget.results)) _keys.clear();

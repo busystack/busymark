@@ -12282,6 +12282,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               searchSnapshot: searchState.sourceSnapshot(
                                 activeBuffer,
                               ),
+                              onNavigateSearch: ref
+                                  .read(searchSessionProvider.notifier)
+                                  .navigateSource,
+                              onCancelSearchNavigation: ref
+                                  .read(searchSessionProvider.notifier)
+                                  .cancelSourceNavigation,
                               searchReplacement:
                                   activeBuffer?.editorState.searchReplacement ??
                                   '',

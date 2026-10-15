@@ -42,6 +42,11 @@ import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/spellcheck/spelling_coordinator.dart';
 import 'package:busymark/src/spellcheck/spelling_projection.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/search/search_session.dart';
+import 'package:busymark/src/app/app_router.dart';
+import 'package:busymark/src/app/app_settings.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/gestures.dart';
@@ -53,6 +58,121 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
 void main() {
+  testWidgets(
+    'Source consumes shared pages and replaces in an unsaved buffer',
+    (tester) async {
+      final source = 'needle\n' * 81;
+      final container = ProviderContainer(
+        overrides: [
+          workspaceControllerProvider.overrideWith(
+            () => _SharedSourceWorkspace(source),
+          ),
+          localSettingsStoreProvider.overrideWithValue(_SharedSearchSettings()),
+        ],
+      );
+      final router = container.read(appRouterProvider);
+      addTearDown(() {
+        container.dispose();
+        router.dispose();
+      });
+      router.go('/workspace');
+      await tester.pump();
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(
+        category: SearchCategory.text,
+        location: SearchLocation.document,
+      );
+      session.query('needle');
+      final key = GlobalKey<BusyMarkSourceEditorState>();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  final workspace = ref.watch(workspaceControllerProvider);
+                  final search = ref.watch(searchSessionProvider);
+                  return BusyMarkSourceEditor(
+                    key: key,
+                    text: workspace.activeText,
+                    documentId: workspace.activeBufferId,
+                    language: SourceSyntaxLanguage.markdown,
+                    filePath: null,
+                    diagnostics: const [],
+                    editorFontSize: 14,
+                    wordWrap: true,
+                    searchActive: search.textActive,
+                    searchOptions: search.options,
+                    searchSnapshot: search.sourceSnapshot(
+                      workspace.activeBuffer,
+                    ),
+                    onNavigateSearch: session.navigateSource,
+                    onCancelSearchNavigation: session.cancelSourceNavigation,
+                    searchReplacement: 'X',
+                    onSearchReplacementChanged: (_) {},
+                    onSearchOptionsChanged: (options) =>
+                        session.set(search.withOptions(options)),
+                    onChanged: (text, _) =>
+                        (ref.read(workspaceControllerProvider.notifier)
+                                as _SharedSourceWorkspace)
+                            .edit(text),
+                    onCloseSearch: session.close,
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      final controller = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .map((field) => field.controller)
+          .whereType<BusyMarkSourceEditingController>()
+          .single;
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.totalMatchCount == 81,
+      );
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchPreviousMatch),
+      );
+      await _pumpUntil(
+        tester,
+        () =>
+            controller.fullSelection.start == 80 * 7 &&
+            controller.searchResult.currentMatchIndex == 80,
+      );
+      expect(
+        container.read(searchSessionProvider).results.length,
+        lessThanOrEqualTo(80),
+      );
+      expect(controller.searchResult.firstMatchIndex, 80);
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchReplaceAndFindNext),
+      );
+      await _pumpUntil(
+        tester,
+        () =>
+            controller.fullText.endsWith('X\n') &&
+            controller.searchResult.totalMatchCount == 80 &&
+            controller.fullSelection ==
+                const TextSelection(baseOffset: 0, extentOffset: 6),
+      );
+      final state = container.read(searchSessionProvider);
+      expect(state.documentCurrentMatchIndex, 0);
+      expect(
+        (state.results[state.selected] as TextSearchResult).match.startOffset,
+        0,
+      );
+      expect(controller.fullText, '${'needle\n' * 80}X\n');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
   for (final readOnly in [false, true]) {
     testWidgets(
       'Source projects shared matches and preserves read-only replacement ($readOnly)',
@@ -9617,6 +9737,50 @@ bool _sourceContainsLoneLf(String value) {
     }
   }
   return false;
+}
+
+class _SharedSearchSettings implements LocalSettingsStore {
+  @override
+  Future<Map<String, Object?>> load() async => AppSettings.defaults().toJson();
+  @override
+  Future<void> save(Map<String, Object?> values) async {}
+}
+
+class _SharedSourceWorkspace extends WorkspaceController {
+  _SharedSourceWorkspace(this.source);
+  final String source;
+  @override
+  WorkspaceState build() => WorkspaceState(
+    workspace: Workspace(
+      id: 'shared',
+      rootPath: '/shared',
+      kind: WorkspaceKind.untitledMarkdown,
+      openedAt: DateTime(2026),
+      files: const [],
+      diagnostics: const [],
+    ),
+    documentBuffers: [
+      DocumentBuffer(
+        id: 'shared-buffer',
+        text: source,
+        lastSavedText: '',
+        dirty: true,
+        untitledName: 'Untitled',
+        editorState: const DocumentEditorState(
+          mode: DocumentViewModePreference.source,
+        ),
+      ),
+    ],
+    activeBufferId: 'shared-buffer',
+  );
+  void edit(String text) {
+    final buffer = state.activeBuffer!;
+    state = state.copyWith(
+      documentBuffers: [
+        buffer.copyWith(text: text, revision: buffer.revision + 1),
+      ],
+    );
+  }
 }
 
 class _SourceTestClipboard extends RichClipboardService {

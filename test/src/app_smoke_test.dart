@@ -13092,6 +13092,403 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
   });
 
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.split,
+  ]) {
+    for (final count in [81, 3000]) {
+      testWidgets(
+        'shared Find/Replace navigates $count matches in ${mode.name}',
+        (tester) async {
+          tester.view.physicalSize = const Size(1440, 900);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final original =
+              '# Group\n${List.generate(count, (i) => 'cat $i\n').join()}';
+          final harness = await _pumpSearchRegression(
+            tester,
+            headerBarService,
+            {'a.md': original},
+            mode: mode,
+          );
+          final container = harness.container;
+          final session = container.read(searchSessionProvider.notifier);
+          session.open(
+            category: SearchCategory.text,
+            location: SearchLocation.document,
+          );
+          session.query('cat');
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                _searchSourceController(tester).searchResult.totalMatchCount ==
+                count,
+          );
+          final source = _searchSourceController(tester);
+          final editor = tester.widget<BusyMarkSourceEditor>(
+            find.byType(BusyMarkSourceEditor),
+          );
+          expect(editor.searchSnapshot, isNotNull);
+          expect(container.read(searchSessionProvider).results, hasLength(80));
+          expect(source.searchResult.currentMatchIndex, isNull);
+
+          Future<void> expectIndex(int index, String text) async {
+            final expected = RegExp('cat').allMatches(text).elementAt(index);
+            await _waitForSearchCondition(
+              tester,
+              () =>
+                  source.searchResult.currentMatchIndex == index &&
+                  source.fullSelection ==
+                      TextSelection(
+                        baseOffset: expected.start,
+                        extentOffset: expected.end,
+                      ),
+            );
+            final state = container.read(searchSessionProvider);
+            expect(source.fullText, text);
+            expect(state.results.length, lessThanOrEqualTo(80));
+            expect(state.documentCurrentMatchIndex, index);
+            final selected = state.results[state.selected] as TextSearchResult;
+            expect(selected.match.startOffset, expected.start);
+            expect(selected.match.endOffset, expected.end);
+            final row = find.byKey(ValueKey(selected.identity));
+            await _waitForSearchCondition(
+              tester,
+              () =>
+                  row.evaluate().isNotEmpty &&
+                  tester
+                      .getRect(row)
+                      .overlaps(
+                        tester.getRect(
+                          find.byKey(const ValueKey('sidebar-search-results')),
+                        ),
+                      ),
+            );
+            expect(tester.widget<ListTile>(row).selected, isTrue);
+          }
+
+          Future<void> choose(int index) async {
+            final match = RegExp(
+              'cat',
+            ).allMatches(source.fullText).elementAt(index);
+            final editorState = tester.state<BusyMarkSourceEditorState>(
+              find.byType(BusyMarkSourceEditor),
+            );
+            editorState.scrollToSearchRange(
+              line:
+                  '\n'
+                      .allMatches(source.fullText.substring(0, match.start))
+                      .length +
+                  1,
+              startOffset: match.start,
+              endOffset: match.end,
+            );
+            await expectIndex(index, source.fullText);
+          }
+
+          // Starting from no selection, Previous must find the actual last match
+          // inside folded content, rather than the last loaded sidebar row.
+          await tester.tap(
+            find.byTooltip(l10n.collapseKind(l10n.foldKindSection)).first,
+          );
+          await tester.pump();
+          expect(source.document.hiddenRanges.ranges, isNotEmpty);
+          await tester.tap(find.byTooltip(l10n.sourceSearchPreviousMatch));
+          await expectIndex(count - 1, original);
+          expect(source.searchResult.currentMatch!.hidden, isFalse);
+          await tester.pumpAndSettle();
+          final sourceField = tester.widget<TextField>(
+            find.byWidgetPredicate(
+              (w) => w is TextField && identical(w.controller, source),
+            ),
+          );
+          expect(sourceField.scrollController!.offset, greaterThan(0));
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(0, original);
+          await choose(79);
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(80, original);
+          await tester.tap(find.byTooltip(l10n.sourceSearchPreviousMatch));
+          await expectIndex(79, original);
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(80, original);
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(count == 81 ? 0 : 81, original);
+
+          if (mode == DocumentViewModePreference.split && count == 3000) {
+            tester.view.physicalSize = const Size(1100, 900);
+            await tester.pumpAndSettle();
+          }
+          final replaceIndex = count == 81 ? 80 : 2500;
+          await choose(replaceIndex);
+          final occurrence = RegExp(
+            'cat',
+          ).allMatches(original).elementAt(replaceIndex);
+          final modified = original.replaceRange(
+            occurrence.start,
+            occurrence.end,
+            'wolf',
+          );
+          await tester.enterText(
+            find.byKey(const ValueKey('source-search-replacement')),
+            'wolf',
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip(l10n.sourceSearchReplaceAndFindNext));
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                container.read(workspaceControllerProvider).activeText ==
+                modified,
+          );
+          await expectIndex(count == 81 ? 0 : replaceIndex, modified);
+          expect(source.searchResult.totalMatchCount, count - 1);
+          expect(RegExp('wolf').allMatches(source.fullText), hasLength(1));
+          await tester.pumpAndSettle();
+          final editable = tester
+              .state<EditableTextState>(
+                find.descendant(
+                  of: find.byWidgetPredicate(
+                    (w) => w is TextField && identical(w.controller, source),
+                  ),
+                  matching: find.byType(EditableText),
+                ),
+              )
+              .renderEditable;
+          final caret = editable.getLocalRectForCaret(
+            TextPosition(offset: source.selection.extentOffset),
+          );
+          expect(caret.top, greaterThanOrEqualTo(0));
+          expect(caret.bottom, lessThanOrEqualTo(editable.size.height));
+          if (mode == DocumentViewModePreference.split && count == 3000) {
+            expect(
+              editable.localToGlobal(caret.topLeft).dy,
+              greaterThan(
+                tester
+                    .getRect(
+                      find.byKey(const ValueKey('source-search-replacement')),
+                    )
+                    .bottom,
+              ),
+              reason: 'The selected match must clear the floating controls.',
+            );
+          }
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                source.fullText == original &&
+                source.searchResult.totalMatchCount == count,
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                source.fullText == modified &&
+                source.searchResult.totalMatchCount == count - 1,
+          );
+          expect(RegExp('wolf').allMatches(source.fullText), hasLength(1));
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 1));
+        },
+      );
+    }
+  }
+
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.split,
+  ]) {
+    for (final scenario in [
+      'separated',
+      'double',
+      'refresh',
+      'query',
+      'options',
+      'document',
+      'undo/redo',
+      'caret',
+    ]) {
+      testWidgets('shared replacement refresh $scenario in ${mode.name}', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(1440, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final original = 'cat\n${'gap\n' * 200}cat\n${'tail\n' * 200}cat\n';
+        final modified = original.replaceRange(0, 3, 'wolf');
+        final harness = await _pumpSearchRegression(tester, headerBarService, {
+          'a.md': original,
+          'b.md': 'other cat buffer\n',
+        }, mode: mode);
+        final container = harness.container;
+        final session = container.read(searchSessionProvider.notifier);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        session.open(
+          category: SearchCategory.text,
+          location: SearchLocation.document,
+        );
+        session.query('cat');
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              _searchSourceController(tester).searchResult.totalMatchCount == 3,
+        );
+        var source = _searchSourceController(tester);
+        expect(
+          tester
+              .widget<BusyMarkSourceEditor>(find.byType(BusyMarkSourceEditor))
+              .searchSnapshot,
+          isNotNull,
+        );
+        await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              source.searchResult.currentMatchIndex == 0 &&
+              source.fullSelection.extentOffset == 3,
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('source-search-replacement')),
+          'wolf',
+        );
+        await tester.pump();
+        await tester.tap(find.byTooltip(l10n.sourceSearchReplaceAndFindNext));
+        if (scenario == 'double') {
+          await tester.tap(find.byTooltip(l10n.sourceSearchReplaceAndFindNext));
+        }
+        // Stop after mutation, while the replacement's async refresh is pending.
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              container.read(workspaceControllerProvider).activeText ==
+              modified,
+        );
+        expect(container.read(searchSessionProvider).searching, isTrue);
+        Future<void> undoRedoKey({bool redo = false}) async {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          if (redo) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          if (redo) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        }
+
+        switch (scenario) {
+          case 'query':
+            for (var i = 0; i < 12; i++) {
+              session.query('missing-$i');
+            }
+            session.query('cat');
+          case 'options':
+            session.set(
+              container
+                  .read(searchSessionProvider)
+                  .copyWith(caseSensitive: true),
+            );
+            session.set(
+              container
+                  .read(searchSessionProvider)
+                  .copyWith(caseSensitive: false),
+            );
+          case 'document':
+            await workspace.openActiveFile(
+              '${_SearchRegressionService.root}/b.md',
+            );
+          case 'undo/redo':
+            await undoRedoKey();
+            expect(
+              container.read(workspaceControllerProvider).activeText,
+              original,
+            );
+            await undoRedoKey(redo: true);
+          case 'caret':
+            source.fullSelection = const TextSelection.collapsed(offset: 7);
+          case 'refresh':
+            await tester.runAsync(() => session.submit());
+            expect(
+              container.read(searchSessionProvider).appliedSourceNavigation,
+              isNonZero,
+            );
+            session.refresh(container.read(workspaceControllerProvider));
+        }
+        await tester.pump();
+        source = _searchSourceController(tester);
+        final selectionAfterAction = source.fullSelection;
+        await _waitForSearchCondition(
+          tester,
+          () => !container.read(searchSessionProvider).searching,
+        );
+        if (scenario == 'separated' ||
+            scenario == 'double' ||
+            scenario == 'refresh') {
+          final next = modified.indexOf('cat');
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                source.fullSelection ==
+                TextSelection(baseOffset: next, extentOffset: next + 3),
+          );
+          final state = container.read(searchSessionProvider);
+          expect(state.documentMatchCount, 2);
+          expect(state.documentCurrentMatchIndex, 0);
+          expect(
+            (state.results[state.selected] as TextSearchResult)
+                .match
+                .startOffset,
+            next,
+          );
+          await tester.pumpAndSettle();
+          final field = find.byWidgetPredicate(
+            (w) => w is TextField && identical(w.controller, source),
+          );
+          final editable = tester
+              .state<EditableTextState>(
+                find.descendant(of: field, matching: find.byType(EditableText)),
+              )
+              .renderEditable;
+          final caret = editable.getLocalRectForCaret(
+            TextPosition(offset: source.selection.extentOffset),
+          );
+          expect(
+            tester.widget<TextField>(field).scrollController!.offset,
+            greaterThan(0),
+          );
+          expect(caret.top, greaterThanOrEqualTo(0));
+          expect(caret.bottom, lessThanOrEqualTo(editable.size.height));
+        } else {
+          await tester.pump(const Duration(milliseconds: 700));
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 100)),
+          );
+          await tester.pumpAndSettle();
+          expect(source.fullSelection, selectionAfterAction);
+          expect(
+            container.read(searchSessionProvider).appliedSourceNavigation,
+            0,
+          );
+        }
+        expect(
+          source.fullText,
+          scenario == 'document' ? 'other cat buffer\n' : modified,
+        );
+        expect(
+          RegExp('wolf').allMatches(source.fullText).length,
+          scenario == 'document' ? 0 : 1,
+        );
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 1));
+      });
+    }
+  }
+
   testWidgets(
     'unified search scopes, query isolation and explicit shortcut destinations',
     (tester) async {

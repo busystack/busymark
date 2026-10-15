@@ -219,6 +219,127 @@ void main() {
     },
   );
 
+  for (final count in [81, 3000]) {
+    test(
+      'document navigation counts $count matches with bounded pages',
+      () async {
+        final source = 'cat\n' * count;
+        final container = containerFor(_state(text: source));
+        container.read(appRouterProvider).go('/workspace');
+        await Future<void>.delayed(Duration.zero);
+        final session = container.read(searchSessionProvider.notifier);
+        session.open(
+          category: SearchCategory.text,
+          location: SearchLocation.document,
+        );
+        session.query('cat');
+        await session.submit();
+        var result = container.read(searchSessionProvider);
+        expect(result.results, hasLength(80));
+        expect(result.documentMatchCount, count);
+        expect(result.documentCurrentMatchIndex, isNull);
+        expect(
+          result
+              .sourceSnapshot(
+                container.read(workspaceControllerProvider).activeBuffer,
+              )
+              .result
+              .totalMatchCount,
+          count,
+        );
+        for (final index in [79, 80, count - 1, 0]) {
+          final id = session.navigateSource(
+            SourceSearchNavigationRequest(
+              documentId: 'scratch-a',
+              source: source,
+              options: const SourceSearchOptions(query: 'cat'),
+              matchIndex: index,
+            ),
+          );
+          expect(id, isNotNull);
+          await session.submit();
+          result = container.read(searchSessionProvider);
+          final snapshot = result.sourceSnapshot(
+            container.read(workspaceControllerProvider).activeBuffer,
+          );
+          expect(result.results.length, lessThanOrEqualTo(80));
+          expect(snapshot.result.totalMatchCount, count);
+          expect(snapshot.result.currentMatchIndex, index);
+          expect(snapshot.result.currentMatch!.fullStart, index * 4);
+          expect(result.selected, index - result.documentFirstMatchIndex);
+          expect(
+            (result.results[result.selected] as TextSearchResult)
+                .match
+                .startOffset,
+            index * 4,
+          );
+          expect(result.appliedSourceNavigation, id);
+        }
+      },
+    );
+  }
+
+  test(
+    'post-edit navigation retains its revision and cancels across queries and buffers',
+    () async {
+      final container = containerFor(_state(text: 'cat${'\n' * 200}cat'));
+      container.read(appRouterProvider).go('/workspace');
+      await Future<void>.delayed(Duration.zero);
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(
+        category: SearchCategory.text,
+        location: SearchLocation.document,
+      );
+      session.query('cat');
+      await session.submit();
+      final workspace = container.read(workspaceControllerProvider);
+      final changed = workspace.activeBuffer!.copyWith(
+        text: 'dog${'\n' * 200}cat',
+        revision: 1,
+      );
+      (container.read(workspaceControllerProvider.notifier) as _Workspace)
+          .replace(workspace.copyWith(documentBuffers: [changed]));
+      final id = session.navigateSource(
+        SourceSearchNavigationRequest(
+          documentId: changed.id,
+          source: changed.text,
+          options: const SourceSearchOptions(query: 'cat'),
+          minimumFullOffset: 3,
+        ),
+      );
+      await session.submit();
+      var result = container.read(searchSessionProvider);
+      expect(result.appliedSourceNavigation, id);
+      expect(
+        (result.results[result.selected] as TextSearchResult).match.startOffset,
+        203,
+      );
+      session.navigateSource(
+        SourceSearchNavigationRequest(
+          documentId: changed.id,
+          source: changed.text,
+          options: const SourceSearchOptions(query: 'cat'),
+          minimumFullOffset: 206,
+        ),
+      );
+      final pending = session.submit();
+      session.query('dog');
+      session.query('cat');
+      (container.read(workspaceControllerProvider.notifier) as _Workspace)
+          .replace(_state(text: 'cat in another buffer', id: 'scratch-b'));
+      await pending;
+      await session.submit();
+      result = container.read(searchSessionProvider);
+      expect(result.sourceNavigationRequest, 0);
+      expect(result.appliedSourceNavigation, 0);
+      expect(result.documentCurrentMatchIndex, isNull);
+      expect(
+        (result.results.single as TextSearchResult).match.bufferId,
+        'scratch-b',
+      );
+    },
+  );
+
   test('late workspace text cannot publish into another category', () async {
     final service = _GatedService();
     final container = containerFor(

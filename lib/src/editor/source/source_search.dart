@@ -151,10 +151,37 @@ class SourceSearchSnapshot {
     required this.source,
     required this.result,
     this.truncated = false,
+    this.searching = false,
+    this.navigationRequest = 0,
+    this.appliedNavigation = 0,
+    this.sourceRevision,
+    this.sessionRevision = 0,
   });
   final String source;
   final SourceSearchResult result;
   final bool truncated;
+  final bool searching;
+  final int navigationRequest, appliedNavigation;
+  final int? sourceRevision;
+  final int sessionRevision;
+}
+
+/// A navigation request for the window's existing search session. The source
+/// and identity must still match the active buffer before resolving an offset.
+class SourceSearchNavigationRequest {
+  const SourceSearchNavigationRequest({
+    required this.documentId,
+    required this.source,
+    required this.options,
+    this.matchIndex,
+    this.minimumFullOffset,
+    this.reveal = true,
+  });
+  final String? documentId;
+  final String source;
+  final SourceSearchOptions options;
+  final int? matchIndex, minimumFullOffset;
+  final bool reveal;
 }
 
 class SourceSearchController {

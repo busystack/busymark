@@ -95,8 +95,12 @@ matches only a position, are not supported for search or replacement.
 
 ## Active document
 
-In Source or Split view, the search panel shows the match count and provides
-previous and next navigation. Its replacement field supports:
+In Source or Split view, the search panel shows the full document match count.
+Previous and next navigate every occurrence, including folded and off-screen
+content, and wrap only at the document boundaries. Previous without a selected
+match selects the final occurrence. The sidebar automatically loads and reveals
+the selected result; **Show more results** is not required for this navigation.
+Its replacement field supports:
 
 - replacing the current match;
 - replacing the current match and moving to the next one; and
@@ -105,6 +109,10 @@ previous and next navigation. Its replacement field supports:
 These commands edit the current in-memory document. They do not save it
 immediately unless autosave is enabled, and they participate in normal undo and
 save behavior.
+
+Replace and find next waits for matches in the modified document before moving
+the caret. Changing the query, options, document or selection cancels that
+pending navigation.
 
 Editor and Reading views show sidebar search results and navigate to matching
 content, but the active-document replacement controls are available in Source

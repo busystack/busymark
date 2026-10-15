@@ -143,6 +143,11 @@ class SearchSessionState {
     this.focusRequest = 0,
     this.generation = 0,
     this.requestRevision = 0,
+    this.documentMatchCount = 0,
+    this.documentFirstMatchIndex = 0,
+    this.documentCurrentMatchIndex,
+    this.sourceNavigationRequest = 0,
+    this.appliedSourceNavigation = 0,
   });
   final bool active;
   final SearchSessionContext? context;
@@ -153,6 +158,9 @@ class SearchSessionState {
   final List<SidebarSearchResult> results;
   final int selected, focusRequest, generation;
   final int requestRevision;
+  final int documentMatchCount, documentFirstMatchIndex;
+  final int? documentCurrentMatchIndex;
+  final int sourceNavigationRequest, appliedSourceNavigation;
   final bool searching, indexing, truncated, invalidRegex, hasZeroLengthMatches;
   final List<String> skippedFiles;
   final String? error;
@@ -184,9 +192,23 @@ class SearchSessionState {
     }
     return SourceSearchSnapshot(
       source: buffer?.text ?? '',
-      truncated: truncated,
+      truncated: location != SearchLocation.document && truncated,
+      searching: searching,
+      navigationRequest: sourceNavigationRequest,
+      appliedNavigation: appliedSourceNavigation,
+      sourceRevision: buffer?.revision,
+      sessionRevision: requestRevision,
       result: SourceSearchResult(
         options: options,
+        totalMatchCount: location == SearchLocation.document
+            ? documentMatchCount
+            : null,
+        firstMatchIndex: location == SearchLocation.document
+            ? documentFirstMatchIndex
+            : 0,
+        currentMatchIndex: location == SearchLocation.document
+            ? documentCurrentMatchIndex
+            : null,
         invalidRegex: invalidRegex,
         hasZeroLengthMatches: hasZeroLengthMatches,
         matches: [
@@ -236,6 +258,12 @@ class SearchSessionState {
     int? focusRequest,
     int? generation,
     int? requestRevision,
+    int? documentMatchCount,
+    int? documentFirstMatchIndex,
+    int? documentCurrentMatchIndex,
+    bool clearDocumentSelection = false,
+    int? sourceNavigationRequest,
+    int? appliedSourceNavigation,
   }) => SearchSessionState(
     active: active ?? this.active,
     context: context ?? this.context,
@@ -257,6 +285,16 @@ class SearchSessionState {
     focusRequest: focusRequest ?? this.focusRequest,
     generation: generation ?? this.generation,
     requestRevision: requestRevision ?? this.requestRevision,
+    documentMatchCount: documentMatchCount ?? this.documentMatchCount,
+    documentFirstMatchIndex:
+        documentFirstMatchIndex ?? this.documentFirstMatchIndex,
+    documentCurrentMatchIndex: clearDocumentSelection
+        ? null
+        : documentCurrentMatchIndex ?? this.documentCurrentMatchIndex,
+    sourceNavigationRequest:
+        sourceNavigationRequest ?? this.sourceNavigationRequest,
+    appliedSourceNavigation:
+        appliedSourceNavigation ?? this.appliedSourceNavigation,
   );
 }
 
@@ -276,6 +314,9 @@ class SearchSessionController extends Notifier<SearchSessionState> {
   final _queries = <(SearchCategory, SearchLocation), SourceSearchOptions>{};
   List<ActionSearchResult> _commands = const [];
   int _request = 0, _limit = maxWorkspaceSearchResults;
+  int _sourceWindowStart = 0, _sourceNavigationSerial = 0;
+  int? _sourceCurrentIndex;
+  _DocumentSearchNavigation? _sourceNavigation;
   bool _disposed = false, _hasOpened = false;
   FocusNode? _returnFocus;
   WeakReference<FocusNode>? _originFocus;
@@ -364,6 +405,10 @@ class SearchSessionController extends Notifier<SearchSessionState> {
 
     FocusManager.instance.addListener(focusChanged);
     ref.listen<WorkspaceState>(workspaceControllerProvider, (before, after) {
+      if (before?.activeBuffer?.editorState.mode !=
+          after.activeBuffer?.editorState.mode) {
+        cancelSourceNavigation(state.sourceNavigationRequest);
+      }
       if (!workspaceSearchInputsChanged(before, after)) return;
       if (before?.workspace?.id != after.workspace?.id ||
           before?.activeBufferId != after.activeBufferId) {
@@ -476,6 +521,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       return;
     }
     captureOrigin();
+    _resetSourceNavigation();
     _remember();
     var nextLocation =
         location ??
@@ -522,6 +568,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
   void close({bool restoreFocus = true}) {
     if (!state.active) return;
     _remember();
+    _resetSourceNavigation();
     _cancel();
     state = state.copyWith(
       active: false,
@@ -530,6 +577,11 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       indexing: false,
       generation: _request,
       requestRevision: state.requestRevision + 1,
+      documentMatchCount: 0,
+      documentFirstMatchIndex: 0,
+      clearDocumentSelection: true,
+      sourceNavigationRequest: 0,
+      appliedSourceNavigation: 0,
     );
     final target = _returnFocus;
     _returnFocus = null;
@@ -558,6 +610,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
   }
 
   void set(SearchSessionState next) {
+    _resetSourceNavigation();
     state = next.copyWith(
       results: const [],
       selected: 0,
@@ -584,7 +637,96 @@ class SearchSessionController extends Notifier<SearchSessionState> {
 
   void showMore() {
     _limit += maxWorkspaceSearchResults;
+    if (state.textActive && state.location == SearchLocation.document) {
+      _sourceWindowStart =
+          ((_sourceCurrentIndex ?? _sourceWindowStart) ~/ _limit) * _limit;
+    }
     _schedule();
+  }
+
+  void _resetSourceNavigation() {
+    _sourceNavigation = null;
+    _sourceCurrentIndex = null;
+    _sourceWindowStart = 0;
+  }
+
+  /// Selects by full-document ordinal or post-edit source offset. Displayed
+  /// rows remain a bounded window; scanning/counting stays in the same worker.
+  int? navigateSource(SourceSearchNavigationRequest request) {
+    final workspace = ref.read(workspaceControllerProvider);
+    final buffer = workspace.activeBuffer;
+    if (!state.textActive ||
+        state.location != SearchLocation.document ||
+        !workspaceVisible ||
+        buffer == null ||
+        (buffer.id != request.documentId &&
+            buffer.filePath != request.documentId) ||
+        buffer.text != request.source ||
+        state.options != request.options ||
+        request.matchIndex != null && request.matchIndex! < 0 ||
+        request.minimumFullOffset != null &&
+            (request.minimumFullOffset! < 0 ||
+                request.minimumFullOffset! > buffer.text.length)) {
+      return null;
+    }
+    final id = ++_sourceNavigationSerial;
+    final index = request.matchIndex;
+    final navigation = _DocumentSearchNavigation(
+      id,
+      request,
+      workspace.workspace!.id,
+      buffer.id,
+      buffer.revision,
+      buffer.editorState.mode,
+      state.requestRevision,
+    );
+    if (!state.searching &&
+        index != null &&
+        index >= state.documentFirstMatchIndex &&
+        index < state.documentFirstMatchIndex + state.results.length) {
+      _sourceNavigation = request.reveal ? navigation : null;
+      _sourceCurrentIndex = index;
+      state = state.copyWith(
+        documentCurrentMatchIndex: index,
+        selected: index - state.documentFirstMatchIndex,
+        sourceNavigationRequest: request.reveal ? id : 0,
+        appliedSourceNavigation: request.reveal ? id : 0,
+      );
+      return id;
+    }
+    _sourceNavigation = navigation;
+    if (index != null) _sourceWindowStart = (index ~/ _limit) * _limit;
+    state = state.copyWith(sourceNavigationRequest: id);
+    _schedule();
+    return id;
+  }
+
+  void cancelSourceNavigation(int id) {
+    if (id == 0 || state.sourceNavigationRequest != id) return;
+    final searchingForTarget = _sourceNavigation != null;
+    _sourceNavigation = null;
+    _sourceCurrentIndex = null;
+    state = state.copyWith(
+      sourceNavigationRequest: 0,
+      appliedSourceNavigation: 0,
+      clearDocumentSelection: true,
+    );
+    if (searchingForTarget) _schedule();
+  }
+
+  bool _sourceNavigationIsCurrent(_DocumentSearchNavigation navigation) {
+    final workspace = ref.read(workspaceControllerProvider);
+    final buffer = workspace.activeBuffer;
+    return state.textActive &&
+        state.location == SearchLocation.document &&
+        workspaceVisible &&
+        workspace.workspace?.id == navigation.workspaceId &&
+        buffer?.id == navigation.bufferId &&
+        buffer?.revision == navigation.revision &&
+        buffer?.editorState.mode == navigation.mode &&
+        buffer?.text == navigation.request.source &&
+        state.options == navigation.request.options &&
+        state.requestRevision == navigation.requestRevision;
   }
 
   void refresh(WorkspaceState _) => _schedule();
@@ -602,6 +744,17 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     final request = _request;
     final visible = workspaceVisible;
     final workspace = ref.read(workspaceControllerProvider);
+    final navigation = _sourceNavigation;
+    final validNavigation =
+        navigation != null && _sourceNavigationIsCurrent(navigation);
+    if (!validNavigation &&
+        (navigation != null ||
+            state.context?.bufferId != workspace.activeBufferId ||
+            state.context?.revision != workspace.activeBuffer?.revision ||
+            !state.textActive ||
+            state.location != SearchLocation.document)) {
+      _resetSourceNavigation();
+    }
     state = state.copyWith(
       context: SearchSessionContext(
         ref.read(appRouterProvider).routeInformationProvider.value.uri.path,
@@ -631,6 +784,11 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       invalidRegex: false,
       hasZeroLengthMatches: false,
       generation: request,
+      documentMatchCount: 0,
+      documentFirstMatchIndex: _sourceWindowStart,
+      clearDocumentSelection: true,
+      sourceNavigationRequest: validNavigation ? navigation.id : 0,
+      appliedSourceNavigation: 0,
     );
     if (!state.active || state.textActive && state.query.isEmpty) {
       state = state.copyWith(searching: false);
@@ -683,72 +841,8 @@ class SearchSessionController extends Notifier<SearchSessionState> {
           final options = snapshot.options;
           WorkspaceTextOutcome outcome;
           if (snapshot.location == SearchLocation.document) {
-            final buffer = workspaceState.activeBuffer;
-            if (buffer == null) {
-              publish([]);
-              return;
-            }
-            final document = SourceDocument(fullText: buffer.text);
-            final matches = await _worker.search(
-              document,
-              options,
-              maximumMatches: _limit + 1,
-              stopAfterMaximumMatches: true,
-            );
-            if (!_current(request)) return;
-            if (matches == null) {
-              state = state.copyWith(
-                searching: false,
-                skippedFiles: [buffer.displayName],
-              );
-              return;
-            }
-            final digest = notesSearchDigest(buffer.text);
-            outcome = WorkspaceTextOutcome(
-              invalidRegex: sourceSearchOptionsHaveInvalidRegex(options),
-              hasZeroLengthMatches: matches.hasZeroLengthMatches,
-              truncated: matches.matches.length > _limit,
-              matches: [
-                for (final match in matches.matches.take(_limit))
-                  WorkspaceTextMatch(
-                    filePath: buffer.filePath,
-                    bufferId: buffer.id,
-                    digest: digest,
-                    relativePath:
-                        buffer.remoteTitle ??
-                        buffer.untitledName ??
-                        (buffer.filePath == null
-                            ? ''
-                            : p.basename(buffer.filePath!)),
-                    fileKind: resolveWorkspaceDocumentContext(
-                      workspace,
-                      buffer,
-                    ).kind,
-                    line: document.lineIndex.lineNumberAtOffset(
-                      match.fullStart,
-                    ),
-                    startOffset: match.fullStart,
-                    endOffset: match.fullEnd,
-                    query: options.query,
-                    lineText: boundedSearchSnippet(
-                      document.lineIndex
-                          .lineAt(
-                            document.lineIndex.lineNumberAtOffset(
-                              match.fullStart,
-                            ),
-                          )
-                          .text,
-                      matchStart:
-                          match.fullStart -
-                          document.lineIndex.offsetForLine(
-                            document.lineIndex.lineNumberAtOffset(
-                              match.fullStart,
-                            ),
-                          ),
-                    ),
-                  ),
-              ],
-            );
+            await _searchDocument(request, workspaceState, snapshot);
+            return;
           } else {
             outcome = await loadWorkspaceTextMatches(
               workspaceState,
@@ -917,6 +1011,111 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     });
   }
 
+  Future<void> _searchDocument(
+    int request,
+    WorkspaceState workspace,
+    SearchSessionState snapshot,
+  ) async {
+    final buffer = workspace.activeBuffer;
+    if (buffer == null) {
+      if (_current(request)) state = state.copyWith(searching: false);
+      return;
+    }
+    final document = SourceDocument(fullText: buffer.text);
+    final navigation = _sourceNavigation;
+    var matches = await _worker.search(
+      document,
+      snapshot.options,
+      firstMatchIndex: _sourceWindowStart,
+      minimumFullOffset: navigation?.request.minimumFullOffset,
+      maximumMatches: _limit,
+    );
+    if (!_current(request)) return;
+    if (matches == null) {
+      state = state.copyWith(
+        searching: false,
+        skippedFiles: [buffer.displayName],
+      );
+      return;
+    }
+    // An offset past the actual final occurrence wraps to the document's first
+    // window, never to the first row in the previously displayed page.
+    if (matches.matches.isEmpty && matches.totalMatchCount > 0) {
+      matches = await _worker.search(
+        document,
+        snapshot.options,
+        maximumMatches: _limit,
+      );
+      if (!_current(request) || matches == null) return;
+    }
+    if (navigation != null && !_sourceNavigationIsCurrent(navigation)) return;
+    var selected = navigation?.request.minimumFullOffset != null
+        ? matches.matches.isEmpty
+              ? null
+              : matches.firstMatchIndex
+        : navigation?.request.matchIndex ?? _sourceCurrentIndex;
+    if (selected != null &&
+        (selected < matches.firstMatchIndex ||
+            selected >= matches.firstMatchIndex + matches.matches.length)) {
+      selected = null;
+    }
+    _sourceCurrentIndex = selected;
+    _sourceWindowStart = matches.firstMatchIndex;
+    // Retain the request until the editor acknowledges applying it. A derived
+    // workspace refresh may otherwise erase a ready-but-not-yet-revealed match.
+    _sourceNavigation = selected != null && navigation?.request.reveal == true
+        ? navigation
+        : null;
+    final digest = notesSearchDigest(buffer.text);
+    state = state.copyWith(
+      documentMatchCount: matches.totalMatchCount,
+      documentFirstMatchIndex: matches.firstMatchIndex,
+      documentCurrentMatchIndex: selected,
+      clearDocumentSelection: selected == null,
+      selected: selected == null ? 0 : selected - matches.firstMatchIndex,
+      sourceNavigationRequest: navigation?.id ?? 0,
+      appliedSourceNavigation: navigation?.request.reveal == true
+          ? navigation!.id
+          : 0,
+      searching: false,
+      truncated: matches.totalMatchCount > matches.matches.length,
+      invalidRegex: matches.invalidRegex,
+      hasZeroLengthMatches: matches.hasZeroLengthMatches,
+      results: [
+        for (final match in matches.matches)
+          TextSearchResult(
+            workspace.workspace!.id,
+            WorkspaceTextMatch(
+              filePath: buffer.filePath,
+              bufferId: buffer.id,
+              digest: digest,
+              relativePath: buffer.displayName,
+              fileKind: resolveWorkspaceDocumentContext(
+                workspace.workspace!,
+                buffer,
+              ).kind,
+              line: document.lineIndex.lineNumberAtOffset(match.fullStart),
+              startOffset: match.fullStart,
+              endOffset: match.fullEnd,
+              query: snapshot.query,
+              lineText: boundedSearchSnippet(
+                document.lineIndex
+                    .lineAt(
+                      document.lineIndex.lineNumberAtOffset(match.fullStart),
+                    )
+                    .text,
+                matchStart:
+                    match.fullStart -
+                    document.lineIndex.offsetForLine(
+                      document.lineIndex.lineNumberAtOffset(match.fullStart),
+                    ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   Future<void> _searchNotes(
     int request,
     WorkspaceState workspace,
@@ -970,6 +1169,22 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       ],
     );
   }
+}
+
+class _DocumentSearchNavigation {
+  const _DocumentSearchNavigation(
+    this.id,
+    this.request,
+    this.workspaceId,
+    this.bufferId,
+    this.revision,
+    this.mode,
+    this.requestRevision,
+  );
+  final int id, revision, requestRevision;
+  final SourceSearchNavigationRequest request;
+  final String workspaceId, bufferId;
+  final DocumentViewModePreference mode;
 }
 
 /// Context plus document identity, revision, view and selection are all required.

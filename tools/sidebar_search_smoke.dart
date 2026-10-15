@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source_highlighter.dart';
@@ -213,6 +214,21 @@ class _DriverState extends ConsumerState<_Driver> {
     stdout.writeln('PASS $message');
   }
 
+  Rect boundsForKey(Key key) {
+    Rect? bounds;
+    void visit(Element element) {
+      if (element.widget.key == key) {
+        final box = element.findRenderObject()! as RenderBox;
+        bounds = box.localToGlobal(Offset.zero) & box.size;
+      } else {
+        element.visitChildren(visit);
+      }
+    }
+
+    WidgetsBinding.instance.rootElement!.visitChildren(visit);
+    return bounds ?? (throw StateError('Missing mounted bounds for $key'));
+  }
+
   Future<void> wait(bool Function() test, String description) async {
     final end = DateTime.now().add(const Duration(seconds: 30));
     while (!test()) {
@@ -320,6 +336,188 @@ class _DriverState extends ConsumerState<_Driver> {
     await query(name);
     check(search.results.isNotEmpty, 'Action $name found');
     await key('enter');
+  }
+
+  Future<void> findReplaceNavigation() async {
+    final original = ref.read(workspaceControllerProvider).activeText;
+    for (final mode in ['source', 'split']) {
+      await ref.read(busyMarkCommandRegistryProvider).execute('view.$mode');
+      await wait(
+        () =>
+            ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.editorState
+                .mode
+                .name ==
+            mode,
+        '$mode view is active',
+      );
+      for (final count in [81, 3000]) {
+        final text =
+            '# Find navigation\n${List.generate(count, (i) => 'needle $i\n').join()}';
+        workspace.updateActiveText(text);
+        await key('ctrl+f');
+        await query('needle');
+        await wait(
+          () => widgets<TextField>().any(
+            (field) =>
+                field.controller is BusyMarkSourceEditingController &&
+                (field.controller! as BusyMarkSourceEditingController)
+                        .searchResult
+                        .totalMatchCount ==
+                    count,
+          ),
+          '$mode $count full match count',
+        );
+        final field = widgets<TextField>().singleWhere(
+          (f) => f.controller is BusyMarkSourceEditingController,
+        );
+        final source = field.controller! as BusyMarkSourceEditingController;
+        final editor =
+            (widgets<BusyMarkSourceEditor>().single.key! as GlobalKey)
+                    .currentState!
+                as BusyMarkSourceEditorState;
+        void press(String tooltip) => widgets<YaruIconButton>()
+            .singleWhere((b) => b.tooltip == tooltip)
+            .onPressed!();
+        Future<void> selected(int index, String expectedText) async {
+          final occurrence = RegExp(
+            'needle',
+          ).allMatches(expectedText).elementAt(index);
+          await wait(
+            () =>
+                source.searchResult.currentMatchIndex == index &&
+                source.fullSelection ==
+                    TextSelection(
+                      baseOffset: occurrence.start,
+                      extentOffset: occurrence.end,
+                    ),
+            '$mode selected occurrence $index',
+          );
+          check(
+            search.results.length <= 80 &&
+                (search.results[search.selected] as TextSearchResult)
+                        .match
+                        .startOffset ==
+                    occurrence.start,
+            '$mode sidebar identifies occurrence $index in a bounded page',
+          );
+          await wait(
+            () => widgets<ListTile>().any(
+              (row) =>
+                  row.key ==
+                      ValueKey(search.results[search.selected].identity) &&
+                  row.selected,
+            ),
+            '$mode selected sidebar row revealed',
+          );
+        }
+
+        Future<void> choose(int index) async {
+          final occurrence = RegExp('needle').allMatches(text).elementAt(index);
+          editor.scrollToSearchRange(
+            line: index + 2,
+            startOffset: occurrence.start,
+            endOffset: occurrence.end,
+          );
+          await selected(index, text);
+        }
+
+        editor.scrollToOffset(0);
+        await wait(
+          () => widgets<BusyMarkCompactIconButton>().any(
+            (button) => button.tooltip == 'Collapse section',
+          ),
+          '$mode first section is visible for folding',
+        );
+        widgets<BusyMarkCompactIconButton>()
+            .firstWhere((button) => button.tooltip == 'Collapse section')
+            .onPressed!();
+        await WidgetsBinding.instance.endOfFrame;
+        check(
+          source.document.hiddenRanges.ranges.isNotEmpty,
+          '$mode search starts with folded content',
+        );
+        press('Previous match');
+        await selected(count - 1, text);
+        check(
+          !source.searchResult.currentMatch!.hidden,
+          '$mode navigation unfolds the actual final occurrence',
+        );
+        press('Next match');
+        await selected(0, text);
+        await choose(79);
+        press('Next match');
+        await selected(80, text);
+        press('Previous match');
+        await selected(79, text);
+        final index = count == 81 ? 80 : 2500;
+        await choose(index);
+        final replacement = widgets<TextField>().singleWhere(
+          (f) => f.key == const ValueKey('source-search-replacement'),
+        );
+        replacement.controller!.text = 'changed';
+        replacement.onChanged!('changed');
+        await WidgetsBinding.instance.endOfFrame;
+        final occurrence = RegExp('needle').allMatches(text).elementAt(index);
+        final modified = text.replaceRange(
+          occurrence.start,
+          occurrence.end,
+          'changed',
+        );
+        press('Replace and find next');
+        await wait(
+          () => source.fullText == modified,
+          '$mode replacement beyond first page',
+        );
+        await selected(count == 81 ? 0 : index, modified);
+        check(
+          RegExp('changed').allMatches(source.fullText).length == 1,
+          '$mode replaces exactly once',
+        );
+        final editable = field.focusNode!.context!
+            .findAncestorStateOfType<EditableTextState>()!
+            .renderEditable;
+        await wait(() {
+          final caret = editable.getLocalRectForCaret(
+            TextPosition(offset: source.selection.extentOffset),
+          );
+          return caret.top >= 0 &&
+              caret.bottom <= editable.size.height &&
+              (mode != 'split' ||
+                  count != 3000 ||
+                  editable.localToGlobal(caret.topLeft).dy >
+                      boundsForKey(
+                        const ValueKey('source-search-replacement'),
+                      ).bottom);
+        }, '$mode replacement caret becomes visible');
+        check(
+          source.fullSelection.extentOffset ==
+              RegExp(
+                'needle',
+              ).allMatches(modified).elementAt(count == 81 ? 0 : index).end,
+          '$mode replacement caret remains visible',
+        );
+        await screenshot('find-replace-$mode-$count');
+        await key('ctrl+z');
+        await wait(() => source.fullText == text, '$mode replacement Undo');
+        await key('ctrl+shift+z');
+        await wait(() => source.fullText == modified, '$mode replacement Redo');
+        await key('escape');
+      }
+    }
+    workspace.updateActiveText(original);
+    await ref.read(busyMarkCommandRegistryProvider).execute('view.source');
+    await wait(
+      () => widgets<TextField>().any(
+        (f) =>
+            f.controller is BusyMarkSourceEditingController &&
+            (f.controller! as BusyMarkSourceEditingController).fullText ==
+                original,
+      ),
+      'restore native workflow document',
+    );
   }
 
   Future<void> run() async {
@@ -512,6 +710,7 @@ class _DriverState extends ConsumerState<_Driver> {
         'Source Ctrl+F uses current-buffer occurrences',
       );
       await key('escape');
+      await findReplaceNavigation();
       workspace.updateActiveText(
         '${ref.read(workspaceControllerProvider).activeText}\n## Unsaved target heading\n',
       );
@@ -877,12 +1076,14 @@ class _DriverState extends ConsumerState<_Driver> {
       await File(
         '${widget.output.path}/measurements.json',
       ).writeAsString(jsonEncode(measurements));
+      // The native runner can return success after SystemNavigator.pop even
+      // when Dart's exitCode was set by an unexpected framework error.
+      if (exitCode != 0) exit(exitCode);
       await SystemNavigator.pop();
     } catch (error, stack) {
       stderr.writeln('$error\n$stack');
       await screenshot('failure');
-      exitCode = 1;
-      await SystemNavigator.pop();
+      exit(1);
     }
   }
 
