@@ -1,3 +1,4 @@
+import 'package:busymark/src/search/search_session.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -362,9 +363,33 @@ class _HarnessState extends ConsumerState<_Harness> {
     }
   }
 
+  SearchSessionState get searchState => ref.read(searchSessionProvider);
+  Future<void> openSidebarSearch(
+    SearchCategory category, {
+    String query = '',
+    String? account,
+    bool recovery = false,
+  }) async {
+    if (account != null &&
+        ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId !=
+            account) {
+      throw StateError('Search account changed.');
+    }
+    final controller = ref.read(searchSessionProvider.notifier);
+    controller.open(
+      category: category,
+      location: category == SearchCategory.text
+          ? (recovery ? SearchLocation.recovery : SearchLocation.workspace)
+          : null,
+    );
+    controller.query(query);
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
   List<T> widgets<T extends Widget>() {
     final result = <T>[];
     void visit(Element e) {
+      if (e.widget is Offstage && (e.widget as Offstage).offstage) return;
       if (e.widget is T) result.add(e.widget as T);
       e.visitChildren(visit);
     }
@@ -770,13 +795,15 @@ class _HarnessState extends ConsumerState<_Harness> {
         return;
       }
     }
-    final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
+    final quick = openSidebarSearch(SearchCategory.documents);
     await wait(
-      () => widgets<QuickOpenDialog>().isNotEmpty,
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
       'quick open dialog',
     );
     widgets<TextField>()
-        .firstWhere((f) => f.decoration?.labelText == 'Quick Open')
+        .firstWhere((f) => f.decoration?.hintText == 'Search Documents…')
         .onChanged!('Workspace desktop');
     await wait(
       () => widgets<ListTile>().any(
@@ -801,13 +828,12 @@ class _HarnessState extends ConsumerState<_Harness> {
           draft.localId,
       'workspaceQuickOpenStableIdentity',
     );
-    final search = showNotesSearch(
-      rootNavigatorKey.currentContext!,
-      ref,
+    final search = openSidebarSearch(
+      SearchCategory.text,
       query: '"alpha beta" category:Workspace',
     );
     await wait(
-      () => widgets<NotesSearchDialog>().isNotEmpty,
+      () => (searchState.active && searchState.category == SearchCategory.text),
       'notes search dialog',
     );
     await wait(
@@ -1466,7 +1492,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.decoration?.labelText == 'Quick Open',
+        (f) => f.decoration?.hintText == 'Search Documents…',
       ),
       search,
     );
@@ -1638,7 +1664,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.decoration?.labelText == 'Quick Open',
+        (f) => f.decoration?.hintText == 'Search Documents…',
       ),
       'References portable target',
     );
@@ -1798,9 +1824,8 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   Future<void> correctionSearch(String query, List<int> counts) async {
-    final searching = showNotesSearch(
-      rootNavigatorKey.currentContext!,
-      ref,
+    final searching = openSidebarSearch(
+      SearchCategory.text,
       account: widget.account.id,
       query: query,
     );
@@ -1808,13 +1833,13 @@ class _HarnessState extends ConsumerState<_Harness> {
       await wait(
         () => widgets<ListView>().any(
           (l) =>
-              l.key == const ValueKey('notes-search-results') &&
+              l.key == const ValueKey('sidebar-search-results') &&
               l.childrenDelegate.estimatedChildCount == count,
         ),
         'correction results $count',
       );
       final list = widgets<ListView>().singleWhere(
-        (l) => l.key == const ValueKey('notes-search-results'),
+        (l) => l.key == const ValueKey('sidebar-search-results'),
       );
       final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
       final keys = <Object>{};
@@ -1831,10 +1856,11 @@ class _HarnessState extends ConsumerState<_Harness> {
       !widgets<Text>().any((t) => t.data == 'Show more results'),
       'correctionSearchNoHiddenFinalOccurrences${counts.last}',
     );
-    Navigator.of(rootNavigatorKey.currentContext!).pop();
+    ref.read(searchSessionProvider.notifier).close();
     await searching;
     await wait(
-      () => widgets<NotesSearchDialog>().isEmpty,
+      () =>
+          (!searchState.active || searchState.category != SearchCategory.text),
       'correction search route closed',
     );
   }
@@ -1890,20 +1916,20 @@ class _HarnessState extends ConsumerState<_Harness> {
         .activeBuffer
         ?.remoteNote
         ?.localId;
-    widgets<TextField>()
-        .firstWhere((f) => f.readOnly && f.decoration?.hintText == 'Search')
-        .onTap!();
+    ref
+        .read(searchSessionProvider.notifier)
+        .open(category: SearchCategory.text, location: SearchLocation.recovery);
     await wait(
-      () => widgets<NotesSearchDialog>().isNotEmpty,
+      () => (searchState.active && searchState.category == SearchCategory.text),
       'correction Recovery Search',
     );
     check(
-      widgets<NotesSearchDialog>().single.recovery,
+      searchState.location == SearchLocation.recovery,
       'correctionRecoverySearchExplicitScope',
     );
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.controller != null && f.decoration?.labelText == 'Search',
+        (f) => f.controller != null && f.decoration?.hintText == 'Search Text…',
       ),
       'retainedcorrectionneedle',
     );
@@ -1918,7 +1944,8 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     widgets<ListTile>().firstWhere(recoveryHit).onTap!();
     await wait(
-      () => widgets<NotesSearchDialog>().isEmpty,
+      () =>
+          (!searchState.active || searchState.category != SearchCategory.text),
       'correction Recovery search route closed',
     );
     await wait(
@@ -2288,10 +2315,11 @@ class _HarnessState extends ConsumerState<_Harness> {
     await capture('workspace-10000-sidebar');
     Future<int> quickSample(String? screenshot) async {
       final watch = Stopwatch()..start();
-      final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
+      final quick = openSidebarSearch(SearchCategory.documents);
       await wait(
         () =>
-            widgets<QuickOpenDialog>().isNotEmpty &&
+            (searchState.active &&
+                searchState.category == SearchCategory.documents) &&
             widgets<ListTile>().any(
               (t) =>
                   t.title is Text &&
@@ -2301,10 +2329,12 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       watch.stop();
       if (screenshot != null) await capture(screenshot);
-      Navigator.of(rootNavigatorKey.currentContext!).pop();
+      ref.read(searchSessionProvider.notifier).close();
       await quick;
       await wait(
-        () => widgets<QuickOpenDialog>().isEmpty,
+        () =>
+            (!searchState.active ||
+            searchState.category != SearchCategory.documents),
         'quick open dismissal before the next sample',
       );
       return watch.elapsedMilliseconds;
@@ -2336,19 +2366,18 @@ class _HarnessState extends ConsumerState<_Harness> {
     await querying;
     check(search.state.hits.isNotEmpty, 'workspaceLargeUiSearchDuringEdit');
     await search.dispose();
-    final dialog = showNotesSearch(
-      rootNavigatorKey.currentContext!,
-      ref,
+    final dialog = openSidebarSearch(
+      SearchCategory.text,
       query: repository.notes.first.title,
     );
     await wait(
       () =>
-          widgets<NotesSearchDialog>().isNotEmpty &&
+          (searchState.active && searchState.category == SearchCategory.text) &&
           widgets<IconButton>().any((b) => b.tooltip == 'Source location'),
       'large indexed search UI',
     );
     await capture('workspace-10000-search');
-    Navigator.of(rootNavigatorKey.currentContext!).pop();
+    ref.read(searchSessionProvider.notifier).close();
     await dialog;
     await File('${widget.output.path}/ui-performance.json').writeAsString(
       jsonEncode({
@@ -2368,10 +2397,15 @@ class _HarnessState extends ConsumerState<_Harness> {
   ) async {
     await workspace.openNextcloudNote(note.localId);
     await nativeShortcut('ctrl+p');
-    await wait(() => widgets<QuickOpenDialog>().isNotEmpty, 'native Ctrl+P');
+    await wait(
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
+      'native Ctrl+P',
+    );
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.decoration?.labelText == 'Quick Open',
+        (f) => f.decoration?.hintText == 'Search Documents…',
       ),
       note.title,
     );
@@ -2384,14 +2418,18 @@ class _HarnessState extends ConsumerState<_Harness> {
     // The imported copy has the same title/category. Capture the selected
     // document identity before Enter instead of guessing from duplicate titles.
     final selectedIdentity = rankQuickOpen(
-      widgets<QuickOpenDialog>().single.documents,
+      searchState.results
+          .whereType<DocumentSearchResult>()
+          .map((r) => r.document)
+          .toList(),
       note.title,
     ).first.localId;
     await capture('workspace-restart-native-quick-open');
     await nativeShortcut('enter');
     await wait(
       () =>
-          widgets<QuickOpenDialog>().isEmpty &&
+          (!searchState.active ||
+              searchState.category != SearchCategory.documents) &&
           ref
                   .read(workspaceControllerProvider)
                   .activeBuffer
@@ -2403,22 +2441,33 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(true, 'nativeCtrlPEnterStableIdentity');
     await nativeShortcut('ctrl+p');
     await wait(
-      () => widgets<QuickOpenDialog>().isNotEmpty,
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
       'Quick Open reopened',
     );
     await nativeShortcut('escape');
-    await wait(() => widgets<QuickOpenDialog>().isEmpty, 'Quick Open Escape');
+    await wait(
+      () =>
+          (!searchState.active ||
+          searchState.category != SearchCategory.documents),
+      'Quick Open Escape',
+    );
     check(true, 'nativeQuickOpenEscape');
     await nativeShortcut('ctrl+shift+p');
     await wait(
       () =>
-          widgets<Text>().any((t) => t.data == 'Command Palette') &&
-          widgets<QuickOpenDialog>().isEmpty,
+          (searchState.active &&
+              searchState.category == SearchCategory.actions) &&
+          (!searchState.active ||
+              searchState.category != SearchCategory.documents),
       'native Ctrl+Shift+P',
     );
     await nativeShortcut('escape');
     await wait(
-      () => !widgets<Text>().any((t) => t.data == 'Command Palette'),
+      () =>
+          !(searchState.active &&
+              searchState.category == SearchCategory.actions),
       'command palette Escape',
     );
     check(true, 'nativeCtrlShiftPCommandPalette');
@@ -2430,8 +2479,13 @@ class _HarnessState extends ConsumerState<_Harness> {
     await file.writeAsString('# Local Markdown\nlocal search smoke');
     await workspace.openFolder(folder.path);
     await workspace.openActiveFile(file.path);
-    final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
-    await wait(() => widgets<QuickOpenDialog>().isNotEmpty, 'local Quick Open');
+    final quick = openSidebarSearch(SearchCategory.documents);
+    await wait(
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
+      'local Quick Open',
+    );
     await wait(
       () => widgets<ListTile>().any(
         (t) => t.title is Text && (t.title as Text).data == 'local',
@@ -2462,10 +2516,11 @@ class _HarnessState extends ConsumerState<_Harness> {
     await workspace.openFolder(writerside.path);
     await workspace.openActiveFile('${writerside.path}/topics/intro.md');
     await localSearchSmoke('Introduction', 'workspace-writerside-search');
-    final writerQuick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
+    final writerQuick = openSidebarSearch(SearchCategory.documents);
     await wait(
       () =>
-          widgets<QuickOpenDialog>().isNotEmpty &&
+          (searchState.active &&
+              searchState.category == SearchCategory.documents) &&
           widgets<ListTile>().any(
             (t) => t.title is Text && (t.title as Text).data == 'install',
           ),
@@ -2495,7 +2550,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await wait(
       () => widgets<TextField>().any(
         (f) =>
-            f.decoration?.hintText == 'Search' &&
+            f.decoration?.hintText == 'Search Text…' &&
             f.onChanged != null &&
             f.controller != null,
       ),
@@ -2504,7 +2559,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     edit(
       widgets<TextField>().lastWhere(
         (f) =>
-            f.decoration?.hintText == 'Search' &&
+            f.decoration?.hintText == 'Search Text…' &&
             f.onChanged != null &&
             f.controller != null,
       ),
@@ -2515,7 +2570,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'local indexed result $query',
     );
     await capture(screenshot);
-    ref.read(workspaceSearchCloseRequestProvider.notifier).request();
+    ref.read(searchSessionProvider.notifier).close();
     check(true, screenshot);
   }
 

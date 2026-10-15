@@ -498,22 +498,32 @@ Read-only notes support favorite changes. Partial results retain successes and
 identify skipped, conflicting or failed notes; resolve conflicts through the
 existing review workflow.
 
-Ctrl+P opens Quick Open for the active workspace. Cached unopened Notes titles
-and categories participate alongside local Markdown/Writerside files in their
-own workspaces. Exact and prefix title matches rank first. Arrow keys choose,
-Enter opens, and Escape dismisses. Ctrl+Shift+P still opens the command palette.
+Ctrl+P opens Documents in the shared search sidebar for the active workspace.
+Cached unopened Notes titles and categories participate within their originating
+account; document search never matches note bodies. Exact and prefix title
+matches rank first. Arrow keys select, Enter opens, and Escape closes search.
+Ctrl+Shift+P opens Actions in the same sidebar. Ctrl+Alt+O searches the shared
+Recent documents and workspaces, including individual offline-created notes.
 
-The sidebar Search control and workspace search use one indexed Notes search
-workflow. Terms combine with AND; quote a phrase, use `title:meeting` or
+Ctrl+F searches the current note's in-memory text. Ctrl+Shift+F and the Notes
+sidebar Search button explicitly choose Text → Current workspace and use the
+existing indexed Notes search. Terms combine with AND; quote a phrase, use `title:meeting` or
 `category:"Work/Team"`, and select Whole word when needed. Ordinary punctuation,
 SQL/FTS operators and wildcard characters are literal. Partial terms, short
 queries, Unicode and decomposed accents are supported. Results include local
 unsynchronized text and overlay dirty open buffers without saving. Results show
 context, individual occurrences, loading/indexing/errors and Show more when
-truncated. Opening a changed result rechecks its revision and content digest and
-relocates the match. The Source location button explicitly selects source for
+truncated. Opening a result rechecks its identity and content digest before
+navigating to the exact occurrence; changed sources require fresh results.
+The Source location button explicitly selects source for
 syntax that the rendered view cannot represent. Remote workspace replacement
 remains disabled. A missing derived index rebuilds without changing notes/outbox.
+
+Welcome offers Nextcloud **New note** and **Browse Notes**. New note creates one
+individual note through the existing offline creation workflow; Browse Notes
+opens ordinary Notes navigation. Without an account, connection settings retain
+the requested operation only until a successful connection or cancellation.
+Opening settings alone does not create a note.
 
 Make available offline retains an individual note or a category and descendants.
 Individual and category requirements are independent and survive restart. Moving
@@ -595,3 +605,18 @@ and opens their recovery preview. Ordinary Notes search excludes these records.
 The preview continues to offer retained Local History revisions and recovery
 as a new note; it does not access server history or trash. Deleted attachments
 retained for recovery do not count as live offline availability.
+
+## Native sidebar search checks
+
+Build the maintained native probe with
+`flutter build linux --release --no-pub -t tools/sidebar_search_smoke.dart`.
+Run the resulting executable on an isolated X11 display, passing an absolute,
+disposable output directory outside the checkout. Add `--large` to exercise 202
+local documents, 10,001 cached notes in the active account and a second offline
+account. The probe uses the application UI, native shortcut delivery and existing
+repository workflows; unexpected Flutter or Dart errors fail the run.
+
+The output directory contains temporary screenshots and timings, including rapid
+query changes, account switching and repeated search opening/closing. It contains
+only generated fixture data. Rebuild the normal Linux release afterward to
+restore the production entry point.

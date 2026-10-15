@@ -1,30 +1,87 @@
 # Search and replace
 
-Press **Ctrl+F**, choose **Search**, or use the command palette to search the
-open workspace. For local Markdown and Writerside workspaces, the search controls
-use the same query and options for the active document and workspace results.
+Search uses one query field in the header and one results sidebar. The labelled
+**Search** dropdown above the results selects a category. Normal Files, Topics,
+Notes and other browsing remain available when search closes. At narrow window
+sizes the same sidebar temporarily overlays the leading side of the document.
 
-## Quick Open and Notes search
+| Category | Scope | Shortcut |
+| --- | --- | --- |
+| Text | Current document | Ctrl+F |
+| Text | Current workspace | Ctrl+Shift+F |
+| Outline | Headings in the current document | Ctrl+3 |
+| Documents | Names, paths or Notes titles/categories in the active workspace | Ctrl+P |
+| Topics | Topics across the current Writerside project, including outside the selected TOC | Ctrl+Shift+T |
+| Recent | Recent individual documents and workspaces | Ctrl+Alt+O |
+| Actions | Application commands, including commands without shortcuts | Ctrl+Shift+P |
 
-**Ctrl+P** opens Quick Open for titles and local paths or Notes categories.
-Exact/prefix title matches appear first. Use the arrow keys and Enter to open a
-result, or Escape to dismiss; **Ctrl+Shift+P** remains the command palette.
+Categories appear in that order; unavailable categories are omitted. Welcome
+provides Recent and Actions. Retained documents behind Welcome are not search
+or action targets. There is no combined category or search-results dialog.
+**Ctrl+Alt+K** continues to open the existing Keyboard Shortcuts dialog.
 
-In a Nextcloud Notes workspace, the sidebar search and workspace Search action
-open the same indexed search dialog, including unopened cached notes, saved
-pending edits, and unsaved open buffers. Terms use AND; quotes match phrases,
+The Search icon toggles search and restores the last applicable category.
+A category shortcut always opens its designated category and focuses the query;
+Ctrl+F always chooses the current document, even after using Actions or opening
+a Nextcloud note. Queries remain separate for each category and Text location
+within the window session. They are not saved to settings or recovery metadata.
+The clear button clears the query. Escape closes an open popup first, then
+closes search and restores valid editing/navigation focus. Closing search also
+restores the previous sidebar destination and visibility for the current workspace.
+
+Up and Down select a result without opening it. Enter activates the highlighted
+result; Tab and Shift+Tab traverse controls. Disabled or stale Actions do not
+execute a different result. Document formatting actions use the editor selection
+captured before the query received focus and reject a changed target.
+Save, Export and workspace actions also validate their original resource.
+Existing Notes synchronization, folder/file import and export workflows are
+available through Actions when their Notes workspace is active.
+
+## Text locations and Notes syntax
+
+**Location: Current document** searches the live buffer, including unsaved text,
+untitled Markdown and individual Nextcloud notes. **Current workspace** explicitly
+widens the scope to the known local file inventory or active Notes account. An
+unrelated external tab does not enlarge the local workspace scope. Text results
+are occurrences; filename discovery belongs to Documents.
+
+For Nextcloud workspace text, the existing local Notes index includes cached,
+unopened notes and dirty-buffer overlays. Terms use AND; quotes match phrases,
 `title:` restricts a term to the title, and `category:` restricts the category.
-For example, `"alpha beta" café category:"Work/子"` combines all three restrictions.
-Whole word is optional. Ordinary punctuation and technical identifiers are
-literal; Notes search does not expose regular-expression or FTS operators.
+For example, `"alpha beta" café category:"Work/子"` combines these restrictions.
+Whole word is optional. The Notes workspace provider does not expose regex or
+case controls. Current-document Notes text uses the normal buffer matching rules.
+Documents searches note titles and categories, never note bodies.
 
-Results show contextual highlights. Select a result to navigate in the current
-view where supported, or choose its source-location action for Markdown syntax
-that has no rendered counterpart. Changed documents are checked before applying
-stored offsets. Loading/indexing, errors, empty results, and **Show more** are
-explicit. Workspace-wide replacement remains unavailable for Notes.
+Loading/indexing, empty results, errors, skipped files and incomplete results are
+shown in the sidebar. **Show more results** extends a bounded search. Activating
+a text result validates its resource and source digest before applying exact
+coordinates. A changed source requires a fresh result. A Notes result also has
+an explicit source-location action for content without a rendered counterpart.
+Recovery Search uses this same sidebar with **Location: Recovery** and opens the
+existing recovery preview. Recovery records stay outside ordinary searches.
 
-The remaining sections describe local workspace search and replacement.
+## Outline, Topics and Recent
+
+An empty Outline query shows the normal outline. Filtering retains matching
+headings and their ancestors, in document order. Navigation and section actions
+use the existing outline identities and full structure, including unsaved headings.
+Topics searches source titles, topic IDs, filenames and project-relative paths
+across modules. Rows distinguish module ownership and open the actual topic.
+
+Recent has separate **Recent documents** and **Recent workspaces** sections,
+with up to twelve entries each. Explicit successful openings move resources to
+the top. Local topics retain their project owner; individual Notes use the
+originating account and stable local note identity, including offline-created
+notes that later receive a server ID. Removing or clearing Recent only removes
+navigation metadata. Missing resources produce feedback rather than opening a
+similarly named document. Removing an account removes its Recent metadata.
+
+On Welcome, **New note** creates one Nextcloud note through the existing offline
+creation workflow; **Browse Notes** opens normal Notes navigation. Both identify
+the Nextcloud destination. Without an account they enter connection settings;
+a successful connection resumes the requested operation, while cancellation or
+changing context cancels it. Merely opening settings does not create a note.
 
 ## Search options
 
@@ -49,13 +106,13 @@ These commands edit the current in-memory document. They do not save it
 immediately unless autosave is enabled, and they participate in normal undo and
 save behavior.
 
-Editor and Reading views show workspace search results and navigate to matching
+Editor and Reading views show sidebar search results and navigate to matching
 content, but the active-document replacement controls are available in Source
 or Split view.
 
 ## Workspace search
 
-The sidebar groups matches by file. Selecting a result opens that document and
+The sidebar shows occurrences with their file and line. Selecting a result opens that document and
 navigates to the matching source. Workspace search covers supported text files
 already known to the open workspace, including Markdown, Writerside Markdown
 and XML topics, trees, configuration, variables, categories, `.gitignore`, and

@@ -1,0 +1,892 @@
+// Native Linux search workflows with disposable files and a cached offline
+// Notes account. All artifacts and navigation history stay in PRIVATE_OUTPUT.
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:busymark/src/app/app_router.dart';
+import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/startup_path.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/editor/source_highlighter.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/local_history/local_history_controller.dart';
+import 'package:busymark/src/local_history/local_history_store.dart';
+import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
+import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
+import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
+import 'package:busymark/src/search/search_session.dart';
+import 'package:busymark/src/search/welcome_notes_action.dart';
+import 'package:busymark/src/workspace/recovery_persistence.dart';
+import 'package:busymark/src/workspace/session_persistence.dart';
+import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:yaru/yaru.dart';
+
+Future<void> main(List<String> args) async {
+  if (args.isEmpty ||
+      args.length > 2 ||
+      args.length == 2 && args.last != '--large') {
+    throw ArgumentError('PRIVATE_OUTPUT [--large]');
+  }
+  final large = args.length == 2;
+  WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    exitCode = 1;
+  };
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
+    stderr.writeln('$error\n$stack');
+    exitCode = 1;
+    return true;
+  };
+  await windowManager.ensureInitialized();
+  await YaruWindow.ensureInitialized();
+  await windowManager.setSize(const Size(1100, 850));
+  final output = await Directory(args.first).create(recursive: true);
+  final store = await NotesStore.open(path: '${output.path}/notes.sqlite3');
+  const account = '123e4567-e89b-42d3-a456-426614174000';
+  await store.saveAccount(
+    NextcloudAccount(
+      id: account,
+      server: Uri.parse('https://offline.example.invalid'),
+      loginName: 'cached-fixture',
+      appVersion: '6.1.0',
+    ),
+  );
+  await store.saveNote(
+    const NextcloudNote(
+      localId: '223e4567-e89b-42d3-a456-426614174000',
+      accountId: account,
+      title: 'Cached individual note',
+      category: 'Work/Offline',
+      content: 'cached needle in an unopened note',
+      revision: 1,
+      ackRevision: 1,
+    ),
+  );
+  await store.saveAccount(
+    NextcloudAccount(
+      id: '423e4567-e89b-42d3-a456-426614174001',
+      server: Uri.parse('https://other-offline.example.invalid'),
+      loginName: 'other-cached-fixture',
+      appVersion: '6.1.0',
+    ),
+  );
+  await store.saveNote(
+    const NextcloudNote(
+      localId: '523e4567-e89b-42d3-a456-426614174001',
+      accountId: '423e4567-e89b-42d3-a456-426614174001',
+      title: 'Cached individual note',
+      category: 'Work/Offline',
+      content: 'other account confidential needle',
+      revision: 1,
+      ackRevision: 1,
+    ),
+  );
+  if (large) {
+    for (var batch = 0; batch < 10000; batch += 100) {
+      await store.commit(
+        notes: [
+          for (var i = batch; i < batch + 100; i++)
+            NextcloudNote(
+              localId:
+                  '323e4567-e89b-42d3-a456-${i.toString().padLeft(12, '0')}',
+              accountId: account,
+              serverId: i + 1,
+              title: 'Duplicate ${i % 250}',
+              category: 'Area ${i % 20}/Group ${i % 71}',
+              content: List.generate(
+                14,
+                (line) =>
+                    'Row $line: café 中文 日本語 Привет مرحبا Ελληνικά. '
+                    'Independent alpha beta record-$i corpus-token${i % 97}.',
+              ).join('\n'),
+              revision: 1,
+              ackRevision: 1,
+            ),
+        ],
+      );
+    }
+  }
+  final repository = NotesRepository(
+    store: store,
+    clientForAccount: (_) async => throw const NotesException(
+      NotesFailureCode.network,
+      'Offline fixture',
+      scope: NotesRequestScope.account,
+    ),
+  );
+  await repository.initialize();
+  runApp(
+    ProviderScope(
+      overrides: [
+        startupPathProvider.overrideWithValue(null),
+        localSettingsStoreProvider.overrideWithValue(_Settings()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+        localHistoryStoreProvider.overrideWithValue(
+          FileLocalHistoryStore(
+            rootDirectory: () async => Directory('${output.path}/history'),
+          ),
+        ),
+        nextcloudNotesRepositoryProvider.overrideWith(
+          (ref) async => repository,
+        ),
+      ],
+      child: _Driver(output, repository, large),
+    ),
+  );
+}
+
+class _Settings implements LocalSettingsStore {
+  Map<String, Object?> value = AppSettings.defaults()
+      .copyWith(
+        localeTag: 'en',
+        themeModePreference: BusyMarkThemeModePreference.light,
+        autoSave: false,
+        automaticSpelling: false,
+        reopenPreviousWorkspaceOnStartup: false,
+        confirmCloseWithUnsavedChanges: false,
+      )
+      .toJson();
+  @override
+  Future<Map<String, Object?>> load() async => value;
+  @override
+  Future<void> save(Map<String, Object?> json) async => value = json;
+}
+
+class _Driver extends ConsumerStatefulWidget {
+  const _Driver(this.output, this.repository, this.large);
+  final Directory output;
+  final NotesRepository repository;
+  final bool large;
+  @override
+  ConsumerState<_Driver> createState() => _DriverState();
+}
+
+class _DriverState extends ConsumerState<_Driver> {
+  final boundary = GlobalKey();
+  final measurements = <String, Object?>{};
+  double _textScale = 1;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(run()));
+  }
+
+  @override
+  Widget build(BuildContext context) => MediaQuery(
+    data: MediaQueryData.fromView(
+      View.of(context),
+    ).copyWith(textScaler: TextScaler.linear(_textScale)),
+    child: RepaintBoundary(key: boundary, child: const BusyMarkApp()),
+  );
+  SearchSessionState get search => ref.read(searchSessionProvider);
+  WorkspaceController get workspace =>
+      ref.read(workspaceControllerProvider.notifier);
+  List<T> widgets<T extends Widget>() {
+    final result = <T>[];
+    void visit(Element e) {
+      if (e.widget is Offstage && (e.widget as Offstage).offstage) return;
+      if (e.widget is T) result.add(e.widget as T);
+      e.visitChildren(visit);
+    }
+
+    WidgetsBinding.instance.rootElement!.visitChildren(visit);
+    return result;
+  }
+
+  void check(bool value, String message) {
+    if (!value) throw StateError(message);
+    stdout.writeln('PASS $message');
+  }
+
+  Future<void> wait(bool Function() test, String description) async {
+    final end = DateTime.now().add(const Duration(seconds: 30));
+    while (!test()) {
+      if (DateTime.now().isAfter(end)) {
+        throw StateError('Timed out: $description; ${search.error}');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+    }
+  }
+
+  Future<void> key(String key) async {
+    final focusRequest = search.focusRequest;
+    await windowManager.focus();
+    final result = await Process.run(
+      'python3',
+      ['tools/nextcloud_notes_native_key.py', key],
+      environment: {'BUSYMARK_NATIVE_ACCEPTANCE': '1'},
+    );
+    check(result.exitCode == 0, 'native $key delivery');
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    if (const {
+      'ctrl+f',
+      'ctrl+shift+f',
+      'ctrl+3',
+      'ctrl+p',
+      'ctrl+shift+t',
+      'ctrl+alt+o',
+      'ctrl+shift+p',
+    }.contains(key)) {
+      check(
+        search.focusRequest == focusRequest + 1,
+        'native $key opens search exactly once '
+        '($focusRequest → ${search.focusRequest})',
+      );
+    }
+  }
+
+  Future<void> query(String text) async {
+    await wait(
+      () => widgets<TextField>().any(
+        (f) =>
+            f.decoration?.hintText?.startsWith('Search ') == true &&
+            f.onChanged != null,
+      ),
+      'shared header query mounted',
+    );
+    changeQuery(text);
+    await wait(() => !search.searching, 'query $text');
+    check(search.error == null, 'query $text completed without error');
+  }
+
+  void changeQuery(String text) {
+    final field = widgets<TextField>().singleWhere(
+      (f) =>
+          f.decoration?.hintText?.startsWith('Search ') == true &&
+          f.onChanged != null,
+    );
+    field.controller!.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    field.onChanged!(text);
+  }
+
+  Future<void> rapidChanges(String label, String finalQuery) async {
+    for (var i = 0; i < 20; i++) {
+      changeQuery('rapid-$i');
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    final settled = Stopwatch()..start();
+    await query(finalQuery);
+    measurements['${label}AfterRapidChangesMicroseconds'] =
+        settled.elapsedMicroseconds;
+    changeQuery('$finalQuery stale');
+    await Future<void>.delayed(const Duration(milliseconds: 140));
+    final cancelled = Stopwatch()..start();
+    await key('ctrl+shift+p');
+    await query('Bold');
+    measurements['${label}SwitchToActionsMicroseconds'] =
+        cancelled.elapsedMicroseconds;
+    check(
+      search.category == SearchCategory.actions &&
+          search.results.every((r) => r is ActionSearchResult),
+      'no stale $label results after category switch',
+    );
+    await key('ctrl+shift+f');
+    await query(finalQuery);
+    await writeMeasurements();
+  }
+
+  Future<void> screenshot(String name) async {
+    await WidgetsBinding.instance.endOfFrame;
+    final render =
+        boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    final image = await render.toImage();
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    await File(
+      '${widget.output.path}/$name.png',
+    ).writeAsBytes(bytes!.buffer.asUint8List());
+    image.dispose();
+  }
+
+  Future<void> action(String name) async {
+    await key('ctrl+shift+p');
+    await query(name);
+    check(search.results.isNotEmpty, 'Action $name found');
+    await key('enter');
+  }
+
+  Future<void> run() async {
+    try {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      check(
+        ref.read(appRouterProvider).routeInformationProvider.value.uri.path ==
+            '/',
+        'Welcome visible',
+      );
+      await key('ctrl+alt+o');
+      await query('');
+      check(search.category == SearchCategory.recent, 'Welcome Recent sidebar');
+      await screenshot('welcome-recent');
+      await key('escape');
+      final folder = await Directory(
+        '${widget.output.path}/documents',
+      ).create();
+      final file = File('${folder.path}/a.md');
+      await file.writeAsString(
+        '# Title\n\nFormatting target\n\nscope needle alpha\n',
+      );
+      await File(
+        '${folder.path}/b.md',
+      ).writeAsString('# Other\n\nscope needle beta\n');
+      if (widget.large) {
+        for (var i = 0; i < 200; i++) {
+          await File('${folder.path}/corpus-$i.md').writeAsString(
+            '# Corpus $i\n\n${List.generate(40, (line) => 'Paragraph $line: representative local content café 中文 '
+                'corpus-token${i % 97} alpha beta gamma delta.').join('\n\n')}',
+          );
+        }
+      }
+      await workspace.openFolder(folder.path);
+      await workspace.openActiveFile(file.path);
+      ref.read(appRouterProvider).go('/workspace');
+      await wait(
+        () => widgets<TextField>().any(
+          (f) =>
+              f.controller is BusyMarkWysiwygTextController &&
+              f.controller!.text == 'Formatting target',
+        ),
+        'Editor ready',
+      );
+      final field = widgets<TextField>().singleWhere(
+        (f) =>
+            f.controller is BusyMarkWysiwygTextController &&
+            f.controller!.text == 'Formatting target',
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 10,
+      );
+      await WidgetsBinding.instance.endOfFrame;
+      await action('Bold');
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('**Formatting**'),
+        'Editor Bold uses captured text',
+      );
+      await key('ctrl+z');
+      await wait(
+        () => !ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('**Formatting**'),
+        'Editor Undo',
+      );
+      await key('ctrl+shift+z');
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('**Formatting**'),
+        'Editor Redo',
+      );
+      check(await workspace.saveActive(), 'save formatting');
+      check(
+        (await file.readAsString()).contains('**Formatting**'),
+        'formatting persisted',
+      );
+      await key('ctrl+f');
+      await query('scope needle');
+      check(
+        search.location == SearchLocation.document &&
+            search.results.length == 1,
+        'Ctrl+F document-only',
+      );
+      await key('ctrl+shift+f');
+      await query('scope needle');
+      check(search.results.length == 2, 'Ctrl+Shift+F workspace');
+      final beforeArrowing = ref.read(workspaceControllerProvider);
+      await key('down');
+      check(
+        search.selected == 1 &&
+            ref.read(workspaceControllerProvider).activeBufferId ==
+                beforeArrowing.activeBufferId &&
+            ref.read(workspaceControllerProvider).activeText ==
+                beforeArrowing.activeText,
+        'arrow selection does not open or edit a document',
+      );
+      final queryFocus = FocusManager.instance.primaryFocus;
+      await key('tab');
+      check(
+        FocusManager.instance.primaryFocus != queryFocus,
+        'Tab leaves the query',
+      );
+      await key('shift+tab');
+      check(
+        FocusManager.instance.primaryFocus == queryFocus,
+        'Shift+Tab returns to the query',
+      );
+      await key('enter');
+      await wait(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+            '${folder.path}/b.md',
+        'Enter activates the selected text occurrence',
+      );
+      final samples = <int>[];
+      for (var i = 0; i < 10; i++) {
+        final watch = Stopwatch()..start();
+        await query(
+          widget.large
+              ? (i.isEven ? 'corpus-token42' : 'corpus-token17')
+              : (i.isEven ? 'needle' : 'scope'),
+        );
+        samples.add(watch.elapsedMicroseconds);
+      }
+      measurements['localSearchMicrosecondsIncludingDebounce'] = samples;
+      measurements['localDocumentCount'] = widget.large ? 202 : 2;
+      await writeMeasurements();
+      await screenshot('local-search-light');
+      await rapidChanges('local', 'scope needle');
+      await key('ctrl+p');
+      await query('beta');
+      check(
+        search.results.isEmpty,
+        'Documents excludes body-only local matches',
+      );
+      await query('b.md');
+      check(
+        search.results.single is DocumentSearchResult,
+        'Documents path ranking',
+      );
+      await key('enter');
+      await wait(
+        () =>
+            ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.filePath
+                ?.endsWith('b.md') ==
+            true,
+        'Documents Enter opens file',
+      );
+      await workspace.openActiveFile(file.path);
+      await key('ctrl+shift+2');
+      await wait(
+        () => widgets<BusyMarkSourceEditor>().isNotEmpty,
+        'Source mode',
+      );
+      final sourceField = widgets<TextField>().singleWhere(
+        (f) => f.controller is BusyMarkSourceEditingController,
+      );
+      sourceField.focusNode!.requestFocus();
+      final source = ref.read(workspaceControllerProvider).activeText;
+      final offset = source.indexOf('target');
+      sourceField.controller!.selection = TextSelection(
+        baseOffset: offset,
+        extentOffset: offset + 6,
+      );
+      await action('Italic');
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('*target*'),
+        'Source action uses captured selection',
+      );
+      check(await workspace.saveActive(), 'Source formatting saved');
+      await key('ctrl+f');
+      await query('target');
+      check(
+        search.location == SearchLocation.document &&
+            search.results.every((r) => r is TextSearchResult),
+        'Source Ctrl+F uses current-buffer occurrences',
+      );
+      await key('escape');
+      workspace.updateActiveText(
+        '${ref.read(workspaceControllerProvider).activeText}\n## Unsaved target heading\n',
+      );
+      await key('ctrl+3');
+      await query('Unsaved target');
+      await wait(
+        () => widgets<Text>().any((t) => t.data == 'Unsaved target heading'),
+        'unsaved Outline heading',
+      );
+      await key('enter');
+      await key('escape');
+      check(await workspace.saveActive(), 'save outline edit');
+      ref.read(appRouterProvider).go('/');
+      await WidgetsBinding.instance.endOfFrame;
+      await key('ctrl+alt+o');
+      await query('a.md');
+      await key('enter');
+      await wait(
+        () =>
+            ref
+                .read(appRouterProvider)
+                .routeInformationProvider
+                .value
+                .uri
+                .path ==
+            '/workspace',
+        'Recent local reopen',
+      );
+      check(
+        ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+            file.path,
+        'Recent document identity',
+      );
+      ref.read(appRouterProvider).go('/');
+      await WidgetsBinding.instance.endOfFrame;
+      final browse = widgets<ListTile>()
+          .where(
+            (t) => t.title is Text && (t.title as Text).data == 'Browse Notes',
+          )
+          .firstOrNull;
+      // Welcome uses BusyMark action rows, so invoke the registered command.
+      await ref.read(busyMarkCommandRegistryProvider).execute('notes.browse');
+      await wait(
+        () => ref.read(workspaceControllerProvider).workspace?.isRemote == true,
+        'Browse Notes',
+      );
+      check(
+        browse == null || browse.onTap != null,
+        'Notes navigation available',
+      );
+      await workspace.openNextcloudNote('223e4567-e89b-42d3-a456-426614174000');
+      await key('ctrl+f');
+      await query('cached needle');
+      check(
+        search.location == SearchLocation.document &&
+            search.results.single is TextSearchResult &&
+            (search.results.single as TextSearchResult).match.bufferId ==
+                ref.read(workspaceControllerProvider).activeBufferId,
+        'Notes Ctrl+F searches only the active in-memory note',
+      );
+      await key('ctrl+shift+f');
+      final noteSamples = <int>[];
+      for (var i = 0; i < 10; i++) {
+        final watch = Stopwatch()..start();
+        await query(
+          widget.large
+              ? (i.isEven ? 'corpus-token42' : 'category:"Area 7"')
+              : (i.isEven ? 'cached needle' : 'category:Offline'),
+        );
+        noteSamples.add(watch.elapsedMicroseconds);
+      }
+      measurements['cachedNotesMicrosecondsIncludingDebounce'] = noteSamples;
+      measurements['cachedNoteCount'] = widget.repository.notes
+          .where((n) => n.accountId == '123e4567-e89b-42d3-a456-426614174000')
+          .length;
+      await writeMeasurements();
+      await query('cached needle');
+      check(
+        search.results.whereType<NoteSearchResult>().isNotEmpty,
+        'cached Notes occurrences',
+      );
+      await rapidChanges('notes', 'cached needle');
+      changeQuery(widget.large ? 'corpus-token42' : 'cached needle');
+      await Future<void>.delayed(const Duration(milliseconds: 140));
+      check(
+        await workspace.openNextcloudWorkspace(
+          '423e4567-e89b-42d3-a456-426614174001',
+        ),
+        'switch account during Notes search',
+      );
+      await query('confidential');
+      check(
+        search.results.whereType<NoteSearchResult>().every(
+          (r) => r.accountId == '423e4567-e89b-42d3-a456-426614174001',
+        ),
+        'Notes results remain in the new account',
+      );
+      await key('escape');
+      final otherIds = widget.repository.notes
+          .where((n) => n.accountId == '423e4567-e89b-42d3-a456-426614174001')
+          .map((n) => n.localId)
+          .toSet();
+      final otherNotes = widget.repository.notes
+          .where((n) => n.accountId == '423e4567-e89b-42d3-a456-426614174001')
+          .length;
+      await action('New note');
+      await wait(
+        () =>
+            widget.repository.notes
+                .where(
+                  (n) => n.accountId == '423e4567-e89b-42d3-a456-426614174001',
+                )
+                .length ==
+            otherNotes + 1,
+        'Actions New Note retains the active account',
+      );
+      final createdOther = widget.repository.notes.singleWhere(
+        (n) =>
+            n.accountId == '423e4567-e89b-42d3-a456-426614174001' &&
+            !otherIds.contains(n.localId),
+      );
+      await wait(
+        () =>
+            ref
+                    .read(workspaceControllerProvider)
+                    .activeBuffer
+                    ?.remoteNote
+                    ?.localId ==
+                createdOther.localId &&
+            !ref.read(welcomeNotesActionProvider.notifier).busy,
+        'new note is open in its originating account',
+      );
+      check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.remoteNote
+                ?.accountId ==
+            '423e4567-e89b-42d3-a456-426614174001',
+        'created note belongs to the explicit active account',
+      );
+      check(
+        await workspace.openNextcloudWorkspace(
+          '123e4567-e89b-42d3-a456-426614174000',
+        ),
+        'return to original Notes account',
+      );
+      await key('ctrl+shift+f');
+      await query('confidential');
+      check(
+        search.results.isEmpty,
+        'previous account results cannot cross accounts',
+      );
+      await query('cached needle');
+      await key('ctrl+p');
+      await query('needle');
+      check(search.results.isEmpty, 'Documents excludes note-body matches');
+      await key('escape');
+      ref.read(appRouterProvider).go('/');
+      await WidgetsBinding.instance.endOfFrame;
+      final before = widget.repository.notes.length;
+      await ref.read(busyMarkCommandRegistryProvider).execute('notes.create');
+      await wait(
+        () => widget.repository.notes.length == before + 1,
+        'New Note exactly once',
+      );
+      check(
+        ref
+                .read(appSettingsControllerProvider)
+                .recentWorkspaces
+                .where(
+                  (r) =>
+                      r.localId ==
+                      ref
+                          .read(workspaceControllerProvider)
+                          .activeBuffer
+                          ?.remoteNote
+                          ?.localId,
+                )
+                .length ==
+            1,
+        'offline note Recent identity',
+      );
+      check(await workspace.saveActive(), 'offline note durable');
+      ref.read(appRouterProvider).go('/');
+      await WidgetsBinding.instance.endOfFrame;
+      await key('ctrl+alt+o');
+      await query('Cached individual');
+      await key('enter');
+      await wait(
+        () =>
+            ref
+                .read(appRouterProvider)
+                .routeInformationProvider
+                .value
+                .uri
+                .path ==
+            '/workspace',
+        'Recent individual note reopen',
+      );
+      check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.remoteNote
+                ?.localId ==
+            '223e4567-e89b-42d3-a456-426614174000',
+        'Recent exact account-qualified note',
+      );
+      final project = Directory('${widget.output.path}/writerside');
+      await project.create();
+      final copied = await Process.run('cp', [
+        '-a',
+        'test/fixtures/writerside/basic_project/.',
+        project.path,
+      ]);
+      check(copied.exitCode == 0, 'disposable Writerside project');
+      final hidden = File('${project.path}/topics/outside-search.topic');
+      await hidden.writeAsString(
+        '<topic id="outside-search" title="Outside Search Topic"><p>semantic selection</p></topic>',
+      );
+      await workspace.openFolder(project.path);
+      await key('ctrl+shift+t');
+      await query('Outside Search Topic');
+      check(
+        search.category == SearchCategory.topics &&
+            search.results.single is TopicSearchResult,
+        'topic outside selected TOC',
+      );
+      check(
+        (search.results.single as TopicSearchResult).path == hidden.path,
+        'actual topic identity',
+      );
+      await key('enter');
+      await wait(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+            hidden.path,
+        'topic activation',
+      );
+      await key('ctrl+shift+1');
+      await wait(
+        () => widgets<TextField>().any(
+          (f) =>
+              f.controller is BusyMarkWysiwygTextController &&
+              f.controller!.text == 'semantic selection',
+        ),
+        'XML Editor ready',
+      );
+      final semantic = widgets<TextField>().singleWhere(
+        (f) =>
+            f.controller is BusyMarkWysiwygTextController &&
+            f.controller!.text == 'semantic selection',
+      );
+      semantic.focusNode!.requestFocus();
+      semantic.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 8,
+      );
+      await WidgetsBinding.instance.endOfFrame;
+      await action('UI Control');
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('<control>semantic</control>'),
+        'typed Writerside semantic action',
+      );
+      await key('ctrl+z');
+      await wait(
+        () => !ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('<control>semantic</control>'),
+        'semantic Undo',
+      );
+      await key('ctrl+shift+z');
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('<control>semantic</control>'),
+        'semantic Redo',
+      );
+      check(await workspace.saveActive(), 'semantic save');
+      check(
+        (await hidden.readAsString()).contains('<control>semantic</control>'),
+        'semantic serialization persisted',
+      );
+      final savedId = ref.read(workspaceControllerProvider).activeBufferId!;
+      check(await workspace.closeDocumentBuffer(savedId), 'close saved topic');
+      check(
+        await workspace.openActiveFile(hidden.path),
+        'reopen saved topic with project context',
+      );
+      check(
+        ref.read(workspaceControllerProvider).workspace?.writersideProject !=
+            null,
+        'project owner preserved',
+      );
+      // Add this previously orphaned source to the disposable publication only
+      // after proving Topics can find it outside the TOC.
+      final tree = File('${project.path}/user-guide.tree');
+      await tree.writeAsString(
+        (await tree.readAsString()).replaceFirst(
+          '</instance-profile>',
+          '<toc-element topic="outside-search.topic"/></instance-profile>',
+        ),
+      );
+      await screenshot('writerside-semantic-action');
+      await key('ctrl+alt+k');
+      await wait(
+        () => widgets<Text>().any((t) => t.data == 'Keyboard Shortcuts'),
+        'unchanged Keyboard Shortcuts modal',
+      );
+      await screenshot('keyboard-shortcuts');
+      await key('escape');
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setThemeModePreference(BusyMarkThemeModePreference.dark);
+      await key('ctrl+shift+p');
+      await query('Bold');
+      await screenshot('search-dark');
+      await windowManager.setSize(const Size(600, 800));
+      await wait(
+        () =>
+            View.of(context).physicalSize.width /
+                View.of(context).devicePixelRatio <
+            700,
+        'narrow window size',
+      );
+      await screenshot('search-narrow');
+      setState(() => _textScale = 1.6);
+      await screenshot('search-scaled');
+      await ref.read(appSettingsControllerProvider.notifier).setLocaleTag('ar');
+      ref.read(searchSessionProvider.notifier).query('');
+      await wait(() => !search.searching, 'RTL action results');
+      await screenshot('search-rtl');
+      await ref.read(appSettingsControllerProvider.notifier).setLocaleTag('en');
+      setState(() => _textScale = 1);
+      await WidgetsBinding.instance.endOfFrame;
+      await key('escape');
+      measurements['rssBeforeThirtyOpenCloseCycles'] = ProcessInfo.currentRss;
+      final cycles = Stopwatch()..start();
+      for (var cycle = 0; cycle < 30; cycle++) {
+        await key('ctrl+shift+p');
+        await query(cycle.isEven ? 'Bold' : 'Italic');
+        await key('escape');
+      }
+      measurements['thirtyOpenCloseCyclesMicroseconds'] =
+          cycles.elapsedMicroseconds;
+      await Future<void>.delayed(const Duration(seconds: 2));
+      check(
+        !search.active &&
+            search.results.isEmpty &&
+            ref.read(searchSessionProvider.notifier).commandTarget == null,
+        'closed search releases results and command targets',
+      );
+      measurements['rssAfterThirtyOpenCloseCycles'] = ProcessInfo.currentRss;
+      measurements['rssBytes'] = ProcessInfo.currentRss;
+      measurements['maximumRssBytes'] = ProcessInfo.maxRss;
+      stdout.writeln(jsonEncode(measurements));
+      await File(
+        '${widget.output.path}/measurements.json',
+      ).writeAsString(jsonEncode(measurements));
+      await SystemNavigator.pop();
+    } catch (error, stack) {
+      stderr.writeln('$error\n$stack');
+      await screenshot('failure');
+      exitCode = 1;
+      await SystemNavigator.pop();
+    }
+  }
+
+  Future<void> writeMeasurements() => File(
+    '${widget.output.path}/measurements.json',
+  ).writeAsString(jsonEncode(measurements));
+}

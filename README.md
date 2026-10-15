@@ -202,17 +202,17 @@ BusyMark can open a **Nextcloud Notes** workspace alongside its local Markdown a
 ### Connect your account
 
 1. Ensure the **Notes** app is enabled on your Nextcloud server.
-2. On BusyMark’s welcome screen, choose **Nextcloud Notes**. You can also open **Settings → Nextcloud Notes**.
+2. On BusyMark’s welcome screen, choose **Browse Notes** or **New note** (both Nextcloud actions). You can also open **Settings → Nextcloud Notes**.
 3. Enter the full **HTTPS** address of your Nextcloud server and click **Connect**.
 4. Complete authorization in your default web browser. BusyMark verifies Notes compatibility and opens the note workspace.
 
-Once connected, select **Nextcloud Notes** on the welcome screen to reopen the workspace. Use **Settings → Nextcloud Notes** to open it, reconnect, or disconnect the account. **One Nextcloud account can be connected at a time.**
+Once connected, select **Browse Notes** on Welcome to reopen normal Notes navigation, or **New note** to create and open one note. Individual notes also reopen through Recent or Documents search. Use **Settings → Nextcloud Notes** to open it, reconnect, or disconnect the account. **One Nextcloud account can be connected at a time.**
 
 ### Work with notes
 
 * **Create and edit:** Create notes from the Notes sidebar and edit them using the normal Markdown editor. Use each note’s menu to change its title, category, or favorite status, save a separate local copy, or delete the note.
 * **Find and organize:** Use All notes, Favorites, Uncategorized, Recovery, or a category and its descendants. Sort by activity or title. Ctrl-click toggles selection, Shift-click selects a range, and Ctrl+A selects the current list; the selected-notes action reviews batch favorite/category changes and reports partial outcomes.
-* **Quick Open and search:** Ctrl+P finds titles/categories, including unopened cached notes; Ctrl+Shift+P opens the command palette. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, whole words, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
+* **Sidebar search:** Ctrl+P searches Documents by titles/categories, including unopened cached notes; Ctrl+Shift+P searches Actions. Ctrl+F searches only the current note’s buffer, while Ctrl+Shift+F searches the active account. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, whole words, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
 * **Work offline:** Edits and new notes are saved locally before synchronization and survive restart. **Make available offline** retains a note or category/subtree's supported managed media. Its status lists available/missing bytes and offers deliberate retry/cancellation. Offline availability, freshness, and acknowledged synchronization are separate states; external dependencies remain identified.
 * **Review conflicts:** If a note changes on the server while you have local edits, BusyMark preserves the competing versions for review instead of silently overwriting one. The comparison workflow supports choosing a version, merging changes, or recovering content as a separate note. Ambiguous note-creation results also require explicit review.
 * **Use attachments:** Add files to notes, view supported images and media, and include managed resources when exporting Markdown or HTML. PDF export includes supported images but does not embed arbitrary file attachments. New uploads are limited to **100 MiB per file**.
