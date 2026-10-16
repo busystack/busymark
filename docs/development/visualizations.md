@@ -279,7 +279,9 @@ any necessary cleanup is recorded as failure. Linux `/proc` task-child reads and
 an observer-only child subreaper track descendants after their parent exits,
 including helpers that create another session. Missing or inaccessible observation
 is incomplete verification, not an empty child list; ordinary process/thread exit
-races are distinguished. The observer requires no pre-existing children so
+races are distinguished. A zombie thread-group leader with remaining threads is
+still a running process: cleanup waits for its workers as well. The observer
+requires no pre-existing children so
 adoption has unambiguous ownership. Cleanup pins and rechecks process identities,
 waits for all identified children independently of the parent, escalates from
 TERM to KILL when necessary, and records verified termination or unresolved
@@ -308,7 +310,11 @@ The alternate entry point calls the real application and its close listener. It
 is test-only and is not the distributable entry point. `FrameTiming` confirms
 live build/raster execution; it does not claim display presentation timing.
 Native tracing checks that the pending case actually reaches shutdown before
-initialization completes. The ordinary shipping-executable cohort does not
+initialization completes. That case uses an isolated test harness with the same
+content security policy that deliberately withholds readiness. This prevents a
+fast harness from finishing during required close persistence; it is a lifecycle
+test, not a reproduction or timing measurement of the historical WebKit stall.
+The ordinary shipping-executable cohort does not
 require tracing. Cleanup warnings are retained separately from fatal signals.
 
 For strict confinement, use an explicitly owned disposable parallel instance

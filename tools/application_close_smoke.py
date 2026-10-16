@@ -21,6 +21,17 @@ class ObservationIncomplete(RuntimeError):
     pass
 
 
+# Test-only harness: preserve the production policy, but withhold its ready
+# event. This exercises closing a live engine during native initialization
+# independently of how quickly the production harness loads on this machine.
+# It is deliberate readiness injection, not a reproduction of a WebKit stall.
+PENDING_HARNESS = '''<!doctype html>
+<html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src busymark-render: 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+</head><body></body></html>
+'''
+
+
 def process_state(pid, expected=None):
     try:
         fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
@@ -321,6 +332,11 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
     environment["BUSYMARK_RELEASE_SMOKE"] = "1"
     environment["BUSYMARK_SPELLING_INSTALL_ROOT"] = str(profile / "data/spelling")
     environment["GST_REGISTRY"] = str(profile / "cache/gstreamer-registry.bin")
+    if scenario == 'pending-initialization' and not plain:
+        assets = profile / 'pending-initialization-assets'
+        assets.mkdir(exist_ok=True)
+        (assets / 'harness.html').write_text(PENDING_HARNESS)
+        environment['BUSYMARK_VISUALIZATION_ASSETS'] = str(assets)
     if not plain:
         environment['BUSYMARK_NATIVE_TRACE'] = '1'
     application_profile = profile
@@ -335,6 +351,8 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
     report = folder / "application.json"
     arguments = [] if plain else [str(report), scenario] + ([str(video)] if scenario == "video" else [str(document)] if scenario == 'reopen' else [])
     record = {"launch_ns": time.monotonic_ns(), "scenario": scenario, "command": command + arguments, "plainShippingExecutable": plain}
+    if scenario == 'pending-initialization' and not plain:
+        record['controlledPendingHarness'] = True
     try:
         tracker = ChildTracker()
     except ObservationIncomplete as error:

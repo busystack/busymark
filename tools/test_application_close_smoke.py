@@ -1,15 +1,21 @@
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from application_close_smoke import ObservationIncomplete, accepted, process_children, run_case, signal_owned
+from application_close_smoke import PENDING_HARNESS, ObservationIncomplete, accepted, process_children, run_case, signal_owned
 
 
 class NaturalExitAcceptanceTest(unittest.TestCase):
+    def test_controlled_pending_harness_preserves_production_content_policy(self):
+        production = (Path(__file__).parent / 'visualization/harness.html').read_text()
+        policy = r'http-equiv="Content-Security-Policy" content="([^"]+)"'
+        self.assertEqual(re.search(policy, PENDING_HARNESS).group(1), re.search(policy, production).group(1))
+
     def run_inferior(self, suffix, timeout=5, plain=False):
         with tempfile.TemporaryDirectory(prefix="bm-close-unit-") as tmp:
             root = Path(tmp)
