@@ -1,0 +1,2 @@
+# Bound independent test-file workers; race tests retain their own concurrency.
+concurrency: 2

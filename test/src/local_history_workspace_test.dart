@@ -23,6 +23,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+import '../support/io_wait_trace.dart';
+
 void main() {
   late Directory root;
 
@@ -6149,11 +6151,21 @@ Future<void> _waitFor(
   String Function()? diagnostics,
 }) async {
   final deadline = DateTime.now().add(timeout);
-  while (!condition()) {
-    if (DateTime.now().isAfter(deadline)) {
-      fail('$operation did not complete. ${diagnostics?.call() ?? ''}');
+  final observation = TestIoWaitTrace(operation);
+  var completed = false;
+  try {
+    while (!condition()) {
+      if (DateTime.now().isAfter(deadline)) {
+        fail(
+          '$operation did not complete. ${observation.description}. '
+          '${diagnostics?.call() ?? ''}',
+        );
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 10));
     }
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+    completed = true;
+  } finally {
+    observation.finish(completed);
   }
 }
 
@@ -7039,6 +7051,7 @@ class _ObservedFileHistoryStore extends FileLocalHistoryStore {
 
   Future<T> _observe<T>(String operation, Future<T> Function() run) async {
     final clock = Stopwatch()..start();
+    traceTestIo(operation, 'store-begin');
     observations.add(
       '$operation admitted pid=$pid '
       'wallUs=${DateTime.now().microsecondsSinceEpoch}',
@@ -7047,6 +7060,7 @@ class _ObservedFileHistoryStore extends FileLocalHistoryStore {
       return await run();
     } finally {
       observations.add('$operation completed ${clock.elapsedMilliseconds}ms');
+      traceTestIo(operation, 'store-end', '${clock.elapsedMicroseconds}us');
     }
   }
 

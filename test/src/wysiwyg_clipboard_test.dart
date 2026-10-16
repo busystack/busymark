@@ -38,6 +38,7 @@ import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
 
 import '../support/widget_async.dart';
+import '../support/io_wait_trace.dart';
 
 const _source =
     '# Issues\n\n**When** selecting all, keep *formatting*.\n\n- [ ] First task\n- [x] Second task\n';
@@ -1008,12 +1009,23 @@ void main() {
       WidgetTester tester,
       LogicalKeyboardKey key, {
       bool shift = false,
+      bool startsRealIo = false,
     }) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyEvent(key);
-      if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      Future<void> send() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(key);
+        if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+
+      if (startsRealIo) {
+        // Start filesystem continuations in the real event loop. Otherwise
+        // each completed I/O await needs another fake-clock widget frame.
+        await tester.runAsync(send);
+      } else {
+        await send();
+      }
       await tester.pump();
     }
 
@@ -3936,8 +3948,14 @@ void main() {
       final reserved = <String>[];
       final ingestion = AssetIngestionService(
         hooks: AssetIngestionHooks(
-          afterDestinationReserved: (path) async => reserved.add(path),
-          afterPublication: (asset) async => published.add(asset),
+          afterDestinationReserved: (path) async {
+            traceTestIo('image alternatives', 'before-publish', path);
+            reserved.add(path);
+          },
+          afterPublication: (asset) async {
+            traceTestIo('image alternatives', 'published', asset.absolutePath);
+            published.add(asset);
+          },
           beforeCommit: (asset) async => committed.add(asset),
           afterRollback: (asset) async => rolledBack.add(asset),
         ),
@@ -3987,7 +4005,9 @@ void main() {
       Future<void> chooseImage(File file, int publicationCount) async {
         final commitsBefore = committed.length;
         picks.add(file.path);
-        await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
+        await tester.runAsync(
+          () => tester.tap(find.byKey(BusyMarkImageDialogKeys.choose)),
+        );
         await waitForCount(published, publicationCount);
         final sourceField = find.descendant(
           of: find.byKey(BusyMarkImageDialogKeys.source),
@@ -4014,7 +4034,7 @@ void main() {
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
         assetIngestionService: ingestion,
       );
-      await key(tester, LogicalKeyboardKey.keyV);
+      await key(tester, LogicalKeyboardKey.keyV, startsRealIo: true);
       await waitForCount(published, 1);
       await waitForDialog();
       await chooseImage(files[1], 2);
@@ -4036,7 +4056,7 @@ void main() {
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
         assetIngestionService: ingestion,
       );
-      await key(tester, LogicalKeyboardKey.keyV);
+      await key(tester, LogicalKeyboardKey.keyV, startsRealIo: true);
       await waitForCount(published, 3);
       await waitForDialog();
       await chooseImage(files[1], 4);
@@ -4069,7 +4089,7 @@ void main() {
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
         assetIngestionService: ingestion,
       );
-      await key(tester, LogicalKeyboardKey.keyV);
+      await key(tester, LogicalKeyboardKey.keyV, startsRealIo: true);
       await waitForCount(published, 6);
       await waitForDialog();
       await chooseImage(files[1], 7);
@@ -4379,9 +4399,15 @@ void main() {
         extentOffset: 4,
       );
       await tester.pump();
-      final tablePaste = registry.paste(payload);
+      late Future<ClipboardPasteResult> tablePaste;
+      await tester.runAsync(() async {
+        tablePaste = registry.paste(payload);
+      });
       await submitImage();
-      expect(await tablePaste, ClipboardPasteResult.inserted);
+      expect(
+        await tester.runAsync(() => tablePaste),
+        ClipboardPasteResult.inserted,
+      );
       expect(tableResult, contains('![Image](images/routed.png)'));
       expect(tableResult, contains('| H |'));
       await key(tester, LogicalKeyboardKey.keyZ);
@@ -4400,9 +4426,15 @@ void main() {
       );
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyA);
-      final multiPaste = registry.paste(payload);
+      late Future<ClipboardPasteResult> multiPaste;
+      await tester.runAsync(() async {
+        multiPaste = registry.paste(payload);
+      });
       await submitImage();
-      expect(await multiPaste, ClipboardPasteResult.inserted);
+      expect(
+        await tester.runAsync(() => multiPaste),
+        ClipboardPasteResult.inserted,
+      );
       expect(multiResult, contains('![Image](images/routed.png)'));
       expect(multiResult, isNot(contains('First')));
       expect(multiResult, isNot(contains('Second')));
@@ -4610,19 +4642,21 @@ void main() {
           'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
         );
         ClipboardPasteResult? pasteResult;
-        registry
-            .paste(
-              BusyMarkClipboardPayload(
-                id: 'composing-image-history',
-                acquiredAt: DateTime.utc(2026),
-                kind: BusyMarkClipboardContentKind.image,
-                imageBytes: png,
-                imageMimeType: 'image/png',
-                imageDisplayName: 'composing.png',
-                external: true,
-              ),
-            )
-            .then((value) => pasteResult = value);
+        await tester.runAsync(() async {
+          registry
+              .paste(
+                BusyMarkClipboardPayload(
+                  id: 'composing-image-history',
+                  acquiredAt: DateTime.utc(2026),
+                  kind: BusyMarkClipboardContentKind.image,
+                  imageBytes: png,
+                  imageMimeType: 'image/png',
+                  imageDisplayName: 'composing.png',
+                  external: true,
+                ),
+              )
+              .then((value) => pasteResult = value);
+        });
         await tester.pump();
         expect(ingestion.started.isCompleted, isTrue);
 

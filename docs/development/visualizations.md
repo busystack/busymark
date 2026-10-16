@@ -315,6 +315,29 @@ Document checks wait for the requested path and text in the mounted editor and
 two subsequent timed frames. Cancel checks retain the exact unsaved text.
 Video confirmation samples the identified application drawable. Record missing
 video prerequisites separately from completed normal-close attempts.
+
+Widget tests run in Flutter's fake async environment. Start interactive operations
+that perform real filesystem work with `tester.runAsync`, then pump the UI outside
+that callback and await their completion with `runAsync`. Starting the operation
+in fake async can make every filesystem continuation wait for another test frame.
+A sleep in a polling helper then adds delay per await. Keep dialog interaction,
+document assertions, and actual file publication/rollback checks intact. See
+[Flutter's runAsync contract](https://api.flutter.dev/flutter/flutter_test/WidgetTester/runAsync.html).
+
+The Source unsafe-local-image fallback still checks exact original text for all
+six candidates. Its former helper made 100 attempts, advanced 20 ms of fake time
+per attempt, and yielded at least 5 ms of real time per attempt. Its existing
+`_pumpUntilRealIo` replacement allows 10 seconds of wall time, yields 25 ms per
+attempt, and does not advance fake time. This expanded functional waiting budget
+is not evidence of meeting a performance target. Starting its paste event in the
+real event loop prevents per-await frame scheduling from becoming part of file
+validation. The follow-up changes do not increase these deadlines.
+
+For test-only I/O diagnosis, set `BUSYMARK_TEST_IO_TRACE=1`. Wait and store events
+include PID, Unix wall-clock microseconds, operation, and begin/completion state
+for correlation with a scoped syscall trace. Completed stores use `return await`
+so a dispatch is not labeled completion. Diagnostics do not establish display
+presentation timing; expensive syscall tracing belongs outside acceptance timing.
 Native tracing checks that the pending case actually reaches shutdown before
 initialization completes. That case uses an isolated test harness with the same
 content security policy that deliberately withholds readiness. This prevents a
@@ -334,3 +357,21 @@ checks; they establish no physical-desktop performance result.
 Use `--fresh-profile` for a new isolated application and graphics cache for each
 case; its reopen check reuses that case's profile. Previous profiles are retained,
 and no system cache is cleared.
+
+The dictionary-import fixture starts its file-picker/modal flow in `runAsync`
+as well: its continuation remains in the initiating zone after the dialog
+closes. A controlled catalog gate and zero-duration cooperative yield check that
+real-I/O scheduling progresses without another fake widget frame. This models
+a provider retry/yield; it is not a reproduction of the historical flush stall.
+Both the gate and the original installation assertion share the original
+fifteen-second wall budget. The baseline fails
+that scheduling assertion while still completing the original import; the
+corrected fixture passes both.
+
+`dart_test.yaml` bounds independent test-file workers to two. This limits
+concurrent compilation and durable filesystem transactions on development/CI
+machines; individual multi-process and thread-race tests retain their internal
+concurrency. It changes no assertion, timeout, retention rule, or flush. Override
+file concurrency explicitly only when evaluating a different resource budget;
+record that condition with failures. A functional suite pass is separate from
+application performance acceptance.

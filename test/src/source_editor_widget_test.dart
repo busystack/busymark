@@ -51,6 +51,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
+import '../support/io_wait_trace.dart';
+
 void main() {
   for (final stale in [false, true]) {
     testWidgets(
@@ -9001,6 +9003,7 @@ void main() {
       assetIngestionService: AssetIngestionService(
         hooks: AssetIngestionHooks(
           afterPublication: (_) async {
+            traceTestIo('Source image publication', 'published', root.path);
             published = true;
           },
         ),
@@ -9008,7 +9011,9 @@ void main() {
     );
     controller.selection = const TextSelection.collapsed(offset: 6);
 
-    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.runAsync(
+      () => _pressControlKey(tester, LogicalKeyboardKey.keyV),
+    );
     await _pumpUntilRealIo(
       tester,
       () => published,
@@ -9140,7 +9145,9 @@ void main() {
         extentOffset: 6,
       );
 
-      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.runAsync(
+        () => _pressControlKey(tester, LogicalKeyboardKey.keyV),
+      );
       // Local candidate validation performs real filesystem I/O.
       await _pumpUntilRealIo(
         tester,
@@ -9660,13 +9667,24 @@ Future<void> _pumpUntilRealIo(
   required String operation,
 }) async {
   final deadline = DateTime.now().add(const Duration(seconds: 10));
-  while (!condition() && DateTime.now().isBefore(deadline)) {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+  final observation = TestIoWaitTrace(operation);
+  var completed = false;
+  try {
+    while (!condition() && DateTime.now().isBefore(deadline)) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 25)),
+      );
+      await tester.pump();
+    }
+    expect(
+      condition(),
+      isTrue,
+      reason: '$operation did not complete. ${observation.description}',
     );
-    await tester.pump();
+    completed = true;
+  } finally {
+    observation.finish(completed);
   }
-  expect(condition(), isTrue, reason: '$operation did not complete.');
 }
 
 SpellingOccurrence _sourceSpellingOccurrence({

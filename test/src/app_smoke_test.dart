@@ -1,3 +1,4 @@
+import 'package:busymark/src/spellcheck/spelling_catalog.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
 import 'dart:async';
@@ -95,6 +96,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../support/spelling_test_bundle.dart';
 import '../support/widget_async.dart';
+import '../support/io_wait_trace.dart';
 
 void main() {
   late _FallbackHeaderBarService headerBarService;
@@ -2207,6 +2209,93 @@ void main() {
       );
     },
   );
+
+  testWidgets('dictionary import continues real I/O without another frame', (
+    tester,
+  ) async {
+    var gateNextCatalog = false;
+    final catalogEntered = Completer<void>();
+    final releaseCatalog = Completer<void>();
+    var catalogResumed = false;
+    final harness = await _pumpSettingsSpellingHarness(
+      tester,
+      headerBarService: headerBarService,
+      settingsStore: _MemorySettingsStore(),
+      downloadFile: _copySettingsDictionaryDownload,
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) async {
+            if (gateNextCatalog && !catalogEntered.isCompleted) {
+              catalogEntered.complete();
+              await releaseCatalog.future;
+              // Model a cooperative retry/yield in a real-I/O provider.
+              await Future<void>.delayed(Duration.zero);
+              catalogResumed = true;
+            }
+            return SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+          },
+    );
+    addTearDown(harness.dispose);
+    const channel = MethodChannel('plugins.flutter.io/file_selector');
+    final fixtures = p.join(
+      Directory.current.path,
+      'packages',
+      'busymark_spellcheck_native',
+      'test',
+      'fixtures',
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      channel,
+      (_) async => [p.join(fixtures, 'test.aff'), p.join(fixtures, 'test.dic')],
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      ),
+    );
+    await _openImportDictionaryPrompt(tester);
+    gateNextCatalog = true;
+    await tester.enterText(find.byType(TextFormField), ' en-GB ');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    // Keep the original import assertion's fifteen-second wall budget, including
+    // the controlled scheduling check. There is no additional allowance.
+    final deadline = DateTime.now().add(const Duration(seconds: 15));
+    await _pumpUntilCondition(
+      tester,
+      () => catalogEntered.isCompleted,
+      timeout: deadline.difference(DateTime.now()),
+    );
+    var resumedWithoutFrame = false;
+    await tester.runAsync(() async {
+      releaseCatalog.complete();
+      // Drain real microtask and zero-timer turns without a fake frame.
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      resumedWithoutFrame = catalogResumed;
+    });
+    await _pumpUntilCondition(
+      tester,
+      () => harness.spelling.catalog?.installedById('en-GB') != null,
+      timeout: deadline.difference(DateTime.now()),
+    );
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(harness.spelling.catalog?.installedById('en-GB'), isNotNull);
+    expect(
+      resumedWithoutFrame,
+      isTrue,
+      reason: 'The real-I/O continuation must not require a fake widget frame.',
+    );
+  });
 
   testWidgets(
     'import dictionary prompt uses native controls and submits a trimmed ID',
@@ -16430,6 +16519,7 @@ Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
   required _MemorySettingsStore settingsStore,
   required SpellingDictionaryFileDownload downloadFile,
   String? projectLanguage,
+  SpellingCatalogLoader? catalogLoader,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(800, 900);
@@ -16469,6 +16559,7 @@ Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
       workspace = await const WorkspaceService().openPath(projectRoot.path);
     }
     spelling = SpellingSessionController(
+      catalogLoader: catalogLoader ?? SpellingDictionaryCatalog.load,
       bundledRoot: fixture.bundle,
       applicationSupportRoot: p.join(temporary.path, 'support'),
       dictionaryStorageRoot: fixture.storage,
@@ -16544,7 +16635,9 @@ Future<void> _selectSpellingLanguage(
   final languageId = selector.options
       .singleWhere((option) => option.label == languageLabel)
       .value;
-  selector.onSelected(languageId);
+  // The selection can start a dictionary transaction after dialog confirmation.
+  // Its real filesystem work must not wait for a widget pump after every await.
+  await tester.runAsync(() async => selector.onSelected(languageId));
   await _pumpSettingsUi(tester);
 }
 
@@ -16560,7 +16653,9 @@ Future<void> _openImportDictionaryPrompt(WidgetTester tester) async {
   }
   await tester.ensureVisible(import);
   await _pumpSettingsUi(tester);
-  await tester.tap(import);
+  // The async import flow resumes after the native picker and modal dialog.
+  // Start it in the real zone so I/O continuations do not require fake frames.
+  await tester.runAsync(() => tester.tap(import));
   await _pumpUntilFound(tester, find.byType(BusyMarkDialogShell));
 }
 
@@ -16583,16 +16678,27 @@ Future<void> _pumpUntilCondition(
   String Function()? diagnostics,
 }) async {
   final deadline = DateTime.now().add(timeout);
-  while (!condition() && DateTime.now().isBefore(deadline)) {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+  final observation = TestIoWaitTrace('settings async condition');
+  var completed = false;
+  try {
+    while (!condition() && DateTime.now().isBefore(deadline)) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 25)),
+      );
+      // I/O progresses in runAsync; UI transitions and retry timers need the
+      // test frame clock to advance as well. A zero-duration pump freezes them.
+      await tester.pump(const Duration(milliseconds: 25));
+    }
+    expect(
+      condition(),
+      isTrue,
+      reason: '${observation.description}. ${diagnostics?.call() ?? ''}',
     );
-    // I/O progresses in runAsync; UI transitions and retry timers need the
-    // test frame clock to advance as well. A zero-duration pump freezes them.
-    await tester.pump(const Duration(milliseconds: 25));
+    await _pumpSettingsUi(tester);
+    completed = true;
+  } finally {
+    observation.finish(completed);
   }
-  expect(condition(), isTrue, reason: diagnostics?.call());
-  await _pumpSettingsUi(tester);
 }
 
 Future<void> _pumpSettingsUi(WidgetTester tester) async {
