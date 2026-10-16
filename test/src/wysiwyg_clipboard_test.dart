@@ -3366,7 +3366,7 @@ void main() {
       (tester) async {
         final root = (await tester.runAsync(
           () => Directory.systemTemp.createTemp(
-            'busymark-clipboard-image-snapshot-',
+            'busymark-clipboard_image-snapshot-',
           ),
         ))!;
         addTearDown(() async {
@@ -3536,7 +3536,16 @@ void main() {
           ClipboardPasteResult.inserted,
         );
         await tester.pump();
-        expect(plain, '${sourceFile.path}\n');
+        // Plain text keeps the literal path in the editor; Markdown source
+        // escapes underscores, including those in a caller's TMPDIR.
+        expect(plain, '${sourceFile.path.replaceAll('_', r'\_')}\n');
+        expect(
+          tester
+              .widget<TextField>(find.byType(TextField).first)
+              .controller!
+              .text,
+          sourceFile.path,
+        );
         expect(
           await tester.runAsync(
             () => Directory('${plainDirectory.path}/images').exists(),
@@ -4424,7 +4433,7 @@ void main() {
       addTearDown(() async {
         if (await root.exists()) await root.delete(recursive: true);
       });
-      final image = File('${root.path}/image.png');
+      final image = File('${root.path}/image_path.png');
       await tester.runAsync(() => image.writeAsBytes([1, 2, 3]));
       systemData = {'text': image.path};
       final ingestion = _CountingAssetIngestionService();
@@ -4441,7 +4450,11 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyV, shift: true);
 
-      expect(result, '${image.path}\n');
+      expect(result, '${image.path.replaceAll('_', r'\_')}\n');
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        image.path,
+      );
       expect(ingestion.fileCalls, 0);
       expect(ingestion.byteCalls, 0);
       expect(find.byKey(BusyMarkImageDialogKeys.submit), findsNothing);

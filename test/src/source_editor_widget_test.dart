@@ -9141,7 +9141,12 @@ void main() {
       );
 
       await _pressControlKey(tester, LogicalKeyboardKey.keyV);
-      await _pumpUntil(tester, () => controller.text != 'Target');
+      // Local candidate validation performs real filesystem I/O.
+      await _pumpUntilRealIo(
+        tester,
+        () => controller.text != 'Target',
+        operation: 'Paste unsafe local image candidate $value',
+      );
 
       expect(controller.text, value, reason: value);
     }

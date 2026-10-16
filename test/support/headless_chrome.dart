@@ -174,7 +174,8 @@ Future<Object?> evaluateDevToolsDocument({
         final remaining = readinessTimeout - readyClock.elapsed;
         if (remaining <= Duration.zero) {
           throw StateError(
-            'Chromium DevTools response timed out for $documentUri '
+            'Chromium did not finish loading $documentUri: '
+            'DevTools response timed out '
             '(request $id); last page state: $lastPageState',
           );
         }
@@ -183,7 +184,8 @@ Future<Object?> evaluateDevToolsDocument({
           hasMessage = await messages.moveNext().timeout(remaining);
         } on TimeoutException {
           throw StateError(
-            'Chromium DevTools response timed out for $documentUri '
+            'Chromium did not finish loading $documentUri: '
+            'DevTools response timed out '
             '(request $id); last page state: $lastPageState',
           );
         }
