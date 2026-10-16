@@ -1194,6 +1194,17 @@ void method_call_cb(FlMethodChannel*,
 
 void busymark_web_render_host_shutdown(BusyMarkWebRenderHost* self) {
   g_return_if_fail(BUSYMARK_IS_WEB_RENDER_HOST(self));
+  if (g_strcmp0(g_getenv("BUSYMARK_NATIVE_TRACE"), "1") == 0) {
+    g_printerr("busymark-native visualization-shutdown initPending=%d "
+               "state=%d context=%d view=%d active=%d queued=%u repeated=%d "
+               "time_us=%" G_GINT64_FORMAT "\n",
+               self->state == RenderState::scheduled ||
+                   self->state == RenderState::loading,
+               static_cast<int>(self->state), self->context != nullptr,
+               self->web_view != nullptr, self->active != nullptr,
+               g_queue_get_length(self->queue), self->shutting_down,
+               g_get_monotonic_time());
+  }
   if (self->shutting_down) {
     return;
   }

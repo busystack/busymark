@@ -259,3 +259,56 @@ still awaits maintenance: no unlimited background writes or maintenance queue
 are introduced. `cache-maintenance-N` separates admission, execution and worker
 completion; `cache-maintenance-worker` measures the scan itself. These spans
 overlap and must not be summed.
+
+## Live application closure
+
+A disappearing GTK window is insufficient shutdown acceptance. Run the release
+binary through the normal window-manager close request and require natural exit
+status zero, no hang, and no surviving identified children:
+
+```bash
+/usr/bin/python3 tools/application_close_smoke.py \
+  --output /absolute/new/close-evidence --cycles 100 --plain -- \
+  build/linux/x64/release/bundle/busymark
+```
+
+The observer uses only the PID-owned X11 window. It supplies disposable home,
+settings, history, session, recovery, cache, and fixture directories while
+preserving the authenticated desktop connection. A failed run is retained and
+any necessary cleanup is recorded as failure. It never treats a Dart checkpoint
+as successful process exit. This is a functional close test, not a startup
+content observer or a presentation-time benchmark.
+
+To exercise rendered frames, an actual diagram, pending native initialization,
+decoded moving video, dirty-document save/discard/cancel, durable clean shutdown,
+and subsequent reopening through the application controllers:
+
+```bash
+flutter build linux --release -t tools/window_close_smoke.dart
+/usr/bin/python3 tools/application_close_smoke.py \
+  --output /absolute/new/close-live-evidence --cycles 3 --fresh-profile \
+  --scenarios plain visualization pending-initialization \
+    dirty-save dirty-discard dirty-cancel video \
+  --video test/fixtures/media/close-testsrc.mp4 -- \
+  build/linux/x64/release/bundle/busymark
+flutter build linux --release -t lib/main.dart
+```
+
+The alternate entry point calls the real application and its close listener. It
+is test-only and is not the distributable entry point. `FrameTiming` confirms
+live build/raster execution; it does not claim display presentation timing.
+Native tracing checks that the pending case actually reaches shutdown before
+initialization completes. The ordinary shipping-executable cohort does not
+require tracing. Cleanup warnings are retained separately from fatal signals.
+
+For strict confinement, use an explicitly owned disposable parallel instance
+in a disposable machine. `--snap-instance busymark_close` enters the normal
+Snap launcher, isolates application paths inside that instance's common directory,
+and verifies its enforced AppArmor label. Do not use this procedure to replace a
+user's installed application. The workflow requires 100 shipping-executable
+natural closes in both standalone and strict-Snap environments and retains
+failure evidence. Headless compositor checks remain functional compatibility
+checks; they establish no physical-desktop performance result.
+Use `--fresh-profile` for a new isolated application and graphics cache for each
+case; its reopen check reuses that case's profile. Previous profiles are retained,
+and no system cache is cleared.

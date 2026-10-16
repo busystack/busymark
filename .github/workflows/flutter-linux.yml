@@ -129,6 +129,17 @@ jobs:
       - name: Build Linux release
         run: flutter build linux --release
 
+      - name: Test natural-exit observer failure detection
+        run: python3 -m unittest discover -s tools -p test_application_close_smoke.py
+
+      - name: Require 100 natural closes of the shipping release
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 \
+            /usr/bin/python3 -u tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/close-release" --cycles 100 --plain -- \
+            build/linux/x64/release/bundle/busymark
+
       - name: Test production GTK accent channel host and lifecycle
         run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
 
@@ -192,6 +203,29 @@ jobs:
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+
+      - name: Exercise live application close, persistence, media and reopening
+        run: |
+          flutter build linux --release --no-pub -t tools/window_close_smoke.dart
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 \
+            /usr/bin/python3 -u tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/close-live-application" --cycles 3 --fresh-profile \
+            --scenarios plain visualization pending-initialization \
+              dirty-save dirty-discard dirty-cancel video \
+            --video test/fixtures/media/close-testsrc.mp4 -- \
+            build/linux/x64/release/bundle/busymark
+          flutter build linux --release --no-pub -t lib/main.dart
+
+      - name: Preserve natural-close evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: natural-close-release
+          path: |
+            ${{ runner.temp }}/close-release
+            ${{ runner.temp }}/close-live-application
+          if-no-files-found: ignore
 
       - name: Run spelling and visualization smoke tests under Wayland
         run: |
@@ -298,12 +332,31 @@ jobs:
       - name: Install desktop smoke dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y weston xvfb
+          sudo apt-get install -y weston xvfb python3-gi dbus-daemon
 
       - name: Install strict Snap
         run: >-
           sudo snap install --dangerous
           "${{ steps.snap-artifact.outputs.snap }}"
+
+      - name: Require 100 natural closes under strict confinement
+        run: |
+          sudo snap set system experimental.parallel-instances=true
+          sudo snap install --dangerous --name=busymark_close \
+            "${{ steps.snap-artifact.outputs.snap }}"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 \
+            /usr/bin/python3 -u tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/close-strict-snap" --cycles 100 \
+            --snap-instance busymark_close
+
+      - name: Preserve strict natural-close evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: natural-close-strict-snap
+          path: ${{ runner.temp }}/close-strict-snap
+          if-no-files-found: ignore
 
       - name: Verify GTK SVG icon loader and portable icon caches
         run: |
