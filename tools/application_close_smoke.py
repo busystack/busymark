@@ -73,9 +73,16 @@ def process_children(pid, expected=None):
     try:
         threads = list(task.iterdir())
         if not threads:
-            raise ObservationIncomplete(f'No observable tasks for live process {pid}')
+            # Exit can empty the task directory after the initial state read.
+            # Recheck identity/state, as for ENOENT, rather than calling that
+            # ordinary race an unavailable observation mechanism. Our own
+            # running observer cannot have exited while executing this check.
+            final_state = process_state(pid, expected)
+            if pid != os.getpid() and final_state['status'] in ('gone', 'reused', 'zombie'):
+                return []
+            raise ObservationIncomplete(f'No observable tasks for process {pid}: initial={state}, final={final_state}')
     except OSError as error:
-        if process_state(pid, expected)['status'] in ('gone', 'reused', 'zombie'):
+        if pid != os.getpid() and process_state(pid, expected)['status'] in ('gone', 'reused', 'zombie'):
             return []
         raise ObservationIncomplete(f'Cannot enumerate tasks for {pid}: {error}') from error
     children = []
@@ -304,8 +311,9 @@ class Desktop:
         self.x.XFlush(self.display)
 
     def video_sample(self, w):
-        ox, oy = w.get_root_origin()
-        p = self.Gdk.pixbuf_get_from_window(self.Gdk.get_default_root_window(), ox + 210, oy + 210, 600, 300)
+        # Root-window pixels can belong to an unrelated overlapping window.
+        # Confirm decoded changes within this identified application drawable.
+        p = self.Gdk.pixbuf_get_from_window(w, 210, 210, 600, 300)
         if p is None:
             return None
         pixels, stride, channels = p.get_pixels(), p.get_rowstride(), p.get_n_channels()

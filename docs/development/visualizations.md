@@ -287,6 +287,8 @@ waits for all identified children independently of the parent, escalates from
 TERM to KILL when necessary, and records verified termination or unresolved
 survivors. Cleanup success preserves the failed-run classification. A cohort
 stops if child observation is incomplete or survivors remain unresolved.
+An empty task snapshot is rechecked against the child's identity and exit state;
+an empty or inaccessible snapshot of a still-live process remains incomplete.
 It never treats a Dart checkpoint
 as successful process exit. This is a functional close test, not a startup
 content observer or a presentation-time benchmark.
@@ -309,6 +311,10 @@ flutter build linux --release -t lib/main.dart
 The alternate entry point calls the real application and its close listener. It
 is test-only and is not the distributable entry point. `FrameTiming` confirms
 live build/raster execution; it does not claim display presentation timing.
+Document checks wait for the requested path and text in the mounted editor and
+two subsequent timed frames. Cancel checks retain the exact unsaved text.
+Video confirmation samples the identified application drawable. Record missing
+video prerequisites separately from completed normal-close attempts.
 Native tracing checks that the pending case actually reaches shutdown before
 initialization completes. That case uses an isolated test harness with the same
 content security policy that deliberately withholds readiness. This prevents a

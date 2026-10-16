@@ -17,6 +17,8 @@ import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/window_control_service.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/writerside_video_player_host.dart';
 import 'package:busymark/src/visualization/visualization_card.dart';
 import 'package:busymark/src/visualization/visualization_models.dart';
@@ -47,6 +49,16 @@ Future<void> _until(bool Function() condition) async {
   }
 }
 
+bool _editorPublished(String path, String source) => _elements().any((e) {
+  final widget = e.widget;
+  return switch (widget) {
+    BusyMarkSourceEditor() => widget.filePath == path && widget.text == source,
+    BusyMarkWysiwygEditor() =>
+      widget.document.filePath == path && widget.document.source == source,
+    _ => false,
+  };
+});
+
 Future<void> main(List<String> args) async {
   if (args.length < 2 ||
       Platform.environment['BUSYMARK_RELEASE_SMOKE'] != '1') {
@@ -73,7 +85,19 @@ Future<void> main(List<String> args) async {
     });
     final binding = WidgetsBinding.instance;
     var frames = 0;
-    binding.addTimingsCallback((timings) => frames += timings.length);
+    int? readyFrameNumber;
+    final timedFramesAfterReady = <int>{};
+    binding.addTimingsCallback((timings) {
+      frames += timings.length;
+      final ready = readyFrameNumber;
+      if (ready != null) {
+        timedFramesAfterReady.addAll(
+          timings
+              .where((timing) => timing.frameNumber > ready)
+              .map((timing) => timing.frameNumber),
+        );
+      }
+    });
     await _until(() => _elements().any((e) => e.widget is BusyMarkApp));
     final context = _elements().firstWhere((e) => e.widget is BusyMarkApp);
     final container = ProviderScope.containerOf(context, listen: false);
@@ -91,6 +115,7 @@ Future<void> main(List<String> args) async {
     final fixture = File('${report.parent.path}/document.md');
     const original = '# Close fixture\n\nOriginal document.\n';
     const edited = '# Close fixture\n\nEdited before normal close.\n';
+    String? reopenedText;
     if (scenario.startsWith('dirty-') ||
         scenario == 'visualization' ||
         scenario == 'reopen') {
@@ -108,18 +133,14 @@ Future<void> main(List<String> args) async {
           .openPath(openedFile.path);
       container.read(appRouterProvider).go('/workspace');
       await _until(
-        () =>
-            _elements().any((e) => e.widget is EditableText) ||
-            _elements().any((e) => e.widget is BusyMarkVisualizationCard),
+        () => _editorPublished(
+          openedFile.path,
+          container.read(workspaceControllerProvider).activeBuffer?.text ?? '',
+        ),
       );
       checks['document'] = openedFile.path;
       if (scenario == 'reopen') {
-        final diskText = await openedFile.readAsString();
-        if (container.read(workspaceControllerProvider).activeBuffer?.text !=
-            diskText) {
-          throw StateError('Reopened document differs from its saved content.');
-        }
-        checks['reopenedContentVerified'] = true;
+        reopenedText = await openedFile.readAsString();
       }
     }
     if (scenario == 'visualization') {
@@ -144,14 +165,33 @@ Future<void> main(List<String> args) async {
         throw StateError('The fixture did not become dirty.');
       }
       checks['expectedText'] = scenario == 'dirty-save' ? edited : original;
+      await _until(() => _editorPublished(fixture.path, edited));
     }
     // FrameTiming establishes live build/raster execution, not presentation time.
-    while (frames < 2) {
+    final frameAtReady = binding.platformDispatcher.frameData.frameNumber;
+    readyFrameNumber = frameAtReady;
+    if (frameAtReady < 0) {
+      throw StateError('Engine frame numbers are unavailable.');
+    }
+    final frameDeadline = DateTime.now().add(const Duration(seconds: 40));
+    while (timedFramesAfterReady.length < 2) {
+      if (DateTime.now().isAfter(frameDeadline)) {
+        throw TimeoutException('Post-ready raster frame observations');
+      }
       binding.scheduleFrame();
       await binding.endOfFrame;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     checks['timedFrames'] = frames;
+    checks['readyFrameNumber'] = readyFrameNumber;
+    checks['timedFrameNumbersAfterReady'] = timedFramesAfterReady.toList();
+    if (reopenedText != null) {
+      if (container.read(workspaceControllerProvider).activeBuffer?.text !=
+          reopenedText) {
+        throw StateError('Reopened document differs from its saved content.');
+      }
+      checks['reopenedContentVerified'] = true;
+    }
     if (scenario == 'pending-initialization') {
       final token = VisualizationCancellationToken();
       var completed = false;
@@ -198,10 +238,13 @@ Future<void> main(List<String> args) async {
       checks['decodedChangingVideoObserved'] = true;
     }
 
-    if (scenario == 'dirty-save') {
+    if (scenario.startsWith('dirty-')) {
       checks['editedTextActiveBeforeClose'] =
           container.read(workspaceControllerProvider).activeBuffer?.text ==
           edited;
+      if (checks['editedTextActiveBeforeClose'] != true) {
+        throw StateError('The edited fixture changed before close.');
+      }
     }
     await publish('close-requested');
     // This enters the same prevent-close listener and save/discard/cancel flow
@@ -235,6 +278,8 @@ Future<void> main(List<String> args) async {
         await binding.endOfFrame;
         if (!await windowManager.isVisible() ||
             !container.read(workspaceControllerProvider).hasUnsavedChanges ||
+            container.read(workspaceControllerProvider).activeBuffer?.text !=
+                edited ||
             await fixture.readAsString() != original) {
           throw StateError('Cancel closed the window or lost unsaved content.');
         }

@@ -7,10 +7,43 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from application_close_smoke import PENDING_HARNESS, ObservationIncomplete, accepted, process_children, run_case, signal_owned
+from application_close_smoke import PENDING_HARNESS, Desktop, ObservationIncomplete, accepted, process_children, run_case, signal_owned
 
 
 class NaturalExitAcceptanceTest(unittest.TestCase):
+    def test_video_confirmation_samples_only_the_owned_window(self):
+        class Pixels:
+            def get_pixels(self):
+                return bytes([255, 0, 0]) * (600 * 300)
+
+            def get_rowstride(self):
+                return 600 * 3
+
+            def get_n_channels(self):
+                return 3
+
+        class Gdk:
+            observed_window = None
+
+            @classmethod
+            def get_default_root_window(cls):
+                raise AssertionError('Unrelated desktop pixels cannot confirm video')
+
+            @classmethod
+            def pixbuf_get_from_window(cls, window, *geometry):
+                cls.observed_window = window
+                return Pixels()
+
+        class Window:
+            def get_root_origin(self):
+                return (100, 100)
+
+        desktop = Desktop.__new__(Desktop)
+        desktop.Gdk = Gdk
+        owned_window = Window()
+        self.assertIsNotNone(desktop.video_sample(owned_window))
+        self.assertIs(Gdk.observed_window, owned_window)
+
     def test_controlled_pending_harness_preserves_production_content_policy(self):
         production = (Path(__file__).parent / 'visualization/harness.html').read_text()
         policy = r'http-equiv="Content-Security-Policy" content="([^"]+)"'
@@ -71,6 +104,38 @@ class NaturalExitAcceptanceTest(unittest.TestCase):
         child = subprocess.Popen([sys.executable, '-c', 'pass'])
         child.wait()
         self.assertEqual(process_children(child.pid), [])
+
+    def test_empty_task_snapshot_rechecks_child_exit(self):
+        for status in ['gone', 'reused', 'zombie']:
+            with self.subTest(status=status), patch(
+                'application_close_smoke.process_state',
+                side_effect=[{'status': 'running'}, {'status': status}],
+            ), patch('application_close_smoke.Path.iterdir', return_value=iter([])):
+                self.assertEqual(process_children(123456, 'owned-start'), [])
+
+    def test_empty_live_task_snapshot_remains_incomplete(self):
+        with patch('application_close_smoke.process_state', return_value={'status': 'running'}), patch(
+            'application_close_smoke.Path.iterdir', return_value=iter([])
+        ), self.assertRaises(ObservationIncomplete):
+            process_children(123456, 'owned-start')
+
+    def test_empty_observer_task_snapshot_is_not_its_own_exit(self):
+        with patch('application_close_smoke.process_state', side_effect=[{'status': 'running'}, {'status': 'gone'}]), patch(
+            'application_close_smoke.Path.iterdir', return_value=iter([])
+        ), self.assertRaises(ObservationIncomplete):
+            process_children(os.getpid())
+
+    def test_missing_observer_task_directory_is_not_its_own_exit(self):
+        with patch('application_close_smoke.process_state', side_effect=[{'status': 'running'}, {'status': 'gone'}]), patch(
+            'application_close_smoke.Path.iterdir', side_effect=FileNotFoundError('proc unavailable')
+        ), self.assertRaises(ObservationIncomplete):
+            process_children(os.getpid())
+
+    def test_empty_task_snapshot_with_unavailable_final_state_is_incomplete(self):
+        with patch('application_close_smoke.process_state', side_effect=[{'status': 'running'}, {'status': 'unavailable', 'error': 'access denied'}]), patch(
+            'application_close_smoke.Path.iterdir', return_value=iter([])
+        ), self.assertRaises(ObservationIncomplete):
+            process_children(123456, 'owned-start')
 
     def test_failed_enumeration_after_launch_preserves_incomplete_failure(self):
         def inaccessible(pid, expected=None):
