@@ -78,19 +78,27 @@ class NaturalExitAcceptanceTest(unittest.TestCase):
         self.assertFalse(record['unresolvedSurvivors'])
         self.assertTrue(all(r['terminationVerified'] for r in record['cleanupOutcomes']))
 
-    def orphan(self, ignores_term):
+    def orphan(self, ignores_term, leader_exits=False):
         return self.run_inferior("""
 child = os.fork()
 if child == 0:
     if IGNORE_TERM:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    if LEADER_EXITS:
+        import threading
+        threading.Thread(target=lambda: time.sleep(30)).start()
     (report.parent / 'child-ready').write_text(str(os.getpid()))
+    if LEADER_EXITS:
+        ctypes.CDLL(None).pthread_exit(None)
     time.sleep(30)
     os._exit(0)
 while not (report.parent / 'child-ready').exists():
     time.sleep(.001)
+if LEADER_EXITS:
+    while pathlib.Path(f'/proc/{child}/stat').read_text().rsplit(')', 1)[1].split()[0] != 'Z':
+        time.sleep(.001)
 os._exit(0)
-""".replace('IGNORE_TERM', repr(ignores_term)))
+""".replace('IGNORE_TERM', repr(ignores_term)).replace('LEADER_EXITS', repr(leader_exits)))
 
     def test_parent_exits_before_child_cleanup_waits_for_child(self):
         record = self.orphan(False)
@@ -105,6 +113,14 @@ os._exit(0)
         record = self.orphan(True)
         self.assertEqual(record['exitCode'], 0)
         self.assertTrue(record['survivingChildren'])
+        self.assertFalse(accepted(record))
+        self.assertFalse(record['unresolvedSurvivors'])
+        self.assertTrue(any(r.get('term') == 'sent' and r.get('kill') == 'sent' and r['terminationVerified'] for r in record['cleanupOutcomes']))
+
+    def test_zombie_leader_with_live_worker_is_waited_for_and_cleaned_up(self):
+        record = self.orphan(True, leader_exits=True)
+        self.assertEqual(record['exitCode'], 0)
+        self.assertTrue(any(r.get('leaderState') == 'Z' and r['status'] == 'running' and r['threads'] > 1 for r in record['survivingChildren']))
         self.assertFalse(accepted(record))
         self.assertFalse(record['unresolvedSurvivors'])
         self.assertTrue(any(r.get('term') == 'sent' and r.get('kill') == 'sent' and r['terminationVerified'] for r in record['cleanupOutcomes']))

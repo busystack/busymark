@@ -25,11 +25,19 @@ def process_state(pid, expected=None):
     try:
         fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
         stamp, state = fields[19], fields[0]
-        status = 'reused' if expected is not None and stamp != expected else 'zombie' if state == 'Z' else 'running'
-        return {'pid': pid, 'identity': stamp, 'status': status}
+        threads = int(fields[17])
+        # /proc/PID/stat describes the thread-group leader. WebKit can leave
+        # that leader a zombie while another thread is still running; waitpid
+        # cannot reap the process yet. Keep observing/waiting for that group.
+        finished = state == 'Z' and threads == 1
+        status = 'reused' if expected is not None and stamp != expected else 'zombie' if finished else 'running'
+        result = {'pid': pid, 'identity': stamp, 'status': status}
+        if state == 'Z' and not finished:
+            result.update(leaderState=state, threads=threads)
+        return result
     except (FileNotFoundError, ProcessLookupError):
         return {'pid': pid, 'status': 'gone'}
-    except (OSError, IndexError) as error:
+    except (OSError, IndexError, ValueError) as error:
         return {'pid': pid, 'status': 'unavailable', 'error': str(error)}
 
 
