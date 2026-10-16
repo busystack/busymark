@@ -2304,9 +2304,7 @@ void main() {
       final destinationPath = p.join(root.path, 'B.md');
       await File(sourcePath).writeAsString('Original A\n');
       final historyRoot = Directory(p.join(root.path, 'history'));
-      final diskStore = FileLocalHistoryStore(
-        rootDirectory: () async => historyRoot,
-      );
+      final diskStore = _ObservedFileHistoryStore(historyRoot);
       final store = _BlockingSaveAsStore(diskStore, destinationPath);
       final timers = <_FakeTimer>[];
       final harness = await _harness(
@@ -2344,6 +2342,16 @@ void main() {
       await _waitFor(
         () => timers.any((timer) => timer.isActive),
         operation: 'Save As checkpoint timer',
+        diagnostics: () {
+          final state = harness.container.read(localHistoryControllerProvider);
+          final buffer = harness.state.activeBuffer!;
+          return 'active=${buffer.filePath}, dirty=${buffer.isDirty}, '
+              'pending=${history.pendingSnapshotForBuffer(buffer.id)?.text}, '
+              'timer states=${timers.map((timer) => timer.isActive).toList()}, '
+              'warning=${state.warning?.detail}, '
+              'storage=${diskStore.observations}, '
+              'revisions=${state.snapshot.revisions.map((revision) => '${revision.historicalPath}:${revision.reason.name}').toList()}';
+        },
       );
       for (final timer in List<_FakeTimer>.of(timers)) {
         timer.fire();
@@ -2391,9 +2399,7 @@ void main() {
         destination.id,
       );
 
-      final reopenedStore = FileLocalHistoryStore(
-        rootDirectory: () async => historyRoot,
-      );
+      final reopenedStore = _ObservedFileHistoryStore(historyRoot);
       final reopened = await _harness(reopenedStore);
       final reopenedHistory = reopened.container.read(
         localHistoryControllerProvider.notifier,
@@ -2405,6 +2411,11 @@ void main() {
               reopened.state.activeBuffer!.id,
             ) !=
             null,
+        operation: 'Reopened A history binding',
+        diagnostics: () =>
+            'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
+            'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
+            'storage=${reopenedStore.observations}',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2417,6 +2428,11 @@ void main() {
               reopened.state.activeBuffer!.id,
             ) !=
             null,
+        operation: 'Reopened B history binding',
+        diagnostics: () =>
+            'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
+            'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
+            'storage=${reopenedStore.observations}',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2471,9 +2487,7 @@ void main() {
       test('first-save pre-promotion cancellation: $cancellation, '
           '${failCapture ? "failed" : "completed"} pending capture', () async {
         final historyRoot = Directory(p.join(root.path, 'history'));
-        final diskStore = FileLocalHistoryStore(
-          rootDirectory: () async => historyRoot,
-        );
+        final diskStore = _ObservedFileHistoryStore(historyRoot);
         final store = _BlockingPrePromotionCaptureStore(
           diskStore,
           failCapture: failCapture,
@@ -2497,6 +2511,19 @@ void main() {
         final settings = harness.container.read(
           appSettingsControllerProvider.notifier,
         );
+        String diagnostics() {
+          final state = harness.container.read(localHistoryControllerProvider);
+          final buffer = harness.state.activeBuffer!;
+          return 'active=${buffer.filePath}, dirty=${buffer.isDirty}, '
+              'text=${buffer.text}, '
+              'pending=${history.pendingSnapshotForBuffer(buffer.id)?.text}, '
+              'document=${history.documentIdForBuffer(buffer.id)}, '
+              'recording=${history.policy.recordingEnabled}, '
+              'timers=${timers.map((timer) => timer.isActive).toList()}, '
+              'warning=${state.warning?.detail}, '
+              'storage=${diskStore.observations}';
+        }
+
         await harness.controller.createMarkdownFile();
         final bufferId = harness.state.activeBuffer!.id;
 
@@ -2532,6 +2559,8 @@ void main() {
           () =>
               history.pendingSnapshotForBuffer(bufferId)?.text ==
               'Pending at first save\n',
+          operation: 'Pre-promotion edit checkpoint admission',
+          diagnostics: diagnostics,
         );
         store.blockNextUntitledCheckpoint = true;
         final destination = p.join(root.path, 'Guide.md');
@@ -2602,13 +2631,19 @@ void main() {
         harness.controller.updateActiveText(
           'Named checkpoint after cancellation\n',
         );
-        await _waitFor(() => timers.any((timer) => timer.isActive));
+        await _waitFor(
+          () => timers.any((timer) => timer.isActive),
+          operation: 'Post-cancellation named checkpoint timer',
+          diagnostics: diagnostics,
+        );
         final namedTimer = timers.singleWhere((timer) => timer.isActive);
         expect(namedTimer.duration, const Duration(seconds: 60));
         now = now.add(namedTimer.duration);
         namedTimer.fire();
         await _waitFor(
           () => history.pendingSnapshotForBuffer(bufferId) == null,
+          operation: 'Post-cancellation named checkpoint completion',
+          diagnostics: diagnostics,
         );
         final captured = await diskStore.load();
         final document = captured.documents.single;
@@ -6992,6 +7027,44 @@ class _BlockingPathBaselineStore extends _FailingProtectiveStore {
     }
     return delegate.capture(request, policy);
   }
+}
+
+// Failure-only diagnostics for the real-storage Save As/reopen scenario. Keep
+// admission and completion separate so a storage wait is not called finished.
+class _ObservedFileHistoryStore extends FileLocalHistoryStore {
+  _ObservedFileHistoryStore(Directory root)
+    : super(rootDirectory: () async => root);
+
+  final observations = <String>[];
+
+  Future<T> _observe<T>(String operation, Future<T> Function() run) async {
+    final clock = Stopwatch()..start();
+    observations.add(
+      '$operation admitted pid=$pid '
+      'wallUs=${DateTime.now().microsecondsSinceEpoch}',
+    );
+    try {
+      return await run();
+    } finally {
+      observations.add('$operation completed ${clock.elapsedMilliseconds}ms');
+    }
+  }
+
+  @override
+  Future<LocalHistorySnapshot> load() => _observe('load', super.load);
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) => _observe(
+    'capture ${request.path}:${request.reason.name}',
+    () => super.capture(request, policy),
+  );
+
+  @override
+  Future<void> prune(LocalHistoryPolicy policy, DateTime now) =>
+      _observe('prune', () => super.prune(policy, now));
 }
 
 class _BlockingSaveAsStore extends _FailingProtectiveStore {
