@@ -17,33 +17,190 @@ import subprocess
 import time
 
 
-def identity(pid):
+class ObservationIncomplete(RuntimeError):
+    pass
+
+
+def process_state(pid, expected=None):
     try:
-        return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
-    except (OSError, IndexError):
-        return None
+        fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+        stamp, state = fields[19], fields[0]
+        status = 'reused' if expected is not None and stamp != expected else 'zombie' if state == 'Z' else 'running'
+        return {'pid': pid, 'identity': stamp, 'status': status}
+    except (FileNotFoundError, ProcessLookupError):
+        return {'pid': pid, 'status': 'gone'}
+    except (OSError, IndexError) as error:
+        return {'pid': pid, 'status': 'unavailable', 'error': str(error)}
+
+
+def identity(pid):
+    return process_state(pid).get('identity')
 
 
 def live(pid, expected):
+    return process_state(pid, expected)['status'] == 'running'
+
+
+def process_children(pid, expected=None):
+    """ENOENT after process/thread exit is a race; a live unreadable task is not."""
+    state = process_state(pid, expected)
+    if pid == os.getpid() and state['status'] != 'running':
+        raise ObservationIncomplete(f'/proc observation mechanism unavailable: {state}')
+    if state['status'] in ('gone', 'reused', 'zombie'):
+        return []
+    if state['status'] == 'unavailable':
+        raise ObservationIncomplete(f'Cannot identify process {pid}: {state}')
+    task = Path(f'/proc/{pid}/task')
     try:
-        return identity(pid) == expected and Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0] != "Z"
-    except OSError:
-        return False
-
-
-def descendants(root, seen):
-    pending = [root]
-    while pending:
-        pid = pending.pop()
-        stamp = identity(pid)
-        if stamp is None:
-            continue
-        seen[pid] = stamp
+        threads = list(task.iterdir())
+        if not threads:
+            raise ObservationIncomplete(f'No observable tasks for live process {pid}')
+    except OSError as error:
+        if process_state(pid, expected)['status'] in ('gone', 'reused', 'zombie'):
+            return []
+        raise ObservationIncomplete(f'Cannot enumerate tasks for {pid}: {error}') from error
+    children = []
+    for thread in threads:
         try:
-            for thread in Path(f"/proc/{pid}/task").iterdir():
-                pending.extend(map(int, (thread / "children").read_text().split()))
-        except OSError:
-            pass
+            children.extend(map(int, (thread / 'children').read_text().split()))
+        except OSError as error:
+            if process_state(pid, expected)['status'] in ('gone', 'reused', 'zombie'):
+                continue
+            if isinstance(error, FileNotFoundError) and not thread.exists():
+                continue  # This particular thread exited during the snapshot.
+            raise ObservationIncomplete(f'Cannot enumerate {thread}/children: {error}') from error
+    return children
+
+
+class ChildTracker:
+    """A dedicated observer adopts orphan descendants, including new sessions.
+
+    Linux subreaper state changes only this observer. No other child may exist
+    at entry, so children adopted after the application starts belong to this
+    case. This closes the parent-exits-between-polls observation gap.
+    """
+    def __init__(self):
+        if process_children(os.getpid()):
+            raise ObservationIncomplete('Observer already has children; ownership would be ambiguous')
+        self.libc = C.CDLL(None, use_errno=True)
+        previous = C.c_int()
+        if self.libc.prctl(37, C.byref(previous), 0, 0, 0) != 0:
+            raise ObservationIncomplete(f'PR_GET_CHILD_SUBREAPER unavailable: errno {C.get_errno()}')
+        self.previous = previous.value
+        if self.libc.prctl(36, 1, 0, 0, 0) != 0:
+            raise ObservationIncomplete(f'PR_SET_CHILD_SUBREAPER unavailable: errno {C.get_errno()}')
+        self.seen = {}
+        self.root = None
+        self.errors = []
+        self.unidentified = {}
+
+    def scan(self):
+        pending = [self.root] if self.root in self.seen else []
+        # A successful read here discovers descendants even if their parent
+        # exited before its first snapshot or a helper started a new session.
+        try:
+            pending.extend(process_children(os.getpid()))
+        except ObservationIncomplete as error:
+            self.errors.append(str(error))
+        visited = set()
+        while pending:
+            pid = pending.pop()
+            if pid in visited:
+                continue
+            visited.add(pid)
+            state = process_state(pid, self.seen.get(pid))
+            if state['status'] == 'unavailable':
+                self.errors.append(str(state))
+                self.unidentified[pid] = state
+                continue
+            if state['status'] in ('gone', 'reused'):
+                continue
+            self.unidentified.pop(pid, None)
+            self.seen.setdefault(pid, state['identity'])
+            if state['status'] == 'zombie':
+                if pid != self.root:
+                    try:
+                        os.waitpid(pid, os.WNOHANG)
+                    except ChildProcessError:
+                        pass
+                continue
+            try:
+                pending.extend(process_children(pid, self.seen[pid]))
+            except ObservationIncomplete as error:
+                self.errors.append(str(error))
+        self.errors = list(dict.fromkeys(self.errors))
+
+    def outstanding(self, children_only=False):
+        self.scan()
+        for pid in list(self.unidentified):
+            if process_state(pid)['status'] == 'gone':
+                self.unidentified.pop(pid)
+        outstanding = [state for state in self.unidentified.values() if state['pid'] != self.root or not children_only]
+        for pid, stamp in self.seen.items():
+            if children_only and pid == self.root:
+                continue
+            state = process_state(pid, stamp)
+            if state['status'] in ('running', 'unavailable'):
+                outstanding.append(state)
+        return outstanding
+
+    def close(self):
+        if self.libc.prctl(36, self.previous, 0, 0, 0) != 0:
+            self.errors.append(f'Could not restore observer subreaper state: errno {C.get_errno()}')
+
+
+def signal_owned(pid, stamp, number):
+    """Pin the process before the final identity check; never signal a reused PID."""
+    try:
+        if hasattr(os, 'pidfd_open'):
+            fd = os.pidfd_open(pid, 0)
+        else:
+            libc = C.CDLL(None, use_errno=True)
+            fd = libc.pidfd_open(pid, 0)
+            if fd < 0:
+                raise OSError(C.get_errno(), os.strerror(C.get_errno()))
+    except ProcessLookupError:
+        return 'gone'
+    except (OSError, AttributeError) as error:
+        return f'unavailable: {error}'
+    try:
+        state = process_state(pid, stamp)
+        if state['status'] != 'running':
+            return state['status']
+        if hasattr(signal, 'pidfd_send_signal'):
+            signal.pidfd_send_signal(fd, number)
+        else:
+            libc = C.CDLL(None, use_errno=True)
+            if libc.pidfd_send_signal(fd, number, None, 0) != 0:
+                raise OSError(C.get_errno(), os.strerror(C.get_errno()))
+        return 'sent'
+    except ProcessLookupError:
+        return 'gone'
+    except (OSError, AttributeError) as error:
+        return f'unavailable: {error}'
+    finally:
+        os.close(fd)
+
+
+def cleanup_owned(tracker, term_grace, kill_grace):
+    outcomes = {}
+    for number, grace, key in [(signal.SIGTERM, term_grace, 'term'), (signal.SIGKILL, kill_grace, 'kill')]:
+        deadline = time.monotonic() + grace
+        while True:
+            pending = tracker.outstanding()
+            for state in pending:
+                pid = state['pid']
+                item = outcomes.setdefault(pid, {'pid': pid, 'identity': tracker.seen.get(pid)})
+                if key not in item:
+                    item[key] = signal_owned(pid, tracker.seen[pid], number) if pid in tracker.seen else 'unavailable: no verified process identity'
+            if not pending or time.monotonic() >= deadline:
+                break
+            time.sleep(.02)
+    unresolved = tracker.outstanding()
+    for pid, item in outcomes.items():
+        item['final'] = process_state(pid, tracker.seen.get(pid))
+        item['terminationVerified'] = item['final']['status'] in ('gone', 'zombie', 'reused')
+    return list(outcomes.values()), unresolved
 
 
 class WindowAttributes(C.Structure):
@@ -139,10 +296,10 @@ class Desktop:
 
 
 def accepted(record):
-    return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired")
+    return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors")
 
 
-def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None):
+def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3):
     folder.mkdir()
     environment = os.environ.copy()
     for key, name in [("HOME", "home"), ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data"), ("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"), ("TMPDIR", "tmp")]:
@@ -170,17 +327,29 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
     report = folder / "application.json"
     arguments = [] if plain else [str(report), scenario] + ([str(video)] if scenario == "video" else [str(document)] if scenario == 'reopen' else [])
     record = {"launch_ns": time.monotonic_ns(), "scenario": scenario, "command": command + arguments, "plainShippingExecutable": plain}
-    seen = {}
+    try:
+        tracker = ChildTracker()
+    except ObservationIncomplete as error:
+        record.update(error=str(error), verificationIncomplete=[str(error)], exitCode=None, launchSkipped=True)
+        temporary_alias.unlink()
+        (folder / 'result.json').write_text(json.dumps(record, indent=2))
+        return record
+    seen = tracker.seen
     desktop = Desktop() if plain or scenario == "video" else None
     with (folder / "application.log").open("w") as log:
         process = subprocess.Popen(record["command"], env=environment, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
         record["pid"] = process.pid
-        seen[process.pid] = identity(process.pid)
+        tracker.root = process.pid
+        stamp = identity(process.pid)
+        if stamp is not None:
+            seen[process.pid] = stamp
         deadline = time.monotonic() + timeout
         close_sent, first_video = False, None
         try:
             while process.poll() is None and time.monotonic() < deadline:
-                descendants(process.pid, seen)
+                tracker.scan()
+                if tracker.errors:
+                    raise ObservationIncomplete("Child observation is incomplete")
                 if plain and not close_sent:
                     w = desktop.window(process.pid)
                     if w:
@@ -243,31 +412,29 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                 recovery = Path(status["applicationSupport"]) / "recovery.json"
                 if not json.loads(recovery.read_text())["cleanShutdown"]:
                     raise RuntimeError("Durable clean-shutdown checkpoint missing")
-            child_deadline = time.monotonic() + 5
-            while any(live(p, stamp) for p, stamp in seen.items() if p != process.pid) and time.monotonic() < child_deadline:
-                time.sleep(.05)
-            record["survivingChildren"] = [p for p, stamp in seen.items() if p != process.pid and live(p, stamp)]
+            child_deadline = time.monotonic() + child_grace
+            while tracker.outstanding(children_only=True) and time.monotonic() < child_deadline:
+                time.sleep(.02)
+            record["survivingChildren"] = tracker.outstanding(children_only=True)
+
         except Exception as error:
             record["error"] = str(error)
             record["exitCode"] = process.poll()
         finally:
-            # Failure cleanup is recorded before signaling only identified children.
-            owned = [p for p, stamp in seen.items() if live(p, stamp)]
-            if owned:
-                record["cleanupRequired"] = owned
+            # Classify before cleanup. A successful cleanup never changes a
+            # failed natural exit, hang, incomplete observation or child leak.
+            pending = tracker.outstanding()
+            if pending:
+                record["cleanupRequired"] = pending
+            record['observedIdentities'] = tracker.seen
+            record['cleanupOutcomes'], record['unresolvedSurvivors'] = cleanup_owned(tracker, term_grace, kill_grace)
+            if process.poll() is not None:
+                process.wait()
+            tracker.close()
+            if tracker.errors:
+                record['verificationIncomplete'] = tracker.errors
             (folder / "result.json").write_text(json.dumps(record, indent=2))
-            for p in owned:
-                try:
-                    os.kill(p, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                for p in owned:
-                    if live(p, seen[p]):
-                        os.kill(p, signal.SIGKILL)
-                process.wait(timeout=5)
+
     temporary_alias.unlink()
     if desktop is not None:
         desktop.dispose()
@@ -305,11 +472,17 @@ def main():
             record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance)
             records.append(record)
             print(json.dumps({"cycle": cycle, "scenario": scenario, "exitCode": record.get("exitCode"), "accepted": accepted(record), "error": record.get("error")}), flush=True)
+            if record.get('unresolvedSurvivors') or record.get('verificationIncomplete'):
+                break
             document = record.get('application', {}).get('document')
             if not args.plain and document and accepted(record):
                 reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, document=Path(document))
                 records.append(reopened)
                 print(json.dumps({'cycle': cycle, 'scenario': scenario + '-reopen', 'exitCode': reopened.get('exitCode'), 'accepted': accepted(reopened), 'error': reopened.get('error')}), flush=True)
+                if reopened.get('unresolvedSurvivors') or reopened.get('verificationIncomplete'):
+                    break
+        if records[-1].get('unresolvedSurvivors') or records[-1].get('verificationIncomplete'):
+            break
     summary = {"runs": len(records), "failures": sum(not accepted(r) for r in records), "records": records}
     (root / "summary.json").write_text(json.dumps(summary, indent=2))
     return 1 if summary["failures"] else 0

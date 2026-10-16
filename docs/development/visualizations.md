@@ -275,7 +275,17 @@ status zero, no hang, and no surviving identified children:
 The observer uses only the PID-owned X11 window. It supplies disposable home,
 settings, history, session, recovery, cache, and fixture directories while
 preserving the authenticated desktop connection. A failed run is retained and
-any necessary cleanup is recorded as failure. It never treats a Dart checkpoint
+any necessary cleanup is recorded as failure. Linux `/proc` task-child reads and
+an observer-only child subreaper track descendants after their parent exits,
+including helpers that create another session. Missing or inaccessible observation
+is incomplete verification, not an empty child list; ordinary process/thread exit
+races are distinguished. The observer requires no pre-existing children so
+adoption has unambiguous ownership. Cleanup pins and rechecks process identities,
+waits for all identified children independently of the parent, escalates from
+TERM to KILL when necessary, and records verified termination or unresolved
+survivors. Cleanup success preserves the failed-run classification. A cohort
+stops if child observation is incomplete or survivors remain unresolved.
+It never treats a Dart checkpoint
 as successful process exit. This is a functional close test, not a startup
 content observer or a presentation-time benchmark.
 
