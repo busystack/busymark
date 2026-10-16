@@ -248,11 +248,28 @@ Future<void> activateSearchResult(
           unavailable();
           return;
         }
-        if (match.bufferId != null) {
-          if (ref.read(workspaceControllerProvider).activeBufferId !=
-                  match.bufferId &&
+        // An open-buffer ID is only a hint: clean tabs may close without
+        // invalidating a workspace result. Resolve its durable file identity
+        // again, including a tab reopened since this result was produced.
+        final live = ref.read(workspaceControllerProvider);
+        final destination = match.filePath != null
+            ? live.bufferForPath(match.filePath!)
+            : live.documentBuffers
+                  .where((buffer) => buffer.id == match.bufferId)
+                  .firstOrNull;
+        bool validSource(String text) =>
+            match.startOffset >= 0 &&
+            match.endOffset > match.startOffset &&
+            match.endOffset <= text.length &&
+            notesSearchDigest(text) == match.digest;
+        if (destination != null) {
+          if (!validSource(destination.text)) {
+            unavailable();
+            return;
+          }
+          if (live.activeBufferId != destination.id &&
               !await controller.activateDocumentBuffer(
-                match.bufferId!,
+                destination.id,
                 acceptNavigation: currentRequest,
               )) {
             return;
@@ -262,6 +279,7 @@ Future<void> activateSearchResult(
             match.filePath!,
             acceptNavigation: currentRequest,
           )) {
+            if (currentRequest()) unavailable();
             return;
           }
         } else {
@@ -276,8 +294,8 @@ Future<void> activateSearchResult(
         }
         final buffer = ref.read(workspaceControllerProvider).activeBuffer;
         if (buffer == null ||
-            notesSearchDigest(buffer.text) != match.digest ||
-            match.endOffset > buffer.text.length) {
+            (match.filePath != null && buffer.filePath != match.filePath) ||
+            !validSource(buffer.text)) {
           unavailable();
           return;
         }

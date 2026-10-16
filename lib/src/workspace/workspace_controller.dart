@@ -7645,6 +7645,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final existed = await _service.pathExists(path);
     if (existed != overwriteExisting) return false;
     WorkspaceFileSnapshot? createdSnapshot;
+    void Function()? stopWatchingTarget;
     try {
       if (!existed) {
         createdSnapshot = await _service.saveNewFormattedText(
@@ -7695,6 +7696,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         format: destination.format,
         editorState: destination.editorState,
       );
+      var targetChanged = false;
+      // Latch actual target changes, including switching away and back. A
+      // workspace metadata refresh may invalidate other document operations
+      // without changing this destination or its protected source.
+      stopWatchingTarget = listenSelf((previous, next) {
+        if (next.workspace?.id != target.workspaceId ||
+            next.activeBufferId != target.bufferId ||
+            next.activeBuffer?.filePath != target.path ||
+            next.activeBuffer?.editorState.mode != target.editorState.mode) {
+          targetChanged = true;
+        }
+      });
       if (!await _localHistory.captureProtective(
         LocalHistoryBufferSnapshot.fromBuffer(destination),
         LocalHistoryCaptureReason.beforeRestore,
@@ -7704,8 +7717,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
         return false;
       }
-      if (!_isLocalHistoryRestoreTargetCurrent(target) ||
+      if (targetChanged ||
+          !_isLocalHistoryRestoreTargetCurrent(target) ||
           await _service.fileChangedSince(path, target.snapshot) ||
+          targetChanged ||
           !_isLocalHistoryRestoreTargetCurrent(target)) {
         if (createdSnapshot != null) {
           await _rollbackMissingHistoryDestination(path, null, createdSnapshot);
@@ -7743,6 +7758,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         await _rollbackMissingHistoryDestination(path, null, createdSnapshot);
       }
       return false;
+    } finally {
+      stopWatchingTarget?.call();
     }
   }
 
@@ -7766,19 +7783,33 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   bool _isLocalHistoryRestoreTargetCurrent(_LocalHistoryRestoreTarget target) {
+    if (!ref.mounted) return false;
     final current = state.documentBuffers
         .where((buffer) => buffer.id == target.bufferId)
         .firstOrNull;
+    // This restores a whole revision, independently of caret/viewport state.
+    // Mounting Editor initializes its rich selection and viewport while the
+    // protective capture is pending. Those session reports do not change the
+    // target source. Navigation, mode, source/undo and disk changes still reject
+    // the restore; use the live session when constructing its Undo entry.
     return current != null &&
         state.workspace?.id == target.workspaceId &&
+        state.activeBufferId == target.bufferId &&
         current.filePath != null &&
         p.equals(current.filePath!, target.path) &&
         current.revision == target.revision &&
         current.text == target.text &&
         _sameFileSnapshot(current.diskSnapshot, target.snapshot) &&
         current.diskState == target.diskState &&
-        identical(current.format, target.format) &&
-        identical(current.editorState, target.editorState);
+        current.format.hasUtf8Bom == target.format.hasUtf8Bom &&
+        current.format.lineEnding == target.format.lineEnding &&
+        current.format.hasFinalNewline == target.format.hasFinalNewline &&
+        current.format.lfCount == target.format.lfCount &&
+        current.format.crlfCount == target.format.crlfCount &&
+        current.format.crCount == target.format.crCount &&
+        !current.readonly &&
+        current.editorState.mode == target.editorState.mode &&
+        identical(current.editorState.undoState, target.editorState.undoState);
   }
 
   Future<bool> localHistoryRestorePathExists(String path) {

@@ -894,6 +894,48 @@ class _DriverState extends ConsumerState<_Driver> {
             search.generation == searchGeneration,
         'clean document activation and outline refresh do not rescan workspace',
       );
+      final retainedResult =
+          search.results[search.selected] as TextSearchResult;
+      final closedBuffer = ref.read(workspaceControllerProvider).activeBuffer!;
+      check(
+        await workspace.closeDocumentBuffer(closedBuffer.id),
+        'close clean search destination tab',
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      check(
+        search.generation == searchGeneration &&
+            identical(search.results[search.selected], retainedResult),
+        'closing clean tab retains workspace result without rescanning',
+      );
+      widgets<TextField>()
+          .singleWhere(
+            (f) => f.decoration?.hintText?.startsWith('Search ') == true,
+          )
+          .focusNode!
+          .requestFocus();
+      await key('enter');
+      await wait(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+            closedBuffer.filePath,
+        'retained workspace result reopens closed clean file',
+      );
+      await wait(
+        () => widgets<TextField>()
+            .map((f) => f.controller)
+            .whereType<BusyMarkWysiwygTextController>()
+            .any(
+              (c) =>
+                  c.text.contains('scope needle beta') &&
+                  c.selection.isValid &&
+                  c.selection.textInside(c.text) == 'scope needle',
+            ),
+        'reopened workspace result reveals exact occurrence',
+      );
+      check(
+        search.generation == searchGeneration,
+        'reopening does not rescan workspace',
+      );
       final samples = <Map<String, Object?>>[];
       for (var i = 0; i < 10; i++) {
         samples.add(

@@ -13606,6 +13606,191 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await opening;
   });
 
+  for (final mode in [
+    DocumentViewModePreference.editor,
+    DocumentViewModePreference.preview,
+  ]) {
+    for (final change in ['initialization', 'edit', 'navigation']) {
+      testWidgets(
+        'deleted History recovery in ${mode.name} tolerates only initialization: $change',
+        (tester) async {
+          final root = Directory.systemTemp.createTempSync(
+            'busymark-history-initialization-',
+          );
+          addTearDown(() => root.deleteSync(recursive: true));
+          final anchor = File(p.join(root.path, 'anchor.md'))
+            ..writeAsStringSync('# Anchor\n');
+          final missing = File(p.join(root.path, 'deleted.md'));
+          final store = _PendingHistoryRestoreStore();
+          const recovered = '# Recovered\n\nDeleted source.\n';
+          final format = decodeUtf8Document(utf8.encode(recovered)).format;
+          final destinationSource = decodeUtf8Document(format.encode('')).text;
+          final capture = await store.capture(
+            LocalHistoryCaptureRequest(
+              path: missing.path,
+              displayName: 'deleted.md',
+              source: recovered,
+              format: format,
+              capturedAt: DateTime.now().toUtc(),
+              reason: LocalHistoryCaptureReason.beforeDelete,
+            ),
+            const LocalHistoryPolicy(),
+          );
+          await store.markDeleted(missing.path, recursive: false);
+          final document = (await store.load()).documents.single;
+          final revision = (await store.readRevision(capture.revision!.id))!;
+          final settings = _MemorySettingsStore()
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  automaticSpelling: false,
+                  documentViewMode: mode,
+                )
+                .toJson();
+          final container = ProviderContainer(
+            overrides: [
+              ..._smokeAccentOverrides,
+              linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+              workspaceFileMonitorProvider.overrideWith(
+                (ref) => _SearchTestFileMonitor(),
+              ),
+              localSettingsStoreProvider.overrideWithValue(settings),
+              localHistoryStoreProvider.overrideWithValue(store),
+              startupPathProvider.overrideWithValue(root.path),
+            ],
+          );
+          addTearDown(container.dispose);
+          addTearDown(() {
+            if (!store.release.isCompleted) store.release.complete();
+          });
+          await tester.pumpWidget(
+            UncontrolledProviderScope(
+              container: container,
+              child: const BusyMarkApp(),
+            ),
+          );
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                container
+                    .read(workspaceControllerProvider)
+                    .activeBuffer
+                    ?.filePath ==
+                anchor.path,
+            attempts: 3000,
+          );
+          final controller = container.read(
+            workspaceControllerProvider.notifier,
+          );
+          container.read(localHistoryOpenRequestProvider.notifier).request();
+          await tester.pumpAndSettle();
+          final history = container.read(
+            localHistoryControllerProvider.notifier,
+          );
+          history.inspectRetainedDocument(document.id);
+          await tester.runAsync(
+            () => history.selectRevision(revision.summary.id),
+          );
+          await tester.pump();
+          final restoring = controller.restoreMissingLocalHistoryRevision(
+            document: document,
+            revision: revision,
+            destinationPath: missing.path,
+            overwriteExisting: false,
+          );
+          bool? restored;
+          unawaited(restoring.then((value) => restored = value));
+          await _waitForSearchCondition(
+            tester,
+            () => store.started.isCompleted || restored != null,
+            attempts: 3000,
+          );
+          expect(
+            store.started.isCompleted,
+            isTrue,
+            reason:
+                'Recovery must reach protective capture before simulating navigation (returned $restored).',
+          );
+          final before = container
+              .read(workspaceControllerProvider)
+              .activeBuffer!;
+          expect(before.filePath, missing.path);
+          expect(before.text, destinationSource);
+          expect(before.editorState.mode, mode);
+          // Mount the actual destination editor while the protective capture is
+          // suspended. Its session report must not masquerade as a source edit.
+          await tester.pumpAndSettle();
+          final initialized = container
+              .read(workspaceControllerProvider)
+              .activeBuffer!;
+          expect(initialized.text, before.text);
+          expect(initialized.revision, before.revision);
+          if (mode == DocumentViewModePreference.editor) {
+            expect(find.byType(BusyMarkWysiwygEditor), findsOneWidget);
+            expect(
+              identical(initialized.editorState, before.editorState),
+              isFalse,
+            );
+          }
+          if (change == 'edit') {
+            controller.updateActiveText('Concurrent user edit\n');
+          }
+          if (change == 'navigation') {
+            await tester.runAsync(() => controller.openActiveFile(anchor.path));
+            // Returning to the same tab must not revive the pending restore.
+            await tester.runAsync(
+              () => controller.openActiveFile(missing.path),
+            );
+          }
+          store.release.complete();
+          await _waitForSearchCondition(
+            tester,
+            () => restored != null,
+            attempts: 3000,
+          );
+          await tester.pumpAndSettle();
+          expect(restored, change == 'initialization');
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            change == 'initialization'
+                ? recovered
+                : change == 'edit'
+                ? 'Concurrent user edit\n'
+                : destinationSource,
+          );
+          if (change == 'initialization') {
+            expect(missing.readAsStringSync(), destinationSource);
+            expect(controller.undoActiveBuffer(), isTrue);
+            await tester.pumpAndSettle();
+            expect(
+              container.read(workspaceControllerProvider).activeText,
+              destinationSource,
+            );
+            expect(controller.redoActiveBuffer(), isTrue);
+            await tester.pumpAndSettle();
+            expect(
+              container.read(workspaceControllerProvider).activeText,
+              recovered,
+            );
+            bool? saved;
+            unawaited(controller.saveActive().then((value) => saved = value));
+            // This includes real filesystem publication and protective History
+            // capture, rather than only the query debounce used by this helper.
+            await _waitForSearchCondition(
+              tester,
+              () => saved != null,
+              attempts: 3000,
+            );
+            expect(saved, isTrue);
+            expect(missing.readAsStringSync(), recovered);
+          }
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 1));
+        },
+      );
+    }
+  }
+
   testWidgets(
     'shared History search inspects exact retained revisions and restores ordinary browsing',
     (tester) async {
@@ -14535,6 +14720,199 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             .configuration
             .searchQuery,
         'needle',
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  for (final resourceChange in [
+    'unchanged',
+    'reopened',
+    'changed',
+    'deleted',
+  ]) {
+    testWidgets(
+      'workspace result resolves a closed clean tab: $resourceChange',
+      (tester) async {
+        final sources = {
+          'a.md': 'Before\noriginal needle result\n',
+          'b.md': '# B\n',
+        };
+        final harness = await _pumpSearchRegression(
+          tester,
+          headerBarService,
+          sources,
+        );
+        final container = harness.container;
+        final controller = container.read(workspaceControllerProvider.notifier);
+        final original = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        await controller.openActiveFile(
+          '${_SearchRegressionService.root}/b.md',
+        );
+        harness.events.add(const HeaderBarSearchQueryChanged('needle'));
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              !container.read(searchSessionProvider).searching &&
+              container.read(searchSessionProvider).results.isNotEmpty,
+        );
+        final result =
+            container.read(searchSessionProvider).results.single
+                as TextSearchResult;
+        expect(result.match.bufferId, original.id);
+        final generation = container.read(searchSessionProvider).generation;
+        expect(await controller.closeDocumentBuffer(original.id), isTrue);
+        await tester.pump();
+        expect(
+          container
+              .read(workspaceControllerProvider)
+              .bufferForPath(original.filePath!),
+          isNull,
+        );
+        if (resourceChange == 'changed') {
+          sources['a.md'] = 'Changed needle content\n';
+        }
+        if (resourceChange == 'deleted') sources.remove('a.md');
+        if (resourceChange == 'reopened') {
+          expect(await controller.openActiveFile(original.filePath!), isTrue);
+          await controller.openActiveFile(
+            '${_SearchRegressionService.root}/b.md',
+          );
+        }
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(container.read(searchSessionProvider).generation, generation);
+        expect(
+          identical(
+            container.read(searchSessionProvider).results.single,
+            result,
+          ),
+          isTrue,
+        );
+        await tester.tap(find.text('original needle result'));
+        if (resourceChange == 'unchanged' || resourceChange == 'reopened') {
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                container
+                        .read(workspaceControllerProvider)
+                        .activeBuffer
+                        ?.filePath ==
+                    original.filePath &&
+                _searchSourceController(tester).fullSelection ==
+                    const TextSelection(baseOffset: 16, extentOffset: 22),
+          );
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            sources['a.md'],
+          );
+          expect(
+            container
+                .read(workspaceControllerProvider)
+                .documentBuffers
+                .where((b) => b.filePath == original.filePath),
+            hasLength(1),
+          );
+        } else {
+          await _waitForSearchCondition(
+            tester,
+            () => find
+                .text(l10n.commandUnavailableInContext)
+                .evaluate()
+                .isNotEmpty,
+          );
+          expect(
+            _searchSourceController(tester).fullSelection,
+            isNot(const TextSelection(baseOffset: 16, extentOffset: 22)),
+          );
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            resourceChange == 'changed' ? sources['a.md'] : sources['b.md'],
+          );
+        }
+        expect(container.read(searchSessionProvider).query, 'needle');
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 1));
+      },
+    );
+  }
+
+  testWidgets(
+    'cancelled closed-tab result cannot navigate or publish feedback',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'original needle result\n',
+        'b.md': '# B\n',
+      });
+      final container = harness.container;
+      final controller = container.read(workspaceControllerProvider.notifier);
+      final original = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      await controller.openActiveFile('${_SearchRegressionService.root}/b.md');
+      final destination = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      harness.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            !container.read(searchSessionProvider).searching &&
+            container.read(searchSessionProvider).results.isNotEmpty,
+      );
+      expect(await controller.closeDocumentBuffer(original.id), isTrue);
+      final started = Completer<void>();
+      final release = Completer<void>();
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+      });
+      (container.read(workspaceServiceProvider) as _SearchRegressionService)
+          .beforeLoad = (path) async {
+        if (path == original.filePath) {
+          started.complete();
+          await release.future;
+        }
+      };
+      await tester.tap(find.text('original needle result'));
+      await _waitForSearchCondition(tester, () => started.isCompleted);
+      container
+          .read(searchSessionProvider.notifier)
+          .open(category: SearchCategory.actions);
+      release.complete();
+      await tester.pumpAndSettle();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeBufferId,
+        destination.id,
+      );
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .bufferForPath(original.filePath!),
+        isNull,
+      );
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.actions,
+      );
+      expect(
+        find.ancestor(
+          of: find.text(l10n.commandUnavailableInContext),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Semantics && widget.properties.liveRegion == true,
+          ),
+        ),
+        findsNothing,
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        destination.text,
       );
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 1));
@@ -15928,6 +16306,23 @@ TapGestureRecognizer? _firstTapRecognizer(InlineSpan span) {
   return null;
 }
 
+class _PendingHistoryRestoreStore extends MemoryLocalHistoryStore {
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.beforeRestore) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
+    }
+    return super.capture(request, policy);
+  }
+}
+
 class _NavigationHistoryStore extends MemoryLocalHistoryStore {
   var available = false;
   var protectiveAttempts = 0;
@@ -16686,9 +17081,10 @@ GitFileStatus _gitStatusFile(
 
 Future<void> _waitForSearchCondition(
   WidgetTester tester,
-  bool Function() condition,
-) async {
-  for (var attempt = 0; attempt < 300; attempt++) {
+  bool Function() condition, {
+  int attempts = 300,
+}) async {
+  for (var attempt = 0; attempt < attempts; attempt++) {
     await tester.pump(const Duration(milliseconds: 20));
     if (condition()) return;
     await tester.runAsync(
@@ -16784,6 +17180,7 @@ class _SearchRegressionService extends WorkspaceService {
   final Map<String, String> sources;
   final Set<String> oversized;
   final Set<String> unreadable;
+  Future<void> Function(String path)? beforeLoad;
 
   @override
   Future<Workspace> openPath(String path) async => Workspace(
@@ -16823,6 +17220,7 @@ class _SearchRegressionService extends WorkspaceService {
 
   @override
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    await beforeLoad?.call(path);
     final text = await loadText(path);
     return WorkspaceFileLoad(
       text: text,
