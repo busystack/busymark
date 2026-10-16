@@ -423,18 +423,6 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "commandPalette": "명령 팔레트",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "명령을 입력하세요",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "일치하는 명령이 없습니다.",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "현재 편집기 컨텍스트에서는 사용할 수 없습니다.",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -4889,7 +4877,6 @@
   "localHistoryNoDocuments": "아직 로컬 히스토리가 있는 문서는 없습니다.",
   "localHistoryNoRevisions": "이 문서는 로컬 히스토리 수정 사항이 없습니다.",
   "localHistoryNoMatches": "이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.",
-  "localHistorySearchHint": "로컬 기록 검색",
   "localHistorySelectedRevision": "선택된 수정",
   "localHistoryCurrentEditor": "현재 편집 내용",
   "localHistoryCurrentDisk": "디스크에 있는 현재 내용",
@@ -5150,20 +5137,20 @@
   "wsAdmonitionsAndQuotes": "안내 및 인용",
   "wsSemanticText": "의미 텍스트",
   "wsPropertiesUnavailable": "검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.",
-  "searchTextCategory": "텍스트",
   "searchDocumentsCategory": "문서",
   "searchTopicsCategory": "주제",
   "searchCurrentDocument": "현재 문서",
   "searchCurrentWorkspace": "현재 작업 공간",
-  "recentDocuments": "최근 문서",
-  "recentWorkspaces": "최근 작업 공간",
   "browseNotes": "노트 찾아보기",
   "searchActionsCommand": "작업 검색",
   "searchDocumentsCommand": "문서 검색",
-  "searchWorkspaceCommand": "작업 공간 텍스트 검색",
   "searchTopicsCommand": "주제 검색",
   "searchRecentCommand": "최근 항목 검색",
   "searchQueryHint": "{category} 검색…",
   "searchResourceUnavailable": "이 리소스를 사용할 수 없습니다.",
-  "notesSync": "노트 동기화"
+  "notesSync": "노트 동기화",
+  "searchInFile": "파일에서 검색",
+  "searchInWorkspace": "작업 공간에서 검색",
+  "searchCategory": "검색 범주",
+  "clearHistorySearchScope": "문서 기록 전체 검색"
 }

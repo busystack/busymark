@@ -584,15 +584,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyboardShortcuts => 'Keyboard Shortcuts';
 
   @override
-  String get commandPalette => 'Command Palette';
-
-  @override
-  String get commandPaletteHint => 'Type a command';
-
-  @override
-  String get commandPaletteEmpty => 'No matching commands';
-
-  @override
   String get commandUnavailableInContext =>
       'Unavailable in the current editor context';
 
@@ -4462,9 +4453,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'No Local History revisions match this search.';
 
   @override
-  String get localHistorySearchHint => 'Search local history';
-
-  @override
   String get localHistorySelectedRevision => 'Selected revision';
 
   @override
@@ -5415,9 +5403,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The inspected element is unavailable. Inspect an element to continue.';
 
   @override
-  String get searchTextCategory => 'Text';
-
-  @override
   String get searchDocumentsCategory => 'Documents';
 
   @override
@@ -5430,12 +5415,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchCurrentWorkspace => 'Current workspace';
 
   @override
-  String get recentDocuments => 'Recent documents';
-
-  @override
-  String get recentWorkspaces => 'Recent workspaces';
-
-  @override
   String get browseNotes => 'Browse Notes';
 
   @override
@@ -5443,9 +5422,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Search Documents';
-
-  @override
-  String get searchWorkspaceCommand => 'Search workspace text';
 
   @override
   String get searchTopicsCommand => 'Search Topics';
@@ -5463,4 +5439,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notesSync => 'Sync notes';
+
+  @override
+  String get searchInFile => 'Search in File';
+
+  @override
+  String get searchInWorkspace => 'Search in Workspace';
+
+  @override
+  String get searchCategory => 'Search category';
+
+  @override
+  String get clearHistorySearchScope => 'Search history across documents';
 }

@@ -587,15 +587,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get keyboardShortcuts => 'Сочетания клавиш';
 
   @override
-  String get commandPalette => 'Палитра команд';
-
-  @override
-  String get commandPaletteHint => 'Введите команду';
-
-  @override
-  String get commandPaletteEmpty => 'Нет подходящих команд';
-
-  @override
   String get commandUnavailableInContext =>
       'Эта команда недоступна в текущем контексте.';
 
@@ -4497,9 +4488,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ни одна версия не соответствует этому поиску.';
 
   @override
-  String get localHistorySearchHint => 'Поиск в локальной истории';
-
-  @override
   String get localHistorySelectedRevision => 'Выбранная версия';
 
   @override
@@ -5457,9 +5445,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Проверяемый элемент недоступен. Выберите элемент для продолжения.';
 
   @override
-  String get searchTextCategory => 'Текст';
-
-  @override
   String get searchDocumentsCategory => 'Документы';
 
   @override
@@ -5472,12 +5457,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchCurrentWorkspace => 'Текущая рабочая область';
 
   @override
-  String get recentDocuments => 'Недавние документы';
-
-  @override
-  String get recentWorkspaces => 'Недавние рабочие области';
-
-  @override
   String get browseNotes => 'Обзор заметок';
 
   @override
@@ -5485,9 +5464,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Поиск документов';
-
-  @override
-  String get searchWorkspaceCommand => 'Поиск текста в рабочей области';
 
   @override
   String get searchTopicsCommand => 'Поиск тем';
@@ -5505,4 +5481,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notesSync => 'Синхронизировать заметки';
+
+  @override
+  String get searchInFile => 'Поиск в файле';
+
+  @override
+  String get searchInWorkspace => 'Поиск в рабочей области';
+
+  @override
+  String get searchCategory => 'Категория поиска';
+
+  @override
+  String get clearHistorySearchScope => 'Поиск в истории документов';
 }

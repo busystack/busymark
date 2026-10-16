@@ -1,3 +1,4 @@
+import '../recent_navigation.dart';
 import '../../search/search_session.dart';
 import '../../search/search_sidebar.dart';
 import '../../search/welcome_notes_action.dart';
@@ -126,9 +127,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
             SearchResultList(
               results: [
                 for (final r in settings.recentWorkspaces)
-                  if (r.isDocument) RecentSearchResult(r),
-                for (final r in settings.recentWorkspaces)
-                  if (!r.isDocument) RecentSearchResult(r),
+                  RecentSearchResult(r),
               ],
               onActivate: (r) => openRecentResource(
                 context,

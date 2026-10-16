@@ -57,6 +57,7 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
   required bool Function() isCancelled,
   required SourceSearchWorker worker,
   required int maximumResults,
+  void Function(WorkspaceTextOutcome outcome)? onProgress,
 }) async {
   final workspace = state.workspace;
   if (workspace == null || options.query.isEmpty || isCancelled()) {
@@ -68,6 +69,9 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
   final results = <WorkspaceTextMatch>[];
   final skippedFiles = <String>[];
   var hasZeroLengthMatches = false;
+  final publicationClock = Stopwatch()..start();
+  var publishedMatches = 0;
+  var lastPublication = 0;
   final sortedFiles =
       workspace.files.where(isSearchableWorkspaceDocument).toList()
         ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
@@ -145,6 +149,20 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
         truncated: true,
         skippedFiles: List.unmodifiable(skippedFiles),
         hasZeroLengthMatches: hasZeroLengthMatches,
+      );
+    }
+    if (onProgress != null &&
+        results.length > publishedMatches &&
+        (publishedMatches == 0 ||
+            publicationClock.elapsedMilliseconds - lastPublication >= 50)) {
+      publishedMatches = results.length;
+      lastPublication = publicationClock.elapsedMilliseconds;
+      onProgress(
+        WorkspaceTextOutcome(
+          matches: List.unmodifiable(results),
+          skippedFiles: List.unmodifiable(skippedFiles),
+          hasZeroLengthMatches: hasZeroLengthMatches,
+        ),
       );
     }
   }

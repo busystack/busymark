@@ -584,15 +584,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get keyboardShortcuts => 'Skróty klawiaturowe';
 
   @override
-  String get commandPalette => 'Paleta poleceń';
-
-  @override
-  String get commandPaletteHint => 'Wpisz polecenie';
-
-  @override
-  String get commandPaletteEmpty => 'Brak pasujących poleceń';
-
-  @override
   String get commandUnavailableInContext =>
       'To polecenie nie jest dostępne w bieżącym kontekście.';
 
@@ -4493,9 +4484,6 @@ class AppLocalizationsPl extends AppLocalizations {
       'Żadne wersje nie pasują do tego wyszukiwania.';
 
   @override
-  String get localHistorySearchHint => 'Przeszukaj historię lokalną';
-
-  @override
   String get localHistorySelectedRevision => 'Wybrana wersja';
 
   @override
@@ -5454,9 +5442,6 @@ class AppLocalizationsPl extends AppLocalizations {
       'Sprawdzany element jest niedostępny. Sprawdź element, aby kontynuować.';
 
   @override
-  String get searchTextCategory => 'Tekst';
-
-  @override
   String get searchDocumentsCategory => 'Dokumenty';
 
   @override
@@ -5469,12 +5454,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get searchCurrentWorkspace => 'Bieżący obszar roboczy';
 
   @override
-  String get recentDocuments => 'Ostatnie dokumenty';
-
-  @override
-  String get recentWorkspaces => 'Ostatnie obszary robocze';
-
-  @override
   String get browseNotes => 'Przeglądaj notatki';
 
   @override
@@ -5482,9 +5461,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Szukaj dokumentów';
-
-  @override
-  String get searchWorkspaceCommand => 'Szukaj tekstu w obszarze roboczym';
 
   @override
   String get searchTopicsCommand => 'Szukaj tematów';
@@ -5502,4 +5478,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get notesSync => 'Synchronizuj notatki';
+
+  @override
+  String get searchInFile => 'Szukaj w pliku';
+
+  @override
+  String get searchInWorkspace => 'Szukaj w obszarze roboczym';
+
+  @override
+  String get searchCategory => 'Kategoria wyszukiwania';
+
+  @override
+  String get clearHistorySearchScope => 'Szukaj w historii dokumentów';
 }

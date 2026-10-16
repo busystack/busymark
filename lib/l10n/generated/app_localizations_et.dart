@@ -579,15 +579,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get keyboardShortcuts => 'Kiirklahvid';
 
   @override
-  String get commandPalette => 'Käskude palett';
-
-  @override
-  String get commandPaletteHint => 'Sisesta käsk';
-
-  @override
-  String get commandPaletteEmpty => 'Sobivaid käske pole';
-
-  @override
   String get commandUnavailableInContext =>
       'See käsk pole praeguses kontekstis saadaval.';
 
@@ -4439,9 +4430,6 @@ class AppLocalizationsEt extends AppLocalizations {
       'Ei leidunud kohalise ajalooga versioone.';
 
   @override
-  String get localHistorySearchHint => 'Otsi kohalikust ajaloost';
-
-  @override
   String get localHistorySelectedRevision => 'Valitud versioon';
 
   @override
@@ -5396,9 +5384,6 @@ class AppLocalizationsEt extends AppLocalizations {
       'Vaadeldav element pole saadaval. Jätkamiseks vali element.';
 
   @override
-  String get searchTextCategory => 'Tekst';
-
-  @override
   String get searchDocumentsCategory => 'Dokumendid';
 
   @override
@@ -5411,12 +5396,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get searchCurrentWorkspace => 'Praegune tööruum';
 
   @override
-  String get recentDocuments => 'Hiljutised dokumendid';
-
-  @override
-  String get recentWorkspaces => 'Hiljutised tööruumid';
-
-  @override
   String get browseNotes => 'Sirvi märkmeid';
 
   @override
@@ -5424,9 +5403,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Otsi dokumente';
-
-  @override
-  String get searchWorkspaceCommand => 'Otsi tööruumi tekstist';
 
   @override
   String get searchTopicsCommand => 'Otsi teemasid';
@@ -5444,4 +5420,16 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get notesSync => 'Sünkrooni märkmed';
+
+  @override
+  String get searchInFile => 'Otsi failist';
+
+  @override
+  String get searchInWorkspace => 'Otsi tööalast';
+
+  @override
+  String get searchCategory => 'Otsingu kategooria';
+
+  @override
+  String get clearHistorySearchScope => 'Otsi dokumentide ajaloost';
 }

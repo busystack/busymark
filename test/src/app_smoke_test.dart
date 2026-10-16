@@ -58,6 +58,7 @@ import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_panel.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/local_history/local_history_comparison_view.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -7661,14 +7662,8 @@ code
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
-    expect(
-      tester
-          .widget<DropdownButton<SearchCategory>>(
-            find.byKey(const ValueKey('search-category')),
-          )
-          .value,
-      SearchCategory.outline,
-    );
+    expect(container.read(searchSessionProvider).active, isFalse);
+    expect(find.byKey(const ValueKey('shared-search-query')), findsNothing);
     final outlineFileMenu = find.byKey(
       const ValueKey('workspace-sidebar-outline-file-menu'),
     );
@@ -7890,8 +7885,12 @@ code
       });
       expect(capturedSources, contains(formatted));
 
+      container
+          .read(searchSessionProvider.notifier)
+          .openHistory(documentId: history.selectedDocumentId);
+      await tester.pump();
       final historySearch = find.descendant(
-        of: find.byType(LocalHistoryPanel),
+        of: find.byKey(const ValueKey('shared-search-query')),
         matching: find.byType(TextField),
       );
       await tester.enterText(historySearch, 'needle');
@@ -7902,24 +7901,37 @@ code
       now = now.add(const Duration(seconds: 60));
       expect(timers.where((timer) => timer.isActive), hasLength(1));
       timers.lastWhere((timer) => timer.isActive).fire();
-      await waitForHistory(
-        (history) => !history.searching && history.searchMatches.length == 1,
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            !container.read(searchSessionProvider).searching &&
+            container
+                    .read(searchSessionProvider)
+                    .results
+                    .whereType<HistorySearchResult>()
+                    .length ==
+                1,
       );
+
       history = container.read(localHistoryControllerProvider);
-      expect(history.searchQuery, 'needle');
-      expect(history.searchMatches, hasLength(1));
+      expect(container.read(searchSessionProvider).query, 'needle');
+      expect(
+        container
+            .read(searchSessionProvider)
+            .results
+            .whereType<HistorySearchResult>(),
+        hasLength(1),
+      );
       expect(
         tester.widget<TextField>(historySearch).controller!.text,
         'needle',
       );
+      await tester.pump(BusyMarkMotion.search);
+      expect(find.byType(LocalHistoryPanel), findsNothing);
       expect(
-        find.descendant(
-          of: find.byType(LocalHistoryPanel),
-          matching: find.byWidgetPredicate(
-            (widget) => widget is BusyMarkSidebarRecordRow,
-          ),
-        ),
-        findsOneWidget,
+        history.selectedRevisions,
+        hasLength(3),
+        reason: 'Search never filters the ordinary timeline.',
       );
 
       await tester.tap(sourceField);
@@ -7962,10 +7974,7 @@ code
       );
       now = now.add(const Duration(seconds: 60));
       timers.lastWhere((timer) => timer.isActive).fire();
-      await waitForHistory(
-        (history) =>
-            history.selectedRevisions.length == 4 && !history.searching,
-      );
+      await waitForHistory((history) => history.selectedRevisions.length == 4);
       history = container.read(localHistoryControllerProvider);
       final finalSources = <String>[];
       await tester.runAsync(() async {
@@ -7976,8 +7985,20 @@ code
         }
       });
       expect(finalSources, contains(redone));
-      expect(history.searchQuery, 'needle');
-      expect(history.searchMatches, hasLength(2));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            !container.read(searchSessionProvider).searching &&
+            container.read(searchSessionProvider).results.length == 2,
+      );
+      expect(container.read(searchSessionProvider).query, 'needle');
+      expect(
+        container
+            .read(searchSessionProvider)
+            .results
+            .whereType<HistorySearchResult>(),
+        hasLength(2),
+      );
     },
   );
 
@@ -12493,7 +12514,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       ..value = AppSettings.defaults()
           .copyWith(
             recentWorkspaces: [
-              RecentWorkspace(
+              RecentResource(
                 path: recentPath,
                 kind: 'markdownFolder',
                 lastOpenedAt: DateTime(2026, 1, 2),
@@ -12572,7 +12593,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       ..value = AppSettings.defaults()
           .copyWith(
             recentWorkspaces: [
-              RecentWorkspace(
+              RecentResource(
                 path: recentPath,
                 kind: 'markdownFolder',
                 lastOpenedAt: DateTime(2026, 1, 2),
@@ -13114,10 +13135,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           );
           final container = harness.container;
           final session = container.read(searchSessionProvider.notifier);
-          session.open(
-            category: SearchCategory.text,
-            location: SearchLocation.document,
-          );
+          session.open(category: SearchCategory.file);
           session.query('cat');
           await _waitForSearchCondition(
             tester,
@@ -13312,6 +13330,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       'refresh',
       'query',
       'options',
+      'category',
       'document',
       'undo/redo',
       'caret',
@@ -13332,10 +13351,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         final container = harness.container;
         final session = container.read(searchSessionProvider.notifier);
         final workspace = container.read(workspaceControllerProvider.notifier);
-        session.open(
-          category: SearchCategory.text,
-          location: SearchLocation.document,
-        );
+        session.open(category: SearchCategory.file);
         session.query('cat');
         await _waitForSearchCondition(
           tester,
@@ -13398,6 +13414,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
                   .read(searchSessionProvider)
                   .copyWith(caseSensitive: false),
             );
+          case 'category':
+            session.open(category: SearchCategory.workspace);
+            session.query('cat');
+            session.open(category: SearchCategory.file);
           case 'document':
             await workspace.openActiveFile(
               '${_SearchRegressionService.root}/b.md',
@@ -13489,26 +13509,249 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
   }
 
+  testWidgets('Welcome, Recent search and Open use the same mixed chronology', (
+    tester,
+  ) async {
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            reopenPreviousWorkspaceOnStartup: false,
+            recentWorkspaces: [
+              RecentResource(
+                path: '/old.md',
+                kind: 'markdown',
+                document: true,
+                title: 'Oldest entry',
+                lastOpenedAt: DateTime.utc(2026, 1, 1),
+              ),
+              RecentResource(
+                path: '/new-folder',
+                kind: 'markdownFolder',
+                title: 'Newest entry',
+                lastOpenedAt: DateTime.utc(2026, 1, 3),
+              ),
+              RecentResource(
+                path: '',
+                kind: 'nextcloudNote',
+                document: true,
+                accountId: 'account-a',
+                localId: 'offline-id',
+                title: 'Middle entry',
+                lastOpenedAt: DateTime.utc(2026, 1, 2),
+              ),
+            ],
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        startupPathProvider.overrideWithValue(null),
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settings),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    void expectChronologicalRows() {
+      final newest = tester.getTopLeft(find.text('Newest entry')).dy;
+      final middle = tester.getTopLeft(find.text('Middle entry')).dy;
+      final oldest = tester.getTopLeft(find.text('Oldest entry')).dy;
+      expect(newest, lessThan(middle));
+      expect(middle, lessThan(oldest));
+    }
+
+    expectChronologicalRows();
+    final search = container.read(searchSessionProvider.notifier);
+    search.open(category: SearchCategory.recent);
+    search.query('entry');
+    await _waitForSearchCondition(
+      tester,
+      () => !container.read(searchSessionProvider).searching,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      container
+          .read(searchSessionProvider)
+          .results
+          .whereType<RecentSearchResult>()
+          .map((r) => r.resource.title),
+      ['Newest entry', 'Middle entry', 'Oldest entry'],
+    );
+    expectChronologicalRows();
+    search.close();
+    await tester.pumpAndSettle();
+    final opening = container
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.open);
+    await tester.pumpAndSettle();
+    final recentRows = tester
+        .widgetList<BusyMarkActionRow>(
+          find.descendant(
+            of: find.byType(BusyMarkDialogShell),
+            matching: find.byType(BusyMarkActionRow),
+          ),
+        )
+        .where((r) => r.title.contains('entry'))
+        .map((r) => r.title.replaceAll('\u2066', '').replaceAll('\u2069', ''))
+        .toList();
+    expect(recentRows, ['Newest entry', 'Middle entry', 'Oldest entry']);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await opening;
+  });
+
+  testWidgets(
+    'shared History search inspects exact retained revisions and restores ordinary browsing',
+    (tester) async {
+      final store = MemoryLocalHistoryStore();
+      final now = DateTime.now().toUtc();
+      for (var i = 0; i < 2; i++) {
+        await store.capture(
+          LocalHistoryCaptureRequest(
+            path: '/retired/same.md',
+            displayName: 'Retired same',
+            source: i == 0 ? 'historical needle' : 'later retained revision',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: now.add(Duration(seconds: i)),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
+        );
+      }
+      await store.remapPath('/retired/same.md', '/deleted/same.md');
+      await store.markDeleted('/deleted/same.md', recursive: false);
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Live heading\nlive source\n',
+      }, historyStore: store);
+      final container = harness.container;
+      final history = container.read(localHistoryControllerProvider.notifier);
+      await history.refresh();
+      final retained = container
+          .read(localHistoryControllerProvider)
+          .snapshot
+          .documents
+          .singleWhere((d) => d.deleted);
+      final before = container.read(workspaceControllerProvider).activeBuffer!;
+      final session = container.read(searchSessionProvider.notifier);
+      session.openHistory();
+      session.query('historical needle');
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      final result =
+          container.read(searchSessionProvider).results.single
+              as HistorySearchResult;
+      final revisionId =
+          (result.match as LocalHistoryRevisionMatch).revision.id;
+      await tester.tap(find.byKey(ValueKey(result.identity)));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            container
+                .read(localHistoryControllerProvider)
+                .selectedRevision
+                ?.summary
+                .id ==
+            revisionId,
+      );
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(
+        container.read(localHistoryControllerProvider).selectedDocumentId,
+        retained.id,
+      );
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevision!.source,
+        'historical needle',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer,
+        same(before),
+      );
+      expect(find.byType(LocalHistoryComparisonView), findsOneWidget);
+      await container
+          .read(busyMarkCommandRegistryProvider)
+          .execute(BusyMarkCommandIds.localHistory);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(find.byType(LocalHistoryPanel), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(LocalHistoryPanel),
+          matching: find.byType(TextField),
+        ),
+        findsNothing,
+      );
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevisions,
+        hasLength(2),
+      );
+      await tester.tap(find.byTooltip(l10n.findLocalHistoryEllipsis));
+      await tester.pump();
+      expect(
+        container.read(searchSessionProvider).historyDocumentId,
+        retained.id,
+      );
+      await container
+          .read(busyMarkCommandRegistryProvider)
+          .execute(BusyMarkCommandIds.findLocalHistory);
+      expect(container.read(searchSessionProvider).historyDocumentId, isNull);
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(
+        container.read(searchSessionProvider).results.single.identity,
+        result.identity,
+      );
+      await history.clearDocument(retained.id);
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(container.read(searchSessionProvider).results, isEmpty);
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevision,
+        isNull,
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer,
+        same(before),
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
   testWidgets(
     'unified search scopes, query isolation and explicit shortcut destinations',
     (tester) async {
       final harness = await _pumpSearchRegression(tester, headerBarService, {
-        'a.md': 'needle alpha\n',
-        'b.md': 'needle beta\n',
+        'a.md': '# Alpha\nneedle alpha\n',
+        'b.md': '# Beta\nneedle beta\n',
       });
       final container = harness.container;
       final session = container.read(searchSessionProvider.notifier);
       expect(session.categories, [
-        SearchCategory.text,
+        SearchCategory.file,
+        SearchCategory.workspace,
         SearchCategory.outline,
         SearchCategory.documents,
         SearchCategory.recent,
+        SearchCategory.localHistory,
         SearchCategory.actions,
       ]);
       Future<void> shortcut(
         LogicalKeyboardKey key, {
         bool shift = false,
         bool alt = false,
+        bool search = true,
       }) async {
         final focusRequest = container.read(searchSessionProvider).focusRequest;
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -13521,7 +13764,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         await tester.pump();
         expect(
           container.read(searchSessionProvider).focusRequest,
-          focusRequest + 1,
+          focusRequest + (search ? 1 : 0),
         );
       }
 
@@ -13540,8 +13783,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
       await shortcut(LogicalKeyboardKey.keyF);
       expect(
-        container.read(searchSessionProvider).location,
-        SearchLocation.document,
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
       );
       await tester.enterText(query, 'needle');
       await _waitForSearchCondition(
@@ -13555,16 +13798,27 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
       expect(container.read(searchSessionProvider).active, isTrue);
+      tester
+          .widget<FilledButton>(
+            find.descendant(
+              of: find.byKey(const ValueKey('search-category')),
+              matching: find.byType(FilledButton),
+            ),
+          )
+          .focusNode!
+          .requestFocus();
+      await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
-      expect(rootNavigatorKey.currentState!.canPop(), isTrue);
+      expect(find.text(l10n.searchInWorkspace), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
+      expect(find.text(l10n.searchInWorkspace), findsNothing);
       expect(container.read(searchSessionProvider).active, isTrue);
       await shortcut(LogicalKeyboardKey.keyF, shift: true);
       expect(
-        container.read(searchSessionProvider).location,
-        SearchLocation.workspace,
+        container.read(searchSessionProvider).category,
+        SearchCategory.workspace,
       );
       expect(container.read(searchSessionProvider).query, '');
       await tester.enterText(query, 'needle');
@@ -13602,16 +13856,16 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
       expect(
         container.read(workspaceControllerProvider).activeText,
-        'needle alpha\n',
+        '# Alpha\nneedle alpha\n',
       );
       await shortcut(LogicalKeyboardKey.keyF);
       expect(
         container.read(searchSessionProvider).category,
-        SearchCategory.text,
+        SearchCategory.file,
       );
       expect(
-        container.read(searchSessionProvider).location,
-        SearchLocation.document,
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
       );
       expect(container.read(searchSessionProvider).query, 'needle');
       await shortcut(LogicalKeyboardKey.keyP);
@@ -13632,7 +13886,18 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             .filePath,
         endsWith('/b.md'),
       );
-      await shortcut(LogicalKeyboardKey.digit3);
+      await shortcut(LogicalKeyboardKey.digit3, search: false);
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-tree')),
+        findsOneWidget,
+      );
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        'Outline navigation',
+      );
+      session.open(category: SearchCategory.outline);
+      await tester.pump();
       expect(
         container.read(searchSessionProvider).category,
         SearchCategory.outline,
@@ -13670,8 +13935,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
       await shortcut(LogicalKeyboardKey.keyF);
       expect(
-        container.read(searchSessionProvider).location,
-        SearchLocation.document,
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
       );
       container.read(appRouterProvider).go('/');
       await tester.pumpAndSettle();
@@ -13837,10 +14102,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       addTearDown(tester.view.resetDevicePixelRatio);
       container
           .read(searchSessionProvider.notifier)
-          .open(
-            category: SearchCategory.text,
-            location: SearchLocation.document,
-          );
+          .open(category: SearchCategory.file);
       await tester.pump();
       expect(identical(_searchSourceController(tester), source), isTrue);
       expect(
@@ -14167,10 +14429,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       });
       session.container
           .read(searchSessionProvider.notifier)
-          .open(
-            category: SearchCategory.text,
-            location: SearchLocation.document,
-          );
+          .open(category: SearchCategory.file);
       session.events.add(const HeaderBarSearchSubmitted(' cat '));
       await _waitForSearchCondition(
         tester,
@@ -14401,7 +14660,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     expect(find.text(l10n.noResults), findsNothing);
     expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
-    await tester.tap(find.text(l10n.sourceSearchRegex));
+    await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
     session.events.add(const HeaderBarSearchQueryChanged('['));
     await _waitForSearchCondition(
       tester,
@@ -14428,7 +14687,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       });
       session.events.add(const HeaderBarSearchQueryChanged('needle'));
       await tester.pump();
-      await tester.tap(find.text(l10n.sourceSearchRegex));
+      await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
       session.events.add(const HeaderBarSearchQueryChanged(r'^(a+)+$'));
       await tester.pump(const Duration(milliseconds: 150));
       await tester.runAsync(
@@ -14446,7 +14705,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       session.events.add(const HeaderBarSearchQueryChanged('active'));
       await _waitForSearchCondition(
         tester,
-        () => find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
+        () =>
+            !session.container.read(searchSessionProvider).searching &&
+            find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
       );
       expect(
         find.byKey(const ValueKey('workspace-search-progress')),
@@ -16454,6 +16715,7 @@ _pumpSearchRegression(
   Set<String> oversized = const {},
   Set<String> unreadable = const {},
   DocumentViewModePreference mode = DocumentViewModePreference.source,
+  LocalHistoryStore? historyStore,
 }) async {
   final events = StreamController<HeaderBarSearchEvent>.broadcast();
   final settings = _MemorySettingsStore()
@@ -16470,6 +16732,8 @@ _pumpSearchRegression(
       linuxHeaderBarServiceProvider.overrideWithValue(headerBar),
       headerBarSearchEventsProvider.overrideWith((ref) => events.stream),
       localSettingsStoreProvider.overrideWithValue(settings),
+      if (historyStore != null)
+        localHistoryStoreProvider.overrideWithValue(historyStore),
       workspaceServiceProvider.overrideWithValue(
         _SearchRegressionService(
           sources,
@@ -16497,7 +16761,7 @@ _pumpSearchRegression(
   );
   container
       .read(searchSessionProvider.notifier)
-      .open(category: SearchCategory.text, location: SearchLocation.workspace);
+      .open(category: SearchCategory.workspace);
   await tester.pump();
   return (container: container, events: events);
 }

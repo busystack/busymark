@@ -1311,7 +1311,6 @@ const _sharedEnglishMatches = <String>{
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
   'de': {
-    'searchTextCategory', // Text is the German noun as well.
     'wsElementSelector', // Element is also the German noun.
     'tocTemplateName', // Name and Format are also German words.
     'tocTemplateFormat',

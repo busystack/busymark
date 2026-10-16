@@ -78,10 +78,7 @@ void main() {
       router.go('/workspace');
       await tester.pump();
       final session = container.read(searchSessionProvider.notifier);
-      session.open(
-        category: SearchCategory.text,
-        location: SearchLocation.document,
-      );
+      session.open(category: SearchCategory.file);
       session.query('needle');
       final key = GlobalKey<BusyMarkSourceEditorState>();
       await tester.pumpWidget(

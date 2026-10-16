@@ -592,15 +592,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get keyboardShortcuts => 'Raccourcis clavier';
 
   @override
-  String get commandPalette => 'Palette de commandes';
-
-  @override
-  String get commandPaletteHint => 'Saisissez une commande';
-
-  @override
-  String get commandPaletteEmpty => 'Aucune commande correspondante';
-
-  @override
   String get commandUnavailableInContext =>
       'Cette commande n’est pas disponible dans le contexte actuel.';
 
@@ -4483,9 +4474,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune révision n\'est trouvée dans cette recherche.';
 
   @override
-  String get localHistorySearchHint => 'Rechercher dans l’historique local';
-
-  @override
   String get localHistorySelectedRevision => 'Révision sélectionnée';
 
   @override
@@ -5453,9 +5441,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'L’élément inspecté est indisponible. Inspectez un élément pour continuer.';
 
   @override
-  String get searchTextCategory => 'Texte';
-
-  @override
   String get searchDocumentsCategory => 'Documents';
 
   @override
@@ -5468,12 +5453,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get searchCurrentWorkspace => 'Espace de travail actuel';
 
   @override
-  String get recentDocuments => 'Documents récents';
-
-  @override
-  String get recentWorkspaces => 'Espaces de travail récents';
-
-  @override
   String get browseNotes => 'Parcourir les notes';
 
   @override
@@ -5481,10 +5460,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Rechercher des documents';
-
-  @override
-  String get searchWorkspaceCommand =>
-      'Rechercher dans le texte de l’espace de travail';
 
   @override
   String get searchTopicsCommand => 'Rechercher des rubriques';
@@ -5502,4 +5477,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notesSync => 'Synchroniser les notes';
+
+  @override
+  String get searchInFile => 'Rechercher dans le fichier';
+
+  @override
+  String get searchInWorkspace => 'Rechercher dans l’espace de travail';
+
+  @override
+  String get searchCategory => 'Catégorie de recherche';
+
+  @override
+  String get clearHistorySearchScope =>
+      'Rechercher dans l’historique des documents';
 }

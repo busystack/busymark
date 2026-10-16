@@ -32,7 +32,8 @@ import 'app_router.dart';
 import 'app_locale.dart';
 import 'app_settings.dart';
 import '../search/search_session.dart';
-import '../search/search_sidebar.dart';
+import '../search/search_activation.dart';
+import '../workspace/recent_navigation.dart';
 import 'command_registry.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
@@ -77,7 +78,6 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     BusyMarkCommandIds.toggleSidebar: const _ToggleSidebarIntent(),
     BusyMarkCommandIds.clipboardHistory: const _OpenClipboardHistoryIntent(),
     BusyMarkCommandIds.localHistory: const _OpenLocalHistoryIntent(),
-    BusyMarkCommandIds.findLocalHistory: const _FindLocalHistoryIntent(),
     BusyMarkCommandIds.viewEditor: const _DocumentViewModeIntent(
       DocumentViewModePreference.editor,
     ),
@@ -96,14 +96,20 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
       for (final id in [
         BusyMarkCommandIds.sidebarFiles,
         BusyMarkCommandIds.sidebarToc,
+        BusyMarkCommandIds.sidebarOutline,
         BusyMarkCommandIds.sidebarGit,
       ])
         id: () =>
             ref.read(workspaceNavigationCommandProvider.notifier).request(id),
       for (final entry in searchCommandDestinations.entries)
-        entry.key: () => ref
-            .read(searchSessionProvider.notifier)
-            .open(category: entry.value.$1, location: entry.value.$2),
+        entry.key: () {
+          final search = ref.read(searchSessionProvider.notifier);
+          if (entry.value == SearchCategory.localHistory) {
+            search.openHistory();
+          } else {
+            search.open(category: entry.value);
+          }
+        },
       BusyMarkCommandIds.elementProperties: () => ref
           .read(workspaceControllerProvider.notifier)
           .toggleElementProperties
@@ -135,6 +141,9 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
           ref.read(searchSessionProvider.notifier).workspaceVisible &&
           ref.read(workspaceControllerProvider).workspace?.writersideProject !=
               null,
+      BusyMarkCommandIds.sidebarOutline: () =>
+          ref.read(searchSessionProvider.notifier).workspaceVisible &&
+          ref.read(workspaceControllerProvider).activeBuffer != null,
       BusyMarkCommandIds.sidebarGit: () =>
           ref.read(searchSessionProvider.notifier).workspaceVisible &&
           ref.read(gitControllerProvider).repositoryInfo != null,
@@ -157,7 +166,7 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
         entry.key: () => ref
             .read(searchSessionProvider.notifier)
             .categories
-            .contains(entry.value.$1),
+            .contains(entry.value),
       BusyMarkCommandIds.save: () =>
           ref.read(searchSessionProvider.notifier).workspaceVisible &&
           ref.read(workspaceControllerProvider).workspace != null,
@@ -440,15 +449,6 @@ class BusyMarkApp extends ConsumerWidget {
                           return null;
                         },
                       ),
-                  _FindLocalHistoryIntent:
-                      CallbackAction<_FindLocalHistoryIntent>(
-                        onInvoke: (intent) {
-                          ref
-                              .read(localHistoryFindRequestProvider.notifier)
-                              .request();
-                          return null;
-                        },
-                      ),
                   _NextTabIntent: CallbackAction<_NextTabIntent>(
                     onInvoke: (intent) {
                       final navigatorContext = rootNavigatorKey.currentContext;
@@ -641,7 +641,7 @@ class BusyMarkApp extends ConsumerWidget {
                     ),
                     onTap: () => Navigator.pop(
                       dialogContext,
-                      _OpenRecentWorkspace(recent),
+                      _OpenRecentResource(recent),
                     ),
                   ),
               ],
@@ -652,14 +652,14 @@ class BusyMarkApp extends ConsumerWidget {
     if (!context.mounted || choice == null) {
       return;
     }
-    if (choice case _OpenRecentWorkspace(:final resource)) {
+    if (choice case _OpenRecentResource(:final resource)) {
       await openRecentResource(context, ref, resource);
       return;
     }
     final path = switch (choice) {
       _OpenMarkdownFile() => await _chooseMarkdownFile(ref),
       _OpenWorkspaceFolder() => await _chooseWorkspaceFolder(ref),
-      _OpenRecentWorkspace() => null,
+      _OpenRecentResource() => null,
     };
     if (path == null || path.isEmpty || !context.mounted) {
       return;
@@ -1232,21 +1232,22 @@ class _BusyMarkSearchShortcutHandlerState
       return false;
     }
     final commands = ref.read(busyMarkCommandRegistryProvider);
-    if (event.logicalKey == LogicalKeyboardKey.numpad3 &&
-        keyboard.isControlPressed &&
-        !keyboard.isShiftPressed &&
-        !keyboard.isAltPressed &&
-        !keyboard.isMetaPressed) {
-      ref
-          .read(searchSessionProvider.notifier)
-          .open(category: SearchCategory.outline);
+    if (commands.shortcutAccepts(
+          BusyMarkCommandIds.sidebarOutline,
+          event,
+          keyboard,
+        ) ||
+        event.logicalKey == LogicalKeyboardKey.numpad3 &&
+            keyboard.isControlPressed &&
+            !keyboard.isShiftPressed &&
+            !keyboard.isAltPressed &&
+            !keyboard.isMetaPressed) {
+      unawaited(commands.execute(BusyMarkCommandIds.sidebarOutline));
       return true;
     }
     for (final entry in searchCommandDestinations.entries) {
       if (commands.shortcutAccepts(entry.key, event, keyboard)) {
-        ref
-            .read(searchSessionProvider.notifier)
-            .open(category: entry.value.$1, location: entry.value.$2);
+        unawaited(commands.execute(entry.key));
         return true;
       }
     }
@@ -1303,10 +1304,10 @@ final class _OpenWorkspaceFolder extends _OpenChooserChoice {
   const _OpenWorkspaceFolder();
 }
 
-final class _OpenRecentWorkspace extends _OpenChooserChoice {
-  const _OpenRecentWorkspace(this.resource);
+final class _OpenRecentResource extends _OpenChooserChoice {
+  const _OpenRecentResource(this.resource);
 
-  final RecentWorkspace resource;
+  final RecentResource resource;
 }
 
 sealed class _NewChooserChoice {
@@ -1371,10 +1372,6 @@ class _OpenClipboardHistoryIntent extends Intent {
 
 class _OpenLocalHistoryIntent extends Intent {
   const _OpenLocalHistoryIntent();
-}
-
-class _FindLocalHistoryIntent extends Intent {
-  const _FindLocalHistoryIntent();
 }
 
 class _ToggleSidebarIntent extends Intent {

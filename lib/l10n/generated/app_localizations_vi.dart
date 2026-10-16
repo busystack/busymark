@@ -583,15 +583,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get keyboardShortcuts => 'Phím tắt';
 
   @override
-  String get commandPalette => 'Bảng lệnh';
-
-  @override
-  String get commandPaletteHint => 'Nhập lệnh';
-
-  @override
-  String get commandPaletteEmpty => 'Không có lệnh phù hợp';
-
-  @override
   String get commandUnavailableInContext =>
       'Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại';
 
@@ -4436,9 +4427,6 @@ class AppLocalizationsVi extends AppLocalizations {
       'Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.';
 
   @override
-  String get localHistorySearchHint => 'Tìm kiếm lịch sử cục bộ';
-
-  @override
   String get localHistorySelectedRevision => 'Phiên bản đã chọn';
 
   @override
@@ -5389,9 +5377,6 @@ class AppLocalizationsVi extends AppLocalizations {
       'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
 
   @override
-  String get searchTextCategory => 'Văn bản';
-
-  @override
   String get searchDocumentsCategory => 'Tài liệu';
 
   @override
@@ -5404,12 +5389,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get searchCurrentWorkspace => 'Không gian làm việc hiện tại';
 
   @override
-  String get recentDocuments => 'Tài liệu gần đây';
-
-  @override
-  String get recentWorkspaces => 'Không gian làm việc gần đây';
-
-  @override
   String get browseNotes => 'Duyệt ghi chú';
 
   @override
@@ -5417,9 +5396,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Tìm tài liệu';
-
-  @override
-  String get searchWorkspaceCommand => 'Tìm văn bản trong không gian làm việc';
 
   @override
   String get searchTopicsCommand => 'Tìm chủ đề';
@@ -5437,4 +5413,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notesSync => 'Đồng bộ ghi chú';
+
+  @override
+  String get searchInFile => 'Tìm trong tệp';
+
+  @override
+  String get searchInWorkspace => 'Tìm trong không gian làm việc';
+
+  @override
+  String get searchCategory => 'Danh mục tìm kiếm';
+
+  @override
+  String get clearHistorySearchScope => 'Tìm trong lịch sử tài liệu';
 }

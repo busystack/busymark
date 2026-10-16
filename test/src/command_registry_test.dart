@@ -1,10 +1,27 @@
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
+import 'package:busymark/src/search/search_session.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
 
 void main() {
+  test(
+    'search destinations exclude ordinary Outline and History navigation',
+    () {
+      expect(searchCommandDestinations, {
+        'search.find': SearchCategory.file,
+        'search.workspace': SearchCategory.workspace,
+        'workspace.quickOpen': SearchCategory.documents,
+        'search.topics': SearchCategory.topics,
+        'search.recent': SearchCategory.recent,
+        'history.findLocal': SearchCategory.localHistory,
+        'view.commandPalette': SearchCategory.actions,
+      });
+      expect(searchCommandDestinations.containsKey('sidebar.outline'), isFalse);
+      expect(searchCommandDestinations.containsKey('history.local'), isFalse);
+    },
+  );
   test('document and workspace command targets are explicit', () {
     final registry = BusyMarkCommandCatalog.metadata;
     for (final id in [
@@ -22,6 +39,8 @@ void main() {
       );
     }
     for (final id in [
+      'history.local',
+      'history.findLocal',
       'sidebar.files',
       'sidebar.git',
       'tabs.next',
@@ -47,6 +66,8 @@ void main() {
       expect(registry[id]!.shortcut, isNull);
     }
     for (final id in [
+      'history.local',
+      'history.findLocal',
       'file.open',
       'file.newDocument',
       'notes.create',

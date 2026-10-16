@@ -420,18 +420,6 @@
     "description": "Insert button label."
   },
   "keyboardShortcuts": "Phím tắt",
-  "commandPalette": "Bảng lệnh",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "Nhập lệnh",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "Không có lệnh phù hợp",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -4889,7 +4877,6 @@
   "localHistoryNoDocuments": "Chưa có tài liệu nào có Lịch sử cục bộ.",
   "localHistoryNoRevisions": "Tài liệu này không có các phiên bản Lịch sử cục bộ.",
   "localHistoryNoMatches": "Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.",
-  "localHistorySearchHint": "Tìm kiếm lịch sử cục bộ",
   "localHistorySelectedRevision": "Phiên bản đã chọn",
   "localHistoryCurrentEditor": "Nội dung trình soạn thảo hiện tại",
   "localHistoryCurrentDisk": "Nội dung hiện tại trên ổ đĩa",
@@ -5150,20 +5137,20 @@
   "wsAdmonitionsAndQuotes": "Lưu ý và trích dẫn",
   "wsSemanticText": "Văn bản ngữ nghĩa",
   "wsPropertiesUnavailable": "Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.",
-  "searchTextCategory": "Văn bản",
   "searchDocumentsCategory": "Tài liệu",
   "searchTopicsCategory": "Chủ đề",
   "searchCurrentDocument": "Tài liệu hiện tại",
   "searchCurrentWorkspace": "Không gian làm việc hiện tại",
-  "recentDocuments": "Tài liệu gần đây",
-  "recentWorkspaces": "Không gian làm việc gần đây",
   "browseNotes": "Duyệt ghi chú",
   "searchActionsCommand": "Tìm thao tác",
   "searchDocumentsCommand": "Tìm tài liệu",
-  "searchWorkspaceCommand": "Tìm văn bản trong không gian làm việc",
   "searchTopicsCommand": "Tìm chủ đề",
   "searchRecentCommand": "Tìm mục gần đây",
   "searchQueryHint": "Tìm trong {category}…",
   "searchResourceUnavailable": "Tài nguyên này không khả dụng.",
-  "notesSync": "Đồng bộ ghi chú"
+  "notesSync": "Đồng bộ ghi chú",
+  "searchInFile": "Tìm trong tệp",
+  "searchInWorkspace": "Tìm trong không gian làm việc",
+  "searchCategory": "Danh mục tìm kiếm",
+  "clearHistorySearchScope": "Tìm trong lịch sử tài liệu"
 }

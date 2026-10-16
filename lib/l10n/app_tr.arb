@@ -423,18 +423,6 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "commandPalette": "Komut Paleti",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "Bir komut yazın",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "Eşleşen komut yok",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "Mevcut düzenleyici bağlamında kullanılamıyor",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -4889,7 +4877,6 @@
   "localHistoryNoDocuments": "Henüz herhangi bir belge Yerel Geçmişe sahip değil.",
   "localHistoryNoRevisions": "Bu belge Yerel Geçmiş revizyonlarına sahip değil.",
   "localHistoryNoMatches": "Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.",
-  "localHistorySearchHint": "Yerel geçmişte ara",
   "localHistorySelectedRevision": "Seçilen revizyon",
   "localHistoryCurrentEditor": "Mevcut düzenleme içeriği",
   "localHistoryCurrentDisk": "Disk üzerinde mevcut içerik",
@@ -5150,20 +5137,20 @@
   "wsAdmonitionsAndQuotes": "Uyarılar ve alıntılar",
   "wsSemanticText": "Anlamsal metin",
   "wsPropertiesUnavailable": "İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.",
-  "searchTextCategory": "Metin",
   "searchDocumentsCategory": "Belgeler",
   "searchTopicsCategory": "Konular",
   "searchCurrentDocument": "Geçerli belge",
   "searchCurrentWorkspace": "Geçerli çalışma alanı",
-  "recentDocuments": "Son belgeler",
-  "recentWorkspaces": "Son çalışma alanları",
   "browseNotes": "Notlara göz at",
   "searchActionsCommand": "Eylemleri ara",
   "searchDocumentsCommand": "Belgeleri ara",
-  "searchWorkspaceCommand": "Çalışma alanında metin ara",
   "searchTopicsCommand": "Konuları ara",
   "searchRecentCommand": "Son kullanılanları ara",
   "searchQueryHint": "{category} içinde ara…",
   "searchResourceUnavailable": "Bu kaynak kullanılamıyor.",
-  "notesSync": "Notları eşitle"
+  "notesSync": "Notları eşitle",
+  "searchInFile": "Dosyada Ara",
+  "searchInWorkspace": "Çalışma Alanında Ara",
+  "searchCategory": "Arama kategorisi",
+  "clearHistorySearchScope": "Belgelerin geçmişinde ara"
 }

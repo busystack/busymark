@@ -563,15 +563,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get keyboardShortcuts => 'キーボードショートカット';
 
   @override
-  String get commandPalette => 'コマンドパレット';
-
-  @override
-  String get commandPaletteHint => 'コマンドを入力';
-
-  @override
-  String get commandPaletteEmpty => '一致するコマンドはありません';
-
-  @override
   String get commandUnavailableInContext => '現在のエディターのコンテキストでは利用できません';
 
   @override
@@ -4313,9 +4304,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get localHistoryNoMatches => 'この検索に一致するローカル履歴の修正はありません。';
 
   @override
-  String get localHistorySearchHint => 'ローカル履歴を検索';
-
-  @override
   String get localHistorySelectedRevision => '選択されたリビジョン';
 
   @override
@@ -5248,9 +5236,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get wsPropertiesUnavailable => '確認中の要素は利用できません。続行するには要素を確認してください。';
 
   @override
-  String get searchTextCategory => 'テキスト';
-
-  @override
   String get searchDocumentsCategory => 'ドキュメント';
 
   @override
@@ -5263,12 +5248,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get searchCurrentWorkspace => '現在のワークスペース';
 
   @override
-  String get recentDocuments => '最近のドキュメント';
-
-  @override
-  String get recentWorkspaces => '最近のワークスペース';
-
-  @override
   String get browseNotes => 'ノートを参照';
 
   @override
@@ -5276,9 +5255,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'ドキュメントを検索';
-
-  @override
-  String get searchWorkspaceCommand => 'ワークスペースのテキストを検索';
 
   @override
   String get searchTopicsCommand => 'トピックを検索';
@@ -5296,4 +5272,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notesSync => 'ノートを同期';
+
+  @override
+  String get searchInFile => 'ファイル内検索';
+
+  @override
+  String get searchInWorkspace => 'ワークスペース内検索';
+
+  @override
+  String get searchCategory => '検索カテゴリ';
+
+  @override
+  String get clearHistorySearchScope => 'すべてのドキュメントの履歴を検索';
 }

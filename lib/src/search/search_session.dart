@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -11,6 +12,8 @@ import '../app/command_registry.dart';
 import '../app/quick_open.dart';
 import '../editor/source/source_document.dart';
 import '../editor/source/source_search.dart';
+import '../local_history/local_history_controller.dart';
+import '../local_history/local_history_models.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import '../nextcloud_notes/application/notes_search_controller.dart';
@@ -21,21 +24,25 @@ import '../workspace/workspace_model.dart';
 import 'workspace_search_scope.dart';
 import 'workspace_text_search.dart';
 
-enum SearchCategory { text, outline, documents, topics, recent, actions }
+enum SearchCategory {
+  file,
+  workspace,
+  outline,
+  documents,
+  topics,
+  recent,
+  localHistory,
+  actions,
+}
 
-enum SearchLocation { document, workspace, recovery }
-
-const searchCommandDestinations = <String, (SearchCategory, SearchLocation?)>{
-  BusyMarkCommandIds.search: (SearchCategory.text, SearchLocation.document),
-  BusyMarkCommandIds.searchWorkspace: (
-    SearchCategory.text,
-    SearchLocation.workspace,
-  ),
-  BusyMarkCommandIds.sidebarOutline: (SearchCategory.outline, null),
-  BusyMarkCommandIds.quickOpen: (SearchCategory.documents, null),
-  BusyMarkCommandIds.searchTopics: (SearchCategory.topics, null),
-  BusyMarkCommandIds.searchRecent: (SearchCategory.recent, null),
-  BusyMarkCommandIds.commandPalette: (SearchCategory.actions, null),
+const searchCommandDestinations = <String, SearchCategory>{
+  BusyMarkCommandIds.search: SearchCategory.file,
+  BusyMarkCommandIds.searchWorkspace: SearchCategory.workspace,
+  BusyMarkCommandIds.quickOpen: SearchCategory.documents,
+  BusyMarkCommandIds.searchTopics: SearchCategory.topics,
+  BusyMarkCommandIds.searchRecent: SearchCategory.recent,
+  BusyMarkCommandIds.findLocalHistory: SearchCategory.localHistory,
+  BusyMarkCommandIds.commandPalette: SearchCategory.actions,
 };
 
 /// A result is qualified by its owning workspace/account, never a synthetic path.
@@ -87,9 +94,16 @@ final class TopicSearchResult extends SidebarSearchResult {
 
 final class RecentSearchResult extends SidebarSearchResult {
   const RecentSearchResult(this.resource);
-  final RecentWorkspace resource;
+  final RecentResource resource;
   @override
   String get identity => resource.identity;
+}
+
+final class HistorySearchResult extends SidebarSearchResult {
+  const HistorySearchResult(this.match);
+  final LocalHistorySearchMatch match;
+  @override
+  String get identity => match.identity;
 }
 
 /// Metadata is localized at the presentation boundary; commands remain in the registry.
@@ -125,8 +139,9 @@ class SearchSessionState {
   const SearchSessionState({
     this.active = false,
     this.context,
-    this.category = SearchCategory.text,
-    this.location = SearchLocation.document,
+    this.category = SearchCategory.file,
+    this.recovery = false,
+    this.historyDocumentId,
     this.query = '',
     this.caseSensitive = false,
     this.wholeWord = false,
@@ -152,7 +167,8 @@ class SearchSessionState {
   final bool active;
   final SearchSessionContext? context;
   final SearchCategory category;
-  final SearchLocation location;
+  final bool recovery;
+  final String? historyDocumentId;
   final String query;
   final bool caseSensitive, wholeWord, regex;
   final List<SidebarSearchResult> results;
@@ -164,17 +180,23 @@ class SearchSessionState {
   final bool searching, indexing, truncated, invalidRegex, hasZeroLengthMatches;
   final List<String> skippedFiles;
   final String? error;
-  bool get textActive => active && category == SearchCategory.text;
+  bool get fileActive => active && category == SearchCategory.file;
+  bool get workspaceActive => active && category == SearchCategory.workspace;
+  bool get textActive => fileActive || workspaceActive;
   SourceSearchSnapshot sourceSnapshot(DocumentBuffer? buffer) {
     final ranges = <(int, int)>[];
     if (textActive &&
         buffer != null &&
-        context?.bufferId == buffer.id &&
-        context?.revision == buffer.revision) {
+        (workspaceActive ||
+            context?.bufferId == buffer.id &&
+                context?.revision == buffer.revision)) {
       final remote = buffer.remoteNote;
-      final digest = remote == null ? null : notesSearchDigest(buffer.text);
+      final digest = notesSearchDigest(buffer.text);
       for (final result in results) {
         if (result is TextSearchResult &&
+            result.match.digest == digest &&
+            result.match.startOffset >= 0 &&
+            result.match.endOffset <= buffer.text.length &&
             (result.match.bufferId == buffer.id ||
                 buffer.filePath != null &&
                     result.match.filePath == buffer.filePath)) {
@@ -192,7 +214,7 @@ class SearchSessionState {
     }
     return SourceSearchSnapshot(
       source: buffer?.text ?? '',
-      truncated: location != SearchLocation.document && truncated,
+      truncated: category != SearchCategory.file && truncated,
       searching: searching,
       navigationRequest: sourceNavigationRequest,
       appliedNavigation: appliedSourceNavigation,
@@ -200,13 +222,13 @@ class SearchSessionState {
       sessionRevision: requestRevision,
       result: SourceSearchResult(
         options: options,
-        totalMatchCount: location == SearchLocation.document
+        totalMatchCount: category == SearchCategory.file
             ? documentMatchCount
             : null,
-        firstMatchIndex: location == SearchLocation.document
+        firstMatchIndex: category == SearchCategory.file
             ? documentFirstMatchIndex
             : 0,
-        currentMatchIndex: location == SearchLocation.document
+        currentMatchIndex: category == SearchCategory.file
             ? documentCurrentMatchIndex
             : null,
         invalidRegex: invalidRegex,
@@ -241,7 +263,9 @@ class SearchSessionState {
     bool? active,
     SearchSessionContext? context,
     SearchCategory? category,
-    SearchLocation? location,
+    bool? recovery,
+    String? historyDocumentId,
+    bool clearHistoryScope = false,
     String? query,
     bool? caseSensitive,
     bool? wholeWord,
@@ -268,7 +292,10 @@ class SearchSessionState {
     active: active ?? this.active,
     context: context ?? this.context,
     category: category ?? this.category,
-    location: location ?? this.location,
+    recovery: recovery ?? this.recovery,
+    historyDocumentId: clearHistoryScope
+        ? null
+        : historyDocumentId ?? this.historyDocumentId,
     query: query ?? this.query,
     caseSensitive: caseSensitive ?? this.caseSensitive,
     wholeWord: wholeWord ?? this.wholeWord,
@@ -309,9 +336,14 @@ class SearchSessionController extends Notifier<SearchSessionState> {
   final _worker = SourceSearchWorker();
   Timer? _debounce;
   NotesSearchController? _notes;
+  ProviderSubscription<LocalHistoryState>? _historyChanges;
   StreamSubscription<void>? _repositoryChanges;
   StreamSubscription<NotesSearchState>? _noteChanges;
-  final _queries = <(SearchCategory, SearchLocation), SourceSearchOptions>{};
+  final _queries = <SearchCategory, SourceSearchOptions>{};
+  SourceSearchOptions _recoveryOptions = const SourceSearchOptions();
+  final _selectedIdentities = <SearchCategory, String>{};
+  final _limits = <SearchCategory, int>{};
+  String? _historyScope;
   List<ActionSearchResult> _commands = const [];
   int _request = 0, _limit = maxWorkspaceSearchResults;
   int _sourceWindowStart = 0, _sourceNavigationSerial = 0;
@@ -346,13 +378,15 @@ class SearchSessionController extends Notifier<SearchSessionState> {
         ? null
         : ref.read(workspaceControllerProvider).activeBuffer;
     return [
-      if (workspace != null) SearchCategory.text,
+      if (buffer != null) SearchCategory.file,
+      if (workspace != null) SearchCategory.workspace,
       if (buffer != null) SearchCategory.outline,
       if (workspace != null) SearchCategory.documents,
       if (workspace?.writersideProject != null ||
           workspace?.writersideModule != null)
         SearchCategory.topics,
       SearchCategory.recent,
+      if (workspace != null) SearchCategory.localHistory,
       SearchCategory.actions,
     ];
   }
@@ -409,7 +443,6 @@ class SearchSessionController extends Notifier<SearchSessionState> {
           after.activeBuffer?.editorState.mode) {
         cancelSourceNavigation(state.sourceNavigationRequest);
       }
-      if (!workspaceSearchInputsChanged(before, after)) return;
       if (before?.workspace?.id != after.workspace?.id ||
           before?.activeBufferId != after.activeBufferId) {
         _originContextRevision++;
@@ -418,20 +451,16 @@ class SearchSessionController extends Notifier<SearchSessionState> {
         commandTarget = null;
         _originFocus = null;
         _returnFocus = null;
-        if (state.textActive &&
-            state.location == SearchLocation.recovery &&
-            workspaceVisible &&
-            after.workspace != null) {
+        if (state.recovery && workspaceVisible && after.workspace != null) {
           open(
-            category: SearchCategory.text,
-            location: after.activeBuffer == null
-                ? SearchLocation.workspace
-                : SearchLocation.document,
+            category: after.activeBuffer == null
+                ? SearchCategory.workspace
+                : SearchCategory.file,
           );
           return;
         }
       }
-      if (state.active) {
+      if (state.active && _searchInputsChanged(state.category, before, after)) {
         if (categories.isEmpty) {
           close(restoreFocus: false);
           return;
@@ -451,6 +480,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       }
     });
     ref.onDispose(() {
+      _historyChanges?.close();
       _disposed = true;
       _request++;
       _debounce?.cancel();
@@ -500,58 +530,46 @@ class SearchSessionController extends Notifier<SearchSessionState> {
         : null;
   }
 
-  void open({SearchCategory? category, SearchLocation? location}) {
+  void open({SearchCategory? category, bool recovery = false}) {
     final available = categories;
     if (available.isEmpty) return;
     final requested =
         category ??
         (_hasOpened && available.contains(state.category)
             ? state.category
-            : workspaceVisible &&
-                  ref.read(workspaceControllerProvider).activeBuffer != null
-            ? SearchCategory.text
+            : available.contains(SearchCategory.file)
+            ? SearchCategory.file
             : SearchCategory.recent);
     if (!available.contains(requested)) return;
-    final hasDocument =
-        workspaceVisible &&
-        ref.read(workspaceControllerProvider).activeBuffer != null;
-    if (requested == SearchCategory.text &&
-        location == SearchLocation.document &&
-        !hasDocument) {
-      return;
+    if (requested == SearchCategory.localHistory) {
+      _observeHistory();
+    } else {
+      _historyChanges?.close();
+      _historyChanges = null;
     }
+
     captureOrigin();
     _resetSourceNavigation();
     _remember();
-    var nextLocation =
-        location ??
-        (requested == SearchCategory.text
-            ? hasDocument
-                  ? state.location
-                  : SearchLocation.workspace
-            : SearchLocation.document);
-    if (requested == SearchCategory.text &&
-        location == null &&
-        nextLocation == SearchLocation.recovery &&
-        state.context?.workspaceId !=
-            ref.read(workspaceControllerProvider).workspace?.id) {
-      nextLocation = hasDocument
-          ? SearchLocation.document
-          : SearchLocation.workspace;
-    }
-    var options =
-        _queries[(requested, nextLocation)] ?? const SourceSearchOptions();
-    if (requested == SearchCategory.text &&
-        nextLocation != SearchLocation.document &&
+    final isRecovery = requested == SearchCategory.workspace && recovery;
+    var options = isRecovery
+        ? _recoveryOptions
+        : _queries[requested] ?? const SourceSearchOptions();
+    if (requested == SearchCategory.workspace &&
         ref.read(workspaceControllerProvider).workspace?.isRemote == true) {
       options = options.copyWith(caseSensitive: false, regex: false);
     }
-    _limit = maxWorkspaceSearchResults;
+    _limit = _limits[requested] ?? maxWorkspaceSearchResults;
     _hasOpened = true;
     state = state.copyWith(
       active: true,
       category: requested,
-      location: nextLocation,
+      recovery: isRecovery,
+      historyDocumentId: requested == SearchCategory.localHistory
+          ? _historyScope
+          : null,
+      clearHistoryScope:
+          requested != SearchCategory.localHistory || _historyScope == null,
       query: options.query,
       results: const [],
       selected: 0,
@@ -564,9 +582,34 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     _schedule();
   }
 
+  void _observeHistory() {
+    _historyChanges ??= ref.listen(localHistoryControllerProvider, (
+      before,
+      after,
+    ) {
+      if (state.active &&
+          state.category == SearchCategory.localHistory &&
+          before?.searchRevision != after.searchRevision) {
+        _schedule();
+      }
+    });
+  }
+
+  void openHistory({String? documentId}) {
+    _historyScope = documentId;
+    open(category: SearchCategory.localHistory);
+  }
+
+  void clearHistoryScope() {
+    _historyScope = null;
+    set(state.copyWith(clearHistoryScope: true));
+  }
+
   void toggle() => state.active ? close() : open();
   void close({bool restoreFocus = true}) {
     if (!state.active) return;
+    _historyChanges?.close();
+    _historyChanges = null;
     _remember();
     _resetSourceNavigation();
     _cancel();
@@ -601,12 +644,22 @@ class SearchSessionController extends Notifier<SearchSessionState> {
   }
 
   void _remember() {
-    _queries[(state.category, state.location)] = SourceSearchOptions(
+    final options = SourceSearchOptions(
       query: state.query,
       caseSensitive: state.caseSensitive,
       wholeWord: state.wholeWord,
       regex: state.regex,
     );
+    if (state.recovery) {
+      _recoveryOptions = options;
+    } else {
+      _queries[state.category] = options;
+    }
+    _limits[state.category] = _limit;
+    if (state.selected >= 0 && state.selected < state.results.length) {
+      _selectedIdentities[state.category] =
+          state.results[state.selected].identity;
+    }
   }
 
   void set(SearchSessionState next) {
@@ -616,8 +669,8 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       selected: 0,
       requestRevision: state.requestRevision + 1,
     );
-    _remember();
     _limit = maxWorkspaceSearchResults;
+    _remember();
     _schedule();
   }
 
@@ -625,6 +678,8 @@ class SearchSessionController extends Notifier<SearchSessionState> {
   void select(int index) {
     if (state.results.isEmpty) return;
     state = state.copyWith(selected: index.clamp(0, state.results.length - 1));
+    _selectedIdentities[state.category] =
+        state.results[state.selected].identity;
   }
 
   void moveSelection(int delta) {
@@ -637,7 +692,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
 
   void showMore() {
     _limit += maxWorkspaceSearchResults;
-    if (state.textActive && state.location == SearchLocation.document) {
+    if (state.textActive && state.category == SearchCategory.file) {
       _sourceWindowStart =
           ((_sourceCurrentIndex ?? _sourceWindowStart) ~/ _limit) * _limit;
     }
@@ -656,7 +711,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     final workspace = ref.read(workspaceControllerProvider);
     final buffer = workspace.activeBuffer;
     if (!state.textActive ||
-        state.location != SearchLocation.document ||
+        state.category != SearchCategory.file ||
         !workspaceVisible ||
         buffer == null ||
         (buffer.id != request.documentId &&
@@ -718,7 +773,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     final workspace = ref.read(workspaceControllerProvider);
     final buffer = workspace.activeBuffer;
     return state.textActive &&
-        state.location == SearchLocation.document &&
+        state.category == SearchCategory.file &&
         workspaceVisible &&
         workspace.workspace?.id == navigation.workspaceId &&
         buffer?.id == navigation.bufferId &&
@@ -752,7 +807,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
             state.context?.bufferId != workspace.activeBufferId ||
             state.context?.revision != workspace.activeBuffer?.revision ||
             !state.textActive ||
-            state.location != SearchLocation.document)) {
+            state.category != SearchCategory.file)) {
       _resetSourceNavigation();
     }
     state = state.copyWith(
@@ -765,13 +820,13 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       ),
       caseSensitive:
           state.textActive &&
-              state.location != SearchLocation.document &&
+              state.category != SearchCategory.file &&
               workspace.workspace?.isRemote == true
           ? false
           : null,
       regex:
           state.textActive &&
-              state.location != SearchLocation.document &&
+              state.category != SearchCategory.file &&
               workspace.workspace?.isRemote == true
           ? false
           : null,
@@ -823,6 +878,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       if (_current(request)) {
         state = state.copyWith(
           results: List.unmodifiable(results),
+          selected: _selectionFor(results),
           searching: false,
           truncated: truncated,
         );
@@ -831,16 +887,35 @@ class SearchSessionController extends Notifier<SearchSessionState> {
 
     try {
       switch (snapshot.category) {
-        case SearchCategory.text:
+        case SearchCategory.file:
+        case SearchCategory.workspace:
           if (workspace == null || !workspaceVisible) return;
-          if (snapshot.location != SearchLocation.document &&
-              workspace.isRemote) {
+          if (snapshot.category != SearchCategory.file && workspace.isRemote) {
             await _searchNotes(request, workspaceState, snapshot);
             return;
           }
           final options = snapshot.options;
           WorkspaceTextOutcome outcome;
-          if (snapshot.location == SearchLocation.document) {
+          void publishText(
+            WorkspaceTextOutcome outcome, {
+            required bool searching,
+          }) {
+            if (!_current(request)) return;
+            final results = [
+              for (final match in outcome.matches)
+                TextSearchResult(workspace.id, match),
+            ];
+            state = state.copyWith(
+              results: List.unmodifiable(results),
+              selected: _selectionFor(results),
+              searching: searching,
+              truncated: outcome.truncated,
+              skippedFiles: outcome.skippedFiles,
+              invalidRegex: outcome.invalidRegex,
+              hasZeroLengthMatches: outcome.hasZeroLengthMatches,
+            );
+          }
+          if (snapshot.category == SearchCategory.file) {
             await _searchDocument(request, workspaceState, snapshot);
             return;
           } else {
@@ -851,20 +926,11 @@ class SearchSessionController extends Notifier<SearchSessionState> {
               isCancelled: () => !_current(request),
               worker: _worker,
               maximumResults: _limit,
+              onProgress: (outcome) => publishText(outcome, searching: true),
             );
           }
           if (!_current(request)) return;
-          state = state.copyWith(
-            results: [
-              for (final match in outcome.matches)
-                TextSearchResult(workspace.id, match),
-            ],
-            searching: false,
-            truncated: outcome.truncated,
-            skippedFiles: outcome.skippedFiles,
-            invalidRegex: outcome.invalidRegex,
-            hasZeroLengthMatches: outcome.hasZeroLengthMatches,
-          );
+          publishText(outcome, searching: false);
         case SearchCategory.outline:
           publish([]); // The existing outline owns its live model and renderer.
         case SearchCategory.documents:
@@ -968,15 +1034,37 @@ class SearchSessionController extends Notifier<SearchSessionState> {
               .read(appSettingsControllerProvider)
               .recentWorkspaces;
           publish([
-            for (final item in [
-              ...history.where((r) => r.isDocument),
-              ...history.where((r) => !r.isDocument),
-            ])
+            for (final item in history)
               if (normalizeNotesSearch(
                 '${item.title ?? ''} ${item.path} ${item.ownerRoot ?? ''} ${item.accountId ?? ''} ${item.accountLabel ?? ''}',
               ).contains(query))
                 RecentSearchResult(item),
           ]);
+        case SearchCategory.localHistory:
+          final history = ref.read(localHistoryControllerProvider.notifier);
+          void publishHistory(
+            LocalHistorySearchPage page, {
+            bool complete = false,
+          }) {
+            if (!_current(request)) return;
+            final results = [
+              for (final match in page.matches) HistorySearchResult(match),
+            ];
+            state = state.copyWith(
+              results: results,
+              selected: _selectionFor(results),
+              searching: !complete,
+              truncated: page.truncated,
+            );
+          }
+          final page = await history.findRetained(
+            query: snapshot.query,
+            documentId: snapshot.historyDocumentId,
+            maximumResults: _limit,
+            isCancelled: () => !_current(request),
+            onProgress: publishHistory,
+          );
+          if (page != null) publishHistory(page, complete: true);
         case SearchCategory.actions:
           final query = snapshot.query.trim().toLowerCase();
           publish(
@@ -1001,11 +1089,17 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     }
   }
 
+  int _selectionFor(List<SidebarSearchResult> results) {
+    final id = _selectedIdentities[state.category];
+    final found = results.indexWhere((r) => r.identity == id);
+    return found < 0 ? 0 : found;
+  }
+
   void _observeRepository(Stream<void> changes) {
     _repositoryChanges ??= changes.listen((_) {
       if (state.active &&
           (state.category == SearchCategory.documents ||
-              state.textActive && state.location != SearchLocation.document)) {
+              state.textActive && state.category != SearchCategory.file)) {
         _schedule();
       }
     });
@@ -1130,7 +1224,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     final controller = NotesSearchController(
       repository.store,
       account,
-      recovery: snapshot.location == SearchLocation.recovery,
+      recovery: snapshot.recovery,
     );
     _notes = controller;
     _noteChanges = controller.changes.listen((value) {
@@ -1138,11 +1232,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       state = state.copyWith(
         results: [
           for (final hit in value.hits)
-            NoteSearchResult(
-              account,
-              hit,
-              snapshot.location == SearchLocation.recovery,
-            ),
+            NoteSearchResult(account, hit, snapshot.recovery),
         ],
         searching: value.loading,
         indexing: value.indexing,
@@ -1236,6 +1326,79 @@ class SearchCommandTarget {
                   state.activeBuffer?.editorState.wysiwygState.extentBlockId &&
               editorState?.wysiwygState.extentOffset ==
                   state.activeBuffer?.editorState.wysiwygState.extentOffset));
+}
+
+// Search dependencies differ from editor/navigation dependencies. In particular,
+// a tab selection, inspector update, or derived outline refresh must not rescan
+// every workspace file or retained historical revision.
+bool _searchInputsChanged(
+  SearchCategory category,
+  WorkspaceState? before,
+  WorkspaceState after,
+) {
+  if (before == null || before.workspace?.id != after.workspace?.id) {
+    return true;
+  }
+  switch (category) {
+    case SearchCategory.file:
+    case SearchCategory.outline:
+      final a = before.activeBuffer, b = after.activeBuffer;
+      return a?.id != b?.id ||
+          a?.revision != b?.revision ||
+          a?.text != b?.text ||
+          a?.filePath != b?.filePath ||
+          a?.displayName != b?.displayName;
+    case SearchCategory.workspace:
+      if (after.workspace?.isRemote == true) {
+        final account = after.workspace?.nextcloudAccountId;
+        Map<String, (int, String)> overlays(WorkspaceState value) => {
+          for (final buffer in value.documentBuffers)
+            if (buffer.dirty && buffer.remoteNote?.accountId == account)
+              buffer.id: (buffer.revision, buffer.text),
+        };
+        return !mapEquals(overlays(before), overlays(after));
+      }
+      Map<String, (String, DocumentKind, int, DateTime)> files(
+        WorkspaceState value,
+      ) => {
+        for (final file in value.workspace?.files ?? const <DocumentFile>[])
+          if (isSearchableWorkspaceDocument(file))
+            file.absolutePath: (
+              file.relativePath,
+              file.kind,
+              file.size,
+              file.lastModified,
+            ),
+      };
+      final a = files(before), b = files(after);
+      if (!mapEquals(a, b)) return true;
+      Map<String, (String, int, String)> overlays(WorkspaceState value) => {
+        for (final buffer in value.documentBuffers)
+          if (buffer.dirty && b.containsKey(buffer.filePath))
+            buffer.filePath!: (buffer.id, buffer.revision, buffer.text),
+      };
+      return !mapEquals(overlays(before), overlays(after));
+    case SearchCategory.documents:
+      final a = before.workspace?.files ?? const <DocumentFile>[];
+      final b = after.workspace?.files ?? const <DocumentFile>[];
+      return !mapEquals(
+        {for (final f in a) f.absolutePath: (f.relativePath, f.kind)},
+        {for (final f in b) f.absolutePath: (f.relativePath, f.kind)},
+      );
+    case SearchCategory.topics:
+      return !identical(
+            before.workspace?.writersideProject,
+            after.workspace?.writersideProject,
+          ) ||
+          !identical(
+            before.workspace?.writersideModule,
+            after.workspace?.writersideModule,
+          );
+    case SearchCategory.recent:
+    case SearchCategory.localHistory:
+    case SearchCategory.actions:
+      return false;
+  }
 }
 
 bool workspaceSearchInputsChanged(

@@ -621,6 +621,7 @@ class WorkspaceScreen extends ConsumerWidget {
       final tab = switch (request.$1) {
         BusyMarkCommandIds.sidebarFiles => _SidebarTab.files,
         BusyMarkCommandIds.sidebarToc => _SidebarTab.toc,
+        BusyMarkCommandIds.sidebarOutline => _SidebarTab.outline,
         BusyMarkCommandIds.sidebarGit => _SidebarTab.git,
         _ => null,
       };
@@ -639,18 +640,16 @@ class WorkspaceScreen extends ConsumerWidget {
       if (next == previous) return;
       _selectSidebarShortcut(ref, _SidebarTab.localHistory);
       final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-      if (buffer != null) {
+      if (buffer != null &&
+          !ref
+              .read(localHistoryControllerProvider)
+              .inspectingRetainedDocument) {
         unawaited(
           ref
               .read(localHistoryControllerProvider.notifier)
               .selectDocumentForBuffer(buffer),
         );
       }
-    });
-    ref.listen<int>(localHistoryFindRequestProvider, (previous, next) {
-      if (next == previous) return;
-      _selectSidebarShortcut(ref, _SidebarTab.localHistory);
-      ref.read(localHistoryControllerProvider.notifier).beginDocumentSearch();
     });
     ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
       final nextWorkspace = next.workspace;
@@ -904,16 +903,8 @@ class WorkspaceScreen extends ConsumerWidget {
 
   void _toggleSearch(WidgetRef ref) =>
       ref.read(searchSessionProvider.notifier).toggle();
-  void _closeSearch(WidgetRef ref) =>
-      ref.read(searchSessionProvider.notifier).close();
 
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
-    if (tab == _SidebarTab.outline) {
-      ref
-          .read(searchSessionProvider.notifier)
-          .open(category: SearchCategory.outline);
-      return;
-    }
     final state = ref.read(workspaceControllerProvider);
     final workspace = state.workspace;
     if (workspace?.isRemote == true && tab == _SidebarTab.files) {
@@ -922,7 +913,7 @@ class WorkspaceScreen extends ConsumerWidget {
     if (workspace == null || !_sidebarTabsFor(workspace.kind).contains(tab)) {
       return;
     }
-    _closeSearch(ref);
+    ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
     unawaited(
       ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
     );
@@ -1753,7 +1744,7 @@ class _Sidebar extends ConsumerStatefulWidget {
 }
 
 class _SidebarState extends ConsumerState<_Sidebar> {
-  final _outlineKey = GlobalKey();
+  final _outlineKey = GlobalKey<_OutlineTabState>();
   late final WorkspaceController _topicActionController;
   late int _tab;
   late String _workspaceId;
@@ -1814,7 +1805,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     ref.listen(searchSessionProvider, (previous, next) {
       if (previous?.options != next.options ||
           previous?.category != next.category ||
-          previous?.location != next.location ||
+          previous?.recovery != next.recovery ||
           previous?.active != next.active) {
         _replacementCancellation?.cancel();
       }
@@ -1953,11 +1944,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                             ?.requestEditorFocus(),
                       ),
                       _SidebarTab.references => const ReferencesPanel(),
-                      _SidebarTab.localHistory => LocalHistoryPanel(
-                        focusSearchRequest: ref.watch(
-                          localHistoryFindRequestProvider,
-                        ),
-                      ),
+                      _SidebarTab.localHistory => const LocalHistoryPanel(),
                       null => const SizedBox.shrink(),
                     },
             ),
@@ -1972,12 +1959,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     List<_SidebarTab> tabs, {
     bool showGitChanges = true,
   }) {
-    if (tab == _SidebarTab.outline) {
-      ref
-          .read(searchSessionProvider.notifier)
-          .open(category: SearchCategory.outline);
-      return;
-    }
+    ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
     final index = tabs.indexOf(tab);
     if (index < 0) {
       return;
@@ -1985,6 +1967,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     setState(() {
       _tab = index;
     });
+    if (tab == _SidebarTab.outline) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !ref.read(searchSessionProvider).active) {
+          _outlineKey.currentState?.requestNavigationFocus();
+        }
+      });
+    }
     if (tab != _SidebarTab.localHistory) {
       ref.read(localHistoryControllerProvider.notifier).clearComparison();
     }
@@ -2398,8 +2387,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     bool currentRequest() {
       if (!mounted) return false;
       final current = ref.read(searchSessionProvider);
-      return current.textActive &&
-          current.location == SearchLocation.workspace &&
+      return current.workspaceActive &&
+          !current.recovery &&
           current.generation == request.generation &&
           ref.read(workspaceControllerProvider).workspace?.id == workspaceId;
     }
@@ -9164,6 +9153,9 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   String? _sourceAtBuild;
   late final SearchSessionController _searchSession;
 
+  final _navigationFocus = FocusNode(debugLabel: 'Outline navigation');
+  void requestNavigationFocus() => _navigationFocus.requestFocus();
+
   void _moveSearchSelection(int delta) {
     if (_searchEntries.isEmpty) return;
     setState(
@@ -9249,6 +9241,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
 
   @override
   void dispose() {
+    _navigationFocus.dispose();
     final session = _searchSession;
     if (session.moveOutline == _moveSearchSelection) session.moveOutline = null;
     if (session.activateOutline == _activateSearchSelection) {
@@ -9497,62 +9490,80 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
       for (var index = 0; index < headings.length; index += 1)
         _outlineNodeKey(headings[index]): index,
     };
-    return ListView.builder(
-      key: const ValueKey('workspace-sidebar-outline-tree'),
-      controller: _treeScrollController,
-      padding: BusyMarkInsets.sidebarList,
-      itemExtent: _treeRowExtent,
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        final node = entry.node;
-        final heading = node.heading;
-        final key = _outlineNodeKey(heading);
-        final headingIndex = headingIndexes[key]!;
-        final expanded = _expandedNodeKeys.contains(key);
-        final hasChildren = node.children.isNotEmpty;
-        final selected = _keyboardIndex >= 0
-            ? index == _keyboardIndex
-            : _selectedNodeKeys.isEmpty
-            ? key == activeNodeKey
-            : _selectedNodeKeys.contains(key);
-        void toggle() {
-          setState(() {
-            _revealedActiveNodeKey = null;
-            if (expanded) {
-              _expandedNodeKeys.remove(key);
-            } else {
-              _expandedNodeKeys.add(key);
-            }
-          });
+    return Focus(
+      focusNode: _navigationFocus,
+      onKeyEvent: (_, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+            event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          _moveSearchSelection(
+            event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
+          );
+          return KeyEventResult.handled;
         }
-
-        return KeyedSubtree(
-          key: ValueKey('workspace-sidebar-outline-row-$headingIndex'),
-          child: _SidebarTreeRow(
-            title: heading.text,
-            depth: entry.depth,
-            icon: BusyMarkGlyphs.tag,
-            leading: _HeadingBadge(level: heading.level),
-            hasChildren: hasChildren,
-            expanded: expanded,
-            selected: selected,
-            onToggle: hasChildren ? toggle : null,
-            onTap: () {
-              final modifiers = _treeSelectionModifiers();
-              _updateOutlineSelection(entries, index, modifiers);
-              if (modifiers.control || modifiers.shift) {
-                return;
-              }
-              _keyboardIndex = index;
-              _navigateHeading(heading);
-            },
-            onMenuRequested: (anchorContext, position) => unawaited(
-              _showSectionMenu(entries, headingIndexes, index, position),
-            ),
-          ),
-        );
+        if (event.logicalKey == LogicalKeyboardKey.enter) {
+          _activateSearchSelection();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
       },
+      child: ListView.builder(
+        key: const ValueKey('workspace-sidebar-outline-tree'),
+        controller: _treeScrollController,
+        padding: BusyMarkInsets.sidebarList,
+        itemExtent: _treeRowExtent,
+        itemCount: entries.length,
+        itemBuilder: (context, index) {
+          final entry = entries[index];
+          final node = entry.node;
+          final heading = node.heading;
+          final key = _outlineNodeKey(heading);
+          final headingIndex = headingIndexes[key]!;
+          final expanded = _expandedNodeKeys.contains(key);
+          final hasChildren = node.children.isNotEmpty;
+          final selected = _keyboardIndex >= 0
+              ? index == _keyboardIndex
+              : _selectedNodeKeys.isEmpty
+              ? key == activeNodeKey
+              : _selectedNodeKeys.contains(key);
+          void toggle() {
+            setState(() {
+              _revealedActiveNodeKey = null;
+              if (expanded) {
+                _expandedNodeKeys.remove(key);
+              } else {
+                _expandedNodeKeys.add(key);
+              }
+            });
+          }
+
+          return KeyedSubtree(
+            key: ValueKey('workspace-sidebar-outline-row-$headingIndex'),
+            child: _SidebarTreeRow(
+              title: heading.text,
+              depth: entry.depth,
+              icon: BusyMarkGlyphs.tag,
+              leading: _HeadingBadge(level: heading.level),
+              hasChildren: hasChildren,
+              expanded: expanded,
+              selected: selected,
+              onToggle: hasChildren ? toggle : null,
+              onTap: () {
+                final modifiers = _treeSelectionModifiers();
+                _updateOutlineSelection(entries, index, modifiers);
+                if (modifiers.control || modifiers.shift) {
+                  return;
+                }
+                _keyboardIndex = index;
+                _navigateHeading(heading);
+              },
+              onMenuRequested: (anchorContext, position) => unawaited(
+                _showSectionMenu(entries, headingIndexes, index, position),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -12275,9 +12286,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               editorFontSize: widget.editorFontSize,
                               wordWrap: widget.wordWrap,
                               searchActive: searchState.textActive,
-                              searchControlsVisible:
-                                  searchState.location ==
-                                  SearchLocation.document,
+                              searchControlsVisible: searchState.fileActive,
                               searchOptions: searchState.options,
                               searchSnapshot: searchState.sourceSnapshot(
                                 activeBuffer,

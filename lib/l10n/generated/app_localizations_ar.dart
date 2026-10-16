@@ -578,15 +578,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get keyboardShortcuts => 'اختصارات لوحة المفاتيح';
 
   @override
-  String get commandPalette => 'لوحة الأوامر';
-
-  @override
-  String get commandPaletteHint => 'اكتب أمرًا';
-
-  @override
-  String get commandPaletteEmpty => 'لا توجد أوامر مطابقة';
-
-  @override
   String get commandUnavailableInContext =>
       'هذا الأمر غير متاح في السياق الحالي.';
 
@@ -4475,9 +4466,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا تتطابق أي إصدارات في التاريخ المحلي مع هذا البحث.';
 
   @override
-  String get localHistorySearchHint => 'البحث في السجل المحلي';
-
-  @override
   String get localHistorySelectedRevision => 'الإصدار المحدد';
 
   @override
@@ -5425,9 +5413,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.';
 
   @override
-  String get searchTextCategory => 'النص';
-
-  @override
   String get searchDocumentsCategory => 'المستندات';
 
   @override
@@ -5440,12 +5425,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchCurrentWorkspace => 'مساحة العمل الحالية';
 
   @override
-  String get recentDocuments => 'المستندات الأخيرة';
-
-  @override
-  String get recentWorkspaces => 'مساحات العمل الأخيرة';
-
-  @override
   String get browseNotes => 'تصفح الملاحظات';
 
   @override
@@ -5453,9 +5432,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'البحث عن مستندات';
-
-  @override
-  String get searchWorkspaceCommand => 'البحث في نص مساحة العمل';
 
   @override
   String get searchTopicsCommand => 'البحث عن مواضيع';
@@ -5473,4 +5449,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notesSync => 'مزامنة الملاحظات';
+
+  @override
+  String get searchInFile => 'البحث في الملف';
+
+  @override
+  String get searchInWorkspace => 'البحث في مساحة العمل';
+
+  @override
+  String get searchCategory => 'فئة البحث';
+
+  @override
+  String get clearHistorySearchScope => 'البحث في سجل المستندات';
 }

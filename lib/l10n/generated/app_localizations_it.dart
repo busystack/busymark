@@ -587,15 +587,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get keyboardShortcuts => 'Scorciatoie da tastiera';
 
   @override
-  String get commandPalette => 'Tavolozza dei comandi';
-
-  @override
-  String get commandPaletteHint => 'Digita un comando';
-
-  @override
-  String get commandPaletteEmpty => 'Nessun comando corrispondente';
-
-  @override
   String get commandUnavailableInContext =>
       'Questo comando non è disponibile nel contesto corrente.';
 
@@ -4477,9 +4468,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessuna revisione corrisponde a questa ricerca.';
 
   @override
-  String get localHistorySearchHint => 'Cerca nella cronologia locale';
-
-  @override
   String get localHistorySelectedRevision => 'Revisione selezionata';
 
   @override
@@ -5445,9 +5433,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'L’elemento esaminato non è disponibile. Esamina un elemento per continuare.';
 
   @override
-  String get searchTextCategory => 'Testo';
-
-  @override
   String get searchDocumentsCategory => 'Documenti';
 
   @override
@@ -5460,12 +5445,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchCurrentWorkspace => 'Area di lavoro corrente';
 
   @override
-  String get recentDocuments => 'Documenti recenti';
-
-  @override
-  String get recentWorkspaces => 'Aree di lavoro recenti';
-
-  @override
   String get browseNotes => 'Sfoglia note';
 
   @override
@@ -5473,9 +5452,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Cerca documenti';
-
-  @override
-  String get searchWorkspaceCommand => 'Cerca testo nell’area di lavoro';
 
   @override
   String get searchTopicsCommand => 'Cerca argomenti';
@@ -5493,4 +5469,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get notesSync => 'Sincronizza note';
+
+  @override
+  String get searchInFile => 'Cerca nel file';
+
+  @override
+  String get searchInWorkspace => 'Cerca nello spazio di lavoro';
+
+  @override
+  String get searchCategory => 'Categoria di ricerca';
+
+  @override
+  String get clearHistorySearchScope => 'Cerca nella cronologia dei documenti';
 }

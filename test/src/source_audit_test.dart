@@ -1568,11 +1568,18 @@ void main() {
       'lib/src/search/search_sidebar.dart',
     ).readAsStringSync();
     expect(welcome, contains('SearchResultList('));
-    expect(sidebar, contains('enum _RecentNavigationAction'));
+    final navigation = File(
+      'lib/src/workspace/recent_navigation.dart',
+    ).readAsStringSync();
+    expect(navigation, contains('enum RecentNavigationAction'));
+    expect(sidebar, isNot(contains('Future<void> openRecentResource')));
+    expect(sidebar, isNot(contains('Future<void> activateSearchResult')));
+    expect(sidebar, isNot(contains('DropdownButton')));
+    expect(sidebar, isNot(contains('FilterChip')));
     expect(sidebar, contains('_recentMenuItems'));
     expect(
       sidebar,
-      contains('BusyMarkSidebarRecordRow<_RecentNavigationAction>'),
+      contains('BusyMarkSidebarRecordRow<RecentNavigationAction>'),
     );
     expect(sidebar, contains('menuItemsBuilder:'));
     expect(design, contains('class BusyMarkSidebarRecordRow<T>'));

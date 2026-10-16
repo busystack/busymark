@@ -4245,7 +4245,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final remote = buffer.remoteNote;
     if (remote != null) {
       await _settingsController.recordRecent(
-        RecentWorkspace(
+        RecentResource(
           path: '',
           kind: 'nextcloudNote',
           document: true,
@@ -4262,7 +4262,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     } else if (buffer.filePath case final path?) {
       final context = resolveWorkspaceDocumentContext(workspace, buffer);
       await _settingsController.recordRecent(
-        RecentWorkspace(
+        RecentResource(
           path: p.normalize(p.absolute(path)),
           kind: workspace.kind == WorkspaceKind.singleMarkdown
               ? workspace.kind.name

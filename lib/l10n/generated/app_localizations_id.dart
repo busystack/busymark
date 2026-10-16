@@ -585,15 +585,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get keyboardShortcuts => 'Pintasan keyboard';
 
   @override
-  String get commandPalette => 'Palet perintah';
-
-  @override
-  String get commandPaletteHint => 'Ketikkan perintah';
-
-  @override
-  String get commandPaletteEmpty => 'Tidak ada perintah yang cocok';
-
-  @override
   String get commandUnavailableInContext =>
       'Tidak tersedia dalam konteks editor saat ini';
 
@@ -4447,9 +4438,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.';
 
   @override
-  String get localHistorySearchHint => 'Cari riwayat lokal';
-
-  @override
   String get localHistorySelectedRevision => 'Revisi yang dipilih';
 
   @override
@@ -5398,9 +5386,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.';
 
   @override
-  String get searchTextCategory => 'Teks';
-
-  @override
   String get searchDocumentsCategory => 'Dokumen';
 
   @override
@@ -5413,12 +5398,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get searchCurrentWorkspace => 'Ruang kerja saat ini';
 
   @override
-  String get recentDocuments => 'Dokumen terbaru';
-
-  @override
-  String get recentWorkspaces => 'Ruang kerja terbaru';
-
-  @override
   String get browseNotes => 'Jelajahi catatan';
 
   @override
@@ -5426,9 +5405,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Cari dokumen';
-
-  @override
-  String get searchWorkspaceCommand => 'Cari teks ruang kerja';
 
   @override
   String get searchTopicsCommand => 'Cari topik';
@@ -5446,4 +5422,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get notesSync => 'Sinkronkan catatan';
+
+  @override
+  String get searchInFile => 'Cari dalam Berkas';
+
+  @override
+  String get searchInWorkspace => 'Cari dalam Ruang Kerja';
+
+  @override
+  String get searchCategory => 'Kategori pencarian';
+
+  @override
+  String get clearHistorySearchScope => 'Cari riwayat seluruh dokumen';
 }

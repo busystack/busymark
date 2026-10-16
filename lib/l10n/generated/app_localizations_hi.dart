@@ -586,15 +586,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get keyboardShortcuts => 'कीबोर्ड शॉर्टकट';
 
   @override
-  String get commandPalette => 'कमांड पैलेट';
-
-  @override
-  String get commandPaletteHint => 'कमांड लिखें';
-
-  @override
-  String get commandPaletteEmpty => 'कोई मेल खाता कमांड नहीं';
-
-  @override
   String get commandUnavailableInContext =>
       'यह आदेश वर्तमान संदर्भ में उपलब्ध नहीं है।';
 
@@ -4437,9 +4428,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'यह खोज स्थानीय इतिहास संशोधनों से मेल नहीं खाती।';
 
   @override
-  String get localHistorySearchHint => 'स्थानीय इतिहास खोजें';
-
-  @override
   String get localHistorySelectedRevision => 'चयनित संशोधन';
 
   @override
@@ -5390,9 +5378,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।';
 
   @override
-  String get searchTextCategory => 'पाठ';
-
-  @override
   String get searchDocumentsCategory => 'दस्तावेज़';
 
   @override
@@ -5405,12 +5390,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get searchCurrentWorkspace => 'वर्तमान कार्यक्षेत्र';
 
   @override
-  String get recentDocuments => 'हाल के दस्तावेज़';
-
-  @override
-  String get recentWorkspaces => 'हाल के कार्यक्षेत्र';
-
-  @override
   String get browseNotes => 'नोट ब्राउज़ करें';
 
   @override
@@ -5418,9 +5397,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'दस्तावेज़ खोजें';
-
-  @override
-  String get searchWorkspaceCommand => 'कार्यक्षेत्र में पाठ खोजें';
 
   @override
   String get searchTopicsCommand => 'विषय खोजें';
@@ -5438,4 +5414,16 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notesSync => 'नोट सिंक करें';
+
+  @override
+  String get searchInFile => 'फ़ाइल में खोजें';
+
+  @override
+  String get searchInWorkspace => 'कार्यस्थान में खोजें';
+
+  @override
+  String get searchCategory => 'खोज श्रेणी';
+
+  @override
+  String get clearHistorySearchScope => 'दस्तावेज़ों के इतिहास में खोजें';
 }

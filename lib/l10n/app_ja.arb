@@ -420,18 +420,6 @@
     "description": "Insert button label."
   },
   "keyboardShortcuts": "キーボードショートカット",
-  "commandPalette": "コマンドパレット",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "コマンドを入力",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "一致するコマンドはありません",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "現在のエディターのコンテキストでは利用できません",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -4889,7 +4877,6 @@
   "localHistoryNoDocuments": "まだローカル履歴を持つドキュメントはありません。",
   "localHistoryNoRevisions": "このドキュメントにはローカル履歴の修正はありません。",
   "localHistoryNoMatches": "この検索に一致するローカル履歴の修正はありません。",
-  "localHistorySearchHint": "ローカル履歴を検索",
   "localHistorySelectedRevision": "選択されたリビジョン",
   "localHistoryCurrentEditor": "現在の編集内容",
   "localHistoryCurrentDisk": "ディスク上の現在の内容",
@@ -5150,20 +5137,20 @@
   "wsAdmonitionsAndQuotes": "注意書きと引用",
   "wsSemanticText": "セマンティックテキスト",
   "wsPropertiesUnavailable": "確認中の要素は利用できません。続行するには要素を確認してください。",
-  "searchTextCategory": "テキスト",
   "searchDocumentsCategory": "ドキュメント",
   "searchTopicsCategory": "トピック",
   "searchCurrentDocument": "現在のドキュメント",
   "searchCurrentWorkspace": "現在のワークスペース",
-  "recentDocuments": "最近のドキュメント",
-  "recentWorkspaces": "最近のワークスペース",
   "browseNotes": "ノートを参照",
   "searchActionsCommand": "アクションを検索",
   "searchDocumentsCommand": "ドキュメントを検索",
-  "searchWorkspaceCommand": "ワークスペースのテキストを検索",
   "searchTopicsCommand": "トピックを検索",
   "searchRecentCommand": "最近の項目を検索",
   "searchQueryHint": "{category}を検索…",
   "searchResourceUnavailable": "このリソースは利用できません。",
-  "notesSync": "ノートを同期"
+  "notesSync": "ノートを同期",
+  "searchInFile": "ファイル内検索",
+  "searchInWorkspace": "ワークスペース内検索",
+  "searchCategory": "検索カテゴリ",
+  "clearHistorySearchScope": "すべてのドキュメントの履歴を検索"
 }

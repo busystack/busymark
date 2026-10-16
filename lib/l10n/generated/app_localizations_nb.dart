@@ -589,15 +589,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get keyboardShortcuts => 'Tastatursnarveier';
 
   @override
-  String get commandPalette => 'Kommandopalett';
-
-  @override
-  String get commandPaletteHint => 'Skriv inn en kommando';
-
-  @override
-  String get commandPaletteEmpty => 'Ingen samsvarende kommandoer';
-
-  @override
   String get commandUnavailableInContext =>
       'Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.';
 
@@ -4444,9 +4435,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get localHistoryNoMatches => 'Ingen revisjoner matcher denne søken.';
 
   @override
-  String get localHistorySearchHint => 'Søk i lokal historikk';
-
-  @override
   String get localHistorySelectedRevision => 'Valgt revisjon';
 
   @override
@@ -5404,9 +5392,6 @@ class AppLocalizationsNb extends AppLocalizations {
       'Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.';
 
   @override
-  String get searchTextCategory => 'Tekst';
-
-  @override
   String get searchDocumentsCategory => 'Dokumenter';
 
   @override
@@ -5419,12 +5404,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get searchCurrentWorkspace => 'Gjeldende arbeidsområde';
 
   @override
-  String get recentDocuments => 'Nylige dokumenter';
-
-  @override
-  String get recentWorkspaces => 'Nylige arbeidsområder';
-
-  @override
   String get browseNotes => 'Bla gjennom notater';
 
   @override
@@ -5432,9 +5411,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Søk etter dokumenter';
-
-  @override
-  String get searchWorkspaceCommand => 'Søk i arbeidsområdets tekst';
 
   @override
   String get searchTopicsCommand => 'Søk etter emner';
@@ -5452,4 +5428,16 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get notesSync => 'Synkroniser notater';
+
+  @override
+  String get searchInFile => 'Søk i fil';
+
+  @override
+  String get searchInWorkspace => 'Søk i arbeidsområde';
+
+  @override
+  String get searchCategory => 'Søkekategori';
+
+  @override
+  String get clearHistorySearchScope => 'Søk i dokumenthistorikken';
 }

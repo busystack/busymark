@@ -590,15 +590,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get keyboardShortcuts => 'Sneltoetsen op het toetsenbord';
 
   @override
-  String get commandPalette => 'Commandopalet';
-
-  @override
-  String get commandPaletteHint => 'Typ een opdracht';
-
-  @override
-  String get commandPaletteEmpty => 'Geen overeenkomende opdrachten';
-
-  @override
   String get commandUnavailableInContext =>
       'Niet beschikbaar in de huidige editorcontext';
 
@@ -4485,9 +4476,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.';
 
   @override
-  String get localHistorySearchHint => 'Lokale geschiedenis doorzoeken';
-
-  @override
   String get localHistorySelectedRevision => 'Geselecteerde revisie';
 
   @override
@@ -5450,9 +5438,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.';
 
   @override
-  String get searchTextCategory => 'Tekst';
-
-  @override
   String get searchDocumentsCategory => 'Documenten';
 
   @override
@@ -5465,12 +5450,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get searchCurrentWorkspace => 'Huidige werkruimte';
 
   @override
-  String get recentDocuments => 'Recente documenten';
-
-  @override
-  String get recentWorkspaces => 'Recente werkruimten';
-
-  @override
   String get browseNotes => 'Notities bekijken';
 
   @override
@@ -5478,9 +5457,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Documenten zoeken';
-
-  @override
-  String get searchWorkspaceCommand => 'Werkruimtetekst zoeken';
 
   @override
   String get searchTopicsCommand => 'Onderwerpen zoeken';
@@ -5498,4 +5474,16 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get notesSync => 'Notities synchroniseren';
+
+  @override
+  String get searchInFile => 'Zoeken in bestand';
+
+  @override
+  String get searchInWorkspace => 'Zoeken in werkruimte';
+
+  @override
+  String get searchCategory => 'Zoekcategorie';
+
+  @override
+  String get clearHistorySearchScope => 'Zoeken in documentgeschiedenis';
 }

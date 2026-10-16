@@ -1,38 +1,37 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:path/path.dart' as p;
-import 'package:url_launcher/url_launcher.dart';
 
 import '../app/app_settings.dart';
-import '../app/app_router.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/busymark_search_field.dart';
-import '../app/busymark_toast.dart';
 import '../app/command_registry.dart';
 import '../app/localization.dart';
+import '../local_history/local_history_controller.dart';
+import '../local_history/local_history_models.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
-import '../nextcloud_notes/application/notes_navigation.dart';
-import '../nextcloud_notes/domain/notes_search.dart';
-import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
+import '../workspace/recent_navigation.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_glyphs.dart';
-import '../workspace/workspace_safety.dart';
-import 'search_session.dart';
+import 'search_activation.dart';
+import 'search_option_button.dart';
 import 'search_result_preview.dart';
+import 'search_session.dart';
 
 String searchCategoryLabel(BuildContext context, SearchCategory category) =>
     switch (category) {
-      SearchCategory.text => context.l10n.searchTextCategory,
+      SearchCategory.file => context.l10n.searchInFile,
+      SearchCategory.workspace => context.l10n.searchInWorkspace,
       SearchCategory.outline => context.l10n.outline,
       SearchCategory.documents => context.l10n.searchDocumentsCategory,
       SearchCategory.topics => context.l10n.searchTopicsCategory,
       SearchCategory.recent => context.l10n.recent,
+      SearchCategory.localHistory => context.l10n.localHistory,
       SearchCategory.actions => context.l10n.actions,
     };
 
@@ -97,9 +96,11 @@ class _SearchHeaderFieldState extends ConsumerState<SearchHeaderField> {
       child: BusyMarkSearchField(
         key: const ValueKey('shared-search-query'),
         controller: _text,
-        hintText: context.l10n.searchQueryHint(
-          searchCategoryLabel(context, state.category),
-        ),
+        hintText: state.fileActive || state.workspaceActive
+            ? '${searchCategoryLabel(context, state.category)}…'
+            : context.l10n.searchQueryHint(
+                searchCategoryLabel(context, state.category),
+              ),
         autofocus: state.active,
         focusRequest: state.focusRequest,
         clearOnEscape: false,
@@ -147,270 +148,282 @@ class SearchSidebar extends ConsumerWidget {
           ),
       ]);
     }
-    final remote =
-        ref.watch(workspaceControllerProvider).workspace?.isRemote == true;
-    return LayoutBuilder(
-      builder: (context, constraints) => Focus(
-        onKeyEvent: (_, event) {
-          if (!state.active || event is! KeyDownEvent) {
-            return KeyEventResult.ignored;
-          }
-          if (event.logicalKey == LogicalKeyboardKey.escape) {
-            controller.close();
-            return KeyEventResult.handled;
-          }
-          if (!_resultBodyHasFocus()) return KeyEventResult.ignored;
-          if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
-              event.logicalKey == LogicalKeyboardKey.arrowUp) {
-            controller.moveSelection(
-              event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
-            );
-            return KeyEventResult.handled;
-          }
-          if (event.logicalKey == LogicalKeyboardKey.enter) {
-            unawaited(activateSelectedSearchResult(context, ref));
-            return KeyEventResult.handled;
-          }
+    final workspace = ref.watch(workspaceControllerProvider);
+    final remote = workspace.workspace?.isRemote == true;
+    final historyDocuments = state.category == SearchCategory.localHistory
+        ? ref.watch(localHistoryControllerProvider).snapshot.documents
+        : const <LocalHistoryDocument>[];
+    final account = remote && state.workspaceActive
+        ? ref.watch(nextcloudConnectionProvider).account
+        : null;
+    final historyDocument = historyDocuments
+        .where((d) => d.id == state.historyDocumentId)
+        .firstOrNull;
+    final contextLabel = state.fileActive
+        ? workspace.activeBuffer?.displayName
+        : state.workspaceActive
+        ? (state.recovery
+              ? context.l10n.notesRecovery
+              : remote
+              ? (account?.id == workspace.workspace?.nextcloudAccountId
+                    ? '${account!.loginName} · ${account.server.host}'
+                    : workspace.workspace?.nextcloudAccountId)
+              : workspace.workspace?.filesystemRootPath)
+        : state.category == SearchCategory.localHistory
+        ? historyDocument?.displayName ??
+              (state.historyDocumentId != null
+                  ? context.l10n.searchResourceUnavailable
+                  : null)
+        : null;
+    return Focus(
+      onKeyEvent: (_, event) {
+        if (!state.active || event is! KeyDownEvent) {
           return KeyEventResult.ignored;
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Visibility(
-              visible: !browsingOutline,
-              maintainState: true,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: BusyMarkSpacing.sm,
+        }
+        if (event.logicalKey == LogicalKeyboardKey.escape) {
+          controller.close();
+          return KeyEventResult.handled;
+        }
+        if (!_resultBodyHasFocus()) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+            event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          controller.moveSelection(
+            event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
+          );
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.enter) {
+          unawaited(activateSelectedSearchResult(context, ref));
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!browsingOutline) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+                vertical: BusyMarkSpacing.xs,
+              ),
+              child: BusyMarkMenuButton<SearchCategory>(
+                key: const ValueKey('search-category'),
+                tooltip: context.l10n.searchCategory,
+                fallbackMenuWidth: BusyMarkSizes.sidebarWidth,
+                items: [
+                  for (final category in controller.categories)
+                    BusyMarkPopupMenuItem(
+                      value: category,
+                      label: searchCategoryLabel(context, category),
+                      checked: category == state.category,
+                      trailingCheck: true,
                     ),
-                    child: Row(
-                      children: [
-                        Text('${context.l10n.search}: '),
-                        Expanded(
-                          child: DropdownButton<SearchCategory>(
-                            key: const ValueKey('search-category'),
-                            isExpanded: true,
-                            value:
-                                controller.categories.contains(state.category)
-                                ? state.category
-                                : controller.categories.first,
-                            items: [
-                              for (final category in controller.categories)
-                                DropdownMenuItem(
-                                  value: category,
-                                  child: Text(
-                                    searchCategoryLabel(context, category),
-                                  ),
-                                ),
-                            ],
-                            onChanged: (category) {
-                              if (category != null) {
-                                controller.open(category: category);
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: constraints.maxHeight * .48,
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (state.textActive) ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: BusyMarkSpacing.sm,
-                              ),
-                              child: Row(
-                                children: [
-                                  Text('${context.l10n.location}: '),
-                                  Expanded(
-                                    child: DropdownButton<SearchLocation>(
-                                      key: const ValueKey('search-location'),
-                                      isExpanded: true,
-                                      value: state.location,
-                                      items: [
-                                        DropdownMenuItem(
-                                          value: SearchLocation.document,
-                                          child: Text(
-                                            context.l10n.searchCurrentDocument,
-                                          ),
-                                        ),
-                                        DropdownMenuItem(
-                                          value: SearchLocation.workspace,
-                                          child: Text(
-                                            context.l10n.searchCurrentWorkspace,
-                                          ),
-                                        ),
-                                        if (state.location ==
-                                            SearchLocation.recovery)
-                                          DropdownMenuItem(
-                                            value: SearchLocation.recovery,
-                                            child: Text(
-                                              context.l10n.notesRecovery,
-                                            ),
-                                          ),
-                                      ],
-                                      onChanged: (location) {
-                                        if (location != null) {
-                                          controller.open(
-                                            category: SearchCategory.text,
-                                            location: location,
-                                          );
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Wrap(
-                              spacing: BusyMarkSpacing.xs,
-                              children: [
-                                if (!remote ||
-                                    state.location == SearchLocation.document)
-                                  FilterChip(
-                                    label: Text(
-                                      context.l10n.sourceSearchCaseSensitive,
-                                    ),
-                                    selected: state.caseSensitive,
-                                    onSelected: (v) => controller.set(
-                                      state.copyWith(caseSensitive: v),
-                                    ),
-                                  ),
-                                FilterChip(
-                                  label: Text(
-                                    context.l10n.sourceSearchWholeWord,
-                                  ),
-                                  selected: state.wholeWord,
-                                  onSelected: (v) => controller.set(
-                                    state.copyWith(wholeWord: v),
-                                  ),
-                                ),
-                                if (!remote ||
-                                    state.location == SearchLocation.document)
-                                  FilterChip(
-                                    label: Text(context.l10n.sourceSearchRegex),
-                                    selected: state.regex,
-                                    onSelected: (v) => controller.set(
-                                      state.copyWith(regex: v),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            if (remote &&
-                                state.location != SearchLocation.document)
-                              Padding(
-                                padding: const EdgeInsets.all(
-                                  BusyMarkSpacing.sm,
-                                ),
-                                child: Text(context.l10n.notesSearchHelp),
-                              ),
-                            if (!remote &&
-                                state.location == SearchLocation.workspace &&
-                                onReviewReplacement != null &&
-                                state.query.isNotEmpty &&
-                                !state.searching)
-                              Padding(
-                                padding: const EdgeInsets.all(
-                                  BusyMarkSpacing.sm,
-                                ),
-                                child: BusyMarkPushButton.standard(
-                                  onPressed: () =>
-                                      unawaited(onReviewReplacement!()),
-                                  child: Text(context.l10n.workspaceReplace),
-                                ),
-                              ),
-                          ],
-                          if (state.searching)
-                            const LinearProgressIndicator(
-                              key: ValueKey('workspace-search-progress'),
-                            ),
-                          if (state.indexing) Text(context.l10n.notesIndexing),
-                          if (state.error != null)
-                            Padding(
-                              padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                              child: Text(state.error!),
-                            ),
-                          if (state.invalidRegex)
-                            Text(context.l10n.sourceSearchInvalidRegex),
-                          if (state.hasZeroLengthMatches)
-                            Text(
-                              context.l10n.sourceSearchZeroLengthUnsupported,
-                            ),
-                          if (state.skippedFiles.isNotEmpty)
-                            Tooltip(
-                              message: state.skippedFiles.join('\n'),
+                ],
+                onSelected: (category) => controller.open(category: category),
+                triggerBuilder: (context, trigger) => trigger.anchor(
+                  child: Tooltip(
+                    message: context.l10n.searchCategory,
+                    child: Semantics(
+                      label: context.l10n.searchCategory,
+                      expanded: trigger.isOpen,
+                      child: BusyMarkPushButton.standard(
+                        focusNode: trigger.focusNode,
+                        onPressed: trigger.onPressed,
+                        child: Row(
+                          children: [
+                            Expanded(
                               child: Text(
-                                '${context.l10n.workspaceSearchSkippedFiles}\n${state.skippedFiles.join('\n')}',
-                                maxLines: 6,
+                                searchCategoryLabel(context, state.category),
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                        ],
+                            const SizedBox(width: BusyMarkSpacing.xs),
+                            const Icon(
+                              BusyMarkGlyphs.downArrow,
+                              size: BusyMarkSizes.iconSm,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                  if (state.truncated)
-                    Padding(
-                      padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                      child: Column(
-                        children: [
-                          Text(
-                            context.l10n.workspaceSearchIncomplete,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          TextButton(
-                            onPressed: controller.showMore,
-                            child: Text(context.l10n.workspaceSearchShowMore),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
-            Expanded(
-              child: outline != null
-                  ? outline!
-                  : state.results.isEmpty
-                  ? state.error != null ||
-                            state.invalidRegex ||
-                            state.hasZeroLengthMatches ||
-                            state.skippedFiles.isNotEmpty
-                        ? const SizedBox.shrink()
-                        : Center(
-                            child: Text(
-                              state.searching
-                                  ? ''
-                                  : state.textActive && state.query.isEmpty
-                                  ? context.l10n.searchQueryHint(
-                                      context.l10n.searchTextCategory,
-                                    )
-                                  : context.l10n.noResults,
-                            ),
-                          )
-                  : SearchResultList(
-                      results: state.results,
-                      selected: state.selected,
-                      onActivate: (result) =>
-                          activateSearchResult(context, ref, result),
+            if (contextLabel != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.md,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Tooltip(
+                        message: contextLabel,
+                        child: Text(
+                          contextLabel,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
                     ),
-            ),
+                    if (state.category == SearchCategory.localHistory &&
+                        state.historyDocumentId != null)
+                      BusyMarkCompactIconButton(
+                        tooltip: context.l10n.clearHistorySearchScope,
+                        icon: BusyMarkGlyphs.clear,
+                        onPressed: controller.clearHistoryScope,
+                      ),
+                  ],
+                ),
+              ),
+            if (state.textActive)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.sm,
+                ),
+                child: Row(
+                  children: [
+                    if (state.fileActive || !remote)
+                      SearchOptionButton(
+                        label: 'Aa',
+                        tooltip: context.l10n.sourceSearchCaseSensitive,
+                        selected: state.caseSensitive,
+                        onPressed: () => controller.set(
+                          state.copyWith(caseSensitive: !state.caseSensitive),
+                        ),
+                      ),
+                    SearchOptionButton(
+                      label: 'W',
+                      tooltip: context.l10n.sourceSearchWholeWord,
+                      selected: state.wholeWord,
+                      onPressed: () => controller.set(
+                        state.copyWith(wholeWord: !state.wholeWord),
+                      ),
+                    ),
+                    if (state.fileActive || !remote)
+                      SearchOptionButton(
+                        label: '.*',
+                        tooltip: context.l10n.sourceSearchRegex,
+                        selected: state.regex,
+                        onPressed: () =>
+                            controller.set(state.copyWith(regex: !state.regex)),
+                      ),
+                    if (remote && state.workspaceActive)
+                      BusyMarkCompactIconButton(
+                        tooltip: context.l10n.notesSearchHelp,
+                        icon: BusyMarkGlyphs.info,
+                        onPressed: null,
+                      ),
+                  ],
+                ),
+              ),
+            if (!remote &&
+                state.workspaceActive &&
+                !state.recovery &&
+                onReviewReplacement != null &&
+                state.query.isNotEmpty &&
+                !state.searching)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.sm,
+                ),
+                child: BusyMarkPushButton.standard(
+                  onPressed: () => unawaited(onReviewReplacement!()),
+                  child: Text(context.l10n.workspaceReplace),
+                ),
+              ),
+            if (state.searching)
+              const LinearProgressIndicator(
+                key: ValueKey('workspace-search-progress'),
+              ),
+            if (state.indexing) _SearchNotice(context.l10n.notesIndexing),
+            if (state.error != null) _SearchNotice(state.error!),
+            if (state.invalidRegex)
+              _SearchNotice(context.l10n.sourceSearchInvalidRegex),
+            if (state.hasZeroLengthMatches)
+              _SearchNotice(context.l10n.sourceSearchZeroLengthUnsupported),
+            if (state.skippedFiles.isNotEmpty)
+              Tooltip(
+                message: state.skippedFiles.join('\n'),
+                child: _SearchNotice(
+                  '${context.l10n.workspaceSearchSkippedFiles} · ${state.skippedFiles.length}\n'
+                  '${state.skippedFiles.join('\n')}',
+                ),
+              ),
+            if (state.truncated)
+              _SearchNotice(context.l10n.workspaceSearchIncomplete),
+            if (state.truncated)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.sm,
+                ),
+                child: Tooltip(
+                  message: context.l10n.workspaceSearchIncomplete,
+                  child: TextButton(
+                    onPressed: controller.showMore,
+                    child: Text(context.l10n.workspaceSearchShowMore),
+                  ),
+                ),
+              ),
           ],
-        ),
+          Expanded(
+            child:
+                outline ??
+                (state.results.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+                          child: Text(
+                            state.searching ||
+                                    state.error != null ||
+                                    state.skippedFiles.isNotEmpty ||
+                                    state.invalidRegex ||
+                                    state.hasZeroLengthMatches
+                                ? ''
+                                : state.textActive && state.query.isEmpty
+                                ? context.l10n.searchQueryHint(
+                                    searchCategoryLabel(
+                                      context,
+                                      state.category,
+                                    ),
+                                  )
+                                : context.l10n.noResults,
+                          ),
+                        ),
+                      )
+                    : SearchResultList(
+                        results: state.results,
+                        selected: state.selected,
+                        onActivate: (result) =>
+                            activateSearchResult(context, ref, result),
+                      )),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _SearchNotice extends StatelessWidget {
+  const _SearchNotice(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(
+      horizontal: BusyMarkSpacing.md,
+      vertical: BusyMarkSpacing.xs,
+    ),
+    child: Text(
+      text,
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodySmall,
+    ),
+  );
 }
 
 class SearchResultList extends ConsumerStatefulWidget {
@@ -511,14 +524,7 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
 
   @override
   Widget build(BuildContext context) {
-    // Recent is always two sections, each bounded to twelve records.
-    final recent = widget.results.whereType<RecentSearchResult>().toList();
-    final rows = recent.isEmpty
-        ? widget.results
-        : <SidebarSearchResult>[
-            ...recent.where((r) => r.resource.isDocument),
-            ...recent.where((r) => !r.resource.isDocument),
-          ];
+    final rows = widget.results;
     final colors = BusyMarkSurfaceColors.of(context);
     return Material(
       color: BusyMarkLinuxPalette.transparent,
@@ -562,6 +568,13 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                   : '${resource.accountLabel ?? resource.accountId}${resource.localId == null ? '' : ' · ${resource.localId}'}',
               null,
             ),
+            HistorySearchResult(:final match) => (
+              match.document.displayName,
+              '${match is LocalHistoryRevisionMatch ? DateFormat.yMd(Localizations.localeOf(context).toLanguageTag()).add_Hms().format(match.revision.capturedAt.toLocal()) : context.l10n.localHistory}\n'
+                  '${match is LocalHistoryRevisionMatch ? match.revision.historicalPath ?? '' : match.document.currentPath ?? match.document.historicalPaths.lastOrNull ?? ''}'
+                  '${match.document.remoteNote == null ? '' : '\n${match.document.remoteNote!.accountId} · ${match.document.remoteNote!.localId}'}',
+              null,
+            ),
             ActionSearchResult(:final title, :final category, :final command) =>
               (
                 title,
@@ -578,15 +591,6 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
               widget.selected >= 0 &&
               widget.selected < widget.results.length &&
               widget.results[widget.selected].identity == result.identity;
-          String? section;
-          if (result is RecentSearchResult &&
-              (index == 0 ||
-                  (rows[index - 1] as RecentSearchResult).resource.isDocument !=
-                      result.resource.isDocument)) {
-            section = result.resource.isDocument
-                ? context.l10n.recentDocuments
-                : context.l10n.recentWorkspaces;
-          }
           final key = result is NoteSearchResult
               ? ValueKey((
                   'notes-search-hit',
@@ -646,7 +650,7 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
           );
           if (result is RecentSearchResult) {
             final resource = result.resource;
-            final record = BusyMarkSidebarRecordRow<_RecentNavigationAction>(
+            final record = BusyMarkSidebarRecordRow<RecentNavigationAction>(
               key: key,
               icon: WorkspaceGlyphs.forRecent(resource),
               selected: selected,
@@ -670,8 +674,9 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
               menuTooltip: context.l10n.actions,
               menuItemsBuilder: (context) =>
                   _recentMenuItems(context, resource),
-              onMenuSelected: (action) =>
-                  unawaited(_recentAction(context, ref, resource, action)),
+              onMenuSelected: (action) => unawaited(
+                runRecentNavigationAction(context, ref, resource, action),
+              ),
             );
             final focusable = Focus(
               focusNode: _focusNodes.putIfAbsent(index, FocusNode.new),
@@ -684,524 +689,34 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
               },
               child: record,
             );
-            if (section == null) return focusable;
-            return Column(
-              key: key,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                  child: Text(
-                    section,
-                    style: busyMarkSectionHeaderStyle(context),
-                  ),
-                ),
-                focusable,
-              ],
-            );
+            return focusable;
           }
-          if (section == null) return row;
-          return Column(
-            key: key,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                child: Text(
-                  section,
-                  style: busyMarkSectionHeaderStyle(context),
-                ),
-              ),
-              row,
-            ],
-          );
+          return row;
         },
       ),
     );
   }
 }
 
-bool actionEnabled(WidgetRef ref, ActionSearchResult result) {
-  final controller = ref.read(searchSessionProvider.notifier);
-  final command = result.command;
-  final registry = BusyMarkCommandRegistryScope.read(ref.context);
-  if (registry == null) return false;
-  final workspace = ref.read(workspaceControllerProvider);
-  final target = controller.commandTarget;
-  if (registry.requiresDocumentTarget(command) &&
-      (!controller.workspaceVisible ||
-          target?.bufferId == null ||
-          target?.isCurrent(workspace) != true)) {
-    return false;
-  }
-  final activeNotesAction =
-      controller.workspaceVisible &&
-      (workspace.workspace?.isRemote == true ||
-          controller.actionAccountId != null) &&
-      {
-        BusyMarkCommandIds.newNote,
-        BusyMarkCommandIds.browseNotes,
-      }.contains(command.id);
-  if ((registry.requiresWorkspaceTarget(command) || activeNotesAction) &&
-      (!controller.workspaceVisible ||
-          target?.workspaceId == null ||
-          target?.workspaceId != workspace.workspace?.id)) {
-    return false;
-  }
-  if (registry.isContextual(command)) {
-    return controller.workspaceVisible &&
-        target?.isCurrent(ref.read(workspaceControllerProvider)) == true &&
-        registry.canExecuteInContext(command.id, target!.context);
-  }
-  if (!controller.workspaceVisible &&
-      command.scope != BusyMarkCommandScope.application) {
-    return false;
-  }
-  return command.canExecute;
-}
-
-Future<void> activateSelectedSearchResult(
+List<PopupMenuEntry<RecentNavigationAction>> _recentMenuItems(
   BuildContext context,
-  WidgetRef ref,
-) async {
-  final controller = ref.read(searchSessionProvider.notifier);
-  if (!await controller.submit() || !context.mounted) return;
-  final state = ref.read(searchSessionProvider);
-  if (state.category == SearchCategory.outline) {
-    controller.activateOutline?.call();
-    return;
-  }
-  if (state.results.isEmpty) return;
-  await activateSearchResult(context, ref, state.results[state.selected]);
-}
-
-final _searchActivationProvider = Provider((ref) => _SearchActivation());
-
-class _SearchActivation {
-  bool busy = false;
-}
-
-Future<void> activateSearchResult(
-  BuildContext context,
-  WidgetRef ref,
-  SidebarSearchResult result, {
-  bool source = false,
-}) async {
-  final guard = ref.read(_searchActivationProvider);
-  if (guard.busy) return;
-  guard.busy = true;
-  final session = ref.read(searchSessionProvider.notifier);
-  final snapshot = ref.read(searchSessionProvider);
-  final workspace = ref.read(workspaceControllerProvider).workspace;
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  void unavailable() {
-    if (context.mounted) {
-      BusyMarkToastOverlay.show(
-        context,
-        message: context.l10n.commandUnavailableInContext,
-      );
-    }
-  }
-
-  try {
-    if (!snapshot.active ||
-        !snapshot.results.any((r) => identical(r, result))) {
-      unavailable();
-      return;
-    }
-    bool currentRequest() =>
-        ref.context.mounted &&
-        session.workspaceVisible &&
-        ref.read(workspaceControllerProvider).workspace?.id == workspace?.id &&
-        ref.read(searchSessionProvider).active &&
-        ref.read(searchSessionProvider).requestRevision ==
-            snapshot.requestRevision &&
-        ref.read(searchSessionProvider).focusRequest == snapshot.focusRequest &&
-        ref.read(searchSessionProvider).query == snapshot.query &&
-        ref.read(searchSessionProvider).category == snapshot.category &&
-        ref.read(searchSessionProvider).location == snapshot.location;
-    switch (result) {
-      case ActionSearchResult(:final command):
-        if (!actionEnabled(ref, result)) {
-          unavailable();
-          return;
-        }
-        final registry = BusyMarkCommandRegistryScope.read(context)!;
-        final success = await registry.executeInContext(
-          command.id,
-          session.commandTarget?.context,
-        );
-        if (success &&
-            ref.context.mounted &&
-            ref.read(searchSessionProvider).focusRequest ==
-                snapshot.focusRequest &&
-            ref.read(searchSessionProvider).category == snapshot.category) {
-          session.close();
-        }
-      case RecentSearchResult(:final resource):
-        await openRecentResource(context, ref, resource);
-      case DocumentSearchResult(
-        :final workspaceId,
-        :final accountId,
-        :final document,
-      ):
-        if (!session.workspaceVisible || workspace?.id != workspaceId) {
-          unavailable();
-          return;
-        }
-        if (accountId != null) {
-          final repo = await ref.read(nextcloudNotesRepositoryProvider.future);
-          final note = repo.noteById(document.localId!);
-          if (!context.mounted ||
-              !currentRequest() ||
-              ref.read(workspaceControllerProvider).workspace?.id !=
-                  workspaceId ||
-              note?.accountId != accountId ||
-              isNotesRecovery(note!) ||
-              repo.isCreationCandidateBinding(note.localId)) {
-            unavailable();
-            return;
-          }
-          if (await controller.openNextcloudNote(
-            document.localId!,
-            acceptNavigation: currentRequest,
-          )) {
-            if (!currentRequest()) return;
-            session.close(restoreFocus: false);
-          }
-        } else {
-          if (!workspace!.files.any(
-            (f) => f.absolutePath == document.filePath,
-          )) {
-            unavailable();
-            return;
-          }
-          if (await controller.openActiveFile(
-            document.filePath!,
-            acceptNavigation: currentRequest,
-          )) {
-            if (!currentRequest()) return;
-            session.close(restoreFocus: false);
-          }
-        }
-      case TopicSearchResult(:final workspaceId, :final path):
-        if (!session.workspaceVisible ||
-            workspace?.id != workspaceId ||
-            ![
-              for (final module
-                  in workspace!.writersideProject?.modules ??
-                      [
-                        if (workspace.writersideModule != null)
-                          workspace.writersideModule!,
-                      ])
-                ...module.topics,
-            ].any((t) => p.equals(t.filePath, path))) {
-          unavailable();
-          return;
-        }
-        if (await controller.openActiveFile(
-          path,
-          acceptNavigation: currentRequest,
-        )) {
-          if (!currentRequest()) return;
-          session.close(restoreFocus: false);
-        }
-      case TextSearchResult(:final workspaceId, :final match):
-        if (!session.workspaceVisible || workspace?.id != workspaceId) {
-          unavailable();
-          return;
-        }
-        if (match.bufferId != null) {
-          if (ref.read(workspaceControllerProvider).activeBufferId !=
-                  match.bufferId &&
-              !await controller.activateDocumentBuffer(
-                match.bufferId!,
-                acceptNavigation: currentRequest,
-              )) {
-            return;
-          }
-        } else if (match.filePath != null) {
-          if (!await controller.openActiveFile(
-            match.filePath!,
-            acceptNavigation: currentRequest,
-          )) {
-            return;
-          }
-        } else {
-          unavailable();
-          return;
-        }
-        if (!context.mounted ||
-            !currentRequest() ||
-            ref.read(workspaceControllerProvider).workspace?.id !=
-                workspaceId) {
-          return;
-        }
-        final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-        if (buffer == null ||
-            notesSearchDigest(buffer.text) != match.digest ||
-            match.endOffset > buffer.text.length) {
-          unavailable();
-          return;
-        }
-        ref
-            .read(notesMatchNavigationProvider.notifier)
-            .navigate(
-              buffer.remoteNote?.localId ?? buffer.filePath ?? buffer.id,
-              match.startOffset,
-              match.endOffset,
-              match.digest,
-              accountId: buffer.remoteNote?.accountId,
-            );
-      case NoteSearchResult(:final accountId, :final hit, :final recovery):
-        final repo = await ref.read(nextcloudNotesRepositoryProvider.future);
-        final note = repo.noteById(hit.localId);
-        if (!context.mounted ||
-            !currentRequest() ||
-            ref
-                    .read(workspaceControllerProvider)
-                    .workspace
-                    ?.nextcloudAccountId !=
-                accountId ||
-            note?.accountId != accountId ||
-            isNotesRecovery(note!) != recovery) {
-          unavailable();
-          return;
-        }
-        if (recovery) {
-          session.close(restoreFocus: false);
-          await showNotesRecovery(context, ref, note);
-          return;
-        }
-        if (!await controller.openNextcloudNote(
-              hit.localId,
-              acceptNavigation: currentRequest,
-            ) ||
-            !context.mounted ||
-            !currentRequest()) {
-          return;
-        }
-        final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-        if (buffer?.remoteNote?.accountId != accountId ||
-            buffer?.remoteNote?.localId != hit.localId ||
-            notesSearchDigest(buffer!.text) != hit.digest) {
-          unavailable();
-          return;
-        }
-        if (source) {
-          controller.updateActiveEditorMode(DocumentViewModePreference.source);
-          await ref
-              .read(appSettingsControllerProvider.notifier)
-              .setDocumentViewMode(DocumentViewModePreference.source);
-          if (!context.mounted || !currentRequest()) return;
-        }
-        if (hit.start != null && hit.end != null) {
-          ref
-              .read(notesMatchNavigationProvider.notifier)
-              .navigate(
-                hit.localId,
-                hit.start!,
-                hit.end!,
-                hit.digest,
-                accountId: accountId,
-              );
-        }
-    }
-  } finally {
-    guard.busy = false;
-  }
-}
-
-Future<void> openRecentResource(
-  BuildContext context,
-  WidgetRef ref,
-  RecentWorkspace resource,
-) async {
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  final origin = ref.read(appRouterProvider).routeInformationProvider.value.uri;
-  final search = ref.read(searchSessionProvider);
-  bool currentRequest() =>
-      context.mounted &&
-      ref.read(appRouterProvider).routeInformationProvider.value.uri ==
-          origin &&
-      ref.read(searchSessionProvider).requestRevision ==
-          search.requestRevision &&
-      (!search.active ||
-          ref.read(searchSessionProvider).active &&
-              ref.read(searchSessionProvider).focusRequest ==
-                  search.focusRequest &&
-              ref.read(searchSessionProvider).category == search.category &&
-              ref.read(searchSessionProvider).query == search.query);
-  final current = ref.read(workspaceControllerProvider).workspace;
-  bool opened = false;
-  if (resource.accountId != null) {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    if (!context.mounted || !currentRequest()) return;
-    final account = repository.accounts
-        .where((a) => a.id == resource.accountId)
-        .firstOrNull;
-    final note = resource.localId == null
-        ? null
-        : repository.noteById(resource.localId!);
-    if (account == null ||
-        resource.isDocument &&
-            (note?.accountId != resource.accountId ||
-                isNotesRecovery(note!) ||
-                repository.isCreationCandidateBinding(note.localId))) {
-      BusyMarkToastOverlay.show(
-        context,
-        message: context.l10n.searchResourceUnavailable,
-      );
-      return;
-    }
-    if (current?.nextcloudAccountId != resource.accountId) {
-      if (!await confirmSafeToContinue(context, ref) ||
-          !context.mounted ||
-          !currentRequest()) {
-        return;
-      }
-      if (!await controller.openNextcloudWorkspace(
-        resource.accountId!,
-        acceptNavigation: currentRequest,
-      )) {
-        return;
-      }
-    }
-    opened =
-        resource.localId == null ||
-        await controller.openNextcloudNote(
-          resource.localId!,
-          acceptNavigation: currentRequest,
-        );
-  } else {
-    if (!await FileSystemEntity.isFile(resource.path) &&
-        !await Directory(resource.path).exists()) {
-      if (context.mounted) {
-        BusyMarkToastOverlay.show(
-          context,
-          message: context.l10n.searchResourceUnavailable,
-        );
-      }
-      return;
-    }
-    if (!context.mounted || !currentRequest()) return;
-    final sameOwner =
-        current != null &&
-        (resource.ownerRoot != null
-            ? p.equals(current.rootPath, resource.ownerRoot!)
-            : current.files.any(
-                (f) => p.equals(f.absolutePath, resource.path),
-              ));
-    if (resource.isDocument && sameOwner) {
-      opened = await controller.openActiveFile(
-        resource.path,
-        acceptNavigation: currentRequest,
-      );
-    } else {
-      if (!await confirmSafeToContinue(context, ref) ||
-          !context.mounted ||
-          !currentRequest()) {
-        return;
-      }
-      await controller.openPath(
-        resource.ownerRoot ?? resource.path,
-        acceptNavigation: currentRequest,
-      );
-      if (!context.mounted || !currentRequest()) return;
-      final workspace = ref.read(workspaceControllerProvider).workspace;
-      if (workspace == null) return;
-      if (resource.ownerRoot != null &&
-          workspace.writersideProject == null &&
-          workspace.writersideModule == null) {
-        BusyMarkToastOverlay.show(
-          context,
-          message: context.l10n.searchResourceUnavailable,
-        );
-        return;
-      }
-      opened =
-          resource.ownerRoot == null ||
-          await controller.openActiveFile(
-            resource.path,
-            acceptNavigation: currentRequest,
-          );
-    }
-  }
-  if (opened && context.mounted) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .recordRecent(
-          RecentWorkspace(
-            path: resource.path,
-            kind: resource.kind,
-            accountId: resource.accountId,
-            accountLabel: resource.accountLabel,
-            localId: resource.localId,
-            title: resource.title,
-            ownerRoot: resource.ownerRoot,
-            document: resource.isDocument,
-            lastOpenedAt: DateTime.now(),
-          ),
-        );
-    if (!context.mounted || !currentRequest()) return;
-    ref.read(searchSessionProvider.notifier).close(restoreFocus: false);
-    context.go('/workspace');
-  }
-}
-
-enum _RecentNavigationAction { openInFiles, copyPath, removeFromRecent }
-
-List<PopupMenuEntry<_RecentNavigationAction>> _recentMenuItems(
-  BuildContext context,
-  RecentWorkspace resource,
+  RecentResource resource,
 ) => [
   if (resource.accountId == null) ...[
     BusyMarkPopupMenuItem(
-      value: _RecentNavigationAction.openInFiles,
+      value: RecentNavigationAction.openInFiles,
       label: context.l10n.openInFiles,
       icon: BusyMarkGlyphs.folderOpen,
     ),
     BusyMarkPopupMenuItem(
-      value: _RecentNavigationAction.copyPath,
+      value: RecentNavigationAction.copyPath,
       label: context.l10n.copyPath,
       icon: BusyMarkGlyphs.copy,
     ),
   ],
   BusyMarkPopupMenuItem(
-    value: _RecentNavigationAction.removeFromRecent,
+    value: RecentNavigationAction.removeFromRecent,
     label: context.l10n.removeFromRecent,
     icon: BusyMarkGlyphs.clear,
   ),
 ];
-Future<void> _recentAction(
-  BuildContext context,
-  WidgetRef ref,
-  RecentWorkspace resource,
-  _RecentNavigationAction action,
-) async {
-  switch (action) {
-    case _RecentNavigationAction.removeFromRecent:
-      await ref
-          .read(appSettingsControllerProvider.notifier)
-          .removeRecentWorkspace(resource.identity);
-    case _RecentNavigationAction.copyPath:
-      await Clipboard.setData(ClipboardData(text: resource.path));
-    case _RecentNavigationAction.openInFiles:
-      final type = await FileSystemEntity.type(resource.path);
-      if (!context.mounted) return;
-      if (type == FileSystemEntityType.notFound) {
-        BusyMarkToastOverlay.show(
-          context,
-          message: context.l10n.searchResourceUnavailable,
-        );
-        return;
-      }
-      await launchUrl(
-        Uri.directory(
-          type == FileSystemEntityType.directory
-              ? resource.path
-              : p.dirname(resource.path),
-        ),
-      );
-  }
-}

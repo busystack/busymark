@@ -10,13 +10,50 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
-    'Recent retains old timestamps and twelve entries in each identity-qualified section',
+    'stored mixed Recent normalizes timestamps and identities with one limit',
+    () {
+      final entries = [
+        for (var i = 0; i < 20; i++)
+          RecentResource(
+            path: i.isEven ? '/docs/$i.md' : '/work/$i',
+            kind: i.isEven ? 'markdown' : 'markdownFolder',
+            document: i.isEven,
+            lastOpenedAt: DateTime.utc(2026, 1, i + 1),
+          ),
+        RecentResource(
+          path: '/docs/18.md',
+          kind: 'markdown',
+          document: true,
+          lastOpenedAt: DateTime.utc(2024),
+        ),
+      ];
+      final settings = AppSettings.fromJson({
+        'recentWorkspaces': entries.reversed.map((r) => r.toJson()).toList(),
+      });
+      expect(settings.recentWorkspaces.map((r) => r.path), [
+        for (var i = 19; i >= 8; i--) i.isEven ? '/docs/$i.md' : '/work/$i',
+      ]);
+      expect(
+        settings.recentWorkspaces[1].lastOpenedAt,
+        DateTime.utc(2026, 1, 19),
+      );
+      expect(settings.toJson().containsKey('recentWorkspaces'), isTrue);
+      expect(
+        AppSettings.fromJson(
+          settings.toJson(),
+        ).recentWorkspaces.map((r) => r.identity),
+        settings.recentWorkspaces.map((r) => r.identity),
+      );
+    },
+  );
+  test(
+    'Recent retains old timestamps and twelve mixed resources in timestamp order',
     () async {
       final oldTime = DateTime.utc(2024, 1, 2);
       final store = _MemorySettingsStore()
         ..value = {
           'recentWorkspaces': [
-            RecentWorkspace(
+            RecentResource(
               path: '/old/file.md',
               kind: 'singleMarkdown',
               lastOpenedAt: oldTime,
@@ -39,26 +76,33 @@ void main() {
       );
       for (var i = 0; i < 13; i++) {
         await controller.recordRecent(
-          RecentWorkspace(
+          RecentResource(
             path: '/docs/$i.md',
             kind: 'markdown',
             document: true,
-            lastOpenedAt: DateTime.utc(2026, 1, i + 1),
+            lastOpenedAt: DateTime.utc(2026, 1, i * 2 + 1),
           ),
         );
-        await controller.recordOpenedWorkspace(
-          path: '/work/$i',
-          kind: 'markdownFolder',
+        await controller.recordRecent(
+          RecentResource(
+            path: '/work/$i',
+            kind: 'markdownFolder',
+            lastOpenedAt: DateTime.utc(2026, 1, i * 2 + 2),
+          ),
         );
       }
       var recent = container
           .read(appSettingsControllerProvider)
           .recentWorkspaces;
-      expect(recent.where((r) => r.isDocument), hasLength(12));
-      expect(recent.where((r) => !r.isDocument), hasLength(12));
+      expect(recent, hasLength(12));
+      expect(recent.map((r) => r.path), [
+        for (var i = 12; i >= 7; i--) ...['/work/$i', '/docs/$i.md'],
+      ]);
+      expect(recent.where((r) => r.isDocument), hasLength(6));
+      expect(recent.where((r) => !r.isDocument), hasLength(6));
       for (final account in ['account-a', 'account-b', 'account-a']) {
         await controller.recordRecent(
-          RecentWorkspace(
+          RecentResource(
             path: '',
             kind: 'nextcloudNote',
             document: true,
@@ -659,7 +703,7 @@ void main() {
             .copyWith(
               wordWrap: false,
               recentWorkspaces: [
-                RecentWorkspace(
+                RecentResource(
                   path: '/tmp/old.md',
                   kind: WorkspaceKindForTest.singleMarkdown,
                   lastOpenedAt: DateTime(2026),
@@ -695,12 +739,12 @@ void main() {
         ..value = AppSettings.defaults()
             .copyWith(
               recentWorkspaces: [
-                RecentWorkspace(
+                RecentResource(
                   path: '/tmp/docs',
                   kind: WorkspaceKindForTest.singleMarkdown,
                   lastOpenedAt: DateTime(2026, 1, 2),
                 ),
-                RecentWorkspace(
+                RecentResource(
                   path: '/tmp/other',
                   kind: WorkspaceKindForTest.singleMarkdown,
                   lastOpenedAt: DateTime(2026, 1, 1),

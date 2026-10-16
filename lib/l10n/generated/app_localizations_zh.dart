@@ -556,15 +556,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keyboardShortcuts => '键盘快捷键';
 
   @override
-  String get commandPalette => '命令面板';
-
-  @override
-  String get commandPaletteHint => '输入命令';
-
-  @override
-  String get commandPaletteEmpty => '没有匹配的命令';
-
-  @override
   String get commandUnavailableInContext => '当前编辑器上下文中无法使用此命令';
 
   @override
@@ -4240,9 +4231,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
 
   @override
-  String get localHistorySearchHint => '搜索本地历史记录';
-
-  @override
   String get localHistorySelectedRevision => '已选择的修订';
 
   @override
@@ -5167,9 +5155,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
 
   @override
-  String get searchTextCategory => '文本';
-
-  @override
   String get searchDocumentsCategory => '文档';
 
   @override
@@ -5182,12 +5167,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchCurrentWorkspace => '当前工作区';
 
   @override
-  String get recentDocuments => '最近的文档';
-
-  @override
-  String get recentWorkspaces => '最近的工作区';
-
-  @override
   String get browseNotes => '浏览笔记';
 
   @override
@@ -5195,9 +5174,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => '搜索文档';
-
-  @override
-  String get searchWorkspaceCommand => '搜索工作区文本';
 
   @override
   String get searchTopicsCommand => '搜索主题';
@@ -5215,6 +5191,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notesSync => '同步笔记';
+
+  @override
+  String get searchInFile => '在文件中搜索';
+
+  @override
+  String get searchInWorkspace => '在工作区中搜索';
+
+  @override
+  String get searchCategory => '搜索类别';
+
+  @override
+  String get clearHistorySearchScope => '搜索文档历史记录';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -5767,15 +5755,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get keyboardShortcuts => '键盘快捷键';
 
   @override
-  String get commandPalette => '命令面板';
-
-  @override
-  String get commandPaletteHint => '输入命令';
-
-  @override
-  String get commandPaletteEmpty => '没有匹配的命令';
-
-  @override
   String get commandUnavailableInContext => '当前编辑器上下文中无法使用此命令';
 
   @override
@@ -9451,9 +9430,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
 
   @override
-  String get localHistorySearchHint => '搜索本地历史记录';
-
-  @override
   String get localHistorySelectedRevision => '已选择的修订';
 
   @override
@@ -10378,9 +10354,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
 
   @override
-  String get searchTextCategory => '文本';
-
-  @override
   String get searchDocumentsCategory => '文档';
 
   @override
@@ -10393,12 +10366,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get searchCurrentWorkspace => '当前工作区';
 
   @override
-  String get recentDocuments => '最近的文档';
-
-  @override
-  String get recentWorkspaces => '最近的工作区';
-
-  @override
   String get browseNotes => '浏览笔记';
 
   @override
@@ -10406,9 +10373,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get searchDocumentsCommand => '搜索文档';
-
-  @override
-  String get searchWorkspaceCommand => '搜索工作区文本';
 
   @override
   String get searchTopicsCommand => '搜索主题';
@@ -10426,4 +10390,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get notesSync => '同步笔记';
+
+  @override
+  String get searchInFile => '在文件中搜索';
+
+  @override
+  String get searchInWorkspace => '在工作区中搜索';
+
+  @override
+  String get searchCategory => '搜索类别';
+
+  @override
+  String get clearHistorySearchScope => '搜索文档历史记录';
 }

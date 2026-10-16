@@ -423,18 +423,6 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "commandPalette": "Commandopalet",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "Typ een opdracht",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "Geen overeenkomende opdrachten",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "Niet beschikbaar in de huidige editorcontext",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -4889,7 +4877,6 @@
   "localHistoryNoDocuments": "Er zijn nog geen documenten met Lokale Geschiedenis.",
   "localHistoryNoRevisions": "Dit document heeft geen revisies van de Lokale Geschiedenis.",
   "localHistoryNoMatches": "Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.",
-  "localHistorySearchHint": "Lokale geschiedenis doorzoeken",
   "localHistorySelectedRevision": "Geselecteerde revisie",
   "localHistoryCurrentEditor": "Huidige inhoud van de editor",
   "localHistoryCurrentDisk": "Huidige inhoud op schijf",
@@ -5150,20 +5137,20 @@
   "wsAdmonitionsAndQuotes": "Opmerkingen en citaten",
   "wsSemanticText": "Semantische tekst",
   "wsPropertiesUnavailable": "Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.",
-  "searchTextCategory": "Tekst",
   "searchDocumentsCategory": "Documenten",
   "searchTopicsCategory": "Onderwerpen",
   "searchCurrentDocument": "Huidig document",
   "searchCurrentWorkspace": "Huidige werkruimte",
-  "recentDocuments": "Recente documenten",
-  "recentWorkspaces": "Recente werkruimten",
   "browseNotes": "Notities bekijken",
   "searchActionsCommand": "Acties zoeken",
   "searchDocumentsCommand": "Documenten zoeken",
-  "searchWorkspaceCommand": "Werkruimtetekst zoeken",
   "searchTopicsCommand": "Onderwerpen zoeken",
   "searchRecentCommand": "Recente items zoeken",
   "searchQueryHint": "Zoeken in {category}…",
   "searchResourceUnavailable": "Deze bron is niet beschikbaar.",
-  "notesSync": "Notities synchroniseren"
+  "notesSync": "Notities synchroniseren",
+  "searchInFile": "Zoeken in bestand",
+  "searchInWorkspace": "Zoeken in werkruimte",
+  "searchCategory": "Zoekcategorie",
+  "clearHistorySearchScope": "Zoeken in documentgeschiedenis"
 }

@@ -1189,24 +1189,6 @@ abstract class AppLocalizations {
   /// **'Keyboard Shortcuts'**
   String get keyboardShortcuts;
 
-  /// Title and command label for the searchable command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'Command Palette'**
-  String get commandPalette;
-
-  /// Search hint in the command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'Type a command'**
-  String get commandPaletteHint;
-
-  /// Empty state in the command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'No matching commands'**
-  String get commandPaletteEmpty;
-
   /// Reason shown for a disabled contextual command.
   ///
   /// In en, this message translates to:
@@ -7518,12 +7500,6 @@ abstract class AppLocalizations {
   /// **'No Local History revisions match this search.'**
   String get localHistoryNoMatches;
 
-  /// No description provided for @localHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search local history'**
-  String get localHistorySearchHint;
-
   /// No description provided for @localHistorySelectedRevision.
   ///
   /// In en, this message translates to:
@@ -9252,12 +9228,6 @@ abstract class AppLocalizations {
   /// **'The inspected element is unavailable. Inspect an element to continue.'**
   String get wsPropertiesUnavailable;
 
-  /// No description provided for @searchTextCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Text'**
-  String get searchTextCategory;
-
   /// No description provided for @searchDocumentsCategory.
   ///
   /// In en, this message translates to:
@@ -9282,18 +9252,6 @@ abstract class AppLocalizations {
   /// **'Current workspace'**
   String get searchCurrentWorkspace;
 
-  /// No description provided for @recentDocuments.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent documents'**
-  String get recentDocuments;
-
-  /// No description provided for @recentWorkspaces.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent workspaces'**
-  String get recentWorkspaces;
-
   /// No description provided for @browseNotes.
   ///
   /// In en, this message translates to:
@@ -9311,12 +9269,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search Documents'**
   String get searchDocumentsCommand;
-
-  /// No description provided for @searchWorkspaceCommand.
-  ///
-  /// In en, this message translates to:
-  /// **'Search workspace text'**
-  String get searchWorkspaceCommand;
 
   /// No description provided for @searchTopicsCommand.
   ///
@@ -9347,6 +9299,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync notes'**
   String get notesSync;
+
+  /// No description provided for @searchInFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in File'**
+  String get searchInFile;
+
+  /// No description provided for @searchInWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Workspace'**
+  String get searchInWorkspace;
+
+  /// No description provided for @searchCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Search category'**
+  String get searchCategory;
+
+  /// No description provided for @clearHistorySearchScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Search history across documents'**
+  String get clearHistorySearchScope;
 }
 
 class _AppLocalizationsDelegate

@@ -562,15 +562,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get keyboardShortcuts => '키보드 단축키';
 
   @override
-  String get commandPalette => '명령 팔레트';
-
-  @override
-  String get commandPaletteHint => '명령을 입력하세요';
-
-  @override
-  String get commandPaletteEmpty => '일치하는 명령이 없습니다.';
-
-  @override
   String get commandUnavailableInContext => '현재 편집기 컨텍스트에서는 사용할 수 없습니다.';
 
   @override
@@ -4308,9 +4299,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get localHistoryNoMatches => '이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.';
 
   @override
-  String get localHistorySearchHint => '로컬 기록 검색';
-
-  @override
   String get localHistorySelectedRevision => '선택된 수정';
 
   @override
@@ -5246,9 +5234,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.';
 
   @override
-  String get searchTextCategory => '텍스트';
-
-  @override
   String get searchDocumentsCategory => '문서';
 
   @override
@@ -5261,12 +5246,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get searchCurrentWorkspace => '현재 작업 공간';
 
   @override
-  String get recentDocuments => '최근 문서';
-
-  @override
-  String get recentWorkspaces => '최근 작업 공간';
-
-  @override
   String get browseNotes => '노트 찾아보기';
 
   @override
@@ -5274,9 +5253,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => '문서 검색';
-
-  @override
-  String get searchWorkspaceCommand => '작업 공간 텍스트 검색';
 
   @override
   String get searchTopicsCommand => '주제 검색';
@@ -5294,4 +5270,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notesSync => '노트 동기화';
+
+  @override
+  String get searchInFile => '파일에서 검색';
+
+  @override
+  String get searchInWorkspace => '작업 공간에서 검색';
+
+  @override
+  String get searchCategory => '검색 범주';
+
+  @override
+  String get clearHistorySearchScope => '문서 기록 전체 검색';
 }

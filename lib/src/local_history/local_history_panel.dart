@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
-import '../app/busymark_search_field.dart';
+import '../search/search_session.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/localization.dart';
 import '../workspace/workspace_controller.dart';
@@ -15,33 +15,23 @@ import 'local_history_controller.dart';
 import 'local_history_models.dart';
 
 class LocalHistoryPanel extends ConsumerStatefulWidget {
-  const LocalHistoryPanel({this.focusSearchRequest = 0, super.key});
-
-  final int focusSearchRequest;
+  const LocalHistoryPanel({super.key});
 
   @override
   ConsumerState<LocalHistoryPanel> createState() => _LocalHistoryPanelState();
 }
 
 class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
-  final _searchController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _selectActive());
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _selectActive({bool preserveLookup = true}) async {
     final history = ref.read(localHistoryControllerProvider);
     if (preserveLookup &&
-        (history.findingDocuments || history.inspectingRetainedDocument)) {
+        (history.browsingDocuments || history.inspectingRetainedDocument)) {
       return;
     }
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
@@ -58,12 +48,6 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(localHistoryControllerProvider);
-    if (_searchController.text != state.searchQuery) {
-      _searchController.value = TextEditingValue(
-        text: state.searchQuery,
-        selection: TextSelection.collapsed(offset: state.searchQuery.length),
-      );
-    }
     final controller = ref.read(localHistoryControllerProvider.notifier);
     final workspaceState = ref.watch(workspaceControllerProvider);
     final activeBuffer = workspaceState.activeBuffer;
@@ -80,7 +64,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
         if (previous == next) return;
         if (next.bufferId == null) {
           final history = ref.read(localHistoryControllerProvider);
-          if (!history.findingDocuments &&
+          if (!history.browsingDocuments &&
               !history.inspectingRetainedDocument) {
             controller.clearDocumentScope();
           }
@@ -92,26 +76,8 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
         }
       },
     );
-    ref.listen<String>(
-      localHistoryControllerProvider.select((value) => value.searchQuery),
-      (previous, next) {
-        if (_searchController.text == next) return;
-        _searchController.value = TextEditingValue(
-          text: next,
-          selection: TextSelection.collapsed(offset: next.length),
-        );
-      },
-    );
-    final documents = [...state.snapshot.documents]
+    final visibleDocuments = [...state.snapshot.documents]
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    final visibleDocuments =
-        state.findingDocuments && state.searchQuery.isNotEmpty
-        ? documents
-              .where(
-                (document) => state.documentSearchMatches.contains(document.id),
-              )
-              .toList(growable: false)
-        : documents;
     final selected = state.selectedDocument;
     final activeHistoryDocumentId = activeBuffer == null
         ? null
@@ -128,17 +94,15 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
         state.inspectingRetainedDocument || selectedMatchesActive;
     final visibleRevisions = selectedMatchesVisibleScope
         ? state.selectedRevisions
-              .where(state.revisionVisible)
-              .toList(growable: false)
         : const <LocalHistoryRevisionSummary>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (state.findingDocuments || state.inspectingRetainedDocument)
+        if (state.browsingDocuments || state.inspectingRetainedDocument)
           _LocalHistoryHeader(
             selectedDocument: selected,
-            findingDocuments: state.findingDocuments,
+            browsingDocuments: state.browsingDocuments,
             inspectingRetainedDocument: state.inspectingRetainedDocument,
             onBack: () => unawaited(_selectActive(preserveLookup: false)),
           ),
@@ -150,13 +114,13 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
           child: Row(
             textDirection: TextDirection.ltr,
             children: [
-              Expanded(
-                child: BusyMarkSearchField(
-                  controller: _searchController,
-                  focusRequest: widget.focusSearchRequest,
-                  hintText: context.l10n.localHistorySearchHint,
-                  onChanged: (value) => unawaited(controller.search(value)),
-                ),
+              const Spacer(),
+              BusyMarkCompactIconButton(
+                tooltip: context.l10n.findLocalHistoryEllipsis,
+                icon: BusyMarkGlyphs.search,
+                onPressed: () => ref
+                    .read(searchSessionProvider.notifier)
+                    .openHistory(documentId: selected?.id),
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
               BusyMarkHeaderPopupMenuButton<_HistoryAction>(
@@ -201,7 +165,9 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
                     case _HistoryAction.refresh:
                       unawaited(controller.refresh());
                     case _HistoryAction.find:
-                      controller.beginDocumentSearch();
+                      ref
+                          .read(searchSessionProvider.notifier)
+                          .openHistory(documentId: selected?.id);
                     case _HistoryAction.clearDocument:
                       final documentId = selected?.id;
                       if (documentId != null) {
@@ -233,10 +199,10 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
             ),
           ),
         Expanded(
-          child: state.findingDocuments
+          child: state.browsingDocuments
               ? visibleDocuments.isEmpty
                     ? _HistoryEmpty(
-                        text: documents.isEmpty
+                        text: visibleDocuments.isEmpty
                             ? context.l10n.localHistoryNoDocuments
                             : context.l10n.localHistoryNoMatches,
                       )
@@ -274,11 +240,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
               : activeBuffer == null && !state.inspectingRetainedDocument
               ? _HistoryEmpty(text: context.l10n.localHistoryNoDocuments)
               : visibleRevisions.isEmpty
-              ? _HistoryEmpty(
-                  text: state.searchQuery.isEmpty
-                      ? context.l10n.localHistoryNoRevisions
-                      : context.l10n.localHistoryNoMatches,
-                )
+              ? _HistoryEmpty(text: context.l10n.localHistoryNoRevisions)
               : ListView.builder(
                   key: ValueKey(
                     'local-history-revisions-${selected?.id ?? 'none'}',
@@ -397,13 +359,13 @@ enum _HistoryAction { refresh, find, clearDocument, clearAll }
 class _LocalHistoryHeader extends StatelessWidget {
   const _LocalHistoryHeader({
     required this.selectedDocument,
-    required this.findingDocuments,
+    required this.browsingDocuments,
     required this.inspectingRetainedDocument,
     required this.onBack,
   });
 
   final LocalHistoryDocument? selectedDocument;
-  final bool findingDocuments;
+  final bool browsingDocuments;
   final bool inspectingRetainedDocument;
   final VoidCallback onBack;
 
@@ -412,7 +374,7 @@ class _LocalHistoryHeader extends StatelessWidget {
     final selectedPath =
         selectedDocument?.currentPath ??
         selectedDocument?.historicalPaths.lastOrNull;
-    final title = findingDocuments
+    final title = browsingDocuments
         ? context.l10n.findLocalHistoryEllipsis
         : selectedDocument?.displayName ?? context.l10n.localHistoryNoDocuments;
     final path = inspectingRetainedDocument ? selectedPath : null;

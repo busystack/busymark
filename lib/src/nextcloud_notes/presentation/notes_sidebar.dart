@@ -372,10 +372,9 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
             onPressed: () => ref
                 .read(searchSessionProvider.notifier)
                 .open(
-                  category: SearchCategory.text,
-                  location: _navigation.destination == NotesDestination.recovery
-                      ? SearchLocation.recovery
-                      : SearchLocation.workspace,
+                  category: SearchCategory.workspace,
+                  recovery:
+                      _navigation.destination == NotesDestination.recovery,
                 ),
           ),
         ),

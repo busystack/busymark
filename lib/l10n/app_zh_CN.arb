@@ -420,18 +420,6 @@
     "description": "Insert button label."
   },
   "keyboardShortcuts": "键盘快捷键",
-  "commandPalette": "命令面板",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "输入命令",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "没有匹配的命令",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "当前编辑器上下文中无法使用此命令",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -4889,7 +4877,6 @@
   "localHistoryNoDocuments": "尚无文档具有本地历史。",
   "localHistoryNoRevisions": "此文档没有本地历史修订。",
   "localHistoryNoMatches": "没有本地历史修订与此搜索匹配。",
-  "localHistorySearchHint": "搜索本地历史记录",
   "localHistorySelectedRevision": "已选择的修订",
   "localHistoryCurrentEditor": "当前编辑器内容",
   "localHistoryCurrentDisk": "磁盘上的当前内容",
@@ -5150,20 +5137,20 @@
   "wsAdmonitionsAndQuotes": "提示和引用",
   "wsSemanticText": "语义文本",
   "wsPropertiesUnavailable": "所检查的元素不可用。请检查一个元素以继续。",
-  "searchTextCategory": "文本",
   "searchDocumentsCategory": "文档",
   "searchTopicsCategory": "主题",
   "searchCurrentDocument": "当前文档",
   "searchCurrentWorkspace": "当前工作区",
-  "recentDocuments": "最近的文档",
-  "recentWorkspaces": "最近的工作区",
   "browseNotes": "浏览笔记",
   "searchActionsCommand": "搜索操作",
   "searchDocumentsCommand": "搜索文档",
-  "searchWorkspaceCommand": "搜索工作区文本",
   "searchTopicsCommand": "搜索主题",
   "searchRecentCommand": "搜索最近项目",
   "searchQueryHint": "搜索{category}…",
   "searchResourceUnavailable": "此资源不可用。",
-  "notesSync": "同步笔记"
+  "notesSync": "同步笔记",
+  "searchInFile": "在文件中搜索",
+  "searchInWorkspace": "在工作区中搜索",
+  "searchCategory": "搜索类别",
+  "clearHistorySearchScope": "搜索文档历史记录"
 }

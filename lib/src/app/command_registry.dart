@@ -205,13 +205,13 @@ class BusyMarkCommandRegistry {
         BusyMarkCommandIds.elementProperties,
         BusyMarkCommandIds.references,
         BusyMarkCommandIds.sidebarOutline,
-        BusyMarkCommandIds.localHistory,
-        BusyMarkCommandIds.findLocalHistory,
       }.contains(command.id);
 
   bool requiresWorkspaceTarget(BusyMarkCommand command) =>
       command.scope == BusyMarkCommandScope.sidebar ||
       const {
+        BusyMarkCommandIds.localHistory,
+        BusyMarkCommandIds.findLocalHistory,
         BusyMarkCommandIds.syncNotes,
         BusyMarkCommandIds.exportNotes,
         BusyMarkCommandIds.importNotesFolder,
@@ -429,7 +429,7 @@ abstract final class BusyMarkCommandCatalog {
         ),
       command(
         id: BusyMarkCommandIds.searchWorkspace,
-        label: (context) => context.l10n.searchWorkspaceCommand,
+        label: (context) => context.l10n.searchInWorkspace,
         category: (c) => c.l10n.search,
         scope: BusyMarkCommandScope.application,
         shortcut: const BusyMarkShortcutDefinition(
@@ -638,7 +638,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.export => context.l10n.export,
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
     BusyMarkAppShortcutAction.back => context.l10n.back,
-    BusyMarkAppShortcutAction.search => context.l10n.search,
+    BusyMarkAppShortcutAction.search => context.l10n.searchInFile,
     BusyMarkAppShortcutAction.quickOpen => context.l10n.searchDocumentsCommand,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.keyboardShortcuts,

@@ -591,15 +591,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get keyboardShortcuts => 'Tastaturkürzel';
 
   @override
-  String get commandPalette => 'Befehlspalette';
-
-  @override
-  String get commandPaletteHint => 'Befehl eingeben';
-
-  @override
-  String get commandPaletteEmpty => 'Keine passenden Befehle';
-
-  @override
   String get commandUnavailableInContext =>
       'Dieser Befehl ist im aktuellen Kontext nicht verfügbar.';
 
@@ -4480,9 +4471,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Keine Lokalen Historie Revisionen passen zu dieser Suche.';
 
   @override
-  String get localHistorySearchHint => 'Lokalen Verlauf durchsuchen';
-
-  @override
   String get localHistorySelectedRevision => 'Ausgewählte Revision';
 
   @override
@@ -5446,9 +5434,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Das betrachtete Element ist nicht verfügbar. Wählen Sie ein Element zum Fortfahren.';
 
   @override
-  String get searchTextCategory => 'Text';
-
-  @override
   String get searchDocumentsCategory => 'Dokumente';
 
   @override
@@ -5461,12 +5446,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get searchCurrentWorkspace => 'Aktueller Arbeitsbereich';
 
   @override
-  String get recentDocuments => 'Zuletzt geöffnete Dokumente';
-
-  @override
-  String get recentWorkspaces => 'Zuletzt geöffnete Arbeitsbereiche';
-
-  @override
   String get browseNotes => 'Notizen durchsuchen';
 
   @override
@@ -5474,9 +5453,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Dokumente suchen';
-
-  @override
-  String get searchWorkspaceCommand => 'Text im Arbeitsbereich suchen';
 
   @override
   String get searchTopicsCommand => 'Themen suchen';
@@ -5495,4 +5471,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notesSync => 'Notizen synchronisieren';
+
+  @override
+  String get searchInFile => 'In Datei suchen';
+
+  @override
+  String get searchInWorkspace => 'Im Arbeitsbereich suchen';
+
+  @override
+  String get searchCategory => 'Suchkategorie';
+
+  @override
+  String get clearHistorySearchScope => 'Verlauf aller Dokumente durchsuchen';
 }

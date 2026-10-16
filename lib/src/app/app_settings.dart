@@ -46,8 +46,8 @@ extension BusyMarkThemeModePreferenceX on BusyMarkThemeModePreference {
   }
 }
 
-class RecentWorkspace {
-  const RecentWorkspace({
+class RecentResource {
+  const RecentResource({
     required this.path,
     required this.kind,
     required this.lastOpenedAt,
@@ -59,8 +59,8 @@ class RecentWorkspace {
     this.document = false,
   });
 
-  factory RecentWorkspace.fromJson(Map<String, Object?> json) {
-    return RecentWorkspace(
+  factory RecentResource.fromJson(Map<String, Object?> json) {
+    return RecentResource(
       path: json['path']?.toString() ?? '',
       accountId: json['accountId'] as String?,
       accountLabel: json['accountLabel'] as String?,
@@ -96,6 +96,15 @@ class RecentWorkspace {
     'document': isDocument,
     'lastOpenedAt': lastOpenedAt.toIso8601String(),
   };
+}
+
+// Keep the existing JSON representation and key; resource type never affects
+// retention. Stable identities are deduplicated after timestamp ordering.
+List<RecentResource> _normalizeRecent(Iterable<RecentResource> resources) {
+  final ordered = resources.toList()
+    ..sort((a, b) => b.lastOpenedAt.compareTo(a.lastOpenedAt));
+  final seen = <String>{};
+  return ordered.where((r) => seen.add(r.identity)).take(12).toList();
 }
 
 class AppSettings {
@@ -305,12 +314,15 @@ class AppSettings {
           defaults.confirmCloseWithUnsavedChanges,
       lastOpenedPath: json['lastOpenedPath']?.toString(),
       recentWorkspaces: recent is List
-          ? recent
-                .whereType<Map>()
-                .map((item) => item.cast<String, Object?>())
-                .map(RecentWorkspace.fromJson)
-                .where((item) => item.path.isNotEmpty || item.accountId != null)
-                .toList()
+          ? _normalizeRecent(
+              recent
+                  .whereType<Map>()
+                  .map((item) => item.cast<String, Object?>())
+                  .map(RecentResource.fromJson)
+                  .where(
+                    (item) => item.path.isNotEmpty || item.accountId != null,
+                  ),
+            )
           : defaults.recentWorkspaces,
     );
   }
@@ -353,7 +365,7 @@ class AppSettings {
   final bool reopenPreviousWorkspaceOnStartup;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
-  final List<RecentWorkspace> recentWorkspaces;
+  final List<RecentResource> recentWorkspaces;
 
   ThemeMode get themeMode => themeModePreference.themeMode;
 
@@ -482,7 +494,7 @@ class AppSettings {
     bool? reopenPreviousWorkspaceOnStartup,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
-    List<RecentWorkspace>? recentWorkspaces,
+    List<RecentResource>? recentWorkspaces,
   }) {
     return AppSettings(
       themeModePreference: themeModePreference ?? this.themeModePreference,
@@ -547,7 +559,9 @@ class AppSettings {
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
-      recentWorkspaces: recentWorkspaces ?? this.recentWorkspaces,
+      recentWorkspaces: recentWorkspaces == null
+          ? this.recentWorkspaces
+          : _normalizeRecent(recentWorkspaces),
     );
   }
 }
@@ -969,7 +983,7 @@ class AppSettingsController extends Notifier<AppSettings> {
     String? title,
   }) {
     return recordRecent(
-      RecentWorkspace(
+      RecentResource(
         path: accountId == null ? p.normalize(p.absolute(path)) : '',
         kind: kind,
         accountId: accountId,
@@ -982,7 +996,7 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> recordRecent(
-    RecentWorkspace resource, {
+    RecentResource resource, {
     bool updateLastOpenedPath = false,
   }) => _mutate((settings) {
     final ordered = [
@@ -991,10 +1005,7 @@ class AppSettingsController extends Notifier<AppSettings> {
         (r) => r.identity != resource.identity,
       ),
     ];
-    var documents = 0, workspaces = 0;
-    final retained = ordered
-        .where((r) => r.isDocument ? ++documents <= 12 : ++workspaces <= 12)
-        .toList();
+    final retained = _normalizeRecent(ordered);
     return settings.copyWith(
       recentWorkspaces: retained,
       lastOpenedPath: updateLastOpenedPath
@@ -1035,7 +1046,7 @@ class AppSettingsController extends Notifier<AppSettings> {
             if (r.accountId != null &&
                 r.localId != null &&
                 titles[(r.accountId!, r.localId!)] != null)
-              RecentWorkspace(
+              RecentResource(
                 path: r.path,
                 kind: r.kind,
                 lastOpenedAt: r.lastOpenedAt,
@@ -1067,7 +1078,7 @@ class AppSettingsController extends Notifier<AppSettings> {
         for (final r in settings.recentWorkspaces)
           if (r.accountId == null &&
               (p.equals(r.path, from) || p.isWithin(from, r.path)))
-            RecentWorkspace(
+            RecentResource(
               path: p.equals(r.path, from)
                   ? to
                   : p.join(to, p.relative(r.path, from: from)),

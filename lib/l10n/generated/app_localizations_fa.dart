@@ -582,15 +582,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get keyboardShortcuts => 'میانبرهای صفحه‌کلید';
 
   @override
-  String get commandPalette => 'پالت فرمان';
-
-  @override
-  String get commandPaletteHint => 'یک فرمان وارد کنید';
-
-  @override
-  String get commandPaletteEmpty => 'هیچ فرمان منطبقی وجود ندارد';
-
-  @override
   String get commandUnavailableInContext =>
       'این فرمان در زمینهٔ فعلی در دسترس نیست.';
 
@@ -4485,9 +4476,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'هیچ نسخه‌ای از تاریخ محلی با این جستجو مطابقت ندارد.';
 
   @override
-  String get localHistorySearchHint => 'جستجو در تاریخچه محلی';
-
-  @override
   String get localHistorySelectedRevision => 'نسخه انتخاب شده';
 
   @override
@@ -5436,9 +5424,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.';
 
   @override
-  String get searchTextCategory => 'متن';
-
-  @override
   String get searchDocumentsCategory => 'سندها';
 
   @override
@@ -5451,12 +5436,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get searchCurrentWorkspace => 'فضای کاری کنونی';
 
   @override
-  String get recentDocuments => 'سندهای اخیر';
-
-  @override
-  String get recentWorkspaces => 'فضاهای کاری اخیر';
-
-  @override
   String get browseNotes => 'مرور یادداشت‌ها';
 
   @override
@@ -5464,9 +5443,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'جستجوی سندها';
-
-  @override
-  String get searchWorkspaceCommand => 'جستجوی متن فضای کاری';
 
   @override
   String get searchTopicsCommand => 'جستجوی موضوع‌ها';
@@ -5484,4 +5460,16 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get notesSync => 'همگام‌سازی یادداشت‌ها';
+
+  @override
+  String get searchInFile => 'جستجو در فایل';
+
+  @override
+  String get searchInWorkspace => 'جستجو در فضای کاری';
+
+  @override
+  String get searchCategory => 'دستهٔ جستجو';
+
+  @override
+  String get clearHistorySearchScope => 'جستجو در تاریخچهٔ سندها';
 }

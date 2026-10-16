@@ -583,15 +583,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get keyboardShortcuts => 'Klavye Kısayolları';
 
   @override
-  String get commandPalette => 'Komut Paleti';
-
-  @override
-  String get commandPaletteHint => 'Bir komut yazın';
-
-  @override
-  String get commandPaletteEmpty => 'Eşleşen komut yok';
-
-  @override
   String get commandUnavailableInContext =>
       'Mevcut düzenleyici bağlamında kullanılamıyor';
 
@@ -4442,9 +4433,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.';
 
   @override
-  String get localHistorySearchHint => 'Yerel geçmişte ara';
-
-  @override
   String get localHistorySelectedRevision => 'Seçilen revizyon';
 
   @override
@@ -5398,9 +5386,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
 
   @override
-  String get searchTextCategory => 'Metin';
-
-  @override
   String get searchDocumentsCategory => 'Belgeler';
 
   @override
@@ -5413,12 +5398,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchCurrentWorkspace => 'Geçerli çalışma alanı';
 
   @override
-  String get recentDocuments => 'Son belgeler';
-
-  @override
-  String get recentWorkspaces => 'Son çalışma alanları';
-
-  @override
   String get browseNotes => 'Notlara göz at';
 
   @override
@@ -5426,9 +5405,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Belgeleri ara';
-
-  @override
-  String get searchWorkspaceCommand => 'Çalışma alanında metin ara';
 
   @override
   String get searchTopicsCommand => 'Konuları ara';
@@ -5446,4 +5422,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notesSync => 'Notları eşitle';
+
+  @override
+  String get searchInFile => 'Dosyada Ara';
+
+  @override
+  String get searchInWorkspace => 'Çalışma Alanında Ara';
+
+  @override
+  String get searchCategory => 'Arama kategorisi';
+
+  @override
+  String get clearHistorySearchScope => 'Belgelerin geçmişinde ara';
 }

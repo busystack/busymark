@@ -1,3 +1,4 @@
+import '../../search/search_option_button.dart';
 import '../link_destination.dart';
 import '../wysiwyg/writerside_editing_adapter.dart';
 import '../../assets/document_media_context.dart';
@@ -3910,19 +3911,19 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                   icon: YaruIcons.pan_down,
                   onPressed: result.totalMatchCount == 0 ? null : widget.onNext,
                 ),
-                _SearchOptionButton(
+                SearchOptionButton(
                   label: 'Aa',
                   tooltip: context.l10n.sourceSearchCaseSensitive,
                   selected: result.options.caseSensitive,
                   onPressed: widget.onToggleCaseSensitive,
                 ),
-                _SearchOptionButton(
+                SearchOptionButton(
                   label: 'W',
                   tooltip: context.l10n.sourceSearchWholeWord,
                   selected: result.options.wholeWord,
                   onPressed: widget.onToggleWholeWord,
                 ),
-                _SearchOptionButton(
+                SearchOptionButton(
                   label: '.*',
                   tooltip: context.l10n.sourceSearchRegex,
                   selected: result.options.regex,
@@ -4010,46 +4011,6 @@ class _SearchPanelIconButton extends StatelessWidget {
       iconSize: 28,
       onPressed: onPressed,
       icon: Icon(icon, size: 14),
-    );
-  }
-}
-
-class _SearchOptionButton extends StatelessWidget {
-  const _SearchOptionButton({
-    required this.label,
-    required this.tooltip,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final String label;
-  final String tooltip;
-  final bool selected;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget optionLabel() => Builder(
-      builder: (context) => Text(
-        label,
-        textDirection: TextDirection.ltr,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: IconTheme.of(context).color,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-      ),
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 1),
-      child: YaruIconButton(
-        tooltip: tooltip,
-        iconSize: 28,
-        isSelected: selected,
-        onPressed: onPressed,
-        icon: optionLabel(),
-        selectedIcon: optionLabel(),
-      ),
     );
   }
 }

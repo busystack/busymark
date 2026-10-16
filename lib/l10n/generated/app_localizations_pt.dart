@@ -587,15 +587,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get keyboardShortcuts => 'Atalhos de teclado';
 
   @override
-  String get commandPalette => 'Paleta de comandos';
-
-  @override
-  String get commandPaletteHint => 'Introduza um comando';
-
-  @override
-  String get commandPaletteEmpty => 'Nenhum comando correspondente';
-
-  @override
   String get commandUnavailableInContext =>
       'Este comando não está disponível no contexto atual.';
 
@@ -4495,9 +4486,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get localHistoryNoMatches => 'Nenhuma revisão corresponde à pesquisa.';
 
   @override
-  String get localHistorySearchHint => 'Pesquisar no histórico local';
-
-  @override
   String get localHistorySelectedRevision => 'Revisão selecionada';
 
   @override
@@ -5463,9 +5451,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'O elemento inspecionado está indisponível. Inspecione um elemento para continuar.';
 
   @override
-  String get searchTextCategory => 'Texto';
-
-  @override
   String get searchDocumentsCategory => 'Documentos';
 
   @override
@@ -5478,12 +5463,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get searchCurrentWorkspace => 'Área de trabalho atual';
 
   @override
-  String get recentDocuments => 'Documentos recentes';
-
-  @override
-  String get recentWorkspaces => 'Áreas de trabalho recentes';
-
-  @override
   String get browseNotes => 'Explorar notas';
 
   @override
@@ -5491,9 +5470,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get searchDocumentsCommand => 'Pesquisar documentos';
-
-  @override
-  String get searchWorkspaceCommand => 'Pesquisar texto na área de trabalho';
 
   @override
   String get searchTopicsCommand => 'Pesquisar tópicos';
@@ -5511,6 +5487,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesSync => 'Sincronizar notas';
+
+  @override
+  String get searchInFile => 'Pesquisar no ficheiro';
+
+  @override
+  String get searchInWorkspace => 'Pesquisar no espaço de trabalho';
+
+  @override
+  String get searchCategory => 'Categoria de pesquisa';
+
+  @override
+  String get clearHistorySearchScope => 'Pesquisar no histórico de documentos';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -6092,15 +6080,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get keyboardShortcuts => 'Atalhos de teclado';
-
-  @override
-  String get commandPalette => 'Paleta de comandos';
-
-  @override
-  String get commandPaletteHint => 'Digite um comando';
-
-  @override
-  String get commandPaletteEmpty => 'Nenhum comando correspondente';
 
   @override
   String get commandUnavailableInContext =>
@@ -10002,9 +9981,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Nenhuma revisão no Histórico Local corresponde a esta pesquisa.';
 
   @override
-  String get localHistorySearchHint => 'Pesquisar no histórico local';
-
-  @override
   String get localHistorySelectedRevision => 'Revisão selecionada';
 
   @override
@@ -10968,9 +10944,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'O elemento inspecionado está indisponível. Inspecione um elemento para continuar.';
 
   @override
-  String get searchTextCategory => 'Texto';
-
-  @override
   String get searchDocumentsCategory => 'Documentos';
 
   @override
@@ -10983,12 +10956,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get searchCurrentWorkspace => 'Área de trabalho atual';
 
   @override
-  String get recentDocuments => 'Documentos recentes';
-
-  @override
-  String get recentWorkspaces => 'Áreas de trabalho recentes';
-
-  @override
   String get browseNotes => 'Explorar notas';
 
   @override
@@ -10996,9 +10963,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get searchDocumentsCommand => 'Pesquisar documentos';
-
-  @override
-  String get searchWorkspaceCommand => 'Pesquisar texto na área de trabalho';
 
   @override
   String get searchTopicsCommand => 'Pesquisar tópicos';
@@ -11016,4 +10980,16 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notesSync => 'Sincronizar notas';
+
+  @override
+  String get searchInFile => 'Pesquisar no arquivo';
+
+  @override
+  String get searchInWorkspace => 'Pesquisar no espaço de trabalho';
+
+  @override
+  String get searchCategory => 'Categoria de pesquisa';
+
+  @override
+  String get clearHistorySearchScope => 'Pesquisar no histórico de documentos';
 }
