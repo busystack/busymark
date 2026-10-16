@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Datum",
   "pdfTitlePageTitleRequired": "Voer een titel voor de titelpagina in.",
   "pdfTocSectionNote": "Begint op een aparte pagina en kan meerdere pagina’s beslaan.",
-  "sourceSearchZeroLengthUnsupported": "Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, $ of lookaheads die alleen een positie vinden).",
   "workspaceSearchIncomplete": "Slechts een deel van de resultaten wordt getoond. Toon meer of verfijn de zoekopdracht.",
   "workspaceSearchShowMore": "Meer resultaten tonen",
   "workspaceSearchSkippedFiles": "De zoekopdracht is onvolledig. Deze bestanden zijn groter dan 1 MiB of konden niet worden gelezen:",
@@ -1931,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Hoofdlettergevoelig",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Heel woord",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regex",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Vervangen door",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2125,10 +2112,6 @@
   "saveAs": "Opslaan als",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Ongeldige reguliere expressie",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Groot bestand: markeren en vouwen worden gepauzeerd",
   "@sourceLargeFileFeaturesPaused": {
@@ -5146,11 +5129,22 @@
   "searchDocumentsCommand": "Documenten zoeken",
   "searchTopicsCommand": "Onderwerpen zoeken",
   "searchRecentCommand": "Recente items zoeken",
-  "searchQueryHint": "Zoeken in {category}…",
   "searchResourceUnavailable": "Deze bron is niet beschikbaar.",
   "notesSync": "Notities synchroniseren",
-  "searchInFile": "Zoeken in bestand",
   "searchInWorkspace": "Zoeken in werkruimte",
   "searchCategory": "Zoekcategorie",
-  "clearHistorySearchScope": "Zoeken in documentgeschiedenis"
+  "clearHistorySearchScope": "Zoeken in documentgeschiedenis",
+  "searchInDocument": "Zoeken in document",
+  "searchDocumentHint": "Dit document doorzoeken…",
+  "searchWorkspaceHint": "Deze werkruimte doorzoeken…",
+  "searchOutlineHint": "Koppen zoeken…",
+  "searchHistoryHint": "Lokale geschiedenis doorzoeken…",
+  "searchEnterText": "Voer tekst in om te zoeken",
+  "searchAccountUnavailable": "Account niet beschikbaar",
+  "searchDocumentsHint": "Documenten zoeken…",
+  "searchTopicsHint": "Onderwerpen zoeken…",
+  "searchRecentHint": "Recente items zoeken…",
+  "searchActionsHint": "Acties zoeken…",
+  "searchRequiresNotesWorkspace": "Vereist een notitiewerkruimte",
+  "searchRecentEmpty": "Geen recente bronnen"
 }

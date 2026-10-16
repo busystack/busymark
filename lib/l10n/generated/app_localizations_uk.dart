@@ -1864,15 +1864,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sourceSearchNextMatch => 'Наступний збіг';
 
   @override
-  String get sourceSearchCaseSensitive => 'З урахуванням регістру';
-
-  @override
-  String get sourceSearchWholeWord => 'Ціле слово';
-
-  @override
-  String get sourceSearchRegex => 'Регулярний вираз';
-
-  @override
   String get sourceSearchReplacement => 'Замінити на';
 
   @override
@@ -1997,13 +1988,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get saveAs => 'Зберегти як';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Збіги регулярних виразів нульової довжини не підтримуються (наприклад, ^, \$ або перевірки вперед, що збігаються лише з позицією).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5482,18 +5466,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get searchRecentCommand => 'Пошук нещодавніх';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Пошук: $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Цей ресурс недоступний.';
 
   @override
   String get notesSync => 'Синхронізувати нотатки';
-
-  @override
-  String get searchInFile => 'Пошук у файлі';
 
   @override
   String get searchInWorkspace => 'Пошук у робочій області';
@@ -5503,4 +5479,43 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Пошук в історії документів';
+
+  @override
+  String get searchInDocument => 'Пошук у документі';
+
+  @override
+  String get searchDocumentHint => 'Пошук у цьому документі…';
+
+  @override
+  String get searchWorkspaceHint => 'Пошук у цьому робочому просторі…';
+
+  @override
+  String get searchOutlineHint => 'Пошук заголовків…';
+
+  @override
+  String get searchHistoryHint => 'Пошук у локальній історії…';
+
+  @override
+  String get searchEnterText => 'Введіть текст для пошуку';
+
+  @override
+  String get searchAccountUnavailable => 'Обліковий запис недоступний';
+
+  @override
+  String get searchDocumentsHint => 'Пошук документів…';
+
+  @override
+  String get searchTopicsHint => 'Пошук тем…';
+
+  @override
+  String get searchRecentHint => 'Пошук нещодавніх…';
+
+  @override
+  String get searchActionsHint => 'Пошук дій…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Потрібен робочий простір нотаток';
+
+  @override
+  String get searchRecentEmpty => 'Немає нещодавніх ресурсів';
 }

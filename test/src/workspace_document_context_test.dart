@@ -27,18 +27,19 @@ void main() {
           editorBlockId: 'live-b',
         ),
       ];
-      expect(filterDocumentOutline(headings, ''), same(headings));
-      final filtered = filterDocumentOutline(headings, 'TARGET');
-      expect(filtered.map((h) => h.id), [
-        'root',
-        'first',
-        'target',
-        'target-1',
-      ]);
-      expect(filtered.map((h) => h.level), [1, 2, 3, 2]);
-      expect(filtered[2], same(headings[2]));
-      expect(filtered.last.editorBlockId, 'live-b');
-      expect(filterDocumentOutline(headings, 'missing'), isEmpty);
+      expect(matchDocumentOutline(headings, ''), isEmpty);
+      final filtered = matchDocumentOutline(headings, 'TARGET');
+      expect(filtered.map((m) => m.heading.id), ['target', 'target-1']);
+      expect(filtered.map((m) => m.heading.level), [3, 2]);
+      expect(filtered.first.heading, same(headings[2]));
+      expect(filtered.last.heading.editorBlockId, 'live-b');
+      expect(filtered.first.ancestors.map((h) => h.id), ['root', 'first']);
+      expect(filtered.last.ancestors.map((h) => h.id), ['root']);
+      expect(
+        matchDocumentOutline(headings, 'target', maximumResults: 1),
+        hasLength(1),
+      );
+      expect(matchDocumentOutline(headings, 'missing'), isEmpty);
     },
   );
   DocumentBuffer untitled(String id) =>

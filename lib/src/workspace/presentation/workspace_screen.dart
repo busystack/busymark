@@ -95,6 +95,7 @@ import '../../git/presentation/git_file_status_colors.dart';
 import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
+import '../outline_navigation.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_section_editor.dart';
@@ -164,15 +165,6 @@ class _ProblemsPresentation extends Notifier<bool> {
   }
 }
 
-final _outlineNavigationTargetProvider =
-    NotifierProvider<
-      _OutlineNavigationTargetController,
-      _OutlineNavigationTarget?
-    >(_OutlineNavigationTargetController.new);
-final _outlineViewportTargetProvider =
-    NotifierProvider<_OutlineViewportTargetController, _OutlineViewportTarget?>(
-      _OutlineViewportTargetController.new,
-    );
 final _sourceNavigationTargetProvider =
     NotifierProvider<
       _SourceNavigationTargetController,
@@ -187,29 +179,6 @@ final _sidebarShortcutRequestProvider =
     NotifierProvider<_SidebarShortcutRequestController, _SidebarTab?>(
       _SidebarShortcutRequestController.new,
     );
-
-class _OutlineNavigationTargetController
-    extends Notifier<_OutlineNavigationTarget?> {
-  @override
-  _OutlineNavigationTarget? build() => null;
-
-  void set(_OutlineNavigationTarget? target) {
-    state = target;
-  }
-}
-
-class _OutlineViewportTargetController
-    extends Notifier<_OutlineViewportTarget?> {
-  @override
-  _OutlineViewportTarget? build() => null;
-
-  void set(_OutlineViewportTarget target) {
-    if (state?.sameLocationAs(target) ?? false) {
-      return;
-    }
-    state = target;
-  }
-}
 
 class _SourceNavigationTargetController
     extends Notifier<_SourceNavigationTarget?> {
@@ -241,51 +210,6 @@ class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
 
   void clear() {
     state = null;
-  }
-}
-
-class _OutlineNavigationTarget {
-  const _OutlineNavigationTarget({
-    required this.workspaceId,
-    required this.bufferId,
-    required this.filePath,
-    required this.headingId,
-    required this.line,
-    this.editorBlockId,
-  });
-
-  final String workspaceId;
-  final String bufferId;
-  final String? filePath;
-  final String headingId;
-  final int? line;
-  final String? editorBlockId;
-}
-
-class _OutlineViewportTarget {
-  const _OutlineViewportTarget({
-    required this.workspaceId,
-    required this.bufferId,
-    required this.filePath,
-    required this.headingId,
-    required this.sourceStartOffset,
-    required this.editorBlockId,
-  });
-
-  final String workspaceId;
-  final String bufferId;
-  final String? filePath;
-  final String? headingId;
-  final int? sourceStartOffset;
-  final String? editorBlockId;
-
-  bool sameLocationAs(_OutlineViewportTarget other) {
-    return workspaceId == other.workspaceId &&
-        bufferId == other.bufferId &&
-        filePath == other.filePath &&
-        headingId == other.headingId &&
-        sourceStartOffset == other.sourceStartOffset &&
-        editorBlockId == other.editorBlockId;
   }
 }
 
@@ -549,7 +473,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final sidebarVisible =
         searchState.active ||
         (settings.sidebarVisible && _hasWorkspaceSidebar(workspace));
-    final documentOutline = _activeDocumentOutline(state);
+    final documentOutline = activeDocumentOutline(state);
     final canExportPdf = canExportWorkspacePdf(state);
     final canExportHtml = canExportWorkspaceHtml(state);
     final sidebar = SizedBox(
@@ -1833,49 +1757,38 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SidebarHeader(
-            workspace: widget.workspace,
-            tabs: tabs,
-            selectedTab: widget.searchState.active
-                ? (widget.searchState.category == SearchCategory.outline
-                      ? _SidebarTab.outline
-                      : null)
-                : selectedTab,
-            repositoryInfo: repositoryInfo,
-            showTabMenu: !widget.searchState.active && tabs.length > 1,
-            onSelectTab: (tab) => _selectTab(tab, tabs),
-            loadGitMenuItems: (menuContext, repository) =>
-                _loadWorkspaceGitMenuItems(menuContext, ref, repository),
-            onGitAction: (menuContext, action) =>
-                _performWorkspaceGitAction(menuContext, ref, action),
-            onRefineActiveDocument: () =>
-                unawaited(_refineActiveDocumentWithAi(context)),
-          ),
+          if (!widget.searchState.active)
+            _SidebarHeader(
+              workspace: widget.workspace,
+              tabs: tabs,
+              selectedTab: selectedTab,
+              repositoryInfo: repositoryInfo,
+              showTabMenu: tabs.length > 1,
+              onSelectTab: (tab) => _selectTab(tab, tabs),
+              loadGitMenuItems: (menuContext, repository) =>
+                  _loadWorkspaceGitMenuItems(menuContext, ref, repository),
+              onGitAction: (menuContext, action) =>
+                  _performWorkspaceGitAction(menuContext, ref, action),
+              onRefineActiveDocument: () =>
+                  unawaited(_refineActiveDocumentWithAi(context)),
+            ),
           Expanded(
-            child: BusyMarkKeyedCrossfade(
-              transitionKey:
-                  (widget.searchState.active &&
-                          widget.searchState.category ==
-                              SearchCategory.outline) ||
-                      (!widget.searchState.active &&
-                          selectedTab == _SidebarTab.outline)
-                  ? 'outline'
-                  : widget.searchState.active
-                  ? 'search'
-                  : _topicRenameReview != null
-                  ? 'rename'
-                  : _topicUsageReview != null
-                  ? 'usages'
-                  : selectedTab ?? 'empty',
-              child:
-                  (widget.searchState.active &&
-                          widget.searchState.category ==
-                              SearchCategory.outline) ||
-                      (!widget.searchState.active &&
-                          selectedTab == _SidebarTab.outline)
-                  ? SearchSidebar(
-                      outlineOnly: !widget.searchState.active,
-                      outline: _OutlineTab(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Offstage(
+                  offstage:
+                      widget.searchState.active ||
+                      selectedTab != _SidebarTab.outline,
+                  child: ExcludeFocus(
+                    excluding:
+                        widget.searchState.active ||
+                        selectedTab != _SidebarTab.outline,
+                    child: TickerMode(
+                      enabled:
+                          !widget.searchState.active &&
+                          selectedTab == _SidebarTab.outline,
+                      child: _OutlineTab(
                         key: _outlineKey,
                         workspace: widget.workspace,
                         bufferId: ref
@@ -1883,70 +1796,91 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                             .activeBufferId,
                         headings: widget.outline,
                       ),
-                    )
-                  : widget.searchState.active
-                  ? SearchSidebar(
-                      onReviewReplacement: _reviewWorkspaceReplacement,
-                    )
-                  : _topicRenameReview != null
-                  ? _WritersideTopicRenameSidebar(
-                      plan: _topicRenameReview!,
-                      onBack: () => setState(() => _topicRenameReview = null),
-                      onDoRefactor: () => _applyReviewedTopicRename(context),
-                    )
-                  : _topicUsageReview != null
-                  ? _WritersideTopicUsagesSidebar(
-                      review: _topicUsageReview!,
-                      onBack: _closeTopicUsageReview,
-                      onOpenUsage: (usage) =>
-                          _openWritersideTopicUsage(context, usage),
-                      onDoRefactor: () =>
-                          _resumeWritersideTopicRemoval(context),
-                    )
-                  : switch (selectedTab) {
-                      _SidebarTab.notes => NextcloudNotesSidebar(
-                        accountId: widget.workspace.nextcloudAccountId!,
-                      ),
-                      _SidebarTab.files => _FilesTab(
-                        workspace: widget.workspace,
-                        onShowFileHistory: _showFileHistory,
-                        onRenameTopic: (path) =>
-                            _startWritersideTopicRename(context, path),
-                        onRequestTopicRemoval: (target) =>
-                            _runWritersideTopicRemoval(context, target),
-                      ),
-                      _SidebarTab.toc => _TocTab(
-                        workspace: widget.workspace,
-                        onShowFileHistory: _showFileHistory,
-                        onRenameTopic: (path) =>
-                            _startWritersideTopicRename(context, path),
-                        onRequestTopicRemoval: (target) =>
-                            _runWritersideTopicRemoval(context, target),
-                      ),
-                      _SidebarTab.outline => const SizedBox.shrink(),
-                      _SidebarTab.git => GitSidebarTab(
-                        workspace: widget.workspace,
-                        onOpenFile: (relativePath) =>
-                            _openGitDiffFile(context, ref, relativePath),
-                        onConfirmDiscard: (files) =>
-                            _confirmDiscardGitFiles(context, ref, files),
-                        onAfterWorkspaceFilesChanged: () =>
-                            _refreshWorkspaceAfterGitFileChanges(ref),
-                        onConfirmSwitchBranch: (branchName) =>
-                            _confirmSwitchGitBranch(context, ref, branchName),
-                        onConfirmPushSetUpstream: () =>
-                            _confirmGitPushSetUpstream(context, ref),
-                      ),
-                      _SidebarTab.clipboard => ClipboardHistoryPanel(
-                        onEscape: () => ref
-                            .read(clipboardInsertionRegistryProvider)
-                            .target
-                            ?.requestEditorFocus(),
-                      ),
-                      _SidebarTab.references => const ReferencesPanel(),
-                      _SidebarTab.localHistory => const LocalHistoryPanel(),
-                      null => const SizedBox.shrink(),
-                    },
+                    ),
+                  ),
+                ),
+                if (widget.searchState.active ||
+                    selectedTab != _SidebarTab.outline)
+                  BusyMarkKeyedCrossfade(
+                    transitionKey: widget.searchState.active
+                        ? 'search'
+                        : _topicRenameReview != null
+                        ? 'rename'
+                        : _topicUsageReview != null
+                        ? 'usages'
+                        : selectedTab ?? 'empty',
+                    child: widget.searchState.active
+                        ? SearchSidebar(
+                            onReviewReplacement: _reviewWorkspaceReplacement,
+                          )
+                        : _topicRenameReview != null
+                        ? _WritersideTopicRenameSidebar(
+                            plan: _topicRenameReview!,
+                            onBack: () =>
+                                setState(() => _topicRenameReview = null),
+                            onDoRefactor: () =>
+                                _applyReviewedTopicRename(context),
+                          )
+                        : _topicUsageReview != null
+                        ? _WritersideTopicUsagesSidebar(
+                            review: _topicUsageReview!,
+                            onBack: _closeTopicUsageReview,
+                            onOpenUsage: (usage) =>
+                                _openWritersideTopicUsage(context, usage),
+                            onDoRefactor: () =>
+                                _resumeWritersideTopicRemoval(context),
+                          )
+                        : switch (selectedTab) {
+                            _SidebarTab.notes => NextcloudNotesSidebar(
+                              accountId: widget.workspace.nextcloudAccountId!,
+                            ),
+                            _SidebarTab.files => _FilesTab(
+                              workspace: widget.workspace,
+                              onShowFileHistory: _showFileHistory,
+                              onRenameTopic: (path) =>
+                                  _startWritersideTopicRename(context, path),
+                              onRequestTopicRemoval: (target) =>
+                                  _runWritersideTopicRemoval(context, target),
+                            ),
+                            _SidebarTab.toc => _TocTab(
+                              workspace: widget.workspace,
+                              onShowFileHistory: _showFileHistory,
+                              onRenameTopic: (path) =>
+                                  _startWritersideTopicRename(context, path),
+                              onRequestTopicRemoval: (target) =>
+                                  _runWritersideTopicRemoval(context, target),
+                            ),
+                            _SidebarTab.outline => const SizedBox.shrink(),
+                            _SidebarTab.git => GitSidebarTab(
+                              workspace: widget.workspace,
+                              onOpenFile: (relativePath) =>
+                                  _openGitDiffFile(context, ref, relativePath),
+                              onConfirmDiscard: (files) =>
+                                  _confirmDiscardGitFiles(context, ref, files),
+                              onAfterWorkspaceFilesChanged: () =>
+                                  _refreshWorkspaceAfterGitFileChanges(ref),
+                              onConfirmSwitchBranch: (branchName) =>
+                                  _confirmSwitchGitBranch(
+                                    context,
+                                    ref,
+                                    branchName,
+                                  ),
+                              onConfirmPushSetUpstream: () =>
+                                  _confirmGitPushSetUpstream(context, ref),
+                            ),
+                            _SidebarTab.clipboard => ClipboardHistoryPanel(
+                              onEscape: () => ref
+                                  .read(clipboardInsertionRegistryProvider)
+                                  .target
+                                  ?.requestEditorFocus(),
+                            ),
+                            _SidebarTab.references => const ReferencesPanel(),
+                            _SidebarTab.localHistory =>
+                              const LocalHistoryPanel(),
+                            null => const SizedBox.shrink(),
+                          },
+                  ),
+              ],
             ),
           ),
         ],
@@ -9147,21 +9081,19 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   String? _revealedActiveNodeKey;
   Set<String> _selectedNodeKeys = {};
   String? _selectionAnchorKey;
-  List<_OutlineTreeEntry> _searchEntries = const [];
+  List<_OutlineTreeEntry> _navigationEntries = const [];
   int _keyboardIndex = -1;
-  String _filter = '';
   String? _sourceAtBuild;
-  late final SearchSessionController _searchSession;
 
   final _navigationFocus = FocusNode(debugLabel: 'Outline navigation');
   void requestNavigationFocus() => _navigationFocus.requestFocus();
 
-  void _moveSearchSelection(int delta) {
-    if (_searchEntries.isEmpty) return;
+  void _moveOutlineSelection(int delta) {
+    if (_navigationEntries.isEmpty) return;
     setState(
       () => _keyboardIndex = (_keyboardIndex + delta).clamp(
         0,
-        _searchEntries.length - 1,
+        _navigationEntries.length - 1,
       ),
     );
     if (_treeScrollController.hasClients) {
@@ -9174,46 +9106,33 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     }
   }
 
-  void _activateSearchSelection() {
-    if (_searchEntries.isEmpty) return;
+  void _activateOutlineSelection() {
+    if (_navigationEntries.isEmpty) return;
     final heading =
-        _searchEntries[_keyboardIndex.clamp(0, _searchEntries.length - 1)]
+        _navigationEntries[_keyboardIndex.clamp(
+              0,
+              _navigationEntries.length - 1,
+            )]
             .node
             .heading;
     _navigateHeading(heading);
   }
 
   void _navigateHeading(DocumentOutlineHeading heading) {
-    final current = ref.read(workspaceControllerProvider);
-    if (current.workspace?.id != widget.workspace.id ||
-        current.activeBufferId != widget.bufferId ||
-        current.activeText != _sourceAtBuild) {
-      return;
-    }
-    _setOutlineViewportTarget(
+    final source = _sourceAtBuild;
+    if (source == null) return;
+    navigateOutlineHeading(
       ref,
-      workspace: widget.workspace,
+      workspaceId: widget.workspace.id,
       bufferId: widget.bufferId,
+      source: source,
       heading: heading,
     );
-    ref
-        .read(_outlineNavigationTargetProvider.notifier)
-        .set(
-          _OutlineNavigationTarget(
-            workspaceId: widget.workspace.id,
-            bufferId: widget.bufferId ?? '',
-            filePath: widget.workspace.activeFilePath,
-            headingId: heading.id,
-            line: heading.sourceStartLine,
-            editorBlockId: heading.editorBlockId,
-          ),
-        );
   }
 
   @override
   void initState() {
     super.initState();
-    _searchSession = ref.read(searchSessionProvider.notifier);
     _outlineStateKey = _outlineStateSignature(
       widget.workspace,
       widget.bufferId,
@@ -9242,11 +9161,6 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   @override
   void dispose() {
     _navigationFocus.dispose();
-    final session = _searchSession;
-    if (session.moveOutline == _moveSearchSelection) session.moveOutline = null;
-    if (session.activateOutline == _activateSearchSelection) {
-      session.activateOutline = null;
-    }
     _treeScrollController.dispose();
     super.dispose();
   }
@@ -9456,28 +9370,14 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         title: context.l10n.noOutline,
       );
     }
-    final search = ref.watch(searchSessionProvider);
-    final query = search.active && search.category == SearchCategory.outline
-        ? search.query
-        : '';
-    if (_filter != query) {
-      _filter = query;
-      _keyboardIndex = -1;
-    }
-    final filtered = filterDocumentOutline(headings, query).toSet();
     final tree = _buildOutlineTree(headings);
     final entries = _visibleOutlineTreeEntries(
       tree,
-      query.trim().isEmpty
-          ? _expandedNodeKeys
-          : _initialExpandedOutlineNodeKeys(headings),
-    ).where((entry) => filtered.contains(entry.node.heading)).toList();
-    _searchEntries = entries;
+      _expandedNodeKeys,
+    ).toList();
+    _navigationEntries = entries;
     _sourceAtBuild = ref.read(workspaceControllerProvider).activeText;
-    final session = ref.read(searchSessionProvider.notifier);
-    session.moveOutline = _moveSearchSelection;
-    session.activateOutline = _activateSearchSelection;
-    final viewportTarget = ref.watch(_outlineViewportTargetProvider);
+    final viewportTarget = ref.watch(outlineViewportTargetProvider);
     final activeNodeKey = _activeVisibleOutlineNodeKey(
       workspace: widget.workspace,
       bufferId: widget.bufferId,
@@ -9496,13 +9396,13 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
         if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
             event.logicalKey == LogicalKeyboardKey.arrowUp) {
-          _moveSearchSelection(
+          _moveOutlineSelection(
             event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
           );
           return KeyEventResult.handled;
         }
         if (event.logicalKey == LogicalKeyboardKey.enter) {
-          _activateSearchSelection();
+          _activateOutlineSelection();
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
@@ -9771,32 +9671,12 @@ Future<bool> _confirmDeleteOutlineSection(
   return confirmed ?? false;
 }
 
-void _setOutlineViewportTarget(
-  WidgetRef ref, {
-  required Workspace workspace,
-  required String? bufferId,
-  required DocumentOutlineHeading? heading,
-}) {
-  ref
-      .read(_outlineViewportTargetProvider.notifier)
-      .set(
-        _OutlineViewportTarget(
-          workspaceId: workspace.id,
-          bufferId: bufferId ?? '',
-          filePath: workspace.activeFilePath,
-          headingId: heading?.id,
-          sourceStartOffset: heading?.sourceStartOffset,
-          editorBlockId: heading?.editorBlockId,
-        ),
-      );
-}
-
 String? _activeVisibleOutlineNodeKey({
   required Workspace workspace,
   required String? bufferId,
   required List<DocumentOutlineHeading> headings,
   required List<_OutlineTreeEntry> entries,
-  required _OutlineViewportTarget? target,
+  required OutlineViewportTarget? target,
 }) {
   if (target == null ||
       target.workspaceId != workspace.id ||
@@ -9822,7 +9702,7 @@ String? _activeVisibleOutlineNodeKey({
 
 int _outlineViewportHeadingIndex(
   List<DocumentOutlineHeading> headings,
-  _OutlineViewportTarget target,
+  OutlineViewportTarget target,
 ) {
   final editorBlockId = target.editorBlockId;
   if (editorBlockId != null) {
@@ -9846,52 +9726,6 @@ int _outlineViewportHeadingIndex(
   return headingId == null
       ? -1
       : headings.indexWhere((heading) => heading.id == headingId);
-}
-
-List<DocumentOutlineHeading> _activeDocumentOutline(WorkspaceState state) {
-  final liveOutline = state.liveOutline;
-  final workspace = state.workspace;
-  if (liveOutline != null &&
-      workspace != null &&
-      liveOutline.matches(workspace, state.activeBuffer, state.activeText)) {
-    return liveOutline.headings;
-  }
-  final preview = state.preview;
-  if (preview != null) {
-    return preview.outline;
-  }
-  final buffer = state.activeBuffer;
-  if (workspace != null &&
-      buffer != null &&
-      resolveWorkspaceDocumentContext(workspace, buffer).kind ==
-          DocumentKind.writersideXmlTopic) {
-    return const WritersideEditingAdapter()
-            .parseXml(
-              filePath: buffer.filePath ?? workspace.activeFilePath ?? '',
-              source: buffer.text,
-            )
-            ?.outline ??
-        const [];
-  }
-  final markdown = workspace?.markdown;
-  if (workspace == null || markdown == null) return const [];
-  if (buffer == null) {
-    if (state.documentBuffers.isNotEmpty) return const [];
-    return [
-      for (final heading in markdown.headings)
-        DocumentOutlineHeading.fromMarkdown(heading),
-    ];
-  }
-  final context = resolveWorkspaceDocumentContext(workspace, buffer);
-  if (!p.equals(markdown.filePath, context.parserPath) ||
-      markdown.source != buffer.text ||
-      markdown.mode != context.markdownMode) {
-    return const [];
-  }
-  return [
-    for (final heading in markdown.headings)
-      DocumentOutlineHeading.fromMarkdown(heading),
-  ];
 }
 
 class _OutlineTreeNode {
@@ -11759,7 +11593,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (!mounted || workspace == null) {
       return;
     }
-    _setOutlineViewportTarget(
+    setOutlineViewportTarget(
       ref,
       workspace: workspace,
       bufferId: widget.state.activeBufferId,
@@ -11769,7 +11603,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(_outlineNavigationTargetProvider, (previous, next) {
+    ref.listen(outlineNavigationTargetProvider, (previous, next) {
       if (next == null) {
         return;
       }
@@ -12325,12 +12159,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                             );
                                       }
                                     },
-                              onSearchOptionsChanged: (options) {
-                                final current = ref.read(searchSessionProvider);
-                                ref
-                                    .read(searchSessionProvider.notifier)
-                                    .set(current.withOptions(options));
-                              },
                               initialSelection:
                                   activeBuffer?.editorState.selection,
                               initialScrollOffset:
@@ -14655,7 +14483,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     return resolveWorkspaceDocumentContext(workspace, buffer).kind;
   }
 
-  void _scrollToOutlineTarget(_OutlineNavigationTarget target) {
+  void _scrollToOutlineTarget(OutlineNavigationTarget target) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -17373,9 +17201,9 @@ void _navigatePreviewAnchor(
     return;
   }
   ref
-      .read(_outlineNavigationTargetProvider.notifier)
+      .read(outlineNavigationTargetProvider.notifier)
       .set(
-        _OutlineNavigationTarget(
+        OutlineNavigationTarget(
           workspaceId: workspace.id,
           bufferId: state.activeBufferId ?? '',
           filePath: workspace.activeFilePath,
@@ -18312,10 +18140,6 @@ String _workspaceReplacementIssueLabel(
     WorkspaceReplacementIssueKind.remoteWorkspaceUnsupported =>
       context.l10n.nextcloudWorkspaceReplaceUnavailable,
     WorkspaceReplacementIssueKind.cancelled => context.l10n.cancel,
-    WorkspaceReplacementIssueKind.invalidRegex =>
-      context.l10n.sourceSearchInvalidRegex,
-    WorkspaceReplacementIssueKind.zeroLengthMatches =>
-      context.l10n.sourceSearchZeroLengthUnsupported,
     WorkspaceReplacementIssueKind.oversized =>
       context.l10n.workspaceReplaceIssueOversized,
     WorkspaceReplacementIssueKind.unreadable =>

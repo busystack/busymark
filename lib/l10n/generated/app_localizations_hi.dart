@@ -1830,16 +1830,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get sourceSearchNextMatch => 'अगला मिलान';
 
   @override
-  String get sourceSearchCaseSensitive =>
-      'बड़े-छोटे अक्षरों के प्रति संवेदनशील';
-
-  @override
-  String get sourceSearchWholeWord => 'पूरा शब्द';
-
-  @override
-  String get sourceSearchRegex => 'रेगुलर एक्सप्रेशन';
-
-  @override
   String get sourceSearchReplacement => 'इससे बदलें';
 
   @override
@@ -1964,13 +1954,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get saveAs => 'इस रूप में सहेजें';
-
-  @override
-  String get sourceSearchInvalidRegex => 'अमान्य रेगुलर एक्सप्रेशन';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'शून्य लंबाई वाले रेगेक्स मिलान समर्थित नहीं हैं (जैसे ^, \$ या केवल स्थिति से मेल खाने वाले लुकअहेड)।';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5405,18 +5388,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get searchRecentCommand => 'हाल के आइटम खोजें';
 
   @override
-  String searchQueryHint(String category) {
-    return '$category में खोजें…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'यह संसाधन उपलब्ध नहीं है।';
 
   @override
   String get notesSync => 'नोट सिंक करें';
-
-  @override
-  String get searchInFile => 'फ़ाइल में खोजें';
 
   @override
   String get searchInWorkspace => 'कार्यस्थान में खोजें';
@@ -5426,4 +5401,43 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'दस्तावेज़ों के इतिहास में खोजें';
+
+  @override
+  String get searchInDocument => 'दस्तावेज़ में खोजें';
+
+  @override
+  String get searchDocumentHint => 'इस दस्तावेज़ में खोजें…';
+
+  @override
+  String get searchWorkspaceHint => 'इस कार्यक्षेत्र में खोजें…';
+
+  @override
+  String get searchOutlineHint => 'शीर्षक खोजें…';
+
+  @override
+  String get searchHistoryHint => 'स्थानीय इतिहास में खोजें…';
+
+  @override
+  String get searchEnterText => 'खोजने के लिए पाठ दर्ज करें';
+
+  @override
+  String get searchAccountUnavailable => 'खाता उपलब्ध नहीं है';
+
+  @override
+  String get searchDocumentsHint => 'दस्तावेज़ खोजें…';
+
+  @override
+  String get searchTopicsHint => 'विषय खोजें…';
+
+  @override
+  String get searchRecentHint => 'हाल के आइटम खोजें…';
+
+  @override
+  String get searchActionsHint => 'क्रियाएँ खोजें…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'नोट्स कार्यक्षेत्र आवश्यक है';
+
+  @override
+  String get searchRecentEmpty => 'हाल के संसाधन नहीं हैं';
 }

@@ -1859,15 +1859,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get sourceSearchNextMatch => 'Następne dopasowanie';
 
   @override
-  String get sourceSearchCaseSensitive => 'Uwzględniaj wielkość liter';
-
-  @override
-  String get sourceSearchWholeWord => 'Całe słowo';
-
-  @override
-  String get sourceSearchRegex => 'Wyrażenie regularne';
-
-  @override
   String get sourceSearchReplacement => 'Zamień na';
 
   @override
@@ -1992,13 +1983,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get saveAs => 'Zapisz jako';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Nieprawidłowe wyrażenie regularne';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Dopasowania wyrażeń regularnych o zerowej długości nie są obsługiwane (np. ^, \$ lub asercje dopasowujące tylko pozycję).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5469,18 +5453,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get searchRecentCommand => 'Szukaj ostatnich';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Szukaj: $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Ten zasób jest niedostępny.';
 
   @override
   String get notesSync => 'Synchronizuj notatki';
-
-  @override
-  String get searchInFile => 'Szukaj w pliku';
 
   @override
   String get searchInWorkspace => 'Szukaj w obszarze roboczym';
@@ -5490,4 +5466,43 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Szukaj w historii dokumentów';
+
+  @override
+  String get searchInDocument => 'Szukaj w dokumencie';
+
+  @override
+  String get searchDocumentHint => 'Przeszukaj ten dokument…';
+
+  @override
+  String get searchWorkspaceHint => 'Przeszukaj ten obszar roboczy…';
+
+  @override
+  String get searchOutlineHint => 'Szukaj nagłówków…';
+
+  @override
+  String get searchHistoryHint => 'Przeszukaj historię lokalną…';
+
+  @override
+  String get searchEnterText => 'Wpisz tekst do wyszukania';
+
+  @override
+  String get searchAccountUnavailable => 'Konto niedostępne';
+
+  @override
+  String get searchDocumentsHint => 'Szukaj dokumentów…';
+
+  @override
+  String get searchTopicsHint => 'Szukaj tematów…';
+
+  @override
+  String get searchRecentHint => 'Szukaj ostatnich…';
+
+  @override
+  String get searchActionsHint => 'Szukaj działań…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Wymaga obszaru roboczego Notatek';
+
+  @override
+  String get searchRecentEmpty => 'Brak ostatnich zasobów';
 }

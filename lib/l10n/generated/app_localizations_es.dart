@@ -1853,15 +1853,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sourceSearchNextMatch => 'Coincidencia siguiente';
 
   @override
-  String get sourceSearchCaseSensitive => 'Distinguir mayúsculas y minúsculas';
-
-  @override
-  String get sourceSearchWholeWord => 'Palabra completa';
-
-  @override
-  String get sourceSearchRegex => 'Expresión regular';
-
-  @override
   String get sourceSearchReplacement => 'Reemplazar por';
 
   @override
@@ -1987,13 +1978,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get saveAs => 'Guardar como';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Expresión regular no válida';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'No se admiten coincidencias de longitud cero (por ejemplo, ^, \$ o anticipaciones que solo coinciden con una posición).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5465,18 +5449,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchRecentCommand => 'Buscar recientes';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Buscar en $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Este recurso no está disponible.';
 
   @override
   String get notesSync => 'Sincronizar notas';
-
-  @override
-  String get searchInFile => 'Buscar en archivo';
 
   @override
   String get searchInWorkspace => 'Buscar en espacio de trabajo';
@@ -5486,4 +5462,44 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Buscar en el historial de documentos';
+
+  @override
+  String get searchInDocument => 'Buscar en el documento';
+
+  @override
+  String get searchDocumentHint => 'Buscar en este documento…';
+
+  @override
+  String get searchWorkspaceHint => 'Buscar en este espacio de trabajo…';
+
+  @override
+  String get searchOutlineHint => 'Buscar encabezados…';
+
+  @override
+  String get searchHistoryHint => 'Buscar en el historial local…';
+
+  @override
+  String get searchEnterText => 'Introduce texto para buscar';
+
+  @override
+  String get searchAccountUnavailable => 'Cuenta no disponible';
+
+  @override
+  String get searchDocumentsHint => 'Buscar documentos…';
+
+  @override
+  String get searchTopicsHint => 'Buscar temas…';
+
+  @override
+  String get searchRecentHint => 'Buscar recientes…';
+
+  @override
+  String get searchActionsHint => 'Buscar acciones…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Requiere un espacio de trabajo de Notas';
+
+  @override
+  String get searchRecentEmpty => 'No hay recursos recientes';
 }

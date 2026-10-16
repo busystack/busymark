@@ -34,7 +34,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onTransactionalChanged:
                     (value, _, previousSelection, selection, _) {

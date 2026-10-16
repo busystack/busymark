@@ -1,4 +1,3 @@
-import '../../search/search_option_button.dart';
 import '../link_destination.dart';
 import '../wysiwyg/writerside_editing_adapter.dart';
 import '../../assets/document_media_context.dart';
@@ -89,7 +88,6 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.searchSnapshot,
     this.onNavigateSearch,
     this.onCancelSearchNavigation,
-    required this.onSearchOptionsChanged,
     this.searchReplacement = '',
     this.onSearchReplacementChanged,
     required this.onChanged,
@@ -138,7 +136,6 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final SourceSearchSnapshot? searchSnapshot;
   final int? Function(SourceSearchNavigationRequest)? onNavigateSearch;
   final ValueChanged<int>? onCancelSearchNavigation;
-  final ValueChanged<SourceSearchOptions> onSearchOptionsChanged;
   final String searchReplacement;
   final ValueChanged<String>? onSearchReplacementChanged;
   final BusyMarkSourceChanged onChanged;
@@ -1115,21 +1112,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 truncated: widget.searchSnapshot?.truncated ?? false,
                 onPrevious: _previousSearchMatch,
                 onNext: _nextSearchMatch,
-                onToggleCaseSensitive: () => _updateSearchOptions(
-                  widget.searchOptions.copyWith(
-                    caseSensitive: !widget.searchOptions.caseSensitive,
-                  ),
-                ),
-                onToggleWholeWord: () => _updateSearchOptions(
-                  widget.searchOptions.copyWith(
-                    wholeWord: !widget.searchOptions.wholeWord,
-                  ),
-                ),
-                onToggleRegex: () => _updateSearchOptions(
-                  widget.searchOptions.copyWith(
-                    regex: !widget.searchOptions.regex,
-                  ),
-                ),
                 replacement: widget.searchReplacement,
                 canReplaceCurrent:
                     !DocumentReadOnlyScope.of(context) &&
@@ -1281,8 +1263,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         totalMatchCount: shared.result.totalMatchCount,
         firstMatchIndex: shared.result.firstMatchIndex,
         currentMatchIndex: shared.result.currentMatchIndex,
-        invalidRegex: shared.result.invalidRegex,
-        hasZeroLengthMatches: shared.result.hasZeroLengthMatches,
         matches: [
           for (final match in shared.result.matches)
             if (match.fullEnd <= document.fullText.length)
@@ -1319,10 +1299,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         (previousResult.options == options
             ? previousResult.firstMatchIndex
             : 0);
-    final invalidRegex = sourceSearchOptionsHaveInvalidRegex(options);
-    _searchController.stageOptions(options, invalidRegex: invalidRegex);
+    _searchController.stageOptions(options);
     _controller.setSearchResult(_searchController.result);
-    if (options.query.isEmpty || invalidRegex) {
+    if (options.query.isEmpty) {
       return;
     }
     _searchDebounce = Timer(const Duration(milliseconds: 120), () {
@@ -1501,10 +1480,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     );
   }
 
-  void _updateSearchOptions(SourceSearchOptions options) {
-    widget.onSearchOptionsChanged(options);
-  }
-
   void _nextSearchMatch() {
     _requestedSearchRange = null;
     _searchNavigationFailed = false;
@@ -1558,7 +1533,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   Future<void> _replaceCurrentSearchMatch({bool findNext = false}) async {
     if (DocumentReadOnlyScope.of(context) ||
-        _searchController.result.invalidRegex ||
         _requestedSearchRange != null ||
         _searchNavigationFailed) {
       return;
@@ -1590,7 +1564,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         replacement != widget.searchReplacement ||
         selection != _controller.fullSelection ||
         _searchController.result.currentMatchIndex != currentIndex ||
-        preview.invalidRegex ||
         preview.matches.isEmpty) {
       return;
     }
@@ -1637,7 +1610,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         !identical(document, _controller.document) ||
         options != widget.searchOptions ||
         replacement != widget.searchReplacement ||
-        preview.invalidRegex ||
         preview.matches.isEmpty) {
       return;
     }
@@ -3800,9 +3772,6 @@ class _SourceSearchPanel extends StatefulWidget {
     this.truncated = false,
     required this.onPrevious,
     required this.onNext,
-    required this.onToggleCaseSensitive,
-    required this.onToggleWholeWord,
-    required this.onToggleRegex,
     required this.replacement,
     required this.canReplaceCurrent,
     this.canReplaceAll = true,
@@ -3817,9 +3786,6 @@ class _SourceSearchPanel extends StatefulWidget {
   final bool truncated;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
-  final VoidCallback onToggleCaseSensitive;
-  final VoidCallback onToggleWholeWord;
-  final VoidCallback onToggleRegex;
   final String replacement;
   final bool canReplaceCurrent;
   final bool canReplaceAll;
@@ -3861,9 +3827,7 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final result = widget.result;
-    final status = result.invalidRegex
-        ? context.l10n.sourceSearchInvalidRegex
-        : result.totalMatchCount == 0
+    final status = result.totalMatchCount == 0
         ? '0 / 0'
         : result.currentMatchIndex == null
         ? '– / ${result.totalMatchCount}'
@@ -3878,23 +3842,14 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (result.hasZeroLengthMatches)
-              Text(
-                context.l10n.sourceSearchZeroLengthUnsupported,
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   widget.truncated ? '$status+' : status,
-                  textDirection: result.invalidRegex
-                      ? Directionality.of(context)
-                      : TextDirection.ltr,
+                  textDirection: TextDirection.ltr,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: result.invalidRegex
-                        ? Theme.of(context).colorScheme.error
-                        : colors.mutedForeground,
+                    color: colors.mutedForeground,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -3910,24 +3865,6 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                   tooltip: context.l10n.sourceSearchNextMatch,
                   icon: YaruIcons.pan_down,
                   onPressed: result.totalMatchCount == 0 ? null : widget.onNext,
-                ),
-                SearchOptionButton(
-                  label: 'Aa',
-                  tooltip: context.l10n.sourceSearchCaseSensitive,
-                  selected: result.options.caseSensitive,
-                  onPressed: widget.onToggleCaseSensitive,
-                ),
-                SearchOptionButton(
-                  label: 'W',
-                  tooltip: context.l10n.sourceSearchWholeWord,
-                  selected: result.options.wholeWord,
-                  onPressed: widget.onToggleWholeWord,
-                ),
-                SearchOptionButton(
-                  label: '.*',
-                  tooltip: context.l10n.sourceSearchRegex,
-                  selected: result.options.regex,
-                  onPressed: widget.onToggleRegex,
                 ),
                 _SearchPanelIconButton(
                   tooltip: context.l10n.close,
@@ -3977,9 +3914,7 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                     tooltip: context.l10n.sourceSearchReplaceAll,
                     icon: BusyMarkGlyphs.searchUnavailable,
                     onPressed:
-                        !widget.canReplaceAll ||
-                            result.options.query.isEmpty ||
-                            result.invalidRegex
+                        !widget.canReplaceAll || result.options.query.isEmpty
                         ? null
                         : widget.onReplaceAll,
                   ),

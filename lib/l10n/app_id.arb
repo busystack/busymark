@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Tanggal",
   "pdfTitlePageTitleRequired": "Masukkan judul untuk halaman judul.",
   "pdfTocSectionNote": "Dimulai pada halaman terpisah dan dapat mencakup beberapa halaman.",
-  "sourceSearchZeroLengthUnsupported": "Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, $, atau lookahead yang hanya cocok dengan posisi).",
   "workspaceSearchIncomplete": "Hanya sebagian hasil yang ditampilkan. Tampilkan lebih banyak atau persempit pencarian.",
   "workspaceSearchShowMore": "Tampilkan lebih banyak hasil",
   "workspaceSearchSkippedFiles": "Pencarian belum lengkap. Berkas ini melebihi 1 MiB atau tidak dapat dibaca:",
@@ -1931,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Peka huruf besar-kecil",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Seluruh kata",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regex",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Ganti dengan",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2125,10 +2112,6 @@
   "saveAs": "Simpan sebagai",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Ekspresi reguler tidak valid",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "File besar: penyorotan dan pelipatan dijeda",
   "@sourceLargeFileFeaturesPaused": {
@@ -5146,11 +5129,22 @@
   "searchDocumentsCommand": "Cari dokumen",
   "searchTopicsCommand": "Cari topik",
   "searchRecentCommand": "Cari terbaru",
-  "searchQueryHint": "Cari di {category}…",
   "searchResourceUnavailable": "Sumber daya ini tidak tersedia.",
   "notesSync": "Sinkronkan catatan",
-  "searchInFile": "Cari dalam Berkas",
   "searchInWorkspace": "Cari dalam Ruang Kerja",
   "searchCategory": "Kategori pencarian",
-  "clearHistorySearchScope": "Cari riwayat seluruh dokumen"
+  "clearHistorySearchScope": "Cari riwayat seluruh dokumen",
+  "searchInDocument": "Cari dalam dokumen",
+  "searchDocumentHint": "Cari dalam dokumen ini…",
+  "searchWorkspaceHint": "Cari dalam ruang kerja ini…",
+  "searchOutlineHint": "Cari judul bagian…",
+  "searchHistoryHint": "Cari dalam riwayat lokal…",
+  "searchEnterText": "Masukkan teks untuk mencari",
+  "searchAccountUnavailable": "Akun tidak tersedia",
+  "searchDocumentsHint": "Cari dokumen…",
+  "searchTopicsHint": "Cari topik…",
+  "searchRecentHint": "Cari terbaru…",
+  "searchActionsHint": "Cari tindakan…",
+  "searchRequiresNotesWorkspace": "Memerlukan ruang kerja Catatan",
+  "searchRecentEmpty": "Tidak ada sumber daya terbaru"
 }

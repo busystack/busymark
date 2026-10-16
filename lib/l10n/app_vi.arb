@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Ngày",
   "pdfTitlePageTitleRequired": "Nhập tiêu đề cho trang tiêu đề.",
   "pdfTocSectionNote": "Bắt đầu trên trang riêng và có thể kéo dài nhiều trang.",
-  "sourceSearchZeroLengthUnsupported": "Không hỗ trợ kết quả khớp regex có độ dài bằng 0 (ví dụ ^, $ hoặc lookahead chỉ khớp với một vị trí).",
   "workspaceSearchIncomplete": "Chỉ hiển thị một phần kết quả. Hiển thị thêm hoặc thu hẹp tìm kiếm.",
   "workspaceSearchShowMore": "Hiển thị thêm kết quả",
   "workspaceSearchSkippedFiles": "Tìm kiếm chưa đầy đủ. Các tệp này vượt quá 1 MiB hoặc không thể đọc được:",
@@ -1931,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Phân biệt chữ hoa, chữ thường",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Toàn bộ từ",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Biểu thức chính quy",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Thay thế bằng",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2125,10 +2112,6 @@
   "saveAs": "Lưu thành",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Biểu thức chính quy không hợp lệ",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Tệp lớn: đã tạm dừng tô sáng và thu gọn",
   "@sourceLargeFileFeaturesPaused": {
@@ -5146,11 +5129,22 @@
   "searchDocumentsCommand": "Tìm tài liệu",
   "searchTopicsCommand": "Tìm chủ đề",
   "searchRecentCommand": "Tìm mục gần đây",
-  "searchQueryHint": "Tìm trong {category}…",
   "searchResourceUnavailable": "Tài nguyên này không khả dụng.",
   "notesSync": "Đồng bộ ghi chú",
-  "searchInFile": "Tìm trong tệp",
   "searchInWorkspace": "Tìm trong không gian làm việc",
   "searchCategory": "Danh mục tìm kiếm",
-  "clearHistorySearchScope": "Tìm trong lịch sử tài liệu"
+  "clearHistorySearchScope": "Tìm trong lịch sử tài liệu",
+  "searchInDocument": "Tìm trong tài liệu",
+  "searchDocumentHint": "Tìm trong tài liệu này…",
+  "searchWorkspaceHint": "Tìm trong không gian làm việc này…",
+  "searchOutlineHint": "Tìm tiêu đề…",
+  "searchHistoryHint": "Tìm trong lịch sử cục bộ…",
+  "searchEnterText": "Nhập văn bản để tìm kiếm",
+  "searchAccountUnavailable": "Tài khoản không khả dụng",
+  "searchDocumentsHint": "Tìm tài liệu…",
+  "searchTopicsHint": "Tìm chủ đề…",
+  "searchRecentHint": "Tìm mục gần đây…",
+  "searchActionsHint": "Tìm thao tác…",
+  "searchRequiresNotesWorkspace": "Yêu cầu không gian làm việc Ghi chú",
+  "searchRecentEmpty": "Không có tài nguyên gần đây"
 }

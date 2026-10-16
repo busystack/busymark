@@ -42,7 +42,6 @@ import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
-import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
@@ -12086,6 +12085,38 @@ Gamma body.
     final headingBounds = tester.getRect(editorFields.first);
     expect(headingBounds.bottom, greaterThan(viewportBounds.top));
     expect(headingBounds.top, lessThan(viewportBounds.bottom));
+    final searchSession = container.read(searchSessionProvider.notifier);
+    searchSession.open(category: SearchCategory.outline);
+    searchSession.query('Unsaved');
+    await _waitForSearchCondition(
+      tester,
+      () => !container.read(searchSessionProvider).searching,
+    );
+    final result =
+        container.read(searchSessionProvider).results.single
+            as OutlineSearchResult;
+    expect(
+      result.heading.editorBlockId,
+      state.liveOutline!.headings.single.editorBlockId,
+    );
+    editorList().itemScrollController!.jumpTo(
+      index: editorList().itemCount - 1,
+    );
+    await tester.pump();
+    expect(editorFieldWithText('Unsaved heading'), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await _waitForSearchCondition(
+      tester,
+      () => editorFieldWithText('Unsaved heading').evaluate().isNotEmpty,
+    );
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      state.activeText,
+    );
+    expect(
+      container.read(searchSessionProvider).results.single.identity,
+      result.identity,
+    );
   });
 
   testWidgets('untitled outline navigates before the first save', (
@@ -13183,7 +13214,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
                         ),
                       ),
             );
-            expect(tester.widget<ListTile>(row).selected, isTrue);
+            expect(
+              tester.widget<BusyMarkSidebarRecordRow>(row).selected,
+              isTrue,
+            );
           }
 
           Future<void> choose(int index) async {
@@ -13329,7 +13363,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       'double',
       'refresh',
       'query',
-      'options',
+      'clear',
       'category',
       'document',
       'undo/redo',
@@ -13403,17 +13437,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
               session.query('missing-$i');
             }
             session.query('cat');
-          case 'options':
-            session.set(
-              container
-                  .read(searchSessionProvider)
-                  .copyWith(caseSensitive: true),
-            );
-            session.set(
-              container
-                  .read(searchSessionProvider)
-                  .copyWith(caseSensitive: false),
-            );
+          case 'clear':
+            session.query('');
+            session.query('cat');
           case 'category':
             session.open(category: SearchCategory.workspace);
             session.query('cat');
@@ -13915,6 +13941,111 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   );
 
   testWidgets(
+    'ordinary Outline keeps its tree state independently of typed Outline search',
+    (tester) async {
+      const text =
+          '# Alpha\n## Shared\nalpha body\n# Beta\n## Shared\nbeta body\n';
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': text,
+      });
+      final container = harness.container;
+      final session = container.read(searchSessionProvider.notifier);
+      Future<void> outlineShortcut() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+      }
+
+      await outlineShortcut();
+      final tree = find.byKey(const ValueKey('workspace-sidebar-outline-tree'));
+      expect(tree, findsOneWidget);
+      expect(find.byKey(const ValueKey('shared-search-query')), findsNothing);
+      expect(find.byKey(const ValueKey('search-category')), findsNothing);
+      final ordinary = find.byWidgetPredicate(
+        (w) => w.runtimeType.toString() == '_OutlineTab',
+      );
+      final ordinaryState = tester.state(ordinary);
+      final first = find.byKey(
+        const ValueKey('workspace-sidebar-outline-row-0'),
+      );
+      final expander = find.descendant(
+        of: first,
+        matching: find.byWidgetPredicate(
+          (w) => w is GestureDetector && w.child is AnimatedRotation,
+        ),
+      );
+      await tester.tap(expander);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-1')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-3')),
+        findsOneWidget,
+      );
+      session.open(category: SearchCategory.outline);
+      await tester.pumpAndSettle();
+      expect(tree, findsNothing);
+      expect(find.text(l10n.searchEnterText), findsOneWidget);
+      expect(container.read(searchSessionProvider).results, isEmpty);
+      await tester.enterText(
+        find.byKey(const ValueKey('shared-search-query')),
+        'Shared',
+      );
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      final results = container
+          .read(searchSessionProvider)
+          .results
+          .cast<OutlineSearchResult>();
+      expect(results, hasLength(2));
+      expect(results.map((r) => r.ancestors.single), ['Alpha', 'Beta']);
+      expect(find.byKey(ValueKey(results.first.identity)), findsOneWidget);
+      expect(tree, findsNothing);
+      session.moveSelection(1);
+      await tester.pump();
+      expect(container.read(workspaceControllerProvider).activeText, text);
+      await tester.tap(find.byKey(ValueKey(results.last.identity)));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            _searchSourceController(tester).fullSelection.start ==
+            text.lastIndexOf('## Shared'),
+      );
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(container.read(workspaceControllerProvider).activeText, text);
+      await outlineShortcut();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(tester.state(ordinary), same(ordinaryState));
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-1')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-3')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('search-category')), findsNothing);
+      // Section operations remain on the normal complete tree, outside search.
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-2')),
+        buttons: kSecondaryButton,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.moveSectionUp), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(container.read(workspaceControllerProvider).activeText, text);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets(
     'unified search scopes, query isolation and explicit shortcut destinations',
     (tester) async {
       final harness = await _pumpSearchRegression(tester, headerBarService, {
@@ -14032,10 +14163,12 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
       expect(
         container
-            .read(workspaceControllerProvider)
-            .activeBuffer!
-            .editorState
-            .searchOptions
+            .read(searchSessionProvider)
+            .sourceSnapshot(
+              container.read(workspaceControllerProvider).activeBuffer,
+            )
+            .result
+            .options
             .query,
         '',
       );
@@ -14155,7 +14288,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       final editor = find.byWidgetPredicate(
         (widget) => widget is TextField && identical(widget.controller, source),
       );
-      await tester.tap(editor);
+      tester.widget<TextField>(editor).focusNode!.requestFocus();
+      await tester.pump();
       source.selection = const TextSelection(baseOffset: 0, extentOffset: 3);
       await tester.pump();
       Future<void> actions() async {
@@ -14228,7 +14362,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       expect(container.read(searchSessionProvider).active, isTrue);
       container.read(searchSessionProvider.notifier).close();
       await tester.pump();
-      await tester.tap(editor);
+      tester.widget<TextField>(editor).focusNode!.requestFocus();
+      await tester.pump();
       await actions();
       final query = find.descendant(
         of: find.byKey(const ValueKey('shared-search-query')),
@@ -14249,8 +14384,28 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           .results
           .whereType<ActionSearchResult>()
           .singleWhere((r) => r.command.id == BusyMarkCommandIds.save);
+      final saveRow = find.byKey(ValueKey(save.identity));
+      container
+          .read(searchSessionProvider.notifier)
+          .select(
+            container
+                .read(searchSessionProvider)
+                .results
+                .indexWhere((r) => r.identity == save.identity),
+          );
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            saveRow.evaluate().isNotEmpty &&
+            tester.widget<BusyMarkSidebarRecordRow>(saveRow).onTap == null,
+      );
       expect(
-        tester.widget<ListTile>(find.byKey(ValueKey(save.identity))).enabled,
+        tester
+                .widget<BusyMarkSidebarRecordRow>(
+                  find.byKey(ValueKey(save.identity)),
+                )
+                .onTap !=
+            null,
         isFalse,
       );
       tester.widget<TextField>(query).focusNode!.requestFocus();
@@ -14934,17 +15089,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final buffer = session.container
         .read(workspaceControllerProvider)
         .activeBuffer!;
-    controller.updateDocumentEditorState(
-      buffer.id,
-      buffer.editorState.copyWith(
-        searchOptions: const SourceSearchOptions(
-          query: 'old query',
-          caseSensitive: true,
-          wholeWord: true,
-          regex: true,
-        ),
-      ),
-    );
     controller.updateDocumentText(buffer.id, 'unsaved needle\n');
     await controller.openActiveFile('${_SearchRegressionService.root}/a.md');
     await tester.pump();
@@ -15014,50 +15158,47 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     },
   );
 
-  testWidgets('workspace search exposes skipped files and regex diagnostics', (
-    tester,
-  ) async {
-    final session = await _pumpSearchRegression(
-      tester,
-      headerBarService,
-      {
-        'a.md': 'active\n',
-        'large.md': 'large needle',
-        'unreadable.md': 'needle',
-      },
-      oversized: {'large.md'},
-      unreadable: {'unreadable.md'},
-    );
-    session.events.add(const HeaderBarSearchQueryChanged('needle'));
-    await _waitForSearchCondition(
-      tester,
-      () => find
-          .textContaining(l10n.workspaceSearchSkippedFiles)
-          .evaluate()
-          .isNotEmpty,
-    );
-    expect(find.text(l10n.noResults), findsNothing);
-    expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
-    await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
-    session.events.add(const HeaderBarSearchQueryChanged('['));
-    await _waitForSearchCondition(
-      tester,
-      () => find.text(l10n.sourceSearchInvalidRegex).evaluate().length == 1,
-    );
-    expect(find.text(l10n.noResults), findsNothing);
-    session.events.add(const HeaderBarSearchQueryChanged('^'));
-    await _waitForSearchCondition(
-      tester,
-      () =>
-          find.text(l10n.sourceSearchZeroLengthUnsupported).evaluate().length ==
-          1,
-    );
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 1));
-  });
+  testWidgets(
+    'workspace search keeps skipped-file feedback for literal punctuation',
+    (tester) async {
+      final session = await _pumpSearchRegression(
+        tester,
+        headerBarService,
+        {
+          'a.md': 'active\n',
+          'large.md': 'large needle',
+          'unreadable.md': 'needle',
+        },
+        oversized: {'large.md'},
+        unreadable: {'unreadable.md'},
+      );
+      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await _waitForSearchCondition(
+        tester,
+        () => find
+            .textContaining(l10n.workspaceSearchSkippedFiles)
+            .evaluate()
+            .isNotEmpty,
+      );
+      expect(find.text(l10n.noResults), findsNothing);
+      expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
+      session.events.add(const HeaderBarSearchQueryChanged('['));
+      await _waitForSearchCondition(
+        tester,
+        () => !session.container.read(searchSessionProvider).searching,
+      );
+      expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
+      expect(session.container.read(searchSessionProvider).results, isEmpty);
+      expect(find.text('Aa'), findsNothing);
+      expect(find.text('W'), findsNothing);
+      expect(find.text('.*'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
 
   testWidgets(
-    'workspace search cancels expensive regex while UI keeps building',
+    'workspace search cancels rapid literal queries while UI keeps building',
     (tester) async {
       final session = await _pumpSearchRegression(tester, headerBarService, {
         'a.md': 'active\n',
@@ -15065,17 +15206,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       });
       session.events.add(const HeaderBarSearchQueryChanged('needle'));
       await tester.pump();
-      await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
       session.events.add(const HeaderBarSearchQueryChanged(r'^(a+)+$'));
-      await tester.pump(const Duration(milliseconds: 150));
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 150)),
-      );
-      await tester.pump();
-      expect(
-        find.byKey(const ValueKey('workspace-search-progress')),
-        findsOneWidget,
-      );
+      await tester.pump(const Duration(milliseconds: 1));
       await session.container
           .read(appSettingsControllerProvider.notifier)
           .setWordWrap(false);
@@ -15157,22 +15289,53 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     },
   );
 
-  testWidgets('preview search highlights preserve Unicode offsets', (
-    tester,
-  ) async {
-    final session = await _pumpSearchRegression(tester, headerBarService, {
-      'a.md': 'İ needle\n',
-    }, mode: DocumentViewModePreference.preview);
-    session.events.add(const HeaderBarSearchQueryChanged('needle'));
-    await _waitForSearchCondition(
-      tester,
-      () => find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
-    );
-    expect(tester.takeException(), isNull);
-    expect(find.text('İ needle', findRichText: true), findsWidgets);
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 1));
-  });
+  testWidgets(
+    'preview search highlights preserve Unicode offsets and literal case-insensitive matching',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'İ needle Cat catalog .*\n',
+      }, mode: DocumentViewModePreference.preview);
+      bool hasHighlight(InlineSpan span, String text) =>
+          span is TextSpan &&
+          (span.text == text && span.style?.backgroundColor != null ||
+              (span.children?.any((child) => hasHighlight(child, text)) ??
+                  false));
+      final session = harness.container.read(searchSessionProvider.notifier);
+      for (final (query, highlighted) in [
+        ('needle', ['needle']),
+        ('cat', ['Cat', 'cat']),
+        ('.*', ['.*']),
+      ]) {
+        session.query(query);
+        await _waitForSearchCondition(
+          tester,
+          () => !harness.container.read(searchSessionProvider).searching,
+        );
+        await tester.pump();
+        expect(
+          harness.container.read(searchSessionProvider).results,
+          hasLength(highlighted.length),
+        );
+        for (final text in highlighted) {
+          expect(
+            tester
+                .widgetList<RichText>(find.byType(RichText))
+                .any((rich) => hasHighlight(rich.text, text)),
+            isTrue,
+            reason:
+                '$text must use the same literal, case-insensitive matching in Reading',
+          );
+        }
+        expect(tester.takeException(), isNull);
+      }
+      expect(
+        find.text('İ needle Cat catalog .*', findRichText: true),
+        findsWidgets,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
 
   testWidgets(
     'literal workspace search bounds malformed Markdown snippets around the match',

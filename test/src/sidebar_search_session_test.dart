@@ -1,3 +1,11 @@
+import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/src/app/quick_open.dart';
+import 'package:busymark/src/search/search_sidebar.dart';
+import 'package:busymark/src/search/search_result_presentation.dart';
+import 'dart:collection';
+import 'package:busymark/src/editor/source/source_document.dart';
+import 'package:busymark/src/markdown/document_outline.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
@@ -25,9 +33,17 @@ void main() {
     WorkspaceState state, {
     _GatedService? service,
     LocalHistoryStore? historyStore,
+    SourceSearchWorker? worker,
+    LocalHistoryController? history,
   }) {
     final container = ProviderContainer(
       overrides: [
+        if (worker != null)
+          searchSessionProvider.overrideWith(
+            () => SearchSessionController(worker: worker),
+          ),
+        if (history != null)
+          localHistoryControllerProvider.overrideWith(() => history),
         workspaceControllerProvider.overrideWith(() => _Workspace(state)),
         localSettingsStoreProvider.overrideWithValue(_Settings()),
         if (historyStore != null)
@@ -43,6 +59,576 @@ void main() {
     });
     return container;
   }
+
+  test(
+    'empty queries gate all six waiting categories before provider work',
+    () async {
+      final fixture = await const WorkspaceService().openPath(
+        'test/fixtures/writerside/basic_project',
+      );
+      final worker = _CountingWorker();
+      final history = _CountingHistory();
+      final files = _ReadCountingList(fixture.files);
+      final module = fixture.writersideProject!.modules.first;
+      final topics = _ReadCountingList(module.topics);
+      final headings = _ReadCountingList([
+        const DocumentOutlineHeading(level: 1, text: 'needle', id: 'needle'),
+      ]);
+      final initial = _state().copyWith(
+        workspace: fixture.copyWith(
+          files: files,
+          writersideProject: null,
+          writersideModule: module.copyWith(topics: topics),
+        ),
+      );
+      final container = containerFor(
+        initial.copyWith(
+          liveOutline: ActiveDocumentOutline(
+            workspaceId: fixture.id,
+            bufferId: 'scratch-a',
+            filePath: null,
+            source: initial.activeText,
+            headings: headings,
+          ),
+        ),
+        worker: worker,
+        history: history,
+      );
+      container.read(appRouterProvider).go('/workspace');
+      await Future<void>.delayed(Duration.zero);
+      final session = container.read(searchSessionProvider.notifier);
+      // The expected categories are the agreed contract, not the production helper.
+      for (final category in [
+        SearchCategory.file,
+        SearchCategory.workspace,
+        SearchCategory.outline,
+        SearchCategory.documents,
+        SearchCategory.topics,
+        SearchCategory.localHistory,
+      ]) {
+        files.reads = topics.reads = headings.reads = 0;
+        session.open(category: category);
+        expect(container.read(searchSessionProvider).waitingForInput, isTrue);
+        expect(container.read(searchSessionProvider).searching, isFalse);
+        await session.submit();
+        session.showMore();
+        session.refresh(container.read(workspaceControllerProvider));
+        session.query('');
+        await session.submit();
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        final state = container.read(searchSessionProvider);
+        expect(
+          state.results,
+          isEmpty,
+          reason: '$category must wait for a query',
+        );
+        expect(state.searching, isFalse);
+        expect(state.truncated, isFalse);
+        expect(state.skippedFiles, isEmpty);
+        expect(state.error, isNull);
+        expect(worker.requests, 0);
+        expect(history.requests, 0);
+        expect(
+          history.builds,
+          0,
+          reason: 'Empty general History does not initialize its provider',
+        );
+        expect(
+          files.reads,
+          0,
+          reason: 'No empty-query document inventory discovery',
+        );
+        expect(
+          topics.reads,
+          0,
+          reason: 'No empty-query topic inventory discovery',
+        );
+        expect(headings.reads, 0, reason: 'No empty-query outline projection');
+      }
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .recordOpenedWorkspace(
+            path: '/workspace/recent.md',
+            kind: 'singleMarkdown',
+          );
+      session.open(category: SearchCategory.recent);
+      await session.submit();
+      expect(container.read(searchSessionProvider).waitingForInput, isFalse);
+      expect(
+        container.read(searchSessionProvider).results.single,
+        isA<RecentSearchResult>(),
+      );
+      session.configureCommands([
+        ActionSearchResult(
+          BusyMarkCommand(
+            id: 'test.action',
+            label: (_) => 'Action',
+            category: (_) => 'Test',
+            scope: BusyMarkCommandScope.application,
+            execute: () {},
+          ),
+          'Action',
+          'Test',
+          null,
+        ),
+      ]);
+      session.open(category: SearchCategory.actions);
+      await session.submit();
+      expect(
+        container.read(searchSessionProvider).results.single,
+        isA<ActionSearchResult>(),
+      );
+    },
+  );
+
+  test(
+    'clearing a query rejects delayed document work and empty submit never waits for it',
+    () async {
+      final worker = _CountingWorker()..gate = Completer<SourceSearchResult?>();
+      final container = containerFor(_state(), worker: worker);
+      container.read(appRouterProvider).go('/workspace');
+      await Future<void>.delayed(Duration.zero);
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(category: SearchCategory.file);
+      session.query('needle');
+      final running = session.submit();
+      expect(worker.requests, 1);
+      session.query('');
+      await session.submit().timeout(const Duration(seconds: 1));
+      worker.gate!.complete(
+        searchSourceDocument(
+          SourceDocument(fullText: 'prefix needle suffix'),
+          const SourceSearchOptions(query: 'needle'),
+        ),
+      );
+      await running;
+      final state = container.read(searchSessionProvider);
+      expect(state.results, isEmpty);
+      expect(state.documentMatchCount, 0);
+      expect(state.documentCurrentMatchIndex, isNull);
+      expect(state.sourceNavigationRequest, 0);
+      expect(state.waitingForInput, isTrue);
+      expect(worker.requests, 1);
+    },
+  );
+
+  test(
+    'literal whitespace remains a document and local-workspace query',
+    () async {
+      final worker = _CountingWorker();
+      final container = containerFor(
+        _state(text: 'a  b\nc', files: []),
+        worker: worker,
+      );
+      container.read(appRouterProvider).go('/workspace');
+      await Future<void>.delayed(Duration.zero);
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(category: SearchCategory.file);
+      session.query('  ');
+      await session.submit();
+      final state = container.read(searchSessionProvider);
+      expect(state.waitingForInput, isFalse);
+      expect(worker.requests, 1);
+      expect((state.results.single as TextSearchResult).match.startOffset, 1);
+      session.open(category: SearchCategory.workspace);
+      session.query(' ');
+      expect(container.read(searchSessionProvider).waitingForInput, isFalse);
+      await session.submit();
+    },
+  );
+
+  test(
+    'Outline search projects live heading identity, levels and duplicate ancestor context',
+    () async {
+      final initial = _state(text: '# A\n## Shared\n# B\n## Shared');
+      final headings = [
+        const DocumentOutlineHeading(
+          level: 1,
+          text: 'A',
+          id: 'a',
+          editorBlockId: 'a',
+        ),
+        const DocumentOutlineHeading(
+          level: 2,
+          text: 'Shared',
+          id: 'shared',
+          editorBlockId: 'first',
+        ),
+        const DocumentOutlineHeading(
+          level: 1,
+          text: 'B',
+          id: 'b',
+          editorBlockId: 'b',
+        ),
+        const DocumentOutlineHeading(
+          level: 2,
+          text: 'Shared',
+          id: 'shared-1',
+          editorBlockId: 'second',
+        ),
+      ];
+      final container = containerFor(
+        initial.copyWith(
+          liveOutline: ActiveDocumentOutline(
+            workspaceId: 'workspace',
+            bufferId: 'scratch-a',
+            filePath: null,
+            source: initial.activeText,
+            headings: headings,
+          ),
+        ),
+      );
+      container.read(appRouterProvider).go('/workspace');
+      await Future<void>.delayed(Duration.zero);
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(category: SearchCategory.outline);
+      session.query('shared');
+      await session.submit();
+      final results = container
+          .read(searchSessionProvider)
+          .results
+          .cast<OutlineSearchResult>();
+      expect(results.map((r) => r.heading.editorBlockId), ['first', 'second']);
+      expect(results.map((r) => r.heading.level), [2, 2]);
+      expect(results.map((r) => r.ancestors.single), ['A', 'B']);
+      expect(results.map((r) => r.identity).toSet(), hasLength(2));
+      session.moveSelection(1);
+      expect(container.read(searchSessionProvider).selected, 1);
+      expect(
+        container.read(workspaceControllerProvider).liveOutline!.headings,
+        same(headings),
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        initial.activeText,
+      );
+    },
+  );
+
+  testWidgets(
+    'Actions sort available first by localized metadata and preserve selected identity on availability change',
+    (tester) async {
+      final container = containerFor(_state());
+      final session = container.read(searchSessionProvider.notifier);
+      ActionSearchResult command(
+        String id,
+        String name, {
+        bool enabled = true,
+      }) => ActionSearchResult(
+        BusyMarkCommand(
+          id: id,
+          label: (_) => name,
+          category: (_) => 'Test',
+          scope: BusyMarkCommandScope.application,
+          execute: () => fail('Sorting must never execute actions'),
+        ),
+        name,
+        'Test',
+        null,
+        enabled: enabled,
+      );
+      session.configureCommands([
+        command('z', 'Zulu'),
+        command('a', 'Alpha', enabled: false),
+        command('b', 'Beta'),
+      ]);
+      session.open(category: SearchCategory.actions);
+      await session.submit();
+      expect(
+        container.read(searchSessionProvider).results.map((r) => r.identity),
+        ['b', 'z', 'a'],
+      );
+      session.select(2);
+      session.configureCommands([
+        command('z', 'Zulu'),
+        command('a', 'Alpha'),
+        command('b', 'Beta'),
+      ]);
+      await tester.pump();
+      final state = container.read(searchSessionProvider);
+      expect(state.results.map((r) => r.identity), ['a', 'b', 'z']);
+      expect(state.results[state.selected].identity, 'a');
+    },
+  );
+
+  testWidgets(
+    'Actions keep the focused command identity across availability reordering',
+    (tester) async {
+      final container = containerFor(_state());
+      final session = container.read(searchSessionProvider.notifier);
+      ActionSearchResult command(
+        String id,
+        String title, {
+        bool enabled = true,
+      }) => ActionSearchResult(
+        BusyMarkCommand(
+          id: id,
+          label: (_) => title,
+          category: (_) => 'Test',
+          scope: BusyMarkCommandScope.application,
+          execute: () {},
+        ),
+        title,
+        'Test',
+        null,
+        enabled: enabled,
+      );
+      session.configureCommands([
+        command('z', 'Zulu'),
+        command('a', 'Alpha', enabled: false),
+        command('b', 'Beta'),
+      ]);
+      session.open(category: SearchCategory.actions);
+      await session.submit();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  final state = ref.watch(searchSessionProvider);
+                  return SearchResultList(
+                    results: state.results,
+                    selected: state.selected,
+                    onActivate: (_) async {},
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      final originalFocus = tester
+          .widget<BusyMarkSidebarRecordRow>(find.byKey(const ValueKey('z')))
+          .focusNode!;
+      originalFocus.requestFocus();
+      await tester.pump();
+      expect(container.read(searchSessionProvider).selected, 1);
+      session.configureCommands([
+        command('z', 'Zulu'),
+        command('a', 'Alpha'),
+        command('b', 'Beta'),
+      ]);
+      await tester.pumpAndSettle();
+      final state = container.read(searchSessionProvider);
+      expect(state.results.map((r) => r.identity), ['a', 'b', 'z']);
+      expect(state.results[state.selected].identity, 'z');
+      expect(FocusManager.instance.primaryFocus, same(originalFocus));
+      expect(
+        tester
+            .widget<BusyMarkSidebarRecordRow>(find.byKey(const ValueKey('z')))
+            .focusNode,
+        same(originalFocus),
+      );
+    },
+  );
+
+  testWidgets(
+    'an empty initial Recent list is distinct from a completed no-results query',
+    (tester) async {
+      final container = containerFor(_state());
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(category: SearchCategory.recent);
+      await session.submit();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: SizedBox(width: 280, height: 400, child: SearchSidebar()),
+            ),
+          ),
+        ),
+      );
+      await tester.runAsync(session.submit);
+      await tester.pumpAndSettle();
+      expect(find.text(AppLocalizationsEn().searchRecentEmpty), findsOneWidget);
+      expect(find.text(AppLocalizationsEn().noResults), findsNothing);
+      session.query('missing');
+      await tester.runAsync(session.submit);
+      await tester.pump();
+      expect(find.text(AppLocalizationsEn().noResults), findsOneWidget);
+      session.query('');
+      await tester.runAsync(session.submit);
+      await tester.pump();
+      expect(find.text(AppLocalizationsEn().searchRecentEmpty), findsOneWidget);
+      expect(find.text(AppLocalizationsEn().noResults), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'result metadata stays concise and never exposes remote identities',
+    (tester) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (value) {
+              context = value;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      final local = RecentResource(
+        path: '/project/topics/a.topic',
+        ownerRoot: '/project',
+        kind: 'writersideModule',
+        title: 'A topic',
+        document: true,
+        lastOpenedAt: DateTime(2026),
+      );
+      final recent = presentSearchResult(context, RecentSearchResult(local));
+      expect(recent.subtitle, '/project/topics/a.topic');
+      expect('/project'.allMatches(recent.subtitle), hasLength(1));
+      for (final label in [null, 'Alex · notes.example']) {
+        final resource = RecentResource(
+          path: '',
+          kind: 'nextcloudNotes',
+          title: 'A note',
+          accountId: 'private-account-id',
+          localId: 'private-local-id',
+          accountLabel: label,
+          document: true,
+          lastOpenedAt: DateTime(2026),
+        );
+        final remote = presentSearchResult(
+          context,
+          RecentSearchResult(resource),
+        );
+        expect(
+          remote.subtitle,
+          label ?? AppLocalizationsEn().searchAccountUnavailable,
+        );
+        expect(remote.subtitle, isNot(contains('private-')));
+        final cached = presentSearchResult(
+          context,
+          RecentSearchResult(resource),
+          accountLabel: (_) => 'Cached user · notes.example',
+        );
+        expect(cached.subtitle, 'Cached user · notes.example');
+      }
+      final document = presentSearchResult(
+        context,
+        const DocumentSearchResult(
+          'workspace',
+          QuickOpenDocument(
+            title: 'Same',
+            path: 'folder/Same.md',
+            filePath: '/project/folder/Same.md',
+          ),
+        ),
+      );
+      expect(document.title, 'Same.md');
+      expect(document.subtitle, 'folder');
+      expect(document.details, '/project/folder/Same.md');
+      final topic = presentSearchResult(
+        context,
+        const TopicSearchResult(
+          'workspace',
+          '/project/a.topic',
+          'Same title',
+          'different-id',
+          'module A',
+          'topics/a.topic',
+        ),
+      );
+      expect(topic.subtitle, contains('module A'));
+      expect(topic.subtitle, contains('different-id'));
+      final historical = LocalHistoryDocument(
+        id: 'history-owner',
+        displayName: 'Deleted.md',
+        historicalPaths: const ['/old/Deleted.md'],
+        deleted: true,
+        updatedAt: DateTime(2026),
+      );
+      final history = presentSearchResult(
+        context,
+        HistorySearchResult(LocalHistoryDocumentMatch(historical)),
+      );
+      expect(history.title, 'Deleted.md');
+      expect(history.subtitle, '/old');
+      expect(history.subtitle, isNot(contains('Local History')));
+    },
+  );
+
+  testWidgets(
+    'shared result rows are compact, accessible and truly disable unavailable actions',
+    (tester) async {
+      final container = containerFor(_state());
+      final disabled = ActionSearchResult(
+        BusyMarkCommand(
+          id: 'disabled',
+          label: (_) => 'Unavailable action',
+          category: (_) => 'Notes',
+          scope: BusyMarkCommandScope.application,
+          execute: () => fail('Disabled execution'),
+        ),
+        'Unavailable action',
+        'Notes',
+        null,
+        enabled: false,
+        disabledReason: 'Requires a Notes workspace',
+      );
+      final rows = <SidebarSearchResult>[
+        const DocumentSearchResult(
+          'workspace',
+          QuickOpenDocument(
+            title: 'Short',
+            path: 'folder/Short.md',
+            filePath: '/project/folder/Short.md',
+          ),
+        ),
+        disabled,
+      ];
+      var activations = 0;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 280,
+                height: 400,
+                child: SearchResultList(
+                  results: rows,
+                  selected: 1,
+                  onActivate: (_) async {
+                    activations++;
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.byType(ListTile), findsNothing);
+      final short = find.byKey(ValueKey(rows.first.identity));
+      expect(tester.getSize(short).height, lessThan(80));
+      final unavailable = tester.widget<BusyMarkSidebarRecordRow>(
+        find.byKey(const ValueKey('disabled')),
+      );
+      expect(unavailable.onTap, isNull);
+      expect(unavailable.selected, isTrue);
+      expect(
+        unavailable.semanticsLabel,
+        contains('Requires a Notes workspace'),
+      );
+      await tester.tap(find.byKey(const ValueKey('disabled')));
+      expect(activations, 0);
+      await tester.tap(short);
+      expect(activations, 1);
+    },
+  );
 
   test('Welcome omits hidden document categories and command targets', () {
     final container = containerFor(_state());
@@ -227,10 +813,12 @@ void main() {
       await session.submit();
       expect(
         container
-            .read(workspaceControllerProvider)
-            .activeBuffer!
-            .editorState
-            .searchOptions,
+            .read(searchSessionProvider)
+            .sourceSnapshot(
+              container.read(workspaceControllerProvider).activeBuffer,
+            )
+            .result
+            .options,
         const SourceSearchOptions(),
       );
       session.open(category: SearchCategory.file);
@@ -387,35 +975,27 @@ void main() {
       );
       session.open(category: SearchCategory.file);
       session.set(
-        container
-            .read(searchSessionProvider)
-            .copyWith(query: 'Needle', caseSensitive: true, regex: true),
+        container.read(searchSessionProvider).copyWith(query: 'Needle'),
       );
       await session.submit();
-      expect(container.read(searchSessionProvider).documentMatchCount, 1);
+      expect(container.read(searchSessionProvider).documentMatchCount, 2);
       session.open(category: SearchCategory.workspace);
       expect(container.read(searchSessionProvider).query, isEmpty);
-      expect(container.read(searchSessionProvider).caseSensitive, isFalse);
-      expect(container.read(searchSessionProvider).regex, isFalse);
       session.set(
         container
             .read(searchSessionProvider)
-            .copyWith(query: 'workspace query', wholeWord: true),
+            .copyWith(query: 'workspace query'),
       );
       session.open(category: SearchCategory.file);
       expect(
         container.read(searchSessionProvider).options,
-        const SourceSearchOptions(
-          query: 'Needle',
-          caseSensitive: true,
-          regex: true,
-        ),
+        const SourceSearchOptions(query: 'Needle'),
       );
       await session.submit();
       session.open(category: SearchCategory.workspace);
       expect(
         container.read(searchSessionProvider).options,
-        const SourceSearchOptions(query: 'workspace query', wholeWord: true),
+        const SourceSearchOptions(query: 'workspace query'),
       );
       expect(
         container.read(workspaceControllerProvider).activeText,
@@ -840,4 +1420,72 @@ class _SlowHistoryStore extends MemoryLocalHistoryStore {
     }
     return super.readRevision(id);
   }
+}
+
+class _CountingWorker extends SourceSearchWorker {
+  int requests = 0;
+  Completer<SourceSearchResult?>? gate;
+  @override
+  Future<SourceSearchResult?> search(
+    SourceDocument document,
+    SourceSearchOptions options, {
+    int? currentMatchIndex,
+    int firstMatchIndex = 0,
+    int? minimumFullOffset,
+    int maximumMatches = sourceInteractiveSearchMatchLimit,
+    bool stopAfterMaximumMatches = false,
+    bool reuseWorker = false,
+  }) {
+    requests++;
+    return gate?.future ??
+        super.search(
+          document,
+          options,
+          currentMatchIndex: currentMatchIndex,
+          firstMatchIndex: firstMatchIndex,
+          minimumFullOffset: minimumFullOffset,
+          maximumMatches: maximumMatches,
+          stopAfterMaximumMatches: stopAfterMaximumMatches,
+          reuseWorker: reuseWorker,
+        );
+  }
+}
+
+class _CountingHistory extends LocalHistoryController {
+  int requests = 0, builds = 0;
+  @override
+  LocalHistoryState build() {
+    builds++;
+    return const LocalHistoryState();
+  }
+
+  @override
+  Future<LocalHistorySearchPage?> findRetained({
+    required String query,
+    String? documentId,
+    int maximumResults = 80,
+    bool Function()? isCancelled,
+    void Function(LocalHistorySearchPage)? onProgress,
+  }) async {
+    requests++;
+    return const LocalHistorySearchPage([]);
+  }
+}
+
+class _ReadCountingList<T> extends ListBase<T> {
+  _ReadCountingList(this.values);
+  final List<T> values;
+  int reads = 0;
+  @override
+  int get length => values.length;
+  @override
+  set length(int value) => throw UnsupportedError('Read only');
+  @override
+  T operator [](int index) {
+    reads++;
+    return values[index];
+  }
+
+  @override
+  void operator []=(int index, T value) => throw UnsupportedError('Read only');
 }

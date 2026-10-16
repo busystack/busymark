@@ -638,7 +638,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.export => context.l10n.export,
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
     BusyMarkAppShortcutAction.back => context.l10n.back,
-    BusyMarkAppShortcutAction.search => context.l10n.searchInFile,
+    BusyMarkAppShortcutAction.search => context.l10n.searchInDocument,
     BusyMarkAppShortcutAction.quickOpen => context.l10n.searchDocumentsCommand,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.keyboardShortcuts,

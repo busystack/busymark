@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart' show DateFormat;
-import 'package:path/path.dart' as p;
 
 import '../app/app_settings.dart';
 import '../app/busymark_design.dart';
@@ -19,13 +17,13 @@ import '../workspace/recent_navigation.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_glyphs.dart';
 import 'search_activation.dart';
-import 'search_option_button.dart';
-import 'search_result_preview.dart';
+import 'search_result_presentation.dart';
+import 'search_action_availability.dart';
 import 'search_session.dart';
 
 String searchCategoryLabel(BuildContext context, SearchCategory category) =>
     switch (category) {
-      SearchCategory.file => context.l10n.searchInFile,
+      SearchCategory.file => context.l10n.searchInDocument,
       SearchCategory.workspace => context.l10n.searchInWorkspace,
       SearchCategory.outline => context.l10n.outline,
       SearchCategory.documents => context.l10n.searchDocumentsCategory,
@@ -96,11 +94,16 @@ class _SearchHeaderFieldState extends ConsumerState<SearchHeaderField> {
       child: BusyMarkSearchField(
         key: const ValueKey('shared-search-query'),
         controller: _text,
-        hintText: state.fileActive || state.workspaceActive
-            ? '${searchCategoryLabel(context, state.category)}…'
-            : context.l10n.searchQueryHint(
-                searchCategoryLabel(context, state.category),
-              ),
+        hintText: switch (state.category) {
+          SearchCategory.file => context.l10n.searchDocumentHint,
+          SearchCategory.workspace => context.l10n.searchWorkspaceHint,
+          SearchCategory.outline => context.l10n.searchOutlineHint,
+          SearchCategory.documents => context.l10n.searchDocumentsHint,
+          SearchCategory.topics => context.l10n.searchTopicsHint,
+          SearchCategory.recent => context.l10n.searchRecentHint,
+          SearchCategory.localHistory => context.l10n.searchHistoryHint,
+          SearchCategory.actions => context.l10n.searchActionsHint,
+        },
         autofocus: state.active,
         focusRequest: state.focusRequest,
         clearOnEscape: false,
@@ -115,26 +118,14 @@ class _SearchHeaderFieldState extends ConsumerState<SearchHeaderField> {
   }
 }
 
-/// Shared presentation; the outline is the application's existing renderer.
+/// One lazy result surface, shared by all categories and both application routes.
 class SearchSidebar extends ConsumerWidget {
-  const SearchSidebar({
-    super.key,
-    this.outline,
-    this.onReviewReplacement,
-    this.outlineOnly = false,
-  });
-  final Widget? outline;
-  final bool outlineOnly;
+  const SearchSidebar({super.key, this.onReviewReplacement});
   final Future<void> Function()? onReviewReplacement;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(searchSessionProvider);
-    final browsingOutline =
-        outline != null &&
-        (outlineOnly ||
-            !state.active ||
-            state.category != SearchCategory.outline);
-    if (!state.active && outline == null) return const SizedBox.shrink();
+    if (!state.active) return const SizedBox.shrink();
     final controller = ref.read(searchSessionProvider.notifier);
     final commands = BusyMarkCommandRegistryScope.maybeOf(context);
     if (commands != null) {
@@ -145,29 +136,66 @@ class SearchSidebar extends ConsumerWidget {
             c.label(context),
             c.category(context),
             c.description?.call(context),
+            enabled: searchActionEnabled(
+              commands,
+              c,
+              controller,
+              ref.read(workspaceControllerProvider),
+            ),
+            disabledReason:
+                {
+                      BusyMarkCommandIds.syncNotes,
+                      BusyMarkCommandIds.exportNotes,
+                      BusyMarkCommandIds.importNotesFolder,
+                      BusyMarkCommandIds.importNotesFile,
+                    }.contains(c.id) &&
+                    ref.read(workspaceControllerProvider).workspace?.isRemote !=
+                        true
+                ? context.l10n.searchRequiresNotesWorkspace
+                : c.disabledReason?.call(context),
           ),
       ]);
     }
     final workspace = ref.watch(workspaceControllerProvider);
     final remote = workspace.workspace?.isRemote == true;
-    final historyDocuments = state.category == SearchCategory.localHistory
+    final historyDocuments =
+        state.category == SearchCategory.localHistory &&
+            state.historyDocumentId != null
         ? ref.watch(localHistoryControllerProvider).snapshot.documents
         : const <LocalHistoryDocument>[];
-    final account = remote && state.workspaceActive
+    final container = ProviderScope.containerOf(context, listen: false);
+    final accountId = workspace.workspace?.nextcloudAccountId;
+    final activeAccount =
+        remote && container.exists(nextcloudConnectionProvider)
         ? ref.watch(nextcloudConnectionProvider).account
         : null;
-    final historyDocument = historyDocuments
-        .where((d) => d.id == state.historyDocumentId)
-        .firstOrNull;
-    final contextLabel = state.fileActive
+    final cachedAccount =
+        remote && container.exists(nextcloudNotesRepositoryProvider)
+        ? ref
+              .watch(nextcloudNotesRepositoryProvider)
+              .value
+              ?.accountById(accountId ?? '')
+        : null;
+    final account = activeAccount?.id == accountId
+        ? activeAccount
+        : cachedAccount;
+    final historyDocument = state.historyDocumentId == null
+        ? null
+        : historyDocuments
+              .where((d) => d.id == state.historyDocumentId)
+              .firstOrNull;
+    final contextLabel =
+        state.fileActive || state.category == SearchCategory.outline
         ? workspace.activeBuffer?.displayName
-        : state.workspaceActive
+        : state.workspaceActive ||
+              state.category == SearchCategory.documents ||
+              state.category == SearchCategory.topics
         ? (state.recovery
               ? context.l10n.notesRecovery
               : remote
               ? (account?.id == workspace.workspace?.nextcloudAccountId
                     ? '${account!.loginName} · ${account.server.host}'
-                    : workspace.workspace?.nextcloudAccountId)
+                    : context.l10n.searchAccountUnavailable)
               : workspace.workspace?.filesystemRootPath)
         : state.category == SearchCategory.localHistory
         ? historyDocument?.displayName ??
@@ -201,206 +229,156 @@ class SearchSidebar extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!browsingOutline) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: BusyMarkSpacing.sm,
-                vertical: BusyMarkSpacing.xs,
-              ),
-              child: BusyMarkMenuButton<SearchCategory>(
-                key: const ValueKey('search-category'),
-                tooltip: context.l10n.searchCategory,
-                fallbackMenuWidth: BusyMarkSizes.sidebarWidth,
-                items: [
-                  for (final category in controller.categories)
-                    BusyMarkPopupMenuItem(
-                      value: category,
-                      label: searchCategoryLabel(context, category),
-                      checked: category == state.category,
-                      trailingCheck: true,
-                    ),
-                ],
-                onSelected: (category) => controller.open(category: category),
-                triggerBuilder: (context, trigger) => trigger.anchor(
-                  child: Tooltip(
-                    message: context.l10n.searchCategory,
-                    child: Semantics(
-                      label: context.l10n.searchCategory,
-                      expanded: trigger.isOpen,
-                      child: BusyMarkPushButton.standard(
-                        focusNode: trigger.focusNode,
-                        onPressed: trigger.onPressed,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                searchCategoryLabel(context, state.category),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.sm,
+              vertical: BusyMarkSpacing.xs,
+            ),
+            child: BusyMarkMenuButton<SearchCategory>(
+              key: const ValueKey('search-category'),
+              tooltip: context.l10n.searchCategory,
+              fallbackMenuWidth: BusyMarkSizes.sidebarWidth,
+              items: [
+                for (final category in controller.categories)
+                  BusyMarkPopupMenuItem(
+                    value: category,
+                    label: searchCategoryLabel(context, category),
+                    checked: category == state.category,
+                    trailingCheck: true,
+                  ),
+              ],
+              onSelected: (category) => controller.open(category: category),
+              triggerBuilder: (context, trigger) => trigger.anchor(
+                child: Tooltip(
+                  message: context.l10n.searchCategory,
+                  child: Semantics(
+                    label: context.l10n.searchCategory,
+                    expanded: trigger.isOpen,
+                    child: BusyMarkPushButton.standard(
+                      focusNode: trigger.focusNode,
+                      onPressed: trigger.onPressed,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              searchCategoryLabel(context, state.category),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: BusyMarkSpacing.xs),
-                            const Icon(
-                              BusyMarkGlyphs.downArrow,
-                              size: BusyMarkSizes.iconSm,
-                            ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: BusyMarkSpacing.xs),
+                          const Icon(
+                            BusyMarkGlyphs.downArrow,
+                            size: BusyMarkSizes.iconSm,
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-            if (contextLabel != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BusyMarkSpacing.md,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Tooltip(
-                        message: contextLabel,
-                        child: Text(
-                          contextLabel,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+          ),
+          if (contextLabel != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: contextLabel,
+                      child: Text(
+                        contextLabel,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
-                    if (state.category == SearchCategory.localHistory &&
-                        state.historyDocumentId != null)
-                      BusyMarkCompactIconButton(
-                        tooltip: context.l10n.clearHistorySearchScope,
-                        icon: BusyMarkGlyphs.clear,
-                        onPressed: controller.clearHistoryScope,
-                      ),
-                  ],
-                ),
-              ),
-            if (state.textActive)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BusyMarkSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    if (state.fileActive || !remote)
-                      SearchOptionButton(
-                        label: 'Aa',
-                        tooltip: context.l10n.sourceSearchCaseSensitive,
-                        selected: state.caseSensitive,
-                        onPressed: () => controller.set(
-                          state.copyWith(caseSensitive: !state.caseSensitive),
-                        ),
-                      ),
-                    SearchOptionButton(
-                      label: 'W',
-                      tooltip: context.l10n.sourceSearchWholeWord,
-                      selected: state.wholeWord,
-                      onPressed: () => controller.set(
-                        state.copyWith(wholeWord: !state.wholeWord),
-                      ),
-                    ),
-                    if (state.fileActive || !remote)
-                      SearchOptionButton(
-                        label: '.*',
-                        tooltip: context.l10n.sourceSearchRegex,
-                        selected: state.regex,
-                        onPressed: () =>
-                            controller.set(state.copyWith(regex: !state.regex)),
-                      ),
-                    if (remote && state.workspaceActive)
-                      BusyMarkCompactIconButton(
-                        tooltip: context.l10n.notesSearchHelp,
-                        icon: BusyMarkGlyphs.info,
-                        onPressed: null,
-                      ),
-                  ],
-                ),
-              ),
-            if (!remote &&
-                state.workspaceActive &&
-                !state.recovery &&
-                onReviewReplacement != null &&
-                state.query.isNotEmpty &&
-                !state.searching)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BusyMarkSpacing.sm,
-                ),
-                child: BusyMarkPushButton.standard(
-                  onPressed: () => unawaited(onReviewReplacement!()),
-                  child: Text(context.l10n.workspaceReplace),
-                ),
-              ),
-            if (state.searching)
-              const LinearProgressIndicator(
-                key: ValueKey('workspace-search-progress'),
-              ),
-            if (state.indexing) _SearchNotice(context.l10n.notesIndexing),
-            if (state.error != null) _SearchNotice(state.error!),
-            if (state.invalidRegex)
-              _SearchNotice(context.l10n.sourceSearchInvalidRegex),
-            if (state.hasZeroLengthMatches)
-              _SearchNotice(context.l10n.sourceSearchZeroLengthUnsupported),
-            if (state.skippedFiles.isNotEmpty)
-              Tooltip(
-                message: state.skippedFiles.join('\n'),
-                child: _SearchNotice(
-                  '${context.l10n.workspaceSearchSkippedFiles} · ${state.skippedFiles.length}\n'
-                  '${state.skippedFiles.join('\n')}',
-                ),
-              ),
-            if (state.truncated)
-              _SearchNotice(context.l10n.workspaceSearchIncomplete),
-            if (state.truncated)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BusyMarkSpacing.sm,
-                ),
-                child: Tooltip(
-                  message: context.l10n.workspaceSearchIncomplete,
-                  child: TextButton(
-                    onPressed: controller.showMore,
-                    child: Text(context.l10n.workspaceSearchShowMore),
                   ),
+                  if (state.category == SearchCategory.localHistory &&
+                      state.historyDocumentId != null)
+                    BusyMarkCompactIconButton(
+                      tooltip: context.l10n.clearHistorySearchScope,
+                      icon: BusyMarkGlyphs.clear,
+                      onPressed: controller.clearHistoryScope,
+                    ),
+                ],
+              ),
+            ),
+          if (remote && state.workspaceActive)
+            _SearchNotice(context.l10n.notesSearchHelp),
+          if (!remote &&
+              state.workspaceActive &&
+              !state.recovery &&
+              onReviewReplacement != null &&
+              state.query.isNotEmpty &&
+              !state.searching)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+              ),
+              child: BusyMarkPushButton.standard(
+                onPressed: () => unawaited(onReviewReplacement!()),
+                child: Text(context.l10n.workspaceReplace),
+              ),
+            ),
+          if (state.searching)
+            const LinearProgressIndicator(
+              key: ValueKey('workspace-search-progress'),
+            ),
+          if (state.indexing) _SearchNotice(context.l10n.notesIndexing),
+          if (state.error != null) _SearchNotice(state.error!),
+          if (state.skippedFiles.isNotEmpty)
+            Tooltip(
+              message: state.skippedFiles.join('\n'),
+              child: _SearchNotice(
+                '${context.l10n.workspaceSearchSkippedFiles} · ${state.skippedFiles.length}\n'
+                '${state.skippedFiles.join('\n')}',
+              ),
+            ),
+          if (state.truncated)
+            _SearchNotice(context.l10n.workspaceSearchIncomplete),
+          if (state.truncated)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+              ),
+              child: Tooltip(
+                message: context.l10n.workspaceSearchIncomplete,
+                child: TextButton(
+                  onPressed: controller.showMore,
+                  child: Text(context.l10n.workspaceSearchShowMore),
                 ),
               ),
-          ],
+            ),
           Expanded(
-            child:
-                outline ??
-                (state.results.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                          child: Text(
-                            state.searching ||
-                                    state.error != null ||
-                                    state.skippedFiles.isNotEmpty ||
-                                    state.invalidRegex ||
-                                    state.hasZeroLengthMatches
-                                ? ''
-                                : state.textActive && state.query.isEmpty
-                                ? context.l10n.searchQueryHint(
-                                    searchCategoryLabel(
-                                      context,
-                                      state.category,
-                                    ),
-                                  )
-                                : context.l10n.noResults,
-                          ),
-                        ),
-                      )
-                    : SearchResultList(
-                        results: state.results,
-                        selected: state.selected,
-                        onActivate: (result) =>
-                            activateSearchResult(context, ref, result),
-                      )),
+            child: (state.results.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+                      child: Text(
+                        state.searching ||
+                                state.error != null ||
+                                state.skippedFiles.isNotEmpty
+                            ? ''
+                            : state.waitingForInput
+                            ? context.l10n.searchEnterText
+                            : state.showingInitialList
+                            ? (state.category == SearchCategory.recent
+                                  ? context.l10n.searchRecentEmpty
+                                  : context.l10n.commandUnavailableInContext)
+                            : context.l10n.noResults,
+                      ),
+                    ),
+                  )
+                : SearchResultList(
+                    results: state.results,
+                    selected: state.selected,
+                    onActivate: (result) =>
+                        activateSearchResult(context, ref, result),
+                  )),
           ),
         ],
       ),
@@ -443,7 +421,7 @@ class SearchResultList extends ConsumerStatefulWidget {
 class _SearchResultListState extends ConsumerState<SearchResultList> {
   final _scroll = ScrollController();
   final _keys = <int, GlobalKey>{};
-  final _focusNodes = <int, FocusNode>{};
+  final _focusNodes = <String, FocusNode>{};
   @override
   void initState() {
     super.initState();
@@ -459,7 +437,22 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
   @override
   void didUpdateWidget(covariant SearchResultList oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.results, widget.results)) _keys.clear();
+    if (!identical(oldWidget.results, widget.results)) {
+      _keys.clear();
+      final retained = {for (final result in widget.results) result.identity};
+      final obsolete = [
+        for (final id in _focusNodes.keys)
+          if (!retained.contains(id)) id,
+      ];
+      final released = [for (final id in obsolete) _focusNodes.remove(id)!];
+      // Old lazy rows detach this frame. Keep focus by resource identity when
+      // availability reorders Actions; release handles for discarded pages.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        for (final node in released) {
+          node.dispose();
+        }
+      });
+    }
     if (widget.selected >= 0 &&
         (oldWidget.selected != widget.selected ||
             !identical(oldWidget.results, widget.results))) {
@@ -495,7 +488,7 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
             mounted &&
             widget.selected == index &&
             identical(widget.results, results)) {
-          _focusNodes[index]?.requestFocus();
+          _focusNodes[results[index].identity]?.requestFocus();
         }
         return;
       }
@@ -526,6 +519,20 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
   Widget build(BuildContext context) {
     final rows = widget.results;
     final colors = BusyMarkSurfaceColors.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final activeAccount = container.exists(nextcloudConnectionProvider)
+        ? ref.watch(nextcloudConnectionProvider).account
+        : null;
+    final cachedAccounts = container.exists(nextcloudNotesRepositoryProvider)
+        ? ref.watch(nextcloudNotesRepositoryProvider).value?.accounts
+        : null;
+    final accountLabels = <String, String>{
+      for (final account in cachedAccounts ?? [])
+        account.id: '${account.loginName} · ${account.server.host}',
+      if (activeAccount != null)
+        activeAccount.id:
+            '${activeAccount.loginName} · ${activeAccount.server.host}',
+    };
     return Material(
       color: BusyMarkLinuxPalette.transparent,
       child: ListView.builder(
@@ -535,58 +542,14 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
         itemCount: rows.length,
         itemBuilder: (context, index) {
           final result = rows[index];
-          final (title, subtitle, shortcut) = switch (result) {
-            TextSearchResult(:final match) => (
-              searchResultTitle(context, match.lineText ?? ''),
-              context.l10n.searchResultLine(match.relativePath, match.line),
-              null,
-            ),
-            NoteSearchResult(:final hit) => (
-              hit.title,
-              '${hit.category}\n${hit.snippet}',
-              null,
-            ),
-            DocumentSearchResult(:final document) => (
-              document.title,
-              document.path,
-              null,
-            ),
-            TopicSearchResult(
-              :final title,
-              :final topicId,
-              :final module,
-              :final relativePath,
-            ) =>
-              (title, '$module · $topicId\n$relativePath', null),
-            RecentSearchResult(:final resource) => (
-              resource.title ??
-                  (resource.accountId != null
-                      ? context.l10n.nextcloudNotes
-                      : p.basename(resource.path)),
-              resource.accountId == null
-                  ? '${resource.ownerRoot == null ? '' : '${resource.ownerRoot}\n'}${resource.path}'
-                  : '${resource.accountLabel ?? resource.accountId}${resource.localId == null ? '' : ' · ${resource.localId}'}',
-              null,
-            ),
-            HistorySearchResult(:final match) => (
-              match.document.displayName,
-              '${match is LocalHistoryRevisionMatch ? DateFormat.yMd(Localizations.localeOf(context).toLanguageTag()).add_Hms().format(match.revision.capturedAt.toLocal()) : context.l10n.localHistory}\n'
-                  '${match is LocalHistoryRevisionMatch ? match.revision.historicalPath ?? '' : match.document.currentPath ?? match.document.historicalPaths.lastOrNull ?? ''}'
-                  '${match.document.remoteNote == null ? '' : '\n${match.document.remoteNote!.accountId} · ${match.document.remoteNote!.localId}'}',
-              null,
-            ),
-            ActionSearchResult(:final title, :final category, :final command) =>
-              (
-                title,
-                actionEnabled(ref, result)
-                    ? category
-                    : command.disabledReason?.call(context) ??
-                          context.l10n.commandUnavailableInContext,
-                command.shortcut?.label,
-              ),
-          };
-          final enabled =
-              result is! ActionSearchResult || actionEnabled(ref, result);
+          final presentation = presentSearchResult(
+            context,
+            result,
+            accountLabel: (id) => accountLabels[id],
+          );
+          final title = presentation.title, subtitle = presentation.subtitle;
+          final shortcut = presentation.shortcut;
+          final enabled = result is! ActionSearchResult || result.enabled;
           final selected =
               widget.selected >= 0 &&
               widget.selected < widget.results.length &&
@@ -599,11 +562,20 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                   result.hit.end,
                 ))
               : ValueKey(result.identity);
-          final row = ListTile(
+          return BusyMarkSidebarRecordRow<RecentNavigationAction>(
             key: key,
+            icon: result is RecentSearchResult
+                ? WorkspaceGlyphs.forRecent(result.resource)
+                : result is ActionSearchResult
+                ? BusyMarkGlyphs.keyboard
+                : result is OutlineSearchResult
+                ? BusyMarkGlyphs.tag
+                : result is HistorySearchResult
+                ? BusyMarkGlyphs.history
+                : BusyMarkGlyphs.document,
             selected: selected,
-            enabled: enabled,
-            focusNode: _focusNodes.putIfAbsent(index, FocusNode.new),
+            compact: true,
+            focusNode: _focusNodes.putIfAbsent(result.identity, FocusNode.new),
             onFocusChange: (focused) {
               if (focused &&
                   widget.selected >= 0 &&
@@ -611,87 +583,67 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                 ref.read(searchSessionProvider.notifier).select(index);
               }
             },
-            selectedTileColor: Color.alphaBlend(colors.control, colors.sidebar),
-            contentPadding: BusyMarkInsets.searchResultRow,
-            title: Text(title, maxLines: 3, overflow: TextOverflow.ellipsis),
-            subtitle: Tooltip(
+            semanticsLabel:
+                '$title\n$subtitle${presentation.details == null ? '' : '\n${presentation.details}'}${shortcut == null ? '' : '\n$shortcut'}',
+            content: Column(
               key: _keys.putIfAbsent(index, GlobalKey.new),
-              message: '$title\n$subtitle',
-              child: Text(
-                subtitle,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            trailing: result is RecentSearchResult
-                ? IconButton(
-                    tooltip: context.l10n.removeFromRecent,
-                    icon: const Icon(BusyMarkGlyphs.clear),
-                    onPressed: () => unawaited(
-                      ref
-                          .read(appSettingsControllerProvider.notifier)
-                          .removeRecentWorkspace(result.resource.identity),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: enabled ? colors.foreground : colors.mutedForeground,
+                  ),
+                ),
+                if (subtitle.isNotEmpty)
+                  Text(
+                    subtitle,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.mutedForeground,
                     ),
-                  )
-                : result is NoteSearchResult &&
-                      !result.recovery &&
-                      result.hit.start != null
-                ? IconButton(
+                  ),
+              ],
+            ),
+            trailing:
+                result is NoteSearchResult &&
+                    !result.recovery &&
+                    result.hit.start != null
+                ? BusyMarkCompactIconButton(
                     tooltip: context.l10n.notesSourceLocation,
-                    icon: const Icon(BusyMarkGlyphs.code),
+                    icon: BusyMarkGlyphs.code,
                     onPressed: () => unawaited(
                       activateSearchResult(context, ref, result, source: true),
                     ),
                   )
                 : shortcut == null
                 ? null
-                : Text(shortcut, style: Theme.of(context).textTheme.labelSmall),
-            onTap: enabled ? () => unawaited(widget.onActivate(result)) : null,
-          );
-          if (result is RecentSearchResult) {
-            final resource = result.resource;
-            final record = BusyMarkSidebarRecordRow<RecentNavigationAction>(
-              key: key,
-              icon: WorkspaceGlyphs.forRecent(resource),
-              selected: selected,
-              content: Tooltip(
-                key: _keys.putIfAbsent(index, GlobalKey.new),
-                message: '$title\n$subtitle',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, maxLines: 3, overflow: TextOverflow.ellipsis),
-                    Text(
-                      subtitle,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
+                : ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 96),
+                    child: Text(
+                      shortcut,
+                      style: Theme.of(context).textTheme.labelSmall,
                     ),
-                  ],
-                ),
-              ),
-              onTap: () => unawaited(widget.onActivate(result)),
-              menuTooltip: context.l10n.actions,
-              menuItemsBuilder: (context) =>
-                  _recentMenuItems(context, resource),
-              onMenuSelected: (action) => unawaited(
-                runRecentNavigationAction(context, ref, resource, action),
-              ),
-            );
-            final focusable = Focus(
-              focusNode: _focusNodes.putIfAbsent(index, FocusNode.new),
-              onFocusChange: (focused) {
-                if (focused &&
-                    widget.selected >= 0 &&
-                    ref.read(searchSessionProvider).active) {
-                  ref.read(searchSessionProvider.notifier).select(index);
-                }
-              },
-              child: record,
-            );
-            return focusable;
-          }
-          return row;
+                  ),
+            onTap: enabled ? () => unawaited(widget.onActivate(result)) : null,
+            menuTooltip: result is RecentSearchResult
+                ? context.l10n.actions
+                : null,
+            menuItemsBuilder: result is RecentSearchResult
+                ? (context) => _recentMenuItems(context, result.resource)
+                : null,
+            onMenuSelected: result is RecentSearchResult
+                ? (action) => unawaited(
+                    runRecentNavigationAction(
+                      context,
+                      ref,
+                      result.resource,
+                      action,
+                    ),
+                  )
+                : null,
+          );
         },
       ),
     );

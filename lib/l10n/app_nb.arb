@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Dato",
   "pdfTitlePageTitleRequired": "Skriv inn en tittel for tittelsiden.",
   "pdfTocSectionNote": "Starter på en egen side og kan gå over flere sider.",
-  "sourceSearchZeroLengthUnsupported": "Regex-treff med null lengde støttes ikke (for eksempel ^, $ eller fremoversøk som bare samsvarer med en posisjon).",
   "workspaceSearchIncomplete": "Bare noen av resultatene vises. Vis flere eller avgrens søket.",
   "workspaceSearchShowMore": "Vis flere resultater",
   "workspaceSearchSkippedFiles": "Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Neste treff",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Skill mellom store og små bokstaver",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Hele ord",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regulært uttrykk",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Ugyldig regulært uttrykk",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Stor fil: utheving og folding er satt på pause",
   "@sourceLargeFileFeaturesPaused": {
@@ -3616,11 +3599,22 @@
   "searchDocumentsCommand": "Søk etter dokumenter",
   "searchTopicsCommand": "Søk etter emner",
   "searchRecentCommand": "Søk i nylige",
-  "searchQueryHint": "Søk i {category}…",
   "searchResourceUnavailable": "Denne ressursen er utilgjengelig.",
   "notesSync": "Synkroniser notater",
-  "searchInFile": "Søk i fil",
   "searchInWorkspace": "Søk i arbeidsområde",
   "searchCategory": "Søkekategori",
-  "clearHistorySearchScope": "Søk i dokumenthistorikken"
+  "clearHistorySearchScope": "Søk i dokumenthistorikken",
+  "searchInDocument": "Søk i dokument",
+  "searchDocumentHint": "Søk i dette dokumentet…",
+  "searchWorkspaceHint": "Søk i dette arbeidsområdet…",
+  "searchOutlineHint": "Søk i overskrifter…",
+  "searchHistoryHint": "Søk i lokal historikk…",
+  "searchEnterText": "Skriv inn tekst for å søke",
+  "searchAccountUnavailable": "Konto utilgjengelig",
+  "searchDocumentsHint": "Søk etter dokumenter…",
+  "searchTopicsHint": "Søk etter emner…",
+  "searchRecentHint": "Søk i nylige…",
+  "searchActionsHint": "Søk etter handlinger…",
+  "searchRequiresNotesWorkspace": "Krever et notatarbeidsområde",
+  "searchRecentEmpty": "Ingen nylige ressurser"
 }

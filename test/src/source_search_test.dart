@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-    'workspace worker reuses sequential requests and cancels an active regex',
+    'workspace worker reuses sequential requests and cancels an active request',
     () async {
       final worker = SourceSearchWorker();
       addTearDown(worker.dispose);
@@ -21,11 +21,10 @@ void main() {
         );
       }
       final slow = worker.search(
-        SourceDocument(fullText: '${'a' * 100}b'),
-        const SourceSearchOptions(query: r'^(a+)+$', regex: true),
+        SourceDocument(fullText: 'a ' * 400000),
+        const SourceSearchOptions(query: 'a'),
         reuseWorker: true,
       );
-      await Future<void>.delayed(const Duration(milliseconds: 80));
       worker.cancel();
       expect(await slow.timeout(const Duration(seconds: 5)), isNull);
       final next = await worker.search(
@@ -36,29 +35,38 @@ void main() {
       expect(next!.matches.single.fullStart, 4);
     },
   );
-  test('regex uses Unicode code points and diagnoses zero-length matches', () {
-    final document = SourceDocument(fullText: '😀');
-    final result = searchSourceDocument(
-      document,
-      const SourceSearchOptions(query: '.', regex: true),
-    );
-    expect(result.matches.single.fullStart, 0);
-    expect(result.matches.single.fullEnd, 2);
-    for (final query in ['^', r'$', '(?=😀)']) {
-      final positions = searchSourceDocument(
-        document,
-        SourceSearchOptions(query: query, regex: true),
+  test(
+    'regex-looking punctuation is literal and Unicode offsets remain valid',
+    () {
+      const source = r'😀 .* ^ $ (?=😀) \q [';
+      final document = SourceDocument(fullText: source);
+      for (final query in ['😀', '.*', '^', r'$', '(?=😀)', r'\q', '[']) {
+        final result = searchSourceDocument(
+          document,
+          SourceSearchOptions(query: query),
+        );
+        expect(result.matches, isNotEmpty);
+        for (final match in result.matches) {
+          expect(source.substring(match.fullStart, match.fullEnd), query);
+          expect(
+            sourceSearchRangeHasSafeBoundaries(
+              source,
+              match.fullStart,
+              match.fullEnd,
+            ),
+            isTrue,
+          );
+        }
+      }
+      expect(
+        searchSourceDocument(
+          document,
+          const SourceSearchOptions(query: '.'),
+        ).totalMatchCount,
+        1,
       );
-      expect(positions.matches, isEmpty);
-      expect(positions.hasZeroLengthMatches, isTrue);
-    }
-    const invalidInUnicodeMode = SourceSearchOptions(query: r'\q', regex: true);
-    expect(sourceSearchOptionsHaveInvalidRegex(invalidInUnicodeMode), isTrue);
-    expect(
-      searchSourceDocument(document, invalidInUnicodeMode).invalidRegex,
-      isTrue,
-    );
-  });
+    },
+  );
 
   test('workspace-style bounded matching stops after the sentinel match', () {
     final result = searchSourceDocument(
@@ -71,14 +79,13 @@ void main() {
     expect(result.totalMatchCount, 81);
   });
 
-  test('search worker terminates a running backtracking expression', () async {
+  test('search worker cancels a superseded request', () async {
     final worker = SourceSearchWorker();
     addTearDown(worker.dispose);
     final slow = worker.search(
-      SourceDocument(fullText: '${'a' * 100}b'),
-      const SourceSearchOptions(query: r'^(a+)+$', regex: true),
+      SourceDocument(fullText: 'a ' * 400000),
+      const SourceSearchOptions(query: 'a'),
     );
-    await Future<void>.delayed(const Duration(milliseconds: 100));
     final current = worker.search(
       SourceDocument(fullText: 'needle'),
       const SourceSearchOptions(query: 'needle'),
@@ -100,60 +107,59 @@ void main() {
     expect(result.matches.map((match) => match.fullStart), [0, 6]);
   });
 
-  test('case-sensitive and whole-word options constrain matches', () {
+  test('literal matching includes case differences and partial words', () {
     final document = SourceDocument(fullText: 'Alpha alpha alphabet');
 
     expect(
       searchSourceDocument(
         document,
-        const SourceSearchOptions(query: 'Alpha', caseSensitive: true),
+        const SourceSearchOptions(query: 'Alpha'),
       ).totalMatchCount,
-      1,
+      3,
     );
     expect(
       searchSourceDocument(
         document,
-        const SourceSearchOptions(query: 'alpha', wholeWord: true),
+        const SourceSearchOptions(query: 'alpha'),
       ).matches.map((match) => match.fullStart),
-      [0, 6],
+      [0, 6, 12],
     );
   });
 
-  test('whole-word boundaries recognize Unicode letters and marks', () {
+  test('Unicode substrings preserve authored source coordinates', () {
     final cyrillic = searchSourceDocument(
       SourceDocument(fullText: 'привет рив'),
-      const SourceSearchOptions(query: 'рив', wholeWord: true),
+      const SourceSearchOptions(query: 'рив'),
     );
     final combining = searchSourceDocument(
       SourceDocument(fullText: 'cafe\u0301 fe'),
-      const SourceSearchOptions(query: 'fe', wholeWord: true),
+      const SourceSearchOptions(query: 'fe'),
     );
     final cjk = searchSourceDocument(
       SourceDocument(fullText: '中文 文'),
-      const SourceSearchOptions(query: '文', wholeWord: true),
+      const SourceSearchOptions(query: '文'),
     );
 
-    expect(cyrillic.matches.map((match) => match.fullStart), [7]);
-    expect(combining.matches.map((match) => match.fullStart), [6]);
-    expect(cjk.matches.map((match) => match.fullStart), [3]);
+    expect(cyrillic.matches.map((match) => match.fullStart), [1, 7]);
+    expect(combining.matches.map((match) => match.fullStart), [2, 6]);
+    expect(cjk.matches.map((match) => match.fullStart), [1, 3]);
   });
 
-  test('regex search and invalid regex are safe', () {
-    final document = SourceDocument(fullText: 'v1 v22 vx');
-
+  test('regex-looking input never becomes an expression', () {
+    final document = SourceDocument(fullText: r'v1 v22 vx v\d+ [');
     expect(
       searchSourceDocument(
         document,
-        const SourceSearchOptions(query: r'v\d+', regex: true),
-      ).matches.map((match) => match.fullEnd),
-      [2, 6],
+        const SourceSearchOptions(query: r'v\d+'),
+      ).matches.map((m) => m.fullStart),
+      [10],
     );
     expect(
       searchSourceDocument(
         document,
-        const SourceSearchOptions(query: r'[', regex: true),
-      ).invalidRegex,
-      isTrue,
+        const SourceSearchOptions(query: '['),
+      ).totalMatchCount,
+      1,
     );
   });
 

@@ -39,15 +39,11 @@ class WorkspaceTextOutcome {
     this.matches = const [],
     this.truncated = false,
     this.skippedFiles = const [],
-    this.invalidRegex = false,
-    this.hasZeroLengthMatches = false,
   });
 
   final List<WorkspaceTextMatch> matches;
   final bool truncated;
   final List<String> skippedFiles;
-  final bool invalidRegex;
-  final bool hasZeroLengthMatches;
 }
 
 Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
@@ -63,12 +59,8 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
   if (workspace == null || options.query.isEmpty || isCancelled()) {
     return const WorkspaceTextOutcome();
   }
-  if (sourceSearchOptionsHaveInvalidRegex(options)) {
-    return const WorkspaceTextOutcome(invalidRegex: true);
-  }
   final results = <WorkspaceTextMatch>[];
   final skippedFiles = <String>[];
-  var hasZeroLengthMatches = false;
   final publicationClock = Stopwatch()..start();
   var publishedMatches = 0;
   var lastPublication = 0;
@@ -117,7 +109,6 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
       if (search == null) {
         skippedFiles.add(file.relativePath);
       } else {
-        hasZeroLengthMatches |= search.hasZeroLengthMatches;
         final digest = notesSearchDigest(text);
         for (final match in search.matches) {
           final line = document.lineIndex.lineNumberAtOffset(match.fullStart);
@@ -148,7 +139,6 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
         matches: List.unmodifiable(results.take(maximumResults)),
         truncated: true,
         skippedFiles: List.unmodifiable(skippedFiles),
-        hasZeroLengthMatches: hasZeroLengthMatches,
       );
     }
     if (onProgress != null &&
@@ -161,7 +151,6 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
         WorkspaceTextOutcome(
           matches: List.unmodifiable(results),
           skippedFiles: List.unmodifiable(skippedFiles),
-          hasZeroLengthMatches: hasZeroLengthMatches,
         ),
       );
     }
@@ -169,7 +158,6 @@ Future<WorkspaceTextOutcome> loadWorkspaceTextMatches(
   return WorkspaceTextOutcome(
     matches: List.unmodifiable(results),
     skippedFiles: List.unmodifiable(skippedFiles),
-    hasZeroLengthMatches: hasZeroLengthMatches,
   );
 }
 

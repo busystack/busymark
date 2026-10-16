@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "तारीख",
   "pdfTitlePageTitleRequired": "शीर्षक पृष्ठ के लिए शीर्षक दर्ज करें।",
   "pdfTocSectionNote": "अलग पृष्ठ से शुरू होता है और कई पृष्ठों तक जा सकता है।",
-  "sourceSearchZeroLengthUnsupported": "शून्य लंबाई वाले रेगेक्स मिलान समर्थित नहीं हैं (जैसे ^, $ या केवल स्थिति से मेल खाने वाले लुकअहेड)।",
   "workspaceSearchIncomplete": "केवल कुछ परिणाम दिखाए गए हैं। अधिक परिणाम देखें या खोज को सीमित करें।",
   "workspaceSearchShowMore": "अधिक परिणाम दिखाएँ",
   "workspaceSearchSkippedFiles": "खोज अधूरी है। ये फ़ाइलें 1 MiB से बड़ी हैं या पढ़ी नहीं जा सकीं:",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "अगला मिलान",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "बड़े-छोटे अक्षरों के प्रति संवेदनशील",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "पूरा शब्द",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "रेगुलर एक्सप्रेशन",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "अमान्य रेगुलर एक्सप्रेशन",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं",
   "@sourceLargeFileFeaturesPaused": {
@@ -3616,11 +3599,22 @@
   "searchDocumentsCommand": "दस्तावेज़ खोजें",
   "searchTopicsCommand": "विषय खोजें",
   "searchRecentCommand": "हाल के आइटम खोजें",
-  "searchQueryHint": "{category} में खोजें…",
   "searchResourceUnavailable": "यह संसाधन उपलब्ध नहीं है।",
   "notesSync": "नोट सिंक करें",
-  "searchInFile": "फ़ाइल में खोजें",
   "searchInWorkspace": "कार्यस्थान में खोजें",
   "searchCategory": "खोज श्रेणी",
-  "clearHistorySearchScope": "दस्तावेज़ों के इतिहास में खोजें"
+  "clearHistorySearchScope": "दस्तावेज़ों के इतिहास में खोजें",
+  "searchInDocument": "दस्तावेज़ में खोजें",
+  "searchDocumentHint": "इस दस्तावेज़ में खोजें…",
+  "searchWorkspaceHint": "इस कार्यक्षेत्र में खोजें…",
+  "searchOutlineHint": "शीर्षक खोजें…",
+  "searchHistoryHint": "स्थानीय इतिहास में खोजें…",
+  "searchEnterText": "खोजने के लिए पाठ दर्ज करें",
+  "searchAccountUnavailable": "खाता उपलब्ध नहीं है",
+  "searchDocumentsHint": "दस्तावेज़ खोजें…",
+  "searchTopicsHint": "विषय खोजें…",
+  "searchRecentHint": "हाल के आइटम खोजें…",
+  "searchActionsHint": "क्रियाएँ खोजें…",
+  "searchRequiresNotesWorkspace": "नोट्स कार्यक्षेत्र आवश्यक है",
+  "searchRecentEmpty": "हाल के संसाधन नहीं हैं"
 }

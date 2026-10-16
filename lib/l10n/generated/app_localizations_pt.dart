@@ -1846,16 +1846,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sourceSearchNextMatch => 'Próxima correspondência';
 
   @override
-  String get sourceSearchCaseSensitive =>
-      'Diferenciar maiúsculas de minúsculas';
-
-  @override
-  String get sourceSearchWholeWord => 'Palavra inteira';
-
-  @override
-  String get sourceSearchRegex => 'Expressão regular';
-
-  @override
   String get sourceSearchReplacement => 'Substituir por';
 
   @override
@@ -1981,13 +1971,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get saveAs => 'Guardar como';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Expressão regular inválida';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Não são suportadas correspondências regex de comprimento zero (por exemplo, ^, \$ ou antecipações que correspondem apenas a uma posição).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5478,18 +5461,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get searchRecentCommand => 'Pesquisar recentes';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Pesquisar em $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Este recurso não está disponível.';
 
   @override
   String get notesSync => 'Sincronizar notas';
-
-  @override
-  String get searchInFile => 'Pesquisar no ficheiro';
 
   @override
   String get searchInWorkspace => 'Pesquisar no espaço de trabalho';
@@ -5499,6 +5474,46 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Pesquisar no histórico de documentos';
+
+  @override
+  String get searchInDocument => 'Pesquisar no documento';
+
+  @override
+  String get searchDocumentHint => 'Pesquisar neste documento…';
+
+  @override
+  String get searchWorkspaceHint => 'Pesquisar neste espaço de trabalho…';
+
+  @override
+  String get searchOutlineHint => 'Pesquisar títulos…';
+
+  @override
+  String get searchHistoryHint => 'Pesquisar no histórico local…';
+
+  @override
+  String get searchEnterText => 'Introduza texto para pesquisar';
+
+  @override
+  String get searchAccountUnavailable => 'Conta indisponível';
+
+  @override
+  String get searchDocumentsHint => 'Pesquisar documentos…';
+
+  @override
+  String get searchTopicsHint => 'Pesquisar tópicos…';
+
+  @override
+  String get searchRecentHint => 'Pesquisar recentes…';
+
+  @override
+  String get searchActionsHint => 'Pesquisar ações…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Requer um espaço de trabalho de Notas';
+
+  @override
+  String get searchRecentEmpty => 'Sem recursos recentes';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -7342,16 +7357,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get sourceSearchNextMatch => 'Próxima correspondência';
 
   @override
-  String get sourceSearchCaseSensitive =>
-      'Diferenciar maiúsculas de minúsculas';
-
-  @override
-  String get sourceSearchWholeWord => 'Palavra inteira';
-
-  @override
-  String get sourceSearchRegex => 'Expressão regular';
-
-  @override
   String get sourceSearchReplacement => 'Substituir por';
 
   @override
@@ -7477,13 +7482,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get saveAs => 'Salvar como';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Expressão regular inválida';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Não há suporte para correspondências regex de comprimento zero (por exemplo, ^, \$ ou antecipações que correspondem apenas a uma posição).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -10971,18 +10969,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get searchRecentCommand => 'Pesquisar recentes';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Pesquisar em $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Este recurso não está disponível.';
 
   @override
   String get notesSync => 'Sincronizar notas';
-
-  @override
-  String get searchInFile => 'Pesquisar no arquivo';
 
   @override
   String get searchInWorkspace => 'Pesquisar no espaço de trabalho';
@@ -10992,4 +10982,44 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get clearHistorySearchScope => 'Pesquisar no histórico de documentos';
+
+  @override
+  String get searchInDocument => 'Pesquisar no documento';
+
+  @override
+  String get searchDocumentHint => 'Pesquisar neste documento…';
+
+  @override
+  String get searchWorkspaceHint => 'Pesquisar neste espaço de trabalho…';
+
+  @override
+  String get searchOutlineHint => 'Pesquisar títulos…';
+
+  @override
+  String get searchHistoryHint => 'Pesquisar no histórico local…';
+
+  @override
+  String get searchEnterText => 'Digite texto para pesquisar';
+
+  @override
+  String get searchAccountUnavailable => 'Conta indisponível';
+
+  @override
+  String get searchDocumentsHint => 'Pesquisar documentos…';
+
+  @override
+  String get searchTopicsHint => 'Pesquisar tópicos…';
+
+  @override
+  String get searchRecentHint => 'Pesquisar recentes…';
+
+  @override
+  String get searchActionsHint => 'Pesquisar ações…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Requer um espaço de trabalho de Notas';
+
+  @override
+  String get searchRecentEmpty => 'Nenhum recurso recente';
 }

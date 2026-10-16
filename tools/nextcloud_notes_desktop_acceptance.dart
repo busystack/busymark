@@ -2556,7 +2556,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await wait(
       () => widgets<TextField>().any(
         (f) =>
-            f.decoration?.hintText == 'Search in File…' &&
+            f.decoration?.hintText == 'Search this document…' &&
             f.onChanged != null &&
             f.controller != null,
       ),
@@ -2565,7 +2565,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     edit(
       widgets<TextField>().lastWhere(
         (f) =>
-            f.decoration?.hintText == 'Search in File…' &&
+            f.decoration?.hintText == 'Search this document…' &&
             f.onChanged != null &&
             f.controller != null,
       ),

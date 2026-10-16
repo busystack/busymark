@@ -2769,6 +2769,10 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     this.subtitle,
     this.content,
     this.selected = false,
+    this.compact = false,
+    this.focusNode,
+    this.onFocusChange,
+    this.trailing,
     this.onDoubleTap,
     this.semanticsLabel,
     this.tooltip,
@@ -2793,8 +2797,11 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final String? title;
   final String? subtitle;
   final Widget? content;
-  final bool selected;
-  final VoidCallback onTap;
+  final bool selected, compact;
+  final FocusNode? focusNode;
+  final ValueChanged<bool>? onFocusChange;
+  final Widget? trailing;
+  final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
   final String? semanticsLabel;
   final String? tooltip;
@@ -2841,7 +2848,7 @@ class _BusyMarkSidebarRecordRowState<T>
   void _handleTap() {
     final onDoubleTap = widget.onDoubleTap;
     if (onDoubleTap == null) {
-      widget.onTap();
+      widget.onTap?.call();
       return;
     }
     final now = DateTime.now();
@@ -2849,7 +2856,7 @@ class _BusyMarkSidebarRecordRowState<T>
     final doubleTap =
         previous != null && now.difference(previous) <= kDoubleTapTimeout;
     _lastTapAt = doubleTap ? null : now;
-    widget.onTap();
+    widget.onTap?.call();
     if (doubleTap) onDoubleTap();
   }
 
@@ -2888,7 +2895,7 @@ class _BusyMarkSidebarRecordRowState<T>
     final customContent = widget.content;
     final menuItems = widget.menuItemsBuilder?.call(context);
     final trailing = menuItems == null || menuItems.isEmpty
-        ? null
+        ? widget.trailing
         : BusyMarkMenuButton<T>(
             tooltip: widget.menuTooltip!,
             items: menuItems,
@@ -2909,7 +2916,9 @@ class _BusyMarkSidebarRecordRowState<T>
           );
     final content = ConstrainedBox(
       constraints: BoxConstraints(
-        minHeight: BusyMarkSizes.sidebarTreeRowHeight * 2,
+        minHeight: widget.compact
+            ? BusyMarkSizes.sidebarTreeRowHeight
+            : BusyMarkSizes.sidebarTreeRowHeight * 2,
       ),
       child: Row(
         children: [
@@ -2924,7 +2933,11 @@ class _BusyMarkSidebarRecordRowState<T>
             child: Padding(
               padding: customContent == null
                   ? EdgeInsets.zero
-                  : const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
+                  : EdgeInsets.symmetric(
+                      vertical: widget.compact
+                          ? BusyMarkSpacing.xs
+                          : BusyMarkSpacing.sm,
+                    ),
               child:
                   customContent ??
                   Column(
@@ -2977,12 +2990,14 @@ class _BusyMarkSidebarRecordRowState<T>
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               hoverColor: busyMarkRowHoverColor(context),
-              focusNode: _rowFocusNode,
-              onTap: _handleTap,
+              focusNode: widget.focusNode ?? _rowFocusNode,
+              onFocusChange: widget.onFocusChange,
+              canRequestFocus: true,
+              onTap: widget.onTap == null ? null : _handleTap,
               onSecondaryTapUp: !_hasMenu
                   ? null
                   : (details) {
-                      _rowFocusNode.requestFocus();
+                      (widget.focusNode ?? _rowFocusNode).requestFocus();
                       unawaited(_showContextMenu(details.globalPosition));
                     },
               child: content,
@@ -2996,7 +3011,8 @@ class _BusyMarkSidebarRecordRowState<T>
       selected: widget.selected,
       button: true,
       label: widget.semanticsLabel,
-      onTap: _handleTap,
+      enabled: widget.onTap != null,
+      onTap: widget.onTap == null ? null : _handleTap,
       child: row,
     );
     final tooltip = widget.tooltip;

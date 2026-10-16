@@ -101,7 +101,11 @@ void main() {
       );
       expect(find.text('Same'), findsNWidgets(2));
       expect(
-        tester.widget<ListTile>(find.byKey(ValueKey(second.identity))).selected,
+        tester
+            .widget<BusyMarkSidebarRecordRow>(
+              find.byKey(ValueKey(second.identity)),
+            )
+            .selected,
         isTrue,
       );
       await tester.tap(find.byKey(ValueKey(second.identity)));
@@ -156,7 +160,7 @@ void main() {
       await tester.pumpAndSettle();
       final row = find.byKey(ValueKey(results[40].identity));
       expect(row.hitTestable(), findsOneWidget);
-      expect(tester.widget<ListTile>(row).selected, isTrue);
+      expect(tester.widget<BusyMarkSidebarRecordRow>(row).selected, isTrue);
       update(() => selected = 0);
       await tester.pumpAndSettle();
       expect(

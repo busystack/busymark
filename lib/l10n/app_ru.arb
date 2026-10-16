@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Дата",
   "pdfTitlePageTitleRequired": "Введите заголовок титульной страницы.",
   "pdfTocSectionNote": "Начинается с отдельной страницы и может занимать несколько страниц.",
-  "sourceSearchZeroLengthUnsupported": "Совпадения регулярных выражений нулевой длины не поддерживаются (например, ^, $ или проверки вперёд, совпадающие только с позицией).",
   "workspaceSearchIncomplete": "Показана только часть результатов. Покажите больше или уточните поиск.",
   "workspaceSearchShowMore": "Показать больше результатов",
   "workspaceSearchSkippedFiles": "Поиск неполный. Эти файлы превышают 1 MiB или не могут быть прочитаны:",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Следующее совпадение",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "С учётом регистра",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Слово целиком",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Регулярное выражение",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Некорректное регулярное выражение",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Большой файл: подсветка и сворачивание приостановлены",
   "@sourceLargeFileFeaturesPaused": {
@@ -3642,11 +3625,22 @@
   "searchDocumentsCommand": "Поиск документов",
   "searchTopicsCommand": "Поиск тем",
   "searchRecentCommand": "Поиск недавних",
-  "searchQueryHint": "Поиск: {category}…",
   "searchResourceUnavailable": "Этот ресурс недоступен.",
   "notesSync": "Синхронизировать заметки",
-  "searchInFile": "Поиск в файле",
   "searchInWorkspace": "Поиск в рабочей области",
   "searchCategory": "Категория поиска",
-  "clearHistorySearchScope": "Поиск в истории документов"
+  "clearHistorySearchScope": "Поиск в истории документов",
+  "searchInDocument": "Поиск в документе",
+  "searchDocumentHint": "Поиск в этом документе…",
+  "searchWorkspaceHint": "Поиск в этой рабочей области…",
+  "searchOutlineHint": "Поиск заголовков…",
+  "searchHistoryHint": "Поиск в локальной истории…",
+  "searchEnterText": "Введите текст для поиска",
+  "searchAccountUnavailable": "Аккаунт недоступен",
+  "searchDocumentsHint": "Поиск документов…",
+  "searchTopicsHint": "Поиск тем…",
+  "searchRecentHint": "Поиск недавних…",
+  "searchActionsHint": "Поиск действий…",
+  "searchRequiresNotesWorkspace": "Требуется рабочая область заметок",
+  "searchRecentEmpty": "Нет недавних ресурсов"
 }

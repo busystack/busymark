@@ -1750,15 +1750,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sourceSearchNextMatch => '下一个匹配项';
 
   @override
-  String get sourceSearchCaseSensitive => '区分大小写';
-
-  @override
-  String get sourceSearchWholeWord => '全字匹配';
-
-  @override
-  String get sourceSearchRegex => '正则表达式';
-
-  @override
   String get sourceSearchReplacement => '替换为';
 
   @override
@@ -1875,13 +1866,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get saveAs => '另存为';
-
-  @override
-  String get sourceSearchInvalidRegex => '无效的正则表达式';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
 
   @override
   String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
@@ -5182,18 +5166,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchRecentCommand => '搜索最近项目';
 
   @override
-  String searchQueryHint(String category) {
-    return '搜索$category…';
-  }
-
-  @override
   String get searchResourceUnavailable => '此资源不可用。';
 
   @override
   String get notesSync => '同步笔记';
-
-  @override
-  String get searchInFile => '在文件中搜索';
 
   @override
   String get searchInWorkspace => '在工作区中搜索';
@@ -5203,6 +5179,45 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => '搜索文档历史记录';
+
+  @override
+  String get searchInDocument => '在文档中搜索';
+
+  @override
+  String get searchDocumentHint => '搜索此文档…';
+
+  @override
+  String get searchWorkspaceHint => '搜索此工作区…';
+
+  @override
+  String get searchOutlineHint => '搜索标题…';
+
+  @override
+  String get searchHistoryHint => '搜索本地历史记录…';
+
+  @override
+  String get searchEnterText => '输入要搜索的文本';
+
+  @override
+  String get searchAccountUnavailable => '账户不可用';
+
+  @override
+  String get searchDocumentsHint => '搜索文档…';
+
+  @override
+  String get searchTopicsHint => '搜索主题…';
+
+  @override
+  String get searchRecentHint => '搜索最近项目…';
+
+  @override
+  String get searchActionsHint => '搜索操作…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '需要笔记工作区';
+
+  @override
+  String get searchRecentEmpty => '没有最近的资源';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -6949,15 +6964,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get sourceSearchNextMatch => '下一个匹配项';
 
   @override
-  String get sourceSearchCaseSensitive => '区分大小写';
-
-  @override
-  String get sourceSearchWholeWord => '全字匹配';
-
-  @override
-  String get sourceSearchRegex => '正则表达式';
-
-  @override
   String get sourceSearchReplacement => '替换为';
 
   @override
@@ -7074,13 +7080,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get saveAs => '另存为';
-
-  @override
-  String get sourceSearchInvalidRegex => '无效的正则表达式';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
 
   @override
   String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
@@ -10381,18 +10380,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get searchRecentCommand => '搜索最近项目';
 
   @override
-  String searchQueryHint(String category) {
-    return '搜索$category…';
-  }
-
-  @override
   String get searchResourceUnavailable => '此资源不可用。';
 
   @override
   String get notesSync => '同步笔记';
-
-  @override
-  String get searchInFile => '在文件中搜索';
 
   @override
   String get searchInWorkspace => '在工作区中搜索';
@@ -10402,4 +10393,43 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get clearHistorySearchScope => '搜索文档历史记录';
+
+  @override
+  String get searchInDocument => '在文档中搜索';
+
+  @override
+  String get searchDocumentHint => '搜索此文档…';
+
+  @override
+  String get searchWorkspaceHint => '搜索此工作区…';
+
+  @override
+  String get searchOutlineHint => '搜索标题…';
+
+  @override
+  String get searchHistoryHint => '搜索本地历史记录…';
+
+  @override
+  String get searchEnterText => '输入要搜索的文本';
+
+  @override
+  String get searchAccountUnavailable => '账户不可用';
+
+  @override
+  String get searchDocumentsHint => '搜索文档…';
+
+  @override
+  String get searchTopicsHint => '搜索主题…';
+
+  @override
+  String get searchRecentHint => '搜索最近项目…';
+
+  @override
+  String get searchActionsHint => '搜索操作…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '需要笔记工作区';
+
+  @override
+  String get searchRecentEmpty => '没有最近的资源';
 }

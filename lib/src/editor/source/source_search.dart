@@ -10,44 +10,18 @@ import 'source_hidden_ranges.dart';
 /// navigation.
 const int sourceInteractiveSearchMatchLimit = 2048;
 
+/// The literal query also identifies asynchronous matching/navigation requests.
 class SourceSearchOptions {
-  const SourceSearchOptions({
-    this.query = '',
-    this.caseSensitive = false,
-    this.wholeWord = false,
-    this.regex = false,
-  });
+  const SourceSearchOptions({this.query = ''});
 
   final String query;
-  final bool caseSensitive;
-  final bool wholeWord;
-  final bool regex;
-
-  SourceSearchOptions copyWith({
-    String? query,
-    bool? caseSensitive,
-    bool? wholeWord,
-    bool? regex,
-  }) {
-    return SourceSearchOptions(
-      query: query ?? this.query,
-      caseSensitive: caseSensitive ?? this.caseSensitive,
-      wholeWord: wholeWord ?? this.wholeWord,
-      regex: regex ?? this.regex,
-    );
-  }
 
   @override
-  bool operator ==(Object other) {
-    return other is SourceSearchOptions &&
-        other.query == query &&
-        other.caseSensitive == caseSensitive &&
-        other.wholeWord == wholeWord &&
-        other.regex == regex;
-  }
+  bool operator ==(Object other) =>
+      other is SourceSearchOptions && other.query == query;
 
   @override
-  int get hashCode => Object.hash(query, caseSensitive, wholeWord, regex);
+  int get hashCode => query.hashCode;
 }
 
 class SourceSearchMatch {
@@ -75,8 +49,6 @@ class SourceSearchResult {
     this.currentMatchIndex,
     int? totalMatchCount,
     this.firstMatchIndex = 0,
-    this.invalidRegex = false,
-    this.hasZeroLengthMatches = false,
   }) : totalMatchCount = totalMatchCount ?? matches.length;
 
   static final empty = SourceSearchResult(
@@ -93,8 +65,6 @@ class SourceSearchResult {
 
   /// The complete-result index represented by [matches.first].
   final int firstMatchIndex;
-  final bool invalidRegex;
-  final bool hasZeroLengthMatches;
 
   SourceSearchMatch? get currentMatch {
     final index = currentMatchIndex;
@@ -115,8 +85,6 @@ class SourceSearchResult {
       currentMatchIndex: currentMatchIndex,
       totalMatchCount: totalMatchCount,
       firstMatchIndex: firstMatchIndex,
-      invalidRegex: invalidRegex,
-      hasZeroLengthMatches: hasZeroLengthMatches,
     );
   }
 
@@ -127,8 +95,6 @@ class SourceSearchResult {
         other.currentMatchIndex == currentMatchIndex &&
         other.totalMatchCount == totalMatchCount &&
         other.firstMatchIndex == firstMatchIndex &&
-        other.invalidRegex == invalidRegex &&
-        other.hasZeroLengthMatches == hasZeroLengthMatches &&
         _matchesEqual(other.matches, matches);
   }
 
@@ -138,8 +104,6 @@ class SourceSearchResult {
     currentMatchIndex,
     totalMatchCount,
     firstMatchIndex,
-    invalidRegex,
-    hasZeroLengthMatches,
     Object.hashAll(matches.map(_matchHash)),
   );
 }
@@ -199,19 +163,10 @@ class SourceSearchController {
 
   int get version => _version;
 
-  void setOptions(SourceSearchOptions options, SourceDocument document) {
-    _options = options;
-    refresh(document);
-  }
-
-  void stageOptions(SourceSearchOptions options, {bool invalidRegex = false}) {
+  void stageOptions(SourceSearchOptions options) {
     _options = options;
     _version++;
-    _result = SourceSearchResult(
-      options: options,
-      matches: const [],
-      invalidRegex: invalidRegex,
-    );
+    _result = SourceSearchResult(options: options, matches: const []);
   }
 
   void acceptResult(SourceSearchResult result) {
@@ -293,7 +248,7 @@ class SourceSearchController {
   }
 }
 
-/// Runs potentially expensive regular expressions away from Flutter's UI
+/// Runs literal matching and full-document counting away from Flutter's UI
 /// isolate. Starting a newer request kills the preceding worker immediately.
 class SourceSearchWorker {
   Isolate? _isolate;
@@ -349,9 +304,6 @@ class SourceSearchWorker {
           <Object?>[range.start, range.end, range.key],
       ],
       'query': options.query,
-      'caseSensitive': options.caseSensitive,
-      'wholeWord': options.wholeWord,
-      'regex': options.regex,
       'currentMatchIndex': currentMatchIndex,
       'firstMatchIndex': firstMatchIndex,
       'minimumFullOffset': minimumFullOffset,
@@ -429,12 +381,7 @@ void _sourceSearchWorkerMain(List<Object?> payload) {
   final request = payload[1] as Map<Object?, Object?>;
   final text = request['text']! as String;
   final hidden = request['hidden']! as List<Object?>;
-  final options = SourceSearchOptions(
-    query: request['query']! as String,
-    caseSensitive: request['caseSensitive']! as bool,
-    wholeWord: request['wholeWord']! as bool,
-    regex: request['regex']! as bool,
-  );
+  final options = SourceSearchOptions(query: request['query']! as String);
   final document = SourceDocument(
     fullText: text,
     hiddenRanges: SourceHiddenRanges(
@@ -459,8 +406,6 @@ void _sourceSearchWorkerMain(List<Object?> payload) {
     stopAfterMaximumMatches: request['stopAfterMaximumMatches']! as bool,
   );
   sendPort.send(<Object?, Object?>{
-    'invalidRegex': result.invalidRegex,
-    'hasZeroLengthMatches': result.hasZeroLengthMatches,
     'currentMatchIndex': result.currentMatchIndex,
     'totalMatchCount': result.totalMatchCount,
     'firstMatchIndex': result.firstMatchIndex,
@@ -497,26 +442,7 @@ SourceSearchResult _decodeSearchResult(
     currentMatchIndex: payload['currentMatchIndex'] as int?,
     totalMatchCount: payload['totalMatchCount']! as int,
     firstMatchIndex: payload['firstMatchIndex']! as int,
-    invalidRegex: payload['invalidRegex']! as bool,
-    hasZeroLengthMatches: payload['hasZeroLengthMatches']! as bool,
   );
-}
-
-bool sourceSearchOptionsHaveInvalidRegex(SourceSearchOptions options) {
-  if (!options.regex || options.query.isEmpty) {
-    return false;
-  }
-  try {
-    RegExp(
-      options.query,
-      caseSensitive: options.caseSensitive,
-      multiLine: true,
-      unicode: true,
-    );
-    return false;
-  } on FormatException {
-    return true;
-  }
 }
 
 class SourceWorkspaceSearchFileResult {
@@ -569,28 +495,7 @@ SourceSearchResult searchSourceDocument(
     return SourceSearchResult(options: options, matches: const []);
   }
 
-  late final Iterable<({int start, int end})> rawMatches;
-  if (options.regex) {
-    try {
-      rawMatches =
-          RegExp(
-                query,
-                caseSensitive: options.caseSensitive,
-                multiLine: true,
-                unicode: true,
-              )
-              .allMatches(document.fullText)
-              .map((match) => (start: match.start, end: match.end));
-    } on FormatException {
-      return SourceSearchResult(
-        options: options,
-        matches: const [],
-        invalidRegex: true,
-      );
-    }
-  } else {
-    rawMatches = _plainMatches(document.fullText, query, options.caseSensitive);
-  }
+  final rawMatches = _plainMatches(document.fullText, query);
 
   final requestedFirstMatchIndex = firstMatchIndex < 0 ? 0 : firstMatchIndex;
   final matchLimit = maximumMatches?.clamp(0, 0x7fffffff).toInt();
@@ -598,21 +503,12 @@ SourceSearchResult searchSourceDocument(
   var totalMatchCount = 0;
   var storedFirstMatchIndex = requestedFirstMatchIndex;
   var foundOffsetWindow = minimumFullOffset == null;
-  var hasZeroLengthMatches = false;
   for (final match in rawMatches) {
-    if (match.start == match.end) {
-      hasZeroLengthMatches = true;
-      continue;
-    }
     if (!sourceSearchRangeHasSafeBoundaries(
       document.fullText,
       match.start,
       match.end,
     )) {
-      continue;
-    }
-    if (options.wholeWord &&
-        !_isWholeWord(document.fullText, match.start, match.end)) {
       continue;
     }
     final matchIndex = totalMatchCount++;
@@ -661,7 +557,6 @@ SourceSearchResult searchSourceDocument(
         : null,
     totalMatchCount: totalMatchCount,
     firstMatchIndex: storedFirstMatchIndex,
-    hasZeroLengthMatches: hasZeroLengthMatches,
   );
 }
 
@@ -681,57 +576,15 @@ bool sourceSearchRangeHasSafeBoundaries(String source, int start, int end) {
 Iterable<({int start, int end})> _plainMatches(
   String source,
   String query,
-  bool caseSensitive,
 ) sync* {
   final expression = RegExp(
     RegExp.escape(query),
-    caseSensitive: caseSensitive,
+    caseSensitive: false,
     unicode: true,
   );
   for (final match in expression.allMatches(source)) {
     yield (start: match.start, end: match.end);
   }
-}
-
-bool _isWholeWord(String source, int start, int end) {
-  return !_isUnicodeWordCharacter(_characterBefore(source, start)) &&
-      !_isUnicodeWordCharacter(_characterAt(source, end));
-}
-
-final _unicodeWordCharacter = RegExp(r'^[\p{L}\p{N}\p{M}_]$', unicode: true);
-
-bool _isUnicodeWordCharacter(String? character) {
-  if (character == null) {
-    return false;
-  }
-  return _unicodeWordCharacter.hasMatch(character);
-}
-
-String? _characterBefore(String source, int offset) {
-  if (offset <= 0 || source.isEmpty) {
-    return null;
-  }
-  final end = offset.clamp(0, source.length).toInt();
-  var start = end - 1;
-  if (_isLowSurrogate(source.codeUnitAt(start)) &&
-      start > 0 &&
-      _isHighSurrogate(source.codeUnitAt(start - 1))) {
-    start--;
-  }
-  return source.substring(start, end);
-}
-
-String? _characterAt(String source, int offset) {
-  if (offset < 0 || offset >= source.length) {
-    return null;
-  }
-  var end = offset + 1;
-  if (_isHighSurrogate(source.codeUnitAt(offset)) &&
-      end < source.length &&
-      _isLowSurrogate(source.codeUnitAt(end))) {
-    end++;
-  }
-  return source.substring(offset, end);
 }
 
 bool _isHighSurrogate(int unit) => unit >= 0xD800 && unit <= 0xDBFF;

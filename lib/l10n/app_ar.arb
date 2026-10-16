@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "التاريخ",
   "pdfTitlePageTitleRequired": "أدخل عنوانًا لصفحة العنوان.",
   "pdfTocSectionNote": "يبدأ في صفحة منفصلة وقد يمتد إلى عدة صفحات.",
-  "sourceSearchZeroLengthUnsupported": "لا تُدعم مطابقات التعبير النمطي ذات الطول الصفري (مثل ^ أو $ أو الاستباق الذي يطابق موضعًا فقط).",
   "workspaceSearchIncomplete": "تظهر بعض النتائج فقط. اعرض المزيد أو ضيّق نطاق البحث.",
   "workspaceSearchShowMore": "عرض المزيد من النتائج",
   "workspaceSearchSkippedFiles": "البحث غير مكتمل. تجاوز حجم هذه الملفات 1 MiB أو تعذّرت قراءتها:",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "التطابق التالي",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "حساس لحالة الأحرف",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "الكلمة بالكامل",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "تعبير نمطي",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "تعبير نمطي غير صالح",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "ملف كبير: تم إيقاف التمييز والطي مؤقتًا",
   "@sourceLargeFileFeaturesPaused": {
@@ -3616,11 +3599,22 @@
   "searchDocumentsCommand": "البحث عن مستندات",
   "searchTopicsCommand": "البحث عن مواضيع",
   "searchRecentCommand": "البحث في الأخيرة",
-  "searchQueryHint": "البحث في {category}…",
   "searchResourceUnavailable": "هذا المورد غير متاح.",
   "notesSync": "مزامنة الملاحظات",
-  "searchInFile": "البحث في الملف",
   "searchInWorkspace": "البحث في مساحة العمل",
   "searchCategory": "فئة البحث",
-  "clearHistorySearchScope": "البحث في سجل المستندات"
+  "clearHistorySearchScope": "البحث في سجل المستندات",
+  "searchInDocument": "البحث في المستند",
+  "searchDocumentHint": "ابحث في هذا المستند…",
+  "searchWorkspaceHint": "ابحث في مساحة العمل هذه…",
+  "searchOutlineHint": "ابحث في العناوين…",
+  "searchHistoryHint": "ابحث في السجل المحلي…",
+  "searchEnterText": "أدخل نصًا للبحث",
+  "searchAccountUnavailable": "الحساب غير متاح",
+  "searchDocumentsHint": "البحث عن مستندات…",
+  "searchTopicsHint": "البحث عن مواضيع…",
+  "searchRecentHint": "البحث في الأخيرة…",
+  "searchActionsHint": "البحث عن إجراءات…",
+  "searchRequiresNotesWorkspace": "يتطلب مساحة عمل للملاحظات",
+  "searchRecentEmpty": "لا توجد موارد حديثة"
 }

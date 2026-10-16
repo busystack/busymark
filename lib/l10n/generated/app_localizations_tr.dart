@@ -1832,15 +1832,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sourceSearchNextMatch => 'Sonraki eşleşme';
 
   @override
-  String get sourceSearchCaseSensitive => 'Büyük-küçük harf duyarlı';
-
-  @override
-  String get sourceSearchWholeWord => 'Tam sözcük';
-
-  @override
-  String get sourceSearchRegex => 'Düzenli ifade';
-
-  @override
   String get sourceSearchReplacement => 'Şununla değiştir:';
 
   @override
@@ -1964,13 +1955,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get saveAs => 'Farklı Kaydet';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Geçersiz düzenli ifade';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Sıfır uzunluklu düzenli ifade eşleşmeleri desteklenmez (örneğin ^, \$ veya yalnızca bir konumla eşleşen ileri bakışlar).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5413,18 +5397,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchRecentCommand => 'Son kullanılanları ara';
 
   @override
-  String searchQueryHint(String category) {
-    return '$category içinde ara…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Bu kaynak kullanılamıyor.';
 
   @override
   String get notesSync => 'Notları eşitle';
-
-  @override
-  String get searchInFile => 'Dosyada Ara';
 
   @override
   String get searchInWorkspace => 'Çalışma Alanında Ara';
@@ -5434,4 +5410,43 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Belgelerin geçmişinde ara';
+
+  @override
+  String get searchInDocument => 'Belgede ara';
+
+  @override
+  String get searchDocumentHint => 'Bu belgede ara…';
+
+  @override
+  String get searchWorkspaceHint => 'Bu çalışma alanında ara…';
+
+  @override
+  String get searchOutlineHint => 'Başlıklarda ara…';
+
+  @override
+  String get searchHistoryHint => 'Yerel geçmişte ara…';
+
+  @override
+  String get searchEnterText => 'Aranacak metni girin';
+
+  @override
+  String get searchAccountUnavailable => 'Hesap kullanılamıyor';
+
+  @override
+  String get searchDocumentsHint => 'Belgeleri ara…';
+
+  @override
+  String get searchTopicsHint => 'Konuları ara…';
+
+  @override
+  String get searchRecentHint => 'Son kullanılanları ara…';
+
+  @override
+  String get searchActionsHint => 'Eylemleri ara…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Notlar çalışma alanı gerektirir';
+
+  @override
+  String get searchRecentEmpty => 'Son kullanılan kaynak yok';
 }

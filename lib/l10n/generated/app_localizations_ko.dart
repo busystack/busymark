@@ -1771,15 +1771,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sourceSearchNextMatch => '다음 일치 항목';
 
   @override
-  String get sourceSearchCaseSensitive => '대소문자 구분';
-
-  @override
-  String get sourceSearchWholeWord => '전체 단어';
-
-  @override
-  String get sourceSearchRegex => '정규식';
-
-  @override
   String get sourceSearchReplacement => '다음으로 바꾸기';
 
   @override
@@ -1899,13 +1890,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get saveAs => '다른 이름으로 저장';
-
-  @override
-  String get sourceSearchInvalidRegex => '잘못된 정규식';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '길이가 0인 정규식 일치는 지원하지 않습니다(예: ^, \$, 위치에만 일치하는 전방 탐색).';
 
   @override
   String get workspaceSearchIncomplete => '일부 결과만 표시됩니다. 더 표시하거나 검색 범위를 좁히세요.';
@@ -5261,18 +5245,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get searchRecentCommand => '최근 항목 검색';
 
   @override
-  String searchQueryHint(String category) {
-    return '$category 검색…';
-  }
-
-  @override
   String get searchResourceUnavailable => '이 리소스를 사용할 수 없습니다.';
 
   @override
   String get notesSync => '노트 동기화';
-
-  @override
-  String get searchInFile => '파일에서 검색';
 
   @override
   String get searchInWorkspace => '작업 공간에서 검색';
@@ -5282,4 +5258,43 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => '문서 기록 전체 검색';
+
+  @override
+  String get searchInDocument => '문서에서 검색';
+
+  @override
+  String get searchDocumentHint => '이 문서에서 검색…';
+
+  @override
+  String get searchWorkspaceHint => '이 작업 공간에서 검색…';
+
+  @override
+  String get searchOutlineHint => '제목 검색…';
+
+  @override
+  String get searchHistoryHint => '로컬 기록 검색…';
+
+  @override
+  String get searchEnterText => '검색할 텍스트 입력';
+
+  @override
+  String get searchAccountUnavailable => '계정을 사용할 수 없음';
+
+  @override
+  String get searchDocumentsHint => '문서 검색…';
+
+  @override
+  String get searchTopicsHint => '주제 검색…';
+
+  @override
+  String get searchRecentHint => '최근 항목 검색…';
+
+  @override
+  String get searchActionsHint => '작업 검색…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '노트 작업 공간 필요';
+
+  @override
+  String get searchRecentEmpty => '최근 리소스 없음';
 }

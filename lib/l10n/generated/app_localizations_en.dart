@@ -1830,15 +1830,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceSearchNextMatch => 'Next match';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
-
-  @override
-  String get sourceSearchWholeWord => 'Whole word';
-
-  @override
-  String get sourceSearchRegex => 'Regex';
-
-  @override
   String get sourceSearchReplacement => 'Replace with';
 
   @override
@@ -1969,13 +1960,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saveAs => 'Save As';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Invalid regular expression';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5430,18 +5414,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchRecentCommand => 'Search Recent';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Search $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'This resource is unavailable.';
 
   @override
   String get notesSync => 'Sync notes';
-
-  @override
-  String get searchInFile => 'Search in File';
 
   @override
   String get searchInWorkspace => 'Search in Workspace';
@@ -5451,4 +5427,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Search history across documents';
+
+  @override
+  String get searchInDocument => 'Search in Document';
+
+  @override
+  String get searchDocumentHint => 'Search this document…';
+
+  @override
+  String get searchWorkspaceHint => 'Search this workspace…';
+
+  @override
+  String get searchOutlineHint => 'Search headings…';
+
+  @override
+  String get searchHistoryHint => 'Search Local History…';
+
+  @override
+  String get searchEnterText => 'Enter text to search';
+
+  @override
+  String get searchAccountUnavailable => 'Account unavailable';
+
+  @override
+  String get searchDocumentsHint => 'Search documents…';
+
+  @override
+  String get searchTopicsHint => 'Search topics…';
+
+  @override
+  String get searchRecentHint => 'Search recent resources…';
+
+  @override
+  String get searchActionsHint => 'Search actions…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Requires a Notes workspace';
+
+  @override
+  String get searchRecentEmpty => 'No recent resources';
 }

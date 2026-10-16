@@ -15,47 +15,21 @@ import '../nextcloud_notes/application/notes_navigation.dart';
 import '../nextcloud_notes/domain/notes_search.dart';
 import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
 import '../workspace/document_navigation.dart';
+import '../workspace/outline_navigation.dart';
 import '../workspace/recent_navigation.dart';
 import '../workspace/workspace_controller.dart';
 import 'search_session.dart';
+import 'search_action_availability.dart';
 
 bool actionEnabled(WidgetRef ref, ActionSearchResult result) {
-  final controller = ref.read(searchSessionProvider.notifier);
-  final command = result.command;
   final registry = BusyMarkCommandRegistryScope.read(ref.context);
-  if (registry == null) return false;
-  final workspace = ref.read(workspaceControllerProvider);
-  final target = controller.commandTarget;
-  if (registry.requiresDocumentTarget(command) &&
-      (!controller.workspaceVisible ||
-          target?.bufferId == null ||
-          target?.isCurrent(workspace) != true)) {
-    return false;
-  }
-  final activeNotesAction =
-      controller.workspaceVisible &&
-      (workspace.workspace?.isRemote == true ||
-          controller.actionAccountId != null) &&
-      {
-        BusyMarkCommandIds.newNote,
-        BusyMarkCommandIds.browseNotes,
-      }.contains(command.id);
-  if ((registry.requiresWorkspaceTarget(command) || activeNotesAction) &&
-      (!controller.workspaceVisible ||
-          target?.workspaceId == null ||
-          target?.workspaceId != workspace.workspace?.id)) {
-    return false;
-  }
-  if (registry.isContextual(command)) {
-    return controller.workspaceVisible &&
-        target?.isCurrent(ref.read(workspaceControllerProvider)) == true &&
-        registry.canExecuteInContext(command.id, target!.context);
-  }
-  if (!controller.workspaceVisible &&
-      command.scope != BusyMarkCommandScope.application) {
-    return false;
-  }
-  return command.canExecute;
+  return registry != null &&
+      searchActionEnabled(
+        registry,
+        result.command,
+        ref.read(searchSessionProvider.notifier),
+        ref.read(workspaceControllerProvider),
+      );
 }
 
 Future<void> activateSelectedSearchResult(
@@ -65,10 +39,6 @@ Future<void> activateSelectedSearchResult(
   final controller = ref.read(searchSessionProvider.notifier);
   if (!await controller.submit() || !context.mounted) return;
   final state = ref.read(searchSessionProvider);
-  if (state.category == SearchCategory.outline) {
-    controller.activateOutline?.call();
-    return;
-  }
   if (state.results.isEmpty) return;
   await activateSearchResult(context, ref, state.results[state.selected]);
 }
@@ -122,6 +92,23 @@ Future<void> activateSearchResult(
         ref.read(searchSessionProvider).historyDocumentId ==
             snapshot.historyDocumentId;
     switch (result) {
+      case OutlineSearchResult():
+        final live = ref.read(workspaceControllerProvider);
+        final buffer = live.activeBuffer;
+        if (!currentRequest() ||
+            buffer?.id != result.bufferId ||
+            buffer?.revision != result.revision ||
+            notesSearchDigest(buffer!.text) != result.digest ||
+            !navigateOutlineHeading(
+              ref,
+              workspaceId: result.workspaceId,
+              bufferId: result.bufferId,
+              source: buffer.text,
+              heading: result.heading,
+            )) {
+          unavailable();
+        }
+
       case ActionSearchResult(:final command):
         if (!actionEnabled(ref, result)) {
           unavailable();

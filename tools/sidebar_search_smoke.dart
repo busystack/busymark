@@ -9,6 +9,7 @@ import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_search_field.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source_highlighter.dart';
@@ -298,10 +299,8 @@ class _DriverState extends ConsumerState<_Driver> {
 
   Future<void> query(String text) async {
     await wait(
-      () => widgets<TextField>().any(
-        (f) =>
-            f.decoration?.hintText?.startsWith('Search ') == true &&
-            f.onChanged != null,
+      () => widgets<BusyMarkSearchField>().any(
+        (f) => f.key == const ValueKey('shared-search-query'),
       ),
       'shared header query mounted',
     );
@@ -311,10 +310,8 @@ class _DriverState extends ConsumerState<_Driver> {
   }
 
   void changeQuery(String text) {
-    final field = widgets<TextField>().singleWhere(
-      (f) =>
-          f.decoration?.hintText?.startsWith('Search ') == true &&
-          f.onChanged != null,
+    final field = widgets<BusyMarkSearchField>().singleWhere(
+      (f) => f.key == const ValueKey('shared-search-query'),
     );
     field.controller!.value = TextEditingValue(
       text: text,
@@ -431,7 +428,10 @@ class _DriverState extends ConsumerState<_Driver> {
     await query('Bold');
     await key('ctrl+f');
     await query('target');
-    check(search.fileActive, 'Actions to Ctrl+F selects only Search in File');
+    check(
+      search.fileActive,
+      'Actions to Ctrl+F selects only Search in Document',
+    );
     await key('ctrl+shift+f');
     await query('scope needle');
     await key('ctrl+3');
@@ -617,7 +617,7 @@ class _DriverState extends ConsumerState<_Driver> {
             '$mode sidebar identifies occurrence $index in a bounded page',
           );
           await wait(
-            () => widgets<ListTile>().any(
+            () => widgets<BusyMarkSidebarRecordRow>().any(
               (row) =>
                   row.key ==
                       ValueKey(search.results[search.selected].identity) &&
@@ -731,6 +731,202 @@ class _DriverState extends ConsumerState<_Driver> {
       ),
       'restore native workflow document',
     );
+  }
+
+  Future<void> presentationJourney(String appearance) async {
+    final controller = ref.read(searchSessionProvider.notifier);
+    final before = ref.read(workspaceControllerProvider).activeText;
+    final files = ref.read(workspaceServiceProvider) as _TraceWorkspaceService;
+    final history = ref.read(localHistoryStoreProvider) as _TraceHistoryStore;
+    // These expected initial behaviors are independent of coordinator helpers.
+    final samples = <SearchCategory, String>{
+      SearchCategory.file: 'semantic',
+      SearchCategory.workspace: 'semantic',
+      SearchCategory.outline: 'Outline presentation',
+      SearchCategory.documents: 'outside-search',
+      SearchCategory.topics: 'outside-search',
+      SearchCategory.recent: '',
+      SearchCategory.localHistory: 'unique-needle',
+      SearchCategory.actions: '',
+    };
+    for (final entry in samples.entries) {
+      controller.open(category: entry.key);
+      await query('');
+      final fileReads = files.reads, revisionReads = history.reads;
+      final listsInitially =
+          entry.key == SearchCategory.recent ||
+          entry.key == SearchCategory.actions;
+      controller.showMore();
+      await controller.submit();
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      check(
+        search.waitingForInput != listsInitially &&
+            (listsInitially
+                ? search.results.isNotEmpty
+                : search.results.isEmpty),
+        '$appearance ${entry.key.name} correct initial list',
+      );
+      check(
+        files.reads == fileReads && history.reads == revisionReads,
+        '$appearance ${entry.key.name} empty query does not read providers',
+      );
+      check(
+        widgets<BusyMarkSearchField>()
+                .where((f) => f.key == const ValueKey('shared-search-query'))
+                .length ==
+            1,
+        '$appearance one shared query',
+      );
+      if (!listsInitially) {
+        await screenshot('$appearance-${entry.key.name}-empty');
+        await query('zz-no-search-match-984134');
+        check(
+          search.results.isEmpty && !search.waitingForInput,
+          '$appearance ${entry.key.name} completed no-results',
+        );
+      }
+      await query(entry.value);
+      check(
+        search.results.isNotEmpty,
+        '$appearance ${entry.key.name} representative results',
+      );
+      check(
+        widgets<ListTile>().isEmpty,
+        '$appearance uses native sidebar record rows',
+      );
+      check(
+        !widgets<Text>().any((t) => ['Aa', 'W', '.*'].contains(t.data)),
+        '$appearance no matching-mode controls',
+      );
+      await screenshot('$appearance-${entry.key.name}-results');
+      if (entry.key == SearchCategory.actions) {
+        await query(BusyMarkCommandIds.syncNotes);
+        check(
+          search.results.single is ActionSearchResult &&
+              !(search.results.single as ActionSearchResult).enabled,
+          '$appearance Notes action has truthful unavailable context',
+        );
+        await WidgetsBinding.instance.endOfFrame;
+        final row = widgets<BusyMarkSidebarRecordRow>().singleWhere(
+          (r) => r.key == ValueKey(BusyMarkCommandIds.syncNotes),
+        );
+        check(
+          row.onTap == null,
+          '$appearance disabled action has no active callback',
+        );
+        await screenshot('$appearance-actions-disabled');
+        await key('enter');
+        check(
+          search.active && search.query == BusyMarkCommandIds.syncNotes,
+          '$appearance disabled Enter keeps the same result and search',
+        );
+      }
+
+      check(
+        ref.read(workspaceControllerProvider).activeText == before,
+        '$appearance ${entry.key.name} query is source-neutral',
+      );
+    }
+    if (appearance == 'light') {
+      final missing = File('${widget.output.path}/documents/a.md');
+      await missing.delete();
+      final owner = ref.read(workspaceControllerProvider).workspace!.id;
+      controller.open(category: SearchCategory.recent);
+      await query('a.md');
+      check(
+        search.results.single is RecentSearchResult &&
+            (search.results.single as RecentSearchResult).resource.path ==
+                missing.path,
+        'missing Recent retains the exact resource identity',
+      );
+      await key('enter');
+      await wait(
+        () => widgets<Text>().any(
+          (t) => t.data == 'This resource is unavailable.',
+        ),
+        'missing Recent resource feedback',
+      );
+      check(
+        ref.read(workspaceControllerProvider).workspace!.id == owner &&
+            ref.read(workspaceControllerProvider).activeText == before,
+        'missing Recent cannot substitute another resource or change the editor',
+      );
+      await screenshot('missing-recent-resource');
+    }
+    controller.close();
+  }
+
+  Future<void> literalMatcherJourney() async {
+    final original = ref.read(workspaceControllerProvider).activeText;
+    for (final mode in ['source', 'split']) {
+      await ref.read(busyMarkCommandRegistryProvider).execute('view.$mode');
+      const text = r'Cat catalog .* $1 😀';
+      workspace.updateActiveText(text);
+      await key('ctrl+f');
+      await query('cat');
+      check(
+        search.documentMatchCount == 2,
+        '$mode case-insensitive partial words',
+      );
+      await query('.*');
+      check(search.documentMatchCount == 1, '$mode punctuation is literal');
+      final source =
+          widgets<TextField>()
+                  .singleWhere(
+                    (f) => f.controller is BusyMarkSourceEditingController,
+                  )
+                  .controller!
+              as BusyMarkSourceEditingController;
+      void press(String tooltip) => widgets<YaruIconButton>()
+          .singleWhere((b) => b.tooltip == tooltip)
+          .onPressed!();
+      await wait(
+        () =>
+            source.searchResult.totalMatchCount == 1 &&
+            widgets<YaruIconButton>().any(
+              (b) => b.tooltip == 'Next match' && b.onPressed != null,
+            ),
+        '$mode Source receives literal query snapshot',
+      );
+      press('Next match');
+      await wait(
+        () =>
+            source.fullSelection ==
+            const TextSelection(baseOffset: 12, extentOffset: 14),
+        '$mode literal occurrence selection',
+      );
+      final replacement = widgets<TextField>().singleWhere(
+        (f) => f.key == const ValueKey('source-search-replacement'),
+      );
+      replacement.controller!.text = r'$1';
+      replacement.onChanged!(r'$1');
+      await WidgetsBinding.instance.endOfFrame;
+      press('Replace and find next');
+      await wait(
+        () => source.fullText == r'Cat catalog $1 $1 😀' && !search.searching,
+        '$mode literal replacement',
+      );
+      await key('ctrl+z');
+      await wait(
+        () => source.fullText == text,
+        '$mode literal replacement Undo',
+      );
+      await key('ctrl+shift+z');
+      await wait(
+        () => source.fullText == r'Cat catalog $1 $1 😀',
+        '$mode literal replacement Redo',
+      );
+      await query('😀');
+      check(search.documentMatchCount == 1, '$mode Unicode literal occurrence');
+      final match = (search.results.single as TextSearchResult).match;
+      check(
+        source.fullText.substring(match.startOffset, match.endOffset) == '😀',
+        '$mode complete Unicode source boundaries',
+      );
+      await key('escape');
+    }
+    workspace.updateActiveText(original);
+    await WidgetsBinding.instance.endOfFrame;
   }
 
   Future<void> run() async {
@@ -1010,6 +1206,7 @@ class _DriverState extends ConsumerState<_Driver> {
       );
       await key('escape');
       await findReplaceNavigation();
+      await literalMatcherJourney();
       workspace.updateActiveText(
         '${ref.read(workspaceControllerProvider).activeText}\n## Unsaved target heading\n',
       );
@@ -1238,7 +1435,7 @@ class _DriverState extends ConsumerState<_Driver> {
       check(copied.exitCode == 0, 'disposable Writerside project');
       final hidden = File('${project.path}/topics/outside-search.topic');
       await hidden.writeAsString(
-        '<topic id="outside-search" title="Outside Search Topic"><p>semantic selection</p></topic>',
+        '<topic id="outside-search" title="Outside Search Topic"><p>semantic selection</p><chapter id="outline-presentation" title="Outline presentation target"><p>Section text.</p></chapter></topic>',
       );
       await workspace.openFolder(project.path);
       await key('ctrl+shift+t');
@@ -1329,6 +1526,7 @@ class _DriverState extends ConsumerState<_Driver> {
         ),
       );
       await screenshot('writerside-semantic-action');
+      await presentationJourney('light');
       await key('ctrl+alt+k');
       await wait(
         () => widgets<Text>().any((t) => t.data == 'Keyboard Shortcuts'),
@@ -1342,6 +1540,9 @@ class _DriverState extends ConsumerState<_Driver> {
       await key('ctrl+shift+p');
       await query('Bold');
       await screenshot('search-dark');
+      await presentationJourney('dark');
+      await key('ctrl+shift+p');
+      await query('Bold');
       await windowManager.setSize(const Size(600, 800));
       await wait(
         () =>
@@ -1351,12 +1552,21 @@ class _DriverState extends ConsumerState<_Driver> {
         'narrow window size',
       );
       await screenshot('search-narrow');
+      await presentationJourney('narrow');
+      await key('ctrl+shift+p');
+      await query('Bold');
       setState(() => _textScale = 1.6);
       await screenshot('search-scaled');
+      await presentationJourney('scaled');
+      await key('ctrl+shift+p');
+      await query('Bold');
       await ref.read(appSettingsControllerProvider.notifier).setLocaleTag('ar');
       ref.read(searchSessionProvider.notifier).query('');
       await wait(() => !search.searching, 'RTL action results');
       await screenshot('search-rtl');
+      await presentationJourney('rtl');
+      await key('ctrl+shift+p');
+      await query('');
       await ref.read(appSettingsControllerProvider.notifier).setLocaleTag('en');
       setState(() => _textScale = 1);
       await WidgetsBinding.instance.endOfFrame;

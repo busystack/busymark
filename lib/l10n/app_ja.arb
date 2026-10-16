@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "日付",
   "pdfTitlePageTitleRequired": "タイトルページのタイトルを入力してください。",
   "pdfTocSectionNote": "別のページから始まり、複数ページにわたる場合があります。",
-  "sourceSearchZeroLengthUnsupported": "長さがゼロの正規表現の一致には対応していません（^、$、位置のみに一致する先読みなど）。",
   "workspaceSearchIncomplete": "一部の結果のみ表示しています。さらに表示するか、検索を絞り込んでください。",
   "workspaceSearchShowMore": "さらに結果を表示",
   "workspaceSearchSkippedFiles": "検索は未完了です。次のファイルは 1 MiB を超えているか、読み取れませんでした:",
@@ -1931,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "大文字と小文字を区別",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "単語単位",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "正規表現",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "置換後",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2125,10 +2112,6 @@
   "saveAs": "名前を付けて保存",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "無効な正規表現",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "大きなファイル：ハイライトと折りたたみを一時停止しています",
   "@sourceLargeFileFeaturesPaused": {
@@ -5146,11 +5129,22 @@
   "searchDocumentsCommand": "ドキュメントを検索",
   "searchTopicsCommand": "トピックを検索",
   "searchRecentCommand": "最近の項目を検索",
-  "searchQueryHint": "{category}を検索…",
   "searchResourceUnavailable": "このリソースは利用できません。",
   "notesSync": "ノートを同期",
-  "searchInFile": "ファイル内検索",
   "searchInWorkspace": "ワークスペース内検索",
   "searchCategory": "検索カテゴリ",
-  "clearHistorySearchScope": "すべてのドキュメントの履歴を検索"
+  "clearHistorySearchScope": "すべてのドキュメントの履歴を検索",
+  "searchInDocument": "ドキュメント内を検索",
+  "searchDocumentHint": "このドキュメントを検索…",
+  "searchWorkspaceHint": "このワークスペースを検索…",
+  "searchOutlineHint": "見出しを検索…",
+  "searchHistoryHint": "ローカル履歴を検索…",
+  "searchEnterText": "検索するテキストを入力",
+  "searchAccountUnavailable": "アカウントを利用できません",
+  "searchDocumentsHint": "ドキュメントを検索…",
+  "searchTopicsHint": "トピックを検索…",
+  "searchRecentHint": "最近の項目を検索…",
+  "searchActionsHint": "アクションを検索…",
+  "searchRequiresNotesWorkspace": "ノートのワークスペースが必要です",
+  "searchRecentEmpty": "最近のリソースはありません"
 }

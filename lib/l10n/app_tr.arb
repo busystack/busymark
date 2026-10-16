@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Tarih",
   "pdfTitlePageTitleRequired": "Başlık sayfası için bir başlık girin.",
   "pdfTocSectionNote": "Ayrı bir sayfada başlar ve birden fazla sayfa sürebilir.",
-  "sourceSearchZeroLengthUnsupported": "Sıfır uzunluklu düzenli ifade eşleşmeleri desteklenmez (örneğin ^, $ veya yalnızca bir konumla eşleşen ileri bakışlar).",
   "workspaceSearchIncomplete": "Sonuçların yalnızca bir kısmı gösteriliyor. Daha fazlasını gösterin veya aramayı daraltın.",
   "workspaceSearchShowMore": "Daha fazla sonuç göster",
   "workspaceSearchSkippedFiles": "Arama eksik. Bu dosyalar 1 MiB boyutunu aşıyor veya okunamadı:",
@@ -1931,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Büyük-küçük harf duyarlı",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Tam sözcük",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Düzenli ifade",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Şununla değiştir:",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2125,10 +2112,6 @@
   "saveAs": "Farklı Kaydet",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Geçersiz düzenli ifade",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Büyük dosya: vurgulama ve katlama duraklatıldı",
   "@sourceLargeFileFeaturesPaused": {
@@ -5146,11 +5129,22 @@
   "searchDocumentsCommand": "Belgeleri ara",
   "searchTopicsCommand": "Konuları ara",
   "searchRecentCommand": "Son kullanılanları ara",
-  "searchQueryHint": "{category} içinde ara…",
   "searchResourceUnavailable": "Bu kaynak kullanılamıyor.",
   "notesSync": "Notları eşitle",
-  "searchInFile": "Dosyada Ara",
   "searchInWorkspace": "Çalışma Alanında Ara",
   "searchCategory": "Arama kategorisi",
-  "clearHistorySearchScope": "Belgelerin geçmişinde ara"
+  "clearHistorySearchScope": "Belgelerin geçmişinde ara",
+  "searchInDocument": "Belgede ara",
+  "searchDocumentHint": "Bu belgede ara…",
+  "searchWorkspaceHint": "Bu çalışma alanında ara…",
+  "searchOutlineHint": "Başlıklarda ara…",
+  "searchHistoryHint": "Yerel geçmişte ara…",
+  "searchEnterText": "Aranacak metni girin",
+  "searchAccountUnavailable": "Hesap kullanılamıyor",
+  "searchDocumentsHint": "Belgeleri ara…",
+  "searchTopicsHint": "Konuları ara…",
+  "searchRecentHint": "Son kullanılanları ara…",
+  "searchActionsHint": "Eylemleri ara…",
+  "searchRequiresNotesWorkspace": "Notlar çalışma alanı gerektirir",
+  "searchRecentEmpty": "Son kullanılan kaynak yok"
 }

@@ -1842,15 +1842,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sourceSearchNextMatch => 'Volgende overeenkomst';
 
   @override
-  String get sourceSearchCaseSensitive => 'Hoofdlettergevoelig';
-
-  @override
-  String get sourceSearchWholeWord => 'Heel woord';
-
-  @override
-  String get sourceSearchRegex => 'Regex';
-
-  @override
   String get sourceSearchReplacement => 'Vervangen door';
 
   @override
@@ -1982,13 +1973,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get saveAs => 'Opslaan als';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Ongeldige reguliere expressie';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, \$ of lookaheads die alleen een positie vinden).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5465,18 +5449,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get searchRecentCommand => 'Recente items zoeken';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Zoeken in $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Deze bron is niet beschikbaar.';
 
   @override
   String get notesSync => 'Notities synchroniseren';
-
-  @override
-  String get searchInFile => 'Zoeken in bestand';
 
   @override
   String get searchInWorkspace => 'Zoeken in werkruimte';
@@ -5486,4 +5462,43 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Zoeken in documentgeschiedenis';
+
+  @override
+  String get searchInDocument => 'Zoeken in document';
+
+  @override
+  String get searchDocumentHint => 'Dit document doorzoeken…';
+
+  @override
+  String get searchWorkspaceHint => 'Deze werkruimte doorzoeken…';
+
+  @override
+  String get searchOutlineHint => 'Koppen zoeken…';
+
+  @override
+  String get searchHistoryHint => 'Lokale geschiedenis doorzoeken…';
+
+  @override
+  String get searchEnterText => 'Voer tekst in om te zoeken';
+
+  @override
+  String get searchAccountUnavailable => 'Account niet beschikbaar';
+
+  @override
+  String get searchDocumentsHint => 'Documenten zoeken…';
+
+  @override
+  String get searchTopicsHint => 'Onderwerpen zoeken…';
+
+  @override
+  String get searchRecentHint => 'Recente items zoeken…';
+
+  @override
+  String get searchActionsHint => 'Acties zoeken…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Vereist een notitiewerkruimte';
+
+  @override
+  String get searchRecentEmpty => 'Geen recente bronnen';
 }

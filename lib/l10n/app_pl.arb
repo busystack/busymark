@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Data",
   "pdfTitlePageTitleRequired": "Wpisz tytuł strony tytułowej.",
   "pdfTocSectionNote": "Zaczyna się na osobnej stronie i może zajmować wiele stron.",
-  "sourceSearchZeroLengthUnsupported": "Dopasowania wyrażeń regularnych o zerowej długości nie są obsługiwane (np. ^, $ lub asercje dopasowujące tylko pozycję).",
   "workspaceSearchIncomplete": "Wyświetlono tylko część wyników. Pokaż więcej lub zawęź wyszukiwanie.",
   "workspaceSearchShowMore": "Pokaż więcej wyników",
   "workspaceSearchSkippedFiles": "Wyszukiwanie jest niepełne. Te pliki przekraczają 1 MiB lub nie można ich odczytać:",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Następne dopasowanie",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Uwzględniaj wielkość liter",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Całe słowo",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Wyrażenie regularne",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Nieprawidłowe wyrażenie regularne",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Duży plik: podświetlanie i zwijanie są wstrzymane",
   "@sourceLargeFileFeaturesPaused": {
@@ -3642,11 +3625,22 @@
   "searchDocumentsCommand": "Szukaj dokumentów",
   "searchTopicsCommand": "Szukaj tematów",
   "searchRecentCommand": "Szukaj ostatnich",
-  "searchQueryHint": "Szukaj: {category}…",
   "searchResourceUnavailable": "Ten zasób jest niedostępny.",
   "notesSync": "Synchronizuj notatki",
-  "searchInFile": "Szukaj w pliku",
   "searchInWorkspace": "Szukaj w obszarze roboczym",
   "searchCategory": "Kategoria wyszukiwania",
-  "clearHistorySearchScope": "Szukaj w historii dokumentów"
+  "clearHistorySearchScope": "Szukaj w historii dokumentów",
+  "searchInDocument": "Szukaj w dokumencie",
+  "searchDocumentHint": "Przeszukaj ten dokument…",
+  "searchWorkspaceHint": "Przeszukaj ten obszar roboczy…",
+  "searchOutlineHint": "Szukaj nagłówków…",
+  "searchHistoryHint": "Przeszukaj historię lokalną…",
+  "searchEnterText": "Wpisz tekst do wyszukania",
+  "searchAccountUnavailable": "Konto niedostępne",
+  "searchDocumentsHint": "Szukaj dokumentów…",
+  "searchTopicsHint": "Szukaj tematów…",
+  "searchRecentHint": "Szukaj ostatnich…",
+  "searchActionsHint": "Szukaj działań…",
+  "searchRequiresNotesWorkspace": "Wymaga obszaru roboczego Notatek",
+  "searchRecentEmpty": "Brak ostatnich zasobów"
 }

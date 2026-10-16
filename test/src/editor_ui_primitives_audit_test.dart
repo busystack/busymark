@@ -10,11 +10,9 @@ void main() {
     final searchPanel = RegExp(
       r'class _SourceSearchPanel[\s\S]*?class _SearchPanelIconButton',
     ).firstMatch(source)!.group(0)!;
-    final searchButtons =
-        RegExp(
-          r'class _SearchPanelIconButton[\s\S]*?class _SourceLargeFileBanner',
-        ).firstMatch(source)!.group(0)! +
-        File('lib/src/search/search_option_button.dart').readAsStringSync();
+    final searchButtons = RegExp(
+      r'class _SearchPanelIconButton[\s\S]*?class _SourceLargeFileBanner',
+    ).firstMatch(source)!.group(0)!;
     final largeFileBanner = RegExp(
       r'class _SourceLargeFileBanner[\s\S]*?'
       r'class _SourceEditorShortcutIntent',
@@ -25,10 +23,14 @@ void main() {
     expect(searchPanel, isNot(contains('DecoratedBox(')));
     expect(searchPanel, isNot(contains('Border.all(')));
     expect(searchPanel, isNot(contains('elevation:')));
-    expect(RegExp(r'SearchOptionButton\(').allMatches(searchPanel).length, 3);
-    expect(RegExp(r'YaruIconButton\(').allMatches(searchButtons).length, 2);
+    expect(searchPanel, isNot(contains('SearchOptionButton(')));
+    expect(
+      File('lib/src/search/search_option_button.dart').existsSync(),
+      isFalse,
+    );
+    expect(RegExp(r'YaruIconButton\(').allMatches(searchButtons).length, 1);
     expect(searchButtons, contains('iconSize: 28'));
-    expect(searchButtons, contains('isSelected: selected'));
+    expect(searchButtons, isNot(contains('isSelected: selected')));
     expect(searchButtons, isNot(contains('WidgetStateProperty.resolveWith')));
     expect(searchButtons, isNot(contains('backgroundColor:')));
     expect(searchButtons, isNot(contains('fixedSize:')));

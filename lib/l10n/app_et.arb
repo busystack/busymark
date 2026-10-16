@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Kuupäev",
   "pdfTitlePageTitleRequired": "Sisesta tiitellehe pealkiri.",
   "pdfTocSectionNote": "Algab eraldi lehelt ja võib hõlmata mitut lehte.",
-  "sourceSearchZeroLengthUnsupported": "Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, $ või ainult asukohta sobitavad ettevaated).",
   "workspaceSearchIncomplete": "Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.",
   "workspaceSearchShowMore": "Kuva rohkem tulemusi",
   "workspaceSearchSkippedFiles": "Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:",
@@ -1854,22 +1853,6 @@
   "sourceSearchNextMatch": "Järgmine vaste",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Tõstutundlik",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Terve sõna",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regulaaravaldis",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Vigane regulaaravaldis",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Suur fail: esiletõstmine ja voltimine on peatatud",
   "@sourceLargeFileFeaturesPaused": {
@@ -4076,11 +4059,22 @@
   "searchDocumentsCommand": "Otsi dokumente",
   "searchTopicsCommand": "Otsi teemasid",
   "searchRecentCommand": "Otsi hiljutisi",
-  "searchQueryHint": "Otsi: {category}…",
   "searchResourceUnavailable": "See ressurss pole saadaval.",
   "notesSync": "Sünkrooni märkmed",
-  "searchInFile": "Otsi failist",
   "searchInWorkspace": "Otsi tööalast",
   "searchCategory": "Otsingu kategooria",
-  "clearHistorySearchScope": "Otsi dokumentide ajaloost"
+  "clearHistorySearchScope": "Otsi dokumentide ajaloost",
+  "searchInDocument": "Otsi dokumendist",
+  "searchDocumentHint": "Otsi sellest dokumendist…",
+  "searchWorkspaceHint": "Otsi sellest tööruumist…",
+  "searchOutlineHint": "Otsi pealkirju…",
+  "searchHistoryHint": "Otsi kohalikust ajaloost…",
+  "searchEnterText": "Sisesta otsitav tekst",
+  "searchAccountUnavailable": "Konto pole saadaval",
+  "searchDocumentsHint": "Otsi dokumente…",
+  "searchTopicsHint": "Otsi teemasid…",
+  "searchRecentHint": "Otsi hiljutisi…",
+  "searchActionsHint": "Otsi toiminguid…",
+  "searchRequiresNotesWorkspace": "Vajab märkmete tööruumi",
+  "searchRecentEmpty": "Hiljutisi ressursse pole"
 }

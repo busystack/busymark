@@ -57,6 +57,8 @@ previously untitled documents by name, current or historical path, or revision
 content. The shared header owns the query and results appear in the search
 sidebar. The History panel’s Find action supplies the selected document as
 removable context; clear that context to search retained history generally.
+An empty query waits for input and does not enumerate retained documents or read
+revision contents. Clearing the query cancels matching and removes its results.
 
 A document result opens its retained timeline. A content result opens that exact
 revision for comparison and leaves the search sidebar available. Inspection never

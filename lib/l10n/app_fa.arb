@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "تاریخ",
   "pdfTitlePageTitleRequired": "عنوانی برای صفحهٔ عنوان وارد کنید.",
   "pdfTocSectionNote": "از صفحه‌ای جداگانه شروع می‌شود و ممکن است چند صفحه ادامه یابد.",
-  "sourceSearchZeroLengthUnsupported": "تطبیق‌های با طول صفر در عبارت منظم پشتیبانی نمی‌شوند (مانند ^، $ یا نگاه‌به‌جلو که فقط با یک موقعیت تطبیق دارد).",
   "workspaceSearchIncomplete": "فقط بخشی از نتایج نمایش داده می‌شود. نتایج بیشتری نمایش دهید یا جستجو را محدود کنید.",
   "workspaceSearchShowMore": "نمایش نتایج بیشتر",
   "workspaceSearchSkippedFiles": "جستجو کامل نیست. حجم این فایل‌ها بیش از 1 MiB است یا خواندن آن‌ها ممکن نبود:",
@@ -1568,22 +1567,6 @@
   "sourceSearchNextMatch": "تطابق بعدی",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "حساس به بزرگی و کوچکی حروف",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "تمام کلمه",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "عبارت منظم",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "عبارت منظم نامعتبر است",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند",
   "@sourceLargeFileFeaturesPaused": {
@@ -3658,11 +3641,22 @@
   "searchDocumentsCommand": "جستجوی سندها",
   "searchTopicsCommand": "جستجوی موضوع‌ها",
   "searchRecentCommand": "جستجوی موارد اخیر",
-  "searchQueryHint": "جستجو در {category}…",
   "searchResourceUnavailable": "این منبع در دسترس نیست.",
   "notesSync": "همگام‌سازی یادداشت‌ها",
-  "searchInFile": "جستجو در فایل",
   "searchInWorkspace": "جستجو در فضای کاری",
   "searchCategory": "دستهٔ جستجو",
-  "clearHistorySearchScope": "جستجو در تاریخچهٔ سندها"
+  "clearHistorySearchScope": "جستجو در تاریخچهٔ سندها",
+  "searchInDocument": "جستجو در سند",
+  "searchDocumentHint": "جستجو در این سند…",
+  "searchWorkspaceHint": "جستجو در این فضای کاری…",
+  "searchOutlineHint": "جستجوی عنوان‌ها…",
+  "searchHistoryHint": "جستجو در تاریخچهٔ محلی…",
+  "searchEnterText": "متن جستجو را وارد کنید",
+  "searchAccountUnavailable": "حساب در دسترس نیست",
+  "searchDocumentsHint": "جستجوی سندها…",
+  "searchTopicsHint": "جستجوی موضوع‌ها…",
+  "searchRecentHint": "جستجوی موارد اخیر…",
+  "searchActionsHint": "جستجوی کنش‌ها…",
+  "searchRequiresNotesWorkspace": "به فضای کاری یادداشت‌ها نیاز دارد",
+  "searchRecentEmpty": "منبع اخیراً بازشده‌ای وجود ندارد"
 }

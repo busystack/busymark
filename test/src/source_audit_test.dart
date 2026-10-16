@@ -741,9 +741,10 @@ void main() {
       singleMarkdownClause.indexOf('_SidebarTab.localHistory'),
       lessThan(singleMarkdownClause.indexOf('_SidebarTab.clipboard')),
     );
+    expect(workspace, contains('showTabMenu: tabs.length > 1'));
     expect(
       workspace,
-      contains('showTabMenu: !widget.searchState.active && tabs.length > 1'),
+      contains(RegExp(r'if \(!widget\.searchState\.active\)\s+_SidebarHeader')),
     );
     expect(workspace, contains('_preferredSidebarTabIndex'));
     expect(workspace, contains('_shouldShowOutlineForOpenFile'));
@@ -1036,7 +1037,7 @@ void main() {
     expect(workspace, isNot(contains('_outlineTreeHeadings')));
     expect(
       workspace,
-      contains('widget.searchState.category == SearchCategory.outline'),
+      isNot(contains('widget.searchState.category == SearchCategory.outline')),
     );
     expect(workspace, contains('selectedTab == _SidebarTab.git'));
     expect(
@@ -1650,16 +1651,19 @@ void main() {
       'lib/src/editor/source/source_editor.dart',
     ).readAsStringSync();
 
-    expect(workspace, contains('_outlineNavigationTargetProvider'));
-    expect(workspace, contains('_OutlineNavigationTarget'));
+    final navigation = File(
+      'lib/src/workspace/outline_navigation.dart',
+    ).readAsStringSync();
+    expect(workspace, contains('outlineNavigationTargetProvider'));
+    expect(navigation, contains('class OutlineNavigationTarget'));
     expect(
       workspace,
-      contains('final documentOutline = _activeDocumentOutline(state);'),
+      contains('final documentOutline = activeDocumentOutline(state);'),
     );
     expect(workspace, contains('outline: documentOutline'));
-    expect(workspace, contains('return preview.outline'));
-    expect(workspace, contains('headingId: heading.id'));
-    expect(workspace, contains('line: heading.sourceStartLine'));
+    expect(navigation, contains('return preview.outline'));
+    expect(navigation, contains('headingId: heading.id'));
+    expect(navigation, contains('line: heading.sourceStartLine'));
     expect(workspace, contains('workspaceId: widget.workspace.id'));
     expect(workspace, isNot(contains('widget.workspace.markdown?.headings')));
     expect(workspace, contains('_sourceEditorKey.currentState?.scrollToLine'));

@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Data",
   "pdfTitlePageTitleRequired": "Inserisci un titolo per il frontespizio.",
   "pdfTocSectionNote": "Inizia su una pagina separata e può occupare più pagine.",
-  "sourceSearchZeroLengthUnsupported": "Le corrispondenze regex di lunghezza zero non sono supportate (ad esempio ^, $ o lookahead che corrispondono solo a una posizione).",
   "workspaceSearchIncomplete": "È mostrata solo una parte dei risultati. Mostrane altri o restringi la ricerca.",
   "workspaceSearchShowMore": "Mostra altri risultati",
   "workspaceSearchSkippedFiles": "La ricerca è incompleta. Questi file superano 1 MiB o non è stato possibile leggerli:",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Corrispondenza successiva",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Maiuscole/minuscole",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Parola intera",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Espressione regolare",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Espressione regolare non valida",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "File di grandi dimensioni: evidenziazione e ripiegamento sono sospesi",
   "@sourceLargeFileFeaturesPaused": {
@@ -3616,11 +3599,22 @@
   "searchDocumentsCommand": "Cerca documenti",
   "searchTopicsCommand": "Cerca argomenti",
   "searchRecentCommand": "Cerca recenti",
-  "searchQueryHint": "Cerca in {category}…",
   "searchResourceUnavailable": "Questa risorsa non è disponibile.",
   "notesSync": "Sincronizza note",
-  "searchInFile": "Cerca nel file",
   "searchInWorkspace": "Cerca nello spazio di lavoro",
   "searchCategory": "Categoria di ricerca",
-  "clearHistorySearchScope": "Cerca nella cronologia dei documenti"
+  "clearHistorySearchScope": "Cerca nella cronologia dei documenti",
+  "searchInDocument": "Cerca nel documento",
+  "searchDocumentHint": "Cerca in questo documento…",
+  "searchWorkspaceHint": "Cerca in questo spazio di lavoro…",
+  "searchOutlineHint": "Cerca titoli…",
+  "searchHistoryHint": "Cerca nella cronologia locale…",
+  "searchEnterText": "Inserisci il testo da cercare",
+  "searchAccountUnavailable": "Account non disponibile",
+  "searchDocumentsHint": "Cerca documenti…",
+  "searchTopicsHint": "Cerca argomenti…",
+  "searchRecentHint": "Cerca recenti…",
+  "searchActionsHint": "Cerca azioni…",
+  "searchRequiresNotesWorkspace": "Richiede uno spazio di lavoro Note",
+  "searchRecentEmpty": "Nessuna risorsa recente"
 }

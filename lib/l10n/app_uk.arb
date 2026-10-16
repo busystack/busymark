@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Дата",
   "pdfTitlePageTitleRequired": "Введіть заголовок титульної сторінки.",
   "pdfTocSectionNote": "Починається з окремої сторінки й може займати кілька сторінок.",
-  "sourceSearchZeroLengthUnsupported": "Збіги регулярних виразів нульової довжини не підтримуються (наприклад, ^, $ або перевірки вперед, що збігаються лише з позицією).",
   "workspaceSearchIncomplete": "Показано лише частину результатів. Покажіть більше або звузьте пошук.",
   "workspaceSearchShowMore": "Показати більше результатів",
   "workspaceSearchSkippedFiles": "Пошук неповний. Ці файли перевищують 1 MiB або їх не вдалося прочитати:",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Наступний збіг",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "З урахуванням регістру",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Ціле слово",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Регулярний вираз",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Некоректний регулярний вираз",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Великий файл: підсвічування та згортання призупинено",
   "@sourceLargeFileFeaturesPaused": {
@@ -3642,11 +3625,22 @@
   "searchDocumentsCommand": "Пошук документів",
   "searchTopicsCommand": "Пошук тем",
   "searchRecentCommand": "Пошук нещодавніх",
-  "searchQueryHint": "Пошук: {category}…",
   "searchResourceUnavailable": "Цей ресурс недоступний.",
   "notesSync": "Синхронізувати нотатки",
-  "searchInFile": "Пошук у файлі",
   "searchInWorkspace": "Пошук у робочій області",
   "searchCategory": "Категорія пошуку",
-  "clearHistorySearchScope": "Пошук в історії документів"
+  "clearHistorySearchScope": "Пошук в історії документів",
+  "searchInDocument": "Пошук у документі",
+  "searchDocumentHint": "Пошук у цьому документі…",
+  "searchWorkspaceHint": "Пошук у цьому робочому просторі…",
+  "searchOutlineHint": "Пошук заголовків…",
+  "searchHistoryHint": "Пошук у локальній історії…",
+  "searchEnterText": "Введіть текст для пошуку",
+  "searchAccountUnavailable": "Обліковий запис недоступний",
+  "searchDocumentsHint": "Пошук документів…",
+  "searchTopicsHint": "Пошук тем…",
+  "searchRecentHint": "Пошук нещодавніх…",
+  "searchActionsHint": "Пошук дій…",
+  "searchRequiresNotesWorkspace": "Потрібен робочий простір нотаток",
+  "searchRecentEmpty": "Немає нещодавніх ресурсів"
 }

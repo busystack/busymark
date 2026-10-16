@@ -1075,7 +1075,7 @@ void main() {
     );
   }
   test(
-    'FTS operators and punctuation stay literal; Unicode whole words and short terms',
+    'FTS operators and punctuation stay literal; Unicode substrings and short terms',
     () async {
       final note = await f.repository.create(
         testAccount().id,
@@ -1089,17 +1089,17 @@ void main() {
       addTearDown(search.dispose);
       await search.search('AND');
       expect(search.state.hits.length, 1);
-      await search.search('foo', wholeWord: true);
-      expect(search.state.hits.length, 1);
+      await search.search('foo');
+      expect(search.state.hits.length, 3);
       expect(
         note.content.substring(
-          search.state.hits.single.start!,
-          search.state.hits.single.end!,
+          search.state.hits.first.start!,
+          search.state.hits.first.end!,
         ),
         'foo',
       );
-      await search.search('βήτα', wholeWord: true);
-      expect(search.state.hits.length, 1);
+      await search.search('βήτα');
+      expect(search.state.hits.length, 2);
       await search.search('100%');
       expect(search.state.hits.length, 1);
       await search.search('"OR foo_bar"');

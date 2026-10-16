@@ -8,7 +8,7 @@ sizes the same sidebar temporarily overlays the leading side of the document.
 
 | Category | Scope | Shortcut |
 | --- | --- | --- |
-| Search in File | Active document’s current buffer | Ctrl+F |
+| Search in Document | Active document’s current buffer | Ctrl+F |
 | Search in Workspace | Current local workspace or Notes account | Ctrl+Shift+F |
 | Outline | Headings in the current document | Explicit category selection |
 | Documents | Names, paths or Notes titles/categories in the active workspace | Ctrl+P |
@@ -39,9 +39,9 @@ Save, Export and workspace actions also validate their original resource.
 Existing Notes synchronization, folder/file import and export workflows are
 available through Actions when their Notes workspace is active.
 
-## File and workspace search
+## Document and workspace search
 
-**Search in File** searches the live buffer, including unsaved text,
+**Search in Document** searches the live buffer, including unsaved text,
 untitled Markdown and individual Nextcloud notes. **Search in Workspace** explicitly
 widens the scope to the known local file inventory or active Notes account. An
 unrelated external tab does not enlarge the local workspace scope. Text results
@@ -51,8 +51,8 @@ For Nextcloud workspace text, the existing local Notes index includes cached,
 unopened notes and dirty-buffer overlays. Terms use AND; quotes match phrases,
 `title:` restricts a term to the title, and `category:` restricts the category.
 For example, `"alpha beta" café category:"Work/子"` combines these restrictions.
-Whole word is optional. The Notes workspace provider does not expose regex or
-case controls. Search in File for Notes uses the normal buffer matching rules.
+The Notes workspace provider keeps its phrase and field query language.
+Search in Document for Notes uses the normal buffer matching rules.
 Documents searches note titles and categories, never note bodies.
 
 Loading/indexing, empty results, errors, skipped files and incomplete results are
@@ -69,9 +69,11 @@ Ctrl+3 and the Outline sidebar button open ordinary Outline without a query or
 remembered filter. Choosing Outline in the search category menu filters the same
 outline model. Explicit browsing closes search and focuses the Outline tree.
 
-An empty Outline query shows the normal outline. Filtering retains matching
-headings and their ancestors, in document order. Navigation and section actions
-use the existing outline identities and full structure, including unsaved headings.
+Outline search waits for a query, then displays matching headings in document
+order with their levels and ancestor context. It uses the same live model and
+validated heading navigation, including unsaved headings. Ordinary Outline owns
+its independent tree expansion, selection and section actions; search does not
+filter or change that browsing state.
 Topics searches source titles, topic IDs, filenames and project-relative paths
 across modules. Rows distinguish module ownership and open the actual topic.
 
@@ -99,7 +101,7 @@ open its existing comparison view while keeping search results available.
 
 The History panel’s Find action searches the selected historical document; its
 name appears as removable context. Clear that context to search all retained
-history. Matching is literal and case-insensitive; file-search options do not apply.
+history. Matching is literal and case-insensitive. An empty History query waits for input.
 Search reads retained revisions without recording, restoring, rebinding a live
 buffer or substituting a same-named file. Missing revisions report failure.
 
@@ -108,15 +110,26 @@ unfiltered timeline. The panel has no private search field or hidden filter.
 Returning through Search restores the shared query and selection. Clearing or
 pruning retained history invalidates affected results and comparisons.
 
-## Search options
+## Literal matching and initial lists
 
-- **Case sensitive** distinguishes uppercase and lowercase letters.
-- **Whole word** excludes matches that are part of a longer word.
-- **Regex** treats the query as a Dart regular expression. Invalid expressions
-  are reported instead of being searched.
+Document and local-workspace text search use case-insensitive literal substring
+matching. `cat` finds `Cat` and `catalog`; `.*` finds those literal characters.
+Whitespace is searchable. Source coordinates remain offsets into the original
+buffer. Replacement text is literal too: `$1` inserts `$1`, without capture-group
+substitution. There are no case, whole-word or regex toggles in the sidebar or
+Source/Split controls.
 
-Zero-length regular-expression matches, such as `^`, `$`, or a lookahead that
-matches only a position, are not supported for search or replacement.
+Search in Document, Search in Workspace, Outline, Documents, Topics and Local
+History initially show **Enter text to search**. Empty queries do not start
+matching, scan the workspace, enumerate topic/document inventories or read History
+revision contents. Clearing cancels outstanding work and removes its results and
+selection. **No results** appears only after a nonempty query completes without
+matches; loading, errors and unavailable resources have distinct feedback.
+
+Recent initially displays its chronological list. Actions initially displays the
+command catalog, ordered by availability, localized action name, category and
+stable ID. Typing filters either list; unavailable Actions stay discoverable and
+cannot execute or redirect Enter to another action.
 
 ## Active document
 
@@ -136,7 +149,7 @@ immediately unless autosave is enabled, and they participate in normal undo and
 save behavior.
 
 Replace and find next waits for matches in the modified document before moving
-the caret. Changing the category, query, options, document or selection cancels
+the caret. Changing the category, query, document or selection cancels
 that pending navigation.
 
 Editor and Reading views show sidebar search results and navigate to matching
@@ -167,10 +180,6 @@ It is unavailable for Notes workspaces and recovery content.
 3. Review matches grouped by file. Clear individual matches or a whole file to
    exclude them.
 4. Choose **Apply replacements**.
-
-With Regex enabled, replacement text supports `$1` through `$99` for numbered
-capture groups, `${name}` for named groups, `$&` for the complete match, and
-`$$` for a literal dollar sign.
 
 BusyMark rechecks every selected file and open buffer against the reviewed
 preview before changing it. Replacements in open documents update their editor

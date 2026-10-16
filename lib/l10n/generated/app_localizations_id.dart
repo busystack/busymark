@@ -1835,15 +1835,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sourceSearchNextMatch => 'Kecocokan berikutnya';
 
   @override
-  String get sourceSearchCaseSensitive => 'Peka huruf besar-kecil';
-
-  @override
-  String get sourceSearchWholeWord => 'Seluruh kata';
-
-  @override
-  String get sourceSearchRegex => 'Regex';
-
-  @override
   String get sourceSearchReplacement => 'Ganti dengan';
 
   @override
@@ -1968,13 +1959,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get saveAs => 'Simpan sebagai';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Ekspresi reguler tidak valid';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, \$, atau lookahead yang hanya cocok dengan posisi).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5413,18 +5397,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get searchRecentCommand => 'Cari terbaru';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Cari di $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Sumber daya ini tidak tersedia.';
 
   @override
   String get notesSync => 'Sinkronkan catatan';
-
-  @override
-  String get searchInFile => 'Cari dalam Berkas';
 
   @override
   String get searchInWorkspace => 'Cari dalam Ruang Kerja';
@@ -5434,4 +5410,43 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Cari riwayat seluruh dokumen';
+
+  @override
+  String get searchInDocument => 'Cari dalam dokumen';
+
+  @override
+  String get searchDocumentHint => 'Cari dalam dokumen ini…';
+
+  @override
+  String get searchWorkspaceHint => 'Cari dalam ruang kerja ini…';
+
+  @override
+  String get searchOutlineHint => 'Cari judul bagian…';
+
+  @override
+  String get searchHistoryHint => 'Cari dalam riwayat lokal…';
+
+  @override
+  String get searchEnterText => 'Masukkan teks untuk mencari';
+
+  @override
+  String get searchAccountUnavailable => 'Akun tidak tersedia';
+
+  @override
+  String get searchDocumentsHint => 'Cari dokumen…';
+
+  @override
+  String get searchTopicsHint => 'Cari topik…';
+
+  @override
+  String get searchRecentHint => 'Cari terbaru…';
+
+  @override
+  String get searchActionsHint => 'Cari tindakan…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Memerlukan ruang kerja Catatan';
+
+  @override
+  String get searchRecentEmpty => 'Tidak ada sumber daya terbaru';
 }

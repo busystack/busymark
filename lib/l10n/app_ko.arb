@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "날짜",
   "pdfTitlePageTitleRequired": "제목 페이지의 제목을 입력하세요.",
   "pdfTocSectionNote": "별도 페이지에서 시작하며 여러 페이지에 걸칠 수 있습니다.",
-  "sourceSearchZeroLengthUnsupported": "길이가 0인 정규식 일치는 지원하지 않습니다(예: ^, $, 위치에만 일치하는 전방 탐색).",
   "workspaceSearchIncomplete": "일부 결과만 표시됩니다. 더 표시하거나 검색 범위를 좁히세요.",
   "workspaceSearchShowMore": "결과 더 보기",
   "workspaceSearchSkippedFiles": "검색이 완료되지 않았습니다. 다음 파일은 1 MiB를 초과하거나 읽을 수 없습니다:",
@@ -1931,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "대소문자 구분",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "전체 단어",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "정규식",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "다음으로 바꾸기",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2125,10 +2112,6 @@
   "saveAs": "다른 이름으로 저장",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "잘못된 정규식",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "대용량 파일: 강조 표시 및 접기가 일시 중지됩니다.",
   "@sourceLargeFileFeaturesPaused": {
@@ -5146,11 +5129,22 @@
   "searchDocumentsCommand": "문서 검색",
   "searchTopicsCommand": "주제 검색",
   "searchRecentCommand": "최근 항목 검색",
-  "searchQueryHint": "{category} 검색…",
   "searchResourceUnavailable": "이 리소스를 사용할 수 없습니다.",
   "notesSync": "노트 동기화",
-  "searchInFile": "파일에서 검색",
   "searchInWorkspace": "작업 공간에서 검색",
   "searchCategory": "검색 범주",
-  "clearHistorySearchScope": "문서 기록 전체 검색"
+  "clearHistorySearchScope": "문서 기록 전체 검색",
+  "searchInDocument": "문서에서 검색",
+  "searchDocumentHint": "이 문서에서 검색…",
+  "searchWorkspaceHint": "이 작업 공간에서 검색…",
+  "searchOutlineHint": "제목 검색…",
+  "searchHistoryHint": "로컬 기록 검색…",
+  "searchEnterText": "검색할 텍스트 입력",
+  "searchAccountUnavailable": "계정을 사용할 수 없음",
+  "searchDocumentsHint": "문서 검색…",
+  "searchTopicsHint": "주제 검색…",
+  "searchRecentHint": "최근 항목 검색…",
+  "searchActionsHint": "작업 검색…",
+  "searchRequiresNotesWorkspace": "노트 작업 공간 필요",
+  "searchRecentEmpty": "최근 리소스 없음"
 }

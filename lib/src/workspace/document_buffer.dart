@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/services.dart';
 
 import '../app/app_settings.dart';
-import '../editor/source/source_search.dart';
 import '../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../spellcheck/spelling_language.dart';
 import '../nextcloud_notes/domain/notes_models.dart';
@@ -115,7 +114,6 @@ class DocumentEditorState {
     this.selection = const TextSelection.collapsed(offset: 0),
     this.scrollOffset = 0,
     this.foldedRegionKeys = const {},
-    this.searchOptions = const SourceSearchOptions(),
     this.searchReplacement = '',
     this.undoState = const DocumentUndoState(),
     this.wysiwygState = const WysiwygEditorSessionState(),
@@ -126,7 +124,6 @@ class DocumentEditorState {
   final TextSelection selection;
   final double scrollOffset;
   final Set<String> foldedRegionKeys;
-  final SourceSearchOptions searchOptions;
   final String searchReplacement;
   final DocumentUndoState undoState;
   final WysiwygEditorSessionState wysiwygState;
@@ -137,7 +134,6 @@ class DocumentEditorState {
     TextSelection? selection,
     double? scrollOffset,
     Set<String>? foldedRegionKeys,
-    SourceSearchOptions? searchOptions,
     String? searchReplacement,
     DocumentUndoState? undoState,
     WysiwygEditorSessionState? wysiwygState,
@@ -150,7 +146,6 @@ class DocumentEditorState {
       foldedRegionKeys: Set.unmodifiable(
         foldedRegionKeys ?? this.foldedRegionKeys,
       ),
-      searchOptions: searchOptions ?? this.searchOptions,
       searchReplacement: searchReplacement ?? this.searchReplacement,
       undoState: undoState ?? this.undoState,
       wysiwygState: wysiwygState ?? this.wysiwygState,
@@ -184,12 +179,6 @@ class DocumentEditorState {
               ?.map((value) => value.toString())
               .toSet() ??
           const {},
-      searchOptions: SourceSearchOptions(
-        query: json['searchQuery']?.toString() ?? '',
-        caseSensitive: json['searchCaseSensitive'] as bool? ?? false,
-        wholeWord: json['searchWholeWord'] as bool? ?? false,
-        regex: json['searchRegex'] as bool? ?? false,
-      ),
       searchReplacement: json['searchReplacement']?.toString() ?? '',
       wysiwygState: WysiwygEditorSessionState.fromJson(
         (json['wysiwygState'] as Map?)?.cast<String, Object?>() ?? const {},

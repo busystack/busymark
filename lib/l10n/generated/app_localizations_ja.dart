@@ -1774,15 +1774,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sourceSearchNextMatch => '次の一致';
 
   @override
-  String get sourceSearchCaseSensitive => '大文字と小文字を区別';
-
-  @override
-  String get sourceSearchWholeWord => '単語単位';
-
-  @override
-  String get sourceSearchRegex => '正規表現';
-
-  @override
   String get sourceSearchReplacement => '置換後';
 
   @override
@@ -1901,13 +1892,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get saveAs => '名前を付けて保存';
-
-  @override
-  String get sourceSearchInvalidRegex => '無効な正規表現';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '長さがゼロの正規表現の一致には対応していません（^、\$、位置のみに一致する先読みなど）。';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5263,18 +5247,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get searchRecentCommand => '最近の項目を検索';
 
   @override
-  String searchQueryHint(String category) {
-    return '$categoryを検索…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'このリソースは利用できません。';
 
   @override
   String get notesSync => 'ノートを同期';
-
-  @override
-  String get searchInFile => 'ファイル内検索';
 
   @override
   String get searchInWorkspace => 'ワークスペース内検索';
@@ -5284,4 +5260,43 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'すべてのドキュメントの履歴を検索';
+
+  @override
+  String get searchInDocument => 'ドキュメント内を検索';
+
+  @override
+  String get searchDocumentHint => 'このドキュメントを検索…';
+
+  @override
+  String get searchWorkspaceHint => 'このワークスペースを検索…';
+
+  @override
+  String get searchOutlineHint => '見出しを検索…';
+
+  @override
+  String get searchHistoryHint => 'ローカル履歴を検索…';
+
+  @override
+  String get searchEnterText => '検索するテキストを入力';
+
+  @override
+  String get searchAccountUnavailable => 'アカウントを利用できません';
+
+  @override
+  String get searchDocumentsHint => 'ドキュメントを検索…';
+
+  @override
+  String get searchTopicsHint => 'トピックを検索…';
+
+  @override
+  String get searchRecentHint => '最近の項目を検索…';
+
+  @override
+  String get searchActionsHint => 'アクションを検索…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'ノートのワークスペースが必要です';
+
+  @override
+  String get searchRecentEmpty => '最近のリソースはありません';
 }

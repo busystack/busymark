@@ -7,7 +7,6 @@ import 'dart:math' as math;
 import 'dart:ui' show BoxHeightStyle;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
-import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -110,8 +109,6 @@ void main() {
                     onCancelSearchNavigation: session.cancelSourceNavigation,
                     searchReplacement: 'X',
                     onSearchReplacementChanged: (_) {},
-                    onSearchOptionsChanged: (options) =>
-                        session.set(search.withOptions(options)),
                     onChanged: (text, _) =>
                         (ref.read(workspaceControllerProvider.notifier)
                                 as _SharedSourceWorkspace)
@@ -206,7 +203,6 @@ void main() {
                       ],
                     ),
                   ),
-                  onSearchOptionsChanged: (_) {},
                   onChanged: (_, _) {},
                   onOpenSearch: () {},
                   onCloseSearch: () {},
@@ -349,7 +345,6 @@ void main() {
                     searchOptions: const SourceSearchOptions(query: 'cat'),
                     searchReplacement: 'bat',
                     onSearchReplacementChanged: (_) {},
-                    onSearchOptionsChanged: (_) {},
                     onChanged: (value, _) => setState(() => text = value),
                     onOpenSearch: () {},
                     onCloseSearch: () {},
@@ -449,7 +444,6 @@ void main() {
                 searchOptions: const SourceSearchOptions(query: 'cat'),
                 searchReplacement: 'dog',
                 onSearchReplacementChanged: (_) {},
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => setState(() => currentText = text),
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -540,7 +534,6 @@ void main() {
             searchActive: true,
             searchOptions: const SourceSearchOptions(query: 'cat'),
             initialFoldedRegionKeys: {region.key},
-            onSearchOptionsChanged: (_) {},
             onChanged: (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -601,7 +594,6 @@ void main() {
             searchOptions: const SourceSearchOptions(),
             initialSelection: TextSelection.collapsed(offset: target),
             initialFoldedRegionKeys: {firstRegion.key},
-            onSearchOptionsChanged: (_) {},
             onChanged: (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -649,7 +641,6 @@ void main() {
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
             initialFoldedRegionKeys: {region.key},
-            onSearchOptionsChanged: (_) {},
             onChanged: (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -755,7 +746,6 @@ void main() {
                   searchOptions: const SourceSearchOptions(),
                   initialSelection: const TextSelection.collapsed(offset: 4),
                   spellingAnnotations: [annotation],
-                  onSearchOptionsChanged: (_) {},
                   onChanged: (_, _) {},
                   onOpenSearch: () {},
                   onCloseSearch: () {},
@@ -921,7 +911,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (text, _) => changedText = text,
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1065,7 +1054,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1146,7 +1134,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1264,7 +1251,6 @@ void main() {
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
               initialFoldedRegionKeys: {region.key},
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1327,7 +1313,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (text, _) => changedText = text,
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1410,7 +1395,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1460,7 +1444,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1499,7 +1482,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1605,7 +1587,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1618,10 +1599,7 @@ void main() {
     expect(find.byTooltip('Duplicate heading ID "intro".'), findsOneWidget);
   });
 
-  testWidgets('source search localizes an invalid regular expression', (
-    tester,
-  ) async {
-    final de = AppLocalizationsDe();
+  testWidgets('source search treats bracket input as literal', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('de'),
@@ -1632,15 +1610,14 @@ void main() {
             width: 900,
             height: 600,
             child: BusyMarkSourceEditor(
-              text: 'Text',
+              text: 'Text [',
               language: SourceSyntaxLanguage.markdown,
               filePath: '/project/topic.md',
               diagnostics: const [],
               editorFontSize: 14,
               wordWrap: true,
               searchActive: true,
-              searchOptions: const SourceSearchOptions(query: '[', regex: true),
-              onSearchOptionsChanged: (_) {},
+              searchOptions: const SourceSearchOptions(query: '['),
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1650,7 +1627,8 @@ void main() {
       ),
     );
 
-    expect(find.text(de.sourceSearchInvalidRegex), findsOneWidget);
+    await _pumpUntil(tester, () => find.text('– / 1').evaluate().isNotEmpty);
+    expect(find.text('– / 1'), findsOneWidget);
   });
 
   testWidgets('source search reports no current match before navigation', (
@@ -1674,7 +1652,6 @@ void main() {
               wordWrap: true,
               searchActive: true,
               searchOptions: const SourceSearchOptions(query: 'cat'),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1703,70 +1680,58 @@ void main() {
     );
   });
 
-  testWidgets('source fold and search options use semantic icon buttons', (
-    tester,
-  ) async {
-    final en = AppLocalizationsEn();
-    SourceSearchOptions? updatedOptions;
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: buildBusyMarkTheme(
-          brightness: Brightness.light,
-          accentColor: BusyMarkLinuxPalette.blueAccent,
-        ),
-        home: Scaffold(
-          body: SizedBox(
-            width: 900,
-            height: 600,
-            child: BusyMarkSourceEditor(
-              text: '# Intro\nBody\n',
-              language: SourceSyntaxLanguage.markdown,
-              filePath: '/project/topic.md',
-              diagnostics: const [],
-              editorFontSize: 14,
-              wordWrap: true,
-              searchActive: true,
-              searchOptions: const SourceSearchOptions(caseSensitive: true),
-              onSearchOptionsChanged: (options) => updatedOptions = options,
-              onChanged: (_, _) {},
-              onOpenSearch: () {},
-              onCloseSearch: () {},
+  testWidgets(
+    'source fold and navigation use semantic buttons without matching toggles',
+    (tester) async {
+      final en = AppLocalizationsEn();
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 600,
+              child: BusyMarkSourceEditor(
+                text: '# Intro\nBody\n',
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: true,
+                searchOptions: const SourceSearchOptions(query: 'Intro'),
+                onChanged: (_, _) {},
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    final foldTooltip = find.byTooltip(en.collapseKind(en.foldKindSection));
-    final foldButton = find.ancestor(
-      of: foldTooltip,
-      matching: find.byType(BusyMarkCompactIconButton),
-    );
-    expect(foldTooltip, findsOneWidget);
-    expect(foldButton, findsOneWidget);
+      final foldTooltip = find.byTooltip(en.collapseKind(en.foldKindSection));
+      final foldButton = find.ancestor(
+        of: foldTooltip,
+        matching: find.byType(BusyMarkCompactIconButton),
+      );
+      expect(foldTooltip, findsOneWidget);
+      expect(foldButton, findsOneWidget);
 
-    final caseButton = find.ancestor(
-      of: find.byTooltip(en.sourceSearchCaseSensitive),
-      matching: find.byType(YaruIconButton),
-    );
-    final wholeWordButton = find.ancestor(
-      of: find.byTooltip(en.sourceSearchWholeWord),
-      matching: find.byType(YaruIconButton),
-    );
-    expect(tester.widget<YaruIconButton>(caseButton).isSelected, isTrue);
-    expect(tester.widget<YaruIconButton>(wholeWordButton).isSelected, isFalse);
+      expect(find.text('Aa'), findsNothing);
+      expect(find.text('W'), findsNothing);
+      expect(find.text('.*'), findsNothing);
+      expect(find.byTooltip(en.sourceSearchNextMatch), findsOneWidget);
 
-    await tester.tap(wholeWordButton);
-    await tester.pump();
-    expect(updatedOptions?.caseSensitive, isTrue);
-    expect(updatedOptions?.wholeWord, isTrue);
-
-    await tester.tap(foldButton);
-    await tester.pump();
-    expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
-  });
+      await tester.tap(foldButton);
+      await tester.pump();
+      expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
+    },
+  );
 
   testWidgets('source Replace All is one editor operation', (tester) async {
     final en = AppLocalizationsEn();
@@ -1794,7 +1759,6 @@ void main() {
                 searchReplacement: replacement,
                 onSearchReplacementChanged: (value) =>
                     setState(() => replacement = value),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) {
                   undoText = currentText;
                   setState(() => currentText = text);
@@ -1862,7 +1826,6 @@ void main() {
                 searchOptions: const SourceSearchOptions(query: 'a'),
                 searchReplacement: 'x',
                 onSearchReplacementChanged: (_) {},
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => setState(() => currentText = text),
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1913,7 +1876,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (text, _) => currentText = text,
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1990,7 +1952,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -2025,7 +1986,6 @@ void main() {
         SourceSearchResult(
           options: const SourceSearchOptions(query: 'Line'),
           matches: const [],
-          invalidRegex: true,
         ),
       );
       await tester.pump();
@@ -2075,7 +2035,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -2163,7 +2122,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -2232,7 +2190,6 @@ void main() {
                   wordWrap: true,
                   searchActive: false,
                   searchOptions: const SourceSearchOptions(),
-                  onSearchOptionsChanged: (_) {},
                   onChanged: (text, _) => setState(() => source = text),
                   onOpenSearch: () {},
                   onCloseSearch: () {},
@@ -2325,7 +2282,6 @@ void main() {
                   wordWrap: true,
                   searchActive: false,
                   searchOptions: const SourceSearchOptions(),
-                  onSearchOptionsChanged: (_) {},
                   onChanged: (text, _) => setState(() => source = text),
                   onOpenSearch: () {},
                   onCloseSearch: () {},
@@ -2393,7 +2349,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => setState(() => source = text),
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -2489,7 +2444,6 @@ void main() {
               wordWrap: false,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -2531,7 +2485,6 @@ void main() {
             wordWrap: true,
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
-            onSearchOptionsChanged: (_) {},
             onChanged: (text, _) => changedText = text,
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -2641,7 +2594,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => changedText = text,
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -9611,7 +9563,6 @@ Future<TextEditingController> _pumpAutocompleteSourceEditor(
             wordWrap: true,
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
-            onSearchOptionsChanged: (_) {},
             onChanged: onChanged ?? (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -9690,7 +9641,6 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
             wordWrap: true,
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
-            onSearchOptionsChanged: (_) {},
             onChanged: onChanged ?? (_, _) {},
             onTransactionalChanged: onTransactionalChanged,
             onUndo: onUndo,

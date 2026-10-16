@@ -1015,13 +1015,32 @@ void main() {
         await tester.pump();
       }
       expect(
-        find.descendant(of: dialog, matching: find.text('Personal note')),
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining('Personal note'),
+        ),
         findsNWidgets(2),
       );
       expect(
-        find.descendant(of: dialog, matching: find.text('Shared note')),
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining('Shared note'),
+        ),
         findsNothing,
       );
+      final results = ProviderScope.containerOf(
+        tester.element(dialog),
+      ).read(searchSessionProvider).results.cast<NoteSearchResult>();
+      expect(results, hasLength(2));
+      expect(
+        results.every(
+          (r) =>
+              r.accountId == accountId &&
+              r.hit.localId == '223e4567-e89b-42d3-a456-426614174000',
+        ),
+        isTrue,
+      );
+      expect(results.map((r) => (r.hit.start, r.hit.end)), [(0, 7), (8, 14)]);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

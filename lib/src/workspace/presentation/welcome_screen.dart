@@ -124,15 +124,18 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         child: IndexedStack(
           index: search.active ? 1 : 0,
           children: [
-            SearchResultList(
-              results: [
-                for (final r in settings.recentWorkspaces)
-                  RecentSearchResult(r),
-              ],
-              onActivate: (r) => openRecentResource(
-                context,
-                ref,
-                (r as RecentSearchResult).resource,
+            ExcludeFocus(
+              excluding: search.active,
+              child: SearchResultList(
+                results: [
+                  for (final r in settings.recentWorkspaces)
+                    RecentSearchResult(r),
+                ],
+                onActivate: (r) => openRecentResource(
+                  context,
+                  ref,
+                  (r as RecentSearchResult).resource,
+                ),
               ),
             ),
             const SearchSidebar(),

@@ -1831,15 +1831,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get sourceSearchNextMatch => 'Järgmine vaste';
 
   @override
-  String get sourceSearchCaseSensitive => 'Tõstutundlik';
-
-  @override
-  String get sourceSearchWholeWord => 'Terve sõna';
-
-  @override
-  String get sourceSearchRegex => 'Regulaaravaldis';
-
-  @override
   String get sourceSearchReplacement => 'Asenda väärtusega';
 
   @override
@@ -1963,13 +1954,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get saveAs => 'Salvesta nimega';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Vigane regulaaravaldis';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, \$ või ainult asukohta sobitavad ettevaated).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5411,18 +5395,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get searchRecentCommand => 'Otsi hiljutisi';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Otsi: $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'See ressurss pole saadaval.';
 
   @override
   String get notesSync => 'Sünkrooni märkmed';
-
-  @override
-  String get searchInFile => 'Otsi failist';
 
   @override
   String get searchInWorkspace => 'Otsi tööalast';
@@ -5432,4 +5408,43 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Otsi dokumentide ajaloost';
+
+  @override
+  String get searchInDocument => 'Otsi dokumendist';
+
+  @override
+  String get searchDocumentHint => 'Otsi sellest dokumendist…';
+
+  @override
+  String get searchWorkspaceHint => 'Otsi sellest tööruumist…';
+
+  @override
+  String get searchOutlineHint => 'Otsi pealkirju…';
+
+  @override
+  String get searchHistoryHint => 'Otsi kohalikust ajaloost…';
+
+  @override
+  String get searchEnterText => 'Sisesta otsitav tekst';
+
+  @override
+  String get searchAccountUnavailable => 'Konto pole saadaval';
+
+  @override
+  String get searchDocumentsHint => 'Otsi dokumente…';
+
+  @override
+  String get searchTopicsHint => 'Otsi teemasid…';
+
+  @override
+  String get searchRecentHint => 'Otsi hiljutisi…';
+
+  @override
+  String get searchActionsHint => 'Otsi toiminguid…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Vajab märkmete tööruumi';
+
+  @override
+  String get searchRecentEmpty => 'Hiljutisi ressursse pole';
 }

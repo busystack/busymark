@@ -1839,15 +1839,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sourceSearchNextMatch => 'التطابق التالي';
 
   @override
-  String get sourceSearchCaseSensitive => 'حساس لحالة الأحرف';
-
-  @override
-  String get sourceSearchWholeWord => 'الكلمة بالكامل';
-
-  @override
-  String get sourceSearchRegex => 'تعبير نمطي';
-
-  @override
   String get sourceSearchReplacement => 'استبدال بـ';
 
   @override
@@ -1971,13 +1962,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get saveAs => 'حفظ باسم';
-
-  @override
-  String get sourceSearchInvalidRegex => 'تعبير نمطي غير صالح';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'لا تُدعم مطابقات التعبير النمطي ذات الطول الصفري (مثل ^ أو \$ أو الاستباق الذي يطابق موضعًا فقط).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5440,18 +5424,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchRecentCommand => 'البحث في الأخيرة';
 
   @override
-  String searchQueryHint(String category) {
-    return 'البحث في $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'هذا المورد غير متاح.';
 
   @override
   String get notesSync => 'مزامنة الملاحظات';
-
-  @override
-  String get searchInFile => 'البحث في الملف';
 
   @override
   String get searchInWorkspace => 'البحث في مساحة العمل';
@@ -5461,4 +5437,43 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'البحث في سجل المستندات';
+
+  @override
+  String get searchInDocument => 'البحث في المستند';
+
+  @override
+  String get searchDocumentHint => 'ابحث في هذا المستند…';
+
+  @override
+  String get searchWorkspaceHint => 'ابحث في مساحة العمل هذه…';
+
+  @override
+  String get searchOutlineHint => 'ابحث في العناوين…';
+
+  @override
+  String get searchHistoryHint => 'ابحث في السجل المحلي…';
+
+  @override
+  String get searchEnterText => 'أدخل نصًا للبحث';
+
+  @override
+  String get searchAccountUnavailable => 'الحساب غير متاح';
+
+  @override
+  String get searchDocumentsHint => 'البحث عن مستندات…';
+
+  @override
+  String get searchTopicsHint => 'البحث عن مواضيع…';
+
+  @override
+  String get searchRecentHint => 'البحث في الأخيرة…';
+
+  @override
+  String get searchActionsHint => 'البحث عن إجراءات…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'يتطلب مساحة عمل للملاحظات';
+
+  @override
+  String get searchRecentEmpty => 'لا توجد موارد حديثة';
 }

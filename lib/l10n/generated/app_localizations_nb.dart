@@ -1839,15 +1839,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get sourceSearchNextMatch => 'Neste treff';
 
   @override
-  String get sourceSearchCaseSensitive => 'Skill mellom store og små bokstaver';
-
-  @override
-  String get sourceSearchWholeWord => 'Hele ord';
-
-  @override
-  String get sourceSearchRegex => 'Regulært uttrykk';
-
-  @override
   String get sourceSearchReplacement => 'Erstatt med';
 
   @override
@@ -1973,13 +1964,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get saveAs => 'Lagre som';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Ugyldig regulært uttrykk';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Regex-treff med null lengde støttes ikke (for eksempel ^, \$ eller fremoversøk som bare samsvarer med en posisjon).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5419,18 +5403,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get searchRecentCommand => 'Søk i nylige';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Søk i $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Denne ressursen er utilgjengelig.';
 
   @override
   String get notesSync => 'Synkroniser notater';
-
-  @override
-  String get searchInFile => 'Søk i fil';
 
   @override
   String get searchInWorkspace => 'Søk i arbeidsområde';
@@ -5440,4 +5416,43 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Søk i dokumenthistorikken';
+
+  @override
+  String get searchInDocument => 'Søk i dokument';
+
+  @override
+  String get searchDocumentHint => 'Søk i dette dokumentet…';
+
+  @override
+  String get searchWorkspaceHint => 'Søk i dette arbeidsområdet…';
+
+  @override
+  String get searchOutlineHint => 'Søk i overskrifter…';
+
+  @override
+  String get searchHistoryHint => 'Søk i lokal historikk…';
+
+  @override
+  String get searchEnterText => 'Skriv inn tekst for å søke';
+
+  @override
+  String get searchAccountUnavailable => 'Konto utilgjengelig';
+
+  @override
+  String get searchDocumentsHint => 'Søk etter dokumenter…';
+
+  @override
+  String get searchTopicsHint => 'Søk etter emner…';
+
+  @override
+  String get searchRecentHint => 'Søk i nylige…';
+
+  @override
+  String get searchActionsHint => 'Søk etter handlinger…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Krever et notatarbeidsområde';
+
+  @override
+  String get searchRecentEmpty => 'Ingen nylige ressurser';
 }

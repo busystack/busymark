@@ -1870,15 +1870,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sourceSearchNextMatch => 'تطابق بعدی';
 
   @override
-  String get sourceSearchCaseSensitive => 'حساس به بزرگی و کوچکی حروف';
-
-  @override
-  String get sourceSearchWholeWord => 'تمام کلمه';
-
-  @override
-  String get sourceSearchRegex => 'عبارت منظم';
-
-  @override
   String get sourceSearchReplacement => 'جایگزینی با';
 
   @override
@@ -2003,13 +1994,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get saveAs => 'ذخیره با نام';
-
-  @override
-  String get sourceSearchInvalidRegex => 'عبارت منظم نامعتبر است';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'تطبیق‌های با طول صفر در عبارت منظم پشتیبانی نمی‌شوند (مانند ^، \$ یا نگاه‌به‌جلو که فقط با یک موقعیت تطبیق دارد).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5451,18 +5435,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get searchRecentCommand => 'جستجوی موارد اخیر';
 
   @override
-  String searchQueryHint(String category) {
-    return 'جستجو در $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'این منبع در دسترس نیست.';
 
   @override
   String get notesSync => 'همگام‌سازی یادداشت‌ها';
-
-  @override
-  String get searchInFile => 'جستجو در فایل';
 
   @override
   String get searchInWorkspace => 'جستجو در فضای کاری';
@@ -5472,4 +5448,44 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'جستجو در تاریخچهٔ سندها';
+
+  @override
+  String get searchInDocument => 'جستجو در سند';
+
+  @override
+  String get searchDocumentHint => 'جستجو در این سند…';
+
+  @override
+  String get searchWorkspaceHint => 'جستجو در این فضای کاری…';
+
+  @override
+  String get searchOutlineHint => 'جستجوی عنوان‌ها…';
+
+  @override
+  String get searchHistoryHint => 'جستجو در تاریخچهٔ محلی…';
+
+  @override
+  String get searchEnterText => 'متن جستجو را وارد کنید';
+
+  @override
+  String get searchAccountUnavailable => 'حساب در دسترس نیست';
+
+  @override
+  String get searchDocumentsHint => 'جستجوی سندها…';
+
+  @override
+  String get searchTopicsHint => 'جستجوی موضوع‌ها…';
+
+  @override
+  String get searchRecentHint => 'جستجوی موارد اخیر…';
+
+  @override
+  String get searchActionsHint => 'جستجوی کنش‌ها…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'به فضای کاری یادداشت‌ها نیاز دارد';
+
+  @override
+  String get searchRecentEmpty => 'منبع اخیراً بازشده‌ای وجود ندارد';
 }

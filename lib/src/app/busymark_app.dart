@@ -1,3 +1,4 @@
+import '../workspace/recent_presentation.dart';
 import '../search/welcome_notes_action.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
@@ -583,6 +584,20 @@ class BusyMarkApp extends ConsumerWidget {
     final recentWorkspaces = ref
         .read(appSettingsControllerProvider)
         .recentWorkspaces;
+    final container = ProviderScope.containerOf(context, listen: false);
+    final cachedAccounts = container.exists(nextcloudNotesRepositoryProvider)
+        ? ref.read(nextcloudNotesRepositoryProvider).value?.accounts
+        : null;
+    final connectedAccount = container.exists(nextcloudConnectionProvider)
+        ? ref.read(nextcloudConnectionProvider).account
+        : null;
+    final accountLabels = <String, String>{
+      for (final account in cachedAccounts ?? [])
+        account.id: '${account.loginName} · ${account.server.host}',
+      if (connectedAccount != null)
+        connectedAccount.id:
+            '${connectedAccount.loginName} · ${connectedAccount.server.host}',
+    };
     final choice = await showBusyMarkModalDialog<_OpenChooserChoice>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
@@ -624,14 +639,15 @@ class BusyMarkApp extends ConsumerWidget {
                   BusyMarkActionRow(
                     title: busyMarkLtrIsolateFor(
                       dialogContext,
-                      recent.title ??
-                          (recent.accountId == null
-                              ? _displayPath(recent.path)
-                              : context.l10n.nextcloudNotes),
+                      recentResourceTitle(dialogContext, recent),
                     ),
                     subtitle: busyMarkLtrIsolateFor(
                       dialogContext,
-                      recent.accountId ?? recent.path,
+                      recentResourceLocation(
+                        dialogContext,
+                        recent,
+                        accountLabel: accountLabels[recent.accountId],
+                      ),
                     ),
                     leading: const Icon(BusyMarkGlyphs.history),
                     trailing: Icon(
@@ -905,11 +921,6 @@ class BusyMarkApp extends ConsumerWidget {
       return null;
     }
     return p.extension(lastPath).isEmpty ? lastPath : p.dirname(lastPath);
-  }
-
-  String _displayPath(String path) {
-    final name = p.basename(path);
-    return name.isEmpty ? path : name;
   }
 
   void _toggleSidebar(WidgetRef ref, {required bool allowWithoutWorkspace}) {

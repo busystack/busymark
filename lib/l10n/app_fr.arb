@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Date",
   "pdfTitlePageTitleRequired": "Saisissez un titre pour la page de titre.",
   "pdfTocSectionNote": "Commence sur une page distincte et peut occuper plusieurs pages.",
-  "sourceSearchZeroLengthUnsupported": "Les correspondances de longueur nulle ne sont pas prises en charge (par exemple ^, $ ou les assertions qui ne correspondent qu’à une position).",
   "workspaceSearchIncomplete": "Seule une partie des résultats est affichée. Affichez-en davantage ou affinez la recherche.",
   "workspaceSearchShowMore": "Afficher plus de résultats",
   "workspaceSearchSkippedFiles": "La recherche est incomplète. Ces fichiers dépassent 1 MiB ou n’ont pas pu être lus :",
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Occurrence suivante",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Respecter la casse",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Mot entier",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Expression régulière",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Expression régulière non valide",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Fichier volumineux : la coloration et le repliage sont suspendus",
   "@sourceLargeFileFeaturesPaused": {
@@ -3616,11 +3599,22 @@
   "searchDocumentsCommand": "Rechercher des documents",
   "searchTopicsCommand": "Rechercher des rubriques",
   "searchRecentCommand": "Rechercher les éléments récents",
-  "searchQueryHint": "Rechercher dans {category}…",
   "searchResourceUnavailable": "Cette ressource est indisponible.",
   "notesSync": "Synchroniser les notes",
-  "searchInFile": "Rechercher dans le fichier",
   "searchInWorkspace": "Rechercher dans l’espace de travail",
   "searchCategory": "Catégorie de recherche",
-  "clearHistorySearchScope": "Rechercher dans l’historique des documents"
+  "clearHistorySearchScope": "Rechercher dans l’historique des documents",
+  "searchInDocument": "Rechercher dans le document",
+  "searchDocumentHint": "Rechercher dans ce document…",
+  "searchWorkspaceHint": "Rechercher dans cet espace de travail…",
+  "searchOutlineHint": "Rechercher des titres…",
+  "searchHistoryHint": "Rechercher dans l’historique local…",
+  "searchEnterText": "Saisissez du texte à rechercher",
+  "searchAccountUnavailable": "Compte indisponible",
+  "searchDocumentsHint": "Rechercher des documents…",
+  "searchTopicsHint": "Rechercher des rubriques…",
+  "searchRecentHint": "Rechercher les éléments récents…",
+  "searchActionsHint": "Rechercher des actions…",
+  "searchRequiresNotesWorkspace": "Nécessite un espace de travail Notes",
+  "searchRecentEmpty": "Aucune ressource récente"
 }

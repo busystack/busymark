@@ -3373,24 +3373,6 @@ abstract class AppLocalizations {
   /// **'Next match'**
   String get sourceSearchNextMatch;
 
-  /// Tooltip for toggling case-sensitive source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Case sensitive'**
-  String get sourceSearchCaseSensitive;
-
-  /// Tooltip for toggling whole-word source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Whole word'**
-  String get sourceSearchWholeWord;
-
-  /// Tooltip for toggling regular-expression source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Regex'**
-  String get sourceSearchRegex;
-
   /// Placeholder for the active-document replacement field.
   ///
   /// In en, this message translates to:
@@ -3594,18 +3576,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save As'**
   String get saveAs;
-
-  /// Source search status shown when the regular expression is invalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid regular expression'**
-  String get sourceSearchInvalidRegex;
-
-  /// No description provided for @sourceSearchZeroLengthUnsupported.
-  ///
-  /// In en, this message translates to:
-  /// **'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).'**
-  String get sourceSearchZeroLengthUnsupported;
 
   /// No description provided for @workspaceSearchIncomplete.
   ///
@@ -9282,12 +9252,6 @@ abstract class AppLocalizations {
   /// **'Search Recent'**
   String get searchRecentCommand;
 
-  /// No description provided for @searchQueryHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search {category}…'**
-  String searchQueryHint(String category);
-
   /// No description provided for @searchResourceUnavailable.
   ///
   /// In en, this message translates to:
@@ -9299,12 +9263,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync notes'**
   String get notesSync;
-
-  /// No description provided for @searchInFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Search in File'**
-  String get searchInFile;
 
   /// No description provided for @searchInWorkspace.
   ///
@@ -9323,6 +9281,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search history across documents'**
   String get clearHistorySearchScope;
+
+  /// No description provided for @searchInDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Document'**
+  String get searchInDocument;
+
+  /// No description provided for @searchDocumentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this document…'**
+  String get searchDocumentHint;
+
+  /// No description provided for @searchWorkspaceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this workspace…'**
+  String get searchWorkspaceHint;
+
+  /// No description provided for @searchOutlineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search headings…'**
+  String get searchOutlineHint;
+
+  /// No description provided for @searchHistoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Local History…'**
+  String get searchHistoryHint;
+
+  /// No description provided for @searchEnterText.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to search'**
+  String get searchEnterText;
+
+  /// No description provided for @searchAccountUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Account unavailable'**
+  String get searchAccountUnavailable;
+
+  /// No description provided for @searchDocumentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search documents…'**
+  String get searchDocumentsHint;
+
+  /// No description provided for @searchTopicsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search topics…'**
+  String get searchTopicsHint;
+
+  /// No description provided for @searchRecentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recent resources…'**
+  String get searchRecentHint;
+
+  /// No description provided for @searchActionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search actions…'**
+  String get searchActionsHint;
+
+  /// No description provided for @searchRequiresNotesWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires a Notes workspace'**
+  String get searchRequiresNotesWorkspace;
+
+  /// No description provided for @searchRecentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent resources'**
+  String get searchRecentEmpty;
 }
 
 class _AppLocalizationsDelegate

@@ -1828,15 +1828,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sourceSearchNextMatch => 'Kết quả khớp tiếp theo';
 
   @override
-  String get sourceSearchCaseSensitive => 'Phân biệt chữ hoa, chữ thường';
-
-  @override
-  String get sourceSearchWholeWord => 'Toàn bộ từ';
-
-  @override
-  String get sourceSearchRegex => 'Biểu thức chính quy';
-
-  @override
   String get sourceSearchReplacement => 'Thay thế bằng';
 
   @override
@@ -1961,13 +1952,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get saveAs => 'Lưu thành';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Biểu thức chính quy không hợp lệ';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Không hỗ trợ kết quả khớp regex có độ dài bằng 0 (ví dụ ^, \$ hoặc lookahead chỉ khớp với một vị trí).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5404,18 +5388,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get searchRecentCommand => 'Tìm mục gần đây';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Tìm trong $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Tài nguyên này không khả dụng.';
 
   @override
   String get notesSync => 'Đồng bộ ghi chú';
-
-  @override
-  String get searchInFile => 'Tìm trong tệp';
 
   @override
   String get searchInWorkspace => 'Tìm trong không gian làm việc';
@@ -5425,4 +5401,44 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Tìm trong lịch sử tài liệu';
+
+  @override
+  String get searchInDocument => 'Tìm trong tài liệu';
+
+  @override
+  String get searchDocumentHint => 'Tìm trong tài liệu này…';
+
+  @override
+  String get searchWorkspaceHint => 'Tìm trong không gian làm việc này…';
+
+  @override
+  String get searchOutlineHint => 'Tìm tiêu đề…';
+
+  @override
+  String get searchHistoryHint => 'Tìm trong lịch sử cục bộ…';
+
+  @override
+  String get searchEnterText => 'Nhập văn bản để tìm kiếm';
+
+  @override
+  String get searchAccountUnavailable => 'Tài khoản không khả dụng';
+
+  @override
+  String get searchDocumentsHint => 'Tìm tài liệu…';
+
+  @override
+  String get searchTopicsHint => 'Tìm chủ đề…';
+
+  @override
+  String get searchRecentHint => 'Tìm mục gần đây…';
+
+  @override
+  String get searchActionsHint => 'Tìm thao tác…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Yêu cầu không gian làm việc Ghi chú';
+
+  @override
+  String get searchRecentEmpty => 'Không có tài nguyên gần đây';
 }

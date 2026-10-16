@@ -1856,15 +1856,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sourceSearchNextMatch => 'Следующее совпадение';
 
   @override
-  String get sourceSearchCaseSensitive => 'С учётом регистра';
-
-  @override
-  String get sourceSearchWholeWord => 'Слово целиком';
-
-  @override
-  String get sourceSearchRegex => 'Регулярное выражение';
-
-  @override
   String get sourceSearchReplacement => 'Заменить на';
 
   @override
@@ -1989,13 +1980,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get saveAs => 'Сохранить как';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Некорректное регулярное выражение';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Совпадения регулярных выражений нулевой длины не поддерживаются (например, ^, \$ или проверки вперёд, совпадающие только с позицией).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -5472,18 +5456,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchRecentCommand => 'Поиск недавних';
 
   @override
-  String searchQueryHint(String category) {
-    return 'Поиск: $category…';
-  }
-
-  @override
   String get searchResourceUnavailable => 'Этот ресурс недоступен.';
 
   @override
   String get notesSync => 'Синхронизировать заметки';
-
-  @override
-  String get searchInFile => 'Поиск в файле';
 
   @override
   String get searchInWorkspace => 'Поиск в рабочей области';
@@ -5493,4 +5469,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearHistorySearchScope => 'Поиск в истории документов';
+
+  @override
+  String get searchInDocument => 'Поиск в документе';
+
+  @override
+  String get searchDocumentHint => 'Поиск в этом документе…';
+
+  @override
+  String get searchWorkspaceHint => 'Поиск в этой рабочей области…';
+
+  @override
+  String get searchOutlineHint => 'Поиск заголовков…';
+
+  @override
+  String get searchHistoryHint => 'Поиск в локальной истории…';
+
+  @override
+  String get searchEnterText => 'Введите текст для поиска';
+
+  @override
+  String get searchAccountUnavailable => 'Аккаунт недоступен';
+
+  @override
+  String get searchDocumentsHint => 'Поиск документов…';
+
+  @override
+  String get searchTopicsHint => 'Поиск тем…';
+
+  @override
+  String get searchRecentHint => 'Поиск недавних…';
+
+  @override
+  String get searchActionsHint => 'Поиск действий…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Требуется рабочая область заметок';
+
+  @override
+  String get searchRecentEmpty => 'Нет недавних ресурсов';
 }

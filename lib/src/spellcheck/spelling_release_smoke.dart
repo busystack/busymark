@@ -282,7 +282,6 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
           wordWrap: true,
           searchActive: false,
           searchOptions: const SourceSearchOptions(),
-          onSearchOptionsChanged: (_) {},
           onChanged: (_, _) {},
           onOpenSearch: () {},
           onCloseSearch: () {},
@@ -397,7 +396,6 @@ helo
         wordWrap: true,
         searchActive: false,
         searchOptions: const SourceSearchOptions(),
-        onSearchOptionsChanged: (_) {},
         onChanged: (_, _) {},
         onTransactionalChanged:
             (text, sourceFilePath, previousSelection, selection, undoGroup) =>
