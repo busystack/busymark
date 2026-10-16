@@ -15,6 +15,11 @@ import 'package:busymark/src/editor/source_highlighter.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
+import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/workspace/text_format_metadata.dart';
+import 'package:busymark/src/workspace/workspace_service.dart';
+import 'package:busymark/src/search/search_sidebar.dart';
+import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
@@ -137,8 +142,9 @@ Future<void> main(List<String> args) async {
         documentRecoveryStoreProvider.overrideWithValue(
           MemoryDocumentRecoveryStore(),
         ),
+        workspaceServiceProvider.overrideWithValue(_TraceWorkspaceService()),
         localHistoryStoreProvider.overrideWithValue(
-          FileLocalHistoryStore(
+          _TraceHistoryStore(
             rootDirectory: () async => Directory('${output.path}/history'),
           ),
         ),
@@ -166,6 +172,31 @@ class _Settings implements LocalSettingsStore {
   Future<Map<String, Object?>> load() async => value;
   @override
   Future<void> save(Map<String, Object?> json) async => value = json;
+}
+
+class _TraceWorkspaceService extends WorkspaceService {
+  int reads = 0;
+  int readMicroseconds = 0;
+  @override
+  Future<String> loadText(String path) async {
+    reads++;
+    final watch = Stopwatch()..start();
+    try {
+      return await super.loadText(path);
+    } finally {
+      readMicroseconds += watch.elapsedMicroseconds;
+    }
+  }
+}
+
+class _TraceHistoryStore extends FileLocalHistoryStore {
+  _TraceHistoryStore({required super.rootDirectory});
+  int reads = 0;
+  @override
+  Future<LocalHistoryRevision?> readRevision(String revisionId) {
+    reads++;
+    return super.readRevision(revisionId);
+  }
 }
 
 class _Driver extends ConsumerStatefulWidget {
@@ -252,7 +283,6 @@ class _DriverState extends ConsumerState<_Driver> {
     if (const {
       'ctrl+f',
       'ctrl+shift+f',
-      'ctrl+3',
       'ctrl+p',
       'ctrl+shift+t',
       'ctrl+alt+o',
@@ -293,21 +323,204 @@ class _DriverState extends ConsumerState<_Driver> {
     field.onChanged!(text);
   }
 
+  // Provider events measure application work, excluding native injection and
+  // the harness's polling intervals. Debounce remains part of user latency.
+  Future<Map<String, Object?>> measuredQuery(String text) async {
+    final files = ref.read(workspaceServiceProvider) as _TraceWorkspaceService;
+    final history = ref.read(localHistoryStoreProvider) as _TraceHistoryStore;
+    final reads = files.reads, historyReads = history.reads;
+    final io = files.readMicroseconds;
+    int? first, completed;
+    var started = false;
+    final watch = Stopwatch();
+    final listener = ref.listenManual(searchSessionProvider, (_, state) {
+      if (state.query != text) return;
+      if (state.searching) started = true;
+      if (started && state.results.isNotEmpty) {
+        first ??= watch.elapsedMicroseconds;
+      }
+      if (started && !state.searching) completed ??= watch.elapsedMicroseconds;
+    });
+    try {
+      watch.start();
+      changeQuery(text);
+      await wait(() => completed != null, 'measured query $text');
+      check(search.error == null, 'measured query succeeds');
+      return {
+        'firstUsefulUs': first,
+        'completedUs': completed,
+        'fileReads': files.reads - reads,
+        'summedFileReadUs': files.readMicroseconds - io,
+        'revisionReads': history.reads - historyReads,
+      };
+    } finally {
+      listener.close();
+    }
+  }
+
+  Future<void> measuredCancellation(
+    String label, {
+    bool history = false,
+  }) async {
+    final files = ref.read(workspaceServiceProvider) as _TraceWorkspaceService;
+    final revisions = ref.read(localHistoryStoreProvider) as _TraceHistoryStore;
+    int reads() => history ? revisions.reads : files.reads;
+    final before = reads();
+    changeQuery('cancel-no-match-$label');
+    await wait(() => reads() > before, 'active $label scan');
+    final atSwitch = reads();
+    final watch = Stopwatch()..start();
+    int? first, complete;
+    final subscription = ref.listenManual(searchSessionProvider, (_, value) {
+      if (value.category != SearchCategory.actions) return;
+      first ??= watch.elapsedMicroseconds;
+      if (!value.searching && value.results.isNotEmpty) {
+        complete ??= watch.elapsedMicroseconds;
+      }
+    });
+    widgets<BusyMarkMenuButton<SearchCategory>>().single.onSelected(
+      SearchCategory.actions,
+    );
+    try {
+      await wait(() => complete != null, 'Actions after $label cancellation');
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      check(
+        search.results.every((r) => r is ActionSearchResult),
+        '$label cancellation rejects stale progress and completion',
+      );
+      check(reads() == atSwitch, '$label cancellation starts no further reads');
+      measurements['${label}Cancellation'] = {
+        'categoryChangedUs': first,
+        'actionsCompleteUs': complete,
+        'readsBeforeSwitch': atSwitch - before,
+        'readsAfterSwitch': reads() - atSwitch,
+      };
+    } finally {
+      subscription.close();
+    }
+  }
+
+  Future<void> historyJourney() async {
+    final store = ref.read(localHistoryStoreProvider);
+    final path = '${widget.output.path}/retired.md';
+    final now = DateTime.now().toUtc();
+    for (var i = 0; i < 20; i++) {
+      await store.capture(
+        LocalHistoryCaptureRequest(
+          path: path,
+          displayName: 'Retired document',
+          source: i.isEven
+              ? 'historical unique-needle $i'
+              : 'another revision $i',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: now.add(Duration(seconds: i)),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        const LocalHistoryPolicy(),
+      );
+    }
+    await store.remapPath(path, '${widget.output.path}/renamed.md');
+    await store.markDeleted(
+      '${widget.output.path}/renamed.md',
+      recursive: false,
+    );
+    final history = ref.read(localHistoryControllerProvider.notifier);
+    await history.refresh();
+    final before = ref.read(workspaceControllerProvider).activeBuffer!;
+    await key('ctrl+shift+p');
+    await query('Bold');
+    await key('ctrl+f');
+    await query('target');
+    check(search.fileActive, 'Actions to Ctrl+F selects only Search in File');
+    await key('ctrl+shift+f');
+    await query('scope needle');
+    await key('ctrl+3');
+    check(!search.active, 'ordinary Outline closes workspace search');
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.findLocalHistory);
+    await wait(
+      () => search.active && search.category == SearchCategory.localHistory,
+      'Find in Local History opens shared search',
+    );
+    await WidgetsBinding.instance.endOfFrame;
+    measurements['historySearchApplicationTiming'] = [
+      await measuredQuery('unique-needle'),
+      await measuredQuery('another revision'),
+      await measuredQuery('unique-needle'),
+    ];
+    check(
+      search.results.length == 10,
+      'all retained matching revisions discovered',
+    );
+    await measuredCancellation('history', history: true);
+    ref.read(searchSessionProvider.notifier).openHistory();
+    await query('unique-needle');
+    final result = search.results.first as HistorySearchResult;
+    final revision = (result.match as LocalHistoryRevisionMatch).revision;
+    await key('enter');
+    await wait(
+      () =>
+          ref
+              .read(localHistoryControllerProvider)
+              .selectedRevision
+              ?.summary
+              .id ==
+          revision.id,
+      'exact retained revision comparison',
+    );
+    check(search.active, 'revision comparison keeps sidebar search');
+    check(
+      ref.read(workspaceControllerProvider).activeText == before.text &&
+          ref.read(workspaceControllerProvider).activeBufferId == before.id,
+      'history inspection never opens or restores a live document',
+    );
+    await key('ctrl+5');
+    await wait(
+      () =>
+          !search.active &&
+          widgets<TextField>().every(
+            (f) => f.key != const ValueKey('local-history-search'),
+          ),
+      'ordinary History timeline',
+    );
+    check(
+      ref.read(localHistoryControllerProvider).selectedRevisions.length == 20,
+      'ordinary History retains every revision without a hidden filter',
+    );
+    ref.read(searchSessionProvider.notifier).toggle();
+    await wait(() => !search.searching, 'return to remembered History query');
+    check(
+      search.query == 'unique-needle' && search.results.length == 10,
+      'History query remains in shared session',
+    );
+    await key('ctrl+alt+o');
+    await query('a.md');
+    await key('enter');
+    await wait(
+      () => !search.active,
+      'Recent document activation after history',
+    );
+    check(
+      ref.read(localHistoryControllerProvider).selectedRevision == null,
+      'Recent opening reveals editor instead of stale history comparison',
+    );
+    await writeMeasurements();
+  }
+
   Future<void> rapidChanges(String label, String finalQuery) async {
     for (var i = 0; i < 20; i++) {
       changeQuery('rapid-$i');
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
-    final settled = Stopwatch()..start();
-    await query(finalQuery);
-    measurements['${label}AfterRapidChangesMicroseconds'] =
-        settled.elapsedMicroseconds;
+    measurements['${label}AfterRapidChangesApplicationTiming'] =
+        await measuredQuery(finalQuery);
     changeQuery('$finalQuery stale');
     await Future<void>.delayed(const Duration(milliseconds: 140));
     final cancelled = Stopwatch()..start();
     await key('ctrl+shift+p');
     await query('Bold');
-    measurements['${label}SwitchToActionsMicroseconds'] =
+    measurements['${label}SwitchToActionsWithNativeInjectionUs'] =
         cancelled.elapsedMicroseconds;
     check(
       search.category == SearchCategory.actions &&
@@ -531,6 +744,38 @@ class _DriverState extends ConsumerState<_Driver> {
       await key('ctrl+alt+o');
       await query('');
       check(search.category == SearchCategory.recent, 'Welcome Recent sidebar');
+      bool categoryHasFocus() {
+        var found = false;
+        FocusManager.instance.primaryFocus?.context?.visitAncestorElements((
+          element,
+        ) {
+          if (element.widget.key == const ValueKey('search-category')) {
+            found = true;
+            return false;
+          }
+          return true;
+        });
+        return found;
+      }
+
+      for (var i = 0; i < 30 && !categoryHasFocus(); i++) {
+        await key('tab');
+      }
+      check(categoryHasFocus(), 'keyboard traversal reaches category selector');
+      await key('enter');
+      await wait(
+        () => widgets<Semantics>().any(
+          (s) =>
+              s.properties.label == 'Search category' &&
+              s.properties.expanded == true,
+        ),
+        'native category popup opened by keyboard',
+      );
+      await key('escape');
+      check(
+        search.active,
+        'category popup consumes Escape before closing search',
+      );
       await screenshot('welcome-recent');
       await key('escape');
       final folder = await Directory(
@@ -605,8 +850,7 @@ class _DriverState extends ConsumerState<_Driver> {
       await key('ctrl+f');
       await query('scope needle');
       check(
-        search.location == SearchLocation.document &&
-            search.results.length == 1,
+        search.category == SearchCategory.file && search.results.length == 1,
         'Ctrl+F document-only',
       );
       await key('ctrl+shift+f');
@@ -640,18 +884,31 @@ class _DriverState extends ConsumerState<_Driver> {
             '${folder.path}/b.md',
         'Enter activates the selected text occurrence',
       );
-      final samples = <int>[];
+      final tracedFiles =
+          ref.read(workspaceServiceProvider) as _TraceWorkspaceService;
+      final readsAfterActivation = tracedFiles.reads;
+      final searchGeneration = search.generation;
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      check(
+        tracedFiles.reads == readsAfterActivation &&
+            search.generation == searchGeneration,
+        'clean document activation and outline refresh do not rescan workspace',
+      );
+      final samples = <Map<String, Object?>>[];
       for (var i = 0; i < 10; i++) {
-        final watch = Stopwatch()..start();
-        await query(
-          widget.large
-              ? (i.isEven ? 'corpus-token42' : 'corpus-token17')
-              : (i.isEven ? 'needle' : 'scope'),
+        samples.add(
+          await measuredQuery(
+            widget.large
+                ? (i.isEven ? 'corpus-token42' : 'corpus-token17')
+                : (i.isEven ? 'needle' : 'scope'),
+          ),
         );
-        samples.add(watch.elapsedMicroseconds);
       }
-      measurements['localSearchMicrosecondsIncludingDebounce'] = samples;
+      measurements['localSearchApplicationTiming'] = samples;
       measurements['localDocumentCount'] = widget.large ? 202 : 2;
+      if (widget.large) await measuredCancellation('local');
+      await key('ctrl+shift+f');
+      await query('scope needle');
       await writeMeasurements();
       await screenshot('local-search-light');
       await rapidChanges('local', 'scope needle');
@@ -705,7 +962,7 @@ class _DriverState extends ConsumerState<_Driver> {
       await key('ctrl+f');
       await query('target');
       check(
-        search.location == SearchLocation.document &&
+        search.category == SearchCategory.file &&
             search.results.every((r) => r is TextSearchResult),
         'Source Ctrl+F uses current-buffer occurrences',
       );
@@ -715,6 +972,14 @@ class _DriverState extends ConsumerState<_Driver> {
         '${ref.read(workspaceControllerProvider).activeText}\n## Unsaved target heading\n',
       );
       await key('ctrl+3');
+      check(
+        !search.active && widgets<SearchHeaderField>().isEmpty,
+        'Ctrl+3 opens ordinary Outline without a query',
+      );
+      await key('ctrl+f');
+      widgets<BusyMarkMenuButton<SearchCategory>>().single.onSelected(
+        SearchCategory.outline,
+      );
       await query('Unsaved target');
       await wait(
         () => widgets<Text>().any((t) => t.data == 'Unsaved target heading'),
@@ -723,6 +988,7 @@ class _DriverState extends ConsumerState<_Driver> {
       await key('enter');
       await key('escape');
       check(await workspace.saveActive(), 'save outline edit');
+      await historyJourney();
       ref.read(appRouterProvider).go('/');
       await WidgetsBinding.instance.endOfFrame;
       await key('ctrl+alt+o');
@@ -765,24 +1031,24 @@ class _DriverState extends ConsumerState<_Driver> {
       await key('ctrl+f');
       await query('cached needle');
       check(
-        search.location == SearchLocation.document &&
+        search.category == SearchCategory.file &&
             search.results.single is TextSearchResult &&
             (search.results.single as TextSearchResult).match.bufferId ==
                 ref.read(workspaceControllerProvider).activeBufferId,
         'Notes Ctrl+F searches only the active in-memory note',
       );
       await key('ctrl+shift+f');
-      final noteSamples = <int>[];
+      final noteSamples = <Map<String, Object?>>[];
       for (var i = 0; i < 10; i++) {
-        final watch = Stopwatch()..start();
-        await query(
-          widget.large
-              ? (i.isEven ? 'corpus-token42' : 'category:"Area 7"')
-              : (i.isEven ? 'cached needle' : 'category:Offline'),
+        noteSamples.add(
+          await measuredQuery(
+            widget.large
+                ? (i.isEven ? 'corpus-token42' : 'category:"Area 7"')
+                : (i.isEven ? 'cached needle' : 'category:Offline'),
+          ),
         );
-        noteSamples.add(watch.elapsedMicroseconds);
       }
-      measurements['cachedNotesMicrosecondsIncludingDebounce'] = noteSamples;
+      measurements['cachedNotesApplicationTiming'] = noteSamples;
       measurements['cachedNoteCount'] = widget.repository.notes
           .where((n) => n.accountId == '123e4567-e89b-42d3-a456-426614174000')
           .length;
@@ -1054,6 +1320,9 @@ class _DriverState extends ConsumerState<_Driver> {
       await WidgetsBinding.instance.endOfFrame;
       await key('escape');
       measurements['rssBeforeThirtyOpenCloseCycles'] = ProcessInfo.currentRss;
+      measurements['fileDescriptorsBeforeCycles'] = await Directory(
+        '/proc/self/fd',
+      ).list().length;
       final cycles = Stopwatch()..start();
       for (var cycle = 0; cycle < 30; cycle++) {
         await key('ctrl+shift+p');
@@ -1070,6 +1339,9 @@ class _DriverState extends ConsumerState<_Driver> {
         'closed search releases results and command targets',
       );
       measurements['rssAfterThirtyOpenCloseCycles'] = ProcessInfo.currentRss;
+      measurements['fileDescriptorsAfterCycles'] = await Directory(
+        '/proc/self/fd',
+      ).list().length;
       measurements['rssBytes'] = ProcessInfo.currentRss;
       measurements['maximumRssBytes'] = ProcessInfo.maxRss;
       stdout.writeln(jsonEncode(measurements));
@@ -1078,6 +1350,8 @@ class _DriverState extends ConsumerState<_Driver> {
       ).writeAsString(jsonEncode(measurements));
       // The native runner can return success after SystemNavigator.pop even
       // when Dart's exitCode was set by an unexpected framework error.
+      if (exitCode != 0) exit(exitCode);
+      await workspace.discardRecoveryForShutdown();
       if (exitCode != 0) exit(exitCode);
       await SystemNavigator.pop();
     } catch (error, stack) {

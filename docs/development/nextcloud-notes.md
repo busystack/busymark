@@ -620,3 +620,20 @@ The output directory contains temporary screenshots and timings, including rapid
 query changes, account switching and repeated search opening/closing. It contains
 only generated fixture data. Rebuild the normal Linux release afterward to
 restore the production entry point.
+
+The desktop target also accepts `--unified-search` for a fresh, disposable
+connected profile. Its private credentials JSON includes `secondaryLoginName`
+and `secondaryAppPassword` for a second authorized disposable user on the same
+server. Supply the test CA through the existing argument. This scenario checks
+file/workspace/Documents scope, offline creation followed by synchronization,
+stable Recent-note identity, direct reopening across accounts, and removal of the
+originating account. It never uses production accounts or embeds credentials.
+
+The sidebar probe’s application timings observe search-session events, excluding
+key injection and polling sleeps while including debounce. They distinguish first
+useful results from completion, count file/revision reads, cancel active scans,
+and compare file descriptors and RSS across repeated opening/closing. Local
+search rereads eligible unopened files for each query; it retains eight-file
+read-ahead and worker reuse and publishes bounded progress. Local History reads
+revision bodies sequentially through the existing store and retains only result
+metadata. Neither probe creates a persistent search cache or index.

@@ -16,6 +16,7 @@ bindings = {
     'ctrl+f': [b'Control_L', b'f'],
     'ctrl+shift+f': [b'Control_L', b'Shift_L', b'f'],
     'ctrl+3': [b'Control_L', b'3'],
+    'ctrl+5': [b'Control_L', b'5'],
     'ctrl+shift+t': [b'Control_L', b'Shift_L', b't'],
     'ctrl+alt+o': [b'Control_L', b'Alt_L', b'o'],
     'ctrl+alt+k': [b'Control_L', b'Alt_L', b'k'],

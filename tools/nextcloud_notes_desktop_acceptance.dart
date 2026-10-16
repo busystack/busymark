@@ -52,6 +52,7 @@ import 'package:window_manager/window_manager.dart';
 enum _Scenario {
   full('full'),
   workspace('workspace'),
+  unifiedSearch('unified-search'),
   offlineStart('offline-start'),
   offlineResume('offline-resume'),
   references('references'),
@@ -184,6 +185,8 @@ Future<void> main(List<String> args) async {
         output: output,
         containerName: args[3],
         scenario: scenario,
+        secondaryLogin: credentials['secondaryLoginName'] as String?,
+        secondaryPassword: credentials['secondaryAppPassword'] as String?,
       ),
     ),
   );
@@ -283,20 +286,18 @@ class _Settings implements LocalSettingsStore {
 }
 
 class _Secrets implements NextcloudSecretStore {
-  _Secrets(this.id, this.password);
-  final String id;
-  String? password;
+  _Secrets(String id, String password) : passwords = {id: password};
+  final Map<String, String> passwords;
   @override
-  Future<String?> read(String accountId) async =>
-      accountId == id ? password : null;
+  Future<String?> read(String accountId) async => passwords[accountId];
   @override
   Future<void> write(String accountId, String value) async {
-    password = value;
+    passwords[accountId] = value;
   }
 
   @override
   Future<void> delete(String accountId) async {
-    password = null;
+    passwords.remove(accountId);
   }
 }
 
@@ -308,6 +309,8 @@ class _Harness extends ConsumerStatefulWidget {
     required this.output,
     required this.containerName,
     required this.scenario,
+    this.secondaryLogin,
+    this.secondaryPassword,
   });
   final NextcloudAccount account;
   final _Transport transport;
@@ -315,6 +318,8 @@ class _Harness extends ConsumerStatefulWidget {
   final Directory output;
   final String containerName;
   final _Scenario scenario;
+  final String? secondaryLogin;
+  final String? secondaryPassword;
   bool get resumeOffline => scenario == _Scenario.offlineResume;
   bool get stopOffline => scenario == _Scenario.offlineStart;
   bool get correctionsStart => scenario == _Scenario.recoveryStart;
@@ -376,12 +381,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       throw StateError('Search account changed.');
     }
     final controller = ref.read(searchSessionProvider.notifier);
-    controller.open(
-      category: category,
-      location: category == SearchCategory.text
-          ? (recovery ? SearchLocation.recovery : SearchLocation.workspace)
-          : null,
-    );
+    controller.open(category: category, recovery: recovery);
     controller.query(query);
     await WidgetsBinding.instance.endOfFrame;
   }
@@ -829,11 +829,13 @@ class _HarnessState extends ConsumerState<_Harness> {
       'workspaceQuickOpenStableIdentity',
     );
     final search = openSidebarSearch(
-      SearchCategory.text,
+      SearchCategory.workspace,
       query: '"alpha beta" category:Workspace',
     );
     await wait(
-      () => (searchState.active && searchState.category == SearchCategory.text),
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.workspace),
       'notes search dialog',
     );
     await wait(
@@ -1825,7 +1827,7 @@ class _HarnessState extends ConsumerState<_Harness> {
 
   Future<void> correctionSearch(String query, List<int> counts) async {
     final searching = openSidebarSearch(
-      SearchCategory.text,
+      SearchCategory.workspace,
       account: widget.account.id,
       query: query,
     );
@@ -1860,7 +1862,8 @@ class _HarnessState extends ConsumerState<_Harness> {
     await searching;
     await wait(
       () =>
-          (!searchState.active || searchState.category != SearchCategory.text),
+          (!searchState.active ||
+          searchState.category != SearchCategory.workspace),
       'correction search route closed',
     );
   }
@@ -1918,18 +1921,19 @@ class _HarnessState extends ConsumerState<_Harness> {
         ?.localId;
     ref
         .read(searchSessionProvider.notifier)
-        .open(category: SearchCategory.text, location: SearchLocation.recovery);
+        .open(category: SearchCategory.workspace, recovery: true);
     await wait(
-      () => (searchState.active && searchState.category == SearchCategory.text),
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.workspace),
       'correction Recovery Search',
     );
-    check(
-      searchState.location == SearchLocation.recovery,
-      'correctionRecoverySearchExplicitScope',
-    );
+    check(searchState.recovery, 'correctionRecoverySearchExplicitScope');
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.controller != null && f.decoration?.hintText == 'Search Text…',
+        (f) =>
+            f.controller != null &&
+            f.decoration?.hintText == 'Search in Workspace…',
       ),
       'retainedcorrectionneedle',
     );
@@ -1945,7 +1949,8 @@ class _HarnessState extends ConsumerState<_Harness> {
     widgets<ListTile>().firstWhere(recoveryHit).onTap!();
     await wait(
       () =>
-          (!searchState.active || searchState.category != SearchCategory.text),
+          (!searchState.active ||
+          searchState.category != SearchCategory.workspace),
       'correction Recovery search route closed',
     );
     await wait(
@@ -2367,12 +2372,13 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(search.state.hits.isNotEmpty, 'workspaceLargeUiSearchDuringEdit');
     await search.dispose();
     final dialog = openSidebarSearch(
-      SearchCategory.text,
+      SearchCategory.workspace,
       query: repository.notes.first.title,
     );
     await wait(
       () =>
-          (searchState.active && searchState.category == SearchCategory.text) &&
+          (searchState.active &&
+              searchState.category == SearchCategory.workspace) &&
           widgets<IconButton>().any((b) => b.tooltip == 'Source location'),
       'large indexed search UI',
     );
@@ -2550,7 +2556,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await wait(
       () => widgets<TextField>().any(
         (f) =>
-            f.decoration?.hintText == 'Search Text…' &&
+            f.decoration?.hintText == 'Search in File…' &&
             f.onChanged != null &&
             f.controller != null,
       ),
@@ -2559,7 +2565,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     edit(
       widgets<TextField>().lastWhere(
         (f) =>
-            f.decoration?.hintText == 'Search Text…' &&
+            f.decoration?.hintText == 'Search in File…' &&
             f.onChanged != null &&
             f.controller != null,
       ),
@@ -2583,6 +2589,207 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     if (result.exitCode != 0) {
       throw StateError('Native acceptance key failed: $key');
+    }
+  }
+
+  Future<void> unifiedSearchJourney(WorkspaceController workspace) async {
+    Future<void> query(String value) async {
+      await wait(
+        () => widgets<TextField>().any(
+          (f) =>
+              f.decoration?.hintText?.startsWith('Search ') == true &&
+              f.onChanged != null,
+        ),
+        'shared query',
+      );
+      edit(
+        widgets<TextField>().singleWhere(
+          (f) =>
+              f.decoration?.hintText?.startsWith('Search ') == true &&
+              f.onChanged != null,
+        ),
+        value,
+      );
+      await wait(() => !searchState.searching, 'completed shared search');
+      check(searchState.error == null, 'unifiedQueryHasNoError');
+    }
+
+    final note = await repository.create(
+      widget.account.id,
+      title: 'Connected shared search',
+      category: 'Qualification/Search',
+      content: '# Connected\nunique-connected-body',
+    );
+    await repository.synchronize(widget.account.id);
+    created.add(repository.noteById(note.localId)!.serverId!);
+    check(
+      await workspace.openNextcloudNote(note.localId),
+      'connectedOpenIndividualNote',
+    );
+    await nativeShortcut('ctrl+f');
+    await query('unique-connected-body');
+    check(
+      searchState.fileActive && searchState.results.single is TextSearchResult,
+      'connectedCtrlFUsesOnlyNoteBuffer',
+    );
+    await nativeShortcut('ctrl+shift+f');
+    await query('unique-connected-body');
+    check(
+      searchState.results.whereType<NoteSearchResult>().single.hit.localId ==
+          note.localId,
+      'connectedSynchronizedBodySearch',
+    );
+    await nativeShortcut('ctrl+p');
+    await query('unique-connected-body');
+    check(searchState.results.isEmpty, 'connectedDocumentsExcludesBodies');
+    await query('Qualification/Search');
+    check(
+      searchState.results
+              .whereType<DocumentSearchResult>()
+              .single
+              .document
+              .localId ==
+          note.localId,
+      'connectedDocumentsUsesCategories',
+    );
+    await nativeShortcut('escape');
+    widget.transport.offline = true;
+    check(
+      await workspace.createNextcloudNote(
+        title: 'Offline unified identity',
+        content: 'offline-connected-needle',
+      ),
+      'connectedOfflineCreation',
+    );
+    final localId = ref
+        .read(workspaceControllerProvider)
+        .activeBuffer!
+        .remoteNote!
+        .localId;
+    check(
+      repository.noteById(localId)!.serverId == null,
+      'connectedOfflineHasNoServerId',
+    );
+    check(await workspace.saveActive(), 'connectedOfflineDurability');
+    widget.transport.offline = false;
+    await repository.synchronize(widget.account.id);
+    final synchronized = repository.noteById(localId)!;
+    check(synchronized.serverId != null, 'connectedOfflineLaterSynchronized');
+    created.add(synchronized.serverId!);
+    check(
+      ref
+              .read(appSettingsControllerProvider)
+              .recentWorkspaces
+              .where(
+                (r) => r.accountId == widget.account.id && r.localId == localId,
+              )
+              .length ==
+          1,
+      'connectedRecentStableLocalIdentity',
+    );
+    await nativeShortcut('ctrl+shift+f');
+    await query('offline-connected-needle');
+    check(
+      searchState.results.whereType<NoteSearchResult>().single.hit.localId ==
+          localId,
+      'connectedSearchRefreshAfterSynchronization',
+    );
+
+    final login = widget.secondaryLogin;
+    final password = widget.secondaryPassword;
+    if (login == null || password == null) {
+      throw StateError('unified-search requires a second disposable account');
+    }
+    final capabilities = await fetchNotesCapabilities(
+      client: widget.transport,
+      server: widget.account.server,
+      loginName: login,
+      appPassword: password,
+    );
+    final other = NextcloudAccount(
+      id: const Uuid().v4(),
+      server: widget.account.server,
+      loginName: login,
+      appVersion: capabilities.appVersion,
+      apiVersion: capabilities.apiVersion,
+    );
+    await ref.read(nextcloudSecretStoreProvider).write(other.id, password);
+    await repository.upsertAccount(other);
+    final second = await repository.create(
+      other.id,
+      title: 'Connected shared search',
+      content: 'other-account-only-needle',
+    );
+    await repository.synchronize(other.id);
+    final otherApi = NotesApiClient(
+      client: widget.transport,
+      account: other,
+      appPassword: password,
+    );
+    try {
+      ref.read(searchSessionProvider.notifier).query('unique-connected-body');
+      check(
+        await workspace.openNextcloudWorkspace(other.id),
+        'connectedSwitchAccountDuringSearch',
+      );
+      await query('unique-connected-body');
+      check(searchState.results.isEmpty, 'connectedSearchAccountIsolation');
+      await query('other-account-only-needle');
+      check(
+        searchState.results.whereType<NoteSearchResult>().single.accountId ==
+            other.id,
+        'connectedSecondAccountSearch',
+      );
+      await nativeShortcut('ctrl+alt+o');
+      await query('Offline unified identity');
+      await nativeShortcut('enter');
+      await wait(
+        () =>
+            ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.remoteNote
+                ?.localId ==
+            localId,
+        'connected Recent direct note reopening',
+      );
+      check(
+        ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId ==
+            widget.account.id,
+        'connectedRecentPreservesOriginatingAccount',
+      );
+      await capture('connected-recent-note');
+      // Remove only these fixture notes before revoking the fixture credential.
+      for (final id in created.toList()) {
+        await api.delete(id);
+      }
+      created.clear();
+      original = null;
+      check(
+        await ref.read(nextcloudConnectionProvider.notifier).disconnect(),
+        'connectedAccountRemoval',
+      );
+      check(
+        ref
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .every((r) => r.accountId != widget.account.id),
+        'connectedRemovalClearsRecent',
+      );
+      check(
+        await workspace.openNextcloudWorkspace(other.id),
+        'connectedRemainingAccountAvailable',
+      );
+      await nativeShortcut('ctrl+alt+o');
+      await query('Offline unified identity');
+      check(
+        searchState.results.isEmpty &&
+            repository.accounts.every((a) => a.id != widget.account.id),
+        'connectedRemovedAccountDoesNotReconnectOrFallback',
+      );
+    } finally {
+      final remote = repository.noteById(second.localId)?.serverId;
+      if (remote != null) await otherApi.delete(remote);
     }
   }
 
@@ -2627,6 +2834,8 @@ class _HarnessState extends ConsumerState<_Harness> {
             await correctionJourney(workspace);
           case _Scenario.performance:
             await performanceJourney(workspace);
+          case _Scenario.unifiedSearch:
+            await unifiedSearchJourney(workspace);
           case _Scenario.workspace ||
               _Scenario.offlineStart ||
               _Scenario.offlineResume:

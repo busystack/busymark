@@ -1,18 +1,20 @@
 # Search and replace
 
-Search uses one query field in the header and one results sidebar. The labelled
-**Search** dropdown above the results selects a category. Normal Files, Topics,
+Search uses one query field in the header and one results sidebar. The compact
+native-styled **Search category** menu above the results selects a category.
+Normal Files, Topics,
 Notes and other browsing remain available when search closes. At narrow window
 sizes the same sidebar temporarily overlays the leading side of the document.
 
 | Category | Scope | Shortcut |
 | --- | --- | --- |
-| Text | Current document | Ctrl+F |
-| Text | Current workspace | Ctrl+Shift+F |
-| Outline | Headings in the current document | Ctrl+3 |
+| Search in File | Active document’s current buffer | Ctrl+F |
+| Search in Workspace | Current local workspace or Notes account | Ctrl+Shift+F |
+| Outline | Headings in the current document | Explicit category selection |
 | Documents | Names, paths or Notes titles/categories in the active workspace | Ctrl+P |
 | Topics | Topics across the current Writerside project, including outside the selected TOC | Ctrl+Shift+T |
-| Recent | Recent individual documents and workspaces | Ctrl+Alt+O |
+| Recent | Chronological document and workspace history | Ctrl+Alt+O |
+| Local History | Retained document names, historical paths and revision contents | Find in Local History… |
 | Actions | Application commands, including commands without shortcuts | Ctrl+Shift+P |
 
 Categories appear in that order; unavailable categories are omitted. Welcome
@@ -23,8 +25,8 @@ or action targets. There is no combined category or search-results dialog.
 The Search icon toggles search and restores the last applicable category.
 A category shortcut always opens its designated category and focuses the query;
 Ctrl+F always chooses the current document, even after using Actions or opening
-a Nextcloud note. Queries remain separate for each category and Text location
-within the window session. They are not saved to settings or recovery metadata.
+a Nextcloud note. Queries remain separate for each category within the window
+session. They are not saved to settings or recovery metadata.
 The clear button clears the query. Escape closes an open popup first, then
 closes search and restores valid editing/navigation focus. Closing search also
 restores the previous sidebar destination and visibility for the current workspace.
@@ -37,10 +39,10 @@ Save, Export and workspace actions also validate their original resource.
 Existing Notes synchronization, folder/file import and export workflows are
 available through Actions when their Notes workspace is active.
 
-## Text locations and Notes syntax
+## File and workspace search
 
-**Location: Current document** searches the live buffer, including unsaved text,
-untitled Markdown and individual Nextcloud notes. **Current workspace** explicitly
+**Search in File** searches the live buffer, including unsaved text,
+untitled Markdown and individual Nextcloud notes. **Search in Workspace** explicitly
 widens the scope to the known local file inventory or active Notes account. An
 unrelated external tab does not enlarge the local workspace scope. Text results
 are occurrences; filename discovery belongs to Documents.
@@ -50,7 +52,7 @@ unopened notes and dirty-buffer overlays. Terms use AND; quotes match phrases,
 `title:` restricts a term to the title, and `category:` restricts the category.
 For example, `"alpha beta" café category:"Work/子"` combines these restrictions.
 Whole word is optional. The Notes workspace provider does not expose regex or
-case controls. Current-document Notes text uses the normal buffer matching rules.
+case controls. Search in File for Notes uses the normal buffer matching rules.
 Documents searches note titles and categories, never note bodies.
 
 Loading/indexing, empty results, errors, skipped files and incomplete results are
@@ -58,10 +60,14 @@ shown in the sidebar. **Show more results** extends a bounded search. Activating
 a text result validates its resource and source digest before applying exact
 coordinates. A changed source requires a fresh result. A Notes result also has
 an explicit source-location action for content without a rendered counterpart.
-Recovery Search uses this same sidebar with **Location: Recovery** and opens the
-existing recovery preview. Recovery records stay outside ordinary searches.
+Recovery Search uses this same sidebar with an explicit **Recovery** context and
+opens the existing recovery preview. Recovery records stay outside ordinary searches.
 
 ## Outline, Topics and Recent
+
+Ctrl+3 and the Outline sidebar button open ordinary Outline without a query or
+remembered filter. Choosing Outline in the search category menu filters the same
+outline model. Explicit browsing closes search and focuses the Outline tree.
 
 An empty Outline query shows the normal outline. Filtering retains matching
 headings and their ancestors, in document order. Navigation and section actions
@@ -69,9 +75,9 @@ use the existing outline identities and full structure, including unsaved headin
 Topics searches source titles, topic IDs, filenames and project-relative paths
 across modules. Rows distinguish module ownership and open the actual topic.
 
-Recent has separate **Recent documents** and **Recent workspaces** sections,
-with up to twelve entries each. Explicit successful openings move resources to
-the top. Local topics retain their project owner; individual Notes use the
+Recent is one chronological collection of documents and workspaces, ordered by
+last successful opening, with twelve entries in total. Explicit successful
+openings move resources to the top. Local topics retain their project owner; individual Notes use the
 originating account and stable local note identity, including offline-created
 notes that later receive a server ID. Removing or clearing Recent only removes
 navigation metadata. Missing resources produce feedback rather than opening a
@@ -82,6 +88,25 @@ creation workflow; **Browse Notes** opens normal Notes navigation. Both identify
 the Nextcloud destination. Without an account they enter connection settings;
 a successful connection resumes the requested operation, while cancellation or
 changing context cancels it. Merely opening settings does not create a note.
+
+## Local History search and browsing
+
+**Find in Local History…** opens the shared header query and sidebar. It searches
+retained documents across the application, including closed, renamed, deleted and
+previously untitled owners. Names and current or historical paths lead to the
+retained timeline. Content results identify an exact revision and timestamp and
+open its existing comparison view while keeping search results available.
+
+The History panel’s Find action searches the selected historical document; its
+name appears as removable context. Clear that context to search all retained
+history. Matching is literal and case-insensitive; file-search options do not apply.
+Search reads retained revisions without recording, restoring, rebinding a live
+buffer or substituting a same-named file. Missing revisions report failure.
+
+The Local History sidebar button and its navigation shortcut show the ordinary,
+unfiltered timeline. The panel has no private search field or hidden filter.
+Returning through Search restores the shared query and selection. Clearing or
+pruning retained history invalidates affected results and comparisons.
 
 ## Search options
 
@@ -111,8 +136,8 @@ immediately unless autosave is enabled, and they participate in normal undo and
 save behavior.
 
 Replace and find next waits for matches in the modified document before moving
-the caret. Changing the query, options, document or selection cancels that
-pending navigation.
+the caret. Changing the category, query, options, document or selection cancels
+that pending navigation.
 
 Editor and Reading views show sidebar search results and navigate to matching
 content, but the active-document replacement controls are available in Source
@@ -120,8 +145,8 @@ or Split view.
 
 ## Workspace search
 
-The sidebar shows occurrences with their file and line. Selecting a result opens that document and
-navigates to the matching source. Workspace search covers supported text files
+The sidebar shows occurrences with their file and line. Selecting a result opens
+that document and navigates to the matching source. Workspace search covers supported text files
 already known to the open workspace, including Markdown, Writerside Markdown
 and XML topics, trees, configuration, variables, categories, `.gitignore`, and
 text resources. Images and unknown file types are excluded.
@@ -134,7 +159,8 @@ the query when the result list is incomplete.
 
 ## Replace in the workspace
 
-Workspace replacement is always reviewed:
+Workspace replacement applies to supported local workspaces and is always reviewed.
+It is unavailable for Notes workspaces and recovery content.
 
 1. Run a workspace search and choose **Replace in Workspace**.
 2. Enter the replacement text and choose **Review replacements**.
