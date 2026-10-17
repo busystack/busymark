@@ -12,7 +12,7 @@ unchanged.
 ## Build and run
 
 Run from the project root on Linux x64. Install the application dependencies in
-the main README, plus Git, Python 3.12+, unzip, binutils and libepoxy development
+the main README, plus Git, GNU patch, Python 3.12+, unzip, binutils and libepoxy development
 headers. Engine compilation uses the DEPS-pinned Clang and downloaded Linux
 sysroot. Allow substantial disk space and build time. The default cache is
 `.build/flutter-engine`; an absolute `BUSYMARK_ENGINE_CACHE` can put it on a
@@ -157,3 +157,12 @@ Any framework/engine roll or patch change requires matching snapshots, updated
 source hashes and native/live application acceptance on supported graphics and
 strict confinement. See Flutter's
 [pinned compilation instructions](https://github.com/flutter/flutter/blob/af7e796e161ae0bb1ff0758c71a7105418bd9ded/docs/engine/contributing/Compiling-the-engine.md).
+
+The pinned Yaru 0.2.2 plugin has a separate retired-window defect: queued state
+requests may outlive the registrar's weak view. Linux CMake requires the narrow
+patch in `tools/native_patches/yaru_window_linux`, verifies its source hashes,
+and compiles build-local copies in every mode. Neither the pub cache nor C6
+engine composition changes. The bundle includes the modified MPL source and
+license. Run `bash tools/test_yaru_window_lifecycle.sh` for the native nullable
+view/surface and event-retirement regression, then the normal compiled close
+gate. A null-view crash in this plugin is distinct from compositor disposal.

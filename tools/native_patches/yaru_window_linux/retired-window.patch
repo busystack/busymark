@@ -1,0 +1,137 @@
+--- a/linux/yaru_window_linux_plugin.cc
++++ b/linux/yaru_window_linux_plugin.cc
+@@ -19,14 +19,24 @@
+ static GtkWindow* yaru_window_linux_plugin_get_window(
+     YaruWindowLinuxPlugin* self, gint window_id) {
+   FlView* view = fl_plugin_registrar_get_view(self->registrar);
+-  return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(view)));
++  // A queued platform message may outlive the registrar's weak view.
++  if (view == nullptr || gtk_widget_in_destruction(GTK_WIDGET(view))) {
++    return nullptr;
++  }
++  GtkWidget* top = gtk_widget_get_toplevel(GTK_WIDGET(view));
++  if (!GTK_IS_WINDOW(top) || gtk_widget_in_destruction(top)) {
++    return nullptr;
++  }
++  return GTK_WINDOW(top);
+ }
+ 
+ static gboolean window_state_cb(GtkWidget* window, GdkEventWindowState* event,
+                                 gpointer user_data) {
+   FlEventChannel* channel = FL_EVENT_CHANNEL(user_data);
+   g_autoptr(FlValue) state = yaru_window_get_state(GTK_WINDOW(window));
+-  fl_event_channel_send(channel, state, nullptr, nullptr);
++  if (state != nullptr) {
++    fl_event_channel_send(channel, state, nullptr, nullptr);
++  }
+   return false;
+ }
+ 
+@@ -34,7 +44,9 @@
+                                gpointer user_data) {
+   FlEventChannel* channel = FL_EVENT_CHANNEL(user_data);
+   g_autoptr(FlValue) state = yaru_window_get_state(GTK_WINDOW(window));
+-  fl_event_channel_send(channel, state, nullptr, nullptr);
++  if (state != nullptr) {
++    fl_event_channel_send(channel, state, nullptr, nullptr);
++  }
+ }
+ 
+ static gboolean window_enter_notify_cb(GtkWidget* window,
+@@ -44,9 +56,12 @@
+   return false;
+ }
+ 
+-static void yaru_window_linux_plugin_listen_window(YaruWindowLinuxPlugin* self,
++static gboolean yaru_window_linux_plugin_listen_window(YaruWindowLinuxPlugin* self,
+                                                    gint window_id) {
+   GtkWindow* window = yaru_window_linux_plugin_get_window(self, window_id);
++  if (window == nullptr) {
++    return FALSE;
++  }
+   if (!g_hash_table_contains(self->signals, GINT_TO_POINTER(window_id))) {
+     g_signal_connect_object(window, "window-state-event",
+                             G_CALLBACK(window_state_cb), self->event_channel,
+@@ -68,18 +83,20 @@
+                             GConnectFlags(0));
+     g_hash_table_insert(self->signals, GINT_TO_POINTER(window_id), 0);
+   }
++  return TRUE;
+ }
+ 
+ static void yaru_window_linux_plugin_unlisten_window(
+     YaruWindowLinuxPlugin* self, gint window_id) {
+   GtkWindow* window = yaru_window_linux_plugin_get_window(self, window_id);
+-  if (g_hash_table_contains(self->signals, GINT_TO_POINTER(window_id))) {
++  if (window != nullptr &&
++      g_hash_table_contains(self->signals, GINT_TO_POINTER(window_id))) {
+     g_signal_handlers_disconnect_by_func(window, gpointer(window_state_cb),
+                                          self->event_channel);
+     g_signal_handlers_disconnect_by_func(window, gpointer(window_property_cb),
+                                          self->event_channel);
+-    g_hash_table_remove(self->signals, GINT_TO_POINTER(window_id));
+-  }
++  }
++  g_hash_table_remove(self->signals, GINT_TO_POINTER(window_id));
+ }
+ 
+ static void yaru_window_linux_plugin_handle_method_call(
+@@ -91,7 +108,11 @@
+   gint window_id = fl_value_get_int(fl_value_get_list_value(args, 0));
+   GtkWindow* window = yaru_window_linux_plugin_get_window(self, window_id);
+ 
+-  if (strcmp(method, "init") == 0) {
++  if (window == nullptr) {
++    response = FL_METHOD_RESPONSE(fl_method_error_response_new(
++        "window-unavailable", "The application window has been destroyed.",
++        nullptr));
++  } else if (strcmp(method, "init") == 0) {
+     yaru_window_init(window);
+   } else if (strcmp(method, "close") == 0) {
+     gtk_window_close(window);
+@@ -117,7 +138,13 @@
+     yaru_window_show_menu(window);
+   } else if (strcmp(method, "state") == 0) {
+     g_autoptr(FlValue) state = yaru_window_get_state(window);
+-    response = FL_METHOD_RESPONSE(fl_method_success_response_new(state));
++    if (state == nullptr) {
++      response = FL_METHOD_RESPONSE(fl_method_error_response_new(
++          "window-unavailable", "The application window has no native surface.",
++          nullptr));
++    } else {
++      response = FL_METHOD_RESPONSE(fl_method_success_response_new(state));
++    }
+   } else if (strcmp(method, "setBackground") == 0) {
+     FlValue* background = fl_value_get_list_value(args, 1);
+     yaru_window_set_background(window, fl_value_get_int(background));
+@@ -177,7 +204,11 @@
+                                               FlValue* args,
+                                               gpointer user_data) {
+   YaruWindowLinuxPlugin* plugin = YARU_WINDOW_LINUX_PLUGIN(user_data);
+-  yaru_window_linux_plugin_listen_window(plugin, 0);
++  if (!yaru_window_linux_plugin_listen_window(plugin, 0)) {
++    return fl_method_error_response_new(
++        "window-unavailable", "The application window has been destroyed.",
++        nullptr);
++  }
+   return nullptr;
+ }
+ 
+--- a/linux/yaru_window.cc
++++ b/linux/yaru_window.cc
+@@ -69,7 +69,14 @@
+ }
+ 
+ FlValue* yaru_window_get_state(GtkWindow* window) {
+-  GdkWindow* handle = gtk_widget_get_window(GTK_WIDGET(window));
++  // Notifications can arrive during destruction, after unrealize removed GDK.
++  if (window == nullptr || gtk_widget_in_destruction(GTK_WIDGET(window))) {
++    return nullptr;
++  }
++  GdkWindow* handle = gtk_widget_get_window(GTK_WIDGET(window));
++  if (handle == nullptr || gdk_window_is_destroyed(handle)) {
++    return nullptr;
++  }
+   GdkWindowState state = gdk_window_get_state(handle);
+   GdkWindowTypeHint type = gdk_window_get_type_hint(handle);
+ 

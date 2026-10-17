@@ -127,6 +127,7 @@ parts:
       - node/24/stable
     build-packages:
       - rsync
+      - patch
       - fonts-noto-core
       - fonts-noto-mono
       - curl

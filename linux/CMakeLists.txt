@@ -219,6 +219,7 @@ set_target_properties(${BINARY_NAME}
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)
+include(cmake/YaruWindowLifetime.cmake)
 
 
 # === Installation ===
@@ -229,6 +230,11 @@ include(flutter/generated_plugins.cmake)
 install(CODE "
   file(REMOVE_RECURSE \"${BUILD_BUNDLE_DIR}/\")
   " COMPONENT Runtime)
+
+# MPL-covered modified native plugin source accompanies every bundle/Snap.
+install(DIRECTORY "${_yaru_output}/"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/busymark/third-party/yaru_window_linux"
+  COMPONENT Runtime)
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
