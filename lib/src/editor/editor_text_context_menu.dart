@@ -248,6 +248,7 @@ class _BusyMarkEditorTextContextMenuState
           value: spellingFallback,
           label: command?.label(context) ?? '',
           shortcut: command?.shortcut?.label,
+          gtkAccelerator: command?.shortcut?.gtkAccelerator,
         ),
       );
       items.add(const PopupMenuDivider(height: BusyMarkSpacing.sm));
@@ -265,6 +266,7 @@ class _BusyMarkEditorTextContextMenuState
             label: command.label(context),
             icon: BusyMarkGlyphs.paste,
             shortcut: command.shortcut?.label,
+            gtkAccelerator: command.shortcut?.gtkAccelerator,
           ),
         );
       }
@@ -277,6 +279,7 @@ class _BusyMarkEditorTextContextMenuState
             label: command.label(context),
             icon: BusyMarkGlyphs.paste,
             shortcut: command.shortcut?.label,
+            gtkAccelerator: command.shortcut?.gtkAccelerator,
           ),
         );
       }
@@ -304,6 +307,7 @@ class _BusyMarkEditorTextContextMenuState
             label: commands[commandId]!.label(context),
             icon: _iconFor(item.type),
             shortcut: commands[commandId]!.shortcut?.label,
+            gtkAccelerator: commands[commandId]!.shortcut?.gtkAccelerator,
             enabled: callback != null,
           ),
         );
@@ -328,6 +332,7 @@ class _BusyMarkEditorTextContextMenuState
             label: command.label(context),
             icon: BusyMarkGlyphs.copy,
             shortcut: command.shortcut?.label,
+            gtkAccelerator: command.shortcut?.gtkAccelerator,
           ),
         );
       }
@@ -344,6 +349,9 @@ class _BusyMarkEditorTextContextMenuState
           icon: BusyMarkGlyphs.ai,
           shortcut:
               commands[BusyMarkCommandIds.editorRefineWithAi]?.shortcut?.label,
+          gtkAccelerator: commands[BusyMarkCommandIds.editorRefineWithAi]
+              ?.shortcut
+              ?.gtkAccelerator,
         ),
       );
     }
@@ -360,6 +368,7 @@ class _BusyMarkEditorTextContextMenuState
             label: command.label(context),
             icon: entry.$2,
             shortcut: command.shortcut?.label,
+            gtkAccelerator: command.shortcut?.gtkAccelerator,
             enabled: command.enabled(),
           ),
         );

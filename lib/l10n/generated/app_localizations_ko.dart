@@ -562,15 +562,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get keyboardShortcuts => '키보드 단축키';
 
   @override
-  String get commandPalette => '명령 팔레트';
-
-  @override
-  String get commandPaletteHint => '명령을 입력하세요';
-
-  @override
-  String get commandPaletteEmpty => '일치하는 명령이 없습니다.';
-
-  @override
   String get commandUnavailableInContext => '현재 편집기 컨텍스트에서는 사용할 수 없습니다.';
 
   @override
@@ -784,7 +775,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shortcutSearchDescription => '현재 작업공간 검색';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '이 키보드 단축키 참조 표시';
+  String get shortcutKeyboardShortcutsDescription => '애플리케이션 키보드 단축키 사용자 지정';
 
   @override
   String get shortcutSyntaxReferenceDescription => '구문 참조 열기';
@@ -1010,7 +1001,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get validateOnEdit => '편집할 때 검증';
 
   @override
-  String get clearRecentWorkspaces => '최근 작업공간 지우기';
+  String get clearRecentWorkspaces => '최근 기록 지우기';
 
   @override
   String get editingButtonsPosition => '편집 버튼 위치';
@@ -1780,15 +1771,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sourceSearchNextMatch => '다음 일치 항목';
 
   @override
-  String get sourceSearchCaseSensitive => '대소문자 구분';
-
-  @override
-  String get sourceSearchWholeWord => '전체 단어';
-
-  @override
-  String get sourceSearchRegex => '정규식';
-
-  @override
   String get sourceSearchReplacement => '다음으로 바꾸기';
 
   @override
@@ -1908,13 +1890,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get saveAs => '다른 이름으로 저장';
-
-  @override
-  String get sourceSearchInvalidRegex => '잘못된 정규식';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '길이가 0인 정규식 일치는 지원하지 않습니다(예: ^, \$, 위치에만 일치하는 전방 탐색).';
 
   @override
   String get workspaceSearchIncomplete => '일부 결과만 표시됩니다. 더 표시하거나 검색 범위를 좁히세요.';
@@ -4229,9 +4204,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get clipboardHistory => '클립보드 기록';
 
   @override
-  String get clipboardHistorySearchHint => '클립보드 기록 검색';
-
-  @override
   String get clipboardHistoryDescription => '세션별 클립보드 기록을 엽니다.';
 
   @override
@@ -4250,9 +4222,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get clipboardNoItems => '클립보드 기록이 비어 있습니다.';
-
-  @override
-  String get clipboardNoMatches => '이 검색과 일치하는 클립보드 항목이 없습니다.';
 
   @override
   String get clipboardDisabled => '클립보드 기록 컬렉션이 설정에서 비활성화되었습니다.';
@@ -4303,12 +4272,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get localHistoryNoRevisions => '이 문서는 로컬 히스토리 수정 사항이 없습니다.';
-
-  @override
-  String get localHistoryNoMatches => '이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.';
-
-  @override
-  String get localHistorySearchHint => '로컬 기록 검색';
 
   @override
   String get localHistorySelectedRevision => '선택된 수정';
@@ -5244,4 +5207,175 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       '검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.';
+
+  @override
+  String get searchDocumentsCategory => '문서';
+
+  @override
+  String get searchTopicsCategory => '주제';
+
+  @override
+  String get searchCurrentDocument => '현재 문서';
+
+  @override
+  String get searchCurrentWorkspace => '현재 작업 공간';
+
+  @override
+  String get browseNotes => '노트 찾아보기';
+
+  @override
+  String get searchActionsCommand => '작업 검색';
+
+  @override
+  String get searchDocumentsCommand => '문서 검색';
+
+  @override
+  String get searchTopicsCommand => '주제 검색';
+
+  @override
+  String get searchRecentCommand => '최근 항목 검색';
+
+  @override
+  String get searchResourceUnavailable => '이 리소스를 사용할 수 없습니다.';
+
+  @override
+  String get notesSync => '노트 동기화';
+
+  @override
+  String get searchInWorkspace => '작업 공간에서 검색';
+
+  @override
+  String get searchCategory => '검색 범주';
+
+  @override
+  String get clearHistorySearchScope => '문서 기록 전체 검색';
+
+  @override
+  String get searchInDocument => '문서에서 검색';
+
+  @override
+  String get searchDocumentHint => '이 문서에서 검색…';
+
+  @override
+  String get searchWorkspaceHint => '이 작업 공간에서 검색…';
+
+  @override
+  String get searchOutlineHint => '제목 검색…';
+
+  @override
+  String get searchHistoryHint => '로컬 기록 검색…';
+
+  @override
+  String get searchEnterText => '검색할 텍스트 입력';
+
+  @override
+  String get searchAccountUnavailable => '계정을 사용할 수 없음';
+
+  @override
+  String get searchDocumentsHint => '문서 검색…';
+
+  @override
+  String get searchTopicsHint => '주제 검색…';
+
+  @override
+  String get searchRecentHint => '최근 항목 검색…';
+
+  @override
+  String get searchActionsHint => '작업 검색…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '노트 작업 공간 필요';
+
+  @override
+  String get searchSidebarLabel => '검색:';
+
+  @override
+  String get searchDocumentTextCategory => '문서 텍스트';
+
+  @override
+  String get searchWorkspaceTextCategory => '작업 공간 텍스트';
+
+  @override
+  String get searchHeadingsCategory => '제목';
+
+  @override
+  String get shortcutUnassigned => '할당되지 않음';
+
+  @override
+  String get shortcutPressKeys => '키 조합을 누르세요…';
+
+  @override
+  String get shortcutRecord => '단축키 기록';
+
+  @override
+  String get shortcutRestoreAll => '모든 기본값 복원';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      '모든 동작의 기본 단축키를 복원할까요? 사용자 지정 할당이 제거됩니다.';
+
+  @override
+  String get shortcutSaveFailed =>
+      '단축키가 활성화되었지만 저장하지 못했습니다. 다시 시작 후에도 유지하려면 저장을 다시 시도하세요.';
+
+  @override
+  String get shortcutRetry => '저장 다시 시도';
+
+  @override
+  String get shortcutChanged => '할당이 변경되었습니다. 현재 단축키를 확인하고 다시 시도하세요.';
+
+  @override
+  String get shortcutInvalid => '이 조합은 이 문맥에서 할당할 수 없습니다.';
+
+  @override
+  String get shortcutSystemWarning =>
+      '데스크톱에서 이 조합을 사용할 수 있습니다. BusyMark는 시스템 단축키를 재정의할 수 없습니다.';
+
+  @override
+  String get shortcutConflicts => '이 단축키는 다음 동작과 충돌합니다:';
+
+  @override
+  String get shortcutRemove => '할당 제거';
+
+  @override
+  String get shortcutRestoreDefault => '기본값 복원';
+
+  @override
+  String get shortcutAssign => '할당';
+
+  @override
+  String get shortcutReassign => '다시 할당';
+
+  @override
+  String get shortcutContextApplication => '애플리케이션';
+
+  @override
+  String get shortcutContextDocument => '문서 보기';
+
+  @override
+  String get shortcutContextEditor => '편집기 및 소스';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 소스';
+
+  @override
+  String get shortcutContextWorkspace => '작업 공간 탐색';
+
+  @override
+  String get shortcutContextTree => '사이드바 트리';
+
+  @override
+  String get searchHeadingsCommand => '제목 검색';
+
+  @override
+  String get shortcutFixed => '편집기에서 관리하므로 설정할 수 없습니다.';
+
+  @override
+  String get shortcutDefaultConflict => '기본 단축키가 사용자 지정 할당과 충돌합니다.';
+
+  @override
+  String get shortcutCurrentBinding => '현재 단축키';
+
+  @override
+  String get shortcutProposedBinding => '제안된 단축키';
 }

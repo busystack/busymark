@@ -1,3 +1,4 @@
+import '../../app/app_settings.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -366,6 +367,9 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
         account.id,
         beforeRemove: () => secrets.delete(account.id),
       );
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .removeRecentAccount(account.id);
       if (!_disposed) {
         state = NextcloudConnectionState(
           error: revoked

@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Date",
   "pdfTitlePageTitleRequired": "Saisissez un titre pour la page de titre.",
   "pdfTocSectionNote": "Commence sur une page distincte et peut occuper plusieurs pages.",
-  "sourceSearchZeroLengthUnsupported": "Les correspondances de longueur nulle ne sont pas prises en charge (par exemple ^, $ ou les assertions qui ne correspondent qu’à une position).",
   "workspaceSearchIncomplete": "Seule une partie des résultats est affichée. Affichez-en davantage ou affinez la recherche.",
   "workspaceSearchShowMore": "Afficher plus de résultats",
   "workspaceSearchSkippedFiles": "La recherche est incomplète. Ces fichiers dépassent 1 MiB ou n’ont pas pu être lus :",
@@ -585,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Afficher cette liste de raccourcis clavier",
+  "shortcutKeyboardShortcutsDescription": "Personnaliser les raccourcis clavier de l’application",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -882,7 +881,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Effacer les espaces de travail récents",
+  "clearRecentWorkspaces": "Effacer l’historique récent",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Occurrence suivante",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Respecter la casse",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Mot entier",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Expression régulière",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Expression régulière non valide",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Fichier volumineux : la coloration et le repliage sont suspendus",
   "@sourceLargeFileFeaturesPaused": {
@@ -3208,9 +3191,6 @@
   "diagnosticMarkdownLinkEmptyText": "Le texte du lien est vide ; fournissez un nom accessible qui décrit son objectif.",
   "diagnosticMarkdownLinkReviewText": "Vérifiez si le texte du lien « {text} » décrit son objectif dans le contexte.",
   "diagnosticMarkdownTableEmptyHeader": "Les en-têtes de tableau doivent identifier leurs colonnes ; complétez chaque en-tête vide.",
-  "commandPalette": "Palette de commandes",
-  "commandPaletteHint": "Saisissez une commande",
-  "commandPaletteEmpty": "Aucune commande correspondante",
   "tableAlignmentUnspecified": "Alignement : non spécifié",
   "tableAlignmentLeft": "Alignement : gauche",
   "tableAlignmentCenter": "Alignement : centre",
@@ -3325,14 +3305,12 @@
   "exportInvalidCss": "Choisissez un fichier .css UTF-8 lisible de 256 KiB maximum, sans imports, URL de ressources, HTML ni CSS exécutable ou échappé.",
   "exportInvalidRange": "{field} : saisissez un nombre entre {minimum} et {maximum}.",
   "clipboardHistory": "Historique de la presse-papiers",
-  "clipboardHistorySearchHint": "Rechercher dans l’historique du presse-papiers",
   "clipboardHistoryDescription": "Ouvrir l'historique de la presse-papiers local à la session.",
   "clipboardCurrent": "Presse-papiers actuel",
   "clipboardCurrentExternal": "Presse-papiers actuel provenant d'une autre application",
   "clipboardDestination": "Coller dans {name}",
   "clipboardSessionOnly": "Stocké uniquement pour cette session BusyMark.",
   "clipboardNoItems": "L'historique de la presse-papiers est vide.",
-  "clipboardNoMatches": "Aucun élément de presse-papiers ne correspond à cette recherche.",
   "clipboardDisabled": "La collection d'Historique de la presse-papiers est désactivée dans les paramètres.",
   "clipboardUnavailable": "Le contenu actuel du presse-papiers n'est pas disponible ou non pris en charge.",
   "clipboardTooLarge": "Cet élément du presse-papiers est trop grand pour être conservé.",
@@ -3349,8 +3327,6 @@
   "findLocalHistoryDescription": "Rechercher les documents et le contenu des révisions dans l'Historique Local.",
   "localHistoryNoDocuments": "Aucun document n'a Historique Local.",
   "localHistoryNoRevisions": "Ce document n'a pas de révisions dans l'Historique Local.",
-  "localHistoryNoMatches": "Aucune révision n'est trouvée dans cette recherche.",
-  "localHistorySearchHint": "Rechercher dans l’historique local",
   "localHistorySelectedRevision": "Révision sélectionnée",
   "localHistoryCurrentEditor": "Contenu de l'éditeur actuel",
   "localHistoryCurrentDisk": "Contenu actuel sur le disque",
@@ -3610,5 +3586,61 @@
   "wsInsertElements": "Insérer des éléments",
   "wsAdmonitionsAndQuotes": "Avertissements et citations",
   "wsSemanticText": "Texte sémantique",
-  "wsPropertiesUnavailable": "L’élément inspecté est indisponible. Inspectez un élément pour continuer."
+  "wsPropertiesUnavailable": "L’élément inspecté est indisponible. Inspectez un élément pour continuer.",
+  "searchDocumentsCategory": "Documents",
+  "searchTopicsCategory": "Rubriques",
+  "searchCurrentDocument": "Document actuel",
+  "searchCurrentWorkspace": "Espace de travail actuel",
+  "browseNotes": "Parcourir les notes",
+  "searchActionsCommand": "Rechercher des actions",
+  "searchDocumentsCommand": "Rechercher des documents",
+  "searchTopicsCommand": "Rechercher des rubriques",
+  "searchRecentCommand": "Rechercher les éléments récents",
+  "searchResourceUnavailable": "Cette ressource est indisponible.",
+  "notesSync": "Synchroniser les notes",
+  "searchInWorkspace": "Rechercher dans l’espace de travail",
+  "searchCategory": "Catégorie de recherche",
+  "clearHistorySearchScope": "Rechercher dans l’historique des documents",
+  "searchInDocument": "Rechercher dans le document",
+  "searchDocumentHint": "Rechercher dans ce document…",
+  "searchWorkspaceHint": "Rechercher dans cet espace de travail…",
+  "searchOutlineHint": "Rechercher des titres…",
+  "searchHistoryHint": "Rechercher dans l’historique local…",
+  "searchEnterText": "Saisissez du texte à rechercher",
+  "searchAccountUnavailable": "Compte indisponible",
+  "searchDocumentsHint": "Rechercher des documents…",
+  "searchTopicsHint": "Rechercher des rubriques…",
+  "searchRecentHint": "Rechercher les éléments récents…",
+  "searchActionsHint": "Rechercher des actions…",
+  "searchRequiresNotesWorkspace": "Nécessite un espace de travail Notes",
+  "searchSidebarLabel": "Rechercher:",
+  "searchDocumentTextCategory": "Texte du document",
+  "searchWorkspaceTextCategory": "Texte de l’espace de travail",
+  "searchHeadingsCategory": "Titres",
+  "shortcutUnassigned": "Non attribué",
+  "shortcutPressKeys": "Appuyez sur une combinaison de touches…",
+  "shortcutRecord": "Enregistrer un raccourci",
+  "shortcutRestoreAll": "Rétablir tous les raccourcis",
+  "shortcutRestoreAllQuestion": "Rétablir les raccourcis par défaut de toutes les actions ? Les affectations personnalisées seront supprimées.",
+  "shortcutSaveFailed": "Les raccourcis sont actifs mais n’ont pas été sauvegardés. Réessayez pour les conserver après redémarrage.",
+  "shortcutRetry": "Réessayer la sauvegarde",
+  "shortcutChanged": "Les affectations ont changé. Vérifiez les raccourcis actuels et réessayez.",
+  "shortcutInvalid": "Cette combinaison ne peut pas être attribuée dans ce contexte.",
+  "shortcutSystemWarning": "Cette combinaison peut être utilisée par votre bureau. BusyMark ne peut pas remplacer les raccourcis système.",
+  "shortcutConflicts": "Ce raccourci entre en conflit avec ces actions :",
+  "shortcutRemove": "Supprimer l’affectation",
+  "shortcutRestoreDefault": "Rétablir le raccourci par défaut",
+  "shortcutAssign": "Attribuer",
+  "shortcutReassign": "Réattribuer",
+  "shortcutContextApplication": "Application entière",
+  "shortcutContextDocument": "Vues du document",
+  "shortcutContextEditor": "Éditeur et source",
+  "shortcutContextWritersideSource": "Source Writerside",
+  "shortcutContextWorkspace": "Navigation de l’espace de travail",
+  "shortcutContextTree": "Arborescences latérales",
+  "searchHeadingsCommand": "Rechercher des titres",
+  "shortcutFixed": "Géré par l’éditeur ; non configurable.",
+  "shortcutDefaultConflict": "Le raccourci par défaut entre en conflit avec une affectation personnalisée.",
+  "shortcutCurrentBinding": "Raccourci actuel",
+  "shortcutProposedBinding": "Raccourci proposé"
 }

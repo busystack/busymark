@@ -583,15 +583,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get keyboardShortcuts => 'Phím tắt';
 
   @override
-  String get commandPalette => 'Bảng lệnh';
-
-  @override
-  String get commandPaletteHint => 'Nhập lệnh';
-
-  @override
-  String get commandPaletteEmpty => 'Không có lệnh phù hợp';
-
-  @override
   String get commandUnavailableInContext =>
       'Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại';
 
@@ -810,7 +801,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Hiển thị tham chiếu phím tắt này';
+      'Tùy chỉnh phím tắt của ứng dụng';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Mở tham chiếu cú pháp';
@@ -1055,7 +1046,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get validateOnEdit => 'Kiểm tra khi chỉnh sửa';
 
   @override
-  String get clearRecentWorkspaces => 'Xóa không gian làm việc gần đây';
+  String get clearRecentWorkspaces => 'Xóa lịch sử gần đây';
 
   @override
   String get editingButtonsPosition => 'Vị trí các nút chỉnh sửa';
@@ -1837,15 +1828,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sourceSearchNextMatch => 'Kết quả khớp tiếp theo';
 
   @override
-  String get sourceSearchCaseSensitive => 'Phân biệt chữ hoa, chữ thường';
-
-  @override
-  String get sourceSearchWholeWord => 'Toàn bộ từ';
-
-  @override
-  String get sourceSearchRegex => 'Biểu thức chính quy';
-
-  @override
   String get sourceSearchReplacement => 'Thay thế bằng';
 
   @override
@@ -1970,13 +1952,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get saveAs => 'Lưu thành';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Biểu thức chính quy không hợp lệ';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Không hỗ trợ kết quả khớp regex có độ dài bằng 0 (ví dụ ^, \$ hoặc lookahead chỉ khớp với một vị trí).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4348,9 +4323,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get clipboardHistory => 'Lịch sử sao chép';
 
   @override
-  String get clipboardHistorySearchHint => 'Tìm kiếm lịch sử bảng nhớ tạm';
-
-  @override
   String get clipboardHistoryDescription => 'Mở lịch sử sao chép cục bộ phiên.';
 
   @override
@@ -4370,10 +4342,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Lịch sử sao chép trống.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Không có mục sao chép nào khớp với tìm kiếm này.';
 
   @override
   String get clipboardDisabled =>
@@ -4430,13 +4398,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Tài liệu này không có các phiên bản Lịch sử cục bộ.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.';
-
-  @override
-  String get localHistorySearchHint => 'Tìm kiếm lịch sử cục bộ';
 
   @override
   String get localHistorySelectedRevision => 'Phiên bản đã chọn';
@@ -5387,4 +5348,178 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
+
+  @override
+  String get searchDocumentsCategory => 'Tài liệu';
+
+  @override
+  String get searchTopicsCategory => 'Chủ đề';
+
+  @override
+  String get searchCurrentDocument => 'Tài liệu hiện tại';
+
+  @override
+  String get searchCurrentWorkspace => 'Không gian làm việc hiện tại';
+
+  @override
+  String get browseNotes => 'Duyệt ghi chú';
+
+  @override
+  String get searchActionsCommand => 'Tìm thao tác';
+
+  @override
+  String get searchDocumentsCommand => 'Tìm tài liệu';
+
+  @override
+  String get searchTopicsCommand => 'Tìm chủ đề';
+
+  @override
+  String get searchRecentCommand => 'Tìm mục gần đây';
+
+  @override
+  String get searchResourceUnavailable => 'Tài nguyên này không khả dụng.';
+
+  @override
+  String get notesSync => 'Đồng bộ ghi chú';
+
+  @override
+  String get searchInWorkspace => 'Tìm trong không gian làm việc';
+
+  @override
+  String get searchCategory => 'Danh mục tìm kiếm';
+
+  @override
+  String get clearHistorySearchScope => 'Tìm trong lịch sử tài liệu';
+
+  @override
+  String get searchInDocument => 'Tìm trong tài liệu';
+
+  @override
+  String get searchDocumentHint => 'Tìm trong tài liệu này…';
+
+  @override
+  String get searchWorkspaceHint => 'Tìm trong không gian làm việc này…';
+
+  @override
+  String get searchOutlineHint => 'Tìm tiêu đề…';
+
+  @override
+  String get searchHistoryHint => 'Tìm trong lịch sử cục bộ…';
+
+  @override
+  String get searchEnterText => 'Nhập văn bản để tìm kiếm';
+
+  @override
+  String get searchAccountUnavailable => 'Tài khoản không khả dụng';
+
+  @override
+  String get searchDocumentsHint => 'Tìm tài liệu…';
+
+  @override
+  String get searchTopicsHint => 'Tìm chủ đề…';
+
+  @override
+  String get searchRecentHint => 'Tìm mục gần đây…';
+
+  @override
+  String get searchActionsHint => 'Tìm thao tác…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Yêu cầu không gian làm việc Ghi chú';
+
+  @override
+  String get searchSidebarLabel => 'Tìm kiếm:';
+
+  @override
+  String get searchDocumentTextCategory => 'Văn bản tài liệu';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Văn bản không gian làm việc';
+
+  @override
+  String get searchHeadingsCategory => 'Tiêu đề';
+
+  @override
+  String get shortcutUnassigned => 'Chưa gán';
+
+  @override
+  String get shortcutPressKeys => 'Nhấn tổ hợp phím…';
+
+  @override
+  String get shortcutRecord => 'Ghi phím tắt';
+
+  @override
+  String get shortcutRestoreAll => 'Khôi phục tất cả mặc định';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Khôi phục phím tắt mặc định của mọi thao tác? Các gán tùy chỉnh sẽ bị xóa.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Phím tắt đang có hiệu lực nhưng chưa lưu được. Thử lưu lại để giữ chúng sau khi khởi động lại.';
+
+  @override
+  String get shortcutRetry => 'Thử lưu lại';
+
+  @override
+  String get shortcutChanged =>
+      'Các gán đã thay đổi. Xem lại phím tắt hiện tại và thử lại.';
+
+  @override
+  String get shortcutInvalid => 'Không thể gán tổ hợp này trong ngữ cảnh này.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Môi trường màn hình có thể dùng tổ hợp này. BusyMark không thể ghi đè phím tắt hệ thống.';
+
+  @override
+  String get shortcutConflicts => 'Phím tắt này xung đột với các thao tác sau:';
+
+  @override
+  String get shortcutRemove => 'Xóa gán';
+
+  @override
+  String get shortcutRestoreDefault => 'Khôi phục mặc định';
+
+  @override
+  String get shortcutAssign => 'Gán';
+
+  @override
+  String get shortcutReassign => 'Gán lại';
+
+  @override
+  String get shortcutContextApplication => 'Ứng dụng';
+
+  @override
+  String get shortcutContextDocument => 'Chế độ xem tài liệu';
+
+  @override
+  String get shortcutContextEditor => 'Trình sửa và mã nguồn';
+
+  @override
+  String get shortcutContextWritersideSource => 'Mã nguồn Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Điều hướng không gian làm việc';
+
+  @override
+  String get shortcutContextTree => 'Cây thanh bên';
+
+  @override
+  String get searchHeadingsCommand => 'Tìm tiêu đề';
+
+  @override
+  String get shortcutFixed => 'Do trình soạn thảo quản lý; không thể cấu hình.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Phím tắt mặc định xung đột với gán tùy chỉnh.';
+
+  @override
+  String get shortcutCurrentBinding => 'Phím tắt hiện tại';
+
+  @override
+  String get shortcutProposedBinding => 'Phím tắt đề xuất';
 }

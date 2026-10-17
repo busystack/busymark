@@ -563,15 +563,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get keyboardShortcuts => 'キーボードショートカット';
 
   @override
-  String get commandPalette => 'コマンドパレット';
-
-  @override
-  String get commandPaletteHint => 'コマンドを入力';
-
-  @override
-  String get commandPaletteEmpty => '一致するコマンドはありません';
-
-  @override
   String get commandUnavailableInContext => '現在のエディターのコンテキストでは利用できません';
 
   @override
@@ -786,7 +777,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shortcutSearchDescription => '現在のワークスペースを検索';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'このキーボードショートカット一覧を表示';
+  String get shortcutKeyboardShortcutsDescription => 'アプリケーションのキーボードショートカットを設定';
 
   @override
   String get shortcutSyntaxReferenceDescription => '構文リファレンスを開く';
@@ -1014,7 +1005,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get validateOnEdit => '編集時に検証';
 
   @override
-  String get clearRecentWorkspaces => '最近使ったワークスペースを消去';
+  String get clearRecentWorkspaces => '最近の履歴を消去';
 
   @override
   String get editingButtonsPosition => '編集ボタンの位置';
@@ -1783,15 +1774,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sourceSearchNextMatch => '次の一致';
 
   @override
-  String get sourceSearchCaseSensitive => '大文字と小文字を区別';
-
-  @override
-  String get sourceSearchWholeWord => '単語単位';
-
-  @override
-  String get sourceSearchRegex => '正規表現';
-
-  @override
   String get sourceSearchReplacement => '置換後';
 
   @override
@@ -1910,13 +1892,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get saveAs => '名前を付けて保存';
-
-  @override
-  String get sourceSearchInvalidRegex => '無効な正規表現';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '長さがゼロの正規表現の一致には対応していません（^、\$、位置のみに一致する先読みなど）。';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4234,9 +4209,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clipboardHistory => 'コピーボード履歴';
 
   @override
-  String get clipboardHistorySearchHint => 'クリップボード履歴を検索';
-
-  @override
   String get clipboardHistoryDescription => 'セッション固有のコピーボード履歴を開く。';
 
   @override
@@ -4255,9 +4227,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'コピーボード履歴は空です。';
-
-  @override
-  String get clipboardNoMatches => 'この検索に一致するコピーボードの項目はありません。';
 
   @override
   String get clipboardDisabled => 'コピーボード履歴のコレクションは設定で無効になっています。';
@@ -4308,12 +4277,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get localHistoryNoRevisions => 'このドキュメントにはローカル履歴の修正はありません。';
-
-  @override
-  String get localHistoryNoMatches => 'この検索に一致するローカル履歴の修正はありません。';
-
-  @override
-  String get localHistorySearchHint => 'ローカル履歴を検索';
 
   @override
   String get localHistorySelectedRevision => '選択されたリビジョン';
@@ -5246,4 +5209,175 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get wsPropertiesUnavailable => '確認中の要素は利用できません。続行するには要素を確認してください。';
+
+  @override
+  String get searchDocumentsCategory => 'ドキュメント';
+
+  @override
+  String get searchTopicsCategory => 'トピック';
+
+  @override
+  String get searchCurrentDocument => '現在のドキュメント';
+
+  @override
+  String get searchCurrentWorkspace => '現在のワークスペース';
+
+  @override
+  String get browseNotes => 'ノートを参照';
+
+  @override
+  String get searchActionsCommand => 'アクションを検索';
+
+  @override
+  String get searchDocumentsCommand => 'ドキュメントを検索';
+
+  @override
+  String get searchTopicsCommand => 'トピックを検索';
+
+  @override
+  String get searchRecentCommand => '最近の項目を検索';
+
+  @override
+  String get searchResourceUnavailable => 'このリソースは利用できません。';
+
+  @override
+  String get notesSync => 'ノートを同期';
+
+  @override
+  String get searchInWorkspace => 'ワークスペース内検索';
+
+  @override
+  String get searchCategory => '検索カテゴリ';
+
+  @override
+  String get clearHistorySearchScope => 'すべてのドキュメントの履歴を検索';
+
+  @override
+  String get searchInDocument => 'ドキュメント内を検索';
+
+  @override
+  String get searchDocumentHint => 'このドキュメントを検索…';
+
+  @override
+  String get searchWorkspaceHint => 'このワークスペースを検索…';
+
+  @override
+  String get searchOutlineHint => '見出しを検索…';
+
+  @override
+  String get searchHistoryHint => 'ローカル履歴を検索…';
+
+  @override
+  String get searchEnterText => '検索するテキストを入力';
+
+  @override
+  String get searchAccountUnavailable => 'アカウントを利用できません';
+
+  @override
+  String get searchDocumentsHint => 'ドキュメントを検索…';
+
+  @override
+  String get searchTopicsHint => 'トピックを検索…';
+
+  @override
+  String get searchRecentHint => '最近の項目を検索…';
+
+  @override
+  String get searchActionsHint => 'アクションを検索…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'ノートのワークスペースが必要です';
+
+  @override
+  String get searchSidebarLabel => '検索：';
+
+  @override
+  String get searchDocumentTextCategory => '文書のテキスト';
+
+  @override
+  String get searchWorkspaceTextCategory => 'ワークスペースのテキスト';
+
+  @override
+  String get searchHeadingsCategory => '見出し';
+
+  @override
+  String get shortcutUnassigned => '未割り当て';
+
+  @override
+  String get shortcutPressKeys => 'キーの組み合わせを押してください…';
+
+  @override
+  String get shortcutRecord => 'ショートカットを記録';
+
+  @override
+  String get shortcutRestoreAll => 'すべて既定に戻す';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'すべてのアクションのショートカットを既定に戻しますか？独自の割り当ては削除されます。';
+
+  @override
+  String get shortcutSaveFailed =>
+      'ショートカットは有効ですが保存できませんでした。再起動後も保持するには保存を再試行してください。';
+
+  @override
+  String get shortcutRetry => '保存を再試行';
+
+  @override
+  String get shortcutChanged => '割り当てが変更されました。現在のショートカットを確認して再試行してください。';
+
+  @override
+  String get shortcutInvalid => 'この組み合わせはこのコンテキストでは割り当てられません。';
+
+  @override
+  String get shortcutSystemWarning =>
+      'この組み合わせはデスクトップで使われている可能性があります。BusyMarkはシステムのショートカットを上書きできません。';
+
+  @override
+  String get shortcutConflicts => 'このショートカットは次のアクションと競合します：';
+
+  @override
+  String get shortcutRemove => '割り当てを削除';
+
+  @override
+  String get shortcutRestoreDefault => '既定に戻す';
+
+  @override
+  String get shortcutAssign => '割り当て';
+
+  @override
+  String get shortcutReassign => '再割り当て';
+
+  @override
+  String get shortcutContextApplication => 'アプリケーション';
+
+  @override
+  String get shortcutContextDocument => '文書の表示';
+
+  @override
+  String get shortcutContextEditor => 'エディターとソース';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writersideのソース';
+
+  @override
+  String get shortcutContextWorkspace => 'ワークスペースの移動';
+
+  @override
+  String get shortcutContextTree => 'サイドバーのツリー';
+
+  @override
+  String get searchHeadingsCommand => '見出しを検索';
+
+  @override
+  String get shortcutFixed => 'エディターが管理するため、変更できません。';
+
+  @override
+  String get shortcutDefaultConflict => '既定のショートカットがカスタム割り当てと競合しています。';
+
+  @override
+  String get shortcutCurrentBinding => '現在のショートカット';
+
+  @override
+  String get shortcutProposedBinding => '新しいショートカット';
 }

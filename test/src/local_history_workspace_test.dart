@@ -894,6 +894,115 @@ void main() {
     },
   );
 
+  for (final change in [
+    'session',
+    'refresh',
+    'edit-undone',
+    'mode',
+    'mode-return',
+    'navigation',
+    'disk',
+    'encoding',
+  ]) {
+    test(
+      'History restore validates source and target rather than session identity: $change',
+      () async {
+        final destination = p.join(root.path, 'destination.md');
+        final anchor = p.join(root.path, 'anchor.md');
+        await File(destination).writeAsString('Protected destination\n');
+        await File(anchor).writeAsString('# Anchor\n');
+        final memory = MemoryLocalHistoryStore();
+        final captured = await _capture(
+          memory,
+          p.join(root.path, 'deleted.md'),
+          'Recovered source\n',
+        );
+        final revision = (await memory.readRevision(captured.revision!.id))!;
+        final blocking = _BlockingProtectiveStore(memory);
+        final harness = await _harness(blocking);
+        await harness.controller.openPath(root.path);
+        await harness.controller.openActiveFile(destination);
+        final before = harness.state.activeBuffer!;
+        final restore = harness.controller.restoreMissingLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+          destinationPath: destination,
+          overwriteExisting: true,
+        );
+        await blocking.started.future;
+        switch (change) {
+          case 'session':
+            harness.controller.updateActiveEditorState(
+              before.editorState.copyWith(scrollOffset: 12),
+            );
+          case 'refresh':
+            expect(
+              await harness.controller
+                  .refreshWorkspaceFromDiskPreservingOpenTabs(),
+              isTrue,
+            );
+          case 'edit-undone':
+            harness.controller.updateActiveText('Concurrent edit\n');
+            expect(harness.controller.undoActiveBuffer(), isTrue);
+            expect(harness.state.activeText, before.text);
+          case 'mode':
+            harness.controller.updateActiveEditorMode(
+              DocumentViewModePreference.source,
+            );
+          case 'mode-return':
+            harness.controller.updateActiveEditorMode(
+              DocumentViewModePreference.source,
+            );
+            harness.controller.updateActiveEditorMode(before.editorState.mode);
+          case 'navigation':
+            await harness.controller.openActiveFile(anchor);
+            await harness.controller.openActiveFile(destination);
+          case 'disk':
+            await File(
+              destination,
+            ).writeAsString('Concurrent disk replacement\n');
+          case 'encoding':
+            await File(
+              destination,
+            ).writeAsString('\uFEFFProtected destination\r\n');
+            expect(
+              await harness.controller
+                  .refreshWorkspaceFromDiskPreservingOpenTabs(),
+              isTrue,
+            );
+            expect(harness.state.activeText, before.text);
+        }
+        blocking.release.complete();
+        final accepted = change == 'session' || change == 'refresh';
+        expect(await restore, accepted);
+        expect(
+          harness.state.activeText,
+          accepted ? revision.source : before.text,
+        );
+        expect(
+          await File(destination).readAsString(),
+          change == 'disk'
+              ? 'Concurrent disk replacement\n'
+              : change == 'encoding'
+              ? 'Protected destination\r\n'
+              : before.text,
+        );
+        if (change == 'encoding') {
+          expect((await File(destination).readAsBytes()).take(3), [
+            0xef,
+            0xbb,
+            0xbf,
+          ]);
+        }
+        if (change == 'session') {
+          expect(harness.controller.undoActiveBuffer(), isTrue);
+          expect(harness.state.activeText, before.text);
+          expect(harness.state.activeBuffer!.editorState.scrollOffset, 12);
+        }
+      },
+    );
+  }
+
   test(
     'autosaved existing-destination recovery never publishes an empty file',
     () async {

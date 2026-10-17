@@ -1189,24 +1189,6 @@ abstract class AppLocalizations {
   /// **'Keyboard Shortcuts'**
   String get keyboardShortcuts;
 
-  /// Title and command label for the searchable command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'Command Palette'**
-  String get commandPalette;
-
-  /// Search hint in the command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'Type a command'**
-  String get commandPaletteHint;
-
-  /// Empty state in the command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'No matching commands'**
-  String get commandPaletteEmpty;
-
   /// Reason shown for a disabled contextual command.
   ///
   /// In en, this message translates to:
@@ -1630,7 +1612,7 @@ abstract class AppLocalizations {
   /// Keyboard shortcut description for opening shortcuts.
   ///
   /// In en, this message translates to:
-  /// **'Show this keyboard shortcut reference'**
+  /// **'Customize application keyboard shortcuts'**
   String get shortcutKeyboardShortcutsDescription;
 
   /// Keyboard shortcut description for opening the Syntax Reference.
@@ -2077,10 +2059,10 @@ abstract class AppLocalizations {
   /// **'Validate on edit'**
   String get validateOnEdit;
 
-  /// Settings action label for clearing recent workspaces.
+  /// Settings action for clearing Recent navigation metadata in both document and workspace sections.
   ///
   /// In en, this message translates to:
-  /// **'Clear recent workspaces'**
+  /// **'Clear recent history'**
   String get clearRecentWorkspaces;
 
   /// Settings label for WYSIWYG editing button position.
@@ -3391,24 +3373,6 @@ abstract class AppLocalizations {
   /// **'Next match'**
   String get sourceSearchNextMatch;
 
-  /// Tooltip for toggling case-sensitive source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Case sensitive'**
-  String get sourceSearchCaseSensitive;
-
-  /// Tooltip for toggling whole-word source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Whole word'**
-  String get sourceSearchWholeWord;
-
-  /// Tooltip for toggling regular-expression source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Regex'**
-  String get sourceSearchRegex;
-
   /// Placeholder for the active-document replacement field.
   ///
   /// In en, this message translates to:
@@ -3612,18 +3576,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save As'**
   String get saveAs;
-
-  /// Source search status shown when the regular expression is invalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid regular expression'**
-  String get sourceSearchInvalidRegex;
-
-  /// No description provided for @sourceSearchZeroLengthUnsupported.
-  ///
-  /// In en, this message translates to:
-  /// **'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).'**
-  String get sourceSearchZeroLengthUnsupported;
 
   /// No description provided for @workspaceSearchIncomplete.
   ///
@@ -7368,12 +7320,6 @@ abstract class AppLocalizations {
   /// **'Clipboard History'**
   String get clipboardHistory;
 
-  /// No description provided for @clipboardHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search clipboard history'**
-  String get clipboardHistorySearchHint;
-
   /// No description provided for @clipboardHistoryDescription.
   ///
   /// In en, this message translates to:
@@ -7409,12 +7355,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clipboard history is empty.'**
   String get clipboardNoItems;
-
-  /// No description provided for @clipboardNoMatches.
-  ///
-  /// In en, this message translates to:
-  /// **'No clipboard items match this search.'**
-  String get clipboardNoMatches;
 
   /// No description provided for @clipboardDisabled.
   ///
@@ -7511,18 +7451,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This document has no Local History revisions.'**
   String get localHistoryNoRevisions;
-
-  /// No description provided for @localHistoryNoMatches.
-  ///
-  /// In en, this message translates to:
-  /// **'No Local History revisions match this search.'**
-  String get localHistoryNoMatches;
-
-  /// No description provided for @localHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search local history'**
-  String get localHistorySearchHint;
 
   /// No description provided for @localHistorySelectedRevision.
   ///
@@ -9251,6 +9179,342 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The inspected element is unavailable. Inspect an element to continue.'**
   String get wsPropertiesUnavailable;
+
+  /// No description provided for @searchDocumentsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get searchDocumentsCategory;
+
+  /// No description provided for @searchTopicsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Topics'**
+  String get searchTopicsCategory;
+
+  /// No description provided for @searchCurrentDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Current document'**
+  String get searchCurrentDocument;
+
+  /// No description provided for @searchCurrentWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Current workspace'**
+  String get searchCurrentWorkspace;
+
+  /// No description provided for @browseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Notes'**
+  String get browseNotes;
+
+  /// No description provided for @searchActionsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Actions'**
+  String get searchActionsCommand;
+
+  /// No description provided for @searchDocumentsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Documents'**
+  String get searchDocumentsCommand;
+
+  /// No description provided for @searchTopicsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Topics'**
+  String get searchTopicsCommand;
+
+  /// No description provided for @searchRecentCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Recent'**
+  String get searchRecentCommand;
+
+  /// No description provided for @searchResourceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This resource is unavailable.'**
+  String get searchResourceUnavailable;
+
+  /// Command to synchronize the active Nextcloud Notes account.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync notes'**
+  String get notesSync;
+
+  /// No description provided for @searchInWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Workspace'**
+  String get searchInWorkspace;
+
+  /// No description provided for @searchCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Search category'**
+  String get searchCategory;
+
+  /// No description provided for @clearHistorySearchScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Search history across documents'**
+  String get clearHistorySearchScope;
+
+  /// No description provided for @searchInDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Document'**
+  String get searchInDocument;
+
+  /// No description provided for @searchDocumentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this document…'**
+  String get searchDocumentHint;
+
+  /// No description provided for @searchWorkspaceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this workspace…'**
+  String get searchWorkspaceHint;
+
+  /// No description provided for @searchOutlineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search headings…'**
+  String get searchOutlineHint;
+
+  /// No description provided for @searchHistoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Local History…'**
+  String get searchHistoryHint;
+
+  /// No description provided for @searchEnterText.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to search'**
+  String get searchEnterText;
+
+  /// No description provided for @searchAccountUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Account unavailable'**
+  String get searchAccountUnavailable;
+
+  /// No description provided for @searchDocumentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search documents…'**
+  String get searchDocumentsHint;
+
+  /// No description provided for @searchTopicsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search topics…'**
+  String get searchTopicsHint;
+
+  /// No description provided for @searchRecentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recent resources…'**
+  String get searchRecentHint;
+
+  /// No description provided for @searchActionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search actions…'**
+  String get searchActionsHint;
+
+  /// No description provided for @searchRequiresNotesWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires a Notes workspace'**
+  String get searchRequiresNotesWorkspace;
+
+  /// Search and keyboard shortcut settings: searchSidebarLabel
+  ///
+  /// In en, this message translates to:
+  /// **'Search:'**
+  String get searchSidebarLabel;
+
+  /// Search and keyboard shortcut settings: searchDocumentTextCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Document Text'**
+  String get searchDocumentTextCategory;
+
+  /// Search and keyboard shortcut settings: searchWorkspaceTextCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace Text'**
+  String get searchWorkspaceTextCategory;
+
+  /// Search and keyboard shortcut settings: searchHeadingsCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Headings'**
+  String get searchHeadingsCategory;
+
+  /// Search and keyboard shortcut settings: shortcutUnassigned
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get shortcutUnassigned;
+
+  /// Search and keyboard shortcut settings: shortcutPressKeys
+  ///
+  /// In en, this message translates to:
+  /// **'Press a key combination…'**
+  String get shortcutPressKeys;
+
+  /// Search and keyboard shortcut settings: shortcutRecord
+  ///
+  /// In en, this message translates to:
+  /// **'Record shortcut'**
+  String get shortcutRecord;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreAll
+  ///
+  /// In en, this message translates to:
+  /// **'Restore all defaults'**
+  String get shortcutRestoreAll;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreAllQuestion
+  ///
+  /// In en, this message translates to:
+  /// **'Restore every action’s default shortcut? Custom assignments will be removed.'**
+  String get shortcutRestoreAllQuestion;
+
+  /// Search and keyboard shortcut settings: shortcutSaveFailed
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcuts are active but could not be saved. Retry to keep them after restart.'**
+  String get shortcutSaveFailed;
+
+  /// Search and keyboard shortcut settings: shortcutRetry
+  ///
+  /// In en, this message translates to:
+  /// **'Retry saving'**
+  String get shortcutRetry;
+
+  /// Search and keyboard shortcut settings: shortcutChanged
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments changed. Review the current shortcuts and try again.'**
+  String get shortcutChanged;
+
+  /// Search and keyboard shortcut settings: shortcutInvalid
+  ///
+  /// In en, this message translates to:
+  /// **'This combination cannot be assigned in this context.'**
+  String get shortcutInvalid;
+
+  /// Search and keyboard shortcut settings: shortcutSystemWarning
+  ///
+  /// In en, this message translates to:
+  /// **'This combination may be used by your desktop. BusyMark cannot override system shortcuts.'**
+  String get shortcutSystemWarning;
+
+  /// Search and keyboard shortcut settings: shortcutConflicts
+  ///
+  /// In en, this message translates to:
+  /// **'This shortcut overlaps these actions:'**
+  String get shortcutConflicts;
+
+  /// Search and keyboard shortcut settings: shortcutRemove
+  ///
+  /// In en, this message translates to:
+  /// **'Remove assignment'**
+  String get shortcutRemove;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreDefault
+  ///
+  /// In en, this message translates to:
+  /// **'Restore default'**
+  String get shortcutRestoreDefault;
+
+  /// Search and keyboard shortcut settings: shortcutAssign
+  ///
+  /// In en, this message translates to:
+  /// **'Assign'**
+  String get shortcutAssign;
+
+  /// Search and keyboard shortcut settings: shortcutReassign
+  ///
+  /// In en, this message translates to:
+  /// **'Reassign'**
+  String get shortcutReassign;
+
+  /// Search and keyboard shortcut settings: shortcutContextApplication
+  ///
+  /// In en, this message translates to:
+  /// **'Application'**
+  String get shortcutContextApplication;
+
+  /// Search and keyboard shortcut settings: shortcutContextDocument
+  ///
+  /// In en, this message translates to:
+  /// **'Document views'**
+  String get shortcutContextDocument;
+
+  /// Search and keyboard shortcut settings: shortcutContextEditor
+  ///
+  /// In en, this message translates to:
+  /// **'Editor and Source'**
+  String get shortcutContextEditor;
+
+  /// Search and keyboard shortcut settings: shortcutContextWritersideSource
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside Source'**
+  String get shortcutContextWritersideSource;
+
+  /// Search and keyboard shortcut settings: shortcutContextWorkspace
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace navigation'**
+  String get shortcutContextWorkspace;
+
+  /// Search and keyboard shortcut settings: shortcutContextTree
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar trees'**
+  String get shortcutContextTree;
+
+  /// No description provided for @searchHeadingsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Headings'**
+  String get searchHeadingsCommand;
+
+  /// No description provided for @shortcutFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Handled by the editor; not configurable.'**
+  String get shortcutFixed;
+
+  /// No description provided for @shortcutDefaultConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Default shortcut conflicts with a custom assignment.'**
+  String get shortcutDefaultConflict;
+
+  /// No description provided for @shortcutCurrentBinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Current shortcut'**
+  String get shortcutCurrentBinding;
+
+  /// No description provided for @shortcutProposedBinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposed shortcut'**
+  String get shortcutProposedBinding;
 }
 
 class _AppLocalizationsDelegate

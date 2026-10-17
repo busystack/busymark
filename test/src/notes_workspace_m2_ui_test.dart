@@ -1,3 +1,6 @@
+import 'package:busymark/src/search/search_session.dart';
+import 'package:busymark/src/search/search_sidebar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/quick_open.dart';
 import 'package:busymark/src/app/busymark_design.dart';
@@ -7,15 +10,6 @@ import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dar
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-Future<void> _drain(WidgetTester tester) async {
-  for (var i = 0; i < 25; i++) {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 10)),
-    );
-    await tester.pump();
-  }
-}
 
 Widget _app(Widget child) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -28,14 +22,11 @@ void main() {
   const windowEvents = EventChannel('yaru_window/events');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-  late int stateRequests;
   setUp(() {
-    stateRequests = 0;
     // The real Yaru dialog title bar subscribes to native window state. Keep
     // this file independent of plugin registration and async completion timing.
     messenger.setMockMethodCallHandler(windowChannel, (call) async {
       if (call.method == 'state') {
-        stateRequests++;
         return <String, Object?>{};
       }
       return null;
@@ -72,7 +63,7 @@ void main() {
             .metadata[BusyMarkCommandIds.quickOpen]!
             .shortcut!
             .label,
-        'Ctrl+P',
+        'Ctrl+Shift+D',
       );
       expect(
         BusyMarkCommandCatalog
@@ -84,44 +75,98 @@ void main() {
     },
   );
   testWidgets(
-    'Quick Open arrow/Enter opens the chosen identity and Escape dismisses',
+    'Documents sidebar renders stable identities and pointer activation',
     (tester) async {
-      QuickOpenDocument? result;
+      SidebarSearchResult? selected;
+      const first = DocumentSearchResult(
+        'account-a',
+        QuickOpenDocument(title: 'Same', path: 'Cat', localId: 'a'),
+        accountId: 'a',
+      );
+      const second = DocumentSearchResult(
+        'account-a',
+        QuickOpenDocument(title: 'Same', path: 'Cat', localId: 'b'),
+        accountId: 'a',
+      );
       await tester.pumpWidget(
-        _app(
-          Builder(
-            builder: (context) => TextButton(
-              onPressed: () async {
-                result = await showDialog<QuickOpenDocument>(
-                  context: context,
-                  builder: (_) => const QuickOpenDialog(
-                    documents: [
-                      QuickOpenDocument(title: 'A', path: 'Cat', localId: 'a'),
-                      QuickOpenDocument(title: 'B', path: 'Cat', localId: 'b'),
-                    ],
-                  ),
-                );
-              },
-              child: const Text('launch'),
+        ProviderScope(
+          child: _app(
+            SearchResultList(
+              results: const [first, second],
+              selected: 1,
+              onActivate: (result) async => selected = result,
             ),
           ),
         ),
       );
-      await tester.tap(find.text('launch'));
-      await _drain(tester);
-      expect(stateRequests, greaterThan(0));
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pumpAndSettle();
-      expect(result?.localId, 'b');
-      expect(result?.filePath, isNull);
-      await tester.tap(find.text('launch'));
-      await _drain(tester);
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
-      expect(find.byType(QuickOpenDialog), findsNothing);
-      expect(result, isNull);
+      expect(find.text('Same'), findsNWidgets(2));
+      expect(
+        tester
+            .widget<BusyMarkSidebarRecordRow>(
+              find.byKey(ValueKey(second.identity)),
+            )
+            .selected,
+        isTrue,
+      );
+      await tester.tap(find.byKey(ValueKey(second.identity)));
+      expect((selected as DocumentSearchResult).document.localId, 'b');
+      expect((selected as DocumentSearchResult).document.filePath, isNull);
       expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'lazy search selection reveals wrapped rows at increased text size',
+    (tester) async {
+      var selected = 0;
+      late StateSetter update;
+      final results = <SidebarSearchResult>[
+        for (var i = 0; i < 80; i++)
+          DocumentSearchResult(
+            'workspace',
+            QuickOpenDocument(
+              title: 'Document $i ${'a long descriptive title ' * 8}',
+              path: 'nested/path/with/context/document-$i.md',
+              filePath: '/document-$i.md',
+            ),
+          ),
+      ];
+      await tester.pumpWidget(
+        ProviderScope(
+          child: _app(
+            StatefulBuilder(
+              builder: (context, setState) {
+                update = setState;
+                return MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: const TextScaler.linear(1.6)),
+                  child: SizedBox(
+                    width: 280,
+                    height: 260,
+                    child: SearchResultList(
+                      results: results,
+                      selected: selected,
+                      onActivate: (_) async {},
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      update(() => selected = 40);
+      await tester.pumpAndSettle();
+      final row = find.byKey(ValueKey(results[40].identity));
+      expect(row.hitTestable(), findsOneWidget);
+      expect(tester.widget<BusyMarkSidebarRecordRow>(row).selected, isTrue);
+      update(() => selected = 0);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ValueKey(results.first.identity)).hitTestable(),
+        findsOneWidget,
+      );
     },
   );
   testWidgets(

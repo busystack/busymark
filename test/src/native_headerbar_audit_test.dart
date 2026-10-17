@@ -459,6 +459,7 @@ void main() {
     expect(nativeMenu, contains('cairo_curve_to('));
     expect(nativeMenu, contains('gtk_icon_info_load_symbolic('));
     expect(design, contains('shortcut: item.shortcut'));
+    expect(design, contains('gtkAccelerator: item.gtkAccelerator'));
     expect(design, contains('checkable: item.trailingCheck'));
     expect(design, contains('mutuallyExclusive: item.mutuallyExclusive'));
     expect(probe, contains('command == "assert-check"'));
@@ -476,10 +477,7 @@ void main() {
       'heading5',
       'heading6',
     ]) {
-      expect(
-        toolbar,
-        contains('shortcut: BusyMarkEditorShortcutLabels.$shortcut'),
-      );
+      expect(toolbar, contains("['editor.$shortcut']"));
     }
   });
 

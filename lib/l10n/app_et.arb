@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Kuupäev",
   "pdfTitlePageTitleRequired": "Sisesta tiitellehe pealkiri.",
   "pdfTocSectionNote": "Algab eraldi lehelt ja võib hõlmata mitut lehte.",
-  "sourceSearchZeroLengthUnsupported": "Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, $ või ainult asukohta sobitavad ettevaated).",
   "workspaceSearchIncomplete": "Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.",
   "workspaceSearchShowMore": "Kuva rohkem tulemusi",
   "workspaceSearchSkippedFiles": "Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:",
@@ -673,7 +672,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Kuva kiirklahvide loend",
+  "shortcutKeyboardShortcutsDescription": "Kohanda rakenduse kiirklahve",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -970,7 +969,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Tühjenda hiljutiste tööruumide loend",
+  "clearRecentWorkspaces": "Tühjenda hiljutiste kirjete loend",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1854,22 +1853,6 @@
   "sourceSearchNextMatch": "Järgmine vaste",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Tõstutundlik",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Terve sõna",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regulaaravaldis",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Vigane regulaaravaldis",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Suur fail: esiletõstmine ja voltimine on peatatud",
   "@sourceLargeFileFeaturesPaused": {
@@ -3668,9 +3651,6 @@
   "diagnosticMarkdownLinkEmptyText": "Lingi tekst on tühi; lisa ligipääsetav nimi, mis kirjeldab selle otstarvet.",
   "diagnosticMarkdownLinkReviewText": "Kontrolli, kas lingi tekst „{text}” kirjeldab kontekstis selle otstarvet.",
   "diagnosticMarkdownTableEmptyHeader": "Tabelipäised peavad veerge kirjeldama; täida kõik tühjad päised.",
-  "commandPalette": "Käskude palett",
-  "commandPaletteHint": "Sisesta käsk",
-  "commandPaletteEmpty": "Sobivaid käske pole",
   "tableAlignmentUnspecified": "Joondus: määramata",
   "tableAlignmentLeft": "Joondus: vasakule",
   "tableAlignmentCenter": "Joondus: keskele",
@@ -3785,14 +3765,12 @@
   "exportInvalidCss": "Vali loetav UTF-8 .css-fail kuni 256 KiB, ilma importide, ressursside URL-ide, HTML-i ning käivitatava või paojadadega CSS-ita.",
   "exportInvalidRange": "{field}: sisesta arv vahemikus {minimum} kuni {maximum}.",
   "clipboardHistory": "Kleepimiskredi ajalugu",
-  "clipboardHistorySearchHint": "Otsi lõikepuhvri ajaloost",
   "clipboardHistoryDescription": "Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.",
   "clipboardCurrent": "Praegune kleepimiskredi",
   "clipboardCurrentExternal": "Praegune kleepimiskredi teistest rakendusest",
   "clipboardDestination": "Kleepi {name}",
   "clipboardSessionOnly": "Salvestatud ainult sellele BusyMark sessioonile.",
   "clipboardNoItems": "Kleepimiskredi ajalugu on tühi.",
-  "clipboardNoMatches": "Ei leitud kleepimiskredi elemente, mis vastavad sellele otsingule.",
   "clipboardDisabled": "Kleepimiskredi ajalugu on peatatud seadetes.",
   "clipboardUnavailable": "Praegune kleepimiskredi sisu pole saadaval või toetatud.",
   "clipboardTooLarge": "See kleepimiskredi element on liiga suur, et seda säilitada.",
@@ -3809,8 +3787,6 @@
   "findLocalHistoryDescription": "Otsi kohalises ajaloos ja versioonide sisu.",
   "localHistoryNoDocuments": "Mida ei ole kohalist ajaloos.",
   "localHistoryNoRevisions": "Selle dokumendil pole kohalist ajaloos.",
-  "localHistoryNoMatches": "Ei leidunud kohalise ajalooga versioone.",
-  "localHistorySearchHint": "Otsi kohalikust ajaloost",
   "localHistorySelectedRevision": "Valitud versioon",
   "localHistoryCurrentEditor": "Praegune redaktoori sisu",
   "localHistoryCurrentDisk": "Praegune sisu faile",
@@ -4070,5 +4046,61 @@
   "wsInsertElements": "Lisa elemendid",
   "wsAdmonitionsAndQuotes": "Märkused ja tsitaadid",
   "wsSemanticText": "Semantiline tekst",
-  "wsPropertiesUnavailable": "Vaadeldav element pole saadaval. Jätkamiseks vali element."
+  "wsPropertiesUnavailable": "Vaadeldav element pole saadaval. Jätkamiseks vali element.",
+  "searchDocumentsCategory": "Dokumendid",
+  "searchTopicsCategory": "Teemad",
+  "searchCurrentDocument": "Praegune dokument",
+  "searchCurrentWorkspace": "Praegune tööruum",
+  "browseNotes": "Sirvi märkmeid",
+  "searchActionsCommand": "Otsi toiminguid",
+  "searchDocumentsCommand": "Otsi dokumente",
+  "searchTopicsCommand": "Otsi teemasid",
+  "searchRecentCommand": "Otsi hiljutisi",
+  "searchResourceUnavailable": "See ressurss pole saadaval.",
+  "notesSync": "Sünkrooni märkmed",
+  "searchInWorkspace": "Otsi tööalast",
+  "searchCategory": "Otsingu kategooria",
+  "clearHistorySearchScope": "Otsi dokumentide ajaloost",
+  "searchInDocument": "Otsi dokumendist",
+  "searchDocumentHint": "Otsi sellest dokumendist…",
+  "searchWorkspaceHint": "Otsi sellest tööruumist…",
+  "searchOutlineHint": "Otsi pealkirju…",
+  "searchHistoryHint": "Otsi kohalikust ajaloost…",
+  "searchEnterText": "Sisesta otsitav tekst",
+  "searchAccountUnavailable": "Konto pole saadaval",
+  "searchDocumentsHint": "Otsi dokumente…",
+  "searchTopicsHint": "Otsi teemasid…",
+  "searchRecentHint": "Otsi hiljutisi…",
+  "searchActionsHint": "Otsi toiminguid…",
+  "searchRequiresNotesWorkspace": "Vajab märkmete tööruumi",
+  "searchSidebarLabel": "Otsi:",
+  "searchDocumentTextCategory": "Dokumendi tekst",
+  "searchWorkspaceTextCategory": "Tööala tekst",
+  "searchHeadingsCategory": "Pealkirjad",
+  "shortcutUnassigned": "Määramata",
+  "shortcutPressKeys": "Vajuta klahvikombinatsiooni…",
+  "shortcutRecord": "Salvesta kiirklahv",
+  "shortcutRestoreAll": "Taasta kõik vaikeväärtused",
+  "shortcutRestoreAllQuestion": "Kas taastada kõigi toimingute vaikekiirklahvid? Kohandatud määrangud eemaldatakse.",
+  "shortcutSaveFailed": "Kiirklahvid on aktiivsed, kuid neid ei saanud salvestada. Proovi uuesti, et säilitada need pärast taaskäivitamist.",
+  "shortcutRetry": "Proovi salvestamist uuesti",
+  "shortcutChanged": "Määrangud on muutunud. Vaata praegused kiirklahvid üle ja proovi uuesti.",
+  "shortcutInvalid": "Seda kombinatsiooni ei saa selles kontekstis määrata.",
+  "shortcutSystemWarning": "Töölaud võib seda kombinatsiooni kasutada. BusyMark ei saa süsteemi kiirklahve alistada.",
+  "shortcutConflicts": "See kiirklahv kattub järgmiste toimingutega:",
+  "shortcutRemove": "Eemalda määrang",
+  "shortcutRestoreDefault": "Taasta vaikeväärtus",
+  "shortcutAssign": "Määra",
+  "shortcutReassign": "Määra ümber",
+  "shortcutContextApplication": "Rakendus",
+  "shortcutContextDocument": "Dokumendivaated",
+  "shortcutContextEditor": "Redaktor ja lähtekood",
+  "shortcutContextWritersideSource": "Writerside’i lähtekood",
+  "shortcutContextWorkspace": "Tööala navigeerimine",
+  "shortcutContextTree": "Külgriba puud",
+  "searchHeadingsCommand": "Otsi pealkirju",
+  "shortcutFixed": "Redaktori hallatav; pole seadistatav.",
+  "shortcutDefaultConflict": "Vaikimisi otsetee on vastuolus kohandatud määranguga.",
+  "shortcutCurrentBinding": "Praegune otsetee",
+  "shortcutProposedBinding": "Pakutud otsetee"
 }

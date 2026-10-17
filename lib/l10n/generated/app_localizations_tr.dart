@@ -583,15 +583,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get keyboardShortcuts => 'Klavye Kısayolları';
 
   @override
-  String get commandPalette => 'Komut Paleti';
-
-  @override
-  String get commandPaletteHint => 'Bir komut yazın';
-
-  @override
-  String get commandPaletteEmpty => 'Eşleşen komut yok';
-
-  @override
   String get commandUnavailableInContext =>
       'Mevcut düzenleyici bağlamında kullanılamıyor';
 
@@ -809,7 +800,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Bu klavye kısayolu referansını göster';
+      'Uygulama klavye kısayollarını özelleştir';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Sözdizimi başvurusunu aç';
@@ -1060,7 +1051,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get validateOnEdit => 'Düzenlemede doğrula';
 
   @override
-  String get clearRecentWorkspaces => 'Son çalışma alanlarını temizle';
+  String get clearRecentWorkspaces => 'Son geçmişi temizle';
 
   @override
   String get editingButtonsPosition => 'Düzenleme düğmelerinin konumu';
@@ -1841,15 +1832,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sourceSearchNextMatch => 'Sonraki eşleşme';
 
   @override
-  String get sourceSearchCaseSensitive => 'Büyük-küçük harf duyarlı';
-
-  @override
-  String get sourceSearchWholeWord => 'Tam sözcük';
-
-  @override
-  String get sourceSearchRegex => 'Düzenli ifade';
-
-  @override
   String get sourceSearchReplacement => 'Şununla değiştir:';
 
   @override
@@ -1973,13 +1955,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get saveAs => 'Farklı Kaydet';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Geçersiz düzenli ifade';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Sıfır uzunluklu düzenli ifade eşleşmeleri desteklenmez (örneğin ^, \$ veya yalnızca bir konumla eşleşen ileri bakışlar).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4351,9 +4326,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clipboardHistory => 'Kopyalama Geçmişi';
 
   @override
-  String get clipboardHistorySearchHint => 'Pano geçmişinde ara';
-
-  @override
   String get clipboardHistoryDescription =>
       'Oturuma özgü kopyalama geçmişini aç.';
 
@@ -4375,10 +4347,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Kopyalama geçmişi boş.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Bu arama ile eşleşen kopyalama öğesi bulunamadı.';
 
   @override
   String get clipboardDisabled =>
@@ -4436,13 +4404,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Bu belge Yerel Geçmiş revizyonlarına sahip değil.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.';
-
-  @override
-  String get localHistorySearchHint => 'Yerel geçmişte ara';
 
   @override
   String get localHistorySelectedRevision => 'Seçilen revizyon';
@@ -5396,4 +5357,178 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
+
+  @override
+  String get searchDocumentsCategory => 'Belgeler';
+
+  @override
+  String get searchTopicsCategory => 'Konular';
+
+  @override
+  String get searchCurrentDocument => 'Geçerli belge';
+
+  @override
+  String get searchCurrentWorkspace => 'Geçerli çalışma alanı';
+
+  @override
+  String get browseNotes => 'Notlara göz at';
+
+  @override
+  String get searchActionsCommand => 'Eylemleri ara';
+
+  @override
+  String get searchDocumentsCommand => 'Belgeleri ara';
+
+  @override
+  String get searchTopicsCommand => 'Konuları ara';
+
+  @override
+  String get searchRecentCommand => 'Son kullanılanları ara';
+
+  @override
+  String get searchResourceUnavailable => 'Bu kaynak kullanılamıyor.';
+
+  @override
+  String get notesSync => 'Notları eşitle';
+
+  @override
+  String get searchInWorkspace => 'Çalışma Alanında Ara';
+
+  @override
+  String get searchCategory => 'Arama kategorisi';
+
+  @override
+  String get clearHistorySearchScope => 'Belgelerin geçmişinde ara';
+
+  @override
+  String get searchInDocument => 'Belgede ara';
+
+  @override
+  String get searchDocumentHint => 'Bu belgede ara…';
+
+  @override
+  String get searchWorkspaceHint => 'Bu çalışma alanında ara…';
+
+  @override
+  String get searchOutlineHint => 'Başlıklarda ara…';
+
+  @override
+  String get searchHistoryHint => 'Yerel geçmişte ara…';
+
+  @override
+  String get searchEnterText => 'Aranacak metni girin';
+
+  @override
+  String get searchAccountUnavailable => 'Hesap kullanılamıyor';
+
+  @override
+  String get searchDocumentsHint => 'Belgeleri ara…';
+
+  @override
+  String get searchTopicsHint => 'Konuları ara…';
+
+  @override
+  String get searchRecentHint => 'Son kullanılanları ara…';
+
+  @override
+  String get searchActionsHint => 'Eylemleri ara…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Notlar çalışma alanı gerektirir';
+
+  @override
+  String get searchSidebarLabel => 'Ara:';
+
+  @override
+  String get searchDocumentTextCategory => 'Belge metni';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Çalışma alanı metni';
+
+  @override
+  String get searchHeadingsCategory => 'Başlıklar';
+
+  @override
+  String get shortcutUnassigned => 'Atanmamış';
+
+  @override
+  String get shortcutPressKeys => 'Bir tuş birleşimine basın…';
+
+  @override
+  String get shortcutRecord => 'Kısayol kaydet';
+
+  @override
+  String get shortcutRestoreAll => 'Tüm varsayılanları geri yükle';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Tüm eylemlerin varsayılan kısayolları geri yüklensin mi? Özel atamalar kaldırılacak.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Kısayollar etkin ancak kaydedilemedi. Yeniden başlatmadan sonra korumak için tekrar kaydedin.';
+
+  @override
+  String get shortcutRetry => 'Kaydetmeyi yeniden dene';
+
+  @override
+  String get shortcutChanged =>
+      'Atamalar değişti. Geçerli kısayolları gözden geçirip yeniden deneyin.';
+
+  @override
+  String get shortcutInvalid => 'Bu birleşim bu bağlamda atanamaz.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Masaüstünüz bu birleşimi kullanıyor olabilir. BusyMark sistem kısayollarını geçersiz kılamaz.';
+
+  @override
+  String get shortcutConflicts => 'Bu kısayol şu eylemlerle çakışıyor:';
+
+  @override
+  String get shortcutRemove => 'Atamayı kaldır';
+
+  @override
+  String get shortcutRestoreDefault => 'Varsayılanı geri yükle';
+
+  @override
+  String get shortcutAssign => 'Ata';
+
+  @override
+  String get shortcutReassign => 'Yeniden ata';
+
+  @override
+  String get shortcutContextApplication => 'Uygulama';
+
+  @override
+  String get shortcutContextDocument => 'Belge görünümleri';
+
+  @override
+  String get shortcutContextEditor => 'Düzenleyici ve kaynak';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside kaynağı';
+
+  @override
+  String get shortcutContextWorkspace => 'Çalışma alanı gezintisi';
+
+  @override
+  String get shortcutContextTree => 'Kenar çubuğu ağaçları';
+
+  @override
+  String get searchHeadingsCommand => 'Başlıklarda Ara';
+
+  @override
+  String get shortcutFixed =>
+      'Düzenleyici tarafından yönetilir; yapılandırılamaz.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Varsayılan kısayol özel bir atamayla çakışıyor.';
+
+  @override
+  String get shortcutCurrentBinding => 'Geçerli kısayol';
+
+  @override
+  String get shortcutProposedBinding => 'Önerilen kısayol';
 }

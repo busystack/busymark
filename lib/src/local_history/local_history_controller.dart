@@ -53,11 +53,6 @@ final localHistoryOpenRequestProvider =
       LocalHistoryOpenRequestController.new,
     );
 
-final localHistoryFindRequestProvider =
-    NotifierProvider<LocalHistoryOpenRequestController, int>(
-      LocalHistoryOpenRequestController.new,
-    );
-
 class LocalHistoryOpenRequestController extends Notifier<int> {
   @override
   int build() => 0;
@@ -68,29 +63,23 @@ class LocalHistoryOpenRequestController extends Notifier<int> {
 class LocalHistoryState {
   const LocalHistoryState({
     this.snapshot = const LocalHistorySnapshot(),
+    this.searchRevision = 0,
     this.loading = false,
     this.selectedDocumentId,
     this.selectedRevisionId,
     this.selectedRevision,
-    this.searchQuery = '',
-    this.searching = false,
-    this.searchMatches = const {},
-    this.documentSearchMatches = const {},
-    this.findingDocuments = false,
+    this.browsingDocuments = false,
     this.inspectingRetainedDocument = false,
     this.warning,
   });
 
   final LocalHistorySnapshot snapshot;
+  final int searchRevision;
   final bool loading;
   final String? selectedDocumentId;
   final String? selectedRevisionId;
   final LocalHistoryRevision? selectedRevision;
-  final String searchQuery;
-  final bool searching;
-  final Set<String> searchMatches;
-  final Set<String> documentSearchMatches;
-  final bool findingDocuments;
+  final bool browsingDocuments;
   final bool inspectingRetainedDocument;
   final LocalHistoryWarning? warning;
 
@@ -103,24 +92,19 @@ class LocalHistoryState {
       ? const []
       : snapshot.revisionsFor(selectedDocumentId!);
 
-  bool revisionVisible(LocalHistoryRevisionSummary revision) =>
-      searchQuery.isEmpty || searchMatches.contains(revision.id);
-
   LocalHistoryState copyWith({
     LocalHistorySnapshot? snapshot,
+    int? searchRevision,
     bool? loading,
     Object? selectedDocumentId = _unset,
     Object? selectedRevisionId = _unset,
     Object? selectedRevision = _unset,
-    String? searchQuery,
-    bool? searching,
-    Set<String>? searchMatches,
-    Set<String>? documentSearchMatches,
-    bool? findingDocuments,
+    bool? browsingDocuments,
     bool? inspectingRetainedDocument,
     Object? warning = _unset,
   }) => LocalHistoryState(
     snapshot: snapshot ?? this.snapshot,
+    searchRevision: searchRevision ?? this.searchRevision,
     loading: loading ?? this.loading,
     selectedDocumentId: identical(selectedDocumentId, _unset)
         ? this.selectedDocumentId
@@ -131,11 +115,7 @@ class LocalHistoryState {
     selectedRevision: identical(selectedRevision, _unset)
         ? this.selectedRevision
         : selectedRevision as LocalHistoryRevision?,
-    searchQuery: searchQuery ?? this.searchQuery,
-    searching: searching ?? this.searching,
-    searchMatches: searchMatches ?? this.searchMatches,
-    documentSearchMatches: documentSearchMatches ?? this.documentSearchMatches,
-    findingDocuments: findingDocuments ?? this.findingDocuments,
+    browsingDocuments: browsingDocuments ?? this.browsingDocuments,
     inspectingRetainedDocument:
         inspectingRetainedDocument ?? this.inspectingRetainedDocument,
     warning: identical(warning, _unset)
@@ -418,7 +398,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   var _historyGeneration = 0;
   var _snapshotGeneration = 0;
   var _loadGeneration = 0;
-  var _searchGeneration = 0;
   var _scopeGeneration = 0;
   var _pathOperationSerial = 0;
   Future<bool> Function()? _persistDurableState;
@@ -3840,17 +3819,12 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final generation = ++_scopeGeneration;
     _normalBrowsingScope = LocalHistoryBufferSnapshot.fromBuffer(buffer);
     _loadGeneration++;
-    _searchGeneration++;
     state = state.copyWith(
       loading: true,
       selectedDocumentId: null,
       selectedRevisionId: null,
       selectedRevision: null,
-      searchQuery: '',
-      searching: false,
-      searchMatches: const {},
-      documentSearchMatches: const {},
-      findingDocuments: false,
+      browsingDocuments: false,
       inspectingRetainedDocument: false,
     );
     _showCaptureFailure();
@@ -3874,7 +3848,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       } else {
         state = state.copyWith(
           loading: false,
-          findingDocuments: false,
+          browsingDocuments: false,
           inspectingRetainedDocument: false,
         );
       }
@@ -3897,17 +3871,12 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     _scopeGeneration++;
     _normalBrowsingScope = null;
     _loadGeneration++;
-    _searchGeneration++;
     state = state.copyWith(
       loading: false,
       selectedDocumentId: null,
       selectedRevisionId: null,
       selectedRevision: null,
-      searchQuery: '',
-      searching: false,
-      searchMatches: const {},
-      documentSearchMatches: const {},
-      findingDocuments: false,
+      browsingDocuments: false,
       inspectingRetainedDocument: false,
     );
     _showCaptureFailure();
@@ -3928,39 +3897,29 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       return;
     }
     _loadGeneration++;
-    _searchGeneration++;
     state = state.copyWith(
       loading: false,
       selectedDocumentId: documentId,
       selectedRevisionId: null,
       selectedRevision: null,
-      searchQuery: '',
-      searching: false,
-      searchMatches: const {},
-      documentSearchMatches: const {},
-      findingDocuments: false,
+      browsingDocuments: false,
       inspectingRetainedDocument: inspectingRetainedDocument,
     );
     _showCaptureFailure();
   }
 
-  /// Opens the store-wide discovery surface used by Find in Local History.
+  /// Browses retained documents without filtering the revision timeline.
   /// No current editor is implied: closed, renamed, untitled, and deleted
   /// documents remain first-class results.
-  void beginDocumentSearch() {
+  void browseDocuments() {
     _scopeGeneration++;
     _loadGeneration++;
-    _searchGeneration++;
     state = state.copyWith(
       loading: false,
       selectedDocumentId: null,
       selectedRevisionId: null,
       selectedRevision: null,
-      searchQuery: '',
-      searching: false,
-      searchMatches: const {},
-      documentSearchMatches: const {},
-      findingDocuments: true,
+      browsingDocuments: true,
       inspectingRetainedDocument: false,
     );
     _showCaptureFailure();
@@ -3990,7 +3949,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     if (document != null) selectDocument(document.id);
   }
 
-  Future<void> selectRevision(String revisionId) async {
+  Future<void> selectRevision(
+    String revisionId, {
+    bool Function()? acceptSelection,
+  }) async {
+    if (acceptSelection?.call() == false) return;
     final documentId = state.selectedDocumentId;
     final summary = state.snapshot.revisions
         .where((revision) => revision.id == revisionId)
@@ -4011,6 +3974,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           (revision != null && revision.summary.documentId != documentId)) {
         return;
       }
+      if (acceptSelection?.call() == false) {
+        state = state.copyWith(
+          loading: false,
+          selectedRevisionId: null,
+          selectedRevision: null,
+        );
+        return;
+      }
       state = state.copyWith(
         selectedRevision: revision,
         loading: false,
@@ -4023,6 +3994,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           generation != _loadGeneration ||
           state.selectedDocumentId != documentId ||
           state.selectedRevisionId != revisionId) {
+        return;
+      }
+      if (acceptSelection?.call() == false) {
+        state = state.copyWith(
+          loading: false,
+          selectedRevisionId: null,
+          selectedRevision: null,
+        );
         return;
       }
       state = state.copyWith(
@@ -4113,11 +4092,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     return false;
   }
 
-  Future<void> search(String query) async {
-    await _runSearch(query, clearMatches: true);
-  }
-
   Future<void> clearDocument(String documentId) async {
+    _invalidateFindRequests();
     final durableBeforeClear = _durableStateFingerprint();
     final document = state.snapshot.documents
         .where((candidate) => candidate.id == documentId)
@@ -4266,7 +4242,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
     _checkpointTimers.remove(_pathRemapOwner)?.cancel();
     _loadGeneration++;
-    _searchGeneration++;
     _documentIdsByBuffer.removeWhere((_, value) => value == documentId);
     final retiredPromotions = _pendingUntitledPromotions.values
         .where((promotion) => promotion.documentId == documentId)
@@ -4387,6 +4362,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   }
 
   Future<void> clearAll() async {
+    _invalidateFindRequests();
     final durableBeforeClear = _durableStateFingerprint();
     final affectedBuffers = <String>{
       ..._documentIdsByBuffer.keys,
@@ -4394,7 +4370,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     };
     _historyGeneration++;
     _loadGeneration++;
-    _searchGeneration++;
     _cancelCheckpoints(clearTransitions: false);
     _captureFailures.clear();
     _documentIdsByBuffer.clear();
@@ -5966,7 +5941,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     _clearEpochLoaded = true;
     _storeWarning = warning;
     _snapshotGeneration++;
-    _searchGeneration++;
     if (capturedBufferId != null &&
         _normalBrowsingScope?.bufferId == capturedBufferId &&
         capturedSnapshot != null &&
@@ -5975,7 +5949,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
 
     var selectedDocumentId = state.selectedDocumentId;
-    if (!state.findingDocuments && !state.inspectingRetainedDocument) {
+    if (!state.browsingDocuments && !state.inspectingRetainedDocument) {
       final scope = _normalBrowsingScope;
       if (scope != null) {
         selectedDocumentId = _documentIdsByBuffer[scope.bufferId];
@@ -6040,106 +6014,88 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       selectedRevision = null;
     }
 
-    final query = state.searchQuery;
     state = state.copyWith(
       snapshot: snapshot,
+      searchRevision: state.searchRevision + 1,
       loading: false,
       selectedDocumentId: selectedDocumentId,
       selectedRevisionId: selectedRevisionId,
       selectedRevision: selectedRevision,
       warning: effectiveWarning,
     );
-    if (query.isNotEmpty) {
-      await _runSearch(query, clearMatches: false);
-    } else {
-      final revisionIds = snapshot.revisions
-          .map((revision) => revision.id)
-          .toSet();
-      final documentIds = snapshot.documents
-          .map((document) => document.id)
-          .toSet();
-      state = state.copyWith(
-        searchMatches: state.searchMatches.intersection(revisionIds),
-        documentSearchMatches: state.documentSearchMatches.intersection(
-          documentIds,
-        ),
-      );
-    }
   }
 
-  Future<void> _runSearch(String query, {required bool clearMatches}) async {
-    final generation = ++_searchGeneration;
-    final snapshotGeneration = _snapshotGeneration;
-    final documentId = state.selectedDocumentId;
-    final findingDocuments = state.findingDocuments;
-    state = state.copyWith(
-      searchQuery: query,
-      searching: query.isNotEmpty,
-      searchMatches: clearMatches ? const {} : state.searchMatches,
-      documentSearchMatches: clearMatches
-          ? const {}
-          : state.documentSearchMatches,
-    );
-    if (query.isEmpty) {
-      state = state.copyWith(
-        searching: false,
-        searchMatches: const {},
-        documentSearchMatches: const {},
-      );
-      return;
-    }
+  void _invalidateFindRequests() {
+    _snapshotGeneration++;
+    state = state.copyWith(searchRevision: state.searchRevision + 1);
+  }
+
+  /// Searches a retained snapshot without binding an editor, capturing a
+  /// revision, selecting a timeline or replacing an existing comparison.
+  Future<LocalHistorySearchPage?> findRetained({
+    required String query,
+    String? documentId,
+    int maximumResults = 80,
+    bool Function()? isCancelled,
+    void Function(LocalHistorySearchPage page)? onProgress,
+  }) async {
     final snapshot = state.snapshot;
-    final summaries = findingDocuments
-        ? snapshot.revisions
-        : documentId == null
-        ? const <LocalHistoryRevisionSummary>[]
-        : snapshot.revisionsFor(documentId);
-    final matches = <String>{};
-    final documentMatches = <String>{};
-    final needle = query.toLowerCase();
+    final version = _snapshotGeneration;
     bool current() =>
         ref.mounted &&
-        generation == _searchGeneration &&
-        snapshotGeneration == _snapshotGeneration &&
-        state.searchQuery == query &&
-        state.selectedDocumentId == documentId &&
-        state.findingDocuments == findingDocuments;
-    try {
-      if (findingDocuments) {
-        for (final document in snapshot.documents) {
-          if (document.displayName.toLowerCase().contains(needle) ||
-              (document.currentPath?.toLowerCase().contains(needle) ?? false) ||
-              document.historicalPaths.any(
-                (path) => path.toLowerCase().contains(needle),
-              )) {
-            documentMatches.add(document.id);
-          }
+        version == _snapshotGeneration &&
+        !(isCancelled?.call() ?? false);
+    final documents = {
+      for (final document in snapshot.documents)
+        if (documentId == null || document.id == documentId)
+          document.id: document,
+    };
+    final matches = <LocalHistorySearchMatch>[];
+    final needle = query.toLowerCase();
+    LocalHistorySearchPage page({bool truncated = false}) =>
+        LocalHistorySearchPage(
+          List.unmodifiable(matches.take(maximumResults)),
+          truncated: truncated,
+        );
+    final orderedDocuments = documents.values.toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    if (documentId == null) {
+      for (final document in orderedDocuments) {
+        if (!current()) return null;
+        if (document.displayName.toLowerCase().contains(needle) ||
+            (document.currentPath?.toLowerCase().contains(needle) ?? false) ||
+            document.historicalPaths.any(
+              (path) => path.toLowerCase().contains(needle),
+            )) {
+          matches.add(LocalHistoryDocumentMatch(document));
+          if (matches.length > maximumResults) return page(truncated: true);
         }
       }
-      for (final summary in summaries) {
-        final revision = await _store.readRevision(summary.id);
-        if (!current()) return;
-        if (revision?.source.toLowerCase().contains(needle) == true) {
-          matches.add(summary.id);
-          documentMatches.add(summary.documentId);
-        }
-      }
-      if (!current()) return;
-      state = state.copyWith(
-        searching: false,
-        searchMatches: matches,
-        documentSearchMatches: documentMatches,
-      );
-    } on Object catch (error) {
-      if (!current()) return;
-      state = state.copyWith(
-        searching: false,
-        warning: LocalHistoryWarning(
-          LocalHistoryWarningKind.revisionRead,
-          detail: error.toString(),
-        ),
-      );
+      if (matches.isNotEmpty) onProgress?.call(page());
+      if (needle.isEmpty) return current() ? page() : null;
     }
+    final summaries =
+        snapshot.revisions
+            .where((r) => documents.containsKey(r.documentId))
+            .toList()
+          ..sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
+    for (final summary in summaries) {
+      if (!current()) return null;
+      // Empty scoped queries can use summaries without reading any bodies.
+      final revision = needle.isEmpty
+          ? null
+          : await _store.readRevision(summary.id);
+      if (!current()) return null;
+      if (needle.isEmpty ||
+          revision?.source.toLowerCase().contains(needle) == true) {
+        matches.add(
+          LocalHistoryRevisionMatch(documents[summary.documentId]!, summary),
+        );
+        if (matches.length > maximumResults) return page(truncated: true);
+        onProgress?.call(page());
+      }
+    }
+    return current() ? page() : null;
   }
 
   void _setWarning(LocalHistoryWarningKind kind, [String? detail]) {

@@ -3999,8 +3999,8 @@ void main() {}
     await tester.pumpWidget(
       Shortcuts(
         shortcuts: <ShortcutActivator, Intent>{
-          BusyMarkAppShortcutActivators.nextTab: const _TestTabIntent(),
-          BusyMarkAppShortcutActivators.previousTab: const _TestTabIntent(),
+          BusyMarkAppShortcuts.nextTab.activator: const _TestTabIntent(),
+          BusyMarkAppShortcuts.previousTab.activator: const _TestTabIntent(),
         },
         child: Actions(
           actions: <Type, Action<Intent>>{

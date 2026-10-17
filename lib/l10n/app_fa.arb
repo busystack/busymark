@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "تاریخ",
   "pdfTitlePageTitleRequired": "عنوانی برای صفحهٔ عنوان وارد کنید.",
   "pdfTocSectionNote": "از صفحه‌ای جداگانه شروع می‌شود و ممکن است چند صفحه ادامه یابد.",
-  "sourceSearchZeroLengthUnsupported": "تطبیق‌های با طول صفر در عبارت منظم پشتیبانی نمی‌شوند (مانند ^، $ یا نگاه‌به‌جلو که فقط با یک موقعیت تطبیق دارد).",
   "workspaceSearchIncomplete": "فقط بخشی از نتایج نمایش داده می‌شود. نتایج بیشتری نمایش دهید یا جستجو را محدود کنید.",
   "workspaceSearchShowMore": "نمایش نتایج بیشتر",
   "workspaceSearchSkippedFiles": "جستجو کامل نیست. حجم این فایل‌ها بیش از 1 MiB است یا خواندن آن‌ها ممکن نبود:",
@@ -585,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "نمایش مرجع میانبرهای صفحه‌کلید",
+  "shortcutKeyboardShortcutsDescription": "سفارشی‌سازی میان‌برهای صفحه‌کلید برنامه",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -882,7 +881,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "پاک کردن فضاهای کاری اخیر",
+  "clearRecentWorkspaces": "پاک کردن تاریخچهٔ اخیر",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1568,22 +1567,6 @@
   "sourceSearchNextMatch": "تطابق بعدی",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "حساس به بزرگی و کوچکی حروف",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "تمام کلمه",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "عبارت منظم",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "عبارت منظم نامعتبر است",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند",
   "@sourceLargeFileFeaturesPaused": {
@@ -3250,9 +3233,6 @@
   "diagnosticMarkdownLinkEmptyText": "متن پیوند خالی است؛ نام دسترس‌پذیری وارد کنید که هدف آن را توضیح دهد.",
   "diagnosticMarkdownLinkReviewText": "بررسی کنید که آیا متن پیوند «⁨{text}⁩» هدف آن را در زمینه توضیح می‌دهد.",
   "diagnosticMarkdownTableEmptyHeader": "سرستون‌های جدول باید ستون‌های خود را مشخص کنند؛ هر سرستون خالی را تکمیل کنید.",
-  "commandPalette": "پالت فرمان",
-  "commandPaletteHint": "یک فرمان وارد کنید",
-  "commandPaletteEmpty": "هیچ فرمان منطبقی وجود ندارد",
   "tableAlignmentUnspecified": "تراز: مشخص‌نشده",
   "tableAlignmentLeft": "تراز: چپ",
   "tableAlignmentCenter": "تراز: وسط",
@@ -3367,14 +3347,12 @@
   "exportInvalidCss": "یک فایل .css خوانا با UTF-8 تا ۲۵۶ KiB انتخاب کنید، بدون واردسازی، نشانی منابع، HTML یا CSS اجرایی یا دارای نویسهٔ گریز.",
   "exportInvalidRange": "{field}: عددی بین {minimum} و {maximum} وارد کنید.",
   "clipboardHistory": "تاریخچه کپی و پیست",
-  "clipboardHistorySearchHint": "جستجو در تاریخچه کلیپ‌بورد",
   "clipboardHistoryDescription": "باز کردن تاریخچه کپی و پیست مخصوص جلسه.",
   "clipboardCurrent": "کپی و پیست فعلی",
   "clipboardCurrentExternal": "کپی و پیست از برنامه دیگر",
   "clipboardDestination": "کپی و پیست در {name}",
   "clipboardSessionOnly": "فقط برای این جلسه BusyMark ذخیره می شود.",
   "clipboardNoItems": "تاریخچه کپی و پیست خالی است.",
-  "clipboardNoMatches": "هیچ آیتم کپی و پیستی با این جستجو مطابقت ندارد.",
   "clipboardDisabled": "مجموعه تاریخچه کپی و پیست در تنظیمات غیرفعال است.",
   "clipboardUnavailable": "محتوای کپی و پیست فعلی در دسترس نیست یا پشتیبانی نمی شود.",
   "clipboardTooLarge": "این آیتم کپی شده خیلی بزرگ است و نمی‌توان آن را نگه داشت.",
@@ -3391,8 +3369,6 @@
   "findLocalHistoryDescription": "اسناد و محتوای نسخه‌های تاریخ محلی را جستجو کنید.",
   "localHistoryNoDocuments": "هنوز هیچ سند دارای تاریخ محلی نیست.",
   "localHistoryNoRevisions": "این سند دارای هیچ نسخه‌ای از تاریخ محلی نیست.",
-  "localHistoryNoMatches": "هیچ نسخه‌ای از تاریخ محلی با این جستجو مطابقت ندارد.",
-  "localHistorySearchHint": "جستجو در تاریخچه محلی",
   "localHistorySelectedRevision": "نسخه انتخاب شده",
   "localHistoryCurrentEditor": "محتوای فعلی ویرایشگر",
   "localHistoryCurrentDisk": "محتوای فعلی روی دیسک",
@@ -3652,5 +3628,61 @@
   "wsInsertElements": "درج عناصر",
   "wsAdmonitionsAndQuotes": "یادآوری‌ها و نقل‌قول‌ها",
   "wsSemanticText": "متن معنایی",
-  "wsPropertiesUnavailable": "عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید."
+  "wsPropertiesUnavailable": "عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.",
+  "searchDocumentsCategory": "سندها",
+  "searchTopicsCategory": "موضوع‌ها",
+  "searchCurrentDocument": "سند کنونی",
+  "searchCurrentWorkspace": "فضای کاری کنونی",
+  "browseNotes": "مرور یادداشت‌ها",
+  "searchActionsCommand": "جستجوی کنش‌ها",
+  "searchDocumentsCommand": "جستجوی سندها",
+  "searchTopicsCommand": "جستجوی موضوع‌ها",
+  "searchRecentCommand": "جستجوی موارد اخیر",
+  "searchResourceUnavailable": "این منبع در دسترس نیست.",
+  "notesSync": "همگام‌سازی یادداشت‌ها",
+  "searchInWorkspace": "جستجو در فضای کاری",
+  "searchCategory": "دستهٔ جستجو",
+  "clearHistorySearchScope": "جستجو در تاریخچهٔ سندها",
+  "searchInDocument": "جستجو در سند",
+  "searchDocumentHint": "جستجو در این سند…",
+  "searchWorkspaceHint": "جستجو در این فضای کاری…",
+  "searchOutlineHint": "جستجوی عنوان‌ها…",
+  "searchHistoryHint": "جستجو در تاریخچهٔ محلی…",
+  "searchEnterText": "متن جستجو را وارد کنید",
+  "searchAccountUnavailable": "حساب در دسترس نیست",
+  "searchDocumentsHint": "جستجوی سندها…",
+  "searchTopicsHint": "جستجوی موضوع‌ها…",
+  "searchRecentHint": "جستجوی موارد اخیر…",
+  "searchActionsHint": "جستجوی کنش‌ها…",
+  "searchRequiresNotesWorkspace": "به فضای کاری یادداشت‌ها نیاز دارد",
+  "searchSidebarLabel": "جستجو:",
+  "searchDocumentTextCategory": "متن سند",
+  "searchWorkspaceTextCategory": "متن فضای کاری",
+  "searchHeadingsCategory": "عنوان‌ها",
+  "shortcutUnassigned": "تخصیص داده نشده",
+  "shortcutPressKeys": "یک ترکیب کلید را فشار دهید…",
+  "shortcutRecord": "ثبت میان‌بر",
+  "shortcutRestoreAll": "بازیابی همهٔ پیش‌فرض‌ها",
+  "shortcutRestoreAllQuestion": "میان‌برهای پیش‌فرض همهٔ کنش‌ها بازیابی شوند؟ تخصیص‌های سفارشی حذف می‌شوند.",
+  "shortcutSaveFailed": "میان‌برها فعال‌اند اما ذخیره نشدند. برای حفظ آن‌ها پس از راه‌اندازی مجدد، دوباره ذخیره کنید.",
+  "shortcutRetry": "تلاش دوباره برای ذخیره",
+  "shortcutChanged": "تخصیص‌ها تغییر کرده‌اند. میان‌برهای فعلی را بررسی و دوباره تلاش کنید.",
+  "shortcutInvalid": "این ترکیب را نمی‌توان در این زمینه تخصیص داد.",
+  "shortcutSystemWarning": "ممکن است میزکار از این ترکیب استفاده کند. BusyMark نمی‌تواند میان‌برهای سیستم را بازنویسی کند.",
+  "shortcutConflicts": "این میان‌بر با کنش‌های زیر تداخل دارد:",
+  "shortcutRemove": "حذف تخصیص",
+  "shortcutRestoreDefault": "بازیابی پیش‌فرض",
+  "shortcutAssign": "تخصیص",
+  "shortcutReassign": "تخصیص مجدد",
+  "shortcutContextApplication": "برنامه",
+  "shortcutContextDocument": "نماهای سند",
+  "shortcutContextEditor": "ویرایشگر و منبع",
+  "shortcutContextWritersideSource": "منبع Writerside",
+  "shortcutContextWorkspace": "پیمایش فضای کاری",
+  "shortcutContextTree": "درخت‌های نوار کناری",
+  "searchHeadingsCommand": "جستجوی عنوان‌ها",
+  "shortcutFixed": "توسط ویرایشگر مدیریت می‌شود؛ قابل تنظیم نیست.",
+  "shortcutDefaultConflict": "میان‌بر پیش‌فرض با تخصیص سفارشی تداخل دارد.",
+  "shortcutCurrentBinding": "میان‌بر فعلی",
+  "shortcutProposedBinding": "میان‌بر پیشنهادی"
 }

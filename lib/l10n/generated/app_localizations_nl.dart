@@ -590,15 +590,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get keyboardShortcuts => 'Sneltoetsen op het toetsenbord';
 
   @override
-  String get commandPalette => 'Commandopalet';
-
-  @override
-  String get commandPaletteHint => 'Typ een opdracht';
-
-  @override
-  String get commandPaletteEmpty => 'Geen overeenkomende opdrachten';
-
-  @override
   String get commandUnavailableInContext =>
       'Niet beschikbaar in de huidige editorcontext';
 
@@ -816,7 +807,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Toon deze sneltoetsreferentie';
+      'Sneltoetsen van de toepassing aanpassen';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Syntaxisreferentie openen';
@@ -1064,7 +1055,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get validateOnEdit => 'Valideren bij bewerken';
 
   @override
-  String get clearRecentWorkspaces => 'Wis recente werkruimten';
+  String get clearRecentWorkspaces => 'Recente geschiedenis wissen';
 
   @override
   String get editingButtonsPosition => 'Positie van knoppen bewerken';
@@ -1851,15 +1842,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sourceSearchNextMatch => 'Volgende overeenkomst';
 
   @override
-  String get sourceSearchCaseSensitive => 'Hoofdlettergevoelig';
-
-  @override
-  String get sourceSearchWholeWord => 'Heel woord';
-
-  @override
-  String get sourceSearchRegex => 'Regex';
-
-  @override
   String get sourceSearchReplacement => 'Vervangen door';
 
   @override
@@ -1991,13 +1973,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get saveAs => 'Opslaan als';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Ongeldige reguliere expressie';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, \$ of lookaheads die alleen een positie vinden).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4394,9 +4369,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get clipboardHistory => 'Historie van de klembord';
 
   @override
-  String get clipboardHistorySearchHint => 'Klembordgeschiedenis doorzoeken';
-
-  @override
   String get clipboardHistoryDescription =>
       'Open de klembordgeschiedenis per sessie.';
 
@@ -4418,10 +4390,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'De klembordgeschiedenis is leeg.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Geen klemborditems komen overeen met deze zoekopdracht.';
 
   @override
   String get clipboardDisabled =>
@@ -4479,13 +4447,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dit document heeft geen revisies van de Lokale Geschiedenis.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.';
-
-  @override
-  String get localHistorySearchHint => 'Lokale geschiedenis doorzoeken';
 
   @override
   String get localHistorySelectedRevision => 'Geselecteerde revisie';
@@ -5448,4 +5409,178 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.';
+
+  @override
+  String get searchDocumentsCategory => 'Documenten';
+
+  @override
+  String get searchTopicsCategory => 'Onderwerpen';
+
+  @override
+  String get searchCurrentDocument => 'Huidig document';
+
+  @override
+  String get searchCurrentWorkspace => 'Huidige werkruimte';
+
+  @override
+  String get browseNotes => 'Notities bekijken';
+
+  @override
+  String get searchActionsCommand => 'Acties zoeken';
+
+  @override
+  String get searchDocumentsCommand => 'Documenten zoeken';
+
+  @override
+  String get searchTopicsCommand => 'Onderwerpen zoeken';
+
+  @override
+  String get searchRecentCommand => 'Recente items zoeken';
+
+  @override
+  String get searchResourceUnavailable => 'Deze bron is niet beschikbaar.';
+
+  @override
+  String get notesSync => 'Notities synchroniseren';
+
+  @override
+  String get searchInWorkspace => 'Zoeken in werkruimte';
+
+  @override
+  String get searchCategory => 'Zoekcategorie';
+
+  @override
+  String get clearHistorySearchScope => 'Zoeken in documentgeschiedenis';
+
+  @override
+  String get searchInDocument => 'Zoeken in document';
+
+  @override
+  String get searchDocumentHint => 'Dit document doorzoeken…';
+
+  @override
+  String get searchWorkspaceHint => 'Deze werkruimte doorzoeken…';
+
+  @override
+  String get searchOutlineHint => 'Koppen zoeken…';
+
+  @override
+  String get searchHistoryHint => 'Lokale geschiedenis doorzoeken…';
+
+  @override
+  String get searchEnterText => 'Voer tekst in om te zoeken';
+
+  @override
+  String get searchAccountUnavailable => 'Account niet beschikbaar';
+
+  @override
+  String get searchDocumentsHint => 'Documenten zoeken…';
+
+  @override
+  String get searchTopicsHint => 'Onderwerpen zoeken…';
+
+  @override
+  String get searchRecentHint => 'Recente items zoeken…';
+
+  @override
+  String get searchActionsHint => 'Acties zoeken…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Vereist een notitiewerkruimte';
+
+  @override
+  String get searchSidebarLabel => 'Zoeken:';
+
+  @override
+  String get searchDocumentTextCategory => 'Documenttekst';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Werkruimtetekst';
+
+  @override
+  String get searchHeadingsCategory => 'Koppen';
+
+  @override
+  String get shortcutUnassigned => 'Niet toegewezen';
+
+  @override
+  String get shortcutPressKeys => 'Druk op een toetscombinatie…';
+
+  @override
+  String get shortcutRecord => 'Sneltoets opnemen';
+
+  @override
+  String get shortcutRestoreAll => 'Alle standaardwaarden herstellen';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Standaardsneltoetsen van alle acties herstellen? Aangepaste toewijzingen worden verwijderd.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Sneltoetsen zijn actief, maar konden niet worden opgeslagen. Probeer opnieuw om ze na herstart te behouden.';
+
+  @override
+  String get shortcutRetry => 'Opslaan opnieuw proberen';
+
+  @override
+  String get shortcutChanged =>
+      'Toewijzingen zijn gewijzigd. Controleer de huidige sneltoetsen en probeer opnieuw.';
+
+  @override
+  String get shortcutInvalid =>
+      'Deze combinatie kan in deze context niet worden toegewezen.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Deze combinatie wordt mogelijk door uw bureaublad gebruikt. BusyMark kan systeemsneltoetsen niet overschrijven.';
+
+  @override
+  String get shortcutConflicts => 'Deze sneltoets overlapt met deze acties:';
+
+  @override
+  String get shortcutRemove => 'Toewijzing verwijderen';
+
+  @override
+  String get shortcutRestoreDefault => 'Standaard herstellen';
+
+  @override
+  String get shortcutAssign => 'Toewijzen';
+
+  @override
+  String get shortcutReassign => 'Opnieuw toewijzen';
+
+  @override
+  String get shortcutContextApplication => 'Toepassing';
+
+  @override
+  String get shortcutContextDocument => 'Documentweergaven';
+
+  @override
+  String get shortcutContextEditor => 'Editor en bron';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside-bron';
+
+  @override
+  String get shortcutContextWorkspace => 'Werkruimtenavigatie';
+
+  @override
+  String get shortcutContextTree => 'Zijbalkbomen';
+
+  @override
+  String get searchHeadingsCommand => 'Koppen zoeken';
+
+  @override
+  String get shortcutFixed => 'Beheerd door de editor; niet instelbaar.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'De standaardsneltoets conflicteert met een aangepaste toewijzing.';
+
+  @override
+  String get shortcutCurrentBinding => 'Huidige sneltoets';
+
+  @override
+  String get shortcutProposedBinding => 'Voorgestelde sneltoets';
 }

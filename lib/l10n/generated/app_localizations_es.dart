@@ -587,15 +587,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get keyboardShortcuts => 'Atajos de teclado';
 
   @override
-  String get commandPalette => 'Paleta de comandos';
-
-  @override
-  String get commandPaletteHint => 'Escribe un comando';
-
-  @override
-  String get commandPaletteEmpty => 'No hay comandos coincidentes';
-
-  @override
   String get commandUnavailableInContext =>
       'Este comando no está disponible en el contexto actual.';
 
@@ -814,7 +805,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Mostrar esta referencia de atajos de teclado';
+      'Personalizar los atajos de teclado de la aplicación';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -1073,7 +1064,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get validateOnEdit => 'Validar al editar';
 
   @override
-  String get clearRecentWorkspaces => 'Borrar espacios de trabajo recientes';
+  String get clearRecentWorkspaces => 'Borrar el historial reciente';
 
   @override
   String get editingButtonsPosition => 'Posición de los botones de edición';
@@ -1862,15 +1853,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sourceSearchNextMatch => 'Coincidencia siguiente';
 
   @override
-  String get sourceSearchCaseSensitive => 'Distinguir mayúsculas y minúsculas';
-
-  @override
-  String get sourceSearchWholeWord => 'Palabra completa';
-
-  @override
-  String get sourceSearchRegex => 'Expresión regular';
-
-  @override
   String get sourceSearchReplacement => 'Reemplazar por';
 
   @override
@@ -1996,13 +1978,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get saveAs => 'Guardar como';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Expresión regular no válida';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'No se admiten coincidencias de longitud cero (por ejemplo, ^, \$ o anticipaciones que solo coinciden con una posición).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4390,10 +4365,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clipboardHistory => 'Historial de la Copia';
 
   @override
-  String get clipboardHistorySearchHint =>
-      'Buscar en el historial del portapapeles';
-
-  @override
   String get clipboardHistoryDescription =>
       'Abrir el historial de la copia local de la sesión.';
 
@@ -4414,10 +4385,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'El historial de la copia está vacío.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ningún elemento de la copia coincide con esta búsqueda.';
 
   @override
   String get clipboardDisabled =>
@@ -4475,13 +4442,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Este documento no tiene revisiones en el Historial Local.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Ninguna revisión del Historial Local coincide con esta búsqueda.';
-
-  @override
-  String get localHistorySearchHint => 'Buscar en el historial local';
 
   @override
   String get localHistorySelectedRevision => 'Revisión seleccionada';
@@ -5448,4 +5408,181 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'El elemento inspeccionado no está disponible. Inspeccione otro elemento para continuar.';
+
+  @override
+  String get searchDocumentsCategory => 'Documentos';
+
+  @override
+  String get searchTopicsCategory => 'Temas';
+
+  @override
+  String get searchCurrentDocument => 'Documento actual';
+
+  @override
+  String get searchCurrentWorkspace => 'Espacio de trabajo actual';
+
+  @override
+  String get browseNotes => 'Explorar notas';
+
+  @override
+  String get searchActionsCommand => 'Buscar acciones';
+
+  @override
+  String get searchDocumentsCommand => 'Buscar documentos';
+
+  @override
+  String get searchTopicsCommand => 'Buscar temas';
+
+  @override
+  String get searchRecentCommand => 'Buscar recientes';
+
+  @override
+  String get searchResourceUnavailable => 'Este recurso no está disponible.';
+
+  @override
+  String get notesSync => 'Sincronizar notas';
+
+  @override
+  String get searchInWorkspace => 'Buscar en espacio de trabajo';
+
+  @override
+  String get searchCategory => 'Categoría de búsqueda';
+
+  @override
+  String get clearHistorySearchScope => 'Buscar en el historial de documentos';
+
+  @override
+  String get searchInDocument => 'Buscar en el documento';
+
+  @override
+  String get searchDocumentHint => 'Buscar en este documento…';
+
+  @override
+  String get searchWorkspaceHint => 'Buscar en este espacio de trabajo…';
+
+  @override
+  String get searchOutlineHint => 'Buscar encabezados…';
+
+  @override
+  String get searchHistoryHint => 'Buscar en el historial local…';
+
+  @override
+  String get searchEnterText => 'Introduce texto para buscar';
+
+  @override
+  String get searchAccountUnavailable => 'Cuenta no disponible';
+
+  @override
+  String get searchDocumentsHint => 'Buscar documentos…';
+
+  @override
+  String get searchTopicsHint => 'Buscar temas…';
+
+  @override
+  String get searchRecentHint => 'Buscar recientes…';
+
+  @override
+  String get searchActionsHint => 'Buscar acciones…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Requiere un espacio de trabajo de Notas';
+
+  @override
+  String get searchSidebarLabel => 'Buscar:';
+
+  @override
+  String get searchDocumentTextCategory => 'Texto del documento';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Texto del espacio de trabajo';
+
+  @override
+  String get searchHeadingsCategory => 'Encabezados';
+
+  @override
+  String get shortcutUnassigned => 'Sin asignar';
+
+  @override
+  String get shortcutPressKeys => 'Pulse una combinación de teclas…';
+
+  @override
+  String get shortcutRecord => 'Capturar atajo';
+
+  @override
+  String get shortcutRestoreAll =>
+      'Restaurar todos los valores predeterminados';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      '¿Restaurar los atajos predeterminados de todas las acciones? Se eliminarán las asignaciones personalizadas.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Los atajos están activos, pero no se pudieron guardar. Reintente para conservarlos tras reiniciar.';
+
+  @override
+  String get shortcutRetry => 'Reintentar guardado';
+
+  @override
+  String get shortcutChanged =>
+      'Las asignaciones cambiaron. Revise los atajos actuales y reintente.';
+
+  @override
+  String get shortcutInvalid =>
+      'Esta combinación no se puede asignar en este contexto.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'El escritorio puede usar esta combinación. BusyMark no puede sustituir atajos del sistema.';
+
+  @override
+  String get shortcutConflicts =>
+      'Este atajo entra en conflicto con estas acciones:';
+
+  @override
+  String get shortcutRemove => 'Quitar asignación';
+
+  @override
+  String get shortcutRestoreDefault => 'Restaurar valor predeterminado';
+
+  @override
+  String get shortcutAssign => 'Asignar';
+
+  @override
+  String get shortcutReassign => 'Reasignar';
+
+  @override
+  String get shortcutContextApplication => 'Aplicación';
+
+  @override
+  String get shortcutContextDocument => 'Vistas del documento';
+
+  @override
+  String get shortcutContextEditor => 'Editor y código fuente';
+
+  @override
+  String get shortcutContextWritersideSource => 'Código fuente de Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navegación del espacio de trabajo';
+
+  @override
+  String get shortcutContextTree => 'Árboles laterales';
+
+  @override
+  String get searchHeadingsCommand => 'Buscar encabezados';
+
+  @override
+  String get shortcutFixed => 'Lo gestiona el editor; no se puede configurar.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'El atajo predeterminado entra en conflicto con una asignación personalizada.';
+
+  @override
+  String get shortcutCurrentBinding => 'Atajo actual';
+
+  @override
+  String get shortcutProposedBinding => 'Atajo propuesto';
 }

@@ -95,7 +95,6 @@ void main() {
           wordWrap: true,
           searchActive: false,
           searchOptions: const SourceSearchOptions(),
-          onSearchOptionsChanged: (_) {},
           onChanged: (_, _) {},
           onTransactionalChanged: (text, _, before, after, group) {
             transactions.add((

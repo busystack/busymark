@@ -1,3 +1,5 @@
+import '../../app/command_shortcuts.dart';
+import '../../app/busymark_search_field.dart';
 import '../link_destination.dart';
 import '../wysiwyg/writerside_editing_adapter.dart';
 import '../../assets/document_media_context.dart';
@@ -83,15 +85,18 @@ class BusyMarkSourceEditor extends StatefulWidget {
     required this.editorFontSize,
     required this.wordWrap,
     required this.searchActive,
+    this.searchControlsVisible = true,
     required this.searchOptions,
-    required this.onSearchOptionsChanged,
+    this.searchSnapshot,
+    this.onNavigateSearch,
+    this.onCancelSearchNavigation,
     this.searchReplacement = '',
     this.onSearchReplacementChanged,
     required this.onChanged,
     this.onTransactionalChanged,
     this.onUndo,
     this.onRedo,
-    required this.onOpenSearch,
+    this.onOpenSearch,
     required this.onCloseSearch,
     this.onVisibleLineChanged,
     this.onAiEdit,
@@ -128,15 +133,18 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final double editorFontSize;
   final bool wordWrap;
   final bool searchActive;
+  final bool searchControlsVisible;
   final SourceSearchOptions searchOptions;
-  final ValueChanged<SourceSearchOptions> onSearchOptionsChanged;
+  final SourceSearchSnapshot? searchSnapshot;
+  final int? Function(SourceSearchNavigationRequest)? onNavigateSearch;
+  final ValueChanged<int>? onCancelSearchNavigation;
   final String searchReplacement;
   final ValueChanged<String>? onSearchReplacementChanged;
   final BusyMarkSourceChanged onChanged;
   final BusyMarkSourceTransactionalChanged? onTransactionalChanged;
   final TextEditingValue? Function()? onUndo;
   final TextEditingValue? Function()? onRedo;
-  final VoidCallback onOpenSearch;
+  final VoidCallback? onOpenSearch;
   final VoidCallback onCloseSearch;
   final ValueChanged<int?>? onVisibleLineChanged;
   final BusyMarkAiEditCallback? onAiEdit;
@@ -175,6 +183,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   late final ScrollController _horizontalScrollController;
   late UndoHistoryController _undoController;
   final _sourceEditorKey = GlobalKey();
+  final _searchPanelKey = GlobalKey();
   final _foldedRegionKeys = <String>{};
   final _searchController = SourceSearchController();
   final _searchWorker = SourceSearchWorker();
@@ -182,6 +191,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   bool _applyingSearchReplacement = false;
   ({int start, int end})? _requestedSearchRange;
   bool _searchNavigationFailed = false;
+  _SharedSearchNavigation? _pendingSharedSearchNavigation;
   final _intrinsicWidthCache = SourceIntrinsicWidthCache();
   final _lineLayoutCache = SourceLineLayoutCache();
   final _autocompleteProvider = const SourceAutocompleteProvider();
@@ -357,6 +367,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       widget.clipboardInsertionRegistry?.register(_historyInsertionTarget);
     }
     if (widget.text != oldWidget.text ||
+        widget.searchActive != oldWidget.searchActive ||
         widget.searchOptions != oldWidget.searchOptions ||
         widget.searchReplacement != oldWidget.searchReplacement) {
       _replacementWorker.cancel();
@@ -364,6 +375,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final path = widget.documentId ?? widget.filePath ?? '';
     final pathChanged = path != _lastPath;
     final languageChanged = widget.language != oldWidget.language;
+    if (pathChanged ||
+        languageChanged ||
+        widget.searchActive != oldWidget.searchActive ||
+        widget.searchOptions != oldWidget.searchOptions ||
+        (_pendingSharedSearchNavigation != null &&
+            widget.text != _pendingSharedSearchNavigation!.request.source)) {
+      _cancelSharedSearchNavigation();
+    }
     var authoritativeDocumentChanged = false;
     if (pathChanged) {
       authoritativeDocumentChanged = true;
@@ -392,6 +411,18 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _requestedSearchRange = null;
       _searchNavigationFailed = false;
       _syncSearchOptions();
+    } else if (widget.searchSnapshot?.result !=
+            oldWidget.searchSnapshot?.result ||
+        widget.searchSnapshot?.source != oldWidget.searchSnapshot?.source) {
+      _syncSearchOptions();
+    }
+    if (widget.searchSnapshot?.navigationRequest !=
+            oldWidget.searchSnapshot?.navigationRequest ||
+        widget.searchSnapshot?.appliedNavigation !=
+            oldWidget.searchSnapshot?.appliedNavigation ||
+        widget.searchSnapshot?.searching !=
+            oldWidget.searchSnapshot?.searching) {
+      _syncSearchOptions();
     }
     if (widget.wordWrap && !oldWidget.wordWrap) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -419,6 +450,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _handleControllerActivity() {
+    final pending = _pendingSharedSearchNavigation;
+    if (pending != null &&
+        (pending.request.source != _controller.fullText ||
+            pending.selection != _controller.fullSelection)) {
+      _cancelSharedSearchNavigation();
+    }
     _scheduleSessionPublication();
     if (widget.wordWrap || _horizontalCaretScheduled) {
       return;
@@ -499,6 +536,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     required int startOffset,
     required int endOffset,
   }) {
+    _cancelSharedSearchNavigation();
     _unfoldSourceRange(startOffset, endOffset);
     final start = startOffset.clamp(0, _controller.fullText.length).toInt();
     final end = endOffset.clamp(start, _controller.fullText.length).toInt();
@@ -520,6 +558,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         result.firstMatchIndex + localIndex,
       );
       _controller.setSearchResult(_searchController.result);
+      if (widget.searchSnapshot != null && widget.onNavigateSearch != null) {
+        _requestSharedSearchNavigation(
+          matchIndex: result.firstMatchIndex + localIndex,
+          reveal: false,
+        );
+      }
       setState(() {});
     } else if (start < end) {
       _scheduleSearch(
@@ -531,14 +575,35 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _searchController.setCurrentMatchIndex(null);
       _controller.setSearchResult(_searchController.result);
     }
+    final source = _controller.fullText;
+    final documentId = widget.documentId ?? widget.filePath;
+    final options = widget.searchOptions;
+    final sourceRevision = widget.searchSnapshot?.sourceRevision;
+    final sessionRevision = widget.searchSnapshot?.sessionRevision;
+    bool current() =>
+        mounted &&
+        _controller.fullText == source &&
+        (widget.documentId ?? widget.filePath) == documentId &&
+        widget.searchOptions == options &&
+        widget.searchSnapshot?.sourceRevision == sourceRevision &&
+        widget.searchSnapshot?.sessionRevision == sessionRevision &&
+        _controller.fullSelection ==
+            TextSelection(baseOffset: start, extentOffset: end);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateScrollToLine(line);
+      if (!current()) return;
+      _animateSearchToLine(line, current);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _jumpScrollToLine(line);
+        if (current()) {
+          _jumpScrollToLine(line);
+          _ensureSearchCaretVisible();
+        }
       });
       unawaited(
         Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
-          _jumpScrollToLine(line);
+          if (current()) {
+            _jumpScrollToLine(line);
+            _ensureSearchCaretVisible();
+          }
         }),
       );
     });
@@ -577,6 +642,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
+    final unmodified =
+        !keyboard.isControlPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isMetaPressed &&
+        !keyboard.isShiftPressed;
     if (_autocompleteSuggestions.isNotEmpty) {
       if (key == LogicalKeyboardKey.arrowDown) {
         _moveAutocompleteSelection(1);
@@ -586,7 +656,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         _moveAutocompleteSelection(-1);
         return KeyEventResult.handled;
       }
-      if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.tab) {
+      if (unmodified &&
+          (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.tab)) {
         _applyAutocomplete(_autocompleteSuggestions[_autocompleteSelection]);
         return KeyEventResult.handled;
       }
@@ -601,22 +672,20 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _showAutocomplete();
       return KeyEventResult.handled;
     }
-    if (widget.onSymbolAction != null) {
-      final action = key == LogicalKeyboardKey.keyB && keyboard.isControlPressed
-          ? SourceSymbolAction.declaration
-          : key == LogicalKeyboardKey.f7 && keyboard.isAltPressed
-          ? SourceSymbolAction.usages
-          : key == LogicalKeyboardKey.f6 && keyboard.isShiftPressed
-          ? SourceSymbolAction.rename
-          : null;
-      if (action != null) {
-        widget.onSymbolAction!(action, _controller.fullSelection.extentOffset);
-        return KeyEventResult.handled;
-      }
-    }
     final commands =
         BusyMarkCommandRegistryScope.read(context) ??
         BusyMarkCommandCatalog.metadata;
+    if (widget.onSymbolAction != null) {
+      for (final entry in sourceSymbolCommands.entries) {
+        if (commands.shortcutAccepts(entry.value, event, keyboard)) {
+          widget.onSymbolAction!(
+            entry.key,
+            _controller.fullSelection.extentOffset,
+          );
+          return KeyEventResult.handled;
+        }
+      }
+    }
     if (widget.filePath?.toLowerCase().endsWith('.tree') == true) {
       final up = commands.shortcutAccepts(
         BusyMarkCommandIds.treeMoveLineUp,
@@ -633,8 +702,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         return KeyEventResult.handled;
       }
     }
-    if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
-      widget.onOpenSearch();
+    if (widget.onOpenSearch != null &&
+        commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
+      widget.onOpenSearch!();
       return KeyEventResult.handled;
     }
     if (commands.shortcutAccepts(
@@ -703,7 +773,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _outdentSelection();
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.enter && !keyboard.isShiftPressed) {
+    if (key == LogicalKeyboardKey.enter && unmodified) {
       _applyFullEditingValue(SourceCommands.smartEnter(_fullEditingValue()));
       return KeyEventResult.handled;
     }
@@ -775,21 +845,72 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 key: _sourceEditorKey,
                 child: KeyedSubtree(
                   key: ValueKey(widget.documentId ?? widget.filePath),
-                  child: Shortcuts(
-                    shortcuts:
-                        (BusyMarkCommandRegistryScope.maybeOf(context) ??
-                                BusyMarkCommandCatalog.metadata)
-                            .shortcutIntents(
-                              scopes: const {BusyMarkCommandScope.editor},
-                              intentFor: BusyMarkContextCommandIntent.new,
-                            ),
+                  child: BusyMarkCommandShortcuts(
+                    isComposing: () => _controller.value.composing.isValid,
+                    shortcuts: {
+                      // Other text-editing bindings are dispatched by the
+                      // source input handler. Select All uses the existing
+                      // full-source action, including folded content.
+                      for (final activator
+                          in (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                                  BusyMarkCommandCatalog.metadata)
+                              .activators(BusyMarkCommandIds.textSelectAll))
+                        activator: const BusyMarkContextCommandIntent(
+                          BusyMarkCommandIds.textSelectAll,
+                        ),
+                      ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                              BusyMarkCommandCatalog.metadata)
+                          .blockedDefaultIntents({
+                            BusyMarkCommandScope.textEditing,
+                            BusyMarkCommandScope.editor,
+                            if (widget.onSymbolAction != null)
+                              BusyMarkCommandScope.sourceSymbol,
+                            if (widget.filePath?.toLowerCase().endsWith(
+                                  '.tree',
+                                ) ==
+                                true)
+                              BusyMarkCommandScope.tree,
+                          }),
+                      ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                              BusyMarkCommandCatalog.metadata)
+                          .shortcutIntents(
+                            scopes: {
+                              BusyMarkCommandScope.editor,
+                              if (widget.onSymbolAction != null)
+                                BusyMarkCommandScope.sourceSymbol,
+                            },
+                            intentFor: BusyMarkContextCommandIntent.new,
+                          ),
+                    },
                     child: Actions(
                       actions: {
                         BusyMarkContextCommandIntent:
                             BusyMarkContextCommandAction(
+                              captureTarget: () {
+                                final source = _controller.fullText;
+                                final selection = _controller.fullSelection;
+                                return BusyMarkContextCommandSnapshot(
+                                  () =>
+                                      mounted &&
+                                      !_hasActiveComposition &&
+                                      _controller.fullText == source &&
+                                      _controller.fullSelection == selection,
+                                );
+                              },
                               isCommandEnabled: (commandId) =>
                                   !_hasActiveComposition &&
-                                  (commandId ==
+                                  (!DocumentReadOnlyScope.of(context) ||
+                                      {
+                                        BusyMarkCommandIds.textCopy,
+                                        BusyMarkCommandIds.textSelectAll,
+                                        BusyMarkCommandIds.editorCopyPlainText,
+                                        BusyMarkCommandIds.checkSpelling,
+                                      }.contains(commandId)) &&
+                                  ((widget.onSymbolAction != null &&
+                                          sourceSymbolCommands.containsValue(
+                                            commandId,
+                                          )) ||
+                                      commandId ==
                                           BusyMarkCommandIds.checkSpelling ||
                                       commandId.startsWith('editor.') ||
                                       (widget.filePath?.toLowerCase().endsWith(
@@ -801,12 +922,53 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                             BusyMarkCommandIds.treeMoveLineDown,
                                           }.contains(commandId)) ||
                                       {
+                                        BusyMarkCommandIds.textSelectAll,
+                                        BusyMarkCommandIds.textUndo,
+                                        BusyMarkCommandIds.textRedo,
                                         BusyMarkCommandIds.textCopy,
                                         BusyMarkCommandIds.textCut,
                                         BusyMarkCommandIds.textPaste,
                                         BusyMarkCommandIds.textPastePlainText,
                                       }.contains(commandId)),
                               onCommand: (commandId) {
+                                final symbol = sourceSymbolCommands.entries
+                                    .where((e) => e.value == commandId)
+                                    .firstOrNull;
+                                if (symbol != null &&
+                                    widget.onSymbolAction != null) {
+                                  widget.onSymbolAction!(
+                                    symbol.key,
+                                    _controller.fullSelection.extentOffset,
+                                  );
+                                  return;
+                                }
+                                if (commandId ==
+                                    BusyMarkCommandIds.textSelectAll) {
+                                  _controller.fullSelection = TextSelection(
+                                    baseOffset: 0,
+                                    extentOffset: _controller.fullText.length,
+                                  );
+                                  return;
+                                }
+                                if (commandId == BusyMarkCommandIds.textUndo ||
+                                    commandId == BusyMarkCommandIds.textRedo) {
+                                  final undo =
+                                      commandId == BusyMarkCommandIds.textUndo;
+                                  final callback = undo
+                                      ? widget.onUndo
+                                      : widget.onRedo;
+                                  if (callback != null) {
+                                    final value = callback();
+                                    if (value != null) {
+                                      _applyOwnedUndoValue(value);
+                                    }
+                                  } else if (undo) {
+                                    _undoController.undo();
+                                  } else {
+                                    _undoController.redo();
+                                  }
+                                  return;
+                                }
                                 if (commandId ==
                                     BusyMarkCommandIds.checkSpelling) {
                                   widget.onCheckSpelling?.call();
@@ -940,19 +1102,28 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                         ),
                                         label: switch (action) {
                                           SourceSymbolAction.declaration =>
-                                            'Go to Declaration',
+                                            context.l10n.goToDeclaration,
                                           SourceSymbolAction.usages =>
-                                            'Find Usages',
+                                            context.l10n.findUsages,
                                           SourceSymbolAction.rename =>
                                             context.l10n.rename,
                                         },
-                                        shortcut: switch (action) {
-                                          SourceSymbolAction.declaration =>
-                                            'Ctrl+B',
-                                          SourceSymbolAction.usages => 'Alt+F7',
-                                          SourceSymbolAction.rename =>
-                                            'Shift+F6',
-                                        },
+                                        shortcut:
+                                            (BusyMarkCommandRegistryScope.read(
+                                                      context,
+                                                    ) ??
+                                                    BusyMarkCommandCatalog
+                                                        .metadata)[sourceSymbolCommands[action]!]
+                                                ?.shortcut
+                                                ?.label,
+                                        gtkAccelerator:
+                                            (BusyMarkCommandRegistryScope.read(
+                                                      context,
+                                                    ) ??
+                                                    BusyMarkCommandCatalog
+                                                        .metadata)[sourceSymbolCommands[action]!]
+                                                ?.shortcut
+                                                ?.gtkAccelerator,
                                       ),
                                 ],
                                 onRefineWithAi: widget.onAiEdit == null
@@ -990,32 +1161,22 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               left: BusyMarkSpacing.sm,
               child: _SourceLargeFileBanner(),
             ),
-          if (widget.searchActive)
+          if (widget.searchActive && widget.searchControlsVisible)
             Positioned(
               top: BusyMarkSpacing.sm,
               right: BusyMarkSpacing.sm,
               child: _SourceSearchPanel(
+                key: _searchPanelKey,
                 result: _searchController.result,
+                truncated: widget.searchSnapshot?.truncated ?? false,
                 onPrevious: _previousSearchMatch,
                 onNext: _nextSearchMatch,
-                onToggleCaseSensitive: () => _updateSearchOptions(
-                  widget.searchOptions.copyWith(
-                    caseSensitive: !widget.searchOptions.caseSensitive,
-                  ),
-                ),
-                onToggleWholeWord: () => _updateSearchOptions(
-                  widget.searchOptions.copyWith(
-                    wholeWord: !widget.searchOptions.wholeWord,
-                  ),
-                ),
-                onToggleRegex: () => _updateSearchOptions(
-                  widget.searchOptions.copyWith(
-                    regex: !widget.searchOptions.regex,
-                  ),
-                ),
                 replacement: widget.searchReplacement,
                 canReplaceCurrent:
-                    _requestedSearchRange == null && !_searchNavigationFailed,
+                    !DocumentReadOnlyScope.of(context) &&
+                    _requestedSearchRange == null &&
+                    !_searchNavigationFailed,
+                canReplaceAll: !DocumentReadOnlyScope.of(context),
                 onReplacementChanged:
                     widget.onSearchReplacementChanged ?? (_) {},
                 onReplaceCurrent: () => unawaited(_replaceCurrentSearchMatch()),
@@ -1135,15 +1296,71 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     final options = widget.searchOptions;
     final previousResult = _searchController.result;
+    final shared = widget.searchSnapshot;
+    if (shared != null) {
+      if (revealCurrentAfterRefresh &&
+          widget.onNavigateSearch != null &&
+          (minimumFullOffset != null || currentIndex != null)) {
+        _requestSharedSearchNavigation(
+          matchIndex: currentIndex,
+          minimumFullOffset: minimumFullOffset,
+        );
+        _searchController.stageOptions(options);
+        _controller.setSearchResult(_searchController.result);
+        return;
+      }
+      _searchController.stageOptions(options);
+      if (shared.source != _controller.fullText ||
+          shared.result.options != options) {
+        _controller.setSearchResult(_searchController.result);
+        return;
+      }
+      final document = _controller.document;
+      // Only project the authoritative window through the local folding map.
+      final projected = SourceSearchResult(
+        options: options,
+        totalMatchCount: shared.result.totalMatchCount,
+        firstMatchIndex: shared.result.firstMatchIndex,
+        currentMatchIndex: shared.result.currentMatchIndex,
+        matches: [
+          for (final match in shared.result.matches)
+            if (match.fullEnd <= document.fullText.length)
+              _projectSearchMatch(document, match),
+        ],
+      );
+      _searchController.acceptResult(projected);
+      final requested = _requestedSearchRange;
+      if (requested != null && !shared.searching) {
+        final index = projected.matches.indexWhere(
+          (match) =>
+              match.fullStart == requested.start &&
+              match.fullEnd == requested.end,
+        );
+        _searchController.setCurrentMatchIndex(
+          index < 0 ? null : projected.firstMatchIndex + index,
+        );
+        _searchNavigationFailed = index < 0;
+        _requestedSearchRange = null;
+      } else if (widget.onNavigateSearch == null) {
+        _searchController.setCurrentMatchIndex(
+          currentIndex ??
+              (previousResult.options == options
+                  ? previousResult.currentMatchIndex
+                  : null),
+        );
+      }
+      _controller.setSearchResult(_searchController.result);
+      _applySharedSearchNavigation(shared);
+      return;
+    }
     final requestedFirstMatchIndex =
         firstMatchIndex ??
         (previousResult.options == options
             ? previousResult.firstMatchIndex
             : 0);
-    final invalidRegex = sourceSearchOptionsHaveInvalidRegex(options);
-    _searchController.stageOptions(options, invalidRegex: invalidRegex);
+    _searchController.stageOptions(options);
     _controller.setSearchResult(_searchController.result);
-    if (options.query.isEmpty || invalidRegex) {
+    if (options.query.isEmpty) {
       return;
     }
     _searchDebounce = Timer(const Duration(milliseconds: 120), () {
@@ -1214,6 +1431,96 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     });
   }
 
+  SourceSearchMatch _projectSearchMatch(
+    SourceDocument document,
+    SourceSearchMatch match,
+  ) {
+    final visible = document.fullRangeToVisibleRange(
+      match.fullStart,
+      match.fullEnd,
+    );
+    return SourceSearchMatch(
+      fullStart: match.fullStart,
+      fullEnd: match.fullEnd,
+      visibleStart: visible.range.start,
+      visibleEnd: visible.range.end,
+      hidden:
+          visible.clippedByHiddenRange ||
+          visible.range.start == visible.range.end,
+    );
+  }
+
+  void _requestSharedSearchNavigation({
+    int? matchIndex,
+    int? minimumFullOffset,
+    bool reveal = true,
+  }) {
+    final request = SourceSearchNavigationRequest(
+      documentId: widget.documentId ?? widget.filePath,
+      source: _controller.fullText,
+      options: widget.searchOptions,
+      matchIndex: matchIndex,
+      minimumFullOffset: minimumFullOffset,
+      reveal: reveal,
+    );
+    final id = widget.onNavigateSearch?.call(request);
+    if (id != null && reveal) {
+      _pendingSharedSearchNavigation = _SharedSearchNavigation(
+        id,
+        request,
+        _controller.fullSelection,
+      );
+    }
+  }
+
+  void _cancelSharedSearchNavigation() {
+    final pending = _pendingSharedSearchNavigation;
+    _pendingSharedSearchNavigation = null;
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onCancelSearchNavigation?.call(pending.id);
+      });
+    }
+  }
+
+  void _applySharedSearchNavigation(SourceSearchSnapshot snapshot) {
+    final pending = _pendingSharedSearchNavigation;
+    if (pending == null) return;
+    if (snapshot.navigationRequest != pending.id) {
+      _cancelSharedSearchNavigation();
+      return;
+    }
+    if (snapshot.searching ||
+        snapshot.appliedNavigation != pending.id ||
+        pending.scheduled) {
+      return;
+    }
+    pending.scheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      pending.scheduled = false;
+      if (!mounted ||
+          !identical(_pendingSharedSearchNavigation, pending) ||
+          !widget.searchActive ||
+          widget.searchSnapshot?.navigationRequest != pending.id ||
+          widget.searchSnapshot?.appliedNavigation != pending.id ||
+          pending.request.documentId !=
+              (widget.documentId ?? widget.filePath) ||
+          pending.request.options != widget.searchOptions ||
+          pending.request.source != _controller.fullText ||
+          pending.selection != _controller.fullSelection) {
+        return;
+      }
+      _pendingSharedSearchNavigation = null;
+      if (!_searchNavigationFailed) {
+        _revealSearchMatch(_searchController.result.currentMatch);
+        final index = _searchController.result.currentMatchIndex;
+        if (index != null) {
+          _requestSharedSearchNavigation(matchIndex: index, reveal: false);
+        }
+      }
+    });
+  }
+
   void _refreshSearch({
     int? currentIndex,
     int? firstMatchIndex,
@@ -1230,10 +1537,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       minimumFullOffset: minimumFullOffset,
       revealCurrentAfterRefresh: revealCurrentAfterRefresh,
     );
-  }
-
-  void _updateSearchOptions(SourceSearchOptions options) {
-    widget.onSearchOptionsChanged(options);
   }
 
   void _nextSearchMatch() {
@@ -1266,6 +1569,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _selectSearchMatchIndex(int index, {required bool loadPreviousWindow}) {
+    if (widget.searchSnapshot != null && widget.onNavigateSearch != null) {
+      _requestSharedSearchNavigation(matchIndex: index);
+      return;
+    }
     final result = _searchController.result;
     final storedEnd = result.firstMatchIndex + result.matches.length;
     if (index >= result.firstMatchIndex && index < storedEnd) {
@@ -1284,7 +1591,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   Future<void> _replaceCurrentSearchMatch({bool findNext = false}) async {
-    if (_searchController.result.invalidRegex ||
+    if (DocumentReadOnlyScope.of(context) ||
         _requestedSearchRange != null ||
         _searchNavigationFailed) {
       return;
@@ -1300,6 +1607,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final document = _controller.document;
     final options = widget.searchOptions;
     final replacement = widget.searchReplacement;
+    final selection = _controller.fullSelection;
     final preview = await _replacementWorker.previewText(
       source: document.fullText,
       options: options,
@@ -1308,12 +1616,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       targetEnd: currentMatch.fullEnd,
     );
     if (!mounted ||
+        DocumentReadOnlyScope.of(context) ||
         preview == null ||
         !identical(document, _controller.document) ||
         options != widget.searchOptions ||
         replacement != widget.searchReplacement ||
+        selection != _controller.fullSelection ||
         _searchController.result.currentMatchIndex != currentIndex ||
-        preview.invalidRegex ||
         preview.matches.isEmpty) {
       return;
     }
@@ -1345,6 +1654,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   Future<void> _replaceAllSearchMatches() async {
+    if (DocumentReadOnlyScope.of(context)) return;
     final document = _controller.document;
     final options = widget.searchOptions;
     final replacement = widget.searchReplacement;
@@ -1354,11 +1664,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       replacement: replacement,
     );
     if (!mounted ||
+        DocumentReadOnlyScope.of(context) ||
         preview == null ||
         !identical(document, _controller.document) ||
         options != widget.searchOptions ||
         replacement != widget.searchReplacement ||
-        preview.invalidRegex ||
         preview.matches.isEmpty) {
       return;
     }
@@ -1404,9 +1714,85 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _focusNode.requestFocus();
     _controller.setSearchResult(_searchController.result);
     setState(() {});
+    final source = _controller.fullText;
+    final documentId = widget.documentId ?? widget.filePath;
+    final options = widget.searchOptions;
+    final selection = _controller.fullSelection;
+    final sourceRevision = widget.searchSnapshot?.sourceRevision;
+    final sessionRevision = widget.searchSnapshot?.sessionRevision;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateScrollToLine(line);
+      if (!mounted ||
+          source != _controller.fullText ||
+          documentId != (widget.documentId ?? widget.filePath) ||
+          options != widget.searchOptions ||
+          sourceRevision != widget.searchSnapshot?.sourceRevision ||
+          sessionRevision != widget.searchSnapshot?.sessionRevision ||
+          !widget.searchActive ||
+          selection != _controller.fullSelection) {
+        return;
+      }
+      _animateSearchToLine(
+        line,
+        () =>
+            mounted &&
+            source == _controller.fullText &&
+            documentId == (widget.documentId ?? widget.filePath) &&
+            options == widget.searchOptions &&
+            sourceRevision == widget.searchSnapshot?.sourceRevision &&
+            sessionRevision == widget.searchSnapshot?.sessionRevision &&
+            selection == _controller.fullSelection,
+      );
     });
+  }
+
+  void _animateSearchToLine(int line, bool Function() current) {
+    if (!_scrollController.hasClients || !current()) return;
+    unawaited(
+      _scrollController
+          .animateTo(
+            _scrollOffsetForLine(line),
+            duration: BusyMarkMotion.scroll,
+            curve: Curves.easeOutCubic,
+          )
+          .then((_) {
+            if (current()) _ensureSearchCaretVisible();
+          }),
+    );
+  }
+
+  void _ensureSearchCaretVisible() {
+    if (!mounted || !_scrollController.hasClients) return;
+    final root = _sourceEditorKey.currentContext?.findRenderObject();
+    final editable = root == null ? null : _findSourceRenderEditable(root);
+    if (editable == null || !_controller.selection.isValid) return;
+    final caret = editable.getLocalRectForCaret(
+      TextPosition(offset: _controller.selection.extentOffset),
+    );
+    final position = _scrollController.position;
+    const margin = BusyMarkSpacing.sm;
+    final height = math.min(editable.size.height, position.viewportDimension);
+    var topMargin = margin;
+    final panel = _searchPanelKey.currentContext?.findRenderObject();
+    if (panel is RenderBox && panel.hasSize) {
+      final panelBounds =
+          editable.globalToLocal(panel.localToGlobal(Offset.zero)) & panel.size;
+      if (caret.right > panelBounds.left && caret.left < panelBounds.right) {
+        topMargin = math.max(
+          margin,
+          math.min(panelBounds.bottom + margin, height - caret.height - margin),
+        );
+      }
+    }
+    final delta = caret.top < topMargin
+        ? caret.top - topMargin
+        : caret.bottom > height - margin
+        ? caret.bottom - height + margin
+        : 0.0;
+    if (delta != 0) {
+      position.jumpTo(
+        (position.pixels + delta).clamp(0.0, position.maxScrollExtent),
+      );
+    }
   }
 
   void _recomputeFoldRegions({bool resetCollapsed = false}) {
@@ -3430,16 +3816,24 @@ class _CollapsedSpellingPainter extends CustomPainter {
       oldDelegate.textScaler != textScaler;
 }
 
+class _SharedSearchNavigation {
+  _SharedSearchNavigation(this.id, this.request, this.selection);
+  final int id;
+  final SourceSearchNavigationRequest request;
+  final TextSelection selection;
+  bool scheduled = false;
+}
+
 class _SourceSearchPanel extends StatefulWidget {
   const _SourceSearchPanel({
+    super.key,
     required this.result,
+    this.truncated = false,
     required this.onPrevious,
     required this.onNext,
-    required this.onToggleCaseSensitive,
-    required this.onToggleWholeWord,
-    required this.onToggleRegex,
     required this.replacement,
     required this.canReplaceCurrent,
+    this.canReplaceAll = true,
     required this.onReplacementChanged,
     required this.onReplaceCurrent,
     required this.onReplaceAndFindNext,
@@ -3448,13 +3842,12 @@ class _SourceSearchPanel extends StatefulWidget {
   });
 
   final SourceSearchResult result;
+  final bool truncated;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
-  final VoidCallback onToggleCaseSensitive;
-  final VoidCallback onToggleWholeWord;
-  final VoidCallback onToggleRegex;
   final String replacement;
   final bool canReplaceCurrent;
+  final bool canReplaceAll;
   final ValueChanged<String> onReplacementChanged;
   final VoidCallback onReplaceCurrent;
   final VoidCallback onReplaceAndFindNext;
@@ -3467,6 +3860,7 @@ class _SourceSearchPanel extends StatefulWidget {
 
 class _SourceSearchPanelState extends State<_SourceSearchPanel> {
   late final TextEditingController _replacementController;
+  final _replacementFocus = BusyMarkSearchFocusNode();
 
   @override
   void initState() {
@@ -3486,6 +3880,7 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
   @override
   void dispose() {
     _replacementController.dispose();
+    _replacementFocus.dispose();
     super.dispose();
   }
 
@@ -3493,9 +3888,7 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final result = widget.result;
-    final status = result.invalidRegex
-        ? context.l10n.sourceSearchInvalidRegex
-        : result.totalMatchCount == 0
+    final status = result.totalMatchCount == 0
         ? '0 / 0'
         : result.currentMatchIndex == null
         ? '– / ${result.totalMatchCount}'
@@ -3510,23 +3903,14 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (result.hasZeroLengthMatches)
-              Text(
-                context.l10n.sourceSearchZeroLengthUnsupported,
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  status,
-                  textDirection: result.invalidRegex
-                      ? Directionality.of(context)
-                      : TextDirection.ltr,
+                  widget.truncated ? '$status+' : status,
+                  textDirection: TextDirection.ltr,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: result.invalidRegex
-                        ? Theme.of(context).colorScheme.error
-                        : colors.mutedForeground,
+                    color: colors.mutedForeground,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -3543,24 +3927,6 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                   icon: YaruIcons.pan_down,
                   onPressed: result.totalMatchCount == 0 ? null : widget.onNext,
                 ),
-                _SearchOptionButton(
-                  label: 'Aa',
-                  tooltip: context.l10n.sourceSearchCaseSensitive,
-                  selected: result.options.caseSensitive,
-                  onPressed: widget.onToggleCaseSensitive,
-                ),
-                _SearchOptionButton(
-                  label: 'W',
-                  tooltip: context.l10n.sourceSearchWholeWord,
-                  selected: result.options.wholeWord,
-                  onPressed: widget.onToggleWholeWord,
-                ),
-                _SearchOptionButton(
-                  label: '.*',
-                  tooltip: context.l10n.sourceSearchRegex,
-                  selected: result.options.regex,
-                  onPressed: widget.onToggleRegex,
-                ),
                 _SearchPanelIconButton(
                   tooltip: context.l10n.close,
                   icon: YaruIcons.window_close,
@@ -3575,16 +3941,19 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      key: const ValueKey('source-search-replacement'),
-                      controller: _replacementController,
-                      onChanged: widget.onReplacementChanged,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: context.l10n.sourceSearchReplacement,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: BusyMarkSpacing.sm,
-                          vertical: BusyMarkSpacing.xs,
+                    child: BusyMarkLocalTextEditingShortcuts(
+                      child: TextField(
+                        key: const ValueKey('source-search-replacement'),
+                        controller: _replacementController,
+                        focusNode: _replacementFocus,
+                        onChanged: widget.onReplacementChanged,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: context.l10n.sourceSearchReplacement,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: BusyMarkSpacing.sm,
+                            vertical: BusyMarkSpacing.xs,
+                          ),
                         ),
                       ),
                     ),
@@ -3609,7 +3978,7 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                     tooltip: context.l10n.sourceSearchReplaceAll,
                     icon: BusyMarkGlyphs.searchUnavailable,
                     onPressed:
-                        result.options.query.isEmpty || result.invalidRegex
+                        !widget.canReplaceAll || result.options.query.isEmpty
                         ? null
                         : widget.onReplaceAll,
                   ),
@@ -3641,46 +4010,6 @@ class _SearchPanelIconButton extends StatelessWidget {
       iconSize: 28,
       onPressed: onPressed,
       icon: Icon(icon, size: 14),
-    );
-  }
-}
-
-class _SearchOptionButton extends StatelessWidget {
-  const _SearchOptionButton({
-    required this.label,
-    required this.tooltip,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final String label;
-  final String tooltip;
-  final bool selected;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget optionLabel() => Builder(
-      builder: (context) => Text(
-        label,
-        textDirection: TextDirection.ltr,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: IconTheme.of(context).color,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-      ),
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 1),
-      child: YaruIconButton(
-        tooltip: tooltip,
-        iconSize: 28,
-        isSelected: selected,
-        onPressed: onPressed,
-        icon: optionLabel(),
-        selectedIcon: optionLabel(),
-      ),
     );
   }
 }
@@ -3964,3 +4293,9 @@ String _collapsedLineText(String text) {
   }
   return '$trimmed ...';
 }
+
+const sourceSymbolCommands = <SourceSymbolAction, String>{
+  SourceSymbolAction.declaration: BusyMarkCommandIds.sourceDeclaration,
+  SourceSymbolAction.usages: BusyMarkCommandIds.sourceUsages,
+  SourceSymbolAction.rename: BusyMarkCommandIds.sourceRename,
+};

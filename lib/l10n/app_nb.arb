@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Dato",
   "pdfTitlePageTitleRequired": "Skriv inn en tittel for tittelsiden.",
   "pdfTocSectionNote": "Starter på en egen side og kan gå over flere sider.",
-  "sourceSearchZeroLengthUnsupported": "Regex-treff med null lengde støttes ikke (for eksempel ^, $ eller fremoversøk som bare samsvarer med en posisjon).",
   "workspaceSearchIncomplete": "Bare noen av resultatene vises. Vis flere eller avgrens søket.",
   "workspaceSearchShowMore": "Vis flere resultater",
   "workspaceSearchSkippedFiles": "Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:",
@@ -585,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Vis denne oversikten over tastatursnarveier",
+  "shortcutKeyboardShortcutsDescription": "Tilpass programmets hurtigtaster",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -882,7 +881,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Tøm nylige arbeidsområder",
+  "clearRecentWorkspaces": "Tøm nylig historikk",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Neste treff",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "Skill mellom store og små bokstaver",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Hele ord",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regulært uttrykk",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Ugyldig regulært uttrykk",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Stor fil: utheving og folding er satt på pause",
   "@sourceLargeFileFeaturesPaused": {
@@ -3208,9 +3191,6 @@
   "diagnosticMarkdownLinkEmptyText": "Lenketeksten er tom. Oppgi et tilgjengelig navn som beskriver formålet.",
   "diagnosticMarkdownLinkReviewText": "Kontroller om lenketeksten «{text}» beskriver formålet i konteksten.",
   "diagnosticMarkdownTableEmptyHeader": "Tabelloverskrifter må identifisere kolonnene. Fyll ut alle tomme overskrifter.",
-  "commandPalette": "Kommandopalett",
-  "commandPaletteHint": "Skriv inn en kommando",
-  "commandPaletteEmpty": "Ingen samsvarende kommandoer",
   "tableAlignmentUnspecified": "Justering: ikke angitt",
   "tableAlignmentLeft": "Justering: venstre",
   "tableAlignmentCenter": "Justering: midtstilt",
@@ -3325,14 +3305,12 @@
   "exportInvalidCss": "Velg en lesbar UTF-8 .css-fil opptil 256 KiB uten importer, ressurs-URL-er, HTML eller kjørbar eller escaped CSS.",
   "exportInvalidRange": "{field}: skriv inn et tall mellom {minimum} og {maximum}.",
   "clipboardHistory": "Utklippshistorie",
-  "clipboardHistorySearchHint": "Søk i utklippstavlehistorikken",
   "clipboardHistoryDescription": "Åpne historien for utklippet som er lokal for sesjonen.",
   "clipboardCurrent": "Nåværende utklipp",
   "clipboardCurrentExternal": "Nåværende utklipp fra en annen applikasjon",
   "clipboardDestination": "Lim inn i {name}",
   "clipboardSessionOnly": "Lagret kun for denne BusyMark-sesjonen.",
   "clipboardNoItems": "Utklippshistorien er tom.",
-  "clipboardNoMatches": "Ingen utklippsposter samsvarer med denne søkingen.",
   "clipboardDisabled": "Samlingen \"Utklippshistorie\" er deaktivert i Innstillinger.",
   "clipboardUnavailable": "Innholdet i det nåværende utklippet er ikke tilgjengelig eller støttet.",
   "clipboardTooLarge": "Denne utklippsteksten er for stor til å lagre.",
@@ -3349,8 +3327,6 @@
   "findLocalHistoryDescription": "Søk etter dokumenter og innhold i Lokal Historikk.",
   "localHistoryNoDocuments": "Ingen dokumenter har Lokal Historikk ennå.",
   "localHistoryNoRevisions": "Dette dokumentet har ingen revisjoner i Lokal Historikk.",
-  "localHistoryNoMatches": "Ingen revisjoner matcher denne søken.",
-  "localHistorySearchHint": "Søk i lokal historikk",
   "localHistorySelectedRevision": "Valgt revisjon",
   "localHistoryCurrentEditor": "Nåværende innhold i redigereren",
   "localHistoryCurrentDisk": "Nåværende innhold på disken",
@@ -3610,5 +3586,61 @@
   "wsInsertElements": "Sett inn elementer",
   "wsAdmonitionsAndQuotes": "Merknader og sitater",
   "wsSemanticText": "Semantisk tekst",
-  "wsPropertiesUnavailable": "Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette."
+  "wsPropertiesUnavailable": "Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.",
+  "searchDocumentsCategory": "Dokumenter",
+  "searchTopicsCategory": "Emner",
+  "searchCurrentDocument": "Gjeldende dokument",
+  "searchCurrentWorkspace": "Gjeldende arbeidsområde",
+  "browseNotes": "Bla gjennom notater",
+  "searchActionsCommand": "Søk etter handlinger",
+  "searchDocumentsCommand": "Søk etter dokumenter",
+  "searchTopicsCommand": "Søk etter emner",
+  "searchRecentCommand": "Søk i nylige",
+  "searchResourceUnavailable": "Denne ressursen er utilgjengelig.",
+  "notesSync": "Synkroniser notater",
+  "searchInWorkspace": "Søk i arbeidsområde",
+  "searchCategory": "Søkekategori",
+  "clearHistorySearchScope": "Søk i dokumenthistorikken",
+  "searchInDocument": "Søk i dokument",
+  "searchDocumentHint": "Søk i dette dokumentet…",
+  "searchWorkspaceHint": "Søk i dette arbeidsområdet…",
+  "searchOutlineHint": "Søk i overskrifter…",
+  "searchHistoryHint": "Søk i lokal historikk…",
+  "searchEnterText": "Skriv inn tekst for å søke",
+  "searchAccountUnavailable": "Konto utilgjengelig",
+  "searchDocumentsHint": "Søk etter dokumenter…",
+  "searchTopicsHint": "Søk etter emner…",
+  "searchRecentHint": "Søk i nylige…",
+  "searchActionsHint": "Søk etter handlinger…",
+  "searchRequiresNotesWorkspace": "Krever et notatarbeidsområde",
+  "searchSidebarLabel": "Søk:",
+  "searchDocumentTextCategory": "Dokumenttekst",
+  "searchWorkspaceTextCategory": "Arbeidsområdetekst",
+  "searchHeadingsCategory": "Overskrifter",
+  "shortcutUnassigned": "Ikke tilordnet",
+  "shortcutPressKeys": "Trykk en tastekombinasjon…",
+  "shortcutRecord": "Registrer hurtigtast",
+  "shortcutRestoreAll": "Gjenopprett alle standarder",
+  "shortcutRestoreAllQuestion": "Gjenopprette standardhurtigtaster for alle handlinger? Egne tilordninger fjernes.",
+  "shortcutSaveFailed": "Hurtigtastene er aktive, men kunne ikke lagres. Prøv igjen for å beholde dem etter omstart.",
+  "shortcutRetry": "Prøv lagring igjen",
+  "shortcutChanged": "Tilordningene er endret. Se gjennom gjeldende hurtigtaster og prøv igjen.",
+  "shortcutInvalid": "Denne kombinasjonen kan ikke tilordnes i denne sammenhengen.",
+  "shortcutSystemWarning": "Skrivebordet kan bruke denne kombinasjonen. BusyMark kan ikke overstyre systemhurtigtaster.",
+  "shortcutConflicts": "Denne hurtigtasten overlapper disse handlingene:",
+  "shortcutRemove": "Fjern tilordning",
+  "shortcutRestoreDefault": "Gjenopprett standard",
+  "shortcutAssign": "Tilordne",
+  "shortcutReassign": "Tilordne på nytt",
+  "shortcutContextApplication": "Program",
+  "shortcutContextDocument": "Dokumentvisninger",
+  "shortcutContextEditor": "Redigering og kilde",
+  "shortcutContextWritersideSource": "Writerside-kilde",
+  "shortcutContextWorkspace": "Arbeidsområdenavigasjon",
+  "shortcutContextTree": "Sidefelttrær",
+  "searchHeadingsCommand": "Søk i overskrifter",
+  "shortcutFixed": "Håndteres av redigereren; kan ikke tilpasses.",
+  "shortcutDefaultConflict": "Standardhurtigtasten er i konflikt med en egendefinert tilordning.",
+  "shortcutCurrentBinding": "Gjeldende hurtigtast",
+  "shortcutProposedBinding": "Foreslått hurtigtast"
 }

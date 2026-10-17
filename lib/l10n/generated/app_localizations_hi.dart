@@ -586,15 +586,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get keyboardShortcuts => 'कीबोर्ड शॉर्टकट';
 
   @override
-  String get commandPalette => 'कमांड पैलेट';
-
-  @override
-  String get commandPaletteHint => 'कमांड लिखें';
-
-  @override
-  String get commandPaletteEmpty => 'कोई मेल खाता कमांड नहीं';
-
-  @override
   String get commandUnavailableInContext =>
       'यह आदेश वर्तमान संदर्भ में उपलब्ध नहीं है।';
 
@@ -812,7 +803,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ';
+      'अनुप्रयोग के कीबोर्ड शॉर्टकट अनुकूलित करें';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'सिंटैक्स संदर्भ खोलें';
@@ -1055,7 +1046,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get validateOnEdit => 'संपादन के समय सत्यापित करें';
 
   @override
-  String get clearRecentWorkspaces => 'हालिया कार्यस्थान साफ़ करें';
+  String get clearRecentWorkspaces => 'हाल का इतिहास साफ़ करें';
 
   @override
   String get editingButtonsPosition => 'संपादन बटनों की स्थिति';
@@ -1839,16 +1830,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get sourceSearchNextMatch => 'अगला मिलान';
 
   @override
-  String get sourceSearchCaseSensitive =>
-      'बड़े-छोटे अक्षरों के प्रति संवेदनशील';
-
-  @override
-  String get sourceSearchWholeWord => 'पूरा शब्द';
-
-  @override
-  String get sourceSearchRegex => 'रेगुलर एक्सप्रेशन';
-
-  @override
   String get sourceSearchReplacement => 'इससे बदलें';
 
   @override
@@ -1973,13 +1954,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get saveAs => 'इस रूप में सहेजें';
-
-  @override
-  String get sourceSearchInvalidRegex => 'अमान्य रेगुलर एक्सप्रेशन';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'शून्य लंबाई वाले रेगेक्स मिलान समर्थित नहीं हैं (जैसे ^, \$ या केवल स्थिति से मेल खाने वाले लुकअहेड)।';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4347,9 +4321,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clipboardHistory => 'क्लिपबोर्ड इतिहास';
 
   @override
-  String get clipboardHistorySearchHint => 'क्लिपबोर्ड इतिहास खोजें';
-
-  @override
   String get clipboardHistoryDescription =>
       'सत्र-विशिष्ट क्लिपबोर्ड इतिहास खोलें।';
 
@@ -4370,10 +4341,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'क्लिपबोर्ड इतिहास खाली है।';
-
-  @override
-  String get clipboardNoMatches =>
-      'कोई क्लिपबोर्ड आइटम इस खोज से मेल नहीं खाता।';
 
   @override
   String get clipboardDisabled =>
@@ -4431,13 +4398,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'इस दस्तावेज़ में स्थानीय इतिहास में कोई संशोधन नहीं है।';
-
-  @override
-  String get localHistoryNoMatches =>
-      'यह खोज स्थानीय इतिहास संशोधनों से मेल नहीं खाती।';
-
-  @override
-  String get localHistorySearchHint => 'स्थानीय इतिहास खोजें';
 
   @override
   String get localHistorySelectedRevision => 'चयनित संशोधन';
@@ -5388,4 +5348,179 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।';
+
+  @override
+  String get searchDocumentsCategory => 'दस्तावेज़';
+
+  @override
+  String get searchTopicsCategory => 'विषय';
+
+  @override
+  String get searchCurrentDocument => 'वर्तमान दस्तावेज़';
+
+  @override
+  String get searchCurrentWorkspace => 'वर्तमान कार्यक्षेत्र';
+
+  @override
+  String get browseNotes => 'नोट ब्राउज़ करें';
+
+  @override
+  String get searchActionsCommand => 'क्रियाएँ खोजें';
+
+  @override
+  String get searchDocumentsCommand => 'दस्तावेज़ खोजें';
+
+  @override
+  String get searchTopicsCommand => 'विषय खोजें';
+
+  @override
+  String get searchRecentCommand => 'हाल के आइटम खोजें';
+
+  @override
+  String get searchResourceUnavailable => 'यह संसाधन उपलब्ध नहीं है।';
+
+  @override
+  String get notesSync => 'नोट सिंक करें';
+
+  @override
+  String get searchInWorkspace => 'कार्यस्थान में खोजें';
+
+  @override
+  String get searchCategory => 'खोज श्रेणी';
+
+  @override
+  String get clearHistorySearchScope => 'दस्तावेज़ों के इतिहास में खोजें';
+
+  @override
+  String get searchInDocument => 'दस्तावेज़ में खोजें';
+
+  @override
+  String get searchDocumentHint => 'इस दस्तावेज़ में खोजें…';
+
+  @override
+  String get searchWorkspaceHint => 'इस कार्यक्षेत्र में खोजें…';
+
+  @override
+  String get searchOutlineHint => 'शीर्षक खोजें…';
+
+  @override
+  String get searchHistoryHint => 'स्थानीय इतिहास में खोजें…';
+
+  @override
+  String get searchEnterText => 'खोजने के लिए पाठ दर्ज करें';
+
+  @override
+  String get searchAccountUnavailable => 'खाता उपलब्ध नहीं है';
+
+  @override
+  String get searchDocumentsHint => 'दस्तावेज़ खोजें…';
+
+  @override
+  String get searchTopicsHint => 'विषय खोजें…';
+
+  @override
+  String get searchRecentHint => 'हाल के आइटम खोजें…';
+
+  @override
+  String get searchActionsHint => 'क्रियाएँ खोजें…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'नोट्स कार्यक्षेत्र आवश्यक है';
+
+  @override
+  String get searchSidebarLabel => 'खोजें:';
+
+  @override
+  String get searchDocumentTextCategory => 'दस्तावेज़ पाठ';
+
+  @override
+  String get searchWorkspaceTextCategory => 'कार्यस्थान पाठ';
+
+  @override
+  String get searchHeadingsCategory => 'शीर्षक';
+
+  @override
+  String get shortcutUnassigned => 'असाइन नहीं किया गया';
+
+  @override
+  String get shortcutPressKeys => 'कुंजी संयोजन दबाएँ…';
+
+  @override
+  String get shortcutRecord => 'शॉर्टकट रिकॉर्ड करें';
+
+  @override
+  String get shortcutRestoreAll => 'सभी डिफ़ॉल्ट पुनर्स्थापित करें';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'सभी क्रियाओं के डिफ़ॉल्ट शॉर्टकट पुनर्स्थापित करें? कस्टम असाइनमेंट हटा दिए जाएँगे।';
+
+  @override
+  String get shortcutSaveFailed =>
+      'शॉर्टकट सक्रिय हैं लेकिन सहेजे नहीं जा सके। पुनः प्रारंभ के बाद रखने के लिए दोबारा सहेजें।';
+
+  @override
+  String get shortcutRetry => 'सहेजने का पुनः प्रयास करें';
+
+  @override
+  String get shortcutChanged =>
+      'असाइनमेंट बदल गए हैं। वर्तमान शॉर्टकट जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String get shortcutInvalid =>
+      'इस संदर्भ में यह संयोजन असाइन नहीं किया जा सकता।';
+
+  @override
+  String get shortcutSystemWarning =>
+      'आपका डेस्कटॉप इस संयोजन का उपयोग कर सकता है। BusyMark सिस्टम शॉर्टकट नहीं बदल सकता।';
+
+  @override
+  String get shortcutConflicts => 'यह शॉर्टकट इन क्रियाओं से टकराता है:';
+
+  @override
+  String get shortcutRemove => 'असाइनमेंट हटाएँ';
+
+  @override
+  String get shortcutRestoreDefault => 'डिफ़ॉल्ट पुनर्स्थापित करें';
+
+  @override
+  String get shortcutAssign => 'असाइन करें';
+
+  @override
+  String get shortcutReassign => 'फिर से असाइन करें';
+
+  @override
+  String get shortcutContextApplication => 'अनुप्रयोग';
+
+  @override
+  String get shortcutContextDocument => 'दस्तावेज़ दृश्य';
+
+  @override
+  String get shortcutContextEditor => 'संपादक और स्रोत';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside स्रोत';
+
+  @override
+  String get shortcutContextWorkspace => 'कार्यस्थान नेविगेशन';
+
+  @override
+  String get shortcutContextTree => 'साइडबार ट्री';
+
+  @override
+  String get searchHeadingsCommand => 'शीर्षक खोजें';
+
+  @override
+  String get shortcutFixed =>
+      'संपादक द्वारा प्रबंधित; कॉन्फ़िगर नहीं किया जा सकता।';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'डिफ़ॉल्ट शॉर्टकट का कस्टम असाइनमेंट से टकराव है।';
+
+  @override
+  String get shortcutCurrentBinding => 'वर्तमान शॉर्टकट';
+
+  @override
+  String get shortcutProposedBinding => 'प्रस्तावित शॉर्टकट';
 }

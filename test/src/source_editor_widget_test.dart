@@ -1,4 +1,5 @@
 import 'package:busymark/src/editor/link_destination.dart';
+import 'package:busymark/src/assets/document_media_context.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -6,7 +7,6 @@ import 'dart:math' as math;
 import 'dart:ui' show BoxHeightStyle;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
-import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -41,6 +41,11 @@ import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/spellcheck/spelling_coordinator.dart';
 import 'package:busymark/src/spellcheck/spelling_projection.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/search/search_session.dart';
+import 'package:busymark/src/app/app_router.dart';
+import 'package:busymark/src/app/app_settings.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/gestures.dart';
@@ -52,6 +57,183 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
 void main() {
+  testWidgets(
+    'Source consumes shared pages and replaces in an unsaved buffer',
+    (tester) async {
+      final source = 'needle\n' * 81;
+      final container = ProviderContainer(
+        overrides: [
+          workspaceControllerProvider.overrideWith(
+            () => _SharedSourceWorkspace(source),
+          ),
+          localSettingsStoreProvider.overrideWithValue(_SharedSearchSettings()),
+        ],
+      );
+      final router = container.read(appRouterProvider);
+      addTearDown(() {
+        container.dispose();
+        router.dispose();
+      });
+      router.go('/workspace');
+      await tester.pump();
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(category: SearchCategory.file);
+      session.query('needle');
+      final key = GlobalKey<BusyMarkSourceEditorState>();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  final workspace = ref.watch(workspaceControllerProvider);
+                  final search = ref.watch(searchSessionProvider);
+                  return BusyMarkSourceEditor(
+                    key: key,
+                    text: workspace.activeText,
+                    documentId: workspace.activeBufferId,
+                    language: SourceSyntaxLanguage.markdown,
+                    filePath: null,
+                    diagnostics: const [],
+                    editorFontSize: 14,
+                    wordWrap: true,
+                    searchActive: search.textActive,
+                    searchOptions: search.options,
+                    searchSnapshot: search.sourceSnapshot(
+                      workspace.activeBuffer,
+                    ),
+                    onNavigateSearch: session.navigateSource,
+                    onCancelSearchNavigation: session.cancelSourceNavigation,
+                    searchReplacement: 'X',
+                    onSearchReplacementChanged: (_) {},
+                    onChanged: (text, _) =>
+                        (ref.read(workspaceControllerProvider.notifier)
+                                as _SharedSourceWorkspace)
+                            .edit(text),
+                    onCloseSearch: session.close,
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      final controller = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .map((field) => field.controller)
+          .whereType<BusyMarkSourceEditingController>()
+          .single;
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.totalMatchCount == 81,
+      );
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchPreviousMatch),
+      );
+      await _pumpUntil(
+        tester,
+        () =>
+            controller.fullSelection.start == 80 * 7 &&
+            controller.searchResult.currentMatchIndex == 80,
+      );
+      expect(
+        container.read(searchSessionProvider).results.length,
+        lessThanOrEqualTo(80),
+      );
+      expect(controller.searchResult.firstMatchIndex, 80);
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchReplaceAndFindNext),
+      );
+      await _pumpUntil(
+        tester,
+        () =>
+            controller.fullText.endsWith('X\n') &&
+            controller.searchResult.totalMatchCount == 80 &&
+            controller.fullSelection ==
+                const TextSelection(baseOffset: 0, extentOffset: 6),
+      );
+      final state = container.read(searchSessionProvider);
+      expect(state.documentCurrentMatchIndex, 0);
+      expect(
+        (state.results[state.selected] as TextSearchResult).match.startOffset,
+        0,
+      );
+      expect(controller.fullText, '${'needle\n' * 80}X\n');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  for (final readOnly in [false, true]) {
+    testWidgets(
+      'Source projects shared matches and preserves read-only replacement ($readOnly)',
+      (tester) async {
+        const source = 'cat cat';
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: DocumentReadOnlyScope(
+                readOnly: readOnly,
+                child: BusyMarkSourceEditor(
+                  text: source,
+                  language: SourceSyntaxLanguage.markdown,
+                  filePath: '/project/shared.md',
+                  diagnostics: const [],
+                  editorFontSize: 14,
+                  wordWrap: true,
+                  searchActive: true,
+                  searchOptions: const SourceSearchOptions(query: 'cat'),
+                  searchSnapshot: SourceSearchSnapshot(
+                    source: source,
+                    result: SourceSearchResult(
+                      options: const SourceSearchOptions(query: 'cat'),
+                      matches: const [
+                        SourceSearchMatch(
+                          fullStart: 4,
+                          fullEnd: 7,
+                          visibleStart: 4,
+                          visibleEnd: 7,
+                          hidden: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                  onChanged: (_, _) {},
+                  onOpenSearch: () {},
+                  onCloseSearch: () {},
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+        final controller = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .map((field) => field.controller)
+            .whereType<BusyMarkSourceEditingController>()
+            .single;
+        expect(controller.searchResult.totalMatchCount, 1);
+        expect(controller.searchResult.matches.single.fullStart, 4);
+        expect(controller.searchResult.matches.single.fullEnd, 7);
+        final l10n = AppLocalizationsEn();
+        for (final tooltip in [
+          l10n.sourceSearchReplaceCurrent,
+          l10n.sourceSearchReplaceAndFindNext,
+          l10n.sourceSearchReplaceAll,
+        ]) {
+          final button = tester
+              .widgetList<YaruIconButton>(find.byType(YaruIconButton))
+              .singleWhere((b) => b.tooltip == tooltip);
+          expect(button.onPressed, readOnly ? isNull : isNotNull);
+        }
+      },
+    );
+  }
   for (final stale in [false, true]) {
     testWidgets(
       'Source target chooser ${stale ? 'rejects changed selection' : 'preserves selected text and formatting'}',
@@ -163,7 +345,6 @@ void main() {
                     searchOptions: const SourceSearchOptions(query: 'cat'),
                     searchReplacement: 'bat',
                     onSearchReplacementChanged: (_) {},
-                    onSearchOptionsChanged: (_) {},
                     onChanged: (value, _) => setState(() => text = value),
                     onOpenSearch: () {},
                     onCloseSearch: () {},
@@ -263,7 +444,6 @@ void main() {
                 searchOptions: const SourceSearchOptions(query: 'cat'),
                 searchReplacement: 'dog',
                 onSearchReplacementChanged: (_) {},
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => setState(() => currentText = text),
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -354,7 +534,6 @@ void main() {
             searchActive: true,
             searchOptions: const SourceSearchOptions(query: 'cat'),
             initialFoldedRegionKeys: {region.key},
-            onSearchOptionsChanged: (_) {},
             onChanged: (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -415,7 +594,6 @@ void main() {
             searchOptions: const SourceSearchOptions(),
             initialSelection: TextSelection.collapsed(offset: target),
             initialFoldedRegionKeys: {firstRegion.key},
-            onSearchOptionsChanged: (_) {},
             onChanged: (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -463,7 +641,6 @@ void main() {
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
             initialFoldedRegionKeys: {region.key},
-            onSearchOptionsChanged: (_) {},
             onChanged: (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -569,7 +746,6 @@ void main() {
                   searchOptions: const SourceSearchOptions(),
                   initialSelection: const TextSelection.collapsed(offset: 4),
                   spellingAnnotations: [annotation],
-                  onSearchOptionsChanged: (_) {},
                   onChanged: (_, _) {},
                   onOpenSearch: () {},
                   onCloseSearch: () {},
@@ -735,7 +911,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (text, _) => changedText = text,
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -879,7 +1054,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -960,7 +1134,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1078,7 +1251,6 @@ void main() {
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
               initialFoldedRegionKeys: {region.key},
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1141,7 +1313,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (text, _) => changedText = text,
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1224,7 +1395,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1274,7 +1444,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1313,7 +1482,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1419,7 +1587,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1432,10 +1599,7 @@ void main() {
     expect(find.byTooltip('Duplicate heading ID "intro".'), findsOneWidget);
   });
 
-  testWidgets('source search localizes an invalid regular expression', (
-    tester,
-  ) async {
-    final de = AppLocalizationsDe();
+  testWidgets('source search treats bracket input as literal', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('de'),
@@ -1446,15 +1610,14 @@ void main() {
             width: 900,
             height: 600,
             child: BusyMarkSourceEditor(
-              text: 'Text',
+              text: 'Text [',
               language: SourceSyntaxLanguage.markdown,
               filePath: '/project/topic.md',
               diagnostics: const [],
               editorFontSize: 14,
               wordWrap: true,
               searchActive: true,
-              searchOptions: const SourceSearchOptions(query: '[', regex: true),
-              onSearchOptionsChanged: (_) {},
+              searchOptions: const SourceSearchOptions(query: '['),
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1464,7 +1627,8 @@ void main() {
       ),
     );
 
-    expect(find.text(de.sourceSearchInvalidRegex), findsOneWidget);
+    await _pumpUntil(tester, () => find.text('– / 1').evaluate().isNotEmpty);
+    expect(find.text('– / 1'), findsOneWidget);
   });
 
   testWidgets('source search reports no current match before navigation', (
@@ -1488,7 +1652,6 @@ void main() {
               wordWrap: true,
               searchActive: true,
               searchOptions: const SourceSearchOptions(query: 'cat'),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1517,70 +1680,58 @@ void main() {
     );
   });
 
-  testWidgets('source fold and search options use semantic icon buttons', (
-    tester,
-  ) async {
-    final en = AppLocalizationsEn();
-    SourceSearchOptions? updatedOptions;
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: buildBusyMarkTheme(
-          brightness: Brightness.light,
-          accentColor: BusyMarkLinuxPalette.blueAccent,
-        ),
-        home: Scaffold(
-          body: SizedBox(
-            width: 900,
-            height: 600,
-            child: BusyMarkSourceEditor(
-              text: '# Intro\nBody\n',
-              language: SourceSyntaxLanguage.markdown,
-              filePath: '/project/topic.md',
-              diagnostics: const [],
-              editorFontSize: 14,
-              wordWrap: true,
-              searchActive: true,
-              searchOptions: const SourceSearchOptions(caseSensitive: true),
-              onSearchOptionsChanged: (options) => updatedOptions = options,
-              onChanged: (_, _) {},
-              onOpenSearch: () {},
-              onCloseSearch: () {},
+  testWidgets(
+    'source fold and navigation use semantic buttons without matching toggles',
+    (tester) async {
+      final en = AppLocalizationsEn();
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 600,
+              child: BusyMarkSourceEditor(
+                text: '# Intro\nBody\n',
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: true,
+                searchOptions: const SourceSearchOptions(query: 'Intro'),
+                onChanged: (_, _) {},
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    final foldTooltip = find.byTooltip(en.collapseKind(en.foldKindSection));
-    final foldButton = find.ancestor(
-      of: foldTooltip,
-      matching: find.byType(BusyMarkCompactIconButton),
-    );
-    expect(foldTooltip, findsOneWidget);
-    expect(foldButton, findsOneWidget);
+      final foldTooltip = find.byTooltip(en.collapseKind(en.foldKindSection));
+      final foldButton = find.ancestor(
+        of: foldTooltip,
+        matching: find.byType(BusyMarkCompactIconButton),
+      );
+      expect(foldTooltip, findsOneWidget);
+      expect(foldButton, findsOneWidget);
 
-    final caseButton = find.ancestor(
-      of: find.byTooltip(en.sourceSearchCaseSensitive),
-      matching: find.byType(YaruIconButton),
-    );
-    final wholeWordButton = find.ancestor(
-      of: find.byTooltip(en.sourceSearchWholeWord),
-      matching: find.byType(YaruIconButton),
-    );
-    expect(tester.widget<YaruIconButton>(caseButton).isSelected, isTrue);
-    expect(tester.widget<YaruIconButton>(wholeWordButton).isSelected, isFalse);
+      expect(find.text('Aa'), findsNothing);
+      expect(find.text('W'), findsNothing);
+      expect(find.text('.*'), findsNothing);
+      expect(find.byTooltip(en.sourceSearchNextMatch), findsOneWidget);
 
-    await tester.tap(wholeWordButton);
-    await tester.pump();
-    expect(updatedOptions?.caseSensitive, isTrue);
-    expect(updatedOptions?.wholeWord, isTrue);
-
-    await tester.tap(foldButton);
-    await tester.pump();
-    expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
-  });
+      await tester.tap(foldButton);
+      await tester.pump();
+      expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
+    },
+  );
 
   testWidgets('source Replace All is one editor operation', (tester) async {
     final en = AppLocalizationsEn();
@@ -1608,7 +1759,6 @@ void main() {
                 searchReplacement: replacement,
                 onSearchReplacementChanged: (value) =>
                     setState(() => replacement = value),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) {
                   undoText = currentText;
                   setState(() => currentText = text);
@@ -1676,7 +1826,6 @@ void main() {
                 searchOptions: const SourceSearchOptions(query: 'a'),
                 searchReplacement: 'x',
                 onSearchReplacementChanged: (_) {},
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => setState(() => currentText = text),
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1727,7 +1876,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (text, _) => currentText = text,
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -1804,7 +1952,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1839,7 +1986,6 @@ void main() {
         SourceSearchResult(
           options: const SourceSearchOptions(query: 'Line'),
           matches: const [],
-          invalidRegex: true,
         ),
       );
       await tester.pump();
@@ -1889,7 +2035,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (_, _) {},
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -1977,7 +2122,6 @@ void main() {
               wordWrap: true,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -2046,7 +2190,6 @@ void main() {
                   wordWrap: true,
                   searchActive: false,
                   searchOptions: const SourceSearchOptions(),
-                  onSearchOptionsChanged: (_) {},
                   onChanged: (text, _) => setState(() => source = text),
                   onOpenSearch: () {},
                   onCloseSearch: () {},
@@ -2139,7 +2282,6 @@ void main() {
                   wordWrap: true,
                   searchActive: false,
                   searchOptions: const SourceSearchOptions(),
-                  onSearchOptionsChanged: (_) {},
                   onChanged: (text, _) => setState(() => source = text),
                   onOpenSearch: () {},
                   onCloseSearch: () {},
@@ -2207,7 +2349,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => setState(() => source = text),
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -2303,7 +2444,6 @@ void main() {
               wordWrap: false,
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
               onChanged: (_, _) {},
               onOpenSearch: () {},
               onCloseSearch: () {},
@@ -2345,7 +2485,6 @@ void main() {
             wordWrap: true,
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
-            onSearchOptionsChanged: (_) {},
             onChanged: (text, _) => changedText = text,
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -2455,7 +2594,6 @@ void main() {
                 wordWrap: true,
                 searchActive: false,
                 searchOptions: const SourceSearchOptions(),
-                onSearchOptionsChanged: (_) {},
                 onChanged: (text, _) => changedText = text,
                 onOpenSearch: () {},
                 onCloseSearch: () {},
@@ -9425,7 +9563,6 @@ Future<TextEditingController> _pumpAutocompleteSourceEditor(
             wordWrap: true,
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
-            onSearchOptionsChanged: (_) {},
             onChanged: onChanged ?? (_, _) {},
             onOpenSearch: () {},
             onCloseSearch: () {},
@@ -9504,7 +9641,6 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
             wordWrap: true,
             searchActive: false,
             searchOptions: const SourceSearchOptions(),
-            onSearchOptionsChanged: (_) {},
             onChanged: onChanged ?? (_, _) {},
             onTransactionalChanged: onTransactionalChanged,
             onUndo: onUndo,
@@ -9548,6 +9684,50 @@ bool _sourceContainsLoneLf(String value) {
     }
   }
   return false;
+}
+
+class _SharedSearchSettings implements LocalSettingsStore {
+  @override
+  Future<Map<String, Object?>> load() async => AppSettings.defaults().toJson();
+  @override
+  Future<void> save(Map<String, Object?> values) async {}
+}
+
+class _SharedSourceWorkspace extends WorkspaceController {
+  _SharedSourceWorkspace(this.source);
+  final String source;
+  @override
+  WorkspaceState build() => WorkspaceState(
+    workspace: Workspace(
+      id: 'shared',
+      rootPath: '/shared',
+      kind: WorkspaceKind.untitledMarkdown,
+      openedAt: DateTime(2026),
+      files: const [],
+      diagnostics: const [],
+    ),
+    documentBuffers: [
+      DocumentBuffer(
+        id: 'shared-buffer',
+        text: source,
+        lastSavedText: '',
+        dirty: true,
+        untitledName: 'Untitled',
+        editorState: const DocumentEditorState(
+          mode: DocumentViewModePreference.source,
+        ),
+      ),
+    ],
+    activeBufferId: 'shared-buffer',
+  );
+  void edit(String text) {
+    final buffer = state.activeBuffer!;
+    state = state.copyWith(
+      documentBuffers: [
+        buffer.copyWith(text: text, revision: buffer.revision + 1),
+      ],
+    );
+  }
 }
 
 class _SourceTestClipboard extends RichClipboardService {

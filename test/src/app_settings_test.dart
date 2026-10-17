@@ -1,3 +1,7 @@
+import 'package:busymark/src/app/command_registry.dart';
+import 'package:busymark/src/app/keymap_controller.dart';
+import 'package:busymark/src/app/shortcut_binding.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -9,6 +13,636 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test(
+    'new search defaults preserve saved assignments and resolve explicitly',
+    () async {
+      const y = BusyMarkKeyBinding(
+        LogicalKeyboardKey.keyL,
+        control: true,
+        shift: true,
+      );
+      const h = BusyMarkKeyBinding(
+        LogicalKeyboardKey.keyH,
+        control: true,
+        shift: true,
+      );
+      const k = BusyMarkKeyBinding(
+        LogicalKeyboardKey.keyK,
+        control: true,
+        alt: true,
+      );
+      final store = _KeymapStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              shortcutOverrides: {
+                'editor.bold': y,
+                'editor.italic': h,
+                'help.keyboardShortcuts': k,
+              },
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      Map<String, BusyMarkKeyBinding?> current() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      BusyMarkCommandRegistry effective() =>
+          effectiveCommandRegistry(BusyMarkCommandCatalog.metadata, current());
+      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Shift+L');
+      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Shift+H');
+      expect(effective()['history.findLocal']!.shortcut, isNull);
+      expect(effective()['search.headings']!.shortcut, isNull);
+      expect(
+        effective()['help.keyboardShortcuts']!.shortcut!.label,
+        'Ctrl+Alt+K',
+      );
+      expect(
+        current().containsKey('history.findLocal'),
+        isFalse,
+        reason: 'No invented persisted override',
+      );
+      final controller = container.read(keymapControllerProvider.notifier);
+      final refused = await controller.update(
+        'history.findLocal',
+        null,
+        reset: true,
+        expected: current(),
+      );
+      expect(refused.status, KeymapUpdateStatus.conflict);
+      expect(refused.conflicts.map((c) => c.id), ['editor.bold']);
+      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Shift+L');
+      final accepted = await controller.update(
+        'history.findLocal',
+        null,
+        reset: true,
+        expected: current(),
+        reassign: {'editor.bold'},
+      );
+      expect(accepted.status, KeymapUpdateStatus.saved);
+      expect(effective()['editor.bold']!.shortcut, isNull);
+      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Shift+L');
+      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Shift+H');
+      expect(current().containsKey('search.headings'), isFalse);
+      await controller.resetAll();
+      expect(effective()['search.headings']!.shortcut!.label, 'Ctrl+Shift+H');
+      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Shift+L');
+      expect(effective()['help.keyboardShortcuts']!.shortcut, isNull);
+    },
+  );
+
+  test(
+    'changed Documents and Recent defaults yield to saved bindings and explicit removals',
+    () {
+      final saved = <String, BusyMarkKeyBinding?>{
+        'file.save': const BusyMarkKeyBinding(
+          LogicalKeyboardKey.keyD,
+          control: true,
+          shift: true,
+        ),
+        'file.open': const BusyMarkKeyBinding(
+          LogicalKeyboardKey.keyR,
+          control: true,
+          shift: true,
+        ),
+        'search.headings': null,
+      };
+      final registry = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.metadata,
+        saved,
+      );
+      expect(registry['file.save']!.shortcut!.label, 'Ctrl+Shift+D');
+      expect(registry['file.open']!.shortcut!.label, 'Ctrl+Shift+R');
+      expect(registry['workspace.quickOpen']!.shortcut, isNull);
+      expect(registry['search.recent']!.shortcut, isNull);
+      expect(registry['search.headings']!.shortcut, isNull);
+      expect(
+        validatedShortcutOverrides(BusyMarkCommandCatalog.metadata, saved),
+        saved,
+      );
+      expect(saved.containsKey('workspace.quickOpen'), isFalse);
+    },
+  );
+
+  test(
+    'successive keymap edits resolve defaults regardless of record position',
+    () async {
+      final store = _KeymapStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final keymap = container.read(keymapControllerProvider.notifier);
+      for (final (id, binding) in [
+        ('editor.bold', const BusyMarkKeyBinding(LogicalKeyboardKey.f12)),
+        ('file.save', const BusyMarkKeyBinding(LogicalKeyboardKey.f8)),
+        (
+          'editor.bold',
+          const BusyMarkKeyBinding(LogicalKeyboardKey.keyS, control: true),
+        ),
+      ]) {
+        expect(
+          (await keymap.update(
+            id,
+            binding,
+            expected: container
+                .read(appSettingsControllerProvider)
+                .shortcutOverrides,
+          )).status,
+          KeymapUpdateStatus.saved,
+        );
+      }
+      final restored = AppSettings.fromJson(store.value);
+      final registry = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.metadata,
+        restored.shortcutOverrides,
+      );
+      expect(registry['editor.bold']!.shortcut!.label, 'Ctrl+S');
+      expect(registry['file.save']!.shortcut!.label, 'F8');
+      expect(restored.autoSave, isFalse);
+    },
+  );
+
+  test(
+    'resetting a default checks keypad aliases before one reassignment transaction',
+    () async {
+      final store = _KeymapStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final keymap = container.read(keymapControllerProvider.notifier);
+      Map<String, BusyMarkKeyBinding?> current() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      expect(
+        (await keymap.update(
+          'sidebar.outline',
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+          expected: current(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(
+        (await keymap.update(
+          'file.save',
+          const BusyMarkKeyBinding(LogicalKeyboardKey.numpad3, control: true),
+          expected: current(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      final before = current();
+      final rejected = await keymap.update(
+        'sidebar.outline',
+        null,
+        expected: before,
+        reset: true,
+      );
+      expect(rejected.status, KeymapUpdateStatus.conflict);
+      expect(rejected.conflicts.map((c) => c.id), ['file.save']);
+      expect(current(), before);
+      expect(store.writes, hasLength(2));
+      expect(
+        (await keymap.update(
+          'sidebar.outline',
+          null,
+          expected: before,
+          reset: true,
+          reassign: {'file.save'},
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(store.writes, hasLength(3));
+      expect(current().containsKey('sidebar.outline'), isFalse);
+      expect(current()['file.save'], isNull);
+      final registry = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.metadata,
+        current(),
+      );
+      expect(registry['file.save']!.shortcut, isNull);
+      expect(
+        registry
+            .activators('sidebar.outline')
+            .whereType<SingleActivator>()
+            .map(BusyMarkKeyBinding.fromActivator),
+        contains(
+          const BusyMarkKeyBinding(LogicalKeyboardKey.numpad3, control: true),
+        ),
+      );
+    },
+  );
+
+  test(
+    'editing another binding cannot revive a rejected stored assignment',
+    () async {
+      final store = _KeymapStore()
+        ..value = {
+          'autoSave': false,
+          'shortcutOverrides': {
+            'editor.bold': {
+              'key': LogicalKeyboardKey.keyS.keyId,
+              'control': true,
+            },
+          },
+        };
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      final loaded = container
+          .read(appSettingsControllerProvider)
+          .shortcutOverrides;
+      expect(
+        effectiveCommandRegistry(
+          BusyMarkCommandCatalog.metadata,
+          loaded,
+        )['editor.bold']!.shortcut!.label,
+        'Ctrl+B',
+      );
+      expect(
+        (await container
+                .read(keymapControllerProvider.notifier)
+                .update(
+                  'file.save',
+                  const BusyMarkKeyBinding(LogicalKeyboardKey.f12),
+                  expected: loaded,
+                ))
+            .status,
+        KeymapUpdateStatus.saved,
+      );
+      final current = container
+          .read(appSettingsControllerProvider)
+          .shortcutOverrides;
+      expect(current.keys, ['file.save']);
+      expect(
+        effectiveCommandRegistry(
+          BusyMarkCommandCatalog.metadata,
+          current,
+        )['editor.bold']!.shortcut!.label,
+        'Ctrl+B',
+      );
+      expect(store.value['autoSave'], isFalse);
+    },
+  );
+
+  test(
+    'keymap overrides survive the existing settings file and restart',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-keymap-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final path = p.join(directory.path, 'settings.json');
+      ProviderContainer start() => ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(
+            JsonFileLocalSettingsStore(settingsFilePathOverride: path),
+          ),
+        ],
+      );
+      final first = start();
+      final settings = first.read(appSettingsControllerProvider.notifier);
+      await settings.waitUntilLoaded();
+      await settings.setAutoSave(false);
+      final keymap = first.read(keymapControllerProvider.notifier);
+      expect(
+        (await keymap.update(
+          'editor.bold',
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f12),
+          expected: {},
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(
+        (await keymap.update(
+          'search.find',
+          null,
+          expected: first.read(appSettingsControllerProvider).shortcutOverrides,
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      first.dispose();
+      final restarted = start();
+      addTearDown(restarted.dispose);
+      await restarted
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      final loaded = restarted.read(appSettingsControllerProvider);
+      expect(loaded.autoSave, isFalse);
+      expect(loaded.shortcutOverrides.keys, ['editor.bold', 'search.find']);
+      final effective = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.metadata,
+        loaded.shortcutOverrides,
+      );
+      expect(effective['editor.bold']!.shortcut!.label, 'F12');
+      expect(effective['search.find']!.shortcut, isNull);
+      expect(effective['search.workspace']!.shortcut!.label, 'Ctrl+Shift+F');
+    },
+  );
+
+  test(
+    'keymap validates each stored binding without resetting preferences',
+    () {
+      final settings = AppSettings.fromJson({
+        'autoSave': false,
+        'shortcutOverrides': {
+          'file.save': {'key': LogicalKeyboardKey.f12.keyId, 'control': true},
+          'search.find': null,
+          'editor.bold': {'key': -1},
+          'editor.italic': {
+            'key': LogicalKeyboardKey.keyI.keyId,
+            'control': 'yes',
+          },
+          'bad id': {'key': LogicalKeyboardKey.f11.keyId},
+        },
+      });
+      expect(settings.autoSave, isFalse);
+      expect(settings.shortcutOverrides.keys, ['file.save', 'search.find']);
+      final restored = AppSettings.fromJson(settings.toJson());
+      expect(restored.shortcutOverrides, settings.shortcutOverrides);
+      final registry = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.metadata,
+        restored.shortcutOverrides,
+      );
+      expect(registry['file.save']!.shortcut!.label, 'Ctrl+F12');
+      expect(registry['search.find']!.shortcut, isNull);
+      expect(
+        BusyMarkCommandCatalog.metadata['search.find']!.shortcut!.label,
+        'Ctrl+F',
+      );
+    },
+  );
+
+  test(
+    'keymap update revalidates hydration, conflicts, resets and stale editors',
+    () async {
+      final store = _KeymapStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      final keymap = container.read(keymapControllerProvider.notifier);
+      Map<String, BusyMarkKeyBinding?> current() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      final binding = BusyMarkKeyBinding(
+        LogicalKeyboardKey.keyS,
+        control: true,
+        alt: true,
+      );
+      final conflict = await keymap.update(
+        'editor.bold',
+        binding,
+        expected: {},
+      );
+      expect(conflict.status, KeymapUpdateStatus.conflict);
+      expect(conflict.conflicts.map((c) => c.id), ['application.settings']);
+      expect(store.writes, isEmpty);
+      final result = await keymap.update(
+        'editor.bold',
+        binding,
+        expected: {},
+        reassign: {'application.settings'},
+      );
+      expect(result.status, KeymapUpdateStatus.saved);
+      expect(current(), {'editor.bold': binding, 'application.settings': null});
+      expect(store.writes, hasLength(1));
+      expect(
+        (await keymap.update('file.save', null, expected: {})).status,
+        KeymapUpdateStatus.changed,
+      );
+      expect(
+        (await keymap.update(
+          'application.settings',
+          null,
+          reset: true,
+          expected: current(),
+        )).status,
+        KeymapUpdateStatus.conflict,
+      );
+      expect(
+        (await keymap.update(
+          'application.settings',
+          null,
+          reset: true,
+          expected: current(),
+          reassign: {'editor.bold'},
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(current(), {'editor.bold': null});
+      await settings.setAutoSave(false);
+      expect(await keymap.resetAll(), isTrue);
+      expect(current(), isEmpty);
+      expect(store.value['autoSave'], isFalse);
+    },
+  );
+
+  test(
+    'keymap serialized saves expose failure and retry the latest preferences',
+    () async {
+      final store = _KeymapStore()..fail = true;
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final keymap = container.read(keymapControllerProvider.notifier);
+      final first = await keymap.update(
+        'file.save',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.f12),
+        expected: {},
+      );
+      expect(first.status, KeymapUpdateStatus.failed);
+      expect(
+        container.read(keymapControllerProvider),
+        KeymapUpdateStatus.failed,
+      );
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .shortcutOverrides['file.save']!
+            .key,
+        LogicalKeyboardKey.f12,
+      );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setWordWrap(false);
+      store.fail = false;
+      final current = container
+          .read(appSettingsControllerProvider)
+          .shortcutOverrides;
+      final pending = keymap.update(
+        'file.open',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.f10, control: true),
+        expected: current,
+      );
+      final stale = keymap.update('file.save', null, expected: current);
+      expect((await pending).status, KeymapUpdateStatus.saved);
+      expect((await stale).status, KeymapUpdateStatus.changed);
+      await keymap.retry();
+      expect(
+        container.read(keymapControllerProvider),
+        KeymapUpdateStatus.saved,
+      );
+      final persisted = AppSettings.fromJson(store.value);
+      expect(persisted.wordWrap, isFalse);
+      expect(persisted.shortcutOverrides.keys, ['file.save', 'file.open']);
+      final restart = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(restart.dispose);
+      await restart
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      expect(
+        restart.read(appSettingsControllerProvider).shortcutOverrides,
+        persisted.shortcutOverrides,
+      );
+    },
+  );
+
+  test(
+    'stored mixed Recent normalizes timestamps and identities with one limit',
+    () {
+      final entries = [
+        for (var i = 0; i < 20; i++)
+          RecentResource(
+            path: i.isEven ? '/docs/$i.md' : '/work/$i',
+            kind: i.isEven ? 'markdown' : 'markdownFolder',
+            document: i.isEven,
+            lastOpenedAt: DateTime.utc(2026, 1, i + 1),
+          ),
+        RecentResource(
+          path: '/docs/18.md',
+          kind: 'markdown',
+          document: true,
+          lastOpenedAt: DateTime.utc(2024),
+        ),
+      ];
+      final settings = AppSettings.fromJson({
+        'recentWorkspaces': entries.reversed.map((r) => r.toJson()).toList(),
+      });
+      expect(settings.recentWorkspaces.map((r) => r.path), [
+        for (var i = 19; i >= 8; i--) i.isEven ? '/docs/$i.md' : '/work/$i',
+      ]);
+      expect(
+        settings.recentWorkspaces[1].lastOpenedAt,
+        DateTime.utc(2026, 1, 19),
+      );
+      expect(settings.toJson().containsKey('recentWorkspaces'), isTrue);
+      expect(
+        AppSettings.fromJson(
+          settings.toJson(),
+        ).recentWorkspaces.map((r) => r.identity),
+        settings.recentWorkspaces.map((r) => r.identity),
+      );
+    },
+  );
+  test(
+    'Recent retains old timestamps and twelve mixed resources in timestamp order',
+    () async {
+      final oldTime = DateTime.utc(2024, 1, 2);
+      final store = _MemorySettingsStore()
+        ..value = {
+          'recentWorkspaces': [
+            RecentResource(
+              path: '/old/file.md',
+              kind: 'singleMarkdown',
+              lastOpenedAt: oldTime,
+            ).toJson(),
+          ],
+        };
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .single
+            .lastOpenedAt,
+        oldTime,
+      );
+      for (var i = 0; i < 13; i++) {
+        await controller.recordRecent(
+          RecentResource(
+            path: '/docs/$i.md',
+            kind: 'markdown',
+            document: true,
+            lastOpenedAt: DateTime.utc(2026, 1, i * 2 + 1),
+          ),
+        );
+        await controller.recordRecent(
+          RecentResource(
+            path: '/work/$i',
+            kind: 'markdownFolder',
+            lastOpenedAt: DateTime.utc(2026, 1, i * 2 + 2),
+          ),
+        );
+      }
+      var recent = container
+          .read(appSettingsControllerProvider)
+          .recentWorkspaces;
+      expect(recent, hasLength(12));
+      expect(recent.map((r) => r.path), [
+        for (var i = 12; i >= 7; i--) ...['/work/$i', '/docs/$i.md'],
+      ]);
+      expect(recent.where((r) => r.isDocument), hasLength(6));
+      expect(recent.where((r) => !r.isDocument), hasLength(6));
+      for (final account in ['account-a', 'account-b', 'account-a']) {
+        await controller.recordRecent(
+          RecentResource(
+            path: '',
+            kind: 'nextcloudNote',
+            document: true,
+            accountId: account,
+            localId: 'offline-local-id',
+            title: 'Same title',
+            lastOpenedAt: DateTime.now(),
+          ),
+        );
+      }
+      recent = container.read(appSettingsControllerProvider).recentWorkspaces;
+      expect(recent.where((r) => r.accountId != null), hasLength(2));
+      expect(recent.first.identity, 'account-a:offline-local-id');
+      expect(
+        AppSettings.fromJson(store.value).recentWorkspaces.first.localId,
+        'offline-local-id',
+      );
+      await controller.removeRecentAccount('account-a');
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .any((r) => r.accountId == 'account-a'),
+        isFalse,
+      );
+      await controller.moveRecentPath('/docs/12.md', '/docs/renamed.md');
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .any((r) => r.path == '/docs/renamed.md'),
+        isTrue,
+      );
+      await controller.removeRecentWorkspace('account-b:offline-local-id');
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .any((r) => r.accountId != null),
+        isFalse,
+      );
+    },
+  );
   test(
     'inspector starts closed after loading an old visible preference',
     () async {
@@ -566,7 +1200,7 @@ void main() {
             .copyWith(
               wordWrap: false,
               recentWorkspaces: [
-                RecentWorkspace(
+                RecentResource(
                   path: '/tmp/old.md',
                   kind: WorkspaceKindForTest.singleMarkdown,
                   lastOpenedAt: DateTime(2026),
@@ -602,12 +1236,12 @@ void main() {
         ..value = AppSettings.defaults()
             .copyWith(
               recentWorkspaces: [
-                RecentWorkspace(
+                RecentResource(
                   path: '/tmp/docs',
                   kind: WorkspaceKindForTest.singleMarkdown,
                   lastOpenedAt: DateTime(2026, 1, 2),
                 ),
-                RecentWorkspace(
+                RecentResource(
                   path: '/tmp/other',
                   kind: WorkspaceKindForTest.singleMarkdown,
                   lastOpenedAt: DateTime(2026, 1, 1),
@@ -810,5 +1444,19 @@ class _DelayedSettingsStore implements LocalSettingsStore {
     if (!_saved.isCompleted) {
       _saved.complete();
     }
+  }
+}
+
+class _KeymapStore implements LocalSettingsStore {
+  Map<String, Object?> value = {'autoSave': false};
+  final writes = <Map<String, Object?>>[];
+  bool fail = false;
+  @override
+  Future<Map<String, Object?>> load() async => value;
+  @override
+  Future<void> save(Map<String, Object?> next) async {
+    if (fail) throw FileSystemException('test persistence failure');
+    writes.add(next);
+    value = next;
   }
 }

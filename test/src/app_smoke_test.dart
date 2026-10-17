@@ -1,3 +1,11 @@
+import 'package:busymark/src/workspace/presentation/welcome_screen.dart';
+import 'package:busymark/src/workspace/presentation/settings_screen.dart';
+import 'package:busymark/src/app/keymap_controller.dart';
+import 'package:busymark/src/app/keyboard_shortcut_badge.dart';
+import 'package:busymark/src/app/shortcut_binding.dart';
+import 'package:busymark/src/app/shortcut_capture.dart';
+import 'package:busymark/src/workspace/presentation/keyboard_shortcuts_settings.dart';
+import 'package:busymark/src/search/search_session.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
 import 'dart:async';
@@ -18,7 +26,6 @@ import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/linux/linux_header_style.dart';
@@ -41,7 +48,6 @@ import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
-import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
@@ -57,6 +63,7 @@ import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_panel.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/local_history/local_history_comparison_view.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -72,7 +79,6 @@ import 'package:busymark/src/writerside/writerside_toc_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
-import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -115,6 +121,953 @@ void main() {
     headerBarService = _FallbackHeaderBarService();
   });
 
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.split,
+  ]) {
+    testWidgets(
+      'effective Select All and Alt+Enter edit the full document in ${mode.name}',
+      (tester) async {
+        tester.view.physicalSize = const Size(1440, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final root = Directory.systemTemp.createTempSync(
+          'busymark-effective-source-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        const original =
+            '## Fold\nfirst hidden\nsecond hidden\n\n## Next\nbefore target after\n';
+        final file = File('${root.path}/document.md')
+          ..writeAsStringSync(original);
+        final store = _MemorySettingsStore()
+          ..value = AppSettings.defaults()
+              .copyWith(autoSave: false, documentViewMode: mode)
+              .toJson();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(store),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+            startupPathProvider.overrideWithValue(file.path),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await _waitForSearchCondition(
+          tester,
+          () => find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<BusyMarkSourceEditor>(find.byType(BusyMarkSourceEditor))
+              .searchSnapshot,
+          isNotNull,
+        );
+        final source = _searchSourceController(tester);
+        final field = tester.widget<TextField>(
+          find.byWidgetPredicate(
+            (w) => w is TextField && identical(w.controller, source),
+          ),
+        );
+        final keymap = container.read(keymapControllerProvider.notifier);
+        Map<String, BusyMarkKeyBinding?> current() =>
+            container.read(appSettingsControllerProvider).shortcutOverrides;
+        Future<void> press(
+          LogicalKeyboardKey key, {
+          bool control = false,
+          bool alt = false,
+          bool shift = false,
+        }) async {
+          field.focusNode!.requestFocus();
+          await tester.pump();
+          if (control) {
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          }
+          if (alt) await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          if (shift) {
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          }
+          await tester.sendKeyEvent(key);
+          if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          if (alt) await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          if (control) {
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          }
+          await tester.pumpAndSettle();
+        }
+
+        expect(
+          (await keymap.update(
+            'text.selectAll',
+            const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+            expected: current(),
+          )).status,
+          KeymapUpdateStatus.saved,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find
+              .descendant(
+                of: find.byType(BusyMarkSourceEditor),
+                matching: find.byTooltip(
+                  l10n.collapseKind(l10n.foldKindSection),
+                ),
+              )
+              .first,
+        );
+        await tester.pumpAndSettle();
+        expect(source.document.hiddenRanges.ranges, isNotEmpty);
+        await press(LogicalKeyboardKey.f8);
+        expect(
+          source.fullSelection,
+          const TextSelection(baseOffset: 0, extentOffset: original.length),
+        );
+        expect(source.fullText, original);
+        await keymap.update('text.selectAll', null, expected: current());
+        await tester.pumpAndSettle();
+        source.fullSelection = const TextSelection.collapsed(offset: 0);
+        await press(LogicalKeyboardKey.f8);
+        expect(source.fullSelection, const TextSelection.collapsed(offset: 0));
+        await press(LogicalKeyboardKey.keyA, control: true);
+        expect(
+          source.fullSelection,
+          const TextSelection.collapsed(offset: 0),
+          reason: 'No hidden platform default after unassignment',
+        );
+        await keymap.update(
+          'text.selectAll',
+          null,
+          reset: true,
+          expected: current(),
+        );
+        await tester.pumpAndSettle();
+        await press(LogicalKeyboardKey.keyA, control: true);
+        expect(
+          source.fullSelection,
+          const TextSelection(baseOffset: 0, extentOffset: original.length),
+        );
+        await tester.tap(
+          find
+              .descendant(
+                of: find.byType(BusyMarkSourceEditor),
+                matching: find.byTooltip(l10n.expandKind(l10n.foldKindSection)),
+              )
+              .first,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          (await keymap.update(
+            'editor.bold',
+            const BusyMarkKeyBinding(LogicalKeyboardKey.enter, alt: true),
+            expected: current(),
+          )).status,
+          KeymapUpdateStatus.saved,
+        );
+        await tester.pumpAndSettle();
+        final start = original.indexOf('target');
+        source.fullSelection = TextSelection(
+          baseOffset: start,
+          extentOffset: start + 6,
+        );
+        await press(LogicalKeyboardKey.enter, alt: true);
+        final modified = original.replaceFirst('target', '**target**');
+        expect(source.fullText, modified);
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          modified,
+        );
+        await press(LogicalKeyboardKey.keyZ, control: true);
+        expect(
+          source.fullText,
+          original,
+          reason: 'Exactly one undo restores the complete document',
+        );
+        await press(LogicalKeyboardKey.keyZ, control: true, shift: true);
+        expect(source.fullText, modified);
+        // Plain Enter retains its existing input behavior and its own undo unit.
+        source.fullSelection = TextSelection.collapsed(offset: modified.length);
+        await press(LogicalKeyboardKey.enter);
+        expect(source.fullText, '$modified\n');
+        await press(LogicalKeyboardKey.keyZ, control: true);
+        expect(source.fullText, modified);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        bool? saved;
+        unawaited(workspace.saveActive().then((value) => saved = value));
+        await _waitForSearchCondition(tester, () => saved != null);
+        expect(saved, isTrue);
+        await tester.pumpAndSettle();
+        expect(file.readAsStringSync(), modified);
+        final id = container.read(workspaceControllerProvider).activeBufferId!;
+        bool? closed;
+        unawaited(
+          workspace.closeDocumentBuffer(id).then((value) => closed = value),
+        );
+        await _waitForSearchCondition(tester, () => closed != null);
+        expect(closed, isTrue);
+        unawaited(workspace.openPath(file.path));
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              container.read(workspaceControllerProvider).activeText ==
+              modified,
+        );
+        expect(file.readAsStringSync(), modified);
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          modified,
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 1));
+      },
+    );
+  }
+
+  testWidgets(
+    'effective keymap changes Source execution, disables defaults and updates native metadata',
+    (tester) async {
+      final (:container, :events) = await _pumpSearchRegression(
+        tester,
+        headerBarService,
+        {'a.md': 'needle other'},
+      );
+      final saveHandler = container
+          .read(busyMarkCommandRegistryProvider)['file.save']!
+          .execute;
+      final keymap = container.read(keymapControllerProvider.notifier);
+      Map<String, BusyMarkKeyBinding?> overrides() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      expect(
+        (await keymap.update(
+          'editor.bold',
+          const BusyMarkKeyBinding(
+            LogicalKeyboardKey.keyB,
+            control: true,
+            alt: true,
+          ),
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(
+        container.read(busyMarkCommandRegistryProvider)['file.save']!.execute,
+        same(saveHandler),
+      );
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find
+            .descendant(
+              of: find.byType(BusyMarkSourceEditor),
+              matching: find.byType(TextField),
+            )
+            .first,
+      );
+      final source = _searchSourceController(tester);
+      field.focusNode!.requestFocus();
+      source.selection = const TextSelection(baseOffset: 0, extentOffset: 6);
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'needle other',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '**needle** other',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'needle other',
+      );
+      expect(
+        (await keymap.update(
+          'text.selectAll',
+          null,
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      await tester.pumpAndSettle();
+      source.selection = const TextSelection.collapsed(offset: 2);
+      field.focusNode!.requestFocus();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        source.fullSelection,
+        const TextSelection.collapsed(offset: 2),
+        reason: 'No fallthrough to DefaultTextEditingShortcuts',
+      );
+      await keymap.update('text.paste', null, expected: overrides());
+      await tester.pumpAndSettle();
+      var clipboardReads = 0;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.getData') {
+            clipboardReads++;
+          }
+          if (call.method == 'Clipboard.getData') {
+            return {'text': 'unexpected paste'};
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      field.focusNode!.requestFocus();
+      final beforePaste = source.fullText;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.insert);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+      expect(
+        source.fullText,
+        beforePaste,
+        reason: 'Removing Paste also removes the platform Shift+Insert alias',
+      );
+      expect(clipboardReads, 0);
+      expect(
+        (await keymap.update(
+          'view.source',
+          null,
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(
+        (await keymap.update(
+          'search.find',
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f12),
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f12);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      expect(container.read(searchSessionProvider).active, isTrue);
+      BusyMarkPopupSelectorOption<SearchCategory> documentOption() => tester
+          .widget<BusyMarkPopupSelector<SearchCategory>>(
+            find.byKey(const ValueKey('search-category')),
+          )
+          .options
+          .singleWhere((o) => o.value == SearchCategory.file);
+      expect(documentOption().shortcut, 'F12');
+      expect(documentOption().gtkAccelerator, 'F12');
+      await tester.tap(find.byKey(const ValueKey('search-category')));
+      await tester.pumpAndSettle();
+      expect(find.text('F12'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isTrue);
+      await keymap.update('search.find', null, expected: overrides());
+      await tester.pumpAndSettle();
+      expect(documentOption().shortcut, isNull);
+      expect(documentOption().gtkAccelerator, isNull);
+      final unchangedRequest = container
+          .read(searchSessionProvider)
+          .focusRequest;
+      await tester.sendKeyEvent(LogicalKeyboardKey.f12);
+      await tester.pump();
+      expect(
+        container.read(searchSessionProvider).focusRequest,
+        unchangedRequest,
+      );
+      await keymap.update(
+        'search.find',
+        null,
+        reset: true,
+        expected: overrides(),
+      );
+      await tester.pumpAndSettle();
+      expect(documentOption().shortcut, 'Ctrl+F');
+      expect(documentOption().gtkAccelerator, '<Primary>f');
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)['view.source']!
+            .shortcut,
+        isNull,
+      );
+      await keymap.update(
+        'file.newDocument',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyA, control: true),
+        expected: overrides(),
+      );
+      await tester.pumpAndSettle();
+      final queryField = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const ValueKey('shared-search-query')),
+          matching: find.byType(TextField),
+        ),
+      );
+      queryField.controller!.text = 'local query';
+      queryField.focusNode!.requestFocus();
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        queryField.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 11),
+      );
+      expect(find.byType(Dialog), findsNothing);
+      await keymap.update('file.newDocument', null, expected: overrides());
+      expect(
+        (await keymap.update(
+          BusyMarkCommandIds.quickOpen,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.keyA, control: true),
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      await tester.pumpAndSettle();
+      queryField.controller!.selection = const TextSelection.collapsed(
+        offset: 3,
+      );
+      final request = container.read(searchSessionProvider).focusRequest;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        queryField.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 11),
+      );
+      expect(container.read(searchSessionProvider).focusRequest, request);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      final replacement = tester.widget<TextField>(
+        find.byKey(const ValueKey('source-search-replacement')),
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('source-search-replacement')),
+        'replacement',
+      );
+      replacement.controller!.selection = const TextSelection.collapsed(
+        offset: 3,
+      );
+      final beforeReplacementInput = container
+          .read(workspaceControllerProvider)
+          .activeText;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        replacement.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 11),
+      );
+      expect(container.read(searchSessionProvider).focusRequest, request);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        beforeReplacementInput,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'capture releases dispatch even when native key-up skips focus delivery',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'unchanged',
+      });
+      final owner = Object();
+      var candidates = 0;
+      BusyMarkShortcutCapture.begin(
+        owner,
+        onCandidate: (_) {
+          candidates++;
+          BusyMarkShortcutCapture.end(owner);
+        },
+        onCancel: () {},
+      );
+      addTearDown(() => BusyMarkShortcutCapture.end(owner));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.f8);
+      expect(candidates, 1);
+      expect(BusyMarkShortcutCapture.suppressing, isTrue);
+      // Reproduce the native hardware-only release, without a subsequent
+      // FocusManager key message. The candidate must remain consumed while the
+      // key is held, then dispatch must become available after release.
+      HardwareKeyboard.instance.handleKeyEvent(
+        const KeyUpEvent(
+          physicalKey: PhysicalKeyboardKey.f8,
+          logicalKey: LogicalKeyboardKey.f8,
+          timeStamp: Duration.zero,
+        ),
+      );
+      await tester.pump();
+      expect(BusyMarkShortcutCapture.suppressing, isFalse);
+      expect(
+        harness.container.read(workspaceControllerProvider).activeText,
+        'unchanged',
+      );
+    },
+  );
+
+  testWidgets(
+    'capture suppresses the real workspace search route until key release',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'selected text',
+      });
+      final container = harness.container;
+      final session = container.read(searchSessionProvider.notifier);
+      session.close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find
+            .descendant(
+              of: find.byType(BusyMarkSourceEditor),
+              matching: find.byType(TextField),
+            )
+            .first,
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 8,
+      );
+      await tester.pump();
+      final request = container.read(searchSessionProvider).focusRequest;
+      final owner = Object();
+      final candidates = <BusyMarkKeyBinding>[];
+      addTearDown(() async {
+        for (final key
+            in HardwareKeyboard.instance.logicalKeysPressed.toList()) {
+          await tester.sendKeyUpEvent(key);
+        }
+        BusyMarkShortcutCapture.end(owner);
+      });
+      BusyMarkShortcutCapture.begin(
+        owner,
+        onCandidate: candidates.add,
+        onCancel: () => BusyMarkShortcutCapture.end(owner),
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(candidates, [
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyF, control: true),
+      ]);
+      BusyMarkShortcutCapture.end(owner);
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).focusRequest, request);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'selected text',
+      );
+      expect(
+        field.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 8),
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      expect(container.read(searchSessionProvider).focusRequest, request + 1);
+    },
+  );
+
+  testWidgets(
+    'shortcut Settings respects pending property edits before leaving the workspace',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'Original text',
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      var attempted = 0;
+      final draft = workspace.propertyEdits.bind(
+        'shortcut-settings-guard',
+        '',
+        (_) {
+          attempted++;
+          return false;
+        },
+      );
+      workspace.propertyEdits.edit(draft, 'pending');
+      await container
+          .read(keymapControllerProvider.notifier)
+          .update(
+            BusyMarkCommandIds.keyboardShortcuts,
+            const BusyMarkKeyBinding(
+              LogicalKeyboardKey.keyK,
+              control: true,
+              alt: true,
+            ),
+            expected: container
+                .read(appSettingsControllerProvider)
+                .shortcutOverrides,
+          );
+
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(
+              busyMarkCommandRegistryProvider,
+            )[BusyMarkCommandIds.keyboardShortcuts]!
+            .shortcut!
+            .label,
+        'Ctrl+Alt+K',
+      );
+      Future<void> openSettings() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+      }
+
+      await openSettings();
+      expect(attempted, 1);
+      expect(find.byType(KeyboardShortcutsSettings), findsNothing);
+      expect(workspace.propertyEdits.hasPending, isTrue);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'Original text',
+      );
+      workspace.propertyEdits.revert(draft);
+      await openSettings();
+      expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .queryParameters['returnTo'],
+        'workspace',
+      );
+    },
+  );
+
+  testWidgets(
+    'Actions keeps its captured target and selected command when a binding changes',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'selected text',
+      });
+      final container = harness.container;
+      final session = container.read(searchSessionProvider.notifier);
+      session.close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find
+            .descendant(
+              of: find.byType(BusyMarkSourceEditor),
+              matching: find.byType(TextField),
+            )
+            .first,
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 8,
+      );
+      await tester.pump();
+      session.open(category: SearchCategory.actions);
+      session.query('Bold');
+      await tester.runAsync(session.submit);
+      await tester.pumpAndSettle();
+      final query = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const ValueKey('shared-search-query')),
+          matching: find.byType(TextField),
+        ),
+      );
+      query.focusNode!.requestFocus();
+      await tester.pump();
+      final focus = FocusManager.instance.primaryFocus;
+      expect(focus, same(query.focusNode));
+      final target = session.commandTarget;
+      await container
+          .read(keymapControllerProvider.notifier)
+          .update(
+            'editor.bold',
+            const BusyMarkKeyBinding(
+              LogicalKeyboardKey.keyB,
+              control: true,
+              alt: true,
+            ),
+            expected: {},
+          );
+      await tester.pumpAndSettle();
+      expect(session.commandTarget, same(target));
+      expect(
+        target!.isCurrent(container.read(workspaceControllerProvider)),
+        isTrue,
+      );
+      expect(FocusManager.instance.primaryFocus, same(focus));
+      final state = container.read(searchSessionProvider);
+      expect(state.results[state.selected].identity, 'editor.bold');
+      expect(
+        (state.results[state.selected] as ActionSearchResult).enabled,
+        isTrue,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkKeyboardShortcutBadge && w.label == 'Ctrl+Alt+B',
+        ),
+        findsOneWidget,
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            container.read(workspaceControllerProvider).activeText ==
+            '**selected** text',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '**selected** text',
+      );
+    },
+  );
+
+  testWidgets('application reassignment receives a retired editor combination', (
+    tester,
+  ) async {
+    final harness = await _pumpSearchRegression(tester, headerBarService, {
+      'a.md': 'Text',
+    });
+    final container = harness.container;
+    final keymap = container.read(keymapControllerProvider.notifier);
+    container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+    Map<String, BusyMarkKeyBinding?> current() =>
+        container.read(appSettingsControllerProvider).shortcutOverrides;
+    await keymap.update('text.paste', null, expected: current());
+    expect(
+      (await keymap.update(
+        'help.keyboardShortcuts',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyV, control: true),
+        expected: current(),
+      )).status,
+      KeymapUpdateStatus.saved,
+    );
+    await tester.pumpAndSettle();
+    tester
+        .widget<TextField>(
+          find
+              .descendant(
+                of: find.byType(BusyMarkSourceEditor),
+                matching: find.byType(TextField),
+              )
+              .first,
+        )
+        .focusNode!
+        .requestFocus();
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+    expect(
+      container
+          .read(appRouterProvider)
+          .routeInformationProvider
+          .value
+          .uri
+          .queryParameters['returnTo'],
+      'workspace',
+    );
+    expect(container.read(workspaceControllerProvider).activeText, 'Text');
+    await keymap.update('help.keyboardShortcuts', null, expected: current());
+    expect(
+      (await keymap.update(
+        'notes.sync',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyV, control: true),
+        expected: current(),
+      )).status,
+      KeymapUpdateStatus.saved,
+    );
+    container.read(appRouterProvider).go('/workspace');
+    await tester.pumpAndSettle();
+    expect(
+      container.read(busyMarkCommandRegistryProvider)['notes.sync']!.canExecute,
+      isFalse,
+    );
+    var clipboardReads = 0;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.getData') {
+          clipboardReads++;
+          return {'text': 'unexpected fallback'};
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final source = tester.widget<TextField>(
+      find
+          .descendant(
+            of: find.byType(BusyMarkSourceEditor),
+            matching: find.byType(TextField),
+          )
+          .first,
+    );
+    source.focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    expect(
+      clipboardReads,
+      0,
+      reason:
+          'A disabled replacement command must not fall through to unassigned Paste.',
+    );
+    expect(container.read(workspaceControllerProvider).activeText, 'Text');
+  });
+
+  testWidgets(
+    'effective keymap replaces sidebar keypad aliases and tree deletion keys',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Heading\nText',
+        'b.md': 'Other',
+      });
+      final container = harness.container;
+      final keymap = container.read(keymapControllerProvider.notifier);
+      Map<String, BusyMarkKeyBinding?> current() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      await keymap.update(
+        'sidebar.files',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+        expected: current(),
+      );
+      await keymap.update(
+        'tree.deleteSelection',
+        const BusyMarkKeyBinding(
+          LogicalKeyboardKey.keyD,
+          control: true,
+          alt: true,
+        ),
+        expected: current(),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        'Outline navigation',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.numpad1);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        'Outline navigation',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.f8);
+      await tester.pumpAndSettle();
+      final tree = find.byWidgetPredicate(
+        (w) => w is Focus && w.focusNode?.debugLabel == 'BusyMark files tree',
+      );
+      expect(
+        tree,
+        findsOneWidget,
+        reason: 'The reassigned navigation key reveals Files',
+      );
+      tester.widget<Focus>(tree).focusNode!.requestFocus();
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.text(l10n.confirmDeleteFileTitle), findsOneWidget);
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).workspace!.files,
+        hasLength(2),
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '# Heading\nText',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
   test('editor shortcuts use documented cross-editor defaults', () {
     expect(
       {
@@ -739,22 +1692,23 @@ void main() {
     expect(find.text(l10n.createWritersideProject), findsOneWidget);
     expect(find.text(l10n.openMarkdownFile), findsOneWidget);
     expect(find.text(l10n.markdownFolderOrWritersideProject), findsOneWidget);
-    expect(find.text(l10n.nextcloudNotes), findsOneWidget);
+    expect(find.text(l10n.browseNotes), findsOneWidget);
+    expect(find.text(l10n.nextcloudNewNote), findsOneWidget);
     expect(
       tester.getTopLeft(find.text(l10n.markdownFolderOrWritersideProject)).dy,
-      lessThan(tester.getTopLeft(find.text(l10n.nextcloudNotes)).dy),
+      lessThan(tester.getTopLeft(find.text(l10n.browseNotes)).dy),
     );
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderGeometry(tester);
@@ -764,13 +1718,13 @@ void main() {
 
     expect(
       find.byTooltip(
-        '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: false,
     );
 
@@ -779,13 +1733,13 @@ void main() {
 
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
   });
@@ -914,7 +1868,7 @@ void main() {
           await tester.pumpAndSettle();
         }
         await tester.tap(
-          find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+          find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
         );
         await tester.pumpAndSettle();
         expect(find.text(l10n.createMarkdownFile), findsOneWidget);
@@ -953,7 +1907,7 @@ void main() {
     await tester.tap(find.byTooltip(l10n.mainMenu));
     await tester.pumpAndSettle();
     expect(find.text(l10n.fullScreen), findsOneWidget);
-    expect(find.text(BusyMarkAppShortcutLabels.fullScreen), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcuts.fullScreen.label), findsOneWidget);
     final exportMenuItem = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkPopupMenuItem<Object?> &&
@@ -964,7 +1918,7 @@ void main() {
       tester.widget<BusyMarkPopupMenuItem<Object?>>(exportMenuItem).enabled,
       isFalse,
     );
-    expect(find.text(BusyMarkAppShortcutLabels.export), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcuts.export.label), findsOneWidget);
     for (final documentCommand in <String>{
       l10n.clipboardHistory,
       l10n.localHistory,
@@ -1016,7 +1970,7 @@ void main() {
     await tester.tap(find.text(l10n.settings));
     await tester.pumpAndSettle();
     expect(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
       findsOneWidget,
     );
     final backButton = tester.widget<BusyMarkLinuxHeaderIconButton>(
@@ -1223,34 +2177,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settings), findsOneWidget);
-    expect(find.text(BusyMarkAppShortcutLabels.settings), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcuts.settings.label), findsOneWidget);
     expect(
       find.byTooltip(
-        '${l10n.settings} (${BusyMarkAppShortcutLabels.settings})',
+        '${l10n.settings} (${BusyMarkAppShortcuts.settings.label})',
       ),
       findsNothing,
     );
-    expect(find.text(l10n.keyboardShortcuts), findsOneWidget);
-    expect(
-      find.text(BusyMarkAppShortcutLabels.keyboardShortcuts),
-      findsOneWidget,
-    );
-    expect(
-      find.byTooltip(
-        '${l10n.keyboardShortcuts} '
-        '(${BusyMarkAppShortcutLabels.keyboardShortcuts})',
-      ),
-      findsNothing,
-    );
+    expect(find.text(l10n.keyboardShortcuts), findsNothing);
+    expect(find.text('Ctrl+Alt+K'), findsNothing);
     expect(find.text(l10n.syntaxReference), findsOneWidget);
     expect(
-      find.text(BusyMarkAppShortcutLabels.syntaxReference),
+      find.text(BusyMarkAppShortcuts.syntaxReference.label),
       findsOneWidget,
     );
     expect(
       find.byTooltip(
         '${l10n.syntaxReference} '
-        '(${BusyMarkAppShortcutLabels.syntaxReference})',
+        '(${BusyMarkAppShortcuts.syntaxReference.label})',
       ),
       findsNothing,
     );
@@ -1309,7 +2253,6 @@ void main() {
   testWidgets('global reference and settings shortcuts open targets', (
     tester,
   ) async {
-    final l10n = AppLocalizationsEn();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -1351,12 +2294,16 @@ void main() {
     }
 
     await pressShortcut(LogicalKeyboardKey.keyK, control: true, alt: true);
-    expect(
-      find.text(l10n.shortcutKeyboardShortcutsDescription),
-      findsOneWidget,
-    );
+    expect(find.byType(KeyboardShortcutsSettings), findsNothing);
+    await pressShortcut(LogicalKeyboardKey.keyS, control: true, alt: true);
+    await _selectShortcutSettingsPage(tester);
+    expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+    expect(find.byType(Dialog), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
+    expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+    await pressShortcut(LogicalKeyboardKey.arrowLeft, alt: true);
+    expect(find.byType(KeyboardShortcutsSettings), findsNothing);
 
     await pressShortcut(LogicalKeyboardKey.keyM, control: true, alt: true);
     expect(
@@ -1783,7 +2730,7 @@ void main() {
     expect(settingsStore.value['confirmCloseWithUnsavedChanges'], isFalse);
 
     await tester.tap(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
     );
     await tester.pumpAndSettle();
 
@@ -1923,7 +2870,7 @@ void main() {
     expect(find.text(l10n.spellingDictionaryProblems), findsNothing);
 
     await tester.tap(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
     );
     await tester.pumpAndSettle();
     header = tester.widget<HeaderBarConfigurationPublisher>(
@@ -2848,160 +3795,115 @@ void main() {
     );
   });
 
-  testWidgets('keyboard shortcuts dialog opens from the header', (
-    tester,
-  ) async {
-    final l10n = AppLocalizationsEn();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
-        child: const BusyMarkApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Keyboard Shortcuts opens its categorized Settings page and safely records assignments',
+    (tester) async {
+      final store = _MemorySettingsStore();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ..._smokeAccentOverrides,
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(store),
+          ],
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(l10n.mainMenu));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.searchDocumentsCommand), findsNothing);
+      expect(find.text(l10n.searchActionsCommand), findsNothing);
+      expect(find.text(l10n.keyboardShortcuts), findsNothing);
+      await tester.tap(find.text(l10n.settings));
+      await tester.pumpAndSettle();
+      await _selectShortcutSettingsPage(tester);
+      expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+      expect(find.byType(Dialog), findsNothing);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(KeyboardShortcutsSettings)),
+      );
+      final router = container.read(appRouterProvider);
+      expect(
+        router.routeInformationProvider.value.uri.queryParameters,
+        containsPair('returnTo', 'welcome'),
+      );
+      await _browseShortcutRow(tester, 'file.save');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('record-shortcut')));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyO);
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: find.byWidgetPredicate(
+            (w) =>
+                w is BusyMarkActionRow &&
+                w.title == l10n.shortcutProposedBinding,
+          ),
+          matching: find.byWidgetPredicate(
+            (w) => w is BusyMarkKeyboardShortcutBadge && w.label == 'Ctrl+O',
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.shortcutConflicts), findsOneWidget);
+      expect(
+        find.byType(Dialog),
+        findsOneWidget,
+        reason: 'Capturing Ctrl+O must not open the application chooser',
+      );
+      expect(
+        container.read(appSettingsControllerProvider).shortcutOverrides,
+        isEmpty,
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyO);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tap(find.text(l10n.cancel).last);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(appSettingsControllerProvider).shortcutOverrides,
+        isEmpty,
+      );
+      await tester.tap(find.byKey(const ValueKey('shortcut-edit-file.save')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('record-shortcut')));
+      await tester.sendKeyEvent(LogicalKeyboardKey.f12);
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('assign-shortcut')));
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)['file.save']!
+            .shortcut!
+            .label,
+        'F12',
+      );
+      expect(find.text('F12'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('settings-shortcut-search')),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('find-by-shortcut')), findsNothing);
+      await _browseShortcutRow(tester, 'view.source');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('remove-shortcut')));
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)['view.source']!
+            .shortcut,
+        isNull,
+      );
+      expect(find.byType(Dialog), findsNothing);
 
-    await tester.tap(find.byTooltip(l10n.mainMenu));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.keyboardShortcuts));
-    await tester.pumpAndSettle();
-
-    expect(find.text(l10n.keyboardShortcuts), findsWidgets);
-    expect(find.text(l10n.shortcutNewDocumentDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutOpenDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutSaveDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutGroupGeneral), findsOneWidget);
-    expect(find.text(l10n.shortcutSearchDescription), findsOneWidget);
-    expect(
-      find.text(l10n.shortcutKeyboardShortcutsDescription),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.shortcutSyntaxReferenceDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutSettingsDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutNextTabDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutPreviousTabDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutCloseTabDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutCloseAllTabsDescription), findsOneWidget);
-    expect(find.text('Show shortcuts over toolbar buttons'), findsNothing);
-    expect(find.text(l10n.shortcutUndoDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutRedoDescription), findsOneWidget);
-    expect(
-      find.text(l10n.shortcutInsertIndentationDescription),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.shortcutOutdentSourceDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutEscapeDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutBoldDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutUnderlineDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutStrikethroughDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutParagraphDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutHeading1Description), findsOneWidget);
-    expect(find.text(l10n.shortcutHeading6Description), findsOneWidget);
-    expect(find.text(l10n.shortcutNumberedListDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
-    expect(find.text(l10n.git), findsOneWidget);
-    expect(find.text(l10n.localHistoryEllipsis), findsOneWidget);
-    expect(find.text(l10n.clipboardHistory), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text(l10n.localHistoryEllipsis)).dy,
-      lessThan(tester.getTopLeft(find.text(l10n.clipboardHistory)).dy),
-    );
-    expect(find.text(l10n.gitChanges), findsNothing);
-    expect(find.text(l10n.gitProjectHistory), findsNothing);
-    expect(find.text(l10n.gitHistory), findsNothing);
-    expect(find.text(l10n.shortcutDeleteTreeItemDescription), findsOneWidget);
-    expect(find.text(l10n.viewMode), findsOneWidget);
-    expect(find.text(l10n.editor), findsOneWidget);
-    expect(find.text(l10n.source), findsOneWidget);
-    expect(find.text(l10n.reading), findsOneWidget);
-    expect(find.text(l10n.split), findsOneWidget);
-
-    final expectedShortcutLabels = <String>{
-      ...BusyMarkAppShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkDocumentViewShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkTextEditingShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkEditorShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkSidebarShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkTreeShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      'F7',
-      'Ctrl+Shift+Home',
-      'Ctrl+Shift+End',
-    };
-    final shortcutRowFinder = find.descendant(
-      of: find.byType(BusyMarkInformationalDialog),
-      matching: find.byType(BusyMarkActionRow),
-    );
-    final shortcutRows = tester
-        .widgetList<BusyMarkActionRow>(shortcutRowFinder)
-        .toList();
-    final localHistoryRow = shortcutRows.singleWhere(
-      (row) => row.title == l10n.localHistoryEllipsis,
-    );
-    final clipboardHistoryRow = shortcutRows.singleWhere(
-      (row) => row.title == l10n.clipboardHistory,
-    );
-    expect(
-      find.descendant(
-        of: find.byWidget(localHistoryRow.trailing!),
-        matching: find.text(BusyMarkSidebarShortcutLabels.localHistory),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byWidget(clipboardHistoryRow.trailing!),
-        matching: find.text(BusyMarkSidebarShortcutLabels.clipboardHistory),
-      ),
-      findsOneWidget,
-    );
-    final displayedShortcutLabels = <String>[];
-    for (final row in shortcutRows) {
-      final trailing = row.trailing;
-      expect(trailing, isNotNull, reason: 'Shortcut rows need a badge.');
-      final badgeLabels = tester
-          .widgetList<Text>(
-            find.descendant(
-              of: find.byWidget(trailing!),
-              matching: find.byType(Text),
-            ),
-          )
-          .map((text) => text.data)
-          .whereType<String>()
-          .toList();
-      expect(badgeLabels, hasLength(1));
-      displayedShortcutLabels.add(badgeLabels.single);
-    }
-    expect(shortcutRows, hasLength(expectedShortcutLabels.length));
-    expect(
-      displayedShortcutLabels.toSet(),
-      expectedShortcutLabels,
-      reason: 'The popup must stay synchronized with every shortcut registry.',
-    );
-    expect(find.text('Alt'), findsNothing);
-    expect(find.text('Esc'), findsOneWidget);
-    expect(find.text('Close'), findsNothing);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-
-    expect(find.text(l10n.shortcutNewDocumentDescription), findsNothing);
-  });
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.pumpAndSettle();
+      expect(find.byType(WelcomeScreen), findsOneWidget);
+    },
+  );
 
   testWidgets('syntax reference categories expose supported authoring forms', (
     tester,
@@ -3330,7 +4232,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    expect(BusyMarkAppShortcutLabels.syntaxReference, 'Ctrl+Alt+M');
+    expect(BusyMarkAppShortcuts.syntaxReference.label, 'Ctrl+Alt+M');
     expect(
       find.byKey(const ValueKey('syntax-reference-dialog')),
       findsOneWidget,
@@ -3413,6 +4315,79 @@ void main() {
     expect(dialog, findsNothing);
   });
 
+  testWidgets(
+    'shortcut Settings keeps persistence failure visible and retries the current assignment',
+    (tester) async {
+      final store = _MemorySettingsStore();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ..._smokeAccentOverrides,
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(store),
+          ],
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      await _selectShortcutSettingsPage(tester);
+      await _browseShortcutRow(tester, 'file.save');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('record-shortcut')));
+      await tester.sendKeyEvent(LogicalKeyboardKey.f8);
+      await tester.pump();
+      final previous = Map<String, Object?>.of(store.value);
+      store.failSaves = true;
+      await tester.tap(find.byKey(const ValueKey('assign-shortcut')));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byKey(const ValueKey('shortcut-feedback')), findsOneWidget);
+      expect(find.text(l10n.shortcutSaveFailed), findsWidgets);
+      expect(
+        store.value,
+        previous,
+        reason: 'Failed publication leaves persisted preferences intact',
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(KeyboardShortcutsSettings)),
+      );
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)['file.save']!
+            .shortcut!
+            .label,
+        'F8',
+      );
+      expect(
+        container.read(keymapControllerProvider),
+        KeymapUpdateStatus.failed,
+      );
+      store.failSaves = false;
+      await tester.tap(find.byKey(const ValueKey('assign-shortcut')));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+      expect(find.text(l10n.shortcutSaveFailed), findsNothing);
+      expect(
+        container.read(keymapControllerProvider),
+        KeymapUpdateStatus.saved,
+      );
+      expect(
+        AppSettings.fromJson(store.value).shortcutOverrides['file.save']!.key,
+        LogicalKeyboardKey.f8,
+      );
+      expect(
+        AppSettings.fromJson(store.value).autoSave,
+        AppSettings.fromJson(previous).autoSave,
+      );
+    },
+  );
+
   testWidgets('keyboard shortcuts tabs section title is localized', (
     tester,
   ) async {
@@ -3434,13 +4409,34 @@ void main() {
 
     await tester.tap(find.byTooltip(fr.mainMenu));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(fr.keyboardShortcuts));
+    expect(find.text(fr.keyboardShortcuts), findsNothing);
+    await tester.tap(find.text(fr.settings));
     await tester.pumpAndSettle();
+    await _selectShortcutSettingsPage(tester);
 
-    expect(find.text(fr.tabs), findsOneWidget);
-    expect(fr.shortcutGroupSidebar, isNot('Sidebar'));
-    expect(find.text(fr.shortcutGroupSidebar), findsOneWidget);
+    await _revealShortcutRow(tester, 'tabs.next');
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Semantics &&
+            w.properties.header == true &&
+            w.child is Text &&
+            (w.child as Text).data == fr.tabs,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Tabs'), findsNothing);
+    await _revealShortcutRow(tester, 'view.toggleSidebar');
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Semantics &&
+            w.properties.header == true &&
+            w.child is Text &&
+            (w.child as Text).data == fr.shortcutGroupSidebar,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Sidebar'), findsNothing);
   });
 
@@ -7416,13 +8412,13 @@ code
 
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderControlGap(
@@ -7496,13 +8492,13 @@ code
     );
     expect(
       find.byTooltip(
-        '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: false,
     );
 
@@ -7512,7 +8508,7 @@ code
     expect(tester.state(find.byKey(sidebarKey)), same(sidebarState));
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderGeometry(tester);
@@ -7656,14 +8652,8 @@ code
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
-    expect(
-      tester
-          .widget<BusyMarkHeaderPopupMenuButton>(
-            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
-          )
-          .icon,
-      BusyMarkGlyphs.indent,
-    );
+    expect(container.read(searchSessionProvider).active, isFalse);
+    expect(find.byKey(const ValueKey('shared-search-query')), findsNothing);
     final outlineFileMenu = find.byKey(
       const ValueKey('workspace-sidebar-outline-file-menu'),
     );
@@ -7694,15 +8684,17 @@ code
     await tester.pumpAndSettle();
     expect(clipboardText, first.path);
 
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
 
     for (final (label, shortcut) in <(String, String)>[
-      (l10n.files, BusyMarkSidebarShortcutLabels.files),
-      (l10n.outline, BusyMarkSidebarShortcutLabels.outline),
-      (l10n.git, BusyMarkSidebarShortcutLabels.git),
-      (l10n.localHistory, BusyMarkSidebarShortcutLabels.localHistory),
-      (l10n.clipboardHistory, BusyMarkSidebarShortcutLabels.clipboardHistory),
+      (l10n.files, BusyMarkSidebarShortcuts.files.label),
+      (l10n.outline, BusyMarkSidebarShortcuts.outline.label),
+      (l10n.git, BusyMarkSidebarShortcuts.git.label),
+      (l10n.localHistory, BusyMarkSidebarShortcuts.localHistory.label),
+      (l10n.clipboardHistory, BusyMarkSidebarShortcuts.clipboardHistory.label),
     ]) {
       expect(find.text(label), findsOneWidget);
       expect(find.text(shortcut), findsOneWidget);
@@ -7717,7 +8709,17 @@ code
     expect(find.text(l10n.gitProjectHistory), findsNothing);
     expect(find.text(l10n.findLocalHistoryEllipsis), findsNothing);
     expect(find.text(l10n.export), findsNothing);
-    expect(find.byIcon(BusyMarkGlyphs.branch), findsOneWidget);
+    final gitEntry = find.ancestor(
+      of: find.text(l10n.git),
+      matching: find.byWidgetPredicate((widget) => widget is PopupMenuItem),
+    );
+    expect(
+      find.descendant(
+        of: gitEntry,
+        matching: find.byIcon(BusyMarkGlyphs.branch),
+      ),
+      findsOneWidget,
+    );
     expect(find.byIcon(BusyMarkGlyphs.sidebarLocalHistory), findsOneWidget);
   });
 
@@ -7873,8 +8875,12 @@ code
       });
       expect(capturedSources, contains(formatted));
 
+      container
+          .read(searchSessionProvider.notifier)
+          .openHistory(documentId: history.selectedDocumentId);
+      await tester.pump();
       final historySearch = find.descendant(
-        of: find.byType(LocalHistoryPanel),
+        of: find.byKey(const ValueKey('shared-search-query')),
         matching: find.byType(TextField),
       );
       await tester.enterText(historySearch, 'needle');
@@ -7885,24 +8891,37 @@ code
       now = now.add(const Duration(seconds: 60));
       expect(timers.where((timer) => timer.isActive), hasLength(1));
       timers.lastWhere((timer) => timer.isActive).fire();
-      await waitForHistory(
-        (history) => !history.searching && history.searchMatches.length == 1,
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            !container.read(searchSessionProvider).searching &&
+            container
+                    .read(searchSessionProvider)
+                    .results
+                    .whereType<HistorySearchResult>()
+                    .length ==
+                1,
       );
+
       history = container.read(localHistoryControllerProvider);
-      expect(history.searchQuery, 'needle');
-      expect(history.searchMatches, hasLength(1));
+      expect(container.read(searchSessionProvider).query, 'needle');
+      expect(
+        container
+            .read(searchSessionProvider)
+            .results
+            .whereType<HistorySearchResult>(),
+        hasLength(1),
+      );
       expect(
         tester.widget<TextField>(historySearch).controller!.text,
         'needle',
       );
+      await tester.pump(BusyMarkMotion.search);
+      expect(find.byType(LocalHistoryPanel), findsNothing);
       expect(
-        find.descendant(
-          of: find.byType(LocalHistoryPanel),
-          matching: find.byWidgetPredicate(
-            (widget) => widget is BusyMarkSidebarRecordRow,
-          ),
-        ),
-        findsOneWidget,
+        history.selectedRevisions,
+        hasLength(3),
+        reason: 'Search never filters the ordinary timeline.',
       );
 
       await tester.tap(sourceField);
@@ -7945,10 +8964,7 @@ code
       );
       now = now.add(const Duration(seconds: 60));
       timers.lastWhere((timer) => timer.isActive).fire();
-      await waitForHistory(
-        (history) =>
-            history.selectedRevisions.length == 4 && !history.searching,
-      );
+      await waitForHistory((history) => history.selectedRevisions.length == 4);
       history = container.read(localHistoryControllerProvider);
       final finalSources = <String>[];
       await tester.runAsync(() async {
@@ -7959,8 +8975,20 @@ code
         }
       });
       expect(finalSources, contains(redone));
-      expect(history.searchQuery, 'needle');
-      expect(history.searchMatches, hasLength(2));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            !container.read(searchSessionProvider).searching &&
+            container.read(searchSessionProvider).results.length == 2,
+      );
+      expect(container.read(searchSessionProvider).query, 'needle');
+      expect(
+        container
+            .read(searchSessionProvider)
+            .results
+            .whereType<HistorySearchResult>(),
+        hasLength(2),
+      );
     },
   );
 
@@ -9699,10 +10727,10 @@ code
       final initialToggleRect = tester.getRect(hideButton);
       final unorderedTooltip =
           '${l10n.unorderedList} '
-          '(${BusyMarkEditorShortcutLabels.unorderedList})';
+          '(${BusyMarkEditorShortcuts.unorderedList.label})';
       final orderedTooltip =
           '${l10n.orderedList} '
-          '(${BusyMarkEditorShortcutLabels.orderedList})';
+          '(${BusyMarkEditorShortcuts.orderedList.label})';
       final horizontalUnorderedRect = tester.getRect(
         find.byTooltip(unorderedTooltip),
       );
@@ -12048,6 +13076,38 @@ Gamma body.
     final headingBounds = tester.getRect(editorFields.first);
     expect(headingBounds.bottom, greaterThan(viewportBounds.top));
     expect(headingBounds.top, lessThan(viewportBounds.bottom));
+    final searchSession = container.read(searchSessionProvider.notifier);
+    searchSession.open(category: SearchCategory.outline);
+    searchSession.query('Unsaved');
+    await _waitForSearchCondition(
+      tester,
+      () => !container.read(searchSessionProvider).searching,
+    );
+    final result =
+        container.read(searchSessionProvider).results.single
+            as OutlineSearchResult;
+    expect(
+      result.heading.editorBlockId,
+      state.liveOutline!.headings.single.editorBlockId,
+    );
+    editorList().itemScrollController!.jumpTo(
+      index: editorList().itemCount - 1,
+    );
+    await tester.pump();
+    expect(editorFieldWithText('Unsaved heading'), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await _waitForSearchCondition(
+      tester,
+      () => editorFieldWithText('Unsaved heading').evaluate().isNotEmpty,
+    );
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      state.activeText,
+    );
+    expect(
+      container.read(searchSessionProvider).results.single.identity,
+      result.identity,
+    );
   });
 
   testWidgets('untitled outline navigates before the first save', (
@@ -12466,13 +13526,17 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
 
   testWidgets('Ctrl+O open chooser lists recent workspaces', (tester) async {
     const startupPath = 'test/fixtures/markdown/basic.md';
-    const recentPath = '/tmp/busymark-recent-docs';
+    final recentDirectory = Directory.systemTemp.createTempSync(
+      'busymark-recent-docs-',
+    );
+    final recentPath = recentDirectory.path;
+    addTearDown(() => recentDirectory.deleteSync(recursive: true));
     final service = _StartupWorkspaceService();
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
           .copyWith(
             recentWorkspaces: [
-              RecentWorkspace(
+              RecentResource(
                 path: recentPath,
                 kind: 'markdownFolder',
                 lastOpenedAt: DateTime(2026, 1, 2),
@@ -12513,9 +13577,13 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
 
     expect(find.text(l10n.openMarkdownFile), findsOneWidget);
     expect(find.text(l10n.recent), findsOneWidget);
-    expect(find.text('busymark-recent-docs'), findsOneWidget);
+    expect(find.text(p.basename(recentPath)), findsOneWidget);
 
-    await tester.tap(find.text('busymark-recent-docs'));
+    await tester.tap(find.text(p.basename(recentPath)));
+    await _waitForSearchCondition(
+      tester,
+      () => service.openedPath == recentPath,
+    );
     await tester.pumpAndSettle();
 
     expect(service.openedPath, recentPath);
@@ -12547,7 +13615,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       ..value = AppSettings.defaults()
           .copyWith(
             recentWorkspaces: [
-              RecentWorkspace(
+              RecentResource(
                 path: recentPath,
                 kind: 'markdownFolder',
                 lastOpenedAt: DateTime(2026, 1, 2),
@@ -13067,6 +14135,1332 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
   });
 
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.split,
+  ]) {
+    for (final count in [81, 3000]) {
+      testWidgets(
+        'shared Find/Replace navigates $count matches in ${mode.name}',
+        (tester) async {
+          tester.view.physicalSize = const Size(1440, 900);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final original =
+              '# Group\n${List.generate(count, (i) => 'cat $i\n').join()}';
+          final harness = await _pumpSearchRegression(
+            tester,
+            headerBarService,
+            {'a.md': original},
+            mode: mode,
+          );
+          final container = harness.container;
+          final session = container.read(searchSessionProvider.notifier);
+          session.open(category: SearchCategory.file);
+          session.query('cat');
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                _searchSourceController(tester).searchResult.totalMatchCount ==
+                count,
+          );
+          final source = _searchSourceController(tester);
+          final editor = tester.widget<BusyMarkSourceEditor>(
+            find.byType(BusyMarkSourceEditor),
+          );
+          expect(editor.searchSnapshot, isNotNull);
+          expect(container.read(searchSessionProvider).results, hasLength(80));
+          expect(source.searchResult.currentMatchIndex, isNull);
+
+          Future<void> expectIndex(int index, String text) async {
+            final expected = RegExp('cat').allMatches(text).elementAt(index);
+            await _waitForSearchCondition(
+              tester,
+              () =>
+                  source.searchResult.currentMatchIndex == index &&
+                  source.fullSelection ==
+                      TextSelection(
+                        baseOffset: expected.start,
+                        extentOffset: expected.end,
+                      ),
+            );
+            final state = container.read(searchSessionProvider);
+            expect(source.fullText, text);
+            expect(state.results.length, lessThanOrEqualTo(80));
+            expect(state.documentCurrentMatchIndex, index);
+            final selected = state.results[state.selected] as TextSearchResult;
+            expect(selected.match.startOffset, expected.start);
+            expect(selected.match.endOffset, expected.end);
+            final row = find.byKey(ValueKey(selected.identity));
+            await _waitForSearchCondition(
+              tester,
+              () =>
+                  row.evaluate().isNotEmpty &&
+                  tester
+                      .getRect(row)
+                      .overlaps(
+                        tester.getRect(
+                          find.byKey(const ValueKey('sidebar-search-results')),
+                        ),
+                      ),
+            );
+            expect(
+              tester.widget<BusyMarkSidebarRecordRow>(row).selected,
+              isTrue,
+            );
+          }
+
+          Future<void> choose(int index) async {
+            final match = RegExp(
+              'cat',
+            ).allMatches(source.fullText).elementAt(index);
+            final editorState = tester.state<BusyMarkSourceEditorState>(
+              find.byType(BusyMarkSourceEditor),
+            );
+            editorState.scrollToSearchRange(
+              line:
+                  '\n'
+                      .allMatches(source.fullText.substring(0, match.start))
+                      .length +
+                  1,
+              startOffset: match.start,
+              endOffset: match.end,
+            );
+            await expectIndex(index, source.fullText);
+          }
+
+          // Starting from no selection, Previous must find the actual last match
+          // inside folded content, rather than the last loaded sidebar row.
+          await tester.tap(
+            find.byTooltip(l10n.collapseKind(l10n.foldKindSection)).first,
+          );
+          await tester.pump();
+          expect(source.document.hiddenRanges.ranges, isNotEmpty);
+          await tester.tap(find.byTooltip(l10n.sourceSearchPreviousMatch));
+          await expectIndex(count - 1, original);
+          expect(source.searchResult.currentMatch!.hidden, isFalse);
+          await tester.pumpAndSettle();
+          final sourceField = tester.widget<TextField>(
+            find.byWidgetPredicate(
+              (w) => w is TextField && identical(w.controller, source),
+            ),
+          );
+          expect(sourceField.scrollController!.offset, greaterThan(0));
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(0, original);
+          await choose(79);
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(80, original);
+          await tester.tap(find.byTooltip(l10n.sourceSearchPreviousMatch));
+          await expectIndex(79, original);
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(80, original);
+          await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+          await expectIndex(count == 81 ? 0 : 81, original);
+
+          if (mode == DocumentViewModePreference.split && count == 3000) {
+            tester.view.physicalSize = const Size(1100, 900);
+            await tester.pumpAndSettle();
+          }
+          final replaceIndex = count == 81 ? 80 : 2500;
+          await choose(replaceIndex);
+          final occurrence = RegExp(
+            'cat',
+          ).allMatches(original).elementAt(replaceIndex);
+          final modified = original.replaceRange(
+            occurrence.start,
+            occurrence.end,
+            'wolf',
+          );
+          await tester.enterText(
+            find.byKey(const ValueKey('source-search-replacement')),
+            'wolf',
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip(l10n.sourceSearchReplaceAndFindNext));
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                container.read(workspaceControllerProvider).activeText ==
+                modified,
+          );
+          await expectIndex(count == 81 ? 0 : replaceIndex, modified);
+          expect(source.searchResult.totalMatchCount, count - 1);
+          expect(RegExp('wolf').allMatches(source.fullText), hasLength(1));
+          await tester.pumpAndSettle();
+          final editable = tester
+              .state<EditableTextState>(
+                find.descendant(
+                  of: find.byWidgetPredicate(
+                    (w) => w is TextField && identical(w.controller, source),
+                  ),
+                  matching: find.byType(EditableText),
+                ),
+              )
+              .renderEditable;
+          final caret = editable.getLocalRectForCaret(
+            TextPosition(offset: source.selection.extentOffset),
+          );
+          expect(caret.top, greaterThanOrEqualTo(0));
+          expect(caret.bottom, lessThanOrEqualTo(editable.size.height));
+          if (mode == DocumentViewModePreference.split && count == 3000) {
+            expect(
+              editable.localToGlobal(caret.topLeft).dy,
+              greaterThan(
+                tester
+                    .getRect(
+                      find.byKey(const ValueKey('source-search-replacement')),
+                    )
+                    .bottom,
+              ),
+              reason: 'The selected match must clear the floating controls.',
+            );
+          }
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                source.fullText == original &&
+                source.searchResult.totalMatchCount == count,
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                source.fullText == modified &&
+                source.searchResult.totalMatchCount == count - 1,
+          );
+          expect(RegExp('wolf').allMatches(source.fullText), hasLength(1));
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 1));
+        },
+      );
+    }
+  }
+
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.split,
+  ]) {
+    for (final scenario in [
+      'separated',
+      'double',
+      'refresh',
+      'query',
+      'clear',
+      'category',
+      'document',
+      'undo/redo',
+      'caret',
+    ]) {
+      testWidgets('shared replacement refresh $scenario in ${mode.name}', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(1440, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final original = 'cat\n${'gap\n' * 200}cat\n${'tail\n' * 200}cat\n';
+        final modified = original.replaceRange(0, 3, 'wolf');
+        final harness = await _pumpSearchRegression(tester, headerBarService, {
+          'a.md': original,
+          'b.md': 'other cat buffer\n',
+        }, mode: mode);
+        final container = harness.container;
+        final session = container.read(searchSessionProvider.notifier);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        session.open(category: SearchCategory.file);
+        session.query('cat');
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              _searchSourceController(tester).searchResult.totalMatchCount == 3,
+        );
+        var source = _searchSourceController(tester);
+        expect(
+          tester
+              .widget<BusyMarkSourceEditor>(find.byType(BusyMarkSourceEditor))
+              .searchSnapshot,
+          isNotNull,
+        );
+        await tester.tap(find.byTooltip(l10n.sourceSearchNextMatch));
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              source.searchResult.currentMatchIndex == 0 &&
+              source.fullSelection.extentOffset == 3,
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('source-search-replacement')),
+          'wolf',
+        );
+        await tester.pump();
+        await tester.tap(find.byTooltip(l10n.sourceSearchReplaceAndFindNext));
+        if (scenario == 'double') {
+          await tester.tap(find.byTooltip(l10n.sourceSearchReplaceAndFindNext));
+        }
+        // Stop after mutation, while the replacement's async refresh is pending.
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              container.read(workspaceControllerProvider).activeText ==
+              modified,
+        );
+        expect(container.read(searchSessionProvider).searching, isTrue);
+        Future<void> undoRedoKey({bool redo = false}) async {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          if (redo) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          if (redo) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        }
+
+        switch (scenario) {
+          case 'query':
+            for (var i = 0; i < 12; i++) {
+              session.query('missing-$i');
+            }
+            session.query('cat');
+          case 'clear':
+            session.query('');
+            session.query('cat');
+          case 'category':
+            session.open(category: SearchCategory.workspace);
+            session.query('cat');
+            session.open(category: SearchCategory.file);
+          case 'document':
+            await workspace.openActiveFile(
+              '${_SearchRegressionService.root}/b.md',
+            );
+          case 'undo/redo':
+            await undoRedoKey();
+            expect(
+              container.read(workspaceControllerProvider).activeText,
+              original,
+            );
+            await undoRedoKey(redo: true);
+          case 'caret':
+            source.fullSelection = const TextSelection.collapsed(offset: 7);
+          case 'refresh':
+            await tester.runAsync(() => session.submit());
+            expect(
+              container.read(searchSessionProvider).appliedSourceNavigation,
+              isNonZero,
+            );
+            session.refresh(container.read(workspaceControllerProvider));
+        }
+        await tester.pump();
+        source = _searchSourceController(tester);
+        final selectionAfterAction = source.fullSelection;
+        await _waitForSearchCondition(
+          tester,
+          () => !container.read(searchSessionProvider).searching,
+        );
+        if (scenario == 'separated' ||
+            scenario == 'double' ||
+            scenario == 'refresh') {
+          final next = modified.indexOf('cat');
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                source.fullSelection ==
+                TextSelection(baseOffset: next, extentOffset: next + 3),
+          );
+          final state = container.read(searchSessionProvider);
+          expect(state.documentMatchCount, 2);
+          expect(state.documentCurrentMatchIndex, 0);
+          expect(
+            (state.results[state.selected] as TextSearchResult)
+                .match
+                .startOffset,
+            next,
+          );
+          await tester.pumpAndSettle();
+          final field = find.byWidgetPredicate(
+            (w) => w is TextField && identical(w.controller, source),
+          );
+          final editable = tester
+              .state<EditableTextState>(
+                find.descendant(of: field, matching: find.byType(EditableText)),
+              )
+              .renderEditable;
+          final caret = editable.getLocalRectForCaret(
+            TextPosition(offset: source.selection.extentOffset),
+          );
+          expect(
+            tester.widget<TextField>(field).scrollController!.offset,
+            greaterThan(0),
+          );
+          expect(caret.top, greaterThanOrEqualTo(0));
+          expect(caret.bottom, lessThanOrEqualTo(editable.size.height));
+        } else {
+          await tester.pump(const Duration(milliseconds: 700));
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 100)),
+          );
+          await tester.pumpAndSettle();
+          expect(source.fullSelection, selectionAfterAction);
+          expect(
+            container.read(searchSessionProvider).appliedSourceNavigation,
+            0,
+          );
+        }
+        expect(
+          source.fullText,
+          scenario == 'document' ? 'other cat buffer\n' : modified,
+        );
+        expect(
+          RegExp('wolf').allMatches(source.fullText).length,
+          scenario == 'document' ? 0 : 1,
+        );
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 1));
+      });
+    }
+  }
+
+  testWidgets('Welcome, Recent search and Open use the same mixed chronology', (
+    tester,
+  ) async {
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            reopenPreviousWorkspaceOnStartup: false,
+            recentWorkspaces: [
+              RecentResource(
+                path: '/old.md',
+                kind: 'markdown',
+                document: true,
+                title: 'Oldest entry',
+                lastOpenedAt: DateTime.utc(2026, 1, 1),
+              ),
+              RecentResource(
+                path: '/new-folder',
+                kind: 'markdownFolder',
+                title: 'Newest entry',
+                lastOpenedAt: DateTime.utc(2026, 1, 3),
+              ),
+              RecentResource(
+                path: '',
+                kind: 'nextcloudNote',
+                document: true,
+                accountId: 'account-a',
+                localId: 'offline-id',
+                title: 'Middle entry',
+                lastOpenedAt: DateTime.utc(2026, 1, 2),
+              ),
+            ],
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        startupPathProvider.overrideWithValue(null),
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settings),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    void expectChronologicalRows() {
+      final newest = tester.getTopLeft(find.text('Newest entry')).dy;
+      final middle = tester.getTopLeft(find.text('Middle entry')).dy;
+      final oldest = tester.getTopLeft(find.text('Oldest entry')).dy;
+      expect(newest, lessThan(middle));
+      expect(middle, lessThan(oldest));
+    }
+
+    expectChronologicalRows();
+    final search = container.read(searchSessionProvider.notifier);
+    search.open(category: SearchCategory.recent);
+    search.query('entry');
+    await _waitForSearchCondition(
+      tester,
+      () => !container.read(searchSessionProvider).searching,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      container
+          .read(searchSessionProvider)
+          .results
+          .whereType<RecentSearchResult>()
+          .map((r) => r.resource.title),
+      ['Newest entry', 'Middle entry', 'Oldest entry'],
+    );
+    expectChronologicalRows();
+    search.close();
+    await tester.pumpAndSettle();
+    final opening = container
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.open);
+    await tester.pumpAndSettle();
+    final recentRows = tester
+        .widgetList<BusyMarkActionRow>(
+          find.descendant(
+            of: find.byType(BusyMarkDialogShell),
+            matching: find.byType(BusyMarkActionRow),
+          ),
+        )
+        .where((r) => r.title.contains('entry'))
+        .map((r) => r.title.replaceAll('\u2066', '').replaceAll('\u2069', ''))
+        .toList();
+    expect(recentRows, ['Newest entry', 'Middle entry', 'Oldest entry']);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await opening;
+  });
+
+  for (final mode in [
+    DocumentViewModePreference.editor,
+    DocumentViewModePreference.preview,
+  ]) {
+    for (final change in ['initialization', 'edit', 'navigation']) {
+      testWidgets(
+        'deleted History recovery in ${mode.name} tolerates only initialization: $change',
+        (tester) async {
+          final root = Directory.systemTemp.createTempSync(
+            'busymark-history-initialization-',
+          );
+          addTearDown(() => root.deleteSync(recursive: true));
+          final anchor = File(p.join(root.path, 'anchor.md'))
+            ..writeAsStringSync('# Anchor\n');
+          final missing = File(p.join(root.path, 'deleted.md'));
+          final store = _PendingHistoryRestoreStore();
+          const recovered = '# Recovered\n\nDeleted source.\n';
+          final format = decodeUtf8Document(utf8.encode(recovered)).format;
+          final destinationSource = decodeUtf8Document(format.encode('')).text;
+          final capture = await store.capture(
+            LocalHistoryCaptureRequest(
+              path: missing.path,
+              displayName: 'deleted.md',
+              source: recovered,
+              format: format,
+              capturedAt: DateTime.now().toUtc(),
+              reason: LocalHistoryCaptureReason.beforeDelete,
+            ),
+            const LocalHistoryPolicy(),
+          );
+          await store.markDeleted(missing.path, recursive: false);
+          final document = (await store.load()).documents.single;
+          final revision = (await store.readRevision(capture.revision!.id))!;
+          final settings = _MemorySettingsStore()
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  automaticSpelling: false,
+                  documentViewMode: mode,
+                )
+                .toJson();
+          final container = ProviderContainer(
+            overrides: [
+              ..._smokeAccentOverrides,
+              linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+              workspaceFileMonitorProvider.overrideWith(
+                (ref) => _SearchTestFileMonitor(),
+              ),
+              localSettingsStoreProvider.overrideWithValue(settings),
+              localHistoryStoreProvider.overrideWithValue(store),
+              startupPathProvider.overrideWithValue(root.path),
+            ],
+          );
+          addTearDown(container.dispose);
+          addTearDown(() {
+            if (!store.release.isCompleted) store.release.complete();
+          });
+          await tester.pumpWidget(
+            UncontrolledProviderScope(
+              container: container,
+              child: const BusyMarkApp(),
+            ),
+          );
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                container
+                    .read(workspaceControllerProvider)
+                    .activeBuffer
+                    ?.filePath ==
+                anchor.path,
+            attempts: 3000,
+          );
+          final controller = container.read(
+            workspaceControllerProvider.notifier,
+          );
+          container.read(localHistoryOpenRequestProvider.notifier).request();
+          await tester.pumpAndSettle();
+          final history = container.read(
+            localHistoryControllerProvider.notifier,
+          );
+          history.inspectRetainedDocument(document.id);
+          await tester.runAsync(
+            () => history.selectRevision(revision.summary.id),
+          );
+          await tester.pump();
+          final restoring = controller.restoreMissingLocalHistoryRevision(
+            document: document,
+            revision: revision,
+            destinationPath: missing.path,
+            overwriteExisting: false,
+          );
+          bool? restored;
+          unawaited(restoring.then((value) => restored = value));
+          await _waitForSearchCondition(
+            tester,
+            () => store.started.isCompleted || restored != null,
+            attempts: 3000,
+          );
+          expect(
+            store.started.isCompleted,
+            isTrue,
+            reason:
+                'Recovery must reach protective capture before simulating navigation (returned $restored).',
+          );
+          final before = container
+              .read(workspaceControllerProvider)
+              .activeBuffer!;
+          expect(before.filePath, missing.path);
+          expect(before.text, destinationSource);
+          expect(before.editorState.mode, mode);
+          // Mount the actual destination editor while the protective capture is
+          // suspended. Its session report must not masquerade as a source edit.
+          await tester.pumpAndSettle();
+          final initialized = container
+              .read(workspaceControllerProvider)
+              .activeBuffer!;
+          expect(initialized.text, before.text);
+          expect(initialized.revision, before.revision);
+          if (mode == DocumentViewModePreference.editor) {
+            expect(find.byType(BusyMarkWysiwygEditor), findsOneWidget);
+            expect(
+              identical(initialized.editorState, before.editorState),
+              isFalse,
+            );
+          }
+          if (change == 'edit') {
+            controller.updateActiveText('Concurrent user edit\n');
+          }
+          if (change == 'navigation') {
+            await tester.runAsync(() => controller.openActiveFile(anchor.path));
+            // Returning to the same tab must not revive the pending restore.
+            await tester.runAsync(
+              () => controller.openActiveFile(missing.path),
+            );
+          }
+          store.release.complete();
+          await _waitForSearchCondition(
+            tester,
+            () => restored != null,
+            attempts: 3000,
+          );
+          await tester.pumpAndSettle();
+          expect(restored, change == 'initialization');
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            change == 'initialization'
+                ? recovered
+                : change == 'edit'
+                ? 'Concurrent user edit\n'
+                : destinationSource,
+          );
+          if (change == 'initialization') {
+            expect(missing.readAsStringSync(), destinationSource);
+            expect(controller.undoActiveBuffer(), isTrue);
+            await tester.pumpAndSettle();
+            expect(
+              container.read(workspaceControllerProvider).activeText,
+              destinationSource,
+            );
+            expect(controller.redoActiveBuffer(), isTrue);
+            await tester.pumpAndSettle();
+            expect(
+              container.read(workspaceControllerProvider).activeText,
+              recovered,
+            );
+            bool? saved;
+            unawaited(controller.saveActive().then((value) => saved = value));
+            // This includes real filesystem publication and protective History
+            // capture, rather than only the query debounce used by this helper.
+            await _waitForSearchCondition(
+              tester,
+              () => saved != null,
+              attempts: 3000,
+            );
+            expect(saved, isTrue);
+            expect(missing.readAsStringSync(), recovered);
+          }
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 1));
+        },
+      );
+    }
+  }
+
+  testWidgets(
+    'shared History search inspects exact retained revisions and restores ordinary browsing',
+    (tester) async {
+      final store = MemoryLocalHistoryStore();
+      final now = DateTime.now().toUtc();
+      for (var i = 0; i < 2; i++) {
+        await store.capture(
+          LocalHistoryCaptureRequest(
+            path: '/retired/same.md',
+            displayName: 'Retired same',
+            source: i == 0 ? 'historical needle' : 'later retained revision',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: now.add(Duration(seconds: i)),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
+        );
+      }
+      await store.remapPath('/retired/same.md', '/deleted/same.md');
+      await store.markDeleted('/deleted/same.md', recursive: false);
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Live heading\nlive source\n',
+      }, historyStore: store);
+      final container = harness.container;
+      final history = container.read(localHistoryControllerProvider.notifier);
+      await history.refresh();
+      final retained = container
+          .read(localHistoryControllerProvider)
+          .snapshot
+          .documents
+          .singleWhere((d) => d.deleted);
+      final before = container.read(workspaceControllerProvider).activeBuffer!;
+      final session = container.read(searchSessionProvider.notifier);
+      session.openHistory();
+      session.query('historical needle');
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      final result =
+          container.read(searchSessionProvider).results.single
+              as HistorySearchResult;
+      final revisionId =
+          (result.match as LocalHistoryRevisionMatch).revision.id;
+      await tester.tap(find.byKey(ValueKey(result.identity)));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            container
+                .read(localHistoryControllerProvider)
+                .selectedRevision
+                ?.summary
+                .id ==
+            revisionId,
+      );
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(
+        container.read(localHistoryControllerProvider).selectedDocumentId,
+        retained.id,
+      );
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevision!.source,
+        'historical needle',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer,
+        same(before),
+      );
+      expect(find.byType(LocalHistoryComparisonView), findsOneWidget);
+      await container
+          .read(busyMarkCommandRegistryProvider)
+          .execute(BusyMarkCommandIds.localHistory);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(find.byType(LocalHistoryPanel), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(LocalHistoryPanel),
+          matching: find.byType(TextField),
+        ),
+        findsNothing,
+      );
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevisions,
+        hasLength(2),
+      );
+      expect(find.byTooltip(l10n.findLocalHistoryEllipsis), findsNothing);
+      container
+          .read(searchSessionProvider.notifier)
+          .openHistory(documentId: retained.id);
+      await tester.pump();
+      expect(
+        container.read(searchSessionProvider).historyDocumentId,
+        retained.id,
+      );
+      await container
+          .read(busyMarkCommandRegistryProvider)
+          .execute(BusyMarkCommandIds.findLocalHistory);
+      expect(container.read(searchSessionProvider).historyDocumentId, isNull);
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(
+        container.read(searchSessionProvider).results.single.identity,
+        result.identity,
+      );
+      await history.clearDocument(retained.id);
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(container.read(searchSessionProvider).results, isEmpty);
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevision,
+        isNull,
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer,
+        same(before),
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets(
+    'ordinary Outline keeps its tree state independently of typed Outline search',
+    (tester) async {
+      const text =
+          '# Alpha\n## Shared\nalpha body\n# Beta\n## Shared\nbeta body\n';
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': text,
+      });
+      final container = harness.container;
+      final session = container.read(searchSessionProvider.notifier);
+      Future<void> outlineShortcut() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+      }
+
+      await outlineShortcut();
+      final tree = find.byKey(const ValueKey('workspace-sidebar-outline-tree'));
+      expect(tree, findsOneWidget);
+      expect(find.byKey(const ValueKey('shared-search-query')), findsNothing);
+      expect(find.byKey(const ValueKey('search-category')), findsNothing);
+      final ordinary = find.byWidgetPredicate(
+        (w) => w.runtimeType.toString() == '_OutlineTab',
+      );
+      final ordinaryState = tester.state(ordinary);
+      final first = find.byKey(
+        const ValueKey('workspace-sidebar-outline-row-0'),
+      );
+      final expander = find.descendant(
+        of: first,
+        matching: find.byWidgetPredicate(
+          (w) => w is GestureDetector && w.child is AnimatedRotation,
+        ),
+      );
+      await tester.tap(expander);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-1')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-3')),
+        findsOneWidget,
+      );
+      session.open(category: SearchCategory.outline);
+      await tester.pumpAndSettle();
+      expect(tree, findsNothing);
+      expect(find.text(l10n.searchEnterText), findsOneWidget);
+      expect(container.read(searchSessionProvider).results, isEmpty);
+      await tester.enterText(
+        find.byKey(const ValueKey('shared-search-query')),
+        'Shared',
+      );
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      final results = container
+          .read(searchSessionProvider)
+          .results
+          .cast<OutlineSearchResult>();
+      expect(results, hasLength(2));
+      expect(results.map((r) => r.ancestors.single), ['Alpha', 'Beta']);
+      expect(find.byKey(ValueKey(results.first.identity)), findsOneWidget);
+      expect(tree, findsNothing);
+      session.moveSelection(1);
+      await tester.pump();
+      expect(container.read(workspaceControllerProvider).activeText, text);
+      await tester.tap(find.byKey(ValueKey(results.last.identity)));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            _searchSourceController(tester).fullSelection.start ==
+            text.lastIndexOf('## Shared'),
+      );
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(container.read(workspaceControllerProvider).activeText, text);
+      await outlineShortcut();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(tester.state(ordinary), same(ordinaryState));
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-1')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-3')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('search-category')), findsNothing);
+      // Section operations remain on the normal complete tree, outside search.
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-outline-row-2')),
+        buttons: kSecondaryButton,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.moveSectionUp), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(container.read(workspaceControllerProvider).activeText, text);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets(
+    'unified search scopes, query isolation and explicit shortcut destinations',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Alpha\nneedle alpha\n',
+        'b.md': '# Beta\nneedle beta\n',
+      });
+      final container = harness.container;
+      final session = container.read(searchSessionProvider.notifier);
+      expect(session.categories, [
+        SearchCategory.file,
+        SearchCategory.workspace,
+        SearchCategory.outline,
+        SearchCategory.documents,
+        SearchCategory.recent,
+        SearchCategory.localHistory,
+        SearchCategory.actions,
+      ]);
+      Future<void> shortcut(
+        LogicalKeyboardKey key, {
+        bool shift = false,
+        bool alt = false,
+        bool search = true,
+      }) async {
+        final focusRequest = container.read(searchSessionProvider).focusRequest;
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        if (alt) await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyEvent(key);
+        if (alt) await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+        if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        expect(
+          container.read(searchSessionProvider).focusRequest,
+          focusRequest + (search ? 1 : 0),
+        );
+      }
+
+      final query = find.descendant(
+        of: find.byKey(const ValueKey('shared-search-query')),
+        matching: find.byType(TextField),
+      );
+      session.close();
+      await tester.pump();
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.controller is BusyMarkSourceEditingController,
+        ),
+      );
+      await shortcut(LogicalKeyboardKey.keyF);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      await tester.enterText(query, 'needle');
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(container.read(searchSessionProvider).results, hasLength(1));
+      // Dropdown Enter and Escape belong to the popup before search dismissal.
+      await tester.tap(find.byKey(const ValueKey('search-category')));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isTrue);
+      tester
+          .widget<TextButton>(
+            find.descendant(
+              of: find.byKey(const ValueKey('search-category')),
+              matching: find.byType(TextButton),
+            ),
+          )
+          .focusNode!
+          .requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.searchWorkspaceTextCategory), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.searchWorkspaceTextCategory), findsNothing);
+      expect(container.read(searchSessionProvider).active, isTrue);
+      await shortcut(LogicalKeyboardKey.keyF, shift: true);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.workspace,
+      );
+      expect(container.read(searchSessionProvider).query, '');
+      await tester.enterText(query, 'needle');
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(container.read(searchSessionProvider).results, hasLength(2));
+      await shortcut(LogicalKeyboardKey.keyP, shift: true);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.actions,
+      );
+      await tester.enterText(query, 'Bold');
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(
+        container
+            .read(searchSessionProvider)
+            .results
+            .whereType<ActionSearchResult>()
+            .any((r) => r.command.id == 'editor.bold'),
+        isTrue,
+      );
+      expect(
+        container
+            .read(searchSessionProvider)
+            .sourceSnapshot(
+              container.read(workspaceControllerProvider).activeBuffer,
+            )
+            .result
+            .options
+            .query,
+        '',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '# Alpha\nneedle alpha\n',
+      );
+      await shortcut(LogicalKeyboardKey.keyF);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      expect(container.read(searchSessionProvider).query, 'needle');
+      await shortcut(LogicalKeyboardKey.keyD, shift: true);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.documents,
+      );
+      await tester.enterText(query, 'b.md');
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      expect(container.read(searchSessionProvider).error, isNull);
+      expect(
+        (container.read(searchSessionProvider).results.single
+                as DocumentSearchResult)
+            .document
+            .filePath,
+        endsWith('/b.md'),
+      );
+      await shortcut(LogicalKeyboardKey.digit3, search: false);
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(
+        find.byKey(const ValueKey('workspace-sidebar-outline-tree')),
+        findsOneWidget,
+      );
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        'Outline navigation',
+      );
+      session.open(category: SearchCategory.outline);
+      await tester.pump();
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.outline,
+      );
+      await shortcut(LogicalKeyboardKey.keyR, shift: true);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.recent,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      await tester.tap(find.byTooltip(l10n.search));
+      await tester.pump();
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.recent,
+      );
+      session.close();
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveEditorMode(DocumentViewModePreference.editor);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.editor);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find
+            .byWidgetPredicate(
+              (widget) =>
+                  widget is TextField &&
+                  widget.controller is BusyMarkWysiwygTextController,
+            )
+            .first,
+      );
+      await shortcut(LogicalKeyboardKey.keyF);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      container.read(appRouterProvider).go('/');
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer,
+        isNotNull,
+      );
+      expect(session.categories, [
+        SearchCategory.recent,
+        SearchCategory.actions,
+      ]);
+      session.open(category: SearchCategory.actions);
+      await tester.pump();
+      expect(session.commandTarget, isNull);
+      container.read(searchSessionProvider.notifier).close();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets(
+    'unified Actions formats captured Source selection and rejects a later selection',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'cat dog\n',
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close();
+      await tester.pump();
+      final source = _searchSourceController(tester);
+      final editor = find.byWidgetPredicate(
+        (widget) => widget is TextField && identical(widget.controller, source),
+      );
+      tester.widget<TextField>(editor).focusNode!.requestFocus();
+      await tester.pump();
+      source.selection = const TextSelection(baseOffset: 0, extentOffset: 3);
+      await tester.pump();
+      Future<void> actions() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        await tester.enterText(
+          find.descendant(
+            of: find.byKey(const ValueKey('shared-search-query')),
+            matching: find.byType(TextField),
+          ),
+          'Bold',
+        );
+        await _waitForSearchCondition(
+          tester,
+          () => !container.read(searchSessionProvider).searching,
+        );
+      }
+
+      await actions();
+      final target = container
+          .read(searchSessionProvider.notifier)
+          .commandTarget;
+      expect(target, isNotNull);
+      expect(target!.context, isNotNull);
+      expect(
+        target.isCurrent(container.read(workspaceControllerProvider)),
+        isTrue,
+        reason: 'Captured Source target must remain valid after query editing',
+      );
+      expect(
+        container.read(searchSessionProvider).results.map((r) => r.identity),
+        ['editor.bold'],
+      );
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)
+            .canExecuteInContext('editor.bold', target.context),
+        isTrue,
+      );
+      final original = container.read(workspaceControllerProvider).activeText;
+      expect(original, 'cat dog\n');
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            container.read(workspaceControllerProvider).activeText ==
+            '**cat** dog\n',
+      );
+      expect(container.read(searchSessionProvider).active, isFalse);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            container.read(workspaceControllerProvider).activeText == original,
+      );
+      source.selection = const TextSelection(baseOffset: 0, extentOffset: 3);
+      await tester.pump();
+      await actions();
+      source.selection = const TextSelection(baseOffset: 4, extentOffset: 7);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(container.read(workspaceControllerProvider).activeText, original);
+      expect(container.read(searchSessionProvider).active, isTrue);
+      container.read(searchSessionProvider.notifier).close();
+      await tester.pump();
+      tester.widget<TextField>(editor).focusNode!.requestFocus();
+      await tester.pump();
+      await actions();
+      final query = find.descendant(
+        of: find.byKey(const ValueKey('shared-search-query')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(query, 'Save');
+      final controller = container.read(workspaceControllerProvider.notifier);
+      controller.updateDocumentText(
+        container.read(workspaceControllerProvider).activeBufferId!,
+        'later edit\n',
+      );
+      await _waitForSearchCondition(
+        tester,
+        () => !container.read(searchSessionProvider).searching,
+      );
+      final save = container
+          .read(searchSessionProvider)
+          .results
+          .whereType<ActionSearchResult>()
+          .singleWhere((r) => r.command.id == BusyMarkCommandIds.save);
+      final saveRow = find.byKey(ValueKey(save.identity));
+      container
+          .read(searchSessionProvider.notifier)
+          .select(
+            container
+                .read(searchSessionProvider)
+                .results
+                .indexWhere((r) => r.identity == save.identity),
+          );
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            saveRow.evaluate().isNotEmpty &&
+            tester.widget<BusyMarkSidebarRecordRow>(saveRow).onTap == null,
+      );
+      expect(
+        tester
+                .widget<BusyMarkSidebarRecordRow>(
+                  find.byKey(ValueKey(save.identity)),
+                )
+                .onTap !=
+            null,
+        isFalse,
+      );
+      tester.widget<TextField>(query).focusNode!.requestFocus();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'later edit\n',
+      );
+      container.read(searchSessionProvider.notifier).close();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets(
+    'unified search overlay retains source controller and initial hidden sidebar',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'needle\n',
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close();
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setSidebarVisible(false);
+      await tester.pump();
+      final source = _searchSourceController(tester);
+      source.selection = const TextSelection(baseOffset: 1, extentOffset: 4);
+      tester.view.physicalSize = const Size(600, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      container
+          .read(searchSessionProvider.notifier)
+          .open(category: SearchCategory.file);
+      await tester.pump();
+      expect(identical(_searchSourceController(tester), source), isTrue);
+      expect(
+        source.fullSelection,
+        const TextSelection(baseOffset: 1, extentOffset: 4),
+      );
+      expect(find.byKey(const ValueKey('search-category')), findsOneWidget);
+      expect(
+        container.read(appSettingsControllerProvider).sidebarVisible,
+        isFalse,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(
+        container.read(appSettingsControllerProvider).sidebarVisible,
+        isFalse,
+      );
+      container.read(searchSessionProvider.notifier).close();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
   testWidgets('header Search button toggles the expanded search field', (
     tester,
   ) async {
@@ -13292,8 +15686,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       }
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pump();
       await tester.enterText(find.byType(TextField), 'needle');
@@ -13360,11 +15756,14 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
   );
 
   testWidgets(
-    'workspace search native submit uses exact payload and selected sidebar occurrence',
+    'document text native submit uses exact payload and selected sidebar occurrence',
     (tester) async {
       final session = await _pumpSearchRegression(tester, headerBarService, {
         'a.md': 'cat\n cat \n cat \n',
       });
+      session.container
+          .read(searchSessionProvider.notifier)
+          .open(category: SearchCategory.file);
       session.events.add(const HeaderBarSearchSubmitted(' cat '));
       await _waitForSearchCondition(
         tester,
@@ -13443,14 +15842,21 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await _waitForSearchCondition(
         tester,
         () =>
-            _searchSourceController(tester).searchResult.currentMatchIndex == 0,
+            _searchSourceController(tester).fullSelection ==
+            const TextSelection(baseOffset: 14, extentOffset: 20),
       );
       final source = _searchSourceController(tester);
+      await _waitForSearchCondition(
+        tester,
+        () => source.searchResult.matches.any(
+          (match) => match.fullStart == 14 && match.fullEnd == 20,
+        ),
+      );
       expect(
         source.fullSelection,
         const TextSelection(baseOffset: 14, extentOffset: 20),
       );
-      expect(source.searchResult.options.query, 'needle');
+      expect(session.container.read(searchSessionProvider).query, 'needle');
       await _waitForSearchCondition(
         tester,
         () => find.text('second needle result').evaluate().isNotEmpty,
@@ -13463,6 +15869,199 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             .configuration
             .searchQuery,
         'needle',
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  for (final resourceChange in [
+    'unchanged',
+    'reopened',
+    'changed',
+    'deleted',
+  ]) {
+    testWidgets(
+      'workspace result resolves a closed clean tab: $resourceChange',
+      (tester) async {
+        final sources = {
+          'a.md': 'Before\noriginal needle result\n',
+          'b.md': '# B\n',
+        };
+        final harness = await _pumpSearchRegression(
+          tester,
+          headerBarService,
+          sources,
+        );
+        final container = harness.container;
+        final controller = container.read(workspaceControllerProvider.notifier);
+        final original = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        await controller.openActiveFile(
+          '${_SearchRegressionService.root}/b.md',
+        );
+        harness.events.add(const HeaderBarSearchQueryChanged('needle'));
+        await _waitForSearchCondition(
+          tester,
+          () =>
+              !container.read(searchSessionProvider).searching &&
+              container.read(searchSessionProvider).results.isNotEmpty,
+        );
+        final result =
+            container.read(searchSessionProvider).results.single
+                as TextSearchResult;
+        expect(result.match.bufferId, original.id);
+        final generation = container.read(searchSessionProvider).generation;
+        expect(await controller.closeDocumentBuffer(original.id), isTrue);
+        await tester.pump();
+        expect(
+          container
+              .read(workspaceControllerProvider)
+              .bufferForPath(original.filePath!),
+          isNull,
+        );
+        if (resourceChange == 'changed') {
+          sources['a.md'] = 'Changed needle content\n';
+        }
+        if (resourceChange == 'deleted') sources.remove('a.md');
+        if (resourceChange == 'reopened') {
+          expect(await controller.openActiveFile(original.filePath!), isTrue);
+          await controller.openActiveFile(
+            '${_SearchRegressionService.root}/b.md',
+          );
+        }
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(container.read(searchSessionProvider).generation, generation);
+        expect(
+          identical(
+            container.read(searchSessionProvider).results.single,
+            result,
+          ),
+          isTrue,
+        );
+        await tester.tap(find.text('original needle result'));
+        if (resourceChange == 'unchanged' || resourceChange == 'reopened') {
+          await _waitForSearchCondition(
+            tester,
+            () =>
+                container
+                        .read(workspaceControllerProvider)
+                        .activeBuffer
+                        ?.filePath ==
+                    original.filePath &&
+                _searchSourceController(tester).fullSelection ==
+                    const TextSelection(baseOffset: 16, extentOffset: 22),
+          );
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            sources['a.md'],
+          );
+          expect(
+            container
+                .read(workspaceControllerProvider)
+                .documentBuffers
+                .where((b) => b.filePath == original.filePath),
+            hasLength(1),
+          );
+        } else {
+          await _waitForSearchCondition(
+            tester,
+            () => find
+                .text(l10n.commandUnavailableInContext)
+                .evaluate()
+                .isNotEmpty,
+          );
+          expect(
+            _searchSourceController(tester).fullSelection,
+            isNot(const TextSelection(baseOffset: 16, extentOffset: 22)),
+          );
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            resourceChange == 'changed' ? sources['a.md'] : sources['b.md'],
+          );
+        }
+        expect(container.read(searchSessionProvider).query, 'needle');
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 1));
+      },
+    );
+  }
+
+  testWidgets(
+    'cancelled closed-tab result cannot navigate or publish feedback',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'original needle result\n',
+        'b.md': '# B\n',
+      });
+      final container = harness.container;
+      final controller = container.read(workspaceControllerProvider.notifier);
+      final original = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      await controller.openActiveFile('${_SearchRegressionService.root}/b.md');
+      final destination = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      harness.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            !container.read(searchSessionProvider).searching &&
+            container.read(searchSessionProvider).results.isNotEmpty,
+      );
+      expect(await controller.closeDocumentBuffer(original.id), isTrue);
+      final started = Completer<void>();
+      final release = Completer<void>();
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+      });
+      (container.read(workspaceServiceProvider) as _SearchRegressionService)
+          .beforeLoad = (path) async {
+        if (path == original.filePath) {
+          started.complete();
+          await release.future;
+        }
+      };
+      await tester.tap(find.text('original needle result'));
+      await _waitForSearchCondition(tester, () => started.isCompleted);
+      container
+          .read(searchSessionProvider.notifier)
+          .open(category: SearchCategory.actions);
+      release.complete();
+      await tester.pumpAndSettle();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeBufferId,
+        destination.id,
+      );
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .bufferForPath(original.filePath!),
+        isNull,
+      );
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.actions,
+      );
+      expect(
+        find.ancestor(
+          of: find.text(l10n.commandUnavailableInContext),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Semantics && widget.properties.liveRegion == true,
+          ),
+        ),
+        findsNothing,
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        destination.text,
       );
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 1));
@@ -13484,17 +16083,6 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final buffer = session.container
         .read(workspaceControllerProvider)
         .activeBuffer!;
-    controller.updateDocumentEditorState(
-      buffer.id,
-      buffer.editorState.copyWith(
-        searchOptions: const SourceSearchOptions(
-          query: 'old query',
-          caseSensitive: true,
-          wholeWord: true,
-          regex: true,
-        ),
-      ),
-    );
     controller.updateDocumentText(buffer.id, 'unsaved needle\n');
     await controller.openActiveFile('${_SearchRegressionService.root}/a.md');
     await tester.pump();
@@ -13521,10 +16109,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           _searchSourceController(tester).fullSelection ==
           const TextSelection(baseOffset: 6, extentOffset: 12),
     );
-    expect(
-      _searchSourceController(tester).searchResult.options.query,
-      'needle',
-    );
+    expect(session.container.read(searchSessionProvider).query, 'needle');
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
   });
@@ -13551,9 +16136,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             .isEmpty,
       );
       expect(find.text(l10n.workspaceSearchIncomplete), findsNothing);
-      final sidebarList = find.byKey(
-        const ValueKey('workspace-search-results'),
-      );
+      final sidebarList = find.byKey(const ValueKey('sidebar-search-results'));
       final scrollable = find
           .descendant(of: sidebarList, matching: find.byType(Scrollable))
           .first;
@@ -13569,50 +16152,47 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     },
   );
 
-  testWidgets('workspace search exposes skipped files and regex diagnostics', (
-    tester,
-  ) async {
-    final session = await _pumpSearchRegression(
-      tester,
-      headerBarService,
-      {
-        'a.md': 'active\n',
-        'large.md': 'large needle',
-        'unreadable.md': 'needle',
-      },
-      oversized: {'large.md'},
-      unreadable: {'unreadable.md'},
-    );
-    session.events.add(const HeaderBarSearchQueryChanged('needle'));
-    await _waitForSearchCondition(
-      tester,
-      () => find
-          .textContaining(l10n.workspaceSearchSkippedFiles)
-          .evaluate()
-          .isNotEmpty,
-    );
-    expect(find.text(l10n.noResults), findsNothing);
-    expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
-    await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
-    session.events.add(const HeaderBarSearchQueryChanged('['));
-    await _waitForSearchCondition(
-      tester,
-      () => find.text(l10n.sourceSearchInvalidRegex).evaluate().length == 2,
-    );
-    expect(find.text(l10n.noResults), findsNothing);
-    session.events.add(const HeaderBarSearchQueryChanged('^'));
-    await _waitForSearchCondition(
-      tester,
-      () =>
-          find.text(l10n.sourceSearchZeroLengthUnsupported).evaluate().length ==
-          2,
-    );
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 1));
-  });
+  testWidgets(
+    'workspace search keeps skipped-file feedback for literal punctuation',
+    (tester) async {
+      final session = await _pumpSearchRegression(
+        tester,
+        headerBarService,
+        {
+          'a.md': 'active\n',
+          'large.md': 'large needle',
+          'unreadable.md': 'needle',
+        },
+        oversized: {'large.md'},
+        unreadable: {'unreadable.md'},
+      );
+      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await _waitForSearchCondition(
+        tester,
+        () => find
+            .textContaining(l10n.workspaceSearchSkippedFiles)
+            .evaluate()
+            .isNotEmpty,
+      );
+      expect(find.text(l10n.noResults), findsNothing);
+      expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
+      session.events.add(const HeaderBarSearchQueryChanged('['));
+      await _waitForSearchCondition(
+        tester,
+        () => !session.container.read(searchSessionProvider).searching,
+      );
+      expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
+      expect(session.container.read(searchSessionProvider).results, isEmpty);
+      expect(find.text('Aa'), findsNothing);
+      expect(find.text('W'), findsNothing);
+      expect(find.text('.*'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
 
   testWidgets(
-    'workspace search cancels expensive regex while UI keeps building',
+    'workspace search cancels rapid literal queries while UI keeps building',
     (tester) async {
       final session = await _pumpSearchRegression(tester, headerBarService, {
         'a.md': 'active\n',
@@ -13620,17 +16200,8 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       });
       session.events.add(const HeaderBarSearchQueryChanged('needle'));
       await tester.pump();
-      await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
       session.events.add(const HeaderBarSearchQueryChanged(r'^(a+)+$'));
-      await tester.pump(const Duration(milliseconds: 150));
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 150)),
-      );
-      await tester.pump();
-      expect(
-        find.byKey(const ValueKey('workspace-search-progress')),
-        findsOneWidget,
-      );
+      await tester.pump(const Duration(milliseconds: 1));
       await session.container
           .read(appSettingsControllerProvider.notifier)
           .setWordWrap(false);
@@ -13638,7 +16209,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       session.events.add(const HeaderBarSearchQueryChanged('active'));
       await _waitForSearchCondition(
         tester,
-        () => find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
+        () =>
+            !session.container.read(searchSessionProvider).searching &&
+            find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
       );
       expect(
         find.byKey(const ValueKey('workspace-search-progress')),
@@ -13710,22 +16283,53 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     },
   );
 
-  testWidgets('preview search highlights preserve Unicode offsets', (
-    tester,
-  ) async {
-    final session = await _pumpSearchRegression(tester, headerBarService, {
-      'a.md': 'İ needle\n',
-    }, mode: DocumentViewModePreference.preview);
-    session.events.add(const HeaderBarSearchQueryChanged('needle'));
-    await _waitForSearchCondition(
-      tester,
-      () => find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
-    );
-    expect(tester.takeException(), isNull);
-    expect(find.text('İ needle', findRichText: true), findsWidgets);
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 1));
-  });
+  testWidgets(
+    'preview search highlights preserve Unicode offsets and literal case-insensitive matching',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'İ needle Cat catalog .*\n',
+      }, mode: DocumentViewModePreference.preview);
+      bool hasHighlight(InlineSpan span, String text) =>
+          span is TextSpan &&
+          (span.text == text && span.style?.backgroundColor != null ||
+              (span.children?.any((child) => hasHighlight(child, text)) ??
+                  false));
+      final session = harness.container.read(searchSessionProvider.notifier);
+      for (final (query, highlighted) in [
+        ('needle', ['needle']),
+        ('cat', ['Cat', 'cat']),
+        ('.*', ['.*']),
+      ]) {
+        session.query(query);
+        await _waitForSearchCondition(
+          tester,
+          () => !harness.container.read(searchSessionProvider).searching,
+        );
+        await tester.pump();
+        expect(
+          harness.container.read(searchSessionProvider).results,
+          hasLength(highlighted.length),
+        );
+        for (final text in highlighted) {
+          expect(
+            tester
+                .widgetList<RichText>(find.byType(RichText))
+                .any((rich) => hasHighlight(rich.text, text)),
+            isTrue,
+            reason:
+                '$text must use the same literal, case-insensitive matching in Reading',
+          );
+        }
+        expect(tester.takeException(), isNull);
+      }
+      expect(
+        find.text('İ needle Cat catalog .*', findRichText: true),
+        findsWidgets,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
 
   testWidgets(
     'literal workspace search bounds malformed Markdown snippets around the match',
@@ -13739,7 +16343,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         tester,
         () => find.text(l10n.searchResultLine('b.md', 2)).evaluate().isNotEmpty,
       );
-      final results = find.byKey(const ValueKey('workspace-search-results'));
+      final results = find.byKey(const ValueKey('sidebar-search-results'));
       final title = tester
           .widgetList<Text>(
             find.descendant(of: results, matching: find.byType(Text)),
@@ -14859,6 +17463,23 @@ TapGestureRecognizer? _firstTapRecognizer(InlineSpan span) {
   return null;
 }
 
+class _PendingHistoryRestoreStore extends MemoryLocalHistoryStore {
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.beforeRestore) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
+    }
+    return super.capture(request, policy);
+  }
+}
+
 class _NavigationHistoryStore extends MemoryLocalHistoryStore {
   var available = false;
   var protectiveAttempts = 0;
@@ -15346,7 +17967,11 @@ class _MutableWorkspaceController extends WorkspaceController {
   }
 
   @override
-  Future<bool> openActiveFile(String path) async {
+  Future<bool> openActiveFile(
+    String path, {
+    bool Function()? acceptNavigation,
+  }) async {
+    if (acceptNavigation?.call() == false) return false;
     openedFilePath = path;
     return true;
   }
@@ -15613,9 +18238,10 @@ GitFileStatus _gitStatusFile(
 
 Future<void> _waitForSearchCondition(
   WidgetTester tester,
-  bool Function() condition,
-) async {
-  for (var attempt = 0; attempt < 300; attempt++) {
+  bool Function() condition, {
+  int attempts = 300,
+}) async {
+  for (var attempt = 0; attempt < attempts; attempt++) {
     await tester.pump(const Duration(milliseconds: 20));
     if (condition()) return;
     await tester.runAsync(
@@ -15642,6 +18268,7 @@ _pumpSearchRegression(
   Set<String> oversized = const {},
   Set<String> unreadable = const {},
   DocumentViewModePreference mode = DocumentViewModePreference.source,
+  LocalHistoryStore? historyStore,
 }) async {
   final events = StreamController<HeaderBarSearchEvent>.broadcast();
   final settings = _MemorySettingsStore()
@@ -15658,6 +18285,8 @@ _pumpSearchRegression(
       linuxHeaderBarServiceProvider.overrideWithValue(headerBar),
       headerBarSearchEventsProvider.overrideWith((ref) => events.stream),
       localSettingsStoreProvider.overrideWithValue(settings),
+      if (historyStore != null)
+        localHistoryStoreProvider.overrideWithValue(historyStore),
       workspaceServiceProvider.overrideWithValue(
         _SearchRegressionService(
           sources,
@@ -15683,6 +18312,10 @@ _pumpSearchRegression(
         container.read(workspaceControllerProvider).activeBuffer != null &&
         find.byType(HeaderBarConfigurationPublisher).evaluate().isNotEmpty,
   );
+  container
+      .read(searchSessionProvider.notifier)
+      .open(category: SearchCategory.workspace);
+  await tester.pump();
   return (container: container, events: events);
 }
 
@@ -15704,6 +18337,7 @@ class _SearchRegressionService extends WorkspaceService {
   final Map<String, String> sources;
   final Set<String> oversized;
   final Set<String> unreadable;
+  Future<void> Function(String path)? beforeLoad;
 
   @override
   Future<Workspace> openPath(String path) async => Workspace(
@@ -15743,6 +18377,7 @@ class _SearchRegressionService extends WorkspaceService {
 
   @override
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    await beforeLoad?.call(path);
     final text = await loadText(path);
     return WorkspaceFileLoad(
       text: text,
@@ -16522,6 +19157,7 @@ Future<void> _copySettingsDictionaryDownload({
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {
+  bool failSaves = false;
   Map<String, Object?> value = <String, Object?>{};
 
   @override
@@ -16529,6 +19165,7 @@ class _MemorySettingsStore implements LocalSettingsStore {
 
   @override
   Future<void> save(Map<String, Object?> json) async {
+    if (failSaves) throw const FileSystemException('Fixture save failed');
     value = json;
   }
 }
@@ -16586,4 +19223,43 @@ class _UnavailableAccentSource implements LinuxAccentSource {
   const _UnavailableAccentSource();
   @override
   Stream<Color?> watchAccentColor() => Stream.value(null);
+}
+
+Future<void> _selectShortcutSettingsPage(WidgetTester tester) async {
+  final nav = find.byKey(
+    const ValueKey('settings-navigation-keyboardShortcuts'),
+  );
+  if (nav.evaluate().isNotEmpty) {
+    await tester.tap(nav);
+  } else {
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(SettingsScreen)),
+    );
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.keyboardShortcuts).last);
+  }
+  await tester.pumpAndSettle();
+}
+
+Future<void> _revealShortcutRow(WidgetTester tester, String id) async {
+  final list = find.byKey(const ValueKey('settings-shortcut-list'));
+  final scrollable = find
+      .descendant(of: list, matching: find.byType(Scrollable))
+      .first;
+  await tester.drag(scrollable, const Offset(0, 20000));
+  await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(
+    find.byKey(ValueKey('shortcut-edit-$id')),
+    300,
+    scrollable: scrollable,
+    maxScrolls: 100,
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _browseShortcutRow(WidgetTester tester, String id) async {
+  await _revealShortcutRow(tester, id);
+  await tester.tap(find.byKey(ValueKey('shortcut-edit-$id')));
+  await tester.pumpAndSettle();
 }

@@ -44,10 +44,8 @@ void main() {
           .register(_PanelInsertionTarget());
       await _pumpPanel(tester, container);
 
-      expect(
-        tester.widget<TextField>(find.byType(TextField)).decoration?.hintText,
-        'Search clipboard history',
-      );
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('Clipboard History'), findsOneWidget);
       final row = tester.widget<BusyMarkSidebarRecordRow>(
         find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
       );
@@ -95,55 +93,63 @@ void main() {
     expect(find.textContaining('Text ·'), findsOneWidget);
   });
 
-  testWidgets('actions menu is right of search and owns refresh and clear', (
-    tester,
-  ) async {
-    final clipboard = _PanelClipboard(
-      const RichClipboardData(text: 'current system clipboard'),
-    );
-    final container = _container(clipboard: clipboard);
-    container
-        .read(clipboardHistoryControllerProvider.notifier)
-        .retain(
-          const BusyMarkClipboardCapture(
-            kind: BusyMarkClipboardContentKind.text,
-            text: 'retained item',
-            sourceText: 'retained item',
-          ),
-        );
-    await _pumpPanel(tester, container, locale: const Locale('ar'));
+  testWidgets(
+    'header owns the trailing management menu and preserves refresh and clear',
+    (tester) async {
+      final clipboard = _PanelClipboard(
+        const RichClipboardData(text: 'current system clipboard'),
+      );
+      final container = _container(clipboard: clipboard);
+      container
+          .read(clipboardHistoryControllerProvider.notifier)
+          .retain(
+            const BusyMarkClipboardCapture(
+              kind: BusyMarkClipboardContentKind.text,
+              text: 'retained item',
+              sourceText: 'retained item',
+            ),
+          );
+      await _pumpPanel(tester, container, locale: const Locale('ar'));
 
-    final actions = find.byKey(
-      const ValueKey('clipboard-history-actions-menu'),
-    );
-    final search = find.byType(TextField);
-    final panelContext = tester.element(find.byType(ClipboardHistoryPanel));
-    final refreshLabel = MaterialLocalizations.of(
-      panelContext,
-    ).refreshIndicatorSemanticLabel;
-    final l10n = AppLocalizations.of(panelContext);
-    expect(actions, findsOneWidget);
-    expect(
-      tester.getCenter(actions).dx,
-      greaterThan(tester.getTopRight(search).dx),
-    );
-    expect(find.byTooltip(refreshLabel), findsNothing);
+      final actions = find.byKey(
+        const ValueKey('clipboard-history-actions-menu'),
+      );
+      final title = find.text(
+        AppLocalizations.of(
+          tester.element(find.byType(ClipboardHistoryPanel)),
+        ).clipboardHistory,
+      );
+      final panelContext = tester.element(find.byType(ClipboardHistoryPanel));
+      final refreshLabel = MaterialLocalizations.of(
+        panelContext,
+      ).refreshIndicatorSemanticLabel;
+      final l10n = AppLocalizations.of(panelContext);
+      expect(actions, findsOneWidget);
+      expect(
+        tester.getCenter(actions).dx,
+        lessThan(tester.getCenter(title).dx),
+      );
+      expect(find.byTooltip(refreshLabel), findsNothing);
 
-    final readsBeforeRefresh = clipboard.readCalls;
-    await tester.tap(actions);
-    await tester.pumpAndSettle();
-    expect(find.text(refreshLabel), findsOneWidget);
-    expect(find.text(l10n.clipboardClearAll), findsOneWidget);
-    await tester.tap(find.text(refreshLabel));
-    await tester.pumpAndSettle();
-    expect(clipboard.readCalls, readsBeforeRefresh + 1);
+      final readsBeforeRefresh = clipboard.readCalls;
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      expect(find.text(refreshLabel), findsOneWidget);
+      expect(find.text(l10n.clipboardClearAll), findsOneWidget);
+      await tester.tap(find.text(refreshLabel));
+      await tester.pumpAndSettle();
+      expect(clipboard.readCalls, readsBeforeRefresh + 1);
 
-    await tester.tap(actions);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.clipboardClearAll));
-    await tester.pumpAndSettle();
-    expect(container.read(clipboardHistoryControllerProvider).entries, isEmpty);
-  });
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.clipboardClearAll));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries,
+        isEmpty,
+      );
+    },
+  );
 
   testWidgets('keyboard navigation keeps the selected history entry visible', (
     tester,
@@ -185,34 +191,33 @@ void main() {
     expect(selectedRect.bottom, lessThanOrEqualTo(listRect.bottom));
   });
 
-  testWidgets('Delete edits the focused search without removing history', (
-    tester,
-  ) async {
-    final container = _container();
-    container
-        .read(clipboardHistoryControllerProvider.notifier)
-        .retain(
-          const BusyMarkClipboardCapture(
-            kind: BusyMarkClipboardContentKind.text,
-            text: 'retained entry',
-            sourceText: 'retained entry',
-          ),
-        );
-    await _pumpPanel(tester, container);
+  testWidgets(
+    'Delete and Enter on a focused menu never delete or paste a list entry',
+    (tester) async {
+      final container = _container();
+      container
+          .read(clipboardHistoryControllerProvider.notifier)
+          .retain(
+            const BusyMarkClipboardCapture(
+              kind: BusyMarkClipboardContentKind.text,
+              text: 'retained entry',
+              sourceText: 'retained entry',
+            ),
+          );
+      await _pumpPanel(tester, container);
 
-    final field = tester.widget<TextField>(find.byType(TextField));
-    await tester.tap(find.byType(TextField));
-    await tester.enterText(find.byType(TextField), 'retained');
-    field.controller!.selection = const TextSelection.collapsed(offset: 6);
-    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
-    await tester.pump();
-
-    expect(field.controller!.text, 'retaind');
-    expect(
-      container.read(clipboardHistoryControllerProvider).entries,
-      hasLength(1),
-    );
-  });
+      await tester.tap(
+        find.byKey(const ValueKey('clipboard-history-actions-menu')),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pump();
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries,
+        hasLength(1),
+      );
+    },
+  );
 
   testWidgets('unsupported payload disables paste for the destination', (
     tester,
@@ -456,9 +461,8 @@ void main() {
           .read(clipboardHistoryControllerProvider.notifier)
           .refreshCurrentClipboard();
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).first, 'External');
-      await tester.pumpAndSettle();
-      await _openEntryActions(tester);
+      expect(find.byType(TextField), findsNothing);
+      await _openEntryActions(tester, index: 1);
       await tester.tap(find.text('Paste'));
       await tester.pumpAndSettle();
       expect(target.payloads, hasLength(2));
@@ -608,13 +612,13 @@ void main() {
   });
 }
 
-Future<void> _openEntryActions(WidgetTester tester) async {
+Future<void> _openEntryActions(WidgetTester tester, {int index = 0}) async {
   final actions = find.descendant(
     of: find.byKey(const ValueKey('clipboard-history-list')),
     matching: find.byTooltip(AppLocalizationsEn().actions),
   );
-  expect(actions, findsOneWidget);
-  await tester.tap(actions);
+  expect(actions, findsWidgets);
+  await tester.tap(actions.at(index));
   await tester.pumpAndSettle();
 }
 

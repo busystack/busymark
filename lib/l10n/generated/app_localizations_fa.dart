@@ -582,15 +582,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get keyboardShortcuts => 'میانبرهای صفحه‌کلید';
 
   @override
-  String get commandPalette => 'پالت فرمان';
-
-  @override
-  String get commandPaletteHint => 'یک فرمان وارد کنید';
-
-  @override
-  String get commandPaletteEmpty => 'هیچ فرمان منطبقی وجود ندارد';
-
-  @override
   String get commandUnavailableInContext =>
       'این فرمان در زمینهٔ فعلی در دسترس نیست.';
 
@@ -808,7 +799,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'نمایش مرجع میانبرهای صفحه‌کلید';
+      'سفارشی‌سازی میان‌برهای صفحه‌کلید برنامه';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'باز کردن راهنمای نحو';
@@ -1053,7 +1044,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get validateOnEdit => 'اعتبارسنجی هنگام ویرایش';
 
   @override
-  String get clearRecentWorkspaces => 'پاک کردن فضاهای کاری اخیر';
+  String get clearRecentWorkspaces => 'پاک کردن تاریخچهٔ اخیر';
 
   @override
   String get editingButtonsPosition => 'موقعیت دکمه‌های ویرایش';
@@ -1879,15 +1870,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sourceSearchNextMatch => 'تطابق بعدی';
 
   @override
-  String get sourceSearchCaseSensitive => 'حساس به بزرگی و کوچکی حروف';
-
-  @override
-  String get sourceSearchWholeWord => 'تمام کلمه';
-
-  @override
-  String get sourceSearchRegex => 'عبارت منظم';
-
-  @override
   String get sourceSearchReplacement => 'جایگزینی با';
 
   @override
@@ -2012,13 +1994,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get saveAs => 'ذخیره با نام';
-
-  @override
-  String get sourceSearchInvalidRegex => 'عبارت منظم نامعتبر است';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'تطبیق‌های با طول صفر در عبارت منظم پشتیبانی نمی‌شوند (مانند ^، \$ یا نگاه‌به‌جلو که فقط با یک موقعیت تطبیق دارد).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4397,9 +4372,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get clipboardHistory => 'تاریخچه کپی و پیست';
 
   @override
-  String get clipboardHistorySearchHint => 'جستجو در تاریخچه کلیپ‌بورد';
-
-  @override
   String get clipboardHistoryDescription =>
       'باز کردن تاریخچه کپی و پیست مخصوص جلسه.';
 
@@ -4419,10 +4391,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'تاریخچه کپی و پیست خالی است.';
-
-  @override
-  String get clipboardNoMatches =>
-      'هیچ آیتم کپی و پیستی با این جستجو مطابقت ندارد.';
 
   @override
   String get clipboardDisabled =>
@@ -4479,13 +4447,6 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'این سند دارای هیچ نسخه‌ای از تاریخ محلی نیست.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'هیچ نسخه‌ای از تاریخ محلی با این جستجو مطابقت ندارد.';
-
-  @override
-  String get localHistorySearchHint => 'جستجو در تاریخچه محلی';
 
   @override
   String get localHistorySelectedRevision => 'نسخه انتخاب شده';
@@ -5434,4 +5395,178 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.';
+
+  @override
+  String get searchDocumentsCategory => 'سندها';
+
+  @override
+  String get searchTopicsCategory => 'موضوع‌ها';
+
+  @override
+  String get searchCurrentDocument => 'سند کنونی';
+
+  @override
+  String get searchCurrentWorkspace => 'فضای کاری کنونی';
+
+  @override
+  String get browseNotes => 'مرور یادداشت‌ها';
+
+  @override
+  String get searchActionsCommand => 'جستجوی کنش‌ها';
+
+  @override
+  String get searchDocumentsCommand => 'جستجوی سندها';
+
+  @override
+  String get searchTopicsCommand => 'جستجوی موضوع‌ها';
+
+  @override
+  String get searchRecentCommand => 'جستجوی موارد اخیر';
+
+  @override
+  String get searchResourceUnavailable => 'این منبع در دسترس نیست.';
+
+  @override
+  String get notesSync => 'همگام‌سازی یادداشت‌ها';
+
+  @override
+  String get searchInWorkspace => 'جستجو در فضای کاری';
+
+  @override
+  String get searchCategory => 'دستهٔ جستجو';
+
+  @override
+  String get clearHistorySearchScope => 'جستجو در تاریخچهٔ سندها';
+
+  @override
+  String get searchInDocument => 'جستجو در سند';
+
+  @override
+  String get searchDocumentHint => 'جستجو در این سند…';
+
+  @override
+  String get searchWorkspaceHint => 'جستجو در این فضای کاری…';
+
+  @override
+  String get searchOutlineHint => 'جستجوی عنوان‌ها…';
+
+  @override
+  String get searchHistoryHint => 'جستجو در تاریخچهٔ محلی…';
+
+  @override
+  String get searchEnterText => 'متن جستجو را وارد کنید';
+
+  @override
+  String get searchAccountUnavailable => 'حساب در دسترس نیست';
+
+  @override
+  String get searchDocumentsHint => 'جستجوی سندها…';
+
+  @override
+  String get searchTopicsHint => 'جستجوی موضوع‌ها…';
+
+  @override
+  String get searchRecentHint => 'جستجوی موارد اخیر…';
+
+  @override
+  String get searchActionsHint => 'جستجوی کنش‌ها…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'به فضای کاری یادداشت‌ها نیاز دارد';
+
+  @override
+  String get searchSidebarLabel => 'جستجو:';
+
+  @override
+  String get searchDocumentTextCategory => 'متن سند';
+
+  @override
+  String get searchWorkspaceTextCategory => 'متن فضای کاری';
+
+  @override
+  String get searchHeadingsCategory => 'عنوان‌ها';
+
+  @override
+  String get shortcutUnassigned => 'تخصیص داده نشده';
+
+  @override
+  String get shortcutPressKeys => 'یک ترکیب کلید را فشار دهید…';
+
+  @override
+  String get shortcutRecord => 'ثبت میان‌بر';
+
+  @override
+  String get shortcutRestoreAll => 'بازیابی همهٔ پیش‌فرض‌ها';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'میان‌برهای پیش‌فرض همهٔ کنش‌ها بازیابی شوند؟ تخصیص‌های سفارشی حذف می‌شوند.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'میان‌برها فعال‌اند اما ذخیره نشدند. برای حفظ آن‌ها پس از راه‌اندازی مجدد، دوباره ذخیره کنید.';
+
+  @override
+  String get shortcutRetry => 'تلاش دوباره برای ذخیره';
+
+  @override
+  String get shortcutChanged =>
+      'تخصیص‌ها تغییر کرده‌اند. میان‌برهای فعلی را بررسی و دوباره تلاش کنید.';
+
+  @override
+  String get shortcutInvalid => 'این ترکیب را نمی‌توان در این زمینه تخصیص داد.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'ممکن است میزکار از این ترکیب استفاده کند. BusyMark نمی‌تواند میان‌برهای سیستم را بازنویسی کند.';
+
+  @override
+  String get shortcutConflicts => 'این میان‌بر با کنش‌های زیر تداخل دارد:';
+
+  @override
+  String get shortcutRemove => 'حذف تخصیص';
+
+  @override
+  String get shortcutRestoreDefault => 'بازیابی پیش‌فرض';
+
+  @override
+  String get shortcutAssign => 'تخصیص';
+
+  @override
+  String get shortcutReassign => 'تخصیص مجدد';
+
+  @override
+  String get shortcutContextApplication => 'برنامه';
+
+  @override
+  String get shortcutContextDocument => 'نماهای سند';
+
+  @override
+  String get shortcutContextEditor => 'ویرایشگر و منبع';
+
+  @override
+  String get shortcutContextWritersideSource => 'منبع Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'پیمایش فضای کاری';
+
+  @override
+  String get shortcutContextTree => 'درخت‌های نوار کناری';
+
+  @override
+  String get searchHeadingsCommand => 'جستجوی عنوان‌ها';
+
+  @override
+  String get shortcutFixed => 'توسط ویرایشگر مدیریت می‌شود؛ قابل تنظیم نیست.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'میان‌بر پیش‌فرض با تخصیص سفارشی تداخل دارد.';
+
+  @override
+  String get shortcutCurrentBinding => 'میان‌بر فعلی';
+
+  @override
+  String get shortcutProposedBinding => 'میان‌بر پیشنهادی';
 }
