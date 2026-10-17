@@ -369,7 +369,30 @@ class OwnedInputIsolationTest(unittest.TestCase):
         from application_close_smoke import check_input_isolation
         with self.assertRaisesRegex(ObservationIncomplete, 'acquired keyboard focus'):
             check_input_isolation(dict(errors=[], keyPresses=0, keyReleases=0,
-                                       activeSamples=1))
+                                       activeSamples=1, focusSamples=1))
+
+    def test_activation_is_distinct_from_core_keyboard_focus(self):
+        from application_close_smoke import check_input_isolation
+        with self.assertRaisesRegex(ObservationIncomplete, 'became active'):
+            check_input_isolation(dict(errors=[], keyPresses=0, keyReleases=0,
+                                       activeSamples=1, focusSamples=0))
+
+    def test_normal_focus_audit_accepts_focus_without_unexpected_input(self):
+        from application_close_smoke import check_owned_input
+        check_owned_input(dict(errors=[], keyPresses=0, keyReleases=0,
+                               activeSamples=1, focusSamples=1))
+
+    def test_normal_focus_audit_still_rejects_input(self):
+        from application_close_smoke import check_owned_input
+        with self.assertRaisesRegex(RuntimeError, 'Unexpected keyboard'):
+            check_owned_input(dict(errors=[], keyPresses=1, keyReleases=0,
+                                   activeSamples=1, focusSamples=1))
+
+    def test_missing_core_focus_observation_is_incomplete(self):
+        from application_close_smoke import check_owned_input
+        with self.assertRaisesRegex(ObservationIncomplete, 'focus observation missing'):
+            check_owned_input(dict(errors=[], keyPresses=0, keyReleases=0,
+                                   activeSamples=0))
 
     def test_only_owned_events_are_counted_without_key_payload_and_details_are_bounded(self):
         from application_close_smoke import OwnedInputAudit, InputEvent
