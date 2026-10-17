@@ -508,7 +508,7 @@ Recent documents and workspaces, including individual offline-created notes.
 Ctrl+F searches the current note's in-memory text. Ctrl+Shift+F and the Notes
 sidebar Search button explicitly choose Workspace Text and use the
 existing indexed Notes search. Terms combine with AND; quote a phrase, use `title:meeting` or
-`category:"Work/Team"`, and select Whole word when needed. Ordinary punctuation,
+`category:"Work/Team"`. Ordinary punctuation,
 SQL/FTS operators and wildcard characters are literal. Partial terms, short
 queries, Unicode and decomposed accents are supported. Results include local
 unsynchronized text and overlay dirty open buffers without saving. Results show
