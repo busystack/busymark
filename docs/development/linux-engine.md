@@ -74,6 +74,13 @@ python3 tools/application_close_smoke.py --output /absolute/new/evidence \
   build/linux/x64/release/bundle/busymark
 ```
 
+For unattended plain-window probes on the physical X11 desktop, add
+`--isolate-input`. The observer sets the identified window’s ICCCM input hint
+before mapping and counts key events only in that window subtree. It rejects
+focus acquisition, unexpected input, and incomplete observation. It never grabs
+input or records key values. Interactive compiled-fixture scenarios use their
+existing application-owned event checks instead.
+
 Use the normal authenticated desktop for production timing. Xvfb/Wayland
 headless checks establish compatibility only. The close observer hashes the
 owned process's pinned mapped library after exit, preserving timing and rejecting

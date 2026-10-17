@@ -350,5 +350,52 @@ os._exit(0)
         self.assertFalse(accepted(record))
 
 
+class OwnedInputIsolationTest(unittest.TestCase):
+    def test_unavailable_input_observation_is_incomplete(self):
+        from application_close_smoke import check_input_isolation
+        with self.assertRaises(ObservationIncomplete):
+            check_input_isolation(dict(errors=['X selection failed'], keyPresses=0,
+                                       keyReleases=0, activeSamples=0))
+
+    def test_keyboard_interference_stays_failed_even_after_successful_cleanup(self):
+        from application_close_smoke import check_input_isolation
+        result = dict(errors=[], keyPresses=1, keyReleases=1, activeSamples=0)
+        with self.assertRaisesRegex(RuntimeError, 'Unexpected keyboard') as error:
+            check_input_isolation(result)
+        self.assertFalse(accepted({'exitCode': 0, 'error': str(error.exception),
+                                   'cleanupOutcomes': [{'terminationVerified': True}]}))
+
+    def test_focus_acquisition_does_not_count_as_verified_isolation(self):
+        from application_close_smoke import check_input_isolation
+        with self.assertRaisesRegex(ObservationIncomplete, 'acquired keyboard focus'):
+            check_input_isolation(dict(errors=[], keyPresses=0, keyReleases=0,
+                                       activeSamples=1))
+
+    def test_only_owned_events_are_counted_without_key_payload_and_details_are_bounded(self):
+        from application_close_smoke import OwnedInputAudit, InputEvent
+        audit = OwnedInputAudit.__new__(OwnedInputAudit)
+        audit.windows = {123}
+        audit.events = []
+        audit.key_presses = audit.key_releases = 0
+        event = InputEvent()
+        event.any.type, event.any.window = 2, 999
+        audit.observe(event)
+        self.assertEqual(audit.key_presses, 0)
+        self.assertFalse(audit.events)
+        event.any.window = 123
+        for _ in range(100):
+            audit.observe(event)
+        self.assertEqual(audit.key_presses, 100)
+        self.assertEqual(len(audit.events), 16)
+        self.assertEqual(set(audit.events[0]), {'kind', 'synthetic', 'observed_ns'})
+
+    def test_close_does_not_send_a_request_after_unexpected_input(self):
+        desktop = Desktop.__new__(Desktop)
+        desktop.input_audit = SimpleNamespace(result=lambda: dict(
+            errors=[], keyPresses=1, keyReleases=0, activeSamples=0))
+        with self.assertRaisesRegex(RuntimeError, 'Unexpected keyboard'):
+            desktop.close(SimpleNamespace(get_xid=lambda: 123))
+
+
 if __name__ == "__main__":
     unittest.main()
