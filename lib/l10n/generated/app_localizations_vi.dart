@@ -5440,9 +5440,6 @@ class AppLocalizationsVi extends AppLocalizations {
       'Yêu cầu không gian làm việc Ghi chú';
 
   @override
-  String get searchRecentEmpty => 'Không có tài nguyên gần đây';
-
-  @override
   String get searchSidebarLabel => 'Tìm kiếm:';
 
   @override
@@ -5526,4 +5523,20 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Cây thanh bên';
+
+  @override
+  String get searchHeadingsCommand => 'Tìm tiêu đề';
+
+  @override
+  String get shortcutFixed => 'Do trình soạn thảo quản lý; không thể cấu hình.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Phím tắt mặc định xung đột với gán tùy chỉnh.';
+
+  @override
+  String get shortcutCurrentBinding => 'Phím tắt hiện tại';
+
+  @override
+  String get shortcutProposedBinding => 'Phím tắt đề xuất';
 }

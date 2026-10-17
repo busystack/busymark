@@ -5146,7 +5146,6 @@
   "searchRecentHint": "Cari terbaru…",
   "searchActionsHint": "Cari tindakan…",
   "searchRequiresNotesWorkspace": "Memerlukan ruang kerja Catatan",
-  "searchRecentEmpty": "Tidak ada sumber daya terbaru",
   "searchSidebarLabel": "Cari:",
   "searchDocumentTextCategory": "Teks dokumen",
   "searchWorkspaceTextCategory": "Teks ruang kerja",
@@ -5173,5 +5172,10 @@
   "shortcutContextEditor": "Editor dan sumber",
   "shortcutContextWritersideSource": "Sumber Writerside",
   "shortcutContextWorkspace": "Navigasi ruang kerja",
-  "shortcutContextTree": "Pohon bilah samping"
+  "shortcutContextTree": "Pohon bilah samping",
+  "searchHeadingsCommand": "Cari judul",
+  "shortcutFixed": "Dikelola oleh editor; tidak dapat dikonfigurasi.",
+  "shortcutDefaultConflict": "Pintasan bawaan bertentangan dengan penetapan khusus.",
+  "shortcutCurrentBinding": "Pintasan saat ini",
+  "shortcutProposedBinding": "Pintasan yang diusulkan"
 }

@@ -1250,11 +1250,11 @@ void main() {
       r'InputDecorationThemeData busyMarkGroupedInputDecorationTheme',
     ).firstMatch(design)!.group(0)!;
     expect(selector, contains('BusyMarkMenuButton<T>('));
-    expect(selector, contains('Theme.of(context).outlinedButtonTheme.style'));
-    expect(
-      selector,
-      contains('side: const WidgetStatePropertyAll(BorderSide.none)'),
-    );
+    expect(selector, isNot(contains('outlinedButtonTheme.style')));
+    expect(selector, isNot(contains('contentPadding')));
+    expect(selector, contains('shortcut: option.shortcut'));
+    expect(selector, contains('gtkAccelerator: option.gtkAccelerator'));
+    expect(selector, isNot(contains('BorderSide.none')));
     expect(selector, contains('BusyMarkPopupMenuItem<T>('));
     expect(selector, contains('softWrap: maxLabelLines > 1'));
     expect(selector, contains('this.maxLabelLines = 1'));

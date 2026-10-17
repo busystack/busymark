@@ -138,7 +138,43 @@ BusyMarkCommandRegistry effectiveCommandRegistry(
   Map<String, BusyMarkKeyBinding?> overrides,
 ) {
   final valid = validatedShortcutOverrides(defaults, overrides);
-  return valid.isEmpty ? defaults : defaults.withOverrides(valid);
+  final deferred = deferredDefaultConflicts(defaults, valid);
+  return valid.isEmpty && deferred.isEmpty
+      ? defaults
+      : defaults.withOverrides({
+          ...valid,
+          for (final id in deferred.keys) id: null,
+        });
+}
+
+/// Newly supplied defaults must not take a previously saved user binding.
+/// This is derived runtime state, never an extra persisted override. Settings
+/// exposes these conflicts and resolves them through the usual transaction.
+Map<String, List<BusyMarkCommand>> deferredDefaultConflicts(
+  BusyMarkCommandRegistry defaults,
+  Map<String, BusyMarkKeyBinding?> overrides,
+) {
+  final result = <String, List<BusyMarkCommand>>{};
+  for (final command in defaults.commands) {
+    final binding = defaultBinding(command);
+    if (!command.defaultYieldsToOverrides ||
+        overrides.containsKey(command.id) ||
+        binding == null) {
+      continue;
+    }
+    final conflicts = <BusyMarkCommand>[];
+    for (final entry in overrides.entries) {
+      final other = defaults[entry.key];
+      if (other != null &&
+          entry.value == binding &&
+          shortcutAssignmentAllowed(other, binding) &&
+          BusyMarkCommandRegistry.contextsOverlap(command, other)) {
+        conflicts.add(other);
+      }
+    }
+    if (conflicts.isNotEmpty) result[command.id] = conflicts;
+  }
+  return result;
 }
 
 /// Resolve all assignments together: a later override may free an earlier
@@ -158,16 +194,18 @@ Map<String, BusyMarkKeyBinding?> validatedShortcutOverrides(
     }
   }
   while (true) {
+    final deferred = deferredDefaultConflicts(defaults, valid);
     final bindings = <BusyMarkKeyBinding, List<BusyMarkCommand>>{};
     for (final command in defaults.commands) {
       final effective = valid.containsKey(command.id)
           ? [if (valid[command.id] case final value?) value]
           : [
-              for (final a
-                  in defaults
-                      .activators(command.id)
-                      .whereType<SingleActivator>())
-                BusyMarkKeyBinding.fromActivator(a),
+              if (!deferred.containsKey(command.id))
+                for (final a
+                    in defaults
+                        .activators(command.id)
+                        .whereType<SingleActivator>())
+                  BusyMarkKeyBinding.fromActivator(a),
             ];
       for (final binding in effective) {
         (bindings[binding] ??= []).add(command);

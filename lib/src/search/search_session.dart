@@ -41,12 +41,18 @@ enum SearchCategory {
 const searchCommandDestinations = <String, SearchCategory>{
   BusyMarkCommandIds.search: SearchCategory.file,
   BusyMarkCommandIds.searchWorkspace: SearchCategory.workspace,
+  BusyMarkCommandIds.searchHeadings: SearchCategory.outline,
   BusyMarkCommandIds.quickOpen: SearchCategory.documents,
   BusyMarkCommandIds.searchTopics: SearchCategory.topics,
   BusyMarkCommandIds.searchRecent: SearchCategory.recent,
   BusyMarkCommandIds.findLocalHistory: SearchCategory.localHistory,
   BusyMarkCommandIds.commandPalette: SearchCategory.actions,
 };
+
+String searchCommandForCategory(SearchCategory category) =>
+    searchCommandDestinations.entries
+        .singleWhere((e) => e.value == category)
+        .key;
 
 /// A result is qualified by its owning workspace/account, never a synthetic path.
 sealed class SidebarSearchResult {
@@ -209,8 +215,7 @@ class SearchSessionState {
     _ => query.trim().isEmpty,
   };
   bool get showingInitialList =>
-      queryIsEmpty &&
-      (category == SearchCategory.recent || category == SearchCategory.actions);
+      queryIsEmpty && category == SearchCategory.actions;
   bool get waitingForInput => queryIsEmpty && !showingInitialList;
   bool get fileActive => active && category == SearchCategory.file;
   bool get workspaceActive => active && category == SearchCategory.workspace;
@@ -665,6 +670,14 @@ class SearchSessionController extends Notifier<SearchSessionState> {
         _schedule();
       }
     });
+  }
+
+  void openCategory(SearchCategory category) {
+    if (category == SearchCategory.localHistory) {
+      openHistory();
+    } else {
+      open(category: category);
+    }
   }
 
   void openHistory({String? documentId}) {

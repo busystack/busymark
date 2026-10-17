@@ -5298,9 +5298,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'ノートのワークスペースが必要です';
 
   @override
-  String get searchRecentEmpty => '最近のリソースはありません';
-
-  @override
   String get searchSidebarLabel => '検索：';
 
   @override
@@ -5383,4 +5380,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'サイドバーのツリー';
+
+  @override
+  String get searchHeadingsCommand => '見出しを検索';
+
+  @override
+  String get shortcutFixed => 'エディターが管理するため、変更できません。';
+
+  @override
+  String get shortcutDefaultConflict => '既定のショートカットがカスタム割り当てと競合しています。';
+
+  @override
+  String get shortcutCurrentBinding => '現在のショートカット';
+
+  @override
+  String get shortcutProposedBinding => '新しいショートカット';
 }

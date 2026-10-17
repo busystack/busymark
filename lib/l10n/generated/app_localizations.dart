@@ -9354,12 +9354,6 @@ abstract class AppLocalizations {
   /// **'Requires a Notes workspace'**
   String get searchRequiresNotesWorkspace;
 
-  /// No description provided for @searchRecentEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No recent resources'**
-  String get searchRecentEmpty;
-
   /// Search and keyboard shortcut settings: searchSidebarLabel
   ///
   /// In en, this message translates to:
@@ -9521,6 +9515,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sidebar trees'**
   String get shortcutContextTree;
+
+  /// No description provided for @searchHeadingsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Headings'**
+  String get searchHeadingsCommand;
+
+  /// No description provided for @shortcutFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Handled by the editor; not configurable.'**
+  String get shortcutFixed;
+
+  /// No description provided for @shortcutDefaultConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Default shortcut conflicts with a custom assignment.'**
+  String get shortcutDefaultConflict;
+
+  /// No description provided for @shortcutCurrentBinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Current shortcut'**
+  String get shortcutCurrentBinding;
+
+  /// No description provided for @shortcutProposedBinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposed shortcut'**
+  String get shortcutProposedBinding;
 }
 
 class _AppLocalizationsDelegate

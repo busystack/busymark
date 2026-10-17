@@ -340,8 +340,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         context.go(settingsLocation(SettingsReturnTarget.welcome));
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
-      case HeaderBarAction.keyboardShortcuts:
-        openKeyboardShortcutsSettings(context);
       case HeaderBarAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case HeaderBarAction.reportIssue:
@@ -394,8 +392,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.welcome));
-      case BusyMarkMainMenuAction.keyboardShortcuts:
-        openKeyboardShortcutsSettings(context);
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:

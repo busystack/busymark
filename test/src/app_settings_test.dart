@@ -14,6 +14,87 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'new search defaults preserve saved assignments and resolve explicitly',
+    () async {
+      const y = BusyMarkKeyBinding(
+        LogicalKeyboardKey.keyY,
+        control: true,
+        alt: true,
+      );
+      const h = BusyMarkKeyBinding(
+        LogicalKeyboardKey.keyH,
+        control: true,
+        alt: true,
+      );
+      const k = BusyMarkKeyBinding(
+        LogicalKeyboardKey.keyK,
+        control: true,
+        alt: true,
+      );
+      final store = _KeymapStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              shortcutOverrides: {
+                'editor.bold': y,
+                'editor.italic': h,
+                'help.keyboardShortcuts': k,
+              },
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      Map<String, BusyMarkKeyBinding?> current() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      BusyMarkCommandRegistry effective() =>
+          effectiveCommandRegistry(BusyMarkCommandCatalog.metadata, current());
+      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Alt+Y');
+      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Alt+H');
+      expect(effective()['history.findLocal']!.shortcut, isNull);
+      expect(effective()['search.headings']!.shortcut, isNull);
+      expect(
+        effective()['help.keyboardShortcuts']!.shortcut!.label,
+        'Ctrl+Alt+K',
+      );
+      expect(
+        current().containsKey('history.findLocal'),
+        isFalse,
+        reason: 'No invented persisted override',
+      );
+      final controller = container.read(keymapControllerProvider.notifier);
+      final refused = await controller.update(
+        'history.findLocal',
+        null,
+        reset: true,
+        expected: current(),
+      );
+      expect(refused.status, KeymapUpdateStatus.conflict);
+      expect(refused.conflicts.map((c) => c.id), ['editor.bold']);
+      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Alt+Y');
+      final accepted = await controller.update(
+        'history.findLocal',
+        null,
+        reset: true,
+        expected: current(),
+        reassign: {'editor.bold'},
+      );
+      expect(accepted.status, KeymapUpdateStatus.saved);
+      expect(effective()['editor.bold']!.shortcut, isNull);
+      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Alt+Y');
+      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Alt+H');
+      expect(current().containsKey('search.headings'), isFalse);
+      await controller.resetAll();
+      expect(effective()['search.headings']!.shortcut!.label, 'Ctrl+Alt+H');
+      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Alt+Y');
+      expect(effective()['help.keyboardShortcuts']!.shortcut, isNull);
+    },
+  );
+
+  test(
     'successive keymap edits resolve defaults regardless of record position',
     () async {
       final store = _KeymapStore();

@@ -5496,9 +5496,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Richiede uno spazio di lavoro Note';
 
   @override
-  String get searchRecentEmpty => 'Nessuna risorsa recente';
-
-  @override
   String get searchSidebarLabel => 'Ricerca:';
 
   @override
@@ -5585,4 +5582,20 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Alberi laterali';
+
+  @override
+  String get searchHeadingsCommand => 'Cerca titoli';
+
+  @override
+  String get shortcutFixed => 'Gestito dall’editor; non configurabile.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'La scorciatoia predefinita è in conflitto con un’assegnazione personalizzata.';
+
+  @override
+  String get shortcutCurrentBinding => 'Scorciatoia attuale';
+
+  @override
+  String get shortcutProposedBinding => 'Scorciatoia proposta';
 }

@@ -642,6 +642,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
+    final unmodified =
+        !keyboard.isControlPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isMetaPressed &&
+        !keyboard.isShiftPressed;
     if (_autocompleteSuggestions.isNotEmpty) {
       if (key == LogicalKeyboardKey.arrowDown) {
         _moveAutocompleteSelection(1);
@@ -651,7 +656,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         _moveAutocompleteSelection(-1);
         return KeyEventResult.handled;
       }
-      if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.tab) {
+      if (unmodified &&
+          (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.tab)) {
         _applyAutocomplete(_autocompleteSuggestions[_autocompleteSelection]);
         return KeyEventResult.handled;
       }
@@ -767,7 +773,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _outdentSelection();
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.enter && !keyboard.isShiftPressed) {
+    if (key == LogicalKeyboardKey.enter && unmodified) {
       _applyFullEditingValue(SourceCommands.smartEnter(_fullEditingValue()));
       return KeyEventResult.handled;
     }
@@ -842,6 +848,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                   child: BusyMarkCommandShortcuts(
                     isComposing: () => _controller.value.composing.isValid,
                     shortcuts: {
+                      // Other text-editing bindings are dispatched by the
+                      // source input handler. Select All uses the existing
+                      // full-source action, including folded content.
+                      for (final activator
+                          in (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                                  BusyMarkCommandCatalog.metadata)
+                              .activators(BusyMarkCommandIds.textSelectAll))
+                        activator: const BusyMarkContextCommandIntent(
+                          BusyMarkCommandIds.textSelectAll,
+                        ),
                       ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
                               BusyMarkCommandCatalog.metadata)
                           .blockedDefaultIntents({

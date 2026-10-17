@@ -3658,7 +3658,6 @@
   "searchRecentHint": "جستجوی موارد اخیر…",
   "searchActionsHint": "جستجوی کنش‌ها…",
   "searchRequiresNotesWorkspace": "به فضای کاری یادداشت‌ها نیاز دارد",
-  "searchRecentEmpty": "منبع اخیراً بازشده‌ای وجود ندارد",
   "searchSidebarLabel": "جستجو:",
   "searchDocumentTextCategory": "متن سند",
   "searchWorkspaceTextCategory": "متن فضای کاری",
@@ -3685,5 +3684,10 @@
   "shortcutContextEditor": "ویرایشگر و منبع",
   "shortcutContextWritersideSource": "منبع Writerside",
   "shortcutContextWorkspace": "پیمایش فضای کاری",
-  "shortcutContextTree": "درخت‌های نوار کناری"
+  "shortcutContextTree": "درخت‌های نوار کناری",
+  "searchHeadingsCommand": "جستجوی عنوان‌ها",
+  "shortcutFixed": "توسط ویرایشگر مدیریت می‌شود؛ قابل تنظیم نیست.",
+  "shortcutDefaultConflict": "میان‌بر پیش‌فرض با تخصیص سفارشی تداخل دارد.",
+  "shortcutCurrentBinding": "میان‌بر فعلی",
+  "shortcutProposedBinding": "میان‌بر پیشنهادی"
 }

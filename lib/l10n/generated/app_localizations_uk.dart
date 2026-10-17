@@ -5517,9 +5517,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Потрібен робочий простір нотаток';
 
   @override
-  String get searchRecentEmpty => 'Немає нещодавніх ресурсів';
-
-  @override
   String get searchSidebarLabel => 'Пошук:';
 
   @override
@@ -5604,4 +5601,20 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Дерева бічної панелі';
+
+  @override
+  String get searchHeadingsCommand => 'Пошук заголовків';
+
+  @override
+  String get shortcutFixed => 'Керується редактором; налаштування недоступне.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Типове сполучення конфліктує з користувацьким призначенням.';
+
+  @override
+  String get shortcutCurrentBinding => 'Поточне сполучення';
+
+  @override
+  String get shortcutProposedBinding => 'Запропоноване сполучення';
 }

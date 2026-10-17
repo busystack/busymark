@@ -5448,9 +5448,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Notlar çalışma alanı gerektirir';
 
   @override
-  String get searchRecentEmpty => 'Son kullanılan kaynak yok';
-
-  @override
   String get searchSidebarLabel => 'Ara:';
 
   @override
@@ -5534,4 +5531,21 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Kenar çubuğu ağaçları';
+
+  @override
+  String get searchHeadingsCommand => 'Başlıklarda Ara';
+
+  @override
+  String get shortcutFixed =>
+      'Düzenleyici tarafından yönetilir; yapılandırılamaz.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Varsayılan kısayol özel bir atamayla çakışıyor.';
+
+  @override
+  String get shortcutCurrentBinding => 'Geçerli kısayol';
+
+  @override
+  String get shortcutProposedBinding => 'Önerilen kısayol';
 }

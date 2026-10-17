@@ -2,27 +2,29 @@
 
 Search uses one query field in the header and one results sidebar. The compact
 native-styled **Search:** selector above the results selects a category.
-Normal Files, Topics,
-Notes and other browsing remain available when search closes. At narrow window
-sizes the same sidebar temporarily overlays the leading side of the document.
+Normal Files, Topics, Notes and other browsing remain available when search
+closes. At narrow window sizes the same sidebar temporarily overlays the leading
+side of the document.
 
 | Category | Scope | Shortcut |
 | --- | --- | --- |
 | Document Text | Active document’s current buffer | Ctrl+F |
 | Workspace Text | Current local workspace or Notes account | Ctrl+Shift+F |
-| Headings | Headings in the current document | Explicit category selection |
+| Headings | Headings in the current document | Ctrl+Alt+H |
 | Documents | Names, paths or Notes titles/categories in the active workspace | Ctrl+P |
 | Topics | Topics across the current Writerside project, including outside the selected TOC | Ctrl+Shift+T |
 | Recent | Chronological document and workspace history | Ctrl+Alt+O |
-| Local History | Retained document names, historical paths and revision contents | Find in Local History… |
+| Local History | Retained document names, historical paths and revision contents | Ctrl+Alt+Y |
 | Actions | Application commands, including commands without shortcuts | Ctrl+Shift+P |
 
 Categories appear in that order; unavailable categories are omitted. Welcome
 provides Recent and Actions. Retained documents behind Welcome are not search
 or action targets. There is no combined category or search-results dialog.
-**Ctrl+Alt+K** opens **Settings → Keyboard Shortcuts**. The Keyboard Shortcuts
-main-menu entry and action open the same page and preserve the Settings return
-destination. The shortcuts listed here are defaults; assignments can be changed.
+**Settings → Keyboard Shortcuts** configures bindings. Its Actions command is
+unassigned by default and opens the same Settings page, preserving the return
+destination. It has no standalone main-menu entry or built-in shortcut. Explicit
+user assignments remain available. The shortcuts listed here are defaults;
+assignments can be changed.
 
 The Search icon toggles search and restores the last applicable category.
 A category shortcut always opens its designated category and focuses the query;
@@ -79,6 +81,9 @@ filter or change that browsing state.
 Topics searches source titles, topic IDs, filenames and project-relative paths
 across modules. Rows distinguish module ownership and open the actual topic.
 
+Recent rows show a resource name and a shortened trailing location on two lines.
+The tooltip, accessible description and Copy Path retain the complete location.
+
 Recent is one chronological collection of documents and workspaces, ordered by
 last successful opening, with twelve entries in total. Explicit successful
 openings move resources to the top. Local topics retain their project owner; individual Notes use the
@@ -121,21 +126,24 @@ buffer. Replacement text is literal too: `$1` inserts `$1`, without capture-grou
 substitution. There are no case, whole-word or regex toggles in the sidebar or
 Source/Split controls.
 
-Document Text, Workspace Text, Headings, Documents, Topics and Local
+Document Text, Workspace Text, Headings, Documents, Topics, Recent and Local
 History initially show **Enter text to search**. Empty queries do not start
 matching, scan the workspace, enumerate topic/document inventories or read History
 revision contents. Clearing cancels outstanding work and removes its results and
 selection. **No results** appears only after a nonempty query completes without
 matches; loading, errors and unavailable resources have distinct feedback.
 
-Recent initially displays its chronological list. Actions initially displays the
-command catalog grouped in the same categories as Keyboard Shortcuts Settings.
+Welcome displays its ordinary chronological Recent list. Recent search waits for
+input and filters that collection without changing its order. Actions initially
+displays the command catalog grouped in the same categories as Keyboard Shortcuts
+Settings.
 Within each group, available commands come first, then localized names. Group
 headings are not selectable. With text entered, Actions shows one flat list ranked
 by exact name, name prefix/token matches, then weaker name or metadata matches.
 Commands without shortcuts remain visible. Selection follows command identity
 when metadata changes; unavailable actions cannot execute or redirect Enter.
-Typing filters Recent without changing its chronological order.
+Each category selector option shows its current effective shortcut, including
+custom assignments. Unassigned categories show no shortcut.
 
 ## Active document
 
@@ -222,12 +230,18 @@ an assignment leaves the action available from its UI and Actions search. Change
 update editor dispatch, Actions badges, menus and header metadata together.
 Writerside Source retains its existing Ctrl+B Go to Declaration precedence over
 formatting. The declaration, usages and rename bindings are configurable too.
+Select All uses the full source document, including folded content, in Source
+and Split. Modified Enter combinations reach their assigned commands; ordinary
+Enter and autocomplete retain their local editing behavior.
+
 Settings stores only overrides keyed by command identity. Logical keys respect
 keyboard layout; display text is not used to identify a key.
 
 Conflicts name actions whose receiving contexts overlap, including commands that
 are currently unavailable. Reassignment explicitly removes those conflicting
 bindings in the same update. Resetting one action also checks for conflicts.
+New Headings and Local History defaults yield to conflicting saved assignments;
+Settings identifies the conflict and supports explicit reassignment or reset.
 Separate Editor-only and Source-only operations can share a combination; each
 keeps its own action and context in the list.
 Capture ignores modifier-only presses and repeats. Escape cancels; held keys must

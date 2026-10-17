@@ -5448,9 +5448,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Memerlukan ruang kerja Catatan';
 
   @override
-  String get searchRecentEmpty => 'Tidak ada sumber daya terbaru';
-
-  @override
   String get searchSidebarLabel => 'Cari:';
 
   @override
@@ -5536,4 +5533,21 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Pohon bilah samping';
+
+  @override
+  String get searchHeadingsCommand => 'Cari judul';
+
+  @override
+  String get shortcutFixed =>
+      'Dikelola oleh editor; tidak dapat dikonfigurasi.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Pintasan bawaan bertentangan dengan penetapan khusus.';
+
+  @override
+  String get shortcutCurrentBinding => 'Pintasan saat ini';
+
+  @override
+  String get shortcutProposedBinding => 'Pintasan yang diusulkan';
 }

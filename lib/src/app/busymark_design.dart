@@ -2135,12 +2135,16 @@ class BusyMarkPopupSelectorOption<T> {
     required this.label,
     this.icon,
     this.iconColor,
+    this.shortcut,
+    this.gtkAccelerator,
   });
 
   final T value;
   final String label;
   final IconData? icon;
   final Color? iconColor;
+  final String? shortcut;
+  final String? gtkAccelerator;
 }
 
 /// The shared desktop selector used by Settings-style control rows.
@@ -2159,7 +2163,6 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
     this.leading,
     this.fullWidth = false,
     this.maxLabelLines = 1,
-    this.contentPadding,
   });
 
   final T? value;
@@ -2174,8 +2177,6 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final Widget? leading;
   final bool fullWidth;
   final int maxLabelLines;
-  final EdgeInsetsGeometry? contentPadding;
-
   @override
   Widget build(BuildContext context) {
     final selectorEnabled = enabled && options.isNotEmpty;
@@ -2199,6 +2200,8 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 label: option.label,
                 icon: option.icon,
                 iconColor: option.iconColor,
+                shortcut: option.shortcut,
+                gtkAccelerator: option.gtkAccelerator,
                 checked: option.value == value,
                 trailingCheck: true,
               ),
@@ -2212,13 +2215,6 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                   child: BusyMarkPushButton.standard(
                     onPressed: trigger.onPressed,
                     focusNode: trigger.focusNode,
-                    style: Theme.of(context).outlinedButtonTheme.style
-                        ?.copyWith(
-                          side: const WidgetStatePropertyAll(BorderSide.none),
-                          padding: contentPadding == null
-                              ? null
-                              : WidgetStatePropertyAll(contentPadding),
-                        ),
                     child: Row(
                       mainAxisSize: fullWidth
                           ? MainAxisSize.max
@@ -2776,6 +2772,7 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     this.selected = false,
     this.compact = false,
     this.focusNode,
+    this.geometryKey,
     this.onFocusChange,
     this.trailing,
     this.onDoubleTap,
@@ -2804,6 +2801,9 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final Widget? content;
   final bool selected, compact;
   final FocusNode? focusNode;
+
+  /// Optional measured anchor; the public row key remains its resource identity.
+  final GlobalKey? geometryKey;
   final ValueChanged<bool>? onFocusChange;
   final Widget? trailing;
   final VoidCallback? onTap;
@@ -3021,13 +3021,16 @@ class _BusyMarkSidebarRecordRowState<T>
       child: row,
     );
     final tooltip = widget.tooltip;
-    return tooltip == null || tooltip.isEmpty
+    final presented = tooltip == null || tooltip.isEmpty
         ? semanticRow
         : Tooltip(
             message: tooltip,
             excludeFromSemantics: true,
             child: semanticRow,
           );
+    return widget.geometryKey == null
+        ? presented
+        : KeyedSubtree(key: widget.geometryKey, child: presented);
   }
 }
 
@@ -3159,7 +3162,10 @@ class BusyMarkGroupedList extends StatelessWidget {
           if (title != null) ...[
             Padding(
               padding: padding,
-              child: Text(title!, style: busyMarkSectionHeaderStyle(context)),
+              child: Semantics(
+                header: true,
+                child: Text(title!, style: busyMarkSectionHeaderStyle(context)),
+              ),
             ),
             if (description != null && description!.isNotEmpty) ...[
               const SizedBox(height: BusyMarkSpacing.xs),

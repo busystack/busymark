@@ -5487,9 +5487,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'به فضای کاری یادداشت‌ها نیاز دارد';
 
   @override
-  String get searchRecentEmpty => 'منبع اخیراً بازشده‌ای وجود ندارد';
-
-  @override
   String get searchSidebarLabel => 'جستجو:';
 
   @override
@@ -5573,4 +5570,20 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'درخت‌های نوار کناری';
+
+  @override
+  String get searchHeadingsCommand => 'جستجوی عنوان‌ها';
+
+  @override
+  String get shortcutFixed => 'توسط ویرایشگر مدیریت می‌شود؛ قابل تنظیم نیست.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'میان‌بر پیش‌فرض با تخصیص سفارشی تداخل دارد.';
+
+  @override
+  String get shortcutCurrentBinding => 'میان‌بر فعلی';
+
+  @override
+  String get shortcutProposedBinding => 'میان‌بر پیشنهادی';
 }

@@ -1,5 +1,6 @@
 import 'package:busymark/src/platform/header_bar_configuration.dart';
 import 'package:busymark/src/workspace/presentation/keyboard_shortcuts_settings.dart';
+import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 // Native Linux search workflows with disposable files and a cached offline
 // Notes account. All artifacts and navigation history stay in PRIVATE_OUTPUT.
 import 'dart:async';
@@ -23,6 +24,9 @@ import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/search/search_sidebar.dart';
 import 'package:busymark/src/app/command_registry.dart';
+import 'package:busymark/src/app/keymap_controller.dart';
+import 'package:busymark/src/app/shortcut_binding.dart';
+import 'package:busymark/src/app/shortcut_capture.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
@@ -161,6 +165,7 @@ Future<void> main(List<String> args) async {
 }
 
 class _Settings implements LocalSettingsStore {
+  bool failSaves = false;
   Map<String, Object?> value = AppSettings.defaults()
       .copyWith(
         localeTag: 'en',
@@ -174,7 +179,12 @@ class _Settings implements LocalSettingsStore {
   @override
   Future<Map<String, Object?>> load() async => value;
   @override
-  Future<void> save(Map<String, Object?> json) async => value = json;
+  Future<void> save(Map<String, Object?> json) async {
+    if (failSaves) {
+      throw const FileSystemException('Disposable settings fixture');
+    }
+    value = json;
+  }
 }
 
 class _TraceWorkspaceService extends WorkspaceService {
@@ -295,6 +305,8 @@ class _DriverState extends ConsumerState<_Driver> {
           'ctrl+p',
           'ctrl+shift+t',
           'ctrl+alt+o',
+          'ctrl+alt+h',
+          'ctrl+alt+y',
           'ctrl+shift+p',
         }.contains(key)) {
       check(
@@ -315,6 +327,7 @@ class _DriverState extends ConsumerState<_Driver> {
     changeQuery(text);
     await wait(() => !search.searching, 'query $text');
     check(search.error == null, 'query $text completed without error');
+    await WidgetsBinding.instance.endOfFrame;
   }
 
   void changeQuery(String text) {
@@ -552,6 +565,74 @@ class _DriverState extends ConsumerState<_Driver> {
     image.dispose();
   }
 
+  Future<void> captureNativeDisplay(String name, {Offset? hover}) async {
+    final capture = await Process.run('/usr/bin/python3', [
+      '-c',
+      r"""
+import gi, sys
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gdk
+root = Gdk.get_default_root_window()
+if len(sys.argv) == 4:
+    display = Gdk.Display.get_default()
+    display.get_default_seat().get_pointer().warp(display.get_default_screen(), int(sys.argv[2]), int(sys.argv[3]))
+    display.sync()
+    import time
+    time.sleep(.15)
+pix = Gdk.pixbuf_get_from_window(root, 0, 0, root.get_width(), root.get_height())
+pix.savev(sys.argv[1], 'png', [], [])
+""",
+      '${widget.output.path}/$name-native.png',
+      if (hover != null) ...['${hover.dx.round()}', '${hover.dy.round()}'],
+    ]);
+    check(capture.exitCode == 0, '$name isolated native capture');
+  }
+
+  Future<void> selectorPresentation(String appearance) async {
+    await key('ctrl+f');
+    await query('');
+    final rect = boundsForKey(const ValueKey('search-category'));
+    final origin = await windowManager.getPosition();
+    await captureNativeDisplay(
+      '$appearance-selector-rest',
+      hover: const Offset(1500, 1000),
+    );
+    await captureNativeDisplay(
+      '$appearance-selector-hover',
+      hover: origin + rect.center,
+    );
+    // Traverse into the same selector with actual keys, then open its GTK menu.
+    bool categoryFocused() {
+      var found = false;
+      FocusManager.instance.primaryFocus?.context?.visitAncestorElements((e) {
+        if (e.widget.key == const ValueKey('search-category')) {
+          found = true;
+          return false;
+        }
+        return true;
+      });
+      return found;
+    }
+
+    for (var i = 0; i < 30 && !categoryFocused(); i++) {
+      await key('tab');
+    }
+    check(categoryFocused(), '$appearance selector keyboard focus');
+    await captureNativeDisplay(
+      '$appearance-selector-focus',
+      hover: const Offset(1500, 1000),
+    );
+    await key('enter');
+    await wait(
+      () => widgets<Semantics>().any((s) => s.properties.expanded == true),
+      '$appearance selector open',
+    );
+    await captureNativeDisplay('$appearance-selector-open');
+    await key('escape');
+    check(search.active, '$appearance popup Escape preserves search');
+    await key('escape');
+  }
+
   Future<void> action(String name) async {
     await key('ctrl+shift+p');
     await query(name);
@@ -753,7 +834,7 @@ class _DriverState extends ConsumerState<_Driver> {
       SearchCategory.outline: 'Outline presentation',
       SearchCategory.documents: 'outside-search',
       SearchCategory.topics: 'outside-search',
-      SearchCategory.recent: '',
+      SearchCategory.recent: 'a.md',
       SearchCategory.localHistory: 'unique-needle',
       SearchCategory.actions: '',
     };
@@ -761,9 +842,7 @@ class _DriverState extends ConsumerState<_Driver> {
       controller.open(category: entry.key);
       await query('');
       final fileReads = files.reads, revisionReads = history.reads;
-      final listsInitially =
-          entry.key == SearchCategory.recent ||
-          entry.key == SearchCategory.actions;
+      final listsInitially = entry.key == SearchCategory.actions;
       controller.showMore();
       await controller.submit();
       await Future<void>.delayed(const Duration(milliseconds: 150));
@@ -862,6 +941,7 @@ class _DriverState extends ConsumerState<_Driver> {
       await screenshot('missing-recent-resource');
     }
     controller.close();
+    await selectorPresentation(appearance);
     await shortcutSettingsPresentation(appearance);
   }
 
@@ -938,14 +1018,197 @@ class _DriverState extends ConsumerState<_Driver> {
     await WidgetsBinding.instance.endOfFrame;
   }
 
+  Future<void> openShortcutSettings() async {
+    await key('ctrl+alt+s', verifySearch: false);
+    await wait(() => widgets<SettingsScreen>().isNotEmpty, 'Settings route');
+    final nav = widgets<BusyMarkSidebarNavigationTile>().where(
+      (r) => r.key == const ValueKey('settings-navigation-keyboardShortcuts'),
+    );
+    if (nav.isNotEmpty) {
+      nav.single.onTap();
+    } else {
+      widgets<BusyMarkMenuButton<SettingsPage>>().single.onSelected(
+        SettingsPage.keyboardShortcuts,
+      );
+    }
+    await wait(
+      () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
+      'Keyboard Shortcuts through Settings',
+    );
+  }
+
+  Future<void> categoryShortcutsJourney() async {
+    const bindings = {
+      SearchCategory.file: 'ctrl+f',
+      SearchCategory.workspace: 'ctrl+shift+f',
+      SearchCategory.outline: 'ctrl+alt+h',
+      SearchCategory.documents: 'ctrl+p',
+      SearchCategory.topics: 'ctrl+shift+t',
+      SearchCategory.recent: 'ctrl+alt+o',
+      SearchCategory.localHistory: 'ctrl+alt+y',
+      SearchCategory.actions: 'ctrl+shift+p',
+    };
+    final before = ref.read(workspaceControllerProvider).activeText;
+    for (final entry in bindings.entries) {
+      await key(entry.value);
+      check(
+        search.category == entry.key,
+        '${entry.key.name} direct command destination',
+      );
+      final selector = widgets<BusyMarkPopupSelector<SearchCategory>>().single;
+      final option = selector.options.singleWhere((o) => o.value == entry.key);
+      final command = ref.read(
+        busyMarkCommandRegistryProvider,
+      )[searchCommandForCategory(entry.key)]!;
+      check(
+        option.shortcut == command.shortcut!.label &&
+            option.gtkAccelerator == command.shortcut!.gtkAccelerator,
+        '${entry.key.name} effective selector metadata',
+      );
+      check(
+        widgets<TextField>()
+            .singleWhere(
+              (f) => identical(
+                f.controller,
+                widgets<BusyMarkSearchField>()
+                    .singleWhere(
+                      (f) => f.key == const ValueKey('shared-search-query'),
+                    )
+                    .controller,
+              ),
+            )
+            .focusNode!
+            .hasFocus,
+        '${entry.key.name} focuses shared query',
+      );
+      final keymap = ref.read(keymapControllerProvider.notifier);
+      final id = searchCommandForCategory(entry.key);
+      Map<String, BusyMarkKeyBinding?> overrides() =>
+          ref.read(appSettingsControllerProvider).shortcutOverrides;
+      check(
+        (await keymap.update(
+              id,
+              const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+              expected: overrides(),
+            )).status ==
+            KeymapUpdateStatus.saved,
+        '${entry.key.name} custom assignment',
+      );
+      await WidgetsBinding.instance.endOfFrame;
+      var request = search.focusRequest;
+      await key(entry.value, verifySearch: false);
+      check(
+        search.focusRequest == request,
+        '${entry.key.name} former default removed',
+      );
+      await key('F8', verifySearch: false);
+      check(
+        search.focusRequest == request + 1 && search.category == entry.key,
+        '${entry.key.name} custom binding executes once',
+      );
+      check(
+        widgets<BusyMarkPopupSelector<SearchCategory>>().single.options
+                .singleWhere((o) => o.value == entry.key)
+                .shortcut ==
+            'F8',
+        '${entry.key.name} custom option label',
+      );
+      await keymap.update(id, null, expected: overrides());
+      await WidgetsBinding.instance.endOfFrame;
+      request = search.focusRequest;
+      await key('F8', verifySearch: false);
+      await key(entry.value, verifySearch: false);
+      check(
+        search.focusRequest == request,
+        '${entry.key.name} unassigned binding and default inactive',
+      );
+      final unassigned = widgets<BusyMarkPopupSelector<SearchCategory>>()
+          .single
+          .options
+          .singleWhere((o) => o.value == entry.key);
+      check(
+        unassigned.shortcut == null && unassigned.gtkAccelerator == null,
+        '${entry.key.name} unassigned metadata removed',
+      );
+      await keymap.update(id, null, reset: true, expected: overrides());
+      await key(entry.value);
+      check(
+        search.category == entry.key,
+        '${entry.key.name} reset default destination',
+      );
+    }
+    await key('escape');
+    await key('ctrl+alt+k', verifySearch: false);
+    check(
+      widgets<KeyboardShortcutsSettings>().isEmpty,
+      'retired Ctrl+Alt+K does not open Settings',
+    );
+    check(
+      ref.read(workspaceControllerProvider).activeText == before,
+      'category shortcuts preserve source',
+    );
+  }
+
   Future<void> shortcutSettingsPresentation(String stage) async {
     final before = ref.read(workspaceControllerProvider).activeText;
-    await key('ctrl+alt+k');
+    await openShortcutSettings();
     await wait(
       () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
       'shortcut Settings $stage',
     );
     await screenshot('shortcuts-settings-$stage');
+    final input = widgets<BusyMarkSearchField>().singleWhere(
+      (f) => f.key == const ValueKey('settings-shortcut-search'),
+    );
+    // Search uses names/categories, so use the localized display name.
+    final name = ref
+        .read(busyMarkCommandRegistryProvider)[BusyMarkCommandIds.save]!
+        .label(rootNavigatorKey.currentContext!);
+    input.controller!.text = name;
+    input.onChanged!(name);
+    await wait(
+      () => widgets<BusyMarkActionRow>().any(
+        (r) => r.key == const ValueKey('shortcut-edit-file.save'),
+      ),
+      'localized Save row',
+    );
+    widgets<BusyMarkActionRow>()
+        .singleWhere((r) => r.key == const ValueKey('shortcut-edit-file.save'))
+        .onTap!();
+    await wait(
+      () => widgets<Dialog>().isNotEmpty,
+      'Settings assignment dialog',
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    await screenshot('shortcut-assignment-$stage');
+    widgets<BusyMarkActionRow>()
+        .singleWhere((r) => r.key == const ValueKey('record-shortcut'))
+        .onTap!();
+    await key('ctrl+o', verifySearch: false);
+    check(
+      !BusyMarkShortcutCapture.suppressing,
+      '$stage capture releases native dispatch',
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    await screenshot('shortcut-conflict-$stage');
+    await key('escape');
+    await wait(
+      () => widgets<Dialog>().isEmpty,
+      'assignment cancellation $stage',
+    );
+
+    if (stage == 'light' || stage == 'dark') {
+      widgets<BusyMarkSidebarNavigationTile>()
+          .singleWhere(
+            (r) => r.key == const ValueKey('settings-navigation-appearance'),
+          )
+          .onTap();
+      await wait(
+        () => widgets<BusyMarkPopupSelector<String>>().isNotEmpty,
+        'Settings language selector',
+      );
+      await captureNativeDisplay('settings-selectors-$stage');
+    }
     check(
       ref.read(workspaceControllerProvider).activeText == before,
       'Settings $stage leaves source unchanged',
@@ -967,7 +1230,7 @@ class _DriverState extends ConsumerState<_Driver> {
       () => router.routeInformationProvider.value.uri.path == '/',
       'Welcome before keymap',
     );
-    await key('ctrl+alt+k');
+    await openShortcutSettings();
     await wait(
       () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
       'shortcut Settings from Welcome',
@@ -977,7 +1240,7 @@ class _DriverState extends ConsumerState<_Driver> {
           'welcome',
       'Welcome Settings return target',
     );
-    await key('ctrl+alt+k');
+    await openShortcutSettings();
     check(
       router.routeInformationProvider.value.uri.queryParameters['returnTo'] ==
           'welcome',
@@ -990,7 +1253,7 @@ class _DriverState extends ConsumerState<_Driver> {
     );
 
     Future<void> edit(String id) async {
-      await key('ctrl+alt+k');
+      await openShortcutSettings();
       await wait(
         () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
         'shortcut editor',
@@ -1018,7 +1281,7 @@ class _DriverState extends ConsumerState<_Driver> {
           .singleWhere((r) => r.key == ValueKey('shortcut-edit-$id'))
           .onTap!();
       await wait(
-        () => widgets<FilledButton>().any(
+        () => widgets<BusyMarkActionRow>().any(
           (b) => b.key == const ValueKey('record-shortcut'),
         ),
         'record button',
@@ -1027,11 +1290,15 @@ class _DriverState extends ConsumerState<_Driver> {
 
     Future<void> assign(String id, String combination) async {
       await edit(id);
-      widgets<FilledButton>()
+      widgets<BusyMarkActionRow>()
           .singleWhere((b) => b.key == const ValueKey('record-shortcut'))
-          .onPressed!();
+          .onTap!();
       final before = ref.read(workspaceControllerProvider).activeText;
       await key(combination, verifySearch: false);
+      check(
+        !BusyMarkShortcutCapture.suppressing,
+        'capture $combination releases native dispatch after key up',
+      );
       check(
         ref.read(workspaceControllerProvider).activeText == before,
         'capture $combination does not execute',
@@ -1133,6 +1400,120 @@ class _DriverState extends ConsumerState<_Driver> {
           file.path,
       'keymap document',
     );
+
+    for (final mode in [
+      DocumentViewModePreference.source,
+      DocumentViewModePreference.split,
+    ]) {
+      await ref
+          .read(busyMarkCommandRegistryProvider)
+          .execute(
+            mode == DocumentViewModePreference.source
+                ? BusyMarkCommandIds.viewSource
+                : BusyMarkCommandIds.viewSplit,
+          );
+      const original =
+          '## Fold\nfirst hidden\nsecond hidden\n\n## Next\nbefore target after\n';
+      workspace.updateActiveText(original);
+      await workspace.saveActive();
+      await assign('text.selectAll', 'F8');
+      await wait(
+        () => widgets<BusyMarkSourceEditor>().isNotEmpty,
+        '$mode Source field',
+      );
+      BusyMarkSourceEditingController source() => widgets<TextField>()
+          .map((f) => f.controller)
+          .whereType<BusyMarkSourceEditingController>()
+          .single;
+      void focusSource() => widgets<TextField>()
+          .singleWhere((f) => f.controller is BusyMarkSourceEditingController)
+          .focusNode!
+          .requestFocus();
+      widgets<IconButton>()
+          .firstWhere((b) => b.tooltip == 'Collapse section')
+          .onPressed!();
+      await wait(
+        () => source().document.hiddenRanges.ranges.isNotEmpty,
+        '$mode folded content',
+      );
+      focusSource();
+      await key('F8', verifySearch: false);
+      check(
+        source().fullSelection ==
+            const TextSelection(baseOffset: 0, extentOffset: original.length),
+        '$mode F8 selects entire folded document',
+      );
+      await edit('text.selectAll');
+      widgets<BusyMarkActionRow>()
+          .singleWhere((b) => b.key == const ValueKey('remove-shortcut'))
+          .onTap!();
+      await wait(() => widgets<Dialog>().isEmpty, '$mode unassignment saved');
+      await key('alt+Left');
+      focusSource();
+      source().fullSelection = const TextSelection.collapsed(offset: 0);
+      await key('F8', verifySearch: false);
+      await key('ctrl+a', verifySearch: false);
+      check(
+        source().fullSelection == const TextSelection.collapsed(offset: 0),
+        '$mode unassigned Select All has no hidden default',
+      );
+      await edit('text.selectAll');
+      widgets<BusyMarkActionRow>()
+          .singleWhere(
+            (b) => b.key == const ValueKey('restore-shortcut-default'),
+          )
+          .onTap!();
+      await wait(() => widgets<Dialog>().isEmpty, '$mode reset saved');
+      await key('alt+Left');
+      focusSource();
+      await key('ctrl+a', verifySearch: false);
+      check(
+        source().fullSelection ==
+            const TextSelection(baseOffset: 0, extentOffset: original.length),
+        '$mode reset Ctrl+A selects complete document',
+      );
+      widgets<IconButton>()
+          .firstWhere((b) => b.tooltip == 'Expand section')
+          .onPressed!();
+      await assign('editor.bold', 'alt+enter');
+      focusSource();
+      source().fullSelection = TextSelection(
+        baseOffset: original.indexOf('target'),
+        extentOffset: original.indexOf('target') + 6,
+      );
+      await key('alt+enter', verifySearch: false);
+      final modified = original.replaceFirst('target', '**target**');
+      await wait(
+        () => source().fullText == modified,
+        '$mode Alt+Enter exact Bold markup',
+      );
+      await key('ctrl+z');
+      check(source().fullText == original, '$mode Alt+Enter one Undo');
+      await key('ctrl+shift+z');
+      check(source().fullText == modified, '$mode Alt+Enter Redo');
+      source().fullSelection = TextSelection.collapsed(offset: modified.length);
+      await key('enter');
+      check(source().fullText == '$modified\n', '$mode plain Enter');
+      await key('ctrl+z');
+      check(source().fullText == modified, '$mode Enter separate Undo');
+      check(
+        await workspace.saveActive() && await file.readAsString() == modified,
+        '$mode Alt+Enter saved source',
+      );
+      check(
+        await workspace.closeDocumentBuffer(
+          ref.read(workspaceControllerProvider).activeBufferId!,
+        ),
+        '$mode close modified document',
+      );
+      await workspace.openPath(file.path);
+      await wait(
+        () => ref.read(workspaceControllerProvider).activeText == modified,
+        '$mode Alt+Enter save/reopen',
+      );
+    }
+    workspace.updateActiveText('Binding target\n');
+    await workspace.saveActive();
 
     await assign('editor.bold', 'ctrl+alt+b');
     for (final mode in [
@@ -1300,7 +1681,7 @@ class _DriverState extends ConsumerState<_Driver> {
         'French logical-key Undo',
       );
       await workspace.saveActive();
-      await key('ctrl+alt+k');
+      await openShortcutSettings();
       await wait(
         () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
         'French Settings input',
@@ -1342,10 +1723,45 @@ class _DriverState extends ConsumerState<_Driver> {
       ]);
       check(restored.exitCode == 0, 'restore isolated keyboard layout');
     }
-    await edit('view.source');
-    widgets<FilledButton>()
-        .singleWhere((b) => b.key == const ValueKey('remove-shortcut'))
+    await edit('file.save');
+    widgets<BusyMarkActionRow>()
+        .singleWhere((r) => r.key == const ValueKey('record-shortcut'))
+        .onTap!();
+    await key('F8', verifySearch: false);
+    final settingsStore = ref.read(localSettingsStoreProvider) as _Settings;
+    final persistedBeforeFailure = jsonEncode(settingsStore.value);
+    settingsStore.failSaves = true;
+    widgets<ElevatedButton>()
+        .singleWhere((b) => b.key == const ValueKey('assign-shortcut'))
         .onPressed!();
+    await wait(
+      () => widgets<Text>().any(
+        (t) => t.key == const ValueKey('shortcut-feedback'),
+      ),
+      'visible settings persistence failure',
+    );
+    check(
+      jsonEncode(settingsStore.value) == persistedBeforeFailure &&
+          widgets<Dialog>().isNotEmpty,
+      'failed save preserves persisted settings and dialog',
+    );
+    await screenshot('shortcut-persistence-failure');
+    settingsStore.failSaves = false;
+    widgets<ElevatedButton>()
+        .singleWhere((b) => b.key == const ValueKey('assign-shortcut'))
+        .onPressed!();
+    await wait(() => widgets<Dialog>().isEmpty, 'settings persistence retry');
+    check(
+      ref.read(busyMarkCommandRegistryProvider)['file.save']!.shortcut!.label ==
+          'F8',
+      'retry keeps current assignment',
+    );
+    await key('alt+Left');
+
+    await edit('view.source');
+    widgets<BusyMarkActionRow>()
+        .singleWhere((b) => b.key == const ValueKey('remove-shortcut'))
+        .onTap!();
     await wait(() => widgets<Dialog>().isEmpty, 'view unassignment saved');
     await key('alt+Left');
     await wait(
@@ -1384,6 +1800,15 @@ class _DriverState extends ConsumerState<_Driver> {
     check(!search.active, 'old search shortcut removed');
     final request = search.focusRequest;
     await key('F12', verifySearch: false);
+    final documentOption = widgets<BusyMarkPopupSelector<SearchCategory>>()
+        .single
+        .options
+        .singleWhere((o) => o.value == SearchCategory.file);
+    check(
+      documentOption.shortcut == 'F12' &&
+          documentOption.gtkAccelerator == 'F12',
+      'custom search selector metadata',
+    );
     check(
       search.active &&
           search.category == SearchCategory.file &&
@@ -1409,7 +1834,7 @@ class _DriverState extends ConsumerState<_Driver> {
     );
     await screenshot('keymap-custom-settings');
     await key('alt+Left');
-    await key('ctrl+alt+k');
+    await openShortcutSettings();
     await wait(
       () => widgets<FilledButton>().any(
         (b) => b.key == const ValueKey('reset-all-shortcuts'),
@@ -1436,6 +1861,152 @@ class _DriverState extends ConsumerState<_Driver> {
     await key('escape');
     measurements['configurableKeymapNativeWorkflows'] =
         'Welcome, Settings, Actions, Editor, Source, Undo/Redo, save, custom search, reset defaults';
+  }
+
+  Future<void> recentPresentationJourney() async {
+    await windowManager.setSize(const Size(1100, 850));
+    await wait(
+      () =>
+          View.of(context).physicalSize.width /
+              View.of(context).devicePixelRatio >=
+          1000,
+      'wide Welcome Recent presentation',
+    );
+    final router = ref.read(appRouterProvider);
+    final files = <File>[];
+    for (final parent in [
+      'short',
+      'a-long-owner-name/nested/another-long-folder/final-parent',
+    ]) {
+      final file = File('${widget.output.path}/recent/$parent/Same.md');
+      await file.parent.create(recursive: true);
+      await file.writeAsString('Recent exact resource: $parent\n');
+      await workspace.openPath(file.path);
+      files.add(file);
+    }
+    // Keep a genuine project-qualified topic in the mixed chronological list.
+    await workspace.openPath('${widget.output.path}/writerside');
+    await workspace.openActiveFile(
+      '${widget.output.path}/writerside/topics/outside-search.topic',
+    );
+    check(
+      await workspace.openNextcloudWorkspace(
+        '123e4567-e89b-42d3-a456-426614174000',
+      ),
+      'mixed Recent Notes owner',
+    );
+    check(
+      await workspace.openNextcloudNote('223e4567-e89b-42d3-a456-426614174000'),
+      'mixed Recent explicit note opening',
+    );
+    router.go('/');
+    await wait(
+      () => router.routeInformationProvider.value.uri.path == '/',
+      'Welcome mixed Recent',
+    );
+    await wait(
+      () => widgets<BusyMarkSidebarRecordRow>().isNotEmpty,
+      'Welcome Recent rows mounted',
+    );
+    final before = ref.read(appSettingsControllerProvider).recentWorkspaces;
+    check(
+      before.any((r) => r.isDocument && r.accountId != null),
+      'mixed Recent retains account-qualified note',
+    );
+    check(
+      before.any(
+        (r) => r.isDocument && r.ownerRoot != null && r.path.endsWith('.topic'),
+      ),
+      'mixed Recent retains project-qualified topic',
+    );
+    for (final scale in [1.0, 1.6]) {
+      setState(() => _textScale = scale);
+      await WidgetsBinding.instance.endOfFrame;
+      final rows = widgets<BusyMarkSidebarRecordRow>();
+      check(
+        rows.isNotEmpty &&
+            rows.every(
+              (r) => r.content == null && r.title != null && r.subtitle != null,
+            ),
+        'Welcome standard Recent identity rows $scale',
+      );
+      final heights = rows.map((r) => boundsForKey(r.key!).height).toList();
+      check(
+        heights.every((h) => (h - heights.first).abs() < .1),
+        'Welcome uniform mixed Recent heights $scale',
+      );
+      check(
+        rows.every(
+          (r) => r.tooltip != null && r.semanticsLabel!.contains(r.tooltip!),
+        ),
+        'Welcome complete accessible locations $scale',
+      );
+      await screenshot('welcome-mixed-recent-$scale');
+    }
+    setState(() => _textScale = 1);
+    await key('ctrl+alt+o');
+    await query('');
+    check(
+      search.waitingForInput && search.results.isEmpty,
+      'Recent search waits independently of Welcome browsing',
+    );
+    await query('Same.md');
+    check(
+      search.results.whereType<RecentSearchResult>().length == 2,
+      'Recent duplicate filenames retain separate identities',
+    );
+    // Welcome retains its ordinary list behind the search presentation.
+    // Inspect just these two resource identities, rather than counting hidden
+    // browsing rows in the framework's retained IndexedStack children.
+    final expectedKeys = {for (final r in search.results) ValueKey(r.identity)};
+    final records = widgets<BusyMarkSidebarRecordRow>().where(
+      (r) => expectedKeys.contains(r.key),
+    );
+    check(
+      records.map((r) => r.subtitle).toSet().length == 2,
+      'Recent duplicate filename locations distinguish owners',
+    );
+    await query('');
+    await key('ctrl+shift+p');
+    await key('ctrl+alt+o');
+    check(
+      search.waitingForInput && search.results.isEmpty,
+      'Recent stays empty after clear and category change',
+    );
+    await key('escape');
+    check(
+      jsonEncode(
+            ref
+                .read(appSettingsControllerProvider)
+                .recentWorkspaces
+                .map((r) => r.toJson())
+                .toList(),
+          ) ==
+          jsonEncode(before.map((r) => r.toJson()).toList()),
+      'search leaves Welcome Recent collection unchanged',
+    );
+    for (final file in files) {
+      await key('ctrl+alt+o');
+      await query(file.path);
+      check(
+        search.results.single is RecentSearchResult,
+        'exact long-path Recent resource',
+      );
+      await key('enter');
+      await wait(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+            file.path,
+        'Recent exact resource activation',
+      );
+      check(
+        ref.read(workspaceControllerProvider).activeText ==
+            await file.readAsString(),
+        'Recent exact resource contents',
+      );
+      router.go('/');
+      await WidgetsBinding.instance.endOfFrame;
+    }
   }
 
   Future<void> run() async {
@@ -2045,8 +2616,9 @@ class _DriverState extends ConsumerState<_Driver> {
         ),
       );
       await screenshot('writerside-semantic-action');
+      await categoryShortcutsJourney();
       await presentationJourney('light');
-      await key('ctrl+alt+k');
+      await openShortcutSettings();
       await wait(
         () => widgets<Text>().any((t) => t.data == 'Keyboard Shortcuts'),
         'Keyboard Shortcuts Settings page',
@@ -2102,6 +2674,7 @@ class _DriverState extends ConsumerState<_Driver> {
       await WidgetsBinding.instance.endOfFrame;
       await key('escape');
       await keymapJourney();
+      await recentPresentationJourney();
       measurements['rssBeforeThirtyOpenCloseCycles'] = ProcessInfo.currentRss;
       measurements['fileDescriptorsBeforeCycles'] = await Directory(
         '/proc/self/fd',

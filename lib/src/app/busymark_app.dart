@@ -105,11 +105,7 @@ final _busyMarkDefaultCommandRegistryProvider =
           for (final entry in searchCommandDestinations.entries)
             entry.key: () {
               final search = ref.read(searchSessionProvider.notifier);
-              if (entry.value == SearchCategory.localHistory) {
-                search.openHistory();
-              } else {
-                search.open(category: entry.value);
-              }
+              search.openCategory(entry.value);
             },
           BusyMarkCommandIds.elementProperties: () => ref
               .read(workspaceControllerProvider.notifier)
@@ -1003,11 +999,6 @@ class BusyMarkApp extends ConsumerWidget {
       settings: label(BusyMarkCommandIds.settings),
       settingsShortcut: shortcut(BusyMarkCommandIds.settings),
       settingsGtkAccelerator: accelerator(BusyMarkCommandIds.settings),
-      keyboardShortcuts: label(BusyMarkCommandIds.keyboardShortcuts),
-      keyboardShortcutsShortcut: shortcut(BusyMarkCommandIds.keyboardShortcuts),
-      keyboardShortcutsGtkAccelerator: accelerator(
-        BusyMarkCommandIds.keyboardShortcuts,
-      ),
       syntaxReference: label(BusyMarkCommandIds.syntaxReference),
       syntaxReferenceShortcut: shortcut(BusyMarkCommandIds.syntaxReference),
       syntaxReferenceGtkAccelerator: accelerator(
@@ -1229,7 +1220,10 @@ class _BusyMarkSearchShortcutHandlerState
   }
 
   bool _handleKeyEvent(KeyEvent event) {
-    if (BusyMarkShortcutCapture.suppressing) return true;
+    // Capture owns the event in FocusManager's early handler, including the
+    // release that ends suppression. Yield here so native key delivery can
+    // reach that handler instead of treating it as an application command.
+    if (BusyMarkShortcutCapture.suppressing) return false;
     if (event is! KeyDownEvent) {
       return false;
     }

@@ -5504,9 +5504,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Wymaga obszaru roboczego Notatek';
 
   @override
-  String get searchRecentEmpty => 'Brak ostatnich zasobów';
-
-  @override
   String get searchSidebarLabel => 'Szukaj:';
 
   @override
@@ -5591,4 +5588,21 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Drzewa paska bocznego';
+
+  @override
+  String get searchHeadingsCommand => 'Szukaj nagłówków';
+
+  @override
+  String get shortcutFixed =>
+      'Zarządzane przez edytor; nie można skonfigurować.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Domyślny skrót koliduje z niestandardowym przypisaniem.';
+
+  @override
+  String get shortcutCurrentBinding => 'Bieżący skrót';
+
+  @override
+  String get shortcutProposedBinding => 'Proponowany skrót';
 }

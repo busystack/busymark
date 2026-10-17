@@ -5146,7 +5146,6 @@
   "searchRecentHint": "Recente items zoeken…",
   "searchActionsHint": "Acties zoeken…",
   "searchRequiresNotesWorkspace": "Vereist een notitiewerkruimte",
-  "searchRecentEmpty": "Geen recente bronnen",
   "searchSidebarLabel": "Zoeken:",
   "searchDocumentTextCategory": "Documenttekst",
   "searchWorkspaceTextCategory": "Werkruimtetekst",
@@ -5173,5 +5172,10 @@
   "shortcutContextEditor": "Editor en bron",
   "shortcutContextWritersideSource": "Writerside-bron",
   "shortcutContextWorkspace": "Werkruimtenavigatie",
-  "shortcutContextTree": "Zijbalkbomen"
+  "shortcutContextTree": "Zijbalkbomen",
+  "searchHeadingsCommand": "Koppen zoeken",
+  "shortcutFixed": "Beheerd door de editor; niet instelbaar.",
+  "shortcutDefaultConflict": "De standaardsneltoets conflicteert met een aangepaste toewijzing.",
+  "shortcutCurrentBinding": "Huidige sneltoets",
+  "shortcutProposedBinding": "Voorgestelde sneltoets"
 }

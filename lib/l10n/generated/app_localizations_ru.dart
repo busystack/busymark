@@ -5508,9 +5508,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Требуется рабочая область заметок';
 
   @override
-  String get searchRecentEmpty => 'Нет недавних ресурсов';
-
-  @override
   String get searchSidebarLabel => 'Поиск:';
 
   @override
@@ -5596,4 +5593,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Деревья боковой панели';
+
+  @override
+  String get searchHeadingsCommand => 'Поиск заголовков';
+
+  @override
+  String get shortcutFixed => 'Управляется редактором; настройка недоступна.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Сочетание по умолчанию конфликтует с пользовательским назначением.';
+
+  @override
+  String get shortcutCurrentBinding => 'Текущее сочетание';
+
+  @override
+  String get shortcutProposedBinding => 'Предлагаемое сочетание';
 }

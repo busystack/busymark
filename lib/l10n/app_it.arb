@@ -3616,7 +3616,6 @@
   "searchRecentHint": "Cerca recenti…",
   "searchActionsHint": "Cerca azioni…",
   "searchRequiresNotesWorkspace": "Richiede uno spazio di lavoro Note",
-  "searchRecentEmpty": "Nessuna risorsa recente",
   "searchSidebarLabel": "Ricerca:",
   "searchDocumentTextCategory": "Testo del documento",
   "searchWorkspaceTextCategory": "Testo dell’area di lavoro",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "Editor e sorgente",
   "shortcutContextWritersideSource": "Sorgente Writerside",
   "shortcutContextWorkspace": "Navigazione dell’area di lavoro",
-  "shortcutContextTree": "Alberi laterali"
+  "shortcutContextTree": "Alberi laterali",
+  "searchHeadingsCommand": "Cerca titoli",
+  "shortcutFixed": "Gestito dall’editor; non configurabile.",
+  "shortcutDefaultConflict": "La scorciatoia predefinita è in conflitto con un’assegnazione personalizzata.",
+  "shortcutCurrentBinding": "Scorciatoia attuale",
+  "shortcutProposedBinding": "Scorciatoia proposta"
 }

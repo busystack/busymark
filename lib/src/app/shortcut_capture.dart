@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -24,6 +26,7 @@ abstract final class BusyMarkShortcutCapture {
     if (!_installed) {
       _installed = true;
       FocusManager.instance.addEarlyKeyEventHandler(_handle);
+      HardwareKeyboard.instance.addHandler(_observeRelease);
     }
   }
 
@@ -40,8 +43,19 @@ abstract final class BusyMarkShortcutCapture {
         HardwareKeyboard.instance.logicalKeysPressed.isEmpty &&
         _installed) {
       FocusManager.instance.removeEarlyKeyEventHandler(_handle);
+      HardwareKeyboard.instance.removeHandler(_observeRelease);
       _installed = false;
     }
+  }
+
+  // Native delivery can omit the focus phase of an already handled release.
+  // Observe releases independently of that phase so capture cannot keep command
+  // dispatch suppressed after its owner and all held keys have gone away.
+  static bool _observeRelease(KeyEvent event) {
+    if (event is KeyUpEvent && _owner == null) {
+      scheduleMicrotask(_releaseIfIdle);
+    }
+    return false;
   }
 
   static KeyEventResult _handle(KeyEvent event) {

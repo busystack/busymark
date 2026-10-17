@@ -3616,7 +3616,6 @@
   "searchRecentHint": "हाल के आइटम खोजें…",
   "searchActionsHint": "क्रियाएँ खोजें…",
   "searchRequiresNotesWorkspace": "नोट्स कार्यक्षेत्र आवश्यक है",
-  "searchRecentEmpty": "हाल के संसाधन नहीं हैं",
   "searchSidebarLabel": "खोजें:",
   "searchDocumentTextCategory": "दस्तावेज़ पाठ",
   "searchWorkspaceTextCategory": "कार्यस्थान पाठ",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "संपादक और स्रोत",
   "shortcutContextWritersideSource": "Writerside स्रोत",
   "shortcutContextWorkspace": "कार्यस्थान नेविगेशन",
-  "shortcutContextTree": "साइडबार ट्री"
+  "shortcutContextTree": "साइडबार ट्री",
+  "searchHeadingsCommand": "शीर्षक खोजें",
+  "shortcutFixed": "संपादक द्वारा प्रबंधित; कॉन्फ़िगर नहीं किया जा सकता।",
+  "shortcutDefaultConflict": "डिफ़ॉल्ट शॉर्टकट का कस्टम असाइनमेंट से टकराव है।",
+  "shortcutCurrentBinding": "वर्तमान शॉर्टकट",
+  "shortcutProposedBinding": "प्रस्तावित शॉर्टकट"
 }

@@ -84,6 +84,13 @@ SearchResultPresentation presentSearchResult(
             ? null
             : accountLabel?.call(resource.accountId!),
       ),
+      details: resource.accountId == null
+          ? resource.path
+          : recentResourceLocation(
+              context,
+              resource,
+              accountLabel: accountLabel?.call(resource.accountId!),
+            ),
     ),
     OutlineSearchResult(
       :final heading,

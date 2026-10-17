@@ -5146,7 +5146,6 @@
   "searchRecentHint": "搜索最近项目…",
   "searchActionsHint": "搜索操作…",
   "searchRequiresNotesWorkspace": "需要笔记工作区",
-  "searchRecentEmpty": "没有最近的资源",
   "searchSidebarLabel": "搜索：",
   "searchDocumentTextCategory": "文档文本",
   "searchWorkspaceTextCategory": "工作区文本",
@@ -5173,5 +5172,10 @@
   "shortcutContextEditor": "编辑器和源码",
   "shortcutContextWritersideSource": "Writerside 源码",
   "shortcutContextWorkspace": "工作区导航",
-  "shortcutContextTree": "侧栏树"
+  "shortcutContextTree": "侧栏树",
+  "searchHeadingsCommand": "搜索标题",
+  "shortcutFixed": "由编辑器管理，无法配置。",
+  "shortcutDefaultConflict": "默认快捷键与自定义分配冲突。",
+  "shortcutCurrentBinding": "当前快捷键",
+  "shortcutProposedBinding": "拟用快捷键"
 }

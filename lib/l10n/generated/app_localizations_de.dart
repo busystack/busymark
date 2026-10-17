@@ -5498,9 +5498,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Erfordert einen Notizen-Arbeitsbereich';
 
   @override
-  String get searchRecentEmpty => 'Keine zuletzt geöffneten Ressourcen';
-
-  @override
   String get searchSidebarLabel => 'Suchen:';
 
   @override
@@ -5586,4 +5583,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Seitenleistenbäume';
+
+  @override
+  String get searchHeadingsCommand => 'Überschriften suchen';
+
+  @override
+  String get shortcutFixed => 'Vom Editor verwaltet; nicht konfigurierbar.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Das Standardkürzel steht mit einer eigenen Zuweisung in Konflikt.';
+
+  @override
+  String get shortcutCurrentBinding => 'Aktuelles Tastenkürzel';
+
+  @override
+  String get shortcutProposedBinding => 'Vorgeschlagenes Tastenkürzel';
 }

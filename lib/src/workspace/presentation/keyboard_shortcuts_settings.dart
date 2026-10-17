@@ -11,6 +11,7 @@ import '../../app/command_presentation.dart';
 import '../../app/command_registry.dart';
 import '../../app/keymap_controller.dart';
 import '../../app/keyboard_shortcut_badge.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../app/shortcut_binding.dart';
 import '../../app/shortcut_capture.dart';
@@ -27,6 +28,7 @@ class _KeyboardShortcutsSettingsState
   final _query = TextEditingController();
   BusyMarkKeyBinding? _findBinding;
   bool _recording = false;
+  bool _restoring = false;
   final _captureFocus = FocusNode();
   @override
   void initState() {
@@ -106,6 +108,20 @@ class _KeyboardShortcutsSettingsState
             final name = a.label(context).compareTo(b.label(context));
             return name != 0 ? name : a.id.compareTo(b.id);
           });
+    final groups = <String, List<BusyMarkCommand>>{
+      for (final category in categories)
+        if (commands.any((c) => c.category(context) == category))
+          category: commands
+              .where((c) => c.category(context) == category)
+              .toList(),
+    };
+    final deferred = deferredDefaultConflicts(
+      BusyMarkCommandCatalog.metadata,
+      validatedShortcutOverrides(
+        BusyMarkCommandCatalog.metadata,
+        settings.shortcutOverrides,
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -119,6 +135,7 @@ class _KeyboardShortcutsSettingsState
         Wrap(
           spacing: BusyMarkSpacing.sm,
           runSpacing: BusyMarkSpacing.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             BusyMarkPushButton.standard(
               key: const ValueKey('find-by-shortcut'),
@@ -129,104 +146,139 @@ class _KeyboardShortcutsSettingsState
               ),
             ),
             if (_findBinding != null)
-              BusyMarkPushButton.standard(
-                onPressed: () => setState(() => _findBinding = null),
-                child: Text('${_findBinding!.label} ×'),
+              Semantics(
+                label: l10n.shortcutFindBy,
+                child: Row(
+                  key: const ValueKey('shortcut-recorded-filter'),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 180),
+                      child: BusyMarkKeyboardShortcutBadge(_findBinding!.label),
+                    ),
+                    BusyMarkCompactIconButton(
+                      key: const ValueKey('clear-shortcut-filter'),
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).clearButtonTooltip,
+                      icon: BusyMarkGlyphs.clear,
+                      onPressed: () => setState(() => _findBinding = null),
+                    ),
+                  ],
+                ),
               ),
-            BusyMarkPushButton.standard(
-              key: const ValueKey('reset-all-shortcuts'),
-              onPressed: () async {
-                final confirmed = await showBusyMarkModalDialog<bool>(
-                  context,
-                  builder: (c) => BusyMarkDialogShell(
-                    title: l10n.shortcutRestoreAll,
-                    actions: [
-                      BusyMarkPushButton.standard(
-                        onPressed: () => Navigator.pop(c, false),
-                        child: Text(l10n.cancel),
-                      ),
-                      BusyMarkPushButton.suggested(
-                        onPressed: () => Navigator.pop(c, true),
-                        child: Text(l10n.shortcutRestoreAll),
-                      ),
-                    ],
-                    children: [Text(l10n.shortcutRestoreAllQuestion)],
-                  ),
-                );
-                if (confirmed == true && mounted) {
-                  await ref.read(keymapControllerProvider.notifier).resetAll();
-                }
-              },
-              child: Text(l10n.shortcutRestoreAll),
-            ),
           ],
         ),
         if (ref.watch(keymapControllerProvider) == KeymapUpdateStatus.failed)
-          BusyMarkActionRow(
+          BusyMarkBanner(
             title: l10n.shortcutSaveFailed,
-            onTap: () =>
+            actionLabel: l10n.shortcutRetry,
+            onAction: () =>
                 unawaited(ref.read(keymapControllerProvider.notifier).retry()),
-            trailing: Text(l10n.shortcutRetry),
           ),
-        const SizedBox(height: BusyMarkSpacing.sm),
         Expanded(
           child: commands.isEmpty
               ? Center(child: Text(l10n.noResults))
               : ListView.builder(
                   key: const ValueKey('settings-shortcut-list'),
-                  itemCount: commands.length,
+                  itemCount: groups.length,
                   itemBuilder: (context, i) {
-                    final command = commands[i];
-                    final row = BusyMarkActionRow(
-                      key: ValueKey('shortcut-edit-${command.id}'),
-                      title: command.label(context),
-                      subtitle: [
-                        commandContextLabel(context, command),
-                        for (final a
-                            in registry
-                                .activators(command.id)
-                                .skip(1)
-                                .whereType<SingleActivator>())
-                          '\u2066${BusyMarkKeyBinding.fromActivator(a).label}\u2069',
-                      ].join(' · '),
-                      trailing: BusyMarkKeyboardShortcutBadge(
-                        command.shortcut?.label ?? l10n.shortcutUnassigned,
-                      ),
-                      onTap: shortcutConfigurable(command)
-                          ? () => showBusyMarkModalDialog<void>(
-                              context,
-                              builder: (_) => _ShortcutEditor(command: command),
-                            )
-                          : null,
-                    );
-                    final category = command.category(context);
-                    if (i > 0 &&
-                        commands[i - 1].category(context) == category) {
-                      return row;
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    final group = groups.entries.elementAt(i);
+                    return BusyMarkGroupedList(
+                      title: group.key,
+                      filled: true,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: BusyMarkSpacing.sm,
+                        for (final command in group.value)
+                          _commandRow(
+                            context,
+                            registry,
+                            command,
+                            deferred[command.id],
                           ),
-                          child: Semantics(
-                            header: true,
-                            child: Text(
-                              category,
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                          ),
-                        ),
-                        row,
                       ],
                     );
                   },
                 ),
         ),
+        const SizedBox(height: BusyMarkSpacing.sm),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: BusyMarkPushButton.standard(
+            key: const ValueKey('reset-all-shortcuts'),
+            onPressed: _restoring ? null : _restoreAll,
+            child: Text(l10n.shortcutRestoreAll),
+          ),
+        ),
       ],
     );
+  }
+
+  Widget _commandRow(
+    BuildContext context,
+    BusyMarkCommandRegistry registry,
+    BusyMarkCommand command,
+    List<BusyMarkCommand>? conflicts,
+  ) {
+    final configurable = shortcutConfigurable(command);
+    final description = [
+      commandContextLabel(context, command),
+      if (!configurable) context.l10n.shortcutFixed,
+      if (conflicts != null) context.l10n.shortcutDefaultConflict,
+      for (final a
+          in registry
+              .activators(command.id)
+              .skip(1)
+              .whereType<SingleActivator>())
+        '\u2066${BusyMarkKeyBinding.fromActivator(a).label}\u2069',
+    ].join(' · ');
+    return BusyMarkActionRow(
+      key: ValueKey('shortcut-edit-${command.id}'),
+      title: command.label(context),
+      subtitle: description,
+      tooltip: '${command.label(context)}\n$description',
+      enabled: configurable,
+      trailing: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 160),
+        child: BusyMarkKeyboardShortcutBadge(
+          command.shortcut?.label ?? context.l10n.shortcutUnassigned,
+        ),
+      ),
+      onTap: configurable
+          ? () => showBusyMarkModalDialog<void>(
+              context,
+              builder: (_) => _ShortcutEditor(command: command),
+            )
+          : null,
+    );
+  }
+
+  Future<void> _restoreAll() async {
+    if (_restoring) return;
+    setState(() => _restoring = true);
+    try {
+      final confirmed = await showBusyMarkModalDialog<bool>(
+        context,
+        builder: (c) => BusyMarkDialogShell(
+          title: context.l10n.shortcutRestoreAll,
+          actions: [
+            BusyMarkPushButton.standard(
+              onPressed: () => Navigator.pop(c, false),
+              child: Text(context.l10n.cancel),
+            ),
+            BusyMarkPushButton.suggested(
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(context.l10n.shortcutRestoreAll),
+            ),
+          ],
+          children: [Text(context.l10n.shortcutRestoreAllQuestion)],
+        ),
+      );
+      if (confirmed == true && mounted) {
+        await ref.read(keymapControllerProvider.notifier).resetAll();
+      }
+    } finally {
+      if (mounted) setState(() => _restoring = false);
+    }
   }
 }
 
@@ -251,6 +303,22 @@ class _ShortcutEditorState extends ConsumerState<_ShortcutEditor> {
   void initState() {
     super.initState();
     _expected = ref.read(appSettingsControllerProvider).shortcutOverrides;
+    _conflicts =
+        deferredDefaultConflicts(
+          BusyMarkCommandCatalog.metadata,
+          validatedShortcutOverrides(
+            BusyMarkCommandCatalog.metadata,
+            _expected,
+          ),
+        )[widget.command.id] ??
+        const [];
+    if (_conflicts.isNotEmpty) {
+      _candidate = defaultBinding(
+        BusyMarkCommandCatalog.metadata[widget.command.id]!,
+      );
+      _reset = true;
+    }
+
     _captureFocus.addListener(() {
       if (!_captureFocus.hasFocus && _recording) {
         _cancelCapture();
@@ -297,7 +365,9 @@ class _ShortcutEditorState extends ConsumerState<_ShortcutEditor> {
             _expected,
           ).conflicts(widget.command.id, binding);
         });
-        _assignFocus.requestFocus();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _assignFocus.requestFocus();
+        });
       },
       onCancel: _cancelCapture,
     );
@@ -360,16 +430,6 @@ class _ShortcutEditorState extends ConsumerState<_ShortcutEditor> {
                 },
           child: Text(l10n.cancel),
         ),
-        BusyMarkPushButton.standard(
-          key: const ValueKey('remove-shortcut'),
-          onPressed: _saving ? null : () => _save(remove: true),
-          child: Text(l10n.shortcutRemove),
-        ),
-        BusyMarkPushButton.standard(
-          key: const ValueKey('restore-shortcut-default'),
-          onPressed: _saving ? null : () => _save(reset: true),
-          child: Text(l10n.shortcutRestoreDefault),
-        ),
         BusyMarkPushButton.suggested(
           key: const ValueKey('assign-shortcut'),
           focusNode: _assignFocus,
@@ -383,35 +443,90 @@ class _ShortcutEditorState extends ConsumerState<_ShortcutEditor> {
         ),
       ],
       children: [
-        Text(commandContextLabel(context, widget.command)),
-        const SizedBox(height: BusyMarkSpacing.sm),
-        Text(current.shortcut?.label ?? l10n.shortcutUnassigned),
-        BusyMarkPushButton.standard(
-          key: const ValueKey('record-shortcut'),
-          focusNode: _captureFocus,
-          onPressed: _saving
-              ? null
-              : _recording
-              ? _cancelCapture
-              : _record,
-          child: Text(
-            _recording ? l10n.shortcutPressKeys : l10n.shortcutRecord,
+        if (_saving)
+          Semantics(
+            label: l10n.save,
+            liveRegion: true,
+            child: const LinearProgressIndicator(
+              key: ValueKey('shortcut-saving'),
+            ),
           ),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkActionRow(
+              title: l10n.shortcutCurrentBinding,
+              subtitle: commandContextLabel(context, widget.command),
+              trailing: BusyMarkKeyboardShortcutBadge(
+                current.shortcut?.label ?? l10n.shortcutUnassigned,
+              ),
+            ),
+            BusyMarkActionRow(
+              key: const ValueKey('record-shortcut'),
+              title: _recording ? l10n.shortcutPressKeys : l10n.shortcutRecord,
+              enabled: !_saving,
+              leading: const Icon(BusyMarkGlyphs.keyboard),
+              onTap: _recording ? _cancelCapture : _record,
+              // Focus remains on the explicit recording control, never an editor.
+              trailing: Focus(
+                focusNode: _captureFocus,
+                skipTraversal: true,
+                includeSemantics: false,
+                child: const SizedBox.shrink(),
+              ),
+            ),
+            if (_candidate != null)
+              BusyMarkActionRow(
+                title: l10n.shortcutProposedBinding,
+                trailing: BusyMarkKeyboardShortcutBadge(_candidate!.label),
+              ),
+          ],
         ),
-        if (_candidate != null)
-          Padding(
-            padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-            child: BusyMarkKeyboardShortcutBadge(_candidate!.label),
-          ),
         if (_candidate?.hasKnownSystemConflict == true)
           Text(l10n.shortcutSystemWarning),
-        if (_conflicts.isNotEmpty) ...[
-          Text(l10n.shortcutConflicts),
-          for (final c in _conflicts)
-            Text('${c.label(context)} · ${commandContextLabel(context, c)}'),
-        ],
+        if (_conflicts.isNotEmpty)
+          BusyMarkGroupedList(
+            title: l10n.shortcutConflicts,
+            filled: true,
+            children: [
+              for (final c in _conflicts)
+                BusyMarkActionRow(
+                  title: c.label(context),
+                  subtitle: commandContextLabel(context, c),
+                  trailing: BusyMarkKeyboardShortcutBadge(
+                    effectiveCommandRegistry(
+                          BusyMarkCommandCatalog.metadata,
+                          ref
+                              .read(appSettingsControllerProvider)
+                              .shortcutOverrides,
+                        )[c.id]?.shortcut?.label ??
+                        l10n.shortcutUnassigned,
+                  ),
+                ),
+            ],
+          ),
         if (_message != null)
-          Text(_message!, key: const ValueKey('shortcut-feedback')),
+          Semantics(
+            liveRegion: true,
+            child: Text(_message!, key: const ValueKey('shortcut-feedback')),
+          ),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkActionRow(
+              key: const ValueKey('remove-shortcut'),
+              title: l10n.shortcutRemove,
+              enabled: !_saving,
+              onTap: () => _save(remove: true),
+            ),
+            BusyMarkActionRow(
+              key: const ValueKey('restore-shortcut-default'),
+              title: l10n.shortcutRestoreDefault,
+              enabled: !_saving,
+              onTap: () => _save(reset: true),
+            ),
+          ],
+        ),
       ],
     );
   }

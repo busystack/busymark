@@ -61,7 +61,7 @@ void main() {
   }
 
   test(
-    'empty queries gate all six waiting categories before provider work',
+    'empty queries gate all seven waiting categories before provider work',
     () async {
       final fixture = await const WorkspaceService().openPath(
         'test/fixtures/writerside/basic_project',
@@ -104,6 +104,7 @@ void main() {
         SearchCategory.outline,
         SearchCategory.documents,
         SearchCategory.topics,
+        SearchCategory.recent,
         SearchCategory.localHistory,
       ]) {
         files.reads = topics.reads = headings.reads = 0;
@@ -153,11 +154,19 @@ void main() {
           );
       session.open(category: SearchCategory.recent);
       await session.submit();
-      expect(container.read(searchSessionProvider).waitingForInput, isFalse);
+      expect(container.read(searchSessionProvider).waitingForInput, isTrue);
+      expect(container.read(searchSessionProvider).results, isEmpty);
+      session.query('recent');
+      await session.submit();
       expect(
         container.read(searchSessionProvider).results.single,
         isA<RecentSearchResult>(),
       );
+      session.query('');
+      session.showMore();
+      await session.submit();
+      expect(container.read(searchSessionProvider).results, isEmpty);
+
       session.configureCommands([
         ActionSearchResult(
           BusyMarkCommand(
@@ -446,6 +455,22 @@ void main() {
       );
       expect(selector.fullWidth, isTrue);
       expect(selector.options.map((o) => o.value), session.categories);
+      final shortcuts = {
+        for (final option in selector.options) option.value: option.shortcut,
+      };
+      expect(shortcuts[SearchCategory.file], 'Ctrl+F');
+      expect(shortcuts[SearchCategory.workspace], 'Ctrl+Shift+F');
+      expect(shortcuts[SearchCategory.outline], 'Ctrl+Alt+H');
+      expect(shortcuts[SearchCategory.documents], 'Ctrl+P');
+      expect(shortcuts[SearchCategory.recent], 'Ctrl+Alt+O');
+      expect(shortcuts[SearchCategory.localHistory], 'Ctrl+Alt+Y');
+      expect(shortcuts[SearchCategory.actions], 'Ctrl+Shift+P');
+      expect(
+        selector.options
+            .singleWhere((o) => o.value == SearchCategory.outline)
+            .gtkAccelerator,
+        '<Primary><Alt>h',
+      );
       expect(find.byType(DropdownButton<SearchCategory>), findsNothing);
     },
   );
@@ -572,7 +597,7 @@ void main() {
   );
 
   testWidgets(
-    'an empty initial Recent list is distinct from a completed no-results query',
+    'Recent waits for input and distinguishes a completed no-results query',
     (tester) async {
       final container = containerFor(_state());
       final session = container.read(searchSessionProvider.notifier);
@@ -592,7 +617,7 @@ void main() {
       );
       await tester.runAsync(session.submit);
       await tester.pumpAndSettle();
-      expect(find.text(AppLocalizationsEn().searchRecentEmpty), findsOneWidget);
+      expect(find.text(AppLocalizationsEn().searchEnterText), findsOneWidget);
       expect(find.text(AppLocalizationsEn().noResults), findsNothing);
       session.query('missing');
       await tester.runAsync(session.submit);
@@ -601,7 +626,7 @@ void main() {
       session.query('');
       await tester.runAsync(session.submit);
       await tester.pump();
-      expect(find.text(AppLocalizationsEn().searchRecentEmpty), findsOneWidget);
+      expect(find.text(AppLocalizationsEn().searchEnterText), findsOneWidget);
       expect(find.text(AppLocalizationsEn().noResults), findsNothing);
     },
   );
@@ -631,8 +656,8 @@ void main() {
         lastOpenedAt: DateTime(2026),
       );
       final recent = presentSearchResult(context, RecentSearchResult(local));
-      expect(recent.subtitle, '/project/topics/a.topic');
-      expect('/project'.allMatches(recent.subtitle), hasLength(1));
+      expect(recent.subtitle, 'project · topics/a.topic');
+      expect(recent.details, '/project/topics/a.topic');
       for (final label in [null, 'Alex · notes.example']) {
         final resource = RecentResource(
           path: '',
@@ -703,6 +728,121 @@ void main() {
       expect(history.subtitle, isNot(contains('Local History')));
     },
   );
+
+  for (final scale in [1.0, 1.8]) {
+    testWidgets('Recent uses uniform two-line identity rows at scale $scale', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final resources = [
+        RecentResource(
+          path: '/',
+          title: 'Root',
+          kind: 'markdownFolder',
+          lastOpenedAt: DateTime(2026),
+        ),
+        RecentResource(
+          path: '/one/Same.md',
+          kind: 'markdownFolder',
+          document: true,
+          lastOpenedAt: DateTime(2026),
+        ),
+        RecentResource(
+          path: '/very/long/unique-parent/deep/Same.md',
+          kind: 'markdownFolder',
+          document: true,
+          lastOpenedAt: DateTime(2026),
+        ),
+        RecentResource(
+          path: '/projects/Guide/topics/a-very-long-topic-name.topic',
+          ownerRoot: '/projects/Guide',
+          title: 'A long Writerside title that must remain on one line',
+          kind: 'writersideModule',
+          document: true,
+          lastOpenedAt: DateTime(2026),
+        ),
+        RecentResource(
+          path: '',
+          title: 'Same.md',
+          kind: 'nextcloudNotes',
+          document: true,
+          accountId: 'account-one',
+          localId: 'same-id',
+          accountLabel: 'Alex · one.example',
+          lastOpenedAt: DateTime(2026),
+        ),
+        RecentResource(
+          path: '',
+          title: 'Same.md',
+          kind: 'nextcloudNotes',
+          document: true,
+          accountId: 'account-two',
+          localId: 'same-id',
+          accountLabel: 'Alex · two.example',
+          lastOpenedAt: DateTime(2026),
+        ),
+      ];
+      final rows = resources.map(RecentSearchResult.new).toList();
+      final activated = <String>[];
+      final container = containerFor(_state());
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(scale)),
+                child: Scaffold(
+                  body: SizedBox(
+                    width: 250,
+                    height: 1200,
+                    child: SearchResultList(
+                      results: rows,
+                      onActivate: (r) async => activated.add(r.identity),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      double? height;
+      final subtitles = <String>{};
+      for (var i = 0; i < rows.length; i++) {
+        final finder = find.byKey(ValueKey(rows[i].identity));
+        final row = tester.widget<BusyMarkSidebarRecordRow>(finder);
+        expect(row.content, isNull);
+        expect(row.title, isNotEmpty);
+        expect(row.subtitle, isNotEmpty);
+        expect(subtitles.add(row.subtitle!), isTrue);
+        final measured = tester.getSize(finder).height;
+        height ??= measured;
+        expect(measured, moreOrLessEquals(height));
+        final full = resources[i].accountId == null
+            ? resources[i].path
+            : resources[i].accountLabel!;
+        expect(row.tooltip, full);
+        expect(row.semanticsLabel, contains(full));
+        for (final text in tester.widgetList<Text>(
+          find.descendant(of: finder, matching: find.byType(Text)),
+        )) {
+          expect(text.maxLines, 1);
+        }
+        await tester.tap(finder);
+      }
+      expect(activated, rows.map((r) => r.identity).toList());
+      expect(resources[2].path, '/very/long/unique-parent/deep/Same.md');
+    });
+  }
 
   testWidgets(
     'shared result rows are compact, accessible and truly disable unavailable actions',

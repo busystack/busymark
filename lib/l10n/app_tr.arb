@@ -5146,7 +5146,6 @@
   "searchRecentHint": "Son kullanılanları ara…",
   "searchActionsHint": "Eylemleri ara…",
   "searchRequiresNotesWorkspace": "Notlar çalışma alanı gerektirir",
-  "searchRecentEmpty": "Son kullanılan kaynak yok",
   "searchSidebarLabel": "Ara:",
   "searchDocumentTextCategory": "Belge metni",
   "searchWorkspaceTextCategory": "Çalışma alanı metni",
@@ -5173,5 +5172,10 @@
   "shortcutContextEditor": "Düzenleyici ve kaynak",
   "shortcutContextWritersideSource": "Writerside kaynağı",
   "shortcutContextWorkspace": "Çalışma alanı gezintisi",
-  "shortcutContextTree": "Kenar çubuğu ağaçları"
+  "shortcutContextTree": "Kenar çubuğu ağaçları",
+  "searchHeadingsCommand": "Başlıklarda Ara",
+  "shortcutFixed": "Düzenleyici tarafından yönetilir; yapılandırılamaz.",
+  "shortcutDefaultConflict": "Varsayılan kısayol özel bir atamayla çakışıyor.",
+  "shortcutCurrentBinding": "Geçerli kısayol",
+  "shortcutProposedBinding": "Önerilen kısayol"
 }

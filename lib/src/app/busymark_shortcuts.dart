@@ -57,7 +57,6 @@ abstract final class BusyMarkAppShortcuts {
   static const fullScreenLabel = 'F11';
   static const backLabel = 'Alt+Left';
   static const searchLabel = 'Ctrl+F';
-  static const keyboardShortcutsLabel = 'Ctrl+Alt+K';
   static const quickOpenLabel = 'Ctrl+P';
   static const quickOpenGtkAccelerator = '<Primary>p';
   static const quickOpen = BusyMarkShortcutDefinition(
@@ -82,7 +81,6 @@ abstract final class BusyMarkAppShortcuts {
   static const fullScreenGtkAccelerator = 'F11';
   static const backGtkAccelerator = '<Alt>Left';
   static const searchGtkAccelerator = '<Primary>f';
-  static const keyboardShortcutsGtkAccelerator = '<Primary><Alt>k';
   static const commandPaletteGtkAccelerator = '<Primary><Shift>p';
   static const syntaxReferenceGtkAccelerator = '<Primary><Alt>m';
   static const settingsGtkAccelerator = '<Primary><Alt>s';
@@ -134,15 +132,6 @@ abstract final class BusyMarkAppShortcuts {
     label: searchLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyF, control: true),
     gtkAccelerator: searchGtkAccelerator,
-  );
-  static const keyboardShortcuts = BusyMarkShortcutDefinition(
-    label: keyboardShortcutsLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyK,
-      control: true,
-      alt: true,
-    ),
-    gtkAccelerator: keyboardShortcutsGtkAccelerator,
   );
   static const commandPalette = BusyMarkShortcutDefinition(
     label: commandPaletteLabel,
@@ -214,7 +203,6 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.fullScreen: fullScreen,
         BusyMarkAppShortcutAction.back: back,
         BusyMarkAppShortcutAction.search: search,
-        BusyMarkAppShortcutAction.keyboardShortcuts: keyboardShortcuts,
         BusyMarkAppShortcutAction.commandPalette: commandPalette,
         BusyMarkAppShortcutAction.quickOpen: quickOpen,
         BusyMarkAppShortcutAction.syntaxReference: syntaxReference,

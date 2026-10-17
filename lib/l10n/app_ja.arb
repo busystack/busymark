@@ -5146,7 +5146,6 @@
   "searchRecentHint": "最近の項目を検索…",
   "searchActionsHint": "アクションを検索…",
   "searchRequiresNotesWorkspace": "ノートのワークスペースが必要です",
-  "searchRecentEmpty": "最近のリソースはありません",
   "searchSidebarLabel": "検索：",
   "searchDocumentTextCategory": "文書のテキスト",
   "searchWorkspaceTextCategory": "ワークスペースのテキスト",
@@ -5173,5 +5172,10 @@
   "shortcutContextEditor": "エディターとソース",
   "shortcutContextWritersideSource": "Writersideのソース",
   "shortcutContextWorkspace": "ワークスペースの移動",
-  "shortcutContextTree": "サイドバーのツリー"
+  "shortcutContextTree": "サイドバーのツリー",
+  "searchHeadingsCommand": "見出しを検索",
+  "shortcutFixed": "エディターが管理するため、変更できません。",
+  "shortcutDefaultConflict": "既定のショートカットがカスタム割り当てと競合しています。",
+  "shortcutCurrentBinding": "現在のショートカット",
+  "shortcutProposedBinding": "新しいショートカット"
 }

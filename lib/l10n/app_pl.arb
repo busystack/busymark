@@ -3642,7 +3642,6 @@
   "searchRecentHint": "Szukaj ostatnich…",
   "searchActionsHint": "Szukaj działań…",
   "searchRequiresNotesWorkspace": "Wymaga obszaru roboczego Notatek",
-  "searchRecentEmpty": "Brak ostatnich zasobów",
   "searchSidebarLabel": "Szukaj:",
   "searchDocumentTextCategory": "Tekst dokumentu",
   "searchWorkspaceTextCategory": "Tekst obszaru roboczego",
@@ -3669,5 +3668,10 @@
   "shortcutContextEditor": "Edytor i źródło",
   "shortcutContextWritersideSource": "Źródło Writerside",
   "shortcutContextWorkspace": "Nawigacja obszaru roboczego",
-  "shortcutContextTree": "Drzewa paska bocznego"
+  "shortcutContextTree": "Drzewa paska bocznego",
+  "searchHeadingsCommand": "Szukaj nagłówków",
+  "shortcutFixed": "Zarządzane przez edytor; nie można skonfigurować.",
+  "shortcutDefaultConflict": "Domyślny skrót koliduje z niestandardowym przypisaniem.",
+  "shortcutCurrentBinding": "Bieżący skrót",
+  "shortcutProposedBinding": "Proponowany skrót"
 }

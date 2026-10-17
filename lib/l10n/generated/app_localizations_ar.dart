@@ -5475,9 +5475,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'يتطلب مساحة عمل للملاحظات';
 
   @override
-  String get searchRecentEmpty => 'لا توجد موارد حديثة';
-
-  @override
   String get searchSidebarLabel => 'بحث:';
 
   @override
@@ -5561,4 +5558,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'أشجار الشريط الجانبي';
+
+  @override
+  String get searchHeadingsCommand => 'البحث عن العناوين';
+
+  @override
+  String get shortcutFixed => 'يتولاه المحرر؛ غير قابل للتخصيص.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'يتعارض الاختصار الافتراضي مع تعيين مخصص.';
+
+  @override
+  String get shortcutCurrentBinding => 'الاختصار الحالي';
+
+  @override
+  String get shortcutProposedBinding => 'الاختصار المقترح';
 }

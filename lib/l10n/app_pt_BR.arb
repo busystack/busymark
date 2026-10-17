@@ -3616,7 +3616,6 @@
   "searchRecentHint": "Pesquisar recentes…",
   "searchActionsHint": "Pesquisar ações…",
   "searchRequiresNotesWorkspace": "Requer um espaço de trabalho de Notas",
-  "searchRecentEmpty": "Nenhum recurso recente",
   "searchSidebarLabel": "Pesquisar:",
   "searchDocumentTextCategory": "Texto do documento",
   "searchWorkspaceTextCategory": "Texto do espaço de trabalho",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "Editor e código-fonte",
   "shortcutContextWritersideSource": "Código-fonte do Writerside",
   "shortcutContextWorkspace": "Navegação do espaço de trabalho",
-  "shortcutContextTree": "Árvores laterais"
+  "shortcutContextTree": "Árvores laterais",
+  "searchHeadingsCommand": "Pesquisar títulos",
+  "shortcutFixed": "Gerenciado pelo editor; não é configurável.",
+  "shortcutDefaultConflict": "O atalho padrão está em conflito com uma atribuição personalizada.",
+  "shortcutCurrentBinding": "Atalho atual",
+  "shortcutProposedBinding": "Atalho proposto"
 }

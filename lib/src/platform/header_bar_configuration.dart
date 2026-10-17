@@ -41,9 +41,6 @@ class HeaderBarLabels {
     required this.settings,
     required this.settingsShortcut,
     required this.settingsGtkAccelerator,
-    required this.keyboardShortcuts,
-    required this.keyboardShortcutsShortcut,
-    required this.keyboardShortcutsGtkAccelerator,
     required this.syntaxReference,
     required this.syntaxReferenceShortcut,
     required this.syntaxReferenceGtkAccelerator,
@@ -82,9 +79,6 @@ class HeaderBarLabels {
   final String settings;
   final String settingsShortcut;
   final String settingsGtkAccelerator;
-  final String keyboardShortcuts;
-  final String keyboardShortcutsShortcut;
-  final String keyboardShortcutsGtkAccelerator;
   final String syntaxReference;
   final String syntaxReferenceShortcut;
   final String syntaxReferenceGtkAccelerator;
@@ -123,9 +117,6 @@ class HeaderBarLabels {
     'settings': settings,
     'settingsShortcut': settingsShortcut,
     'settingsGtkAccelerator': settingsGtkAccelerator,
-    'keyboardShortcuts': keyboardShortcuts,
-    'keyboardShortcutsShortcut': keyboardShortcutsShortcut,
-    'keyboardShortcutsGtkAccelerator': keyboardShortcutsGtkAccelerator,
     'syntaxReference': syntaxReference,
     'syntaxReferenceShortcut': syntaxReferenceShortcut,
     'syntaxReferenceGtkAccelerator': syntaxReferenceGtkAccelerator,

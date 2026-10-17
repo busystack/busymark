@@ -80,6 +80,7 @@ class BusyMarkCommand {
     required this.category,
     required this.scope,
     this.shortcut,
+    this.defaultYieldsToOverrides = false,
     this.resourceContext = BusyMarkCommandResourceContext.any,
     this.description,
     this.disabledReason,
@@ -93,6 +94,7 @@ class BusyMarkCommand {
   final BusyMarkCommandLabel category;
   final BusyMarkCommandScope scope;
   final BusyMarkShortcutDefinition? shortcut;
+  final bool defaultYieldsToOverrides;
   final BusyMarkCommandResourceContext resourceContext;
 
   BusyMarkCommand withShortcut(BusyMarkShortcutDefinition? value) =>
@@ -102,6 +104,7 @@ class BusyMarkCommand {
         category: category,
         scope: scope,
         shortcut: value,
+        defaultYieldsToOverrides: defaultYieldsToOverrides,
         resourceContext: resourceContext,
         description: description,
         disabledReason: disabledReason,
@@ -474,6 +477,7 @@ abstract final class BusyMarkCommandIds {
   static const back = 'navigation.back';
   static const search = 'search.find';
   static const searchWorkspace = 'search.workspace';
+  static const searchHeadings = 'search.headings';
   static const searchTopics = 'search.topics';
   static const searchRecent = 'search.recent';
   static const newNote = 'notes.create';
@@ -547,6 +551,7 @@ abstract final class BusyMarkCommandCatalog {
       required BusyMarkCommandLabel category,
       required BusyMarkCommandScope scope,
       BusyMarkShortcutDefinition? shortcut,
+      bool defaultYieldsToOverrides = false,
       BusyMarkCommandDescription? description,
     }) {
       final contextual =
@@ -563,6 +568,7 @@ abstract final class BusyMarkCommandCatalog {
         category: category,
         scope: scope,
         shortcut: shortcut,
+        defaultYieldsToOverrides: defaultYieldsToOverrides,
         resourceContext: notesWorkspaceCommandIds.contains(id)
             ? BusyMarkCommandResourceContext.notesWorkspace
             : scope == BusyMarkCommandScope.sourceSymbol ||
@@ -675,6 +681,22 @@ abstract final class BusyMarkCommandCatalog {
             shift: true,
           ),
           gtkAccelerator: '<Primary><Shift>f',
+        ),
+      ),
+      command(
+        id: BusyMarkCommandIds.searchHeadings,
+        label: (c) => c.l10n.searchHeadingsCommand,
+        category: (c) => c.l10n.search,
+        scope: BusyMarkCommandScope.application,
+        defaultYieldsToOverrides: true,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+Alt+H',
+          activator: SingleActivator(
+            LogicalKeyboardKey.keyH,
+            control: true,
+            alt: true,
+          ),
+          gtkAccelerator: '<Primary><Alt>h',
         ),
       ),
       command(
@@ -841,6 +863,16 @@ abstract final class BusyMarkCommandCatalog {
         ),
       command(
         id: BusyMarkCommandIds.findLocalHistory,
+        defaultYieldsToOverrides: true,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+Alt+Y',
+          activator: SingleActivator(
+            LogicalKeyboardKey.keyY,
+            control: true,
+            alt: true,
+          ),
+          gtkAccelerator: '<Primary><Alt>y',
+        ),
         label: (context) => context.l10n.findLocalHistoryEllipsis,
         category: (context) => context.l10n.shortcutGroupSidebar,
         scope: BusyMarkCommandScope.application,

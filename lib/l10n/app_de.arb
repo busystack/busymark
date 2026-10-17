@@ -3616,7 +3616,6 @@
   "searchRecentHint": "Zuletzt geöffnet suchen…",
   "searchActionsHint": "Aktionen suchen…",
   "searchRequiresNotesWorkspace": "Erfordert einen Notizen-Arbeitsbereich",
-  "searchRecentEmpty": "Keine zuletzt geöffneten Ressourcen",
   "searchSidebarLabel": "Suchen:",
   "searchDocumentTextCategory": "Dokumenttext",
   "searchWorkspaceTextCategory": "Arbeitsbereichstext",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "Editor und Quelltext",
   "shortcutContextWritersideSource": "Writerside-Quelltext",
   "shortcutContextWorkspace": "Arbeitsbereichsnavigation",
-  "shortcutContextTree": "Seitenleistenbäume"
+  "shortcutContextTree": "Seitenleistenbäume",
+  "searchHeadingsCommand": "Überschriften suchen",
+  "shortcutFixed": "Vom Editor verwaltet; nicht konfigurierbar.",
+  "shortcutDefaultConflict": "Das Standardkürzel steht mit einer eigenen Zuweisung in Konflikt.",
+  "shortcutCurrentBinding": "Aktuelles Tastenkürzel",
+  "shortcutProposedBinding": "Vorgeschlagenes Tastenkürzel"
 }

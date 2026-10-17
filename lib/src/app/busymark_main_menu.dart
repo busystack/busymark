@@ -13,7 +13,6 @@ enum BusyMarkMainMenuAction {
   export,
   fullScreen,
   settings,
-  keyboardShortcuts,
   syntaxReference,
   reportIssue,
   aboutBusyMark,
@@ -74,17 +73,6 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           ).shortcut?.gtkAccelerator,
         ),
         BusyMarkPopupMenuItem(
-          value: BusyMarkMainMenuAction.keyboardShortcuts,
-          label: command(BusyMarkCommandIds.keyboardShortcuts).label(context),
-          icon: BusyMarkGlyphs.keyboard,
-          shortcut: command(
-            BusyMarkCommandIds.keyboardShortcuts,
-          ).shortcut?.label,
-          gtkAccelerator: command(
-            BusyMarkCommandIds.keyboardShortcuts,
-          ).shortcut?.gtkAccelerator,
-        ),
-        BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.syntaxReference,
           label: command(BusyMarkCommandIds.syntaxReference).label(context),
           icon: BusyMarkGlyphs.markdownFile,
@@ -109,8 +97,6 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           BusyMarkMainMenuAction.export => BusyMarkCommandIds.export,
           BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
-          BusyMarkMainMenuAction.keyboardShortcuts =>
-            BusyMarkCommandIds.keyboardShortcuts,
           BusyMarkMainMenuAction.syntaxReference =>
             BusyMarkCommandIds.syntaxReference,
           BusyMarkMainMenuAction.reportIssue ||

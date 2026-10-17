@@ -5146,7 +5146,6 @@
   "searchRecentHint": "최근 항목 검색…",
   "searchActionsHint": "작업 검색…",
   "searchRequiresNotesWorkspace": "노트 작업 공간 필요",
-  "searchRecentEmpty": "최근 리소스 없음",
   "searchSidebarLabel": "검색:",
   "searchDocumentTextCategory": "문서 텍스트",
   "searchWorkspaceTextCategory": "작업 공간 텍스트",
@@ -5173,5 +5172,10 @@
   "shortcutContextEditor": "편집기 및 소스",
   "shortcutContextWritersideSource": "Writerside 소스",
   "shortcutContextWorkspace": "작업 공간 탐색",
-  "shortcutContextTree": "사이드바 트리"
+  "shortcutContextTree": "사이드바 트리",
+  "searchHeadingsCommand": "제목 검색",
+  "shortcutFixed": "편집기에서 관리하므로 설정할 수 없습니다.",
+  "shortcutDefaultConflict": "기본 단축키가 사용자 지정 할당과 충돌합니다.",
+  "shortcutCurrentBinding": "현재 단축키",
+  "shortcutProposedBinding": "제안된 단축키"
 }

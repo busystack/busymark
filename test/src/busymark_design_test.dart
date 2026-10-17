@@ -820,6 +820,80 @@ void main() {
     );
   });
 
+  for (final native in [false, true]) {
+    testWidgets(
+      'selector forwards effective shortcut metadata to ${native ? 'GTK' : 'fallback'}',
+      (tester) async {
+        const channel = MethodChannel(nativeMenuChannelName);
+        Map<Object?, Object?>? arguments;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          (call) async {
+            if (!native) throw MissingPluginException();
+            if (call.method == 'show') {
+              arguments = call.arguments as Map<Object?, Object?>;
+              return 1;
+            }
+            return false;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            channel,
+            null,
+          ),
+        );
+        String? selected;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: BusyMarkPopupSelector<String>(
+                value: 'file',
+                label: 'Document Text',
+                tooltip: 'Search category',
+                fullWidth: true,
+                options: const [
+                  BusyMarkPopupSelectorOption(
+                    value: 'file',
+                    label: 'Document Text',
+                    shortcut: 'F8',
+                    gtkAccelerator: 'F8',
+                  ),
+                  BusyMarkPopupSelectorOption(
+                    value: 'actions',
+                    label: 'Actions',
+                  ),
+                ],
+                onSelected: (v) => selected = v,
+              ),
+            ),
+          ),
+        );
+        final button = tester.widget<BusyMarkMenuButton<String>>(
+          find.byType(BusyMarkMenuButton<String>),
+        );
+        final item = button.items.first as BusyMarkPopupMenuItem<String>;
+        expect(item.shortcut, 'F8');
+        expect(item.gtkAccelerator, 'F8');
+        await tester.tap(find.byTooltip('Search category'));
+        await tester.pumpAndSettle();
+        if (native) {
+          final entries = arguments!['entries'] as List;
+          expect((entries.first as Map)['shortcut'], 'F8');
+          expect((entries.first as Map)['gtkAccelerator'], 'F8');
+          expect((entries[1] as Map)['shortcut'], isNull);
+          expect(selected, 'actions');
+        } else {
+          expect(find.text('F8'), findsOneWidget);
+          expect(item.checked, isTrue);
+          await tester.tap(find.text('Actions'));
+          await tester.pumpAndSettle();
+          expect(selected, 'actions');
+        }
+      },
+    );
+  }
+
   testWidgets('desktop tooltips use one explicit natural-width geometry', (
     tester,
   ) async {
@@ -1984,21 +2058,13 @@ void main() {
     );
     final selectorButton = tester.widget<FilledButton>(selectorFinder);
     expect(
-      selectorButton.style?.backgroundColor?.resolve({}),
-      BusyMarkLinuxPalette.transparent,
-    );
-    expect(selectorButton.style?.side?.resolve({}), BorderSide.none);
-    expect(
-      selectorButton.style?.minimumSize?.resolve({}),
-      theme.outlinedButtonTheme.style?.minimumSize?.resolve({}),
+      selectorButton.style,
+      isNull,
+      reason: 'The shared selector uses the standard filled control theme',
     );
     expect(
-      selectorButton.style?.padding?.resolve({}),
-      theme.outlinedButtonTheme.style?.padding?.resolve({}),
-    );
-    expect(
-      selectorButton.style?.shape?.resolve({}),
-      theme.outlinedButtonTheme.style?.shape?.resolve({}),
+      theme.filledButtonTheme.style?.backgroundColor?.resolve({}),
+      isNot(BusyMarkLinuxPalette.transparent),
     );
     expect(selector.enabled, isTrue);
     expect(selector.items, hasLength(2));

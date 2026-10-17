@@ -3169,7 +3169,6 @@
   "searchRecentHint": "Search recent resources…",
   "searchActionsHint": "Search actions…",
   "searchRequiresNotesWorkspace": "Requires a Notes workspace",
-  "searchRecentEmpty": "No recent resources",
   "searchSidebarLabel": "Search:",
   "@searchSidebarLabel": {"description": "Search and keyboard shortcut settings: searchSidebarLabel"},
   "searchDocumentTextCategory": "Document Text",
@@ -3223,5 +3222,10 @@
   "shortcutContextWorkspace": "Workspace navigation",
   "@shortcutContextWorkspace": {"description": "Search and keyboard shortcut settings: shortcutContextWorkspace"},
   "shortcutContextTree": "Sidebar trees",
-  "@shortcutContextTree": {"description": "Search and keyboard shortcut settings: shortcutContextTree"}
+  "@shortcutContextTree": {"description": "Search and keyboard shortcut settings: shortcutContextTree"},
+  "searchHeadingsCommand": "Search Headings",
+  "shortcutFixed": "Handled by the editor; not configurable.",
+  "shortcutDefaultConflict": "Default shortcut conflicts with a custom assignment.",
+  "shortcutCurrentBinding": "Current shortcut",
+  "shortcutProposedBinding": "Proposed shortcut"
 }

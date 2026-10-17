@@ -3616,7 +3616,6 @@
   "searchRecentHint": "Rechercher les éléments récents…",
   "searchActionsHint": "Rechercher des actions…",
   "searchRequiresNotesWorkspace": "Nécessite un espace de travail Notes",
-  "searchRecentEmpty": "Aucune ressource récente",
   "searchSidebarLabel": "Rechercher:",
   "searchDocumentTextCategory": "Texte du document",
   "searchWorkspaceTextCategory": "Texte de l’espace de travail",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "Éditeur et source",
   "shortcutContextWritersideSource": "Source Writerside",
   "shortcutContextWorkspace": "Navigation de l’espace de travail",
-  "shortcutContextTree": "Arborescences latérales"
+  "shortcutContextTree": "Arborescences latérales",
+  "searchHeadingsCommand": "Rechercher des titres",
+  "shortcutFixed": "Géré par l’éditeur ; non configurable.",
+  "shortcutDefaultConflict": "Le raccourci par défaut entre en conflit avec une affectation personnalisée.",
+  "shortcutCurrentBinding": "Raccourci actuel",
+  "shortcutProposedBinding": "Raccourci proposé"
 }

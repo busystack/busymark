@@ -5146,7 +5146,6 @@
   "searchRecentHint": "Tìm mục gần đây…",
   "searchActionsHint": "Tìm thao tác…",
   "searchRequiresNotesWorkspace": "Yêu cầu không gian làm việc Ghi chú",
-  "searchRecentEmpty": "Không có tài nguyên gần đây",
   "searchSidebarLabel": "Tìm kiếm:",
   "searchDocumentTextCategory": "Văn bản tài liệu",
   "searchWorkspaceTextCategory": "Văn bản không gian làm việc",
@@ -5173,5 +5172,10 @@
   "shortcutContextEditor": "Trình sửa và mã nguồn",
   "shortcutContextWritersideSource": "Mã nguồn Writerside",
   "shortcutContextWorkspace": "Điều hướng không gian làm việc",
-  "shortcutContextTree": "Cây thanh bên"
+  "shortcutContextTree": "Cây thanh bên",
+  "searchHeadingsCommand": "Tìm tiêu đề",
+  "shortcutFixed": "Do trình soạn thảo quản lý; không thể cấu hình.",
+  "shortcutDefaultConflict": "Phím tắt mặc định xung đột với gán tùy chỉnh.",
+  "shortcutCurrentBinding": "Phím tắt hiện tại",
+  "shortcutProposedBinding": "Phím tắt đề xuất"
 }

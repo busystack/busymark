@@ -3616,7 +3616,6 @@
   "searchRecentHint": "البحث في الأخيرة…",
   "searchActionsHint": "البحث عن إجراءات…",
   "searchRequiresNotesWorkspace": "يتطلب مساحة عمل للملاحظات",
-  "searchRecentEmpty": "لا توجد موارد حديثة",
   "searchSidebarLabel": "بحث:",
   "searchDocumentTextCategory": "نص المستند",
   "searchWorkspaceTextCategory": "نص مساحة العمل",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "المحرر والمصدر",
   "shortcutContextWritersideSource": "مصدر Writerside",
   "shortcutContextWorkspace": "التنقل في مساحة العمل",
-  "shortcutContextTree": "أشجار الشريط الجانبي"
+  "shortcutContextTree": "أشجار الشريط الجانبي",
+  "searchHeadingsCommand": "البحث عن العناوين",
+  "shortcutFixed": "يتولاه المحرر؛ غير قابل للتخصيص.",
+  "shortcutDefaultConflict": "يتعارض الاختصار الافتراضي مع تعيين مخصص.",
+  "shortcutCurrentBinding": "الاختصار الحالي",
+  "shortcutProposedBinding": "الاختصار المقترح"
 }

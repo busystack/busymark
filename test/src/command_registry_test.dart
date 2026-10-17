@@ -289,6 +289,7 @@ void main() {
       expect(searchCommandDestinations, {
         'search.find': SearchCategory.file,
         'search.workspace': SearchCategory.workspace,
+        'search.headings': SearchCategory.outline,
         'workspace.quickOpen': SearchCategory.documents,
         'search.topics': SearchCategory.topics,
         'search.recent': SearchCategory.recent,
@@ -457,6 +458,9 @@ void main() {
   });
   test('all agreed search shortcuts have no cross-scope collision', () {
     final registry = BusyMarkCommandCatalog.metadata;
+    expect(registry['help.keyboardShortcuts'], isNotNull);
+    expect(registry['help.keyboardShortcuts']!.shortcut, isNull);
+    expect(registry.activators('help.keyboardShortcuts'), isEmpty);
     const expected = {
       'search.find': 'Ctrl+F',
       'search.workspace': 'Ctrl+Shift+F',
@@ -465,7 +469,8 @@ void main() {
       'search.topics': 'Ctrl+Shift+T',
       'search.recent': 'Ctrl+Alt+O',
       'view.commandPalette': 'Ctrl+Shift+P',
-      'help.keyboardShortcuts': 'Ctrl+Alt+K',
+      'search.headings': 'Ctrl+Alt+H',
+      'history.findLocal': 'Ctrl+Alt+Y',
     };
     for (final entry in expected.entries) {
       expect(registry[entry.key]?.shortcut?.label, entry.value);

@@ -5439,9 +5439,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'नोट्स कार्यक्षेत्र आवश्यक है';
 
   @override
-  String get searchRecentEmpty => 'हाल के संसाधन नहीं हैं';
-
-  @override
   String get searchSidebarLabel => 'खोजें:';
 
   @override
@@ -5526,4 +5523,21 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'साइडबार ट्री';
+
+  @override
+  String get searchHeadingsCommand => 'शीर्षक खोजें';
+
+  @override
+  String get shortcutFixed =>
+      'संपादक द्वारा प्रबंधित; कॉन्फ़िगर नहीं किया जा सकता।';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'डिफ़ॉल्ट शॉर्टकट का कस्टम असाइनमेंट से टकराव है।';
+
+  @override
+  String get shortcutCurrentBinding => 'वर्तमान शॉर्टकट';
+
+  @override
+  String get shortcutProposedBinding => 'प्रस्तावित शॉर्टकट';
 }

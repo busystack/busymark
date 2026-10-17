@@ -5447,9 +5447,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Vajab märkmete tööruumi';
 
   @override
-  String get searchRecentEmpty => 'Hiljutisi ressursse pole';
-
-  @override
   String get searchSidebarLabel => 'Otsi:';
 
   @override
@@ -5535,4 +5532,20 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Külgriba puud';
+
+  @override
+  String get searchHeadingsCommand => 'Otsi pealkirju';
+
+  @override
+  String get shortcutFixed => 'Redaktori hallatav; pole seadistatav.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Vaikimisi otsetee on vastuolus kohandatud määranguga.';
+
+  @override
+  String get shortcutCurrentBinding => 'Praegune otsetee';
+
+  @override
+  String get shortcutProposedBinding => 'Pakutud otsetee';
 }

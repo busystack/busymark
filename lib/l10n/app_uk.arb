@@ -3642,7 +3642,6 @@
   "searchRecentHint": "Пошук нещодавніх…",
   "searchActionsHint": "Пошук дій…",
   "searchRequiresNotesWorkspace": "Потрібен робочий простір нотаток",
-  "searchRecentEmpty": "Немає нещодавніх ресурсів",
   "searchSidebarLabel": "Пошук:",
   "searchDocumentTextCategory": "Текст документа",
   "searchWorkspaceTextCategory": "Текст робочої області",
@@ -3669,5 +3668,10 @@
   "shortcutContextEditor": "Редактор і джерело",
   "shortcutContextWritersideSource": "Джерело Writerside",
   "shortcutContextWorkspace": "Навігація робочою областю",
-  "shortcutContextTree": "Дерева бічної панелі"
+  "shortcutContextTree": "Дерева бічної панелі",
+  "searchHeadingsCommand": "Пошук заголовків",
+  "shortcutFixed": "Керується редактором; налаштування недоступне.",
+  "shortcutDefaultConflict": "Типове сполучення конфліктує з користувацьким призначенням.",
+  "shortcutCurrentBinding": "Поточне сполучення",
+  "shortcutProposedBinding": "Запропоноване сполучення"
 }

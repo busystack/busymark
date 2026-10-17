@@ -5505,9 +5505,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Nécessite un espace de travail Notes';
 
   @override
-  String get searchRecentEmpty => 'Aucune ressource récente';
-
-  @override
   String get searchSidebarLabel => 'Rechercher:';
 
   @override
@@ -5593,4 +5590,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Arborescences latérales';
+
+  @override
+  String get searchHeadingsCommand => 'Rechercher des titres';
+
+  @override
+  String get shortcutFixed => 'Géré par l’éditeur ; non configurable.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Le raccourci par défaut entre en conflit avec une affectation personnalisée.';
+
+  @override
+  String get shortcutCurrentBinding => 'Raccourci actuel';
+
+  @override
+  String get shortcutProposedBinding => 'Raccourci proposé';
 }

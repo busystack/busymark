@@ -249,18 +249,31 @@ class SearchSidebar extends ConsumerWidget {
                       tooltip: context.l10n.searchCategory,
                       fullWidth: true,
                       maxLabelLines: 2,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: BusyMarkSpacing.xs,
-                      ),
                       options: [
                         for (final category in controller.categories)
                           BusyMarkPopupSelectorOption(
                             value: category,
                             label: searchCategoryLabel(context, category),
+                            shortcut:
+                                (commands ??
+                                        BusyMarkCommandCatalog
+                                            .metadata)[searchCommandForCategory(
+                                      category,
+                                    )]
+                                    ?.shortcut
+                                    ?.label,
+                            gtkAccelerator:
+                                (commands ??
+                                        BusyMarkCommandCatalog
+                                            .metadata)[searchCommandForCategory(
+                                      category,
+                                    )]
+                                    ?.shortcut
+                                    ?.gtkAccelerator,
                           ),
                       ],
                       onSelected: (category) =>
-                          controller.open(category: category),
+                          controller.openCategory(category),
                     ),
                   ),
                 ),
@@ -354,9 +367,7 @@ class SearchSidebar extends ConsumerWidget {
                             : state.waitingForInput
                             ? context.l10n.searchEnterText
                             : state.showingInitialList
-                            ? (state.category == SearchCategory.recent
-                                  ? context.l10n.searchRecentEmpty
-                                  : context.l10n.commandUnavailableInContext)
+                            ? context.l10n.commandUnavailableInContext
                             : context.l10n.noResults,
                       ),
                     ),
@@ -560,6 +571,7 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
               : ValueKey(result.identity);
           final row = BusyMarkSidebarRecordRow<RecentNavigationAction>(
             key: key,
+            geometryKey: _keys.putIfAbsent(index, GlobalKey.new),
             icon: result is RecentSearchResult
                 ? WorkspaceGlyphs.forRecent(result.resource)
                 : result is ActionSearchResult
@@ -581,27 +593,32 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
             },
             semanticsLabel:
                 '$title\n$subtitle${presentation.details == null ? '' : '\n${presentation.details}'}${shortcut == null ? '' : '\n$shortcut'}',
-            content: Column(
-              key: _keys.putIfAbsent(index, GlobalKey.new),
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: enabled ? colors.foreground : colors.mutedForeground,
+            title: result is RecentSearchResult ? title : null,
+            subtitle: result is RecentSearchResult ? subtitle : null,
+            tooltip: result is RecentSearchResult ? presentation.details : null,
+            content: result is RecentSearchResult
+                ? null
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: enabled
+                              ? colors.foreground
+                              : colors.mutedForeground,
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty)
+                        Text(
+                          subtitle,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.mutedForeground),
+                        ),
+                    ],
                   ),
-                ),
-                if (subtitle.isNotEmpty)
-                  Text(
-                    subtitle,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-              ],
-            ),
             trailing:
                 result is NoteSearchResult &&
                     !result.recovery &&

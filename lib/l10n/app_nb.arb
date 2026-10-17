@@ -3616,7 +3616,6 @@
   "searchRecentHint": "Søk i nylige…",
   "searchActionsHint": "Søk etter handlinger…",
   "searchRequiresNotesWorkspace": "Krever et notatarbeidsområde",
-  "searchRecentEmpty": "Ingen nylige ressurser",
   "searchSidebarLabel": "Søk:",
   "searchDocumentTextCategory": "Dokumenttekst",
   "searchWorkspaceTextCategory": "Arbeidsområdetekst",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "Redigering og kilde",
   "shortcutContextWritersideSource": "Writerside-kilde",
   "shortcutContextWorkspace": "Arbeidsområdenavigasjon",
-  "shortcutContextTree": "Sidefelttrær"
+  "shortcutContextTree": "Sidefelttrær",
+  "searchHeadingsCommand": "Søk i overskrifter",
+  "shortcutFixed": "Håndteres av redigereren; kan ikke tilpasses.",
+  "shortcutDefaultConflict": "Standardhurtigtasten er i konflikt med en egendefinert tilordning.",
+  "shortcutCurrentBinding": "Gjeldende hurtigtast",
+  "shortcutProposedBinding": "Foreslått hurtigtast"
 }

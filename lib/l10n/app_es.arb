@@ -3616,7 +3616,6 @@
   "searchRecentHint": "Buscar recientes…",
   "searchActionsHint": "Buscar acciones…",
   "searchRequiresNotesWorkspace": "Requiere un espacio de trabajo de Notas",
-  "searchRecentEmpty": "No hay recursos recientes",
   "searchSidebarLabel": "Buscar:",
   "searchDocumentTextCategory": "Texto del documento",
   "searchWorkspaceTextCategory": "Texto del espacio de trabajo",
@@ -3643,5 +3642,10 @@
   "shortcutContextEditor": "Editor y código fuente",
   "shortcutContextWritersideSource": "Código fuente de Writerside",
   "shortcutContextWorkspace": "Navegación del espacio de trabajo",
-  "shortcutContextTree": "Árboles laterales"
+  "shortcutContextTree": "Árboles laterales",
+  "searchHeadingsCommand": "Buscar encabezados",
+  "shortcutFixed": "Lo gestiona el editor; no se puede configurar.",
+  "shortcutDefaultConflict": "El atajo predeterminado entra en conflicto con una asignación personalizada.",
+  "shortcutCurrentBinding": "Atajo actual",
+  "shortcutProposedBinding": "Atajo propuesto"
 }

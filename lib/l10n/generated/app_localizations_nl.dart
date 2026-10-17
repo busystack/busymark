@@ -5500,9 +5500,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Vereist een notitiewerkruimte';
 
   @override
-  String get searchRecentEmpty => 'Geen recente bronnen';
-
-  @override
   String get searchSidebarLabel => 'Zoeken:';
 
   @override
@@ -5587,4 +5584,20 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Zijbalkbomen';
+
+  @override
+  String get searchHeadingsCommand => 'Koppen zoeken';
+
+  @override
+  String get shortcutFixed => 'Beheerd door de editor; niet instelbaar.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'De standaardsneltoets conflicteert met een aangepaste toewijzing.';
+
+  @override
+  String get shortcutCurrentBinding => 'Huidige sneltoets';
+
+  @override
+  String get shortcutProposedBinding => 'Voorgestelde sneltoets';
 }

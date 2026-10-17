@@ -5465,9 +5465,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Requires a Notes workspace';
 
   @override
-  String get searchRecentEmpty => 'No recent resources';
-
-  @override
   String get searchSidebarLabel => 'Search:';
 
   @override
@@ -5552,4 +5549,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Sidebar trees';
+
+  @override
+  String get searchHeadingsCommand => 'Search Headings';
+
+  @override
+  String get shortcutFixed => 'Handled by the editor; not configurable.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Default shortcut conflicts with a custom assignment.';
+
+  @override
+  String get shortcutCurrentBinding => 'Current shortcut';
+
+  @override
+  String get shortcutProposedBinding => 'Proposed shortcut';
 }

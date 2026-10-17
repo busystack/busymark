@@ -48,15 +48,15 @@ plain-text fallbacks outside BusyMark.
 
 ## Local History
 
-Open **Local History** from the sidebar, Actions search, an editor or document
-tab context menu, or a file-tree context menu. The revision list normally follows
-the active document.
+Open **Local History** from the sidebar (Ctrl+5 by default), Actions search, an
+editor or document-tab context menu, or a file-tree context menu. The revision
+list normally follows the active document.
 
-Use **Find in Local History…** to search retained closed, renamed, deleted and
-previously untitled documents by name, current or historical path, or revision
-content. The shared header owns the query and results appear in the search
-sidebar. The History panel’s Find action supplies the selected document as
-removable context; clear that context to search retained history generally.
+Use **Find in Local History…** (Ctrl+Alt+Y by default) to search retained closed,
+renamed, deleted and previously untitled documents by name, current or historical
+path, or revision content. The shared header owns the query and results appear
+in the search sidebar. The History panel’s Find action supplies the selected
+document as removable context; clear that context to search retained history generally.
 An empty query waits for input and does not enumerate retained documents or read
 revision contents. Clearing the query cancels matching and removes its results.
 

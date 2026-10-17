@@ -5501,9 +5501,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Requiere un espacio de trabajo de Notas';
 
   @override
-  String get searchRecentEmpty => 'No hay recursos recientes';
-
-  @override
   String get searchSidebarLabel => 'Buscar:';
 
   @override
@@ -5590,4 +5587,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Árboles laterales';
+
+  @override
+  String get searchHeadingsCommand => 'Buscar encabezados';
+
+  @override
+  String get shortcutFixed => 'Lo gestiona el editor; no se puede configurar.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'El atajo predeterminado entra en conflicto con una asignación personalizada.';
+
+  @override
+  String get shortcutCurrentBinding => 'Atajo actual';
+
+  @override
+  String get shortcutProposedBinding => 'Atajo propuesto';
 }

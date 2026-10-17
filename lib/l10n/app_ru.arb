@@ -3642,7 +3642,6 @@
   "searchRecentHint": "Поиск недавних…",
   "searchActionsHint": "Поиск действий…",
   "searchRequiresNotesWorkspace": "Требуется рабочая область заметок",
-  "searchRecentEmpty": "Нет недавних ресурсов",
   "searchSidebarLabel": "Поиск:",
   "searchDocumentTextCategory": "Текст документа",
   "searchWorkspaceTextCategory": "Текст рабочей области",
@@ -3669,5 +3668,10 @@
   "shortcutContextEditor": "Редактор и исходный код",
   "shortcutContextWritersideSource": "Исходный код Writerside",
   "shortcutContextWorkspace": "Навигация рабочей области",
-  "shortcutContextTree": "Деревья боковой панели"
+  "shortcutContextTree": "Деревья боковой панели",
+  "searchHeadingsCommand": "Поиск заголовков",
+  "shortcutFixed": "Управляется редактором; настройка недоступна.",
+  "shortcutDefaultConflict": "Сочетание по умолчанию конфликтует с пользовательским назначением.",
+  "shortcutCurrentBinding": "Текущее сочетание",
+  "shortcutProposedBinding": "Предлагаемое сочетание"
 }

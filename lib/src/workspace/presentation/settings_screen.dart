@@ -644,8 +644,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _goBack();
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
-      case HeaderBarAction.keyboardShortcuts:
-        openKeyboardShortcutsSettings(context);
       case HeaderBarAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case HeaderBarAction.reportIssue:
@@ -688,8 +686,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
         _selectPage(SettingsPage.appearance);
-      case BusyMarkMainMenuAction.keyboardShortcuts:
-        openKeyboardShortcutsSettings(context);
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:

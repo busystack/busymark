@@ -5513,9 +5513,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Requer um espaço de trabalho de Notas';
 
   @override
-  String get searchRecentEmpty => 'Sem recursos recentes';
-
-  @override
   String get searchSidebarLabel => 'Pesquisar:';
 
   @override
@@ -5601,6 +5598,22 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Árvores laterais';
+
+  @override
+  String get searchHeadingsCommand => 'Pesquisar títulos';
+
+  @override
+  String get shortcutFixed => 'Gerido pelo editor; não é configurável.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'O atalho predefinido está em conflito com uma atribuição personalizada.';
+
+  @override
+  String get shortcutCurrentBinding => 'Atalho atual';
+
+  @override
+  String get shortcutProposedBinding => 'Atalho proposto';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -11108,9 +11121,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Requer um espaço de trabalho de Notas';
 
   @override
-  String get searchRecentEmpty => 'Nenhum recurso recente';
-
-  @override
   String get searchSidebarLabel => 'Pesquisar:';
 
   @override
@@ -11196,4 +11206,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get shortcutContextTree => 'Árvores laterais';
+
+  @override
+  String get searchHeadingsCommand => 'Pesquisar títulos';
+
+  @override
+  String get shortcutFixed => 'Gerenciado pelo editor; não é configurável.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'O atalho padrão está em conflito com uma atribuição personalizada.';
+
+  @override
+  String get shortcutCurrentBinding => 'Atalho atual';
+
+  @override
+  String get shortcutProposedBinding => 'Atalho proposto';
 }

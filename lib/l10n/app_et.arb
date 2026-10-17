@@ -4076,7 +4076,6 @@
   "searchRecentHint": "Otsi hiljutisi…",
   "searchActionsHint": "Otsi toiminguid…",
   "searchRequiresNotesWorkspace": "Vajab märkmete tööruumi",
-  "searchRecentEmpty": "Hiljutisi ressursse pole",
   "searchSidebarLabel": "Otsi:",
   "searchDocumentTextCategory": "Dokumendi tekst",
   "searchWorkspaceTextCategory": "Tööala tekst",
@@ -4103,5 +4102,10 @@
   "shortcutContextEditor": "Redaktor ja lähtekood",
   "shortcutContextWritersideSource": "Writerside’i lähtekood",
   "shortcutContextWorkspace": "Tööala navigeerimine",
-  "shortcutContextTree": "Külgriba puud"
+  "shortcutContextTree": "Külgriba puud",
+  "searchHeadingsCommand": "Otsi pealkirju",
+  "shortcutFixed": "Redaktori hallatav; pole seadistatav.",
+  "shortcutDefaultConflict": "Vaikimisi otsetee on vastuolus kohandatud määranguga.",
+  "shortcutCurrentBinding": "Praegune otsetee",
+  "shortcutProposedBinding": "Pakutud otsetee"
 }

@@ -856,8 +856,6 @@ class WorkspaceScreen extends ConsumerWidget {
         execute(BusyMarkCommandIds.fullScreen);
       case HeaderBarAction.settings:
         execute(BusyMarkCommandIds.settings);
-      case HeaderBarAction.keyboardShortcuts:
-        execute(BusyMarkCommandIds.keyboardShortcuts);
       case HeaderBarAction.syntaxReference:
         execute(BusyMarkCommandIds.syntaxReference);
       case HeaderBarAction.reportIssue:
@@ -907,8 +905,6 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.workspace));
-      case BusyMarkMainMenuAction.keyboardShortcuts:
-        openKeyboardShortcutsSettings(context);
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:

@@ -232,7 +232,7 @@ See the [Notes workspace guide](docs/development/nextcloud-notes.md#everyday-not
 BusyMark supports active-document replacement and reviewed workspace-wide
 replacement for local workspaces. Nextcloud Notes supports replacement within
 individual notes, but not workspace-wide replacement. See [Search and replace](docs/search-and-replace.md) for search
-options, scope, preview behavior, and stale-result handling.
+matching, scopes, preview behavior, and stale-result handling.
 
 ## Diagrams and mathematics
 

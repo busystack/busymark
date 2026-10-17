@@ -5296,9 +5296,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get searchRequiresNotesWorkspace => '노트 작업 공간 필요';
 
   @override
-  String get searchRecentEmpty => '최근 리소스 없음';
-
-  @override
   String get searchSidebarLabel => '검색:';
 
   @override
@@ -5381,4 +5378,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get shortcutContextTree => '사이드바 트리';
+
+  @override
+  String get searchHeadingsCommand => '제목 검색';
+
+  @override
+  String get shortcutFixed => '편집기에서 관리하므로 설정할 수 없습니다.';
+
+  @override
+  String get shortcutDefaultConflict => '기본 단축키가 사용자 지정 할당과 충돌합니다.';
+
+  @override
+  String get shortcutCurrentBinding => '현재 단축키';
+
+  @override
+  String get shortcutProposedBinding => '제안된 단축키';
 }

@@ -5454,9 +5454,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get searchRequiresNotesWorkspace => 'Krever et notatarbeidsområde';
 
   @override
-  String get searchRecentEmpty => 'Ingen nylige ressurser';
-
-  @override
   String get searchSidebarLabel => 'Søk:';
 
   @override
@@ -5542,4 +5539,20 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get shortcutContextTree => 'Sidefelttrær';
+
+  @override
+  String get searchHeadingsCommand => 'Søk i overskrifter';
+
+  @override
+  String get shortcutFixed => 'Håndteres av redigereren; kan ikke tilpasses.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Standardhurtigtasten er i konflikt med en egendefinert tilordning.';
+
+  @override
+  String get shortcutCurrentBinding => 'Gjeldende hurtigtast';
+
+  @override
+  String get shortcutProposedBinding => 'Foreslått hurtigtast';
 }

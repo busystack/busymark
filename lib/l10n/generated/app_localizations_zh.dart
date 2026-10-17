@@ -5217,9 +5217,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchRequiresNotesWorkspace => '需要笔记工作区';
 
   @override
-  String get searchRecentEmpty => '没有最近的资源';
-
-  @override
   String get searchSidebarLabel => '搜索：';
 
   @override
@@ -5299,6 +5296,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutContextTree => '侧栏树';
+
+  @override
+  String get searchHeadingsCommand => '搜索标题';
+
+  @override
+  String get shortcutFixed => '由编辑器管理，无法配置。';
+
+  @override
+  String get shortcutDefaultConflict => '默认快捷键与自定义分配冲突。';
+
+  @override
+  String get shortcutCurrentBinding => '当前快捷键';
+
+  @override
+  String get shortcutProposedBinding => '拟用快捷键';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -10512,9 +10524,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get searchRequiresNotesWorkspace => '需要笔记工作区';
 
   @override
-  String get searchRecentEmpty => '没有最近的资源';
-
-  @override
   String get searchSidebarLabel => '搜索：';
 
   @override
@@ -10594,4 +10603,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get shortcutContextTree => '侧栏树';
+
+  @override
+  String get searchHeadingsCommand => '搜索标题';
+
+  @override
+  String get shortcutFixed => '由编辑器管理，无法配置。';
+
+  @override
+  String get shortcutDefaultConflict => '默认快捷键与自定义分配冲突。';
+
+  @override
+  String get shortcutCurrentBinding => '当前快捷键';
+
+  @override
+  String get shortcutProposedBinding => '拟用快捷键';
 }
