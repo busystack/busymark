@@ -2,6 +2,20 @@
 cmake_minimum_required(VERSION 3.13)
 project(runner LANGUAGES CXX)
 
+# Establish the local bundle prefix before a dependency/engine guard can fail.
+# Otherwise a failed first configure caches /usr/local and a corrected retry
+# can attempt installation outside the build tree.
+set(BUILD_BUNDLE_DIR "${PROJECT_BINARY_DIR}/bundle")
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
+endif()
+if(NOT CMAKE_INSTALL_PREFIX STREQUAL BUILD_BUNDLE_DIR)
+  message(FATAL_ERROR
+    "Refusing an install prefix outside the Flutter bundle: ${CMAKE_INSTALL_PREFIX}. "
+    "Regenerate ${PROJECT_BINARY_DIR}/CMakeCache.txt or configure with "
+    "-DCMAKE_INSTALL_PREFIX=${BUILD_BUNDLE_DIR}.")
+endif()
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "busymark")
@@ -49,6 +63,7 @@ endfunction()
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
+include(cmake/CorrectedFlutterEngine.cmake)
 
 # System-level dependencies.
 find_package(PkgConfig REQUIRED)
@@ -209,10 +224,6 @@ include(flutter/generated_plugins.cmake)
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build
 # directory.
-set(BUILD_BUNDLE_DIR "${PROJECT_BINARY_DIR}/bundle")
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
-endif()
 
 # Start with a clean build bundle directory every time.
 install(CODE "
@@ -303,6 +314,10 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../tools/flutter_engine/LICENSE"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/flutter-engine"
+  COMPONENT Runtime)
+
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
   install(FILES "${bundled_library}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
@@ -329,3 +344,16 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Verify installation too, including builds invoked directly with Flutter.
+install(CODE "
+  set(engine_environment [==[${FLUTTER_TOOL_ENVIRONMENT}]==])
+  execute_process(COMMAND \"${Python3_EXECUTABLE}\"
+    \"${CMAKE_CURRENT_SOURCE_DIR}/../tools/flutter_engine/engine.py\"
+    check-cmake --mode \"${CMAKE_BUILD_TYPE}\" --framework \"${FLUTTER_ROOT}\"
+    --bundle \"${CMAKE_INSTALL_PREFIX}\" \${engine_environment}
+    RESULT_VARIABLE engine_result)
+  if(NOT engine_result EQUAL 0)
+    message(FATAL_ERROR \"Installed BusyMark bundle failed engine verification\")
+  endif()
+" COMPONENT Runtime)

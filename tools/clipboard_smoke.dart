@@ -1,4 +1,4 @@
-// Build with flutter build linux --debug -t tools/clipboard_smoke.dart.
+// Build with python3 tools/flutter.py build linux --debug -t tools/clipboard_smoke.dart.
 // Run the resulting binary with:
 // roundtrip|write|read|plain|html OUTPUT_DIRECTORY.
 // Use a private display: this probe intentionally owns that display's clipboard.

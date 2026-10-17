@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -184,9 +185,7 @@ void main() {
     expect(script, contains('For release/security refreshes'));
     expect(
       script.indexOf('NOTICE: this helper creates a development repack'),
-      lessThan(
-        script.indexOf(r'select_project_flutter "$REQUIRED_FLUTTER_VERSION"'),
-      ),
+      lessThan(script.indexOf('verify --mode release')),
     );
 
     final help = Process.runSync('bash', [
@@ -303,9 +302,10 @@ void main() {
       isTrue,
     );
     expect(script, contains('project_flutter_version'));
-    expect(script, contains('select_project_flutter'));
-    expect(script, contains('BUSYMARK_FLUTTER_BIN'));
-    expect(script, contains(r'--branch "$required_version"'));
+    expect(script, contains(r'FLUTTER_BIN="$PROJECT_ROOT/tools/flutter.py"'));
+    expect(script, contains('verify --mode release'));
+    expect(script, contains('Flutter SDK overrides are no longer supported'));
+    expect(script, isNot(contains('select_project_flutter')));
     expect(script, contains(r'"$FLUTTER_BIN" pub get --enforce-lockfile'));
     expect(script, contains(r'"$FLUTTER_BIN" analyze --no-pub'));
     expect(script, contains(r'"$FLUTTER_BIN" test --no-pub'));
@@ -320,19 +320,36 @@ void main() {
       multiLine: true,
     ).firstMatch(pubspec)!.group(1)!;
 
-    expect(snapcraft, contains('BUSYMARK_FLUTTER_VERSION: "$projectVersion"'));
+    final lock =
+        jsonDecode(
+              File('tools/flutter_engine/engine.lock.json').readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    expect(lock['frameworkVersion'], projectVersion);
+    expect(lock['frameworkRevision'], matches(RegExp(r'^[a-f0-9]{40}$')));
+    expect(lock['engineRevision'], matches(RegExp(r'^[a-f0-9]{40}$')));
+    expect(lock['modes'], {
+      'debug': 'host_debug_unopt',
+      'profile': 'host_profile',
+      'release': 'host_release',
+    });
+    expect(snapcraft, contains('source: tools/flutter_engine'));
+    expect(snapcraft, contains('engine.py prepare --framework-only'));
+    expect(snapcraft, contains('engine.py import'));
+    expect(snapcraft, contains('engine.py build --mode release'));
     expect(
       snapcraft,
-      contains(r'git clone --depth 1 --branch "$BUSYMARK_FLUTTER_VERSION"'),
+      contains(r'export BUSYMARK_ENGINE_CACHE="$CRAFT_STAGE/flutter-engine"'),
     );
     expect(
       snapcraft,
-      contains(r'git -C "$flutter_sdk" describe --tags --exact-match HEAD'),
+      contains('python3 tools/flutter.py build linux --release --no-pub'),
     );
-    expect(
-      snapcraft,
-      contains(r'"$flutter_sdk/bin/flutter" --no-version-check build linux'),
-    );
+    expect(snapcraft, contains(r'--mode release --bundle "$CRAFT_PRIME"'));
+    expect(snapcraft, contains('build-attributes: [no-patchelf]'));
+    expect(snapcraft, contains('*/libflutter_linux_gtk.so) continue'));
+    expect(snapcraft, isNot(contains('--packaged')));
+    expect(snapcraft, isNot(contains('plugin: flutter')));
     expect(snapcraft, isNot(contains('git clone --depth 1 -b stable')));
   });
 
@@ -685,15 +702,14 @@ void main() {
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
     expect(snapcraft, contains('export CI=true'));
+    expect(snapcraft, contains('engine.py prepare --framework-only'));
     expect(
-      snapcraft,
-      contains(
-        r'"$flutter_sdk/bin/flutter" --no-version-check precache --linux',
-      ),
+      File('tools/flutter_engine/engine.py').readAsStringSync(),
+      contains('"precache", "--linux"'),
     );
     expect(
       snapcraft,
-      contains(r'"$flutter_sdk/bin/flutter" --no-version-check pub get'),
+      contains('python3 tools/flutter.py pub get --enforce-lockfile'),
     );
     expect(
       snapcraft,
@@ -765,7 +781,7 @@ void _verifyLocalFontRepack({required bool linkedScaffold}) {
     final root = '${fixture.path}/root';
     final tools = '$project/tools';
     final stubBin = '${fixture.path}/stub-bin';
-    final flutterSdk = '${fixture.path}/flutter-sdk';
+    final verifyMarker = '${fixture.path}/engine-verified';
     final fontDir = '$scaffold/share/busymark/fonts';
     final stagedFont =
         '$scaffold/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf';
@@ -802,11 +818,15 @@ void _verifyLocalFontRepack({required bool linkedScaffold}) {
       _writeFixtureFile('$fontDir/NotoSans-Regular.ttf', 'old bundle font');
     }
     _writeFixtureFile(
-      '$flutterSdk/bin/cache/flutter.version.json',
-      '{"frameworkVersion":"3.47.5"}\n',
+      '$tools/flutter_engine/engine.py',
+      r'''import os, pathlib, sys
+assert sys.argv[1:] == ['verify', '--mode', 'release']
+pathlib.Path(os.environ['STUB_ENGINE_VERIFY_MARKER']).touch()
+''',
     );
-    _writeFixtureExecutable('$flutterSdk/bin/flutter', r'''#!/bin/sh
+    _writeFixtureExecutable('$tools/flutter.py', r'''#!/bin/sh
 set -eu
+test -f "$STUB_ENGINE_VERIFY_MARKER"
 case "$1" in
   pub) exit 0 ;;
   build)
@@ -853,7 +873,7 @@ exit 1
       environment: {
         ...Platform.environment,
         'PATH': '$stubBin:${Platform.environment['PATH']}',
-        'BUSYMARK_FLUTTER_BIN': '$flutterSdk/bin/flutter',
+        'STUB_ENGINE_VERIFY_MARKER': verifyMarker,
         'BUSYMARK_BUILD_TMP_ROOT': '${fixture.path}/build-tmp',
         'STUB_PROJECT': project,
         'STUB_SNAP_ROOT': root,
@@ -865,6 +885,7 @@ exit 1
       0,
       reason: 'linked=$linkedScaffold\n${result.stdout}\n${result.stderr}',
     );
+    expect(File(verifyMarker).existsSync(), isTrue);
     expect(File('${fixture.path}/local.snap').existsSync(), isTrue);
     expect(Link('$root/share/busymark/fonts').existsSync(), isFalse);
     expect(

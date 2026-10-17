@@ -440,7 +440,7 @@ not a timing assertion in the regression suite.
 Build the reusable native target with:
 
 ```sh
-flutter build linux --release -t tools/nextcloud_notes_desktop_acceptance.dart
+python3 tools/flutter.py build linux --release -t tools/nextcloud_notes_desktop_acceptance.dart
 GDK_BACKEND=x11 build/linux/x64/release/bundle/busymark \
   /private/app-credentials.json /private/test-ca.pem /private/desktop-output \
   disposable-nextcloud-container --full

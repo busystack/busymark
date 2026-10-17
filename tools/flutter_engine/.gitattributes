@@ -1,0 +1,3 @@
+# Unified diffs have space-prefixed blank context lines. Preserve reviewed
+# patch bytes; this setting applies to patch containers, not engine sources.
+*.patch -whitespace

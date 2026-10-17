@@ -80,12 +80,12 @@ and D-Bus installed. Keep captures and results outside the repository:
 
 ```bash
 toc_output="$(mktemp -d)"
-flutter build linux --debug --no-pub --target tools/writerside_toc_visual_smoke.dart
+python3 tools/flutter.py build linux --debug --no-pub --target tools/writerside_toc_visual_smoke.dart
 BUSYMARK_NATIVE_PROBE=1 GDK_BACKEND=x11 NO_AT_BRIDGE=0 \
   dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' \
   build/linux/x64/debug/bundle/busymark \
   test/fixtures/writerside/toc_ui "$toc_output"
-flutter build linux --debug --no-pub --target lib/main.dart
+python3 tools/flutter.py build linux --debug --no-pub --target lib/main.dart
 ```
 
 The harness exits nonzero on failure and writes `result.json` with its checks
@@ -130,14 +130,14 @@ These are fixture rendering settings; retain WebKit's sandbox protections.
 unset BUSYMARK_PROPERTY_CONTRACT_ONLY BUSYMARK_INLINE_REFERENCES_ONLY \
   BUSYMARK_VARIABLE_MEDIA_ONLY BUSYMARK_NAVIGATION_ONLY BUSYMARK_PROPERTIES_ONLY
 inspector_output="$(mktemp -d)"
-flutter build linux --debug --no-pub \
+python3 tools/flutter.py build linux --debug --no-pub \
   --target=test/support/writerside_authoring_native_smoke.dart
 BUSYMARK_NATIVE_PROBE=1 GDK_BACKEND=x11 NO_AT_BRIDGE=0 \
   LIBGL_ALWAYS_SOFTWARE=1 \
   dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' \
   build/linux/x64/debug/bundle/busymark \
   test/fixtures/writerside/conformance_project "$inspector_output"
-flutter build linux --debug --no-pub --target lib/main.dart
+python3 tools/flutter.py build linux --debug --no-pub --target lib/main.dart
 ```
 
 The full invocation clears focused-mode flags so it reaches the retained

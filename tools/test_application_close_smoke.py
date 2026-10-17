@@ -1,16 +1,125 @@
 import json
+import hashlib
 import os
+import subprocess
 from pathlib import Path
 import re
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
-from application_close_smoke import PENDING_HARNESS, Desktop, ObservationIncomplete, accepted, process_children, run_case, signal_owned
+from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, signal_owned, snap_command
+
+
+class LoadedEngineAcceptanceTest(unittest.TestCase):
+    def capture(self, root, expected=None, inode_delta=0):
+        binary = root / "libflutter_linux_gtk.so"
+        binary.write_bytes(b"controlled mapped engine")
+        want = expected or hashlib.sha256(binary.read_bytes()).hexdigest()
+        receipt = root / "receipt.json"
+        receipt.write_text(json.dumps({"files": {"libflutter_linux_gtk.so": want}}))
+        probe = LoadedEngine(receipt)
+        st = binary.stat()
+        maps = f'00001000-00002000 r-xp 00000000 {os.major(st.st_dev):x}:{os.minor(st.st_dev):x} {st.st_ino + inode_delta} {binary}\n'
+        tracker = SimpleNamespace(root=os.getpid(), seen={os.getpid(): "owned"}, errors=[])
+        original = Path.read_text
+        def read(path, *args, **kwargs):
+            return maps if str(path) == f'/proc/{os.getpid()}/maps' else original(path, *args, **kwargs)
+        with patch.object(Path, 'read_text', read), patch('application_close_smoke.process_state', return_value={'status': 'running'}):
+            probe.capture(tracker)
+        return probe, tracker, binary
+
+    def test_pinned_mapping_is_hashed_and_closed_after_exit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            probe, tracker, _ = self.capture(Path(temp))
+            fd = probe.fd
+            record = {'exitCode': 0}
+            probe.finish(record, tracker.errors)
+            self.assertEqual(record['loadedEngine']['sha256'], probe.expected)
+            self.assertFalse(tracker.errors)
+            with self.assertRaises(OSError):
+                os.fstat(fd)
+
+    def test_wrong_loaded_engine_keeps_failure_despite_zero_exit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            probe, tracker, _ = self.capture(Path(temp), expected='0' * 64)
+            record = {'exitCode': 0}
+            probe.finish(record, tracker.errors)
+            record['verificationIncomplete'] = tracker.errors
+            self.assertFalse(accepted(record))
+            self.assertIn('differs', tracker.errors[0])
+
+    def test_mapped_inode_mismatch_is_incomplete(self):
+        with tempfile.TemporaryDirectory() as temp:
+            probe, tracker, _ = self.capture(Path(temp), inode_delta=1)
+            self.assertIsNone(probe.fd)
+            self.assertIn('inode/device', tracker.errors[0])
+
+    def test_changed_file_after_capture_is_not_accepted(self):
+        with tempfile.TemporaryDirectory() as temp:
+            probe, tracker, binary = self.capture(Path(temp))
+            binary.write_bytes(b"changed while mapped")
+            record = {'exitCode': 0}
+            probe.finish(record, tracker.errors)
+            self.assertIn('changed after', tracker.errors[0])
+
+    def test_missing_capture_is_incomplete(self):
+        with tempfile.TemporaryDirectory() as temp:
+            receipt = Path(temp) / 'receipt.json'
+            receipt.write_text(json.dumps({'files': {'libflutter_linux_gtk.so': '0' * 64}}))
+            probe = LoadedEngine(receipt)
+            errors = []
+            probe.finish({'exitCode': 0}, errors)
+            self.assertIn('incomplete', errors[0])
 
 
 class NaturalExitAcceptanceTest(unittest.TestCase):
+    def test_confined_fixture_keeps_optin_after_launcher_environment_reset(self):
+        import application_close_smoke
+        with tempfile.TemporaryDirectory(prefix='bm-close-snap-optin-') as temp:
+            root = Path(temp)
+            binary = root / 'busymark'
+            binary.write_text('#!' + sys.executable + '''
+import json,os,pathlib,sys
+assert os.environ.get('BUSYMARK_RELEASE_SMOKE') == '1', 'smoke opt-in required'
+report=pathlib.Path(sys.argv[1])
+support=report.parent/'support'
+support.mkdir()
+(support/'recovery.json').write_text(json.dumps({'cleanShutdown':True}))
+report.write_text(json.dumps({'phase':'close-requested','applicationSupport':str(support)}))
+''')
+            binary.chmod(0o755)
+
+            def isolated_shell(instance, leaf, arguments, extra):
+                command = snap_command(instance, leaf, arguments, extra)
+                return ['env', 'SNAP=' + str(root), 'SNAP_USER_COMMON=' + str(root / 'common'), 'bash', '-c', command[-1]]
+
+            # Execute the real post-confinement shell, replacing only the
+            # privileged launcher. This tests run_case's environment reset;
+            # it does not claim native-engine or confinement acceptance.
+            with patch.object(application_close_smoke, 'snap_command', side_effect=isolated_shell), patch.object(Path, 'home', return_value=root):
+                record = run_case([], root / 'case', root / 'profile', 'plain', 5, snap_instance='busymark_fixture')
+            self.assertTrue(accepted(record), record)
+
+    def test_snap_fixture_arguments_are_literal_and_profile_is_isolated(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            binary = root / 'busymark'
+            binary.write_text('#!' + sys.executable + '\nimport json,os,sys,pathlib\npathlib.Path(os.environ["SNAP_USER_COMMON"],"argv.json").write_text(json.dumps({"argv":sys.argv[1:],"home":os.environ["HOME"]}))\n')
+            binary.chmod(0o755)
+            unwanted = root / 'unexpected-command'
+            arguments = ['report with spaces.json', 'dirty-save', '$(touch ' + str(unwanted) + ')']
+            command = snap_command('busymark_fixture', 'c-owned', arguments)
+            env = os.environ.copy()
+            env.update(SNAP=str(root), SNAP_USER_COMMON=str(root / 'common'))
+            subprocess.run(['bash', '-c', command[-1]], env=env, check=True)
+            actual = json.loads((root / 'common/argv.json').read_text())
+            self.assertEqual(actual['argv'], arguments)
+            self.assertEqual(actual['home'], str(root / 'common/c-owned/home'))
+            self.assertFalse(unwanted.exists())
+
     def test_video_confirmation_samples_only_the_owned_window(self):
         class Pixels:
             def get_pixels(self):
@@ -69,7 +178,11 @@ class NaturalExitAcceptanceTest(unittest.TestCase):
             return run_case([sys.executable, "-c", source], root / "case", root / "profile", "plain", timeout, plain=plain, child_grace=.15, term_grace=.15, kill_grace=2)
 
     def test_natural_zero_exit_is_accepted(self):
-        self.assertTrue(accepted(self.run_inferior("sys.exit(0)")))
+        record = self.run_inferior("sys.exit(0)")
+        self.assertTrue(accepted(record))
+        self.assertLessEqual(record['launch_ns'], record['spawnRequest_ns'])
+        self.assertLessEqual(record['spawnRequest_ns'], record['spawnReturned_ns'])
+        self.assertLessEqual(record['spawnReturned_ns'], record['exitObserved_ns'])
 
     def test_zero_exit_without_an_owned_window_close_is_rejected(self):
         with patch('application_close_smoke.Desktop') as desktop:
@@ -208,6 +321,26 @@ os._exit(0)
 
     def test_cleanup_refuses_a_mismatched_process_identity(self):
         self.assertEqual(signal_owned(os.getpid(), 'not-this-process-start', 9), 'reused')
+
+    def test_confined_fixture_reopen_uses_same_instance_and_profile(self):
+        import application_close_smoke
+        with tempfile.TemporaryDirectory(prefix='bm-close-snap-reopen-') as tmp:
+            home = Path(tmp)
+            root = home / 'snap/busymark_fixture/common/close'
+            document = str(root.parent / 'document.md')
+            records = [{'exitCode': 0, 'application': {'document': document}}, {'exitCode': 0}]
+            args = ['close', '--output', str(root), '--scenarios', 'dirty-save',
+                    '--snap-instance', 'busymark_fixture', '--snap-fixture',
+                    '--engine-manifest', str(home / 'manifest.json')]
+            with patch.object(sys, 'argv', args), patch.object(Path, 'home', return_value=home), patch.object(application_close_smoke, 'run_case', side_effect=records) as run:
+                self.assertEqual(application_close_smoke.main(), 0)
+                self.assertEqual(run.call_count, 2)
+                initial, reopened = run.call_args_list
+                self.assertEqual(initial.args[7], 'busymark_fixture')
+                self.assertEqual(reopened.kwargs['snap_instance'], initial.args[7])
+                self.assertEqual(reopened.args[2], initial.args[2])
+                self.assertEqual(reopened.args[3], 'reopen')
+                self.assertEqual(reopened.kwargs['document'], Path(document))
 
     def test_hang_is_rejected_and_cleanup_is_explicit(self):
         record = self.run_inferior("time.sleep(30)", timeout=.3)

@@ -1,0 +1,95 @@
+--- a/engine/src/flutter/shell/platform/linux/fl_engine_test.cc
++++ b/engine/src/flutter/shell/platform/linux/fl_engine_test.cc
+@@ -1070,3 +1070,92 @@
+ }
+ 
+ // NOLINTEND(clang-analyzer-core.StackAddressEscape)
++
++// Engine-level regression using the real embedder presentation dispatch. The
++// existing proc-table seam supplies a controlled engine and synchronization.
++#include <atomic>
++#include <thread>
++
++namespace {
++struct PresentationReferenceState {
++  GMutex mutex;
++  GCond condition;
++  gboolean entered = FALSE;
++  gboolean released = FALSE;
++  std::atomic<bool> finalized{false};
++  std::atomic<bool> finalized_on_gtk{false};
++  GThread* gtk = g_thread_self();
++
++  PresentationReferenceState() {
++    g_mutex_init(&mutex);
++    g_cond_init(&condition);
++  }
++  ~PresentationReferenceState() {
++    g_cond_clear(&condition);
++    g_mutex_clear(&mutex);
++  }
++};
++}  // namespace
++
++TEST_F(FlEngineTest, PresentationLastReferenceReturnsToGtk) {
++  FlutterCompositor compositor = {};
++  auto* api = fl_engine_get_embedder_api(engine);
++  auto initialize = api->Initialize;
++  api->Initialize = MOCK_ENGINE_PROC(
++      Initialize,
++      ([&](size_t version, const FlutterRendererConfig* config,
++           const FlutterProjectArgs* args, void* user_data, auto* engine_out) {
++        compositor = *args->compositor;
++        return initialize(version, config, args, user_data, engine_out);
++      }));
++  StartEngine();
++  ASSERT_NE(compositor.present_view_callback, nullptr);
++
++  PresentationReferenceState state;
++  auto* renderable = fl_mock_renderable_new();
++  g_object_set_data(G_OBJECT(renderable), "presentation-reference-state", &state);
++  auto* iface = FL_RENDERABLE_GET_IFACE(renderable);
++  auto original_present = iface->present_layers;
++  iface->present_layers = [](FlRenderable* renderable, const FlutterLayer**, size_t) {
++    auto* state = static_cast<PresentationReferenceState*>(
++        g_object_get_data(G_OBJECT(renderable), "presentation-reference-state"));
++    g_mutex_lock(&state->mutex);
++    state->entered = TRUE;
++    g_cond_signal(&state->condition);
++    while (!state->released) {
++      g_cond_wait(&state->condition, &state->mutex);
++    }
++    g_mutex_unlock(&state->mutex);
++  };
++  g_object_weak_ref(
++      G_OBJECT(renderable),
++      [](gpointer data, GObject*) {
++        auto* state = static_cast<PresentationReferenceState*>(data);
++        state->finalized_on_gtk = g_thread_self() == state->gtk;
++        state->finalized = true;
++      },
++      &state);
++  fl_engine_set_implicit_view(engine, FL_RENDERABLE(renderable));
++
++  FlutterPresentViewInfo info = {};
++  info.struct_size = sizeof(info);
++  info.view_id = 0;
++  info.user_data = engine;
++  std::thread raster([&] { compositor.present_view_callback(&info); });
++  g_mutex_lock(&state.mutex);
++  while (!state.entered) {
++    g_cond_wait(&state.condition, &state.mutex);
++  }
++  // The raster callback is now the sole reference owner. No sleep or GTK
++  // scheduling assumption can hide a final release on the wrong thread.
++  g_object_unref(renderable);
++  state.released = TRUE;
++  g_cond_signal(&state.condition);
++  g_mutex_unlock(&state.mutex);
++  raster.join();
++  EXPECT_FALSE(state.finalized);
++  while (g_main_context_iteration(nullptr, FALSE)) {}
++  EXPECT_TRUE(state.finalized);
++  EXPECT_TRUE(state.finalized_on_gtk);
++  iface->present_layers = original_present;
++}

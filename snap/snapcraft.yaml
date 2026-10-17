@@ -60,18 +60,73 @@ apps:
       BUSYMARK_SPELLING_INSTALL_ROOT: $SNAP_USER_COMMON/spelling/dictionaries
 
 parts:
+  flutter-engine:
+    plugin: nil
+    source: tools/flutter_engine
+    build-packages:
+      - binutils
+      - git
+      - curl
+      - python3
+      - clang
+      - ninja-build
+      - pkg-config
+      - libgtk-3-dev
+      - libepoxy-dev
+      - unzip
+      - xz-utils
+    override-build: |
+      export BUSYMARK_ENGINE_CACHE="$CRAFT_PART_BUILD/cache"
+      engine_archive="$CRAFT_PROJECT_DIR/.build/engine-release.tar.xz"
+      if [ -f "$engine_archive" ]; then
+        python3 engine.py prepare --framework-only
+        python3 engine.py import "$engine_archive"
+      else
+        python3 engine.py prepare
+        python3 engine.py build --mode release --jobs 4
+      fi
+      python3 engine.py verify --mode release
+      engine_key="$(python3 engine.py key)"
+      mkdir -p "$CRAFT_PART_INSTALL/flutter-engine/$engine_key"
+      cp -a "$BUSYMARK_ENGINE_CACHE/$engine_key/sdk" \
+        "$BUSYMARK_ENGINE_CACHE/$engine_key/artifacts" \
+        "$BUSYMARK_ENGINE_CACHE/$engine_key/symbols" \
+        "$CRAFT_PART_INSTALL/flutter-engine/$engine_key/"
+    prime:
+      - '-*'
+
+  flutter-runtime:
+    after: [flutter-engine]
+    plugin: nil
+    build-attributes: [no-patchelf]
+    override-build: |
+      # The reviewed engine already has RUNPATH=$ORIGIN. Snapcraft's ELF
+      # rewriting changes its GNU note alignment and breaks symbol matching.
+      engine_key="$(python3 "$CRAFT_PROJECT_DIR/tools/flutter_engine/engine.py" key)"
+      install -Dm755 \
+        "$CRAFT_STAGE/flutter-engine/$engine_key/artifacts/engine/src/out/host_release/libflutter_linux_gtk.so" \
+        "$CRAFT_PART_INSTALL/lib/libflutter_linux_gtk.so"
+
   busymark:
-    plugin: flutter
+    after: [flutter-runtime]
+    plugin: nil
     build-attributes:
       - enable-patchelf
     source: .
-    flutter-target: lib/main.dart
-    flutter-channel: stable
-    build-environment:
-      - BUSYMARK_FLUTTER_VERSION: "3.47.5"
+    override-pull: |
+      # Generated state may contain an entire private engine checkout. Pull only
+      # application inputs; the verified archive is read from PROJECT_DIR by
+      # the engine part, not copied into the application part.
+      rsync -a --delete \
+        --exclude=/.git/ --exclude=/.build/ --exclude=/.dart_tool/ \
+        --exclude=/build/ --exclude=/linux/flutter/ephemeral/ \
+        --exclude=/.craft/ --exclude=/parts/ --exclude=/stage/ --exclude=/prime/ \
+        --exclude='/*.snap' \
+        "$CRAFT_PROJECT_DIR/" "$CRAFT_PART_SRC/"
     build-snaps:
       - node/24/stable
     build-packages:
+      - rsync
       - fonts-noto-core
       - fonts-noto-mono
       - curl
@@ -96,22 +151,44 @@ parts:
       rm -rf "$CRAFT_PART_BUILD/build"
       rm -rf "$CRAFT_PART_BUILD/.dart_tool"
       rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
-      flutter_sdk="$CRAFT_PART_BUILD/flutter-distro"
-      flutter_sdk_version="$(git -C "$flutter_sdk" describe --tags --exact-match HEAD 2>/dev/null || true)"
-      if [ ! -x "$flutter_sdk/bin/flutter" ] || \
-          [ "$flutter_sdk_version" != "$BUSYMARK_FLUTTER_VERSION" ]; then
-        rm -rf "$flutter_sdk"
-        git clone --depth 1 --branch "$BUSYMARK_FLUTTER_VERSION" \
-          https://github.com/flutter/flutter.git "$flutter_sdk"
-      fi
-      test "$(git -C "$flutter_sdk" describe --tags --exact-match HEAD)" = \
-        "$BUSYMARK_FLUTTER_VERSION"
+      export BUSYMARK_ENGINE_CACHE="$CRAFT_STAGE/flutter-engine"
       export CI=true
-      "$flutter_sdk/bin/flutter" --no-version-check precache --linux
-      "$flutter_sdk/bin/flutter" --no-version-check pub get
-      "$flutter_sdk/bin/flutter" --no-version-check build linux --release --verbose \
+      python3 tools/flutter.py pub get --enforce-lockfile
+      python3 tools/flutter.py build linux --release --no-pub --verbose \
         --target lib/main.dart
       cp -r build/linux/*/release/bundle/* "$CRAFT_PART_INSTALL/"
+      # The byte-identical, verified engine belongs to flutter-runtime so only
+      # the application/plugins receive Snapcraft's runtime path adjustments.
+      rm "$CRAFT_PART_INSTALL/lib/libflutter_linux_gtk.so"
+
+      # Normalize owned resources before staging so incremental clean/rebuild
+      # tracks these symlinks, rather than leaving untracked prime aliases.
+      # CMake installs the deterministic Typst font set at the bundle-relative
+      # path used by the application. The same files are staged for fontconfig;
+      # require them to be identical before consolidating the bundle copy.
+      for bundled_font in "$CRAFT_PART_INSTALL/share/busymark/fonts"/Noto*.ttf; do
+        staged_font="$CRAFT_PART_INSTALL/usr/share/fonts/truetype/noto/${bundled_font##*/}"
+        test -f "$staged_font"
+        cmp -s "$bundled_font" "$staged_font"
+      done
+      rm -rf "$CRAFT_PART_INSTALL/share/busymark/fonts"
+      ln -s ../../usr/share/fonts/truetype/noto \
+        "$CRAFT_PART_INSTALL/share/busymark/fonts"
+
+      # BusyMark checks both standard XDG roots for user-selected Yaru variants.
+      # Preserve both lookup paths without storing a second copy of each theme.
+      mkdir -p "$CRAFT_PART_INSTALL/share/themes" "$CRAFT_PART_INSTALL/share/icons"
+      for resource_kind in themes icons; do
+        for staged_resource in \
+          "$CRAFT_PART_INSTALL/usr/share/$resource_kind"/Yaru*; do
+          test -e "$staged_resource"
+          resource_name="${staged_resource##*/}"
+          linked_resource="$CRAFT_PART_INSTALL/share/$resource_kind/$resource_name"
+          rm -rf "$linked_resource"
+          ln -s "../../usr/share/$resource_kind/$resource_name" \
+            "$linked_resource"
+        done
+      done
 
   desktop-integration:
     after: [busymark]
@@ -124,6 +201,9 @@ parts:
       # GNOME/Mesa launcher's library selection. Preserve the patched paths as
       # RUNPATH so the connected platform supplies its matching shared runtime.
       for bundled_elf in "$CRAFT_PRIME/busymark" "$CRAFT_PRIME/lib"/*.so; do
+        case "$bundled_elf" in
+          */libflutter_linux_gtk.so) continue ;;
+        esac
         existing_rpath="$(patchelf --print-rpath "$bundled_elf")"
         if [ -n "$existing_rpath" ]; then
           patchelf --set-rpath "$existing_rpath" "$bundled_elf"
@@ -159,32 +239,6 @@ parts:
       # together; otherwise every SVG-backed GTK symbolic icon fails to load.
       rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*
 
-      # CMake installs the deterministic Typst font set at the bundle-relative
-      # path used by the application. The same files are staged for fontconfig;
-      # require them to be identical before consolidating the bundle copy.
-      for bundled_font in "$CRAFT_PRIME/share/busymark/fonts"/Noto*.ttf; do
-        staged_font="$CRAFT_PRIME/usr/share/fonts/truetype/noto/${bundled_font##*/}"
-        test -f "$staged_font"
-        cmp -s "$bundled_font" "$staged_font"
-      done
-      rm -rf "$CRAFT_PRIME/share/busymark/fonts"
-      ln -s ../../usr/share/fonts/truetype/noto \
-        "$CRAFT_PRIME/share/busymark/fonts"
-
-      # BusyMark checks both standard XDG roots for user-selected Yaru variants.
-      # Preserve both lookup paths without storing a second copy of each theme.
-      mkdir -p "$CRAFT_PRIME/share/themes" "$CRAFT_PRIME/share/icons"
-      for resource_kind in themes icons; do
-        for staged_resource in \
-          "$CRAFT_PRIME/usr/share/$resource_kind"/Yaru*; do
-          test -e "$staged_resource"
-          resource_name="${staged_resource##*/}"
-          linked_resource="$CRAFT_PRIME/share/$resource_kind/$resource_name"
-          rm -rf "$linked_resource"
-          ln -s "../../usr/share/$resource_kind/$resource_name" \
-            "$linked_resource"
-        done
-      done
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
         "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
@@ -214,3 +268,8 @@ parts:
         fi
       done
       test -s "$CRAFT_PRIME/usr/share/icons/Yaru/icon-theme.cache"
+
+      # The engine and ICU must remain byte-identical to verified C6 inputs.
+      BUSYMARK_ENGINE_CACHE="$CRAFT_STAGE/flutter-engine" \
+        python3 "$CRAFT_PROJECT_DIR/tools/flutter_engine/engine.py" check-bundle \
+        --mode release --bundle "$CRAFT_PRIME"

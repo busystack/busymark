@@ -67,29 +67,35 @@ components.
 Prepare and run the application:
 
 ```bash
-flutter doctor
-flutter pub get
-flutter run -d linux
+python3 tools/flutter_engine/engine.py prepare
+python3 tools/flutter_engine/engine.py build --mode debug profile release
+python3 tools/flutter.py pub get --enforce-lockfile
+python3 tools/flutter.py run -d linux
 ```
 
-Pass a Markdown file or documentation directory after `--` to open it at
-startup:
+Pass a Markdown file or documentation directory as a Dart entrypoint argument
+to open it at startup:
 
 ```bash
-flutter run -d linux -- /absolute/path/to/document.md
-flutter run -d linux -- /absolute/path/to/documentation
+python3 tools/flutter.py run -d linux --dart-entrypoint-args=/absolute/path/to/document.md
+python3 tools/flutter.py run -d linux --dart-entrypoint-args=/absolute/path/to/documentation
 ```
 
 Build and run the standard checks with:
 
 ```bash
-flutter build linux
-flutter analyze
-flutter test
+python3 tools/flutter.py build linux
+python3 tools/flutter.py analyze
+python3 tools/flutter.py test --concurrency=2
 ```
 
 The build assembles BusyMark's runtime components. Packaged users do not need
 separate Typst, Java, Node.js, or Chromium installations.
+
+Linux builds require the pinned compositor lifetime correction in debug,
+profile and release. See [Linux engine builds](docs/development/linux-engine.md)
+for prerequisites, private caches, native tests and failure diagnostics. CMake
+rejects builds that silently select the defective official engine.
 
 The CI workflow installs additional packages for headless X11/Wayland, browser,
 PDF, and sandbox verification. Those packages are not required for an ordinary
