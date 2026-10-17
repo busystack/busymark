@@ -18,13 +18,78 @@ Future<Object?> evaluateInChrome(String htmlPath, String expression) =>
 
 class _BrowserHttpOverrides extends HttpOverrides {}
 
+/// Keep the existing startup deadline, but report early browser exits and the
+/// bounded stderr tail instead of waiting for an endpoint that cannot arrive.
+/// This is functional-test diagnostics, not a performance measurement.
+Future<Uri> browserDevToolsEndpoint(
+  Stream<List<int>> stderr,
+  Future<int> exitCode, {
+  Duration timeout = const Duration(seconds: 15),
+}) {
+  final endpoint = Completer<Uri>();
+  final diagnostics = <String>[];
+  final elapsed = Stopwatch()..start();
+  String detail(String message) =>
+      '$message after ${elapsed.elapsedMilliseconds} ms. '
+      'Browser stderr (last 20 lines, 512 characters each):\n'
+      '${diagnostics.join('\n')}';
+  stderr
+      .transform(utf8.decoder)
+      .transform(const LineSplitter())
+      .listen(
+        (line) {
+          diagnostics.add(line.length > 512 ? line.substring(0, 512) : line);
+          if (diagnostics.length > 20) diagnostics.removeAt(0);
+          const prefix = 'DevTools listening on ';
+          if (line.startsWith(prefix) && !endpoint.isCompleted) {
+            final uri = Uri.tryParse(line.substring(prefix.length));
+            if (uri != null && uri.scheme == 'ws' && uri.hasPort) {
+              endpoint.complete(uri);
+            }
+          }
+        },
+        onError: (Object error, StackTrace stack) {
+          if (!endpoint.isCompleted) {
+            endpoint.completeError(
+              StateError(
+                detail('Cannot read Chromium startup diagnostics: $error'),
+              ),
+              stack,
+            );
+          }
+        },
+      );
+  unawaited(
+    exitCode.then<void>(
+      (code) {
+        if (!endpoint.isCompleted) {
+          endpoint.completeError(
+            StateError(
+              detail('Chromium exited $code before its DevTools endpoint'),
+            ),
+          );
+        }
+      },
+      onError: (Object error, StackTrace stack) {
+        if (!endpoint.isCompleted) endpoint.completeError(error, stack);
+      },
+    ),
+  );
+  return endpoint.future.timeout(
+    timeout,
+    onTimeout: () => throw TimeoutException(
+      detail('Chromium DevTools startup did not complete'),
+      timeout,
+    ),
+  );
+}
+
 Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
   final profile = await Directory.systemTemp.createTemp('html-csp-browser-');
   Process? browser;
   Uri? browserEndpoint;
   final documentUri = Uri.file(htmlPath);
   try {
-    final endpoint = Completer<Uri>();
     browser = await Process.start(headlessChromePath!, [
       '--headless=new',
       '--no-first-run',
@@ -37,16 +102,7 @@ Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
       documentUri.toString(),
     ]);
     unawaited(browser.stdout.drain<void>());
-    browser.stderr
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((line) {
-          const prefix = 'DevTools listening on ';
-          if (line.startsWith(prefix) && !endpoint.isCompleted) {
-            endpoint.complete(Uri.parse(line.substring(prefix.length)));
-          }
-        });
-    final uri = await endpoint.future.timeout(const Duration(seconds: 15));
+    final uri = await browserDevToolsEndpoint(browser.stderr, browser.exitCode);
     browserEndpoint = uri;
     return await evaluateDevToolsDocument(
       browserEndpoint: uri,
