@@ -4204,9 +4204,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get clipboardHistory => '클립보드 기록';
 
   @override
-  String get clipboardHistorySearchHint => '클립보드 기록 검색';
-
-  @override
   String get clipboardHistoryDescription => '세션별 클립보드 기록을 엽니다.';
 
   @override
@@ -4225,9 +4222,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get clipboardNoItems => '클립보드 기록이 비어 있습니다.';
-
-  @override
-  String get clipboardNoMatches => '이 검색과 일치하는 클립보드 항목이 없습니다.';
 
   @override
   String get clipboardDisabled => '클립보드 기록 컬렉션이 설정에서 비활성화되었습니다.';
@@ -4278,9 +4272,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get localHistoryNoRevisions => '이 문서는 로컬 히스토리 수정 사항이 없습니다.';
-
-  @override
-  String get localHistoryNoMatches => '이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.';
 
   @override
   String get localHistorySelectedRevision => '선택된 수정';
@@ -5309,12 +5300,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => '할당되지 않음';
-
-  @override
-  String get shortcutSearchHint => '동작 또는 단축키 검색…';
-
-  @override
-  String get shortcutFindBy => '단축키로 찾기';
 
   @override
   String get shortcutPressKeys => '키 조합을 누르세요…';

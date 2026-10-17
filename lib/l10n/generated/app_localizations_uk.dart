@@ -4389,9 +4389,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get clipboardHistory => 'Історія Вирізання';
 
   @override
-  String get clipboardHistorySearchHint => 'Пошук в історії буфера обміну';
-
-  @override
   String get clipboardHistoryDescription =>
       'Відкрити історію вирізання, прив\'язану до сесії.';
 
@@ -4412,10 +4409,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Історія вирізання порожня.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Жоден елемент вирізання не відповідає цьому пошуку.';
 
   @override
   String get clipboardDisabled =>
@@ -4473,10 +4466,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Цей документ не має версій локальної історії.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Жодна версія локальної історії не відповідає цьому пошуку.';
 
   @override
   String get localHistorySelectedRevision => 'Обрана версія';
@@ -5530,12 +5519,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Не призначено';
-
-  @override
-  String get shortcutSearchHint => 'Пошук дій або сполучень клавіш…';
-
-  @override
-  String get shortcutFindBy => 'Знайти за сполученням клавіш';
 
   @override
   String get shortcutPressKeys => 'Натисніть сполучення клавіш…';

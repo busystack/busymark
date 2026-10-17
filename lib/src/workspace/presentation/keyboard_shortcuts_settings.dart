@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
-import '../../app/busymark_search_field.dart';
 import '../../app/command_presentation.dart';
 import '../../app/command_registry.dart';
 import '../../app/keymap_controller.dart';
@@ -25,51 +24,7 @@ class KeyboardShortcutsSettings extends ConsumerStatefulWidget {
 
 class _KeyboardShortcutsSettingsState
     extends ConsumerState<KeyboardShortcutsSettings> {
-  final _query = TextEditingController();
-  BusyMarkKeyBinding? _findBinding;
-  bool _recording = false;
   bool _restoring = false;
-  final _captureFocus = FocusNode();
-  @override
-  void initState() {
-    super.initState();
-    _captureFocus.addListener(() {
-      if (!_captureFocus.hasFocus && _recording) {
-        _cancelRecording();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    BusyMarkShortcutCapture.end(this);
-    _captureFocus.dispose();
-    _query.dispose();
-    super.dispose();
-  }
-
-  void _record() {
-    _captureFocus.requestFocus();
-    setState(() => _recording = true);
-    BusyMarkShortcutCapture.begin(
-      this,
-      onCandidate: (binding) {
-        BusyMarkShortcutCapture.end(this);
-        if (mounted) {
-          setState(() {
-            _recording = false;
-            _findBinding = binding;
-          });
-        }
-      },
-      onCancel: _cancelRecording,
-    );
-  }
-
-  void _cancelRecording() {
-    BusyMarkShortcutCapture.end(this);
-    if (mounted) setState(() => _recording = false);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,35 +34,16 @@ class _KeyboardShortcutsSettingsState
       settings.shortcutOverrides,
     );
     final l10n = context.l10n;
-    final query = _query.text.trim().toLowerCase();
     final categories = commandCategoryOrder(context);
-    final commands =
-        registry.commands
-            .where(
-              (c) =>
-                  (query.isEmpty ||
-                      '${c.label(context)} ${c.category(context)} ${c.shortcut?.label ?? l10n.shortcutUnassigned} ${registry.activators(c.id).whereType<SingleActivator>().map((a) => BusyMarkKeyBinding.fromActivator(a).label).join(' ')}'
-                          .toLowerCase()
-                          .contains(query)) &&
-                  (_findBinding == null ||
-                      registry
-                          .activators(c.id)
-                          .any(
-                            (a) =>
-                                a is SingleActivator &&
-                                BusyMarkKeyBinding.fromActivator(a) ==
-                                    _findBinding,
-                          )),
-            )
-            .toList()
-          ..sort((a, b) {
-            final group = categories
-                .indexOf(a.category(context))
-                .compareTo(categories.indexOf(b.category(context)));
-            if (group != 0) return group;
-            final name = a.label(context).compareTo(b.label(context));
-            return name != 0 ? name : a.id.compareTo(b.id);
-          });
+    final commands = registry.commands.toList()
+      ..sort((a, b) {
+        final group = categories
+            .indexOf(a.category(context))
+            .compareTo(categories.indexOf(b.category(context)));
+        if (group != 0) return group;
+        final name = a.label(context).compareTo(b.label(context));
+        return name != 0 ? name : a.id.compareTo(b.id);
+      });
     final groups = <String, List<BusyMarkCommand>>{
       for (final category in categories)
         if (commands.any((c) => c.category(context) == category))
@@ -125,50 +61,6 @@ class _KeyboardShortcutsSettingsState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        BusyMarkSearchField(
-          key: const ValueKey('settings-shortcut-search'),
-          controller: _query,
-          hintText: l10n.shortcutSearchHint,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: BusyMarkSpacing.sm),
-        Wrap(
-          spacing: BusyMarkSpacing.sm,
-          runSpacing: BusyMarkSpacing.xs,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            BusyMarkPushButton.standard(
-              key: const ValueKey('find-by-shortcut'),
-              focusNode: _captureFocus,
-              onPressed: _recording ? _cancelRecording : _record,
-              child: Text(
-                _recording ? l10n.shortcutPressKeys : l10n.shortcutFindBy,
-              ),
-            ),
-            if (_findBinding != null)
-              Semantics(
-                label: l10n.shortcutFindBy,
-                child: Row(
-                  key: const ValueKey('shortcut-recorded-filter'),
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 180),
-                      child: BusyMarkKeyboardShortcutBadge(_findBinding!.label),
-                    ),
-                    BusyMarkCompactIconButton(
-                      key: const ValueKey('clear-shortcut-filter'),
-                      tooltip: MaterialLocalizations.of(
-                        context,
-                      ).clearButtonTooltip,
-                      icon: BusyMarkGlyphs.clear,
-                      onPressed: () => setState(() => _findBinding = null),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
         if (ref.watch(keymapControllerProvider) == KeymapUpdateStatus.failed)
           BusyMarkBanner(
             title: l10n.shortcutSaveFailed,
@@ -177,28 +69,26 @@ class _KeyboardShortcutsSettingsState
                 unawaited(ref.read(keymapControllerProvider.notifier).retry()),
           ),
         Expanded(
-          child: commands.isEmpty
-              ? Center(child: Text(l10n.noResults))
-              : ListView.builder(
-                  key: const ValueKey('settings-shortcut-list'),
-                  itemCount: groups.length,
-                  itemBuilder: (context, i) {
-                    final group = groups.entries.elementAt(i);
-                    return BusyMarkGroupedList(
-                      title: group.key,
-                      filled: true,
-                      children: [
-                        for (final command in group.value)
-                          _commandRow(
-                            context,
-                            registry,
-                            command,
-                            deferred[command.id],
-                          ),
-                      ],
-                    );
-                  },
-                ),
+          child: ListView.builder(
+            key: const ValueKey('settings-shortcut-list'),
+            itemCount: groups.length,
+            itemBuilder: (context, i) {
+              final group = groups.entries.elementAt(i);
+              return BusyMarkGroupedList(
+                title: group.key,
+                filled: true,
+                children: [
+                  for (final command in group.value)
+                    _commandRow(
+                      context,
+                      registry,
+                      command,
+                      deferred[command.id],
+                    ),
+                ],
+              );
+            },
+          ),
         ),
         const SizedBox(height: BusyMarkSpacing.sm),
         Align(

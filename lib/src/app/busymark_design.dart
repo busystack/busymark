@@ -10,6 +10,7 @@ import 'package:yaru/yaru.dart';
 import '../platform/native_menu_service.dart';
 import '../platform/gtk_header_icon_service.dart';
 import 'busymark_glyphs.dart';
+import 'path_label.dart';
 
 /// Resolve an explicit six-digit RGB color chosen in a document/export control.
 /// This does not inherit the application's theme accent.
@@ -2212,7 +2213,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 message: tooltip,
                 child: Semantics(
                   expanded: trigger.isOpen,
-                  child: BusyMarkPushButton.standard(
+                  child: OutlinedButton(
                     onPressed: trigger.onPressed,
                     focusNode: trigger.focusNode,
                     child: Row(
@@ -2768,6 +2769,7 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     required this.onTap,
     this.title,
     this.subtitle,
+    this.pathSubtitle = false,
     this.content,
     this.selected = false,
     this.compact = false,
@@ -2798,6 +2800,7 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final IconData icon;
   final String? title;
   final String? subtitle;
+  final bool pathSubtitle;
   final Widget? content;
   final bool selected, compact;
   final FocusNode? focusNode;
@@ -2959,13 +2962,20 @@ class _BusyMarkSidebarRecordRowState<T>
                       ),
                       if (subtitle != null && subtitle.isNotEmpty) ...[
                         const SizedBox(height: BusyMarkSpacing.xxs),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colors.mutedForeground),
-                        ),
+                        if (widget.pathSubtitle)
+                          BusyMarkPathLabel(
+                            path: subtitle,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colors.mutedForeground),
+                          )
+                        else
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colors.mutedForeground),
+                          ),
                       ],
                     ],
                   ),

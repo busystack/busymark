@@ -3828,13 +3828,7 @@ void main() {
         router.routeInformationProvider.value.uri.queryParameters,
         containsPair('returnTo', 'welcome'),
       );
-      final query = find.descendant(
-        of: find.byKey(const ValueKey('settings-shortcut-search')),
-        matching: find.byType(TextField),
-      );
-      await tester.enterText(query, 'Save');
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('shortcut-edit-file.save')));
+      await _browseShortcutRow(tester, 'file.save');
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('record-shortcut')));
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -3886,44 +3880,12 @@ void main() {
         'F12',
       );
       expect(find.text('F12'), findsOneWidget);
-      await tester.enterText(query, '');
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('find-by-shortcut')));
-      await tester.sendKeyEvent(LogicalKeyboardKey.f12);
-      await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey('shortcut-edit-file.save')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('shortcut-edit-file.open')),
+        find.byKey(const ValueKey('settings-shortcut-search')),
         findsNothing,
       );
-      await tester.tap(find.byKey(const ValueKey('find-by-shortcut')));
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
-      expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
-      expect(find.byType(Dialog), findsNothing);
-      await tester.tap(find.byKey(const ValueKey('find-by-shortcut')));
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.keyO);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pumpAndSettle();
-      expect(
-        find.byType(Dialog),
-        findsNothing,
-        reason:
-            'Find by shortcut suppresses the application Open command outside a modal',
-      );
-      expect(
-        find.byKey(const ValueKey('shortcut-edit-file.open')),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.byKey(const ValueKey('clear-shortcut-filter')));
-      await tester.enterText(query, 'Source');
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('shortcut-edit-view.source')));
+      expect(find.byKey(const ValueKey('find-by-shortcut')), findsNothing);
+      await _browseShortcutRow(tester, 'view.source');
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('remove-shortcut')));
       await tester.pumpAndSettle();
@@ -4375,13 +4337,7 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pumpAndSettle();
       await _selectShortcutSettingsPage(tester);
-      final query = find.descendant(
-        of: find.byKey(const ValueKey('settings-shortcut-search')),
-        matching: find.byType(TextField),
-      );
-      await tester.enterText(query, 'Save');
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('shortcut-edit-file.save')));
+      await _browseShortcutRow(tester, 'file.save');
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('record-shortcut')));
       await tester.sendKeyEvent(LogicalKeyboardKey.f8);
@@ -4458,12 +4414,7 @@ void main() {
     await tester.pumpAndSettle();
     await _selectShortcutSettingsPage(tester);
 
-    final query = find.descendant(
-      of: find.byKey(const ValueKey('settings-shortcut-search')),
-      matching: find.byType(TextField),
-    );
-    await tester.enterText(query, fr.tabs);
-    await tester.pumpAndSettle();
+    await _revealShortcutRow(tester, 'tabs.next');
     expect(
       find.byWidgetPredicate(
         (w) =>
@@ -4475,8 +4426,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Tabs'), findsNothing);
-    await tester.enterText(query, fr.shortcutGroupSidebar);
-    await tester.pumpAndSettle();
+    await _revealShortcutRow(tester, 'view.toggleSidebar');
     expect(
       find.byWidgetPredicate(
         (w) =>
@@ -14944,7 +14894,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         container.read(localHistoryControllerProvider).selectedRevisions,
         hasLength(2),
       );
-      await tester.tap(find.byTooltip(l10n.findLocalHistoryEllipsis));
+      expect(find.byTooltip(l10n.findLocalHistoryEllipsis), findsNothing);
+      container
+          .read(searchSessionProvider.notifier)
+          .openHistory(documentId: retained.id);
       await tester.pump();
       expect(
         container.read(searchSessionProvider).historyDocumentId,
@@ -15156,10 +15109,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await tester.pumpAndSettle();
       expect(container.read(searchSessionProvider).active, isTrue);
       tester
-          .widget<FilledButton>(
+          .widget<OutlinedButton>(
             find.descendant(
               of: find.byKey(const ValueKey('search-category')),
-              matching: find.byType(FilledButton),
+              matching: find.byType(OutlinedButton),
             ),
           )
           .focusNode!
@@ -15227,7 +15180,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         SearchCategory.file,
       );
       expect(container.read(searchSessionProvider).query, 'needle');
-      await shortcut(LogicalKeyboardKey.keyP);
+      await shortcut(LogicalKeyboardKey.keyD, shift: true);
       expect(
         container.read(searchSessionProvider).category,
         SearchCategory.documents,
@@ -15261,7 +15214,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
         container.read(searchSessionProvider).category,
         SearchCategory.outline,
       );
-      await shortcut(LogicalKeyboardKey.keyO, alt: true);
+      await shortcut(LogicalKeyboardKey.keyR, shift: true);
       expect(
         container.read(searchSessionProvider).category,
         SearchCategory.recent,
@@ -19286,5 +19239,27 @@ Future<void> _selectShortcutSettingsPage(WidgetTester tester) async {
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.keyboardShortcuts).last);
   }
+  await tester.pumpAndSettle();
+}
+
+Future<void> _revealShortcutRow(WidgetTester tester, String id) async {
+  final list = find.byKey(const ValueKey('settings-shortcut-list'));
+  final scrollable = find
+      .descendant(of: list, matching: find.byType(Scrollable))
+      .first;
+  await tester.drag(scrollable, const Offset(0, 20000));
+  await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(
+    find.byKey(ValueKey('shortcut-edit-$id')),
+    300,
+    scrollable: scrollable,
+    maxScrolls: 100,
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _browseShortcutRow(WidgetTester tester, String id) async {
+  await _revealShortcutRow(tester, id);
+  await tester.tap(find.byKey(ValueKey('shortcut-edit-$id')));
   await tester.pumpAndSettle();
 }

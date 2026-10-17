@@ -6,9 +6,58 @@ import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/search/search_session.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:busymark/l10n/generated/app_localizations.dart';
 
 void main() {
+  testWidgets(
+    'all eight search commands occur once in Search with only their new defaults',
+    (tester) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (c) {
+              context = c;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      const expected = {
+        'search.find': ('Ctrl+F', '<Primary>f'),
+        'search.workspace': ('Ctrl+Shift+F', '<Primary><Shift>f'),
+        'search.headings': ('Ctrl+Shift+H', '<Primary><Shift>h'),
+        'workspace.quickOpen': ('Ctrl+Shift+D', '<Primary><Shift>d'),
+        'search.topics': ('Ctrl+Shift+T', '<Primary><Shift>t'),
+        'search.recent': ('Ctrl+Shift+R', '<Primary><Shift>r'),
+        'history.findLocal': ('Ctrl+Shift+L', '<Primary><Shift>l'),
+        'view.commandPalette': ('Ctrl+Shift+P', '<Primary><Shift>p'),
+      };
+      final registry = BusyMarkCommandCatalog.metadata;
+      expect(
+        registry.commands
+            .where((c) => c.category(context) == 'Search')
+            .map((c) => c.id)
+            .toSet(),
+        expected.keys.toSet(),
+      );
+      for (final entry in expected.entries) {
+        expect(registry.commands.where((c) => c.id == entry.key), hasLength(1));
+        expect(registry[entry.key]!.shortcut!.label, entry.value.$1);
+        expect(registry[entry.key]!.shortcut!.gtkAccelerator, entry.value.$2);
+        expect(registry.activators(entry.key), hasLength(1));
+      }
+      for (final id in ['sidebar.outline', 'history.local']) {
+        final command = registry[id];
+        expect(command, isNotNull);
+        expect(command!.category(context), 'Sidebar');
+      }
+    },
+  );
+
   test(
     'tree browsing and Source line movement can share a combination within one scope',
     () {
@@ -465,12 +514,12 @@ void main() {
       'search.find': 'Ctrl+F',
       'search.workspace': 'Ctrl+Shift+F',
       'sidebar.outline': 'Ctrl+3',
-      'workspace.quickOpen': 'Ctrl+P',
+      'workspace.quickOpen': 'Ctrl+Shift+D',
       'search.topics': 'Ctrl+Shift+T',
-      'search.recent': 'Ctrl+Alt+O',
+      'search.recent': 'Ctrl+Shift+R',
       'view.commandPalette': 'Ctrl+Shift+P',
-      'search.headings': 'Ctrl+Alt+H',
-      'history.findLocal': 'Ctrl+Alt+Y',
+      'search.headings': 'Ctrl+Shift+H',
+      'history.findLocal': 'Ctrl+Shift+L',
     };
     for (final entry in expected.entries) {
       expect(registry[entry.key]?.shortcut?.label, entry.value);

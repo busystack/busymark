@@ -63,7 +63,7 @@ void main() {
             .metadata[BusyMarkCommandIds.quickOpen]!
             .shortcut!
             .label,
-        'Ctrl+P',
+        'Ctrl+Shift+D',
       );
       expect(
         BusyMarkCommandCatalog

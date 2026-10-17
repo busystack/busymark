@@ -2129,7 +2129,7 @@ void main() {
       expect(find.byType(TextField), findsNothing);
       expect(state.selectedRevisions, isNotEmpty);
       expect(
-        find.byKey(const ValueKey('local-history-context-header')),
+        find.byKey(const ValueKey('local-history-document-context')),
         findsOneWidget,
       );
       expect(find.text('deleted.md'), findsOneWidget);
@@ -2311,10 +2311,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey('local-history-context-header')),
-        findsNothing,
+        find.byKey(const ValueKey('local-history-document-context')),
+        findsOneWidget,
       );
-      expect(find.text('B.md'), findsNothing);
+      expect(find.text('B.md'), findsOneWidget);
       expect(find.byType(DropdownButton<String>), findsNothing);
 
       final searchField = find.byType(TextField);
@@ -2349,10 +2349,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey('local-history-context-header')),
-        findsNothing,
+        find.byKey(const ValueKey('local-history-document-context')),
+        findsOneWidget,
       );
-      expect(find.text('A.md'), findsNothing);
+      expect(find.text('A.md'), findsOneWidget);
       expect(searchField, findsNothing);
       expect(
         container.read(localHistoryControllerProvider).selectedRevisions,
@@ -2364,24 +2364,18 @@ void main() {
         panelContext,
       ).refreshIndicatorSemanticLabel;
       expect(
-        tester.getCenter(actionsMenu).dx,
-        greaterThan(
-          tester
-              .getCenter(
-                find.byTooltip(
-                  AppLocalizations.of(
-                    tester.element(find.byType(LocalHistoryPanel)),
-                  ).findLocalHistoryEllipsis,
-                ),
-              )
-              .dx,
+        find.byTooltip(
+          AppLocalizations.of(
+            tester.element(find.byType(LocalHistoryPanel)),
+          ).findLocalHistoryEllipsis,
         ),
+        findsNothing,
       );
       expect(find.byTooltip(refreshLabel), findsNothing);
       await tester.tap(actionsMenu);
       await tester.pumpAndSettle();
       expect(find.text(refreshLabel), findsOneWidget);
-      expect(find.text('Find in Local History…'), findsOneWidget);
+      expect(find.text('Find in Local History…'), findsNothing);
       expect(find.text('Clear This Document’s History'), findsOneWidget);
       expect(find.text('Clear All Local History'), findsOneWidget);
     },
@@ -2477,18 +2471,12 @@ void main() {
       expect(actionsMenu, findsOneWidget);
       expect(searchField, findsNothing);
       expect(
-        tester.getCenter(actionsMenu).dx,
-        greaterThan(
-          tester
-              .getCenter(
-                find.byTooltip(
-                  AppLocalizations.of(
-                    tester.element(find.byType(LocalHistoryPanel)),
-                  ).findLocalHistoryEllipsis,
-                ),
-              )
-              .dx,
+        find.byTooltip(
+          AppLocalizations.of(
+            tester.element(find.byType(LocalHistoryPanel)),
+          ).findLocalHistoryEllipsis,
         ),
+        findsNothing,
       );
       expect(find.text(beforeLabel), findsOneWidget);
       expect(find.text(afterLabel), findsOneWidget);

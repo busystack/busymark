@@ -4378,10 +4378,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get clipboardHistory => 'Histórico da Área de Transferência';
 
   @override
-  String get clipboardHistorySearchHint =>
-      'Pesquisar no histórico da área de transferência';
-
-  @override
   String get clipboardHistoryDescription =>
       'Abrir o histórico da área de transferência local da sessão.';
 
@@ -4404,10 +4400,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get clipboardNoItems =>
       'O histórico da área de transferência está vazio.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Nenhum item da área de transferência corresponde a esta pesquisa.';
 
   @override
   String get clipboardDisabled =>
@@ -4464,9 +4456,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Este documento não tem revisões no Histórico Local.';
-
-  @override
-  String get localHistoryNoMatches => 'Nenhuma revisão corresponde à pesquisa.';
 
   @override
   String get localHistorySelectedRevision => 'Revisão selecionada';
@@ -5526,12 +5515,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Não atribuído';
-
-  @override
-  String get shortcutSearchHint => 'Pesquisar ações ou atalhos…';
-
-  @override
-  String get shortcutFindBy => 'Procurar por atalho';
 
   @override
   String get shortcutPressKeys => 'Prima uma combinação de teclas…';
@@ -9986,10 +9969,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get clipboardHistory => 'Histórico da Área de Transferência';
 
   @override
-  String get clipboardHistorySearchHint =>
-      'Pesquisar no histórico da área de transferência';
-
-  @override
   String get clipboardHistoryDescription =>
       'Abrir o histórico da área de transferência local da sessão.';
 
@@ -10012,10 +9991,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get clipboardNoItems =>
       'O histórico da área de transferência está vazio.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Nenhum item da área de transferência corresponde a esta pesquisa.';
 
   @override
   String get clipboardDisabled =>
@@ -10073,10 +10048,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get localHistoryNoRevisions =>
       'Este documento não possui revisões no Histórico Local.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Nenhuma revisão no Histórico Local corresponde a esta pesquisa.';
 
   @override
   String get localHistorySelectedRevision => 'Revisão selecionada';
@@ -11134,12 +11105,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get shortcutUnassigned => 'Não atribuído';
-
-  @override
-  String get shortcutSearchHint => 'Pesquisar ações ou atalhos…';
-
-  @override
-  String get shortcutFindBy => 'Buscar por atalho';
 
   @override
   String get shortcutPressKeys => 'Pressione uma combinação de teclas…';

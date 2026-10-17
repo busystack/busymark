@@ -3,6 +3,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:path/path.dart' as p;
 
 import '../app/localization.dart';
+import '../app/app_settings.dart';
 import '../local_history/local_history_models.dart';
 import '../workspace/recent_presentation.dart';
 import 'search_result_preview.dart';
@@ -24,6 +25,8 @@ SearchResultPresentation presentSearchResult(
   BuildContext context,
   SidebarSearchResult result, {
   String? Function(String accountId)? accountLabel,
+  Iterable<RecentResource> recentResources = const [],
+  String? workspaceRoot,
 }) {
   String account(String id) =>
       accountLabel?.call(id) ?? context.l10n.searchAccountUnavailable;
@@ -80,6 +83,8 @@ SearchResultPresentation presentSearchResult(
       recentResourceLocation(
         context,
         resource,
+        recentResources: recentResources,
+        workspaceRoot: workspaceRoot,
         accountLabel: resource.accountId == null
             ? null
             : accountLabel?.call(resource.accountId!),

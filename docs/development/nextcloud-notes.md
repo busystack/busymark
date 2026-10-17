@@ -498,15 +498,15 @@ Read-only notes support favorite changes. Partial results retain successes and
 identify skipped, conflicting or failed notes; resolve conflicts through the
 existing review workflow.
 
-Ctrl+P opens Documents in the shared search sidebar for the active workspace.
+Ctrl+Shift+D opens Documents in the shared search sidebar for the active workspace.
 Cached unopened Notes titles and categories participate within their originating
 account; document search never matches note bodies. Exact and prefix title
 matches rank first. Arrow keys select, Enter opens, and Escape closes search.
-Ctrl+Shift+P opens Actions in the same sidebar. Ctrl+Alt+O searches the shared
+Ctrl+Shift+P opens Actions in the same sidebar. Ctrl+Shift+R searches the shared
 Recent documents and workspaces, including individual offline-created notes.
 
 Ctrl+F searches the current note's in-memory text. Ctrl+Shift+F and the Notes
-sidebar Search button explicitly choose Text → Current workspace and use the
+sidebar Search button explicitly choose Workspace Text and use the
 existing indexed Notes search. Terms combine with AND; quote a phrase, use `title:meeting` or
 `category:"Work/Team"`, and select Whole word when needed. Ordinary punctuation,
 SQL/FTS operators and wildcard characters are literal. Partial terms, short

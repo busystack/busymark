@@ -4364,9 +4364,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get clipboardHistory => 'Zwischenablage-Historie';
 
   @override
-  String get clipboardHistorySearchHint => 'Zwischenablageverlauf durchsuchen';
-
-  @override
   String get clipboardHistoryDescription =>
       'Öffne die Sitzungs-spezifische Zwischenablage-Historie.';
 
@@ -4388,10 +4385,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Zwischenablage-Historie ist leer.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Keine Zwischenablagen-Elemente passen zu dieser Suche.';
 
   @override
   String get clipboardDisabled =>
@@ -4449,10 +4442,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dieses Dokument hat keine Lokalen Historie Revisionen.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Keine Lokalen Historie Revisionen passen zu dieser Suche.';
 
   @override
   String get localHistorySelectedRevision => 'Ausgewählte Revision';
@@ -5511,12 +5500,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Nicht zugewiesen';
-
-  @override
-  String get shortcutSearchHint => 'Aktionen oder Tastenkürzel suchen…';
-
-  @override
-  String get shortcutFindBy => 'Nach Tastenkürzel suchen';
 
   @override
   String get shortcutPressKeys => 'Tastenkombination drücken…';

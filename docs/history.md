@@ -7,7 +7,8 @@ document revisions on this device for comparison and recovery.
 ## Clipboard History
 
 Open **Clipboard History** from the sidebar, Actions search, or an editor
-context menu. Search examines each item's complete text. Select an item and use
+context menu. The panel shows the current clipboard followed by retained entries,
+without a search field. Select an item and use
 **Paste** or **Paste as Plain Text**; Enter and double-click also insert the
 selected item at the latest editable selection.
 
@@ -52,11 +53,13 @@ Open **Local History** from the sidebar (Ctrl+5 by default), Actions search, an
 editor or document-tab context menu, or a file-tree context menu. The revision
 list normally follows the active document.
 
-Use **Find in Local History…** (Ctrl+Alt+Y by default) to search retained closed,
+Use **Find in Local History…** (Ctrl+Shift+L by default) to search retained closed,
 renamed, deleted and previously untitled documents by name, current or historical
 path, or revision content. The shared header owns the query and results appear
-in the search sidebar. The History panel’s Find action supplies the selected
-document as removable context; clear that context to search retained history generally.
+in the search sidebar. Scoped history results retain removable document context;
+clear that context to search retained history generally. The ordinary History
+panel has no Search or Find action; its management menu provides Refresh and
+confirmed clearing operations.
 An empty query waits for input and does not enumerate retained documents or read
 revision contents. Clearing the query cancels matching and removes its results.
 

@@ -200,11 +200,11 @@ void main() {
     ]) {
       expect(combined, isNot(contains(removed)));
     }
-    // Ctrl+P is now the approved Quick Open binding. Printing remains absent.
+    // Ctrl+Shift+D is now the approved Quick Open binding. Printing remains absent.
     final shortcuts = File(
       'lib/src/app/busymark_shortcuts.dart',
     ).readAsStringSync();
-    expect(shortcuts, contains("quickOpenLabel = 'Ctrl+P'"));
+    expect(shortcuts, contains("quickOpenLabel = 'Ctrl+Shift+D'"));
     expect(shortcuts, contains("commandPaletteLabel = 'Ctrl+Shift+P'"));
     final registry = File(
       'lib/src/app/command_registry.dart',
@@ -1250,7 +1250,8 @@ void main() {
       r'InputDecorationThemeData busyMarkGroupedInputDecorationTheme',
     ).firstMatch(design)!.group(0)!;
     expect(selector, contains('BusyMarkMenuButton<T>('));
-    expect(selector, isNot(contains('outlinedButtonTheme.style')));
+    expect(selector, contains('child: OutlinedButton('));
+    expect(selector, isNot(contains('BusyMarkPushButton.standard(')));
     expect(selector, isNot(contains('contentPadding')));
     expect(selector, contains('shortcut: option.shortcut'));
     expect(selector, contains('gtkAccelerator: option.gtkAccelerator'));
@@ -1258,7 +1259,6 @@ void main() {
     expect(selector, contains('BusyMarkPopupMenuItem<T>('));
     expect(selector, contains('softWrap: maxLabelLines > 1'));
     expect(selector, contains('this.maxLabelLines = 1'));
-    expect(selector, contains('BusyMarkPushButton.standard('));
     expect(selector, isNot(contains('WidgetStatesController()')));
     expect(selector, isNot(contains('showMenu<T>(')));
     expect(selector, isNot(contains('MouseRegion(')));
@@ -1632,7 +1632,9 @@ void main() {
       contains('BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>'),
     );
     expect(clipboard, contains("'clipboard-history-actions-menu'"));
-    expect(clipboard, contains('textDirection: TextDirection.ltr'));
+    expect(clipboard, isNot(contains('BusyMarkSearchField(')));
+    expect(clipboard, contains('context.l10n.clipboardHistory'));
+    expect(clipboard, contains('if (!_listFocusNode.hasPrimaryFocus)'));
     expect(clipboard, isNot(contains('colorScheme.primaryContainer')));
     expect(clipboard, isNot(contains('expandedChild:')));
     expect(clipboard, isNot(contains('_ClipboardPreview')));
@@ -1644,7 +1646,8 @@ void main() {
       contains('BusyMarkHeaderPopupMenuButton<_HistoryAction>'),
     );
     expect(localHistory, contains("'local-history-actions-menu'"));
-    expect(localHistory, contains('textDirection: TextDirection.ltr'));
+    expect(localHistory, isNot(contains('searchSessionProvider')));
+    expect(localHistory, contains('context.l10n.localHistory'));
     expect(localHistory, contains('_HistoryAction.refresh'));
     expect(localHistory, contains('padding: BusyMarkInsets.sidebarList'));
     expect(localHistory, isNot(contains('child: ListTile(')));

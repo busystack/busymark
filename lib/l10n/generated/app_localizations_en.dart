@@ -4350,9 +4350,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clipboardHistory => 'Clipboard History';
 
   @override
-  String get clipboardHistorySearchHint => 'Search clipboard history';
-
-  @override
   String get clipboardHistoryDescription =>
       'Open the session-local clipboard history.';
 
@@ -4373,9 +4370,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Clipboard history is empty.';
-
-  @override
-  String get clipboardNoMatches => 'No clipboard items match this search.';
 
   @override
   String get clipboardDisabled =>
@@ -4431,10 +4425,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'This document has no Local History revisions.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'No Local History revisions match this search.';
 
   @override
   String get localHistorySelectedRevision => 'Selected revision';
@@ -5478,12 +5468,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Unassigned';
-
-  @override
-  String get shortcutSearchHint => 'Search actions or shortcuts…';
-
-  @override
-  String get shortcutFindBy => 'Find by shortcut';
 
   @override
   String get shortcutPressKeys => 'Press a key combination…';

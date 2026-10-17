@@ -4378,9 +4378,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get clipboardHistory => 'Historia w Koszyku';
 
   @override
-  String get clipboardHistorySearchHint => 'Przeszukaj historię schowka';
-
-  @override
   String get clipboardHistoryDescription =>
       'Otwórz historię w koszyku lokalną dla sesji.';
 
@@ -4401,10 +4398,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Historia w koszyku jest pusta.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Żadne elementy w koszyku nie pasują do tego wyszukiwania.';
 
   @override
   String get clipboardDisabled =>
@@ -4462,10 +4455,6 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Ten dokument nie ma wersji w Lokalnej Historii.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Żadne wersje nie pasują do tego wyszukiwania.';
 
   @override
   String get localHistorySelectedRevision => 'Wybrana wersja';
@@ -5517,12 +5506,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Nieprzypisany';
-
-  @override
-  String get shortcutSearchHint => 'Szukaj działań lub skrótów…';
-
-  @override
-  String get shortcutFindBy => 'Znajdź według skrótu';
 
   @override
   String get shortcutPressKeys => 'Naciśnij kombinację klawiszy…';

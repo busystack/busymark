@@ -4209,9 +4209,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clipboardHistory => 'コピーボード履歴';
 
   @override
-  String get clipboardHistorySearchHint => 'クリップボード履歴を検索';
-
-  @override
   String get clipboardHistoryDescription => 'セッション固有のコピーボード履歴を開く。';
 
   @override
@@ -4230,9 +4227,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'コピーボード履歴は空です。';
-
-  @override
-  String get clipboardNoMatches => 'この検索に一致するコピーボードの項目はありません。';
 
   @override
   String get clipboardDisabled => 'コピーボード履歴のコレクションは設定で無効になっています。';
@@ -4283,9 +4277,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get localHistoryNoRevisions => 'このドキュメントにはローカル履歴の修正はありません。';
-
-  @override
-  String get localHistoryNoMatches => 'この検索に一致するローカル履歴の修正はありません。';
 
   @override
   String get localHistorySelectedRevision => '選択されたリビジョン';
@@ -5311,12 +5302,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => '未割り当て';
-
-  @override
-  String get shortcutSearchHint => 'アクションやショートカットを検索…';
-
-  @override
-  String get shortcutFindBy => 'ショートカットで検索';
 
   @override
   String get shortcutPressKeys => 'キーの組み合わせを押してください…';

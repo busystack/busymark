@@ -522,6 +522,14 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
   @override
   Widget build(BuildContext context) {
     final rows = widget.results;
+    final recentResources = ref.watch(
+      appSettingsControllerProvider.select((s) => s.recentWorkspaces),
+    );
+    final workspaceRoot = ref.watch(
+      workspaceControllerProvider.select(
+        (s) => s.workspace?.filesystemRootPath,
+      ),
+    );
     final colors = BusyMarkSurfaceColors.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     final activeAccount = container.exists(nextcloudConnectionProvider)
@@ -549,6 +557,8 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
           final presentation = presentSearchResult(
             context,
             result,
+            recentResources: recentResources,
+            workspaceRoot: workspaceRoot,
             accountLabel: (id) => accountLabels[id],
           );
           final title = presentation.title;
@@ -595,6 +605,9 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                 '$title\n$subtitle${presentation.details == null ? '' : '\n${presentation.details}'}${shortcut == null ? '' : '\n$shortcut'}',
             title: result is RecentSearchResult ? title : null,
             subtitle: result is RecentSearchResult ? subtitle : null,
+            pathSubtitle:
+                result is RecentSearchResult &&
+                result.resource.accountId == null,
             tooltip: result is RecentSearchResult ? presentation.details : null,
             content: result is RecentSearchResult
                 ? null

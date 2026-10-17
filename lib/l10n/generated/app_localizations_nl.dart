@@ -4369,9 +4369,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get clipboardHistory => 'Historie van de klembord';
 
   @override
-  String get clipboardHistorySearchHint => 'Klembordgeschiedenis doorzoeken';
-
-  @override
   String get clipboardHistoryDescription =>
       'Open de klembordgeschiedenis per sessie.';
 
@@ -4393,10 +4390,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'De klembordgeschiedenis is leeg.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Geen klemborditems komen overeen met deze zoekopdracht.';
 
   @override
   String get clipboardDisabled =>
@@ -4454,10 +4447,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dit document heeft geen revisies van de Lokale Geschiedenis.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.';
 
   @override
   String get localHistorySelectedRevision => 'Geselecteerde revisie';
@@ -5513,12 +5502,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Niet toegewezen';
-
-  @override
-  String get shortcutSearchHint => 'Acties of sneltoetsen zoeken…';
-
-  @override
-  String get shortcutFindBy => 'Zoeken op sneltoets';
 
   @override
   String get shortcutPressKeys => 'Druk op een toetscombinatie…';

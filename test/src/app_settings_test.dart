@@ -17,14 +17,14 @@ void main() {
     'new search defaults preserve saved assignments and resolve explicitly',
     () async {
       const y = BusyMarkKeyBinding(
-        LogicalKeyboardKey.keyY,
+        LogicalKeyboardKey.keyL,
         control: true,
-        alt: true,
+        shift: true,
       );
       const h = BusyMarkKeyBinding(
         LogicalKeyboardKey.keyH,
         control: true,
-        alt: true,
+        shift: true,
       );
       const k = BusyMarkKeyBinding(
         LogicalKeyboardKey.keyK,
@@ -52,8 +52,8 @@ void main() {
           container.read(appSettingsControllerProvider).shortcutOverrides;
       BusyMarkCommandRegistry effective() =>
           effectiveCommandRegistry(BusyMarkCommandCatalog.metadata, current());
-      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Alt+Y');
-      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Alt+H');
+      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Shift+L');
+      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Shift+H');
       expect(effective()['history.findLocal']!.shortcut, isNull);
       expect(effective()['search.headings']!.shortcut, isNull);
       expect(
@@ -74,7 +74,7 @@ void main() {
       );
       expect(refused.status, KeymapUpdateStatus.conflict);
       expect(refused.conflicts.map((c) => c.id), ['editor.bold']);
-      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Alt+Y');
+      expect(effective()['editor.bold']!.shortcut!.label, 'Ctrl+Shift+L');
       final accepted = await controller.update(
         'history.findLocal',
         null,
@@ -84,13 +84,46 @@ void main() {
       );
       expect(accepted.status, KeymapUpdateStatus.saved);
       expect(effective()['editor.bold']!.shortcut, isNull);
-      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Alt+Y');
-      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Alt+H');
+      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Shift+L');
+      expect(effective()['editor.italic']!.shortcut!.label, 'Ctrl+Shift+H');
       expect(current().containsKey('search.headings'), isFalse);
       await controller.resetAll();
-      expect(effective()['search.headings']!.shortcut!.label, 'Ctrl+Alt+H');
-      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Alt+Y');
+      expect(effective()['search.headings']!.shortcut!.label, 'Ctrl+Shift+H');
+      expect(effective()['history.findLocal']!.shortcut!.label, 'Ctrl+Shift+L');
       expect(effective()['help.keyboardShortcuts']!.shortcut, isNull);
+    },
+  );
+
+  test(
+    'changed Documents and Recent defaults yield to saved bindings and explicit removals',
+    () {
+      final saved = <String, BusyMarkKeyBinding?>{
+        'file.save': const BusyMarkKeyBinding(
+          LogicalKeyboardKey.keyD,
+          control: true,
+          shift: true,
+        ),
+        'file.open': const BusyMarkKeyBinding(
+          LogicalKeyboardKey.keyR,
+          control: true,
+          shift: true,
+        ),
+        'search.headings': null,
+      };
+      final registry = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.metadata,
+        saved,
+      );
+      expect(registry['file.save']!.shortcut!.label, 'Ctrl+Shift+D');
+      expect(registry['file.open']!.shortcut!.label, 'Ctrl+Shift+R');
+      expect(registry['workspace.quickOpen']!.shortcut, isNull);
+      expect(registry['search.recent']!.shortcut, isNull);
+      expect(registry['search.headings']!.shortcut, isNull);
+      expect(
+        validatedShortcutOverrides(BusyMarkCommandCatalog.metadata, saved),
+        saved,
+      );
+      expect(saved.containsKey('workspace.quickOpen'), isFalse);
     },
   );
 

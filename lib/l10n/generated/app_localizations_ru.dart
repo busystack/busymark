@@ -4381,9 +4381,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clipboardHistory => 'История буфера обмена';
 
   @override
-  String get clipboardHistorySearchHint => 'Поиск в истории буфера обмена';
-
-  @override
   String get clipboardHistoryDescription =>
       'Открыть историю буфера обмена, специфичную для сеанса.';
 
@@ -4405,10 +4402,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'История буфера обмена пуста.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Нет элементов буфера обмена, соответствующих этому поиску.';
 
   @override
   String get clipboardDisabled =>
@@ -4466,10 +4459,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Этот документ не имеет версий в локальной истории.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Ни одна версия не соответствует этому поиску.';
 
   @override
   String get localHistorySelectedRevision => 'Выбранная версия';
@@ -5521,12 +5510,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Не назначено';
-
-  @override
-  String get shortcutSearchHint => 'Поиск действий или сочетаний клавиш…';
-
-  @override
-  String get shortcutFindBy => 'Найти по сочетанию клавиш';
 
   @override
   String get shortcutPressKeys => 'Нажмите сочетание клавиш…';

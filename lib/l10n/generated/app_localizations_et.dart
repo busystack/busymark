@@ -4325,9 +4325,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get clipboardHistory => 'Kleepimiskredi ajalugu';
 
   @override
-  String get clipboardHistorySearchHint => 'Otsi lõikepuhvri ajaloost';
-
-  @override
   String get clipboardHistoryDescription =>
       'Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.';
 
@@ -4349,10 +4346,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Kleepimiskredi ajalugu on tühi.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ei leitud kleepimiskredi elemente, mis vastavad sellele otsingule.';
 
   @override
   String get clipboardDisabled =>
@@ -4409,10 +4402,6 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Selle dokumendil pole kohalist ajaloos.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Ei leidunud kohalise ajalooga versioone.';
 
   @override
   String get localHistorySelectedRevision => 'Valitud versioon';
@@ -5460,12 +5449,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Määramata';
-
-  @override
-  String get shortcutSearchHint => 'Otsi toiminguid või kiirklahve…';
-
-  @override
-  String get shortcutFindBy => 'Otsi kiirklahvi järgi';
 
   @override
   String get shortcutPressKeys => 'Vajuta klahvikombinatsiooni…';

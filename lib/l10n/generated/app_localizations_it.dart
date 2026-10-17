@@ -4360,10 +4360,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clipboardHistory => 'Cronologia della Copia';
 
   @override
-  String get clipboardHistorySearchHint =>
-      'Cerca nella cronologia degli appunti';
-
-  @override
   String get clipboardHistoryDescription =>
       'Apri la cronologia della copia locale della sessione.';
 
@@ -4385,10 +4381,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'La cronologia della copia è vuota.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Nessun elemento della copia corrisponde a questa ricerca.';
 
   @override
   String get clipboardDisabled =>
@@ -4446,10 +4438,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Questo documento non ha revisioni nella cronologia locale.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Nessuna revisione corrisponde a questa ricerca.';
 
   @override
   String get localHistorySelectedRevision => 'Revisione selezionata';
@@ -5509,12 +5497,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Non assegnata';
-
-  @override
-  String get shortcutSearchHint => 'Cerca azioni o scorciatoie…';
-
-  @override
-  String get shortcutFindBy => 'Trova per scorciatoia';
 
   @override
   String get shortcutPressKeys => 'Premi una combinazione di tasti…';

@@ -4326,9 +4326,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clipboardHistory => 'Kopyalama Geçmişi';
 
   @override
-  String get clipboardHistorySearchHint => 'Pano geçmişinde ara';
-
-  @override
   String get clipboardHistoryDescription =>
       'Oturuma özgü kopyalama geçmişini aç.';
 
@@ -4350,10 +4347,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Kopyalama geçmişi boş.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Bu arama ile eşleşen kopyalama öğesi bulunamadı.';
 
   @override
   String get clipboardDisabled =>
@@ -4411,10 +4404,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Bu belge Yerel Geçmiş revizyonlarına sahip değil.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.';
 
   @override
   String get localHistorySelectedRevision => 'Seçilen revizyon';
@@ -5461,12 +5450,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Atanmamış';
-
-  @override
-  String get shortcutSearchHint => 'Eylem veya kısayol ara…';
-
-  @override
-  String get shortcutFindBy => 'Kısayola göre bul';
 
   @override
   String get shortcutPressKeys => 'Bir tuş birleşimine basın…';

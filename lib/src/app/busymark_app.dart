@@ -38,6 +38,7 @@ import '../workspace/recent_navigation.dart';
 import 'command_registry.dart';
 import 'command_shortcuts.dart';
 import 'keymap_controller.dart';
+import 'path_label.dart';
 import 'shortcut_capture.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
@@ -644,14 +645,25 @@ class BusyMarkApp extends ConsumerWidget {
                       dialogContext,
                       recentResourceTitle(dialogContext, recent),
                     ),
-                    subtitle: busyMarkLtrIsolateFor(
-                      dialogContext,
-                      recentResourceLocation(
-                        dialogContext,
-                        recent,
-                        accountLabel: accountLabels[recent.accountId],
-                      ),
-                    ),
+                    tooltip: recent.accountId == null
+                        ? recent.path
+                        : accountLabels[recent.accountId],
+                    subtitleWidget: recent.accountId == null
+                        ? BusyMarkPathLabel(
+                            path: recentResourceLocation(
+                              dialogContext,
+                              recent,
+                              recentResources: recentWorkspaces,
+                            ),
+                            style: Theme.of(dialogContext).textTheme.bodySmall,
+                          )
+                        : Text(
+                            recentResourceLocation(
+                              dialogContext,
+                              recent,
+                              accountLabel: accountLabels[recent.accountId],
+                            ),
+                          ),
                     leading: const Icon(BusyMarkGlyphs.history),
                     trailing: Icon(
                       BusyMarkGlyphs.forwardFor(

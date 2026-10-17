@@ -4367,10 +4367,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clipboardHistory => 'Historique de la presse-papiers';
 
   @override
-  String get clipboardHistorySearchHint =>
-      'Rechercher dans l’historique du presse-papiers';
-
-  @override
   String get clipboardHistoryDescription =>
       'Ouvrir l\'historique de la presse-papiers local à la session.';
 
@@ -4392,10 +4388,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'L\'historique de la presse-papiers est vide.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Aucun élément de presse-papiers ne correspond à cette recherche.';
 
   @override
   String get clipboardDisabled =>
@@ -4452,10 +4444,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Ce document n\'a pas de révisions dans l\'Historique Local.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Aucune révision n\'est trouvée dans cette recherche.';
 
   @override
   String get localHistorySelectedRevision => 'Révision sélectionnée';
@@ -5518,12 +5506,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Non attribué';
-
-  @override
-  String get shortcutSearchHint => 'Rechercher des actions ou raccourcis…';
-
-  @override
-  String get shortcutFindBy => 'Rechercher par raccourci';
 
   @override
   String get shortcutPressKeys => 'Appuyez sur une combinaison de touches…';

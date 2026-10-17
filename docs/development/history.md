@@ -227,5 +227,6 @@ sequentially and discarded after matching, rather than kept in widget state.
 Activation revalidates stable document/revision IDs and checksum before the
 existing comparison workflow reads a revision. Its selection callback also checks
 the originating search request after the read. Ordinary History navigation keeps
-the complete timeline; the panel’s Find action opens shared search with an
-explicit removable document scope. There is no panel-owned query controller.
+the complete timeline and has no search entry points or private query controller.
+The shared coordinator retains explicit removable document scopes independently
+of the browsing panel.

@@ -7320,12 +7320,6 @@ abstract class AppLocalizations {
   /// **'Clipboard History'**
   String get clipboardHistory;
 
-  /// No description provided for @clipboardHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search clipboard history'**
-  String get clipboardHistorySearchHint;
-
   /// No description provided for @clipboardHistoryDescription.
   ///
   /// In en, this message translates to:
@@ -7361,12 +7355,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clipboard history is empty.'**
   String get clipboardNoItems;
-
-  /// No description provided for @clipboardNoMatches.
-  ///
-  /// In en, this message translates to:
-  /// **'No clipboard items match this search.'**
-  String get clipboardNoMatches;
 
   /// No description provided for @clipboardDisabled.
   ///
@@ -7463,12 +7451,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This document has no Local History revisions.'**
   String get localHistoryNoRevisions;
-
-  /// No description provided for @localHistoryNoMatches.
-  ///
-  /// In en, this message translates to:
-  /// **'No Local History revisions match this search.'**
-  String get localHistoryNoMatches;
 
   /// No description provided for @localHistorySelectedRevision.
   ///
@@ -9383,18 +9365,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unassigned'**
   String get shortcutUnassigned;
-
-  /// Search and keyboard shortcut settings: shortcutSearchHint
-  ///
-  /// In en, this message translates to:
-  /// **'Search actions or shortcuts…'**
-  String get shortcutSearchHint;
-
-  /// Search and keyboard shortcut settings: shortcutFindBy
-  ///
-  /// In en, this message translates to:
-  /// **'Find by shortcut'**
-  String get shortcutFindBy;
 
   /// Search and keyboard shortcut settings: shortcutPressKeys
   ///

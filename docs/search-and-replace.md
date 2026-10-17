@@ -10,11 +10,11 @@ side of the document.
 | --- | --- | --- |
 | Document Text | Active document’s current buffer | Ctrl+F |
 | Workspace Text | Current local workspace or Notes account | Ctrl+Shift+F |
-| Headings | Headings in the current document | Ctrl+Alt+H |
-| Documents | Names, paths or Notes titles/categories in the active workspace | Ctrl+P |
+| Headings | Headings in the current document | Ctrl+Shift+H |
+| Documents | Names, paths or Notes titles/categories in the active workspace | Ctrl+Shift+D |
 | Topics | Topics across the current Writerside project, including outside the selected TOC | Ctrl+Shift+T |
-| Recent | Chronological document and workspace history | Ctrl+Alt+O |
-| Local History | Retained document names, historical paths and revision contents | Ctrl+Alt+Y |
+| Recent | Chronological document and workspace history | Ctrl+Shift+R |
+| Local History | Retained document names, historical paths and revision contents | Ctrl+Shift+L |
 | Actions | Application commands, including commands without shortcuts | Ctrl+Shift+P |
 
 Categories appear in that order; unavailable categories are omitted. Welcome
@@ -81,7 +81,10 @@ filter or change that browsing state.
 Topics searches source titles, topic IDs, filenames and project-relative paths
 across modules. Rows distinguish module ownership and open the actual topic.
 
-Recent rows show a resource name and a shortened trailing location on two lines.
+Recent rows show a resource name and its containing location on two lines.
+Locations inside the actual home use `~`; owned topics show their workspace and
+containing folder. Outside locations remain absolute. One measured path elision
+keeps useful trailing folders visible in narrow rows.
 The tooltip, accessible description and Copy Path retain the complete location.
 
 Recent is one chronological collection of documents and workspaces, ordered by
@@ -106,9 +109,10 @@ previously untitled owners. Names and current or historical paths lead to the
 retained timeline. Content results identify an exact revision and timestamp and
 open its existing comparison view while keeping search results available.
 
-The History panel’s Find action searches the selected historical document; its
-name appears as removable context. Clear that context to search all retained
-history. Matching is literal and case-insensitive. An empty History query waits for input.
+When History search has an explicit document scope, its name appears as
+removable context. Clear that context to search all retained history. The
+ordinary History panel has no Search or Find controls. Matching is literal and
+case-insensitive. An empty History query waits for input.
 Search reads retained revisions without recording, restoring, rebinding a live
 buffer or substituting a same-named file. Missing revisions report failure.
 
@@ -215,9 +219,9 @@ summary before continuing.
 
 ## Keyboard shortcut settings
 
-Use **Settings → Keyboard Shortcuts** to search actions, categories or displayed
-key combinations. **Find by shortcut** records a combination to filter this list;
-it does not execute a command. Select an action to record and assign a shortcut,
+Use **Settings → Keyboard Shortcuts** to browse the complete action catalog by
+category. The page has no search or shortcut filter. Scroll to an action and
+select it to record and assign a shortcut,
 remove its assignment, or restore its default. **Restore all defaults** asks for
 confirmation. Local text input and traversal operations remain local controls.
 While typing in a search field, Select All, Cut, Copy, Paste and Undo keep editing
@@ -240,7 +244,7 @@ keyboard layout; display text is not used to identify a key.
 Conflicts name actions whose receiving contexts overlap, including commands that
 are currently unavailable. Reassignment explicitly removes those conflicting
 bindings in the same update. Resetting one action also checks for conflicts.
-New Headings and Local History defaults yield to conflicting saved assignments;
+Changed search defaults yield to conflicting saved assignments;
 Settings identifies the conflict and supports explicit reassignment or reset.
 Separate Editor-only and Source-only operations can share a combination; each
 keeps its own action and context in the list.

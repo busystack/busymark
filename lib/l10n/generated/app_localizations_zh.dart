@@ -4136,9 +4136,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clipboardHistory => '剪贴板历史';
 
   @override
-  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
-
-  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -4157,9 +4154,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clipboardNoItems => '剪贴板历史为空。';
-
-  @override
-  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
 
   @override
   String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
@@ -4210,9 +4204,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get localHistoryNoRevisions => '此文档没有本地历史修订。';
-
-  @override
-  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';
@@ -5230,12 +5221,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => '未分配';
-
-  @override
-  String get shortcutSearchHint => '搜索操作或快捷键…';
-
-  @override
-  String get shortcutFindBy => '按快捷键查找';
 
   @override
   String get shortcutPressKeys => '请按下组合键…';
@@ -9443,9 +9428,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get clipboardHistory => '剪贴板历史';
 
   @override
-  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
-
-  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -9464,9 +9446,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get clipboardNoItems => '剪贴板历史为空。';
-
-  @override
-  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
 
   @override
   String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
@@ -9517,9 +9496,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get localHistoryNoRevisions => '此文档没有本地历史修订。';
-
-  @override
-  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';
@@ -10537,12 +10513,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get shortcutUnassigned => '未分配';
-
-  @override
-  String get shortcutSearchHint => '搜索操作或快捷键…';
-
-  @override
-  String get shortcutFindBy => '按快捷键查找';
 
   @override
   String get shortcutPressKeys => '请按下组合键…';

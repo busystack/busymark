@@ -4365,10 +4365,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clipboardHistory => 'Historial de la Copia';
 
   @override
-  String get clipboardHistorySearchHint =>
-      'Buscar en el historial del portapapeles';
-
-  @override
   String get clipboardHistoryDescription =>
       'Abrir el historial de la copia local de la sesión.';
 
@@ -4389,10 +4385,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'El historial de la copia está vacío.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ningún elemento de la copia coincide con esta búsqueda.';
 
   @override
   String get clipboardDisabled =>
@@ -4450,10 +4442,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Este documento no tiene revisiones en el Historial Local.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Ninguna revisión del Historial Local coincide con esta búsqueda.';
 
   @override
   String get localHistorySelectedRevision => 'Revisión seleccionada';
@@ -5514,12 +5502,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Sin asignar';
-
-  @override
-  String get shortcutSearchHint => 'Buscar acciones o atajos…';
-
-  @override
-  String get shortcutFindBy => 'Buscar por atajo';
 
   @override
   String get shortcutPressKeys => 'Pulse una combinación de teclas…';

@@ -4372,9 +4372,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get clipboardHistory => 'تاریخچه کپی و پیست';
 
   @override
-  String get clipboardHistorySearchHint => 'جستجو در تاریخچه کلیپ‌بورد';
-
-  @override
   String get clipboardHistoryDescription =>
       'باز کردن تاریخچه کپی و پیست مخصوص جلسه.';
 
@@ -4394,10 +4391,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'تاریخچه کپی و پیست خالی است.';
-
-  @override
-  String get clipboardNoMatches =>
-      'هیچ آیتم کپی و پیستی با این جستجو مطابقت ندارد.';
 
   @override
   String get clipboardDisabled =>
@@ -4454,10 +4447,6 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'این سند دارای هیچ نسخه‌ای از تاریخ محلی نیست.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'هیچ نسخه‌ای از تاریخ محلی با این جستجو مطابقت ندارد.';
 
   @override
   String get localHistorySelectedRevision => 'نسخه انتخاب شده';
@@ -5500,12 +5489,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'تخصیص داده نشده';
-
-  @override
-  String get shortcutSearchHint => 'جستجوی کنش‌ها یا میان‌برها…';
-
-  @override
-  String get shortcutFindBy => 'یافتن با میان‌بر';
 
   @override
   String get shortcutPressKeys => 'یک ترکیب کلید را فشار دهید…';

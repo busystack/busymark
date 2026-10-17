@@ -4330,9 +4330,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get clipboardHistory => 'Utklippshistorie';
 
   @override
-  String get clipboardHistorySearchHint => 'Søk i utklippstavlehistorikken';
-
-  @override
   String get clipboardHistoryDescription =>
       'Åpne historien for utklippet som er lokal for sesjonen.';
 
@@ -4353,10 +4350,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Utklippshistorien er tom.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ingen utklippsposter samsvarer med denne søkingen.';
 
   @override
   String get clipboardDisabled =>
@@ -4414,9 +4407,6 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dette dokumentet har ingen revisjoner i Lokal Historikk.';
-
-  @override
-  String get localHistoryNoMatches => 'Ingen revisjoner matcher denne søken.';
 
   @override
   String get localHistorySelectedRevision => 'Valgt revisjon';
@@ -5467,12 +5457,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Ikke tilordnet';
-
-  @override
-  String get shortcutSearchHint => 'Søk etter handlinger eller hurtigtaster…';
-
-  @override
-  String get shortcutFindBy => 'Finn med hurtigtast';
 
   @override
   String get shortcutPressKeys => 'Trykk en tastekombinasjon…';

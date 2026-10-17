@@ -4363,9 +4363,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clipboardHistory => 'سجل النسخ واللصق';
 
   @override
-  String get clipboardHistorySearchHint => 'البحث في سجل الحافظة';
-
-  @override
   String get clipboardHistoryDescription =>
       'افتح سجل النسخ واللصق الخاص بالجلسة.';
 
@@ -4385,10 +4382,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'سجل النسخ واللصق فارغ.';
-
-  @override
-  String get clipboardNoMatches =>
-      'لا توجد عناصر في سجل النسخ واللصق تطابق هذا البحث.';
 
   @override
   String get clipboardDisabled => 'مجموعة سجل النسخ واللصق معطلة في الإعدادات.';
@@ -4444,10 +4437,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'هذا المستند ليس لديه إصدارات في التاريخ المحلي.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'لا تتطابق أي إصدارات في التاريخ المحلي مع هذا البحث.';
 
   @override
   String get localHistorySelectedRevision => 'الإصدار المحدد';
@@ -5488,12 +5477,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'غير معيّن';
-
-  @override
-  String get shortcutSearchHint => 'ابحث عن إجراءات أو اختصارات…';
-
-  @override
-  String get shortcutFindBy => 'البحث بالاختصار';
 
   @override
   String get shortcutPressKeys => 'اضغط مجموعة مفاتيح…';

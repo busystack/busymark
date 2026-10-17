@@ -2054,17 +2054,17 @@ void main() {
     final selector = tester.widget<BusyMarkMenuButton<String>>(menuFinder);
     final selectorFinder = find.descendant(
       of: find.byType(BusyMarkPopupSelector<String>),
-      matching: find.byType(FilledButton),
+      matching: find.byType(OutlinedButton),
     );
-    final selectorButton = tester.widget<FilledButton>(selectorFinder);
+    final selectorButton = tester.widget<OutlinedButton>(selectorFinder);
     expect(
       selectorButton.style,
       isNull,
-      reason: 'The shared selector uses the standard filled control theme',
+      reason: 'The shared selector uses the neutral outlined selector theme',
     );
     expect(
-      theme.filledButtonTheme.style?.backgroundColor?.resolve({}),
-      isNot(BusyMarkLinuxPalette.transparent),
+      theme.outlinedButtonTheme.style?.backgroundColor?.resolve({}),
+      BusyMarkLinuxPalette.transparent,
     );
     expect(selector.enabled, isTrue);
     expect(selector.items, hasLength(2));

@@ -690,13 +690,13 @@ abstract final class BusyMarkCommandCatalog {
         scope: BusyMarkCommandScope.application,
         defaultYieldsToOverrides: true,
         shortcut: const BusyMarkShortcutDefinition(
-          label: 'Ctrl+Alt+H',
+          label: 'Ctrl+Shift+H',
           activator: SingleActivator(
             LogicalKeyboardKey.keyH,
             control: true,
-            alt: true,
+            shift: true,
           ),
-          gtkAccelerator: '<Primary><Alt>h',
+          gtkAccelerator: '<Primary><Shift>h',
         ),
       ),
       command(
@@ -719,14 +719,15 @@ abstract final class BusyMarkCommandCatalog {
         label: (context) => context.l10n.searchRecentCommand,
         category: (c) => c.l10n.search,
         scope: BusyMarkCommandScope.application,
+        defaultYieldsToOverrides: true,
         shortcut: const BusyMarkShortcutDefinition(
-          label: 'Ctrl+Alt+O',
+          label: 'Ctrl+Shift+R',
           activator: SingleActivator(
-            LogicalKeyboardKey.keyO,
+            LogicalKeyboardKey.keyR,
             control: true,
-            alt: true,
+            shift: true,
           ),
-          gtkAccelerator: '<Primary><Alt>o',
+          gtkAccelerator: '<Primary><Shift>r',
         ),
       ),
       command(
@@ -748,6 +749,8 @@ abstract final class BusyMarkCommandCatalog {
           category: (context) => _appCategory(context, action),
           scope: BusyMarkCommandScope.application,
           shortcut: BusyMarkAppShortcuts.definitions[action],
+          defaultYieldsToOverrides:
+              action == BusyMarkAppShortcutAction.quickOpen,
           description: (context) => _appDescription(context, action),
         ),
       for (final action in BusyMarkDocumentViewShortcutAction.values)
@@ -865,16 +868,16 @@ abstract final class BusyMarkCommandCatalog {
         id: BusyMarkCommandIds.findLocalHistory,
         defaultYieldsToOverrides: true,
         shortcut: const BusyMarkShortcutDefinition(
-          label: 'Ctrl+Alt+Y',
+          label: 'Ctrl+Shift+L',
           activator: SingleActivator(
-            LogicalKeyboardKey.keyY,
+            LogicalKeyboardKey.keyL,
             control: true,
-            alt: true,
+            shift: true,
           ),
-          gtkAccelerator: '<Primary><Alt>y',
+          gtkAccelerator: '<Primary><Shift>l',
         ),
         label: (context) => context.l10n.findLocalHistoryEllipsis,
-        category: (context) => context.l10n.shortcutGroupSidebar,
+        category: (context) => context.l10n.search,
         scope: BusyMarkCommandScope.application,
         description: (context) => context.l10n.findLocalHistoryDescription,
       ),
@@ -934,6 +937,9 @@ abstract final class BusyMarkCommandCatalog {
     BuildContext context,
     BusyMarkAppShortcutAction action,
   ) => switch (action) {
+    BusyMarkAppShortcutAction.search ||
+    BusyMarkAppShortcutAction.quickOpen ||
+    BusyMarkAppShortcutAction.commandPalette => context.l10n.search,
     BusyMarkAppShortcutAction.nextTab ||
     BusyMarkAppShortcutAction.previousTab ||
     BusyMarkAppShortcutAction.closeTab ||

@@ -57,11 +57,15 @@ abstract final class BusyMarkAppShortcuts {
   static const fullScreenLabel = 'F11';
   static const backLabel = 'Alt+Left';
   static const searchLabel = 'Ctrl+F';
-  static const quickOpenLabel = 'Ctrl+P';
-  static const quickOpenGtkAccelerator = '<Primary>p';
+  static const quickOpenLabel = 'Ctrl+Shift+D';
+  static const quickOpenGtkAccelerator = '<Primary><Shift>d';
   static const quickOpen = BusyMarkShortcutDefinition(
     label: quickOpenLabel,
-    activator: SingleActivator(LogicalKeyboardKey.keyP, control: true),
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyD,
+      control: true,
+      shift: true,
+    ),
     gtkAccelerator: quickOpenGtkAccelerator,
   );
 

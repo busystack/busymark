@@ -4323,9 +4323,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get clipboardHistory => 'Lịch sử sao chép';
 
   @override
-  String get clipboardHistorySearchHint => 'Tìm kiếm lịch sử bảng nhớ tạm';
-
-  @override
   String get clipboardHistoryDescription => 'Mở lịch sử sao chép cục bộ phiên.';
 
   @override
@@ -4345,10 +4342,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Lịch sử sao chép trống.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Không có mục sao chép nào khớp với tìm kiếm này.';
 
   @override
   String get clipboardDisabled =>
@@ -4405,10 +4398,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Tài liệu này không có các phiên bản Lịch sử cục bộ.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.';
 
   @override
   String get localHistorySelectedRevision => 'Phiên bản đã chọn';
@@ -5453,12 +5442,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Chưa gán';
-
-  @override
-  String get shortcutSearchHint => 'Tìm thao tác hoặc phím tắt…';
-
-  @override
-  String get shortcutFindBy => 'Tìm bằng phím tắt';
 
   @override
   String get shortcutPressKeys => 'Nhấn tổ hợp phím…';

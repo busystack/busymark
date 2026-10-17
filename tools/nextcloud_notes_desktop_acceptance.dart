@@ -2402,12 +2402,12 @@ class _HarnessState extends ConsumerState<_Harness> {
     NextcloudNote note,
   ) async {
     await workspace.openNextcloudNote(note.localId);
-    await nativeShortcut('ctrl+p');
+    await nativeShortcut('ctrl+shift+d');
     await wait(
       () =>
           (searchState.active &&
           searchState.category == SearchCategory.documents),
-      'native Ctrl+P',
+      'native Ctrl+Shift+D',
     );
     edit(
       widgets<TextField>().firstWhere(
@@ -2445,7 +2445,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'native Quick Open Enter',
     );
     check(true, 'nativeCtrlPEnterStableIdentity');
-    await nativeShortcut('ctrl+p');
+    await nativeShortcut('ctrl+shift+d');
     await wait(
       () =>
           (searchState.active &&
@@ -2639,7 +2639,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           note.localId,
       'connectedSynchronizedBodySearch',
     );
-    await nativeShortcut('ctrl+p');
+    await nativeShortcut('ctrl+shift+d');
     await query('unique-connected-body');
     check(searchState.results.isEmpty, 'connectedDocumentsExcludesBodies');
     await query('Qualification/Search');
@@ -2740,7 +2740,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             other.id,
         'connectedSecondAccountSearch',
       );
-      await nativeShortcut('ctrl+alt+o');
+      await nativeShortcut('ctrl+shift+r');
       await query('Offline unified identity');
       await nativeShortcut('enter');
       await wait(
@@ -2780,7 +2780,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         await workspace.openNextcloudWorkspace(other.id),
         'connectedRemainingAccountAvailable',
       );
-      await nativeShortcut('ctrl+alt+o');
+      await nativeShortcut('ctrl+shift+r');
       await query('Offline unified identity');
       check(
         searchState.results.isEmpty &&

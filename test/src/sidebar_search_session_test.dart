@@ -460,16 +460,16 @@ void main() {
       };
       expect(shortcuts[SearchCategory.file], 'Ctrl+F');
       expect(shortcuts[SearchCategory.workspace], 'Ctrl+Shift+F');
-      expect(shortcuts[SearchCategory.outline], 'Ctrl+Alt+H');
-      expect(shortcuts[SearchCategory.documents], 'Ctrl+P');
-      expect(shortcuts[SearchCategory.recent], 'Ctrl+Alt+O');
-      expect(shortcuts[SearchCategory.localHistory], 'Ctrl+Alt+Y');
+      expect(shortcuts[SearchCategory.outline], 'Ctrl+Shift+H');
+      expect(shortcuts[SearchCategory.documents], 'Ctrl+Shift+D');
+      expect(shortcuts[SearchCategory.recent], 'Ctrl+Shift+R');
+      expect(shortcuts[SearchCategory.localHistory], 'Ctrl+Shift+L');
       expect(shortcuts[SearchCategory.actions], 'Ctrl+Shift+P');
       expect(
         selector.options
             .singleWhere((o) => o.value == SearchCategory.outline)
             .gtkAccelerator,
-        '<Primary><Alt>h',
+        '<Primary><Shift>h',
       );
       expect(find.byType(DropdownButton<SearchCategory>), findsNothing);
     },
@@ -656,7 +656,7 @@ void main() {
         lastOpenedAt: DateTime(2026),
       );
       final recent = presentSearchResult(context, RecentSearchResult(local));
-      expect(recent.subtitle, 'project · topics/a.topic');
+      expect(recent.subtitle, '/project/topics');
       expect(recent.details, '/project/topics/a.topic');
       for (final label in [null, 'Alex · notes.example']) {
         final resource = RecentResource(
@@ -726,6 +726,44 @@ void main() {
       expect(history.title, 'Deleted.md');
       expect(history.subtitle, '/old');
       expect(history.subtitle, isNot(contains('Local History')));
+    },
+  );
+
+  testWidgets(
+    'Recent rows in a Notes workspace never request a filesystem root',
+    (tester) async {
+      final container = containerFor(
+        _state().copyWith(workspace: Workspace.nextcloudNotes('account-one')),
+      );
+      final resource = RecentResource(
+        path: '',
+        kind: 'nextcloudNote',
+        document: true,
+        accountId: 'account-one',
+        localId: 'stable-note',
+        accountLabel: 'Alex · notes.example',
+        title: 'A note',
+        lastOpenedAt: DateTime(2026),
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SearchResultList(
+                results: [RecentSearchResult(resource)],
+                onActivate: (_) async {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('A note'), findsOneWidget);
+      expect(find.text('Alex · notes.example'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 

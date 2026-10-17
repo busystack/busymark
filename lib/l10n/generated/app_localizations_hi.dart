@@ -4321,9 +4321,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clipboardHistory => 'क्लिपबोर्ड इतिहास';
 
   @override
-  String get clipboardHistorySearchHint => 'क्लिपबोर्ड इतिहास खोजें';
-
-  @override
   String get clipboardHistoryDescription =>
       'सत्र-विशिष्ट क्लिपबोर्ड इतिहास खोलें।';
 
@@ -4344,10 +4341,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'क्लिपबोर्ड इतिहास खाली है।';
-
-  @override
-  String get clipboardNoMatches =>
-      'कोई क्लिपबोर्ड आइटम इस खोज से मेल नहीं खाता।';
 
   @override
   String get clipboardDisabled =>
@@ -4405,10 +4398,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'इस दस्तावेज़ में स्थानीय इतिहास में कोई संशोधन नहीं है।';
-
-  @override
-  String get localHistoryNoMatches =>
-      'यह खोज स्थानीय इतिहास संशोधनों से मेल नहीं खाती।';
 
   @override
   String get localHistorySelectedRevision => 'चयनित संशोधन';
@@ -5452,12 +5441,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'असाइन नहीं किया गया';
-
-  @override
-  String get shortcutSearchHint => 'क्रियाएँ या शॉर्टकट खोजें…';
-
-  @override
-  String get shortcutFindBy => 'शॉर्टकट से खोजें';
 
   @override
   String get shortcutPressKeys => 'कुंजी संयोजन दबाएँ…';

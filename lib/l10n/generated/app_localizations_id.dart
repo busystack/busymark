@@ -4334,9 +4334,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get clipboardHistory => 'Sejarah Tempel';
 
   @override
-  String get clipboardHistorySearchHint => 'Cari riwayat papan klip';
-
-  @override
   String get clipboardHistoryDescription => 'Buka riwayat tempel lokal sesi.';
 
   @override
@@ -4355,10 +4352,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Riwayat tempel kosong.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Tidak ada item tempel yang cocok dengan pencarian ini.';
 
   @override
   String get clipboardDisabled =>
@@ -4416,10 +4409,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dokumen ini tidak memiliki revisi Sejarah Lokal.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.';
 
   @override
   String get localHistorySelectedRevision => 'Revisi yang dipilih';
@@ -5461,12 +5450,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get shortcutUnassigned => 'Belum ditetapkan';
-
-  @override
-  String get shortcutSearchHint => 'Cari tindakan atau pintasan…';
-
-  @override
-  String get shortcutFindBy => 'Cari berdasarkan pintasan';
 
   @override
   String get shortcutPressKeys => 'Tekan kombinasi tombol…';
