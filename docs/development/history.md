@@ -231,6 +231,19 @@ queue before retiring recovery state. UI tests that create a controller in the
 widget clock must pump its initial settings hydration before awaiting file I/O
 inside `tester.runAsync`.
 
+Restoring a view mode still joins the settings write queue. Once earlier writes
+settle, an identical complete settings snapshot may reuse its successful load or
+publication instead of performing another atomic write. Failed loads/writes do
+not acknowledge new state; changed preferences and hydration-time requests retain
+their existing publication path. Session, recovery, and Local History flushes
+and the close-during-restoration barrier remain mandatory.
+
+Session restoration admits at most four tab reads at once. Each read keeps its
+text, format, and conflict snapshot together; completed batches retain the saved
+tab order. A failed batch settles all admitted reads before releasing recovery
+ownership. No partial batch is published, and shutdown still waits for the
+complete restoration operation and its required persistence.
+
 Retention commits its tombstones and retained index before removing expired
 revision files. Both capture-time retention and startup pruning await that
 transaction directly; they do not publish an identical second index after

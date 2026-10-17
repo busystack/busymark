@@ -613,6 +613,7 @@ class AppSettingsController extends Notifier<AppSettings> {
       _mutate((s) => s.copyWith(elementPropertiesWidth: value.clamp(260, 600)));
   late LocalSettingsStore _store;
   Future<void>? _lastSave;
+  String? _persistedSettingsJson;
   var _saveTraceSequence = 0;
   final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
   final _pendingInitialPersistence = <Completer<void>>[];
@@ -702,6 +703,7 @@ class AppSettingsController extends Notifier<AppSettings> {
         documentViewMode: mode,
         previewVisible: mode != DocumentViewModePreference.source,
       ),
+      reusePersisted: true,
     );
   }
 
@@ -983,6 +985,7 @@ class AppSettingsController extends Notifier<AppSettings> {
     AppSettings loaded;
     try {
       loaded = AppSettings.fromJson(await _store.load());
+      _persistedSettingsJson = jsonEncode(loaded.toJson());
     } on Object {
       loaded = AppSettings.defaults();
     }
@@ -1017,6 +1020,7 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> _mutate(
     AppSettings Function(AppSettings) mutation, {
     bool propagateFailure = false,
+    bool reusePersisted = false,
   }) {
     if (!_loaded) {
       _pendingInitialMutations.add(mutation);
@@ -1028,12 +1032,21 @@ class AppSettingsController extends Notifier<AppSettings> {
       }
       return Future<void>.value();
     }
-    return _save(mutation(state), propagateFailure: propagateFailure);
+    return _save(
+      mutation(state),
+      propagateFailure: propagateFailure,
+      reusePersisted: reusePersisted,
+    );
   }
 
-  Future<void> _save(AppSettings next, {bool propagateFailure = false}) async {
+  Future<void> _save(
+    AppSettings next, {
+    bool propagateFailure = false,
+    bool reusePersisted = false,
+  }) async {
     state = next;
     final json = next.toJson();
+    final encoded = jsonEncode(json);
     final previousSave = _lastSave;
     final traceName = PerformanceTrace.enabled
         ? 'settings-${++_saveTraceSequence}'
@@ -1044,7 +1057,17 @@ class AppSettingsController extends Notifier<AppSettings> {
     final save = () async {
       await previousSave;
       try {
-        await PerformanceTrace.async(traceName, () => _store.save(json));
+        await PerformanceTrace.async(traceName, () async {
+          // Reconcile a restored view mode against the last acknowledged full
+          // settings snapshot, after preceding writes settle. In-memory equality
+          // alone is unsafe after a failed load/save or a queued mode change.
+          if (reusePersisted && encoded == _persistedSettingsJson) {
+            PerformanceTrace.event('$traceName-unchanged');
+            return;
+          }
+          await _store.save(json);
+          _persistedSettingsJson = encoded;
+        });
       } on Object catch (error, stack) {
         failure = error;
         failureStack = stack;

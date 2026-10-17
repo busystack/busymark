@@ -10,6 +10,138 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'view-mode reconciliation reuses acknowledged unchanged settings',
+    () async {
+      final store = _ViewModeSettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      var propertyFlushes = 0;
+      controller.processPendingProperties = () {
+        propertyFlushes++;
+        return true;
+      };
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(propertyFlushes, 1);
+      expect(store.saves, isEmpty);
+      await controller.setDocumentViewMode(DocumentViewModePreference.source);
+      expect(store.saves, hasLength(1));
+      expect(store.value['documentViewMode'], 'source');
+      expect(store.value['previewVisible'], isFalse);
+      await controller.setDocumentViewMode(DocumentViewModePreference.source);
+      expect(store.saves, hasLength(1));
+    },
+  );
+
+  test('view-mode reconciliation waits for preceding durable writes', () async {
+    final store = _ViewModeSettingsStore()..saveGate = Completer<void>();
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await controller.waitUntilLoaded();
+    final changing = controller.setWordWrap(false);
+    var completed = false;
+    final reconciling = controller
+        .setDocumentViewMode(DocumentViewModePreference.editor)
+        .then((_) => completed = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(completed, isFalse);
+    expect(store.saves, hasLength(1));
+    store.saveGate!.complete();
+    await changing;
+    await reconciling;
+    expect(store.saves, hasLength(1));
+    expect(store.value['wordWrap'], isFalse);
+  });
+
+  test(
+    'view-mode reconciliation cannot reuse state before a queued mode change',
+    () async {
+      final store = _ViewModeSettingsStore()..saveGate = Completer<void>();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      final source = controller.setDocumentViewMode(
+        DocumentViewModePreference.source,
+      );
+      final editor = controller.setDocumentViewMode(
+        DocumentViewModePreference.editor,
+      );
+      await Future<void>.delayed(Duration.zero);
+      store.saveGate!.complete();
+      await source;
+      await editor;
+      expect(store.saves, hasLength(2));
+      expect(store.value['documentViewMode'], 'editor');
+    },
+  );
+
+  test('view-mode reconciliation retries a failed write', () async {
+    final store = _ViewModeSettingsStore()..failSave = true;
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await controller.waitUntilLoaded();
+    await controller.setDocumentViewMode(DocumentViewModePreference.source);
+    expect(store.value['documentViewMode'], 'editor');
+    store.failSave = false;
+    await controller.setDocumentViewMode(DocumentViewModePreference.source);
+    expect(store.saves, hasLength(2));
+    expect(store.value['documentViewMode'], 'source');
+  });
+
+  test(
+    'view-mode reconciliation does not acknowledge a failed settings load',
+    () async {
+      final store = _ViewModeSettingsStore()..failLoad = true;
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(store.saves, hasLength(1));
+    },
+  );
+
+  test(
+    'view-mode reconciliation preserves requests during hydration',
+    () async {
+      final store = _ViewModeSettingsStore()
+        ..loadGate = Completer<Map<String, Object?>>();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      store.loadGate!.complete(
+        AppSettings.defaults()
+            .copyWith(
+              documentViewMode: DocumentViewModePreference.source,
+              previewVisible: false,
+            )
+            .toJson(),
+      );
+      await controller.waitUntilLoaded();
+      expect(store.saves, hasLength(1));
+      expect(store.value['documentViewMode'], 'editor');
+      expect(store.value['previewVisible'], isTrue);
+    },
+  );
+
+  test(
     'recent workspace write failures propagate and leave the save queue usable',
     () async {
       final store = _FailingRecentSettingsStore();
@@ -826,6 +958,29 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _ViewModeSettingsStore implements LocalSettingsStore {
+  Map<String, Object?> value = AppSettings.defaults().toJson();
+  final saves = <Map<String, Object?>>[];
+  Completer<void>? saveGate;
+  Completer<Map<String, Object?>>? loadGate;
+  bool failSave = false;
+  bool failLoad = false;
+
+  @override
+  Future<Map<String, Object?>> load() async {
+    if (failLoad) throw StateError('injected settings load failure');
+    return loadGate == null ? value : await loadGate!.future;
+  }
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    saves.add(Map.of(json));
+    await saveGate?.future;
+    if (failSave) throw StateError('injected settings write failure');
+    value = Map.of(json);
   }
 }
 

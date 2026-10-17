@@ -1562,7 +1562,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
         final buffers = <DocumentBuffer>[];
         final consumedRecoveries = <(String?, String)>{};
-        for (final entry in sessionEntries) {
+        Future<({DocumentBuffer? buffer, DocumentRecoveryEntry? recovery})>
+        loadSessionEntry(DocumentSessionEntry entry) async {
           final ownedById = recoverEntries
               .where(
                 (recovery) =>
@@ -1586,14 +1587,42 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               : ownedById.isEmpty && ownedByPath.length == 1
               ? ownedByPath.single
               : null;
+          final traceName = PerformanceTrace.enabled
+              ? 'restore-buffer-${entry.id}'
+              : '';
+          PerformanceTrace.event(traceName, 'queued');
           final buffer = await PerformanceTrace.async(
-            'restore-buffer',
+            traceName,
             () => _restoreSessionBuffer(entry, recovered),
           );
-          if (buffer != null) {
-            buffers.add(buffer);
-            if (recovered != null) {
-              consumedRecoveries.add((recovered.ownerId, recovered.id));
+          return (buffer: buffer, recovery: recovered);
+        }
+
+        // Bound file reads/decoding while preserving session order. A failed
+        // batch drains every admitted read before recovery can be released;
+        // no partial batch is published or left running after failure.
+        const readBatchSize = 4;
+        for (
+          var offset = 0;
+          offset < sessionEntries.length;
+          offset += readBatchSize
+        ) {
+          if (!ref.mounted) return false;
+          final end = offset + readBatchSize < sessionEntries.length
+              ? offset + readBatchSize
+              : sessionEntries.length;
+          final loaded = await Future.wait([
+            for (var index = offset; index < end; index++)
+              loadSessionEntry(sessionEntries[index]),
+          ], eagerError: false);
+          for (final item in loaded) {
+            final buffer = item.buffer;
+            if (buffer != null) {
+              buffers.add(buffer);
+              final recovered = item.recovery;
+              if (recovered != null) {
+                consumedRecoveries.add((recovered.ownerId, recovered.id));
+              }
             }
           }
         }

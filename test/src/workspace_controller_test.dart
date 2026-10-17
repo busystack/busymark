@@ -3006,6 +3006,94 @@ CommonMark paragraph.
     expect(controller.state.isDirty, isFalse);
   });
 
+  for (final failFirst in [false, true]) {
+    test('restoration bounds tab reads and settles them before publication '
+        '(failure=$failFirst)', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-restore-reads-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final paths = [
+        for (var i = 0; i < 9; i++) p.join(directory.path, 'tab$i.md'),
+      ];
+      for (var i = 0; i < paths.length; i++) {
+        await File(paths[i]).writeAsString('# Restored $i\n\nПривет ⛵ $i.\n');
+      }
+      final service = _RestoreReadGateService(paths, failFirst: failFirst);
+      final sessions = MemoryDocumentSessionStore()
+        ..value = WorkspaceSessionSnapshot(
+          workspacePath: directory.path,
+          activeBufferId: 'tab7',
+          tabs: [
+            for (var i = 0; i < paths.length; i++)
+              DocumentSessionEntry(
+                id: 'tab$i',
+                filePath: paths[i],
+                untitledName: null,
+                editorState: DocumentEditorState(
+                  mode: DocumentViewModePreference.values[i % 4],
+                ),
+              ),
+          ],
+        );
+      final harness = await _createControllerHarness(
+        service: service,
+        sessionStore: sessions,
+        recoveryStore: MemoryDocumentRecoveryStore(),
+        localHistoryStore: MemoryLocalHistoryStore(),
+      );
+      var settled = false;
+      final restoring = harness.controller.restorePreviousSession().then((
+        value,
+      ) {
+        settled = true;
+        return value;
+      });
+      await service.started.future;
+      // The fake path check completes in microtasks; file-read completion is
+      // held by explicit gates. This observes admission without an I/O timeout.
+      var openingBarrierSettled = false;
+      final openingBarrier = harness.controller._notifier
+          .waitForWorkspaceOpening()
+          .then((_) => openingBarrierSettled = true);
+      await Future<void>.delayed(Duration.zero);
+      final admitted = service.pending;
+      var settledWhilePeersPending = false;
+      if (admitted == 4) {
+        service.release(failFirst ? paths[0] : paths[3]);
+        await service.finished[failFirst ? paths[0] : paths[3]]!.future;
+        await Future<void>.delayed(Duration.zero);
+        settledWhilePeersPending = settled;
+        expect(openingBarrierSettled, isFalse);
+        expect(harness.controller.state.workspace, isNull);
+      }
+      service.releaseAll();
+      final restored = await restoring;
+      await openingBarrier;
+      expect(admitted, 4);
+      expect(settledWhilePeersPending, isFalse);
+      expect(service.maximumPending, lessThanOrEqualTo(4));
+      expect(service.pending, 0);
+      expect(restored, !failFirst);
+      if (failFirst) {
+        expect(harness.controller.state.workspace, isNull);
+        expect(sessions.value!.tabs, hasLength(9));
+      } else {
+        final buffers = harness.controller.state.documentBuffers;
+        expect(buffers.map((b) => b.id), [for (var i = 0; i < 9; i++) 'tab$i']);
+        expect(harness.controller.state.activeBufferId, 'tab7');
+        for (var i = 0; i < buffers.length; i++) {
+          expect(buffers[i].text, await File(paths[i]).readAsString());
+          expect(buffers[i].diskSnapshot, isNotNull);
+          expect(
+            buffers[i].editorState.mode,
+            DocumentViewModePreference.values[i % 4],
+          );
+        }
+      }
+    });
+  }
+
   test('clean shutdown waits for adopted recovery to be published', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-close-during-restore-',
@@ -6946,6 +7034,61 @@ class _PostDeleteRefreshGateService extends WorkspaceService {
       await release.future;
     }
     return result;
+  }
+}
+
+class _RestoreReadGateService extends WorkspaceService {
+  _RestoreReadGateService(this.paths, {required this.failFirst});
+  final List<String> paths;
+  final bool failFirst;
+  final started = Completer<void>();
+  final gates = <String, Completer<void>>{};
+  final finished = <String, Completer<void>>{};
+  bool armed = false;
+  bool released = false;
+  int pending = 0;
+  int maximumPending = 0;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    final workspace = await super.openPath(path);
+    armed = true;
+    return workspace;
+  }
+
+  @override
+  Future<bool> pathExists(String path) => armed && paths.contains(path)
+      ? Future.value(true)
+      : super.pathExists(path);
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (!armed || !paths.contains(path)) {
+      return super.loadTextWithSnapshot(path);
+    }
+    pending++;
+    if (pending > maximumPending) maximumPending = pending;
+    final gate = gates.putIfAbsent(path, Completer<void>.new);
+    final done = finished.putIfAbsent(path, Completer<void>.new);
+    if (!started.isCompleted) started.complete();
+    try {
+      if (!released) await gate.future;
+      if (failFirst && path == paths.first) {
+        throw StateError('injected restore read failure');
+      }
+      return await super.loadTextWithSnapshot(path);
+    } finally {
+      pending--;
+      if (!done.isCompleted) done.complete();
+    }
+  }
+
+  void release(String path) => gates[path]!.complete();
+  void releaseAll() {
+    released = true;
+    for (final gate in gates.values) {
+      if (!gate.isCompleted) gate.complete();
+    }
   }
 }
 
