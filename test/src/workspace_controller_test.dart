@@ -3006,6 +3006,78 @@ CommonMark paragraph.
     expect(controller.state.isDirty, isFalse);
   });
 
+  test('clean shutdown waits for adopted recovery to be published', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-close-during-restore-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'recovered.md'));
+    await file.writeAsString('# Saved\n');
+    final service = _RestoreOpenGateService();
+    final load = await service.loadTextWithSnapshot(file.path);
+    final sessions = MemoryDocumentSessionStore()
+      ..value = WorkspaceSessionSnapshot(
+        workspacePath: file.path,
+        activeBufferId: 'recovered',
+        tabs: [
+          DocumentSessionEntry(
+            id: 'recovered',
+            filePath: file.path,
+            untitledName: null,
+            editorState: const DocumentEditorState(),
+          ),
+        ],
+      );
+    final recovery = MemoryDocumentRecoveryStore()
+      ..value = RecoverySnapshot(
+        cleanShutdown: false,
+        entries: [
+          DocumentRecoveryEntry(
+            id: 'recovered',
+            workspacePath: file.path,
+            filePath: file.path,
+            untitledName: null,
+            text: '# Retained edit\n',
+            lastSavedText: load.text,
+            diskSnapshot: load.snapshot,
+            format: load.format,
+            editorState: const DocumentEditorState(),
+            revision: 1,
+          ),
+        ],
+      );
+    final harness = await _createControllerHarness(
+      service: service,
+      sessionStore: sessions,
+      recoveryStore: recovery,
+    );
+    await harness.settingsController.setAutoSave(false);
+    final restoring = harness.controller.restoreStartupSession(
+      reopenCleanSession: false,
+    );
+    await service.started.future;
+    expect(harness.controller.state.workspace, isNull);
+    expect(recovery.value.entries.single.ownerId, recovery.ownerId);
+    var closed = false;
+    final closing = harness.controller.markCleanShutdown().then((_) {
+      closed = true;
+    });
+    // A real synchronization barrier, not a timing-dependent slow file read.
+    for (var turn = 0; turn < 10; turn++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    final closedBeforePublication = closed;
+    service.release.complete();
+    expect(await restoring, isTrue);
+    await closing;
+    expect(closedBeforePublication, isFalse);
+    expect(harness.controller.state.activeBuffer!.text, '# Retained edit\n');
+    expect(recovery.value.entries.single.text, '# Retained edit\n');
+    expect(recovery.value.cleanShutdown, isFalse);
+    expect(sessions.value!.tabs.single.filePath, file.path);
+    expect(await file.readAsString(), '# Saved\n');
+  });
+
   test('clean shutdown waits for in-flight document writes', () async {
     final service = _AutosaveWorkspaceService(pauseFirstSave: true);
     final harness = await _createControllerHarness(service: service);
@@ -6874,6 +6946,18 @@ class _PostDeleteRefreshGateService extends WorkspaceService {
       await release.future;
     }
     return result;
+  }
+}
+
+class _RestoreOpenGateService extends WorkspaceService {
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    started.complete();
+    await release.future;
+    return super.openPath(path);
   }
 }
 

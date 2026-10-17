@@ -988,13 +988,15 @@ class _BusyMarkWindowLifecycleState
     if (!context.mounted) {
       return;
     }
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    await controller.waitForWorkspaceOpening();
+    if (!mounted || !context.mounted) return;
     final settings = ref.read(appSettingsControllerProvider);
     var workspace = ref.read(workspaceControllerProvider);
     if (settings.autoSave && workspace.hasUnsavedChanges) {
       await ref.read(workspaceControllerProvider.notifier).saveAll();
       workspace = ref.read(workspaceControllerProvider);
     }
-    final controller = ref.read(workspaceControllerProvider.notifier);
     await _windowControlService.handleCloseRequest(
       hasUnsavedChanges: workspace.hasUnsavedChanges,
       confirmCloseWithUnsavedChanges: settings.confirmCloseWithUnsavedChanges,

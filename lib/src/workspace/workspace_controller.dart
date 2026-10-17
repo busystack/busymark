@@ -285,6 +285,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   final _restoredRecoveryOwnerIdsByBuffer = <String, String>{};
 
   late Future<RecoverySnapshot> _recoveryStart;
+  final _workspaceOpenings = <Future<void>>{};
   Future<void> _persistenceWrites = Future.value();
   var _persistenceTraceSequence = 0;
 
@@ -1238,8 +1239,29 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await flushPersistence();
   }
 
-  Future<bool> restorePreviousSession() =>
-      PerformanceTrace.async('restore-session', _restorePreviousSession);
+  Future<bool> restorePreviousSession() => _trackWorkspaceOpening(
+    () => PerformanceTrace.async('restore-session', _restorePreviousSession),
+  );
+
+  Future<T> _trackWorkspaceOpening<T>(Future<T> Function() operation) async {
+    final settled = Completer<void>();
+    _workspaceOpenings.add(settled.future);
+    try {
+      return await operation();
+    } finally {
+      _workspaceOpenings.remove(settled.future);
+      settled.complete();
+    }
+  }
+
+  /// Wait before reading dirty state or persisting a shutdown snapshot.
+  /// Recovery ownership can already be adopted while the editor is unpublished.
+  /// Opening itself must not await this barrier (including its persistence).
+  Future<void> waitForWorkspaceOpening() async {
+    while (_workspaceOpenings.isNotEmpty) {
+      await Future.wait(_workspaceOpenings.toList(growable: false));
+    }
+  }
 
   Future<bool> _restorePreviousSession() async {
     if (state.workspace != null) {
@@ -2204,15 +2226,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   /// Restores startup state when the previous run needs recovery, or when the
   /// user has explicitly enabled clean-session reopening.
-  Future<bool> restoreStartupSession({required bool reopenCleanSession}) async {
-    final recovery = await _recoveryStart;
-    final needsRecovery =
-        !recovery.cleanShutdown || recovery.entries.isNotEmpty;
-    if (!reopenCleanSession && !needsRecovery) {
-      return false;
-    }
-    return restorePreviousSession();
-  }
+  Future<bool> restoreStartupSession({bool? reopenCleanSession}) =>
+      _trackWorkspaceOpening(() async {
+        await _settingsController.waitUntilLoaded();
+        final recovery = await _recoveryStart;
+        final needsRecovery =
+            !recovery.cleanShutdown || recovery.entries.isNotEmpty;
+        if (!(reopenCleanSession ??
+                _settingsController.state.reopenPreviousWorkspaceOnStartup) &&
+            !needsRecovery) {
+          return false;
+        }
+        return PerformanceTrace.async(
+          'restore-session',
+          _restorePreviousSession,
+        );
+      });
 
   Future<void> _persistRestoredLocalHistoryJournal(
     WorkspaceSessionSnapshot original, {
@@ -2613,6 +2642,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> _settleWritesForShutdown() async {
+    await waitForWorkspaceOpening();
     _cancelAllAutoSaves();
     await _drainBufferWrites();
     await _settingsController.flushPersistence();
@@ -3934,8 +3964,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await _startMonitoring(state.workspace ?? workspace);
   }
 
-  Future<void> openPath(String path) =>
-      PerformanceTrace.async('controller-open', () => _openPath(path));
+  Future<void> openPath(String path) => _trackWorkspaceOpening(
+    () => PerformanceTrace.async('controller-open', () => _openPath(path)),
+  );
 
   Future<void> _openPath(String path) async {
     if (!propertyEdits.flush()) return;

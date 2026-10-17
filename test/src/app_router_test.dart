@@ -213,9 +213,7 @@ class _StaleWorkspaceController extends WorkspaceController {
   }
 
   @override
-  Future<bool> restoreStartupSession({
-    required bool reopenCleanSession,
-  }) async => false;
+  Future<bool> restoreStartupSession({bool? reopenCleanSession}) async => false;
 }
 
 class _RestoringWorkspaceController extends WorkspaceController {
@@ -223,7 +221,7 @@ class _RestoringWorkspaceController extends WorkspaceController {
   WorkspaceState build() => const WorkspaceState();
 
   @override
-  Future<bool> restoreStartupSession({required bool reopenCleanSession}) =>
+  Future<bool> restoreStartupSession({bool? reopenCleanSession}) =>
       restorePreviousSession();
 
   @override
