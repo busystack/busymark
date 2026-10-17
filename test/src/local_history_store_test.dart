@@ -55,6 +55,109 @@ void main() {
     maximumBytes: 16 * 1024 * 1024,
   );
 
+  final sentinelTime = DateTime.utc(2000);
+  LocalHistoryCaptureRequest journalRequest(String text, int minute) =>
+      request(text, DateTime.utc(2026, 10, 17).add(Duration(minutes: minute)));
+
+  test(
+    'unchanged tombstone journal is retained while index and revision commit',
+    () async {
+      await store.capture(journalRequest('Original A\n', 0), policy);
+      final journal = File(p.join(root.path, 'tombstones.json'));
+      final before = await journal.readAsString();
+      await journal.setLastModified(sentinelTime);
+      await store.capture(journalRequest('Changed A\n', 1), policy);
+      expect(await journal.readAsString(), before);
+      expect(
+        (await journal.lastModified()).millisecondsSinceEpoch,
+        sentinelTime.millisecondsSinceEpoch,
+      );
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      final snapshot = await reopened.load();
+      expect(snapshot.revisions, hasLength(2));
+      expect(
+        await Future.wait(
+          snapshot.revisions.map(
+            (r) async => (await reopened.readRevision(r.id))!.source,
+          ),
+        ),
+        unorderedEquals(['Original A\n', 'Changed A\n']),
+      );
+    },
+  );
+  test(
+    'existing deletion tombstones survive index-only publication without rewriting',
+    () async {
+      final first = await store.capture(
+        journalRequest('Original A\n', 0),
+        policy,
+      );
+      await store.clearDocument(first.document.id);
+      await store.capture(journalRequest('Replacement A\n', 1), policy);
+      final journal = File(p.join(root.path, 'tombstones.json'));
+      final contents = await journal.readAsString();
+      expect(jsonDecode(contents), contains(first.revision!.id));
+      await journal.setLastModified(sentinelTime);
+      await store.capture(journalRequest('Replacement A changed\n', 2), policy);
+      expect(await journal.readAsString(), contents);
+      expect(
+        (await journal.lastModified()).millisecondsSinceEpoch,
+        sentinelTime.millisecondsSinceEpoch,
+      );
+      final snapshot = await store.load();
+      expect(snapshot.revisions, hasLength(2));
+      expect(
+        await Future.wait(
+          snapshot.revisions.map(
+            (r) async => (await store.readRevision(r.id))!.source,
+          ),
+        ),
+        isNot(contains('Original A\n')),
+      );
+    },
+  );
+  for (final missing in [true, false]) {
+    test(
+      'index publication repairs ${missing ? 'missing' : 'corrupt'} tombstone journal',
+      () async {
+        await store.capture(journalRequest('Original A\n', 0), policy);
+        final journal = File(p.join(root.path, 'tombstones.json'));
+        if (missing) {
+          await journal.delete();
+        } else {
+          await journal.writeAsString('broken journal');
+        }
+        await store.capture(journalRequest('Changed A\n', 1), policy);
+        expect(jsonDecode(await journal.readAsString()), isEmpty);
+        expect((await store.load()).revisions, hasLength(2));
+      },
+    );
+  }
+  test(
+    'matching symlink journal is replaced without changing its target',
+    () async {
+      await store.capture(journalRequest('Original A\n', 0), policy);
+      final journal = File(p.join(root.path, 'tombstones.json'));
+      final target = File(p.join(root.path, 'unrelated-target.json'));
+      final contents = await journal.readAsString();
+      await target.writeAsString(contents);
+      await target.setLastModified(sentinelTime);
+      await journal.delete();
+      await Link(journal.path).create(target.path);
+      await store.capture(journalRequest('Changed A\n', 1), policy);
+      expect(
+        await FileSystemEntity.type(journal.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await target.readAsString(), contents);
+      expect(
+        (await target.lastModified()).millisecondsSinceEpoch,
+        sentinelTime.millisecondsSinceEpoch,
+      );
+      expect((await store.load()).revisions, hasLength(2));
+    },
+  );
+
   for (final memory in [false, true]) {
     test(
       'capture commit guard rejects stale policy (memory=$memory)',
@@ -1083,8 +1186,9 @@ void main() {
         request('current', DateTime.utc(2020, 2, 1)),
         policy,
       );
-      // Revision identity/stage, initial index pair, then retained index pair.
-      expect(ids - before, 6);
+      // Revision identity/stage and changed index, then the retained journal
+      // and index. The initial capture reuses the unchanged tombstone journal.
+      expect(ids - before, 5);
       final snapshot = await store.load();
       expect(snapshot.revisions.map((r) => r.id), [current.revision!.id]);
       expect(

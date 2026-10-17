@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show listEquals, visibleForTesting;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -1139,16 +1139,39 @@ class FileLocalHistoryStore implements LocalHistoryStore {
   }
 
   Future<void> _publishIndex(Directory root, _Index index) async {
-    await _publishReplacingFile(
-      File(p.join(root.path, 'tombstones.json')),
-      const JsonEncoder.withIndent(
-        ' ',
-      ).convert(index.tombstones.toList()..sort()),
-    );
+    final journal = File(p.join(root.path, 'tombstones.json'));
+    final tombstones = const JsonEncoder.withIndent(
+      ' ',
+    ).convert(index.tombstones.toList()..sort());
+    // Every caller holds the store's interprocess lock. Reuse only the exact
+    // regular journal already on disk; never cache completed authority across
+    // transactions. New tombstones still commit before the index or deletion.
+    if (!await _journalMatches(journal, tombstones)) {
+      await _publishReplacingFile(journal, tombstones);
+    }
     await _publishReplacingFile(
       File(p.join(root.path, 'index.json')),
       const JsonEncoder.withIndent(' ').convert(index.toJson()),
     );
+  }
+
+  Future<bool> _journalMatches(File journal, String content) async {
+    try {
+      if (await FileSystemEntity.type(journal.path, followLinks: false) !=
+          FileSystemEntityType.file) {
+        return false;
+      }
+      final expected = utf8.encode(content);
+      if (await journal.length() != expected.length) return false;
+      final matches = listEquals(await journal.readAsBytes(), expected);
+      return matches &&
+          await FileSystemEntity.type(journal.path, followLinks: false) ==
+              FileSystemEntityType.file;
+    } on FileSystemException {
+      // A missing/unreadable journal cannot be reused. Attempt the same atomic
+      // publication as before; any publication failure still propagates.
+      return false;
+    }
   }
 
   Future<void> _publishNewFile(File target, String content) async {

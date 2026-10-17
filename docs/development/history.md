@@ -236,6 +236,14 @@ revision files. Both capture-time retention and startup pruning await that
 transaction directly; they do not publish an identical second index after
 cleanup. Repair still consults the durable tombstones if deletion is interrupted.
 
+Index publication checks the existing regular tombstone journal under the store
+lock and reuses it only when its bytes already match the complete intended
+journal. Ordinary captures and metadata changes therefore avoid another identical
+atomic write and flush. No completed authority is cached between transactions.
+New tombstones still publish before the index and cleanup; revision and index
+flushes remain mandatory. Missing, corrupt, changed, or linked journals take the
+existing atomic publication path, including its error handling.
+
 Startup maintenance and captures wait for saved settings before applying their
 policy. Defaults are presentation state during hydration and must not delete
 history governed by a longer saved policy or override disabled recording.
