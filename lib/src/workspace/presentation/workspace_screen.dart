@@ -62,6 +62,7 @@ import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart'
     show isTextDocumentationPath, slugForHeading;
+import '../../core/performance_trace.dart';
 import '../../core/source_span.dart';
 import '../../comparison/source_comparison.dart';
 import '../../core/uri_utils.dart';
@@ -12079,6 +12080,7 @@ final class _SpellingBannerPresentation {
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
+  String? _tracedEditorRevision;
   final _previewScrollController = ItemScrollController();
   final _previewItemPositionsListener = ItemPositionsListener.create();
   PreviewDocument? _outlineStopsPreview;
@@ -12116,6 +12118,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void initState() {
     super.initState();
+    PerformanceTrace.event('editor-split-initialization', 'begin');
     _inspectorWorkspaceController = ref.read(
       workspaceControllerProvider.notifier,
     );
@@ -12132,6 +12135,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _previewItemPositionsListener.itemPositions.addListener(
       _handlePreviewVisibleItemsChanged,
     );
+    PerformanceTrace.event('editor-split-initialization', 'end');
   }
 
   @override
@@ -12266,6 +12270,25 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   @override
   Widget build(BuildContext context) {
+    if (!PerformanceTrace.enabled) return _buildEditor(context);
+    final buffer = widget.state.activeBuffer;
+    final revision = '${buffer?.id}-${buffer?.revision}';
+    if (_tracedEditorRevision != revision) {
+      _tracedEditorRevision = revision;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _tracedEditorRevision == revision) {
+          // Frame callback delivery is not display presentation or interaction.
+          PerformanceTrace.event('editor-frame-callback-$revision');
+        }
+      });
+    }
+    return PerformanceTrace.sync(
+      'editor-split-build-$revision',
+      () => _buildEditor(context),
+    );
+  }
+
+  Widget _buildEditor(BuildContext context) {
     ref.listen(_outlineNavigationTargetProvider, (previous, next) {
       if (next == null) {
         return;
@@ -15451,6 +15474,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   BusyDocument? _wysiwygDocument() {
+    return PerformanceTrace.sync(
+      'editor-document-preparation',
+      _prepareWysiwygDocument,
+    );
+  }
+
+  BusyDocument? _prepareWysiwygDocument() {
     final workspace = ref.read(workspaceControllerProvider).workspace;
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     if (workspace == null || buffer == null) {
@@ -15463,9 +15493,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         _cachedWysiwygSource == buffer.text &&
         _cachedWysiwygMode == context.markdownMode &&
         _cachedWysiwygKind == context.kind) {
+      PerformanceTrace.event('editor-document-cache-hit');
       return _cachedWysiwygDocument;
     }
     if (context.kind == DocumentKind.writersideXmlTopic) {
+      PerformanceTrace.event('editor-document-xml-adapter');
       final authored = context.writersideTopic?.document;
       final adapter = const WritersideEditingAdapter();
       final document =
@@ -15483,6 +15515,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         p.equals(currentMarkdown.filePath, activePath) &&
         currentMarkdown.source == buffer.text &&
         currentMarkdown.mode == context.markdownMode) {
+      PerformanceTrace.event('editor-document-model-reuse');
       final document = currentMarkdown.busyDocument;
       _cachedWysiwygDocument = document;
       _cachedWysiwygBufferId = buffer.id;
@@ -15493,6 +15526,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       return document;
     }
     try {
+      PerformanceTrace.event('editor-document-markdown-parse');
       final document = const MarkdownParser()
           .parse(
             filePath: activePath,

@@ -9,8 +9,46 @@ import tempfile
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
+from unittest.mock import Mock
+import ctypes as C
 
-from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, signal_owned, snap_command
+from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, signal_owned, snap_command, snapshot_mapped_process
+
+
+class MappingObservationTest(unittest.TestCase):
+    def test_detection_precedes_snapshot_io_and_legacy_stamp_follows_it(self):
+        record, events, order = {}, [], []
+        def read(path):
+            self.assertEqual(record['mapDetected_ns'], 10)
+            self.assertNotIn('mapped_ns', record)
+            order.append('read')
+            return 'controlled maps'
+        def write(path, contents):
+            self.assertEqual(contents, 'controlled maps')
+            self.assertNotIn('mapped_ns', record)
+            order.append('write')
+        with patch('application_close_smoke.time.monotonic_ns', side_effect=[10, 11, 12, 13, 14, 20]), patch.object(Path, 'read_text', read), patch.object(Path, 'write_text', write):
+            snapshot_mapped_process(123, Path('/owned-case'), record, events.append)
+        self.assertEqual(record, {'mapDetected_ns': 10, 'mapped_ns': 20})
+        self.assertEqual(order, ['read', 'write'])
+        self.assertEqual([(e['name'], e['phase']) for e in events], [
+            ('mapped-process-maps-read', 'begin'), ('mapped-process-maps-read', 'end'),
+            ('mapped-process-maps-write', 'begin'), ('mapped-process-maps-write', 'end')])
+
+    def test_snapshot_failure_does_not_publish_successful_legacy_stamp(self):
+        record, events = {}, []
+        with patch.object(Path, 'read_text', return_value='maps'), patch.object(Path, 'write_text', side_effect=OSError('snapshot failed')):
+            with self.assertRaisesRegex(ObservationIncomplete, 'snapshot failed'):
+                snapshot_mapped_process(123, Path('/owned-case'), record, events.append)
+        self.assertIn('mapDetected_ns', record)
+        self.assertNotIn('mapped_ns', record)
+        self.assertEqual(events[-1]['phase'], 'end')
+
+    def test_uninstrumented_snapshot_keeps_both_endpoints_without_cpu_sampling(self):
+        record = {}
+        with patch.object(Path, 'read_text', return_value='maps'), patch.object(Path, 'write_text'), patch('application_close_smoke.time.thread_time_ns', side_effect=AssertionError('diagnostic sampling in acceptance')):
+            snapshot_mapped_process(123, Path('/owned-case'), record)
+        self.assertLessEqual(record['mapDetected_ns'], record['mapped_ns'])
 
 
 class LoadedEngineAcceptanceTest(unittest.TestCase):
@@ -430,7 +468,75 @@ class OwnedInputIsolationTest(unittest.TestCase):
             audit.observe(event)
         self.assertEqual(audit.key_presses, 100)
         self.assertEqual(len(audit.events), 16)
-        self.assertEqual(set(audit.events[0]), {'kind', 'synthetic', 'observed_ns'})
+        self.assertEqual(set(audit.events[0]), {'kind', 'synthetic', 'source', 'observed_ns'})
+
+    def test_xi2_unavailable_is_incomplete_instead_of_core_only_success(self):
+        from application_close_smoke import OwnedInputAudit
+        audit = OwnedInputAudit.__new__(OwnedInputAudit)
+        audit.display = None
+        audit.x = SimpleNamespace(XQueryExtension=Mock(return_value=0))
+        for failure in [OSError('libXi unavailable'), AttributeError('missing symbol')]:
+            with self.subTest(failure=str(failure)), patch('application_close_smoke.C.CDLL', side_effect=failure):
+                with self.assertRaises(ObservationIncomplete):
+                    audit._prepare_xi2()
+        with patch('application_close_smoke.C.CDLL', return_value=SimpleNamespace()):
+            with self.assertRaisesRegex(ObservationIncomplete, 'requires XInput2'):
+                audit._prepare_xi2()
+        audit.x.XQueryExtension.return_value = 1
+        with patch('application_close_smoke.C.CDLL', return_value=SimpleNamespace(XIQueryVersion=Mock(return_value=1))):
+            with self.assertRaisesRegex(ObservationIncomplete, 'version 2'):
+                audit._prepare_xi2()
+
+    def xi_event(self, xid=123, kind=2):
+        from application_close_smoke import OwnedInputAudit, InputEvent, InputCookie, DeviceKeyPrefix
+        audit = OwnedInputAudit.__new__(OwnedInputAudit)
+        audit.windows, audit.events, audit.errors = {123}, [], []
+        audit.key_presses = audit.key_releases = 0
+        audit.xi_opcode, audit.display = 131, None
+        audit.x = SimpleNamespace(XGetEventData=Mock(return_value=1), XFreeEventData=Mock())
+        event = InputEvent()
+        cookie = C.cast(C.byref(event), C.POINTER(InputCookie)).contents
+        cookie.type, cookie.extension, cookie.evtype = 35, 131, kind
+        data = DeviceKeyPrefix()
+        data.event, data.evtype = xid, kind
+        cookie.data = C.addressof(data)
+        return audit, event, cookie, data
+
+    def test_xi2_owned_keys_are_counted_without_payload_and_cookie_is_freed(self):
+        for kind in [2, 3]:
+            with self.subTest(kind=kind):
+                audit, event, cookie, data = self.xi_event(kind=kind)
+                audit.observe(event)
+                self.assertEqual((audit.key_presses, audit.key_releases), (1, 0) if kind == 2 else (0, 1))
+                self.assertEqual(audit.events[0]['source'], 'XI2')
+                self.assertEqual(set(audit.events[0]), {'kind', 'synthetic', 'source', 'observed_ns'})
+                audit.x.XFreeEventData.assert_called_once()
+
+    def test_xi2_does_not_observe_unowned_windows_or_other_extension_events(self):
+        audit, event, cookie, data = self.xi_event(xid=999)
+        audit.observe(event)
+        self.assertEqual(audit.key_presses, 0)
+        audit.x.XFreeEventData.assert_called_once()
+        audit.x.XGetEventData.reset_mock()
+        cookie.extension = 999
+        audit.observe(event)
+        cookie.extension, cookie.evtype = 131, 6
+        audit.observe(event)
+        audit.x.XGetEventData.assert_not_called()
+
+    def test_missing_xi2_event_data_makes_verification_incomplete(self):
+        from application_close_smoke import check_owned_input
+        for available in [True, False]:
+            with self.subTest(available=available):
+                audit, event, cookie, data = self.xi_event()
+                if available:
+                    cookie.data = None
+                else:
+                    audit.x.XGetEventData.return_value = 0
+                audit.observe(event)
+                with self.assertRaises(ObservationIncomplete):
+                    check_owned_input(dict(errors=audit.errors))
+                self.assertEqual(audit.x.XFreeEventData.call_count, int(available))
 
     def test_close_does_not_send_a_request_after_unexpected_input(self):
         desktop = Desktop.__new__(Desktop)

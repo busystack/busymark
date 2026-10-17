@@ -189,6 +189,9 @@ jobs:
       - name: Test retired Yaru window requests and notifications
         run: xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
 
+      - name: Verify GTK keyboard delivery is observed through XInput2
+        run: xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_application_input_observer.py --disposable-display
+
       - name: Require 100 natural closes of the shipping release
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \

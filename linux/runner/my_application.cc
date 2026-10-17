@@ -1168,10 +1168,17 @@ static void first_frame_cb(MyApplication*, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
+static void window_map_cb(GtkWidget*, gpointer) {
+  BusyMarkPerformanceSpan::Event("native-window-map");
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
+  BusyMarkPerformanceSpan activation_span("application-activate");
   MyApplication* self = MY_APPLICATION(application);
+  BusyMarkPerformanceSpan::Event("window-construction", "begin");
   GtkWindow* window = GTK_WINDOW(hdy_application_window_new());
+  g_signal_connect(window, "map", G_CALLBACK(window_map_cb), nullptr);
   gtk_application_add_window(GTK_APPLICATION(application), window);
   self->main_window = window;
   gtk_window_set_title(window, kApplicationDisplayName);
@@ -1196,6 +1203,7 @@ static void my_application_activate(GApplication* application) {
     gtk_style_context_add_provider_for_screen(gtk_widget_get_screen(GTK_WIDGET(window)),
         GTK_STYLE_PROVIDER(self->native_surface_css_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   }
+  BusyMarkPerformanceSpan::Event("window-construction", "end");
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
@@ -1222,14 +1230,20 @@ static void my_application_activate(GApplication* application) {
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
   // Register before realizing the view starts Dart execution.
-  self->gtk_accent_host = busymark_gtk_accent_host_new(view, GTK_WIDGET(window));
+  {
+    BusyMarkPerformanceSpan span("accent-host-registration");
+    self->gtk_accent_host = busymark_gtk_accent_host_new(view, GTK_WIDGET(window));
+  }
   {
     BusyMarkPerformanceSpan span("flutter-view-realization");
     gtk_widget_realize(GTK_WIDGET(view));
   }
 
   BusyMarkPerformanceSpan integrations_span("native-integrations");
-  fl_register_plugins(FL_PLUGIN_REGISTRY(view));
+  {
+    BusyMarkPerformanceSpan span("plugin-registration");
+    fl_register_plugins(FL_PLUGIN_REGISTRY(view));
+  }
   self->chrome_host = busymark_linux_chrome_host_new(view, window, set_gtk_theme_preference);
   register_native_menu_channel(self, view);
   self->writerside_dialog_channel =
@@ -1238,12 +1252,18 @@ static void my_application_activate(GApplication* application) {
   self->rich_clipboard_channel = busymark_rich_clipboard_channel_new(view);
   self->secure_credential_channel =
       busymark_secure_credential_channel_new(view);
-  self->visualization_host =
-      busymark_web_render_host_new(GTK_APPLICATION(self), window);
-  busymark_web_render_host_register_channel(self->visualization_host, view);
-  self->video_player_host =
-      busymark_video_player_host_new(self->flutter_overlay);
-  busymark_video_player_host_register_channel(self->video_player_host, view);
+  {
+    BusyMarkPerformanceSpan span("visualization-host-registration");
+    self->visualization_host =
+        busymark_web_render_host_new(GTK_APPLICATION(self), window);
+    busymark_web_render_host_register_channel(self->visualization_host, view);
+  }
+  {
+    BusyMarkPerformanceSpan span("video-host-registration");
+    self->video_player_host =
+        busymark_video_player_host_new(self->flutter_overlay);
+    busymark_video_player_host_register_channel(self->video_player_host, view);
+  }
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
@@ -1256,7 +1276,12 @@ static gboolean my_application_local_command_line(GApplication* application,
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
   g_autoptr(GError) error = nullptr;
-  if (!g_application_register(application, nullptr, &error)) {
+  gboolean registered;
+  {
+    BusyMarkPerformanceSpan span("application-registration");
+    registered = g_application_register(application, nullptr, &error);
+  }
+  if (!registered) {
     g_warning("Failed to register: %s", error->message);
     *exit_status = 1;
     return TRUE;
@@ -1270,6 +1295,7 @@ static gboolean my_application_local_command_line(GApplication* application,
 
 // Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
+  BusyMarkPerformanceSpan span("application-startup");
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
   hdy_init();
 

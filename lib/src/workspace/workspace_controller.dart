@@ -1680,22 +1680,27 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           return false;
         }
         PerformanceTrace.event('restore-editor-publish');
-        state = WorkspaceState(
-          workspace: reparsed,
-          preview: _safePreview(reparsed, active),
-          documentBuffers: buffers,
-          activeBufferId: active.id,
-          message: recovery.readErrors > 0
-              ? WorkspaceMessage(
-                  WorkspaceMessageCode.recoveryDamaged,
-                  error: recovery.readErrors,
-                )
-              : recoverEntries.isNotEmpty
-              ? WorkspaceMessage(
-                  WorkspaceMessageCode.recoveryRestored,
-                  error: recoverEntries.length,
-                )
-              : null,
+        PerformanceTrace.sync('restore-state-publication', () {
+          state = WorkspaceState(
+            workspace: reparsed,
+            preview: _safePreview(reparsed, active),
+            documentBuffers: buffers,
+            activeBufferId: active.id,
+            message: recovery.readErrors > 0
+                ? WorkspaceMessage(
+                    WorkspaceMessageCode.recoveryDamaged,
+                    error: recovery.readErrors,
+                  )
+                : recoverEntries.isNotEmpty
+                ? WorkspaceMessage(
+                    WorkspaceMessageCode.recoveryRestored,
+                    error: recoverEntries.length,
+                  )
+                : null,
+          );
+        });
+        PerformanceTrace.event(
+          'restore-published-${active.id}-${active.revision}',
         );
         for (final entry in sessionEntries) {
           final recoveryOwnerId = entry.recoveryOwnerId;

@@ -145,6 +145,21 @@ the produced artifact and require that receipt in confined close acceptance.
 The local scaffold repack helper also uses the wrapper; it remains unsuitable
 for validating dependency or packaging changes.
 
+The close observer records `mapDetected_ns` when its owned-window query first
+finds the mapped window. Historical `mapped_ns` remains after `/proc/PID/maps`
+snapshot publication; neither endpoint measures display presentation. The optional
+`run_case(observer_event=...)` diagnostic hook reports observer operation wall/CPU
+boundaries to a caller-owned bounded memory buffer. Snapshot observation failures
+are incomplete verification, never successful application-close acceptance.
+
+Owned-window keyboard auditing requires XInput2 as well as core X11 events:
+GTK can receive XI2 keyboard input that never reaches a core-only observer.
+Unavailable selection or event data makes observation incomplete. The observer
+selects only the identified window subtree, never root/raw input, and records
+counts without key values. Verify actual GTK delivery on a disposable display:
+`xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_application_input_observer.py --disposable-display`.
+The explicit flag authorizes test input only on that private display.
+
 ## Maintenance
 
 `FlView` retains its renderer through forced GTK disposal. The engine returns

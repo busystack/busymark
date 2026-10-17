@@ -6,6 +6,7 @@ No successful path calls terminate(), kill(), Dart exit(), or gtk_main_quit().
 """
 import argparse
 import ctypes as C
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -21,6 +22,40 @@ import time
 
 class ObservationIncomplete(RuntimeError):
     pass
+
+
+@contextmanager
+def observation_span(event, name):
+    """Optional in-memory diagnostic hook; the caller owns bounded buffering.
+
+    Wall/CPU timestamps describe observer work, never application completion.
+    Ordinary acceptance does not install a callback or collect these events.
+    """
+    if event is None:
+        yield
+        return
+    def emit(phase):
+        event({'name': name, 'phase': phase, 'monotonic_ns': time.monotonic_ns(),
+               'threadCPU_ns': time.thread_time_ns()})
+    emit('begin')
+    try:
+        yield
+    finally:
+        emit('end')
+
+
+def snapshot_mapped_process(pid, folder, record, event=None):
+    # Keep the historical mapped_ns endpoint after snapshot publication, but
+    # expose detection before observer I/O. Neither timestamp is presentation.
+    record['mapDetected_ns'] = time.monotonic_ns()
+    try:
+        with observation_span(event, 'mapped-process-maps-read'):
+            maps = Path(f'/proc/{pid}/maps').read_text()
+        with observation_span(event, 'mapped-process-maps-write'):
+            (folder / 'maps').write_text(maps)
+    except OSError as error:
+        raise ObservationIncomplete('Owned mapped-process snapshot failed: ' + str(error)) from error
+    record['mapped_ns'] = time.monotonic_ns()
 
 
 class LoadedEngine:
@@ -343,6 +378,27 @@ class InputEvent(C.Union):
     _fields_ = [('any', AnyEvent), ('pad', C.c_long * 24)]
 
 
+class InputCookie(C.Structure):
+    _fields_ = AnyEvent._fields_[:-1] + [
+        ('extension', C.c_int), ('evtype', C.c_int),
+        ('cookie', C.c_uint), ('data', C.c_void_p),
+    ]
+
+
+class DeviceKeyPrefix(C.Structure):
+    # Only inspect event type/window. Never inspect the key detail or values.
+    _fields_ = AnyEvent._fields_[:-1] + [
+        ('extension', C.c_int), ('evtype', C.c_int), ('time', C.c_ulong),
+        ('deviceid', C.c_int), ('sourceid', C.c_int), ('unused_detail', C.c_int),
+        ('root', C.c_ulong), ('event', C.c_ulong), ('child', C.c_ulong),
+    ]
+
+
+class DeviceEventMask(C.Structure):
+    _fields_ = [('deviceid', C.c_int), ('mask_len', C.c_int),
+                ('mask', C.POINTER(C.c_ubyte))]
+
+
 class InputError(C.Structure):
     _fields_ = [('type', C.c_int), ('display', C.c_void_p),
                 ('resource', C.c_ulong), ('serial', C.c_ulong),
@@ -353,8 +409,9 @@ class InputError(C.Structure):
 class OwnedInputAudit:
     """Observe event counts only in the identified app's own window subtree.
 
-    XSelectInput adds a selection on this observer's separate X connection;
-    it neither grabs input nor replaces the application's event handler.
+    Select core and XI2 keys on this observer's separate X connection. GTK
+    consumes XI2 keys, which a core-only selection can miss. No root/raw input
+    listener, input grab, key values, or replacement application handler.
     """
     def __init__(self, desktop, window):
         self.desktop = desktop
@@ -384,6 +441,9 @@ class OwnedInputAudit:
         handler = handler_type(error)
         previous = x.XSetErrorHandler(C.cast(handler, C.c_void_p))
         try:
+            self._prepare_xi2()
+            bits = (C.c_ubyte * 1)((1 << 2) | (1 << 3))
+            mask = DeviceEventMask(1, 1, bits)  # XIAllMasterDevices; keys only.
             pending = [window.get_xid()]
             while pending:
                 xid = pending.pop()
@@ -393,6 +453,8 @@ class OwnedInputAudit:
                     raise ObservationIncomplete('Owned input window bound exceeded')
                 self.windows.add(xid)
                 x.XSelectInput(self.display, xid, (1 << 0) | (1 << 1) | (1 << 21))
+                if self.xi.XISelectEvents(self.display, xid, C.byref(mask), 1) != 0:
+                    raise ObservationIncomplete('Owned XInput2 window selection failed')
                 root, parent, count = C.c_ulong(), C.c_ulong(), C.c_uint()
                 children = C.POINTER(C.c_ulong)()
                 if x.XQueryTree(self.display, xid, C.byref(root), C.byref(parent), C.byref(children), C.byref(count)):
@@ -406,6 +468,25 @@ class OwnedInputAudit:
             x.XSetErrorHandler(previous)
         if self.errors:
             raise ObservationIncomplete('Owned input observation unavailable: ' + repr(self.errors))
+
+    def _prepare_xi2(self):
+        x = self.x
+        try:
+            self.xi = C.CDLL('libXi.so.6')
+            opcode, first, error_base = C.c_int(), C.c_int(), C.c_int()
+            x.XQueryExtension.argtypes = [C.c_void_p, C.c_char_p, C.POINTER(C.c_int), C.POINTER(C.c_int), C.POINTER(C.c_int)]
+            if not x.XQueryExtension(self.display, b'XInputExtension', C.byref(opcode), C.byref(first), C.byref(error_base)):
+                raise ObservationIncomplete('Owned keyboard observation requires XInput2')
+            self.xi_opcode = opcode.value
+            self.xi.XIQueryVersion.argtypes = [C.c_void_p, C.POINTER(C.c_int), C.POINTER(C.c_int)]
+            major, minor = C.c_int(2), C.c_int(0)
+            if self.xi.XIQueryVersion(self.display, C.byref(major), C.byref(minor)) != 0 or major.value < 2:
+                raise ObservationIncomplete('XInput2 version 2 keyboard observation unavailable')
+            self.xi.XISelectEvents.argtypes = [C.c_void_p, C.c_ulong, C.POINTER(DeviceEventMask), C.c_int]
+            x.XGetEventData.argtypes = [C.c_void_p, C.POINTER(InputCookie)]
+            x.XFreeEventData.argtypes = [C.c_void_p, C.POINTER(InputCookie)]
+        except (OSError, AttributeError) as failure:
+            raise ObservationIncomplete('Owned XInput2 keyboard observation unavailable: ' + str(failure)) from failure
 
     def poll(self):
         self.samples += 1
@@ -439,16 +520,43 @@ class OwnedInputAudit:
             self.observe(event)
 
     def observe(self, event):
+        if event.any.type == 35:  # GenericEvent, not a core XAnyEvent window.
+            cookie = C.cast(C.byref(event), C.POINTER(InputCookie)).contents
+            if cookie.extension != self.xi_opcode or cookie.evtype not in (2, 3):
+                return
+            if not self.x.XGetEventData(self.display, C.byref(cookie)):
+                self.errors.append('Owned XInput2 key-event data unavailable')
+                return
+            try:
+                if not cookie.data:
+                    self.errors.append('Owned XInput2 key-event data missing')
+                    return
+                key = C.cast(cookie.data, C.POINTER(DeviceKeyPrefix)).contents
+                if key.event not in self.windows:
+                    return
+                self._key(key.evtype, bool(key.send_event), 'XI2')
+            finally:
+                self.x.XFreeEventData(self.display, C.byref(cookie))
+            return
         if event.any.window not in self.windows:
             return
-        if event.any.type == 2:
-            self.key_presses += 1
-        if event.any.type == 3:
-            self.key_releases += 1
-        kinds = {2: 'key-press', 3: 'key-release', 9: 'focus-in', 10: 'focus-out'}
+        if event.any.type in (2, 3):
+            self._key(event.any.type, bool(event.any.send_event), 'core')
+            return
+        kinds = {9: 'focus-in', 10: 'focus-out'}
         if event.any.type in kinds and len(self.events) < 16:
             self.events.append({'kind': kinds[event.any.type],
                                 'synthetic': bool(event.any.send_event),
+                                'observed_ns': time.monotonic_ns()})
+
+    def _key(self, kind, synthetic, source):
+        if kind == 2:
+            self.key_presses += 1
+        if kind == 3:
+            self.key_releases += 1
+        if len(self.events) < 16:
+            self.events.append({'kind': 'key-press' if kind == 2 else 'key-release',
+                                'synthetic': synthetic, 'source': source,
                                 'observed_ns': time.monotonic_ns()})
 
     def result(self):
@@ -457,6 +565,7 @@ class OwnedInputAudit:
                 'activeSamples': self.activeSamples, 'focusSamples': self.focusSamples,
                 'samples': self.samples,
                 'events': self.events, 'errors': self.errors,
+                'keyboardMechanism': 'owned-window XInput2 and core events',
                 'scope': 'Identified owned X11 window subtree only; no key values, text, global input or unrelated window identities.'}
 
 
@@ -601,7 +710,7 @@ def accepted(record):
     return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors")
 
 
-def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, engine_manifest=None, isolate_input=False, audit_input=False):
+def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, engine_manifest=None, isolate_input=False, audit_input=False, observer_event=None):
     if isolate_input and audit_input:
         raise ValueError('Select passive isolation or normal-focus input audit')
     if isolate_input and not plain:
@@ -682,18 +791,20 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         close_sent, first_video = False, None
         try:
             while process.poll() is None and time.monotonic() < deadline:
-                tracker.scan()
+                with observation_span(observer_event, 'child-and-input-scan'):
+                    tracker.scan()
                 if tracker.errors:
                     raise ObservationIncomplete("Child observation is incomplete")
                 if (isolate_input or audit_input) and tracker.input_audit is None:
                     observe = desktop.isolate_input if isolate_input else desktop.audit_input
-                    tracker.input_audit = observe(process.pid)
+                    with observation_span(observer_event, 'input-observation-setup'):
+                        tracker.input_audit = observe(process.pid)
                 if plain and not close_sent:
-                    w = desktop.window(process.pid)
+                    with observation_span(observer_event, 'owned-window-query'):
+                        w = desktop.window(process.pid)
                     if w:
                         # BusyMark maps its top-level only after FlView first-frame.
-                        (folder / "maps").write_text(Path(f"/proc/{process.pid}/maps").read_text())
-                        record["mapped_ns"] = time.monotonic_ns()
+                        snapshot_mapped_process(process.pid, folder, record, observer_event)
                         if snap_instance:
                             confinement = Path(f"/proc/{process.pid}/attr/current").read_text().strip()
                             record['confinement'] = confinement
@@ -701,7 +812,8 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                                 raise RuntimeError('Expected genuine strict Snap confinement')
                         if isolate_input and tracker.input_audit is None:
                             raise ObservationIncomplete('No owned pre-map input observation')
-                        desktop.close(w)
+                        with observation_span(observer_event, 'owned-content-probe-and-close'):
+                            desktop.close(w)
                         record["closeRequestSent_ns"] = time.monotonic_ns()
                         close_sent = True
                 if report.exists():

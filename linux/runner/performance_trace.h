@@ -8,6 +8,13 @@
 // collect stacks while the GTK thread is blocked. No timers on that thread.
 class BusyMarkPerformanceSpan {
  public:
+  static void Event(const char* operation, const char* phase = "point") {
+    if (g_strcmp0(g_getenv("BUSYMARK_NATIVE_TRACE"), "1") == 0) {
+      g_printerr("busymark-native %s %s time_us=%" G_GINT64_FORMAT "\n",
+                 operation, phase, g_get_monotonic_time());
+    }
+  }
+
   explicit BusyMarkPerformanceSpan(const char* operation)
       : operation_(operation),
         enabled_(g_strcmp0(g_getenv("BUSYMARK_NATIVE_TRACE"), "1") == 0) {

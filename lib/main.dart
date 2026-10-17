@@ -21,7 +21,10 @@ import 'src/visualization/visualization_release_smoke.dart';
 
 Future<void> main(List<String> args) async {
   PerformanceTrace.event('dart-entry');
-  WidgetsFlutterBinding.ensureInitialized();
+  PerformanceTrace.sync(
+    'binding-initialization',
+    WidgetsFlutterBinding.ensureInitialized,
+  );
   await PerformanceTrace.async(
     'window-manager',
     windowManager.ensureInitialized,
