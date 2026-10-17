@@ -15,6 +15,7 @@ import secrets
 import re
 import shlex
 import subprocess
+import sys
 import time
 
 
@@ -645,20 +646,27 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             extra['BUSYMARK_VISUALIZATION_ASSETS'] = str(profile / 'pending-initialization-assets')
         command = snap_command(snap_instance, leaf, arguments, extra)
         arguments = []
-    record = {"launch_ns": time.monotonic_ns(), "scenario": scenario, "command": command + arguments, "plainShippingExecutable": plain}
+    record = {"launch_ns": time.monotonic_ns(), "scenario": scenario, "command": command + arguments, "plainShippingExecutable": plain, "observationInterpreter": sys.executable}
     if scenario == 'pending-initialization' and not plain:
         record['controlledPendingHarness'] = True
+    tracker = None
     try:
         probe = LoadedEngine(engine_manifest) if engine_manifest is not None else None
         tracker = ChildTracker()
         tracker.engine = probe
-    except ObservationIncomplete as error:
-        record.update(error=str(error), verificationIncomplete=[str(error)], exitCode=None, launchSkipped=True)
+        desktop = Desktop() if plain or scenario == "video" or audit_input else None
+    except (ImportError, OSError, ValueError, RuntimeError) as error:
+        detail = f'Observer initialization failed ({type(error).__name__}): {error}'
+        if isinstance(error, ImportError):
+            detail += '; use /usr/bin/python3 with system PyGObject/GdkX11'
+        record.update(error=detail, verificationIncomplete=[detail], exitCode=None,
+                      launchSkipped=True, observationInterpreter=sys.executable)
+        if tracker is not None:
+            tracker.close()
         temporary_alias.unlink()
         (folder / 'result.json').write_text(json.dumps(record, indent=2))
         return record
     seen = tracker.seen
-    desktop = Desktop() if plain or scenario == "video" or audit_input else None
     with (folder / "application.log").open("w") as log:
         # Keep launch_ns for historical comparisons, while exposing observer
         # setup/log-open time separately from the actual process launch request.

@@ -351,6 +351,26 @@ os._exit(0)
 
 
 class OwnedInputIsolationTest(unittest.TestCase):
+    def test_unavailable_desktop_is_recorded_before_launch_and_alias_is_removed(self):
+        for error in [ModuleNotFoundError('No module named gi'),
+                      RuntimeError('No authenticated X11 display')]:
+            with self.subTest(error=type(error).__name__), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                with patch('application_close_smoke.Desktop', side_effect=error), \
+                     patch('application_close_smoke.subprocess.Popen') as launch, \
+                     patch('application_close_smoke.secrets.token_hex', return_value=root.name):
+                    record = run_case([], root / 'case', root / 'profile',
+                                      'plain', 1, plain=True)
+                launch.assert_not_called()
+                self.assertTrue(record['launchSkipped'])
+                self.assertTrue(record['verificationIncomplete'])
+                self.assertEqual(record['observationInterpreter'], sys.executable)
+                if isinstance(error, ImportError):
+                    self.assertIn('/usr/bin/python3', record['error'])
+                self.assertFalse(accepted(record))
+                self.assertFalse((Path('/tmp') / ('bm-close-' + root.name)).is_symlink())
+                self.assertEqual(json.loads((root / 'case/result.json').read_text()), record)
+
     def test_unavailable_input_observation_is_incomplete(self):
         from application_close_smoke import check_input_isolation
         with self.assertRaises(ObservationIncomplete):

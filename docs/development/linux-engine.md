@@ -68,7 +68,7 @@ Widget tests do not execute the Linux GTK embedder. Native acceptance is separat
 xvfb-run -a dbus-run-session -- \
   python3 tools/flutter_engine/engine.py test --mode release
 python3 tools/flutter_engine/engine.py verify --mode release
-python3 tools/application_close_smoke.py --output /absolute/new/evidence \
+/usr/bin/python3 tools/application_close_smoke.py --output /absolute/new/evidence \
   --cycles 100 --plain --fresh-profile \
   --engine-manifest build/linux/x64/release/bundle/data/busymark-engine.json -- \
   build/linux/x64/release/bundle/busymark

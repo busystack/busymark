@@ -282,7 +282,7 @@ jobs:
         run: |
           python3 tools/flutter_engine/build_control.py --mode release \
             --output "${RUNNER_TEMP}/engine-control-release"
-          xvfb-run -a dbus-run-session -- python3 tools/application_close_smoke.py \
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/close-complete-core" --cycles 10 --plain --fresh-profile \
             --engine-manifest "${RUNNER_TEMP}/engine-control-release/bundle/data/busymark-engine.json" -- \
             "${RUNNER_TEMP}/engine-control-release/bundle/busymark"
@@ -659,7 +659,7 @@ jobs:
           fixture_root="$HOME/snap/busymark_fixture/common"
           mkdir -p "$fixture_root/fixtures"
           cp test/fixtures/media/close-testsrc.mp4 "$fixture_root/fixtures/"
-          xvfb-run -a dbus-run-session -- python3 tools/application_close_smoke.py \
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "$fixture_root/close-live" --cycles 3 --fresh-profile \
             --snap-instance busymark_fixture --snap-fixture \
             --engine-manifest /snap/busymark_fixture/current/data/busymark-engine.json \
@@ -704,12 +704,12 @@ jobs:
         run: |
           python3 tools/flutter.py build linux --${{ matrix.mode }} --no-pub
           xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
-          xvfb-run -a dbus-run-session -- python3 tools/application_close_smoke.py \
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/close-${{ matrix.mode }}" --cycles 10 --fresh-profile --plain \
             --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json -- \
             build/linux/x64/${{ matrix.mode }}/bundle/busymark
           python3 tools/flutter.py build linux --${{ matrix.mode }} --no-pub -t tools/window_close_smoke.dart
-          xvfb-run -a dbus-run-session -- python3 tools/application_close_smoke.py \
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/features-${{ matrix.mode }}" --cycles 1 --fresh-profile \
             --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json \
             --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
@@ -719,7 +719,7 @@ jobs:
         run: |
           python3 tools/flutter_engine/build_control.py --mode ${{ matrix.mode }} \
             --output "${RUNNER_TEMP}/engine-control-${{ matrix.mode }}"
-          xvfb-run -a dbus-run-session -- python3 tools/application_close_smoke.py \
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/complete-core-${{ matrix.mode }}" --cycles 10 --plain --fresh-profile \
             --engine-manifest "${RUNNER_TEMP}/engine-control-${{ matrix.mode }}/bundle/data/busymark-engine.json" -- \
             "${RUNNER_TEMP}/engine-control-${{ matrix.mode }}/bundle/busymark"
