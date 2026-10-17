@@ -14,13 +14,15 @@ def main():
     args = sys.argv[1:]
     if not args:
         raise RuntimeError("Usage: python3 tools/flutter.py <Flutter command> [arguments]")
+    if args[0] == "attach":
+        raise RuntimeError("Unmanaged attach cannot verify the loaded GTK engine. Start with python3 tools/flutter.py run -d linux (add --profile for profiling), use its hot reload/restart commands and VM-service/DevTools URL")
     if any(a.startswith("--local-engine") for a in args):
         raise RuntimeError("Engine selection is controlled by engine.lock.json; remove manual local-engine flags")
     if any(a == "--use-application-binary" or a.startswith("--use-application-binary=") for a in args):
         raise RuntimeError("A prebuilt application bypasses corrected-engine assembly checks. Build/run with this wrapper, or verify a bundle with tools/flutter_engine/engine.py check-bundle before launching it directly")
     root = engine.cache_root()
     sdk = engine.framework(root)
-    native = args[0] in ("run", "attach") or args[:2] == ["build", "linux"]
+    native = args[0] == "run" or args[:2] == ["build", "linux"]
     flags = []
     if native:
         modes = [m for m in engine.LOCK["modes"] if "--" + m in args]

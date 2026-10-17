@@ -39,6 +39,9 @@ checks what Flutter actually assembled and installed. An IDE must invoke the
 wrapper as a task, or use the same verified local-engine arguments; an IDE's
 default official-engine build fails. Do not bypass the guard to get a build.
 The wrapper rejects `--use-application-binary`, which bypasses assembly checks.
+It also rejects unmanaged `attach`: selecting local artifacts cannot verify an
+already-running target's GTK engine. Start with the wrapper's `run` command,
+use its hot reload/restart controls, and connect DevTools to its printed URL.
 Before launching an existing bundle directly, verify it with the matching cache:
 
 ```sh

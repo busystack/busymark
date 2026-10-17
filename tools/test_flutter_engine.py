@@ -19,6 +19,20 @@ spec.loader.exec_module(engine)
 
 
 class FlutterWrapperSelectionTest(unittest.TestCase):
+    def test_attach_cannot_certify_an_unverified_running_engine(self):
+        source = Path(__file__).parent / 'flutter.py'
+        spec = importlib.util.spec_from_file_location('busymark_flutter_wrapper', source)
+        wrapper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(wrapper)
+        with patch.object(sys, 'argv', ['flutter.py', 'attach', '-d', 'linux']), \
+             patch.object(wrapper.engine, 'cache_root', return_value=Path('/unused')), \
+             patch.object(wrapper.engine, 'framework', return_value=Path('/unused/sdk')), \
+             patch.object(wrapper.engine, 'verify'), \
+             patch.object(wrapper.subprocess, 'call', return_value=0) as launch:
+            with self.assertRaisesRegex(RuntimeError, 'cannot verify the loaded GTK engine'):
+                wrapper.main()
+            launch.assert_not_called()
+
     def test_prebuilt_application_cannot_bypass_corrected_engine_assembly(self):
         source = Path(__file__).parent / 'flutter.py'
         spec = importlib.util.spec_from_file_location('busymark_flutter_wrapper', source)
