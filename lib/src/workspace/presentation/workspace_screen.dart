@@ -4460,71 +4460,88 @@ class _WritersideTopicRenameSidebarState
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.l10n.topicRenamePathChange(
-                  widget.plan.oldTopicPath,
-                  widget.plan.newTopicPath,
-                ),
-                key: const ValueKey('topic-rename-path-change'),
-              ),
-              if (widget.plan.updatesXmlTopicId)
-                Text(
-                  context.l10n.topicRenameIdChange(
-                    widget.plan.oldTopicId,
-                    widget.plan.newTopicId,
+        Expanded(
+          child: CustomScrollView(
+            key: const ValueKey('topic-rename-preview-scroll'),
+            primary: false,
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.topicRenamePathChange(
+                          widget.plan.oldTopicPath,
+                          widget.plan.newTopicPath,
+                        ),
+                        key: const ValueKey('topic-rename-path-change'),
+                      ),
+                      if (widget.plan.updatesXmlTopicId)
+                        Text(
+                          context.l10n.topicRenameIdChange(
+                            widget.plan.oldTopicId,
+                            widget.plan.newTopicId,
+                          ),
+                          key: const ValueKey('topic-rename-id-change'),
+                        ),
+                      for (final change in widget.plan.webFileNameChanges)
+                        if (change.changed)
+                          Text(
+                            context.l10n.topicRenameUrlChange(
+                              change.instanceId,
+                              change.oldWebFileName,
+                              change.newWebFileName,
+                            ),
+                          ),
+                      const SizedBox(height: BusyMarkSpacing.sm),
+                      Text(
+                        context.l10n.topicRenameAffectedFiles,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ],
                   ),
-                  key: const ValueKey('topic-rename-id-change'),
                 ),
-              for (final change in widget.plan.webFileNameChanges)
-                if (change.changed)
-                  Text(
-                    context.l10n.topicRenameUrlChange(
-                      change.instanceId,
-                      change.oldWebFileName,
-                      change.newWebFileName,
+              ),
+              SliverToBoxAdapter(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  child: ListView.builder(
+                    key: const ValueKey('topic-rename-affected-files'),
+                    primary: false,
+                    itemCount: files.length,
+                    itemBuilder: (context, index) => ListTile(
+                      dense: true,
+                      selected: index == _selected,
+                      leading: Icon(
+                        index == 0
+                            ? BusyMarkGlyphs.edit
+                            : BusyMarkGlyphs.document,
+                        size: BusyMarkSizes.iconSm,
+                      ),
+                      title: Text(
+                        index == 0
+                            ? '${p.basename(widget.plan.oldTopicPath)} → ${p.basename(widget.plan.newTopicPath)}'
+                            : p.basename(files[index].path),
+                      ),
+                      subtitle: Text(
+                        files[index].path,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () => setState(() => _selected = index),
                     ),
                   ),
-              const SizedBox(height: BusyMarkSpacing.sm),
-              Text(
-                context.l10n.topicRenameAffectedFiles,
-                style: Theme.of(context).textTheme.labelLarge,
+                ),
               ),
+              SliverToBoxAdapter(
+                child: Divider(height: 1, color: colors.subtleBorder),
+              ),
+              SourceComparisonView.sliver(comparison: comparison),
             ],
           ),
         ),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 180),
-          child: ListView.builder(
-            key: const ValueKey('topic-rename-affected-files'),
-            itemCount: files.length,
-            itemBuilder: (context, index) => ListTile(
-              dense: true,
-              selected: index == _selected,
-              leading: Icon(
-                index == 0 ? BusyMarkGlyphs.edit : BusyMarkGlyphs.document,
-                size: BusyMarkSizes.iconSm,
-              ),
-              title: Text(
-                index == 0
-                    ? '${p.basename(widget.plan.oldTopicPath)} → ${p.basename(widget.plan.newTopicPath)}'
-                    : p.basename(files[index].path),
-              ),
-              subtitle: Text(
-                files[index].path,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              onTap: () => setState(() => _selected = index),
-            ),
-          ),
-        ),
-        Divider(height: 1, color: colors.subtleBorder),
-        Expanded(child: SourceComparisonView(comparison: comparison)),
         Padding(
           padding: const EdgeInsets.all(BusyMarkSpacing.sm),
           child: BusyMarkPushButton.standardIcon(

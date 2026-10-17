@@ -5219,308 +5219,362 @@ code
     );
   }
 
-  testWidgets(
-    'Writerside topic rename uses Preview, Do Refactor, and shared entry points',
-    (tester) async {
-      const yaruWindowChannel = MethodChannel('yaru_window');
-      const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(yaruWindowChannel, (call) async {
-            if (call.method == 'state') return <String, Object?>{};
-            return null;
-          });
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(yaruWindowEventsChannel, (_) async => null);
-      addTearDown(() {
+  for (final longPath in [false, true]) {
+    testWidgets(
+      'Writerside topic rename uses Preview, Do Refactor, and shared entry points'
+      '${longPath ? ' with long paths' : ''}',
+      (tester) async {
+        const yaruWindowChannel = MethodChannel('yaru_window');
+        const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          ..setMockMethodCallHandler(yaruWindowChannel, null)
-          ..setMockMethodCallHandler(yaruWindowEventsChannel, null);
-      });
-      final binding = TestWidgetsFlutterBinding.ensureInitialized();
-      binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
-      await binding.setSurfaceSize(const Size(1440, 900));
-      addTearDown(() async {
-        binding.platformDispatcher.defaultRouteNameTestValue = '/';
-        await binding.setSurfaceSize(null);
-      });
-      final root = Directory.systemTemp.createTempSync(
-        'busymark-topic-rename-ui-',
-      );
-      addTearDown(() {
-        if (root.existsSync()) root.deleteSync(recursive: true);
-      });
-      final topics = Directory(p.join(root.path, 'topics'))..createSync();
-      final configPath = p.join(root.path, 'writerside.cfg');
-      final treePath = p.join(root.path, 'guide.tree');
-      final topicPath = p.join(topics.path, 'guide.topic');
-      final linksPath = p.join(topics.path, 'links.md');
-      File(configPath).writeAsStringSync('''
+            .setMockMethodCallHandler(yaruWindowChannel, (call) async {
+              if (call.method == 'state') return <String, Object?>{};
+              return null;
+            });
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              yaruWindowEventsChannel,
+              (_) async => null,
+            );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            ..setMockMethodCallHandler(yaruWindowChannel, null)
+            ..setMockMethodCallHandler(yaruWindowEventsChannel, null);
+        });
+        final binding = TestWidgetsFlutterBinding.ensureInitialized();
+        binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+        await binding.setSurfaceSize(const Size(1440, 900));
+        addTearDown(() async {
+          binding.platformDispatcher.defaultRouteNameTestValue = '/';
+          await binding.setSurfaceSize(null);
+        });
+        final temporary = Directory.systemTemp.createTempSync(
+          'busymark-topic-rename-ui-',
+        );
+        final root = longPath
+            ? (Directory(
+                p.joinAll([
+                  temporary.path,
+                  for (var index = 0; index < 4; index++)
+                    'long-project-segment-$index-with-readable-project-details',
+                ]),
+              )..createSync(recursive: true))
+            : temporary;
+        addTearDown(() {
+          if (temporary.existsSync()) temporary.deleteSync(recursive: true);
+        });
+        final topics = Directory(p.join(root.path, 'topics'))..createSync();
+        final configPath = p.join(root.path, 'writerside.cfg');
+        final treePath = p.join(root.path, 'guide.tree');
+        final topicPath = p.join(topics.path, 'guide.topic');
+        final linksPath = p.join(topics.path, 'links.md');
+        File(configPath).writeAsStringSync('''
 <ihp version="2.0"><topics dir="topics"/><instance src="guide.tree"/></ihp>
 ''');
-      File(treePath).writeAsStringSync('''
+        File(treePath).writeAsStringSync('''
 <instance-profile id="guide" start-page="guide.topic">
   <toc-element topic="guide.topic"/>
   <toc-element topic="links.md"/>
 </instance-profile>
 ''');
-      const topicSource =
-          '<topic id="guide" title="Guide">'
-          '<chapter id="install" title="Install"/>'
-          '</topic>\n';
-      File(topicPath).writeAsStringSync(topicSource);
-      File(linksPath).writeAsStringSync('# Links\n\n[Guide](guide.topic)\n');
-      final workspace = (await tester.runAsync(
-        () => const WorkspaceService().openPath(root.path),
-      ))!;
-      final setupPlan = (await tester.runAsync(
-        () => const WorkspaceService().prepareWritersideTopicRename(
-          workspace,
-          topicPath: topicPath,
-          newFileName: 'setup.topic',
-          topicModuleRoot: root.path,
-        ),
-      ))!;
-      final controller =
-          _MutableWorkspaceController(
-              WorkspaceState(workspace: workspace, activeText: topicSource),
-            )
-            ..topicRenamePlans['setup.topic'] = setupPlan
-            ..simulateTopicRename = true;
-      final container = ProviderContainer(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-          workspaceControllerProvider.overrideWith(() => controller),
-        ],
-      );
-      addTearDown(container.dispose);
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const BusyMarkApp(),
-        ),
-      );
-      await tester.pump();
-      for (var index = 0; index < 10; index++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-
-      Future<void> openPopup(Finder anchor) async {
-        await tester.tap(anchor, buttons: kSecondaryButton);
-        await tester.pumpAndSettle();
-      }
-
-      Future<void> pressShiftF6() async {
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.f6);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-        await tester.pumpAndSettle();
-      }
-
-      Future<void> enterRename(String fileName) async {
-        final field = find.descendant(
-          of: find.byType(BusyMarkDialogShell),
-          matching: find.byType(EditableText),
+        const topicSource =
+            '<topic id="guide" title="Guide">'
+            '<chapter id="install" title="Install"/>'
+            '</topic>\n';
+        File(topicPath).writeAsStringSync(topicSource);
+        File(linksPath).writeAsStringSync('# Links\n\n[Guide](guide.topic)\n');
+        final workspace = (await tester.runAsync(
+          () => const WorkspaceService().openPath(root.path),
+        ))!;
+        final setupPlan = (await tester.runAsync(
+          () => const WorkspaceService().prepareWritersideTopicRename(
+            workspace,
+            topicPath: topicPath,
+            newFileName: 'setup.topic',
+            topicModuleRoot: root.path,
+          ),
+        ))!;
+        final controller =
+            _MutableWorkspaceController(
+                WorkspaceState(workspace: workspace, activeText: topicSource),
+              )
+              ..topicRenamePlans['setup.topic'] = setupPlan
+              ..simulateTopicRename = true;
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides,
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            workspaceControllerProvider.overrideWith(() => controller),
+          ],
         );
-        expect(field, findsOneWidget);
-        await tester.enterText(field, fileName);
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
         await tester.pump();
-      }
+        for (var index = 0; index < 10; index++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
 
-      await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.toc));
-      await tester.pumpAndSettle();
-      final firstRow = find.byKey(
-        const ValueKey('workspace-sidebar-toc-row-0'),
-      );
-      await tester.tap(firstRow);
-      await tester.pump();
+        Future<void> openPopup(Finder anchor) async {
+          await tester.tap(anchor, buttons: kSecondaryButton);
+          await tester.pumpAndSettle();
+        }
 
-      await pressShiftF6();
-      expect(find.text(l10n.rename), findsOneWidget);
-      expect(find.text(l10n.preview), findsOneWidget);
-      expect(find.text(l10n.tocRefactorMenu), findsOneWidget);
-      await tester.tap(find.text(l10n.cancel));
-      await tester.pumpAndSettle();
-      expect(File(topicPath).readAsStringSync(), topicSource);
+        Future<void> pressShiftF6() async {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.f6);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.pumpAndSettle();
+        }
 
-      await openPopup(firstRow);
-      final renameMenuItem = find.text(l10n.renameTopicFile);
-      expect(renameMenuItem, findsOneWidget);
-      await tester.tap(renameMenuItem);
-      await tester.pumpAndSettle();
-      await enterRename('setup.topic');
-      await tester.tap(find.text(l10n.preview));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+        Future<void> enterRename(String fileName) async {
+          final field = find.descendant(
+            of: find.byType(BusyMarkDialogShell),
+            matching: find.byType(EditableText),
+          );
+          expect(field, findsOneWidget);
+          await tester.enterText(field, fileName);
+          await tester.pump();
+        }
 
-      expect(
-        find.text(l10n.topicRenamePreviewTitle),
-        findsOneWidget,
-        reason:
-            'prepared=${controller.topicRenamePrepareCount}, '
-            'error=${controller.state.message?.error}',
-      );
-      expect(find.text(l10n.doRefactor), findsOneWidget);
-      expect(find.text('guide.topic → setup.topic'), findsOneWidget);
-      expect(find.text('guide.tree'), findsOneWidget);
-      expect(find.text('links.md'), findsOneWidget);
-      expect(File(topicPath).readAsStringSync(), topicSource);
-      expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
+        await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.toc));
+        await tester.pumpAndSettle();
+        final firstRow = find.byKey(
+          const ValueKey('workspace-sidebar-toc-row-0'),
+        );
+        await tester.tap(firstRow);
+        await tester.pump();
 
-      controller.rejectTopicRename = true;
-      await tester.tap(find.text(l10n.doRefactor));
-      await tester.pump();
-      expect(find.text(l10n.topicRenamePreviewTitle), findsOneWidget);
-      expect(File(topicPath).readAsStringSync(), topicSource);
-      expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
+        await pressShiftF6();
+        expect(find.text(l10n.rename), findsOneWidget);
+        expect(find.text(l10n.preview), findsOneWidget);
+        expect(find.text(l10n.tocRefactorMenu), findsOneWidget);
+        await tester.tap(find.text(l10n.cancel));
+        await tester.pumpAndSettle();
+        expect(File(topicPath).readAsStringSync(), topicSource);
 
-      controller.rejectTopicRename = false;
-      controller.appliedTopicRenamePlan = null;
-      controller.markWritersideProjectBufferDirty(
-        path: linksPath,
-        text: '# Links\n\nUnsaved after preview.\n',
-        lastSavedText: File(linksPath).readAsStringSync(),
-      );
-      await tester.tap(find.text(l10n.doRefactor));
-      await tester.pumpAndSettle();
-      expect(find.text(l10n.topicRenamePreviewTitle), findsNothing);
-      expect(controller.appliedTopicRenamePlan, isNull);
-      expect(File(topicPath).readAsStringSync(), topicSource);
-      expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
+        await openPopup(firstRow);
+        final renameMenuItem = find.text(l10n.renameTopicFile);
+        expect(renameMenuItem, findsOneWidget);
+        await tester.tap(renameMenuItem);
+        await tester.pumpAndSettle();
+        await enterRename('setup.topic');
+        await tester.tap(find.text(l10n.preview));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
-      controller.clearDocumentBuffersForTest();
-      await openPopup(firstRow);
-      await tester.tap(find.text(l10n.renameTopicFile));
-      await tester.pumpAndSettle();
-      await enterRename('setup.topic');
-      await tester.tap(find.text(l10n.preview));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.tap(find.text(l10n.doRefactor));
-      await tester.pumpAndSettle();
-      expect(controller.appliedTopicRenamePlan, same(setupPlan));
-      expect(File(topicPath).readAsStringSync(), topicSource);
-      expect(File(treePath).readAsStringSync(), contains('guide.topic'));
-      expect(File(linksPath).readAsStringSync(), contains('(guide.topic)'));
+        expect(
+          find.text(l10n.topicRenamePreviewTitle),
+          findsOneWidget,
+          reason:
+              'prepared=${controller.topicRenamePrepareCount}, '
+              'error=${controller.state.message?.error}',
+        );
+        expect(find.text(l10n.doRefactor), findsOneWidget);
+        if (longPath) {
+          final scrollable = find
+              .descendant(
+                of: find.byKey(const ValueKey('topic-rename-preview-scroll')),
+                matching: find.byType(Scrollable),
+              )
+              .first;
+          await tester.scrollUntilVisible(
+            find.byKey(const ValueKey('topic-rename-affected-files')),
+            400,
+            scrollable: scrollable,
+          );
+          await tester.pumpAndSettle();
+        }
+        expect(find.text('guide.topic → setup.topic'), findsOneWidget);
+        expect(find.text('guide.tree'), findsOneWidget);
+        expect(find.text('links.md'), findsOneWidget);
+        expect(File(topicPath).readAsStringSync(), topicSource);
+        expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
 
-      await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.files));
-      await tester.pumpAndSettle();
-      controller.appliedTopicRenamePlan = null;
-      await openPopup(find.text('guide.topic').first);
-      await tester.tap(find.text(l10n.renameTopicFile));
-      await tester.pumpAndSettle();
-      await enterRename('setup.topic');
-      await tester.tap(find.text(l10n.tocRefactorMenu));
-      await tester.pumpAndSettle();
-      expect(controller.appliedTopicRenamePlan, same(setupPlan));
+        if (longPath) {
+          expect(tester.takeException(), isNull);
+          await tester.ensureVisible(find.text('links.md'));
+          await tester.pumpAndSettle();
+          expect(find.text('links.md').hitTestable(), findsOneWidget);
+          expect(find.text(l10n.doRefactor).hitTestable(), findsOneWidget);
+          await tester.tap(find.text('links.md'));
+          await tester.pumpAndSettle();
+          final scrollable = find
+              .descendant(
+                of: find.byKey(const ValueKey('topic-rename-preview-scroll')),
+                matching: find.byType(Scrollable),
+              )
+              .first;
+          await tester.scrollUntilVisible(
+            find.byKey(const ValueKey('topic-rename-path-change')),
+            -400,
+            scrollable: scrollable,
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        }
 
-      await openPopup(find.text('guide.tree'));
-      await tester.tap(find.text(l10n.rename));
-      await tester.pumpAndSettle();
-      expect(find.text(l10n.preview), findsNothing);
-      expect(find.text(l10n.rename), findsWidgets);
-      await tester.tap(find.text(l10n.cancel));
-      await tester.pumpAndSettle();
+        controller.rejectTopicRename = true;
+        await tester.tap(find.text(l10n.doRefactor));
+        await tester.pump();
+        expect(find.text(l10n.topicRenamePreviewTitle), findsOneWidget);
+        expect(File(topicPath).readAsStringSync(), topicSource);
+        expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
 
-      await openPopup(find.text('guide.topic').first);
-      await tester.tap(find.text(l10n.renameTopicFile));
-      await tester.pumpAndSettle();
-      expect(find.text(l10n.preview), findsOneWidget);
-      expect(find.text(l10n.tocRefactorMenu), findsOneWidget);
-      await tester.tap(find.text(l10n.cancel));
-      await tester.pumpAndSettle();
+        controller.rejectTopicRename = false;
+        controller.appliedTopicRenamePlan = null;
+        controller.markWritersideProjectBufferDirty(
+          path: linksPath,
+          text: '# Links\n\nUnsaved after preview.\n',
+          lastSavedText: File(linksPath).readAsStringSync(),
+        );
+        await tester.tap(find.text(l10n.doRefactor));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.topicRenamePreviewTitle), findsNothing);
+        expect(controller.appliedTopicRenamePlan, isNull);
+        expect(File(topicPath).readAsStringSync(), topicSource);
+        expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
 
-      final sourceField = find.descendant(
-        of: find.byType(BusyMarkSourceEditor),
-        matching: find.byType(TextField),
-      );
-      expect(sourceField, findsOneWidget);
-      await tester.tap(sourceField);
-      final sourceController = tester
-          .widget<TextField>(sourceField)
-          .controller!;
-      final sourceEditor = tester.widget<BusyMarkSourceEditor>(
-        find.byType(BusyMarkSourceEditor),
-      );
-      controller.editorIndexOverride = const WritersideProjectIndex(
-        symbols: [],
-        references: [],
-        diagnostics: [],
-      );
-      sourceEditor.onSymbolAction!(
-        SourceSymbolAction.usages,
-        topicSource.length - 1,
-      );
-      await tester.pumpAndSettle();
-      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-      expect(find.text(l10n.noResults), findsOneWidget);
-      expect(find.byType(AlertDialog), findsNothing);
-      await tester.tap(find.text(l10n.close));
-      await tester.pumpAndSettle();
-      controller.editorIndexOverride = null;
+        controller.clearDocumentBuffersForTest();
+        await openPopup(firstRow);
+        await tester.tap(find.text(l10n.renameTopicFile));
+        await tester.pumpAndSettle();
+        await enterRename('setup.topic');
+        await tester.tap(find.text(l10n.preview));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(find.text(l10n.doRefactor));
+        await tester.pumpAndSettle();
+        expect(controller.appliedTopicRenamePlan, same(setupPlan));
+        expect(File(topicPath).readAsStringSync(), topicSource);
+        expect(File(treePath).readAsStringSync(), contains('guide.topic'));
+        expect(File(linksPath).readAsStringSync(), contains('(guide.topic)'));
 
-      sourceEditor.onSymbolAction!(
-        SourceSymbolAction.usages,
-        topicSource.indexOf('guide') + 1,
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('${l10n.findUsages}: guide'), findsOneWidget);
-      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-      expect(find.byType(BusyMarkActionRow), findsWidgets);
-      expect(find.text('links.md'), findsWidgets);
-      await tester.tap(find.text(l10n.close));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.files));
+        await tester.pumpAndSettle();
+        controller.appliedTopicRenamePlan = null;
+        await openPopup(find.text('guide.topic').first);
+        await tester.tap(find.text(l10n.renameTopicFile));
+        await tester.pumpAndSettle();
+        await enterRename('setup.topic');
+        await tester.tap(find.text(l10n.tocRefactorMenu));
+        await tester.pumpAndSettle();
+        expect(controller.appliedTopicRenamePlan, same(setupPlan));
 
-      sourceEditor.onSymbolAction!(
-        SourceSymbolAction.rename,
-        topicSource.indexOf('install') + 1,
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField), 'invalid!');
-      await tester.tap(find.text(l10n.rename));
-      await tester.pumpAndSettle();
-      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-      expect(find.text(l10n.cannotRenameSymbol), findsOneWidget);
-      expect(find.byType(AlertDialog), findsNothing);
-      expect(controller.state.activeText, topicSource);
-      await tester.tap(find.text(l10n.close));
-      await tester.pumpAndSettle();
+        await openPopup(find.text('guide.tree'));
+        await tester.tap(find.text(l10n.rename));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.preview), findsNothing);
+        expect(find.text(l10n.rename), findsWidgets);
+        await tester.tap(find.text(l10n.cancel));
+        await tester.pumpAndSettle();
 
-      sourceController.selection = TextSelection.collapsed(
-        offset: topicSource.indexOf('guide') + 1,
-      );
-      await pressShiftF6();
-      expect(find.text(l10n.renameTopicFileInstead), findsOneWidget);
-      expect(controller.state.activeText, topicSource);
-      expect(File(topicPath).readAsStringSync(), topicSource);
-      await tester.tap(find.text(l10n.close));
-      await tester.pumpAndSettle();
+        await openPopup(find.text('guide.topic').first);
+        await tester.tap(find.text(l10n.renameTopicFile));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.preview), findsOneWidget);
+        expect(find.text(l10n.tocRefactorMenu), findsOneWidget);
+        await tester.tap(find.text(l10n.cancel));
+        await tester.pumpAndSettle();
 
-      await tester.tap(sourceField);
-      sourceController.selection = TextSelection.collapsed(
-        offset: topicSource.indexOf('install') + 1,
-      );
-      await pressShiftF6();
-      expect(find.text('${l10n.rename}: install'), findsOneWidget);
-      expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
-      expect(find.byType(Dialog), findsOneWidget);
-      expect(find.byType(AlertDialog), findsNothing);
-      await tester.tapAt(const Offset(1, 1));
-      await tester.pump();
-      expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
-      await tester.enterText(find.byType(TextFormField), 'renamed-install');
-      await tester.tap(find.text(l10n.rename));
-      await tester.pumpAndSettle();
-      expect(controller.state.activeText, contains('id="renamed-install"'));
-      expect(controller.state.activeText, contains('id="guide"'));
-    },
-  );
+        final sourceField = find.descendant(
+          of: find.byType(BusyMarkSourceEditor),
+          matching: find.byType(TextField),
+        );
+        expect(sourceField, findsOneWidget);
+        await tester.tap(sourceField);
+        final sourceController = tester
+            .widget<TextField>(sourceField)
+            .controller!;
+        final sourceEditor = tester.widget<BusyMarkSourceEditor>(
+          find.byType(BusyMarkSourceEditor),
+        );
+        controller.editorIndexOverride = const WritersideProjectIndex(
+          symbols: [],
+          references: [],
+          diagnostics: [],
+        );
+        sourceEditor.onSymbolAction!(
+          SourceSymbolAction.usages,
+          topicSource.length - 1,
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+        expect(find.text(l10n.noResults), findsOneWidget);
+        expect(find.byType(AlertDialog), findsNothing);
+        await tester.tap(find.text(l10n.close));
+        await tester.pumpAndSettle();
+        controller.editorIndexOverride = null;
+
+        sourceEditor.onSymbolAction!(
+          SourceSymbolAction.usages,
+          topicSource.indexOf('guide') + 1,
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('${l10n.findUsages}: guide'), findsOneWidget);
+        expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+        expect(find.byType(BusyMarkActionRow), findsWidgets);
+        expect(find.text('links.md'), findsWidgets);
+        await tester.tap(find.text(l10n.close));
+        await tester.pumpAndSettle();
+
+        sourceEditor.onSymbolAction!(
+          SourceSymbolAction.rename,
+          topicSource.indexOf('install') + 1,
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField), 'invalid!');
+        await tester.tap(find.text(l10n.rename));
+        await tester.pumpAndSettle();
+        expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+        expect(find.text(l10n.cannotRenameSymbol), findsOneWidget);
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(controller.state.activeText, topicSource);
+        await tester.tap(find.text(l10n.close));
+        await tester.pumpAndSettle();
+
+        sourceController.selection = TextSelection.collapsed(
+          offset: topicSource.indexOf('guide') + 1,
+        );
+        await pressShiftF6();
+        expect(find.text(l10n.renameTopicFileInstead), findsOneWidget);
+        expect(controller.state.activeText, topicSource);
+        expect(File(topicPath).readAsStringSync(), topicSource);
+        await tester.tap(find.text(l10n.close));
+        await tester.pumpAndSettle();
+
+        await tester.tap(sourceField);
+        sourceController.selection = TextSelection.collapsed(
+          offset: topicSource.indexOf('install') + 1,
+        );
+        await pressShiftF6();
+        expect(find.text('${l10n.rename}: install'), findsOneWidget);
+        expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+        expect(find.byType(Dialog), findsOneWidget);
+        expect(find.byType(AlertDialog), findsNothing);
+        await tester.tapAt(const Offset(1, 1));
+        await tester.pump();
+        expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+        await tester.enterText(find.byType(TextFormField), 'renamed-install');
+        await tester.tap(find.text(l10n.rename));
+        await tester.pumpAndSettle();
+        expect(controller.state.activeText, contains('id="renamed-install"'));
+        expect(controller.state.activeText, contains('id="guide"'));
+      },
+    );
+  }
 
   testWidgets(
     'topic rename saves every dirty Writerside project source before planning',
