@@ -794,7 +794,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'إظهار مرجع اختصارات لوحة المفاتيح';
+      'تخصيص اختصارات لوحة مفاتيح التطبيق';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'فتح مرجع بناء الجملة';
@@ -5476,4 +5476,89 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'لا توجد موارد حديثة';
+
+  @override
+  String get searchSidebarLabel => 'بحث:';
+
+  @override
+  String get searchDocumentTextCategory => 'نص المستند';
+
+  @override
+  String get searchWorkspaceTextCategory => 'نص مساحة العمل';
+
+  @override
+  String get searchHeadingsCategory => 'العناوين';
+
+  @override
+  String get shortcutUnassigned => 'غير معيّن';
+
+  @override
+  String get shortcutSearchHint => 'ابحث عن إجراءات أو اختصارات…';
+
+  @override
+  String get shortcutFindBy => 'البحث بالاختصار';
+
+  @override
+  String get shortcutPressKeys => 'اضغط مجموعة مفاتيح…';
+
+  @override
+  String get shortcutRecord => 'تسجيل اختصار';
+
+  @override
+  String get shortcutRestoreAll => 'استعادة جميع الإعدادات الافتراضية';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'هل تريد استعادة الاختصارات الافتراضية لجميع الإجراءات؟ ستُزال التعيينات المخصصة.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'الاختصارات مفعّلة ولكن تعذر حفظها. أعد المحاولة للاحتفاظ بها بعد إعادة التشغيل.';
+
+  @override
+  String get shortcutRetry => 'إعادة محاولة الحفظ';
+
+  @override
+  String get shortcutChanged =>
+      'تغيرت التعيينات. راجع الاختصارات الحالية وحاول مجددًا.';
+
+  @override
+  String get shortcutInvalid => 'لا يمكن تعيين هذه المجموعة في هذا السياق.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'قد يستخدم سطح المكتب هذه المجموعة. لا يستطيع BusyMark تجاوز اختصارات النظام.';
+
+  @override
+  String get shortcutConflicts => 'يتعارض هذا الاختصار مع الإجراءات التالية:';
+
+  @override
+  String get shortcutRemove => 'إزالة التعيين';
+
+  @override
+  String get shortcutRestoreDefault => 'استعادة الافتراضي';
+
+  @override
+  String get shortcutAssign => 'تعيين';
+
+  @override
+  String get shortcutReassign => 'إعادة التعيين';
+
+  @override
+  String get shortcutContextApplication => 'التطبيق';
+
+  @override
+  String get shortcutContextDocument => 'طرق عرض المستند';
+
+  @override
+  String get shortcutContextEditor => 'المحرر والمصدر';
+
+  @override
+  String get shortcutContextWritersideSource => 'مصدر Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'التنقل في مساحة العمل';
+
+  @override
+  String get shortcutContextTree => 'أشجار الشريط الجانبي';
 }

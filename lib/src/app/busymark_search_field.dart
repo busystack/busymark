@@ -2,6 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
+/// Identifies local query input to the application's early keyboard route.
+/// No ancestor lookup is needed while focus detaches during navigation.
+class BusyMarkSearchFocusNode extends FocusNode {
+  BusyMarkSearchFocusNode()
+    : super(debugLabel: 'BusyMarkSearchField text entry');
+}
+
+/// Keep input editing local without shadowing application navigation (for
+/// example Alt+Left) with a second complete platform shortcut map.
+class BusyMarkLocalTextEditingShortcuts extends StatelessWidget {
+  const BusyMarkLocalTextEditingShortcuts({super.key, required this.child});
+
+  final Widget child;
+  static const bindings = <ShortcutActivator, Intent>{
+    SingleActivator(LogicalKeyboardKey.keyA, control: true):
+        SelectAllTextIntent(SelectionChangedCause.keyboard),
+    SingleActivator(LogicalKeyboardKey.keyC, control: true):
+        CopySelectionTextIntent.copy,
+    SingleActivator(LogicalKeyboardKey.insert, control: true):
+        CopySelectionTextIntent.copy,
+    SingleActivator(LogicalKeyboardKey.keyX, control: true):
+        CopySelectionTextIntent.cut(SelectionChangedCause.keyboard),
+    SingleActivator(LogicalKeyboardKey.delete, shift: true):
+        CopySelectionTextIntent.cut(SelectionChangedCause.keyboard),
+    SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteTextIntent(
+      SelectionChangedCause.keyboard,
+    ),
+    SingleActivator(LogicalKeyboardKey.insert, shift: true): PasteTextIntent(
+      SelectionChangedCause.keyboard,
+    ),
+    SingleActivator(LogicalKeyboardKey.keyZ, control: true): UndoTextIntent(
+      SelectionChangedCause.keyboard,
+    ),
+    SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true):
+        RedoTextIntent(SelectionChangedCause.keyboard),
+  };
+
+  @override
+  Widget build(BuildContext context) =>
+      Shortcuts(shortcuts: bindings, child: child);
+}
+
 /// Flutter counterpart to BusyMark's native Linux `GtkSearchEntry`.
 ///
 /// The native entry cannot be embedded in Flutter-owned layouts. This uses the
@@ -46,7 +88,7 @@ class BusyMarkSearchField extends StatefulWidget {
 class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
   late TextEditingController _controller;
   late bool _textIsEmpty;
-  final _focusNode = FocusNode(debugLabel: 'BusyMarkSearchField text entry');
+  final _focusNode = BusyMarkSearchFocusNode();
 
   @override
   void initState() {
@@ -117,10 +159,12 @@ class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
   @override
   Widget build(BuildContext context) {
     _focusNode.onKeyEvent = (_, event) {
-      if (event is! KeyDownEvent || _controller.value.composing.isValid) {
+      if ((event is! KeyDownEvent && event is! KeyRepeatEvent) ||
+          _controller.value.composing.isValid) {
         return KeyEventResult.ignored;
       }
-      if (event.logicalKey == LogicalKeyboardKey.enter &&
+      if (event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.enter &&
           widget.onSubmitted != null) {
         widget.onSubmitted!(_controller.text);
         return KeyEventResult.handled;
@@ -152,32 +196,36 @@ class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
       },
       child: SizedBox(
         height: kYaruTitleBarItemHeight,
-        child: TextField(
-          controller: _controller,
-          focusNode: _focusNode,
-          autofocus: widget.autofocus,
-          textInputAction: TextInputAction.search,
-          textAlignVertical: TextAlignVertical.center,
-          cursorWidth: 1,
-          onChanged: widget.onChanged,
-          onSubmitted: widget.onSubmitted,
-          decoration: InputDecoration(
-            hintText: widget.hintText,
-            filled: true,
-            fillColor: theme.colorScheme.surface,
-            prefixIcon: const Icon(YaruIcons.search),
-            prefixIconConstraints: const BoxConstraints.tightFor(
-              width: kYaruTitleBarItemHeight,
-            ),
-            suffixIcon: _textIsEmpty
-                ? null
-                : IconButton(
-                    tooltip: clearLabel,
-                    onPressed: _clear,
-                    icon: const Icon(YaruIcons.edit_clear),
-                  ),
-            suffixIconConstraints: const BoxConstraints.tightFor(
-              width: kYaruTitleBarItemHeight,
+        // Query editing stays local even if an application command acquires
+        // one of the platform's ordinary text-editing combinations.
+        child: BusyMarkLocalTextEditingShortcuts(
+          child: TextField(
+            controller: _controller,
+            focusNode: _focusNode,
+            autofocus: widget.autofocus,
+            textInputAction: TextInputAction.search,
+            textAlignVertical: TextAlignVertical.center,
+            cursorWidth: 1,
+            onChanged: widget.onChanged,
+            onSubmitted: widget.onSubmitted,
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              prefixIcon: const Icon(YaruIcons.search),
+              prefixIconConstraints: const BoxConstraints.tightFor(
+                width: kYaruTitleBarItemHeight,
+              ),
+              suffixIcon: _textIsEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: clearLabel,
+                      onPressed: _clear,
+                      icon: const Icon(YaruIcons.edit_clear),
+                    ),
+              suffixIconConstraints: const BoxConstraints.tightFor(
+                width: kYaruTitleBarItemHeight,
+              ),
             ),
           ),
         ),

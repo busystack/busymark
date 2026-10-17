@@ -1612,7 +1612,7 @@ abstract class AppLocalizations {
   /// Keyboard shortcut description for opening shortcuts.
   ///
   /// In en, this message translates to:
-  /// **'Show this keyboard shortcut reference'**
+  /// **'Customize application keyboard shortcuts'**
   String get shortcutKeyboardShortcutsDescription;
 
   /// Keyboard shortcut description for opening the Syntax Reference.
@@ -9359,6 +9359,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No recent resources'**
   String get searchRecentEmpty;
+
+  /// Search and keyboard shortcut settings: searchSidebarLabel
+  ///
+  /// In en, this message translates to:
+  /// **'Search:'**
+  String get searchSidebarLabel;
+
+  /// Search and keyboard shortcut settings: searchDocumentTextCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Document Text'**
+  String get searchDocumentTextCategory;
+
+  /// Search and keyboard shortcut settings: searchWorkspaceTextCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace Text'**
+  String get searchWorkspaceTextCategory;
+
+  /// Search and keyboard shortcut settings: searchHeadingsCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Headings'**
+  String get searchHeadingsCategory;
+
+  /// Search and keyboard shortcut settings: shortcutUnassigned
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get shortcutUnassigned;
+
+  /// Search and keyboard shortcut settings: shortcutSearchHint
+  ///
+  /// In en, this message translates to:
+  /// **'Search actions or shortcuts…'**
+  String get shortcutSearchHint;
+
+  /// Search and keyboard shortcut settings: shortcutFindBy
+  ///
+  /// In en, this message translates to:
+  /// **'Find by shortcut'**
+  String get shortcutFindBy;
+
+  /// Search and keyboard shortcut settings: shortcutPressKeys
+  ///
+  /// In en, this message translates to:
+  /// **'Press a key combination…'**
+  String get shortcutPressKeys;
+
+  /// Search and keyboard shortcut settings: shortcutRecord
+  ///
+  /// In en, this message translates to:
+  /// **'Record shortcut'**
+  String get shortcutRecord;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreAll
+  ///
+  /// In en, this message translates to:
+  /// **'Restore all defaults'**
+  String get shortcutRestoreAll;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreAllQuestion
+  ///
+  /// In en, this message translates to:
+  /// **'Restore every action’s default shortcut? Custom assignments will be removed.'**
+  String get shortcutRestoreAllQuestion;
+
+  /// Search and keyboard shortcut settings: shortcutSaveFailed
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcuts are active but could not be saved. Retry to keep them after restart.'**
+  String get shortcutSaveFailed;
+
+  /// Search and keyboard shortcut settings: shortcutRetry
+  ///
+  /// In en, this message translates to:
+  /// **'Retry saving'**
+  String get shortcutRetry;
+
+  /// Search and keyboard shortcut settings: shortcutChanged
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments changed. Review the current shortcuts and try again.'**
+  String get shortcutChanged;
+
+  /// Search and keyboard shortcut settings: shortcutInvalid
+  ///
+  /// In en, this message translates to:
+  /// **'This combination cannot be assigned in this context.'**
+  String get shortcutInvalid;
+
+  /// Search and keyboard shortcut settings: shortcutSystemWarning
+  ///
+  /// In en, this message translates to:
+  /// **'This combination may be used by your desktop. BusyMark cannot override system shortcuts.'**
+  String get shortcutSystemWarning;
+
+  /// Search and keyboard shortcut settings: shortcutConflicts
+  ///
+  /// In en, this message translates to:
+  /// **'This shortcut overlaps these actions:'**
+  String get shortcutConflicts;
+
+  /// Search and keyboard shortcut settings: shortcutRemove
+  ///
+  /// In en, this message translates to:
+  /// **'Remove assignment'**
+  String get shortcutRemove;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreDefault
+  ///
+  /// In en, this message translates to:
+  /// **'Restore default'**
+  String get shortcutRestoreDefault;
+
+  /// Search and keyboard shortcut settings: shortcutAssign
+  ///
+  /// In en, this message translates to:
+  /// **'Assign'**
+  String get shortcutAssign;
+
+  /// Search and keyboard shortcut settings: shortcutReassign
+  ///
+  /// In en, this message translates to:
+  /// **'Reassign'**
+  String get shortcutReassign;
+
+  /// Search and keyboard shortcut settings: shortcutContextApplication
+  ///
+  /// In en, this message translates to:
+  /// **'Application'**
+  String get shortcutContextApplication;
+
+  /// Search and keyboard shortcut settings: shortcutContextDocument
+  ///
+  /// In en, this message translates to:
+  /// **'Document views'**
+  String get shortcutContextDocument;
+
+  /// Search and keyboard shortcut settings: shortcutContextEditor
+  ///
+  /// In en, this message translates to:
+  /// **'Editor and Source'**
+  String get shortcutContextEditor;
+
+  /// Search and keyboard shortcut settings: shortcutContextWritersideSource
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside Source'**
+  String get shortcutContextWritersideSource;
+
+  /// Search and keyboard shortcut settings: shortcutContextWorkspace
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace navigation'**
+  String get shortcutContextWorkspace;
+
+  /// Search and keyboard shortcut settings: shortcutContextTree
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar trees'**
+  String get shortcutContextTree;
 }
 
 class _AppLocalizationsDelegate

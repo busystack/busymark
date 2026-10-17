@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Показати довідку з комбінацій клавіш",
+  "shortcutKeyboardShortcutsDescription": "Налаштувати сполучення клавіш застосунку",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3642,5 +3642,32 @@
   "searchRecentHint": "Пошук нещодавніх…",
   "searchActionsHint": "Пошук дій…",
   "searchRequiresNotesWorkspace": "Потрібен робочий простір нотаток",
-  "searchRecentEmpty": "Немає нещодавніх ресурсів"
+  "searchRecentEmpty": "Немає нещодавніх ресурсів",
+  "searchSidebarLabel": "Пошук:",
+  "searchDocumentTextCategory": "Текст документа",
+  "searchWorkspaceTextCategory": "Текст робочої області",
+  "searchHeadingsCategory": "Заголовки",
+  "shortcutUnassigned": "Не призначено",
+  "shortcutSearchHint": "Пошук дій або сполучень клавіш…",
+  "shortcutFindBy": "Знайти за сполученням клавіш",
+  "shortcutPressKeys": "Натисніть сполучення клавіш…",
+  "shortcutRecord": "Записати сполучення клавіш",
+  "shortcutRestoreAll": "Відновити всі типові значення",
+  "shortcutRestoreAllQuestion": "Відновити типові сполучення всіх дій? Власні призначення буде видалено.",
+  "shortcutSaveFailed": "Сполучення діють, але їх не збережено. Повторіть збереження, щоб залишити їх після перезапуску.",
+  "shortcutRetry": "Повторити збереження",
+  "shortcutChanged": "Призначення змінилися. Перевірте поточні сполучення та повторіть спробу.",
+  "shortcutInvalid": "Це сполучення не можна призначити в цьому контексті.",
+  "shortcutSystemWarning": "Це сполучення може використовуватися стільницею. BusyMark не може перевизначати системні сполучення.",
+  "shortcutConflicts": "Це сполучення конфліктує з такими діями:",
+  "shortcutRemove": "Вилучити призначення",
+  "shortcutRestoreDefault": "Відновити типове",
+  "shortcutAssign": "Призначити",
+  "shortcutReassign": "Перепризначити",
+  "shortcutContextApplication": "Застосунок",
+  "shortcutContextDocument": "Подання документа",
+  "shortcutContextEditor": "Редактор і джерело",
+  "shortcutContextWritersideSource": "Джерело Writerside",
+  "shortcutContextWorkspace": "Навігація робочою областю",
+  "shortcutContextTree": "Дерева бічної панелі"
 }

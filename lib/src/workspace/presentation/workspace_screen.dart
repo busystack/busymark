@@ -616,29 +616,17 @@ class WorkspaceScreen extends ConsumerWidget {
       enabled: headerBar.isAvailable,
       child: Shortcuts(
         shortcuts: {
-          commandRegistry[BusyMarkCommandIds.sidebarFiles]!.shortcut!.activator:
-              const _SelectSidebarTabIntent(_SidebarTab.files),
-          const SingleActivator(LogicalKeyboardKey.numpad1, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.files),
-          commandRegistry[BusyMarkCommandIds.sidebarToc]!.shortcut!.activator:
-              const _SelectSidebarTabIntent(_SidebarTab.toc),
-          const SingleActivator(LogicalKeyboardKey.numpad2, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.toc),
-          commandRegistry[BusyMarkCommandIds.sidebarGit]!.shortcut!.activator:
-              const _SelectSidebarTabIntent(_SidebarTab.git),
-          const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.git),
-          commandRegistry[BusyMarkCommandIds.localHistory]!.shortcut!.activator:
-              const _SelectSidebarTabIntent(_SidebarTab.localHistory),
-          const SingleActivator(LogicalKeyboardKey.numpad5, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.localHistory),
-          commandRegistry[BusyMarkCommandIds.clipboardHistory]!
-              .shortcut!
-              .activator: const _SelectSidebarTabIntent(
-            _SidebarTab.clipboard,
-          ),
-          const SingleActivator(LogicalKeyboardKey.numpad6, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.clipboard),
+          for (final entry in const <String, _SidebarTab>{
+            BusyMarkCommandIds.sidebarFiles: _SidebarTab.files,
+            BusyMarkCommandIds.sidebarToc: _SidebarTab.toc,
+            BusyMarkCommandIds.sidebarGit: _SidebarTab.git,
+            BusyMarkCommandIds.localHistory: _SidebarTab.localHistory,
+            BusyMarkCommandIds.clipboardHistory: _SidebarTab.clipboard,
+          }.entries)
+            ...commandRegistry.bindingIntents(
+              entry.key,
+              _SelectSidebarTabIntent(entry.value),
+            ),
         },
         child: Actions(
           actions: {
@@ -920,10 +908,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.workspace));
       case BusyMarkMainMenuAction.keyboardShortcuts:
-        showBusyMarkKeyboardShortcutsDialog(context);
-      case BusyMarkMainMenuAction.quickOpen:
-      case BusyMarkMainMenuAction.commandPalette:
-        return;
+        openKeyboardShortcutsSettings(context);
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
@@ -992,7 +977,7 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.preview => BusyMarkCommandIds.viewReading,
       DocumentViewModePreference.split => BusyMarkCommandIds.viewSplit,
     };
-    return commands[id]!.shortcut!.label;
+    return commands[id]?.shortcut?.label ?? '';
   }
 
   Future<void> _showProblemsDialog(BuildContext context, WidgetRef ref) async {
@@ -4022,21 +4007,53 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
     }
     return Shortcuts(
       shortcuts: {
-        (BusyMarkCommandRegistryScope.maybeOf(context) ??
-                    BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
-                    .treeDeleteSelection]!
-                .shortcut!
-                .activator:
-            const _DeleteSelectedFileTreeEntryIntent(),
+        ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                BusyMarkCommandCatalog.metadata)
+            .bindingIntents(
+              BusyMarkCommandIds.treeDeleteSelection,
+              const _DeleteSelectedFileTreeEntryIntent(),
+            ),
         const SingleActivator(LogicalKeyboardKey.contextMenu):
             const _ShowSelectedSidebarTreeMenuIntent(),
         const SingleActivator(LogicalKeyboardKey.f10, shift: true):
             const _ShowSelectedSidebarTreeMenuIntent(),
-        const SingleActivator(LogicalKeyboardKey.f6, shift: true):
-            const _RenameSelectedTopicFileIntent(),
+        ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                BusyMarkCommandCatalog.metadata)
+            .bindingIntents(
+              BusyMarkCommandIds.treeRenameSelection,
+              const _RenameSelectedTopicFileIntent(),
+            ),
       },
       child: Actions(
         actions: {
+          BusyMarkContextCommandIntent: BusyMarkContextCommandAction(
+            captureTarget: () {
+              final selected = _selectedPath, workspaceId = widget.workspace.id;
+              return BusyMarkContextCommandSnapshot(
+                () =>
+                    mounted &&
+                    widget.workspace.id == workspaceId &&
+                    _selectedPath == selected,
+              );
+            },
+            isCommandEnabled: (id) =>
+                _selectedPath != null &&
+                const {
+                  BusyMarkCommandIds.treeDeleteSelection,
+                  BusyMarkCommandIds.treeRenameSelection,
+                }.contains(id),
+            onCommand: (id) {
+              final target = _treeFocusNode.context;
+              if (target != null) {
+                Actions.maybeInvoke(
+                  target,
+                  id == BusyMarkCommandIds.treeRenameSelection
+                      ? const _RenameSelectedTopicFileIntent()
+                      : const _DeleteSelectedFileTreeEntryIntent(),
+                );
+              }
+            },
+          ),
           _DeleteSelectedFileTreeEntryIntent:
               CallbackAction<_DeleteSelectedFileTreeEntryIntent>(
                 onInvoke: (_) {
@@ -4494,7 +4511,13 @@ Future<_FileTreeAction?> _showFileTreeMenu(
             ? context.l10n.renameTopicFile
             : context.l10n.rename,
         icon: BusyMarkGlyphs.edit,
-        shortcut: safeDeleteTopic ? 'Shift+F6' : null,
+        shortcut: safeDeleteTopic
+            ? (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                      .treeRenameSelection]
+                  ?.shortcut
+                  ?.label
+            : null,
       ),
       BusyMarkPopupMenuItem(
         value: _FileTreeAction.cut,
@@ -5550,21 +5573,56 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     return Shortcuts(
       shortcuts: {
-        (BusyMarkCommandRegistryScope.maybeOf(context) ??
-                    BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
-                    .treeDeleteSelection]!
-                .shortcut!
-                .activator:
-            const _RemoveSelectedTocEntryIntent(),
+        ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                BusyMarkCommandCatalog.metadata)
+            .bindingIntents(
+              BusyMarkCommandIds.treeDeleteSelection,
+              const _RemoveSelectedTocEntryIntent(),
+            ),
         const SingleActivator(LogicalKeyboardKey.contextMenu):
             const _ShowSelectedSidebarTreeMenuIntent(),
         const SingleActivator(LogicalKeyboardKey.f10, shift: true):
             const _ShowSelectedSidebarTreeMenuIntent(),
-        const SingleActivator(LogicalKeyboardKey.f6, shift: true):
-            const _RenameSelectedTopicFileIntent(),
+        ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                BusyMarkCommandCatalog.metadata)
+            .bindingIntents(
+              BusyMarkCommandIds.treeRenameSelection,
+              const _RenameSelectedTopicFileIntent(),
+            ),
       },
       child: Actions(
         actions: {
+          BusyMarkContextCommandIntent: BusyMarkContextCommandAction(
+            captureTarget: () {
+              final selected = _selectedNodePathKey;
+              final selection = Set<String>.of(_selectedNodePathKeys);
+              final workspaceId = widget.workspace.id;
+              return BusyMarkContextCommandSnapshot(
+                () =>
+                    mounted &&
+                    widget.workspace.id == workspaceId &&
+                    _selectedNodePathKey == selected &&
+                    setEquals(selection, _selectedNodePathKeys),
+              );
+            },
+            isCommandEnabled: (id) =>
+                selectedEntry != null &&
+                const {
+                  BusyMarkCommandIds.treeDeleteSelection,
+                  BusyMarkCommandIds.treeRenameSelection,
+                }.contains(id),
+            onCommand: (id) {
+              final target = _treeFocusNode.context;
+              if (target != null) {
+                Actions.maybeInvoke(
+                  target,
+                  id == BusyMarkCommandIds.treeRenameSelection
+                      ? const _RenameSelectedTopicFileIntent()
+                      : const _RemoveSelectedTocEntryIntent(),
+                );
+              }
+            },
+          ),
           _RemoveSelectedTocEntryIntent:
               CallbackAction<_RemoveSelectedTocEntryIntent>(
                 onInvoke: (_) {
@@ -7701,7 +7759,12 @@ Future<_TocTreeAction?> _showTocTreeMenu(
           value: _TocTreeAction.rename,
           label: context.l10n.renameTopicFile,
           icon: BusyMarkGlyphs.edit,
-          shortcut: 'Shift+F6',
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                      .treeRenameSelection]
+                  ?.shortcut
+                  ?.label,
           enabled: hasTopicFile,
         ),
         BusyMarkPopupMenuItem(

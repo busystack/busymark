@@ -806,7 +806,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Vis denne oversikten over tastatursnarveier';
+      'Tilpass programmets hurtigtaster';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Åpne syntaksreferansen';
@@ -5455,4 +5455,91 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Ingen nylige ressurser';
+
+  @override
+  String get searchSidebarLabel => 'Søk:';
+
+  @override
+  String get searchDocumentTextCategory => 'Dokumenttekst';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Arbeidsområdetekst';
+
+  @override
+  String get searchHeadingsCategory => 'Overskrifter';
+
+  @override
+  String get shortcutUnassigned => 'Ikke tilordnet';
+
+  @override
+  String get shortcutSearchHint => 'Søk etter handlinger eller hurtigtaster…';
+
+  @override
+  String get shortcutFindBy => 'Finn med hurtigtast';
+
+  @override
+  String get shortcutPressKeys => 'Trykk en tastekombinasjon…';
+
+  @override
+  String get shortcutRecord => 'Registrer hurtigtast';
+
+  @override
+  String get shortcutRestoreAll => 'Gjenopprett alle standarder';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Gjenopprette standardhurtigtaster for alle handlinger? Egne tilordninger fjernes.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Hurtigtastene er aktive, men kunne ikke lagres. Prøv igjen for å beholde dem etter omstart.';
+
+  @override
+  String get shortcutRetry => 'Prøv lagring igjen';
+
+  @override
+  String get shortcutChanged =>
+      'Tilordningene er endret. Se gjennom gjeldende hurtigtaster og prøv igjen.';
+
+  @override
+  String get shortcutInvalid =>
+      'Denne kombinasjonen kan ikke tilordnes i denne sammenhengen.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Skrivebordet kan bruke denne kombinasjonen. BusyMark kan ikke overstyre systemhurtigtaster.';
+
+  @override
+  String get shortcutConflicts =>
+      'Denne hurtigtasten overlapper disse handlingene:';
+
+  @override
+  String get shortcutRemove => 'Fjern tilordning';
+
+  @override
+  String get shortcutRestoreDefault => 'Gjenopprett standard';
+
+  @override
+  String get shortcutAssign => 'Tilordne';
+
+  @override
+  String get shortcutReassign => 'Tilordne på nytt';
+
+  @override
+  String get shortcutContextApplication => 'Program';
+
+  @override
+  String get shortcutContextDocument => 'Dokumentvisninger';
+
+  @override
+  String get shortcutContextEditor => 'Redigering og kilde';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside-kilde';
+
+  @override
+  String get shortcutContextWorkspace => 'Arbeidsområdenavigasjon';
+
+  @override
+  String get shortcutContextTree => 'Sidefelttrær';
 }

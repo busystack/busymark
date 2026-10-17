@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Afficher cette liste de raccourcis clavier",
+  "shortcutKeyboardShortcutsDescription": "Personnaliser les raccourcis clavier de l’application",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3616,5 +3616,32 @@
   "searchRecentHint": "Rechercher les éléments récents…",
   "searchActionsHint": "Rechercher des actions…",
   "searchRequiresNotesWorkspace": "Nécessite un espace de travail Notes",
-  "searchRecentEmpty": "Aucune ressource récente"
+  "searchRecentEmpty": "Aucune ressource récente",
+  "searchSidebarLabel": "Rechercher:",
+  "searchDocumentTextCategory": "Texte du document",
+  "searchWorkspaceTextCategory": "Texte de l’espace de travail",
+  "searchHeadingsCategory": "Titres",
+  "shortcutUnassigned": "Non attribué",
+  "shortcutSearchHint": "Rechercher des actions ou raccourcis…",
+  "shortcutFindBy": "Rechercher par raccourci",
+  "shortcutPressKeys": "Appuyez sur une combinaison de touches…",
+  "shortcutRecord": "Enregistrer un raccourci",
+  "shortcutRestoreAll": "Rétablir tous les raccourcis",
+  "shortcutRestoreAllQuestion": "Rétablir les raccourcis par défaut de toutes les actions ? Les affectations personnalisées seront supprimées.",
+  "shortcutSaveFailed": "Les raccourcis sont actifs mais n’ont pas été sauvegardés. Réessayez pour les conserver après redémarrage.",
+  "shortcutRetry": "Réessayer la sauvegarde",
+  "shortcutChanged": "Les affectations ont changé. Vérifiez les raccourcis actuels et réessayez.",
+  "shortcutInvalid": "Cette combinaison ne peut pas être attribuée dans ce contexte.",
+  "shortcutSystemWarning": "Cette combinaison peut être utilisée par votre bureau. BusyMark ne peut pas remplacer les raccourcis système.",
+  "shortcutConflicts": "Ce raccourci entre en conflit avec ces actions :",
+  "shortcutRemove": "Supprimer l’affectation",
+  "shortcutRestoreDefault": "Rétablir le raccourci par défaut",
+  "shortcutAssign": "Attribuer",
+  "shortcutReassign": "Réattribuer",
+  "shortcutContextApplication": "Application entière",
+  "shortcutContextDocument": "Vues du document",
+  "shortcutContextEditor": "Éditeur et source",
+  "shortcutContextWritersideSource": "Source Writerside",
+  "shortcutContextWorkspace": "Navigation de l’espace de travail",
+  "shortcutContextTree": "Arborescences latérales"
 }

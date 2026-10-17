@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Показать справку по сочетаниям клавиш",
+  "shortcutKeyboardShortcutsDescription": "Настроить сочетания клавиш приложения",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3642,5 +3642,32 @@
   "searchRecentHint": "Поиск недавних…",
   "searchActionsHint": "Поиск действий…",
   "searchRequiresNotesWorkspace": "Требуется рабочая область заметок",
-  "searchRecentEmpty": "Нет недавних ресурсов"
+  "searchRecentEmpty": "Нет недавних ресурсов",
+  "searchSidebarLabel": "Поиск:",
+  "searchDocumentTextCategory": "Текст документа",
+  "searchWorkspaceTextCategory": "Текст рабочей области",
+  "searchHeadingsCategory": "Заголовки",
+  "shortcutUnassigned": "Не назначено",
+  "shortcutSearchHint": "Поиск действий или сочетаний клавиш…",
+  "shortcutFindBy": "Найти по сочетанию клавиш",
+  "shortcutPressKeys": "Нажмите сочетание клавиш…",
+  "shortcutRecord": "Записать сочетание клавиш",
+  "shortcutRestoreAll": "Восстановить все значения по умолчанию",
+  "shortcutRestoreAllQuestion": "Восстановить стандартные сочетания всех действий? Пользовательские назначения будут удалены.",
+  "shortcutSaveFailed": "Сочетания действуют, но не сохранены. Повторите сохранение, чтобы они сохранились после перезапуска.",
+  "shortcutRetry": "Повторить сохранение",
+  "shortcutChanged": "Назначения изменились. Проверьте текущие сочетания и повторите попытку.",
+  "shortcutInvalid": "Это сочетание нельзя назначить в данном контексте.",
+  "shortcutSystemWarning": "Это сочетание может использоваться рабочим столом. BusyMark не может переопределять системные сочетания.",
+  "shortcutConflicts": "Это сочетание конфликтует со следующими действиями:",
+  "shortcutRemove": "Удалить назначение",
+  "shortcutRestoreDefault": "Восстановить стандартное",
+  "shortcutAssign": "Назначить",
+  "shortcutReassign": "Переназначить",
+  "shortcutContextApplication": "Приложение",
+  "shortcutContextDocument": "Представления документа",
+  "shortcutContextEditor": "Редактор и исходный код",
+  "shortcutContextWritersideSource": "Исходный код Writerside",
+  "shortcutContextWorkspace": "Навигация рабочей области",
+  "shortcutContextTree": "Деревья боковой панели"
 }

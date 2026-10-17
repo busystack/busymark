@@ -1,16 +1,16 @@
 # Search and replace
 
 Search uses one query field in the header and one results sidebar. The compact
-native-styled **Search category** menu above the results selects a category.
+native-styled **Search:** selector above the results selects a category.
 Normal Files, Topics,
 Notes and other browsing remain available when search closes. At narrow window
 sizes the same sidebar temporarily overlays the leading side of the document.
 
 | Category | Scope | Shortcut |
 | --- | --- | --- |
-| Search in Document | Active document’s current buffer | Ctrl+F |
-| Search in Workspace | Current local workspace or Notes account | Ctrl+Shift+F |
-| Outline | Headings in the current document | Explicit category selection |
+| Document Text | Active document’s current buffer | Ctrl+F |
+| Workspace Text | Current local workspace or Notes account | Ctrl+Shift+F |
+| Headings | Headings in the current document | Explicit category selection |
 | Documents | Names, paths or Notes titles/categories in the active workspace | Ctrl+P |
 | Topics | Topics across the current Writerside project, including outside the selected TOC | Ctrl+Shift+T |
 | Recent | Chronological document and workspace history | Ctrl+Alt+O |
@@ -20,7 +20,9 @@ sizes the same sidebar temporarily overlays the leading side of the document.
 Categories appear in that order; unavailable categories are omitted. Welcome
 provides Recent and Actions. Retained documents behind Welcome are not search
 or action targets. There is no combined category or search-results dialog.
-**Ctrl+Alt+K** continues to open the existing Keyboard Shortcuts dialog.
+**Ctrl+Alt+K** opens **Settings → Keyboard Shortcuts**. The Keyboard Shortcuts
+main-menu entry and action open the same page and preserve the Settings return
+destination. The shortcuts listed here are defaults; assignments can be changed.
 
 The Search icon toggles search and restores the last applicable category.
 A category shortcut always opens its designated category and focuses the query;
@@ -66,7 +68,7 @@ opens the existing recovery preview. Recovery records stay outside ordinary sear
 ## Outline, Topics and Recent
 
 Ctrl+3 and the Outline sidebar button open ordinary Outline without a query or
-remembered filter. Choosing Outline in the search category menu filters the same
+remembered filter. Choosing Headings in the search category menu filters the same
 outline model. Explicit browsing closes search and focuses the Outline tree.
 
 Outline search waits for a query, then displays matching headings in document
@@ -119,7 +121,7 @@ buffer. Replacement text is literal too: `$1` inserts `$1`, without capture-grou
 substitution. There are no case, whole-word or regex toggles in the sidebar or
 Source/Split controls.
 
-Search in Document, Search in Workspace, Outline, Documents, Topics and Local
+Document Text, Workspace Text, Headings, Documents, Topics and Local
 History initially show **Enter text to search**. Empty queries do not start
 matching, scan the workspace, enumerate topic/document inventories or read History
 revision contents. Clearing cancels outstanding work and removes its results and
@@ -127,9 +129,13 @@ selection. **No results** appears only after a nonempty query completes without
 matches; loading, errors and unavailable resources have distinct feedback.
 
 Recent initially displays its chronological list. Actions initially displays the
-command catalog, ordered by availability, localized action name, category and
-stable ID. Typing filters either list; unavailable Actions stay discoverable and
-cannot execute or redirect Enter to another action.
+command catalog grouped in the same categories as Keyboard Shortcuts Settings.
+Within each group, available commands come first, then localized names. Group
+headings are not selectable. With text entered, Actions shows one flat list ranked
+by exact name, name prefix/token matches, then weaker name or metadata matches.
+Commands without shortcuts remain visible. Selection follows command identity
+when metadata changes; unavailable actions cannot execute or redirect Enter.
+Typing filters Recent without changing its chronological order.
 
 ## Active document
 
@@ -198,3 +204,35 @@ BusyMark does not apply an incomplete preview. If a concurrent change prevents
 a safe file transaction, the result identifies the affected path and, when
 necessary, the preserved displaced content. Always read the final replacement
 summary before continuing.
+
+## Keyboard shortcut settings
+
+Use **Settings → Keyboard Shortcuts** to search actions, categories or displayed
+key combinations. **Find by shortcut** records a combination to filter this list;
+it does not execute a command. Select an action to record and assign a shortcut,
+remove its assignment, or restore its default. **Restore all defaults** asks for
+confirmation. Local text input and traversal operations remain local controls.
+While typing in a search field, Select All, Cut, Copy, Paste and Undo keep editing
+that field, including when those combinations are assigned to application actions.
+
+A custom assignment replaces the default and its aliases, including numeric-keypad
+variants and Ctrl+Insert / Shift+Insert / Shift+Delete for Copy / Paste / Cut.
+The Settings context line identifies default aliases. Removing
+an assignment leaves the action available from its UI and Actions search. Changes
+update editor dispatch, Actions badges, menus and header metadata together.
+Writerside Source retains its existing Ctrl+B Go to Declaration precedence over
+formatting. The declaration, usages and rename bindings are configurable too.
+Settings stores only overrides keyed by command identity. Logical keys respect
+keyboard layout; display text is not used to identify a key.
+
+Conflicts name actions whose receiving contexts overlap, including commands that
+are currently unavailable. Reassignment explicitly removes those conflicting
+bindings in the same update. Resetting one action also checks for conflicts.
+Separate Editor-only and Source-only operations can share a combination; each
+keeps its own action and context in the list.
+Capture ignores modifier-only presses and repeats. Escape cancels; held keys must
+be released before normal command dispatch resumes. A desktop may reserve some
+combinations that BusyMark cannot override.
+
+If saving fails, the current bindings remain active and Settings reports that
+failure. Retry saving before relying on those assignments after restarting.

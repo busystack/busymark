@@ -767,7 +767,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutSearchDescription => '搜索当前工作区';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '显示此键盘快捷键参考';
+  String get shortcutKeyboardShortcutsDescription => '自定义应用程序键盘快捷键';
 
   @override
   String get shortcutSyntaxReferenceDescription => '打开语法参考';
@@ -5218,6 +5218,87 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => '没有最近的资源';
+
+  @override
+  String get searchSidebarLabel => '搜索：';
+
+  @override
+  String get searchDocumentTextCategory => '文档文本';
+
+  @override
+  String get searchWorkspaceTextCategory => '工作区文本';
+
+  @override
+  String get searchHeadingsCategory => '标题';
+
+  @override
+  String get shortcutUnassigned => '未分配';
+
+  @override
+  String get shortcutSearchHint => '搜索操作或快捷键…';
+
+  @override
+  String get shortcutFindBy => '按快捷键查找';
+
+  @override
+  String get shortcutPressKeys => '请按下组合键…';
+
+  @override
+  String get shortcutRecord => '录制快捷键';
+
+  @override
+  String get shortcutRestoreAll => '恢复所有默认设置';
+
+  @override
+  String get shortcutRestoreAllQuestion => '恢复所有操作的默认快捷键？自定义分配将被移除。';
+
+  @override
+  String get shortcutSaveFailed => '快捷键已生效，但无法保存。请重试保存以便重启后保留。';
+
+  @override
+  String get shortcutRetry => '重试保存';
+
+  @override
+  String get shortcutChanged => '分配已更改。请检查当前快捷键并重试。';
+
+  @override
+  String get shortcutInvalid => '无法在此上下文中分配此组合键。';
+
+  @override
+  String get shortcutSystemWarning => '桌面可能正在使用此组合键。BusyMark 无法覆盖系统快捷键。';
+
+  @override
+  String get shortcutConflicts => '此快捷键与以下操作冲突：';
+
+  @override
+  String get shortcutRemove => '移除分配';
+
+  @override
+  String get shortcutRestoreDefault => '恢复默认设置';
+
+  @override
+  String get shortcutAssign => '分配';
+
+  @override
+  String get shortcutReassign => '重新分配';
+
+  @override
+  String get shortcutContextApplication => '应用程序';
+
+  @override
+  String get shortcutContextDocument => '文档视图';
+
+  @override
+  String get shortcutContextEditor => '编辑器和源码';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 源码';
+
+  @override
+  String get shortcutContextWorkspace => '工作区导航';
+
+  @override
+  String get shortcutContextTree => '侧栏树';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -5981,7 +6062,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get shortcutSearchDescription => '搜索当前工作区';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '显示此键盘快捷键参考';
+  String get shortcutKeyboardShortcutsDescription => '自定义应用程序键盘快捷键';
 
   @override
   String get shortcutSyntaxReferenceDescription => '打开语法参考';
@@ -10432,4 +10513,85 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get searchRecentEmpty => '没有最近的资源';
+
+  @override
+  String get searchSidebarLabel => '搜索：';
+
+  @override
+  String get searchDocumentTextCategory => '文档文本';
+
+  @override
+  String get searchWorkspaceTextCategory => '工作区文本';
+
+  @override
+  String get searchHeadingsCategory => '标题';
+
+  @override
+  String get shortcutUnassigned => '未分配';
+
+  @override
+  String get shortcutSearchHint => '搜索操作或快捷键…';
+
+  @override
+  String get shortcutFindBy => '按快捷键查找';
+
+  @override
+  String get shortcutPressKeys => '请按下组合键…';
+
+  @override
+  String get shortcutRecord => '录制快捷键';
+
+  @override
+  String get shortcutRestoreAll => '恢复所有默认设置';
+
+  @override
+  String get shortcutRestoreAllQuestion => '恢复所有操作的默认快捷键？自定义分配将被移除。';
+
+  @override
+  String get shortcutSaveFailed => '快捷键已生效，但无法保存。请重试保存以便重启后保留。';
+
+  @override
+  String get shortcutRetry => '重试保存';
+
+  @override
+  String get shortcutChanged => '分配已更改。请检查当前快捷键并重试。';
+
+  @override
+  String get shortcutInvalid => '无法在此上下文中分配此组合键。';
+
+  @override
+  String get shortcutSystemWarning => '桌面可能正在使用此组合键。BusyMark 无法覆盖系统快捷键。';
+
+  @override
+  String get shortcutConflicts => '此快捷键与以下操作冲突：';
+
+  @override
+  String get shortcutRemove => '移除分配';
+
+  @override
+  String get shortcutRestoreDefault => '恢复默认设置';
+
+  @override
+  String get shortcutAssign => '分配';
+
+  @override
+  String get shortcutReassign => '重新分配';
+
+  @override
+  String get shortcutContextApplication => '应用程序';
+
+  @override
+  String get shortcutContextDocument => '文档视图';
+
+  @override
+  String get shortcutContextEditor => '编辑器和源码';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 源码';
+
+  @override
+  String get shortcutContextWorkspace => '工作区导航';
+
+  @override
+  String get shortcutContextTree => '侧栏树';
 }

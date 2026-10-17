@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Mostra il riferimento alle scorciatoie da tastiera",
+  "shortcutKeyboardShortcutsDescription": "Personalizza le scorciatoie da tastiera dell’applicazione",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3616,5 +3616,32 @@
   "searchRecentHint": "Cerca recenti…",
   "searchActionsHint": "Cerca azioni…",
   "searchRequiresNotesWorkspace": "Richiede uno spazio di lavoro Note",
-  "searchRecentEmpty": "Nessuna risorsa recente"
+  "searchRecentEmpty": "Nessuna risorsa recente",
+  "searchSidebarLabel": "Ricerca:",
+  "searchDocumentTextCategory": "Testo del documento",
+  "searchWorkspaceTextCategory": "Testo dell’area di lavoro",
+  "searchHeadingsCategory": "Intestazioni",
+  "shortcutUnassigned": "Non assegnata",
+  "shortcutSearchHint": "Cerca azioni o scorciatoie…",
+  "shortcutFindBy": "Trova per scorciatoia",
+  "shortcutPressKeys": "Premi una combinazione di tasti…",
+  "shortcutRecord": "Acquisisci scorciatoia",
+  "shortcutRestoreAll": "Ripristina tutte le impostazioni predefinite",
+  "shortcutRestoreAllQuestion": "Ripristinare le scorciatoie predefinite di tutte le azioni? Le assegnazioni personalizzate verranno rimosse.",
+  "shortcutSaveFailed": "Le scorciatoie sono attive ma non sono state salvate. Riprova per mantenerle dopo il riavvio.",
+  "shortcutRetry": "Riprova salvataggio",
+  "shortcutChanged": "Le assegnazioni sono cambiate. Controlla le scorciatoie attuali e riprova.",
+  "shortcutInvalid": "Questa combinazione non può essere assegnata in questo contesto.",
+  "shortcutSystemWarning": "Questa combinazione potrebbe essere usata dal desktop. BusyMark non può sostituire le scorciatoie di sistema.",
+  "shortcutConflicts": "Questa scorciatoia è in conflitto con queste azioni:",
+  "shortcutRemove": "Rimuovi assegnazione",
+  "shortcutRestoreDefault": "Ripristina predefinita",
+  "shortcutAssign": "Assegna",
+  "shortcutReassign": "Riassegna",
+  "shortcutContextApplication": "Applicazione",
+  "shortcutContextDocument": "Viste del documento",
+  "shortcutContextEditor": "Editor e sorgente",
+  "shortcutContextWritersideSource": "Sorgente Writerside",
+  "shortcutContextWorkspace": "Navigazione dell’area di lavoro",
+  "shortcutContextTree": "Alberi laterali"
 }

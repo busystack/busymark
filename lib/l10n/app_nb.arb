@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Vis denne oversikten over tastatursnarveier",
+  "shortcutKeyboardShortcutsDescription": "Tilpass programmets hurtigtaster",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3616,5 +3616,32 @@
   "searchRecentHint": "Søk i nylige…",
   "searchActionsHint": "Søk etter handlinger…",
   "searchRequiresNotesWorkspace": "Krever et notatarbeidsområde",
-  "searchRecentEmpty": "Ingen nylige ressurser"
+  "searchRecentEmpty": "Ingen nylige ressurser",
+  "searchSidebarLabel": "Søk:",
+  "searchDocumentTextCategory": "Dokumenttekst",
+  "searchWorkspaceTextCategory": "Arbeidsområdetekst",
+  "searchHeadingsCategory": "Overskrifter",
+  "shortcutUnassigned": "Ikke tilordnet",
+  "shortcutSearchHint": "Søk etter handlinger eller hurtigtaster…",
+  "shortcutFindBy": "Finn med hurtigtast",
+  "shortcutPressKeys": "Trykk en tastekombinasjon…",
+  "shortcutRecord": "Registrer hurtigtast",
+  "shortcutRestoreAll": "Gjenopprett alle standarder",
+  "shortcutRestoreAllQuestion": "Gjenopprette standardhurtigtaster for alle handlinger? Egne tilordninger fjernes.",
+  "shortcutSaveFailed": "Hurtigtastene er aktive, men kunne ikke lagres. Prøv igjen for å beholde dem etter omstart.",
+  "shortcutRetry": "Prøv lagring igjen",
+  "shortcutChanged": "Tilordningene er endret. Se gjennom gjeldende hurtigtaster og prøv igjen.",
+  "shortcutInvalid": "Denne kombinasjonen kan ikke tilordnes i denne sammenhengen.",
+  "shortcutSystemWarning": "Skrivebordet kan bruke denne kombinasjonen. BusyMark kan ikke overstyre systemhurtigtaster.",
+  "shortcutConflicts": "Denne hurtigtasten overlapper disse handlingene:",
+  "shortcutRemove": "Fjern tilordning",
+  "shortcutRestoreDefault": "Gjenopprett standard",
+  "shortcutAssign": "Tilordne",
+  "shortcutReassign": "Tilordne på nytt",
+  "shortcutContextApplication": "Program",
+  "shortcutContextDocument": "Dokumentvisninger",
+  "shortcutContextEditor": "Redigering og kilde",
+  "shortcutContextWritersideSource": "Writerside-kilde",
+  "shortcutContextWorkspace": "Arbeidsområdenavigasjon",
+  "shortcutContextTree": "Sidefelttrær"
 }

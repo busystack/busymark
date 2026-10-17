@@ -801,7 +801,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Pokaż ten wykaz skrótów klawiaturowych';
+      'Dostosuj skróty klawiaturowe aplikacji';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -5505,4 +5505,90 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Brak ostatnich zasobów';
+
+  @override
+  String get searchSidebarLabel => 'Szukaj:';
+
+  @override
+  String get searchDocumentTextCategory => 'Tekst dokumentu';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Tekst obszaru roboczego';
+
+  @override
+  String get searchHeadingsCategory => 'Nagłówki';
+
+  @override
+  String get shortcutUnassigned => 'Nieprzypisany';
+
+  @override
+  String get shortcutSearchHint => 'Szukaj działań lub skrótów…';
+
+  @override
+  String get shortcutFindBy => 'Znajdź według skrótu';
+
+  @override
+  String get shortcutPressKeys => 'Naciśnij kombinację klawiszy…';
+
+  @override
+  String get shortcutRecord => 'Zarejestruj skrót';
+
+  @override
+  String get shortcutRestoreAll => 'Przywróć wszystkie domyślne';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Przywrócić domyślne skróty wszystkich działań? Własne przypisania zostaną usunięte.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Skróty są aktywne, lecz nie udało się ich zapisać. Spróbuj ponownie, aby zachować je po restarcie.';
+
+  @override
+  String get shortcutRetry => 'Ponów zapis';
+
+  @override
+  String get shortcutChanged =>
+      'Przypisania uległy zmianie. Sprawdź bieżące skróty i spróbuj ponownie.';
+
+  @override
+  String get shortcutInvalid =>
+      'Nie można przypisać tej kombinacji w tym kontekście.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Pulpit może używać tej kombinacji. BusyMark nie może zastępować skrótów systemowych.';
+
+  @override
+  String get shortcutConflicts => 'Ten skrót koliduje z tymi działaniami:';
+
+  @override
+  String get shortcutRemove => 'Usuń przypisanie';
+
+  @override
+  String get shortcutRestoreDefault => 'Przywróć domyślny';
+
+  @override
+  String get shortcutAssign => 'Przypisz';
+
+  @override
+  String get shortcutReassign => 'Przypisz ponownie';
+
+  @override
+  String get shortcutContextApplication => 'Aplikacja';
+
+  @override
+  String get shortcutContextDocument => 'Widoki dokumentu';
+
+  @override
+  String get shortcutContextEditor => 'Edytor i źródło';
+
+  @override
+  String get shortcutContextWritersideSource => 'Źródło Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Nawigacja obszaru roboczego';
+
+  @override
+  String get shortcutContextTree => 'Drzewa paska bocznego';
 }

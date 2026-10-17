@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "إظهار مرجع اختصارات لوحة المفاتيح",
+  "shortcutKeyboardShortcutsDescription": "تخصيص اختصارات لوحة مفاتيح التطبيق",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3616,5 +3616,32 @@
   "searchRecentHint": "البحث في الأخيرة…",
   "searchActionsHint": "البحث عن إجراءات…",
   "searchRequiresNotesWorkspace": "يتطلب مساحة عمل للملاحظات",
-  "searchRecentEmpty": "لا توجد موارد حديثة"
+  "searchRecentEmpty": "لا توجد موارد حديثة",
+  "searchSidebarLabel": "بحث:",
+  "searchDocumentTextCategory": "نص المستند",
+  "searchWorkspaceTextCategory": "نص مساحة العمل",
+  "searchHeadingsCategory": "العناوين",
+  "shortcutUnassigned": "غير معيّن",
+  "shortcutSearchHint": "ابحث عن إجراءات أو اختصارات…",
+  "shortcutFindBy": "البحث بالاختصار",
+  "shortcutPressKeys": "اضغط مجموعة مفاتيح…",
+  "shortcutRecord": "تسجيل اختصار",
+  "shortcutRestoreAll": "استعادة جميع الإعدادات الافتراضية",
+  "shortcutRestoreAllQuestion": "هل تريد استعادة الاختصارات الافتراضية لجميع الإجراءات؟ ستُزال التعيينات المخصصة.",
+  "shortcutSaveFailed": "الاختصارات مفعّلة ولكن تعذر حفظها. أعد المحاولة للاحتفاظ بها بعد إعادة التشغيل.",
+  "shortcutRetry": "إعادة محاولة الحفظ",
+  "shortcutChanged": "تغيرت التعيينات. راجع الاختصارات الحالية وحاول مجددًا.",
+  "shortcutInvalid": "لا يمكن تعيين هذه المجموعة في هذا السياق.",
+  "shortcutSystemWarning": "قد يستخدم سطح المكتب هذه المجموعة. لا يستطيع BusyMark تجاوز اختصارات النظام.",
+  "shortcutConflicts": "يتعارض هذا الاختصار مع الإجراءات التالية:",
+  "shortcutRemove": "إزالة التعيين",
+  "shortcutRestoreDefault": "استعادة الافتراضي",
+  "shortcutAssign": "تعيين",
+  "shortcutReassign": "إعادة التعيين",
+  "shortcutContextApplication": "التطبيق",
+  "shortcutContextDocument": "طرق عرض المستند",
+  "shortcutContextEditor": "المحرر والمصدر",
+  "shortcutContextWritersideSource": "مصدر Writerside",
+  "shortcutContextWorkspace": "التنقل في مساحة العمل",
+  "shortcutContextTree": "أشجار الشريط الجانبي"
 }

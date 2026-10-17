@@ -804,7 +804,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Показати довідку з комбінацій клавіш';
+      'Налаштувати сполучення клавіш застосунку';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -5518,4 +5518,90 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Немає нещодавніх ресурсів';
+
+  @override
+  String get searchSidebarLabel => 'Пошук:';
+
+  @override
+  String get searchDocumentTextCategory => 'Текст документа';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Текст робочої області';
+
+  @override
+  String get searchHeadingsCategory => 'Заголовки';
+
+  @override
+  String get shortcutUnassigned => 'Не призначено';
+
+  @override
+  String get shortcutSearchHint => 'Пошук дій або сполучень клавіш…';
+
+  @override
+  String get shortcutFindBy => 'Знайти за сполученням клавіш';
+
+  @override
+  String get shortcutPressKeys => 'Натисніть сполучення клавіш…';
+
+  @override
+  String get shortcutRecord => 'Записати сполучення клавіш';
+
+  @override
+  String get shortcutRestoreAll => 'Відновити всі типові значення';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Відновити типові сполучення всіх дій? Власні призначення буде видалено.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Сполучення діють, але їх не збережено. Повторіть збереження, щоб залишити їх після перезапуску.';
+
+  @override
+  String get shortcutRetry => 'Повторити збереження';
+
+  @override
+  String get shortcutChanged =>
+      'Призначення змінилися. Перевірте поточні сполучення та повторіть спробу.';
+
+  @override
+  String get shortcutInvalid =>
+      'Це сполучення не можна призначити в цьому контексті.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Це сполучення може використовуватися стільницею. BusyMark не може перевизначати системні сполучення.';
+
+  @override
+  String get shortcutConflicts => 'Це сполучення конфліктує з такими діями:';
+
+  @override
+  String get shortcutRemove => 'Вилучити призначення';
+
+  @override
+  String get shortcutRestoreDefault => 'Відновити типове';
+
+  @override
+  String get shortcutAssign => 'Призначити';
+
+  @override
+  String get shortcutReassign => 'Перепризначити';
+
+  @override
+  String get shortcutContextApplication => 'Застосунок';
+
+  @override
+  String get shortcutContextDocument => 'Подання документа';
+
+  @override
+  String get shortcutContextEditor => 'Редактор і джерело';
+
+  @override
+  String get shortcutContextWritersideSource => 'Джерело Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Навігація робочою областю';
+
+  @override
+  String get shortcutContextTree => 'Дерева бічної панелі';
 }

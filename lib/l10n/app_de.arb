@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Diese Tastaturkürzelübersicht anzeigen",
+  "shortcutKeyboardShortcutsDescription": "Tastenkürzel der Anwendung anpassen",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3616,5 +3616,32 @@
   "searchRecentHint": "Zuletzt geöffnet suchen…",
   "searchActionsHint": "Aktionen suchen…",
   "searchRequiresNotesWorkspace": "Erfordert einen Notizen-Arbeitsbereich",
-  "searchRecentEmpty": "Keine zuletzt geöffneten Ressourcen"
+  "searchRecentEmpty": "Keine zuletzt geöffneten Ressourcen",
+  "searchSidebarLabel": "Suchen:",
+  "searchDocumentTextCategory": "Dokumenttext",
+  "searchWorkspaceTextCategory": "Arbeitsbereichstext",
+  "searchHeadingsCategory": "Überschriften",
+  "shortcutUnassigned": "Nicht zugewiesen",
+  "shortcutSearchHint": "Aktionen oder Tastenkürzel suchen…",
+  "shortcutFindBy": "Nach Tastenkürzel suchen",
+  "shortcutPressKeys": "Tastenkombination drücken…",
+  "shortcutRecord": "Tastenkürzel aufnehmen",
+  "shortcutRestoreAll": "Alle Vorgaben wiederherstellen",
+  "shortcutRestoreAllQuestion": "Standardkürzel aller Aktionen wiederherstellen? Eigene Zuweisungen werden entfernt.",
+  "shortcutSaveFailed": "Tastenkürzel sind aktiv, konnten aber nicht gespeichert werden. Zum Beibehalten nach Neustart erneut speichern.",
+  "shortcutRetry": "Speichern wiederholen",
+  "shortcutChanged": "Zuweisungen geändert. Aktuelle Tastenkürzel prüfen und erneut versuchen.",
+  "shortcutInvalid": "Diese Kombination kann hier nicht zugewiesen werden.",
+  "shortcutSystemWarning": "Diese Kombination wird möglicherweise vom Desktop verwendet. BusyMark kann Systemkürzel nicht überschreiben.",
+  "shortcutConflicts": "Dieses Tastenkürzel überschneidet sich mit diesen Aktionen:",
+  "shortcutRemove": "Zuweisung entfernen",
+  "shortcutRestoreDefault": "Vorgabe wiederherstellen",
+  "shortcutAssign": "Zuweisen",
+  "shortcutReassign": "Neu zuweisen",
+  "shortcutContextApplication": "Anwendung",
+  "shortcutContextDocument": "Dokumentansichten",
+  "shortcutContextEditor": "Editor und Quelltext",
+  "shortcutContextWritersideSource": "Writerside-Quelltext",
+  "shortcutContextWorkspace": "Arbeitsbereichsnavigation",
+  "shortcutContextTree": "Seitenleistenbäume"
 }

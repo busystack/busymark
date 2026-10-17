@@ -12,6 +12,7 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "gtk_accent_host.h"
 #include "linux_chrome_host.h"
+#include "native_shortcut_metadata.h"
 #include "rich_clipboard_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
@@ -69,60 +70,15 @@ struct _MyApplication {
 };
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
-static gchar* gtk_accelerator_from_shortcut_label(const gchar* shortcut) {
-  if (shortcut == nullptr || shortcut[0] == '\0') {
-    return nullptr;
-  }
-
-  guint key = 0;
-  GdkModifierType modifiers = static_cast<GdkModifierType>(0);
-  gtk_accelerator_parse(shortcut, &key, &modifiers);
-  if (key != 0) {
-    return g_strdup(shortcut);
-  }
-
-  gchar** parts = g_strsplit(shortcut, "+", -1);
-  const gsize part_count = g_strv_length(parts);
-  GString* accelerator = g_string_new(nullptr);
-  gboolean valid = part_count > 0;
-  for (gsize index = 0; valid && index + 1 < part_count; index++) {
-    const gchar* part = g_strstrip(parts[index]);
-    if (g_strcmp0(part, "Ctrl") == 0 ||
-        g_strcmp0(part, "Control") == 0) {
-      g_string_append(accelerator, "<Control>");
-    } else if (g_strcmp0(part, "Alt") == 0) {
-      g_string_append(accelerator, "<Alt>");
-    } else if (g_strcmp0(part, "Shift") == 0) {
-      g_string_append(accelerator, "<Shift>");
-    } else if (g_strcmp0(part, "Super") == 0) {
-      g_string_append(accelerator, "<Super>");
-    } else if (g_strcmp0(part, "Meta") == 0) {
-      g_string_append(accelerator, "<Meta>");
-    } else {
-      valid = FALSE;
-    }
-  }
-  if (valid) {
-    const gchar* key_label = g_strstrip(parts[part_count - 1]);
-    g_string_append(accelerator,
-                    g_strcmp0(key_label, "Esc") == 0 ? "Escape" : key_label);
-    key = 0;
-    modifiers = static_cast<GdkModifierType>(0);
-    gtk_accelerator_parse(accelerator->str, &key, &modifiers);
-    valid = key != 0;
-  }
-
-  g_strfreev(parts);
-  return g_string_free(accelerator, !valid);
-}
-
-static void set_menu_item_accelerator(GMenuItem* item,
+static bool set_menu_item_accelerator(GMenuItem* item,
                                       const gchar* shortcut) {
   g_autofree gchar* accelerator =
       gtk_accelerator_from_shortcut_label(shortcut);
   if (accelerator != nullptr) {
     g_menu_item_set_attribute(item, kMenuAccelAttribute, "s", accelerator);
+    return true;
   }
+  return false;
 }
 
 static GdkPixbuf* load_application_icon_at_size(gint size) {
@@ -665,6 +621,8 @@ static gboolean validate_native_menu_entries(FlValue* entries,
               static_cast<gint64>(G_MAXUINT32))) ||
         (selected && !checkable) ||
         (children != nullptr && (separator || checkable)) ||
+        (fl_value_lookup_string(entry, "gtkAccelerator") != nullptr &&
+         fl_lookup_string_arg(entry, "gtkAccelerator") == nullptr) ||
         (fl_value_lookup_string(entry, "shortcut") != nullptr &&
          fl_lookup_string_arg(entry, "shortcut") == nullptr)) {
       respond_native_menu_argument_error(
@@ -764,7 +722,10 @@ static void build_native_menu_model(FlValue* entries,
     // this native boundary; action indexes and clipboard payloads stay intact.
     g_autofree gchar* literal_label = escape_native_menu_label(label);
     const gchar* icon_name = fl_lookup_string_arg(entry, "icon");
-    const gchar* shortcut = fl_lookup_string_arg(entry, "shortcut");
+    // Accelerator metadata is generated from logical keys in Dart. GMenu uses
+    // it for display; Flutter remains the single command dispatch mechanism.
+    const gchar* shortcut = fl_lookup_string_arg(entry, "gtkAccelerator");
+    if (shortcut == nullptr) shortcut = fl_lookup_string_arg(entry, "shortcut");
     gboolean enabled = TRUE;
     gboolean checkable = FALSE;
     gboolean selected = FALSE;
@@ -810,8 +771,13 @@ static void build_native_menu_model(FlValue* entries,
       g_autoptr(GIcon) icon = create_native_menu_icon(icon_name, entry);
       g_menu_item_set_icon(item, icon);
     }
-    if (shortcut != nullptr && shortcut[0] != '\0') {
-      set_menu_item_accelerator(item, shortcut);
+    if (shortcut != nullptr && shortcut[0] != '\0' &&
+        !set_menu_item_accelerator(item, shortcut)) {
+      const gchar* display = fl_lookup_string_arg(entry, "shortcut");
+      if (display != nullptr && display[0] != '\0') {
+        g_autofree gchar* fallback = g_strdup_printf("%s  (%s)", literal_label, display);
+        g_menu_item_set_label(item, fallback);
+      }
     }
     g_menu_append_item(section, item);
     g_object_unref(action);

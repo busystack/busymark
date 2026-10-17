@@ -805,7 +805,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Показать справку по сочетаниям клавиш';
+      'Настроить сочетания клавиш приложения';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -5509,4 +5509,91 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Нет недавних ресурсов';
+
+  @override
+  String get searchSidebarLabel => 'Поиск:';
+
+  @override
+  String get searchDocumentTextCategory => 'Текст документа';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Текст рабочей области';
+
+  @override
+  String get searchHeadingsCategory => 'Заголовки';
+
+  @override
+  String get shortcutUnassigned => 'Не назначено';
+
+  @override
+  String get shortcutSearchHint => 'Поиск действий или сочетаний клавиш…';
+
+  @override
+  String get shortcutFindBy => 'Найти по сочетанию клавиш';
+
+  @override
+  String get shortcutPressKeys => 'Нажмите сочетание клавиш…';
+
+  @override
+  String get shortcutRecord => 'Записать сочетание клавиш';
+
+  @override
+  String get shortcutRestoreAll => 'Восстановить все значения по умолчанию';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Восстановить стандартные сочетания всех действий? Пользовательские назначения будут удалены.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Сочетания действуют, но не сохранены. Повторите сохранение, чтобы они сохранились после перезапуска.';
+
+  @override
+  String get shortcutRetry => 'Повторить сохранение';
+
+  @override
+  String get shortcutChanged =>
+      'Назначения изменились. Проверьте текущие сочетания и повторите попытку.';
+
+  @override
+  String get shortcutInvalid =>
+      'Это сочетание нельзя назначить в данном контексте.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Это сочетание может использоваться рабочим столом. BusyMark не может переопределять системные сочетания.';
+
+  @override
+  String get shortcutConflicts =>
+      'Это сочетание конфликтует со следующими действиями:';
+
+  @override
+  String get shortcutRemove => 'Удалить назначение';
+
+  @override
+  String get shortcutRestoreDefault => 'Восстановить стандартное';
+
+  @override
+  String get shortcutAssign => 'Назначить';
+
+  @override
+  String get shortcutReassign => 'Переназначить';
+
+  @override
+  String get shortcutContextApplication => 'Приложение';
+
+  @override
+  String get shortcutContextDocument => 'Представления документа';
+
+  @override
+  String get shortcutContextEditor => 'Редактор и исходный код';
+
+  @override
+  String get shortcutContextWritersideSource => 'Исходный код Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Навигация рабочей области';
+
+  @override
+  String get shortcutContextTree => 'Деревья боковой панели';
 }

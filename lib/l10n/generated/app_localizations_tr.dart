@@ -800,7 +800,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Bu klavye kısayolu referansını göster';
+      'Uygulama klavye kısayollarını özelleştir';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Sözdizimi başvurusunu aç';
@@ -5449,4 +5449,89 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Son kullanılan kaynak yok';
+
+  @override
+  String get searchSidebarLabel => 'Ara:';
+
+  @override
+  String get searchDocumentTextCategory => 'Belge metni';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Çalışma alanı metni';
+
+  @override
+  String get searchHeadingsCategory => 'Başlıklar';
+
+  @override
+  String get shortcutUnassigned => 'Atanmamış';
+
+  @override
+  String get shortcutSearchHint => 'Eylem veya kısayol ara…';
+
+  @override
+  String get shortcutFindBy => 'Kısayola göre bul';
+
+  @override
+  String get shortcutPressKeys => 'Bir tuş birleşimine basın…';
+
+  @override
+  String get shortcutRecord => 'Kısayol kaydet';
+
+  @override
+  String get shortcutRestoreAll => 'Tüm varsayılanları geri yükle';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Tüm eylemlerin varsayılan kısayolları geri yüklensin mi? Özel atamalar kaldırılacak.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Kısayollar etkin ancak kaydedilemedi. Yeniden başlatmadan sonra korumak için tekrar kaydedin.';
+
+  @override
+  String get shortcutRetry => 'Kaydetmeyi yeniden dene';
+
+  @override
+  String get shortcutChanged =>
+      'Atamalar değişti. Geçerli kısayolları gözden geçirip yeniden deneyin.';
+
+  @override
+  String get shortcutInvalid => 'Bu birleşim bu bağlamda atanamaz.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Masaüstünüz bu birleşimi kullanıyor olabilir. BusyMark sistem kısayollarını geçersiz kılamaz.';
+
+  @override
+  String get shortcutConflicts => 'Bu kısayol şu eylemlerle çakışıyor:';
+
+  @override
+  String get shortcutRemove => 'Atamayı kaldır';
+
+  @override
+  String get shortcutRestoreDefault => 'Varsayılanı geri yükle';
+
+  @override
+  String get shortcutAssign => 'Ata';
+
+  @override
+  String get shortcutReassign => 'Yeniden ata';
+
+  @override
+  String get shortcutContextApplication => 'Uygulama';
+
+  @override
+  String get shortcutContextDocument => 'Belge görünümleri';
+
+  @override
+  String get shortcutContextEditor => 'Düzenleyici ve kaynak';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside kaynağı';
+
+  @override
+  String get shortcutContextWorkspace => 'Çalışma alanı gezintisi';
+
+  @override
+  String get shortcutContextTree => 'Kenar çubuğu ağaçları';
 }

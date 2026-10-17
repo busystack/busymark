@@ -805,7 +805,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Mostrar esta referencia de atajos de teclado';
+      'Personalizar los atajos de teclado de la aplicación';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -5502,4 +5502,92 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'No hay recursos recientes';
+
+  @override
+  String get searchSidebarLabel => 'Buscar:';
+
+  @override
+  String get searchDocumentTextCategory => 'Texto del documento';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Texto del espacio de trabajo';
+
+  @override
+  String get searchHeadingsCategory => 'Encabezados';
+
+  @override
+  String get shortcutUnassigned => 'Sin asignar';
+
+  @override
+  String get shortcutSearchHint => 'Buscar acciones o atajos…';
+
+  @override
+  String get shortcutFindBy => 'Buscar por atajo';
+
+  @override
+  String get shortcutPressKeys => 'Pulse una combinación de teclas…';
+
+  @override
+  String get shortcutRecord => 'Capturar atajo';
+
+  @override
+  String get shortcutRestoreAll =>
+      'Restaurar todos los valores predeterminados';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      '¿Restaurar los atajos predeterminados de todas las acciones? Se eliminarán las asignaciones personalizadas.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Los atajos están activos, pero no se pudieron guardar. Reintente para conservarlos tras reiniciar.';
+
+  @override
+  String get shortcutRetry => 'Reintentar guardado';
+
+  @override
+  String get shortcutChanged =>
+      'Las asignaciones cambiaron. Revise los atajos actuales y reintente.';
+
+  @override
+  String get shortcutInvalid =>
+      'Esta combinación no se puede asignar en este contexto.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'El escritorio puede usar esta combinación. BusyMark no puede sustituir atajos del sistema.';
+
+  @override
+  String get shortcutConflicts =>
+      'Este atajo entra en conflicto con estas acciones:';
+
+  @override
+  String get shortcutRemove => 'Quitar asignación';
+
+  @override
+  String get shortcutRestoreDefault => 'Restaurar valor predeterminado';
+
+  @override
+  String get shortcutAssign => 'Asignar';
+
+  @override
+  String get shortcutReassign => 'Reasignar';
+
+  @override
+  String get shortcutContextApplication => 'Aplicación';
+
+  @override
+  String get shortcutContextDocument => 'Vistas del documento';
+
+  @override
+  String get shortcutContextEditor => 'Editor y código fuente';
+
+  @override
+  String get shortcutContextWritersideSource => 'Código fuente de Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navegación del espacio de trabajo';
+
+  @override
+  String get shortcutContextTree => 'Árboles laterales';
 }

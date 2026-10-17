@@ -306,6 +306,151 @@ void main() {
   );
 
   testWidgets(
+    'Actions groups browsing by catalog category and ranks filtered matches before availability',
+    (tester) async {
+      final container = containerFor(_state());
+      final session = container.read(searchSessionProvider.notifier);
+      ActionSearchResult action(
+        String id,
+        String title,
+        String category, {
+        bool enabled = true,
+      }) => ActionSearchResult(
+        BusyMarkCommand(
+          id: id,
+          label: (_) => title,
+          category: (_) => category,
+          scope: BusyMarkCommandScope.application,
+          execute: () => fail('Presentation cannot execute'),
+        ),
+        title,
+        category,
+        'Formatting command',
+        enabled: enabled,
+      );
+      session.configureCommands(
+        [
+          action('app.other', 'Zebra', 'General'),
+          action('edit.exact', 'Bold', 'Formatting', enabled: false),
+          action('edit.prefix', 'Bold text', 'Formatting'),
+          action('edit.token', 'Make Bold', 'Formatting'),
+          action('edit.weak', 'Some Boldness', 'Formatting'),
+          action('app.category', 'Bold settings', 'General'),
+        ],
+        categoryOrder: ['General', 'Formatting'],
+      );
+      session.open(category: SearchCategory.actions);
+      await session.submit();
+      expect(
+        container.read(searchSessionProvider).results.map((r) => r.identity),
+        [
+          'app.category',
+          'app.other',
+          'edit.prefix',
+          'edit.token',
+          'edit.weak',
+          'edit.exact',
+        ],
+      );
+      session.select(3);
+      session.query('Bold');
+      await session.submit();
+      var state = container.read(searchSessionProvider);
+      expect(state.results.map((r) => r.identity), [
+        'edit.exact',
+        'app.category',
+        'edit.prefix',
+        'edit.token',
+        'edit.weak',
+      ]);
+      expect(state.results[state.selected].identity, 'edit.token');
+      session.select(0);
+      session.query('');
+      await session.submit();
+      state = container.read(searchSessionProvider);
+      expect(state.results[state.selected].identity, 'edit.exact');
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SearchResultList(
+                groupActions: true,
+                results: state.results,
+                selected: state.selected,
+                onActivate: (_) async => fail('Disabled action'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('General'), findsOneWidget);
+      expect(find.text('Formatting'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is BusyMarkSidebarRecordRow),
+        findsNWidgets(6),
+      );
+      final disabled = tester.widget<BusyMarkSidebarRecordRow>(
+        find.byKey(const ValueKey('edit.exact')),
+      );
+      expect(disabled.onTap, isNull);
+      session.moveSelection(-1);
+      expect(
+        container.read(searchSessionProvider).selected,
+        4,
+        reason: 'Headings are not selection indices',
+      );
+    },
+  );
+
+  testWidgets(
+    'search header uses one Settings selector and the eight agreed category labels',
+    (tester) async {
+      final container = containerFor(_state());
+      container.read(appRouterProvider).go('/workspace');
+      final session = container.read(searchSessionProvider.notifier);
+      session.open(category: SearchCategory.file);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: SizedBox(width: 250, height: 500, child: SearchSidebar()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final context = tester.element(find.byType(SearchSidebar));
+      expect(
+        SearchCategory.values.map((c) => searchCategoryLabel(context, c)),
+        [
+          'Document Text',
+          'Workspace Text',
+          'Headings',
+          'Documents',
+          'Topics',
+          'Recent',
+          'Local History',
+          'Actions',
+        ],
+      );
+      expect(find.text('Search:'), findsOneWidget);
+      final selector = tester.widget<BusyMarkPopupSelector<SearchCategory>>(
+        find.byKey(const ValueKey('search-category')),
+      );
+      expect(selector.fullWidth, isTrue);
+      expect(selector.options.map((o) => o.value), session.categories);
+      expect(find.byType(DropdownButton<SearchCategory>), findsNothing);
+    },
+  );
+
+  testWidgets(
     'Actions sort available first by localized metadata and preserve selected identity on availability change',
     (tester) async {
       final container = containerFor(_state());

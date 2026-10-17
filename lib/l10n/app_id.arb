@@ -702,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Tampilkan referensi pintasan keyboard ini",
+  "shortcutKeyboardShortcutsDescription": "Sesuaikan pintasan keyboard aplikasi",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -5146,5 +5146,32 @@
   "searchRecentHint": "Cari terbaru…",
   "searchActionsHint": "Cari tindakan…",
   "searchRequiresNotesWorkspace": "Memerlukan ruang kerja Catatan",
-  "searchRecentEmpty": "Tidak ada sumber daya terbaru"
+  "searchRecentEmpty": "Tidak ada sumber daya terbaru",
+  "searchSidebarLabel": "Cari:",
+  "searchDocumentTextCategory": "Teks dokumen",
+  "searchWorkspaceTextCategory": "Teks ruang kerja",
+  "searchHeadingsCategory": "Judul",
+  "shortcutUnassigned": "Belum ditetapkan",
+  "shortcutSearchHint": "Cari tindakan atau pintasan…",
+  "shortcutFindBy": "Cari berdasarkan pintasan",
+  "shortcutPressKeys": "Tekan kombinasi tombol…",
+  "shortcutRecord": "Rekam pintasan",
+  "shortcutRestoreAll": "Pulihkan semua bawaan",
+  "shortcutRestoreAllQuestion": "Pulihkan pintasan bawaan semua tindakan? Penetapan khusus akan dihapus.",
+  "shortcutSaveFailed": "Pintasan aktif tetapi tidak dapat disimpan. Coba lagi agar tetap tersedia setelah mulai ulang.",
+  "shortcutRetry": "Coba simpan lagi",
+  "shortcutChanged": "Penetapan berubah. Tinjau pintasan saat ini dan coba lagi.",
+  "shortcutInvalid": "Kombinasi ini tidak dapat ditetapkan dalam konteks ini.",
+  "shortcutSystemWarning": "Desktop Anda mungkin memakai kombinasi ini. BusyMark tidak dapat mengganti pintasan sistem.",
+  "shortcutConflicts": "Pintasan ini bertentangan dengan tindakan berikut:",
+  "shortcutRemove": "Hapus penetapan",
+  "shortcutRestoreDefault": "Pulihkan bawaan",
+  "shortcutAssign": "Tetapkan",
+  "shortcutReassign": "Tetapkan ulang",
+  "shortcutContextApplication": "Aplikasi",
+  "shortcutContextDocument": "Tampilan dokumen",
+  "shortcutContextEditor": "Editor dan sumber",
+  "shortcutContextWritersideSource": "Sumber Writerside",
+  "shortcutContextWorkspace": "Navigasi ruang kerja",
+  "shortcutContextTree": "Pohon bilah samping"
 }

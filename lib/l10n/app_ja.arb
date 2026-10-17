@@ -702,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "このキーボードショートカット一覧を表示",
+  "shortcutKeyboardShortcutsDescription": "アプリケーションのキーボードショートカットを設定",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -5146,5 +5146,32 @@
   "searchRecentHint": "最近の項目を検索…",
   "searchActionsHint": "アクションを検索…",
   "searchRequiresNotesWorkspace": "ノートのワークスペースが必要です",
-  "searchRecentEmpty": "最近のリソースはありません"
+  "searchRecentEmpty": "最近のリソースはありません",
+  "searchSidebarLabel": "検索：",
+  "searchDocumentTextCategory": "文書のテキスト",
+  "searchWorkspaceTextCategory": "ワークスペースのテキスト",
+  "searchHeadingsCategory": "見出し",
+  "shortcutUnassigned": "未割り当て",
+  "shortcutSearchHint": "アクションやショートカットを検索…",
+  "shortcutFindBy": "ショートカットで検索",
+  "shortcutPressKeys": "キーの組み合わせを押してください…",
+  "shortcutRecord": "ショートカットを記録",
+  "shortcutRestoreAll": "すべて既定に戻す",
+  "shortcutRestoreAllQuestion": "すべてのアクションのショートカットを既定に戻しますか？独自の割り当ては削除されます。",
+  "shortcutSaveFailed": "ショートカットは有効ですが保存できませんでした。再起動後も保持するには保存を再試行してください。",
+  "shortcutRetry": "保存を再試行",
+  "shortcutChanged": "割り当てが変更されました。現在のショートカットを確認して再試行してください。",
+  "shortcutInvalid": "この組み合わせはこのコンテキストでは割り当てられません。",
+  "shortcutSystemWarning": "この組み合わせはデスクトップで使われている可能性があります。BusyMarkはシステムのショートカットを上書きできません。",
+  "shortcutConflicts": "このショートカットは次のアクションと競合します：",
+  "shortcutRemove": "割り当てを削除",
+  "shortcutRestoreDefault": "既定に戻す",
+  "shortcutAssign": "割り当て",
+  "shortcutReassign": "再割り当て",
+  "shortcutContextApplication": "アプリケーション",
+  "shortcutContextDocument": "文書の表示",
+  "shortcutContextEditor": "エディターとソース",
+  "shortcutContextWritersideSource": "Writersideのソース",
+  "shortcutContextWorkspace": "ワークスペースの移動",
+  "shortcutContextTree": "サイドバーのツリー"
 }

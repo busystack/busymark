@@ -672,7 +672,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Kuva kiirklahvide loend",
+  "shortcutKeyboardShortcutsDescription": "Kohanda rakenduse kiirklahve",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -4076,5 +4076,32 @@
   "searchRecentHint": "Otsi hiljutisi…",
   "searchActionsHint": "Otsi toiminguid…",
   "searchRequiresNotesWorkspace": "Vajab märkmete tööruumi",
-  "searchRecentEmpty": "Hiljutisi ressursse pole"
+  "searchRecentEmpty": "Hiljutisi ressursse pole",
+  "searchSidebarLabel": "Otsi:",
+  "searchDocumentTextCategory": "Dokumendi tekst",
+  "searchWorkspaceTextCategory": "Tööala tekst",
+  "searchHeadingsCategory": "Pealkirjad",
+  "shortcutUnassigned": "Määramata",
+  "shortcutSearchHint": "Otsi toiminguid või kiirklahve…",
+  "shortcutFindBy": "Otsi kiirklahvi järgi",
+  "shortcutPressKeys": "Vajuta klahvikombinatsiooni…",
+  "shortcutRecord": "Salvesta kiirklahv",
+  "shortcutRestoreAll": "Taasta kõik vaikeväärtused",
+  "shortcutRestoreAllQuestion": "Kas taastada kõigi toimingute vaikekiirklahvid? Kohandatud määrangud eemaldatakse.",
+  "shortcutSaveFailed": "Kiirklahvid on aktiivsed, kuid neid ei saanud salvestada. Proovi uuesti, et säilitada need pärast taaskäivitamist.",
+  "shortcutRetry": "Proovi salvestamist uuesti",
+  "shortcutChanged": "Määrangud on muutunud. Vaata praegused kiirklahvid üle ja proovi uuesti.",
+  "shortcutInvalid": "Seda kombinatsiooni ei saa selles kontekstis määrata.",
+  "shortcutSystemWarning": "Töölaud võib seda kombinatsiooni kasutada. BusyMark ei saa süsteemi kiirklahve alistada.",
+  "shortcutConflicts": "See kiirklahv kattub järgmiste toimingutega:",
+  "shortcutRemove": "Eemalda määrang",
+  "shortcutRestoreDefault": "Taasta vaikeväärtus",
+  "shortcutAssign": "Määra",
+  "shortcutReassign": "Määra ümber",
+  "shortcutContextApplication": "Rakendus",
+  "shortcutContextDocument": "Dokumendivaated",
+  "shortcutContextEditor": "Redaktor ja lähtekood",
+  "shortcutContextWritersideSource": "Writerside’i lähtekood",
+  "shortcutContextWorkspace": "Tööala navigeerimine",
+  "shortcutContextTree": "Külgriba puud"
 }

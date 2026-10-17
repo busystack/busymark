@@ -775,7 +775,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shortcutSearchDescription => '현재 작업공간 검색';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '이 키보드 단축키 참조 표시';
+  String get shortcutKeyboardShortcutsDescription => '애플리케이션 키보드 단축키 사용자 지정';
 
   @override
   String get shortcutSyntaxReferenceDescription => '구문 참조 열기';
@@ -5297,4 +5297,88 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => '최근 리소스 없음';
+
+  @override
+  String get searchSidebarLabel => '검색:';
+
+  @override
+  String get searchDocumentTextCategory => '문서 텍스트';
+
+  @override
+  String get searchWorkspaceTextCategory => '작업 공간 텍스트';
+
+  @override
+  String get searchHeadingsCategory => '제목';
+
+  @override
+  String get shortcutUnassigned => '할당되지 않음';
+
+  @override
+  String get shortcutSearchHint => '동작 또는 단축키 검색…';
+
+  @override
+  String get shortcutFindBy => '단축키로 찾기';
+
+  @override
+  String get shortcutPressKeys => '키 조합을 누르세요…';
+
+  @override
+  String get shortcutRecord => '단축키 기록';
+
+  @override
+  String get shortcutRestoreAll => '모든 기본값 복원';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      '모든 동작의 기본 단축키를 복원할까요? 사용자 지정 할당이 제거됩니다.';
+
+  @override
+  String get shortcutSaveFailed =>
+      '단축키가 활성화되었지만 저장하지 못했습니다. 다시 시작 후에도 유지하려면 저장을 다시 시도하세요.';
+
+  @override
+  String get shortcutRetry => '저장 다시 시도';
+
+  @override
+  String get shortcutChanged => '할당이 변경되었습니다. 현재 단축키를 확인하고 다시 시도하세요.';
+
+  @override
+  String get shortcutInvalid => '이 조합은 이 문맥에서 할당할 수 없습니다.';
+
+  @override
+  String get shortcutSystemWarning =>
+      '데스크톱에서 이 조합을 사용할 수 있습니다. BusyMark는 시스템 단축키를 재정의할 수 없습니다.';
+
+  @override
+  String get shortcutConflicts => '이 단축키는 다음 동작과 충돌합니다:';
+
+  @override
+  String get shortcutRemove => '할당 제거';
+
+  @override
+  String get shortcutRestoreDefault => '기본값 복원';
+
+  @override
+  String get shortcutAssign => '할당';
+
+  @override
+  String get shortcutReassign => '다시 할당';
+
+  @override
+  String get shortcutContextApplication => '애플리케이션';
+
+  @override
+  String get shortcutContextDocument => '문서 보기';
+
+  @override
+  String get shortcutContextEditor => '편집기 및 소스';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 소스';
+
+  @override
+  String get shortcutContextWorkspace => '작업 공간 탐색';
+
+  @override
+  String get shortcutContextTree => '사이드바 트리';
 }

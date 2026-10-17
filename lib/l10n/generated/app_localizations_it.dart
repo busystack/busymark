@@ -804,7 +804,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Mostra il riferimento alle scorciatoie da tastiera';
+      'Personalizza le scorciatoie da tastiera dell’applicazione';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -5497,4 +5497,92 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Nessuna risorsa recente';
+
+  @override
+  String get searchSidebarLabel => 'Ricerca:';
+
+  @override
+  String get searchDocumentTextCategory => 'Testo del documento';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Testo dell’area di lavoro';
+
+  @override
+  String get searchHeadingsCategory => 'Intestazioni';
+
+  @override
+  String get shortcutUnassigned => 'Non assegnata';
+
+  @override
+  String get shortcutSearchHint => 'Cerca azioni o scorciatoie…';
+
+  @override
+  String get shortcutFindBy => 'Trova per scorciatoia';
+
+  @override
+  String get shortcutPressKeys => 'Premi una combinazione di tasti…';
+
+  @override
+  String get shortcutRecord => 'Acquisisci scorciatoia';
+
+  @override
+  String get shortcutRestoreAll =>
+      'Ripristina tutte le impostazioni predefinite';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Ripristinare le scorciatoie predefinite di tutte le azioni? Le assegnazioni personalizzate verranno rimosse.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Le scorciatoie sono attive ma non sono state salvate. Riprova per mantenerle dopo il riavvio.';
+
+  @override
+  String get shortcutRetry => 'Riprova salvataggio';
+
+  @override
+  String get shortcutChanged =>
+      'Le assegnazioni sono cambiate. Controlla le scorciatoie attuali e riprova.';
+
+  @override
+  String get shortcutInvalid =>
+      'Questa combinazione non può essere assegnata in questo contesto.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Questa combinazione potrebbe essere usata dal desktop. BusyMark non può sostituire le scorciatoie di sistema.';
+
+  @override
+  String get shortcutConflicts =>
+      'Questa scorciatoia è in conflitto con queste azioni:';
+
+  @override
+  String get shortcutRemove => 'Rimuovi assegnazione';
+
+  @override
+  String get shortcutRestoreDefault => 'Ripristina predefinita';
+
+  @override
+  String get shortcutAssign => 'Assegna';
+
+  @override
+  String get shortcutReassign => 'Riassegna';
+
+  @override
+  String get shortcutContextApplication => 'Applicazione';
+
+  @override
+  String get shortcutContextDocument => 'Viste del documento';
+
+  @override
+  String get shortcutContextEditor => 'Editor e sorgente';
+
+  @override
+  String get shortcutContextWritersideSource => 'Sorgente Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navigazione dell’area di lavoro';
+
+  @override
+  String get shortcutContextTree => 'Alberi laterali';
 }

@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ",
+  "shortcutKeyboardShortcutsDescription": "अनुप्रयोग के कीबोर्ड शॉर्टकट अनुकूलित करें",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3616,5 +3616,32 @@
   "searchRecentHint": "हाल के आइटम खोजें…",
   "searchActionsHint": "क्रियाएँ खोजें…",
   "searchRequiresNotesWorkspace": "नोट्स कार्यक्षेत्र आवश्यक है",
-  "searchRecentEmpty": "हाल के संसाधन नहीं हैं"
+  "searchRecentEmpty": "हाल के संसाधन नहीं हैं",
+  "searchSidebarLabel": "खोजें:",
+  "searchDocumentTextCategory": "दस्तावेज़ पाठ",
+  "searchWorkspaceTextCategory": "कार्यस्थान पाठ",
+  "searchHeadingsCategory": "शीर्षक",
+  "shortcutUnassigned": "असाइन नहीं किया गया",
+  "shortcutSearchHint": "क्रियाएँ या शॉर्टकट खोजें…",
+  "shortcutFindBy": "शॉर्टकट से खोजें",
+  "shortcutPressKeys": "कुंजी संयोजन दबाएँ…",
+  "shortcutRecord": "शॉर्टकट रिकॉर्ड करें",
+  "shortcutRestoreAll": "सभी डिफ़ॉल्ट पुनर्स्थापित करें",
+  "shortcutRestoreAllQuestion": "सभी क्रियाओं के डिफ़ॉल्ट शॉर्टकट पुनर्स्थापित करें? कस्टम असाइनमेंट हटा दिए जाएँगे।",
+  "shortcutSaveFailed": "शॉर्टकट सक्रिय हैं लेकिन सहेजे नहीं जा सके। पुनः प्रारंभ के बाद रखने के लिए दोबारा सहेजें।",
+  "shortcutRetry": "सहेजने का पुनः प्रयास करें",
+  "shortcutChanged": "असाइनमेंट बदल गए हैं। वर्तमान शॉर्टकट जाँचें और पुनः प्रयास करें।",
+  "shortcutInvalid": "इस संदर्भ में यह संयोजन असाइन नहीं किया जा सकता।",
+  "shortcutSystemWarning": "आपका डेस्कटॉप इस संयोजन का उपयोग कर सकता है। BusyMark सिस्टम शॉर्टकट नहीं बदल सकता।",
+  "shortcutConflicts": "यह शॉर्टकट इन क्रियाओं से टकराता है:",
+  "shortcutRemove": "असाइनमेंट हटाएँ",
+  "shortcutRestoreDefault": "डिफ़ॉल्ट पुनर्स्थापित करें",
+  "shortcutAssign": "असाइन करें",
+  "shortcutReassign": "फिर से असाइन करें",
+  "shortcutContextApplication": "अनुप्रयोग",
+  "shortcutContextDocument": "दस्तावेज़ दृश्य",
+  "shortcutContextEditor": "संपादक और स्रोत",
+  "shortcutContextWritersideSource": "Writerside स्रोत",
+  "shortcutContextWorkspace": "कार्यस्थान नेविगेशन",
+  "shortcutContextTree": "साइडबार ट्री"
 }

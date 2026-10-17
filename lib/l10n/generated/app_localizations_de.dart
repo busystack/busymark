@@ -809,7 +809,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Diese Tastaturkürzelübersicht anzeigen';
+      'Tastenkürzel der Anwendung anpassen';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Syntaxreferenz öffnen';
@@ -5499,4 +5499,91 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Keine zuletzt geöffneten Ressourcen';
+
+  @override
+  String get searchSidebarLabel => 'Suchen:';
+
+  @override
+  String get searchDocumentTextCategory => 'Dokumenttext';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Arbeitsbereichstext';
+
+  @override
+  String get searchHeadingsCategory => 'Überschriften';
+
+  @override
+  String get shortcutUnassigned => 'Nicht zugewiesen';
+
+  @override
+  String get shortcutSearchHint => 'Aktionen oder Tastenkürzel suchen…';
+
+  @override
+  String get shortcutFindBy => 'Nach Tastenkürzel suchen';
+
+  @override
+  String get shortcutPressKeys => 'Tastenkombination drücken…';
+
+  @override
+  String get shortcutRecord => 'Tastenkürzel aufnehmen';
+
+  @override
+  String get shortcutRestoreAll => 'Alle Vorgaben wiederherstellen';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Standardkürzel aller Aktionen wiederherstellen? Eigene Zuweisungen werden entfernt.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Tastenkürzel sind aktiv, konnten aber nicht gespeichert werden. Zum Beibehalten nach Neustart erneut speichern.';
+
+  @override
+  String get shortcutRetry => 'Speichern wiederholen';
+
+  @override
+  String get shortcutChanged =>
+      'Zuweisungen geändert. Aktuelle Tastenkürzel prüfen und erneut versuchen.';
+
+  @override
+  String get shortcutInvalid =>
+      'Diese Kombination kann hier nicht zugewiesen werden.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Diese Kombination wird möglicherweise vom Desktop verwendet. BusyMark kann Systemkürzel nicht überschreiben.';
+
+  @override
+  String get shortcutConflicts =>
+      'Dieses Tastenkürzel überschneidet sich mit diesen Aktionen:';
+
+  @override
+  String get shortcutRemove => 'Zuweisung entfernen';
+
+  @override
+  String get shortcutRestoreDefault => 'Vorgabe wiederherstellen';
+
+  @override
+  String get shortcutAssign => 'Zuweisen';
+
+  @override
+  String get shortcutReassign => 'Neu zuweisen';
+
+  @override
+  String get shortcutContextApplication => 'Anwendung';
+
+  @override
+  String get shortcutContextDocument => 'Dokumentansichten';
+
+  @override
+  String get shortcutContextEditor => 'Editor und Quelltext';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside-Quelltext';
+
+  @override
+  String get shortcutContextWorkspace => 'Arbeitsbereichsnavigation';
+
+  @override
+  String get shortcutContextTree => 'Seitenleistenbäume';
 }

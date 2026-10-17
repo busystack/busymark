@@ -1,3 +1,5 @@
+import '../app/command_presentation.dart';
+import '../app/keyboard_shortcut_badge.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -23,9 +25,9 @@ import 'search_session.dart';
 
 String searchCategoryLabel(BuildContext context, SearchCategory category) =>
     switch (category) {
-      SearchCategory.file => context.l10n.searchInDocument,
-      SearchCategory.workspace => context.l10n.searchInWorkspace,
-      SearchCategory.outline => context.l10n.outline,
+      SearchCategory.file => context.l10n.searchDocumentTextCategory,
+      SearchCategory.workspace => context.l10n.searchWorkspaceTextCategory,
+      SearchCategory.outline => context.l10n.searchHeadingsCategory,
       SearchCategory.documents => context.l10n.searchDocumentsCategory,
       SearchCategory.topics => context.l10n.searchTopicsCategory,
       SearchCategory.recent => context.l10n.recent,
@@ -143,18 +145,15 @@ class SearchSidebar extends ConsumerWidget {
               ref.read(workspaceControllerProvider),
             ),
             disabledReason:
-                {
-                      BusyMarkCommandIds.syncNotes,
-                      BusyMarkCommandIds.exportNotes,
-                      BusyMarkCommandIds.importNotesFolder,
-                      BusyMarkCommandIds.importNotesFile,
-                    }.contains(c.id) &&
+                BusyMarkCommandCatalog.notesWorkspaceCommandIds.contains(
+                      c.id,
+                    ) &&
                     ref.read(workspaceControllerProvider).workspace?.isRemote !=
                         true
                 ? context.l10n.searchRequiresNotesWorkspace
                 : c.disabledReason?.call(context),
           ),
-      ]);
+      ], categoryOrder: commandCategoryOrder(context));
     }
     final workspace = ref.watch(workspaceControllerProvider);
     final remote = workspace.workspace?.isRemote == true;
@@ -234,49 +233,38 @@ class SearchSidebar extends ConsumerWidget {
               horizontal: BusyMarkSpacing.sm,
               vertical: BusyMarkSpacing.xs,
             ),
-            child: BusyMarkMenuButton<SearchCategory>(
-              key: const ValueKey('search-category'),
-              tooltip: context.l10n.searchCategory,
-              fallbackMenuWidth: BusyMarkSizes.sidebarWidth,
-              items: [
-                for (final category in controller.categories)
-                  BusyMarkPopupMenuItem(
-                    value: category,
-                    label: searchCategoryLabel(context, category),
-                    checked: category == state.category,
-                    trailingCheck: true,
-                  ),
-              ],
-              onSelected: (category) => controller.open(category: category),
-              triggerBuilder: (context, trigger) => trigger.anchor(
-                child: Tooltip(
-                  message: context.l10n.searchCategory,
+            child: Row(
+              children: [
+                const Icon(BusyMarkGlyphs.search, size: BusyMarkSizes.iconSm),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                Text(context.l10n.searchSidebarLabel),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                Expanded(
                   child: Semantics(
                     label: context.l10n.searchCategory,
-                    expanded: trigger.isOpen,
-                    child: BusyMarkPushButton.standard(
-                      focusNode: trigger.focusNode,
-                      onPressed: trigger.onPressed,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              searchCategoryLabel(context, state.category),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: BusyMarkSpacing.xs),
-                          const Icon(
-                            BusyMarkGlyphs.downArrow,
-                            size: BusyMarkSizes.iconSm,
-                          ),
-                        ],
+                    child: BusyMarkPopupSelector<SearchCategory>(
+                      key: const ValueKey('search-category'),
+                      value: state.category,
+                      label: searchCategoryLabel(context, state.category),
+                      tooltip: context.l10n.searchCategory,
+                      fullWidth: true,
+                      maxLabelLines: 2,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: BusyMarkSpacing.xs,
                       ),
+                      options: [
+                        for (final category in controller.categories)
+                          BusyMarkPopupSelectorOption(
+                            value: category,
+                            label: searchCategoryLabel(context, category),
+                          ),
+                      ],
+                      onSelected: (category) =>
+                          controller.open(category: category),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
           if (contextLabel != null)
@@ -374,6 +362,9 @@ class SearchSidebar extends ConsumerWidget {
                     ),
                   )
                 : SearchResultList(
+                    groupActions:
+                        state.category == SearchCategory.actions &&
+                        state.query.trim().isEmpty,
                     results: state.results,
                     selected: state.selected,
                     onActivate: (result) =>
@@ -410,7 +401,9 @@ class SearchResultList extends ConsumerStatefulWidget {
     required this.results,
     this.selected = -1,
     required this.onActivate,
+    this.groupActions = false,
   });
+  final bool groupActions;
   final List<SidebarSearchResult> results;
   final int selected;
   final Future<void> Function(SidebarSearchResult) onActivate;
@@ -547,7 +540,10 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
             result,
             accountLabel: (id) => accountLabels[id],
           );
-          final title = presentation.title, subtitle = presentation.subtitle;
+          final title = presentation.title;
+          final subtitle = widget.groupActions && result is ActionSearchResult
+              ? (result.enabled ? '' : result.disabledReason ?? '')
+              : presentation.subtitle;
           final shortcut = presentation.shortcut;
           final enabled = result is! ActionSearchResult || result.enabled;
           final selected =
@@ -562,7 +558,7 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                   result.hit.end,
                 ))
               : ValueKey(result.identity);
-          return BusyMarkSidebarRecordRow<RecentNavigationAction>(
+          final row = BusyMarkSidebarRecordRow<RecentNavigationAction>(
             key: key,
             icon: result is RecentSearchResult
                 ? WorkspaceGlyphs.forRecent(result.resource)
@@ -620,11 +616,8 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                 : shortcut == null
                 ? null
                 : ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 96),
-                    child: Text(
-                      shortcut,
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
+                    constraints: const BoxConstraints(maxWidth: 120),
+                    child: BusyMarkKeyboardShortcutBadge(shortcut),
                   ),
             onTap: enabled ? () => unawaited(widget.onActivate(result)) : null,
             menuTooltip: result is RecentSearchResult
@@ -643,6 +636,35 @@ class _SearchResultListState extends ConsumerState<SearchResultList> {
                     ),
                   )
                 : null,
+          );
+          if (!widget.groupActions ||
+              result is! ActionSearchResult ||
+              index > 0 &&
+                  rows[index - 1] is ActionSearchResult &&
+                  (rows[index - 1] as ActionSearchResult).category ==
+                      result.category) {
+            return row;
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                  BusyMarkSpacing.sm,
+                  BusyMarkSpacing.sm,
+                  BusyMarkSpacing.sm,
+                  BusyMarkSpacing.xs,
+                ),
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    result.category,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ),
+              row,
+            ],
           );
         },
       ),

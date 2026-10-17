@@ -795,7 +795,8 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutSearchDescription => 'Otsi praegusest tööruumist';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'Kuva kiirklahvide loend';
+  String get shortcutKeyboardShortcutsDescription =>
+      'Kohanda rakenduse kiirklahve';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Ava süntaksiviide';
@@ -5447,4 +5448,91 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Hiljutisi ressursse pole';
+
+  @override
+  String get searchSidebarLabel => 'Otsi:';
+
+  @override
+  String get searchDocumentTextCategory => 'Dokumendi tekst';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Tööala tekst';
+
+  @override
+  String get searchHeadingsCategory => 'Pealkirjad';
+
+  @override
+  String get shortcutUnassigned => 'Määramata';
+
+  @override
+  String get shortcutSearchHint => 'Otsi toiminguid või kiirklahve…';
+
+  @override
+  String get shortcutFindBy => 'Otsi kiirklahvi järgi';
+
+  @override
+  String get shortcutPressKeys => 'Vajuta klahvikombinatsiooni…';
+
+  @override
+  String get shortcutRecord => 'Salvesta kiirklahv';
+
+  @override
+  String get shortcutRestoreAll => 'Taasta kõik vaikeväärtused';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Kas taastada kõigi toimingute vaikekiirklahvid? Kohandatud määrangud eemaldatakse.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Kiirklahvid on aktiivsed, kuid neid ei saanud salvestada. Proovi uuesti, et säilitada need pärast taaskäivitamist.';
+
+  @override
+  String get shortcutRetry => 'Proovi salvestamist uuesti';
+
+  @override
+  String get shortcutChanged =>
+      'Määrangud on muutunud. Vaata praegused kiirklahvid üle ja proovi uuesti.';
+
+  @override
+  String get shortcutInvalid =>
+      'Seda kombinatsiooni ei saa selles kontekstis määrata.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Töölaud võib seda kombinatsiooni kasutada. BusyMark ei saa süsteemi kiirklahve alistada.';
+
+  @override
+  String get shortcutConflicts =>
+      'See kiirklahv kattub järgmiste toimingutega:';
+
+  @override
+  String get shortcutRemove => 'Eemalda määrang';
+
+  @override
+  String get shortcutRestoreDefault => 'Taasta vaikeväärtus';
+
+  @override
+  String get shortcutAssign => 'Määra';
+
+  @override
+  String get shortcutReassign => 'Määra ümber';
+
+  @override
+  String get shortcutContextApplication => 'Rakendus';
+
+  @override
+  String get shortcutContextDocument => 'Dokumendivaated';
+
+  @override
+  String get shortcutContextEditor => 'Redaktor ja lähtekood';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside’i lähtekood';
+
+  @override
+  String get shortcutContextWorkspace => 'Tööala navigeerimine';
+
+  @override
+  String get shortcutContextTree => 'Külgriba puud';
 }

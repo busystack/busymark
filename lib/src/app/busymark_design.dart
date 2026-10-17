@@ -1507,6 +1507,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon),
           iconColorArgb: item.iconColor?.toARGB32(),
           shortcut: item.shortcut,
+          gtkAccelerator: item.gtkAccelerator,
           enabled: item.enabled,
           checkable: item.trailingCheck,
           selected: item.trailingCheck && item.checked,
@@ -1835,6 +1836,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     IconData? icon,
     Color? iconColor,
     String? shortcut,
+    this.gtkAccelerator,
     super.enabled = true,
     bool checked = false,
     bool trailingCheck = false,
@@ -1869,6 +1871,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   final IconData? icon;
   final Color? iconColor;
   final String? shortcut;
+  final String? gtkAccelerator;
   final bool checked;
   final bool trailingCheck;
   final bool mutuallyExclusive;
@@ -2155,6 +2158,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
     this.buttonMaxWidth = BusyMarkSizes.languageButtonMaxWidth,
     this.leading,
     this.fullWidth = false,
+    this.maxLabelLines = 1,
     this.contentPadding,
   });
 
@@ -2169,6 +2173,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final double buttonMaxWidth;
   final Widget? leading;
   final bool fullWidth;
+  final int maxLabelLines;
   final EdgeInsetsGeometry? contentPadding;
 
   @override
@@ -2227,9 +2232,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                           Expanded(
                             child: Text(
                               label,
-                              maxLines: 1,
+                              maxLines: maxLabelLines,
                               overflow: TextOverflow.ellipsis,
-                              softWrap: false,
+                              softWrap: maxLabelLines > 1,
                             ),
                           )
                         else
@@ -2245,9 +2250,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                               ),
                               child: Text(
                                 label,
-                                maxLines: 1,
+                                maxLines: maxLabelLines,
                                 overflow: TextOverflow.ellipsis,
-                                softWrap: false,
+                                softWrap: maxLabelLines > 1,
                               ),
                             ),
                           ),

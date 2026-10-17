@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Mostrar esta referência de atalhos de teclado",
+  "shortcutKeyboardShortcutsDescription": "Personalizar os atalhos de teclado do aplicativo",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3616,5 +3616,32 @@
   "searchRecentHint": "Pesquisar recentes…",
   "searchActionsHint": "Pesquisar ações…",
   "searchRequiresNotesWorkspace": "Requer um espaço de trabalho de Notas",
-  "searchRecentEmpty": "Nenhum recurso recente"
+  "searchRecentEmpty": "Nenhum recurso recente",
+  "searchSidebarLabel": "Pesquisar:",
+  "searchDocumentTextCategory": "Texto do documento",
+  "searchWorkspaceTextCategory": "Texto do espaço de trabalho",
+  "searchHeadingsCategory": "Títulos",
+  "shortcutUnassigned": "Não atribuído",
+  "shortcutSearchHint": "Pesquisar ações ou atalhos…",
+  "shortcutFindBy": "Buscar por atalho",
+  "shortcutPressKeys": "Pressione uma combinação de teclas…",
+  "shortcutRecord": "Capturar atalho",
+  "shortcutRestoreAll": "Restaurar todos os padrões",
+  "shortcutRestoreAllQuestion": "Restaurar os atalhos padrão de todas as ações? As atribuições personalizadas serão removidas.",
+  "shortcutSaveFailed": "Os atalhos estão ativos, mas não foram salvos. Tente novamente para mantê-los após reiniciar.",
+  "shortcutRetry": "Tentar salvar novamente",
+  "shortcutChanged": "As atribuições mudaram. Confira os atalhos atuais e tente novamente.",
+  "shortcutInvalid": "Esta combinação não pode ser atribuída neste contexto.",
+  "shortcutSystemWarning": "O ambiente de trabalho pode usar esta combinação. O BusyMark não pode substituir atalhos do sistema.",
+  "shortcutConflicts": "Este atalho entra em conflito com estas ações:",
+  "shortcutRemove": "Remover atribuição",
+  "shortcutRestoreDefault": "Restaurar padrão",
+  "shortcutAssign": "Atribuir",
+  "shortcutReassign": "Reatribuir",
+  "shortcutContextApplication": "Aplicativo",
+  "shortcutContextDocument": "Visualizações do documento",
+  "shortcutContextEditor": "Editor e código-fonte",
+  "shortcutContextWritersideSource": "Código-fonte do Writerside",
+  "shortcutContextWorkspace": "Navegação do espaço de trabalho",
+  "shortcutContextTree": "Árvores laterais"
 }

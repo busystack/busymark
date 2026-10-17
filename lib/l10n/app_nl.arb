@@ -702,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Toon deze sneltoetsreferentie",
+  "shortcutKeyboardShortcutsDescription": "Sneltoetsen van de toepassing aanpassen",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -5146,5 +5146,32 @@
   "searchRecentHint": "Recente items zoeken…",
   "searchActionsHint": "Acties zoeken…",
   "searchRequiresNotesWorkspace": "Vereist een notitiewerkruimte",
-  "searchRecentEmpty": "Geen recente bronnen"
+  "searchRecentEmpty": "Geen recente bronnen",
+  "searchSidebarLabel": "Zoeken:",
+  "searchDocumentTextCategory": "Documenttekst",
+  "searchWorkspaceTextCategory": "Werkruimtetekst",
+  "searchHeadingsCategory": "Koppen",
+  "shortcutUnassigned": "Niet toegewezen",
+  "shortcutSearchHint": "Acties of sneltoetsen zoeken…",
+  "shortcutFindBy": "Zoeken op sneltoets",
+  "shortcutPressKeys": "Druk op een toetscombinatie…",
+  "shortcutRecord": "Sneltoets opnemen",
+  "shortcutRestoreAll": "Alle standaardwaarden herstellen",
+  "shortcutRestoreAllQuestion": "Standaardsneltoetsen van alle acties herstellen? Aangepaste toewijzingen worden verwijderd.",
+  "shortcutSaveFailed": "Sneltoetsen zijn actief, maar konden niet worden opgeslagen. Probeer opnieuw om ze na herstart te behouden.",
+  "shortcutRetry": "Opslaan opnieuw proberen",
+  "shortcutChanged": "Toewijzingen zijn gewijzigd. Controleer de huidige sneltoetsen en probeer opnieuw.",
+  "shortcutInvalid": "Deze combinatie kan in deze context niet worden toegewezen.",
+  "shortcutSystemWarning": "Deze combinatie wordt mogelijk door uw bureaublad gebruikt. BusyMark kan systeemsneltoetsen niet overschrijven.",
+  "shortcutConflicts": "Deze sneltoets overlapt met deze acties:",
+  "shortcutRemove": "Toewijzing verwijderen",
+  "shortcutRestoreDefault": "Standaard herstellen",
+  "shortcutAssign": "Toewijzen",
+  "shortcutReassign": "Opnieuw toewijzen",
+  "shortcutContextApplication": "Toepassing",
+  "shortcutContextDocument": "Documentweergaven",
+  "shortcutContextEditor": "Editor en bron",
+  "shortcutContextWritersideSource": "Writerside-bron",
+  "shortcutContextWorkspace": "Werkruimtenavigatie",
+  "shortcutContextTree": "Zijbalkbomen"
 }

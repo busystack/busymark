@@ -702,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Bu klavye kısayolu referansını göster",
+  "shortcutKeyboardShortcutsDescription": "Uygulama klavye kısayollarını özelleştir",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -5146,5 +5146,32 @@
   "searchRecentHint": "Son kullanılanları ara…",
   "searchActionsHint": "Eylemleri ara…",
   "searchRequiresNotesWorkspace": "Notlar çalışma alanı gerektirir",
-  "searchRecentEmpty": "Son kullanılan kaynak yok"
+  "searchRecentEmpty": "Son kullanılan kaynak yok",
+  "searchSidebarLabel": "Ara:",
+  "searchDocumentTextCategory": "Belge metni",
+  "searchWorkspaceTextCategory": "Çalışma alanı metni",
+  "searchHeadingsCategory": "Başlıklar",
+  "shortcutUnassigned": "Atanmamış",
+  "shortcutSearchHint": "Eylem veya kısayol ara…",
+  "shortcutFindBy": "Kısayola göre bul",
+  "shortcutPressKeys": "Bir tuş birleşimine basın…",
+  "shortcutRecord": "Kısayol kaydet",
+  "shortcutRestoreAll": "Tüm varsayılanları geri yükle",
+  "shortcutRestoreAllQuestion": "Tüm eylemlerin varsayılan kısayolları geri yüklensin mi? Özel atamalar kaldırılacak.",
+  "shortcutSaveFailed": "Kısayollar etkin ancak kaydedilemedi. Yeniden başlatmadan sonra korumak için tekrar kaydedin.",
+  "shortcutRetry": "Kaydetmeyi yeniden dene",
+  "shortcutChanged": "Atamalar değişti. Geçerli kısayolları gözden geçirip yeniden deneyin.",
+  "shortcutInvalid": "Bu birleşim bu bağlamda atanamaz.",
+  "shortcutSystemWarning": "Masaüstünüz bu birleşimi kullanıyor olabilir. BusyMark sistem kısayollarını geçersiz kılamaz.",
+  "shortcutConflicts": "Bu kısayol şu eylemlerle çakışıyor:",
+  "shortcutRemove": "Atamayı kaldır",
+  "shortcutRestoreDefault": "Varsayılanı geri yükle",
+  "shortcutAssign": "Ata",
+  "shortcutReassign": "Yeniden ata",
+  "shortcutContextApplication": "Uygulama",
+  "shortcutContextDocument": "Belge görünümleri",
+  "shortcutContextEditor": "Düzenleyici ve kaynak",
+  "shortcutContextWritersideSource": "Writerside kaynağı",
+  "shortcutContextWorkspace": "Çalışma alanı gezintisi",
+  "shortcutContextTree": "Kenar çubuğu ağaçları"
 }

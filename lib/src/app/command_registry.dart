@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'busymark_shortcuts.dart';
+import 'shortcut_binding.dart';
+import 'shortcut_capture.dart';
 import 'localization.dart';
 
 typedef BusyMarkCommandCallback = FutureOr<void> Function();
@@ -64,7 +66,11 @@ enum BusyMarkCommandScope {
   editor,
   sidebar,
   tree,
+  sourceSymbol,
+  wysiwyg,
 }
+
+enum BusyMarkCommandResourceContext { any, localWorkspace, notesWorkspace }
 
 @immutable
 class BusyMarkCommand {
@@ -74,6 +80,7 @@ class BusyMarkCommand {
     required this.category,
     required this.scope,
     this.shortcut,
+    this.resourceContext = BusyMarkCommandResourceContext.any,
     this.description,
     this.disabledReason,
     this.execute,
@@ -86,6 +93,22 @@ class BusyMarkCommand {
   final BusyMarkCommandLabel category;
   final BusyMarkCommandScope scope;
   final BusyMarkShortcutDefinition? shortcut;
+  final BusyMarkCommandResourceContext resourceContext;
+
+  BusyMarkCommand withShortcut(BusyMarkShortcutDefinition? value) =>
+      BusyMarkCommand(
+        id: id,
+        label: label,
+        category: category,
+        scope: scope,
+        shortcut: value,
+        resourceContext: resourceContext,
+        description: description,
+        disabledReason: disabledReason,
+        execute: execute,
+        enabled: enabled,
+        visible: visible,
+      );
   final BusyMarkCommandDescription? description;
   final BusyMarkCommandDescription? disabledReason;
   final BusyMarkCommandCallback? execute;
@@ -139,9 +162,155 @@ class BusyMarkCommandRegistry {
     : commands = List.unmodifiable(commands) {
     _validate(this.commands);
     _byId = {for (final command in this.commands) command.id: command};
+    for (final c in this.commands) {
+      _aliases[c.id] = _defaultAliases(c);
+    }
+    _compileKeyCandidates();
   }
 
   final List<BusyMarkCommand> commands;
+  final Map<String, List<ShortcutActivator>> _aliases = {};
+  final Map<(BusyMarkCommandScope, LogicalKeyboardKey), List<String>>
+  _keyCandidates = {};
+  void _compileKeyCandidates() {
+    _keyCandidates.clear();
+    for (final c in commands) {
+      for (final activator in activators(c.id)) {
+        for (final trigger in activator.triggers ?? <LogicalKeyboardKey>[]) {
+          (_keyCandidates[(c.scope, trigger)] ??= []).add(c.id);
+        }
+      }
+    }
+  }
+
+  final Map<String, BusyMarkCommand> _replacedDefaults = {};
+  final Map<String, List<ShortcutActivator>> _retiredBindings = {};
+  final Map<int, List<ShortcutActivator>> _blockedBindings = {};
+  List<ShortcutActivator> _blockedFor(Set<BusyMarkCommandScope> scopes) {
+    final key = scopes.fold(0, (int bits, scope) => bits | 1 << scope.index);
+    return _blockedBindings.putIfAbsent(key, () {
+      final receivers = {
+        ...scopes,
+        BusyMarkCommandScope.application,
+        BusyMarkCommandScope.documentView,
+        BusyMarkCommandScope.sidebar,
+      };
+      bool replaced(BusyMarkCommand old, ShortcutActivator retired) =>
+          commands.any(
+            (c) =>
+                receivers.contains(c.scope) &&
+                contextsOverlap(old, c) &&
+                activators(c.id).any(
+                  (a) => a is SingleActivator && retired is SingleActivator
+                      ? BusyMarkKeyBinding.fromActivator(a) ==
+                            BusyMarkKeyBinding.fromActivator(retired)
+                      : a == retired,
+                ),
+          );
+      return [
+        for (final c in _replacedDefaults.values)
+          if (scopes.contains(c.scope))
+            for (final a in _retiredBindings[c.id] ?? <ShortcutActivator>[])
+              if (!replaced(c, a)) a,
+      ];
+    });
+  }
+
+  Map<ShortcutActivator, Intent> blockedDefaultIntents(
+    Set<BusyMarkCommandScope> scopes,
+  ) => {
+    for (final a in _blockedFor(scopes))
+      a: const DoNothingAndStopPropagationIntent(),
+  };
+  bool blocksReplacedDefault(
+    KeyEvent event,
+    HardwareKeyboard keyboard,
+    Set<BusyMarkCommandScope> scopes,
+  ) => _blockedFor(scopes).any((a) => a.accepts(event, keyboard));
+  List<ShortcutActivator> activators(String id) => [
+    if (_byId[id]?.shortcut case final value?) value.activator,
+    ...?_aliases[id],
+  ];
+
+  BusyMarkCommandRegistry withOverrides(
+    Map<String, BusyMarkKeyBinding?> overrides,
+  ) {
+    final result = BusyMarkCommandRegistry([
+      for (final command in commands)
+        if (!overrides.containsKey(command.id))
+          command
+        else
+          command.withShortcut(switch (overrides[command.id]) {
+            final binding? => BusyMarkShortcutDefinition(
+              label: binding.label,
+              activator: binding.activator,
+              gtkAccelerator: binding.gtkAccelerator,
+            ),
+            _ => null,
+          }),
+    ]);
+    result._aliases.clear();
+    for (final command in result.commands) {
+      if (overrides.containsKey(command.id)) {
+        result._replacedDefaults[command.id] = this[command.id]!;
+        result._retiredBindings[command.id] = activators(command.id);
+      } else {
+        result._aliases[command.id] = _defaultAliases(command);
+      }
+    }
+    result._compileKeyCandidates();
+    return result;
+  }
+
+  Map<ShortcutActivator, Intent> bindingIntents(String id, Intent intent) => {
+    for (final activator in activators(id)) activator: intent,
+  };
+
+  /// Actual receiving contexts overlap across scopes. Tree browsing is the one
+  /// disjoint document context; line movement edits the Source .tree buffer.
+  static bool contextsOverlap(BusyMarkCommand a, BusyMarkCommand b) {
+    if (a.resourceContext != BusyMarkCommandResourceContext.any &&
+        b.resourceContext != BusyMarkCommandResourceContext.any &&
+        a.resourceContext != b.resourceContext) {
+      return false;
+    }
+    bool global(BusyMarkCommand c) => {
+      BusyMarkCommandScope.application,
+      BusyMarkCommandScope.documentView,
+      BusyMarkCommandScope.sidebar,
+    }.contains(c.scope);
+    bool treeOnly(BusyMarkCommand c) =>
+        c.id == BusyMarkCommandIds.treeDeleteSelection ||
+        c.id == BusyMarkCommandIds.treeRenameSelection;
+    if (global(a) || global(b)) return true;
+    bool sourceOnly(BusyMarkCommand c) =>
+        c.scope == BusyMarkCommandScope.sourceSymbol ||
+        c.id == BusyMarkCommandIds.treeMoveLineUp ||
+        c.id == BusyMarkCommandIds.treeMoveLineDown;
+    if (a.scope == BusyMarkCommandScope.wysiwyg && sourceOnly(b) ||
+        b.scope == BusyMarkCommandScope.wysiwyg && sourceOnly(a)) {
+      return false;
+    }
+    if (treeOnly(a) || treeOnly(b)) {
+      return treeOnly(a) && treeOnly(b);
+    }
+    return true;
+  }
+
+  List<BusyMarkCommand> conflicts(String id, BusyMarkKeyBinding binding) {
+    final command = this[id];
+    if (command == null) return const [];
+    return [
+      for (final other in commands)
+        if (other.id != id &&
+            contextsOverlap(command, other) &&
+            activators(other.id).whereType<SingleActivator>().any(
+              (a) => BusyMarkKeyBinding.fromActivator(a) == binding,
+            ))
+          other,
+    ];
+  }
+
   late final Map<String, BusyMarkCommand> _byId;
 
   BusyMarkCommand? operator [](String id) => _byId[id];
@@ -189,7 +358,10 @@ class BusyMarkCommandRegistry {
 
   bool isContextual(BusyMarkCommand command) {
     return command.scope == BusyMarkCommandScope.editor ||
+        command.scope == BusyMarkCommandScope.wysiwyg ||
         command.scope == BusyMarkCommandScope.textEditing ||
+        command.scope == BusyMarkCommandScope.sourceSymbol ||
+        command.scope == BusyMarkCommandScope.tree ||
         command.id == BusyMarkCommandIds.treeMoveLineUp ||
         command.id == BusyMarkCommandIds.treeMoveLineDown;
   }
@@ -222,7 +394,8 @@ class BusyMarkCommandRegistry {
       }.contains(command.id);
 
   bool shortcutAccepts(String id, KeyEvent event, HardwareKeyboard keyboard) {
-    return _byId[id]?.shortcut?.activator.accepts(event, keyboard) ?? false;
+    return !BusyMarkShortcutCapture.suppressing &&
+        activators(id).any((a) => a.accepts(event, keyboard));
   }
 
   String? matchingCommandId(
@@ -230,11 +403,9 @@ class BusyMarkCommandRegistry {
     HardwareKeyboard keyboard, {
     required BusyMarkCommandScope scope,
   }) {
-    for (final command in commands) {
-      if (command.scope == scope &&
-          command.shortcut?.activator.accepts(event, keyboard) == true) {
-        return command.id;
-      }
+    if (BusyMarkShortcutCapture.suppressing) return null;
+    for (final id in _keyCandidates[(scope, event.logicalKey)] ?? <String>[]) {
+      if (shortcutAccepts(id, event, keyboard)) return id;
     }
     return null;
   }
@@ -249,13 +420,14 @@ class BusyMarkCommandRegistry {
         if (scopes.contains(command.scope) &&
             command.shortcut != null &&
             !excludedIds.contains(command.id))
-          command.shortcut!.activator: intentFor(command.id),
+          for (final activator in activators(command.id))
+            activator: intentFor(command.id),
     };
   }
 
   static void _validate(List<BusyMarkCommand> commands) {
     final ids = <String>{};
-    final shortcuts = <(BusyMarkCommandScope, ShortcutActivator), String>{};
+    final shortcuts = <(BusyMarkCommandScope, Object), List<BusyMarkCommand>>{};
     for (final command in commands) {
       if (!RegExp(
         r'^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*)+$',
@@ -273,13 +445,22 @@ class BusyMarkCommandRegistry {
       if (shortcut == null) {
         continue;
       }
-      final key = (command.scope, shortcut.activator);
-      if (shortcuts[key] case final existing?) {
-        throw BusyMarkCommandRegistryValidationException(
-          'Shortcut conflict in ${command.scope.name}: $existing and ${command.id}',
-        );
+      final activator = shortcut.activator;
+      final key = (
+        command.scope,
+        activator is SingleActivator
+            ? BusyMarkKeyBinding.fromActivator(activator)
+            : activator,
+      );
+      final existing = shortcuts[key] ??= [];
+      for (final other in existing) {
+        if (contextsOverlap(command, other)) {
+          throw BusyMarkCommandRegistryValidationException(
+            'Shortcut conflict in ${command.scope.name}: ${other.id} and ${command.id}',
+          );
+        }
       }
-      shortcuts[key] = command.id;
+      existing.add(command);
     }
   }
 }
@@ -337,12 +518,22 @@ abstract final class BusyMarkCommandIds {
   static const clipboardHistory = 'sidebar.clipboardHistory';
   static const localHistory = 'history.local';
   static const findLocalHistory = 'history.findLocal';
+  static const sourceDeclaration = 'source.declaration';
+  static const sourceUsages = 'source.usages';
+  static const sourceRename = 'source.rename';
+  static const treeRenameSelection = 'tree.renameSelection';
   static const treeDeleteSelection = 'tree.deleteSelection';
   static const treeMoveLineUp = 'tree.moveLineUp';
   static const treeMoveLineDown = 'tree.moveLineDown';
 }
 
 abstract final class BusyMarkCommandCatalog {
+  static const notesWorkspaceCommandIds = <String>{
+    BusyMarkCommandIds.syncNotes,
+    BusyMarkCommandIds.exportNotes,
+    BusyMarkCommandIds.importNotesFolder,
+    BusyMarkCommandIds.importNotesFile,
+  };
   static final BusyMarkCommandRegistry metadata = create();
 
   static BusyMarkCommandRegistry create({
@@ -360,7 +551,10 @@ abstract final class BusyMarkCommandCatalog {
     }) {
       final contextual =
           scope == BusyMarkCommandScope.editor ||
+          scope == BusyMarkCommandScope.wysiwyg ||
           scope == BusyMarkCommandScope.textEditing ||
+          scope == BusyMarkCommandScope.sourceSymbol ||
+          scope == BusyMarkCommandScope.tree ||
           id == BusyMarkCommandIds.treeMoveLineUp ||
           id == BusyMarkCommandIds.treeMoveLineDown;
       return BusyMarkCommand(
@@ -369,6 +563,17 @@ abstract final class BusyMarkCommandCatalog {
         category: category,
         scope: scope,
         shortcut: shortcut,
+        resourceContext: notesWorkspaceCommandIds.contains(id)
+            ? BusyMarkCommandResourceContext.notesWorkspace
+            : scope == BusyMarkCommandScope.sourceSymbol ||
+                  const {
+                    BusyMarkCommandIds.treeDeleteSelection,
+                    BusyMarkCommandIds.treeRenameSelection,
+                    BusyMarkCommandIds.treeMoveLineUp,
+                    BusyMarkCommandIds.treeMoveLineDown,
+                  }.contains(id)
+            ? BusyMarkCommandResourceContext.localWorkspace
+            : BusyMarkCommandResourceContext.any,
         description: description,
         disabledReason: (context) => context.l10n.commandUnavailableInContext,
         execute:
@@ -384,6 +589,36 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
+      command(
+        id: BusyMarkCommandIds.sourceDeclaration,
+        label: (c) => c.l10n.goToDeclaration,
+        category: (c) => 'Writerside',
+        scope: BusyMarkCommandScope.sourceSymbol,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+B',
+          activator: SingleActivator(LogicalKeyboardKey.keyB, control: true),
+        ),
+      ),
+      command(
+        id: BusyMarkCommandIds.sourceUsages,
+        label: (c) => c.l10n.findUsages,
+        category: (c) => 'Writerside',
+        scope: BusyMarkCommandScope.sourceSymbol,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Alt+F7',
+          activator: SingleActivator(LogicalKeyboardKey.f7, alt: true),
+        ),
+      ),
+      command(
+        id: BusyMarkCommandIds.sourceRename,
+        label: (c) => c.l10n.rename,
+        category: (c) => 'Writerside',
+        scope: BusyMarkCommandScope.sourceSymbol,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Shift+F6',
+          activator: SingleActivator(LogicalKeyboardKey.f6, shift: true),
+        ),
+      ),
       command(
         id: BusyMarkCommandIds.newNote,
         label: (c) => c.l10n.nextcloudNewNote,
@@ -425,7 +660,7 @@ abstract final class BusyMarkCommandCatalog {
           id: entry.key,
           label: (context) => writersideCommandLabel(context, entry.value),
           category: (context) => 'Writerside',
-          scope: BusyMarkCommandScope.editor,
+          scope: BusyMarkCommandScope.wysiwyg,
         ),
       command(
         id: BusyMarkCommandIds.searchWorkspace,
@@ -584,6 +819,16 @@ abstract final class BusyMarkCommandCatalog {
           shortcut: BusyMarkSidebarShortcuts.definitions[action],
           description: (context) => _sidebarDescription(context, action),
         ),
+      command(
+        id: BusyMarkCommandIds.treeRenameSelection,
+        label: (c) => c.l10n.rename,
+        category: (c) => c.l10n.shortcutGroupSidebar,
+        scope: BusyMarkCommandScope.tree,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Shift+F6',
+          activator: SingleActivator(LogicalKeyboardKey.f6, shift: true),
+        ),
+      ),
       for (final action in BusyMarkTreeShortcutAction.values)
         command(
           id: 'tree.${action.name}',
@@ -908,17 +1153,27 @@ abstract final class BusyMarkCommandCatalog {
 /// The same typed commands used by the consolidated Writerside toolbar.
 final writersideCommands = <String, BusyWritersideToolbarCommand>{
   for (final command in BusyWritersideInsertCommand.values)
-    'writerside.insert${command.name[0].toUpperCase()}${command.name.substring(1)}':
+    writersideToolbarCommandId(BusyWritersideToolbarInsert(command)):
         BusyWritersideToolbarInsert(command),
   for (final style in BusyAdmonitionStyle.values)
-    'writerside.${style.name}': BusyWritersideToolbarAdmonition(style),
+    writersideToolbarCommandId(BusyWritersideToolbarAdmonition(style)):
+        BusyWritersideToolbarAdmonition(style),
   for (final command in [
     BusyWysiwygInlineCommand.uiControl,
     BusyWysiwygInlineCommand.filePath,
     BusyWysiwygInlineCommand.uiPath,
     BusyWysiwygInlineCommand.shortcut,
   ])
-    'writerside.${command.name}': BusyWritersideToolbarSemantic(command),
+    writersideToolbarCommandId(BusyWritersideToolbarSemantic(command)):
+        BusyWritersideToolbarSemantic(command),
+};
+String writersideToolbarCommandId(
+  BusyWritersideToolbarCommand value,
+) => switch (value) {
+  BusyWritersideToolbarInsert(:final command) =>
+    'writerside.insert${command.name[0].toUpperCase()}${command.name.substring(1)}',
+  BusyWritersideToolbarAdmonition(:final style) => 'writerside.${style.name}',
+  BusyWritersideToolbarSemantic(:final command) => 'writerside.${command.name}',
 };
 String writersideCommandLabel(
   BuildContext context,
@@ -948,3 +1203,51 @@ String writersideCommandLabel(
     _ => context.l10n.keyboardShortcuts,
   },
 };
+
+final _keypadAliases = <LogicalKeyboardKey, LogicalKeyboardKey>{
+  LogicalKeyboardKey.digit0: LogicalKeyboardKey.numpad0,
+  LogicalKeyboardKey.digit1: LogicalKeyboardKey.numpad1,
+  LogicalKeyboardKey.digit2: LogicalKeyboardKey.numpad2,
+  LogicalKeyboardKey.digit3: LogicalKeyboardKey.numpad3,
+  LogicalKeyboardKey.digit4: LogicalKeyboardKey.numpad4,
+  LogicalKeyboardKey.digit5: LogicalKeyboardKey.numpad5,
+  LogicalKeyboardKey.digit6: LogicalKeyboardKey.numpad6,
+};
+
+List<ShortcutActivator> _defaultAliases(BusyMarkCommand command) {
+  final shortcut = command.shortcut;
+  if (shortcut == null) return const [];
+  final aliases = <ShortcutActivator>[
+    ...?const <String, List<ShortcutActivator>>{
+      BusyMarkCommandIds.textCopy: [
+        SingleActivator(LogicalKeyboardKey.insert, control: true),
+      ],
+      BusyMarkCommandIds.textCut: [
+        SingleActivator(LogicalKeyboardKey.delete, shift: true),
+      ],
+      BusyMarkCommandIds.textPaste: [
+        SingleActivator(LogicalKeyboardKey.insert, shift: true),
+      ],
+    }[command.id],
+  ];
+  final a = shortcut.activator;
+  if (a is SingleActivator &&
+      (command.scope == BusyMarkCommandScope.sidebar ||
+          command.id == BusyMarkCommandIds.localHistory ||
+          command.id == BusyMarkCommandIds.clipboardHistory)) {
+    final key = _keypadAliases[a.trigger];
+    if (key != null) {
+      aliases.add(
+        SingleActivator(
+          key,
+          control: a.control,
+          shift: a.shift,
+          alt: a.alt,
+          meta: a.meta,
+          includeRepeats: false,
+        ),
+      );
+    }
+  }
+  return aliases;
+}

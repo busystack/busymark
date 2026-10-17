@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "نمایش مرجع میانبرهای صفحه‌کلید",
+  "shortcutKeyboardShortcutsDescription": "سفارشی‌سازی میان‌برهای صفحه‌کلید برنامه",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3658,5 +3658,32 @@
   "searchRecentHint": "جستجوی موارد اخیر…",
   "searchActionsHint": "جستجوی کنش‌ها…",
   "searchRequiresNotesWorkspace": "به فضای کاری یادداشت‌ها نیاز دارد",
-  "searchRecentEmpty": "منبع اخیراً بازشده‌ای وجود ندارد"
+  "searchRecentEmpty": "منبع اخیراً بازشده‌ای وجود ندارد",
+  "searchSidebarLabel": "جستجو:",
+  "searchDocumentTextCategory": "متن سند",
+  "searchWorkspaceTextCategory": "متن فضای کاری",
+  "searchHeadingsCategory": "عنوان‌ها",
+  "shortcutUnassigned": "تخصیص داده نشده",
+  "shortcutSearchHint": "جستجوی کنش‌ها یا میان‌برها…",
+  "shortcutFindBy": "یافتن با میان‌بر",
+  "shortcutPressKeys": "یک ترکیب کلید را فشار دهید…",
+  "shortcutRecord": "ثبت میان‌بر",
+  "shortcutRestoreAll": "بازیابی همهٔ پیش‌فرض‌ها",
+  "shortcutRestoreAllQuestion": "میان‌برهای پیش‌فرض همهٔ کنش‌ها بازیابی شوند؟ تخصیص‌های سفارشی حذف می‌شوند.",
+  "shortcutSaveFailed": "میان‌برها فعال‌اند اما ذخیره نشدند. برای حفظ آن‌ها پس از راه‌اندازی مجدد، دوباره ذخیره کنید.",
+  "shortcutRetry": "تلاش دوباره برای ذخیره",
+  "shortcutChanged": "تخصیص‌ها تغییر کرده‌اند. میان‌برهای فعلی را بررسی و دوباره تلاش کنید.",
+  "shortcutInvalid": "این ترکیب را نمی‌توان در این زمینه تخصیص داد.",
+  "shortcutSystemWarning": "ممکن است میزکار از این ترکیب استفاده کند. BusyMark نمی‌تواند میان‌برهای سیستم را بازنویسی کند.",
+  "shortcutConflicts": "این میان‌بر با کنش‌های زیر تداخل دارد:",
+  "shortcutRemove": "حذف تخصیص",
+  "shortcutRestoreDefault": "بازیابی پیش‌فرض",
+  "shortcutAssign": "تخصیص",
+  "shortcutReassign": "تخصیص مجدد",
+  "shortcutContextApplication": "برنامه",
+  "shortcutContextDocument": "نماهای سند",
+  "shortcutContextEditor": "ویرایشگر و منبع",
+  "shortcutContextWritersideSource": "منبع Writerside",
+  "shortcutContextWorkspace": "پیمایش فضای کاری",
+  "shortcutContextTree": "درخت‌های نوار کناری"
 }

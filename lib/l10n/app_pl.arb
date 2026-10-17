@@ -584,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Pokaż ten wykaz skrótów klawiaturowych",
+  "shortcutKeyboardShortcutsDescription": "Dostosuj skróty klawiaturowe aplikacji",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -3642,5 +3642,32 @@
   "searchRecentHint": "Szukaj ostatnich…",
   "searchActionsHint": "Szukaj działań…",
   "searchRequiresNotesWorkspace": "Wymaga obszaru roboczego Notatek",
-  "searchRecentEmpty": "Brak ostatnich zasobów"
+  "searchRecentEmpty": "Brak ostatnich zasobów",
+  "searchSidebarLabel": "Szukaj:",
+  "searchDocumentTextCategory": "Tekst dokumentu",
+  "searchWorkspaceTextCategory": "Tekst obszaru roboczego",
+  "searchHeadingsCategory": "Nagłówki",
+  "shortcutUnassigned": "Nieprzypisany",
+  "shortcutSearchHint": "Szukaj działań lub skrótów…",
+  "shortcutFindBy": "Znajdź według skrótu",
+  "shortcutPressKeys": "Naciśnij kombinację klawiszy…",
+  "shortcutRecord": "Zarejestruj skrót",
+  "shortcutRestoreAll": "Przywróć wszystkie domyślne",
+  "shortcutRestoreAllQuestion": "Przywrócić domyślne skróty wszystkich działań? Własne przypisania zostaną usunięte.",
+  "shortcutSaveFailed": "Skróty są aktywne, lecz nie udało się ich zapisać. Spróbuj ponownie, aby zachować je po restarcie.",
+  "shortcutRetry": "Ponów zapis",
+  "shortcutChanged": "Przypisania uległy zmianie. Sprawdź bieżące skróty i spróbuj ponownie.",
+  "shortcutInvalid": "Nie można przypisać tej kombinacji w tym kontekście.",
+  "shortcutSystemWarning": "Pulpit może używać tej kombinacji. BusyMark nie może zastępować skrótów systemowych.",
+  "shortcutConflicts": "Ten skrót koliduje z tymi działaniami:",
+  "shortcutRemove": "Usuń przypisanie",
+  "shortcutRestoreDefault": "Przywróć domyślny",
+  "shortcutAssign": "Przypisz",
+  "shortcutReassign": "Przypisz ponownie",
+  "shortcutContextApplication": "Aplikacja",
+  "shortcutContextDocument": "Widoki dokumentu",
+  "shortcutContextEditor": "Edytor i źródło",
+  "shortcutContextWritersideSource": "Źródło Writerside",
+  "shortcutContextWorkspace": "Nawigacja obszaru roboczego",
+  "shortcutContextTree": "Drzewa paska bocznego"
 }

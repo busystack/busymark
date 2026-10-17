@@ -702,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Hiển thị tham chiếu phím tắt này",
+  "shortcutKeyboardShortcutsDescription": "Tùy chỉnh phím tắt của ứng dụng",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -5146,5 +5146,32 @@
   "searchRecentHint": "Tìm mục gần đây…",
   "searchActionsHint": "Tìm thao tác…",
   "searchRequiresNotesWorkspace": "Yêu cầu không gian làm việc Ghi chú",
-  "searchRecentEmpty": "Không có tài nguyên gần đây"
+  "searchRecentEmpty": "Không có tài nguyên gần đây",
+  "searchSidebarLabel": "Tìm kiếm:",
+  "searchDocumentTextCategory": "Văn bản tài liệu",
+  "searchWorkspaceTextCategory": "Văn bản không gian làm việc",
+  "searchHeadingsCategory": "Tiêu đề",
+  "shortcutUnassigned": "Chưa gán",
+  "shortcutSearchHint": "Tìm thao tác hoặc phím tắt…",
+  "shortcutFindBy": "Tìm bằng phím tắt",
+  "shortcutPressKeys": "Nhấn tổ hợp phím…",
+  "shortcutRecord": "Ghi phím tắt",
+  "shortcutRestoreAll": "Khôi phục tất cả mặc định",
+  "shortcutRestoreAllQuestion": "Khôi phục phím tắt mặc định của mọi thao tác? Các gán tùy chỉnh sẽ bị xóa.",
+  "shortcutSaveFailed": "Phím tắt đang có hiệu lực nhưng chưa lưu được. Thử lưu lại để giữ chúng sau khi khởi động lại.",
+  "shortcutRetry": "Thử lưu lại",
+  "shortcutChanged": "Các gán đã thay đổi. Xem lại phím tắt hiện tại và thử lại.",
+  "shortcutInvalid": "Không thể gán tổ hợp này trong ngữ cảnh này.",
+  "shortcutSystemWarning": "Môi trường màn hình có thể dùng tổ hợp này. BusyMark không thể ghi đè phím tắt hệ thống.",
+  "shortcutConflicts": "Phím tắt này xung đột với các thao tác sau:",
+  "shortcutRemove": "Xóa gán",
+  "shortcutRestoreDefault": "Khôi phục mặc định",
+  "shortcutAssign": "Gán",
+  "shortcutReassign": "Gán lại",
+  "shortcutContextApplication": "Ứng dụng",
+  "shortcutContextDocument": "Chế độ xem tài liệu",
+  "shortcutContextEditor": "Trình sửa và mã nguồn",
+  "shortcutContextWritersideSource": "Mã nguồn Writerside",
+  "shortcutContextWorkspace": "Điều hướng không gian làm việc",
+  "shortcutContextTree": "Cây thanh bên"
 }

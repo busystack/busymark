@@ -1,3 +1,5 @@
+import '../../app/command_shortcuts.dart';
+import '../../app/busymark_search_field.dart';
 import '../link_destination.dart';
 import '../wysiwyg/writerside_editing_adapter.dart';
 import '../../assets/document_media_context.dart';
@@ -664,22 +666,20 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _showAutocomplete();
       return KeyEventResult.handled;
     }
-    if (widget.onSymbolAction != null) {
-      final action = key == LogicalKeyboardKey.keyB && keyboard.isControlPressed
-          ? SourceSymbolAction.declaration
-          : key == LogicalKeyboardKey.f7 && keyboard.isAltPressed
-          ? SourceSymbolAction.usages
-          : key == LogicalKeyboardKey.f6 && keyboard.isShiftPressed
-          ? SourceSymbolAction.rename
-          : null;
-      if (action != null) {
-        widget.onSymbolAction!(action, _controller.fullSelection.extentOffset);
-        return KeyEventResult.handled;
-      }
-    }
     final commands =
         BusyMarkCommandRegistryScope.read(context) ??
         BusyMarkCommandCatalog.metadata;
+    if (widget.onSymbolAction != null) {
+      for (final entry in sourceSymbolCommands.entries) {
+        if (commands.shortcutAccepts(entry.value, event, keyboard)) {
+          widget.onSymbolAction!(
+            entry.key,
+            _controller.fullSelection.extentOffset,
+          );
+          return KeyEventResult.handled;
+        }
+      }
+    }
     if (widget.filePath?.toLowerCase().endsWith('.tree') == true) {
       final up = commands.shortcutAccepts(
         BusyMarkCommandIds.treeMoveLineUp,
@@ -839,14 +839,33 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 key: _sourceEditorKey,
                 child: KeyedSubtree(
                   key: ValueKey(widget.documentId ?? widget.filePath),
-                  child: Shortcuts(
-                    shortcuts:
-                        (BusyMarkCommandRegistryScope.maybeOf(context) ??
-                                BusyMarkCommandCatalog.metadata)
-                            .shortcutIntents(
-                              scopes: const {BusyMarkCommandScope.editor},
-                              intentFor: BusyMarkContextCommandIntent.new,
-                            ),
+                  child: BusyMarkCommandShortcuts(
+                    isComposing: () => _controller.value.composing.isValid,
+                    shortcuts: {
+                      ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                              BusyMarkCommandCatalog.metadata)
+                          .blockedDefaultIntents({
+                            BusyMarkCommandScope.textEditing,
+                            BusyMarkCommandScope.editor,
+                            if (widget.onSymbolAction != null)
+                              BusyMarkCommandScope.sourceSymbol,
+                            if (widget.filePath?.toLowerCase().endsWith(
+                                  '.tree',
+                                ) ==
+                                true)
+                              BusyMarkCommandScope.tree,
+                          }),
+                      ...(BusyMarkCommandRegistryScope.maybeOf(context) ??
+                              BusyMarkCommandCatalog.metadata)
+                          .shortcutIntents(
+                            scopes: {
+                              BusyMarkCommandScope.editor,
+                              if (widget.onSymbolAction != null)
+                                BusyMarkCommandScope.sourceSymbol,
+                            },
+                            intentFor: BusyMarkContextCommandIntent.new,
+                          ),
+                    },
                     child: Actions(
                       actions: {
                         BusyMarkContextCommandIntent:
@@ -871,7 +890,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                         BusyMarkCommandIds.editorCopyPlainText,
                                         BusyMarkCommandIds.checkSpelling,
                                       }.contains(commandId)) &&
-                                  (commandId ==
+                                  ((widget.onSymbolAction != null &&
+                                          sourceSymbolCommands.containsValue(
+                                            commandId,
+                                          )) ||
+                                      commandId ==
                                           BusyMarkCommandIds.checkSpelling ||
                                       commandId.startsWith('editor.') ||
                                       (widget.filePath?.toLowerCase().endsWith(
@@ -892,6 +915,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                         BusyMarkCommandIds.textPastePlainText,
                                       }.contains(commandId)),
                               onCommand: (commandId) {
+                                final symbol = sourceSymbolCommands.entries
+                                    .where((e) => e.value == commandId)
+                                    .firstOrNull;
+                                if (symbol != null &&
+                                    widget.onSymbolAction != null) {
+                                  widget.onSymbolAction!(
+                                    symbol.key,
+                                    _controller.fullSelection.extentOffset,
+                                  );
+                                  return;
+                                }
                                 if (commandId ==
                                     BusyMarkCommandIds.textSelectAll) {
                                   _controller.fullSelection = TextSelection(
@@ -1052,19 +1086,28 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                         ),
                                         label: switch (action) {
                                           SourceSymbolAction.declaration =>
-                                            'Go to Declaration',
+                                            context.l10n.goToDeclaration,
                                           SourceSymbolAction.usages =>
-                                            'Find Usages',
+                                            context.l10n.findUsages,
                                           SourceSymbolAction.rename =>
                                             context.l10n.rename,
                                         },
-                                        shortcut: switch (action) {
-                                          SourceSymbolAction.declaration =>
-                                            'Ctrl+B',
-                                          SourceSymbolAction.usages => 'Alt+F7',
-                                          SourceSymbolAction.rename =>
-                                            'Shift+F6',
-                                        },
+                                        shortcut:
+                                            (BusyMarkCommandRegistryScope.read(
+                                                      context,
+                                                    ) ??
+                                                    BusyMarkCommandCatalog
+                                                        .metadata)[sourceSymbolCommands[action]!]
+                                                ?.shortcut
+                                                ?.label,
+                                        gtkAccelerator:
+                                            (BusyMarkCommandRegistryScope.read(
+                                                      context,
+                                                    ) ??
+                                                    BusyMarkCommandCatalog
+                                                        .metadata)[sourceSymbolCommands[action]!]
+                                                ?.shortcut
+                                                ?.gtkAccelerator,
                                       ),
                                 ],
                                 onRefineWithAi: widget.onAiEdit == null
@@ -3801,6 +3844,7 @@ class _SourceSearchPanel extends StatefulWidget {
 
 class _SourceSearchPanelState extends State<_SourceSearchPanel> {
   late final TextEditingController _replacementController;
+  final _replacementFocus = BusyMarkSearchFocusNode();
 
   @override
   void initState() {
@@ -3820,6 +3864,7 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
   @override
   void dispose() {
     _replacementController.dispose();
+    _replacementFocus.dispose();
     super.dispose();
   }
 
@@ -3880,16 +3925,19 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      key: const ValueKey('source-search-replacement'),
-                      controller: _replacementController,
-                      onChanged: widget.onReplacementChanged,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: context.l10n.sourceSearchReplacement,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: BusyMarkSpacing.sm,
-                          vertical: BusyMarkSpacing.xs,
+                    child: BusyMarkLocalTextEditingShortcuts(
+                      child: TextField(
+                        key: const ValueKey('source-search-replacement'),
+                        controller: _replacementController,
+                        focusNode: _replacementFocus,
+                        onChanged: widget.onReplacementChanged,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: context.l10n.sourceSearchReplacement,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: BusyMarkSpacing.sm,
+                            vertical: BusyMarkSpacing.xs,
+                          ),
                         ),
                       ),
                     ),
@@ -4229,3 +4277,9 @@ String _collapsedLineText(String text) {
   }
   return '$trimmed ...';
 }
+
+const sourceSymbolCommands = <SourceSymbolAction, String>{
+  SourceSymbolAction.declaration: BusyMarkCommandIds.sourceDeclaration,
+  SourceSymbolAction.usages: BusyMarkCommandIds.sourceUsages,
+  SourceSymbolAction.rename: BusyMarkCommandIds.sourceRename,
+};

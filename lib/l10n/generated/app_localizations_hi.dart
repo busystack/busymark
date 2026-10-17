@@ -803,7 +803,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ';
+      'अनुप्रयोग के कीबोर्ड शॉर्टकट अनुकूलित करें';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'सिंटैक्स संदर्भ खोलें';
@@ -5440,4 +5440,90 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'हाल के संसाधन नहीं हैं';
+
+  @override
+  String get searchSidebarLabel => 'खोजें:';
+
+  @override
+  String get searchDocumentTextCategory => 'दस्तावेज़ पाठ';
+
+  @override
+  String get searchWorkspaceTextCategory => 'कार्यस्थान पाठ';
+
+  @override
+  String get searchHeadingsCategory => 'शीर्षक';
+
+  @override
+  String get shortcutUnassigned => 'असाइन नहीं किया गया';
+
+  @override
+  String get shortcutSearchHint => 'क्रियाएँ या शॉर्टकट खोजें…';
+
+  @override
+  String get shortcutFindBy => 'शॉर्टकट से खोजें';
+
+  @override
+  String get shortcutPressKeys => 'कुंजी संयोजन दबाएँ…';
+
+  @override
+  String get shortcutRecord => 'शॉर्टकट रिकॉर्ड करें';
+
+  @override
+  String get shortcutRestoreAll => 'सभी डिफ़ॉल्ट पुनर्स्थापित करें';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'सभी क्रियाओं के डिफ़ॉल्ट शॉर्टकट पुनर्स्थापित करें? कस्टम असाइनमेंट हटा दिए जाएँगे।';
+
+  @override
+  String get shortcutSaveFailed =>
+      'शॉर्टकट सक्रिय हैं लेकिन सहेजे नहीं जा सके। पुनः प्रारंभ के बाद रखने के लिए दोबारा सहेजें।';
+
+  @override
+  String get shortcutRetry => 'सहेजने का पुनः प्रयास करें';
+
+  @override
+  String get shortcutChanged =>
+      'असाइनमेंट बदल गए हैं। वर्तमान शॉर्टकट जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String get shortcutInvalid =>
+      'इस संदर्भ में यह संयोजन असाइन नहीं किया जा सकता।';
+
+  @override
+  String get shortcutSystemWarning =>
+      'आपका डेस्कटॉप इस संयोजन का उपयोग कर सकता है। BusyMark सिस्टम शॉर्टकट नहीं बदल सकता।';
+
+  @override
+  String get shortcutConflicts => 'यह शॉर्टकट इन क्रियाओं से टकराता है:';
+
+  @override
+  String get shortcutRemove => 'असाइनमेंट हटाएँ';
+
+  @override
+  String get shortcutRestoreDefault => 'डिफ़ॉल्ट पुनर्स्थापित करें';
+
+  @override
+  String get shortcutAssign => 'असाइन करें';
+
+  @override
+  String get shortcutReassign => 'फिर से असाइन करें';
+
+  @override
+  String get shortcutContextApplication => 'अनुप्रयोग';
+
+  @override
+  String get shortcutContextDocument => 'दस्तावेज़ दृश्य';
+
+  @override
+  String get shortcutContextEditor => 'संपादक और स्रोत';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside स्रोत';
+
+  @override
+  String get shortcutContextWorkspace => 'कार्यस्थान नेविगेशन';
+
+  @override
+  String get shortcutContextTree => 'साइडबार ट्री';
 }

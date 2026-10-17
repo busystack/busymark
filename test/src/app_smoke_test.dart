@@ -1,3 +1,10 @@
+import 'package:busymark/src/workspace/presentation/welcome_screen.dart';
+import 'package:busymark/src/workspace/presentation/settings_screen.dart';
+import 'package:busymark/src/app/keymap_controller.dart';
+import 'package:busymark/src/app/keyboard_shortcut_badge.dart';
+import 'package:busymark/src/app/shortcut_binding.dart';
+import 'package:busymark/src/app/shortcut_capture.dart';
+import 'package:busymark/src/workspace/presentation/keyboard_shortcuts_settings.dart';
 import 'package:busymark/src/search/search_session.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
@@ -19,7 +26,6 @@ import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/linux/linux_header_style.dart';
@@ -73,7 +79,6 @@ import 'package:busymark/src/writerside/writerside_toc_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
-import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -116,6 +121,636 @@ void main() {
     headerBarService = _FallbackHeaderBarService();
   });
 
+  testWidgets(
+    'effective keymap changes Source execution, disables defaults and updates native metadata',
+    (tester) async {
+      final (:container, :events) = await _pumpSearchRegression(
+        tester,
+        headerBarService,
+        {'a.md': 'needle other'},
+      );
+      final saveHandler = container
+          .read(busyMarkCommandRegistryProvider)['file.save']!
+          .execute;
+      final keymap = container.read(keymapControllerProvider.notifier);
+      Map<String, BusyMarkKeyBinding?> overrides() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      expect(
+        (await keymap.update(
+          'editor.bold',
+          const BusyMarkKeyBinding(
+            LogicalKeyboardKey.keyB,
+            control: true,
+            alt: true,
+          ),
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(
+        container.read(busyMarkCommandRegistryProvider)['file.save']!.execute,
+        same(saveHandler),
+      );
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find
+            .descendant(
+              of: find.byType(BusyMarkSourceEditor),
+              matching: find.byType(TextField),
+            )
+            .first,
+      );
+      final source = _searchSourceController(tester);
+      field.focusNode!.requestFocus();
+      source.selection = const TextSelection(baseOffset: 0, extentOffset: 6);
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'needle other',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '**needle** other',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'needle other',
+      );
+      expect(
+        (await keymap.update(
+          'text.selectAll',
+          null,
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      await tester.pumpAndSettle();
+      source.selection = const TextSelection.collapsed(offset: 2);
+      field.focusNode!.requestFocus();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        source.fullSelection,
+        const TextSelection.collapsed(offset: 2),
+        reason: 'No fallthrough to DefaultTextEditingShortcuts',
+      );
+      await keymap.update('text.paste', null, expected: overrides());
+      await tester.pumpAndSettle();
+      var clipboardReads = 0;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.getData') {
+            clipboardReads++;
+          }
+          if (call.method == 'Clipboard.getData') {
+            return {'text': 'unexpected paste'};
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      field.focusNode!.requestFocus();
+      final beforePaste = source.fullText;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.insert);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+      expect(
+        source.fullText,
+        beforePaste,
+        reason: 'Removing Paste also removes the platform Shift+Insert alias',
+      );
+      expect(clipboardReads, 0);
+      expect(
+        (await keymap.update(
+          'view.source',
+          null,
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      expect(
+        (await keymap.update(
+          'search.find',
+          const BusyMarkKeyBinding(LogicalKeyboardKey.f12),
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f12);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)['view.source']!
+            .shortcut,
+        isNull,
+      );
+      await keymap.update(
+        'file.newDocument',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyA, control: true),
+        expected: overrides(),
+      );
+      await tester.pumpAndSettle();
+      final queryField = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const ValueKey('shared-search-query')),
+          matching: find.byType(TextField),
+        ),
+      );
+      queryField.controller!.text = 'local query';
+      queryField.focusNode!.requestFocus();
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        queryField.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 11),
+      );
+      expect(find.byType(Dialog), findsNothing);
+      await keymap.update('file.newDocument', null, expected: overrides());
+      expect(
+        (await keymap.update(
+          BusyMarkCommandIds.quickOpen,
+          const BusyMarkKeyBinding(LogicalKeyboardKey.keyA, control: true),
+          expected: overrides(),
+        )).status,
+        KeymapUpdateStatus.saved,
+      );
+      await tester.pumpAndSettle();
+      queryField.controller!.selection = const TextSelection.collapsed(
+        offset: 3,
+      );
+      final request = container.read(searchSessionProvider).focusRequest;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        queryField.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 11),
+      );
+      expect(container.read(searchSessionProvider).focusRequest, request);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      final replacement = tester.widget<TextField>(
+        find.byKey(const ValueKey('source-search-replacement')),
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('source-search-replacement')),
+        'replacement',
+      );
+      replacement.controller!.selection = const TextSelection.collapsed(
+        offset: 3,
+      );
+      final beforeReplacementInput = container
+          .read(workspaceControllerProvider)
+          .activeText;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        replacement.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 11),
+      );
+      expect(container.read(searchSessionProvider).focusRequest, request);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        beforeReplacementInput,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'capture suppresses the real workspace search route until key release',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'selected text',
+      });
+      final container = harness.container;
+      final session = container.read(searchSessionProvider.notifier);
+      session.close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find
+            .descendant(
+              of: find.byType(BusyMarkSourceEditor),
+              matching: find.byType(TextField),
+            )
+            .first,
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 8,
+      );
+      await tester.pump();
+      final request = container.read(searchSessionProvider).focusRequest;
+      final owner = Object();
+      final candidates = <BusyMarkKeyBinding>[];
+      addTearDown(() async {
+        for (final key
+            in HardwareKeyboard.instance.logicalKeysPressed.toList()) {
+          await tester.sendKeyUpEvent(key);
+        }
+        BusyMarkShortcutCapture.end(owner);
+      });
+      BusyMarkShortcutCapture.begin(
+        owner,
+        onCandidate: candidates.add,
+        onCancel: () => BusyMarkShortcutCapture.end(owner),
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(candidates, [
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyF, control: true),
+      ]);
+      BusyMarkShortcutCapture.end(owner);
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(container.read(searchSessionProvider).focusRequest, request);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'selected text',
+      );
+      expect(
+        field.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 8),
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(
+        container.read(searchSessionProvider).category,
+        SearchCategory.file,
+      );
+      expect(container.read(searchSessionProvider).focusRequest, request + 1);
+    },
+  );
+
+  testWidgets(
+    'shortcut Settings respects pending property edits before leaving the workspace',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'Original text',
+      });
+      final container = harness.container;
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      var attempted = 0;
+      final draft = workspace.propertyEdits.bind(
+        'shortcut-settings-guard',
+        '',
+        (_) {
+          attempted++;
+          return false;
+        },
+      );
+      workspace.propertyEdits.edit(draft, 'pending');
+      Future<void> openSettings() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+      }
+
+      await openSettings();
+      expect(attempted, 1);
+      expect(find.byType(KeyboardShortcutsSettings), findsNothing);
+      expect(workspace.propertyEdits.hasPending, isTrue);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'Original text',
+      );
+      workspace.propertyEdits.revert(draft);
+      await openSettings();
+      expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .queryParameters['returnTo'],
+        'workspace',
+      );
+    },
+  );
+
+  testWidgets(
+    'Actions keeps its captured target and selected command when a binding changes',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'selected text',
+      });
+      final container = harness.container;
+      final session = container.read(searchSessionProvider.notifier);
+      session.close(restoreFocus: false);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find
+            .descendant(
+              of: find.byType(BusyMarkSourceEditor),
+              matching: find.byType(TextField),
+            )
+            .first,
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 8,
+      );
+      await tester.pump();
+      session.open(category: SearchCategory.actions);
+      session.query('Bold');
+      await tester.runAsync(session.submit);
+      await tester.pumpAndSettle();
+      final query = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const ValueKey('shared-search-query')),
+          matching: find.byType(TextField),
+        ),
+      );
+      query.focusNode!.requestFocus();
+      await tester.pump();
+      final focus = FocusManager.instance.primaryFocus;
+      expect(focus, same(query.focusNode));
+      final target = session.commandTarget;
+      await container
+          .read(keymapControllerProvider.notifier)
+          .update(
+            'editor.bold',
+            const BusyMarkKeyBinding(
+              LogicalKeyboardKey.keyB,
+              control: true,
+              alt: true,
+            ),
+            expected: {},
+          );
+      await tester.pumpAndSettle();
+      expect(session.commandTarget, same(target));
+      expect(
+        target!.isCurrent(container.read(workspaceControllerProvider)),
+        isTrue,
+      );
+      expect(FocusManager.instance.primaryFocus, same(focus));
+      final state = container.read(searchSessionProvider);
+      expect(state.results[state.selected].identity, 'editor.bold');
+      expect(
+        (state.results[state.selected] as ActionSearchResult).enabled,
+        isTrue,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkKeyboardShortcutBadge && w.label == 'Ctrl+Alt+B',
+        ),
+        findsOneWidget,
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            container.read(workspaceControllerProvider).activeText ==
+            '**selected** text',
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '**selected** text',
+      );
+    },
+  );
+
+  testWidgets('application reassignment receives a retired editor combination', (
+    tester,
+  ) async {
+    final harness = await _pumpSearchRegression(tester, headerBarService, {
+      'a.md': 'Text',
+    });
+    final container = harness.container;
+    final keymap = container.read(keymapControllerProvider.notifier);
+    container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+    Map<String, BusyMarkKeyBinding?> current() =>
+        container.read(appSettingsControllerProvider).shortcutOverrides;
+    await keymap.update('text.paste', null, expected: current());
+    expect(
+      (await keymap.update(
+        'help.keyboardShortcuts',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyV, control: true),
+        expected: current(),
+      )).status,
+      KeymapUpdateStatus.saved,
+    );
+    await tester.pumpAndSettle();
+    tester
+        .widget<TextField>(
+          find
+              .descendant(
+                of: find.byType(BusyMarkSourceEditor),
+                matching: find.byType(TextField),
+              )
+              .first,
+        )
+        .focusNode!
+        .requestFocus();
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+    expect(
+      container
+          .read(appRouterProvider)
+          .routeInformationProvider
+          .value
+          .uri
+          .queryParameters['returnTo'],
+      'workspace',
+    );
+    expect(container.read(workspaceControllerProvider).activeText, 'Text');
+    await keymap.update('help.keyboardShortcuts', null, expected: current());
+    expect(
+      (await keymap.update(
+        'notes.sync',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.keyV, control: true),
+        expected: current(),
+      )).status,
+      KeymapUpdateStatus.saved,
+    );
+    container.read(appRouterProvider).go('/workspace');
+    await tester.pumpAndSettle();
+    expect(
+      container.read(busyMarkCommandRegistryProvider)['notes.sync']!.canExecute,
+      isFalse,
+    );
+    var clipboardReads = 0;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.getData') {
+          clipboardReads++;
+          return {'text': 'unexpected fallback'};
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final source = tester.widget<TextField>(
+      find
+          .descendant(
+            of: find.byType(BusyMarkSourceEditor),
+            matching: find.byType(TextField),
+          )
+          .first,
+    );
+    source.focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    expect(
+      clipboardReads,
+      0,
+      reason:
+          'A disabled replacement command must not fall through to unassigned Paste.',
+    );
+    expect(container.read(workspaceControllerProvider).activeText, 'Text');
+  });
+
+  testWidgets(
+    'effective keymap replaces sidebar keypad aliases and tree deletion keys',
+    (tester) async {
+      final harness = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': '# Heading\nText',
+        'b.md': 'Other',
+      });
+      final container = harness.container;
+      final keymap = container.read(keymapControllerProvider.notifier);
+      Map<String, BusyMarkKeyBinding?> current() =>
+          container.read(appSettingsControllerProvider).shortcutOverrides;
+      await keymap.update(
+        'sidebar.files',
+        const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+        expected: current(),
+      );
+      await keymap.update(
+        'tree.deleteSelection',
+        const BusyMarkKeyBinding(
+          LogicalKeyboardKey.keyD,
+          control: true,
+          alt: true,
+        ),
+        expected: current(),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        'Outline navigation',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.numpad1);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        'Outline navigation',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.f8);
+      await tester.pumpAndSettle();
+      final tree = find.byWidgetPredicate(
+        (w) => w is Focus && w.focusNode?.debugLabel == 'BusyMark files tree',
+      );
+      expect(
+        tree,
+        findsOneWidget,
+        reason: 'The reassigned navigation key reveals Files',
+      );
+      tester.widget<Focus>(tree).focusNode!.requestFocus();
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.text(l10n.confirmDeleteFileTitle), findsOneWidget);
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).workspace!.files,
+        hasLength(2),
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '# Heading\nText',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
   test('editor shortcuts use documented cross-editor defaults', () {
     expect(
       {
@@ -750,13 +1385,13 @@ void main() {
     expect(find.textContaining('sign in'), findsNothing);
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderGeometry(tester);
@@ -766,13 +1401,13 @@ void main() {
 
     expect(
       find.byTooltip(
-        '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: false,
     );
 
@@ -781,13 +1416,13 @@ void main() {
 
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
   });
@@ -916,7 +1551,7 @@ void main() {
           await tester.pumpAndSettle();
         }
         await tester.tap(
-          find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+          find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
         );
         await tester.pumpAndSettle();
         expect(find.text(l10n.createMarkdownFile), findsOneWidget);
@@ -955,7 +1590,7 @@ void main() {
     await tester.tap(find.byTooltip(l10n.mainMenu));
     await tester.pumpAndSettle();
     expect(find.text(l10n.fullScreen), findsOneWidget);
-    expect(find.text(BusyMarkAppShortcutLabels.fullScreen), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcuts.fullScreen.label), findsOneWidget);
     final exportMenuItem = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkPopupMenuItem<Object?> &&
@@ -966,7 +1601,7 @@ void main() {
       tester.widget<BusyMarkPopupMenuItem<Object?>>(exportMenuItem).enabled,
       isFalse,
     );
-    expect(find.text(BusyMarkAppShortcutLabels.export), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcuts.export.label), findsOneWidget);
     for (final documentCommand in <String>{
       l10n.clipboardHistory,
       l10n.localHistory,
@@ -1018,7 +1653,7 @@ void main() {
     await tester.tap(find.text(l10n.settings));
     await tester.pumpAndSettle();
     expect(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
       findsOneWidget,
     );
     final backButton = tester.widget<BusyMarkLinuxHeaderIconButton>(
@@ -1225,34 +1860,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settings), findsOneWidget);
-    expect(find.text(BusyMarkAppShortcutLabels.settings), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcuts.settings.label), findsOneWidget);
     expect(
       find.byTooltip(
-        '${l10n.settings} (${BusyMarkAppShortcutLabels.settings})',
+        '${l10n.settings} (${BusyMarkAppShortcuts.settings.label})',
       ),
       findsNothing,
     );
     expect(find.text(l10n.keyboardShortcuts), findsOneWidget);
     expect(
-      find.text(BusyMarkAppShortcutLabels.keyboardShortcuts),
+      find.text(BusyMarkAppShortcuts.keyboardShortcuts.label),
       findsOneWidget,
     );
     expect(
       find.byTooltip(
         '${l10n.keyboardShortcuts} '
-        '(${BusyMarkAppShortcutLabels.keyboardShortcuts})',
+        '(${BusyMarkAppShortcuts.keyboardShortcuts.label})',
       ),
       findsNothing,
     );
     expect(find.text(l10n.syntaxReference), findsOneWidget);
     expect(
-      find.text(BusyMarkAppShortcutLabels.syntaxReference),
+      find.text(BusyMarkAppShortcuts.syntaxReference.label),
       findsOneWidget,
     );
     expect(
       find.byTooltip(
         '${l10n.syntaxReference} '
-        '(${BusyMarkAppShortcutLabels.syntaxReference})',
+        '(${BusyMarkAppShortcuts.syntaxReference.label})',
       ),
       findsNothing,
     );
@@ -1311,7 +1946,6 @@ void main() {
   testWidgets('global reference and settings shortcuts open targets', (
     tester,
   ) async {
-    final l10n = AppLocalizationsEn();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -1353,12 +1987,13 @@ void main() {
     }
 
     await pressShortcut(LogicalKeyboardKey.keyK, control: true, alt: true);
-    expect(
-      find.text(l10n.shortcutKeyboardShortcutsDescription),
-      findsOneWidget,
-    );
+    expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+    expect(find.byType(Dialog), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
+    expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+    await pressShortcut(LogicalKeyboardKey.arrowLeft, alt: true);
+    expect(find.byType(KeyboardShortcutsSettings), findsNothing);
 
     await pressShortcut(LogicalKeyboardKey.keyM, control: true, alt: true);
     expect(
@@ -1785,7 +2420,7 @@ void main() {
     expect(settingsStore.value['confirmCloseWithUnsavedChanges'], isFalse);
 
     await tester.tap(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
     );
     await tester.pumpAndSettle();
 
@@ -1925,7 +2560,7 @@ void main() {
     expect(find.text(l10n.spellingDictionaryProblems), findsNothing);
 
     await tester.tap(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
     );
     await tester.pumpAndSettle();
     header = tester.widget<HeaderBarConfigurationPublisher>(
@@ -2850,163 +3485,144 @@ void main() {
     );
   });
 
-  testWidgets('keyboard shortcuts dialog opens from the header', (
-    tester,
-  ) async {
-    final l10n = AppLocalizationsEn();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          ..._smokeAccentOverrides,
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        ],
-        child: const BusyMarkApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Keyboard Shortcuts opens its categorized Settings page and safely records assignments',
+    (tester) async {
+      final store = _MemorySettingsStore();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ..._smokeAccentOverrides,
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(store),
+          ],
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(l10n.mainMenu));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.searchDocumentsCommand), findsNothing);
+      expect(find.text(l10n.searchActionsCommand), findsNothing);
+      await tester.tap(find.text(l10n.keyboardShortcuts));
+      await tester.pumpAndSettle();
+      expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+      expect(find.byType(Dialog), findsNothing);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(KeyboardShortcutsSettings)),
+      );
+      final router = container.read(appRouterProvider);
+      expect(
+        router.routeInformationProvider.value.uri.queryParameters,
+        containsPair('returnTo', 'welcome'),
+      );
+      final query = find.descendant(
+        of: find.byKey(const ValueKey('settings-shortcut-search')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(query, 'Save');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('shortcut-edit-file.save')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('record-shortcut')));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyO);
+      await tester.pump();
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkKeyboardShortcutBadge && w.label == 'Ctrl+O',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.shortcutConflicts), findsOneWidget);
+      expect(
+        find.byType(Dialog),
+        findsOneWidget,
+        reason: 'Capturing Ctrl+O must not open the application chooser',
+      );
+      expect(
+        container.read(appSettingsControllerProvider).shortcutOverrides,
+        isEmpty,
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyO);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tap(find.text(l10n.cancel).last);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(appSettingsControllerProvider).shortcutOverrides,
+        isEmpty,
+      );
+      await tester.tap(find.byKey(const ValueKey('shortcut-edit-file.save')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('record-shortcut')));
+      await tester.sendKeyEvent(LogicalKeyboardKey.f12);
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('assign-shortcut')));
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)['file.save']!
+            .shortcut!
+            .label,
+        'F12',
+      );
+      expect(find.text('F12'), findsOneWidget);
+      await tester.enterText(query, '');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('find-by-shortcut')));
+      await tester.sendKeyEvent(LogicalKeyboardKey.f12);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('shortcut-edit-file.save')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('shortcut-edit-file.open')),
+        findsNothing,
+      );
+      await tester.tap(find.byKey(const ValueKey('find-by-shortcut')));
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(KeyboardShortcutsSettings), findsOneWidget);
+      expect(find.byType(Dialog), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('find-by-shortcut')));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyO);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(Dialog),
+        findsNothing,
+        reason:
+            'Find by shortcut suppresses the application Open command outside a modal',
+      );
+      expect(
+        find.byKey(const ValueKey('shortcut-edit-file.open')),
+        findsOneWidget,
+      );
 
-    await tester.tap(find.byTooltip(l10n.mainMenu));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.keyboardShortcuts));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Ctrl+O ×'));
+      await tester.enterText(query, 'Source');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('shortcut-edit-view.source')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('remove-shortcut')));
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(busyMarkCommandRegistryProvider)['view.source']!
+            .shortcut,
+        isNull,
+      );
+      expect(find.byType(Dialog), findsNothing);
 
-    expect(find.text(l10n.keyboardShortcuts), findsWidgets);
-    expect(find.text(l10n.shortcutNewDocumentDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutOpenDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutSaveDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutGroupGeneral), findsOneWidget);
-    expect(find.text(l10n.shortcutSearchDescription), findsOneWidget);
-    expect(
-      find.text(l10n.shortcutKeyboardShortcutsDescription),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.shortcutSyntaxReferenceDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutSettingsDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutNextTabDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutPreviousTabDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutCloseTabDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutCloseAllTabsDescription), findsOneWidget);
-    expect(find.text('Show shortcuts over toolbar buttons'), findsNothing);
-    expect(find.text(l10n.shortcutUndoDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutRedoDescription), findsOneWidget);
-    expect(
-      find.text(l10n.shortcutInsertIndentationDescription),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.shortcutOutdentSourceDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutEscapeDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutBoldDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutUnderlineDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutStrikethroughDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutParagraphDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutHeading1Description), findsOneWidget);
-    expect(find.text(l10n.shortcutHeading6Description), findsOneWidget);
-    expect(find.text(l10n.shortcutNumberedListDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
-    expect(find.text(l10n.git), findsOneWidget);
-    expect(find.text(l10n.localHistoryEllipsis), findsOneWidget);
-    expect(find.text(l10n.clipboardHistory), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text(l10n.localHistoryEllipsis)).dy,
-      lessThan(tester.getTopLeft(find.text(l10n.clipboardHistory)).dy),
-    );
-    expect(find.text(l10n.gitChanges), findsNothing);
-    expect(find.text(l10n.gitProjectHistory), findsNothing);
-    expect(find.text(l10n.gitHistory), findsNothing);
-    expect(find.text(l10n.shortcutDeleteTreeItemDescription), findsOneWidget);
-    expect(find.text(l10n.viewMode), findsOneWidget);
-    expect(find.text(l10n.editor), findsOneWidget);
-    expect(find.text(l10n.source), findsOneWidget);
-    expect(find.text(l10n.reading), findsOneWidget);
-    expect(find.text(l10n.split), findsOneWidget);
-
-    final expectedShortcutLabels = <String>{
-      ...BusyMarkAppShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkDocumentViewShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkTextEditingShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkEditorShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkSidebarShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkTreeShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      'F7',
-      'Ctrl+Shift+Home',
-      'Ctrl+Shift+End',
-      'Ctrl+Shift+F',
-      'Ctrl+Shift+T',
-      'Ctrl+Alt+O',
-    };
-    final shortcutRowFinder = find.descendant(
-      of: find.byType(BusyMarkInformationalDialog),
-      matching: find.byType(BusyMarkActionRow),
-    );
-    final shortcutRows = tester
-        .widgetList<BusyMarkActionRow>(shortcutRowFinder)
-        .toList();
-    final localHistoryRow = shortcutRows.singleWhere(
-      (row) => row.title == l10n.localHistoryEllipsis,
-    );
-    final clipboardHistoryRow = shortcutRows.singleWhere(
-      (row) => row.title == l10n.clipboardHistory,
-    );
-    expect(
-      find.descendant(
-        of: find.byWidget(localHistoryRow.trailing!),
-        matching: find.text(BusyMarkSidebarShortcutLabels.localHistory),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byWidget(clipboardHistoryRow.trailing!),
-        matching: find.text(BusyMarkSidebarShortcutLabels.clipboardHistory),
-      ),
-      findsOneWidget,
-    );
-    final displayedShortcutLabels = <String>[];
-    for (final row in shortcutRows) {
-      final trailing = row.trailing;
-      expect(trailing, isNotNull, reason: 'Shortcut rows need a badge.');
-      final badgeLabels = tester
-          .widgetList<Text>(
-            find.descendant(
-              of: find.byWidget(trailing!),
-              matching: find.byType(Text),
-            ),
-          )
-          .map((text) => text.data)
-          .whereType<String>()
-          .toList();
-      expect(badgeLabels, hasLength(1));
-      displayedShortcutLabels.add(badgeLabels.single);
-    }
-    expect(shortcutRows, hasLength(expectedShortcutLabels.length));
-    expect(
-      displayedShortcutLabels.toSet(),
-      expectedShortcutLabels,
-      reason: 'The popup must stay synchronized with every shortcut registry.',
-    );
-    expect(find.text('Alt'), findsNothing);
-    expect(find.text('Esc'), findsOneWidget);
-    expect(find.text('Close'), findsNothing);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-
-    expect(find.text(l10n.shortcutNewDocumentDescription), findsNothing);
-  });
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.pumpAndSettle();
+      expect(find.byType(WelcomeScreen), findsOneWidget);
+    },
+  );
 
   testWidgets('syntax reference categories expose supported authoring forms', (
     tester,
@@ -3335,7 +3951,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    expect(BusyMarkAppShortcutLabels.syntaxReference, 'Ctrl+Alt+M');
+    expect(BusyMarkAppShortcuts.syntaxReference.label, 'Ctrl+Alt+M');
     expect(
       find.byKey(const ValueKey('syntax-reference-dialog')),
       findsOneWidget,
@@ -3442,10 +4058,35 @@ void main() {
     await tester.tap(find.text(fr.keyboardShortcuts));
     await tester.pumpAndSettle();
 
-    expect(find.text(fr.tabs), findsOneWidget);
-    expect(fr.shortcutGroupSidebar, isNot('Sidebar'));
-    expect(find.text(fr.shortcutGroupSidebar), findsOneWidget);
+    final query = find.descendant(
+      of: find.byKey(const ValueKey('settings-shortcut-search')),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(query, fr.tabs);
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Semantics &&
+            w.properties.header == true &&
+            w.child is Text &&
+            (w.child as Text).data == fr.tabs,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Tabs'), findsNothing);
+    await tester.enterText(query, fr.shortcutGroupSidebar);
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Semantics &&
+            w.properties.header == true &&
+            w.child is Text &&
+            (w.child as Text).data == fr.shortcutGroupSidebar,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Sidebar'), findsNothing);
   });
 
@@ -7421,13 +8062,13 @@ code
 
     expect(
       find.byTooltip(
-        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderControlGap(
@@ -7501,13 +8142,13 @@ code
     );
     expect(
       find.byTooltip(
-        '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+        '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       ),
       findsOneWidget,
     );
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: false,
     );
 
@@ -7517,7 +8158,7 @@ code
     expect(tester.state(find.byKey(sidebarKey)), same(sidebarState));
     _expectNeutralSidebarToggle(
       tester,
-      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
     );
     _expectHeaderGeometry(tester);
@@ -7699,11 +8340,11 @@ code
     await tester.pumpAndSettle();
 
     for (final (label, shortcut) in <(String, String)>[
-      (l10n.files, BusyMarkSidebarShortcutLabels.files),
-      (l10n.outline, BusyMarkSidebarShortcutLabels.outline),
-      (l10n.git, BusyMarkSidebarShortcutLabels.git),
-      (l10n.localHistory, BusyMarkSidebarShortcutLabels.localHistory),
-      (l10n.clipboardHistory, BusyMarkSidebarShortcutLabels.clipboardHistory),
+      (l10n.files, BusyMarkSidebarShortcuts.files.label),
+      (l10n.outline, BusyMarkSidebarShortcuts.outline.label),
+      (l10n.git, BusyMarkSidebarShortcuts.git.label),
+      (l10n.localHistory, BusyMarkSidebarShortcuts.localHistory.label),
+      (l10n.clipboardHistory, BusyMarkSidebarShortcuts.clipboardHistory.label),
     ]) {
       expect(find.text(label), findsOneWidget);
       expect(find.text(shortcut), findsOneWidget);
@@ -9736,10 +10377,10 @@ code
       final initialToggleRect = tester.getRect(hideButton);
       final unorderedTooltip =
           '${l10n.unorderedList} '
-          '(${BusyMarkEditorShortcutLabels.unorderedList})';
+          '(${BusyMarkEditorShortcuts.unorderedList.label})';
       final orderedTooltip =
           '${l10n.orderedList} '
-          '(${BusyMarkEditorShortcutLabels.orderedList})';
+          '(${BusyMarkEditorShortcuts.orderedList.label})';
       final horizontalUnorderedRect = tester.getRect(
         find.byTooltip(unorderedTooltip),
       );
@@ -14126,10 +14767,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
-      expect(find.text(l10n.searchInWorkspace), findsOneWidget);
+      expect(find.text(l10n.searchWorkspaceTextCategory), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      expect(find.text(l10n.searchInWorkspace), findsNothing);
+      expect(find.text(l10n.searchWorkspaceTextCategory), findsNothing);
       expect(container.read(searchSessionProvider).active, isTrue);
       await shortcut(LogicalKeyboardKey.keyF, shift: true);
       expect(

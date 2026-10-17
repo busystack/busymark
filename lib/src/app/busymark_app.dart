@@ -36,9 +36,13 @@ import '../search/search_session.dart';
 import '../search/search_activation.dart';
 import '../workspace/recent_navigation.dart';
 import 'command_registry.dart';
+import 'command_shortcuts.dart';
+import 'keymap_controller.dart';
+import 'shortcut_capture.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
+import 'busymark_search_field.dart';
 import 'busymark_glyphs.dart';
 import 'busymark_toast.dart';
 import 'localization.dart';
@@ -46,144 +50,149 @@ import 'system_accent.dart';
 import 'window_control_service.dart';
 import 'linux/linux_window_host.dart';
 
+final _busyMarkDefaultCommandRegistryProvider =
+    Provider<BusyMarkCommandRegistry>((ref) {
+      final commandIntents = <String, Intent>{
+        for (final id in BusyMarkCommandCatalog.notesWorkspaceCommandIds)
+          id: _NotesWorkspaceActionIntent(id),
+        BusyMarkCommandIds.newNote: const _NotesActionIntent(
+          WelcomeNotesAction.create,
+        ),
+        BusyMarkCommandIds.browseNotes: const _NotesActionIntent(
+          WelcomeNotesAction.browse,
+        ),
+        BusyMarkCommandIds.newDocument: const _NewWorkspaceIntent(),
+        BusyMarkCommandIds.open: const _OpenWorkspaceIntent(),
+        BusyMarkCommandIds.save: const _SaveActiveIntent(),
+        BusyMarkCommandIds.export: const _ExportIntent(),
+        BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
+        BusyMarkCommandIds.back: const _BackIntent(),
+        BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
+        BusyMarkCommandIds.syntaxReference: const _SyntaxReferenceIntent(),
+        BusyMarkCommandIds.settings: const _SettingsIntent(),
+        BusyMarkCommandIds.nextTab: const _NextTabIntent(),
+        BusyMarkCommandIds.previousTab: const _PreviousTabIntent(),
+        BusyMarkCommandIds.closeTab: const _CloseTabIntent(),
+        BusyMarkCommandIds.closeAllTabs: const _CloseAllTabsIntent(),
+        BusyMarkCommandIds.toggleSidebar: const _ToggleSidebarIntent(),
+        BusyMarkCommandIds.clipboardHistory:
+            const _OpenClipboardHistoryIntent(),
+        BusyMarkCommandIds.localHistory: const _OpenLocalHistoryIntent(),
+        BusyMarkCommandIds.viewEditor: const _DocumentViewModeIntent(
+          DocumentViewModePreference.editor,
+        ),
+        BusyMarkCommandIds.viewSource: const _DocumentViewModeIntent(
+          DocumentViewModePreference.source,
+        ),
+        BusyMarkCommandIds.viewReading: const _DocumentViewModeIntent(
+          DocumentViewModePreference.preview,
+        ),
+        BusyMarkCommandIds.viewSplit: const _DocumentViewModeIntent(
+          DocumentViewModePreference.split,
+        ),
+      };
+      final defaults = BusyMarkCommandCatalog.create(
+        executions: {
+          for (final id in [
+            BusyMarkCommandIds.sidebarFiles,
+            BusyMarkCommandIds.sidebarToc,
+            BusyMarkCommandIds.sidebarOutline,
+            BusyMarkCommandIds.sidebarGit,
+          ])
+            id: () => ref
+                .read(workspaceNavigationCommandProvider.notifier)
+                .request(id),
+          for (final entry in searchCommandDestinations.entries)
+            entry.key: () {
+              final search = ref.read(searchSessionProvider.notifier);
+              if (entry.value == SearchCategory.localHistory) {
+                search.openHistory();
+              } else {
+                search.open(category: entry.value);
+              }
+            },
+          BusyMarkCommandIds.elementProperties: () => ref
+              .read(workspaceControllerProvider.notifier)
+              .toggleElementProperties
+              ?.call(),
+          BusyMarkCommandIds.references: () =>
+              ref.read(referencePanelRequestProvider.notifier).request(),
+          for (final entry in commandIntents.entries)
+            entry.key: () {
+              final target = rootNavigatorKey.currentContext;
+              if (target != null) {
+                Actions.maybeInvoke(target, entry.value);
+              }
+            },
+        },
+        enabled: {
+          for (final id in BusyMarkCommandCatalog.notesWorkspaceCommandIds)
+            id: () =>
+                ref.read(searchSessionProvider.notifier).workspaceVisible &&
+                ref.read(workspaceControllerProvider).workspace?.isRemote ==
+                    true,
+          BusyMarkCommandIds.sidebarFiles: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.sidebarToc: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref
+                      .read(workspaceControllerProvider)
+                      .workspace
+                      ?.writersideProject !=
+                  null,
+          BusyMarkCommandIds.sidebarOutline: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).activeBuffer != null,
+          BusyMarkCommandIds.sidebarGit: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(gitControllerProvider).repositoryInfo != null,
+          for (final id in [
+            BusyMarkCommandIds.elementProperties,
+            BusyMarkCommandIds.references,
+            BusyMarkCommandIds.viewEditor,
+            BusyMarkCommandIds.viewSource,
+            BusyMarkCommandIds.viewReading,
+            BusyMarkCommandIds.viewSplit,
+            BusyMarkCommandIds.nextTab,
+            BusyMarkCommandIds.previousTab,
+            BusyMarkCommandIds.closeTab,
+            BusyMarkCommandIds.closeAllTabs,
+          ])
+            id: () =>
+                ref.read(searchSessionProvider.notifier).workspaceVisible &&
+                ref.read(workspaceControllerProvider).workspace != null,
+          for (final entry in searchCommandDestinations.entries)
+            entry.key: () => ref
+                .read(searchSessionProvider.notifier)
+                .categories
+                .contains(entry.value),
+          BusyMarkCommandIds.save: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.export: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              canExportWorkspace(ref.read(workspaceControllerProvider)),
+          BusyMarkCommandIds.clipboardHistory: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.localHistory: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).workspace != null,
+          BusyMarkCommandIds.findLocalHistory: () =>
+              ref.read(searchSessionProvider.notifier).workspaceVisible &&
+              ref.read(workspaceControllerProvider).workspace != null,
+        },
+      );
+      return defaults;
+    });
+
 final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
   ref,
 ) {
-  final commandIntents = <String, Intent>{
-    for (final id in [
-      BusyMarkCommandIds.syncNotes,
-      BusyMarkCommandIds.exportNotes,
-      BusyMarkCommandIds.importNotesFolder,
-      BusyMarkCommandIds.importNotesFile,
-    ])
-      id: _NotesWorkspaceActionIntent(id),
-    BusyMarkCommandIds.newNote: const _NotesActionIntent(
-      WelcomeNotesAction.create,
-    ),
-    BusyMarkCommandIds.browseNotes: const _NotesActionIntent(
-      WelcomeNotesAction.browse,
-    ),
-    BusyMarkCommandIds.newDocument: const _NewWorkspaceIntent(),
-    BusyMarkCommandIds.open: const _OpenWorkspaceIntent(),
-    BusyMarkCommandIds.save: const _SaveActiveIntent(),
-    BusyMarkCommandIds.export: const _ExportIntent(),
-    BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
-    BusyMarkCommandIds.back: const _BackIntent(),
-    BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
-    BusyMarkCommandIds.syntaxReference: const _SyntaxReferenceIntent(),
-    BusyMarkCommandIds.settings: const _SettingsIntent(),
-    BusyMarkCommandIds.nextTab: const _NextTabIntent(),
-    BusyMarkCommandIds.previousTab: const _PreviousTabIntent(),
-    BusyMarkCommandIds.closeTab: const _CloseTabIntent(),
-    BusyMarkCommandIds.closeAllTabs: const _CloseAllTabsIntent(),
-    BusyMarkCommandIds.toggleSidebar: const _ToggleSidebarIntent(),
-    BusyMarkCommandIds.clipboardHistory: const _OpenClipboardHistoryIntent(),
-    BusyMarkCommandIds.localHistory: const _OpenLocalHistoryIntent(),
-    BusyMarkCommandIds.viewEditor: const _DocumentViewModeIntent(
-      DocumentViewModePreference.editor,
-    ),
-    BusyMarkCommandIds.viewSource: const _DocumentViewModeIntent(
-      DocumentViewModePreference.source,
-    ),
-    BusyMarkCommandIds.viewReading: const _DocumentViewModeIntent(
-      DocumentViewModePreference.preview,
-    ),
-    BusyMarkCommandIds.viewSplit: const _DocumentViewModeIntent(
-      DocumentViewModePreference.split,
-    ),
-  };
-  return BusyMarkCommandCatalog.create(
-    executions: {
-      for (final id in [
-        BusyMarkCommandIds.sidebarFiles,
-        BusyMarkCommandIds.sidebarToc,
-        BusyMarkCommandIds.sidebarOutline,
-        BusyMarkCommandIds.sidebarGit,
-      ])
-        id: () =>
-            ref.read(workspaceNavigationCommandProvider.notifier).request(id),
-      for (final entry in searchCommandDestinations.entries)
-        entry.key: () {
-          final search = ref.read(searchSessionProvider.notifier);
-          if (entry.value == SearchCategory.localHistory) {
-            search.openHistory();
-          } else {
-            search.open(category: entry.value);
-          }
-        },
-      BusyMarkCommandIds.elementProperties: () => ref
-          .read(workspaceControllerProvider.notifier)
-          .toggleElementProperties
-          ?.call(),
-      BusyMarkCommandIds.references: () =>
-          ref.read(referencePanelRequestProvider.notifier).request(),
-      for (final entry in commandIntents.entries)
-        entry.key: () {
-          final target = rootNavigatorKey.currentContext;
-          if (target != null) {
-            Actions.maybeInvoke(target, entry.value);
-          }
-        },
-    },
-    enabled: {
-      for (final id in [
-        BusyMarkCommandIds.syncNotes,
-        BusyMarkCommandIds.exportNotes,
-        BusyMarkCommandIds.importNotesFolder,
-        BusyMarkCommandIds.importNotesFile,
-      ])
-        id: () =>
-            ref.read(searchSessionProvider.notifier).workspaceVisible &&
-            ref.read(workspaceControllerProvider).workspace?.isRemote == true,
-      BusyMarkCommandIds.sidebarFiles: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(workspaceControllerProvider).workspace != null,
-      BusyMarkCommandIds.sidebarToc: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(workspaceControllerProvider).workspace?.writersideProject !=
-              null,
-      BusyMarkCommandIds.sidebarOutline: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(workspaceControllerProvider).activeBuffer != null,
-      BusyMarkCommandIds.sidebarGit: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(gitControllerProvider).repositoryInfo != null,
-      for (final id in [
-        BusyMarkCommandIds.elementProperties,
-        BusyMarkCommandIds.references,
-        BusyMarkCommandIds.viewEditor,
-        BusyMarkCommandIds.viewSource,
-        BusyMarkCommandIds.viewReading,
-        BusyMarkCommandIds.viewSplit,
-        BusyMarkCommandIds.nextTab,
-        BusyMarkCommandIds.previousTab,
-        BusyMarkCommandIds.closeTab,
-        BusyMarkCommandIds.closeAllTabs,
-      ])
-        id: () =>
-            ref.read(searchSessionProvider.notifier).workspaceVisible &&
-            ref.read(workspaceControllerProvider).workspace != null,
-      for (final entry in searchCommandDestinations.entries)
-        entry.key: () => ref
-            .read(searchSessionProvider.notifier)
-            .categories
-            .contains(entry.value),
-      BusyMarkCommandIds.save: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(workspaceControllerProvider).workspace != null,
-      BusyMarkCommandIds.export: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          canExportWorkspace(ref.read(workspaceControllerProvider)),
-      BusyMarkCommandIds.clipboardHistory: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(workspaceControllerProvider).workspace != null,
-      BusyMarkCommandIds.localHistory: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(workspaceControllerProvider).workspace != null,
-      BusyMarkCommandIds.findLocalHistory: () =>
-          ref.read(searchSessionProvider.notifier).workspaceVisible &&
-          ref.read(workspaceControllerProvider).workspace != null,
-    },
+  return effectiveCommandRegistry(
+    ref.watch(_busyMarkDefaultCommandRegistryProvider),
+    ref.watch(appSettingsControllerProvider.select((s) => s.shortcutOverrides)),
   );
 });
 
@@ -243,7 +252,7 @@ class BusyMarkApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
-        final commandRegistry = ref.read(busyMarkCommandRegistryProvider);
+        final commandRegistry = ref.watch(busyMarkCommandRegistryProvider);
         final headerBarDefaults = _nativeHeaderBarDefaults(
           context,
           settings,
@@ -253,7 +262,7 @@ class BusyMarkApp extends ConsumerWidget {
         final appContent = HeaderBarConfigurationDefaults(
           configuration: headerBarDefaults,
           child: _BusyMarkWindowLifecycle(
-            child: Shortcuts(
+            child: BusyMarkCommandShortcuts(
               shortcuts: commandRegistry.shortcutIntents(
                 excludedIds: searchCommandDestinations.keys.toSet(),
                 scopes: const {
@@ -399,9 +408,7 @@ class BusyMarkApp extends ConsumerWidget {
                           final navigatorContext =
                               rootNavigatorKey.currentContext;
                           if (navigatorContext != null) {
-                            showBusyMarkKeyboardShortcutsDialog(
-                              navigatorContext,
-                            );
+                            openKeyboardShortcutsSettings(navigatorContext);
                           }
                           return null;
                         },
@@ -962,8 +969,8 @@ class BusyMarkApp extends ConsumerWidget {
     final textDirection = Directionality.maybeOf(context) ?? TextDirection.ltr;
     BusyMarkCommand command(String id) => commandRegistry[id]!;
     String label(String id) => command(id).label(context);
-    String shortcut(String id) => command(id).shortcut!.label;
-    String accelerator(String id) => command(id).shortcut!.gtkAccelerator!;
+    String shortcut(String id) => command(id).shortcut?.label ?? '';
+    String accelerator(String id) => command(id).shortcut?.gtkAccelerator ?? '';
     final labels = HeaderBarLabels(
       editor: label(BusyMarkCommandIds.viewEditor),
       source: label(BusyMarkCommandIds.viewSource),
@@ -1222,6 +1229,7 @@ class _BusyMarkSearchShortcutHandlerState
   }
 
   bool _handleKeyEvent(KeyEvent event) {
+    if (BusyMarkShortcutCapture.suppressing) return true;
     if (event is! KeyDownEvent) {
       return false;
     }
@@ -1239,20 +1247,24 @@ class _BusyMarkSearchShortcutHandlerState
       return true;
     }
     final keyboard = HardwareKeyboard.instance;
+    // Search delivery precedes Flutter's focus hierarchy. Let the query's
+    // DefaultTextEditingShortcuts consume local editing before any reassigned
+    // application search command, just as it does for other application actions.
+    if (FocusManager.instance.primaryFocus is BusyMarkSearchFocusNode &&
+        BusyMarkLocalTextEditingShortcuts.bindings.keys.any(
+          (a) => a.accepts(event, keyboard),
+        )) {
+      return false;
+    }
     if (ref.read(searchSessionProvider.notifier).categories.isEmpty) {
       return false;
     }
     final commands = ref.read(busyMarkCommandRegistryProvider);
     if (commands.shortcutAccepts(
-          BusyMarkCommandIds.sidebarOutline,
-          event,
-          keyboard,
-        ) ||
-        event.logicalKey == LogicalKeyboardKey.numpad3 &&
-            keyboard.isControlPressed &&
-            !keyboard.isShiftPressed &&
-            !keyboard.isAltPressed &&
-            !keyboard.isMetaPressed) {
+      BusyMarkCommandIds.sidebarOutline,
+      event,
+      keyboard,
+    )) {
       unawaited(commands.execute(BusyMarkCommandIds.sidebarOutline));
       return true;
     }

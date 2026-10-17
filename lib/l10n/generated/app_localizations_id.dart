@@ -802,7 +802,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Tampilkan referensi pintasan keyboard ini';
+      'Sesuaikan pintasan keyboard aplikasi';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Buka referensi sintaks';
@@ -5449,4 +5449,91 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Tidak ada sumber daya terbaru';
+
+  @override
+  String get searchSidebarLabel => 'Cari:';
+
+  @override
+  String get searchDocumentTextCategory => 'Teks dokumen';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Teks ruang kerja';
+
+  @override
+  String get searchHeadingsCategory => 'Judul';
+
+  @override
+  String get shortcutUnassigned => 'Belum ditetapkan';
+
+  @override
+  String get shortcutSearchHint => 'Cari tindakan atau pintasan…';
+
+  @override
+  String get shortcutFindBy => 'Cari berdasarkan pintasan';
+
+  @override
+  String get shortcutPressKeys => 'Tekan kombinasi tombol…';
+
+  @override
+  String get shortcutRecord => 'Rekam pintasan';
+
+  @override
+  String get shortcutRestoreAll => 'Pulihkan semua bawaan';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Pulihkan pintasan bawaan semua tindakan? Penetapan khusus akan dihapus.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Pintasan aktif tetapi tidak dapat disimpan. Coba lagi agar tetap tersedia setelah mulai ulang.';
+
+  @override
+  String get shortcutRetry => 'Coba simpan lagi';
+
+  @override
+  String get shortcutChanged =>
+      'Penetapan berubah. Tinjau pintasan saat ini dan coba lagi.';
+
+  @override
+  String get shortcutInvalid =>
+      'Kombinasi ini tidak dapat ditetapkan dalam konteks ini.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Desktop Anda mungkin memakai kombinasi ini. BusyMark tidak dapat mengganti pintasan sistem.';
+
+  @override
+  String get shortcutConflicts =>
+      'Pintasan ini bertentangan dengan tindakan berikut:';
+
+  @override
+  String get shortcutRemove => 'Hapus penetapan';
+
+  @override
+  String get shortcutRestoreDefault => 'Pulihkan bawaan';
+
+  @override
+  String get shortcutAssign => 'Tetapkan';
+
+  @override
+  String get shortcutReassign => 'Tetapkan ulang';
+
+  @override
+  String get shortcutContextApplication => 'Aplikasi';
+
+  @override
+  String get shortcutContextDocument => 'Tampilan dokumen';
+
+  @override
+  String get shortcutContextEditor => 'Editor dan sumber';
+
+  @override
+  String get shortcutContextWritersideSource => 'Sumber Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navigasi ruang kerja';
+
+  @override
+  String get shortcutContextTree => 'Pohon bilah samping';
 }

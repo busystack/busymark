@@ -801,7 +801,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Hiển thị tham chiếu phím tắt này';
+      'Tùy chỉnh phím tắt của ứng dụng';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Mở tham chiếu cú pháp';
@@ -5441,4 +5441,89 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Không có tài nguyên gần đây';
+
+  @override
+  String get searchSidebarLabel => 'Tìm kiếm:';
+
+  @override
+  String get searchDocumentTextCategory => 'Văn bản tài liệu';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Văn bản không gian làm việc';
+
+  @override
+  String get searchHeadingsCategory => 'Tiêu đề';
+
+  @override
+  String get shortcutUnassigned => 'Chưa gán';
+
+  @override
+  String get shortcutSearchHint => 'Tìm thao tác hoặc phím tắt…';
+
+  @override
+  String get shortcutFindBy => 'Tìm bằng phím tắt';
+
+  @override
+  String get shortcutPressKeys => 'Nhấn tổ hợp phím…';
+
+  @override
+  String get shortcutRecord => 'Ghi phím tắt';
+
+  @override
+  String get shortcutRestoreAll => 'Khôi phục tất cả mặc định';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Khôi phục phím tắt mặc định của mọi thao tác? Các gán tùy chỉnh sẽ bị xóa.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Phím tắt đang có hiệu lực nhưng chưa lưu được. Thử lưu lại để giữ chúng sau khi khởi động lại.';
+
+  @override
+  String get shortcutRetry => 'Thử lưu lại';
+
+  @override
+  String get shortcutChanged =>
+      'Các gán đã thay đổi. Xem lại phím tắt hiện tại và thử lại.';
+
+  @override
+  String get shortcutInvalid => 'Không thể gán tổ hợp này trong ngữ cảnh này.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Môi trường màn hình có thể dùng tổ hợp này. BusyMark không thể ghi đè phím tắt hệ thống.';
+
+  @override
+  String get shortcutConflicts => 'Phím tắt này xung đột với các thao tác sau:';
+
+  @override
+  String get shortcutRemove => 'Xóa gán';
+
+  @override
+  String get shortcutRestoreDefault => 'Khôi phục mặc định';
+
+  @override
+  String get shortcutAssign => 'Gán';
+
+  @override
+  String get shortcutReassign => 'Gán lại';
+
+  @override
+  String get shortcutContextApplication => 'Ứng dụng';
+
+  @override
+  String get shortcutContextDocument => 'Chế độ xem tài liệu';
+
+  @override
+  String get shortcutContextEditor => 'Trình sửa và mã nguồn';
+
+  @override
+  String get shortcutContextWritersideSource => 'Mã nguồn Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Điều hướng không gian làm việc';
+
+  @override
+  String get shortcutContextTree => 'Cây thanh bên';
 }

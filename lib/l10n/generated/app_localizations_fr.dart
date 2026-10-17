@@ -810,7 +810,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Afficher cette liste de raccourcis clavier';
+      'Personnaliser les raccourcis clavier de l’application';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -5506,4 +5506,91 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Aucune ressource récente';
+
+  @override
+  String get searchSidebarLabel => 'Rechercher:';
+
+  @override
+  String get searchDocumentTextCategory => 'Texte du document';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Texte de l’espace de travail';
+
+  @override
+  String get searchHeadingsCategory => 'Titres';
+
+  @override
+  String get shortcutUnassigned => 'Non attribué';
+
+  @override
+  String get shortcutSearchHint => 'Rechercher des actions ou raccourcis…';
+
+  @override
+  String get shortcutFindBy => 'Rechercher par raccourci';
+
+  @override
+  String get shortcutPressKeys => 'Appuyez sur une combinaison de touches…';
+
+  @override
+  String get shortcutRecord => 'Enregistrer un raccourci';
+
+  @override
+  String get shortcutRestoreAll => 'Rétablir tous les raccourcis';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Rétablir les raccourcis par défaut de toutes les actions ? Les affectations personnalisées seront supprimées.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Les raccourcis sont actifs mais n’ont pas été sauvegardés. Réessayez pour les conserver après redémarrage.';
+
+  @override
+  String get shortcutRetry => 'Réessayer la sauvegarde';
+
+  @override
+  String get shortcutChanged =>
+      'Les affectations ont changé. Vérifiez les raccourcis actuels et réessayez.';
+
+  @override
+  String get shortcutInvalid =>
+      'Cette combinaison ne peut pas être attribuée dans ce contexte.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Cette combinaison peut être utilisée par votre bureau. BusyMark ne peut pas remplacer les raccourcis système.';
+
+  @override
+  String get shortcutConflicts =>
+      'Ce raccourci entre en conflit avec ces actions :';
+
+  @override
+  String get shortcutRemove => 'Supprimer l’affectation';
+
+  @override
+  String get shortcutRestoreDefault => 'Rétablir le raccourci par défaut';
+
+  @override
+  String get shortcutAssign => 'Attribuer';
+
+  @override
+  String get shortcutReassign => 'Réattribuer';
+
+  @override
+  String get shortcutContextApplication => 'Application entière';
+
+  @override
+  String get shortcutContextDocument => 'Vues du document';
+
+  @override
+  String get shortcutContextEditor => 'Éditeur et source';
+
+  @override
+  String get shortcutContextWritersideSource => 'Source Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navigation de l’espace de travail';
+
+  @override
+  String get shortcutContextTree => 'Arborescences latérales';
 }

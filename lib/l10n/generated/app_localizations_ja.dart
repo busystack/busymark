@@ -777,7 +777,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shortcutSearchDescription => '現在のワークスペースを検索';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'このキーボードショートカット一覧を表示';
+  String get shortcutKeyboardShortcutsDescription => 'アプリケーションのキーボードショートカットを設定';
 
   @override
   String get shortcutSyntaxReferenceDescription => '構文リファレンスを開く';
@@ -5299,4 +5299,88 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => '最近のリソースはありません';
+
+  @override
+  String get searchSidebarLabel => '検索：';
+
+  @override
+  String get searchDocumentTextCategory => '文書のテキスト';
+
+  @override
+  String get searchWorkspaceTextCategory => 'ワークスペースのテキスト';
+
+  @override
+  String get searchHeadingsCategory => '見出し';
+
+  @override
+  String get shortcutUnassigned => '未割り当て';
+
+  @override
+  String get shortcutSearchHint => 'アクションやショートカットを検索…';
+
+  @override
+  String get shortcutFindBy => 'ショートカットで検索';
+
+  @override
+  String get shortcutPressKeys => 'キーの組み合わせを押してください…';
+
+  @override
+  String get shortcutRecord => 'ショートカットを記録';
+
+  @override
+  String get shortcutRestoreAll => 'すべて既定に戻す';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'すべてのアクションのショートカットを既定に戻しますか？独自の割り当ては削除されます。';
+
+  @override
+  String get shortcutSaveFailed =>
+      'ショートカットは有効ですが保存できませんでした。再起動後も保持するには保存を再試行してください。';
+
+  @override
+  String get shortcutRetry => '保存を再試行';
+
+  @override
+  String get shortcutChanged => '割り当てが変更されました。現在のショートカットを確認して再試行してください。';
+
+  @override
+  String get shortcutInvalid => 'この組み合わせはこのコンテキストでは割り当てられません。';
+
+  @override
+  String get shortcutSystemWarning =>
+      'この組み合わせはデスクトップで使われている可能性があります。BusyMarkはシステムのショートカットを上書きできません。';
+
+  @override
+  String get shortcutConflicts => 'このショートカットは次のアクションと競合します：';
+
+  @override
+  String get shortcutRemove => '割り当てを削除';
+
+  @override
+  String get shortcutRestoreDefault => '既定に戻す';
+
+  @override
+  String get shortcutAssign => '割り当て';
+
+  @override
+  String get shortcutReassign => '再割り当て';
+
+  @override
+  String get shortcutContextApplication => 'アプリケーション';
+
+  @override
+  String get shortcutContextDocument => '文書の表示';
+
+  @override
+  String get shortcutContextEditor => 'エディターとソース';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writersideのソース';
+
+  @override
+  String get shortcutContextWorkspace => 'ワークスペースの移動';
+
+  @override
+  String get shortcutContextTree => 'サイドバーのツリー';
 }

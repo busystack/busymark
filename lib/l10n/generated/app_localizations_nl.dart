@@ -807,7 +807,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Toon deze sneltoetsreferentie';
+      'Sneltoetsen van de toepassing aanpassen';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Syntaxisreferentie openen';
@@ -5501,4 +5501,90 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Geen recente bronnen';
+
+  @override
+  String get searchSidebarLabel => 'Zoeken:';
+
+  @override
+  String get searchDocumentTextCategory => 'Documenttekst';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Werkruimtetekst';
+
+  @override
+  String get searchHeadingsCategory => 'Koppen';
+
+  @override
+  String get shortcutUnassigned => 'Niet toegewezen';
+
+  @override
+  String get shortcutSearchHint => 'Acties of sneltoetsen zoeken…';
+
+  @override
+  String get shortcutFindBy => 'Zoeken op sneltoets';
+
+  @override
+  String get shortcutPressKeys => 'Druk op een toetscombinatie…';
+
+  @override
+  String get shortcutRecord => 'Sneltoets opnemen';
+
+  @override
+  String get shortcutRestoreAll => 'Alle standaardwaarden herstellen';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Standaardsneltoetsen van alle acties herstellen? Aangepaste toewijzingen worden verwijderd.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Sneltoetsen zijn actief, maar konden niet worden opgeslagen. Probeer opnieuw om ze na herstart te behouden.';
+
+  @override
+  String get shortcutRetry => 'Opslaan opnieuw proberen';
+
+  @override
+  String get shortcutChanged =>
+      'Toewijzingen zijn gewijzigd. Controleer de huidige sneltoetsen en probeer opnieuw.';
+
+  @override
+  String get shortcutInvalid =>
+      'Deze combinatie kan in deze context niet worden toegewezen.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Deze combinatie wordt mogelijk door uw bureaublad gebruikt. BusyMark kan systeemsneltoetsen niet overschrijven.';
+
+  @override
+  String get shortcutConflicts => 'Deze sneltoets overlapt met deze acties:';
+
+  @override
+  String get shortcutRemove => 'Toewijzing verwijderen';
+
+  @override
+  String get shortcutRestoreDefault => 'Standaard herstellen';
+
+  @override
+  String get shortcutAssign => 'Toewijzen';
+
+  @override
+  String get shortcutReassign => 'Opnieuw toewijzen';
+
+  @override
+  String get shortcutContextApplication => 'Toepassing';
+
+  @override
+  String get shortcutContextDocument => 'Documentweergaven';
+
+  @override
+  String get shortcutContextEditor => 'Editor en bron';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside-bron';
+
+  @override
+  String get shortcutContextWorkspace => 'Werkruimtenavigatie';
+
+  @override
+  String get shortcutContextTree => 'Zijbalkbomen';
 }

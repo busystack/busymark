@@ -1,3 +1,4 @@
+import '../../app/command_registry.dart';
 import '../recent_navigation.dart';
 import '../../search/search_session.dart';
 import '../../search/search_sidebar.dart';
@@ -22,7 +23,6 @@ import '../../app/linux/linux_page_frame.dart';
 import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
-import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/debug_log.dart';
@@ -295,7 +295,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     icon: BusyMarkGlyphs.sidebar,
                     nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
                     selected: sidebarVisible,
-                    shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                    shortcut:
+                        (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                                BusyMarkCommandCatalog
+                                    .metadata)[BusyMarkCommandIds.toggleSidebar]
+                            ?.shortcut
+                            ?.label,
                     onPressed: _toggleSidebar,
                   ),
                 ],
@@ -336,7 +341,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
-        showBusyMarkKeyboardShortcutsDialog(context);
+        openKeyboardShortcutsSettings(context);
       case HeaderBarAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case HeaderBarAction.reportIssue:
@@ -390,15 +395,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.welcome));
       case BusyMarkMainMenuAction.keyboardShortcuts:
-        showBusyMarkKeyboardShortcutsDialog(context);
-      case BusyMarkMainMenuAction.quickOpen:
-        ref
-            .read(searchSessionProvider.notifier)
-            .open(category: SearchCategory.documents);
-      case BusyMarkMainMenuAction.commandPalette:
-        ref
-            .read(searchSessionProvider.notifier)
-            .open(category: SearchCategory.actions);
+        openKeyboardShortcutsSettings(context);
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:

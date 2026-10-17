@@ -21,7 +21,7 @@ Markdown, Writerside, and Nextcloud Notes editor for Linux.
 * **Writerside projects** — Open and create Writerside-compatible projects; edit Markdown and XML topics; manage instances, tables of contents, reusable TOC libraries, and project structure.
 * **Nextcloud Notes** — Connect to a Nextcloud server, create and edit notes offline, synchronize changes, search and filter notes, manage categories and favorites, and work with attachments.
 * **References and links** — Incoming/outgoing references, document/topic/heading target chooser, reviewed local Markdown rename/move, and portable Nextcloud note URLs. See [reference workflows](docs/references.md).
-* **Navigation and search** — Files, Topics, and Outline views, tabbed documents, command palette, keyboard shortcuts, document search and replace, reviewed replacement across local workspaces, and Markdown TOC generation.
+* **Navigation and search** — Files, Topics, and Outline views, tabbed documents, Actions search, configurable keyboard shortcuts, document search and replace, reviewed replacement across local workspaces, and Markdown TOC generation.
 * **Technical documentation** — Local rendering of Mermaid, PlantUML, D2, fenced OpenAPI specifications, and MathJax mathematical expressions.
 * **PDF and HTML publishing** — Export Markdown documents and Writerside instances to configurable PDF or portable offline HTML, with controls for layout, typography, tables of contents, heading numbering, and HTML styling.
 * **Git integration for local workspaces** — Review changes and diffs, stage and unstage files, commit, create and switch branches, fetch, pull, push, inspect file and project history, compare historical versions, and restore earlier file versions.
@@ -145,9 +145,10 @@ a release, a security update, or validation of `stage-packages` changes.
       <sub><b>Reading view</b> for rendered documentation.</sub>
     </td>
     <td width="50%">
-      <img src="docs/screenshots/busymark-keyboard-shortcuts.png" alt="BusyMark keyboard shortcuts dialog">
+      <b>Keyboard Shortcuts</b> in Settings
       <br>
-      <sub><b>Keyboard shortcuts</b> reference.</sub>
+      Find actions or record a combination, assign shortcuts, resolve conflicts,
+      and restore defaults. <a href="docs/search-and-replace.md#keyboard-shortcut-settings">Shortcut guide</a>.
     </td>
   </tr>
   <tr>
@@ -212,7 +213,7 @@ Once connected, select **Browse Notes** on Welcome to reopen normal Notes naviga
 
 * **Create and edit:** Create notes from the Notes sidebar and edit them using the normal Markdown editor. Use each note’s menu to change its title, category, or favorite status, save a separate local copy, or delete the note.
 * **Find and organize:** Use All notes, Favorites, Uncategorized, Recovery, or a category and its descendants. Sort by activity or title. Ctrl-click toggles selection, Shift-click selects a range, and Ctrl+A selects the current list; the selected-notes action reviews batch favorite/category changes and reports partial outcomes.
-* **Sidebar search:** Ctrl+P searches Documents by titles/categories, including unopened cached notes; Ctrl+Shift+P searches Actions. Ctrl+F searches only the current note’s buffer, while Ctrl+Shift+F searches the active account. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, whole words, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
+* **Sidebar search:** Ctrl+P searches Documents by titles/categories, including unopened cached notes; Ctrl+Shift+P searches Actions. Ctrl+F searches only the current note’s buffer, while Ctrl+Shift+F searches the active account. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
 * **Work offline:** Edits and new notes are saved locally before synchronization and survive restart. **Make available offline** retains a note or category/subtree's supported managed media. Its status lists available/missing bytes and offers deliberate retry/cancellation. Offline availability, freshness, and acknowledged synchronization are separate states; external dependencies remain identified.
 * **Review conflicts:** If a note changes on the server while you have local edits, BusyMark preserves the competing versions for review instead of silently overwriting one. The comparison workflow supports choosing a version, merging changes, or recovering content as a separate note. Ambiguous note-creation results also require explicit review.
 * **Use attachments:** Add files to notes, view supported images and media, and include managed resources when exporting Markdown or HTML. PDF export includes supported images but does not embed arbitrary file attachments. New uploads are limited to **100 MiB per file**.

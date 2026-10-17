@@ -805,7 +805,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Mostrar esta referência de atalhos de teclado';
+      'Personalizar os atalhos de teclado da aplicação';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -5514,6 +5514,93 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'Sem recursos recentes';
+
+  @override
+  String get searchSidebarLabel => 'Pesquisar:';
+
+  @override
+  String get searchDocumentTextCategory => 'Texto do documento';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Texto do espaço de trabalho';
+
+  @override
+  String get searchHeadingsCategory => 'Cabeçalhos';
+
+  @override
+  String get shortcutUnassigned => 'Não atribuído';
+
+  @override
+  String get shortcutSearchHint => 'Pesquisar ações ou atalhos…';
+
+  @override
+  String get shortcutFindBy => 'Procurar por atalho';
+
+  @override
+  String get shortcutPressKeys => 'Prima uma combinação de teclas…';
+
+  @override
+  String get shortcutRecord => 'Capturar atalho';
+
+  @override
+  String get shortcutRestoreAll => 'Repor todas as predefinições';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Repor os atalhos predefinidos de todas as ações? As atribuições personalizadas serão removidas.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Os atalhos estão ativos, mas não foram guardados. Tente novamente para os manter após reiniciar.';
+
+  @override
+  String get shortcutRetry => 'Tentar guardar novamente';
+
+  @override
+  String get shortcutChanged =>
+      'As atribuições mudaram. Reveja os atalhos atuais e tente novamente.';
+
+  @override
+  String get shortcutInvalid =>
+      'Esta combinação não pode ser atribuída neste contexto.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'O ambiente de trabalho pode usar esta combinação. O BusyMark não pode substituir atalhos do sistema.';
+
+  @override
+  String get shortcutConflicts =>
+      'Este atalho entra em conflito com estas ações:';
+
+  @override
+  String get shortcutRemove => 'Remover atribuição';
+
+  @override
+  String get shortcutRestoreDefault => 'Repor predefinição';
+
+  @override
+  String get shortcutAssign => 'Atribuir';
+
+  @override
+  String get shortcutReassign => 'Reatribuir';
+
+  @override
+  String get shortcutContextApplication => 'Aplicação';
+
+  @override
+  String get shortcutContextDocument => 'Vistas do documento';
+
+  @override
+  String get shortcutContextEditor => 'Editor e código-fonte';
+
+  @override
+  String get shortcutContextWritersideSource => 'Código-fonte do Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navegação do espaço de trabalho';
+
+  @override
+  String get shortcutContextTree => 'Árvores laterais';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -6315,7 +6402,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Mostrar esta referência de atalhos de teclado';
+      'Personalizar os atalhos de teclado do aplicativo';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -11022,4 +11109,91 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get searchRecentEmpty => 'Nenhum recurso recente';
+
+  @override
+  String get searchSidebarLabel => 'Pesquisar:';
+
+  @override
+  String get searchDocumentTextCategory => 'Texto do documento';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Texto do espaço de trabalho';
+
+  @override
+  String get searchHeadingsCategory => 'Títulos';
+
+  @override
+  String get shortcutUnassigned => 'Não atribuído';
+
+  @override
+  String get shortcutSearchHint => 'Pesquisar ações ou atalhos…';
+
+  @override
+  String get shortcutFindBy => 'Buscar por atalho';
+
+  @override
+  String get shortcutPressKeys => 'Pressione uma combinação de teclas…';
+
+  @override
+  String get shortcutRecord => 'Capturar atalho';
+
+  @override
+  String get shortcutRestoreAll => 'Restaurar todos os padrões';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Restaurar os atalhos padrão de todas as ações? As atribuições personalizadas serão removidas.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Os atalhos estão ativos, mas não foram salvos. Tente novamente para mantê-los após reiniciar.';
+
+  @override
+  String get shortcutRetry => 'Tentar salvar novamente';
+
+  @override
+  String get shortcutChanged =>
+      'As atribuições mudaram. Confira os atalhos atuais e tente novamente.';
+
+  @override
+  String get shortcutInvalid =>
+      'Esta combinação não pode ser atribuída neste contexto.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'O ambiente de trabalho pode usar esta combinação. O BusyMark não pode substituir atalhos do sistema.';
+
+  @override
+  String get shortcutConflicts =>
+      'Este atalho entra em conflito com estas ações:';
+
+  @override
+  String get shortcutRemove => 'Remover atribuição';
+
+  @override
+  String get shortcutRestoreDefault => 'Restaurar padrão';
+
+  @override
+  String get shortcutAssign => 'Atribuir';
+
+  @override
+  String get shortcutReassign => 'Reatribuir';
+
+  @override
+  String get shortcutContextApplication => 'Aplicativo';
+
+  @override
+  String get shortcutContextDocument => 'Visualizações do documento';
+
+  @override
+  String get shortcutContextEditor => 'Editor e código-fonte';
+
+  @override
+  String get shortcutContextWritersideSource => 'Código-fonte do Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navegação do espaço de trabalho';
+
+  @override
+  String get shortcutContextTree => 'Árvores laterais';
 }

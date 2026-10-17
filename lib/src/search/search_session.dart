@@ -1,6 +1,7 @@
+import 'package:flutter/foundation.dart';
+import '../app/command_presentation.dart';
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -507,8 +508,16 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     return const SearchSessionState();
   }
 
-  void configureCommands(List<ActionSearchResult> commands) {
+  List<String> _commandCategories = const [];
+
+  void configureCommands(
+    List<ActionSearchResult> commands, {
+    List<String> categoryOrder = const [],
+  }) {
+    final categoriesChanged = !listEquals(_commandCategories, categoryOrder);
+    _commandCategories = categoryOrder;
     final changed =
+        categoriesChanged ||
         commands.length != _commands.length ||
         commands.indexed.any((entry) {
           final (i, value) = entry;
@@ -542,23 +551,34 @@ class SearchSessionController extends Notifier<SearchSessionState> {
       _selectedIdentities[state.category] =
           state.results[state.selected].identity;
     }
-    final query = state.query.trim().toLowerCase();
-    final results =
-        _commands
-            .where(
-              (c) =>
-                  '${c.title} ${c.category} ${c.description ?? ''} ${c.command.id}'
-                      .toLowerCase()
-                      .contains(query),
-            )
-            .toList()
-          ..sort((a, b) {
-            if (a.enabled != b.enabled) return a.enabled ? -1 : 1;
-            final name = a.title.compareTo(b.title);
-            if (name != 0) return name;
-            final category = a.category.compareTo(b.category);
-            return category != 0 ? category : a.identity.compareTo(b.identity);
-          });
+    final query = state.query.trim();
+    int? rank(ActionSearchResult c) => commandMatchRank(
+      name: c.title,
+      category: c.category,
+      description: c.description,
+      id: c.identity,
+      query: query,
+    );
+    final categories = _commandCategories.isEmpty
+        ? _commands.map((c) => c.category).toSet().toList()
+        : _commandCategories;
+    final results = _commands.where((c) => rank(c) != null).toList()
+      ..sort((a, b) {
+        if (query.isEmpty) {
+          final group = categories
+              .indexOf(a.category)
+              .compareTo(categories.indexOf(b.category));
+          if (group != 0) return group;
+        } else {
+          final relevance = rank(a)!.compareTo(rank(b)!);
+          if (relevance != 0) return relevance;
+        }
+        if (a.enabled != b.enabled) return a.enabled ? -1 : 1;
+        final name = a.title.compareTo(b.title);
+        if (name != 0) return name;
+        final category = a.category.compareTo(b.category);
+        return category != 0 ? category : a.identity.compareTo(b.identity);
+      });
     state = state.copyWith(
       results: List.unmodifiable(results),
       selected: _selectionFor(results),
@@ -710,7 +730,9 @@ class SearchSessionController extends Notifier<SearchSessionState> {
   }
 
   void set(SearchSessionState next) {
-    if (next.query != state.query) _selectedIdentities.remove(next.category);
+    if (next.query != state.query && next.category != SearchCategory.actions) {
+      _selectedIdentities.remove(next.category);
+    }
     _resetSourceNavigation();
     state = next.copyWith(
       results: const [],

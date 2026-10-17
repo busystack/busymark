@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import '../export/export_options.dart';
 import '../spellcheck/spelling_language.dart';
 import 'app_locale.dart';
+import 'shortcut_binding.dart';
 
 enum BusyMarkThemeModePreference { system, light, dark }
 
@@ -148,6 +150,7 @@ class AppSettings {
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
+    this.shortcutOverrides = const {},
   });
 
   factory AppSettings.defaults() {
@@ -312,6 +315,7 @@ class AppSettings {
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
           defaults.confirmCloseWithUnsavedChanges,
+      shortcutOverrides: readShortcutOverrides(json['shortcutOverrides']),
       lastOpenedPath: json['lastOpenedPath']?.toString(),
       recentWorkspaces: recent is List
           ? _normalizeRecent(
@@ -365,6 +369,7 @@ class AppSettings {
   final bool reopenPreviousWorkspaceOnStartup;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
+  final Map<String, BusyMarkKeyBinding?> shortcutOverrides;
   final List<RecentResource> recentWorkspaces;
 
   ThemeMode get themeMode => themeModePreference.themeMode;
@@ -372,6 +377,9 @@ class AppSettings {
   Locale? get locale => busyMarkLocaleFromTag(localeTag);
 
   Map<String, Object?> toJson() => {
+    'shortcutOverrides': {
+      for (final e in shortcutOverrides.entries) e.key: e.value?.toJson(),
+    },
     'themeModePreference': themeModePreference.name,
     'localeTag': localeTag,
     'sidebarVisible': sidebarVisible,
@@ -456,6 +464,7 @@ class AppSettings {
   }
 
   AppSettings copyWith({
+    Map<String, BusyMarkKeyBinding?>? shortcutOverrides,
     BusyMarkThemeModePreference? themeModePreference,
     Object? localeTag = _unset,
     bool? sidebarVisible,
@@ -497,6 +506,7 @@ class AppSettings {
     List<RecentResource>? recentWorkspaces,
   }) {
     return AppSettings(
+      shortcutOverrides: shortcutOverrides ?? this.shortcutOverrides,
       themeModePreference: themeModePreference ?? this.themeModePreference,
       localeTag: identical(localeTag, _unset)
           ? this.localeTag
@@ -663,6 +673,20 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> waitUntilLoaded() => _loadFuture;
+
+  /// Invoked after validation against the current in-memory assignments. All
+  /// preferences still use the same ordered writer and settings file.
+  bool _trackShortcutSaves = false;
+  Future<bool> saveShortcutOverrides(
+    Map<String, BusyMarkKeyBinding?> overrides,
+  ) {
+    _trackShortcutSaves = true;
+    return _save(
+      state.copyWith(shortcutOverrides: Map.unmodifiable(overrides)),
+    );
+  }
+
+  Future<bool> retryShortcutSave() => _save(state);
 
   Future<void> setPdfExportOptions(PdfExportOptions options) {
     options.validateOrThrow();
@@ -1132,7 +1156,7 @@ class AppSettingsController extends Notifier<AppSettings> {
     return _save(mutation(state));
   }
 
-  Future<void> _save(AppSettings next) async {
+  Future<bool> _save(AppSettings next) async {
     state = next;
     final json = next.toJson();
     final previousSave = _lastSave;
@@ -1140,14 +1164,33 @@ class AppSettingsController extends Notifier<AppSettings> {
       await previousSave;
       try {
         await _store.save(json);
+        return true;
       } on Object {
-        // Keep the in-memory preference even when local persistence is unavailable.
+        // Runtime preferences stay visible; keymap callers observe this outcome.
+        return false;
       }
     }();
     _lastSave = save;
-    await save;
+    final succeeded = await save;
+    if (ref.mounted &&
+        _trackShortcutSaves &&
+        mapEquals(state.shortcutOverrides, next.shortcutOverrides)) {
+      ref.read(shortcutPersistenceOutcomeProvider.notifier).complete(succeeded);
+    }
+    return succeeded;
   }
 }
+
+class ShortcutPersistenceOutcome extends Notifier<bool?> {
+  @override
+  bool? build() => null;
+  void complete(bool saved) => state = saved;
+}
+
+final shortcutPersistenceOutcomeProvider =
+    NotifierProvider<ShortcutPersistenceOutcome, bool?>(
+      ShortcutPersistenceOutcome.new,
+    );
 
 final localSettingsStoreProvider = Provider<LocalSettingsStore>(
   (ref) => const JsonFileLocalSettingsStore(),

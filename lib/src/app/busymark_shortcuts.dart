@@ -1,3 +1,4 @@
+import 'shortcut_binding.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -5,8 +6,8 @@ class BusyMarkShortcutDefinition {
   const BusyMarkShortcutDefinition({
     required this.label,
     required this.activator,
-    this.gtkAccelerator,
-  });
+    String? gtkAccelerator,
+  }) : _gtkAccelerator = gtkAccelerator;
 
   final String label;
   final ShortcutActivator activator;
@@ -15,7 +16,15 @@ class BusyMarkShortcutDefinition {
   ///
   /// This is deliberately separate from [label]: GTK parses strings such as
   /// `<Primary>comma`, then formats the visible label for the current desktop.
-  final String? gtkAccelerator;
+  final String? _gtkAccelerator;
+  String? get gtkAccelerator =>
+      _gtkAccelerator ??
+      switch (activator) {
+        final SingleActivator value => BusyMarkKeyBinding.fromActivator(
+          value,
+        ).gtkAccelerator,
+        _ => null,
+      };
 }
 
 enum BusyMarkAppShortcutAction {
@@ -218,72 +227,6 @@ abstract final class BusyMarkAppShortcuts {
       };
 }
 
-abstract final class BusyMarkAppShortcutLabels {
-  const BusyMarkAppShortcutLabels._();
-
-  static const newDocument = BusyMarkAppShortcuts.newDocumentLabel;
-  static const open = BusyMarkAppShortcuts.openLabel;
-  static const save = BusyMarkAppShortcuts.saveLabel;
-  static const export = BusyMarkAppShortcuts.exportLabel;
-  static const fullScreen = BusyMarkAppShortcuts.fullScreenLabel;
-  static const back = BusyMarkAppShortcuts.backLabel;
-  static const search = BusyMarkAppShortcuts.searchLabel;
-  static const keyboardShortcuts = BusyMarkAppShortcuts.keyboardShortcutsLabel;
-  static const commandPalette = BusyMarkAppShortcuts.commandPaletteLabel;
-  static const syntaxReference = BusyMarkAppShortcuts.syntaxReferenceLabel;
-  static const settings = BusyMarkAppShortcuts.settingsLabel;
-  static const nextTab = BusyMarkAppShortcuts.nextTabLabel;
-  static const previousTab = BusyMarkAppShortcuts.previousTabLabel;
-  static const closeTab = BusyMarkAppShortcuts.closeTabLabel;
-  static const closeAllTabs = BusyMarkAppShortcuts.closeAllTabsLabel;
-}
-
-abstract final class BusyMarkAppShortcutActivators {
-  const BusyMarkAppShortcutActivators._();
-
-  static ShortcutActivator get newDocument =>
-      BusyMarkAppShortcuts.newDocument.activator;
-  static ShortcutActivator get open => BusyMarkAppShortcuts.open.activator;
-  static ShortcutActivator get save => BusyMarkAppShortcuts.save.activator;
-  static ShortcutActivator get export => BusyMarkAppShortcuts.export.activator;
-  static ShortcutActivator get fullScreen =>
-      BusyMarkAppShortcuts.fullScreen.activator;
-  static ShortcutActivator get back => BusyMarkAppShortcuts.back.activator;
-  static ShortcutActivator get search => BusyMarkAppShortcuts.search.activator;
-  static ShortcutActivator get keyboardShortcuts =>
-      BusyMarkAppShortcuts.keyboardShortcuts.activator;
-  static ShortcutActivator get commandPalette =>
-      BusyMarkAppShortcuts.commandPalette.activator;
-  static ShortcutActivator get syntaxReference =>
-      BusyMarkAppShortcuts.syntaxReference.activator;
-  static ShortcutActivator get settings =>
-      BusyMarkAppShortcuts.settings.activator;
-  static ShortcutActivator get nextTab =>
-      BusyMarkAppShortcuts.nextTab.activator;
-  static ShortcutActivator get previousTab =>
-      BusyMarkAppShortcuts.previousTab.activator;
-  static ShortcutActivator get closeTab =>
-      BusyMarkAppShortcuts.closeTab.activator;
-  static ShortcutActivator get closeAllTabs =>
-      BusyMarkAppShortcuts.closeAllTabs.activator;
-  static ShortcutActivator get toggleSidebar =>
-      BusyMarkAppShortcuts.toggleSidebar.activator;
-}
-
-abstract final class BusyMarkAppShortcutGtkAccelerators {
-  const BusyMarkAppShortcutGtkAccelerators._();
-
-  static const search = BusyMarkAppShortcuts.searchGtkAccelerator;
-  static const export = BusyMarkAppShortcuts.exportGtkAccelerator;
-  static const fullScreen = BusyMarkAppShortcuts.fullScreenGtkAccelerator;
-  static const back = BusyMarkAppShortcuts.backGtkAccelerator;
-  static const keyboardShortcuts =
-      BusyMarkAppShortcuts.keyboardShortcutsGtkAccelerator;
-  static const syntaxReference =
-      BusyMarkAppShortcuts.syntaxReferenceGtkAccelerator;
-  static const settings = BusyMarkAppShortcuts.settingsGtkAccelerator;
-}
-
 enum BusyMarkDocumentViewShortcutAction { editor, source, reading, split }
 
 abstract final class BusyMarkDocumentViewShortcuts {
@@ -343,37 +286,6 @@ abstract final class BusyMarkDocumentViewShortcuts {
         BusyMarkDocumentViewShortcutAction.reading: reading,
         BusyMarkDocumentViewShortcutAction.split: split,
       };
-}
-
-abstract final class BusyMarkDocumentViewShortcutLabels {
-  const BusyMarkDocumentViewShortcutLabels._();
-
-  static const editor = BusyMarkDocumentViewShortcuts.editorLabel;
-  static const source = BusyMarkDocumentViewShortcuts.sourceLabel;
-  static const reading = BusyMarkDocumentViewShortcuts.readingLabel;
-  static const split = BusyMarkDocumentViewShortcuts.splitLabel;
-}
-
-abstract final class BusyMarkDocumentViewShortcutActivators {
-  const BusyMarkDocumentViewShortcutActivators._();
-
-  static ShortcutActivator get editor =>
-      BusyMarkDocumentViewShortcuts.editor.activator;
-  static ShortcutActivator get source =>
-      BusyMarkDocumentViewShortcuts.source.activator;
-  static ShortcutActivator get reading =>
-      BusyMarkDocumentViewShortcuts.reading.activator;
-  static ShortcutActivator get split =>
-      BusyMarkDocumentViewShortcuts.split.activator;
-}
-
-abstract final class BusyMarkDocumentViewShortcutGtkAccelerators {
-  const BusyMarkDocumentViewShortcutGtkAccelerators._();
-
-  static const editor = BusyMarkDocumentViewShortcuts.editorGtkAccelerator;
-  static const source = BusyMarkDocumentViewShortcuts.sourceGtkAccelerator;
-  static const reading = BusyMarkDocumentViewShortcuts.readingGtkAccelerator;
-  static const split = BusyMarkDocumentViewShortcuts.splitGtkAccelerator;
 }
 
 enum BusyMarkTextEditingShortcutAction {
@@ -465,48 +377,6 @@ abstract final class BusyMarkTextEditingShortcuts {
         BusyMarkTextEditingShortcutAction.outdentSource: outdentSource,
         BusyMarkTextEditingShortcutAction.escape: escape,
       };
-}
-
-abstract final class BusyMarkTextEditingShortcutLabels {
-  const BusyMarkTextEditingShortcutLabels._();
-
-  static const selectAll = BusyMarkTextEditingShortcuts.selectAllLabel;
-  static const cut = BusyMarkTextEditingShortcuts.cutLabel;
-  static const copy = BusyMarkTextEditingShortcuts.copyLabel;
-  static const paste = BusyMarkTextEditingShortcuts.pasteLabel;
-  static const pastePlainText =
-      BusyMarkTextEditingShortcuts.pastePlainTextLabel;
-  static const undo = BusyMarkTextEditingShortcuts.undoLabel;
-  static const redo = BusyMarkTextEditingShortcuts.redoLabel;
-  static const insertIndentation =
-      BusyMarkTextEditingShortcuts.insertIndentationLabel;
-  static const outdentSource = BusyMarkTextEditingShortcuts.outdentSourceLabel;
-  static const escape = BusyMarkTextEditingShortcuts.escapeLabel;
-}
-
-abstract final class BusyMarkTextEditingShortcutActivators {
-  const BusyMarkTextEditingShortcutActivators._();
-
-  static ShortcutActivator get selectAll =>
-      BusyMarkTextEditingShortcuts.selectAll.activator;
-  static ShortcutActivator get cut =>
-      BusyMarkTextEditingShortcuts.cut.activator;
-  static ShortcutActivator get copy =>
-      BusyMarkTextEditingShortcuts.copy.activator;
-  static ShortcutActivator get paste =>
-      BusyMarkTextEditingShortcuts.paste.activator;
-  static ShortcutActivator get pastePlainText =>
-      BusyMarkTextEditingShortcuts.pastePlainText.activator;
-  static ShortcutActivator get undo =>
-      BusyMarkTextEditingShortcuts.undo.activator;
-  static ShortcutActivator get redo =>
-      BusyMarkTextEditingShortcuts.redo.activator;
-  static ShortcutActivator get insertIndentation =>
-      BusyMarkTextEditingShortcuts.insertIndentation.activator;
-  static ShortcutActivator get outdentSource =>
-      BusyMarkTextEditingShortcuts.outdentSource.activator;
-  static ShortcutActivator get escape =>
-      BusyMarkTextEditingShortcuts.escape.activator;
 }
 
 enum BusyMarkEditorShortcutAction {
@@ -770,111 +640,6 @@ abstract final class BusyMarkEditorShortcuts {
       };
 }
 
-abstract final class BusyMarkEditorShortcutLabels {
-  const BusyMarkEditorShortcutLabels._();
-
-  static const refineWithAi = BusyMarkEditorShortcuts.refineWithAiLabel;
-  static const copyPlainText = BusyMarkEditorShortcuts.copyPlainTextLabel;
-  static const textStyle = BusyMarkEditorShortcuts.textStyleLabel;
-  static const bold = BusyMarkEditorShortcuts.boldLabel;
-  static const italic = BusyMarkEditorShortcuts.italicLabel;
-  static const underline = BusyMarkEditorShortcuts.underlineLabel;
-  static const strikethrough = BusyMarkEditorShortcuts.strikethroughLabel;
-  static const inlineCode = BusyMarkEditorShortcuts.inlineCodeLabel;
-  static const link = BusyMarkEditorShortcuts.linkLabel;
-  static const paragraph = BusyMarkEditorShortcuts.paragraphLabel;
-  static const heading1 = BusyMarkEditorShortcuts.heading1Label;
-  static const heading2 = BusyMarkEditorShortcuts.heading2Label;
-  static const heading3 = BusyMarkEditorShortcuts.heading3Label;
-  static const heading4 = BusyMarkEditorShortcuts.heading4Label;
-  static const heading5 = BusyMarkEditorShortcuts.heading5Label;
-  static const heading6 = BusyMarkEditorShortcuts.heading6Label;
-  static const orderedList = BusyMarkEditorShortcuts.orderedListLabel;
-  static const unorderedList = BusyMarkEditorShortcuts.unorderedListLabel;
-  static const taskList = BusyMarkEditorShortcuts.taskListLabel;
-  static const indent = BusyMarkEditorShortcuts.indentLabel;
-  static const outdent = BusyMarkEditorShortcuts.outdentLabel;
-  static const blockquote = BusyMarkEditorShortcuts.blockquoteLabel;
-  static const codeBlock = BusyMarkEditorShortcuts.codeBlockLabel;
-  static const image = BusyMarkEditorShortcuts.imageLabel;
-  static const thematicBreak = BusyMarkEditorShortcuts.thematicBreakLabel;
-  static const hardLineBreak = BusyMarkEditorShortcuts.hardLineBreakLabel;
-}
-
-abstract final class BusyMarkEditorShortcutActivators {
-  const BusyMarkEditorShortcutActivators._();
-
-  static Map<ShortcutActivator, Intent> intentMap(
-    Intent Function(BusyMarkEditorShortcutAction action) intentFor,
-  ) {
-    return {
-      for (final entry in BusyMarkEditorShortcuts.definitions.entries)
-        entry.value.activator: intentFor(entry.key),
-    };
-  }
-
-  static BusyMarkEditorShortcutAction? actionForKeyEvent(
-    KeyEvent event,
-    HardwareKeyboard keyboard,
-  ) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return null;
-    }
-    for (final entry in BusyMarkEditorShortcuts.definitions.entries) {
-      if (entry.value.activator.accepts(event, keyboard)) {
-        return entry.key;
-      }
-    }
-    return null;
-  }
-
-  static ShortcutActivator get refineWithAi =>
-      BusyMarkEditorShortcuts.refineWithAi.activator;
-  static ShortcutActivator get bold => BusyMarkEditorShortcuts.bold.activator;
-  static ShortcutActivator get italic =>
-      BusyMarkEditorShortcuts.italic.activator;
-  static ShortcutActivator get underline =>
-      BusyMarkEditorShortcuts.underline.activator;
-  static ShortcutActivator get link => BusyMarkEditorShortcuts.link.activator;
-  static ShortcutActivator get inlineCode =>
-      BusyMarkEditorShortcuts.inlineCode.activator;
-  static ShortcutActivator get strikethrough =>
-      BusyMarkEditorShortcuts.strikethrough.activator;
-  static ShortcutActivator get paragraph =>
-      BusyMarkEditorShortcuts.paragraph.activator;
-  static ShortcutActivator get heading1 =>
-      BusyMarkEditorShortcuts.heading1.activator;
-  static ShortcutActivator get heading2 =>
-      BusyMarkEditorShortcuts.heading2.activator;
-  static ShortcutActivator get heading3 =>
-      BusyMarkEditorShortcuts.heading3.activator;
-  static ShortcutActivator get heading4 =>
-      BusyMarkEditorShortcuts.heading4.activator;
-  static ShortcutActivator get heading5 =>
-      BusyMarkEditorShortcuts.heading5.activator;
-  static ShortcutActivator get heading6 =>
-      BusyMarkEditorShortcuts.heading6.activator;
-  static ShortcutActivator get orderedList =>
-      BusyMarkEditorShortcuts.orderedList.activator;
-  static ShortcutActivator get unorderedList =>
-      BusyMarkEditorShortcuts.unorderedList.activator;
-  static ShortcutActivator get taskList =>
-      BusyMarkEditorShortcuts.taskList.activator;
-  static ShortcutActivator get indent =>
-      BusyMarkEditorShortcuts.indent.activator;
-  static ShortcutActivator get outdent =>
-      BusyMarkEditorShortcuts.outdent.activator;
-  static ShortcutActivator get blockquote =>
-      BusyMarkEditorShortcuts.blockquote.activator;
-  static ShortcutActivator get codeBlock =>
-      BusyMarkEditorShortcuts.codeBlock.activator;
-  static ShortcutActivator get image => BusyMarkEditorShortcuts.image.activator;
-  static ShortcutActivator get thematicBreak =>
-      BusyMarkEditorShortcuts.thematicBreak.activator;
-  static ShortcutActivator get hardLineBreak =>
-      BusyMarkEditorShortcuts.hardLineBreak.activator;
-}
-
 enum BusyMarkSidebarShortcutAction {
   files,
   toc,
@@ -931,66 +696,6 @@ abstract final class BusyMarkSidebarShortcuts {
       };
 }
 
-abstract final class BusyMarkSidebarShortcutLabels {
-  const BusyMarkSidebarShortcutLabels._();
-
-  static const toggleSidebar = BusyMarkAppShortcuts.toggleSidebarLabel;
-  static const files = BusyMarkSidebarShortcuts.filesLabel;
-  static const toc = BusyMarkSidebarShortcuts.tocLabel;
-  static const outline = BusyMarkSidebarShortcuts.outlineLabel;
-  static const git = BusyMarkSidebarShortcuts.gitLabel;
-  static const localHistory = BusyMarkSidebarShortcuts.localHistoryLabel;
-  static const clipboardHistory =
-      BusyMarkSidebarShortcuts.clipboardHistoryLabel;
-}
-
-abstract final class BusyMarkSidebarShortcutActivators {
-  const BusyMarkSidebarShortcutActivators._();
-
-  static ShortcutActivator get toggleSidebar =>
-      BusyMarkSidebarShortcuts.toggleSidebar.activator;
-  static ShortcutActivator get files =>
-      BusyMarkSidebarShortcuts.files.activator;
-  static ShortcutActivator get toc => BusyMarkSidebarShortcuts.toc.activator;
-  static ShortcutActivator get outline =>
-      BusyMarkSidebarShortcuts.outline.activator;
-  static ShortcutActivator get git => BusyMarkSidebarShortcuts.git.activator;
-  static ShortcutActivator get localHistory =>
-      BusyMarkSidebarShortcuts.localHistory.activator;
-  static ShortcutActivator get clipboardHistory =>
-      BusyMarkSidebarShortcuts.clipboardHistory.activator;
-
-  static BusyMarkSidebarShortcutAction? actionForKeyEvent(
-    KeyEvent event,
-    HardwareKeyboard keyboard,
-  ) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return null;
-    }
-    if (!keyboard.isControlPressed ||
-        keyboard.isShiftPressed ||
-        keyboard.isAltPressed ||
-        keyboard.isMetaPressed) {
-      return null;
-    }
-    return switch (event.logicalKey) {
-      LogicalKeyboardKey.digit1 ||
-      LogicalKeyboardKey.numpad1 => BusyMarkSidebarShortcutAction.files,
-      LogicalKeyboardKey.digit2 ||
-      LogicalKeyboardKey.numpad2 => BusyMarkSidebarShortcutAction.toc,
-      LogicalKeyboardKey.digit3 ||
-      LogicalKeyboardKey.numpad3 => BusyMarkSidebarShortcutAction.outline,
-      LogicalKeyboardKey.digit4 ||
-      LogicalKeyboardKey.numpad4 => BusyMarkSidebarShortcutAction.git,
-      LogicalKeyboardKey.digit5 ||
-      LogicalKeyboardKey.numpad5 => BusyMarkSidebarShortcutAction.localHistory,
-      LogicalKeyboardKey.digit6 || LogicalKeyboardKey.numpad6 =>
-        BusyMarkSidebarShortcutAction.clipboardHistory,
-      _ => null,
-    };
-  }
-}
-
 enum BusyMarkTreeShortcutAction { deleteSelection }
 
 abstract final class BusyMarkTreeShortcuts {
@@ -1007,17 +712,4 @@ abstract final class BusyMarkTreeShortcuts {
       <BusyMarkTreeShortcutAction, BusyMarkShortcutDefinition>{
         BusyMarkTreeShortcutAction.deleteSelection: deleteSelection,
       };
-}
-
-abstract final class BusyMarkTreeShortcutLabels {
-  const BusyMarkTreeShortcutLabels._();
-
-  static const deleteSelection = BusyMarkTreeShortcuts.deleteSelectionLabel;
-}
-
-abstract final class BusyMarkTreeShortcutActivators {
-  const BusyMarkTreeShortcutActivators._();
-
-  static ShortcutActivator get deleteSelection =>
-      BusyMarkTreeShortcuts.deleteSelection.activator;
 }

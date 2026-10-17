@@ -873,10 +873,16 @@ void main() {
     expect(workspace, contains('shortcut: _sidebarTabShortcut(context, tab)'));
     expect(
       workspace,
-      isNot(contains('BusyMarkSidebarShortcutActivators.history')),
+      isNot(contains('BusyMarkSidebarShortcuts.history.activator')),
     );
-    expect(workspace, contains('LogicalKeyboardKey.numpad5'));
-    expect(workspace, contains('LogicalKeyboardKey.numpad6'));
+    expect(
+      File('lib/src/app/command_registry.dart').readAsStringSync(),
+      contains('LogicalKeyboardKey.numpad5'),
+    );
+    expect(
+      File('lib/src/app/command_registry.dart').readAsStringSync(),
+      contains('LogicalKeyboardKey.numpad6'),
+    );
     expect(
       workspace,
       contains('_SidebarTab.files => BusyMarkGlyphs.documentOpen'),
@@ -1250,7 +1256,8 @@ void main() {
       contains('side: const WidgetStatePropertyAll(BorderSide.none)'),
     );
     expect(selector, contains('BusyMarkPopupMenuItem<T>('));
-    expect(selector, contains('softWrap: false'));
+    expect(selector, contains('softWrap: maxLabelLines > 1'));
+    expect(selector, contains('this.maxLabelLines = 1'));
     expect(selector, contains('BusyMarkPushButton.standard('));
     expect(selector, isNot(contains('WidgetStatesController()')));
     expect(selector, isNot(contains('showMenu<T>(')));
@@ -1767,27 +1774,18 @@ void main() {
     ]) {
       expect(toolbar, contains(label));
     }
-    for (final shortcut in [
-      'BusyMarkEditorShortcutLabels.textStyle',
-      'BusyMarkEditorShortcutLabels.indent',
-      'BusyMarkEditorShortcutLabels.outdent',
-      'BusyMarkEditorShortcutLabels.blockquote',
-      'BusyMarkEditorShortcutLabels.codeBlock',
-      'BusyMarkEditorShortcutLabels.image',
-      'BusyMarkEditorShortcutLabels.thematicBreak',
-      'BusyMarkEditorShortcutLabels.hardLineBreak',
+    for (final id in [
+      'indent',
+      'outdent',
+      'blockquote',
+      'codeBlock',
+      'image',
+      'thematicBreak',
+      'hardLineBreak',
     ]) {
-      expect(toolbar, contains(shortcut));
+      expect(toolbar, contains("['editor.$id']"));
     }
-    for (final shortcut in [
-      'BusyMarkEditorShortcutLabels.toggleTask',
-      'BusyMarkEditorShortcutLabels.codeBlockLanguage',
-      'BusyMarkEditorShortcutLabels.inlineImage',
-      'BusyMarkEditorShortcutLabels.table',
-      'BusyMarkEditorShortcutLabels.htmlBlock',
-    ]) {
-      expect(toolbar, isNot(contains(shortcut)));
-    }
+    expect(toolbar, isNot(contains('BusyMarkEditorShortcuts.')));
     expect(toolbar, isNot(contains('context.l10n.codeBlockLanguage')));
     expect(editor, contains('BusyMarkEditorShortcutAction.codeBlockLanguage'));
     expect(editor, contains('_applyCodeLanguageCommand()'));

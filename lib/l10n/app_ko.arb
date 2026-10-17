@@ -702,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "이 키보드 단축키 참조 표시",
+  "shortcutKeyboardShortcutsDescription": "애플리케이션 키보드 단축키 사용자 지정",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -5146,5 +5146,32 @@
   "searchRecentHint": "최근 항목 검색…",
   "searchActionsHint": "작업 검색…",
   "searchRequiresNotesWorkspace": "노트 작업 공간 필요",
-  "searchRecentEmpty": "최근 리소스 없음"
+  "searchRecentEmpty": "최근 리소스 없음",
+  "searchSidebarLabel": "검색:",
+  "searchDocumentTextCategory": "문서 텍스트",
+  "searchWorkspaceTextCategory": "작업 공간 텍스트",
+  "searchHeadingsCategory": "제목",
+  "shortcutUnassigned": "할당되지 않음",
+  "shortcutSearchHint": "동작 또는 단축키 검색…",
+  "shortcutFindBy": "단축키로 찾기",
+  "shortcutPressKeys": "키 조합을 누르세요…",
+  "shortcutRecord": "단축키 기록",
+  "shortcutRestoreAll": "모든 기본값 복원",
+  "shortcutRestoreAllQuestion": "모든 동작의 기본 단축키를 복원할까요? 사용자 지정 할당이 제거됩니다.",
+  "shortcutSaveFailed": "단축키가 활성화되었지만 저장하지 못했습니다. 다시 시작 후에도 유지하려면 저장을 다시 시도하세요.",
+  "shortcutRetry": "저장 다시 시도",
+  "shortcutChanged": "할당이 변경되었습니다. 현재 단축키를 확인하고 다시 시도하세요.",
+  "shortcutInvalid": "이 조합은 이 문맥에서 할당할 수 없습니다.",
+  "shortcutSystemWarning": "데스크톱에서 이 조합을 사용할 수 있습니다. BusyMark는 시스템 단축키를 재정의할 수 없습니다.",
+  "shortcutConflicts": "이 단축키는 다음 동작과 충돌합니다:",
+  "shortcutRemove": "할당 제거",
+  "shortcutRestoreDefault": "기본값 복원",
+  "shortcutAssign": "할당",
+  "shortcutReassign": "다시 할당",
+  "shortcutContextApplication": "애플리케이션",
+  "shortcutContextDocument": "문서 보기",
+  "shortcutContextEditor": "편집기 및 소스",
+  "shortcutContextWritersideSource": "Writerside 소스",
+  "shortcutContextWorkspace": "작업 공간 탐색",
+  "shortcutContextTree": "사이드바 트리"
 }

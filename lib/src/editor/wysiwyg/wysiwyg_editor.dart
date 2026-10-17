@@ -1,3 +1,4 @@
+import '../../app/command_shortcuts.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import '../../writerside/writerside_effective_properties.dart';
 import '../../writerside/writerside_model.dart';
@@ -830,31 +831,51 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
     }
     final selectedBlockIds = _fullySelectedBlockIds(blocks);
-    return Shortcuts(
+    return BusyMarkCommandShortcuts(
+      isComposing: () => _hasActiveClipboardComposition,
       shortcuts: {
+        ...commandRegistry.blockedDefaultIntents(const {
+          BusyMarkCommandScope.textEditing,
+          BusyMarkCommandScope.editor,
+          BusyMarkCommandScope.wysiwyg,
+        }),
         ...commandRegistry.shortcutIntents(
-          scopes: const {BusyMarkCommandScope.editor},
+          scopes: const {
+            BusyMarkCommandScope.editor,
+            BusyMarkCommandScope.wysiwyg,
+          },
           intentFor: BusyMarkContextCommandIntent.new,
         ),
-        commandRegistry[BusyMarkCommandIds.textPaste]!.shortcut!.activator:
-            const _PasteTextIntent(BusyMarkPasteMode.normal),
-        commandRegistry[BusyMarkCommandIds.textPastePlainText]!
-            .shortcut!
-            .activator: const _PasteTextIntent(
-          BusyMarkPasteMode.plainText,
+        ...commandRegistry.bindingIntents(
+          BusyMarkCommandIds.textPaste,
+          const _PasteTextIntent(BusyMarkPasteMode.normal),
         ),
-        commandRegistry[BusyMarkCommandIds.textSelectAll]!.shortcut!.activator:
-            const _SelectAllTextIntent(),
-        commandRegistry['text.undo']!.shortcut!.activator:
-            const _UndoEditorIntent(),
-        commandRegistry['text.redo']!.shortcut!.activator:
-            const _RedoEditorIntent(),
+        ...commandRegistry.bindingIntents(
+          BusyMarkCommandIds.textPastePlainText,
+          const _PasteTextIntent(BusyMarkPasteMode.plainText),
+        ),
+        ...commandRegistry.bindingIntents(
+          BusyMarkCommandIds.textSelectAll,
+          const _SelectAllTextIntent(),
+        ),
+        ...commandRegistry.bindingIntents(
+          'text.undo',
+          const _UndoEditorIntent(),
+        ),
+        ...commandRegistry.bindingIntents(
+          'text.redo',
+          const _RedoEditorIntent(),
+        ),
         if (blockSelectionActive)
-          commandRegistry[BusyMarkCommandIds.textCopy]!.shortcut!.activator:
-              const _CopyBlockSelectionIntent(),
+          ...commandRegistry.bindingIntents(
+            BusyMarkCommandIds.textCopy,
+            const _CopyBlockSelectionIntent(),
+          ),
         if (blockSelectionActive)
-          commandRegistry[BusyMarkCommandIds.textCut]!.shortcut!.activator:
-              const _CutBlockSelectionIntent(),
+          ...commandRegistry.bindingIntents(
+            BusyMarkCommandIds.textCut,
+            const _CutBlockSelectionIntent(),
+          ),
         if (blockSelectionActive)
           const SingleActivator(LogicalKeyboardKey.backspace):
               const _DeleteBlockSelectionIntent(),
@@ -862,8 +883,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           const SingleActivator(LogicalKeyboardKey.delete):
               const _DeleteBlockSelectionIntent(),
         if (blockSelectionActive)
-          commandRegistry['text.escape']!.shortcut!.activator:
-              const _ClearBlockSelectionIntent(),
+          ...commandRegistry.bindingIntents(
+            'text.escape',
+            const _ClearBlockSelectionIntent(),
+          ),
       },
       child: Actions(
         actions: {
@@ -4222,6 +4245,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         return KeyEventResult.ignored;
       }
       _applyEditorShortcutAction(shortcutAction);
+      return KeyEventResult.handled;
+    }
+    if (commands.blocksReplacedDefault(event, keyboard, const {
+      BusyMarkCommandScope.editor,
+      BusyMarkCommandScope.wysiwyg,
+      BusyMarkCommandScope.textEditing,
+    })) {
       return KeyEventResult.handled;
     }
     if (event is KeyDownEvent &&
@@ -8172,6 +8202,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         label: command.label(context),
         icon: icon,
         shortcut: command.shortcut?.label,
+        gtkAccelerator: command.shortcut?.gtkAccelerator,
       );
     }
 

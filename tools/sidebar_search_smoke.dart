@@ -1,3 +1,5 @@
+import 'package:busymark/src/platform/header_bar_configuration.dart';
+import 'package:busymark/src/workspace/presentation/keyboard_shortcuts_settings.dart';
 // Native Linux search workflows with disposable files and a cached offline
 // Notes account. All artifacts and navigation history stay in PRIVATE_OUTPUT.
 import 'dart:async';
@@ -265,13 +267,18 @@ class _DriverState extends ConsumerState<_Driver> {
     final end = DateTime.now().add(const Duration(seconds: 30));
     while (!test()) {
       if (DateTime.now().isAfter(end)) {
-        throw StateError('Timed out: $description; ${search.error}');
+        throw StateError(
+          'Timed out: $description; ${search.error}; '
+          'route=${ref.read(appRouterProvider).routeInformationProvider.value.uri}; '
+          'focus=${FocusManager.instance.primaryFocus}; '
+          'pressed=${HardwareKeyboard.instance.logicalKeysPressed}',
+        );
       }
       await Future<void>.delayed(const Duration(milliseconds: 30));
     }
   }
 
-  Future<void> key(String key) async {
+  Future<void> key(String key, {bool verifySearch = true}) async {
     final focusRequest = search.focusRequest;
     await windowManager.focus();
     final result = await Process.run(
@@ -281,14 +288,15 @@ class _DriverState extends ConsumerState<_Driver> {
     );
     check(result.exitCode == 0, 'native $key delivery');
     await Future<void>.delayed(const Duration(milliseconds: 100));
-    if (const {
-      'ctrl+f',
-      'ctrl+shift+f',
-      'ctrl+p',
-      'ctrl+shift+t',
-      'ctrl+alt+o',
-      'ctrl+shift+p',
-    }.contains(key)) {
+    if (verifySearch &&
+        const {
+          'ctrl+f',
+          'ctrl+shift+f',
+          'ctrl+p',
+          'ctrl+shift+t',
+          'ctrl+alt+o',
+          'ctrl+shift+p',
+        }.contains(key)) {
       check(
         search.focusRequest == focusRequest + 1,
         'native $key opens search exactly once '
@@ -375,7 +383,7 @@ class _DriverState extends ConsumerState<_Driver> {
         complete ??= watch.elapsedMicroseconds;
       }
     });
-    widgets<BusyMarkMenuButton<SearchCategory>>().single.onSelected(
+    widgets<BusyMarkPopupSelector<SearchCategory>>().single.onSelected(
       SearchCategory.actions,
     );
     try {
@@ -854,6 +862,7 @@ class _DriverState extends ConsumerState<_Driver> {
       await screenshot('missing-recent-resource');
     }
     controller.close();
+    await shortcutSettingsPresentation(appearance);
   }
 
   Future<void> literalMatcherJourney() async {
@@ -929,6 +938,506 @@ class _DriverState extends ConsumerState<_Driver> {
     await WidgetsBinding.instance.endOfFrame;
   }
 
+  Future<void> shortcutSettingsPresentation(String stage) async {
+    final before = ref.read(workspaceControllerProvider).activeText;
+    await key('ctrl+alt+k');
+    await wait(
+      () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
+      'shortcut Settings $stage',
+    );
+    await screenshot('shortcuts-settings-$stage');
+    check(
+      ref.read(workspaceControllerProvider).activeText == before,
+      'Settings $stage leaves source unchanged',
+    );
+    await key('alt+Left');
+    await wait(
+      () =>
+          ref.read(appRouterProvider).routeInformationProvider.value.uri.path ==
+          '/workspace',
+      'Settings return $stage',
+    );
+  }
+
+  Future<void> keymapJourney() async {
+    final router = ref.read(appRouterProvider);
+    await workspace.saveActive();
+    router.go('/');
+    await wait(
+      () => router.routeInformationProvider.value.uri.path == '/',
+      'Welcome before keymap',
+    );
+    await key('ctrl+alt+k');
+    await wait(
+      () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
+      'shortcut Settings from Welcome',
+    );
+    check(
+      router.routeInformationProvider.value.uri.queryParameters['returnTo'] ==
+          'welcome',
+      'Welcome Settings return target',
+    );
+    await key('ctrl+alt+k');
+    check(
+      router.routeInformationProvider.value.uri.queryParameters['returnTo'] ==
+          'welcome',
+      'Settings shortcut keeps original return target',
+    );
+    await key('alt+Left');
+    await wait(
+      () => router.routeInformationProvider.value.uri.path == '/',
+      'return to Welcome from shortcut Settings',
+    );
+
+    Future<void> edit(String id) async {
+      await key('ctrl+alt+k');
+      await wait(
+        () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
+        'shortcut editor',
+      );
+      final registry = ref.read(busyMarkCommandRegistryProvider);
+      final query = widgets<BusyMarkSearchField>().singleWhere(
+        (f) => f.key == const ValueKey('settings-shortcut-search'),
+      );
+      final name = registry[id]!.label(rootNavigatorKey.currentContext!);
+      // Setting the controller below simulates typing the action name. Keep
+      // its real editing focus, which a user has before opening an assignment.
+      widgets<TextField>()
+          .singleWhere((f) => identical(f.controller, query.controller))
+          .focusNode!
+          .requestFocus();
+      query.controller!.text = name;
+      query.onChanged?.call(name);
+      await wait(
+        () => widgets<BusyMarkActionRow>().any(
+          (r) => r.key == ValueKey('shortcut-edit-$id'),
+        ),
+        'shortcut action $id',
+      );
+      widgets<BusyMarkActionRow>()
+          .singleWhere((r) => r.key == ValueKey('shortcut-edit-$id'))
+          .onTap!();
+      await wait(
+        () => widgets<FilledButton>().any(
+          (b) => b.key == const ValueKey('record-shortcut'),
+        ),
+        'record button',
+      );
+    }
+
+    Future<void> assign(String id, String combination) async {
+      await edit(id);
+      widgets<FilledButton>()
+          .singleWhere((b) => b.key == const ValueKey('record-shortcut'))
+          .onPressed!();
+      final before = ref.read(workspaceControllerProvider).activeText;
+      await key(combination, verifySearch: false);
+      check(
+        ref.read(workspaceControllerProvider).activeText == before,
+        'capture $combination does not execute',
+      );
+      await wait(
+        () => widgets<ElevatedButton>().any(
+          (b) =>
+              b.key == const ValueKey('assign-shortcut') && b.onPressed != null,
+        ),
+        'candidate captured',
+      );
+      widgets<ElevatedButton>()
+          .singleWhere((b) => b.key == const ValueKey('assign-shortcut'))
+          .onPressed!();
+      await wait(() => widgets<Dialog>().isEmpty, 'assignment saved');
+      await key('alt+Left');
+      await wait(
+        () => router.routeInformationProvider.value.uri.path == '/workspace',
+        'return to keymap document',
+      );
+    }
+
+    // Qualify a previously unbound typed Writerside operation through real keys.
+    await workspace.openPath('${widget.output.path}/writerside');
+    await workspace.openActiveFile(
+      '${widget.output.path}/writerside/topics/outside-search.topic',
+    );
+    router.go('/workspace');
+    await key('ctrl+shift+1', verifySearch: false);
+    await assign('source.declaration', 'ctrl+alt+y');
+    await assign('writerside.uiControl', 'ctrl+alt+y');
+    check(
+      ref
+                  .read(busyMarkCommandRegistryProvider)['source.declaration']!
+                  .shortcut
+                  ?.label ==
+              'Ctrl+Alt+Y' &&
+          ref
+                  .read(
+                    busyMarkCommandRegistryProvider,
+                  )['writerside.uiControl']!
+                  .shortcut
+                  ?.label ==
+              'Ctrl+Alt+Y',
+      'separate Source and Editor receivers keep both assignments',
+    );
+    await wait(
+      () => widgets<TextField>().any(
+        (f) =>
+            f.controller is BusyMarkWysiwygTextController &&
+            f.controller!.text.contains('semantic selection'),
+      ),
+      'Writerside shortcut target',
+    );
+    final semantic = widgets<TextField>().firstWhere(
+      (f) =>
+          f.controller is BusyMarkWysiwygTextController &&
+          f.controller!.text.contains('semantic selection'),
+    );
+    semantic.focusNode!.requestFocus();
+    final offset = semantic.controller!.text.indexOf('selection');
+    semantic.controller!.selection = TextSelection(
+      baseOffset: offset,
+      extentOffset: offset + 'selection'.length,
+    );
+    await WidgetsBinding.instance.endOfFrame;
+    final beforeSemantic = ref.read(workspaceControllerProvider).activeText;
+    await key('ctrl+alt+y', verifySearch: false);
+    await wait(
+      () => ref
+          .read(workspaceControllerProvider)
+          .activeText
+          .contains('<control>selection</control>'),
+      'assigned Writerside Control',
+    );
+    await key('ctrl+z');
+    await wait(
+      () => ref.read(workspaceControllerProvider).activeText == beforeSemantic,
+      'assigned Writerside Undo',
+    );
+    await key('ctrl+shift+z');
+    await wait(
+      () => ref
+          .read(workspaceControllerProvider)
+          .activeText
+          .contains('<control>selection</control>'),
+      'assigned Writerside Redo',
+    );
+    await workspace.saveActive();
+    await screenshot('keymap-writerside-command');
+
+    final file = File('${widget.output.path}/keymap-document.md');
+    await file.writeAsString('Binding target\n');
+    await workspace.openPath(file.path);
+    router.go('/workspace');
+    await wait(
+      () =>
+          ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          file.path,
+      'keymap document',
+    );
+
+    await assign('editor.bold', 'ctrl+alt+b');
+    for (final mode in [
+      DocumentViewModePreference.editor,
+      DocumentViewModePreference.source,
+    ]) {
+      await key(
+        mode == DocumentViewModePreference.source
+            ? 'ctrl+shift+2'
+            : 'ctrl+shift+1',
+        verifySearch: false,
+      );
+      await wait(
+        () => widgets<TextField>().any(
+          (f) => mode == DocumentViewModePreference.source
+              ? f.controller is BusyMarkSourceEditingController
+              : f.controller is BusyMarkWysiwygTextController,
+        ),
+        '$mode keymap field',
+      );
+      final field = widgets<TextField>().firstWhere(
+        (f) => mode == DocumentViewModePreference.source
+            ? f.controller is BusyMarkSourceEditingController
+            : f.controller is BusyMarkWysiwygTextController,
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 7,
+      );
+      await WidgetsBinding.instance.endOfFrame;
+      if (mode == DocumentViewModePreference.editor) {
+        check(
+          widgets<Tooltip>().any((t) => t.message == 'Bold (Ctrl+Alt+B)'),
+          'toolbar displays the reassigned formatting shortcut',
+        );
+      }
+      await key('ctrl+b', verifySearch: false);
+      check(
+        !ref.read(workspaceControllerProvider).activeText.contains('**'),
+        '$mode old formatting binding removed',
+      );
+      await key('ctrl+alt+b', verifySearch: false);
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('**Binding**'),
+        '$mode reassigned formatting',
+      );
+      await key('ctrl+z');
+      await wait(
+        () => !ref.read(workspaceControllerProvider).activeText.contains('**'),
+        '$mode reassigned formatting Undo',
+      );
+      await key('ctrl+shift+z');
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('**Binding**'),
+        '$mode reassigned formatting Redo',
+      );
+      await workspace.saveActive();
+      check(
+        (await file.readAsString()).contains('**Binding**'),
+        '$mode saved formatting',
+      );
+      await key('ctrl+z');
+      await wait(
+        () => !ref.read(workspaceControllerProvider).activeText.contains('**'),
+        '$mode reset text',
+      );
+      await workspace.saveActive();
+    }
+    final savedField = widgets<TextField>().singleWhere(
+      (f) => f.controller is BusyMarkSourceEditingController,
+    );
+    savedField.focusNode!.requestFocus();
+    savedField.controller!.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 7,
+    );
+    await WidgetsBinding.instance.endOfFrame;
+    await key('ctrl+alt+b', verifySearch: false);
+    await wait(
+      () =>
+          ref.read(workspaceControllerProvider).activeText ==
+          '**Binding** target\n',
+      'formatted source before reopening',
+    );
+    check(
+      await workspace.saveActive(),
+      'save reassigned formatting for reopening',
+    );
+    check(
+      await workspace.closeDocumentBuffer(
+        ref.read(workspaceControllerProvider).activeBufferId!,
+      ),
+      'close saved formatting document',
+    );
+    await workspace.openPath(file.path);
+    check(
+      ref.read(workspaceControllerProvider).activeText ==
+          '**Binding** target\n',
+      'reopen retains the reassigned formatting source',
+    );
+    workspace.updateActiveText('Binding target\n');
+    await workspace.saveActive();
+    await key('ctrl+shift+2', verifySearch: false);
+    final layout = await Process.run('setxkbmap', [
+      '-display',
+      Platform.environment['DISPLAY']!,
+      '-layout',
+      'fr',
+    ]);
+    check(layout.exitCode == 0, 'isolated French keyboard layout');
+    try {
+      PhysicalKeyboardKey? capturedPhysical;
+      bool observeFrenchKey(KeyEvent event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.keyA) {
+          capturedPhysical = event.physicalKey;
+        }
+        return false;
+      }
+
+      HardwareKeyboard.instance.addHandler(observeFrenchKey);
+      try {
+        await assign('editor.bold', 'ctrl+shift+a');
+      } finally {
+        HardwareKeyboard.instance.removeHandler(observeFrenchKey);
+      }
+      final binding = ref
+          .read(appSettingsControllerProvider)
+          .shortcutOverrides['editor.bold']!;
+      check(
+        binding.key == LogicalKeyboardKey.keyA &&
+            binding.control &&
+            binding.shift &&
+            capturedPhysical == PhysicalKeyboardKey.keyQ,
+        'capture follows French logical A on physical Q '
+        '(${binding.label}, physical ${capturedPhysical?.usbHidUsage})',
+      );
+      final source = widgets<TextField>().singleWhere(
+        (f) => f.controller is BusyMarkSourceEditingController,
+      );
+      source.focusNode!.requestFocus();
+      source.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 7,
+      );
+      await WidgetsBinding.instance.endOfFrame;
+      await key('ctrl+shift+a', verifySearch: false);
+      await wait(
+        () => ref
+            .read(workspaceControllerProvider)
+            .activeText
+            .contains('**Binding**'),
+        'French logical-key formatting',
+      );
+      await key('ctrl+z');
+      await wait(
+        () => !ref.read(workspaceControllerProvider).activeText.contains('**'),
+        'French logical-key Undo',
+      );
+      await workspace.saveActive();
+      await key('ctrl+alt+k');
+      await wait(
+        () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
+        'French Settings input',
+      );
+      final input = widgets<BusyMarkSearchField>().singleWhere(
+        (f) => f.key == const ValueKey('settings-shortcut-search'),
+      );
+      input.controller!.clear();
+      input.onChanged?.call('');
+      // The field owns its focus node; focus its actual TextField when it is internal.
+      for (final f in widgets<TextField>()) {
+        if (identical(f.controller, input.controller)) {
+          f.focusNode!.requestFocus();
+        }
+      }
+      await WidgetsBinding.instance.endOfFrame;
+      final sourceBeforeAltGr = ref
+          .read(workspaceControllerProvider)
+          .activeText;
+      await key('altgr+e', verifySearch: false);
+      await wait(
+        () => input.controller!.text == '€',
+        'AltGr input stays in Settings query',
+      );
+      check(
+        ref.read(workspaceControllerProvider).activeText == sourceBeforeAltGr,
+        'AltGr does not execute a document action',
+      );
+      await screenshot('keymap-french-input');
+      await key('alt+Left');
+      measurements['nonUsKeymap'] =
+          'French layout: logical Ctrl+Shift+A captured and executed on physical Q';
+    } finally {
+      final restored = await Process.run('setxkbmap', [
+        '-display',
+        Platform.environment['DISPLAY']!,
+        '-layout',
+        'us',
+      ]);
+      check(restored.exitCode == 0, 'restore isolated keyboard layout');
+    }
+    await edit('view.source');
+    widgets<FilledButton>()
+        .singleWhere((b) => b.key == const ValueKey('remove-shortcut'))
+        .onPressed!();
+    await wait(() => widgets<Dialog>().isEmpty, 'view unassignment saved');
+    await key('alt+Left');
+    await wait(
+      () => router.routeInformationProvider.value.uri.path == '/workspace',
+      'return after view unassignment',
+    );
+    await key('ctrl+shift+1', verifySearch: false);
+    await wait(
+      () =>
+          widgets<TextField>().any(
+            (f) => f.controller is BusyMarkWysiwygTextController,
+          ) &&
+          widgets<BusyMarkSourceEditor>().isEmpty,
+      'Editor after view unassignment',
+    );
+    final beforeUnassignedView = ref
+        .read(workspaceControllerProvider)
+        .activeText;
+    await key('ctrl+shift+2', verifySearch: false);
+    check(
+      widgets<BusyMarkSourceEditor>().isEmpty &&
+          ref.read(workspaceControllerProvider).activeText ==
+              beforeUnassignedView,
+      'old unassigned view key cannot switch modes',
+    );
+    // The shared Flutter page frame publishes this configuration even when
+    // the legacy native header service is unavailable on the current runner.
+    final labels =
+        widgets<HeaderBarConfigurationPublisher>().single.configuration.labels;
+    check(
+      labels.sourceShortcut.isEmpty && labels.sourceGtkAccelerator.isEmpty,
+      'mounted header removes unassigned view metadata',
+    );
+    await assign('search.find', 'F12');
+    await key('ctrl+f', verifySearch: false);
+    check(!search.active, 'old search shortcut removed');
+    final request = search.focusRequest;
+    await key('F12', verifySearch: false);
+    check(
+      search.active &&
+          search.category == SearchCategory.file &&
+          search.focusRequest == request + 1,
+      'custom document search executes once',
+    );
+    await query('Binding');
+    check(
+      search.documentMatchCount == 1,
+      'custom search retains document scope',
+    );
+    await key('ctrl+shift+f');
+    check(
+      search.category == SearchCategory.workspace,
+      'workspace search remains separate',
+    );
+    await key('ctrl+shift+p');
+    await query('Keyboard Shortcuts');
+    await key('enter');
+    await wait(
+      () => widgets<KeyboardShortcutsSettings>().isNotEmpty,
+      'shortcut Settings from Actions',
+    );
+    await screenshot('keymap-custom-settings');
+    await key('alt+Left');
+    await key('ctrl+alt+k');
+    await wait(
+      () => widgets<FilledButton>().any(
+        (b) => b.key == const ValueKey('reset-all-shortcuts'),
+      ),
+      'Reset All button',
+    );
+    widgets<FilledButton>()
+        .singleWhere((b) => b.key == const ValueKey('reset-all-shortcuts'))
+        .onPressed!();
+    await wait(() => widgets<Dialog>().isNotEmpty, 'Reset All confirmation');
+    widgets<ElevatedButton>()
+        .singleWhere((b) => b.onPressed != null)
+        .onPressed!();
+    await wait(
+      () => ref.read(appSettingsControllerProvider).shortcutOverrides.isEmpty,
+      'Reset All saved',
+    );
+    await key('alt+Left');
+    await key('ctrl+f');
+    check(
+      search.category == SearchCategory.file,
+      'Reset All restores default document binding',
+    );
+    await key('escape');
+    measurements['configurableKeymapNativeWorkflows'] =
+        'Welcome, Settings, Actions, Editor, Source, Undo/Redo, save, custom search, reset defaults';
+  }
+
   Future<void> run() async {
     try {
       await Future<void>.delayed(const Duration(seconds: 2));
@@ -960,11 +1469,11 @@ class _DriverState extends ConsumerState<_Driver> {
       check(categoryHasFocus(), 'keyboard traversal reaches category selector');
       await key('enter');
       await wait(
-        () => widgets<Semantics>().any(
-          (s) =>
-              s.properties.label == 'Search category' &&
-              s.properties.expanded == true,
-        ),
+        () =>
+            widgets<Semantics>().any(
+              (s) => s.properties.label == 'Search category',
+            ) &&
+            widgets<Semantics>().any((s) => s.properties.expanded == true),
         'native category popup opened by keyboard',
       );
       await key('escape');
@@ -1043,6 +1552,13 @@ class _DriverState extends ConsumerState<_Driver> {
         (await file.readAsString()).contains('**Formatting**'),
         'formatting persisted',
       );
+      // Settle the preceding save's inventory metadata before measuring clean
+      // tab navigation. A later genuine metadata refresh is a valid reason to
+      // invalidate workspace results, independently of a tab being closed.
+      check(
+        await workspace.refreshWorkspaceFromDiskPreservingOpenTabs(),
+        'refresh saved file metadata before workspace navigation',
+      );
       await key('ctrl+f');
       await query('scope needle');
       check(
@@ -1101,7 +1617,10 @@ class _DriverState extends ConsumerState<_Driver> {
       check(
         search.generation == searchGeneration &&
             identical(search.results[search.selected], retainedResult),
-        'closing clean tab retains workspace result without rescanning',
+        'closing clean tab retains workspace result without rescanning '
+        '(generation $searchGeneration → ${search.generation}, '
+        'selected ${search.selected}, retained '
+        '${identical(search.results.elementAtOrNull(search.selected), retainedResult)})',
       );
       widgets<TextField>()
           .singleWhere(
@@ -1216,7 +1735,7 @@ class _DriverState extends ConsumerState<_Driver> {
         'Ctrl+3 opens ordinary Outline without a query',
       );
       await key('ctrl+f');
-      widgets<BusyMarkMenuButton<SearchCategory>>().single.onSelected(
+      widgets<BusyMarkPopupSelector<SearchCategory>>().single.onSelected(
         SearchCategory.outline,
       );
       await query('Unsaved target');
@@ -1530,10 +2049,21 @@ class _DriverState extends ConsumerState<_Driver> {
       await key('ctrl+alt+k');
       await wait(
         () => widgets<Text>().any((t) => t.data == 'Keyboard Shortcuts'),
-        'unchanged Keyboard Shortcuts modal',
+        'Keyboard Shortcuts Settings page',
       );
       await screenshot('keyboard-shortcuts');
-      await key('escape');
+      ref.read(appRouterProvider).go('/workspace');
+      await wait(
+        () =>
+            ref
+                .read(appRouterProvider)
+                .routeInformationProvider
+                .value
+                .uri
+                .path ==
+            '/workspace',
+        'return from Keyboard Shortcuts Settings',
+      );
       await ref
           .read(appSettingsControllerProvider.notifier)
           .setThemeModePreference(BusyMarkThemeModePreference.dark);
@@ -1571,6 +2101,7 @@ class _DriverState extends ConsumerState<_Driver> {
       setState(() => _textScale = 1);
       await WidgetsBinding.instance.endOfFrame;
       await key('escape');
+      await keymapJourney();
       measurements['rssBeforeThirtyOpenCloseCycles'] = ProcessInfo.currentRss;
       measurements['fileDescriptorsBeforeCycles'] = await Directory(
         '/proc/self/fd',

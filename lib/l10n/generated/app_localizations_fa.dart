@@ -799,7 +799,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'نمایش مرجع میانبرهای صفحه‌کلید';
+      'سفارشی‌سازی میان‌برهای صفحه‌کلید برنامه';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'باز کردن راهنمای نحو';
@@ -5488,4 +5488,89 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get searchRecentEmpty => 'منبع اخیراً بازشده‌ای وجود ندارد';
+
+  @override
+  String get searchSidebarLabel => 'جستجو:';
+
+  @override
+  String get searchDocumentTextCategory => 'متن سند';
+
+  @override
+  String get searchWorkspaceTextCategory => 'متن فضای کاری';
+
+  @override
+  String get searchHeadingsCategory => 'عنوان‌ها';
+
+  @override
+  String get shortcutUnassigned => 'تخصیص داده نشده';
+
+  @override
+  String get shortcutSearchHint => 'جستجوی کنش‌ها یا میان‌برها…';
+
+  @override
+  String get shortcutFindBy => 'یافتن با میان‌بر';
+
+  @override
+  String get shortcutPressKeys => 'یک ترکیب کلید را فشار دهید…';
+
+  @override
+  String get shortcutRecord => 'ثبت میان‌بر';
+
+  @override
+  String get shortcutRestoreAll => 'بازیابی همهٔ پیش‌فرض‌ها';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'میان‌برهای پیش‌فرض همهٔ کنش‌ها بازیابی شوند؟ تخصیص‌های سفارشی حذف می‌شوند.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'میان‌برها فعال‌اند اما ذخیره نشدند. برای حفظ آن‌ها پس از راه‌اندازی مجدد، دوباره ذخیره کنید.';
+
+  @override
+  String get shortcutRetry => 'تلاش دوباره برای ذخیره';
+
+  @override
+  String get shortcutChanged =>
+      'تخصیص‌ها تغییر کرده‌اند. میان‌برهای فعلی را بررسی و دوباره تلاش کنید.';
+
+  @override
+  String get shortcutInvalid => 'این ترکیب را نمی‌توان در این زمینه تخصیص داد.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'ممکن است میزکار از این ترکیب استفاده کند. BusyMark نمی‌تواند میان‌برهای سیستم را بازنویسی کند.';
+
+  @override
+  String get shortcutConflicts => 'این میان‌بر با کنش‌های زیر تداخل دارد:';
+
+  @override
+  String get shortcutRemove => 'حذف تخصیص';
+
+  @override
+  String get shortcutRestoreDefault => 'بازیابی پیش‌فرض';
+
+  @override
+  String get shortcutAssign => 'تخصیص';
+
+  @override
+  String get shortcutReassign => 'تخصیص مجدد';
+
+  @override
+  String get shortcutContextApplication => 'برنامه';
+
+  @override
+  String get shortcutContextDocument => 'نماهای سند';
+
+  @override
+  String get shortcutContextEditor => 'ویرایشگر و منبع';
+
+  @override
+  String get shortcutContextWritersideSource => 'منبع Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'پیمایش فضای کاری';
+
+  @override
+  String get shortcutContextTree => 'درخت‌های نوار کناری';
 }
