@@ -2929,73 +2929,81 @@ class _BusyMarkSidebarRecordRowState<T>
               ),
             ),
           );
-    final content = ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: widget.compact
-            ? BusyMarkSizes.sidebarTreeRowHeight
-            : BusyMarkSizes.sidebarTreeRowHeight * 2,
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Icon(
-            widget.icon,
-            size: BusyMarkSizes.iconSm,
-            color: colors.mutedForeground,
-          ),
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Expanded(
-            child: Padding(
-              padding: customContent == null
-                  ? EdgeInsets.zero
-                  : EdgeInsets.symmetric(
+    final customRow = customContent == null
+        ? null
+        : ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: widget.compact
+                  ? BusyMarkSizes.sidebarTreeRowHeight
+                  : BusyMarkSizes.sidebarTreeRowHeight * 2,
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Icon(
+                  widget.icon,
+                  size: BusyMarkSizes.iconSm,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
                       vertical: widget.compact
                           ? BusyMarkSpacing.xs
                           : BusyMarkSpacing.sm,
                     ),
-              child:
-                  customContent ??
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.title!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.foreground,
-                        ),
-                      ),
-                      if (subtitle != null && subtitle.isNotEmpty) ...[
-                        const SizedBox(height: BusyMarkSpacing.xxs),
-                        if (widget.pathSubtitle)
-                          BusyMarkPathLabel(
-                            path: subtitle,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: colors.mutedForeground),
-                          )
-                        else
-                          Text(
+                    child: customContent,
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: BusyMarkSpacing.xs),
+                  trailing,
+                ],
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
+            ),
+          );
+    // Standard identities use the same native row layout as other BusyMark
+    // lists. Yaru owns their typography, content spacing and minimum extent.
+    final tile = customRow == null
+        ? YaruListTile.square(
+            leading: Icon(
+              widget.icon,
+              size: BusyMarkSizes.iconSm,
+              color: colors.mutedForeground,
+            ),
+            title: Text(
+              widget.title!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: subtitle == null || subtitle.isEmpty
+                ? null
+                : _busyMarkGroupedRowSubtitle(
+                    context,
+                    widget.pathSubtitle
+                        ? BusyMarkPathLabel(path: subtitle)
+                        : Text(
                             subtitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: colors.mutedForeground),
                           ),
-                      ],
-                    ],
                   ),
-            ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: BusyMarkSpacing.xs),
-            trailing,
-          ],
-          const SizedBox(width: BusyMarkSpacing.sm),
-        ],
-      ),
-    );
+            trailing: trailing,
+            focusNode: widget.focusNode ?? _rowFocusNode,
+            onFocusChange: widget.onFocusChange,
+            hoverColor: busyMarkRowHoverColor(context),
+            onTap: widget.onTap == null ? null : _handleTap,
+          )
+        : InkWell(
+            hoverColor: busyMarkRowHoverColor(context),
+            focusNode: widget.focusNode ?? _rowFocusNode,
+            onFocusChange: widget.onFocusChange,
+            canRequestFocus: true,
+            onTap: widget.onTap == null ? null : _handleTap,
+            child: customRow,
+          );
     final row = KeyedSubtree(
       key: _rowKey,
       child: Focus(
@@ -3010,19 +3018,14 @@ class _BusyMarkSidebarRecordRowState<T>
                 : BusyMarkLinuxPalette.transparent,
             borderRadius: BorderRadius.circular(BusyMarkRadius.md),
             clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              hoverColor: busyMarkRowHoverColor(context),
-              focusNode: widget.focusNode ?? _rowFocusNode,
-              onFocusChange: widget.onFocusChange,
-              canRequestFocus: true,
-              onTap: widget.onTap == null ? null : _handleTap,
+            child: GestureDetector(
               onSecondaryTapUp: !_hasMenu
                   ? null
                   : (details) {
                       (widget.focusNode ?? _rowFocusNode).requestFocus();
                       unawaited(_showContextMenu(details.globalPosition));
                     },
-              child: content,
+              child: tile,
             ),
           ),
         ),

@@ -25,6 +25,7 @@ import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yaru/yaru.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -865,6 +866,25 @@ void main() {
         final measured = tester.getSize(finder).height;
         height ??= measured;
         expect(measured, moreOrLessEquals(height));
+        final nativeTile = tester.widget<YaruListTile>(
+          find.descendant(of: finder, matching: find.byType(YaruListTile)),
+        );
+        expect(nativeTile.contentPadding, isNull);
+        final nativeSpacing = const YaruListTile(
+          titleText: 'Native reference',
+        ).verticalGap;
+        final rowRect = tester.getRect(finder);
+        final labels = find.descendant(of: finder, matching: find.byType(Text));
+        final firstLabel = tester.getRect(labels.first);
+        final lastLabel = tester.getRect(labels.last);
+        expect(
+          firstLabel.top - rowRect.top,
+          greaterThanOrEqualTo(nativeSpacing),
+        );
+        expect(
+          rowRect.bottom - lastLabel.bottom,
+          greaterThanOrEqualTo(nativeSpacing),
+        );
         final full = resources[i].accountId == null
             ? resources[i].path
             : resources[i].accountLabel!;
