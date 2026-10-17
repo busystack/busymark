@@ -2054,18 +2054,19 @@ void main() {
     final selector = tester.widget<BusyMarkMenuButton<String>>(menuFinder);
     final selectorFinder = find.descendant(
       of: find.byType(BusyMarkPopupSelector<String>),
-      matching: find.byType(OutlinedButton),
+      matching: find.byType(TextButton),
     );
-    final selectorButton = tester.widget<OutlinedButton>(selectorFinder);
+    final selectorButton = tester.widget<TextButton>(selectorFinder);
     expect(
-      selectorButton.style,
-      isNull,
-      reason: 'The shared selector uses the neutral outlined selector theme',
+      selectorButton.style?.foregroundColor,
+      same(theme.outlinedButtonTheme.style?.foregroundColor),
+      reason: 'The borderless selector retains the neutral themed foreground',
     );
     expect(
-      theme.outlinedButtonTheme.style?.backgroundColor?.resolve({}),
-      BusyMarkLinuxPalette.transparent,
+      selectorButton.style?.iconColor,
+      same(theme.outlinedButtonTheme.style?.iconColor),
     );
+    expect(selectorButton.style?.side, isNull);
     expect(selector.enabled, isTrue);
     expect(selector.items, hasLength(2));
 
@@ -2076,6 +2077,110 @@ void main() {
     await tester.pumpAndSettle();
     expect(selectedTheme, 'light');
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('sidebar and Settings selectors share borderless theme states '
+        'in ${brightness.name}', (tester) async {
+      final theme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: const Color(0xFF3584E4),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Directionality(
+              textDirection: TextDirection.rtl,
+              child: MediaQuery(
+                data: const MediaQueryData(textScaler: TextScaler.linear(1.6)),
+                child: SizedBox(
+                  width: 300,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Text('Search:'),
+                          Expanded(
+                            child: BusyMarkPopupSelector<String>(
+                              key: const ValueKey('sidebar-selector'),
+                              value: 'document',
+                              label: 'Document Text',
+                              tooltip: 'Search category',
+                              fullWidth: true,
+                              maxLabelLines: 2,
+                              options: const [
+                                BusyMarkPopupSelectorOption(
+                                  value: 'document',
+                                  label: 'Document Text',
+                                ),
+                              ],
+                              onSelected: (_) {},
+                            ),
+                          ),
+                        ],
+                      ),
+                      BusyMarkGroupedList(
+                        filled: true,
+                        children: [
+                          BusyMarkActionRow(
+                            title: 'Theme',
+                            trailing: BusyMarkPopupSelector<String>(
+                              key: const ValueKey('settings-selector'),
+                              value: 'system',
+                              label: 'System',
+                              tooltip: 'Theme',
+                              options: const [
+                                BusyMarkPopupSelectorOption(
+                                  value: 'system',
+                                  label: 'System',
+                                ),
+                              ],
+                              onSelected: (_) {},
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      for (final key in ['sidebar-selector', 'settings-selector']) {
+        final button = find.descendant(
+          of: find.byKey(ValueKey(key)),
+          matching: find.byType(TextButton),
+        );
+        final control = tester.widget<TextButton>(button);
+        final materialFinder = find.descendant(
+          of: button,
+          matching: find.byType(Material),
+        );
+        void expectBorderless() {
+          final material = tester.widget<Material>(materialFinder);
+          expect((material.shape! as OutlinedBorder).side, BorderSide.none);
+          expect(material.color, BusyMarkLinuxPalette.transparent);
+          expect(tester.takeException(), isNull);
+        }
+
+        expectBorderless();
+        control.focusNode!.requestFocus();
+        await tester.pumpAndSettle();
+        expect(control.focusNode!.hasFocus, isTrue);
+        expectBorderless();
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(button));
+        await tester.pumpAndSettle();
+        expectBorderless();
+        await mouse.removePointer();
+        await tester.pumpAndSettle();
+      }
+    });
+  }
 
   for (final brightness in Brightness.values) {
     testWidgets('WYSIWYG toolbar uses accent controls in ${brightness.name}', (

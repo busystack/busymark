@@ -2180,6 +2180,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final int maxLabelLines;
   @override
   Widget build(BuildContext context) {
+    // Inherit borderless button geometry and interaction states while keeping
+    // the neutral control foreground rather than an action-link accent.
+    final neutralButtonStyle = Theme.of(context).outlinedButtonTheme.style;
     final selectorEnabled = enabled && options.isNotEmpty;
     final fallbackMenuWidth = (fullWidth ? popupMaxWidth : buttonMaxWidth)
         .clamp(popupMinWidth, popupMaxWidth);
@@ -2213,7 +2216,11 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 message: tooltip,
                 child: Semantics(
                   expanded: trigger.isOpen,
-                  child: OutlinedButton(
+                  child: TextButton(
+                    style: ButtonStyle(
+                      foregroundColor: neutralButtonStyle?.foregroundColor,
+                      iconColor: neutralButtonStyle?.iconColor,
+                    ),
                     onPressed: trigger.onPressed,
                     focusNode: trigger.focusNode,
                     child: Row(

@@ -15109,10 +15109,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await tester.pumpAndSettle();
       expect(container.read(searchSessionProvider).active, isTrue);
       tester
-          .widget<OutlinedButton>(
+          .widget<TextButton>(
             find.descendant(
               of: find.byKey(const ValueKey('search-category')),
-              matching: find.byType(OutlinedButton),
+              matching: find.byType(TextButton),
             ),
           )
           .focusNode!

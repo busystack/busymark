@@ -1250,7 +1250,8 @@ void main() {
       r'InputDecorationThemeData busyMarkGroupedInputDecorationTheme',
     ).firstMatch(design)!.group(0)!;
     expect(selector, contains('BusyMarkMenuButton<T>('));
-    expect(selector, contains('child: OutlinedButton('));
+    expect(selector, contains('child: TextButton('));
+    expect(selector, isNot(contains('OutlinedButton(')));
     expect(selector, isNot(contains('BusyMarkPushButton.standard(')));
     expect(selector, isNot(contains('contentPadding')));
     expect(selector, contains('shortcut: option.shortcut'));
