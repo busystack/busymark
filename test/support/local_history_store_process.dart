@@ -1,22 +1,36 @@
-// Runs under Flutter's test runtime because the production store's dependency
-// graph includes dart:ui. Each invocation is an independent OS process.
+// Compiled once and run by the selected official flutter_tester because the
+// production store's dependency graph includes dart:ui. Each invocation is an
+// independent OS process; no nested flutter test/tool startup is involved.
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-void main() {
+Future<void> main() async {
   final rootPath = Platform.environment['BUSYMARK_HISTORY_PROCESS_ROOT'];
   if (rootPath == null) return;
-  test('independent history process', () async {
+  try {
     final root = Directory(rootPath);
     final signal = Platform.environment['BUSYMARK_HISTORY_PROCESS_SIGNAL']!;
     final mode = Platform.environment['BUSYMARK_HISTORY_PROCESS_MODE']!;
-    await File('$signal.pid').writeAsString('$pid');
+    final clock = Stopwatch()..start();
+    Future<T> phase<T>(String name, Future<T> Function() operation) async {
+      void trace(String status) => stderr.writeln(
+        'HISTORY_FIXTURE ${jsonEncode({'pid': pid, 'phase': name, 'status': status, 'elapsedUs': clock.elapsedMicroseconds, 'wallUs': DateTime.now().microsecondsSinceEpoch})}',
+      );
+      trace('begin');
+      try {
+        return await operation();
+      } finally {
+        trace('end');
+      }
+    }
+
+    stderr.writeln('HISTORY_FIXTURE runtime-entered pid=$pid');
     if (mode == 'fail-before-ready') {
       throw StateError('Controlled history process failure before readiness');
     }
@@ -35,41 +49,44 @@ void main() {
         p.join(root.path, '.store.lock'),
       ).open(mode: FileMode.append);
       try {
-        await handle.lock(FileLock.exclusive);
+        await phase('hold-lock', () => handle.lock(FileLock.exclusive));
         await File('$signal.ready').writeAsString('locked');
         await waitForRelease();
         await handle.unlock();
       } finally {
         await handle.close();
       }
-      return;
+      exit(0);
     }
     if (mode == 'replace-paths') {
       final store = FileLocalHistoryStore(rootDirectory: () async => root);
-      final snapshot = await store.load();
+      final snapshot = await phase('replacement-load', store.load);
       final oldDelete = snapshot.documents.singleWhere(
         (document) =>
             document.currentPath == '/workspace/reconcile-d.md' &&
             !document.deleted,
       );
-      await store.clearDocument(oldDelete.id);
+      await phase('replacement-clear', () => store.clearDocument(oldDelete.id));
       for (final path in [
         '/workspace/reconcile-b.md',
         '/workspace/reconcile-d.md',
       ]) {
-        await store.capture(
-          LocalHistoryCaptureRequest(
-            path: path,
-            displayName: p.basename(path),
-            source: 'replacement $path',
-            format: TextFormatMetadata.utf8Lf,
-            capturedAt: DateTime.utc(2026, 1, 2),
-            reason: LocalHistoryCaptureReason.saved,
+        await phase(
+          'replacement-capture-$path',
+          () => store.capture(
+            LocalHistoryCaptureRequest(
+              path: path,
+              displayName: p.basename(path),
+              source: 'replacement $path',
+              format: TextFormatMetadata.utf8Lf,
+              capturedAt: DateTime.utc(2026, 1, 2),
+              reason: LocalHistoryCaptureReason.saved,
+            ),
+            const LocalHistoryPolicy(),
           ),
-          const LocalHistoryPolicy(),
         );
       }
-      final replaced = await store.load();
+      final replaced = await phase('replacement-reload', store.load);
       await File('$signal.result').writeAsString(
         replaced.documents
             .where(
@@ -82,46 +99,59 @@ void main() {
       );
       await File('$signal.ready').writeAsString('replaced');
       await waitForRelease();
-      return;
+      exit(0);
     }
     final owner = Platform.environment['BUSYMARK_HISTORY_PROCESS_OWNER']!;
     final store = FileLocalHistoryStore(rootDirectory: () async => root);
     if (mode == 'recapture-id') {
-      await store.capture(
-        LocalHistoryCaptureRequest(
-          documentId: owner,
-          path: '/workspace/reconcile-same-id.md',
-          displayName: 'reconcile-same-id.md',
-          source: 'replacement under reused identity',
-          format: TextFormatMetadata.utf8Lf,
-          capturedAt: DateTime.utc(2026, 1, 3),
-          reason: LocalHistoryCaptureReason.saved,
+      await phase(
+        'identity-recapture',
+        () => store.capture(
+          LocalHistoryCaptureRequest(
+            documentId: owner,
+            path: '/workspace/reconcile-same-id.md',
+            displayName: 'reconcile-same-id.md',
+            source: 'replacement under reused identity',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: DateTime.utc(2026, 1, 3),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
         ),
-        const LocalHistoryPolicy(),
       );
       await File('$signal.ready').writeAsString('recaptured');
       await waitForRelease();
-      return;
+      exit(0);
     }
     await File('$signal.ready').writeAsString('ready');
     await waitForRelease();
     String? documentId;
     for (var index = 0; index < 8; index++) {
-      final result = await store.capture(
-        LocalHistoryCaptureRequest(
-          documentId: documentId,
-          path: '/workspace/$owner.md',
-          displayName: '$owner.md',
-          source: '$owner revision $index',
-          format: TextFormatMetadata.utf8Lf,
-          capturedAt: DateTime.utc(2026, 1, 1, 0, index),
-          reason: LocalHistoryCaptureReason.saved,
+      final result = await phase(
+        'writer-capture-$index',
+        () => store.capture(
+          LocalHistoryCaptureRequest(
+            documentId: documentId,
+            path: '/workspace/$owner.md',
+            displayName: '$owner.md',
+            source: '$owner revision $index',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: DateTime.utc(2026, 1, 1, 0, index),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
         ),
-        const LocalHistoryPolicy(),
       );
       documentId = result.document.id;
       await File('$signal.progress').writeAsString('${index + 1}');
     }
-    expect((await store.load()).revisionsFor(documentId!), hasLength(8));
-  }, timeout: const Timeout(Duration(seconds: 60)));
+    final snapshot = await phase('writer-reload', store.load);
+    if (snapshot.revisionsFor(documentId!).length != 8) {
+      throw StateError('Expected eight production revisions for $documentId');
+    }
+    exit(0);
+  } on Object catch (error, stack) {
+    stderr.writeln('$error\n$stack');
+    exit(1);
+  }
 }

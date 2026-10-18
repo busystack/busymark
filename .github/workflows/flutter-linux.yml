@@ -54,6 +54,8 @@ jobs:
             poppler-utils \
             python3-gi \
             python3-gi-cairo \
+            python3-pil \
+            python3-yaml \
             rsync \
             xvfb \
             weston \
@@ -141,6 +143,7 @@ jobs:
         run: |
           /usr/bin/python3 -m unittest tools/test_owned_processes.py \
             tools/test_application_content_observer.py tools/test_application_close_smoke.py \
+            tools/test_run_owned_fixture.py \
             tools/test_yaru_patch.py tools/test_capture_native_slow_operation.py \
             tools/test_official_flutter_workflow.py
 

@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -53,6 +54,14 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             library.write_bytes(b'\x7fELFowned official-payload control')
             subprocess.run(['bash', '-euc', script], check=True, env={**os.environ, 'CRAFT_STAGE': str(stage), 'CRAFT_PART_INSTALL': str(output)})
             self.assertEqual((output / 'lib/libflutter_linux_gtk.so').read_bytes(), library.read_bytes())
+
+    def test_tooling_job_installs_its_python_test_dependencies(self):
+        script = self.step('verify', 'Install Linux build dependencies')['run']
+        # Parse executed command tokens, not a comment mentioning the packages.
+        commands = [shlex.split(line, comments=True) for line in script.replace('\\\n', '').splitlines()]
+        packages = {arg for command in commands if command[:3] == ['sudo', 'apt-get', 'install']
+                    for arg in command[3:]}
+        self.assertTrue({'python3-pil', 'python3-yaml'}.issubset(packages))
 
     def test_snap_build_invokes_selected_sdk_with_locked_inputs(self):
         # Execute the real build preamble in a disposable tree. The SDK spy

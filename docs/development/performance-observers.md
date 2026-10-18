@@ -51,7 +51,7 @@ permission to trace their own synthetic children:
 /usr/bin/python3 -m unittest tools/test_owned_processes.py \
   tools/test_application_close_smoke.py tools/test_capture_native_slow_operation.py \
   tools/test_application_content_observer.py tools/test_yaru_patch.py \
-  tools/test_official_flutter_workflow.py
+  tools/test_official_flutter_workflow.py tools/test_run_owned_fixture.py
 ```
 
 CI checks remain required. Explicit prerequisite/status conditions let independent
@@ -60,3 +60,22 @@ that failure still fails its job. A fixture-target build and restoration of the
 main target each have their own outcome, so later checks cannot silently use a
 stale target. These topology/unit checks are not hosted-CI, GTK-engine or strict
 confinement acceptance.
+
+The Linux History interprocess tests compile their fixture once per test file,
+using the official SDK selected by `.dart_tool/package_config.json`. They launch
+that kernel directly with the same SDK's `flutter_tester`; operation readiness
+does not include repeated Flutter-tool startup, SDK locking, assets or build
+hooks. This is test execution, not a new application build/engine workflow.
+Fixture diagnostics separate runtime entry and individual production store/lock
+operations. The existing 60-second operation-readiness and 30-second writer
+completion bounds remain unchanged; compiler preparation has its own bound.
+
+`tools/run_owned_fixture.py` gives each compiler/runtime a dedicated supervisor
+using the same `owned_processes.py` contract. It accepts a command, never a
+fixture-provided PID. Parent EOF/cancellation requests verified retirement.
+Surviving children are waited for independently of root exit and escalated only
+through matching identities. Failed runs remain failures after cleanup; missing
+observation or unresolved retirement prevents the Dart fixture from starting
+another case. Reports include the actual command and monotonic spawn/exit
+boundaries. The fixtures are headless widget-runtime checks, not GTK compositor,
+strict-Snap or application performance acceptance.

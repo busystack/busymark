@@ -371,5 +371,3 @@ def cleanup_owned(tracker, term_grace, kill_grace):
         item['final'] = process_state(pid, tracker.seen.get(pid))
         item['terminationVerified'] = item['final']['status'] in ('gone', 'zombie', 'reused')
     return list(outcomes.values()), unresolved
-
-
