@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' show FrameTiming;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,15 +65,21 @@ Future<void> main(List<String> args) async {
   );
   if (PerformanceTrace.enabled) {
     var remaining = 120;
-    WidgetsBinding.instance.addTimingsCallback((timings) {
+    void traceTimings(List<FrameTiming> timings) {
       for (final timing in timings) {
-        if (remaining-- <= 0) return;
+        if (remaining == 0) break;
+        remaining--;
         PerformanceTrace.event(
           'frame-build-${timing.buildDuration.inMicroseconds}'
           '-raster-${timing.rasterDuration.inMicroseconds}',
         );
       }
-    });
+      if (remaining == 0) {
+        WidgetsBinding.instance.removeTimingsCallback(traceTimings);
+      }
+    }
+
+    WidgetsBinding.instance.addTimingsCallback(traceTimings);
   }
   PerformanceTrace.event('runApp');
   runApp(

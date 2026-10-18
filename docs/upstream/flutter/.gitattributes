@@ -1,0 +1,3 @@
+# Unified-diff context includes a leading space on empty context lines.
+# Keep reviewed patch bytes and hashes intact.
+*.patch -whitespace
