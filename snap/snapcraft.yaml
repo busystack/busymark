@@ -60,51 +60,24 @@ apps:
       BUSYMARK_SPELLING_INSTALL_ROOT: $SNAP_USER_COMMON/spelling/dictionaries
 
 parts:
-  flutter-engine:
+  flutter-sdk:
     plugin: nil
-    source: tools/flutter_engine
-    build-packages:
-      - binutils
-      - git
-      - curl
-      - python3
-      - clang
-      - ninja-build
-      - pkg-config
-      - libgtk-3-dev
-      - libepoxy-dev
-      - unzip
-      - xz-utils
+    source: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.5-stable.tar.xz
+    source-checksum: sha256/2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb
     override-build: |
-      export BUSYMARK_ENGINE_CACHE="$CRAFT_PART_BUILD/cache"
-      engine_archive="$CRAFT_PROJECT_DIR/.build/engine-release.tar.xz"
-      if [ -f "$engine_archive" ]; then
-        python3 engine.py prepare --framework-only
-        python3 engine.py import "$engine_archive"
-      else
-        python3 engine.py prepare
-        python3 engine.py build --mode release --jobs 4
-      fi
-      python3 engine.py verify --mode release
-      engine_key="$(python3 engine.py key)"
-      mkdir -p "$CRAFT_PART_INSTALL/flutter-engine/$engine_key"
-      cp -a "$BUSYMARK_ENGINE_CACHE/$engine_key/sdk" \
-        "$BUSYMARK_ENGINE_CACHE/$engine_key/artifacts" \
-        "$BUSYMARK_ENGINE_CACHE/$engine_key/symbols" \
-        "$CRAFT_PART_INSTALL/flutter-engine/$engine_key/"
+      cp -r "$CRAFT_PART_SRC" "$CRAFT_PART_INSTALL/flutter-sdk"
     prime:
       - '-*'
 
   flutter-runtime:
-    after: [flutter-engine]
+    after: [flutter-sdk]
     plugin: nil
     build-attributes: [no-patchelf]
     override-build: |
-      # The reviewed engine already has RUNPATH=$ORIGIN. Snapcraft's ELF
-      # rewriting changes its GNU note alignment and breaks symbol matching.
-      engine_key="$(python3 "$CRAFT_PROJECT_DIR/tools/flutter_engine/engine.py" key)"
+      # Preserve the official library's GNU build-ID notes. This part copies
+      # the unmodified SDK payload; it does not compile or patch an engine.
       install -Dm755 \
-        "$CRAFT_STAGE/flutter-engine/$engine_key/artifacts/engine/src/out/host_release/libflutter_linux_gtk.so" \
+        "$CRAFT_STAGE/flutter-sdk/bin/cache/artifacts/engine/linux-x64-release/libflutter_linux_gtk.so" \
         "$CRAFT_PART_INSTALL/lib/libflutter_linux_gtk.so"
 
   busymark:
@@ -114,9 +87,7 @@ parts:
       - enable-patchelf
     source: .
     override-pull: |
-      # Generated state may contain an entire private engine checkout. Pull only
-      # application inputs; the verified archive is read from PROJECT_DIR by
-      # the engine part, not copied into the application part.
+      # Pull source inputs only; generated build state is never a package input.
       rsync -a --delete \
         --exclude=/.git/ --exclude=/.build/ --exclude=/.dart_tool/ \
         --exclude=/build/ --exclude=/linux/flutter/ephemeral/ \
@@ -126,6 +97,13 @@ parts:
     build-snaps:
       - node/24/stable
     build-packages:
+      - clang
+      - cmake
+      - ninja-build
+      - pkg-config
+      - libgtk-3-dev
+      - git
+      - unzip
       - rsync
       - patch
       - fonts-noto-core
@@ -152,13 +130,14 @@ parts:
       rm -rf "$CRAFT_PART_BUILD/build"
       rm -rf "$CRAFT_PART_BUILD/.dart_tool"
       rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
-      export BUSYMARK_ENGINE_CACHE="$CRAFT_STAGE/flutter-engine"
+      export FLUTTER_ROOT="$CRAFT_STAGE/flutter-sdk"
+      export PATH="$FLUTTER_ROOT/bin:$PATH"
       export CI=true
-      python3 tools/flutter.py pub get --enforce-lockfile
-      python3 tools/flutter.py build linux --release --no-pub --verbose \
+      flutter pub get --enforce-lockfile
+      flutter build linux --release --no-pub --verbose \
         --target lib/main.dart
       cp -r build/linux/*/release/bundle/* "$CRAFT_PART_INSTALL/"
-      # The byte-identical, verified engine belongs to flutter-runtime so only
+      # The unmodified official engine belongs to flutter-runtime so only
       # the application/plugins receive Snapcraft's runtime path adjustments.
       rm "$CRAFT_PART_INSTALL/lib/libflutter_linux_gtk.so"
 
@@ -269,8 +248,3 @@ parts:
         fi
       done
       test -s "$CRAFT_PRIME/usr/share/icons/Yaru/icon-theme.cache"
-
-      # The engine and ICU must remain byte-identical to verified C6 inputs.
-      BUSYMARK_ENGINE_CACHE="$CRAFT_STAGE/flutter-engine" \
-        python3 "$CRAFT_PROJECT_DIR/tools/flutter_engine/engine.py" check-bundle \
-        --mode release --bundle "$CRAFT_PRIME"

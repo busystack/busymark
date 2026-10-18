@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(runner LANGUAGES CXX)
 
-# Establish the local bundle prefix before a dependency/engine guard can fail.
+# Establish the local bundle prefix before a dependency check can fail.
 # Otherwise a failed first configure caches /usr/local and a corrected retry
 # can attempt installation outside the build tree.
 set(BUILD_BUNDLE_DIR "${PROJECT_BINARY_DIR}/bundle")
@@ -63,7 +63,6 @@ endfunction()
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
-include(cmake/CorrectedFlutterEngine.cmake)
 
 # System-level dependencies.
 find_package(PkgConfig REQUIRED)
@@ -320,10 +319,6 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../tools/flutter_engine/LICENSE"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/flutter-engine"
-  COMPONENT Runtime)
-
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
   install(FILES "${bundled_library}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
@@ -350,16 +345,3 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
-
-# Verify installation too, including builds invoked directly with Flutter.
-install(CODE "
-  set(engine_environment [==[${FLUTTER_TOOL_ENVIRONMENT}]==])
-  execute_process(COMMAND \"${Python3_EXECUTABLE}\"
-    \"${CMAKE_CURRENT_SOURCE_DIR}/../tools/flutter_engine/engine.py\"
-    check-cmake --mode \"${CMAKE_BUILD_TYPE}\" --framework \"${FLUTTER_ROOT}\"
-    --bundle \"${CMAKE_INSTALL_PREFIX}\" \${engine_environment}
-    RESULT_VARIABLE engine_result)
-  if(NOT engine_result EQUAL 0)
-    message(FATAL_ERROR \"Installed BusyMark bundle failed engine verification\")
-  endif()
-" COMPONENT Runtime)

@@ -169,7 +169,7 @@ The native clipboard probe verifies same-process rich-token resolution and
 cross-process HTML/plain-text interoperability:
 
 ```bash
-python3 tools/flutter.py build linux --debug -t tools/clipboard_smoke.dart
+flutter build linux --debug -t tools/clipboard_smoke.dart
 GDK_BACKEND=x11 build/linux/x64/debug/bundle/busymark \
   roundtrip OUTPUT_DIRECTORY
 ```
@@ -183,7 +183,7 @@ formats. Rebuild the default entry point afterward.
 The production-controller visual probe uses disposable workspaces:
 
 ```bash
-python3 tools/flutter.py build linux --debug -t tools/history_visual_smoke.dart
+flutter build linux --debug -t tools/history_visual_smoke.dart
 GDK_BACKEND=x11 build/linux/x64/debug/bundle/busymark \
   markdown WORKSPACE PRIMARY_FILE DELETE_FILE OUTPUT_DIRECTORY
 GDK_BACKEND=x11 build/linux/x64/debug/bundle/busymark \
@@ -201,12 +201,12 @@ the production editor and Linux clipboard:
 
 ```bash
 selection_output="$(mktemp -d)"
-python3 tools/flutter.py build linux --debug --no-pub --target tools/wysiwyg_selection_smoke.dart
+flutter build linux --debug --no-pub --target tools/wysiwyg_selection_smoke.dart
 GDK_BACKEND=x11 dbus-run-session -- \
   xvfb-run -a -s '-screen 0 1440x1000x24' \
   build/linux/x64/debug/bundle/busymark \
   test/fixtures/wysiwyg/selection_boundaries.md "$selection_output"
-python3 tools/flutter.py build linux --debug --no-pub --target lib/main.dart
+flutter build linux --debug --no-pub --target lib/main.dart
 ```
 
 The probe exits nonzero on failed assertions and writes temporary captures and

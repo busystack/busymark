@@ -22,7 +22,7 @@ import time
 
 from application_close_smoke import ChildTracker, cleanup_owned, identity, process_state, signal_owned
 
-SERVICE = Path(__file__).with_name('flutter_engine') / 'tests/portal_service.py'
+SERVICE = Path(__file__).resolve().parent.parent / 'docs/upstream/flutter/tests/portal_service.py'
 NAMESPACE = 'org.gnome.desktop.interface'
 
 

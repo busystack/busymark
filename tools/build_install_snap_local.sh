@@ -32,7 +32,7 @@ Options:
 Environment overrides are also supported:
   VERSION, OUT, SNAP_ROOT, SNAP_SCAFFOLD, SNAP_NAME, BINARY_NAME, APP_ID,
   INSTALL_AFTER_BUILD=0, RUN_AFTER_INSTALL=0, SKIP_TESTS=1, BUNDLE_GIT=0,
-  DART_DEFINE_FROM_FILE, BUSYMARK_ENGINE_CACHE, BUSYMARK_BUILD_TMP_ROOT
+  DART_DEFINE_FROM_FILE, BUSYMARK_FLUTTER_BIN, BUSYMARK_BUILD_TMP_ROOT
 EOF
 }
 
@@ -287,10 +287,10 @@ echo "Use the clean Snapcraft procedure in README.md for release/security artifa
 REQUIRED_FLUTTER_VERSION="$(project_flutter_version)"
 [[ -n "$REQUIRED_FLUTTER_VERSION" ]] || \
   fail "pubspec.yaml must declare an exact environment.flutter version"
-[[ -z "${BUSYMARK_FLUTTER_BIN:-}${BUSYMARK_FLUTTER_CACHE:-}" ]] || \
-  fail "Flutter SDK overrides are no longer supported; prepare C6 with tools/flutter_engine/engine.py and set BUSYMARK_ENGINE_CACHE"
-FLUTTER_BIN="$PROJECT_ROOT/tools/flutter.py"
-python3 "$PROJECT_ROOT/tools/flutter_engine/engine.py" verify --mode release
+FLUTTER_BIN="${BUSYMARK_FLUTTER_BIN:-$(command -v flutter || true)}"
+[[ -n "$FLUTTER_BIN" && -x "$FLUTTER_BIN" ]] || fail "put the official Flutter $REQUIRED_FLUTTER_VERSION SDK on PATH"
+actual_flutter_version="$("$FLUTTER_BIN" --version --machine | python3 -c 'import json,sys;print(json.load(sys.stdin)["frameworkVersion"])')"
+[[ "$actual_flutter_version" == "$REQUIRED_FLUTTER_VERSION" ]] || fail "expected official Flutter $REQUIRED_FLUTTER_VERSION; found $actual_flutter_version"
 prepare_build_tmp
 trap cleanup_build_tmp EXIT
 

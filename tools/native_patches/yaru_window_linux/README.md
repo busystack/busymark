@@ -14,8 +14,8 @@ compiles these copies for every Linux mode and installs the modified source,
 patch, and upstream MPL 2.0 license in
 `share/busymark/third-party/yaru_window_linux`.
 
-Run `bash tools/test_yaru_window_lifecycle.sh` after preparing the corrected
-engine. The probe exercises the actual patched source with a controlled nullable
+Run `bash tools/test_yaru_window_lifecycle.sh` with the official Flutter SDK and GTK development
+dependencies available. The probe exercises the actual patched source with a controlled nullable
 registrar view and GTK destruction; compiled-application natural-close checks
 remain a separate acceptance gate. To verify the original regression, pass
 `--unpatched` and the source directory to that script.

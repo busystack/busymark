@@ -82,7 +82,7 @@ def exercise(args, name, root):
         else:
             f.record['localBackend'] = 'memory; synthetic schema default1.25'
         output = root / 'compiled'
-        if name == 'application-preference':
+        if name in ['application-preference', 'fast-preference']:
             # The compiled fixture seeds its observer-created isolated profile
             # before application.main. Do not pre-create the observer's fresh
             # evidence root: its refusal to overwrite evidence must remain.
@@ -92,8 +92,9 @@ def exercise(args, name, root):
                    '--output', str(output), '--cycles', '1', '--fresh-profile',
                    '--scenarios', 'portal-settings', '--audit-input',
                    '--settings-schema-dir', str(schemas), '--portal-bus-address', f.address,
-                   '--engine-manifest', str(args.engine_manifest),
                    '--settings-backend', args.settings_backend]
+        if args.engine_manifest is not None:
+            command += ['--expected-engine', str(args.engine_manifest)]
         if database is not None:
             command += ['--local-settings-db', str(database)]
         if args.snap_instance:
@@ -115,11 +116,11 @@ def exercise(args, name, root):
         assert initial['localFramesProgressed'] and initial['portalEditorPublished'], initial
         snapshots = initial['settingsSnapshots']
         assert snapshots, initial
-        if name == 'application-preference':
+        if name in ['application-preference', 'fast-preference']:
             assert initial['applicationThemeSnapshots'][0] == 'dark', initial
         if name == 'local-accessibility':
             assert snapshots[0] == dict(clock12=False, dark=False, animations=False, contrast=True, scale=1.25), snapshots
-        elif name not in ['fast', 'getall-pending']:
+        elif name not in ['fast', 'fast-preference', 'getall-pending']:
             expect_snapshot(snapshots[0], nondefault=False, scale=1.25)
         expected = dict(clock12=True, dark=True, animations=False, contrast=True, scale=1.5)
         if name not in ['close-pending', 'missing']:
@@ -175,18 +176,20 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--application', type=Path)
     parser.add_argument('--snap-instance')
-    parser.add_argument('--engine-manifest', type=Path, required=True)
+    parser.add_argument('--expected-engine', '--engine-manifest', dest='engine_manifest', type=Path,
+                        help='Optional expected official engine library; no production receipt required')
     parser.add_argument('--settings-backend', choices=['memory', 'dconf'], default='dconf')
     parser.add_argument('--socket-parent', type=Path,
                         help='Short writable common-directory path for confined UNIX sockets')
-    cases = ['fast', 'delayed', 'close-pending', 'missing', 'restart',
+    cases = ['fast', 'fast-preference', 'delayed', 'close-pending', 'missing', 'restart',
              'local-accessibility', 'application-preference', 'getall-pending']
     parser.add_argument('--cases', nargs='+', choices=cases, default=cases)
     args = parser.parse_args()
     if bool(args.application) == bool(args.snap_instance):
         parser.error('Select one compiled application or disposable parallel Snap')
     args.output = args.output.resolve()
-    args.engine_manifest = args.engine_manifest.resolve()
+    if args.engine_manifest is not None:
+        args.engine_manifest = args.engine_manifest.resolve()
     if args.application:
         args.application = args.application.resolve()
     args.output.mkdir(parents=True, exist_ok=False)

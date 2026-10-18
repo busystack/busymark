@@ -67,35 +67,34 @@ components.
 Prepare and run the application:
 
 ```bash
-python3 tools/flutter_engine/engine.py prepare
-python3 tools/flutter_engine/engine.py build --mode debug profile release
-python3 tools/flutter.py pub get --enforce-lockfile
-python3 tools/flutter.py run -d linux
+flutter pub get --enforce-lockfile
+flutter run -d linux
 ```
 
 Pass a Markdown file or documentation directory as a Dart entrypoint argument
 to open it at startup:
 
 ```bash
-python3 tools/flutter.py run -d linux --dart-entrypoint-args=/absolute/path/to/document.md
-python3 tools/flutter.py run -d linux --dart-entrypoint-args=/absolute/path/to/documentation
+flutter run -d linux --dart-entrypoint-args=/absolute/path/to/document.md
+flutter run -d linux --dart-entrypoint-args=/absolute/path/to/documentation
 ```
 
 Build and run the standard checks with:
 
 ```bash
-python3 tools/flutter.py build linux
-python3 tools/flutter.py analyze
-python3 tools/flutter.py test --concurrency=2
+flutter build linux
+flutter analyze
+flutter test --concurrency=2
 ```
 
 The build assembles BusyMark's runtime components. Packaged users do not need
 separate Typst, Java, Node.js, or Chromium installations.
 
-Linux builds require the pinned compositor lifetime correction in debug,
-profile and release. See [Linux engine builds](docs/development/linux-engine.md)
-for prerequisites, private caches, native tests and failure diagnostics. CMake
-rejects builds that silently select the defective official engine.
+Linux development and packaging use the official Flutter SDK version pinned in
+`pubspec.yaml` (currently 3.47.5). No custom Flutter engine is built or selected.
+See [Linux development](docs/development/linux-engine.md) for the standard mode
+commands and the upstream shutdown/startup blockers. A successful build does
+not establish release readiness: native fatal exits keep release blocked.
 
 The CI workflow installs additional packages for headless X11/Wayland, browser,
 PDF, and sandbox verification. Those packages are not required for an ordinary

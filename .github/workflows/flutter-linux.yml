@@ -9,57 +9,6 @@ on:
       - main
 
 jobs:
-  engine:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    strategy:
-      fail-fast: false
-      matrix:
-        mode: [debug, profile, release]
-    steps:
-      - uses: actions/checkout@v7
-      - name: Install pinned-engine build prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y binutils clang cmake curl git ninja-build pkg-config \
-            libgtk-3-dev libepoxy-dev python3 python3-gi gsettings-desktop-schemas xz-utils unzip xvfb dbus-daemon
-      - name: Cache verified mode archive
-        id: engine-cache
-        uses: actions/cache@v6
-        with:
-          path: .build/engine-${{ matrix.mode }}.tar.xz
-          key: linux-x64-ubuntu24-c6-${{ matrix.mode }}-${{ hashFiles('tools/flutter_engine/**', 'tools/test_portal_initialization.py', 'tools/application_close_smoke.py') }}
-      - name: Build exact reviewed engine from source
-        if: steps.engine-cache.outputs.cache-hit != 'true'
-        run: |
-          python3 tools/flutter_engine/engine.py prepare
-          python3 tools/flutter_engine/engine.py build --mode ${{ matrix.mode }} --jobs 4
-          python3 tools/flutter_engine/engine.py export --mode ${{ matrix.mode }} \
-            --output .build/engine-${{ matrix.mode }}.tar.xz
-      - name: Import cached engine without fallback
-        if: steps.engine-cache.outputs.cache-hit == 'true'
-        run: python3 tools/flutter_engine/engine.py import .build/engine-${{ matrix.mode }}.tar.xz
-      - name: Run native engine and deterministic renderer lifetime regressions
-        run: |
-          xvfb-run -a dbus-run-session -- \
-            python3 tools/flutter_engine/engine.py test --mode ${{ matrix.mode }} \
-              --output "${RUNNER_TEMP}/portal-${{ matrix.mode }}"
-      - name: Preserve controlled portal evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: portal-engine-${{ matrix.mode }}
-          path: ${{ runner.temp }}/portal-${{ matrix.mode }}
-          if-no-files-found: ignore
-      - name: Supply verified build inputs to application jobs
-        uses: actions/upload-artifact@v7
-        with:
-          name: corrected-engine-${{ matrix.mode }}
-          path: .build/engine-${{ matrix.mode }}.tar.xz
-          if-no-files-found: error
-          include-hidden-files: true
-          compression-level: 0
-
   writerside-conformance:
     runs-on: ubuntu-24.04
 
@@ -71,7 +20,6 @@ jobs:
         run: tools/validate_writerside_conformance.sh
 
   verify:
-    needs: engine
     runs-on: ubuntu-24.04
 
     steps:
@@ -134,17 +82,12 @@ jobs:
           cache: npm
           cache-dependency-path: tools/visualization/package-lock.json
 
-      - name: Download verified release engine
-        uses: actions/download-artifact@v8
+      - name: Select official pinned Flutter SDK
+        uses: subosito/flutter-action@v2
         with:
-          name: corrected-engine-release
-          path: .build
-      - name: Prepare private pinned framework and corrected release engine
-        run: |
-          python3 tools/flutter_engine/engine.py prepare --framework-only
-          python3 tools/flutter_engine/engine.py import .build/engine-release.tar.xz
-          key="$(python3 tools/flutter_engine/engine.py key)"
-          echo "$GITHUB_WORKSPACE/.build/flutter-engine/$key/sdk/bin" >> "$GITHUB_PATH"
+          channel: stable
+          flutter-version: '3.47.5'
+          cache: true
 
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
@@ -188,13 +131,14 @@ jobs:
         run: flutter test test/src/spelling_bundle_integration_test.dart
 
       - name: Build Linux release
-        run: python3 tools/flutter.py build linux --release
+        run: flutter build linux --release
 
-      - name: Test natural-exit observer and engine selection failure detection
+      - name: Test natural-exit observer and capture cleanup
         run: |
           python3 -m unittest discover -s tools -p test_application_close_smoke.py
-          python3 -m unittest discover -s tools -p test_flutter_engine.py
           python3 -m unittest discover -s tools -p test_yaru_patch.py
+          python3 -m unittest discover -s tools -p test_capture_native_slow_operation.py
+          python3 -m unittest discover -s tools -p test_official_flutter_workflow.py
 
       - name: Test retired Yaru window requests and notifications
         run: xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
@@ -208,7 +152,7 @@ jobs:
             dbus-run-session -- env GDK_BACKEND=x11 \
             /usr/bin/python3 -u tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/close-release" --cycles 100 --plain \
-            --engine-manifest build/linux/x64/release/bundle/data/busymark-engine.json -- \
+            --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so -- \
             build/linux/x64/release/bundle/busymark
 
       - name: Test production GTK accent channel host and lifecycle
@@ -247,7 +191,7 @@ jobs:
           BUSYMARK_TYPST_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/typst
         # Real durable fixtures share the runner's filesystem. Keep the full
         # suite bounded independently of a developer machine's CPU count.
-        run: python3 tools/flutter.py test --concurrency=2
+        run: flutter test --concurrency=2
 
       - name: Exercise demand-driven native visualization lifecycle
         run: |
@@ -279,30 +223,21 @@ jobs:
 
       - name: Exercise live application close, persistence, media and reopening
         run: |
-          python3 tools/flutter.py build linux --release --no-pub -t tools/window_close_smoke.dart
+          flutter build linux --release --no-pub -t tools/window_close_smoke.dart
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
             --output "${RUNNER_TEMP}/portal-application-release" \
             --application build/linux/x64/release/bundle/busymark \
-            --engine-manifest build/linux/x64/release/bundle/data/busymark-engine.json
+            --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 \
             /usr/bin/python3 -u tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/close-live-application" --cycles 3 --fresh-profile \
-            --engine-manifest build/linux/x64/release/bundle/data/busymark-engine.json \
+            --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so \
             --scenarios plain visualization pending-initialization \
               dirty-save dirty-discard dirty-cancel video \
             --video test/fixtures/media/close-testsrc.mp4 -- \
             build/linux/x64/release/bundle/busymark
-          python3 tools/flutter.py build linux --release --no-pub -t lib/main.dart
-
-      - name: Require complete-core retirement with animated Flutter frames
-        run: |
-          python3 tools/flutter_engine/build_control.py --mode release \
-            --output "${RUNNER_TEMP}/engine-control-release"
-          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
-            --output "${RUNNER_TEMP}/close-complete-core" --cycles 10 --plain --fresh-profile \
-            --engine-manifest "${RUNNER_TEMP}/engine-control-release/bundle/data/busymark-engine.json" -- \
-            "${RUNNER_TEMP}/engine-control-release/bundle/busymark"
+          flutter build linux --release --no-pub -t lib/main.dart
 
       - name: Preserve natural-close evidence
         if: always()
@@ -313,7 +248,6 @@ jobs:
             ${{ runner.temp }}/portal-application-release
             ${{ runner.temp }}/close-release
             ${{ runner.temp }}/close-live-application
-            ${{ runner.temp }}/close-complete-core
           if-no-files-found: ignore
 
       - name: Run spelling and visualization smoke tests under Wayland
@@ -364,18 +298,11 @@ jobs:
           test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
 
   snap:
-    needs: engine
     runs-on: ubuntu-24.04
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
-
-      - name: Supply the verified engine to clean Snapcraft
-        uses: actions/download-artifact@v8
-        with:
-          name: corrected-engine-release
-          path: .build
 
       - name: Prepare clean Snap artifact selection
         run: |
@@ -445,7 +372,7 @@ jobs:
             /usr/bin/python3 -u tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/close-strict-snap" --cycles 100 \
             --snap-instance busymark_close \
-            --engine-manifest /snap/busymark_close/current/data/busymark-engine.json
+            --expected-engine /snap/busymark_close/current/lib/libflutter_linux_gtk.so
 
       - name: Preserve strict natural-close evidence
         if: always()
@@ -680,7 +607,7 @@ jobs:
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "$fixture_root/close-live" --cycles 3 --fresh-profile \
             --snap-instance busymark_fixture --snap-fixture \
-            --engine-manifest /snap/busymark_fixture/current/data/busymark-engine.json \
+            --expected-engine /snap/busymark_fixture/current/lib/libflutter_linux_gtk.so \
             --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
             --video "$fixture_root/fixtures/close-testsrc.mp4"
       - name: Require usable confined content while portal replies are withheld
@@ -690,7 +617,7 @@ jobs:
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
             --output "$portal_root/portal-application" --socket-parent "$portal_root/p" \
             --snap-instance busymark_fixture \
-            --engine-manifest /snap/busymark_fixture/current/data/busymark-engine.json
+            --expected-engine /snap/busymark_fixture/current/lib/libflutter_linux_gtk.so
       - name: Preserve strict compiled-close evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -702,7 +629,6 @@ jobs:
           if-no-files-found: ignore
 
   development-modes:
-    needs: engine
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -719,42 +645,32 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - uses: actions/download-artifact@v8
+      - name: Select official pinned Flutter SDK
+        uses: subosito/flutter-action@v2
         with:
-          name: corrected-engine-${{ matrix.mode }}
-          path: .build
-      - name: Select pinned framework and matching mode inputs
-        run: |
-          python3 tools/flutter_engine/engine.py prepare --framework-only
-          python3 tools/flutter_engine/engine.py import .build/engine-${{ matrix.mode }}.tar.xz
-          python3 tools/flutter.py pub get --enforce-lockfile
+          channel: stable
+          flutter-version: '3.47.5'
+          cache: true
+      - run: flutter pub get --enforce-lockfile
       - name: Build and verify actual GTK engine and natural close
         run: |
-          python3 tools/flutter.py build linux --${{ matrix.mode }} --no-pub
+          flutter build linux --${{ matrix.mode }} --no-pub
           xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/close-${{ matrix.mode }}" --cycles 10 --fresh-profile --plain \
-            --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json -- \
+            --expected-engine build/linux/x64/${{ matrix.mode }}/bundle/lib/libflutter_linux_gtk.so -- \
             build/linux/x64/${{ matrix.mode }}/bundle/busymark
-          python3 tools/flutter.py build linux --${{ matrix.mode }} --no-pub -t tools/window_close_smoke.dart
+          flutter build linux --${{ matrix.mode }} --no-pub -t tools/window_close_smoke.dart
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
             --output "${RUNNER_TEMP}/portal-application-${{ matrix.mode }}" \
             --application build/linux/x64/${{ matrix.mode }}/bundle/busymark \
-            --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json
+            --expected-engine build/linux/x64/${{ matrix.mode }}/bundle/lib/libflutter_linux_gtk.so
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/features-${{ matrix.mode }}" --cycles 1 --fresh-profile \
-            --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json \
+            --expected-engine build/linux/x64/${{ matrix.mode }}/bundle/lib/libflutter_linux_gtk.so \
             --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
             --video test/fixtures/media/close-testsrc.mp4 -- \
             build/linux/x64/${{ matrix.mode }}/bundle/busymark
-      - name: Verify full engine finalization in the development mode
-        run: |
-          python3 tools/flutter_engine/build_control.py --mode ${{ matrix.mode }} \
-            --output "${RUNNER_TEMP}/engine-control-${{ matrix.mode }}"
-          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
-            --output "${RUNNER_TEMP}/complete-core-${{ matrix.mode }}" --cycles 10 --plain --fresh-profile \
-            --engine-manifest "${RUNNER_TEMP}/engine-control-${{ matrix.mode }}/bundle/data/busymark-engine.json" -- \
-            "${RUNNER_TEMP}/engine-control-${{ matrix.mode }}/bundle/busymark"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -762,5 +678,4 @@ jobs:
           path: |
             ${{ runner.temp }}/close-${{ matrix.mode }}
             ${{ runner.temp }}/features-${{ matrix.mode }}
-            ${{ runner.temp }}/complete-core-${{ matrix.mode }}
             ${{ runner.temp }}/portal-application-${{ matrix.mode }}

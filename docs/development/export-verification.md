@@ -33,7 +33,7 @@ flutter gen-l10n
 dart format --set-exit-if-changed .
 flutter analyze
 flutter test
-python3 tools/flutter.py build linux --release
+flutter build linux --release
 ```
 
 The tests cover option parsing and persistence, dialog behavior, output bounds,

@@ -298,14 +298,14 @@ decoded moving video, dirty-document save/discard/cancel, durable clean shutdown
 and subsequent reopening through the application controllers:
 
 ```bash
-python3 tools/flutter.py build linux --release -t tools/window_close_smoke.dart
+flutter build linux --release -t tools/window_close_smoke.dart
 /usr/bin/python3 tools/application_close_smoke.py \
   --output /absolute/new/close-live-evidence --cycles 3 --fresh-profile \
   --scenarios plain visualization pending-initialization \
     dirty-save dirty-discard dirty-cancel video \
   --video test/fixtures/media/close-testsrc.mp4 -- \
   build/linux/x64/release/bundle/busymark
-python3 tools/flutter.py build linux --release -t lib/main.dart
+flutter build linux --release -t lib/main.dart
 ```
 
 The alternate entry point calls the real application and its close listener. It
