@@ -5,10 +5,13 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 
 
 def prepare(source: Path, output: Path) -> None:
+    if output.is_symlink():
+        raise RuntimeError(f"Refusing a redirected generated source: {output}")
     source, output = source.resolve(), output.resolve()
     if output == source or source in output.parents:
         raise RuntimeError("Patched output must be outside the dependency source")
@@ -24,11 +27,25 @@ def prepare(source: Path, output: Path) -> None:
                 "Resolve pubspec.lock's yaru_window_linux 0.2.2; review this patch "
                 "before changing the pinned source. No unpatched fallback is allowed."
             )
+    # Validate the entire write plan before copying anything. Generated notices
+    # and the retained patch are writable outputs too. Never follow a symlink
+    # or truncate a hard-linked file outside this generated tree.
+    names = [*lock["upstream"], patch.name, "BUSYMARK-CHANGES.md"]
+    for name in names:
+        relative = Path(name)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise RuntimeError(f"Invalid generated source path: {name}")
+        target = output / relative
+        for path in [*target.parents[:len(relative.parts) - 1], target]:
+            if path.is_symlink():
+                raise RuntimeError(f"Refusing a redirected generated source: {path}")
+        if target.exists():
+            info = target.stat()
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise RuntimeError(f"Refusing a redirected generated source: {target}")
     output.mkdir(parents=True, exist_ok=True)
     for name in lock["upstream"]:
         target = output / name
-        if target.is_symlink() or output not in target.resolve().parents:
-            raise RuntimeError(f"Refusing a redirected generated source: {target}")
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source / name, target)
     subprocess.run(
@@ -44,4 +61,4 @@ if __name__ == "__main__":
     parser.add_argument("source", type=Path)
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
-    prepare(args.source.resolve(), args.output.resolve())
+    prepare(args.source, args.output)

@@ -1,6 +1,9 @@
 import hashlib
 import importlib.util
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -59,6 +62,56 @@ class PrepareTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "redirected"):
             MODULE.prepare(self.source, self.output)
         self.assertEqual((self.source / "example.cc").read_text(), "before\n")
+
+    def test_metadata_redirects_are_rejected_before_any_output_changes(self):
+        self.output.mkdir()
+        (self.output / "example.cc").write_text("old generated output\n")
+        for name in ["retired-window.patch", "BUSYMARK-CHANGES.md"]:
+            for hardlink in [False, True]:
+                with self.subTest(name=name, hardlink=hardlink):
+                    target = self.output / name
+                    if hardlink:
+                        os.link(self.source / "example.cc", target)
+                    else:
+                        target.symlink_to(self.source / "example.cc")
+                    with self.assertRaisesRegex(RuntimeError, "redirected"):
+                        MODULE.prepare(self.source, self.output)
+                    self.assertEqual((self.source / "example.cc").read_text(), "before\n")
+                    self.assertEqual((self.output / "example.cc").read_text(), "old generated output\n")
+                    self.assertFalse((self.output / ("BUSYMARK-CHANGES.md" if name == "retired-window.patch" else "retired-window.patch")).exists())
+                    target.unlink()
+
+    def test_redirected_ancestor_is_rejected_before_any_mutation(self):
+        lock = json.loads((self.here / "source.lock.json").read_text())
+        (self.source / "nested").mkdir()
+        (self.source / "nested/other.cc").write_text("protected\n")
+        lock["upstream"]["nested/other.cc"] = hashlib.sha256(b"protected\n").hexdigest()
+        (self.here / "source.lock.json").write_text(json.dumps(lock))
+        self.output.mkdir()
+        (self.output / "example.cc").write_text("old\n")
+        (self.output / "nested").symlink_to(self.source / "nested", target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeError, "redirected"):
+            MODULE.prepare(self.source, self.output)
+        self.assertEqual((self.output / "example.cc").read_text(), "old\n")
+        self.assertEqual((self.source / "nested/other.cc").read_text(), "protected\n")
+
+    def test_redirected_output_root_is_rejected(self):
+        elsewhere = self.root / "elsewhere"
+        elsewhere.mkdir()
+        self.output.symlink_to(elsewhere, target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeError, "redirected"):
+            MODULE.prepare(self.source, self.output)
+        self.assertEqual(list(elsewhere.iterdir()), [])
+
+    def test_command_line_does_not_resolve_away_redirected_output_root(self):
+        elsewhere = self.root / "elsewhere"
+        elsewhere.mkdir()
+        self.output.symlink_to(elsewhere, target_is_directory=True)
+        result = subprocess.run([sys.executable, str(PATCH_ROOT / "prepare.py"),
+                                 str(self.source), str(self.output)], capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("redirected", result.stderr)
+        self.assertEqual(list(elsewhere.iterdir()), [])
 
 
 if __name__ == "__main__":
