@@ -80,7 +80,7 @@ def exercise(args, name, root):
             subprocess.run(['/usr/bin/dconf', 'compile', str(database), str(keys)], check=True)
             f.record['localBackend'] = 'dconf; compiled synthetic DB scale1.25 versus schema default1.0'
         else:
-            f.record['localBackend'] = 'memory; synthetic schema default1.25' 
+            f.record['localBackend'] = 'memory; synthetic schema default1.25'
         output = root / 'compiled'
         if name == 'application-preference':
             # The compiled fixture seeds its observer-created isolated profile
