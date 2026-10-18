@@ -29,7 +29,7 @@ class WatchdogCleanupTest(unittest.TestCase):
             self.assertIn('inaccessible /proc', result['error'])
 
     def test_changed_identity_is_never_signalled(self):
-        import application_close_smoke as observer
+        import owned_processes as observer
         tracker = mock.Mock(seen={123: 'old'})
         tracker.outstanding.side_effect = [[{'pid': 123, 'status': 'running'}], [], [], []]
         with mock.patch.object(observer.os, 'pidfd_open', return_value=9, create=True), \

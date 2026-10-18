@@ -15,7 +15,7 @@ import io
 import ctypes as C
 
 sys.path.insert(0, str(Path(__file__).parent))
-from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, seed_local_settings, signal_owned, snap_command, snapshot_mapped_process
+from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, ProcessHandle, accepted, process_children, run_case, seed_local_settings, signal_owned, snap_command, snapshot_mapped_process
 
 
 class LaunchLifetimeTest(unittest.TestCase):
@@ -182,6 +182,12 @@ class MappingObservationTest(unittest.TestCase):
 
 
 class LoadedEngineAcceptanceTest(unittest.TestCase):
+    def test_historical_packaged_only_identity_does_not_evaluate_missing_fallback(self):
+        with tempfile.TemporaryDirectory() as temp:
+            receipt = Path(temp) / 'receipt.json'
+            receipt.write_text(json.dumps({'packagedEngineSHA256': 'a' * 64}))
+            self.assertEqual(LoadedEngine(receipt).expected, 'a' * 64)
+
     def test_expected_official_library_needs_no_build_receipt(self):
         with tempfile.TemporaryDirectory() as temp:
             library = Path(temp) / 'libflutter_linux_gtk.so'
@@ -201,12 +207,23 @@ class LoadedEngineAcceptanceTest(unittest.TestCase):
         st = binary.stat()
         maps = f'00001000-00002000 r-xp 00000000 {os.major(st.st_dev):x}:{os.minor(st.st_dev):x} {st.st_ino + inode_delta} {binary}\n'
         tracker = SimpleNamespace(root=os.getpid(), seen={os.getpid(): "owned"}, errors=[])
-        original = Path.read_text
-        def read(path, *args, **kwargs):
-            return maps if str(path) == f'/proc/{os.getpid()}/maps' else original(path, *args, **kwargs)
-        with patch.object(Path, 'read_text', read), patch('application_close_smoke.process_state', return_value={'status': 'running'}):
+        original = ProcessHandle.read
+        def read(proc, name):
+            return maps.encode() if name == 'maps' else original(proc, name)
+        with patch.object(ProcessHandle, 'read', read), patch.object(ProcessHandle, 'state', return_value={'status': 'running'}), patch('application_close_smoke.process_state', return_value={'status': 'running'}):
             probe.capture(tracker)
         return probe, tracker, binary
+
+    def test_retired_root_is_rejected_before_reading_engine_maps(self):
+        with tempfile.TemporaryDirectory() as temp:
+            library = Path(temp) / 'libflutter_linux_gtk.so'
+            library.write_bytes(b'\x7fELFowned bytes')
+            probe = LoadedEngine(library)
+            tracker = SimpleNamespace(root=os.getpid(), seen={os.getpid(): 'retired'}, errors=[])
+            with patch.object(ProcessHandle, 'state', return_value={'status': 'reused'}), patch.object(ProcessHandle, 'read') as read:
+                probe.capture(tracker)
+            read.assert_not_called()
+            self.assertIsNone(probe.fd)
 
     def test_pinned_mapping_is_hashed_and_closed_after_exit(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -377,14 +394,14 @@ report.write_text(json.dumps({'phase':'close-requested','applicationSupport':str
                 self.assertFalse(accepted(record))
 
     def test_unavailable_child_enumeration_is_incomplete_not_empty(self):
-        with patch('application_close_smoke.process_children', side_effect=ObservationIncomplete('children mechanism inaccessible')):
+        with patch('owned_processes.process_children', side_effect=ObservationIncomplete('children mechanism inaccessible')):
             record = self.run_inferior('sys.exit(0)')
         self.assertTrue(record['verificationIncomplete'])
         self.assertTrue(record['launchSkipped'])
         self.assertFalse(accepted(record))
 
     def test_missing_proc_mechanism_is_not_a_process_exit_race(self):
-        with patch('application_close_smoke.process_state', return_value={'pid': os.getpid(), 'status': 'gone'}):
+        with patch('owned_processes.process_state', return_value={'pid': os.getpid(), 'status': 'gone'}):
             record = self.run_inferior('sys.exit(0)')
         self.assertTrue(record['verificationIncomplete'])
         self.assertTrue(record['launchSkipped'])
@@ -398,32 +415,32 @@ report.write_text(json.dumps({'phase':'close-requested','applicationSupport':str
     def test_empty_task_snapshot_rechecks_child_exit(self):
         for status in ['gone', 'reused', 'zombie']:
             with self.subTest(status=status), patch(
-                'application_close_smoke.process_state',
+                'owned_processes.process_state',
                 side_effect=[{'status': 'running'}, {'status': status}],
-            ), patch('application_close_smoke.Path.iterdir', return_value=iter([])):
+            ), patch('owned_processes.Path.iterdir', return_value=iter([])):
                 self.assertEqual(process_children(123456, 'owned-start'), [])
 
     def test_empty_live_task_snapshot_remains_incomplete(self):
-        with patch('application_close_smoke.process_state', return_value={'status': 'running'}), patch(
-            'application_close_smoke.Path.iterdir', return_value=iter([])
+        with patch('owned_processes.process_state', return_value={'status': 'running'}), patch(
+            'owned_processes.Path.iterdir', return_value=iter([])
         ), self.assertRaises(ObservationIncomplete):
             process_children(123456, 'owned-start')
 
     def test_empty_observer_task_snapshot_is_not_its_own_exit(self):
-        with patch('application_close_smoke.process_state', side_effect=[{'status': 'running'}, {'status': 'gone'}]), patch(
-            'application_close_smoke.Path.iterdir', return_value=iter([])
+        with patch('owned_processes.process_state', side_effect=[{'status': 'running'}, {'status': 'gone'}]), patch(
+            'owned_processes.Path.iterdir', return_value=iter([])
         ), self.assertRaises(ObservationIncomplete):
             process_children(os.getpid())
 
     def test_missing_observer_task_directory_is_not_its_own_exit(self):
-        with patch('application_close_smoke.process_state', side_effect=[{'status': 'running'}, {'status': 'gone'}]), patch(
-            'application_close_smoke.Path.iterdir', side_effect=FileNotFoundError('proc unavailable')
+        with patch('owned_processes.process_state', side_effect=[{'status': 'running'}, {'status': 'gone'}]), patch(
+            'owned_processes.Path.iterdir', side_effect=FileNotFoundError('proc unavailable')
         ), self.assertRaises(ObservationIncomplete):
             process_children(os.getpid())
 
     def test_empty_task_snapshot_with_unavailable_final_state_is_incomplete(self):
-        with patch('application_close_smoke.process_state', side_effect=[{'status': 'running'}, {'status': 'unavailable', 'error': 'access denied'}]), patch(
-            'application_close_smoke.Path.iterdir', return_value=iter([])
+        with patch('owned_processes.process_state', side_effect=[{'status': 'running'}, {'status': 'unavailable', 'error': 'access denied'}]), patch(
+            'owned_processes.Path.iterdir', return_value=iter([])
         ), self.assertRaises(ObservationIncomplete):
             process_children(123456, 'owned-start')
 
@@ -432,7 +449,7 @@ report.write_text(json.dumps({'phase':'close-requested','applicationSupport':str
             if pid != os.getpid():
                 raise ObservationIncomplete('live child task inaccessible')
             return process_children(pid, expected)
-        with patch('application_close_smoke.process_children', side_effect=inaccessible):
+        with patch('owned_processes.process_children', side_effect=inaccessible):
             record = self.run_inferior('time.sleep(30)')
         self.assertTrue(record['verificationIncomplete'])
         self.assertFalse(accepted(record))

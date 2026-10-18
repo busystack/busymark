@@ -20,7 +20,7 @@ import tempfile
 import threading
 import time
 
-from application_close_smoke import ChildTracker, cleanup_owned, identity, process_state, signal_owned
+from owned_processes import ChildTracker, cleanup_owned, identity, process_state, signal_owned
 
 SERVICE = Path(__file__).resolve().parent.parent / 'docs/upstream/flutter/tests/portal_service.py'
 NAMESPACE = 'org.gnome.desktop.interface'

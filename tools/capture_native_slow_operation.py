@@ -17,7 +17,7 @@ import subprocess
 import threading
 import sys
 
-from application_close_smoke import ChildTracker, ObservationIncomplete, cleanup_owned, identity, process_state
+from owned_processes import ChildTracker, ObservationIncomplete, cleanup_owned, identity, process_state, snapshot_owned
 import time
 
 
@@ -91,6 +91,7 @@ def main():
                                                 for x in record['survivorsBeforeCleanup']):
                     record.setdefault('error', 'Application exited with surviving owned descendants')
                 record['observedIdentities'] = dict(tracker.seen)
+                record['admittedAncestry'] = dict(tracker.admitted_by)
                 record['cleanupOutcomes'], record['unresolvedSurvivors'] = cleanup_owned(tracker, .5, 3)
             except BaseException as error:
                 cleanup_error('owned descendants', error)
@@ -286,25 +287,13 @@ def _capture(args, command, output, template, tracker, resources, record):
                 # Expand descendants from each inferior only. Never inspect or
                 # signal unrelated desktop or WebKit processes by name.
                 remember_descendants()
-                pids = set(tracker.seen) - {debugger.pid}
-                pending = list(pids)
-                while pending:
-                    current = pending.pop()
-                    proc = Path('/proc') / str(current)
-                    try:
-                        for task in (proc / 'task').iterdir():
-                            for field in ['status', 'wchan', 'syscall']:
-                                try:
-                                    (capture / f'{current}-{task.name}-{field}').write_text(
-                                        (task / field).read_text())
-                                except OSError as error:
-                                    (capture / f'{current}-{task.name}-{field}.error').write_text(str(error))
-                        (capture / f'{current}-maps').write_text((proc / 'maps').read_text())
-                        (capture / f'{current}-stat').write_text((proc / 'stat').read_text())
-                        (capture / f'{current}-cmdline').write_bytes((proc / 'cmdline').read_bytes())
-                        (capture / f'{current}-exe').write_text(os.readlink(proc / 'exe'))
-                    except OSError as error:
-                        (capture / f'{current}.error').write_text(str(error))
+                snapshots = [snapshot_owned(pid, stamp, capture)
+                             for pid, stamp in list(tracker.seen.items())
+                             if pid != debugger.pid]
+                (capture / 'process-observations.json').write_text(json.dumps(snapshots, indent=2))
+                incomplete = [x for x in snapshots if x['status'] == 'unavailable']
+                if incomplete:
+                    raise ObservationIncomplete('Owned snapshot incomplete: ' + repr(incomplete))
                 stopped.clear()
                 resources['requestedStop'] = True
                 if debugger_attached:
