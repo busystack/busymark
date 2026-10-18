@@ -10,9 +10,131 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 from unittest.mock import Mock
+from contextlib import redirect_stderr
+import io
 import ctypes as C
 
 from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, seed_local_settings, signal_owned, snap_command, snapshot_mapped_process
+
+
+class LaunchLifetimeTest(unittest.TestCase):
+    def run_failure(self, command, *, desktop=False, failure=None):
+        import application_close_smoke as a
+        with tempfile.TemporaryDirectory(prefix='bm-launch-lifetime-') as tmp:
+            root = Path(tmp)
+            tracker_instances = []
+            class Tracker(a.ChildTracker):
+                def __init__(self):
+                    super().__init__()
+                    self.closed = 0
+                    tracker_instances.append(self)
+                def close(self):
+                    self.closed += 1
+                    return super().close()
+            observer = Mock()
+            alias = Path('/tmp') / ('bm-close-' + root.name)
+            original_open = Path.open
+            def opened(path, *args, **kwargs):
+                if failure == 'log' and path.name == 'application.log':
+                    raise PermissionError('controlled log failure')
+                if failure == 'report' and path.name == 'result.json':
+                    raise PermissionError('controlled report failure')
+                return original_open(path, *args, **kwargs)
+            with patch.object(a, 'ChildTracker', Tracker), \
+                 patch.object(a, 'Desktop', return_value=observer), \
+                 patch.object(a.secrets, 'token_hex', return_value=root.name), \
+                 patch.object(Path, 'open', opened), redirect_stderr(io.StringIO()) as errors:
+                record = run_case(command(root), root / 'case', root / 'profile', 'plain',
+                                  .5, audit_input=desktop, term_grace=.1, kill_grace=1)
+            self.assertFalse(accepted(record), record)
+            self.assertFalse(alias.is_symlink())
+            self.assertFalse(record.get('unresolvedSurvivors'), record)
+            self.assertEqual([x.closed for x in tracker_instances], [1])
+            if desktop:
+                observer.dispose.assert_called_once()
+            if failure == 'report':
+                self.assertIn('controlled report failure', record['reportingError'])
+                self.assertIn('result publication failed', errors.getvalue())
+            else:
+                self.assertEqual(json.loads((root / 'case/result.json').read_text()), json.loads(json.dumps(record)))
+            return record
+
+    def test_real_absent_executable_closes_all_resources_and_reports_original_error(self):
+        r = self.run_failure(lambda root: [str(root / 'absent')], desktop=True)
+        self.assertEqual(r['errorType'], 'FileNotFoundError')
+        self.assertEqual(r['failurePhase'], 'process creation')
+        self.assertFalse(r['applicationStarted'])
+        self.assertTrue(r['launchSkipped'])
+
+    def test_real_nonexecutable_file_reports_failed_creation(self):
+        def command(root):
+            p = root / 'not-executable'
+            p.write_text('not executable')
+            p.chmod(0o600)
+            return [str(p)]
+        r = self.run_failure(command)
+        self.assertEqual(r['errorType'], 'PermissionError')
+        self.assertFalse(r['applicationStarted'])
+
+    def test_log_open_failure_still_closes_observers_and_alias(self):
+        r = self.run_failure(lambda _: ['/bin/true'], desktop=True, failure='log')
+        self.assertEqual(r['failurePhase'], 'log opening')
+        self.assertFalse(r['applicationStarted'])
+
+    def test_reporting_failure_is_explicit_and_preserves_original_failure(self):
+        r = self.run_failure(lambda root: [str(root / 'absent')], failure='report')
+        self.assertEqual(r['errorType'], 'FileNotFoundError')
+        self.assertIn('absent', r['error'])
+
+    def test_immediate_zero_exit_is_not_normal_application_close(self):
+        r = self.run_failure(lambda _: ['/bin/true'])
+        self.assertTrue(r['applicationStarted'])
+        self.assertEqual(r['exitCode'], 0)
+        self.assertIn('Missing normal-close', r['error'])
+
+    def test_setup_failure_has_structured_record_without_launch(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            profile = root / 'profile'
+            profile.write_text('not a directory')
+            with patch('application_close_smoke.subprocess.Popen') as launch:
+                r = run_case(['/bin/true'], root / 'case', profile, 'plain', 1)
+            launch.assert_not_called()
+            self.assertFalse(accepted(r))
+            self.assertEqual(r['failurePhase'], 'setup')
+            self.assertEqual(json.loads((root / 'case/result.json').read_text()), r)
+
+    def test_partial_desktop_initialization_releases_its_connection(self):
+        # Real Desktop constructor and acquisition order; only GI/Xlib are
+        # controlled. Failure after XOpenDisplay must close the same pointer.
+        import types
+        x = Mock()
+        x.XOpenDisplay.return_value = 123
+        x.XDefaultRootWindow.side_effect = RuntimeError('controlled root failure')
+        gi = types.ModuleType('gi')
+        gi.require_version = Mock()
+        repository = types.ModuleType('gi.repository')
+        repository.Gdk = Mock()
+        repository.GdkX11 = Mock()
+        with patch.dict(sys.modules, {'gi': gi, 'gi.repository': repository}), \
+             patch('application_close_smoke.C.CDLL', return_value=x):
+            with self.assertRaisesRegex(RuntimeError, 'controlled root failure'):
+                Desktop()
+        x.XCloseDisplay.assert_called_once_with(123)
+
+    def test_cleanup_error_does_not_replace_launch_failure(self):
+        import application_close_smoke as a
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            base = a.ChildTracker.close
+            def close(tracker):
+                base(tracker)
+                raise OSError('controlled close failure')
+            with patch.object(a.ChildTracker, 'close', close):
+                r = run_case([str(root / 'absent')], root / 'case', root / 'profile', 'plain', 1)
+            self.assertEqual(r['errorType'], 'FileNotFoundError')
+            self.assertEqual(r['cleanupErrors'][0]['stage'], 'tracker close')
+            self.assertFalse(accepted(r))
 
 
 class MappingObservationTest(unittest.TestCase):
@@ -52,6 +174,15 @@ class MappingObservationTest(unittest.TestCase):
 
 
 class LoadedEngineAcceptanceTest(unittest.TestCase):
+    def test_expected_official_library_needs_no_build_receipt(self):
+        with tempfile.TemporaryDirectory() as temp:
+            library = Path(temp) / 'libflutter_linux_gtk.so'
+            library.write_bytes(b'\x7fELF' + b'owned test bytes')
+            probe = LoadedEngine(library)
+            self.assertEqual(probe.expected, hashlib.sha256(library.read_bytes()).hexdigest())
+            self.assertEqual(probe.receipt, {})
+            self.assertIsNone(probe.fd)
+
     def capture(self, root, expected=None, inode_delta=0):
         binary = root / "libflutter_linux_gtk.so"
         binary.write_bytes(b"controlled mapped engine")

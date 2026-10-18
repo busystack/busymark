@@ -12,10 +12,12 @@ import json
 import os
 from pathlib import Path
 import re
-import signal
 import shutil
 import subprocess
 import threading
+import sys
+
+from application_close_smoke import ChildTracker, ObservationIncomplete, cleanup_owned, identity, process_state
 import time
 
 
@@ -45,6 +47,84 @@ def main():
     if template is not None and output.is_relative_to(template):
         parser.error('the capture output must not be inside its profile template')
     output.mkdir(parents=True, exist_ok=False)
+    record = {'expectedExit': args.expect_exit, 'detachedUntilSlow': args.detach_until_slow,
+              'captures': 0, 'exited': False, 'command': command}
+    resources = {}
+    tracker = None
+    try:
+        tracker = ChildTracker()
+        _capture(args, command, output, template, tracker, resources, record)
+        debugger = resources.get('debugger')
+        if debugger is not None and debugger.poll() is not None and not record.get('exited'):
+            raise RuntimeError('Debugger exited before verified capture completion')
+        if record.get('exitCode') not in (None, 0):
+            raise RuntimeError('Application exited with nonzero status')
+        if args.expect_exit and record.get('exitCode') != 0:
+            raise RuntimeError('Successful natural application exit was not verified')
+        record['terminationReason'] = 'observed-exit' if record.get('exited') else 'capture-duration-budget'
+    except BaseException as error:
+        record['error'] = repr(error)
+    finally:
+        resources['retiring'] = True
+        debugger = resources.get('debugger')
+        def cleanup_error(stage, error):
+            record.setdefault('cleanupErrors', []).append({'stage': stage, 'error': repr(error)})
+        if debugger is not None and debugger.poll() is None:
+            try:
+                send = resources.get('send')
+                if send is not None:
+                    if resources.get('attached') and not resources.get('exited'):
+                        send('-exec-interrupt --all')
+                    send('-gdb-exit')
+                    deadline = time.monotonic() + 10
+                    while debugger.poll() is None and time.monotonic() < deadline:
+                        tracker.scan()
+                        time.sleep(.025)
+                    if debugger.poll() is None:
+                        raise RuntimeError('Debugger did not retire on request')
+            except BaseException as error:
+                cleanup_error('debugger retirement', error)
+        if tracker is not None:
+            try:
+                record['survivorsBeforeCleanup'] = tracker.outstanding()
+                if record.get('exited') and any(x['pid'] != (debugger.pid if debugger else None)
+                                                for x in record['survivorsBeforeCleanup']):
+                    record.setdefault('error', 'Application exited with surviving owned descendants')
+                record['observedIdentities'] = dict(tracker.seen)
+                record['cleanupOutcomes'], record['unresolvedSurvivors'] = cleanup_owned(tracker, .5, 3)
+            except BaseException as error:
+                cleanup_error('owned descendants', error)
+                record['unresolvedSurvivors'] = [{'status': 'unavailable', 'error': repr(error)}]
+            try:
+                tracker.close()
+            except BaseException as error:
+                cleanup_error('observer close', error)
+            record['verificationIncomplete'] = tracker.errors
+        if debugger is not None and debugger.poll() is not None:
+            debugger.wait()
+            record['debuggerExitCode'] = debugger.returncode
+        reader = resources.get('reader')
+        if reader is not None:
+            reader.join(timeout=2)
+            if reader.is_alive():
+                cleanup_error('debugger reader', RuntimeError('Reader did not retire'))
+        for stream in [debugger.stdin if debugger else None, debugger.stdout if debugger else None, resources.get('log')]:
+            if stream is not None:
+                try:
+                    stream.close()
+                except BaseException as error:
+                    cleanup_error('stream close', error)
+        record['ok'] = not any(record.get(k) for k in ['error', 'fatalSignal', 'debuggerErrors', 'cleanupErrors', 'verificationIncomplete', 'unresolvedSurvivors'])
+        try:
+            (output / 'result.json').write_text(json.dumps(record, indent=2))
+        except OSError as error:
+            record.update(ok=False, reportingError=repr(error))
+            print('Native capture result publication failed: ' + repr(error), file=sys.stderr)
+    print(json.dumps(record), flush=True)
+    return 0 if record['ok'] else 1
+
+
+def _capture(args, command, output, template, tracker, resources, record):
     environment = os.environ.copy()
     if template is not None:
         shutil.copytree(template, output / 'profile')
@@ -57,12 +137,18 @@ def main():
         environment[key] = str(path)
     environment['BUSYMARK_NATIVE_TRACE'] = '1'
     environment['BUSYMARK_VISUALIZATION_TRACE'] = '1'
-    log = (output / 'gdb-mi.log').open('w')
+    log = resources['log'] = (output / 'gdb-mi.log').open('x')
     debugger = subprocess.Popen(
         ['gdb', '-q', '--nx', '--interpreter=mi2', '--args', *command],
         env=environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT, text=True, bufsize=1,
     )
+    resources['debugger'] = debugger
+    tracker.root = debugger.pid
+    stamp = identity(debugger.pid)
+    if stamp is None:
+        raise ObservationIncomplete('Debugger identity unavailable after launch')
+    tracker.seen[debugger.pid] = stamp
     lock = threading.Lock()
     active = {}
     captured = set()
@@ -72,6 +158,7 @@ def main():
     exited = threading.Event()
     detached = threading.Event()
     debugger_attached = True
+    resources["attached"] = True
     event = re.compile(
         r'(?:busymark-native|busymark-dart|visualization-init) (\S+) (begin|end) time_us=(\d+)'
     )
@@ -82,7 +169,7 @@ def main():
         debugger.stdin.write(value + '\n')
         debugger.stdin.flush()
 
-    def read():
+    def read_lines():
         for line in debugger.stdout:
             log.write(f'{time.monotonic_ns()} {line}')
             log.flush()
@@ -96,6 +183,13 @@ def main():
                         active[match[1]] = (int(match[3]), time.monotonic_ns() / 1000)
                     else:
                         active.pop(match[1], None)
+            if '^error' in line:
+                record.setdefault('debuggerErrors', []).append(line.strip())
+            if 'reason=\"signal-received\"' in line and not resources.get('retiring'):
+                if resources.get('requestedStop') and re.search(r'signal-name="SIG(?:INT|STOP)"', line):
+                    record.setdefault('controlledStops', []).append(line.strip())
+                else:
+                    record['fatalSignal'] = line.strip()
             if '*stopped' in line:
                 stopped.set()
             if '=thread-group-exited' in line:
@@ -107,7 +201,15 @@ def main():
             if line.startswith('900^done'):
                 detached.set()
 
+    def read():
+        try:
+            read_lines()
+        except BaseException as error:
+            record.setdefault('debuggerErrors', []).append('Reader failed: ' + repr(error))
+
     reader = threading.Thread(target=read, daemon=True)
+    resources['reader'] = reader
+    resources['send'] = send
     reader.start()
     send('-gdb-set pagination off')
     send('-gdb-set confirm off')
@@ -117,42 +219,37 @@ def main():
     if args.detach_until_slow:
         send('-break-insert -t main')
     send('-exec-run')
-    owned_identities = {}
+    def remember_descendants():
+        tracker.scan()
+        if tracker.errors:
+            raise ObservationIncomplete('; '.join(tracker.errors))
 
     def identify(pid):
-        try:
-            proc = Path('/proc') / str(pid)
-            fields = (proc / 'stat').read_text().rsplit(') ', 1)[1].split()
-            return fields[19], os.readlink(proc / 'exe')
-        except OSError:
+        expected = tracker.seen.get(pid)
+        if expected is None:
             return None
+        state = process_state(pid, expected)
+        return expected if state['status'] == 'running' else None
 
-    def remember_descendants():
-        pending = list(process_ids)
-        seen = set()
-        while pending:
-            pid = pending.pop()
-            if pid in seen:
-                continue
-            seen.add(pid)
-            identity = identify(pid)
-            if identity is not None:
-                owned_identities[pid] = identity
-            try:
-                for task in (Path('/proc') / str(pid) / 'task').iterdir():
-                    pending.extend(map(int, (task / 'children').read_text().split()))
-            except OSError:
-                pass
+    def wait_for(flag, seconds):
+        deadline = time.monotonic() + seconds
+        while not flag.is_set() and time.monotonic() < deadline:
+            remember_descendants()
+            if record.get('debuggerErrors') or debugger.poll() is not None:
+                raise RuntimeError('Debugger failed while waiting for a stop/detach')
+            flag.wait(.025)
+        return flag.is_set()
 
     try:
         if args.detach_until_slow:
-            if not stopped.wait(20):
+            if not wait_for(stopped, 20):
                 raise RuntimeError('GDB did not stop at native main')
             remember_descendants()
             send('900-target-detach')
-            if not detached.wait(5):
+            if not wait_for(detached, 5):
                 raise RuntimeError('GDB did not detach at native main')
             debugger_attached = False
+            resources["attached"] = False
             (output / 'detached.json').write_text(json.dumps({
                 'pids': sorted(process_ids),
                 'monotonic_ns': time.monotonic_ns(),
@@ -160,11 +257,11 @@ def main():
             }))
         deadline = time.monotonic() + args.duration
         while debugger.poll() is None and not exited.is_set() and time.monotonic() < deadline:
+            remember_descendants()
+            if record.get('debuggerErrors') or record.get('fatalSignal'):
+                raise RuntimeError('Debugger/application failure during capture')
             if args.detach_until_slow:
-                remember_descendants()
-                if not any(identify(pid) == identity
-                           for pid, identity in owned_identities.items()
-                           if pid in process_ids):
+                if process_ids and not any(identify(pid) is not None for pid in process_ids):
                     exited.set()
                     break
             with lock:
@@ -188,17 +285,14 @@ def main():
                 }))
                 # Expand descendants from each inferior only. Never inspect or
                 # signal unrelated desktop or WebKit processes by name.
+                remember_descendants()
+                pids = set(tracker.seen) - {debugger.pid}
                 pending = list(pids)
                 while pending:
                     current = pending.pop()
                     proc = Path('/proc') / str(current)
                     try:
                         for task in (proc / 'task').iterdir():
-                            children = (task / 'children').read_text()
-                            for child in map(int, children.split()):
-                                if child not in pids:
-                                    pids.add(child)
-                                    pending.append(child)
                             for field in ['status', 'wchan', 'syscall']:
                                 try:
                                     (capture / f'{current}-{task.name}-{field}').write_text(
@@ -212,12 +306,18 @@ def main():
                     except OSError as error:
                         (capture / f'{current}.error').write_text(str(error))
                 stopped.clear()
+                resources['requestedStop'] = True
                 if debugger_attached:
                     send('-exec-interrupt --all')
                 else:
-                    send(f'-target-attach {min(process_ids)}')
-                if stopped.wait(5):
+                    eligible = [pid for pid in process_ids if identify(pid) is not None]
+                    if not eligible:
+                        raise ObservationIncomplete('No still-matching owned inferior to attach')
+                    send(f'-target-attach {min(eligible)}')
+                if wait_for(stopped, 5):
+                    resources['requestedStop'] = False
                     debugger_attached = True
+                    resources["attached"] = True
                     with lock:
                         (capture / 'active-at-stop.json').write_text(json.dumps({
                             'monotonic_ns': time.monotonic_ns(),
@@ -227,52 +327,19 @@ def main():
                     if args.detach_until_slow:
                         detached.clear()
                         send('900-target-detach')
-                        if not detached.wait(5):
+                        if not wait_for(detached, 5):
                             raise RuntimeError('GDB did not detach after capture')
                         debugger_attached = False
+                        resources["attached"] = False
                     else:
                         send('-exec-continue')
                 else:
-                    (capture / 'interrupt.error').write_text('GDB did not report a stop')
+                    raise RuntimeError('GDB did not report a capture stop')
             time.sleep(.025)
     finally:
-        if args.detach_until_slow:
-            remember_descendants()
-        if debugger.poll() is None:
-            if not exited.is_set() and debugger_attached:
-                stopped.clear()
-                send('-exec-interrupt --all')
-                stopped.wait(5)
-                # GDB owns the inferior. Kill that inferior, then exit the debugger.
-                send('-interpreter-exec console "kill"')
-            send('-gdb-exit')
-            try:
-                debugger.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                debugger.terminate()
-                debugger.wait(timeout=5)
-        if args.detach_until_slow:
-            # A detached inferior survives GDB exit. Signal only processes
-            # discovered below the launched inferior, with matching identities.
-            for sig in [signal.SIGTERM, signal.SIGKILL]:
-                for pid, identity in owned_identities.items():
-                    if identify(pid) == identity:
-                        try:
-                            os.kill(pid, sig)
-                        except ProcessLookupError:
-                            pass
-                if sig == signal.SIGTERM:
-                    time.sleep(.1)
-        reader.join(timeout=2)
-        log.close()
-    result = {**inferior_result, 'captures': len(captured),
-              'expectedExit': args.expect_exit, 'exited': exited.is_set(),
-              'detachedUntilSlow': args.detach_until_slow}
-    (output / 'result.json').write_text(json.dumps(result, indent=2))
-    print(json.dumps(result), flush=True)
-    if args.expect_exit and inferior_result.get('exitCode') != 0:
-        raise SystemExit(1)
+        record.update(**inferior_result, captures=len(captured), exited=exited.is_set())
+        resources['exited'] = exited.is_set()
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

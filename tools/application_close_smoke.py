@@ -62,8 +62,18 @@ class LoadedEngine:
     """Pin the owned process's mapped engine; hash after exit, outside timing."""
     def __init__(self, manifest):
         try:
-            self.receipt = json.loads(Path(manifest).read_text())
-            self.expected = self.receipt.get('packagedEngineSHA256', self.receipt['files']['libflutter_linux_gtk.so'])
+            path = Path(manifest)
+            with path.open('rb') as stream:
+                elf = stream.read(4) == b'\x7fELF'
+                stream.seek(0)
+                if elf:
+                    self.receipt = {}
+                    self.expected = hashlib.file_digest(stream, 'sha256').hexdigest()
+                else:
+                    # Read historical evidence without requiring production
+                    # build receipts. Current tests supply an official .so.
+                    self.receipt = json.load(stream)
+                    self.expected = self.receipt.get('packagedEngineSHA256', self.receipt['files']['libflutter_linux_gtk.so'])
         except (OSError, ValueError, KeyError, TypeError) as error:
             raise ObservationIncomplete('Engine receipt unavailable or invalid: ' + str(error)) from error
         if not isinstance(self.expected, str) or not re.fullmatch(r'[0-9a-f]{64}', self.expected):
@@ -120,7 +130,7 @@ class LoadedEngine:
             actual = h.hexdigest()
             record['loadedEngine'] = {'path': self.path, 'sha256': actual, 'expectedSHA256': self.expected, 'inode': self.stat.st_ino, 'device': self.stat.st_dev, 'mode': self.receipt.get('mode'), 'key': self.receipt.get('key'), 'confinement': self.confinement}
             if actual != self.expected:
-                errors.append('Actual loaded engine differs from the selected corrected artifact')
+                errors.append('Actual loaded engine differs from the expected official artifact')
         except OSError as error:
             errors.append('Loaded-engine hashing incomplete: ' + str(error))
         finally:
@@ -228,14 +238,16 @@ class ChildTracker:
         if self.libc.prctl(37, C.byref(previous), 0, 0, 0) != 0:
             raise ObservationIncomplete(f'PR_GET_CHILD_SUBREAPER unavailable: errno {C.get_errno()}')
         self.previous = previous.value
-        if self.libc.prctl(36, 1, 0, 0, 0) != 0:
-            raise ObservationIncomplete(f'PR_SET_CHILD_SUBREAPER unavailable: errno {C.get_errno()}')
         self.seen = {}
         self.root = None
         self.errors = []
         self.unidentified = {}
         self.engine = None
         self.input_audit = None
+        # Allocate Python state before acquiring the process-wide resource.
+        # There must be no fallible initialization after setting subreaper.
+        if self.libc.prctl(36, 1, 0, 0, 0) != 0:
+            raise ObservationIncomplete(f'PR_SET_CHILD_SUBREAPER unavailable: errno {C.get_errno()}')
 
     def scan(self):
         pending = [self.root] if self.root in self.seen else []
@@ -619,12 +631,9 @@ class Desktop:
         self.x = C.CDLL("libX11.so.6")
         x = self.x
         x.XOpenDisplay.restype = C.c_void_p
-        self.display = x.XOpenDisplay(None)
-        if not self.display:
-            raise RuntimeError("An authenticated X11 desktop is required")
+        self.display = None
         x.XDefaultRootWindow.argtypes = [C.c_void_p]
         x.XDefaultRootWindow.restype = C.c_ulong
-        self.root = x.XDefaultRootWindow(self.display)
         x.XInternAtom.argtypes = [C.c_void_p, C.c_char_p, C.c_int]
         x.XInternAtom.restype = C.c_ulong
         x.XGetWindowProperty.argtypes = [C.c_void_p, C.c_ulong, C.c_ulong, C.c_long, C.c_long, C.c_int, C.c_ulong, C.POINTER(C.c_ulong), C.POINTER(C.c_int), C.POINTER(C.c_ulong), C.POINTER(C.c_ulong), C.POINTER(C.POINTER(C.c_ubyte))]
@@ -633,9 +642,19 @@ class Desktop:
         x.XFree.argtypes = [C.c_void_p]
         x.XFlush.argtypes = [C.c_void_p]
         x.XCloseDisplay.argtypes = [C.c_void_p]
+        self.display = x.XOpenDisplay(None)
+        if not self.display:
+            raise RuntimeError("An authenticated X11 desktop is required")
+        try:
+            self.root = x.XDefaultRootWindow(self.display)
+        except BaseException:
+            self.dispose()
+            raise
 
     def dispose(self):
-        self.x.XCloseDisplay(self.display)
+        display, self.display = self.display, None
+        if display:
+            self.x.XCloseDisplay(display)
 
     def atom(self, name):
         return self.x.XInternAtom(self.display, name.encode(), 0)
@@ -756,7 +775,7 @@ def check_owned_input(result, require_passive=False):
 
 
 def accepted(record):
-    return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors")
+    return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors") and not record.get('cleanupErrors') and not record.get('reportingError')
 
 
 def seed_local_settings(profile, source):
@@ -786,212 +805,263 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         raise ValueError('Select passive isolation or normal-focus input audit')
     if isolate_input and not plain:
         raise ValueError('Input isolation applies only to plain startup observation')
-    folder.mkdir()
-    environment = os.environ.copy()
-    for key, name in [("HOME", "home"), ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data"), ("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"), ("TMPDIR", "tmp")]:
-        p = profile / name
-        p.mkdir(parents=True, exist_ok=True)
-        environment[key] = str(p)
-    # Unix-domain socket paths must not inherit a long evidence-directory name.
-    temporary_alias = Path('/tmp') / ('bm-close-' + secrets.token_hex(8))
-    temporary_alias.symlink_to(profile / 'tmp', target_is_directory=True)
-    environment['TMPDIR'] = str(temporary_alias)
-    environment["BUSYMARK_RELEASE_SMOKE"] = "1"
-    environment["BUSYMARK_SPELLING_INSTALL_ROOT"] = str(profile / "data/spelling")
-    environment["GST_REGISTRY"] = str(profile / "cache/gstreamer-registry.bin")
-    if scenario == 'pending-initialization' and not plain:
-        assets = profile / 'pending-initialization-assets'
-        assets.mkdir(exist_ok=True)
-        (assets / 'harness.html').write_text(PENDING_HARNESS)
-        environment['BUSYMARK_VISUALIZATION_ASSETS'] = str(assets)
-    if not plain:
-        environment['BUSYMARK_NATIVE_TRACE'] = '1'
-    if settings_schema_dir is not None:
-        environment["GSETTINGS_SCHEMA_DIR"] = str(Path(settings_schema_dir).resolve())
-        environment["GSETTINGS_BACKEND"] = settings_backend
-    if portal_bus_address is not None:
-        environment["DBUS_SESSION_BUS_ADDRESS"] = portal_bus_address
-    application_profile = profile
-    if snap_instance:
-        # snap-confine needs the real account home. The application gets an
-        # isolated profile only after the normal confined launcher has run.
-        environment = os.environ.copy()
-        leaf = 'c-' + hashlib.sha256(str(profile).encode()).hexdigest()[:12]
-        application_profile = Path.home() / 'snap' / snap_instance / 'common' / leaf
-    report = folder / "application.json"
-    arguments = [] if plain else [str(report), scenario] + ([str(video)] if scenario == "video" else [str(document)] if scenario == 'reopen' else [])
-    if snap_instance:
-        extra = {}
-        if not plain:
-            # The real account HOME is restored for snap-confine above, so
-            # transfer the fixture opt-in only after entering confinement.
-            extra['BUSYMARK_RELEASE_SMOKE'] = '1'
-            extra['BUSYMARK_NATIVE_TRACE'] = '1'
-        if portal_bus_address is not None:
-            extra["DBUS_SESSION_BUS_ADDRESS"] = portal_bus_address
-        if settings_schema_dir is not None:
-            extra['GSETTINGS_SCHEMA_DIR'] = str(Path(settings_schema_dir).resolve())
-            extra['GSETTINGS_BACKEND'] = settings_backend
-        if scenario == 'pending-initialization' and not plain:
-            extra['BUSYMARK_VISUALIZATION_ASSETS'] = str(profile / 'pending-initialization-assets')
-        command = snap_command(snap_instance, leaf, arguments, extra)
-        arguments = []
-    record = {"launch_ns": time.monotonic_ns(), "scenario": scenario, "command": command + arguments, "plainShippingExecutable": plain, "observationInterpreter": sys.executable}
-    if scenario == 'pending-initialization' and not plain:
-        record['controlledPendingHarness'] = True
-    tracker = None
+    record = {"launch_ns": time.monotonic_ns(), "scenario": scenario,
+              "command": command, "plainShippingExecutable": plain,
+              "observationInterpreter": sys.executable, "exitCode": None,
+              "applicationStarted": False}
+    tracker = desktop = process = log = probe = temporary_alias = alias_identity = None
+    phase = 'setup'
+    def cleanup_error(stage, error):
+        record.setdefault('cleanupErrors', []).append({'stage': stage, 'error': repr(error)})
     try:
+        folder.mkdir()  # Never overwrite an earlier case or result.
+        environment = os.environ.copy()
+        for key, name in [("HOME", "home"), ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data"), ("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"), ("TMPDIR", "tmp")]:
+            p = profile / name
+            p.mkdir(parents=True, exist_ok=True)
+            environment[key] = str(p)
+        # Unix-domain socket paths must not inherit a long evidence-directory name.
+        temporary_alias = Path('/tmp') / ('bm-close-' + secrets.token_hex(8))
+        temporary_alias.symlink_to(profile / 'tmp', target_is_directory=True)
+        alias_identity = temporary_alias.lstat()
+        environment['TMPDIR'] = str(temporary_alias)
+        environment["BUSYMARK_RELEASE_SMOKE"] = "1"
+        environment["BUSYMARK_SPELLING_INSTALL_ROOT"] = str(profile / "data/spelling")
+        environment["GST_REGISTRY"] = str(profile / "cache/gstreamer-registry.bin")
+        if scenario == 'pending-initialization' and not plain:
+            assets = profile / 'pending-initialization-assets'
+            assets.mkdir(exist_ok=True)
+            (assets / 'harness.html').write_text(PENDING_HARNESS)
+            environment['BUSYMARK_VISUALIZATION_ASSETS'] = str(assets)
+        if not plain:
+            environment['BUSYMARK_NATIVE_TRACE'] = '1'
+        if settings_schema_dir is not None:
+            environment["GSETTINGS_SCHEMA_DIR"] = str(Path(settings_schema_dir).resolve())
+            environment["GSETTINGS_BACKEND"] = settings_backend
+        if portal_bus_address is not None:
+            environment["DBUS_SESSION_BUS_ADDRESS"] = portal_bus_address
+        application_profile = profile
+        if snap_instance:
+            # snap-confine needs the real account home. The application gets an
+            # isolated profile only after the normal confined launcher has run.
+            environment = os.environ.copy()
+            leaf = 'c-' + hashlib.sha256(str(profile).encode()).hexdigest()[:12]
+            application_profile = Path.home() / 'snap' / snap_instance / 'common' / leaf
+        report = folder / "application.json"
+        arguments = [] if plain else [str(report), scenario] + ([str(video)] if scenario == "video" else [str(document)] if scenario == 'reopen' else [])
+        if snap_instance:
+            extra = {}
+            if not plain:
+                # The real account HOME is restored for snap-confine above, so
+                # transfer the fixture opt-in only after entering confinement.
+                extra['BUSYMARK_RELEASE_SMOKE'] = '1'
+                extra['BUSYMARK_NATIVE_TRACE'] = '1'
+            if portal_bus_address is not None:
+                extra["DBUS_SESSION_BUS_ADDRESS"] = portal_bus_address
+            if settings_schema_dir is not None:
+                extra['GSETTINGS_SCHEMA_DIR'] = str(Path(settings_schema_dir).resolve())
+                extra['GSETTINGS_BACKEND'] = settings_backend
+            if scenario == 'pending-initialization' and not plain:
+                extra['BUSYMARK_VISUALIZATION_ASSETS'] = str(profile / 'pending-initialization-assets')
+            command = snap_command(snap_instance, leaf, arguments, extra)
+            arguments = []
+
+        record['command'] = command + arguments
+        if scenario == 'pending-initialization' and not plain:
+            record['controlledPendingHarness'] = True
+        phase = 'observer initialization'
         if local_settings_db is not None:
             seed_local_settings(application_profile, local_settings_db)
         probe = LoadedEngine(engine_manifest) if engine_manifest is not None else None
         tracker = ChildTracker()
         tracker.engine = probe
         desktop = Desktop() if plain or scenario == "video" or audit_input else None
-    except (ImportError, OSError, ValueError, RuntimeError) as error:
-        detail = f'Observer initialization failed ({type(error).__name__}): {error}'
-        if isinstance(error, ImportError):
-            detail += '; use /usr/bin/python3 with system PyGObject/GdkX11'
-        record.update(error=detail, verificationIncomplete=[detail], exitCode=None,
-                      launchSkipped=True, observationInterpreter=sys.executable)
-        if tracker is not None:
-            tracker.close()
-        temporary_alias.unlink()
-        (folder / 'result.json').write_text(json.dumps(record, indent=2))
-        return record
-    seen = tracker.seen
-    with (folder / "application.log").open("w") as log:
-        # Keep launch_ns for historical comparisons, while exposing observer
-        # setup/log-open time separately from the actual process launch request.
+        phase = 'log opening'
+        log = (folder / 'application.log').open('x')
+        phase = 'process creation'
         record['spawnRequest_ns'] = time.monotonic_ns()
-        process = subprocess.Popen(record["command"], env=environment, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        record['launchAttempted'] = True
+        process = subprocess.Popen(record['command'], env=environment, stdout=log,
+                                   stderr=subprocess.STDOUT, start_new_session=True)
+        record['applicationStarted'] = True
         record['spawnReturned_ns'] = time.monotonic_ns()
-        record["pid"] = process.pid
+        record['pid'] = process.pid
         tracker.root = process.pid
         stamp = identity(process.pid)
         if stamp is not None:
-            seen[process.pid] = stamp
+            tracker.seen[process.pid] = stamp
+        else:
+            tracker.errors.append('Application identity unavailable after launch')
+        phase = 'application observation'
         deadline = time.monotonic() + timeout
         close_sent, first_video = False, None
-        try:
-            while process.poll() is None and time.monotonic() < deadline:
-                with observation_span(observer_event, 'child-and-input-scan'):
-                    tracker.scan()
-                if tracker.errors:
-                    raise ObservationIncomplete("Child observation is incomplete")
-                if (isolate_input or audit_input) and tracker.input_audit is None:
-                    observe = desktop.isolate_input if isolate_input else desktop.audit_input
-                    with observation_span(observer_event, 'input-observation-setup'):
-                        tracker.input_audit = observe(process.pid)
-                if plain and not close_sent:
-                    with observation_span(observer_event, 'owned-window-query'):
-                        w = desktop.window(process.pid)
-                    if w:
-                        if tracker.input_audit is not None and tracker.input_audit.root_window != w.get_xid():
-                            raise ObservationIncomplete('Input audit is attached to a different owned window')
-                        # BusyMark maps its top-level only after FlView first-frame.
-                        snapshot_mapped_process(process.pid, folder, record, observer_event)
-                        if snap_instance:
-                            confinement = Path(f"/proc/{process.pid}/attr/current").read_text().strip()
-                            record['confinement'] = confinement
-                            if f'snap.{snap_instance}.busymark' not in confinement or '(enforce)' not in confinement:
-                                raise RuntimeError('Expected genuine strict Snap confinement')
-                        if isolate_input and tracker.input_audit is None:
-                            raise ObservationIncomplete('No owned pre-map input observation')
-                        with observation_span(observer_event, 'owned-content-probe-and-close'):
-                            desktop.close(w)
-                        record["closeRequestSent_ns"] = time.monotonic_ns()
-                        close_sent = True
-                if report.exists():
-                    try:
-                        status = json.loads(report.read_text())
-                    except json.JSONDecodeError:
-                        status = {}
-                    if status.get("phase") == "failed":
-                        raise RuntimeError(status.get("error", "Application probe failed"))
-                    if status.get("phase") == "awaiting-video":
-                        w = desktop.window(process.pid)
-                        sample = desktop.video_sample(w) if w else None
-                        if sample and first_video and sample != first_video:
-                            Path(str(report) + ".video-confirmed").touch()
-                            record["decodedChangingVideoObserved"] = True
-                        if sample:
-                            first_video = sample
-                time.sleep(.05)
-            if process.poll() is None:
-                raise TimeoutError("Natural application exit deadline expired")
-            record["exitCode"] = process.returncode
-            record["exitObserved_ns"] = time.monotonic_ns()
-            if plain and not close_sent:
-                raise RuntimeError("Process exited before a verified owned-window close request")
-            if isolate_input or audit_input:
-                if tracker.input_audit is None:
-                    raise ObservationIncomplete('No owned input observation')
-                record['ownedInput'] = tracker.input_audit.result()
-                check_owned_input(record['ownedInput'], require_passive=isolate_input)
-            log.flush()
-            application_log = (folder / 'application.log').read_text(errors='replace')
-            record['messengerCleanupWarnings'] = application_log.count('Attempted to set message handler on an FlBinaryMessenger without an engine')
-            for failure in ['Failed to shutdown Flutter engine']:
-                if failure in application_log:
-                    raise RuntimeError(failure)
-            if scenario == 'pending-initialization' and 'visualization-shutdown initPending=1' not in application_log:
-                raise RuntimeError('Initialization finished before native shutdown; pending-initialization boundary was not exercised')
-            if plain:
-                recovery = application_profile / 'data/io.busystack.busymark/recovery.json'
-                if recovery.exists():
-                    clean_shutdown = json.loads(recovery.read_text())['cleanShutdown']
-                    record['durableCleanShutdown'] = clean_shutdown
-                    if not clean_shutdown:
-                        raise RuntimeError('Durable clean-shutdown checkpoint missing')
-            if not plain:
-                status = json.loads(report.read_text()) if report.exists() else {}
-                record["application"] = status
-                if status.get("phase") != "close-requested":
-                    raise RuntimeError("Missing normal-close application checkpoint")
-                if status.get("document") and status.get("expectedText") is not None:
-                    if Path(status["document"]).read_text() != status["expectedText"]:
-                        raise RuntimeError("Save/discard produced incorrect document content")
-                recovery = Path(status["applicationSupport"]) / "recovery.json"
-                if not json.loads(recovery.read_text())["cleanShutdown"]:
-                    raise RuntimeError("Durable clean-shutdown checkpoint missing")
-            child_deadline = time.monotonic() + child_grace
-            while tracker.outstanding(children_only=True) and time.monotonic() < child_deadline:
-                time.sleep(.02)
-            record["survivingChildren"] = tracker.outstanding(children_only=True)
-
-        except Exception as error:
-            if isinstance(error, ObservationIncomplete):
-                tracker.errors.append(str(error))
-            record["error"] = str(error)
-            record["exitCode"] = process.poll()
-        finally:
-            # Classify before cleanup. A successful cleanup never changes a
-            # failed natural exit, hang, incomplete observation or child leak.
-            pending = tracker.outstanding()
-            if pending:
-                record["cleanupRequired"] = pending
-            record['observedIdentities'] = tracker.seen
-            record['cleanupOutcomes'], record['unresolvedSurvivors'] = cleanup_owned(tracker, term_grace, kill_grace)
-            if process.poll() is not None:
-                process.wait()
-            tracker.close()
-            if tracker.engine is not None:
-                tracker.engine.finish(record, tracker.errors)
-                if snap_instance and record.get('loadedEngine', {}).get('confinement') != f'snap.{snap_instance}.busymark (enforce)':
-                    tracker.errors.append('Expected genuine strict Snap confinement for the mapped engine')
-            if (isolate_input or audit_input) and tracker.input_audit is not None:
-                record['ownedInput'] = tracker.input_audit.result()
-                record['inputAuditEstablished_ns'] = tracker.input_audit.applied_ns
-                record['inputObservationMode'] = 'passive-hint' if isolate_input else 'normal-focus-audit'
-                if isolate_input:
-                    record['inputHintApplied_ns'] = tracker.input_audit.applied_ns
+        while process.poll() is None and time.monotonic() < deadline:
+            with observation_span(observer_event, 'child-and-input-scan'):
+                tracker.scan()
             if tracker.errors:
-                record['verificationIncomplete'] = tracker.errors
-            (folder / "result.json").write_text(json.dumps(record, indent=2))
+                raise ObservationIncomplete("Child observation is incomplete")
+            if (isolate_input or audit_input) and tracker.input_audit is None:
+                observe = desktop.isolate_input if isolate_input else desktop.audit_input
+                with observation_span(observer_event, 'input-observation-setup'):
+                    tracker.input_audit = observe(process.pid)
+            if plain and not close_sent:
+                with observation_span(observer_event, 'owned-window-query'):
+                    w = desktop.window(process.pid)
+                if w:
+                    if tracker.input_audit is not None and tracker.input_audit.root_window != w.get_xid():
+                        raise ObservationIncomplete('Input audit is attached to a different owned window')
+                    # BusyMark maps its top-level only after FlView first-frame.
+                    snapshot_mapped_process(process.pid, folder, record, observer_event)
+                    if snap_instance:
+                        confinement = Path(f"/proc/{process.pid}/attr/current").read_text().strip()
+                        record['confinement'] = confinement
+                        if f'snap.{snap_instance}.busymark' not in confinement or '(enforce)' not in confinement:
+                            raise RuntimeError('Expected genuine strict Snap confinement')
+                    if isolate_input and tracker.input_audit is None:
+                        raise ObservationIncomplete('No owned pre-map input observation')
+                    with observation_span(observer_event, 'owned-content-probe-and-close'):
+                        desktop.close(w)
+                    record["closeRequestSent_ns"] = time.monotonic_ns()
+                    close_sent = True
+            if report.exists():
+                try:
+                    status = json.loads(report.read_text())
+                except json.JSONDecodeError:
+                    status = {}
+                if status.get("phase") == "failed":
+                    raise RuntimeError(status.get("error", "Application probe failed"))
+                if status.get("phase") == "awaiting-video":
+                    w = desktop.window(process.pid)
+                    sample = desktop.video_sample(w) if w else None
+                    if sample and first_video and sample != first_video:
+                        Path(str(report) + ".video-confirmed").touch()
+                        record["decodedChangingVideoObserved"] = True
+                    if sample:
+                        first_video = sample
+            time.sleep(.05)
+        if process.poll() is None:
+            raise TimeoutError("Natural application exit deadline expired")
+        record["exitCode"] = process.returncode
+        record["exitObserved_ns"] = time.monotonic_ns()
+        if plain and not close_sent:
+            raise RuntimeError("Process exited before a verified owned-window close request")
+        if isolate_input or audit_input:
+            if tracker.input_audit is None:
+                raise ObservationIncomplete('No owned input observation')
+            record['ownedInput'] = tracker.input_audit.result()
+            check_owned_input(record['ownedInput'], require_passive=isolate_input)
+        log.flush()
+        application_log = (folder / 'application.log').read_text(errors='replace')
+        record['messengerCleanupWarnings'] = application_log.count('Attempted to set message handler on an FlBinaryMessenger without an engine')
+        for failure in ['Failed to shutdown Flutter engine']:
+            if failure in application_log:
+                raise RuntimeError(failure)
+        if scenario == 'pending-initialization' and 'visualization-shutdown initPending=1' not in application_log:
+            raise RuntimeError('Initialization finished before native shutdown; pending-initialization boundary was not exercised')
+        if plain:
+            recovery = application_profile / 'data/io.busystack.busymark/recovery.json'
+            if recovery.exists():
+                clean_shutdown = json.loads(recovery.read_text())['cleanShutdown']
+                record['durableCleanShutdown'] = clean_shutdown
+                if not clean_shutdown:
+                    raise RuntimeError('Durable clean-shutdown checkpoint missing')
+        if not plain:
+            status = json.loads(report.read_text()) if report.exists() else {}
+            record["application"] = status
+            if status.get("phase") != "close-requested":
+                raise RuntimeError("Missing normal-close application checkpoint")
+            if status.get("document") and status.get("expectedText") is not None:
+                if Path(status["document"]).read_text() != status["expectedText"]:
+                    raise RuntimeError("Save/discard produced incorrect document content")
+            recovery = Path(status["applicationSupport"]) / "recovery.json"
+            if not json.loads(recovery.read_text())["cleanShutdown"]:
+                raise RuntimeError("Durable clean-shutdown checkpoint missing")
+        child_deadline = time.monotonic() + child_grace
+        while tracker.outstanding(children_only=True) and time.monotonic() < child_deadline:
+            time.sleep(.02)
+        record["survivingChildren"] = tracker.outstanding(children_only=True)
 
-    temporary_alias.unlink()
-    if desktop is not None:
-        desktop.dispose()
+    except BaseException as error:
+        record['failurePhase'] = phase
+        record['errorType'] = type(error).__name__
+        record['error'] = f'{phase.capitalize()} failed ({type(error).__name__}): {error}'
+        if isinstance(error, ImportError):
+            record['error'] += '; use /usr/bin/python3 with system PyGObject/GdkX11'
+        if process is None:
+            record['launchSkipped'] = True
+        if isinstance(error, ObservationIncomplete) or phase == 'observer initialization' or not isinstance(error, Exception):
+            record.setdefault('verificationIncomplete', []).append(str(error))
+        if process is not None:
+            record['exitCode'] = process.poll()
+    finally:
+        if tracker is not None:
+            # Classify before cleanup. A successful cleanup cannot turn any
+            # failed launch, fatal exit, hang or incomplete observation into a pass.
+            try:
+                pending = tracker.outstanding()
+                if pending:
+                    record['cleanupRequired'] = pending
+                record['observedIdentities'] = dict(tracker.seen)
+                record['cleanupOutcomes'], record['unresolvedSurvivors'] = cleanup_owned(tracker, term_grace, kill_grace)
+            except BaseException as error:
+                cleanup_error('owned processes', error)
+                record['unresolvedSurvivors'] = [{'status': 'unavailable', 'error': repr(error)}]
+            if process is not None:
+                try:
+                    if process.poll() is not None:
+                        process.wait()
+                except BaseException as error:
+                    cleanup_error('process reap', error)
+            if (isolate_input or audit_input) and tracker.input_audit is not None:
+                try:
+                    record['ownedInput'] = tracker.input_audit.result()
+                    record['inputAuditEstablished_ns'] = tracker.input_audit.applied_ns
+                    record['inputObservationMode'] = 'passive-hint' if isolate_input else 'normal-focus-audit'
+                    if isolate_input:
+                        record['inputHintApplied_ns'] = tracker.input_audit.applied_ns
+                except BaseException as error:
+                    cleanup_error('input audit', error)
+            try:
+                tracker.close()
+            except BaseException as error:
+                cleanup_error('tracker close', error)
+            if tracker.errors:
+                record.setdefault('verificationIncomplete', []).extend(tracker.errors)
+        if probe is not None:
+            try:
+                errors = []
+                probe.finish(record, errors)
+                if snap_instance and record.get('loadedEngine', {}).get('confinement') != f'snap.{snap_instance}.busymark (enforce)':
+                    errors.append('Expected genuine strict Snap confinement for the mapped engine')
+                if errors:
+                    record.setdefault('verificationIncomplete', []).extend(errors)
+            except BaseException as error:
+                cleanup_error('engine observation', error)
+        if desktop is not None:
+            try:
+                desktop.dispose()
+            except BaseException as error:
+                cleanup_error('desktop close', error)
+        if log is not None:
+            try:
+                log.close()
+            except BaseException as error:
+                cleanup_error('log close', error)
+        if alias_identity is not None:
+            try:
+                current = temporary_alias.lstat()
+                if (current.st_dev, current.st_ino) != (alias_identity.st_dev, alias_identity.st_ino):
+                    raise RuntimeError('Temporary alias identity changed; refusing to unlink')
+                temporary_alias.unlink()
+            except BaseException as error:
+                cleanup_error('temporary alias', error)
+        try:
+            with (folder / 'result.json').open('x') as output:
+                output.write(json.dumps(record, indent=2))
+        except BaseException as error:
+            record['reportingError'] = repr(error)
+            record.setdefault('error', 'Close observer result publication failed')
+            print(f'Close observer result publication failed for {folder}: {error!r}; original failure: {record.get("error")}', file=sys.stderr, flush=True)
     return record
 
 
@@ -1012,7 +1082,7 @@ def main():
     parser.add_argument("--settings-schema-dir", type=Path, help="Controlled portal fixture local schema directory (memory backend)")
     parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel", "portal-settings"], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
     parser.add_argument("--video", type=Path)
-    parser.add_argument("--engine-manifest", type=Path, help="Require the actual mapped engine to match the built/packaged C6 receipt; hash pinned descriptor after exit")
+    parser.add_argument("--expected-engine", "--engine-manifest", dest='engine_manifest', type=Path, help="Optional test-only expected engine .so (or historical evidence JSON); hash actual mapped file after exit")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if (args.portal_bus_address or args.settings_schema_dir or args.local_settings_db or args.settings_backend != "memory") and (
