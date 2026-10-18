@@ -130,11 +130,32 @@ def main():
             assert (result['keyPresses'], result['keyReleases']) == (2, 2), result
             late.destroy()
             until(lambda: late_xid not in watch.windows)
-            windows[0].destroy()
-            until(lambda: watch.retired)
+            # Deterministically destroy the root after the observer drains
+            # events but before its next QueryTree reaches the X server.
+            # The real server returns BadWindow plus our subscribed
+            # DestroyNotify; a missing or unrelated notification is not enough.
+            class DestroyBeforeQuery:
+                def __init__(self):
+                    self.destroyed = False
+
+                def __getattr__(self, name):
+                    return getattr(x, name)
+
+                def XQueryTree(self, *arguments):
+                    if arguments[1] == watch.root_window and not self.destroyed:
+                        self.destroyed = True
+                        windows[0].destroy()
+                        Gdk.Display.get_default().sync()
+                    return x.XQueryTree(*arguments)
+
+            watch.x = DestroyBeforeQuery()
+            watch._refresh_windows()
+            assert watch.retired
+            assert watch.retirement_races, 'Actual BadWindow race was not exercised'
             assert not watch.result()['errors']
             print(json.dumps({'ok': True, 'deliveredToBothOwnedEntries': True,
                               'lateChildDeliveryAndRetirement': True,
+                              'destroyDuringQueryRetirement': True,
                               'observer': result}, indent=2))
         finally:
             for window in windows:

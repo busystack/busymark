@@ -443,6 +443,7 @@ class OwnedInputAudit:
         self.key_presses = self.key_releases = self.activeSamples = self.samples = 0
         self.focusSamples = 0
         self.errors = []
+        self.retirement_races = []
         x = self.x
         x.XSelectInput.argtypes = [C.c_void_p, C.c_ulong, C.c_long]
         x.XPending.argtypes = [C.c_void_p]
@@ -463,10 +464,12 @@ class OwnedInputAudit:
         """
         x = self.x
         handler_type = C.CFUNCTYPE(C.c_int, C.c_void_p, C.POINTER(InputError))
+        errors = []
 
         def error(_display, event):
-            self.errors.append({'code': event.contents.error_code,
-                                'request': event.contents.request_code})
+            errors.append({'code': event.contents.error_code,
+                           'request': event.contents.request_code,
+                           'resource': event.contents.resource})
             return 0
 
         handler = handler_type(error)
@@ -474,7 +477,8 @@ class OwnedInputAudit:
         try:
             bits = (C.c_ubyte * 1)((1 << 2) | (1 << 3))
             mask = DeviceEventMask(1, 1, bits)  # XIAllMasterDevices; keys only.
-            pending, current = [self.root_window], set()
+            pending, current, failed = [self.root_window], set(), set()
+            self.refresh_required = False
             while pending:
                 xid = pending.pop()
                 if xid in current:
@@ -493,14 +497,30 @@ class OwnedInputAudit:
                     if children:
                         x.XFree(children)
                 else:
-                    raise ObservationIncomplete('Owned window subtree enumeration failed')
+                    failed.add(xid)
             x.XSync(self.display, 0)
+            # Destruction can occur after poll drained the queue and before
+            # QueryTree reaches the server. Only a matching DestroyNotify on
+            # our already subscribed connection establishes this normal race.
+            # BadWindow alone is not evidence of complete observation.
+            subscribed = self.windows.copy()
+            destroyed = self._drain_events()
+            for item in errors:
+                if (item['code'] == 3 and item['resource'] in destroyed
+                        and item['resource'] in subscribed
+                        and item['request'] in (2, 15, self.xi_opcode)):
+                    if len(self.retirement_races) < 64:
+                        self.retirement_races.append(dict(item, observed_ns=time.monotonic_ns()))
+                else:
+                    self.errors.append(item)
+            if failed - destroyed:
+                raise ObservationIncomplete('Owned window subtree enumeration failed')
+            current = set() if self.retired else current - destroyed
             if current != self.windows and len(self.window_updates) < 64:
                 self.window_updates.append({'observed_ns': time.monotonic_ns(),
                                             'added': len(current - self.windows),
                                             'removed': len(self.windows - current)})
             self.windows = current
-            self.refresh_required = False
         finally:
             x.XSetErrorHandler(previous)
         if self.errors:
@@ -531,16 +551,7 @@ class OwnedInputAudit:
         # Drain structure notifications first, so focus queries include a FlView
         # realized after the initial top-level was found. A destroyed root must
         # not be queried again during normal process exit.
-        drained = 0
-        while self.x.XPending(self.display):
-            drained += 1
-            if drained > 4096:
-                if 'Owned event queue overflow' not in self.errors:
-                    self.errors.append('Owned event queue overflow')
-                break
-            event = InputEvent()
-            self.x.XNextEvent(self.display, C.byref(event))
-            self.observe(event)
+        self._drain_events()
         if self.refresh_required and not self.retired:
             self._refresh_windows()
         atom, form, count, remaining = C.c_ulong(), C.c_int(), C.c_ulong(), C.c_ulong()
@@ -560,6 +571,22 @@ class OwnedInputAudit:
                 self.errors.append('XGetInputFocus failed')
         elif focused.value in self.windows:
             self.focusSamples += 1
+
+    def _drain_events(self):
+        drained, destroyed = 0, set()
+        while self.x.XPending(self.display):
+            drained += 1
+            if drained > 4096:
+                if 'Owned event queue overflow' not in self.errors:
+                    self.errors.append('Owned event queue overflow')
+                break
+            event = InputEvent()
+            self.x.XNextEvent(self.display, C.byref(event))
+            if event.any.type == 17 and event.any.window in self.windows:
+                lifecycle = C.cast(C.byref(event), C.POINTER(WindowLifecycleEvent)).contents
+                destroyed.add(lifecycle.child)
+            self.observe(event)
+        return destroyed
 
     def observe(self, event):
         if event.any.type == 35:  # GenericEvent, not a core XAnyEvent window.
@@ -615,6 +642,7 @@ class OwnedInputAudit:
                 'samples': self.samples,
                 'events': self.events, 'errors': self.errors,
                 'windowUpdates': self.window_updates,
+                'windowRetirementRaces': self.retirement_races,
                 'rootWindow': self.root_window,
                 'windowTracking': 'Owned subtree lifecycle notifications; newly realized children selected when polled. Input before a child subscription cannot be reconstructed.',
                 'keyboardMechanism': 'owned-window XInput2 and core events',

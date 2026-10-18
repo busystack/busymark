@@ -626,6 +626,53 @@ class OwnedInputIsolationTest(unittest.TestCase):
             with self.assertRaisesRegex(ObservationIncomplete, 'version 2'):
                 audit._prepare_xi2()
 
+    def query_retirement(self, *, destroyed, code=3, resource=123):
+        from application_close_smoke import OwnedInputAudit, InputError
+        audit = OwnedInputAudit.__new__(OwnedInputAudit)
+        audit.display, audit.root_window, audit.xi_opcode = None, 123, 131
+        audit.windows, audit.window_updates, audit.errors = {123}, [], []
+        audit.retirement_races, audit.retired = [], False
+        handler = None
+
+        def set_handler(address):
+            nonlocal handler
+            previous, handler = handler, address
+            return previous
+
+        def query(*_):
+            callback = C.CFUNCTYPE(C.c_int, C.c_void_p, C.POINTER(InputError))(handler.value)
+            error = InputError(resource=resource, error_code=code, request_code=15)
+            callback(None, C.byref(error))
+            return 0
+
+        def drain():
+            if 123 in destroyed:
+                audit.retired = True
+                audit.windows.clear()
+            return destroyed
+
+        audit.x = SimpleNamespace(XSetErrorHandler=set_handler, XQueryTree=query,
+                                  XSync=Mock())
+        audit._drain_events = drain
+        return audit
+
+    def test_query_badwindow_requires_matching_owned_destroy_notification(self):
+        for arguments in [dict(destroyed=set()), dict(destroyed={123}, code=10),
+                          dict(destroyed={123}, resource=999)]:
+            with self.subTest(arguments=arguments):
+                audit = self.query_retirement(**arguments)
+                with self.assertRaises(ObservationIncomplete):
+                    audit._refresh_windows()
+                self.assertFalse(audit.retirement_races)
+
+    def test_query_badwindow_after_observed_retirement_is_recorded(self):
+        audit = self.query_retirement(destroyed={123})
+        audit._refresh_windows()
+        self.assertTrue(audit.retired)
+        self.assertFalse(audit.windows)
+        self.assertFalse(audit.errors)
+        self.assertEqual(audit.retirement_races[0]['resource'], 123)
+
     def xi_event(self, xid=123, kind=2):
         from application_close_smoke import OwnedInputAudit, InputEvent, InputCookie, DeviceKeyPrefix
         audit = OwnedInputAudit.__new__(OwnedInputAudit)

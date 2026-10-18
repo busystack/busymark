@@ -59,3 +59,7 @@ only on a disposable display:
 xvfb-run -a dbus-run-session -- /usr/bin/python3 \
   tools/test_application_input_observer.py --disposable-display
 ```
+
+If a window disappears during subtree enumeration, only a matching subscribed
+`DestroyNotify` establishes ordinary retirement. The observer records that race;
+an unmatched `BadWindow` or inaccessible observation still fails verification.
