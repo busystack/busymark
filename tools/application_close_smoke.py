@@ -75,7 +75,7 @@ class LoadedEngine:
                     self.receipt = json.load(stream)
                     self.expected = self.receipt.get('packagedEngineSHA256', self.receipt['files']['libflutter_linux_gtk.so'])
         except (OSError, ValueError, KeyError, TypeError) as error:
-            raise ObservationIncomplete('Engine receipt unavailable or invalid: ' + str(error)) from error
+            raise ObservationIncomplete('Expected engine identity input unavailable or invalid: ' + str(error)) from error
         if not isinstance(self.expected, str) or not re.fullmatch(r'[0-9a-f]{64}', self.expected):
             raise ObservationIncomplete('Invalid expected engine SHA256')
         self.fd = None
@@ -130,7 +130,7 @@ class LoadedEngine:
             actual = h.hexdigest()
             record['loadedEngine'] = {'path': self.path, 'sha256': actual, 'expectedSHA256': self.expected, 'inode': self.stat.st_ino, 'device': self.stat.st_dev, 'mode': self.receipt.get('mode'), 'key': self.receipt.get('key'), 'confinement': self.confinement}
             if actual != self.expected:
-                errors.append('Actual loaded engine differs from the expected official artifact')
+                errors.append('Actual loaded engine differs from the expected artifact')
         except OSError as error:
             errors.append('Loaded-engine hashing incomplete: ' + str(error))
         finally:
@@ -805,7 +805,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         raise ValueError('Select passive isolation or normal-focus input audit')
     if isolate_input and not plain:
         raise ValueError('Input isolation applies only to plain startup observation')
-    record = {"launch_ns": time.monotonic_ns(), "scenario": scenario,
+    record = {"caseSetup_ns": time.monotonic_ns(), "launch_ns": None, "scenario": scenario,
               "command": command, "plainShippingExecutable": plain,
               "observationInterpreter": sys.executable, "exitCode": None,
               "applicationStarted": False}
@@ -867,6 +867,9 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             arguments = []
 
         record['command'] = command + arguments
+        # Preserve the historical endpoint after profile/command preparation,
+        # before observer initialization. Setup failures have no launch epoch.
+        record['launch_ns'] = time.monotonic_ns()
         if scenario == 'pending-initialization' and not plain:
             record['controlledPendingHarness'] = True
         phase = 'observer initialization'

@@ -14,6 +14,7 @@ from contextlib import redirect_stderr
 import io
 import ctypes as C
 
+sys.path.insert(0, str(Path(__file__).parent))
 from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, seed_local_settings, signal_owned, snap_command, snapshot_mapped_process
 
 
@@ -66,6 +67,12 @@ class LaunchLifetimeTest(unittest.TestCase):
         self.assertFalse(r['applicationStarted'])
         self.assertTrue(r['launchSkipped'])
 
+    def test_launch_epoch_preserves_pre_observer_boundary_after_case_setup(self):
+        with patch('application_close_smoke.time.monotonic_ns', side_effect=iter(range(10000))):
+            r = self.run_failure(lambda root: [str(root / 'absent')])
+        self.assertLess(r['caseSetup_ns'], r['launch_ns'])
+        self.assertLess(r['launch_ns'], r['spawnRequest_ns'])
+
     def test_real_nonexecutable_file_reports_failed_creation(self):
         def command(root):
             p = root / 'not-executable'
@@ -102,6 +109,7 @@ class LaunchLifetimeTest(unittest.TestCase):
             launch.assert_not_called()
             self.assertFalse(accepted(r))
             self.assertEqual(r['failurePhase'], 'setup')
+            self.assertIsNone(r['launch_ns'])
             self.assertEqual(json.loads((root / 'case/result.json').read_text()), r)
 
     def test_partial_desktop_initialization_releases_its_connection(self):
