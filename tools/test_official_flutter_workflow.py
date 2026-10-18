@@ -8,7 +8,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shlex
 import subprocess
 import tempfile
 import unittest
@@ -55,14 +54,34 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             subprocess.run(['bash', '-euc', script], check=True, env={**os.environ, 'CRAFT_STAGE': str(stage), 'CRAFT_PART_INSTALL': str(output)})
             self.assertEqual((output / 'lib/libflutter_linux_gtk.so').read_bytes(), library.read_bytes())
 
-    def test_executable_build_arguments_do_not_select_a_local_engine(self):
-        scripts = [part.get('override-build', '') for part in self.recipe['parts'].values()]
-        scripts += [step.get('run', '') for job in self.workflow['jobs'].values() for step in job['steps']]
-        for script in scripts:
-            self.assertFalse(any(word.startswith('--local-engine') for word in shlex.split(script, comments=True)))
-        build = shlex.split(self.recipe['parts']['busymark']['override-build'], comments=True)
-        start = build.index('flutter', build.index('--enforce-lockfile'))
-        self.assertEqual(build[start:start + 4], ['flutter', 'build', 'linux', '--release'])
+    def test_snap_build_invokes_selected_sdk_with_locked_inputs(self):
+        # Execute the real build preamble in a disposable tree. The SDK spy
+        # stops at build admission, before compilation or staging. Documentation
+        # and comments cannot affect these assertions about actual argv.
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            stage = root / 'stage'
+            sdk = stage / 'flutter-sdk'
+            (sdk / 'bin').mkdir(parents=True)
+            spy = sdk / 'bin/flutter'
+            spy.write_text('''#!/usr/bin/python3
+import json, os, sys
+with open(os.environ['BUILD_CALLS'], 'a') as output:
+    output.write(json.dumps(sys.argv) + '\\n')
+raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
+''')
+            spy.chmod(0o700)
+            calls = root / 'calls.jsonl'
+            result = subprocess.run(['bash', '-euc', self.recipe['parts']['busymark']['override-build']],
+                                    cwd=root, env={**os.environ, 'CRAFT_STAGE': str(stage),
+                                                   'CRAFT_PART_BUILD': str(root / 'build'),
+                                                   'CRAFT_PART_INSTALL': str(root / 'install'),
+                                                   'BUILD_CALLS': str(calls)}, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77, result.stdout + result.stderr)
+            invocations = [json.loads(line) for line in calls.read_text().splitlines()]
+            self.assertEqual(invocations[0], [str(spy), 'pub', 'get', '--enforce-lockfile'])
+            self.assertEqual(invocations[1], [str(spy), 'build', 'linux', '--release', '--no-pub',
+                                               '--verbose', '--target', 'lib/main.dart'])
 
     def test_required_native_failures_do_not_suppress_independent_checks(self):
         checks = {
