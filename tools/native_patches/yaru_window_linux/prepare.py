@@ -36,9 +36,13 @@ def prepare(source: Path, output: Path) -> None:
         if relative.is_absolute() or ".." in relative.parts:
             raise RuntimeError(f"Invalid generated source path: {name}")
         target = output / relative
-        for path in [*target.parents[:len(relative.parts) - 1], target]:
+        parents = target.parents[:len(relative.parts) - 1]
+        for path in [*parents, target]:
             if path.is_symlink():
                 raise RuntimeError(f"Refusing a redirected generated source: {path}")
+        for path in parents:
+            if path.exists() and not path.is_dir():
+                raise RuntimeError(f"Refusing a non-directory generated parent: {path}")
         if target.exists():
             info = target.stat()
             if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
