@@ -34,7 +34,7 @@ void main() {
       final beforeMode = (await outside.stat()).mode;
       final link = Link(p.join(directory.path, 'link'));
       await link.create(outside.path);
-      expect(
+      await expectLater(
         () => LinuxPrivatePermissions.instance.restrict(
           link.path,
           directory: false,
@@ -43,7 +43,7 @@ void main() {
       );
       expect((await outside.stat()).mode, beforeMode);
       expect(await outside.readAsString(), 'untouched');
-      expect(
+      await expectLater(
         () => LinuxPrivatePermissions.instance.restrict(
           '${outside.path}\u0000/unexpected',
           directory: false,
@@ -51,7 +51,7 @@ void main() {
         throwsA(isA<FileSystemException>()),
       );
       expect((await outside.stat()).mode, beforeMode);
-      expect(
+      await expectLater(
         () => LinuxPrivatePermissions.instance.restrict(
           p.join(directory.path, 'missing'),
           directory: false,

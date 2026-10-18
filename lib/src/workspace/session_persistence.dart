@@ -736,9 +736,9 @@ Future<void> _writeAtomic(File target, Map<String, Object?> json) async {
   await target.parent.create(recursive: true);
   await _setPrivatePermissions(target.parent, directory: true);
   final staging = await target.parent.createTemp('.busymark-state-');
-  await _setPrivatePermissions(staging, directory: true);
   final staged = File(p.join(staging.path, p.basename(target.path)));
   try {
+    await _setPrivatePermissions(staging, directory: true);
     await staged.writeAsString(
       const JsonEncoder.withIndent('  ').convert(json),
       flush: true,
@@ -772,7 +772,7 @@ Future<void> _setPrivatePermissions(
     return;
   }
   if (Platform.isLinux) {
-    LinuxPrivatePermissions.instance.restrict(
+    await LinuxPrivatePermissions.instance.restrict(
       entity.path,
       directory: directory,
     );

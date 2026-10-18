@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 
@@ -16,15 +18,51 @@ typedef _ErrnoDart = Pointer<Int32> Function();
 /// O_NOFOLLOW rejects final-component symlinks; fchmod applies to the opened
 /// inode even if another process replaces the pathname in the meantime.
 final class LinuxPrivatePermissions {
-  LinuxPrivatePermissions._() {
-    final libc = DynamicLibrary.open('libc.so.6');
+  LinuxPrivatePermissions._() : _library = 'libc.so.6';
+
+  /// Native barrier/error fixture only; production always selects libc.
+  LinuxPrivatePermissions.forTesting({required String nativeLibrary})
+    : _library = nativeLibrary;
+
+  static final instance = LinuxPrivatePermissions._();
+  final String _library;
+
+  // At most one native worker is active per calling isolate. UI transaction
+  // queues await admission/completion; no operation is dropped or cancelled.
+  // Isolate.run retires its worker after each operation, including failures,
+  // so an idle permission service cannot keep application shutdown alive.
+  static Future<void> _tail = Future<void>.value();
+
+  Future<void> restrict(String path, {required bool directory}) async {
+    if (path.contains('\u0000')) {
+      throw FileSystemException('Invalid application state path', path);
+    }
+    final operation = _tail.then(
+      (_) => _restrictOffIsolate(path, directory, _library),
+    );
+    _tail = operation.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    await operation;
+  }
+}
+
+// Explicit inputs prevent a closure from transferring a service, transaction,
+// open descriptor or UI object. Construction, allocation, open/fchmod/close
+// and error/errno handling all execute together on the worker isolate.
+Future<void> _restrictOffIsolate(String path, bool directory, String library) =>
+    Isolate.run(
+      () => _NativePermissions(library).restrict(path, directory: directory),
+      debugName: 'busymark-private-permissions',
+    );
+
+final class _NativePermissions {
+  _NativePermissions(String library) {
+    final libc = DynamicLibrary.open(library);
     _open = libc.lookupFunction<_OpenNative, _OpenDart>('open');
     _fchmod = libc.lookupFunction<_FchmodNative, _FchmodDart>('fchmod');
     _close = libc.lookupFunction<_CloseNative, _CloseDart>('close');
     _errno = libc.lookupFunction<_ErrnoNative, _ErrnoDart>('__errno_location');
   }
 
-  static final instance = LinuxPrivatePermissions._();
   late final _OpenDart _open;
   late final _FchmodDart _fchmod;
   late final _CloseDart _close;
