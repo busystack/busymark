@@ -1,0 +1,1057 @@
+--- a/engine/src/flutter/shell/platform/linux/fl_settings.cc
++++ b/engine/src/flutter/shell/platform/linux/fl_settings.cc
+@@ -53,13 +53,9 @@
+ }
+ 
+ FlSettings* fl_settings_new() {
+-  g_autoptr(FlSettingsPortal) portal = fl_settings_portal_new();
+-
+-  g_autoptr(GError) error = nullptr;
+-  if (!fl_settings_portal_start(portal, &error)) {
+-    g_debug("XDG desktop portal settings unavailable: %s", error->message);
+-    return fl_gnome_settings_new();
+-  }
+-
+-  return FL_SETTINGS(g_object_ref(portal));
++  FlSettingsPortal* portal = fl_settings_portal_new();
++  // Local values are immediately usable. Neither session-bus authentication,
++  // service activation nor portal reads may hold up engine startup on GTK.
++  fl_settings_portal_start(portal, nullptr, nullptr, nullptr);
++  return FL_SETTINGS(portal);
+ }
+--- a/engine/src/flutter/shell/platform/linux/fl_settings_portal.cc
++++ b/engine/src/flutter/shell/platform/linux/fl_settings_portal.cc
+@@ -5,7 +5,11 @@
+ #include "flutter/shell/platform/linux/fl_settings_portal.h"
+ 
+ #include <gio/gio.h>
++#include <cmath>
++#include <memory>
++
+ #include <glib.h>
++#include "flutter/shell/platform/linux/fl_gnome_settings.h"
+ 
+ static constexpr char kPortalName[] = "org.freedesktop.portal.Desktop";
+ static constexpr char kPortalPath[] = "/org/freedesktop/portal/desktop";
+@@ -73,6 +77,33 @@
+ 
+   GDBusProxy* dbus_proxy;
+   GVariantDict* values;
++  GVariantDict* staged;
++  GMainContext* context;
++  GSource* publish_source;
++  struct Snapshot {
++    FlClockFormat clock;
++    FlColorScheme color;
++    gboolean animations;
++    gboolean contrast;
++    gdouble scale;
++  } published;
++  FlSettings* fallback;
++  GCancellable* cancellable;
++  GCancellable* external_cancellable;
++  gulong external_cancel_id;
++  GTask* initialization;
++  gboolean started;
++  gboolean retired;
++  gboolean had_owner;
++  gchar* owner;
++  guint64 generation;
++  guint pending;
++  struct {
++    GCancellable* cancellable;
++    gulong cancel_id;
++    guint64 revision;
++    gboolean pending;
++  } requests[G_N_ELEMENTS(kAllSettings)];
+ };
+ 
+ static void fl_settings_portal_iface_init(FlSettingsInterface* iface);
+@@ -95,57 +126,255 @@
+   return *value != nullptr;
+ }
+ 
+-static void set_value(FlSettingsPortal* portal,
++static FlSettingsPortal::Snapshot snapshot(FlSettingsPortal* self) {
++  FlSettings* settings = FL_SETTINGS(self);
++  return {fl_settings_get_clock_format(settings),
++          fl_settings_get_color_scheme(settings),
++          fl_settings_get_enable_animations(settings),
++          fl_settings_get_high_contrast(settings),
++          fl_settings_get_text_scaling_factor(settings)};
++}
++
++static void schedule_publish(FlSettingsPortal* self) {
++  if (self->retired || self->publish_source != nullptr) {
++    return;
++  }
++  // At most one short dispatch. No strong reference: disposal destroys the
++  // source before releasing its provider. Hold a reference only while running,
++  // because a changed handler may dispose or release the provider reentrantly.
++  self->publish_source = g_idle_source_new();
++  g_source_set_priority(self->publish_source, G_PRIORITY_DEFAULT);
++  g_source_set_callback(
++      self->publish_source,
++      +[](gpointer data) -> gboolean {
++        g_autoptr(FlSettingsPortal) portal =
++            FL_SETTINGS_PORTAL(g_object_ref(data));
++        g_clear_pointer(&portal->publish_source, g_source_unref);
++        const auto next = snapshot(portal);
++        const auto previous = portal->published;
++        portal->published = next;
++        if (next.clock != previous.clock || next.color != previous.color ||
++            next.animations != previous.animations ||
++            next.contrast != previous.contrast ||
++            next.scale != previous.scale) {
++          fl_settings_emit_changed(FL_SETTINGS(portal));
++        }
++        return G_SOURCE_REMOVE;
++      },
++      self, nullptr);
++  g_source_attach(self->publish_source, self->context);
++}
++
++static void local_changed_cb(FlSettings*, gpointer data) {
++  schedule_publish(FL_SETTINGS_PORTAL(data));
++}
++
++static void set_value(FlSettingsPortal* self,
+                       const FlSetting* setting,
+                       GVariant* value) {
+-  g_autofree const gchar* key = format_key(setting);
+-
+-  // ignore redundant changes from multiple XDG desktop portal backends
+-  g_autoptr(GVariant) old_value =
+-      g_variant_dict_lookup_value(portal->values, key, nullptr);
+-  if (old_value != nullptr && value != nullptr &&
+-      g_variant_equal(old_value, value)) {
+-    return;
+-  }
+-
+-  g_variant_dict_insert_value(portal->values, key, value);
+-  fl_settings_emit_changed(FL_SETTINGS(portal));
+-}
+-
+-// Based on
+-// https://gitlab.gnome.org/GNOME/Initiatives/-/wikis/Dark-Style-Preference#other
+-static gboolean settings_portal_read(GDBusProxy* proxy,
+-                                     const gchar* ns,
+-                                     const gchar* key,
+-                                     GVariant** out) {
++  g_autofree gchar* key = format_key(setting);
++  // Keep the previous complete authority while acquiring a new generation.
++  // Initial replies and concurrent signals become one coherent snapshot.
++  GVariantDict* target = self->staged != nullptr ? self->staged : self->values;
++  g_autoptr(GVariant) previous =
++      g_variant_dict_lookup_value(target, key, nullptr);
++  if (previous != nullptr && g_variant_equal(previous, value)) {
++    return;
++  }
++  g_variant_dict_insert_value(target, key, value);
++  if (self->staged == nullptr) {
++    schedule_publish(self);
++  }
++}
++
++static void commit_snapshot(FlSettingsPortal* self) {
++  if (self->staged != nullptr) {
++    g_variant_dict_unref(self->values);
++    self->values = self->staged;
++    self->staged = nullptr;
++    schedule_publish(self);
++  }
++}
++
++// Callback contexts never own the portal (and therefore cannot retain a view or
++// engine). All state mutation is on the creating GTK main context. GIO owns
++// only these weak contexts until its cancellable operation completes.
++struct PortalCallback {
++  GWeakRef portal;
++  guint64 generation;
++  guint index;
++  guint64 revision;
++  PortalCallback(FlSettingsPortal* self, guint slot = 0)
++      : generation(self->generation),
++        index(slot),
++        revision(self->requests[slot].revision) {
++    g_weak_ref_init(&portal, self);
++  }
++  ~PortalCallback() { g_weak_ref_clear(&portal); }
++};
++
++static void disconnect_initial_cancellable(FlSettingsPortal* self) {
++  if (self->external_cancel_id != 0) {
++    g_cancellable_disconnect(self->external_cancellable,
++                             self->external_cancel_id);
++    self->external_cancel_id = 0;
++  }
++  g_clear_object(&self->external_cancellable);
++}
++
++static void complete_initialization(FlSettingsPortal* self) {
++  if (self->initialization == nullptr) {
++    return;
++  }
++  disconnect_initial_cancellable(self);
++  GTask* task = self->initialization;
++  self->initialization = nullptr;
++  if (!g_task_return_error_if_cancelled(task)) {
++    g_task_return_boolean(task, TRUE);
++  }
++  g_object_unref(task);
++}
++
++static void cancel_requests(FlSettingsPortal* self) {
++  ++self->generation;
++  for (auto& request : self->requests) {
++    request.pending = FALSE;
++    if (request.cancellable != nullptr) {
++      g_cancellable_cancel(request.cancellable);
++    }
++    if (request.cancel_id != 0) {
++      g_cancellable_disconnect(self->cancellable, request.cancel_id);
++      request.cancel_id = 0;
++    }
++    g_clear_object(&request.cancellable);
++  }
++  self->pending = 0;
++  g_clear_pointer(&self->staged, g_variant_dict_unref);
++}
++
++static void settle_request(FlSettingsPortal* self, guint index) {
++  if (self->retired || !self->requests[index].pending) {
++    return;
++  }
++  auto& request = self->requests[index];
++  request.pending = FALSE;
++  if (request.cancel_id != 0) {
++    g_cancellable_disconnect(self->cancellable, request.cancel_id);
++    request.cancel_id = 0;
++  }
++  g_clear_object(&request.cancellable);
++  if (--self->pending == 0) {
++    if (g_cancellable_is_cancelled(self->cancellable)) {
++      g_clear_pointer(&self->staged, g_variant_dict_unref);
++    } else {
++      commit_snapshot(self);
++    }
++    complete_initialization(self);
++  }
++}
++
++static gint find_setting(const gchar* ns, const gchar* key) {
++  for (guint i = 0; i < G_N_ELEMENTS(kAllSettings); ++i) {
++    if (g_str_equal(ns, kAllSettings[i].ns) &&
++        g_str_equal(key, kAllSettings[i].key)) {
++      return static_cast<gint>(i);
++    }
++  }
++  return -1;
++}
++
++static gboolean valid_value(guint index, GVariant* value) {
++  if (!g_variant_is_of_type(value, kAllSettings[index].type)) {
++    return FALSE;
++  }
++  if (g_variant_type_equal(kAllSettings[index].type, G_VARIANT_TYPE_DOUBLE)) {
++    const gdouble scale = g_variant_get_double(value);
++    return std::isfinite(scale) && scale > 0;
++  }
++  return TRUE;
++}
++
++static void read_cb(GObject* object, GAsyncResult* result, gpointer user_data) {
++  std::unique_ptr<PortalCallback> callback(
++      static_cast<PortalCallback*>(user_data));
+   g_autoptr(GError) error = nullptr;
+-  g_autoptr(GVariant) value =
+-      g_dbus_proxy_call_sync(proxy, "Read", g_variant_new("(ss)", ns, key),
+-                             G_DBUS_CALL_FLAGS_NONE, G_MAXINT, nullptr, &error);
+-
+-  if (error) {
+-    if (error->domain == G_DBUS_ERROR &&
+-        error->code == G_DBUS_ERROR_SERVICE_UNKNOWN) {
+-      g_debug("XDG desktop portal unavailable: %s", error->message);
+-      return FALSE;
+-    }
+-
+-    if (error->domain == G_DBUS_ERROR &&
+-        error->code == G_DBUS_ERROR_UNKNOWN_METHOD) {
+-      g_debug("XDG desktop portal settings unavailable: %s", error->message);
+-      return FALSE;
+-    }
+-
+-    g_critical("Failed to read XDG desktop portal settings: %s",
+-               error->message);
+-    return FALSE;
+-  }
+-
+-  g_autoptr(GVariant) child = nullptr;
+-  g_variant_get(value, "(v)", &child);
+-  g_variant_get(child, "v", out);
+-
+-  return TRUE;
++  g_autoptr(GVariant) reply =
++      g_dbus_proxy_call_finish(G_DBUS_PROXY(object), result, &error);
++  g_autoptr(FlSettingsPortal) self =
++      FL_SETTINGS_PORTAL(g_weak_ref_get(&callback->portal));
++  if (self == nullptr || self->retired ||
++      callback->generation != self->generation ||
++      !self->requests[callback->index].pending) {
++    return;
++  }
++  if (g_cancellable_is_cancelled(self->cancellable)) {
++    settle_request(self, callback->index);
++    return;
++  }
++  if (error != nullptr) {
++    if (g_error_matches(error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN) ||
++        g_error_matches(error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD)) {
++      g_debug("XDG desktop portal Read %s: %s",
++              kAllSettings[callback->index].key, error->message);
++    } else if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
++      g_warning("Failed to read XDG desktop portal %s: %s",
++                kAllSettings[callback->index].key, error->message);
++    }
++    settle_request(self, callback->index);
++    return;
++  }
++
++  // The deprecated portal Read API wraps its result twice. ReadOne is not a
++  // drop-in replacement. Validate both layers and the known setting type.
++  g_autoptr(GVariant) outer = nullptr;
++  g_autoptr(GVariant) inner = nullptr;
++  g_autoptr(GVariant) value = nullptr;
++  if (g_variant_is_of_type(reply, G_VARIANT_TYPE("(v)"))) {
++    outer = g_variant_get_child_value(reply, 0);
++    inner = g_variant_get_variant(outer);
++    if (g_variant_is_of_type(inner, G_VARIANT_TYPE_VARIANT)) {
++      value = g_variant_get_variant(inner);
++    }
++  }
++  if (value != nullptr && valid_value(callback->index, value)) {
++    if (callback->revision == self->requests[callback->index].revision) {
++      set_value(self, &kAllSettings[callback->index], value);
++    }
++  } else {
++    g_warning("Invalid XDG desktop portal value for %s",
++              kAllSettings[callback->index].key);
++  }
++  settle_request(self, callback->index);
++}
++
++static void read_settings(FlSettingsPortal* self) {
++  cancel_requests(self);
++  self->staged = g_variant_dict_new(nullptr);
++  for (const auto& setting : kAllSettings) {
++    g_autoptr(GVariant) value = nullptr;
++    if (get_value(self, &setting, &value)) {
++      g_autofree gchar* key = format_key(&setting);
++      g_variant_dict_insert_value(self->staged, key, value);
++    }
++  }
++  self->pending = G_N_ELEMENTS(kAllSettings);
++  for (guint i = 0; i < G_N_ELEMENTS(kAllSettings); ++i) {
++    auto& request = self->requests[i];
++    request.pending = TRUE;
++    request.cancellable = g_cancellable_new();
++    request.cancel_id = g_cancellable_connect(
++        self->cancellable, G_CALLBACK(+[](GCancellable*, gpointer data) {
++          g_cancellable_cancel(G_CANCELLABLE(data));
++        }),
++        g_object_ref(request.cancellable), g_object_unref);
++    // Keep the existing deadline. Cancellation and weak callback ownership,
++    // rather than a shorter timeout or a nested main loop, retire the work.
++    g_dbus_proxy_call(
++        self->dbus_proxy, "Read",
++        g_variant_new("(ss)", kAllSettings[i].ns, kAllSettings[i].key),
++        G_DBUS_CALL_FLAGS_NONE, G_MAXINT, request.cancellable, read_cb,
++        new PortalCallback(self, i));
++  }
+ }
+ 
+ static void settings_portal_changed_cb(GDBusProxy* proxy,
+@@ -153,28 +382,157 @@
+                                        const char* signal_name,
+                                        GVariant* parameters,
+                                        gpointer user_data) {
+-  FlSettingsPortal* portal = FL_SETTINGS_PORTAL(user_data);
+-  if (g_strcmp0(signal_name, "SettingChanged")) {
+-    return;
+-  }
+-
+-  FlSetting setting;
++  g_autoptr(FlSettingsPortal) self =
++      FL_SETTINGS_PORTAL(g_object_ref(user_data));
++  if (self->retired || g_cancellable_is_cancelled(self->cancellable) ||
++      g_strcmp0(signal_name, "SettingChanged") != 0 ||
++      !g_variant_is_of_type(parameters, G_VARIANT_TYPE("(ssv)"))) {
++    return;
++  }
++  const gchar *ns, *key;
+   g_autoptr(GVariant) value = nullptr;
+-  g_variant_get(parameters, "(&s&sv)", &setting.ns, &setting.key, &value);
+-  set_value(portal, &setting, value);
++  g_variant_get(parameters, "(&s&sv)", &ns, &key, &value);
++  const gint index = find_setting(ns, key);
++  if (index < 0 || !valid_value(index, value)) {
++    return;
++  }
++  ++self->requests[index].revision;
++  set_value(self, &kAllSettings[index], value);
++  if (self->staged != nullptr) {
++    // A current notification must not wait for an unrelated initial read.
++    // Publish it coherently on the next dispatch, and retain it in the staged
++    // round so completion cannot roll it back to an older response.
++    g_autofree gchar* compound_key = format_key(&kAllSettings[index]);
++    g_variant_dict_insert_value(self->values, compound_key, value);
++    schedule_publish(self);
++  }
++  // A newer authoritative signal also satisfies this key's initial read.
++  // Cancel its stale request, so a withheld older reply cannot hold startup.
++  if (!self->retired && self->requests[index].pending) {
++    g_cancellable_cancel(self->requests[index].cancellable);
++    settle_request(self, index);
++  }
++}
++
++static void owner_changed_cb(GDBusProxy* proxy,
++                             GParamSpec*,
++                             gpointer user_data) {
++  FlSettingsPortal* self = FL_SETTINGS_PORTAL(user_data);
++  if (self->retired || g_cancellable_is_cancelled(self->cancellable)) {
++    return;
++  }
++  g_autofree gchar* owner = g_dbus_proxy_get_name_owner(proxy);
++  if (g_strcmp0(owner, self->owner) == 0) {
++    return;
++  }
++  const gboolean first_activation =
++      self->owner == nullptr && !self->had_owner &&
++      self->initialization != nullptr && self->pending > 0;
++  g_free(self->owner);
++  self->owner = g_strdup(owner);
++  self->had_owner |= owner != nullptr;
++  if (first_activation && owner != nullptr) {
++    // The original calls activated this owner. Their responses are valid;
++    // issuing a second initial batch would duplicate all six requests.
++    return;
++  }
++  if (owner != nullptr) {
++    read_settings(self);
++  } else {
++    cancel_requests(self);
++    // Retain the last complete authority on owner loss. A replacement owner
++    // supplies a fresh coherent snapshot; canceled old replies cannot publish.
++    complete_initialization(self);
++  }
++}
++
++static void use_local_settings(FlSettingsPortal* self, const GError* error) {
++  g_debug("XDG desktop portal settings unavailable: %s", error->message);
++  // The local provider has been active since construction. No replacement,
++  // theme reset or delayed fallback is necessary on connection failure.
++  complete_initialization(self);
++}
++
++static void proxy_cb(GObject*, GAsyncResult* result, gpointer user_data) {
++  std::unique_ptr<PortalCallback> callback(
++      static_cast<PortalCallback*>(user_data));
++  g_autoptr(GError) error = nullptr;
++  g_autoptr(GDBusProxy) proxy = g_dbus_proxy_new_finish(result, &error);
++  g_autoptr(FlSettingsPortal) self =
++      FL_SETTINGS_PORTAL(g_weak_ref_get(&callback->portal));
++  if (self == nullptr || self->retired) {
++    return;
++  }
++  if (g_cancellable_is_cancelled(self->cancellable)) {
++    complete_initialization(self);
++    return;
++  }
++  if (proxy == nullptr) {
++    if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
++      complete_initialization(self);
++    } else {
++      use_local_settings(self, error);
++    }
++    return;
++  }
++  self->dbus_proxy = G_DBUS_PROXY(g_steal_pointer(&proxy));
++  self->owner = g_dbus_proxy_get_name_owner(self->dbus_proxy);
++  self->had_owner = self->owner != nullptr;
++  // Subscribe before issuing any reads. A key revision prevents an older
++  // initial response from replacing a later SettingChanged notification.
++  g_signal_connect_object(self->dbus_proxy, "g-signal",
++                          G_CALLBACK(settings_portal_changed_cb), self,
++                          static_cast<GConnectFlags>(0));
++  g_signal_connect_object(self->dbus_proxy, "notify::g-name-owner",
++                          G_CALLBACK(owner_changed_cb), self,
++                          static_cast<GConnectFlags>(0));
++  read_settings(self);
++}
++
++static void bus_cb(GObject*, GAsyncResult* result, gpointer user_data) {
++  std::unique_ptr<PortalCallback> callback(
++      static_cast<PortalCallback*>(user_data));
++  g_autoptr(GError) error = nullptr;
++  g_autoptr(GDBusConnection) connection = g_bus_get_finish(result, &error);
++  g_autoptr(FlSettingsPortal) self =
++      FL_SETTINGS_PORTAL(g_weak_ref_get(&callback->portal));
++  if (self == nullptr || self->retired) {
++    return;
++  }
++  if (g_cancellable_is_cancelled(self->cancellable)) {
++    complete_initialization(self);
++    return;
++  }
++  if (connection == nullptr) {
++    if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
++      complete_initialization(self);
++    } else {
++      use_local_settings(self, error);
++    }
++    return;
++  }
++  const auto flags = static_cast<GDBusProxyFlags>(
++      G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
++      G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START_AT_CONSTRUCTION);
++  // Settings properties are unused here. Read retains service activation after
++  // signal subscriptions are ready, rather than doing an unused GetAll.
++  g_dbus_proxy_new(connection, flags, nullptr, kPortalName, kPortalPath,
++                   kPortalSettings, self->cancellable, proxy_cb,
++                   new PortalCallback(self));
+ }
+ 
+ static FlClockFormat fl_settings_portal_get_clock_format(FlSettings* settings) {
+   FlSettingsPortal* self = FL_SETTINGS_PORTAL(settings);
+-
+-  FlClockFormat clock_format = FL_CLOCK_FORMAT_24H;
++  FlClockFormat clock_format =
++      self->fallback != nullptr ? fl_settings_get_clock_format(self->fallback)
++                                : FL_CLOCK_FORMAT_24H;
+ 
+   g_autoptr(GVariant) value = nullptr;
+   if (get_value(self, &kClockFormat, &value)) {
+-    const gchar* clock_format_str = g_variant_get_string(value, nullptr);
+-    if (g_strcmp0(clock_format_str, kClockFormat12Hour) == 0) {
+-      clock_format = FL_CLOCK_FORMAT_12H;
+-    }
++    clock_format =
++        g_strcmp0(g_variant_get_string(value, nullptr), kClockFormat12Hour) == 0
++            ? FL_CLOCK_FORMAT_12H
++            : FL_CLOCK_FORMAT_24H;
+   }
+ 
+   return clock_format;
+@@ -182,19 +540,20 @@
+ 
+ static FlColorScheme fl_settings_portal_get_color_scheme(FlSettings* settings) {
+   FlSettingsPortal* self = FL_SETTINGS_PORTAL(settings);
+-
+-  FlColorScheme color_scheme = FL_COLOR_SCHEME_LIGHT;
++  FlColorScheme color_scheme =
++      self->fallback != nullptr ? fl_settings_get_color_scheme(self->fallback)
++                                : FL_COLOR_SCHEME_LIGHT;
+ 
+   g_autoptr(GVariant) value = nullptr;
+   if (get_value(self, &kColorScheme, &value)) {
+-    if (g_variant_get_uint32(value) == COLOR_SCHEME_PREFER_DARK) {
+-      color_scheme = FL_COLOR_SCHEME_DARK;
+-    }
++    color_scheme = g_variant_get_uint32(value) == COLOR_SCHEME_PREFER_DARK
++                       ? FL_COLOR_SCHEME_DARK
++                       : FL_COLOR_SCHEME_LIGHT;
+   } else if (get_value(self, &kGtkTheme, &value)) {
+     const gchar* gtk_theme_str = g_variant_get_string(value, nullptr);
+-    if (g_str_has_suffix(gtk_theme_str, kGtkThemeDarkSuffix)) {
+-      color_scheme = FL_COLOR_SCHEME_DARK;
+-    }
++    color_scheme = g_str_has_suffix(gtk_theme_str, kGtkThemeDarkSuffix)
++                       ? FL_COLOR_SCHEME_DARK
++                       : FL_COLOR_SCHEME_LIGHT;
+   }
+ 
+   return color_scheme;
+@@ -202,8 +561,10 @@
+ 
+ static gboolean fl_settings_portal_get_enable_animations(FlSettings* settings) {
+   FlSettingsPortal* self = FL_SETTINGS_PORTAL(settings);
+-
+-  gboolean enable_animations = true;
++  gboolean enable_animations =
++      self->fallback != nullptr
++          ? fl_settings_get_enable_animations(self->fallback)
++          : true;
+ 
+   g_autoptr(GVariant) value = nullptr;
+   if (get_value(self, &kEnableAnimations, &value)) {
+@@ -215,8 +576,9 @@
+ 
+ static gboolean fl_settings_portal_get_high_contrast(FlSettings* settings) {
+   FlSettingsPortal* self = FL_SETTINGS_PORTAL(settings);
+-
+-  gboolean high_contrast = false;
++  gboolean high_contrast = self->fallback != nullptr
++                               ? fl_settings_get_high_contrast(self->fallback)
++                               : false;
+ 
+   g_autoptr(GVariant) value = nullptr;
+   if (get_value(self, &kHighContrast, &value)) {
+@@ -229,8 +591,10 @@
+ static gdouble fl_settings_portal_get_text_scaling_factor(
+     FlSettings* settings) {
+   FlSettingsPortal* self = FL_SETTINGS_PORTAL(settings);
+-
+-  gdouble scaling_factor = 1.0;
++  gdouble scaling_factor =
++      self->fallback != nullptr
++          ? fl_settings_get_text_scaling_factor(self->fallback)
++          : 1.0;
+ 
+   g_autoptr(GVariant) value = nullptr;
+   if (get_value(self, &kTextScalingFactor, &value)) {
+@@ -243,15 +607,40 @@
+ static void fl_settings_portal_dispose(GObject* object) {
+   FlSettingsPortal* self = FL_SETTINGS_PORTAL(object);
+ 
++  self->retired = TRUE;
++  if (self->publish_source != nullptr) {
++    g_source_destroy(self->publish_source);
++    g_clear_pointer(&self->publish_source, g_source_unref);
++  }
++  g_cancellable_cancel(self->cancellable);
++  cancel_requests(self);
++  complete_initialization(self);
++  disconnect_initial_cancellable(self);
++  if (self->dbus_proxy != nullptr) {
++    g_signal_handlers_disconnect_by_data(self->dbus_proxy, self);
++  }
+   g_clear_object(&self->dbus_proxy);
++  if (self->fallback != nullptr) {
++    g_signal_handlers_disconnect_by_data(self->fallback, self);
++  }
++  g_clear_object(&self->fallback);
++  g_clear_pointer(&self->owner, g_free);
+   g_clear_pointer(&self->values, g_variant_dict_unref);
+ 
+   G_OBJECT_CLASS(fl_settings_portal_parent_class)->dispose(object);
++}
++
++static void fl_settings_portal_finalize(GObject* object) {
++  FlSettingsPortal* self = FL_SETTINGS_PORTAL(object);
++  g_clear_object(&self->cancellable);
++  g_clear_pointer(&self->context, g_main_context_unref);
++  G_OBJECT_CLASS(fl_settings_portal_parent_class)->finalize(object);
+ }
+ 
+ static void fl_settings_portal_class_init(FlSettingsPortalClass* klass) {
+   GObjectClass* object_class = G_OBJECT_CLASS(klass);
+   object_class->dispose = fl_settings_portal_dispose;
++  object_class->finalize = fl_settings_portal_finalize;
+ }
+ 
+ static void fl_settings_portal_iface_init(FlSettingsInterface* iface) {
+@@ -262,11 +651,20 @@
+   iface->get_text_scaling_factor = fl_settings_portal_get_text_scaling_factor;
+ }
+ 
+-static void fl_settings_portal_init(FlSettingsPortal* self) {}
++static void fl_settings_portal_init(FlSettingsPortal* self) {
++  self->cancellable = g_cancellable_new();
++  self->context = g_main_context_ref_thread_default();
++}
+ 
+ FlSettingsPortal* fl_settings_portal_new() {
+   g_autoptr(GVariantDict) values = g_variant_dict_new(nullptr);
+-  return fl_settings_portal_new_with_values(values);
++  FlSettingsPortal* self = fl_settings_portal_new_with_values(values);
++  self->fallback = fl_gnome_settings_new();
++  self->published = snapshot(self);
++  g_signal_connect_object(self->fallback, "changed",
++                          G_CALLBACK(local_changed_cb), self,
++                          static_cast<GConnectFlags>(0));
++  return self;
+ }
+ 
+ FlSettingsPortal* fl_settings_portal_new_with_values(GVariantDict* values) {
+@@ -274,32 +672,53 @@
+   FlSettingsPortal* portal =
+       FL_SETTINGS_PORTAL(g_object_new(fl_settings_portal_get_type(), nullptr));
+   portal->values = g_variant_dict_ref(values);
++  portal->published = snapshot(portal);
+   return portal;
+ }
+ 
+-gboolean fl_settings_portal_start(FlSettingsPortal* self, GError** error) {
+-  g_return_val_if_fail(FL_IS_SETTINGS_PORTAL(self), false);
+-  g_return_val_if_fail(self->dbus_proxy == nullptr, false);
+-
+-  self->dbus_proxy = g_dbus_proxy_new_for_bus_sync(
+-      G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, nullptr, kPortalName,
+-      kPortalPath, kPortalSettings, nullptr, error);
+-
+-  if (self->dbus_proxy == nullptr) {
+-    return FALSE;
+-  }
+-
+-  for (const FlSetting setting : kAllSettings) {
+-    g_autoptr(GVariant) value = nullptr;
+-    if (settings_portal_read(self->dbus_proxy, setting.ns, setting.key,
+-                             &value)) {
+-      set_value(self, &setting, value);
+-    }
+-  }
+-
+-  g_signal_connect_object(self->dbus_proxy, "g-signal",
+-                          G_CALLBACK(settings_portal_changed_cb), self,
+-                          static_cast<GConnectFlags>(0));
+-
+-  return true;
+-}
++void fl_settings_portal_start(FlSettingsPortal* self,
++                              GCancellable* cancellable,
++                              GAsyncReadyCallback callback,
++                              gpointer user_data) {
++  g_return_if_fail(FL_IS_SETTINGS_PORTAL(self));
++  // No source object: the pending task must not keep this provider, its view,
++  // or its engine alive. Disposal cancels and completes outstanding work.
++  if (self->retired || g_cancellable_is_cancelled(self->cancellable)) {
++    g_autoptr(GTask) task =
++        g_task_new(nullptr, cancellable, callback, user_data);
++    g_task_return_new_error(task, G_IO_ERROR, G_IO_ERROR_CANCELLED,
++                            "Settings provider retired");
++    return;
++  }
++  if (self->started) {
++    g_autoptr(GTask) task =
++        g_task_new(nullptr, cancellable, callback, user_data);
++    if (self->initialization != nullptr) {
++      g_task_return_new_error(task, G_IO_ERROR, G_IO_ERROR_PENDING,
++                              "Settings initialization already pending");
++    } else {
++      g_task_return_boolean(task, TRUE);
++    }
++    return;
++  }
++  self->started = TRUE;
++  // This task's cancellation reflects the provider lifetime as well as the
++  // initial caller. The caller is disconnected once initialization completes.
++  self->initialization =
++      g_task_new(nullptr, self->cancellable, callback, user_data);
++  if (cancellable != nullptr) {
++    self->external_cancellable = G_CANCELLABLE(g_object_ref(cancellable));
++    self->external_cancel_id = g_cancellable_connect(
++        cancellable, G_CALLBACK(+[](GCancellable*, gpointer data) {
++          g_cancellable_cancel(G_CANCELLABLE(data));
++        }),
++        g_object_ref(self->cancellable), g_object_unref);
++  }
++  g_bus_get(G_BUS_TYPE_SESSION, self->cancellable, bus_cb,
++            new PortalCallback(self));
++}
++
++gboolean fl_settings_portal_start_finish(GAsyncResult* result, GError** error) {
++  g_return_val_if_fail(g_task_is_valid(result, nullptr), FALSE);
++  return g_task_propagate_boolean(G_TASK(result), error);
++}
+--- a/engine/src/flutter/shell/platform/linux/fl_settings_portal.h
++++ b/engine/src/flutter/shell/platform/linux/fl_settings_portal.h
+@@ -4,6 +4,8 @@
+ 
+ #ifndef FLUTTER_SHELL_PLATFORM_LINUX_FL_SETTINGS_PORTAL_H_
+ #define FLUTTER_SHELL_PLATFORM_LINUX_FL_SETTINGS_PORTAL_H_
++
++#include <gio/gio.h>
+ 
+ #include "flutter/shell/platform/linux/fl_settings.h"
+ 
+@@ -42,17 +44,21 @@
+ /**
+  * fl_settings_portal_start:
+  * @portal: an #FlSettingsPortal.
+- * @error: (allow-none): #GError location to store the error occurring, or
+- * %NULL. If `error` is not %NULL, `*error` must be initialized (typically
+- * %NULL, but an error from a previous call using GLib error handling is
+- * explicitly valid).
++ * @cancellable: optional cancellation for initial acquisition.
++ * @callback: completion callback; its source object is NULL.
++ * @user_data: callback data.
+  *
+- * Reads the current settings and starts monitoring for changes in the desktop
+- * portal settings.
+- *
+- * Returns: %TRUE on success, or %FALSE if the portal is not available.
++ * Acquires the session bus, creates a proxy and reads the initial settings
++ * asynchronously. Changes are subscribed before reads. The caller retains
++ * the provider while using it; pending callbacks only hold weak references.
++ * Disposal cancels pending operations. Repeat while pending returns PENDING;
++ * repeat after success completes without duplicating subscriptions or reads.
+  */
+-gboolean fl_settings_portal_start(FlSettingsPortal* portal, GError** error);
++void fl_settings_portal_start(FlSettingsPortal* portal,
++                              GCancellable* cancellable,
++                              GAsyncReadyCallback callback,
++                              gpointer user_data);
++gboolean fl_settings_portal_start_finish(GAsyncResult* result, GError** error);
+ 
+ G_END_DECLS
+ 
+--- a/engine/src/flutter/shell/platform/linux/fl_gnome_settings.cc
++++ b/engine/src/flutter/shell/platform/linux/fl_gnome_settings.cc
+@@ -6,6 +6,8 @@
+ 
+ #include <gio/gio.h>
+ #include <glib.h>
++#include <gtk/gtk.h>
++#include <cmath>
+ 
+ static constexpr char kDesktopInterfaceSchema[] = "org.gnome.desktop.interface";
+ static constexpr char kDesktopTextScalingFactorKey[] = "text-scaling-factor";
+@@ -20,9 +22,16 @@
+   GObject parent_instance;
+ 
+   GSettings* interface_settings;
++  GSettings* accessibility_settings;
++  GtkSettings* gtk_settings;
+ };
+ 
+-enum { PROP_0, PROP_INTERFACE_SETTINGS, PROP_LAST };
++enum {
++  PROP_0,
++  PROP_INTERFACE_SETTINGS,
++  PROP_ACCESSIBILITY_SETTINGS,
++  PROP_LAST
++};
+ 
+ static void fl_gnome_settings_iface_init(FlSettingsInterface* iface);
+ 
+@@ -32,12 +41,34 @@
+                         G_IMPLEMENT_INTERFACE(fl_settings_get_type(),
+                                               fl_gnome_settings_iface_init))
+ 
++// Schema lookup and cached backend values do not wait for the settings portal.
++// Older desktop runtimes can omit individual keys or entire schemas.
++static gboolean has_key(GSettings* settings, const gchar* key) {
++  if (settings == nullptr) {
++    return FALSE;
++  }
++  g_autoptr(GSettingsSchema) schema = nullptr;
++  g_object_get(settings, "settings-schema", &schema, nullptr);
++  return g_settings_schema_has_key(schema, key);
++}
++
++static gchar* theme_name(FlGnomeSettings* self) {
++  if (has_key(self->interface_settings, kDesktopGtkThemeKey)) {
++    return g_settings_get_string(self->interface_settings, kDesktopGtkThemeKey);
++  }
++  gchar* name = nullptr;
++  if (self->gtk_settings != nullptr) {
++    g_object_get(self->gtk_settings, "gtk-theme-name", &name, nullptr);
++  }
++  return name;
++}
++
+ static FlClockFormat fl_gnome_settings_get_clock_format(FlSettings* settings) {
+   FlGnomeSettings* self = FL_GNOME_SETTINGS(settings);
+ 
+   FlClockFormat clock_format = FL_CLOCK_FORMAT_24H;
+ 
+-  if (self->interface_settings != nullptr) {
++  if (has_key(self->interface_settings, kDesktopClockFormatKey)) {
+     g_autofree gchar* value =
+         g_settings_get_string(self->interface_settings, kDesktopClockFormatKey);
+     if (g_strcmp0(value, kClockFormat12Hour) == 0) {
+@@ -52,23 +83,45 @@
+ 
+   FlColorScheme color_scheme = FL_COLOR_SCHEME_LIGHT;
+ 
+-  if (self->interface_settings != nullptr) {
+-    // check whether org.gnome.desktop.interface.gtk-theme ends with "-dark"
++  if (has_key(self->interface_settings, "color-scheme")) {
+     g_autofree gchar* value =
+-        g_settings_get_string(self->interface_settings, kDesktopGtkThemeKey);
+-    if (g_str_has_suffix(value, kGtkThemeDarkSuffix)) {
+-      color_scheme = FL_COLOR_SCHEME_DARK;
+-    }
++        g_settings_get_string(self->interface_settings, "color-scheme");
++    if (g_str_equal(value, "prefer-dark")) {
++      return FL_COLOR_SCHEME_DARK;
++    }
++    if (g_str_equal(value, "prefer-light")) {
++      return FL_COLOR_SCHEME_LIGHT;
++    }
++  }
++  g_autofree gchar* theme = theme_name(self);
++  if (theme != nullptr && g_str_has_suffix(theme, kGtkThemeDarkSuffix)) {
++    color_scheme = FL_COLOR_SCHEME_DARK;
+   }
+   return color_scheme;
+ }
+ 
+ static gboolean fl_gnome_settings_get_enable_animations(FlSettings* settings) {
+-  return TRUE;
++  FlGnomeSettings* self = FL_GNOME_SETTINGS(settings);
++  if (has_key(self->interface_settings, "enable-animations")) {
++    return g_settings_get_boolean(self->interface_settings,
++                                  "enable-animations");
++  }
++  gboolean enabled = TRUE;
++  if (self->gtk_settings != nullptr) {
++    g_object_get(self->gtk_settings, "gtk-enable-animations", &enabled,
++                 nullptr);
++  }
++  return enabled;
+ }
+ 
+ static gboolean fl_gnome_settings_get_high_contrast(FlSettings* settings) {
+-  return FALSE;
++  FlGnomeSettings* self = FL_GNOME_SETTINGS(settings);
++  if (has_key(self->accessibility_settings, "high-contrast")) {
++    return g_settings_get_boolean(self->accessibility_settings,
++                                  "high-contrast");
++  }
++  g_autofree gchar* theme = theme_name(self);
++  return theme != nullptr && g_str_has_prefix(theme, "HighContrast");
+ }
+ 
+ static gdouble fl_gnome_settings_get_text_scaling_factor(FlSettings* settings) {
+@@ -76,28 +129,35 @@
+ 
+   gdouble scaling_factor = 1.0;
+ 
+-  if (self->interface_settings != nullptr) {
++  if (has_key(self->interface_settings, kDesktopTextScalingFactorKey)) {
+     scaling_factor = g_settings_get_double(self->interface_settings,
+                                            kDesktopTextScalingFactorKey);
+   }
+-  return scaling_factor;
+-}
+-
+-static void fl_gnome_settings_set_interface_settings(FlGnomeSettings* self,
+-                                                     GSettings* settings) {
+-  g_return_if_fail(G_IS_SETTINGS(settings));
+-
+-  g_signal_connect_object(settings, "changed::clock-format",
+-                          G_CALLBACK(fl_settings_emit_changed), self,
+-                          G_CONNECT_SWAPPED);
+-  g_signal_connect_object(settings, "changed::gtk-theme",
+-                          G_CALLBACK(fl_settings_emit_changed), self,
+-                          G_CONNECT_SWAPPED);
+-  g_signal_connect_object(settings, "changed::text-scaling-factor",
+-                          G_CALLBACK(fl_settings_emit_changed), self,
+-                          G_CONNECT_SWAPPED);
+-
+-  self->interface_settings = G_SETTINGS(g_object_ref(settings));
++  return std::isfinite(scaling_factor) && scaling_factor > 0 ? scaling_factor
++                                                             : 1.0;
++}
++
++static void local_changed_cb(GSettings*, const gchar* key, gpointer data) {
++  if (g_str_equal(key, "clock-format") || g_str_equal(key, "gtk-theme") ||
++      g_str_equal(key, "text-scaling-factor") ||
++      g_str_equal(key, "color-scheme") ||
++      g_str_equal(key, "enable-animations") ||
++      g_str_equal(key, "high-contrast")) {
++    fl_settings_emit_changed(FL_SETTINGS(data));
++  }
++}
++
++static void set_settings(FlGnomeSettings* self,
++                         GSettings** target,
++                         GSettings* settings) {
++  if (*target != nullptr) {
++    g_signal_handlers_disconnect_by_data(*target, self);
++  }
++  g_set_object(target, settings);
++  if (settings != nullptr) {
++    g_signal_connect_object(settings, "changed", G_CALLBACK(local_changed_cb),
++                            self, static_cast<GConnectFlags>(0));
++  }
+ }
+ 
+ static void fl_gnome_settings_set_property(GObject* object,
+@@ -107,8 +167,12 @@
+   FlGnomeSettings* self = FL_GNOME_SETTINGS(object);
+   switch (prop_id) {
+     case PROP_INTERFACE_SETTINGS:
+-      fl_gnome_settings_set_interface_settings(
+-          self, G_SETTINGS(g_value_get_object(value)));
++      set_settings(self, &self->interface_settings,
++                   G_SETTINGS(g_value_get_object(value)));
++      break;
++    case PROP_ACCESSIBILITY_SETTINGS:
++      set_settings(self, &self->accessibility_settings,
++                   G_SETTINGS(g_value_get_object(value)));
+       break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+@@ -119,7 +183,18 @@
+ static void fl_gnome_settings_dispose(GObject* object) {
+   FlGnomeSettings* self = FL_GNOME_SETTINGS(object);
+ 
++  if (self->interface_settings != nullptr) {
++    g_signal_handlers_disconnect_by_data(self->interface_settings, self);
++  }
++  if (self->accessibility_settings != nullptr) {
++    g_signal_handlers_disconnect_by_data(self->accessibility_settings, self);
++  }
++  if (self->gtk_settings != nullptr) {
++    g_signal_handlers_disconnect_by_data(self->gtk_settings, self);
++  }
+   g_clear_object(&self->interface_settings);
++  g_clear_object(&self->accessibility_settings);
++  g_clear_object(&self->gtk_settings);
+ 
+   G_OBJECT_CLASS(fl_gnome_settings_parent_class)->dispose(object);
+ }
+@@ -136,6 +211,13 @@
+           g_settings_get_type(),
+           static_cast<GParamFlags>(G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY |
+                                    G_PARAM_STATIC_STRINGS)));
++  g_object_class_install_property(
++      object_class, PROP_ACCESSIBILITY_SETTINGS,
++      g_param_spec_object(
++          "accessibility-settings", "accessibility-settings",
++          "org.gnome.desktop.a11y.interface", G_TYPE_SETTINGS,
++          static_cast<GParamFlags>(G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY |
++                                   G_PARAM_STATIC_STRINGS)));
+ }
+ 
+ static void fl_gnome_settings_iface_init(FlSettingsInterface* iface) {
+@@ -146,7 +228,21 @@
+   iface->get_text_scaling_factor = fl_gnome_settings_get_text_scaling_factor;
+ }
+ 
+-static void fl_gnome_settings_init(FlGnomeSettings* self) {}
++static void fl_gnome_settings_init(FlGnomeSettings* self) {
++  GtkSettings* settings = gtk_settings_get_default();
++  if (settings != nullptr) {
++    self->gtk_settings = GTK_SETTINGS(g_object_ref(settings));
++    g_signal_connect_object(
++        settings, "notify",
++        G_CALLBACK(+[](GObject*, GParamSpec* property, gpointer data) {
++          if (g_str_equal(property->name, "gtk-theme-name") ||
++              g_str_equal(property->name, "gtk-enable-animations")) {
++            fl_settings_emit_changed(FL_SETTINGS(data));
++          }
++        }),
++        self, static_cast<GConnectFlags>(0));
++  }
++}
+ 
+ static GSettings* create_settings(const gchar* schema_id) {
+   GSettings* settings = nullptr;
+@@ -164,7 +260,9 @@
+ FlSettings* fl_gnome_settings_new() {
+   g_autoptr(GSettings) interface_settings =
+       create_settings(kDesktopInterfaceSchema);
+-  return FL_SETTINGS(g_object_new(fl_gnome_settings_get_type(),
+-                                  kInterfaceSettings, interface_settings,
+-                                  nullptr));
+-}
++  g_autoptr(GSettings) accessibility_settings =
++      create_settings("org.gnome.desktop.a11y.interface");
++  return FL_SETTINGS(g_object_new(
++      fl_gnome_settings_get_type(), kInterfaceSettings, interface_settings,
++      "accessibility-settings", accessibility_settings, nullptr));
++}

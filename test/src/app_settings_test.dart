@@ -9,6 +9,116 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  testWidgets('saved local theme is present in the first constructed frame', (
+    tester,
+  ) async {
+    final store = _ViewModeSettingsStore();
+    store.value['themeModePreference'] = 'dark';
+    final startup = await tester.runAsync(() => StartupAppSettings.load(store));
+    final frames = <BusyMarkThemeModePreference>[];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) {
+            final settings = ref.watch(appSettingsControllerProvider);
+            frames.add(settings.themeModePreference);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(frames, [BusyMarkThemeModePreference.dark]);
+    expect(store.loads, 1);
+    expect(store.saves, isEmpty);
+  });
+
+  test(
+    'startup settings are one-use and bound to their acknowledged store',
+    () async {
+      final store = _ViewModeSettingsStore();
+      store.value['themeModePreference'] = 'dark';
+      final startup = await StartupAppSettings.load(store);
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      expect(
+        container.read(appSettingsControllerProvider).themeModePreference,
+        BusyMarkThemeModePreference.dark,
+      );
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(store.loads, 1);
+      expect(store.saves, isEmpty);
+      store.value['themeModePreference'] = 'light';
+      container.invalidate(appSettingsControllerProvider);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      expect(
+        container.read(appSettingsControllerProvider).themeModePreference,
+        BusyMarkThemeModePreference.light,
+      );
+      expect(store.loads, 2);
+
+      final original = _ViewModeSettingsStore();
+      original.value['themeModePreference'] = 'dark';
+      final other = _ViewModeSettingsStore();
+      other.value['themeModePreference'] = 'light';
+      final mismatched = await StartupAppSettings.load(original);
+      final different = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(other),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: mismatched),
+          ),
+        ],
+      );
+      addTearDown(different.dispose);
+      await different
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      expect(
+        different.read(appSettingsControllerProvider).themeModePreference,
+        BusyMarkThemeModePreference.light,
+      );
+      expect(other.loads, 1);
+    },
+  );
+
+  test(
+    'failed startup load cannot acknowledge default settings for reuse',
+    () async {
+      final store = _ViewModeSettingsStore()..failLoad = true;
+      final startup = await StartupAppSettings.load(store);
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(store.loads, 1);
+      expect(store.saves, hasLength(1));
+    },
+  );
+
   test(
     'view-mode reconciliation reuses acknowledged unchanged settings',
     () async {
@@ -968,9 +1078,11 @@ class _ViewModeSettingsStore implements LocalSettingsStore {
   Completer<Map<String, Object?>>? loadGate;
   bool failSave = false;
   bool failLoad = false;
+  int loads = 0;
 
   @override
   Future<Map<String, Object?>> load() async {
+    loads++;
     if (failLoad) throw StateError('injected settings load failure');
     return loadGate == null ? value : await loadGate!.future;
   }

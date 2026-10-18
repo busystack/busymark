@@ -710,7 +710,29 @@ def accepted(record):
     return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors")
 
 
-def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, engine_manifest=None, isolate_input=False, audit_input=False, observer_event=None):
+def seed_local_settings(profile, source):
+    """Seed only a synthetic local-settings fixture in an isolated profile."""
+    directory = Path(profile).resolve()
+    for leaf in ['config', 'dconf']:
+        directory /= leaf
+        if directory.is_symlink():
+            raise RuntimeError('Refusing a symlink in the isolated DConf fixture path')
+        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    destination = directory / 'user'
+    if destination.is_symlink():
+        raise RuntimeError('Refusing a symlink for the isolated DConf fixture')
+    contents = Path(source).read_bytes()
+    try:
+        fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    except FileExistsError:
+        if destination.read_bytes() != contents:
+            raise RuntimeError('Refusing to replace a changed isolated DConf fixture')
+        return
+    with os.fdopen(fd, 'wb') as stream:
+        stream.write(contents)
+
+
+def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, engine_manifest=None, isolate_input=False, audit_input=False, observer_event=None, settings_schema_dir=None, portal_bus_address=None, settings_backend="memory", local_settings_db=None):
     if isolate_input and audit_input:
         raise ValueError('Select passive isolation or normal-focus input audit')
     if isolate_input and not plain:
@@ -735,6 +757,11 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         environment['BUSYMARK_VISUALIZATION_ASSETS'] = str(assets)
     if not plain:
         environment['BUSYMARK_NATIVE_TRACE'] = '1'
+    if settings_schema_dir is not None:
+        environment["GSETTINGS_SCHEMA_DIR"] = str(Path(settings_schema_dir).resolve())
+        environment["GSETTINGS_BACKEND"] = settings_backend
+    if portal_bus_address is not None:
+        environment["DBUS_SESSION_BUS_ADDRESS"] = portal_bus_address
     application_profile = profile
     if snap_instance:
         # snap-confine needs the real account home. The application gets an
@@ -751,6 +778,11 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             # transfer the fixture opt-in only after entering confinement.
             extra['BUSYMARK_RELEASE_SMOKE'] = '1'
             extra['BUSYMARK_NATIVE_TRACE'] = '1'
+        if portal_bus_address is not None:
+            extra["DBUS_SESSION_BUS_ADDRESS"] = portal_bus_address
+        if settings_schema_dir is not None:
+            extra['GSETTINGS_SCHEMA_DIR'] = str(Path(settings_schema_dir).resolve())
+            extra['GSETTINGS_BACKEND'] = settings_backend
         if scenario == 'pending-initialization' and not plain:
             extra['BUSYMARK_VISUALIZATION_ASSETS'] = str(profile / 'pending-initialization-assets')
         command = snap_command(snap_instance, leaf, arguments, extra)
@@ -760,6 +792,8 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         record['controlledPendingHarness'] = True
     tracker = None
     try:
+        if local_settings_db is not None:
+            seed_local_settings(application_profile, local_settings_db)
         probe = LoadedEngine(engine_manifest) if engine_manifest is not None else None
         tracker = ChildTracker()
         tracker.engine = probe
@@ -921,11 +955,18 @@ def main():
     parser.add_argument("--plain", action="store_true", help="Test the unmodified shipping executable using WM_DELETE_WINDOW")
     parser.add_argument("--snap-instance", help="Owned disposable parallel instance, e.g. busymark_close")
     parser.add_argument("--snap-fixture", action="store_true", help="The disposable instance contains the compiled window_close_smoke target; require output in its common directory")
-    parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
+    parser.add_argument("--settings-backend", choices=["memory", "dconf"], default="memory")
+    parser.add_argument("--local-settings-db", type=Path, help="Offline compiled DConf fixture copied only into the isolated profile")
+    parser.add_argument("--portal-bus-address", help="Owned isolated bus used only after the normal confined launcher")
+    parser.add_argument("--settings-schema-dir", type=Path, help="Controlled portal fixture local schema directory (memory backend)")
+    parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel", "portal-settings"], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
     parser.add_argument("--video", type=Path)
     parser.add_argument("--engine-manifest", type=Path, help="Require the actual mapped engine to match the built/packaged C6 receipt; hash pinned descriptor after exit")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if (args.portal_bus_address or args.settings_schema_dir or args.local_settings_db or args.settings_backend != "memory") and (
+            args.plain or args.scenarios != ['portal-settings']):
+        parser.error('Controlled portal inputs require only the portal-settings fixture')
     if args.video:
         args.video = args.video.resolve()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -954,14 +995,14 @@ def main():
     for cycle in range(args.cycles):
         for scenario in scenarios:
             profile = root / "profiles" / f"{cycle}-{scenario}" if args.fresh_profile else root / "profile"
-            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, engine_manifest=args.engine_manifest, isolate_input=args.isolate_input, audit_input=args.audit_input)
+            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, engine_manifest=args.engine_manifest, isolate_input=args.isolate_input, audit_input=args.audit_input, settings_schema_dir=args.settings_schema_dir, portal_bus_address=args.portal_bus_address, settings_backend=args.settings_backend, local_settings_db=args.local_settings_db)
             records.append(record)
             print(json.dumps({"cycle": cycle, "scenario": scenario, "exitCode": record.get("exitCode"), "accepted": accepted(record), "error": record.get("error")}), flush=True)
             if record.get('unresolvedSurvivors') or record.get('verificationIncomplete'):
                 break
             document = record.get('application', {}).get('document')
             if not args.plain and document and accepted(record):
-                reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, snap_instance=args.snap_instance, document=Path(document), engine_manifest=args.engine_manifest, audit_input=args.audit_input)
+                reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, snap_instance=args.snap_instance, document=Path(document), engine_manifest=args.engine_manifest, audit_input=args.audit_input, settings_schema_dir=args.settings_schema_dir, portal_bus_address=args.portal_bus_address, settings_backend=args.settings_backend, local_settings_db=args.local_settings_db)
                 records.append(reopened)
                 print(json.dumps({'cycle': cycle, 'scenario': scenario + '-reopen', 'exitCode': reopened.get('exitCode'), 'accepted': accepted(reopened), 'error': reopened.get('error')}), flush=True)
                 if reopened.get('unresolvedSurvivors') or reopened.get('verificationIncomplete'):

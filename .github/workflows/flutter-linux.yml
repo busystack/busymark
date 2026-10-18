@@ -22,13 +22,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y binutils clang cmake curl git ninja-build pkg-config \
-            libgtk-3-dev libepoxy-dev python3 xz-utils unzip xvfb dbus-daemon
+            libgtk-3-dev libepoxy-dev python3 python3-gi gsettings-desktop-schemas xz-utils unzip xvfb dbus-daemon
       - name: Cache verified mode archive
         id: engine-cache
         uses: actions/cache@v6
         with:
           path: .build/engine-${{ matrix.mode }}.tar.xz
-          key: linux-x64-ubuntu24-c6-${{ matrix.mode }}-${{ hashFiles('tools/flutter_engine/**') }}
+          key: linux-x64-ubuntu24-c6-${{ matrix.mode }}-${{ hashFiles('tools/flutter_engine/**', 'tools/test_portal_initialization.py', 'tools/application_close_smoke.py') }}
       - name: Build exact reviewed engine from source
         if: steps.engine-cache.outputs.cache-hit != 'true'
         run: |
@@ -42,7 +42,15 @@ jobs:
       - name: Run native engine and deterministic renderer lifetime regressions
         run: |
           xvfb-run -a dbus-run-session -- \
-            python3 tools/flutter_engine/engine.py test --mode ${{ matrix.mode }}
+            python3 tools/flutter_engine/engine.py test --mode ${{ matrix.mode }} \
+              --output "${RUNNER_TEMP}/portal-${{ matrix.mode }}"
+      - name: Preserve controlled portal evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: portal-engine-${{ matrix.mode }}
+          path: ${{ runner.temp }}/portal-${{ matrix.mode }}
+          if-no-files-found: ignore
       - name: Supply verified build inputs to application jobs
         uses: actions/upload-artifact@v7
         with:
@@ -80,6 +88,8 @@ jobs:
             clang \
             cmake \
             dbus-daemon \
+            gsettings-desktop-schemas \
+            dconf-cli \
             fonts-noto-core \
             fonts-noto-cjk \
             fonts-noto-mono \
@@ -270,6 +280,10 @@ jobs:
       - name: Exercise live application close, persistence, media and reopening
         run: |
           python3 tools/flutter.py build linux --release --no-pub -t tools/window_close_smoke.dart
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
+            --output "${RUNNER_TEMP}/portal-application-release" \
+            --application build/linux/x64/release/bundle/busymark \
+            --engine-manifest build/linux/x64/release/bundle/data/busymark-engine.json
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 \
             /usr/bin/python3 -u tools/application_close_smoke.py \
@@ -296,6 +310,7 @@ jobs:
         with:
           name: natural-close-release
           path: |
+            ${{ runner.temp }}/portal-application-release
             ${{ runner.temp }}/close-release
             ${{ runner.temp }}/close-live-application
             ${{ runner.temp }}/close-complete-core
@@ -413,7 +428,7 @@ jobs:
       - name: Install desktop smoke dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y weston xvfb python3-gi dbus-daemon
+          sudo apt-get install -y weston xvfb python3-gi gsettings-desktop-schemas dconf-cli dbus-daemon
 
       - name: Install strict Snap
         run: >-
@@ -668,12 +683,22 @@ jobs:
             --engine-manifest /snap/busymark_fixture/current/data/busymark-engine.json \
             --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
             --video "$fixture_root/fixtures/close-testsrc.mp4"
+      - name: Require usable confined content while portal replies are withheld
+        run: |
+          portal_root="$HOME/snap/busymark_fixture/common"
+          mkdir -p "$portal_root/p"
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
+            --output "$portal_root/portal-application" --socket-parent "$portal_root/p" \
+            --snap-instance busymark_fixture \
+            --engine-manifest /snap/busymark_fixture/current/data/busymark-engine.json
       - name: Preserve strict compiled-close evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: natural-close-strict-fixture
-          path: ~/snap/busymark_fixture/common/close-live
+          path: |
+            ~/snap/busymark_fixture/common/close-live
+            ~/snap/busymark_fixture/common/portal-application
           if-no-files-found: ignore
 
   development-modes:
@@ -690,7 +715,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build patch pkg-config curl xz-utils \
             libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
-            fonts-noto-core fonts-noto-mono python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
+            fonts-noto-core fonts-noto-mono gsettings-desktop-schemas dconf-cli python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -712,6 +737,10 @@ jobs:
             --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json -- \
             build/linux/x64/${{ matrix.mode }}/bundle/busymark
           python3 tools/flutter.py build linux --${{ matrix.mode }} --no-pub -t tools/window_close_smoke.dart
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
+            --output "${RUNNER_TEMP}/portal-application-${{ matrix.mode }}" \
+            --application build/linux/x64/${{ matrix.mode }}/bundle/busymark \
+            --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/features-${{ matrix.mode }}" --cycles 1 --fresh-profile \
             --engine-manifest build/linux/x64/${{ matrix.mode }}/bundle/data/busymark-engine.json \
@@ -734,3 +763,4 @@ jobs:
             ${{ runner.temp }}/close-${{ matrix.mode }}
             ${{ runner.temp }}/features-${{ matrix.mode }}
             ${{ runner.temp }}/complete-core-${{ matrix.mode }}
+            ${{ runner.temp }}/portal-application-${{ matrix.mode }}

@@ -1,0 +1,42 @@
+--- a/engine/src/flutter/shell/platform/linux/fl_gnome_settings_test.cc
++++ b/engine/src/flutter/shell/platform/linux/fl_gnome_settings_test.cc
+@@ -9,6 +9,7 @@
+ #include "flutter/testing/testing.h"
+ 
+ #include <gio/gio.h>
++#include <gtk/gtk.h>
+ #define G_SETTINGS_ENABLE_BACKEND
+ #include <gio/gsettingsbackend.h>
+ 
+@@ -121,3 +122,31 @@
+   g_settings_set_string(interface_settings, "gtk-theme", "Yaru");
+   g_settings_set_double(interface_settings, "text-scaling-factor", 2.0);
+ }
++
++// A local first frame must preserve cached reduced-motion preferences even
++// when GNOME schemas are unavailable (for example another desktop runtime).
++TEST_F(FlGnomeSettingsTest, CachedAnimationFallback) {
++  GtkSettings* gtk = gtk_settings_get_default();
++  // mock_gtk.cc interposes the varargs g_object_set and ignores settings
++  // properties. Use the real typed setter; do not weaken the preference checks.
++  const auto set_animations = [gtk](gboolean enabled) {
++    GValue value = G_VALUE_INIT;
++    g_value_init(&value, G_TYPE_BOOLEAN);
++    g_value_set_boolean(&value, enabled);
++    g_object_set_property(G_OBJECT(gtk), "gtk-enable-animations", &value);
++    g_value_unset(&value);
++  };
++  gboolean original;
++  g_object_get(gtk, "gtk-enable-animations", &original, nullptr);
++  set_animations(FALSE);
++  gboolean configured = TRUE;
++  g_object_get(gtk, "gtk-enable-animations", &configured, nullptr);
++  EXPECT_FALSE(configured);
++  g_autoptr(FlSettings) settings =
++      FL_SETTINGS(g_object_new(fl_gnome_settings_get_type(), nullptr));
++  EXPECT_FALSE(fl_settings_get_enable_animations(settings));
++  set_animations(TRUE);
++  EXPECT_TRUE(fl_settings_get_enable_animations(settings));
++  g_clear_object(&settings);
++  set_animations(original);
++}

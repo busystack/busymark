@@ -5,7 +5,9 @@ Linux build. The framework, engine, Dart, depot_tools and Clang revisions,
 configuration and patch order are in
 [engine.lock.json](../../tools/flutter_engine/engine.lock.json). The patch set is
 the lifetime correction, its engine regressions, and a separate ATK null-ID and
-returned-string ownership correction. Keep that composition when reproducing
+returned-string ownership correction. Separate portal-initialization patches
+remove synchronous session-bus/proxy/read work from Flutter settings startup and test the
+local settings fallback. Keep that composition when reproducing
 the validated engine. Flutter's public API and application dependencies are
 unchanged.
 
@@ -13,7 +15,9 @@ unchanged.
 
 Run from the project root on Linux x64. Install the application dependencies in
 the main README, plus Git, GNU patch, Python 3.12+, unzip, binutils and libepoxy development
-headers. Engine compilation uses the DEPS-pinned Clang and downloaded Linux
+headers, `python3-gi`, `gsettings-desktop-schemas`, `dbus-daemon` and a disposable
+X11 display for portal tests. Compiled application checks also use `dconf-cli`
+to create a synthetic database offline; they never write desktop settings. Engine compilation uses the DEPS-pinned Clang and downloaded Linux
 sysroot. Allow substantial disk space and build time. The default cache is
 `.build/flutter-engine`; an absolute `BUSYMARK_ENGINE_CACHE` can put it on a
 larger disk. This is a private SDK/cache, never a replacement inside another SDK.
@@ -94,6 +98,76 @@ a wrong engine or incomplete observation. Use the existing compiled
 `tools/window_close_smoke.dart` fixture for rendering, media, dirty decisions
 and reopening; its build goes through the same wrapper and receipt.
 
+## Asynchronous portal settings
+
+The initial frame uses available local GNOME settings and cached GTK properties.
+Valid portal values override their local counterparts when the asynchronous
+initial read round settles; missing or malformed keys retain local values.
+Portal color-scheme retains precedence over its gtk-theme value. Local animation,
+contrast and text-scale preferences remain available while the portal is absent.
+Explicit BusyMark appearance preferences still take precedence in the app.
+A genuinely different authority may cause one appearance adjustment.
+
+Session-bus acquisition, proxy construction, service activation and all six reads
+are asynchronous and cancellable. Subscribe before reading; key revisions reject
+stale replies. Publish the initial round as one effective settings snapshot and
+coalesce subsequent notifications. Live signals also publish while initial reads
+are pending; their key revisions and staged values prevent later rollback.
+On service restart, retain the previous
+complete authority until the new round is available. Weak callback contexts and
+retirement of the single pending publication source allow closure while replies
+are withheld. No timeout is shortened and no nested GTK wait is introduced.
+BusyMark's accent startup barrier similarly waits only for its local GTK source;
+portal accent updates continue with the existing source precedence.
+Before `runApp`, read BusyMark's local preferences once and hand their parsed,
+acknowledged state to the controller. This keeps an explicit saved theme in the
+first frame. The handoff is tied to its store and consumed once; subsequent
+initialization reads fresh data. Failed reads retain the existing default policy
+without treating defaults as an acknowledged file. This local read is part of
+the measured launch, with no new settings write or portal wait.
+
+The normal engine test command also runs the controlled portal regressions on
+private session buses. Retain their evidence with `test --mode release --output
+/absolute/new/portal-evidence`. The authentication case isolates provider bus
+acquisition on GLib's main context: GTK's separate AT-SPI startup can itself wait
+for bus authentication, before this provider runs. Other cases use live GTK
+windows with normal accessibility enabled. These are functional progress bounds,
+not startup performance measurements.
+
+After building `tools/window_close_smoke.dart` with the wrapper, run compiled
+settings/close acceptance on a disposable X11 display:
+
+```sh
+/usr/bin/python3 tools/test_portal_application.py \
+  --output /absolute/new/compiled-portal-evidence \
+  --application build/linux/x64/release/bundle/busymark \
+  --engine-manifest build/linux/x64/release/bundle/data/busymark-engine.json
+```
+
+This reuses the existing natural-close observer and owned portal service. It
+requires a real editor and continued frames before releasing withheld replies,
+checks initial and authoritative settings, and verifies natural process/child
+exit. A separate configured-profile case checks an explicit application theme
+on the first rendered frame while portal reads are pending. The default uses
+the real DConf backend, with a synthetic private database
+whose nondefault scale differs from the schema default; `--settings-backend memory`
+retains the simpler component fixture. For strict confinement, use `--snap-instance busymark_portal` instead of
+`--application`, output under that disposable instance's common directory, and
+`--socket-parent` pointing to a short directory there. The confined launcher uses
+its normal session bus; only the application selects the owned fixture bus after
+confinement. This changes no host portal or security policy. A denied fixture
+connection is a failed/unverified check, never a reason to weaken confinement.
+Deliberate service delays are kept separate from natural performance cohorts.
+
+The compiled gate also withholds `Properties.GetAll` for every portal interface
+until natural process exit. This checks the complete application, including GTK
+startup before Flutter. GTK 3.24.41 and 3.24.50 can synchronously fetch unused Inhibit
+properties on this path; the engine settings patch does not correct that GTK
+call. A failure here is an application startup acceptance failure even when the
+component tests and the other compiled cases pass. Do not omit this case or
+claim that engine-only validation proves independence from the portal. A GTK
+runtime correction requires separate source, runtime and packaging validation.
+
 ## Caching and Snapcraft
 
 The source/patch/configuration key names the cache. Artifact receipts record
@@ -161,6 +235,13 @@ counts without key values. Verify actual GTK delivery on a disposable display:
 The explicit flag authorizes test input only on that private display.
 
 ## Maintenance
+
+The build records reviewed Linux source hashes in `busymark-linux-inputs.json`.
+Missing or changed hashes invalidate the private build's Linux objects before
+Ninja runs, even when copied source files have older timestamps than cached
+objects. Other engine objects remain reusable. Publication rechecks source
+content after compilation; imported artifacts must include the matching stamp.
+Do not certify a source change by updating an artifact receipt alone.
 
 `FlView` retains its renderer through forced GTK disposal. The engine returns
 completed presentation references to GTK, preventing the raster callback from

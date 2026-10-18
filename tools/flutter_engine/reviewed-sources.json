@@ -6,6 +6,11 @@
   "engine/src/flutter/shell/platform/linux/fl_engine.cc": "41581b6f59f144377ba1c7cc2d077aa7196151c5e350faccd2a3c4b1edf49feb",
   "engine/src/flutter/shell/platform/linux/fl_engine_private.h": "298abcb40955825a72ac94118b38fa59f388de91d7f12244eb6be07213885682",
   "engine/src/flutter/shell/platform/linux/fl_engine_test.cc": "3f3887b88608d92786e6daf79735697d384ddeae6d55c23d85d27855f5390401",
+  "engine/src/flutter/shell/platform/linux/fl_gnome_settings.cc": "1f4dfb26010ba8a1936582071de4b25eecfdf5450c7d486df12d82db7aef289f",
+  "engine/src/flutter/shell/platform/linux/fl_gnome_settings_test.cc": "fce8280f30dcad5749c880ac3a3f2db1a0d313a2b7c2c5f5644369ad8a7993d8",
+  "engine/src/flutter/shell/platform/linux/fl_settings.cc": "df3f019a8e171abf9427f4d8d1b28c20c9f4a517bb0b9f50dacc0428bb04b174",
+  "engine/src/flutter/shell/platform/linux/fl_settings_portal.cc": "98e326a31701d3d02b121633a8b2dc1fa7ba9f482d36713c4b0b4019bcbb535d",
+  "engine/src/flutter/shell/platform/linux/fl_settings_portal.h": "8a852c3d7912bd621b4fa3cb4ae418ec65ee0d93709fefca456fad1db48fa6a3",
   "engine/src/flutter/shell/platform/linux/fl_view.cc": "d4eba30f9933616d72e43b1c9f43671d9d8fc7d31e9070768ae908b0466e3961",
   "engine/src/flutter/shell/platform/linux/fl_view_renderer.cc": "237ab4d1c1d83d660a7647ca6cebfa7d0ed339aac386c90faba8f314f0886ea8"
 }

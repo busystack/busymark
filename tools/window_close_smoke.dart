@@ -59,6 +59,55 @@ bool _editorPublished(String path, String source) => _elements().any((e) {
   };
 });
 
+// Used only by the controlled portal fixture. Observe settings after frames,
+// without replacing dispatcher callbacks or recording global desktop input.
+class _PortalSettingsObserver with WidgetsBindingObserver {
+  final snapshots = <Map<String, Object?>>[];
+  final applicationThemes = <String>[];
+  bool _queued = false;
+
+  Map<String, Object?> current() {
+    final binding = WidgetsBinding.instance;
+    final data = MediaQueryData.fromView(
+      binding.platformDispatcher.views.first,
+    );
+    return {
+      'clock12': !data.alwaysUse24HourFormat,
+      'dark': data.platformBrightness == Brightness.dark,
+      'animations': !data.disableAnimations,
+      'contrast': data.highContrast,
+      'scale': data.textScaler.scale(1),
+    };
+  }
+
+  void observe({bool requestFrame = true}) {
+    if (_queued) return;
+    _queued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _queued = false;
+      final next = current();
+      if (snapshots.isEmpty || jsonEncode(snapshots.last) != jsonEncode(next)) {
+        snapshots.add(next);
+      }
+      final navigators = _elements().where((e) => e.widget is Navigator);
+      if (navigators.isNotEmpty) {
+        final theme = Theme.of(navigators.first).brightness.name;
+        if (applicationThemes.isEmpty || applicationThemes.last != theme) {
+          applicationThemes.add(theme);
+        }
+      }
+    });
+    if (requestFrame) WidgetsBinding.instance.scheduleFrame();
+  }
+
+  @override
+  void didChangePlatformBrightness() => observe();
+  @override
+  void didChangeTextScaleFactor() => observe();
+  @override
+  void didChangeAccessibilityFeatures() => observe();
+}
+
 Future<void> main(List<String> args) async {
   if (args.length < 2 ||
       Platform.environment['BUSYMARK_RELEASE_SMOKE'] != '1') {
@@ -74,6 +123,44 @@ Future<void> main(List<String> args) async {
     flush: true,
   );
   try {
+    _PortalSettingsObserver? portal;
+    if (scenario == 'portal-settings') {
+      WidgetsFlutterBinding.ensureInitialized();
+      final initialTheme = File(
+        '${report.parent.parent.parent.path}/portal-initial-theme',
+      );
+      if (await initialTheme.exists()) {
+        final theme = await initialTheme.readAsString();
+        if (theme != 'dark') {
+          throw StateError('Invalid controlled initial theme');
+        }
+        final data = Platform.environment['XDG_DATA_HOME'] ?? '';
+        if (!data.endsWith('/profiles/0-portal-settings/data') &&
+            !RegExp(r'/common/c-[0-9a-f]{12}/data$').hasMatch(data)) {
+          throw StateError(
+            'Initial theme requires an isolated observer profile',
+          );
+        }
+        final support = await getApplicationSupportDirectory();
+        if (support.path != '$data/io.busystack.busymark') {
+          throw StateError('Unexpected controlled application settings path');
+        }
+        final settingsFile = File('${support.path}/settings.json');
+        if (await settingsFile.exists()) {
+          throw StateError('Refusing to replace existing controlled settings');
+        }
+        await const JsonFileLocalSettingsStore().save({
+          'themeModePreference': 'dark',
+        });
+        checks['portalSeededApplicationPreference'] = theme;
+      }
+      portal = _PortalSettingsObserver();
+      WidgetsBinding.instance.addObserver(portal);
+      // Observe runApp's first frame without scheduling an early empty one.
+      portal.observe(requestFrame: false);
+      checks['settingsSnapshots'] = portal.snapshots;
+      checks['applicationThemeSnapshots'] = portal.applicationThemes;
+    }
     await application.main([]);
     var hardwareKeyEvents = 0;
     HardwareKeyboard.instance.addHandler((_) {
@@ -103,6 +190,60 @@ Future<void> main(List<String> args) async {
     final container = ProviderScope.containerOf(context, listen: false);
     final settings = container.read(appSettingsControllerProvider.notifier);
     await settings.waitUntilLoaded();
+    if (portal != null) {
+      await _until(() => portal!.snapshots.isNotEmpty);
+      // Check a second live frame while replies may still be withheld. This
+      // proves Flutter keeps constructing frames; it is not a timing endpoint.
+      binding.scheduleFrame();
+      await binding.endOfFrame;
+      checks['localFramesProgressed'] = true;
+      final portalDocument = File('${report.parent.path}/portal.md');
+      const portalText =
+          '# Portal responsiveness\n\nUsable while replies are pending.\n';
+      await portalDocument.writeAsString(portalText, flush: true);
+      await container
+          .read(workspaceControllerProvider.notifier)
+          .openPath(portalDocument.path);
+      container.read(appRouterProvider).go('/workspace');
+      await _until(() => _editorPublished(portalDocument.path, portalText));
+      checks['portalEditorPublished'] = true;
+      // A portal update must not override an explicit application preference.
+      await settings.setThemeModePreference(BusyMarkThemeModePreference.light);
+      await binding.endOfFrame;
+      checks['portalExplicitThemePreference'] = 'light';
+      checks['document'] = portalDocument.path;
+      checks['expectedText'] = portalText;
+      checks['applicationSupport'] =
+          (await getApplicationSupportDirectory()).path;
+      await publish('portal-local');
+      final authority = File('${report.path}.portal-authority');
+      final finished = File('${report.path}.portal-close');
+      await _until(() => authority.existsSync() || finished.existsSync());
+      if (authority.existsSync()) {
+        final expected = jsonDecode(await authority.readAsString());
+        await _until(() {
+          final actual = portal!.current();
+          return expected is Map &&
+              expected.entries.every(
+                (entry) => actual[entry.key] == entry.value,
+              );
+        });
+        portal.observe();
+        await binding.endOfFrame;
+        checks['authoritySettingsVerified'] = portal.current();
+        await _until(
+          () => _elements().any(
+            (element) =>
+                element.widget is Navigator &&
+                Theme.of(element).brightness == Brightness.light,
+          ),
+        );
+        checks['portalApplicationThemePreserved'] = true;
+        await publish('portal-authority');
+        await _until(finished.existsSync);
+      }
+      WidgetsBinding.instance.removeObserver(portal);
+    }
     await settings.setAutoSave(false);
     await settings.setAutomaticSpelling(false);
     await settings.setConfirmCloseWithUnsavedChanges(true);

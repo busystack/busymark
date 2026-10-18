@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:yaru/yaru.dart';
 
+import 'src/app/app_settings.dart';
 import 'src/app/busymark_app.dart';
 import 'src/app/startup_path.dart';
 import 'src/app/system_accent.dart';
@@ -43,7 +44,10 @@ Future<void> main(List<String> args) async {
         ? [const LinuxGtkAccentService(), const LinuxPortalAppearance()]
         : [],
   );
-  await PerformanceTrace.async('accent-ready', accentCoordinator.initialize);
+  await PerformanceTrace.async(
+    'accent-local-ready',
+    accentCoordinator.initializeLocal,
+  );
   final chrome = await PerformanceTrace.async(
     'gtk-settings',
     () => Future.wait<Object?>([
@@ -53,6 +57,11 @@ Future<void> main(List<String> args) async {
   );
   final headerIcons = GtkHeaderIconService();
   await PerformanceTrace.async('header-icons', headerIcons.initialize);
+  const settingsStore = JsonFileLocalSettingsStore();
+  final startupSettings = await PerformanceTrace.async(
+    'local-settings-ready',
+    () => StartupAppSettings.load(settingsStore),
+  );
   if (PerformanceTrace.enabled) {
     var remaining = 120;
     WidgetsBinding.instance.addTimingsCallback((timings) {
@@ -69,6 +78,10 @@ Future<void> main(List<String> args) async {
   runApp(
     ProviderScope(
       overrides: [
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        appSettingsControllerProvider.overrideWith(
+          () => AppSettingsController(startupSettings: startupSettings),
+        ),
         initialGtkAnimationsEnabledProvider.overrideWithValue(
           chrome[0] as bool?,
         ),

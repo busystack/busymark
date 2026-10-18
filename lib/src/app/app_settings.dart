@@ -534,6 +534,41 @@ abstract class LocalSettingsStore {
   Future<void> save(Map<String, Object?> json);
 }
 
+/// One-use handoff of local preferences read before the first application frame.
+/// Bound to the store that acknowledged them; later controller initialization
+/// reads the store again instead of reusing a startup snapshot.
+class StartupAppSettings {
+  StartupAppSettings._(this._store, this._snapshot);
+
+  final LocalSettingsStore _store;
+  ({AppSettings settings, String? acknowledgedJson})? _snapshot;
+
+  static Future<StartupAppSettings> load(LocalSettingsStore store) async {
+    AppSettings settings;
+    String? acknowledgedJson;
+    try {
+      settings = AppSettings.fromJson(await store.load());
+      acknowledgedJson = jsonEncode(settings.toJson());
+    } on Object {
+      // Match the controller's existing failed-load policy. Defaults are usable
+      // but are not an acknowledged disk snapshot for write reconciliation.
+      settings = AppSettings.defaults();
+    }
+    return StartupAppSettings._(store, (
+      settings: settings,
+      acknowledgedJson: acknowledgedJson,
+    ));
+  }
+
+  ({AppSettings settings, String? acknowledgedJson})? _take(
+    LocalSettingsStore store,
+  ) {
+    final snapshot = _snapshot;
+    _snapshot = null;
+    return identical(store, _store) ? snapshot : null;
+  }
+}
+
 class JsonFileLocalSettingsStore implements LocalSettingsStore {
   const JsonFileLocalSettingsStore({
     String? settingsFilePathOverride,
@@ -601,6 +636,10 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
 }
 
 class AppSettingsController extends Notifier<AppSettings> {
+  AppSettingsController({StartupAppSettings? startupSettings})
+    : _startupSettings = startupSettings;
+
+  final StartupAppSettings? _startupSettings;
   bool Function()? processPendingProperties;
   Future<void> setElementPropertiesVisible(bool value) {
     if (!value && processPendingProperties?.call() == false) {
@@ -623,6 +662,15 @@ class AppSettingsController extends Notifier<AppSettings> {
   @override
   AppSettings build() {
     _store = ref.read(localSettingsStoreProvider);
+    final startup = _startupSettings?._take(_store);
+    if (startup != null) {
+      _loaded = true;
+      _persistedSettingsJson = startup.acknowledgedJson;
+      _loadFuture = Future<void>.value();
+      return startup.settings.copyWith(elementPropertiesVisible: false);
+    }
+    _loaded = false;
+    _persistedSettingsJson = null;
     _loadFuture = _load();
     unawaited(_loadFuture);
     return AppSettings.defaults();

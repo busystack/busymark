@@ -12,7 +12,7 @@ from unittest.mock import patch
 from unittest.mock import Mock
 import ctypes as C
 
-from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, signal_owned, snap_command, snapshot_mapped_process
+from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, accepted, process_children, run_case, seed_local_settings, signal_owned, snap_command, snapshot_mapped_process
 
 
 class MappingObservationTest(unittest.TestCase):
@@ -545,6 +545,47 @@ class OwnedInputIsolationTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'Unexpected keyboard'):
             desktop.close(SimpleNamespace(get_xid=lambda: 123))
 
+
+
+class LocalSettingsFixtureTest(unittest.TestCase):
+    def test_seed_is_private_and_does_not_rewrite_unchanged_database(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'source.db'
+            source.write_bytes(b'synthetic local settings')
+            profile = root / 'profile'
+            seed_local_settings(profile, source)
+            target = profile / 'config/dconf/user'
+            self.assertEqual(target.read_bytes(), source.read_bytes())
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+            original = target.stat()
+            seed_local_settings(profile, source)
+            self.assertEqual(target.stat().st_ino, original.st_ino)
+            self.assertEqual(target.stat().st_mtime_ns, original.st_mtime_ns)
+            target.write_bytes(b'changed local settings')
+            with self.assertRaisesRegex(RuntimeError, 'changed isolated'):
+                seed_local_settings(profile, source)
+            self.assertEqual(target.read_bytes(), b'changed local settings')
+
+    def test_seed_refuses_file_and_directory_symlinks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'source.db'
+            source.write_bytes(b'fixture')
+            outside = root / 'outside'
+            outside.mkdir()
+            profile = root / 'profile'
+            (profile / 'config').mkdir(parents=True)
+            (profile / 'config/dconf').symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(RuntimeError, 'symlink'):
+                seed_local_settings(profile, source)
+            self.assertEqual(list(outside.iterdir()), [])
+            (profile / 'config/dconf').unlink()
+            (profile / 'config/dconf').mkdir()
+            (profile / 'config/dconf/user').symlink_to(source)
+            with self.assertRaisesRegex(RuntimeError, 'symlink'):
+                seed_local_settings(profile, source)
+            self.assertEqual(source.read_bytes(), b'fixture')
 
 if __name__ == "__main__":
     unittest.main()

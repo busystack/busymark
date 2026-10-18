@@ -40,6 +40,14 @@
     {
       "file": "patches/adjacent-atk-null-id.patch",
       "sha256": "fb3b47f75089f28d641eb388762b3adfacfbf52ea27ab48c45d689b4c491d0c3"
+    },
+    {
+      "file": "patches/settings-portal-async.patch",
+      "sha256": "547aa79c3c45c3b3fc77181842a309b3be4adb8f39fe7662bb6033a02ccd16f8"
+    },
+    {
+      "file": "patches/settings-portal-tests.patch",
+      "sha256": "03b8a631ba2dd0071aa9a924028d7651ba64e921c95c1e1e92e06f64b9aeb101"
     }
   ]
 }

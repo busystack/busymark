@@ -68,7 +68,7 @@ def key():
 
 
 def cache_root():
-    return Path(os.environ.get("BUSYMARK_ENGINE_CACHE", PROJECT / ".build/flutter-engine")).expanduser().resolve() / key()
+    return (Path(os.environ.get("BUSYMARK_ENGINE_CACHE", PROJECT / ".build/flutter-engine")).expanduser().resolve() / key()).resolve()
 
 
 def run(args, cwd=None, **kwargs):
@@ -140,7 +140,7 @@ def verify_source(source):
     expected = expected_sources(source)
     changed = set(subprocess.check_output(["git", "diff", "--name-only", "HEAD"], cwd=source, text=True).splitlines())
     if changed != set(expected) or any(digest(source / p) != h for p, h in expected.items()):
-        fail("Engine source differs from the reviewed C6 composition; do not reuse this build")
+        fail("Engine source differs from the reviewed engine patch composition; do not reuse this build")
     return expected
 
 
@@ -207,19 +207,77 @@ def build(args, root):
         fail("The DEPS-pinned Clang toolchain is missing or mismatched")
     for mode in args.mode:
         name = LOCK["modes"][mode]
+        built = src / "out" / name
+        invalidate_native_inputs(built, sources)
         gn = [sys.executable, "flutter/tools/gn", "--runtime-mode=" + mode, *LOCK["gn"]]
         if mode == "debug":
             gn.append("--unoptimized")
         run(gn, cwd=src, env=env)
-        built = src / "out" / name
         run([ninja, "-C", "out/" + name, "-j" + str(args.jobs), *LOCK["targets"]], cwd=src, env=env)
         build_portable_native_tests(built, ninja, env, args.jobs)
+        if verify_source(source) != sources:
+            fail("Engine sources changed during compilation; rebuild before publishing")
+        write_native_inputs(built, sources)
         fixtures = built / "native-test-fixtures"
         if fixtures.exists():
             shutil.rmtree(fixtures)
         shutil.copytree(built / "gen/flutter/shell/platform/linux/assets", fixtures)
         with exclusive(root, ".artifact-" + mode + ".lock"):
             publish(root, mode, sources, version, builder_sha)
+
+
+NATIVE_INPUTS = "busymark-linux-inputs.json"
+
+
+def native_inputs(sources):
+    return {"schema": 1, "sources": sources}
+
+
+def invalidate_native_inputs(built, sources):
+    """Ninja timestamps cannot certify content copied from another cache."""
+    built = built.resolve()
+    stamp = built / NATIVE_INPUTS
+    try:
+        if json.loads(stamp.read_text()) == native_inputs(sources):
+            return []
+    except (OSError, ValueError):
+        pass
+    prefix = "engine/src/flutter/shell/platform/linux/"
+    if any(not name.startswith(prefix) for name in sources):
+        fail("Reviewed patches extend beyond the Linux embedder; use a fresh engine build cache")
+    trees = [built / "obj/flutter/shell/platform/linux",
+             built / "obj/BUILD_DIR/gen/flutter/shell/platform/linux"]
+    paths = [stamp, *[built / name for name in [
+        "libflutter_linux_gtk.so", "lib.unstripped/libflutter_linux_gtk.so",
+        "flutter_linux_unittests", "exe.unstripped/flutter_linux_unittests"]]]
+    # Validate everything before deleting anything. Never follow a redirected
+    # output tree into a source checkout or another cache.
+    for tree in trees:
+        if tree.is_symlink() or not tree.resolve().is_relative_to(built):
+            fail(f"Redirected native output tree: {tree}")
+        if tree.exists():
+            for path in tree.rglob("*"):
+                if path.is_symlink() or not path.resolve().is_relative_to(built):
+                    fail(f"Redirected native output: {path}")
+                if path.suffix == ".o":
+                    paths.append(path)
+    for path in paths:
+        if path.is_symlink() or not path.resolve().is_relative_to(built):
+            fail(f"Redirected native output: {path}")
+    removed = []
+    for path in paths:
+        if path.exists():
+            path.unlink()
+            removed.append(str(path.relative_to(built)))
+    print(f"Invalidated {len(removed)} Linux outputs: missing/changed content stamp", flush=True)
+    return removed
+
+
+def write_native_inputs(built, sources):
+    stamp = built / NATIVE_INPUTS
+    temporary = stamp.with_suffix(".partial")
+    temporary.write_text(json.dumps(native_inputs(sources), indent=2) + "\n")
+    temporary.replace(stamp)
 
 
 def configure_native_test_fixtures(built):
@@ -259,6 +317,21 @@ def portable_native_tests(path):
     return found
 
 
+def portal_project():
+    # Snapcraft builds this part from tools/flutter_engine alone. Its current
+    # project supplies the maintained observer/driver, never an old cache copy.
+    return Path(os.environ.get("CRAFT_PROJECT_DIR", PROJECT)).resolve()
+
+
+def portal_test_sources():
+    return {name: digest(portal_project() / name) for name in [
+        "tools/flutter_engine/tests/portal-initialization-test.cc",
+        "tools/flutter_engine/tests/portal_service.py",
+        "tools/test_portal_initialization.py",
+        "tools/application_close_smoke.py",
+    ]}
+
+
 def publish(root, mode, sources, clang, builder_sha):
     name = LOCK["modes"][mode]
     built = root / "source/engine/src/out" / name
@@ -267,7 +340,7 @@ def publish(root, mode, sources, clang, builder_sha):
     if partial.exists():
         shutil.rmtree(partial)
     partial.mkdir(parents=True)
-    required = ["libflutter_linux_gtk.so", "flutter_linux", "icudtl.dat", "dart-sdk", "flutter_patched_sdk", "gen/dart-pkg/sky_engine", "gen/const_finder.dart.snapshot", "font-subset", "flutter_linux_unittests", "native-test-fixtures", "args.gn"]
+    required = [NATIVE_INPUTS, "libflutter_linux_gtk.so", "flutter_linux", "icudtl.dat", "dart-sdk", "flutter_patched_sdk", "gen/dart-pkg/sky_engine", "gen/const_finder.dart.snapshot", "font-subset", "flutter_linux_unittests", "native-test-fixtures", "args.gn"]
     if mode != "debug":
         required.append("gen_snapshot")
     for name in required:
@@ -290,8 +363,13 @@ def publish(root, mode, sources, clang, builder_sha):
     src = root / "source/engine/src"
     gtk = shlex.split(subprocess.check_output(["pkg-config", "--cflags", "--libs", "gtk+-3.0"], text=True))
     run([src / "flutter/buildtools/linux-x64/clang/bin/clang++", "-std=c++17", "-O1", "-g", "-pthread", "-DFLUTTER_LINUX_COMPILATION", '-DBM2_RENDERER_SOURCE="' + str(src / "flutter/shell/platform/linux/fl_view_renderer.cc") + '"', HERE / "tests/renderer-retirement-test.cc", src / "flutter/shell/platform/linux/fl_compositor.cc", "-I" + str(src), *gtk, "-o", partial / "renderer-retirement"])
+    run([src / "flutter/buildtools/linux-x64/clang/bin/clang++", "-std=c++17", "-O1", "-g",
+         "-I" + str(src), HERE / "tests/portal-initialization-test.cc",
+         *[src / "flutter/shell/platform/linux" / name for name in
+           ["fl_settings.cc", "fl_settings_portal.cc", "fl_gnome_settings.cc"]],
+         *gtk, "-o", partial / "portal-initialization"])
     files = {str(p.relative_to(partial)): digest(p) for p in sorted(partial.rglob("*")) if p.is_file()}
-    receipt = {"schema": 2, "key": key(), "mode": mode, "architecture": LOCK["architecture"], "frameworkRevision": LOCK["frameworkRevision"], "engineRevision": LOCK["engineRevision"], "sources": sources, "clang": clang, "builderSHA256": builder_sha, "componentSourceSHA256": digest(HERE / "tests/renderer-retirement-test.cc"), "symbolsSHA256": digest(symbols / "libflutter_linux_gtk.so.debug"), "elf": elf_identity(lib), "files": files}
+    receipt = {"schema": 2, "portalTestSources": portal_test_sources(), "key": key(), "mode": mode, "architecture": LOCK["architecture"], "frameworkRevision": LOCK["frameworkRevision"], "engineRevision": LOCK["engineRevision"], "sources": sources, "clang": clang, "builderSHA256": builder_sha, "componentSourceSHA256": digest(HERE / "tests/renderer-retirement-test.cc"), "symbolsSHA256": digest(symbols / "libflutter_linux_gtk.so.debug"), "elf": elf_identity(lib), "files": files}
     (partial / "busymark-engine.json").write_text(json.dumps(receipt, indent=2) + "\n")
     if dest.exists():
         shutil.rmtree(dest)
@@ -313,10 +391,12 @@ def verify(root, mode):
         fail("Artifact compiler differs from the DEPS-pinned Clang; rebuild/import the locked toolchain artifacts")
     expected = json.loads((HERE / "reviewed-sources.json").read_text())
     if receipt.get("sources") != expected:
-        fail("Artifact was not built from the reviewed C6 sources")
+        fail("Artifact was not built from the reviewed engine sources")
     if receipt.get("componentSourceSHA256") != digest(HERE / "tests/renderer-retirement-test.cc"):
         fail("Cached lifetime regressions differ from the maintained source; rebuild")
-    for name in ["libflutter_linux_gtk.so", "icudtl.dat", "flutter_linux/flutter_linux.h", "dart-sdk/version", "dart-sdk/revision", "dart-sdk/bin/dart", "dart-sdk/bin/dartaotruntime", "dart-sdk/bin/snapshots/frontend_server_aot.dart.snapshot", "flutter_patched_sdk/platform_strong.dill", "gen/dart-pkg/sky_engine/pubspec.yaml", "gen/const_finder.dart.snapshot", "font-subset", "flutter_linux_unittests", "native-test-fixtures/ubuntu-20.04/gschemas.compiled", "renderer-retirement", "args.gn"]:
+    if receipt.get("portalTestSources") != portal_test_sources():
+        fail("Cached portal regressions differ from the maintained sources; rebuild")
+    for name in [NATIVE_INPUTS, "portal-initialization", "libflutter_linux_gtk.so", "icudtl.dat", "flutter_linux/flutter_linux.h", "dart-sdk/version", "dart-sdk/revision", "dart-sdk/bin/dart", "dart-sdk/bin/dartaotruntime", "dart-sdk/bin/snapshots/frontend_server_aot.dart.snapshot", "flutter_patched_sdk/platform_strong.dill", "gen/dart-pkg/sky_engine/pubspec.yaml", "gen/const_finder.dart.snapshot", "font-subset", "flutter_linux_unittests", "native-test-fixtures/ubuntu-20.04/gschemas.compiled", "renderer-retirement", "args.gn"]:
         if name not in receipt["files"]:
             fail(f"Incomplete artifact receipt: {name}")
     if mode != "debug" and "gen_snapshot" not in receipt["files"]:
@@ -328,6 +408,8 @@ def verify(root, mode):
         f = out / name
         if not f.is_file() or digest(f) != want:
             fail(f"Engine artifact missing or mismatched: {f}; rebuild/import a verified {mode} cache")
+    if json.loads((out / NATIVE_INPUTS).read_text()) != native_inputs(expected):
+        fail("Native build input stamp differs from the reviewed sources; rebuild")
     if (out / "dart-sdk/version").read_text().strip() != LOCK["dartVersion"]:
         fail("Engine Dart SDK does not match the pinned framework")
     if (out / "dart-sdk/revision").read_text().strip() != LOCK["dartRevision"]:
@@ -409,6 +491,8 @@ def main():
     for command in ["verify", "test", "export"]:
         p = commands.add_parser(command)
         p.add_argument("--mode", choices=LOCK["modes"], required=True)
+        if command == "test":
+            p.add_argument("--output", type=Path, help="Retain controlled portal regression evidence outside the repository")
         if command == "export":
             p.add_argument("--output", type=Path, required=True)
     p = commands.add_parser("import")
@@ -455,6 +539,11 @@ def main():
                 run([out / "flutter_linux_unittests"], cwd=out, env=env)
                 for case in ["active-presentation", "pending-redraw", "first-frame", "partial"]:
                     run([out / "renderer-retirement", case], env=env)
+                portal = ["/usr/bin/python3", portal_project() / "tools/test_portal_initialization.py",
+                          "--probe", out / "portal-initialization"]
+                if args.output:
+                    portal.extend(["--output", args.output.resolve()])
+                run(portal, env=env)
         elif args.command == "check-bundle":
             check_bundle(root, args.mode, args.bundle, args.packaged)
         elif args.command == "export":

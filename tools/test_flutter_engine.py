@@ -52,6 +52,7 @@ class EngineSelectionTest(unittest.TestCase):
         self.out = self.root / "artifacts/engine/src/out/host_release"
         self.out.mkdir(parents=True)
         files = {
+            engine.NATIVE_INPUTS: json.dumps(engine.native_inputs(json.loads((engine.HERE / 'reviewed-sources.json').read_text()))).encode(),
             "libflutter_linux_gtk.so": Path("/bin/true").read_bytes(),
             "icudtl.dat": b"test-icu", "flutter_linux/flutter_linux.h": b"test-header",
             "dart-sdk/version": engine.LOCK["dartVersion"].encode(),
@@ -64,6 +65,7 @@ class EngineSelectionTest(unittest.TestCase):
             "native-test-fixtures/ubuntu-20.04/gschemas.compiled": b"test-schemas",
             "flutter_patched_sdk/platform_strong.dill": b"test-platform",
             "flutter_linux_unittests": b"test-native\0native-test-fixtures\0", "renderer-retirement": b"test-component",
+            "portal-initialization": b"test-portal-component",
             "args.gn": ('flutter_runtime_mode = "release"\ntarget_cpu = "x64"\ntarget_os = "linux"\nengine_version = "' + engine.LOCK["engineRevision"] + '"\nenable_lto = false\nis_debug = false\n').encode(),
         }
         for name, data in files.items():
@@ -75,7 +77,7 @@ class EngineSelectionTest(unittest.TestCase):
         symbols = self.root / 'symbols/release/libflutter_linux_gtk.so.debug'
         symbols.parent.mkdir(parents=True)
         shutil.copy2(self.out / 'libflutter_linux_gtk.so', symbols)
-        self.receipt.update(schema=2, symbolsSHA256=engine.digest(symbols))
+        self.receipt.update(schema=2, symbolsSHA256=engine.digest(symbols), portalTestSources=engine.portal_test_sources())
         self.write_receipt()
 
     def write_receipt(self):
@@ -83,6 +85,56 @@ class EngineSelectionTest(unittest.TestCase):
 
     def test_complete_selected_inputs_verify(self):
         self.assertEqual(engine.verify(self.root, "release")[0], self.out)
+
+    def test_missing_native_input_stamp_rejects_timestamp_only_cache(self):
+        del self.receipt['files'][engine.NATIVE_INPUTS]
+        self.write_receipt()
+        with self.assertRaisesRegex(RuntimeError, 'Incomplete artifact receipt'):
+            engine.verify(self.root, 'release')
+
+    def test_incorrect_native_input_stamp_cannot_claim_current_sources(self):
+        stamp = self.out / engine.NATIVE_INPUTS
+        stamp.write_text(json.dumps(engine.native_inputs({})))
+        self.receipt['files'][engine.NATIVE_INPUTS] = engine.digest(stamp)
+        self.write_receipt()
+        with self.assertRaisesRegex(RuntimeError, 'Native build input stamp'):
+            engine.verify(self.root, 'release')
+
+    def test_missing_portal_regression_is_an_incomplete_cache(self):
+        del self.receipt['files']['portal-initialization']
+        self.write_receipt()
+        with self.assertRaisesRegex(RuntimeError, 'Incomplete artifact receipt'):
+            engine.verify(self.root, 'release')
+
+    def test_changed_portal_observer_or_fixture_is_rejected(self):
+        self.receipt['portalTestSources']['tools/test_portal_initialization.py'] = '0' * 64
+        self.write_receipt()
+        with self.assertRaisesRegex(RuntimeError, 'Cached portal regressions differ'):
+            engine.verify(self.root, 'release')
+
+    def test_engine_only_snap_part_uses_current_project_regressions(self):
+        for name in engine.portal_test_sources():
+            target = self.root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(engine.PROJECT / name, target)
+        with patch.dict(os.environ, CRAFT_PROJECT_DIR=str(self.root)), \
+             patch.object(engine, 'PROJECT', self.root / 'parts/flutter-engine'):
+            sources = engine.portal_test_sources()
+            self.assertEqual(sources['tools/application_close_smoke.py'],
+                             engine.digest(self.root / 'tools/application_close_smoke.py'))
+            (self.root / 'tools/application_close_smoke.py').write_text('changed observer')
+            with self.assertRaisesRegex(RuntimeError, 'Cached portal regressions differ'):
+                engine.verify(self.root, 'release')
+
+    def test_cache_alias_uses_one_canonical_build_root(self):
+        cache = self.root / 'cache'
+        cache.mkdir()
+        physical = self.root / 'private-build'
+        physical.mkdir()
+        (cache / 'reviewed-key').symlink_to(physical, target_is_directory=True)
+        with patch.dict(os.environ, BUSYMARK_ENGINE_CACHE=str(cache)), \
+             patch.object(engine, 'key', return_value='reviewed-key'):
+            self.assertEqual(engine.cache_root(), physical)
 
     def test_missing_mode_has_actionable_failure(self):
         with self.assertRaisesRegex(RuntimeError, "build --mode profile"):
@@ -152,7 +204,7 @@ class EngineSelectionTest(unittest.TestCase):
     def test_changed_source_composition_is_rejected(self):
         self.receipt["sources"].pop(next(iter(self.receipt["sources"])))
         self.write_receipt()
-        with self.assertRaisesRegex(RuntimeError, "reviewed C6"):
+        with self.assertRaisesRegex(RuntimeError, "reviewed engine"):
             engine.verify(self.root, "release")
 
     def test_unsafe_manifest_path_is_rejected(self):
@@ -280,6 +332,53 @@ class EngineSelectionTest(unittest.TestCase):
         fonts = install / 'share/busymark/fonts'
         self.assertFalse(fonts.is_symlink())
         self.assertEqual((fonts / 'NotoSans-Regular.ttf').read_bytes(), b'font')
+
+
+class NativeBuildInputTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='bm-native-input-')
+        self.addCleanup(self.temp.cleanup)
+        self.built = Path(self.temp.name) / 'out'
+        self.obj = self.built / 'obj/flutter/shell/platform/linux/unit.o'
+        self.other = self.built / 'obj/flutter/runtime/core.o'
+        self.library = self.built / 'libflutter_linux_gtk.so'
+        self.sources = {'engine/src/flutter/shell/platform/linux/fl_settings.cc': 'new-content'}
+        for path in [self.obj, self.other, self.library]:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'old')
+
+    def test_missing_stamp_invalidates_only_native_outputs(self):
+        removed = engine.invalidate_native_inputs(self.built, self.sources)
+        self.assertIn('libflutter_linux_gtk.so', removed)
+        self.assertFalse(self.obj.exists())
+        self.assertTrue(self.other.exists())
+
+    def test_content_change_invalidates_even_future_dated_object(self):
+        engine.write_native_inputs(self.built, {next(iter(self.sources)): 'old-content'})
+        os.utime(self.obj, (4102444800, 4102444800))
+        engine.invalidate_native_inputs(self.built, self.sources)
+        self.assertFalse(self.obj.exists())
+        self.assertFalse((self.built / engine.NATIVE_INPUTS).exists())
+
+    def test_unchanged_content_reuses_objects(self):
+        engine.write_native_inputs(self.built, self.sources)
+        self.assertEqual(engine.invalidate_native_inputs(self.built, self.sources), [])
+        self.assertTrue(self.obj.exists())
+
+    def test_redirected_output_rejected_before_mutation(self):
+        tree = self.obj.parent
+        outside = Path(self.temp.name) / 'outside'
+        tree.rename(outside)
+        tree.symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeError, 'Redirected native output'):
+            engine.invalidate_native_inputs(self.built, self.sources)
+        self.assertTrue((outside / 'unit.o').exists())
+        self.assertTrue(self.library.exists())
+
+    def test_non_linux_patch_requires_fresh_build(self):
+        with self.assertRaisesRegex(RuntimeError, 'beyond the Linux embedder'):
+            engine.invalidate_native_inputs(self.built, {'engine/src/flutter/runtime/core.cc': 'x'})
+        self.assertTrue(self.obj.exists())
 
 
 if __name__ == "__main__":

@@ -61,6 +61,7 @@ class LinuxAccentCoordinator {
   final _changes = StreamController<Color>.broadcast(sync: true);
   final _subscriptions = <StreamSubscription<Color?>>[];
   final _ready = Completer<void>();
+  final _localReady = Completer<void>();
   Future<void>? _disposal;
   bool _started = false;
   bool _disposed = false;
@@ -75,6 +76,15 @@ class LinuxAccentCoordinator {
     listener.add(_color);
     listener.onCancel = subscription.cancel;
   });
+
+  /// Start both sources, but make the initial frame depend only on the first
+  /// (local GTK) source. An unavailable local accent is a valid local result;
+  /// the portal can later replace the existing fallback without delaying UI.
+  /// Normal source precedence and live notifications remain unchanged.
+  Future<void> initializeLocal() {
+    unawaited(initialize());
+    return _localReady.future;
+  }
 
   Future<void> initialize() {
     if (!_started && !_disposed) {
@@ -115,6 +125,9 @@ class LinuxAccentCoordinator {
   }
 
   void _recompute() {
+    if (!_localReady.isCompleted && (_sources.isEmpty || _resolved.first)) {
+      _localReady.complete();
+    }
     var ready = true;
     Color? selected;
     for (var index = 0; index < _sources.length; index++) {
@@ -143,6 +156,7 @@ class LinuxAccentCoordinator {
       deadline?.cancel();
     }
     if (!_ready.isCompleted) _ready.complete();
+    if (!_localReady.isCompleted) _localReady.complete();
     await Future.wait(
       _subscriptions.map((subscription) => subscription.cancel()),
     );
