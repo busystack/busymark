@@ -234,6 +234,14 @@ counts without key values. Verify actual GTK delivery on a disposable display:
 `xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_application_input_observer.py --disposable-display`.
 The explicit flag authorizes test input only on that private display.
 
+Pre-map input observation requires the normal content window: GTK's hidden
+application leader also carries the process ID. The close gate checks that its
+audit root is the subsequently mapped window. It tracks later-realized children
+through owned subtree notifications and reports subscription times. Input before
+a new child's subscription cannot be reconstructed; zero observed keys alone
+does not establish the source of an unexpected document edit. The live regression
+covers leader selection, late child delivery and widget destruction.
+
 ## Maintenance
 
 The build records reviewed Linux source hashes in `busymark-linux-inputs.json`.

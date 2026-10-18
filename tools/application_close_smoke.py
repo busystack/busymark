@@ -378,6 +378,11 @@ class InputEvent(C.Union):
     _fields_ = [('any', AnyEvent), ('pad', C.c_long * 24)]
 
 
+class WindowLifecycleEvent(C.Structure):
+    # Create/Destroy/Map/Reparent notifications share event/parent then window.
+    _fields_ = AnyEvent._fields_ + [('child', C.c_ulong)]
+
+
 class InputCookie(C.Structure):
     _fields_ = AnyEvent._fields_[:-1] + [
         ('extension', C.c_int), ('evtype', C.c_int),
@@ -418,6 +423,10 @@ class OwnedInputAudit:
         self.x = desktop.x
         self.display = desktop.display
         self.windows = set()
+        self.root_window = window.get_xid()
+        self.window_updates = []
+        self.refresh_required = False
+        self.retired = False
         self.events = []
         self.key_presses = self.key_releases = self.activeSamples = self.samples = 0
         self.focusSamples = 0
@@ -431,6 +440,16 @@ class OwnedInputAudit:
         x.XSetErrorHandler.argtypes = [C.c_void_p]
         x.XSetErrorHandler.restype = C.c_void_p
         x.XGetInputFocus.argtypes = [C.c_void_p, C.POINTER(C.c_ulong), C.POINTER(C.c_int)]
+        self._prepare_xi2()
+        self._refresh_windows()
+
+    def _refresh_windows(self):
+        """Track later-realized children without selecting root/raw input.
+
+        Lifecycle delivery is polled: report the refresh times rather than
+        implying observation of input before a new window was selected.
+        """
+        x = self.x
         handler_type = C.CFUNCTYPE(C.c_int, C.c_void_p, C.POINTER(InputError))
 
         def error(_display, event):
@@ -441,20 +460,20 @@ class OwnedInputAudit:
         handler = handler_type(error)
         previous = x.XSetErrorHandler(C.cast(handler, C.c_void_p))
         try:
-            self._prepare_xi2()
             bits = (C.c_ubyte * 1)((1 << 2) | (1 << 3))
             mask = DeviceEventMask(1, 1, bits)  # XIAllMasterDevices; keys only.
-            pending = [window.get_xid()]
+            pending, current = [self.root_window], set()
             while pending:
                 xid = pending.pop()
-                if xid in self.windows:
+                if xid in current:
                     continue
-                if len(self.windows) >= 1024:
+                if len(current) >= 1024:
                     raise ObservationIncomplete('Owned input window bound exceeded')
-                self.windows.add(xid)
-                x.XSelectInput(self.display, xid, (1 << 0) | (1 << 1) | (1 << 21))
-                if self.xi.XISelectEvents(self.display, xid, C.byref(mask), 1) != 0:
-                    raise ObservationIncomplete('Owned XInput2 window selection failed')
+                current.add(xid)
+                if xid not in self.windows:
+                    x.XSelectInput(self.display, xid, (1 << 0) | (1 << 1) | (1 << 21) | (1 << 19) | (1 << 17))
+                    if self.xi.XISelectEvents(self.display, xid, C.byref(mask), 1) != 0:
+                        raise ObservationIncomplete('Owned XInput2 window selection failed')
                 root, parent, count = C.c_ulong(), C.c_ulong(), C.c_uint()
                 children = C.POINTER(C.c_ulong)()
                 if x.XQueryTree(self.display, xid, C.byref(root), C.byref(parent), C.byref(children), C.byref(count)):
@@ -464,6 +483,12 @@ class OwnedInputAudit:
                 else:
                     raise ObservationIncomplete('Owned window subtree enumeration failed')
             x.XSync(self.display, 0)
+            if current != self.windows and len(self.window_updates) < 64:
+                self.window_updates.append({'observed_ns': time.monotonic_ns(),
+                                            'added': len(current - self.windows),
+                                            'removed': len(self.windows - current)})
+            self.windows = current
+            self.refresh_required = False
         finally:
             x.XSetErrorHandler(previous)
         if self.errors:
@@ -491,6 +516,21 @@ class OwnedInputAudit:
     def poll(self):
         self.samples += 1
         desktop = self.desktop
+        # Drain structure notifications first, so focus queries include a FlView
+        # realized after the initial top-level was found. A destroyed root must
+        # not be queried again during normal process exit.
+        drained = 0
+        while self.x.XPending(self.display):
+            drained += 1
+            if drained > 4096:
+                if 'Owned event queue overflow' not in self.errors:
+                    self.errors.append('Owned event queue overflow')
+                break
+            event = InputEvent()
+            self.x.XNextEvent(self.display, C.byref(event))
+            self.observe(event)
+        if self.refresh_required and not self.retired:
+            self._refresh_windows()
         atom, form, count, remaining = C.c_ulong(), C.c_int(), C.c_ulong(), C.c_ulong()
         data = C.POINTER(C.c_ubyte)()
         self.x.XGetWindowProperty(self.display, desktop.root,
@@ -508,16 +548,6 @@ class OwnedInputAudit:
                 self.errors.append('XGetInputFocus failed')
         elif focused.value in self.windows:
             self.focusSamples += 1
-        drained = 0
-        while self.x.XPending(self.display):
-            drained += 1
-            if drained > 4096:
-                if 'Owned event queue overflow' not in self.errors:
-                    self.errors.append('Owned event queue overflow')
-                break
-            event = InputEvent()
-            self.x.XNextEvent(self.display, C.byref(event))
-            self.observe(event)
 
     def observe(self, event):
         if event.any.type == 35:  # GenericEvent, not a core XAnyEvent window.
@@ -539,6 +569,13 @@ class OwnedInputAudit:
                 self.x.XFreeEventData(self.display, C.byref(cookie))
             return
         if event.any.window not in self.windows:
+            return
+        if event.any.type in (16, 17, 19, 21):
+            lifecycle = C.cast(C.byref(event), C.POINTER(WindowLifecycleEvent)).contents
+            if event.any.type == 17 and lifecycle.child == self.root_window:
+                self.retired = True
+                self.windows.clear()
+            self.refresh_required = True
             return
         if event.any.type in (2, 3):
             self._key(event.any.type, bool(event.any.send_event), 'core')
@@ -565,6 +602,9 @@ class OwnedInputAudit:
                 'activeSamples': self.activeSamples, 'focusSamples': self.focusSamples,
                 'samples': self.samples,
                 'events': self.events, 'errors': self.errors,
+                'windowUpdates': self.window_updates,
+                'rootWindow': self.root_window,
+                'windowTracking': 'Owned subtree lifecycle notifications; newly realized children selected when polled. Input before a child subscription cannot be reconstructed.',
                 'keyboardMechanism': 'owned-window XInput2 and core events',
                 'scope': 'Identified owned X11 window subtree only; no key values, text, global input or unrelated window identities.'}
 
@@ -600,7 +640,7 @@ class Desktop:
     def atom(self, name):
         return self.x.XInternAtom(self.display, name.encode(), 0)
 
-    def window(self, pid, require_mapped=True):
+    def window(self, pid, require_mapped=True, require_normal=False):
         pending = [self.root]
         while pending:
             xid = pending.pop()
@@ -611,9 +651,16 @@ class Desktop:
             if data:
                 self.x.XFree(data)
             if owner == pid:
+                normal = True
+                if require_normal:
+                    data = C.POINTER(C.c_ubyte)()
+                    self.x.XGetWindowProperty(self.display, xid, self.atom('_NET_WM_WINDOW_TYPE'), 0, 32, 0, 0, C.byref(a), C.byref(f), C.byref(n), C.byref(remaining), C.byref(data))
+                    normal = bool(n.value and f.value == 32 and self.atom('_NET_WM_WINDOW_TYPE_NORMAL') in C.cast(data, C.POINTER(C.c_ulong))[:n.value])
+                    if data:
+                        self.x.XFree(data)
                 w = self.GdkX11.X11Window.foreign_new_for_display(self.Gdk.Display.get_default(), xid)
                 attributes = WindowAttributes()
-                if w and self.x.XGetWindowAttributes(self.display, xid, C.byref(attributes)) and (not require_mapped or attributes.map_state == 2):
+                if normal and w and self.x.XGetWindowAttributes(self.display, xid, C.byref(attributes)) and (not require_mapped or attributes.map_state == 2):
                     return w
             root, parent, count = C.c_ulong(), C.c_ulong(), C.c_uint()
             children = C.POINTER(C.c_ulong)()
@@ -632,7 +679,9 @@ class Desktop:
         return self._observe_input(pid, passive=False)
 
     def _observe_input(self, pid, passive):
-        window = self.window(pid, require_mapped=False)
+        # GTK's hidden application leader also has _NET_WM_PID. It is not the
+        # future content window and cannot establish coverage of its siblings.
+        window = self.window(pid, require_mapped=False, require_normal=True)
         if window is None:
             return None
         attrs = WindowAttributes()
@@ -837,6 +886,8 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                     with observation_span(observer_event, 'owned-window-query'):
                         w = desktop.window(process.pid)
                     if w:
+                        if tracker.input_audit is not None and tracker.input_audit.root_window != w.get_xid():
+                            raise ObservationIncomplete('Input audit is attached to a different owned window')
                         # BusyMark maps its top-level only after FlView first-frame.
                         snapshot_mapped_process(process.pid, folder, record, observer_event)
                         if snap_instance:
