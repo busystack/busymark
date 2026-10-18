@@ -217,7 +217,6 @@ class VisualizationCoordinator {
       if (result.isSuccessful) {
         _rememberLastSuccessful(queued.request.blockKey, result);
       }
-      _throwIfSuperseded(queued.request, queued.token);
       if (!queued.completer.isCompleted) {
         queued.completer.complete(result);
       }
