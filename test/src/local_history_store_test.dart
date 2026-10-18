@@ -1700,6 +1700,33 @@ void main() {
     expect(windowsPolicy.excludes(r'c:\WORKSPACE\PRIVATE\secret.md'), isTrue);
     expect(windowsPolicy.excludes(r'C:\workspace\public\guide.md'), isFalse);
   });
+
+  // Keep these after the existing process cases: a diagnostic regression must
+  // not warm the first helper launch and mask its original startup boundary.
+  test(
+    'history process startup preserves the child failure before readiness',
+    () async {
+      final child = await _HistoryProcess.start(
+        root,
+        'fail-before-ready',
+        'failed',
+      );
+      addTearDown(child.close);
+      await expectLater(
+        child.ready(),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'child diagnostics',
+            allOf(
+              contains('exited 1 before readiness'),
+              contains('Controlled history process failure before readiness'),
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _LockSettingsStore implements LocalSettingsStore {
@@ -1710,11 +1737,34 @@ class _LockSettingsStore implements LocalSettingsStore {
 }
 
 class _HistoryProcess {
-  _HistoryProcess(this.process, this.signal, this.output);
+  _HistoryProcess(this.process, this.signal) {
+    output = Future.wait([
+      _collectOutput(process.stdout, _stdout),
+      _collectOutput(process.stderr, _stderr),
+    ]);
+    unawaited(process.exitCode.then((code) => _exitCode = code));
+  }
   final Process process;
   final String signal;
-  final Future<List<String>> output;
+  late final Future<List<String>> output;
+  final _stdout = _HistoryProcessOutput();
+  final _stderr = _HistoryProcessOutput();
+  int? _exitCode;
   bool exited = false;
+
+  static Future<String> _collectOutput(
+    Stream<List<int>> stream,
+    _HistoryProcessOutput buffer,
+  ) async {
+    await for (final chunk in stream.transform(utf8.decoder)) {
+      buffer.add(chunk);
+    }
+    return buffer.contents;
+  }
+
+  String get diagnostics =>
+      'launcher pid=${process.pid}, signal=$signal, exit=${_exitCode ?? 'pending'}'
+      '\nstdout:\n${_stdout.contents}\nstderr:\n${_stderr.contents}';
 
   static Future<_HistoryProcess> start(
     Directory root,
@@ -1758,18 +1808,21 @@ class _HistoryProcess {
         'BUSYMARK_HISTORY_PROCESS_OWNER': owner,
       },
     );
-    final output = Future.wait([
-      process.stdout.transform(utf8.decoder).join(),
-      process.stderr.transform(utf8.decoder).join(),
-    ]);
-    return _HistoryProcess(process, signal, output);
+    return _HistoryProcess(process, signal);
   }
 
   Future<void> ready() async {
     final deadline = Stopwatch()..start();
     while (!await File('$signal.ready').exists()) {
+      if (_exitCode != null) {
+        await output;
+        exited = true;
+        throw StateError(
+          'History child exited $_exitCode before readiness.\n$diagnostics',
+        );
+      }
       if (deadline.elapsed > const Duration(seconds: 60)) {
-        throw TimeoutException('History child was not ready');
+        throw TimeoutException('History child was not ready.\n$diagnostics');
       }
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
@@ -1799,4 +1852,30 @@ class _HistoryProcess {
     await output;
     exited = true;
   }
+}
+
+/// Retain the first error and recent progress without unbounded child output.
+class _HistoryProcessOutput {
+  static const _prefixLimit = 8 * 1024;
+  static const _tailLimit = 56 * 1024;
+  String _prefix = '';
+  String _tail = '';
+  bool _elided = false;
+
+  void add(String chunk) {
+    final remaining = _prefixLimit - _prefix.length;
+    if (remaining > 0) {
+      final count = chunk.length < remaining ? chunk.length : remaining;
+      _prefix += chunk.substring(0, count);
+      chunk = chunk.substring(count);
+    }
+    _tail += chunk;
+    if (_tail.length > _tailLimit) {
+      _tail = _tail.substring(_tail.length - _tailLimit);
+      _elided = true;
+    }
+  }
+
+  String get contents =>
+      '$_prefix${_elided ? '\n[output elided]\n' : ''}$_tail';
 }

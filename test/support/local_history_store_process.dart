@@ -17,6 +17,9 @@ void main() {
     final signal = Platform.environment['BUSYMARK_HISTORY_PROCESS_SIGNAL']!;
     final mode = Platform.environment['BUSYMARK_HISTORY_PROCESS_MODE']!;
     await File('$signal.pid').writeAsString('$pid');
+    if (mode == 'fail-before-ready') {
+      throw StateError('Controlled history process failure before readiness');
+    }
     Future<void> waitForRelease() async {
       final deadline = Stopwatch()..start();
       while (!await File('$signal.release').exists()) {

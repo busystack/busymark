@@ -6,6 +6,31 @@ import 'package:flutter_test/flutter_test.dart';
 import '../support/headless_chrome.dart';
 
 void main() {
+  test(
+    'browser does not inherit Flutter synthetic fonts or read-only cache',
+    () {
+      final parent = {
+        'FONTCONFIG_FILE': '/tmp/flutter_test_fonts.owned/fonts.conf',
+        'XDG_CACHE_HOME': '/owned/browser-cache',
+        'DISPLAY': ':97',
+      };
+      expect(chromeProcessEnvironment(parent), {
+        'XDG_CACHE_HOME': '/owned/browser-cache',
+        'DISPLAY': ':97',
+      });
+      expect(parent['FONTCONFIG_FILE'], isNotNull);
+    },
+  );
+
+  test('browser preserves ordinary explicit font configuration', () {
+    final parent = {
+      'FONTCONFIG_FILE': '/owned/custom-fonts/fonts.conf',
+      'FONTCONFIG_PATH': '/owned/font-config',
+    };
+    expect(chromeProcessEnvironment(parent), parent);
+    expect(chromeProcessEnvironment({'DISPLAY': ':97'}), {'DISPLAY': ':97'});
+  });
+
   test('browser endpoint survives normal later process exit', () async {
     final exit = Completer<int>();
     final uri = await browserDevToolsEndpoint(

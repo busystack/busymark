@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 /// Optional browser integration, using the installed browser's DevTools API.
 final String? headlessChromePath = [
   Platform.environment['BUSYMARK_CHROME_PATH'],
@@ -84,23 +86,43 @@ Future<Uri> browserDevToolsEndpoint(
   );
 }
 
+/// Flutter's widget runner exports a synthetic Fontconfig file pointing at
+/// SDK test fonts with only /var/cache/fontconfig as a cache. A separate real
+/// browser must use its normal font configuration and isolated XDG cache.
+/// Preserve an explicitly supplied ordinary Fontconfig configuration.
+Map<String, String> chromeProcessEnvironment(Map<String, String> parent) {
+  final environment = Map<String, String>.of(parent);
+  final config = environment['FONTCONFIG_FILE'];
+  if (config != null &&
+      p.basename(config) == 'fonts.conf' &&
+      p.basename(p.dirname(config)).startsWith('flutter_test_fonts.')) {
+    environment.remove('FONTCONFIG_FILE');
+  }
+  return environment;
+}
+
 Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
   final profile = await Directory.systemTemp.createTemp('html-csp-browser-');
   Process? browser;
   Uri? browserEndpoint;
   final documentUri = Uri.file(htmlPath);
   try {
-    browser = await Process.start(headlessChromePath!, [
-      '--headless=new',
-      '--no-first-run',
-      '--disable-background-networking',
-      '--disable-component-update',
-      '--remote-debugging-port=0',
-      '--user-data-dir=${profile.path}',
-      '--proxy-server=http://127.0.0.1:9',
-      '--proxy-bypass-list=127.0.0.1;localhost',
-      documentUri.toString(),
-    ]);
+    browser = await Process.start(
+      headlessChromePath!,
+      [
+        '--headless=new',
+        '--no-first-run',
+        '--disable-background-networking',
+        '--disable-component-update',
+        '--remote-debugging-port=0',
+        '--user-data-dir=${profile.path}',
+        '--proxy-server=http://127.0.0.1:9',
+        '--proxy-bypass-list=127.0.0.1;localhost',
+        documentUri.toString(),
+      ],
+      environment: chromeProcessEnvironment(Platform.environment),
+      includeParentEnvironment: false,
+    );
     unawaited(browser.stdout.drain<void>());
     final uri = await browserDevToolsEndpoint(browser.stderr, browser.exitCode);
     browserEndpoint = uri;
