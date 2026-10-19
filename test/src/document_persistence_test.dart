@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -13,7 +14,63 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+typedef _UmaskNative = Uint32 Function(Uint32);
+typedef _UmaskDart = int Function(int);
+
 void main() {
+  for (final mask in [0x3f, 0x100, 0x1ff]) {
+    test(
+      'atomic publication protects files created with umask $mask',
+      () async {
+        if (!Platform.isLinux) return;
+        final directory = await Directory.systemTemp.createTemp(
+          'busymark-mask-',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final umask = DynamicLibrary.open(
+          'libc.so.6',
+        ).lookupFunction<_UmaskNative, _UmaskDart>('umask');
+        final target = File(p.join(directory.path, 'state.json'));
+        final previous = umask(mask);
+        try {
+          await writeAtomicJson(target, {'revision': 1});
+        } finally {
+          umask(previous);
+        }
+        expect(jsonDecode(await target.readAsString()), {'revision': 1});
+        expect((await directory.stat()).mode & 511, 448);
+        expect((await target.stat()).mode & 511, 384);
+        expect(await directory.list().length, 1);
+      },
+    );
+    test('recovery lock remains reusable under umask $mask', () async {
+      if (!Platform.isLinux) return;
+      final directory = await Directory.systemTemp.createTemp('busymark-lock-');
+      addTearDown(() async {
+        await Process.run('chmod', ['-R', 'u+rwX', directory.path]);
+        await directory.delete(recursive: true);
+      });
+      final umask = DynamicLibrary.open(
+        'libc.so.6',
+      ).lookupFunction<_UmaskNative, _UmaskDart>('umask');
+      final path = p.join(directory.path, 'recovery.json');
+      final store = JsonDocumentRecoveryStore(filePathOverride: path);
+      final previous = umask(mask);
+      try {
+        await store.beginRun();
+        await store.markCleanShutdown();
+      } finally {
+        umask(previous);
+      }
+      expect((await File('$path.lock').stat()).mode & 511, 384);
+      expect((await File(path).stat()).mode & 511, 384);
+      expect(
+        jsonDecode(await File(path).readAsString())['cleanShutdown'],
+        isTrue,
+      );
+    });
+  }
+
   test(
     'atomic publication repairs an unreadable owned state directory',
     () async {

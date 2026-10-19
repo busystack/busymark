@@ -223,13 +223,17 @@ there is no second path-based chmod after publication. Permission failures still
 fail the transaction, and locking, flush, recovery adoption, and journal ordering
 remain mandatory. Other POSIX platforms retain their subprocess implementation.
 
-An owned directory can require permission repair without being readable. If its
-ordinary descriptor open fails with access denied, the same worker pins it with
-`O_PATH | O_DIRECTORY | O_NOFOLLOW` and applies `chmod` through `/proc/self/fd/N`
-while holding that descriptor. This targets the admitted inode even if its name
-is replaced. The directory requirement rejects a final symlink; unavailable
-procfs or failed protection still fails the transaction. Normal readable state
-continues to use `fchmod` directly.
+An owned directory or newly written file can require permission repair without
+being readable, including files created under a restrictive umask. On access
+denied, the same worker pins the inode with `O_PATH | O_NOFOLLOW` (plus
+`O_DIRECTORY` for directories). Empty-path `statx` rejects a held symlink
+before `chmod` through `/proc/self/fd/N`. The descriptor stays open throughout,
+so replacing the original pathname cannot redirect protection. Unavailable
+inspection/procfs or failed protection still fails the transaction. Normal
+readable state continues to use `fchmod` directly.
+Recovery also protects a newly admitted lock inode before its first handle is
+closed, so a restrictive creation mask cannot prevent the next checkpoint from
+reopening it. Protection failure still closes the handle and fails the operation.
 
 Opening publishes the existing editor after validated content and file monitoring
 are ready. The opening future still waits for recent-workspace settings to be

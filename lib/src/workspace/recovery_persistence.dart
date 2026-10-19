@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../core/linux_private_permissions.dart';
 import '../core/performance_trace.dart';
 import 'document_buffer.dart';
 import 'session_persistence.dart';
@@ -583,10 +584,19 @@ int? _linuxProcessStartIdentity(int processId) {
 
 Future<T> _withRecoveryLock<T>(File recovery, Future<T> Function() body) async {
   await recovery.parent.create(recursive: true);
-  final lock = await File('${recovery.path}.lock').open(mode: FileMode.append);
+  final lockFile = File('${recovery.path}.lock');
+  final lock = await lockFile.open(mode: FileMode.append);
   final deadline = DateTime.now().add(const Duration(seconds: 30));
   var acquired = false;
   try {
+    // Protect a newly created lock before releasing its first handle. Otherwise
+    // an owner-read-stripping creation mask prevents subsequent checkpoints.
+    if (Platform.isLinux) {
+      await LinuxPrivatePermissions.instance.restrict(
+        lockFile.path,
+        directory: false,
+      );
+    }
     while (!acquired) {
       try {
         await PerformanceTrace.async(

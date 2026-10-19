@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdatomic.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -33,6 +34,12 @@ int open(const char* path, int flags, ...) {
   int fd = real(path, flags);
   if (fd >= 0) { opened_fd = fd; ++opens; }
   return fd;
+}
+int statx(int fd, const char* path, int flags, unsigned mask, struct statx* buffer) {
+  int (*real)(int, const char*, int, unsigned, struct statx*) = dlsym(RTLD_NEXT, "statx");
+  if (mode == 7) { errno = EIO; return -1; }
+  if (mode == 8) { memset(buffer, 0, sizeof(*buffer)); return 0; }
+  return real(fd, path, flags, mask, buffer);
 }
 static int before_chmod(void) {
   worker_tid = syscall(SYS_gettid);

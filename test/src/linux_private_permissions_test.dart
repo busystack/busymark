@@ -160,26 +160,86 @@ void main() {
     },
   );
 
-  for (final mode in [5, 6]) {
-    test(
-      'directory fallback failure $mode closes fd and preserves queue',
-      () async {
-        expect(configure(mode), 0);
-        final directory = await Directory(
-          '${root.path}/failure-dir-$mode',
-        ).create();
-        await expectLater(
-          permissions.restrict(directory.path, directory: true),
-          throwsA(isA<FileSystemException>()),
-        );
-        expect(opens(), 1);
-        expect(closes(), 1);
-        expect(configure(0), 0);
-        await permissions.restrict(directory.path, directory: true);
-        expect(closes(), 1);
-      },
-    );
+  test('unreadable file uses its held inode after path replacement', () async {
+    expect(configure(4), 0);
+    final file = await File('${root.path}/held-file').writeAsString('held');
+    final moved = '${root.path}/moved-file';
+    final operation = permissions.restrict(file.path, directory: false);
+    try {
+      final deadline = Stopwatch()..start();
+      while (entered() == 0) {
+        expect(deadline.elapsed, lessThan(const Duration(seconds: 10)));
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+      expect(workerTid(), isNot(currentTid()));
+      expect(opens(), 1);
+      await file.rename(moved);
+      await file.writeAsString('replacement');
+      expect((await Process.run('chmod', ['644', file.path])).exitCode, 0);
+    } finally {
+      expect(release(), 1);
+      await operation;
+    }
+    expect((await File(moved).stat()).mode & 511, 384);
+    expect((await file.stat()).mode & 511, 420);
+    expect(await file.readAsString(), 'replacement');
+    expect(closes(), 1);
+  });
+
+  for (final directory in [true, false]) {
+    for (final mode in [5, 6, 7, 8]) {
+      test(
+        'fallback directory=$directory failure $mode closes fd and preserves queue',
+        () async {
+          expect(configure(mode), 0);
+          final path = '${root.path}/failure-$directory-$mode';
+          if (directory) {
+            await Directory(path).create();
+          } else {
+            await File(path).writeAsString('data');
+          }
+          await expectLater(
+            permissions.restrict(path, directory: directory),
+            throwsA(isA<FileSystemException>()),
+          );
+          expect(opens(), 1);
+          expect(closes(), 1);
+          expect(configure(0), 0);
+          await permissions.restrict(path, directory: directory);
+          expect(closes(), 1);
+        },
+      );
+    }
   }
+
+  test(
+    'file fallback rejects an O_PATH descriptor to a final symlink',
+    () async {
+      expect(configure(4), 0);
+      final file = await File(
+        '${root.path}/linked-file',
+      ).writeAsString('target');
+      expect((await Process.run('chmod', ['644', file.path])).exitCode, 0);
+      final link = await Link('${root.path}/file-link').create(file.path);
+      await expectLater(
+        permissions.restrict(link.path, directory: false),
+        throwsA(
+          isA<FileSystemException>().having(
+            (error) => error.osError?.errorCode,
+            'symlink rejection',
+            40,
+          ),
+        ),
+      );
+      expect(opens(), 1);
+      expect(closes(), 1);
+      expect(entered(), 0);
+      expect((await file.stat()).mode & 511, 420);
+      expect(await link.target(), file.path);
+      expect(await file.readAsString(), 'target');
+      expect(configure(0), 0);
+    },
+  );
 
   test('directory fallback rejects a final symlink', () async {
     expect(configure(4), 0);
