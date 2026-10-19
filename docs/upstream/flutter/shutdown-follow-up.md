@@ -10,12 +10,14 @@ already present in the pinned source.
 The duplicate check also found open
 [PR 193533](https://github.com/flutter/flutter/pull/193533), which explicitly
 adds a strong view-to-renderer reference and synchronizes newer OpenGL/subsurface
-renderer disposal, and [PR 193126](https://github.com/flutter/flutter/pull/193126),
-which cancels a frame wait and defers secondary-window destruction out of a
-reentrant GTK draw. Both belong to stack 193534. Contribute the pinned-release
-captures, deterministic tests and ownership analysis to those reviews instead
-of opening a duplicate claim. Their newer renderer implementation differs from
-the pinned compositor code; neither open PR is a validated official-release fix
+renderer disposal. It belongs to stack 193534.
+[PR 193126](https://github.com/flutter/flutter/pull/193126) concerns the Linux
+windowing test environment and GLX/EGL context selection; the earlier draft's
+attribution of frame-wait cancellation to that PR was incorrect.
+Contribute the pinned-release captures, deterministic tests and ownership
+analysis to the renderer review instead of opening a duplicate claim.
+Its newer renderer implementation differs from
+the pinned compositor code; the open PR is not a validated official-release fix
 or an approved application workaround. In particular, review GTK cleanup-thread
 ownership and post-unlock task-runner use alongside the child-reference repair.
 
