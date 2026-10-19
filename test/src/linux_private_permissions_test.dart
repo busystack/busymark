@@ -127,6 +127,77 @@ void main() {
     );
   }
 
+  test(
+    'unreadable directory uses its held inode after path replacement',
+    () async {
+      expect(configure(4), 0);
+      final directory = await Directory('${root.path}/held').create();
+      final moved = '${root.path}/moved';
+      final operation = permissions.restrict(directory.path, directory: true);
+      try {
+        final deadline = Stopwatch()..start();
+        while (entered() == 0) {
+          expect(deadline.elapsed, lessThan(const Duration(seconds: 10)));
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+        }
+        // The actual native chmod is pending on a worker, with its O_PATH fd
+        // admitted. Replacing the original path must not redirect protection.
+        expect(workerTid(), isNot(currentTid()));
+        expect(opens(), 1);
+        await directory.rename(moved);
+        await directory.create();
+        expect(
+          (await Process.run('chmod', ['755', directory.path])).exitCode,
+          0,
+        );
+      } finally {
+        expect(release(), 1);
+        await operation;
+      }
+      expect((await Directory(moved).stat()).mode & 511, 448);
+      expect((await directory.stat()).mode & 511, 493);
+      expect(closes(), 1);
+    },
+  );
+
+  for (final mode in [5, 6]) {
+    test(
+      'directory fallback failure $mode closes fd and preserves queue',
+      () async {
+        expect(configure(mode), 0);
+        final directory = await Directory(
+          '${root.path}/failure-dir-$mode',
+        ).create();
+        await expectLater(
+          permissions.restrict(directory.path, directory: true),
+          throwsA(isA<FileSystemException>()),
+        );
+        expect(opens(), 1);
+        expect(closes(), 1);
+        expect(configure(0), 0);
+        await permissions.restrict(directory.path, directory: true);
+        expect(closes(), 1);
+      },
+    );
+  }
+
+  test('directory fallback rejects a final symlink', () async {
+    expect(configure(4), 0);
+    final directory = await Directory('${root.path}/linked-directory').create();
+    expect((await Process.run('chmod', ['755', directory.path])).exitCode, 0);
+    final link = await Link(
+      '${root.path}/directory-link',
+    ).create(directory.path);
+    await expectLater(
+      permissions.restrict(link.path, directory: true),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(opens(), 0);
+    expect(entered(), 0);
+    expect((await directory.stat()).mode & 511, 493);
+    expect(configure(0), 0);
+  });
+
   test('rejected paths leave their target and worker queue intact', () async {
     expect(configure(0), 0);
     final file = await File('${root.path}/target').writeAsString('unchanged');

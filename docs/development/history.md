@@ -223,6 +223,14 @@ there is no second path-based chmod after publication. Permission failures still
 fail the transaction, and locking, flush, recovery adoption, and journal ordering
 remain mandatory. Other POSIX platforms retain their subprocess implementation.
 
+An owned directory can require permission repair without being readable. If its
+ordinary descriptor open fails with access denied, the same worker pins it with
+`O_PATH | O_DIRECTORY | O_NOFOLLOW` and applies `chmod` through `/proc/self/fd/N`
+while holding that descriptor. This targets the admitted inode even if its name
+is replaced. The directory requirement rejects a final symlink; unavailable
+procfs or failed protection still fails the transaction. Normal readable state
+continues to use `fchmod` directly.
+
 Opening publishes the existing editor after validated content and file monitoring
 are ready. The opening future still waits for recent-workspace settings to be
 published and reports a failed write. Settings mutations made during initial

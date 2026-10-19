@@ -15,6 +15,26 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'atomic publication repairs an unreadable owned state directory',
+    () async {
+      if (!Platform.isLinux) return;
+      final directory = await Directory.systemTemp.createTemp('busymark-mode-');
+      addTearDown(() async {
+        // Also restore access when the regression fails before normalization.
+        await Process.run('chmod', ['700', directory.path]);
+        await directory.delete(recursive: true);
+      });
+      expect((await Process.run('chmod', ['300', directory.path])).exitCode, 0);
+      final target = File(p.join(directory.path, 'state.json'));
+      await writeAtomicJson(target, {'revision': 1});
+      expect((await directory.stat()).mode & 511, 448);
+      expect((await target.stat()).mode & 511, 384);
+      expect(jsonDecode(await target.readAsString()), {'revision': 1});
+      expect(await directory.list().length, 1);
+    },
+  );
+
+  test(
     'Linux state permissions reject symlinks and preserve private publication',
     () async {
       if (!Platform.isLinux) return;

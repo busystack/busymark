@@ -9,6 +9,8 @@ typedef _OpenNative = Int32 Function(Pointer<Utf8>, Int32);
 typedef _OpenDart = int Function(Pointer<Utf8>, int);
 typedef _FchmodNative = Int32 Function(Int32, Uint32);
 typedef _FchmodDart = int Function(int, int);
+typedef _ChmodNative = Int32 Function(Pointer<Utf8>, Uint32);
+typedef _ChmodDart = int Function(Pointer<Utf8>, int);
 typedef _CloseNative = Int32 Function(Int32);
 typedef _CloseDart = int Function(int);
 typedef _ErrnoNative = Pointer<Int32> Function();
@@ -59,12 +61,14 @@ final class _NativePermissions {
     final libc = DynamicLibrary.open(library);
     _open = libc.lookupFunction<_OpenNative, _OpenDart>('open');
     _fchmod = libc.lookupFunction<_FchmodNative, _FchmodDart>('fchmod');
+    _chmod = libc.lookupFunction<_ChmodNative, _ChmodDart>('chmod');
     _close = libc.lookupFunction<_CloseNative, _CloseDart>('close');
     _errno = libc.lookupFunction<_ErrnoNative, _ErrnoDart>('__errno_location');
   }
 
   late final _OpenDart _open;
   late final _FchmodDart _fchmod;
+  late final _ChmodDart _chmod;
   late final _CloseDart _close;
   late final _ErrnoDart _errno;
 
@@ -76,16 +80,36 @@ final class _NativePermissions {
     // O_DIRECTORY. O_NONBLOCK prevents an unexpected FIFO from blocking GTK.
     const flags = 0x800 | 0x80000 | 0x20000;
     final nativePath = path.toNativeUtf8();
-    final int descriptor;
+    var descriptor = -1;
+    var pathDescriptor = false;
+    int? error;
     try {
       descriptor = _open(nativePath, flags | (directory ? 0x10000 : 0));
+      if (descriptor < 0 && directory && _errno().value == 13) {
+        // chmod does not require read permission on an owned directory. Pin
+        // that inode without opening it for I/O. O_DIRECTORY | O_NOFOLLOW
+        // rejects a final symlink even though O_PATH alone would retain it.
+        descriptor = _open(nativePath, 0x200000 | 0x80000 | 0x20000 | 0x10000);
+        pathDescriptor = true;
+      }
+      if (descriptor < 0) error = _errno().value;
     } finally {
       malloc.free(nativePath);
     }
-    if (descriptor < 0) _fail(path, _errno().value);
-    int? error;
+    if (error != null) _fail(path, error);
     try {
-      if (_fchmod(descriptor, directory ? 448 : 384) != 0) {
+      if (pathDescriptor) {
+        // fchmod rejects O_PATH descriptors. This procfs magic link resolves
+        // the held inode, not the original (possibly replaced) pathname. Keep
+        // the descriptor open until chmod completes; unavailable procfs fails
+        // the transaction rather than falling back to an unpinned path.
+        final heldPath = '/proc/self/fd/$descriptor'.toNativeUtf8();
+        try {
+          if (_chmod(heldPath, 448) != 0) error = _errno().value;
+        } finally {
+          malloc.free(heldPath);
+        }
+      } else if (_fchmod(descriptor, directory ? 448 : 384) != 0) {
         error = _errno().value;
       }
     } finally {
