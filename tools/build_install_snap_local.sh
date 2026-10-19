@@ -287,8 +287,10 @@ echo "Use the clean Snapcraft procedure in README.md for release/security artifa
 REQUIRED_FLUTTER_VERSION="$(project_flutter_version)"
 [[ -n "$REQUIRED_FLUTTER_VERSION" ]] || \
   fail "pubspec.yaml must declare an exact environment.flutter version"
-FLUTTER_BIN="${BUSYMARK_FLUTTER_BIN:-$(command -v flutter || true)}"
-[[ -n "$FLUTTER_BIN" && -x "$FLUTTER_BIN" ]] || fail "put the official Flutter $REQUIRED_FLUTTER_VERSION SDK on PATH"
+selected_flutter="${BUSYMARK_FLUTTER_BIN:-flutter}"
+FLUTTER_BIN="$(command -v -- "$selected_flutter" || true)"
+[[ -n "$FLUTTER_BIN" && -x "$FLUTTER_BIN" ]] || \
+  fail "cannot execute '$selected_flutter'; select the official Flutter $REQUIRED_FLUTTER_VERSION SDK with PATH or BUSYMARK_FLUTTER_BIN"
 actual_flutter_version="$("$FLUTTER_BIN" --version --machine | python3 -c 'import json,sys;print(json.load(sys.stdin)["frameworkVersion"])')"
 [[ "$actual_flutter_version" == "$REQUIRED_FLUTTER_VERSION" ]] || fail "expected official Flutter $REQUIRED_FLUTTER_VERSION; found $actual_flutter_version"
 prepare_build_tmp

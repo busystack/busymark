@@ -57,7 +57,9 @@ sudo apt-get install -y \
   libsecret-1-dev \
   libwebkit2gtk-4.1-dev \
   ninja-build \
+  patch \
   pkg-config \
+  python3 \
   xz-utils
 ```
 
@@ -129,6 +131,8 @@ the Flutter payload in an installed Snap scaffold for quick development and
 may retain that scaffold's Ubuntu libraries and bundled tools. Even with
 `--no-install`, its output is not a dependency refresh and must not be used for
 a release, a security update, or validation of `stage-packages` changes.
+It selects Flutter from PATH; `BUSYMARK_FLUTTER_BIN` can select an executable
+by command name or path. The selected SDK must match the pinned version.
 
 ## Screenshots
 

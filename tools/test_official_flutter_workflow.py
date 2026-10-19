@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -92,6 +93,62 @@ raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
             self.assertEqual(invocations[1], [str(spy), 'build', 'linux', '--release', '--no-pub',
                                                '--verbose', '--target', 'lib/main.dart'])
 
+    def test_local_repack_resolves_sdk_names_and_paths_before_building(self):
+        # Run the helper, stopping at dependency resolution. No scaffold is
+        # consumed, compiled payload staged, or installed application touched.
+        cases = ['default', 'command', 'absolute', 'relative', 'missing',
+                 'nonexecutable', 'wrong-version']
+        for case in cases:
+            with self.subTest(selection=case), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                (root / 'tools').mkdir()
+                (root / 'linux').mkdir()
+                for name in ['tools/build_install_snap_local.sh', 'pubspec.yaml',
+                             'linux/CMakeLists.txt']:
+                    shutil.copyfile(ROOT / name, root / name)
+                (root / 'bin').mkdir()
+                spy = root / 'bin/flutter'
+                spy.write_text('''#!/usr/bin/python3
+import json, os, sys
+with open(os.environ['BUILD_CALLS'], 'a') as output:
+    output.write(json.dumps(sys.argv[1:]) + '\\n')
+if sys.argv[1:] == ['--version', '--machine']:
+    print(json.dumps({'frameworkVersion': os.environ['SPY_VERSION']}))
+    raise SystemExit(0)
+raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else 99)
+''')
+                spy.chmod(0o600 if case == 'nonexecutable' else 0o700)
+                calls = root / 'calls.jsonl'
+                protected = root / 'snap-root'
+                protected.mkdir()
+                (protected / 'sentinel').write_text('preserve')
+                env = {key: value for key, value in os.environ.items()
+                       if not key.startswith('BUSYMARK_')}
+                env.update(PATH=str(spy.parent) + ':/usr/bin:/bin', HOME=str(root),
+                           BUILD_CALLS=str(calls), SPY_VERSION='0.0.0' if case == 'wrong-version' else '3.47.5',
+                           BUSYMARK_BUILD_TMP_ROOT=str(root / 'tmp'))
+                if case != 'default':
+                    env['BUSYMARK_FLUTTER_BIN'] = {
+                        'command': 'flutter', 'relative': './bin/flutter',
+                        'missing': 'no-such-owned-sdk',
+                    }.get(case, str(spy))
+                result = subprocess.run(
+                    ['bash', str(root / 'tools/build_install_snap_local.sh'),
+                     '--no-install', '--no-run', '--skip-tests', '--skip-bundled-git',
+                     '--root', str(protected), '--scaffold', str(root / 'unused'),
+                     '--output', str(root / 'unused.snap')],
+                    cwd=root, env=env, capture_output=True, text=True, timeout=15)
+                observed = [json.loads(line) for line in calls.read_text().splitlines()] if calls.exists() else []
+                if case in ['missing', 'nonexecutable', 'wrong-version']:
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    self.assertEqual(observed, [['--version', '--machine']] if case == 'wrong-version' else [])
+                    self.assertIn('official Flutter 3.47.5', result.stderr)
+                else:
+                    self.assertEqual(result.returncode, 77, result.stdout + result.stderr)
+                    self.assertEqual(observed, [['--version', '--machine'], ['pub', 'get', '--enforce-lockfile']])
+                self.assertEqual((protected / 'sentinel').read_text(), 'preserve')
+                self.assertFalse((root / 'unused.snap').exists())
+
     def test_required_native_failures_do_not_suppress_independent_checks(self):
         checks = {
             'verify': {
@@ -151,6 +208,80 @@ raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
             self.assertEqual(hashlib.sha256((root / patch['file']).read_bytes()).hexdigest(), patch['sha256'])
         self.assertFalse((ROOT / 'tools/flutter_engine/engine.py').exists())
         self.assertFalse((ROOT / 'linux/cmake/CorrectedFlutterEngine.cmake').exists())
+
+
+class BundleInstallTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.source = self.root / 'source'
+        self.source.mkdir()
+        self.build = self.root / 'build'
+        self.bundle = self.build / 'bundle'
+        (self.source / 'payload').write_text('installed')
+        # Exercise the maintained module without needing Flutter or plugins.
+        (self.source / 'CMakeLists.txt').write_text(f'''
+cmake_minimum_required(VERSION 3.13)
+project(bundle_control NONE)
+include("{ROOT / 'linux/cmake/BundleInstall.cmake'}")
+if(FAIL_AFTER_DEFAULT)
+  message(FATAL_ERROR "Controlled dependency failure")
+endif()
+busymark_clean_default_bundle()
+install(FILES payload DESTINATION "${{CMAKE_INSTALL_PREFIX}}/data" COMPONENT Runtime)
+''')
+        self.env = dict(os.environ)
+        self.env.pop('CMAKE_INSTALL_PREFIX', None)
+
+    def cmake(self, *args, success=True, environment=None):
+        result = subprocess.run(['cmake', *map(str, args)], env=environment or self.env,
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
+
+    def sentinel(self, directory):
+        directory.mkdir(parents=True, exist_ok=True)
+        target = directory / 'preserve'
+        target.write_text('unrelated')
+        return target
+
+    def test_default_bundle_cleanup_preserves_siblings(self):
+        self.cmake('-S', self.source, '-B', self.build)
+        stale = self.sentinel(self.bundle)
+        sibling = self.sentinel(self.build / 'unrelated')
+        self.cmake('--install', self.build)
+        self.assertFalse(stale.exists())
+        self.assertEqual(sibling.read_text(), 'unrelated')
+        self.assertEqual((self.bundle / 'data/payload').read_text(), 'installed')
+
+    def test_explicit_prefix_does_not_clean_either_destination(self):
+        custom = self.root / 'custom-stage'
+        self.cmake('-S', self.source, '-B', self.build, f'-DCMAKE_INSTALL_PREFIX={custom}')
+        original = self.sentinel(self.bundle)
+        existing = self.sentinel(custom)
+        self.cmake('--install', self.build)
+        self.assertEqual(original.read_text(), 'unrelated')
+        self.assertEqual(existing.read_text(), 'unrelated')
+        self.assertEqual((custom / 'data/payload').read_text(), 'installed')
+
+    def test_destdir_does_not_clean_the_real_bundle_or_staged_files(self):
+        self.cmake('-S', self.source, '-B', self.build)
+        destdir = self.root / 'destdir'
+        staged = destdir / self.bundle.relative_to(self.bundle.anchor)
+        original = self.sentinel(self.bundle)
+        existing = self.sentinel(staged)
+        self.cmake('--install', self.build, environment={**self.env, 'DESTDIR': str(destdir)})
+        self.assertEqual(original.read_text(), 'unrelated')
+        self.assertEqual(existing.read_text(), 'unrelated')
+        self.assertEqual((staged / 'data/payload').read_text(), 'installed')
+
+    def test_failed_first_configure_retains_the_safe_default(self):
+        self.cmake('-S', self.source, '-B', self.build, '-DFAIL_AFTER_DEFAULT=ON', success=False)
+        self.assertIn(f'CMAKE_INSTALL_PREFIX:PATH={self.bundle}',
+                      (self.build / 'CMakeCache.txt').read_text())
+        self.cmake('-S', self.source, '-B', self.build, '-DFAIL_AFTER_DEFAULT=OFF')
+        self.cmake('--install', self.build)
+        self.assertEqual((self.bundle / 'data/payload').read_text(), 'installed')
 
 
 if __name__ == '__main__':
