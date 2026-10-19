@@ -3,16 +3,32 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import stat
 import subprocess
 
 
-def prepare(source: Path, output: Path) -> None:
-    if output.is_symlink():
-        raise RuntimeError(f"Refusing a redirected generated source: {output}")
-    source, output = source.resolve(), output.resolve()
+def prepare(source: Path, output: Path, *, build_root: Path) -> None:
+    # The caller selects the build boundary independently of the output. Allow
+    # an explicitly external/symlinked build root, but no redirects below it.
+    selected_root = Path(os.path.abspath(build_root))
+    requested = Path(os.path.abspath(output))
+    try:
+        relative = requested.relative_to(selected_root)
+    except ValueError as error:
+        raise RuntimeError(f"Generated source must be below build root {selected_root}") from error
+    if not relative.parts:
+        raise RuntimeError("Generated source must not replace the build root")
+    output = selected_root.resolve(strict=True)
+    for component in relative.parts:
+        output = output / component
+        if output.is_symlink():
+            raise RuntimeError(f"Refusing a redirected generated source: {output}")
+        if output.exists() and not output.is_dir():
+            raise RuntimeError(f"Refusing a non-directory generated parent: {output}")
+    source = source.resolve()
     if output == source or source in output.parents:
         raise RuntimeError("Patched output must be outside the dependency source")
     here = Path(__file__).resolve().parent
@@ -64,5 +80,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--build-root", type=Path, required=True,
+                        help="Explicit CMake/fixture build root; redirects below it are rejected")
     args = parser.parse_args()
-    prepare(args.source, args.output)
+    prepare(args.source, args.output, build_root=args.build_root)

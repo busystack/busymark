@@ -10,7 +10,10 @@ nor changes engine shutdown. Valid window operations keep their original behavio
 
 `prepare.py` verifies every source input and the patch, then patches generated
 copies inside the build tree. It never writes to the dependency cache. CMake
-compiles these copies for every Linux mode and installs the modified source,
+passes its build root independently: symlink redirects below that root are
+rejected before any generated file is changed. An explicitly external build
+root remains supported. Direct fixture invocations must supply `--build-root`.
+CMake compiles these copies for every Linux mode and installs the modified source,
 patch, and upstream MPL 2.0 license in
 `share/busymark/third-party/yaru_window_linux`.
 

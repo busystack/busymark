@@ -12,7 +12,7 @@ if [[ "${1:-}" == --unpatched ]]; then
   if (( $# )); then shift; fi
 else
   python3 "$project_root/tools/native_patches/yaru_window_linux/prepare.py" \
-    "$source_root" "$fixture_root/patched"
+    "$source_root" "$fixture_root/patched" --build-root "$fixture_root"
   source_root="$fixture_root/patched"
 fi
 "${CXX:-clang++}" -std=c++14 -Wall -Werror \

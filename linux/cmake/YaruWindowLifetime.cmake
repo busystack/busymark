@@ -14,7 +14,7 @@ foreach(_yaru_input pubspec.yaml LICENSE linux/CMakeLists.txt
 endforeach()
 execute_process(
   COMMAND "${Python3_EXECUTABLE}" "${_yaru_patch}/prepare.py"
-    "${_yaru_source}" "${_yaru_output}"
+    "${_yaru_source}" "${_yaru_output}" --build-root "${CMAKE_BINARY_DIR}"
   RESULT_VARIABLE _yaru_result OUTPUT_VARIABLE _yaru_stdout ERROR_VARIABLE _yaru_stderr)
 if(NOT _yaru_result EQUAL 0)
   message(FATAL_ERROR "Cannot prepare the required Yaru lifetime correction:\n${_yaru_stdout}\n${_yaru_stderr}")
