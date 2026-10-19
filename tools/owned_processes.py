@@ -22,9 +22,17 @@ def _parse_state(pid, text, expected=None):
     # that leader a zombie while another thread is still running; waitpid
     # cannot reap the process yet. Keep observing/waiting for that group.
     finished = state == 'Z' and threads == 1
-    status = 'reused' if expected is not None and stamp != expected else 'zombie' if finished else 'running'
+    if expected is not None and stamp != expected:
+        status = 'reused'
+    elif (state == 'X' and threads in (0, 1)) or (state == 'Z' and threads == 0):
+        # An anchored stat read can race release_task: state can still be Z
+        # when the last thread is gone and parent is already 0. A dead group
+        # grants no admission/signal authority, regardless of its old ancestry.
+        status = 'gone'
+    else:
+        status = 'zombie' if finished else 'running'
     result = {'pid': pid, 'identity': stamp, 'status': status, 'parent': int(fields[1])}
-    if state == 'Z' and not finished:
+    if state in ('Z', 'X') and status == 'running':
         result.update(leaderState=state, threads=threads)
     return result
 

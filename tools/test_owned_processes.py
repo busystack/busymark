@@ -10,9 +10,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 import owned_processes as owned
 
 
-def stat_line(pid, parent, birth):
+def stat_line(pid, parent, birth, state='S', threads=1):
     fields = ['0'] * 22
-    fields[0], fields[1], fields[17], fields[19] = 'S', str(parent), '1', birth
+    fields[0], fields[1], fields[17], fields[19] = state, str(parent), str(threads), birth
     return f'{pid} (owned fixture) ' + ' '.join(fields)
 
 
@@ -75,6 +75,40 @@ class OwnedProcessTest(unittest.TestCase):
             state = owned.admit_child(200, 100, 'owned-root')
         parent.assert_called_once_with(100, 'owned-root')
         self.assertEqual(state['identity'], 'child')
+
+    def test_reaped_dead_task_never_acquires_admission_or_signal_authority(self):
+        for index, (state, threads) in enumerate([('X', 0), ('X', 1), ('Z', 0)]):
+            pid = 200 + index
+            proc = self.process(pid, 0, 'retired')
+            (proc / 'stat').write_text(stat_line(pid, 0, 'retired', state, threads))
+            tracker = owned.ChildTracker.__new__(owned.ChildTracker)
+            tracker.root, tracker.seen = 100, {100: 'root'}
+            tracker.admitted_by, tracker.errors, tracker.unidentified = {}, [], {}
+            tracker.engine = tracker.input_audit = None
+            with patch.object(owned, 'process_children', side_effect=lambda parent, expected=None: [pid] if parent == 100 else []), patch.object(
+                owned, 'process_state', return_value={'pid': 100, 'identity': 'root', 'status': 'running'}
+            ), patch.object(owned, 'signal_owned') as send:
+                tracker.scan()
+            self.assertNotIn(pid, tracker.seen)
+            self.assertFalse(tracker.errors)
+            send.assert_not_called()
+
+    def test_dead_leader_does_not_hide_other_live_threads_or_identity_reuse(self):
+        proc = self.process(200, 0, 'replacement')
+        (proc / 'stat').write_text(stat_line(200, 0, 'replacement', 'X', 2))
+        with self.assertRaises(owned.ObservationIncomplete):
+            owned.admit_child(200, 100, 'root')
+        (proc / 'stat').write_text(stat_line(200, 0, 'replacement', 'X', 0))
+        with owned.ProcessHandle(200) as handle:
+            self.assertEqual(handle.state('previous')['status'], 'reused')
+
+    def test_child_retiring_during_parent_verification_is_not_an_ancestry_failure(self):
+        proc = self.process(200, 100, 'child')
+        def reap(*args):
+            (proc / 'stat').write_text(stat_line(200, 0, 'child', 'X', 0))
+            return {'status': 'running'}
+        with patch.object(owned, 'process_state', side_effect=reap):
+            self.assertEqual(owned.admit_child(200, 100, 'root')['status'], 'gone')
 
     def test_seen_pid_replacement_from_child_list_is_not_silently_lost(self):
         tracker = owned.ChildTracker.__new__(owned.ChildTracker)
