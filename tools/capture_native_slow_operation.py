@@ -21,6 +21,54 @@ from owned_processes import ChildTracker, ObservationIncomplete, cleanup_owned, 
 import time
 
 
+class _OperationSpans:
+    """Correlate invocations, never infer asynchronous completion order by name.
+
+    Historical untagged logs remain usable only while names do not overlap.
+    Their ambiguity must fail capture verification rather than erase a span.
+    """
+    event = re.compile(r'(busymark-native|busymark-dart|visualization-init) (.+?) (begin|end) time_us=(\d+)')
+    legacy = re.compile(r'bm-native (.+?) (begin|end) (\d+)')
+    # Native counters, current Dart UUIDs, and historical signed VM IDs.
+    identity = re.compile(
+        r' pid=(\d+) span=(-?\d+|[0-9a-f]{8}-[0-9a-f]{4}'
+        r'-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})(?![A-Za-z0-9_-])')
+
+    def __init__(self):
+        self.active = {}
+
+    def observe(self, line, received_us):
+        match = self.event.search(line)
+        if match:
+            origin, name, phase, stamp = match.groups()
+            identity = self.identity.match(line, match.end())
+            if line[match.end():].startswith((' pid=', ' span=')) and identity is None:
+                raise ObservationIncomplete('Malformed trace invocation identity')
+        else:
+            match = self.legacy.search(line)
+            if not match:
+                return
+            origin = 'bm-native'
+            name, phase, stamp = match.groups()
+            identity = None
+        pid, span = identity.groups() if identity else (None, None)
+        key = f'{origin}/{pid}/{span}' if identity else name
+        if phase == 'begin':
+            if key in self.active:
+                detail = 'Duplicate invocation' if identity else 'Ambiguous overlapping legacy operation'
+                raise ObservationIncomplete(f'{detail}: {key}')
+            self.active[key] = {'name': name, 'start_us': int(stamp),
+                                'received_us': received_us, 'pid': pid,
+                                'span': span, 'origin': origin}
+        else:
+            pending = self.active.get(key)
+            if identity and pending is None:
+                raise ObservationIncomplete(f'Trace end without admitted invocation: {key}')
+            if pending is not None and (pending['name'] != name or pending['origin'] != origin):
+                raise ObservationIncomplete(f'Trace invocation changed operation: {key}')
+            self.active.pop(key, None)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
@@ -151,7 +199,8 @@ def _capture(args, command, output, template, tracker, resources, record):
         raise ObservationIncomplete('Debugger identity unavailable after launch')
     tracker.seen[debugger.pid] = stamp
     lock = threading.Lock()
-    active = {}
+    spans = _OperationSpans()
+    active = spans.active
     captured = set()
     process_ids = set()
     inferior_result = {}
@@ -160,11 +209,6 @@ def _capture(args, command, output, template, tracker, resources, record):
     detached = threading.Event()
     debugger_attached = True
     resources["attached"] = True
-    event = re.compile(
-        r'(?:busymark-native|busymark-dart|visualization-init) (\S+) (begin|end) time_us=(\d+)'
-    )
-    # An external interposer can trace an unmodified archived executable.
-    legacy_event = re.compile(r'bm-native (\S+) (begin|end) (\d+)')
 
     def send(value):
         debugger.stdin.write(value + '\n')
@@ -178,12 +222,7 @@ def _capture(args, command, output, template, tracker, resources, record):
             with lock:
                 if match:
                     process_ids.add(int(match[1]))
-                match = event.search(line) or legacy_event.search(line)
-                if match:
-                    if match[2] == 'begin':
-                        active[match[1]] = (int(match[3]), time.monotonic_ns() / 1000)
-                    else:
-                        active.pop(match[1], None)
+                spans.observe(line, time.monotonic_ns() // 1000)
             if '^error' in line:
                 record.setdefault('debuggerErrors', []).append(line.strip())
             if 'reason=\"signal-received\"' in line and not resources.get('retiring'):
@@ -266,20 +305,19 @@ def _capture(args, command, output, template, tracker, resources, record):
                     exited.set()
                     break
             with lock:
-                slow = [(name, start) for name, (start, received) in active.items()
-                        if (name, start) not in captured and
-                        (args.operation is None or name in args.operation) and
-                        time.monotonic_ns() / 1000 - start > args.threshold_ms * 1000 and
+                slow = [(key, item) for key, item in active.items()
+                        if (key, item['start_us']) not in captured and
+                        (args.operation is None or item['name'] in args.operation) and
+                        time.monotonic_ns() / 1000 - item['start_us'] > args.threshold_ms * 1000 and
                         # GDB can deliver buffered inferior output late while
                         # loading libraries. Require a full observation interval
                         # as well, so that backlog cannot manufacture a stall.
-                        time.monotonic_ns() / 1000 - received > args.threshold_ms * 1000]
-                pids = set(process_ids)
+                        time.monotonic_ns() / 1000 - item['received_us'] > args.threshold_ms * 1000]
             if slow:
-                captured.update(slow)
+                captured.update((key, item['start_us']) for key, item in slow)
                 capture = output / f'capture-{len(captured)}'
                 capture.mkdir()
-                (capture / 'operations.json').write_text(json.dumps(slow))
+                (capture / 'operations.json').write_text(json.dumps(dict(slow)))
                 (capture / 'clock.json').write_text(json.dumps({
                     'monotonic_ns': time.monotonic_ns(),
                     'wall_ns': time.time_ns(),

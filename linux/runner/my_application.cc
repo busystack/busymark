@@ -1176,7 +1176,7 @@ static void window_map_cb(GtkWidget*, gpointer) {
 static void my_application_activate(GApplication* application) {
   BusyMarkPerformanceSpan activation_span("application-activate");
   MyApplication* self = MY_APPLICATION(application);
-  BusyMarkPerformanceSpan::Event("window-construction", "begin");
+  BusyMarkPerformanceSpan window_span("window-construction");
   GtkWindow* window = GTK_WINDOW(hdy_application_window_new());
   g_signal_connect(window, "map", G_CALLBACK(window_map_cb), nullptr);
   gtk_application_add_window(GTK_APPLICATION(application), window);
@@ -1203,7 +1203,7 @@ static void my_application_activate(GApplication* application) {
     gtk_style_context_add_provider_for_screen(gtk_widget_get_screen(GTK_WIDGET(window)),
         GTK_STYLE_PROVIDER(self->native_surface_css_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   }
-  BusyMarkPerformanceSpan::Event("window-construction", "end");
+  window_span.End();
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(

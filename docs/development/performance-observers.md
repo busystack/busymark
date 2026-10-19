@@ -14,6 +14,19 @@ descriptor. Exited/reused processes are snapshot races; inaccessible live
 processes and failed publication are verification failures. Neither successful
 cleanup nor a disappearing window turns a failed application run into a pass.
 
+Current native, Dart and visualization begin/end records append `pid` and `span`
+invocation IDs after `time_us`. Names remain operation filters, not identities.
+Native spans use a process-wide atomic counter; Dart uses the existing UUID
+generator, independent of isolates and VM timeline support. Official Flutter
+release engines can return zero for every `TimelineTask` ID, so those IDs cannot
+identify diagnostic invocations. The producer regression exercises JIT and AOT.
+The watchdog pairs by producer/process/invocation, including overlapping async
+work completing in either order. Capture `operations.json` and `active-at-stop`
+records use those keys with explicit name/start/receipt metadata. Historical
+untagged records remain readable for nonoverlapping names; ambiguous overlap
+fails verification instead of silently retiring the wrong operation. Preserve
+the original raw historical logs; IDs cannot be reconstructed retrospectively.
+
 Content recognition has a separate purpose. `tools/application_content_observer.py`
 compares a crop of an **already identified owned application window** to a ready
 reference. It does not find windows or prove input responsiveness or persistence.

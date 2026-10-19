@@ -12118,7 +12118,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void initState() {
     super.initState();
-    PerformanceTrace.event('editor-split-initialization', 'begin');
+    PerformanceTrace.sync('editor-split-initialization', _initializeEditor);
+  }
+
+  void _initializeEditor() {
     _inspectorWorkspaceController = ref.read(
       workspaceControllerProvider.notifier,
     );
@@ -12135,7 +12138,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _previewItemPositionsListener.itemPositions.addListener(
       _handlePreviewVisibleItemsChanged,
     );
-    PerformanceTrace.event('editor-split-initialization', 'end');
   }
 
   @override

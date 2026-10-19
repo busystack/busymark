@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
+import 'package:uuid/uuid.dart';
 
 import 'debug_log.dart';
 
@@ -21,6 +22,7 @@ typedef _ClockDart = int Function(int, Pointer<_Timespec>);
 /// only, never treated as a display-presentation or monotonic-clock timestamp.
 abstract final class PerformanceTrace {
   static const enabled = bool.fromEnvironment('BUSYMARK_PERFORMANCE_TRACE');
+  static const _ids = Uuid();
   static final _clock = Platform.isLinux
       ? DynamicLibrary.open(
           'libc.so.6',
@@ -28,6 +30,10 @@ abstract final class PerformanceTrace {
       : null;
 
   static void event(String name, [String phase = 'point']) {
+    _event(name, phase, null);
+  }
+
+  static void _event(String name, String phase, String? span) {
     if (!enabled) return;
     final clock = _clock;
     var timestamp = Timeline.now;
@@ -40,7 +46,10 @@ abstract final class PerformanceTrace {
         calloc.free(value);
       }
     }
-    busyMarkPerformanceLogLine('busymark-dart $name $phase time_us=$timestamp');
+    final identity = span == null ? '' : ' pid=$pid span=$span';
+    busyMarkPerformanceLogLine(
+      'busymark-dart $name $phase time_us=$timestamp$identity',
+    );
   }
 
   static Future<T> async<T>(String name, Future<T> Function() operation) {
@@ -53,23 +62,27 @@ abstract final class PerformanceTrace {
     Future<T> Function() operation,
   ) async {
     final task = TimelineTask()..start(name);
-    event(name, 'begin');
+    // Product engines may return zero for every TimelineTask ID. Diagnostic
+    // identity must also be independent of isolate-local counters.
+    final id = _ids.v4();
+    _event(name, 'begin', id);
     try {
       return await operation();
     } finally {
-      event(name, 'end');
+      _event(name, 'end', id);
       task.finish();
     }
   }
 
   static T sync<T>(String name, T Function() operation) {
     if (!enabled) return operation();
+    final id = _ids.v4();
     Timeline.startSync(name);
-    event(name, 'begin');
+    _event(name, 'begin', id);
     try {
       return operation();
     } finally {
-      event(name, 'end');
+      _event(name, 'end', id);
       Timeline.finishSync();
     }
   }

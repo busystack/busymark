@@ -1,4 +1,5 @@
 #include "web_render_host.h"
+#include "performance_trace.h"
 
 #include <cairo.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -26,16 +27,19 @@ class InitializationProbe {
   explicit InitializationProbe(const char* operation)
       : operation_(operation),
         enabled_(g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0),
-        start_(enabled_ ? g_get_monotonic_time() : 0) {
+        start_(enabled_ ? g_get_monotonic_time() : 0),
+        id_(enabled_ ? BusyMarkPerformanceSpan::NextId() : 0) {
     if (enabled_) {
-      g_printerr("visualization-init %s begin time_us=%" G_GINT64_FORMAT "\n",
-                 operation_, start_);
+      g_printerr("visualization-init %s begin time_us=%" G_GINT64_FORMAT
+                 " pid=%d span=%" G_GUINT64_FORMAT "\n",
+                 operation_, start_, static_cast<int>(getpid()), id_);
     }
   }
   ~InitializationProbe() {
     if (enabled_) {
-      g_printerr("visualization-init %s end time_us=%" G_GINT64_FORMAT "\n",
-                 operation_, g_get_monotonic_time());
+      g_printerr("visualization-init %s end time_us=%" G_GINT64_FORMAT
+                 " pid=%d span=%" G_GUINT64_FORMAT "\n",
+                 operation_, g_get_monotonic_time(), static_cast<int>(getpid()), id_);
       g_printerr("visualization-init %s start_us=%" G_GINT64_FORMAT
                  " duration_us=%" G_GINT64_FORMAT "\n",
                  operation_, start_, g_get_monotonic_time() - start_);
@@ -46,6 +50,7 @@ class InitializationProbe {
   const char* operation_;
   bool enabled_;
   gint64 start_;
+  guint64 id_;
 };
 
 struct PendingRequest {
