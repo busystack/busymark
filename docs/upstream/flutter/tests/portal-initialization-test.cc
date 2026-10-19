@@ -1,5 +1,5 @@
 // Live GTK settings-provider regression; uses only the owned bus/display
-// supplied by test_portal_initialization.py. No raw input or desktop portal
+// supplied by run_portal_initialization.py. No raw input or desktop portal
 // replacement. Built from the exact selected engine sources.
 #include <glib-unix.h>
 #include <gtk/gtk.h>

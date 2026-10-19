@@ -140,7 +140,7 @@ do not certify physical-printer or assistive-technology behavior.
 
 ## CI environment
 
-The Linux workflow in `.github/workflows/flutter-linux.yml` is authoritative for
+The explicit native workflow in `.github/workflows/flutter-linux-native.yml` is authoritative for
 native packages, environment flags, X11 and Wayland runs, and the
 strict Snap verification. Keep ordinary build prerequisites in the main README;
 do not copy the larger CI-only dependency set into user installation steps.

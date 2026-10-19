@@ -8,6 +8,10 @@ subreaper. A child PID list alone does not prove ownership. Ambiguous admission
 fails verification and grants no signal authority. Cleanup uses pinned process
 identities, waits independently of parent exit and records unresolved survivors;
 do not start another case after incomplete observation or unresolved cleanup.
+An anchored stat read may observe a reaped `X` task, or stale `Z` state with zero
+threads and parent 0. This is retirement, not proof of ownership; it grants no signal authority.
+Identity mismatches and live/unverified ancestry still fail observation. A
+zombie/dead leader with other threads is kept under observation.
 
 Watchdog snapshots use the same recorded births and an anchored proc-directory
 descriptor. Exited/reused processes are snapshot races; inaccessible live
@@ -67,16 +71,34 @@ permission to trace their own synthetic children:
   tools/test_official_flutter_workflow.py tools/test_run_owned_fixture.py
 ```
 
-CI checks remain required. Explicit prerequisite/status conditions let independent
-widget, native, portal and document checks run after a native acceptance failure;
-that failure still fails its job. A fixture-target build and restoration of the
-main target each have their own outcome, so later checks cannot silently use a
-stale target. These topology/unit checks are not hosted-CI, GTK-engine or strict
-confinement acceptance.
+The ordinary `Flutter Linux` push/PR workflow checks application formatting,
+analysis, the complete widget suite, tooling controls and release compilation.
+Run `Linux native acceptance` explicitly before a release/runtime decision: it
+retains the 100-close standalone and strict-Snap cohorts, debug/profile checks,
+compiled document/media tests and X11/Wayland compatibility checks. Run
+`Flutter upstream capabilities` separately to exercise the proposed local-first
+portal behavior on the selected official engine, including withheld replies.
+These capability assertions are unchanged and currently expose upstream
+blockers; they are not ordinary widget regressions.
 
-The Linux History interprocess tests compile their fixture once per test file,
+A passing ordinary workflow does **not** establish release readiness. Native
+fatal exits and unmet required portal behavior remain release blockers. Neither
+explicit workflow permits publishing or deployment. Within native/capability
+runs, prerequisite/status conditions let independent checks continue after a
+failure, which still fails its job. Fixture and main-target builds have distinct
+outcomes, preventing stale-target checks. Local topology/unit checks are not
+hosted-CI, GTK-engine or strict-confinement acceptance.
+
+`tools/portal_test_support.py` owns the shared private-bus fixture and protocol;
+`tools/portal_test_service.py` supplies the controlled service. Application
+capability checks import that support directly. The proposed-engine component
+driver is `docs/upstream/flutter/tests/run_portal_initialization.py`; it is not
+an application test dependency. No control modifies the host desktop portal.
+
+The Linux History interprocess tests lazily compile their fixture on the first interprocess case, once per test file,
 using `flutter build bundle --debug --no-pub` from the official SDK selected by
-`.dart_tool/package_config.json`. This avoids invoking private compiler snapshots
+`.dart_tool/package_config.json`. Filtered local-only cases do not invoke a compiler. Concurrent child starts await
+the same preparation result, including failure. This avoids invoking private compiler snapshots
 or maintaining frontend-server arguments. They launch the resulting kernel
 directly with the same SDK's `flutter_tester` and ICU data; this remaining runtime
 coupling is covered by the interprocess tests. Operation readiness

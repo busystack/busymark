@@ -161,9 +161,13 @@ void main() {
   });
 
   test('Linux CI builds and exercises the bundled visualization stack', () {
-    final workflow = File(
+    final applicationWorkflow = File(
       '.github/workflows/flutter-linux.yml',
     ).readAsStringSync();
+    final nativeWorkflow = File(
+      '.github/workflows/flutter-linux-native.yml',
+    ).readAsStringSync();
+    final workflow = '$applicationWorkflow\n$nativeWorkflow';
 
     expect(
       workflow,

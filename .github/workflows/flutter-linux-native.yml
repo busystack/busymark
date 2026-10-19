@@ -1,0 +1,695 @@
+name: Linux native acceptance
+
+# Explicit, expensive release/runtime acceptance. A green application workflow
+# does not override native fatal exits or missing upstream capabilities.
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      upstream-capabilities:
+        description: Run proposed portal capabilities instead of native release acceptance
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  verify:
+    name: ${{ inputs.upstream-capabilities && 'Upstream portal capability' || 'Native release acceptance' }} (verify)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            apparmor-profiles \
+            at-spi2-core \
+            bubblewrap \
+            clang \
+            cmake \
+            dbus-daemon \
+            gsettings-desktop-schemas \
+            dconf-cli \
+            fonts-noto-core \
+            fonts-noto-cjk \
+            fonts-noto-mono \
+            ninja-build \
+            patch \
+            pkg-config \
+            libgtk-3-dev \
+            libglib2.0-dev \
+            libpango1.0-dev \
+            libhandy-1-dev \
+            libsecret-1-dev \
+            libwebkit2gtk-4.1-dev \
+            gir1.2-webkit2-4.1 \
+            poppler-utils \
+            python3-gi \
+            python3-gi-cairo \
+            python3-pil \
+            python3-yaml \
+            rsync \
+            xvfb \
+            weston \
+            xz-utils
+
+      - name: Enable Bubblewrap sandbox for WebKitGTK tests
+        run: |
+          probe_bwrap() {
+            bwrap --ro-bind / / --unshare-user --unshare-pid \
+              --unshare-net /usr/bin/true
+          }
+          if ! probe_bwrap; then
+            profile=/usr/share/apparmor/extra-profiles/bwrap-userns-restrict
+            test -f "$profile"
+            sudo install -m 0644 "$profile" \
+              /etc/apparmor.d/bwrap-userns-restrict
+            sudo apparmor_parser --replace \
+              /etc/apparmor.d/bwrap-userns-restrict
+          fi
+          probe_bwrap
+
+      - name: Set up Node.js for bundled web engines
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/visualization/package-lock.json
+
+      - name: Select official pinned Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.5'
+          cache: true
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Resolve locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Build Linux release
+        id: release-build
+        run: flutter build linux --release
+
+      # Explicit status conditions keep independent checks running after a
+      # native failure. Failed checks still fail the job; none is optional.
+      - name: Test retired Yaru window requests and notifications
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
+
+      - name: Verify GTK keyboard delivery is observed through XInput2
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_application_input_observer.py --disposable-display
+
+      - name: Require 100 natural closes of the shipping release
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 \
+            /usr/bin/python3 -u tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/close-release" --cycles 100 --plain \
+            --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so -- \
+            build/linux/x64/release/bundle/busymark
+
+      - name: Test production GTK accent channel host and lifecycle
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
+
+      - name: Verify release ships catalog and notices without language pairs
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          spelling_root="build/linux/x64/release/bundle/share/busymark/spelling"
+          test -s "$spelling_root/dictionaries.json"
+          test -s "$spelling_root/NOTICE"
+          test -z "$(find "$spelling_root" -type f \( -name '*.aff' -o -name '*.dic' \) -print -quit)"
+
+      - name: Install one dictionary and exercise it after an offline restart
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          report="${RUNNER_TEMP}/spelling-release.json"
+          profile="${RUNNER_TEMP}/spelling-profile"
+          mkdir -p "$profile"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
+          sudo unshare --net --fork -- \
+            runuser -u "$(id -un)" -- \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+
+      - name: Exercise demand-driven native visualization lifecycle
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 NO_AT_BRIDGE=1 \
+            bash tools/test_web_render_host.sh
+
+      - name: Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
+            /usr/bin/python3 -u tools/visualization_smoke.py \
+            --assets build/linux/x64/release/bundle/share/busymark/visualization \
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
+            --demo test/fixtures/markdown/basic.md \
+            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
+
+      - name: Exercise the release binary visualization and PDF paths under X11
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          report="${RUNNER_TEMP}/visualization-release-x11.json"
+          timeout --signal=TERM 300s \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+
+      - name: Build compiled-close fixture
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        id: release-fixture
+        run: flutter build linux --release --no-pub -t tools/window_close_smoke.dart
+
+      - name: Require usable content while portal replies are withheld
+        if: ${{ inputs.upstream-capabilities && !cancelled() && steps.release-fixture.outcome == 'success' }}
+        run: |
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
+            --output "${RUNNER_TEMP}/portal-application-release" \
+            --application build/linux/x64/release/bundle/busymark \
+            --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so
+
+      - name: Exercise live application close, persistence, media and reopening
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-fixture.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 \
+            /usr/bin/python3 -u tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/close-live-application" --cycles 3 --fresh-profile \
+            --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so \
+            --scenarios plain visualization pending-initialization \
+              dirty-save dirty-discard dirty-cancel video \
+            --video test/fixtures/media/close-testsrc.mp4 -- \
+            build/linux/x64/release/bundle/busymark
+
+      - name: Restore main target for Wayland checks
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        id: release-main
+        run: flutter build linux --release --no-pub -t lib/main.dart
+
+      - name: Preserve natural-close evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: natural-close-release
+          path: |
+            ${{ runner.temp }}/portal-application-release
+            ${{ runner.temp }}/close-release
+            ${{ runner.temp }}/close-live-application
+          if-no-files-found: ignore
+
+      - name: Run spelling and visualization smoke tests under Wayland
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.release-main.outcome == 'success' }}
+        run: |
+          runtime_dir="/run/user/$(id -u)"
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
+          XDG_RUNTIME_DIR="$runtime_dir" \
+            weston --backend=headless-backend.so --socket=wayland-99 \
+            --idle-time=0 --log="${RUNNER_TEMP}/weston.log" &
+          weston_pid=$!
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..40}; do
+            if [ -S "$runtime_dir/wayland-99" ]; then
+              break
+            fi
+            if ! kill -0 "$weston_pid" 2>/dev/null; then
+              cat "${RUNNER_TEMP}/weston.log"
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test -S "$runtime_dir/wayland-99"
+          spelling_report="${RUNNER_TEMP}/spelling-release-wayland.json"
+          spelling_profile="${RUNNER_TEMP}/spelling-profile"
+          sudo unshare --net --fork -- \
+            runuser -u "$(id -un)" -- \
+            env XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            XDG_DATA_HOME="$spelling_profile" GDK_BACKEND=wayland \
+            BUSYMARK_RELEASE_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$spelling_report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1 \
+            /usr/bin/python3 -u tools/visualization_smoke.py \
+            --assets build/linux/x64/release/bundle/share/busymark/visualization \
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
+            --demo test/fixtures/markdown/basic.md \
+            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
+          report="${RUNNER_TEMP}/visualization-release-wayland.json"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout --signal=TERM 300s \
+            build/linux/x64/release/bundle/busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+
+  snap:
+    name: ${{ inputs.upstream-capabilities && 'Upstream portal capability' || 'Native release acceptance' }} (snap)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Prepare clean Snap artifact selection
+        run: |
+          rm -f ./*.snap
+          touch "${RUNNER_TEMP}/busymark-snap-build-start"
+
+      - name: Build strict Snap from a clean core24 environment (attempt 1)
+        id: snapcraft
+        uses: snapcore/action-build@v1
+        continue-on-error: true
+
+      - name: Retry strict Snap build after an infrastructure failure
+        id: snapcraft-retry
+        if: steps.snapcraft.outcome == 'failure'
+        uses: snapcore/action-build@v1
+
+      - name: Select built Snap
+        id: snap-artifact
+        env:
+          PRIMARY_SNAP: ${{ steps.snapcraft.outputs.snap }}
+          PRIMARY_OUTCOME: ${{ steps.snapcraft.outcome }}
+          RETRY_SNAP: ${{ steps.snapcraft-retry.outputs.snap }}
+          RETRY_OUTCOME: ${{ steps.snapcraft-retry.outcome }}
+        run: |
+          if [ "$PRIMARY_OUTCOME" = success ]; then
+            snap_path="$PRIMARY_SNAP"
+          else
+            test "$PRIMARY_OUTCOME" = failure
+            test "$RETRY_OUTCOME" = success
+            snap_path="$RETRY_SNAP"
+          fi
+          test -n "$snap_path"
+          test -f "$snap_path"
+          test "$snap_path" -nt "${RUNNER_TEMP}/busymark-snap-build-start"
+          snap_path="$(realpath "$snap_path")"
+          case "$snap_path" in
+            "$GITHUB_WORKSPACE"/*.snap) ;;
+            *) echo "Refusing Snap outside the clean checkout: $snap_path" >&2; exit 1 ;;
+          esac
+          test "$(unsquashfs -cat "$snap_path" snap/snapcraft.yaml | sha256sum | cut -d' ' -f1)" = \
+            "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
+          echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Snap artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: busymark-snap
+          path: ${{ steps.snap-artifact.outputs.snap }}
+
+      - name: Install desktop smoke dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y weston xvfb python3-gi gsettings-desktop-schemas dconf-cli dbus-daemon
+
+      - name: Install strict Snap
+        id: strict-install
+        run: >-
+          sudo snap install --dangerous
+          "${{ steps.snap-artifact.outputs.snap }}"
+
+      - name: Install disposable close instance
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' }}
+        id: strict-close-install
+        run: |
+          sudo snap set system experimental.parallel-instances=true
+          sudo snap install --dangerous --name=busymark_close \
+            "${{ steps.snap-artifact.outputs.snap }}"
+
+      - name: Require 100 natural closes under strict confinement
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-close-install.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 \
+            /usr/bin/python3 -u tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/close-strict-snap" --cycles 100 \
+            --snap-instance busymark_close \
+            --expected-engine /snap/busymark_close/current/lib/libflutter_linux_gtk.so
+
+      - name: Preserve strict natural-close evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: natural-close-strict-snap
+          path: ${{ runner.temp }}/close-strict-snap
+          if-no-files-found: ignore
+
+      - name: Verify GTK SVG icon loader and portable icon caches
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' }}
+        run: |
+          snap run --shell busymark -c '
+            test ! -e \
+              "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/librsvg-2.so.2"
+            query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
+            loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
+            "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
+            cache_tool="$SNAP_DESKTOP_RUNTIME/usr/bin/gtk-update-icon-cache"
+            test -x "$cache_tool"
+            for icon_theme in \
+              "$SNAP"/usr/share/icons/* "$SNAP"/share/icons/*; do
+              if [ -f "$icon_theme/index.theme" ]; then
+                if [ -f "$icon_theme/icon-theme.cache" ]; then
+                  "$cache_tool" --validate "$icon_theme"
+                fi
+              fi
+            done
+            test -s "$SNAP/usr/share/icons/Yaru/icon-theme.cache"
+          '
+
+      - name: Verify shared runtimes, packaged tools, media, and resources
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' }}
+        run: |
+          snap run --shell busymark -c '
+            set -eu
+            inspect_dependencies() {
+              dependency_object="$1"
+              if dependency_output="$(ldd "$dependency_object" 2>&1)"; then
+                :
+              else
+                printf "Dependency inspection failed: %s\n%s\n" \
+                  "$dependency_object" "$dependency_output" >&2
+                exit 1
+              fi
+              case "$dependency_output" in
+                *"not found"*)
+                  printf "Unresolved dependencies: %s\n%s\n" \
+                    "$dependency_object" "$dependency_output" >&2
+                  exit 1
+                  ;;
+              esac
+            }
+            require_resolution() {
+              required_library="$1"
+              required_path="$2"
+              resolved_path="$(printf "%s\n" "$dependency_output" | \
+                awk -v name="$required_library" \
+                  "\$1 == name && \$2 == \"=>\" { print \$3; exit }")"
+              if [ -z "$resolved_path" ] || \
+                  ! expected_real="$(readlink -e "$required_path")" || \
+                  ! resolved_real="$(readlink -e "$resolved_path")" || \
+                  [ "$resolved_real" != "$expected_real" ]; then
+                printf "Unexpected resolution for %s in %s; expected %s\n%s\n" \
+                  "$required_library" "$dependency_object" \
+                  "$required_path" "$dependency_output" >&2
+                exit 1
+              fi
+            }
+            app_lib="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            inspect_dependencies "$SNAP/busymark"
+            for library in \
+              libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 \
+              libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
+              test ! -e "$app_lib/$library"
+              require_resolution "$library" \
+                "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
+            done
+            graphics_lib="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            for library in \
+              libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 \
+              libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 \
+              libwayland-cursor.so.0 libwayland-egl.so.1; do
+              test ! -e "$app_lib/$library"
+              test -e "$graphics_lib/$library"
+              require_resolution "$library" "$graphics_lib/$library"
+            done
+            for helper in WebKitWebProcess WebKitNetworkProcess WebKitGPUProcess; do
+              test -x "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/webkit2gtk-4.1/$helper"
+            done
+            test -x "$SNAP/usr/bin/git"
+            test -x "$SNAP/usr/bin/ssh"
+            test -x "$SNAP/usr/bin/setsid"
+            inspect_dependencies "$SNAP/usr/lib/git-core/git-remote-http"
+            require_resolution libcurl-gnutls.so.4 \
+              "$app_lib/libcurl-gnutls.so.4"
+            GIT_EXEC_PATH="$SNAP/usr/lib/git-core" \
+              "$SNAP/usr/bin/git" --exec-path | grep -Fx "$SNAP/usr/lib/git-core"
+            "$SNAP/usr/bin/ssh" -V
+            provider_plugins="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
+            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
+              libgstogg.so libgsttheora.so libgstvpx.so; do
+              test -f "$provider_plugins/$plugin"
+              inspect_dependencies "$provider_plugins/$plugin"
+            done
+            private_plugins="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
+            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
+              libgstogg.so libgsttheora.so libgstvpx.so; do
+              test ! -e "$private_plugins/$plugin"
+            done
+            for plugin in libgstlibav.so libgstvideoparsersbad.so \
+              libgstmpeg2dec.so; do
+              test -f "$private_plugins/$plugin"
+              inspect_dependencies "$private_plugins/$plugin"
+            done
+            test -L "$SNAP/share/busymark/fonts"
+            test "$(readlink "$SNAP/share/busymark/fonts")" = \
+              ../../usr/share/fonts/truetype/noto
+            test -f "$SNAP/share/busymark/fonts/NotoSans-Regular.ttf"
+            test -f "$SNAP/usr/share/doc/fonts-noto-core/copyright"
+            test -f "$SNAP/usr/share/doc/fonts-noto-mono/copyright"
+            for resource_kind in themes icons; do
+              for resource_name in Yaru Yaru-dark; do
+                resource="$SNAP/share/$resource_kind/$resource_name"
+                test -L "$resource"
+                test -e "$resource"
+              done
+            done
+          '
+
+      - name: Install one strict-Snap dictionary and verify refresh/offline use
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' }}
+        run: |
+          report="$HOME/snap/busymark/common/spelling-release.json"
+          rm -f "$report"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
+          test -d "$HOME/snap/busymark/common/spelling/dictionaries/downloaded/en-US"
+          before_revision="$(snap list busymark | awk 'NR == 2 {print $3}')"
+          sudo snap install --dangerous \
+            "${{ steps.snap-artifact.outputs.snap }}"
+          after_revision="$(snap list busymark | awk 'NR == 2 {print $3}')"
+          test -n "$before_revision"
+          test -n "$after_revision"
+          test "$before_revision" != "$after_revision"
+          sudo snap disconnect busymark:network
+          trap 'sudo snap connect busymark:network >/dev/null' EXIT
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+          sudo snap connect busymark:network
+          trap - EXIT
+
+      - name: Exercise strict Snap visualization and PDF paths under X11
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' }}
+        run: |
+          report="$HOME/snap/busymark/common/visualization-release-x11.json"
+          mkdir -p "$(dirname "$report")"
+          timeout --signal=TERM 300s \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
+
+      - name: Exercise strict Snap spelling and visualization under Wayland
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' }}
+        run: |
+          runtime_dir="/run/user/$(id -u)"
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
+          XDG_RUNTIME_DIR="$runtime_dir" \
+            weston --backend=headless-backend.so --socket=wayland-99 \
+            --idle-time=0 --log="${RUNNER_TEMP}/weston-snap.log" &
+          weston_pid=$!
+          sudo snap disconnect busymark:network
+          trap 'sudo snap connect busymark:network >/dev/null; kill "$weston_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..40}; do
+            if [ -S "$runtime_dir/wayland-99" ]; then
+              break
+            fi
+            if ! kill -0 "$weston_pid" 2>/dev/null; then
+              cat "${RUNNER_TEMP}/weston-snap.log"
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test -S "$runtime_dir/wayland-99"
+          spelling_report="$HOME/snap/busymark/common/spelling-release-wayland.json"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout --signal=TERM 300s snap run busymark \
+            --spelling-release-smoke="$spelling_report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
+          report="$HOME/snap/busymark/common/visualization-release-wayland.json"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout --signal=TERM 300s snap run busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
+          sudo snap connect busymark:network
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+
+      - name: Prepare a separate compiled-close fixture package
+        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' }}
+        id: strict-fixture-source
+        run: |
+          cp "${{ steps.snap-artifact.outputs.snap }}" "${RUNNER_TEMP}/shipping-main.snap"
+          cp snap/snapcraft.yaml "${RUNNER_TEMP}/shipping-snapcraft.yaml"
+          rm -f ./*.snap
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          recipe = Path('snap/snapcraft.yaml')
+          text = recipe.read_text()
+          assert text.count('--target lib/main.dart') == 1
+          recipe.write_text(text.replace('--target lib/main.dart', '--target tools/window_close_smoke.dart'))
+          PYCODE
+      - name: Build genuine strict compiled-close fixture
+        if: ${{ !cancelled() && steps.strict-fixture-source.outcome == 'success' }}
+        id: close-fixture-snap
+        uses: snapcore/action-build@v1
+      - name: Install strict compiled-close fixture
+        if: ${{ !cancelled() && steps.close-fixture-snap.outcome == 'success' }}
+        id: strict-fixture-install
+        run: |
+          fixture="${{ steps.close-fixture-snap.outputs.snap }}"
+          test -f "$fixture"
+          test "$(unsquashfs -cat "$fixture" snap/snapcraft.yaml | sha256sum | cut -d' ' -f1)" = \
+            "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
+          sudo snap install --dangerous --name=busymark_fixture "$fixture"
+          fixture_root="$HOME/snap/busymark_fixture/common"
+          mkdir -p "$fixture_root/fixtures"
+          cp test/fixtures/media/close-testsrc.mp4 "$fixture_root/fixtures/"
+
+      - name: Verify strict Save Discard Cancel media rendering and reopening
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-fixture-install.outcome == 'success' }}
+        run: |
+          fixture_root="$HOME/snap/busymark_fixture/common"
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
+            --output "$fixture_root/close-live" --cycles 3 --fresh-profile \
+            --snap-instance busymark_fixture --snap-fixture \
+            --expected-engine /snap/busymark_fixture/current/lib/libflutter_linux_gtk.so \
+            --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
+            --video "$fixture_root/fixtures/close-testsrc.mp4"
+      - name: Require usable confined content while portal replies are withheld
+        if: ${{ inputs.upstream-capabilities && !cancelled() && steps.strict-fixture-install.outcome == 'success' }}
+        run: |
+          portal_root="$HOME/snap/busymark_fixture/common"
+          mkdir -p "$portal_root/p"
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
+            --output "$portal_root/portal-application" --socket-parent "$portal_root/p" \
+            --snap-instance busymark_fixture \
+            --expected-engine /snap/busymark_fixture/current/lib/libflutter_linux_gtk.so
+      - name: Preserve strict compiled-close evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: natural-close-strict-fixture
+          path: |
+            ~/snap/busymark_fixture/common/close-live
+            ~/snap/busymark_fixture/common/portal-application
+          if-no-files-found: ignore
+
+  development-modes:
+    name: ${{ inputs.upstream-capabilities && 'Upstream portal capability' || 'Native release acceptance' }} (${{ matrix.mode }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [debug, profile]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Linux application prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build patch pkg-config curl xz-utils \
+            libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
+            fonts-noto-core fonts-noto-mono gsettings-desktop-schemas dconf-cli python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Select official pinned Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.5'
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+        if: ${{ !inputs.upstream-capabilities }}
+      - name: Build official development mode
+        id: mode-build
+        run: flutter build linux --${{ matrix.mode }} --no-pub
+      - name: Test retired Yaru window in development mode
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.mode-build.outcome == 'success' }}
+        run: |
+          xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
+      - name: Verify development mode GTK engine and natural close
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.mode-build.outcome == 'success' }}
+        run: |
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/close-${{ matrix.mode }}" --cycles 10 --fresh-profile --plain \
+            --expected-engine build/linux/x64/${{ matrix.mode }}/bundle/lib/libflutter_linux_gtk.so -- \
+            build/linux/x64/${{ matrix.mode }}/bundle/busymark
+      - name: Build development-mode compiled-close fixture
+        if: ${{ !cancelled() && steps.mode-build.outcome == 'success' }}
+        id: mode-fixture
+        run: flutter build linux --${{ matrix.mode }} --no-pub -t tools/window_close_smoke.dart
+      - name: Require development-mode portal responsiveness
+        if: ${{ inputs.upstream-capabilities && !cancelled() && steps.mode-fixture.outcome == 'success' }}
+        run: |
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_portal_application.py \
+            --output "${RUNNER_TEMP}/portal-application-${{ matrix.mode }}" \
+            --application build/linux/x64/${{ matrix.mode }}/bundle/busymark \
+            --expected-engine build/linux/x64/${{ matrix.mode }}/bundle/lib/libflutter_linux_gtk.so
+      - name: Verify development-mode documents media and reopening
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.mode-fixture.outcome == 'success' }}
+        run: |
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
+            --output "${RUNNER_TEMP}/features-${{ matrix.mode }}" --cycles 1 --fresh-profile \
+            --expected-engine build/linux/x64/${{ matrix.mode }}/bundle/lib/libflutter_linux_gtk.so \
+            --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
+            --video test/fixtures/media/close-testsrc.mp4 -- \
+            build/linux/x64/${{ matrix.mode }}/bundle/busymark
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: development-mode-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/close-${{ matrix.mode }}
+            ${{ runner.temp }}/features-${{ matrix.mode }}
+            ${{ runner.temp }}/portal-application-${{ matrix.mode }}

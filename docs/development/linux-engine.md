@@ -23,6 +23,12 @@ only in a disposable supported environment; never replace a user's installation
 for acceptance. See the README's clean Snapcraft procedure. The local scaffold
 repack helper does not validate dependency or confinement changes.
 
+Ordinary push/PR application checks run in `Flutter Linux`. The explicit
+`Linux native acceptance` workflow owns the full compiled/strict-Snap release
+checks. `Flutter upstream capabilities` separately reports the proposed portal
+behavior on the official engine. See the [observer guide](performance-observers.md)
+for these boundaries; a green ordinary workflow does not clear a native blocker.
+
 Build success is separate from release acceptance. The official Linux engine
 has reproduced a compositor disposal/presentation race; synchronous portal
 initialization can also prevent startup when the service withholds replies.

@@ -3,7 +3,10 @@
 Unpublished review material. The production engine is official and unpatched.
 The preserved [implementation](patches/settings-portal-async.patch),
 [native tests](tests/portal-initialization-test.cc) and
-[owned service](tests/portal_service.py) are upstream proposal inputs.
+[shared owned service](../../../tools/portal_test_service.py) are upstream proposal inputs.
+The component driver is `tests/run_portal_initialization.py`; pass `--probe`
+with the independently built native control and `--output` with a new evidence
+directory. It imports the ordinary shared bus support, not an application CLI.
 
 Exact pinned source uses synchronous session-bus connection, proxy construction
 (including service activation and initial properties), then six initial Reads

@@ -8,6 +8,9 @@ void main() {
     final workflow = File(
       '.github/workflows/flutter-linux.yml',
     ).readAsStringSync();
+    final nativeWorkflow = File(
+      '.github/workflows/flutter-linux-native.yml',
+    ).readAsStringSync();
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
     final credentialHost = File(
@@ -23,8 +26,8 @@ void main() {
     expect(snapcraft, contains('- libsecret-1-dev'));
     expect(snapcraft, contains('extensions: [gnome]'));
     expect(snapcraft, isNot(contains('- libsecret-1-0')));
-    expect(workflow, contains('libsecret-1.so.0'));
-    expect(workflow, contains(r'$SNAP_DESKTOP_RUNTIME/'));
+    expect(nativeWorkflow, contains('libsecret-1.so.0'));
+    expect(nativeWorkflow, contains(r'$SNAP_DESKTOP_RUNTIME/'));
     expect(snapcraft, contains('confinement: strict'));
   });
 

@@ -16,7 +16,7 @@ import subprocess
 import time
 
 from application_close_smoke import accepted
-from test_portal_initialization import Fixture, expect_snapshot
+from portal_test_support import Fixture, expect_snapshot
 
 HERE = Path(__file__).resolve().parent
 

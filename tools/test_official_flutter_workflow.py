@@ -24,6 +24,8 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.workflow = yaml.safe_load((ROOT / '.github/workflows/flutter-linux.yml').read_text())
+        cls.native = yaml.safe_load((ROOT / '.github/workflows/flutter-linux-native.yml').read_text())
+        cls.upstream = yaml.safe_load((ROOT / '.github/workflows/flutter-upstream-capabilities.yml').read_text())
         cls.recipe = yaml.safe_load((ROOT / 'snap/snapcraft.yaml').read_text())
 
     def step(self, job, name):
@@ -36,13 +38,13 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
         match = re.fullmatch(r'/flutter_infra_release/releases/stable/linux/flutter_linux_(\d+\.\d+\.\d+)-stable.tar.xz', url.path)
         self.assertIsNotNone(match)
         self.assertRegex(sdk['source-checksum'], r'^sha256/[a-f0-9]{64}$')
-        selections = [s['with'] for job in self.workflow['jobs'].values()
+        selections = [s['with'] for workflow in [self.workflow, self.native] for job in workflow['jobs'].values()
                       for s in job['steps'] if s.get('uses', '').startswith('subosito/flutter-action@')]
         self.assertTrue(selections)
         for selection in selections:
             self.assertEqual(selection['flutter-version'], match[1])
             self.assertEqual(selection['channel'], 'stable')
-        self.assertEqual(self.workflow['jobs']['development-modes']['strategy']['matrix']['mode'], ['debug', 'profile'])
+        self.assertEqual(self.native['jobs']['development-modes']['strategy']['matrix']['mode'], ['debug', 'profile'])
         self.assertEqual(self.recipe['confinement'], 'strict')
 
     def test_snap_runtime_copies_unmodified_official_sdk_payload(self):
@@ -149,57 +151,58 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 self.assertEqual((protected / 'sentinel').read_text(), 'preserve')
                 self.assertFalse((root / 'unused.snap').exists())
 
-    def test_required_native_failures_do_not_suppress_independent_checks(self):
-        checks = {
-            'verify': {
-                'Test including bundled D2 and Typst paths': 'release-build',
-                'Exercise demand-driven native visualization lifecycle': 'release-build',
-                'Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests': 'release-build',
-                'Exercise the release binary visualization and PDF paths under X11': 'release-build',
-                'Build compiled-close fixture': 'release-build',
-                'Require usable content while portal replies are withheld': 'release-fixture',
-                'Exercise live application close, persistence, media and reopening': 'release-fixture',
-                'Restore main target for Wayland checks': 'release-build',
-                'Run spelling and visualization smoke tests under Wayland': 'release-main',
-            },
-            'snap': {
-                'Verify GTK SVG icon loader and portable icon caches': 'strict-install',
-                'Verify shared runtimes, packaged tools, media, and resources': 'strict-install',
-                'Prepare a separate compiled-close fixture package': 'strict-install',
-                'Build genuine strict compiled-close fixture': 'strict-fixture-source',
-                'Verify strict Save Discard Cancel media rendering and reopening': 'strict-fixture-install',
-                'Require usable confined content while portal replies are withheld': 'strict-fixture-install',
-            },
-            'development-modes': {
-                'Build development-mode compiled-close fixture': 'mode-build',
-                'Require development-mode portal responsiveness': 'mode-fixture',
-                'Verify development-mode documents media and reopening': 'mode-fixture',
-            },
-        }
-        for job, steps in checks.items():
-            ids = {s.get('id') for s in self.workflow['jobs'][job]['steps']}
-            for name, prerequisite in steps.items():
-                with self.subTest(job=job, check=name):
-                    step = self.step(job, name)
-                    self.assertEqual(step.get('if'), "${{ !cancelled() && steps." + prerequisite + ".outcome == 'success' }}")
+    def test_application_feedback_is_separate_from_native_and_upstream_acceptance(self):
+        scripts = '\n'.join(step.get('run', '') for job in self.workflow['jobs'].values()
+                            for step in job['steps'])
+        self.assertIn('flutter test --concurrency=2', scripts)
+        self.assertIn('flutter build linux --release', scripts)
+        self.assertIn('tools/test_application_close_smoke.py', scripts)
+        self.assertNotIn('tools/application_close_smoke.py', scripts)
+        self.assertNotIn('tools/test_portal_application.py', scripts)
+        upstream = self.upstream['jobs']['portal']
+        self.assertEqual(upstream['uses'], './.github/workflows/flutter-linux-native.yml')
+        self.assertIs(upstream['with']['upstream-capabilities'], True)
+        # Expensive checks are explicit. Neither can deploy or bypass a gate.
+        for workflow in [self.native, self.upstream]:
+            triggers = workflow.get('on', workflow.get(True))
+            self.assertNotIn('pull_request', triggers)
+            self.assertNotIn('push', triggers)
+            self.assertIn('workflow_dispatch', triggers)
+
+    def test_native_failures_remain_required_and_independent(self):
+        ordinary_counts, portals = {}, []
+        for job_name, job in self.native['jobs'].items():
+            steps = job['steps']
+            ids = {step['id'] for step in steps if 'id' in step}
+            for step in steps:
+                script = step.get('run', '')
+                condition = step.get('if', '')
+                for prerequisite in re.findall(r"steps.([\w-]+).outcome == 'success'", condition):
                     self.assertIn(prerequisite, ids)
+                    self.assertIn('!cancelled()', condition)
+                if 'tools/test_portal_application.py' in script:
+                    portals.append(job_name)
+                    self.assertIn('inputs.upstream-capabilities', condition)
+                    self.assertNotIn('!inputs.upstream-capabilities', condition)
                     self.assertNotIn('continue-on-error', step)
-        for job, name, cycles in [('verify', 'Require 100 natural closes of the shipping release', 100),
-                                  ('snap', 'Require 100 natural closes under strict confinement', 100),
-                                  ('development-modes', 'Verify development mode GTK engine and natural close', 10)]:
-            step = self.step(job, name)
-            self.assertNotIn('continue-on-error', step)
-            self.assertRegex(step['run'], rf'--cycles {cycles}\b')
-        for job, name in [('verify', 'Require usable content while portal replies are withheld'),
-                          ('development-modes', 'Require development-mode portal responsiveness')]:
-            self.assertNotIn('application_close_smoke.py', self.step(job, name)['run'])
+                if 'tools/application_close_smoke.py' in script:
+                    self.assertIn('!inputs.upstream-capabilities', condition)
+                    self.assertNotIn('continue-on-error', step)
+                    self.assertNotIn('|| true', script)
+                    # Preserve stress counts, provenance and ordinary closure.
+                    if '--plain' in script or '--snap-instance busymark_close' in script:
+                        ordinary_counts[job_name] = int(re.search(r'--cycles (\d+)', script)[1])
+                        self.assertIn('--expected-engine', script)
+        self.assertEqual(ordinary_counts, {'verify': 100, 'snap': 100, 'development-modes': 10})
+        self.assertCountEqual(portals, ['verify', 'snap', 'development-modes'])
 
     def test_shell_steps_parse(self):
-        for job in self.workflow['jobs'].values():
-            for step in job['steps']:
-                if 'run' in step:
-                    script = re.sub(r'\$\{\{.*?\}\}', 'owned-placeholder', step['run'])
-                    subprocess.run(['bash', '-n'], input=script, text=True, check=True)
+        for workflow in [self.workflow, self.native]:
+            for job in workflow['jobs'].values():
+                for step in job['steps']:
+                    if 'run' in step:
+                        script = re.sub(r'\$\{\{.*?\}\}', 'owned-placeholder', step['run'])
+                        subprocess.run(['bash', '-n'], input=script, text=True, check=True)
 
     def test_upstream_patch_composition_remains_review_material(self):
         root = ROOT / 'docs/upstream/flutter'

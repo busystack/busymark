@@ -1,0 +1,11 @@
+name: Flutter upstream capabilities
+
+# Expected to expose pinned upstream blockers; never a release exemption.
+on:
+  workflow_dispatch:
+
+jobs:
+  portal:
+    uses: ./.github/workflows/flutter-linux-native.yml
+    with:
+      upstream-capabilities: true

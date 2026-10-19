@@ -1,7 +1,10 @@
 # Flutter upstream review material
 
-BusyMark builds with the **official Flutter 3.47.5 SDK**. Nothing in this
-directory is applied, built, selected or packaged by the application workflow.
+BusyMark builds with the **official Flutter 3.47.5 SDK**. The proposed engine
+patches and native controls in this directory are not applied, built, selected
+or packaged by the application workflow. The portal controls share the owned-bus
+support in `tools/portal_test_support.py` and `tools/portal_test_service.py` with
+application capability checks; those helpers do not patch or select an engine.
 Do not substitute these experimental libraries into a shared SDK or a release.
 
 The preserved patches are review inputs, not an alternative engine distribution:

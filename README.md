@@ -102,7 +102,7 @@ for process ownership, content-recognition controls, and focused tooling checks.
 
 The CI workflow installs additional packages for headless X11/Wayland, browser,
 PDF, and sandbox verification. Those packages are not required for an ordinary
-local build; see [the Linux workflow](.github/workflows/flutter-linux.yml) when
+local build; see [native acceptance](.github/workflows/flutter-linux-native.yml) when
 reproducing release verification.
 
 ## Snap release and security builds
@@ -122,7 +122,7 @@ sha256sum ./busymark_*.snap
 
 Inspect and test the exact file emitted by the final `snapcraft` command. A
 failed build must not fall back to an older `.snap`. The `snap` job in
-[the Linux workflow](.github/workflows/flutter-linux.yml) follows this route,
+[native acceptance](.github/workflows/flutter-linux-native.yml) follows this route,
 installs that selected artifact, and runs the strict-confinement smoke checks.
 Build information embeds the original recipe for the workflow's identity check.
 

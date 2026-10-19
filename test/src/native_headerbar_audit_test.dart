@@ -117,7 +117,7 @@ void main() {
       'tools/build_install_snap_local.sh',
     ).readAsStringSync();
     final workflow = File(
-      '.github/workflows/flutter-linux.yml',
+      '.github/workflows/flutter-linux-native.yml',
     ).readAsStringSync();
 
     expect(
@@ -599,7 +599,7 @@ void main() {
         isNot(contains('libflutter_secure_storage_linux_plugin.so')),
       );
       final workflow = File(
-        '.github/workflows/flutter-linux.yml',
+        '.github/workflows/flutter-linux-native.yml',
       ).readAsStringSync();
       expect(workflow, contains(r'graphics_lib="$SNAP/gpu-2404/usr/lib/'));
       expect(workflow, contains('libwayland-egl.so.1'));
@@ -891,7 +891,7 @@ exit 1
 
 String _sharedRuntimeValidationBody() {
   final workflow = File(
-    '.github/workflows/flutter-linux.yml',
+    '.github/workflows/flutter-linux-native.yml',
   ).readAsStringSync();
   const step =
       '      - name: Verify shared runtimes, packaged tools, media, and resources';

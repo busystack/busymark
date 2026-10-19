@@ -103,7 +103,7 @@ sources are:
 - `tools/fetch_d2.sh` for the D2 release, architecture, and verified hashes;
 - `tools/fetch_typst.sh` for Typst release artifacts and hashes;
 - `linux/CMakeLists.txt` and `snap/snapcraft.yaml` for bundle layout; and
-- `.github/workflows/flutter-linux.yml` for release and Snap verification.
+- `.github/workflows/flutter-linux-native.yml` for explicit release and Snap verification.
 
 The web bundle is built with `npm ci --ignore-scripts`. Build steps verify direct
 upstream artifacts and stage package metadata, licenses, and notices. Node.js is
