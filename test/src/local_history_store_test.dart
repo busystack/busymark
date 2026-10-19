@@ -18,9 +18,8 @@ void main() {
   late int ids;
   late FileLocalHistoryStore store;
 
-  // Compile once before the cases. Child operation deadlines no longer include
-  // repeated Flutter-tool startup, its SDK lock, assets or build hooks.
-  setUpAll(_HistoryProcess.prepare);
+  // Only interprocess cases need the compiled fixture. Preparation is shared
+  // across concurrent starts and stays outside child-operation deadlines.
   tearDownAll(_HistoryProcess.disposeRuntime);
 
   setUp(() async {
@@ -371,10 +370,16 @@ void main() {
   test(
     'independent production writers preserve both identities and revisions',
     () async {
-      final first = await _HistoryProcess.start(root, 'write', 'first');
-      addTearDown(first.close);
-      final second = await _HistoryProcess.start(root, 'write', 'second');
-      addTearDown(second.close);
+      Future<_HistoryProcess> start(String owner) async {
+        final child = await _HistoryProcess.start(root, 'write', owner);
+        addTearDown(child.close);
+        return child;
+      }
+
+      final [first, second] = await Future.wait([
+        start('first'),
+        start('second'),
+      ]);
       await Future.wait([first.ready(), second.ready()]);
       // Both independent OS processes execute the same prepared production
       // fixture, without a Flutter tool/compiler or PID-file launcher layer.
@@ -1805,6 +1810,7 @@ class _HistoryProcess {
   final String signal;
   final File report;
   static Directory? _runtimeDirectory;
+  static Future<void>? _preparation;
   static late String _tester;
   static late String _icu;
   static String? _cleanupFailure;
@@ -1828,7 +1834,7 @@ class _HistoryProcess {
       'launcher pid=${process.pid}, signal=$signal, exit=${_exitCode ?? 'pending'}'
       '\nstdout:\n${_stdout.contents}\nstderr:\n${_stderr.contents}';
 
-  static Future<void> prepare() async {
+  static Future<void> _prepare() async {
     if (!Platform.isLinux) {
       throw UnsupportedError(
         'The owned History process fixture requires Linux',
@@ -1908,6 +1914,7 @@ class _HistoryProcess {
         'Previous fixture cleanup is unresolved: $_cleanupFailure',
       );
     }
+    await (_preparation ??= _prepare());
     final signal = p.join(root.path, 'process-$owner');
     return _launch(
       [
