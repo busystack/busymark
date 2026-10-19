@@ -985,6 +985,7 @@ BusyMarkStatusKind busyMarkWorkspaceMessageStatusKind(
       BusyMarkStatusKind.information,
     WorkspaceMessageCode.recoveryRestored => BusyMarkStatusKind.information,
     WorkspaceMessageCode.saveBlockedFileChangedOnDisk ||
+    WorkspaceMessageCode.recentWorkspaceUpdateFailed ||
     WorkspaceMessageCode.recoveryDamaged => BusyMarkStatusKind.warning,
     WorkspaceMessageCode.openFailed ||
     WorkspaceMessageCode.createWritersideProjectFailed ||

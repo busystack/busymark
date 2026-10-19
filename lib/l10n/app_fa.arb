@@ -1719,6 +1719,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "با موفقیت باز شد، اما به‌روزرسانی فضاهای کاری اخیر ممکن نشد: {error}",
   "workspaceErrorOpenFailed": "باز کردن ناموفق بود: ⁨{error}⁩",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

@@ -3817,6 +3817,12 @@ abstract class AppLocalizations {
   /// **'Resource file'**
   String get documentKindResourceFile;
 
+  /// Warning after opening succeeded but saving the recent workspace list failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened successfully, but could not update recent workspaces: {error}'**
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error);
+
   /// Workspace error message shown when opening a path fails.
   ///
   /// In en, this message translates to:

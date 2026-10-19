@@ -2097,6 +2097,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get documentKindResourceFile => 'ملف الموارد';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'تم الفتح بنجاح، ولكن تعذر تحديث مساحات العمل الأخيرة: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'فشل الفتح: ⁨$error⁩';
   }

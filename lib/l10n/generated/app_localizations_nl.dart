@@ -2109,6 +2109,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get documentKindResourceFile => 'Bronbestand';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Geopend, maar de recente werkruimten konden niet worden bijgewerkt: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Openen mislukt: $error';
   }

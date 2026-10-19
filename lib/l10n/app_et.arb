@@ -2004,6 +2004,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Avamine õnnestus, kuid hiljutisi tööruume ei saanud uuendada: {error}",
   "workspaceErrorOpenFailed": "Avamine nurjus: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

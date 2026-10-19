@@ -4089,13 +4089,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final recentPath = workspace.kind == WorkspaceKind.singleMarkdown
           ? workspace.activeFilePath ?? workspace.rootPath
           : workspace.rootPath;
-      await PerformanceTrace.async(
-        'recent-workspace',
-        () => _settingsController.recordOpenedWorkspace(
-          path: recentPath,
-          kind: workspace.kind.name,
-        ),
-      );
+      try {
+        await PerformanceTrace.async(
+          'recent-workspace',
+          () => _settingsController.recordOpenedWorkspace(
+            path: recentPath,
+            kind: workspace.kind.name,
+          ),
+        );
+      } on Object catch (error, stackTrace) {
+        busyMarkDebugLogError(
+          '[BusyMark] Could not update recent workspaces',
+          error,
+          stackTrace,
+          context: {'path': busyMarkLogPath(path)},
+        );
+        if (_isCurrentActiveDocumentOperation(operationRevision)) {
+          state = state.copyWith(
+            message: WorkspaceMessage(
+              WorkspaceMessageCode.recentWorkspaceUpdateFailed,
+              error: error,
+            ),
+          );
+        }
+      }
     } on Object catch (error, stackTrace) {
       busyMarkDebugLogError(
         '[BusyMark] Open failed',

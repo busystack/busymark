@@ -1997,6 +1997,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get documentKindResourceFile => '资源文件';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return '已成功打开，但无法更新最近的工作区：$error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return '打开失败：$error';
   }
@@ -7156,6 +7161,11 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get documentKindResourceFile => '资源文件';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return '已成功打开，但无法更新最近的工作区：$error';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {

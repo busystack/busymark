@@ -2088,6 +2088,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get documentKindResourceFile => 'Tệp tài nguyên';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Đã mở thành công nhưng không thể cập nhật các không gian làm việc gần đây: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Mở không thành công: $error';
   }

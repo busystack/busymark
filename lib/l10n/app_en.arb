@@ -1326,6 +1326,11 @@
   "documentKindResourceFile": "Resource file",
   "@documentKindResourceFile": {"description": "Search result document kind label."},
 
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Opened successfully, but could not update recent workspaces: {error}",
+  "@workspaceErrorRecentWorkspaceUpdateFailed": {
+    "description": "Warning after opening succeeded but saving the recent workspace list failed.",
+    "placeholders": {"error": {"type": "String"}}
+  },
   "workspaceErrorOpenFailed": "Open failed: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

@@ -2025,6 +2025,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get documentKindResourceFile => 'リソースファイル';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return '正常に開きましたが、最近使ったワークスペースを更新できませんでした: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return '開くことができませんでした：$error';
   }

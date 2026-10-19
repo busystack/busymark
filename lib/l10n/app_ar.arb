@@ -1711,6 +1711,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "تم الفتح بنجاح، ولكن تعذر تحديث مساحات العمل الأخيرة: {error}",
   "workspaceErrorOpenFailed": "فشل الفتح: ⁨{error}⁩",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

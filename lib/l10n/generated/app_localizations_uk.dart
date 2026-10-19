@@ -2124,6 +2124,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get documentKindResourceFile => 'Файл ресурсів';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Успішно відкрито, але не вдалося оновити список нещодавніх робочих областей: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Не вдалося відкрити: $error';
   }

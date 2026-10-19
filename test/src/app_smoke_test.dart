@@ -178,7 +178,7 @@ void main() {
         if (fail) {
           expect(
             container.read(workspaceControllerProvider).message?.code,
-            WorkspaceMessageCode.openFailed,
+            WorkspaceMessageCode.recentWorkspaceUpdateFailed,
           );
         } else {
           expect(settings.value['recentWorkspaces'], isNotEmpty);
@@ -190,6 +190,14 @@ void main() {
         );
         expect(shutdownComplete, isTrue);
         await shutdown;
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          '# Basic Markdown\n',
+        );
+        expect(
+          container.read(workspaceControllerProvider).message?.code,
+          isNot(WorkspaceMessageCode.openFailed),
+        );
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );

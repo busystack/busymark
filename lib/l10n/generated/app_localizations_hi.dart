@@ -2090,6 +2090,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get documentKindResourceFile => 'संसाधन फ़ाइल';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'सफलतापूर्वक खोला गया, लेकिन हाल के कार्यस्थल अपडेट नहीं हो सके: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'खोलना विफल रहा: $error';
   }

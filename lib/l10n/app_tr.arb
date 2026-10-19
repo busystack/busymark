@@ -2281,6 +2281,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Başarıyla açıldı, ancak son çalışma alanları güncellenemedi: {error}",
   "workspaceErrorOpenFailed": "Açma başarısız oldu: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

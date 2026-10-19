@@ -2116,6 +2116,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get documentKindResourceFile => 'Файл ресурсов';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Открыто успешно, но не удалось обновить список недавних рабочих областей: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Не удалось открыть: $error';
   }

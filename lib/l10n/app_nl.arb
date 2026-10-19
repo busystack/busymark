@@ -2281,6 +2281,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Geopend, maar de recente werkruimten konden niet worden bijgewerkt: {error}",
   "workspaceErrorOpenFailed": "Openen mislukt: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

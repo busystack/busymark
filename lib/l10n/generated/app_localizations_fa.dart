@@ -2134,6 +2134,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get documentKindResourceFile => 'فایل منبع';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'با موفقیت باز شد، اما به‌روزرسانی فضاهای کاری اخیر ممکن نشد: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'باز کردن ناموفق بود: ⁨$error⁩';
   }

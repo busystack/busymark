@@ -1711,6 +1711,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Åpnet, men kunne ikke oppdatere nylige arbeidsområder: {error}",
   "workspaceErrorOpenFailed": "Åpning mislyktes: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

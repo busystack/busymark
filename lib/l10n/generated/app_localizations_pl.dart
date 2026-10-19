@@ -2120,6 +2120,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get documentKindResourceFile => 'Plik zasobów';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Otwarto pomyślnie, ale nie udało się zaktualizować ostatnich obszarów roboczych: $error';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Otwieranie nie powiodło się: $error';
   }
