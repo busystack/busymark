@@ -75,8 +75,11 @@ stale target. These topology/unit checks are not hosted-CI, GTK-engine or strict
 confinement acceptance.
 
 The Linux History interprocess tests compile their fixture once per test file,
-using the official SDK selected by `.dart_tool/package_config.json`. They launch
-that kernel directly with the same SDK's `flutter_tester`; operation readiness
+using `flutter build bundle --debug --no-pub` from the official SDK selected by
+`.dart_tool/package_config.json`. This avoids invoking private compiler snapshots
+or maintaining frontend-server arguments. They launch the resulting kernel
+directly with the same SDK's `flutter_tester` and ICU data; this remaining runtime
+coupling is covered by the interprocess tests. Operation readiness
 does not include repeated Flutter-tool startup, SDK locking, assets or build
 hooks. This is test execution, not a new application build/engine workflow.
 Fixture diagnostics separate runtime entry and individual production store/lock

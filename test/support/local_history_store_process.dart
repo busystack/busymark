@@ -1,6 +1,7 @@
-// Compiled once and run by the selected official flutter_tester because the
-// production store's dependency graph includes dart:ui. Each invocation is an
-// independent OS process; no nested flutter test/tool startup is involved.
+// Prepared once with `flutter build bundle` and run by the selected official
+// flutter_tester because the production store's dependency graph includes
+// dart:ui. Each invocation is an independent OS process; no nested flutter
+// test/tool startup is involved.
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

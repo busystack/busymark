@@ -389,7 +389,7 @@ void main() {
               as List;
       expect(p.basename(firstCommand.first as String), 'flutter_tester');
       expect(secondCommand, firstCommand);
-      expect(firstCommand.last, endsWith('history.dill'));
+      expect(firstCommand.last, endsWith('/assets/kernel_blob.bin'));
       final snapshot = await store.load();
       expect(snapshot.documents, hasLength(2));
       expect(snapshot.documents.map((d) => d.id).toSet(), hasLength(2));
@@ -1845,7 +1845,13 @@ class _HistoryProcess {
       '.dart_tool/package_config.json',
     ).absolute.uri.resolve(flutter['rootUri'] as String).toFilePath();
     final sdk = p.dirname(p.dirname(p.normalize(packageRoot)));
-    final architecture = Abi.current() == Abi.linuxArm64 ? 'arm64' : 'x64';
+    final architecture = switch (Abi.current()) {
+      Abi.linuxX64 => 'x64',
+      Abi.linuxArm64 => 'arm64',
+      final abi => throw UnsupportedError(
+        'Unsupported History fixture ABI: $abi',
+      ),
+    };
     final engine = p.join(
       sdk,
       'bin/cache/artifacts/engine/linux-$architecture',
@@ -1856,18 +1862,21 @@ class _HistoryProcess {
       'busymark-history-runtime-',
     );
     _runtimeDirectory = directory;
+    // Use Flutter's public build command instead of depending on its private
+    // frontend-server flags and snapshot layout. Prepare once; child readiness
+    // still measures only the independent runtime's store/lock operations.
     final command = [
-      p.join(sdk, 'bin/cache/dart-sdk/bin/dartaotruntime'),
-      p.join(engine, 'frontend_server_aot.dart.snapshot'),
-      '--sdk-root',
-      p.join(sdk, 'bin/cache/artifacts/engine/common/flutter_patched_sdk'),
-      '--target=flutter',
-      '--no-print-incremental-dependencies',
-      '--packages',
-      p.absolute('.dart_tool/package_config.json'),
-      '--output-dill',
-      p.join(directory.path, 'history.dill'),
-      '--verbosity=error',
+      p.join(sdk, 'bin/flutter'),
+      'build',
+      'bundle',
+      '--debug',
+      '--no-pub',
+      '--target-platform=linux-$architecture',
+      '--asset-dir',
+      p.join(directory.path, 'assets'),
+      '--depfile',
+      p.join(directory.path, 'bundle.d'),
+      '--target',
       p.absolute('test/support/local_history_store_process.dart'),
     ];
     final compiler = await _launch(
@@ -1909,7 +1918,7 @@ class _HistoryProcess {
         '--enable-software-rendering',
         '--non-interactive',
         '--icu-data-file-path=$_icu',
-        p.join(_runtimeDirectory!.path, 'history.dill'),
+        p.join(_runtimeDirectory!.path, 'assets/kernel_blob.bin'),
       ],
       signal,
       File('$signal.observation.json'),
