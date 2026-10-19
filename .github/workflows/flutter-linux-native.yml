@@ -337,11 +337,15 @@ jobs:
           sudo snap install --dangerous
           "${{ steps.snap-artifact.outputs.snap }}"
 
+      - name: Enable parallel Snap instances
+        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' }}
+        id: strict-parallel
+        run: sudo snap set system experimental.parallel-instances=true
+
       - name: Install disposable close instance
-        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' }}
+        if: ${{ !inputs.upstream-capabilities && !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
         id: strict-close-install
         run: |
-          sudo snap set system experimental.parallel-instances=true
           sudo snap install --dangerous --name=busymark_close \
             "${{ steps.snap-artifact.outputs.snap }}"
 
@@ -584,7 +588,7 @@ jobs:
         id: close-fixture-snap
         uses: snapcore/action-build@v1
       - name: Install strict compiled-close fixture
-        if: ${{ !cancelled() && steps.close-fixture-snap.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.close-fixture-snap.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
         id: strict-fixture-install
         run: |
           fixture="${{ steps.close-fixture-snap.outputs.snap }}"
@@ -650,7 +654,6 @@ jobs:
           flutter-version: '3.47.5'
           cache: true
       - run: flutter pub get --enforce-lockfile
-        if: ${{ !inputs.upstream-capabilities }}
       - name: Build official development mode
         id: mode-build
         run: flutter build linux --${{ matrix.mode }} --no-pub

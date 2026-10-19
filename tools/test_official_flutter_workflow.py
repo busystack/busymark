@@ -196,6 +196,46 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         self.assertEqual(ordinary_counts, {'verify': 100, 'snap': 100, 'development-modes': 10})
         self.assertCountEqual(portals, ['verify', 'snap', 'development-modes'])
 
+    def test_development_modes_prepare_locked_dependencies_in_both_workflows(self):
+        steps = self.native['jobs']['development-modes']['steps']
+        preparation = [step for step in steps
+                       if step.get('run', '').strip() == 'flutter pub get --enforce-lockfile']
+        self.assertEqual(len(preparation), 1)
+        # No input-dependent gate: clean native and upstream jobs both need
+        # dependency resolution before either --no-pub development build.
+        self.assertNotIn('if', preparation[0])
+        self.assertNotIn('continue-on-error', preparation[0])
+        builds = [step for step in steps
+                  if step.get('run', '').startswith('flutter build linux ')]
+        self.assertEqual(len(builds), 2)
+        for build in builds:
+            with self.subTest(build=build['name']):
+                self.assertIn('--no-pub', shlex.split(build['run']))
+                self.assertLess(steps.index(preparation[0]), steps.index(build))
+
+    def test_parallel_snap_setup_is_shared_and_required_by_every_named_install(self):
+        steps = self.native['jobs']['snap']['steps']
+        setup = [step for step in steps
+                 if step.get('run', '').strip() ==
+                 'sudo snap set system experimental.parallel-instances=true']
+        self.assertEqual(len(setup), 1, 'Parallel-instance setup must be a shared step')
+        setup = setup[0]
+        self.assertNotIn('inputs.upstream-capabilities', setup.get('if', ''))
+        self.assertNotIn('continue-on-error', setup)
+        prerequisite = f"steps.{setup['id']}.outcome == 'success'"
+        installs = [step for step in steps
+                    if re.search(r'\bsnap install\b[^\n]*--name=', step.get('run', ''))]
+        self.assertEqual(len(installs), 2)
+        for install in installs:
+            with self.subTest(install=install['name']):
+                self.assertLess(steps.index(setup), steps.index(install))
+                self.assertIn(prerequisite, install.get('if', ''))
+                self.assertIn('!cancelled()', install['if'])
+        close = next(step for step in installs if '--name=busymark_close' in step['run'])
+        fixture = next(step for step in installs if '--name=busymark_fixture' in step['run'])
+        self.assertIn('!inputs.upstream-capabilities', close['if'])
+        self.assertNotIn('inputs.upstream-capabilities', fixture['if'])
+
     def test_shell_steps_parse(self):
         for workflow in [self.workflow, self.native]:
             for job in workflow['jobs'].values():
