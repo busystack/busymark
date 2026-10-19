@@ -3,7 +3,6 @@
 Uses PyYAML (a CI test prerequisite). Comments/documentation are not policy.
 The Snap recipe pins the official archive; CI must select that same version.
 """
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -25,7 +24,6 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
     def setUpClass(cls):
         cls.workflow = yaml.safe_load((ROOT / '.github/workflows/flutter-linux.yml').read_text())
         cls.native = yaml.safe_load((ROOT / '.github/workflows/flutter-linux-native.yml').read_text())
-        cls.upstream = yaml.safe_load((ROOT / '.github/workflows/flutter-upstream-capabilities.yml').read_text())
         cls.recipe = yaml.safe_load((ROOT / 'snap/snapcraft.yaml').read_text())
 
     def step(self, job, name):
@@ -151,26 +149,22 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 self.assertEqual((protected / 'sentinel').read_text(), 'preserve')
                 self.assertFalse((root / 'unused.snap').exists())
 
-    def test_application_feedback_is_separate_from_native_and_upstream_acceptance(self):
+    def test_application_feedback_is_separate_from_native_acceptance(self):
         scripts = '\n'.join(step.get('run', '') for job in self.workflow['jobs'].values()
                             for step in job['steps'])
         self.assertIn('flutter test --concurrency=2', scripts)
         self.assertIn('flutter build linux --release', scripts)
         self.assertIn('tools/test_application_close_smoke.py', scripts)
         self.assertNotIn('tools/application_close_smoke.py', scripts)
-        self.assertNotIn('tools/test_portal_application.py', scripts)
-        upstream = self.upstream['jobs']['portal']
-        self.assertEqual(upstream['uses'], './.github/workflows/flutter-linux-native.yml')
-        self.assertIs(upstream['with']['upstream-capabilities'], True)
-        # Expensive checks are explicit. Neither can deploy or bypass a gate.
-        for workflow in [self.native, self.upstream]:
+        # Expensive native checks are explicit and cannot bypass a gate.
+        for workflow in [self.native]:
             triggers = workflow.get('on', workflow.get(True))
             self.assertNotIn('pull_request', triggers)
             self.assertNotIn('push', triggers)
             self.assertIn('workflow_dispatch', triggers)
 
     def test_native_failures_remain_required_and_independent(self):
-        ordinary_counts, portals = {}, []
+        ordinary_counts = {}
         for job_name, job in self.native['jobs'].items():
             steps = job['steps']
             ids = {step['id'] for step in steps if 'id' in step}
@@ -180,13 +174,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 for prerequisite in re.findall(r"steps.([\w-]+).outcome == 'success'", condition):
                     self.assertIn(prerequisite, ids)
                     self.assertIn('!cancelled()', condition)
-                if 'tools/test_portal_application.py' in script:
-                    portals.append(job_name)
-                    self.assertIn('inputs.upstream-capabilities', condition)
-                    self.assertNotIn('!inputs.upstream-capabilities', condition)
-                    self.assertNotIn('continue-on-error', step)
                 if 'tools/application_close_smoke.py' in script:
-                    self.assertIn('!inputs.upstream-capabilities', condition)
                     self.assertNotIn('continue-on-error', step)
                     self.assertNotIn('|| true', script)
                     # Preserve stress counts, provenance and ordinary closure.
@@ -194,15 +182,13 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                         ordinary_counts[job_name] = int(re.search(r'--cycles (\d+)', script)[1])
                         self.assertIn('--expected-engine', script)
         self.assertEqual(ordinary_counts, {'verify': 100, 'snap': 100, 'development-modes': 10})
-        self.assertCountEqual(portals, ['verify', 'snap', 'development-modes'])
 
-    def test_development_modes_prepare_locked_dependencies_in_both_workflows(self):
+    def test_development_modes_prepare_locked_dependencies(self):
         steps = self.native['jobs']['development-modes']['steps']
         preparation = [step for step in steps
                        if step.get('run', '').strip() == 'flutter pub get --enforce-lockfile']
         self.assertEqual(len(preparation), 1)
-        # No input-dependent gate: clean native and upstream jobs both need
-        # dependency resolution before either --no-pub development build.
+        # Clean jobs need dependency resolution before either --no-pub build.
         self.assertNotIn('if', preparation[0])
         self.assertNotIn('continue-on-error', preparation[0])
         builds = [step for step in steps
@@ -220,7 +206,6 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                  'sudo snap set system experimental.parallel-instances=true']
         self.assertEqual(len(setup), 1, 'Parallel-instance setup must be a shared step')
         setup = setup[0]
-        self.assertNotIn('inputs.upstream-capabilities', setup.get('if', ''))
         self.assertNotIn('continue-on-error', setup)
         prerequisite = f"steps.{setup['id']}.outcome == 'success'"
         installs = [step for step in steps
@@ -231,10 +216,32 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 self.assertLess(steps.index(setup), steps.index(install))
                 self.assertIn(prerequisite, install.get('if', ''))
                 self.assertIn('!cancelled()', install['if'])
-        close = next(step for step in installs if '--name=busymark_close' in step['run'])
-        fixture = next(step for step in installs if '--name=busymark_fixture' in step['run'])
-        self.assertIn('!inputs.upstream-capabilities', close['if'])
-        self.assertNotIn('inputs.upstream-capabilities', fixture['if'])
+
+    def test_snap_launches_keep_the_systemd_user_session_bus(self):
+        steps = self.native['jobs']['snap']['steps']
+        sessions = [step for step in steps if step.get('id') == 'strict-session']
+        self.assertEqual(len(sessions), 1)
+        session = sessions[0]
+        dependencies = next(step for step in steps
+                            if step.get('name') == 'Install desktop smoke dependencies')
+        packages = [shlex.split(line) for line in dependencies['run'].splitlines()]
+        self.assertTrue(any(command[:3] == ['sudo', 'apt-get', 'install'] and
+                            'dbus-user-session' in command[3:] for command in packages))
+        self.assertLess(steps.index(dependencies), steps.index(session))
+        self.assertIn('sudo systemctl start "user@${session_uid}.service"', session['run'])
+        self.assertIn('test -S "$runtime_dir/bus"', session['run'])
+        self.assertIn('DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime_dir/bus', session['run'])
+        self.assertIn('XDG_RUNTIME_DIR=$runtime_dir', session['run'])
+        self.assertIn('"$GITHUB_ENV"', session['run'])
+        self.assertNotIn('continue-on-error', session)
+        launches = [step for step in steps if 'snap run' in step.get('run', '') or
+                    'tools/application_close_smoke.py' in step.get('run', '')]
+        self.assertEqual(len(launches), 7)
+        for launch in launches:
+            with self.subTest(launch=launch['name']):
+                self.assertLess(steps.index(session), steps.index(launch))
+                self.assertIn("steps.strict-session.outcome == 'success'", launch['if'])
+                self.assertNotIn('dbus-run-session', launch['run'])
 
     def test_shell_steps_parse(self):
         for workflow in [self.workflow, self.native]:
@@ -243,14 +250,6 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     if 'run' in step:
                         script = re.sub(r'\$\{\{.*?\}\}', 'owned-placeholder', step['run'])
                         subprocess.run(['bash', '-n'], input=script, text=True, check=True)
-
-    def test_upstream_patch_composition_remains_review_material(self):
-        root = ROOT / 'docs/upstream/flutter'
-        lock = json.loads((root / 'engine.lock.json').read_text())
-        for patch in lock['patches']:
-            self.assertEqual(hashlib.sha256((root / patch['file']).read_bytes()).hexdigest(), patch['sha256'])
-        self.assertFalse((ROOT / 'tools/flutter_engine/engine.py').exists())
-        self.assertFalse((ROOT / 'linux/cmake/CorrectedFlutterEngine.cmake').exists())
 
 
 class BundleInstallTest(unittest.TestCase):

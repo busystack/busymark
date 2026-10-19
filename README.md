@@ -98,7 +98,7 @@ See [Linux development](docs/development/linux-engine.md) for the standard mode
 commands and the upstream shutdown/startup blockers. A successful build does
 not establish release readiness: native fatal exits keep release blocked.
 See [performance and shutdown observers](docs/development/performance-observers.md)
-for process ownership, content-recognition controls, and focused tooling checks.
+for maintained process-ownership and content-recognition checks.
 
 The CI workflow installs additional packages for headless X11/Wayland, browser,
 PDF, and sandbox verification. Those packages are not required for an ordinary

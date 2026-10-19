@@ -167,13 +167,8 @@ extern "C" void __wrap_webkit_web_view_load_uri(WebKitWebView* view,
   __real_webkit_web_view_load_uri(view, uri);
 }
 static bool fail_context = false;
-static bool delay_context_for_watchdog = false;
 extern "C" WebKitWebContext* __wrap_webkit_web_context_new_ephemeral() {
   ++contexts;
-  if (delay_context_for_watchdog) {
-    delay_context_for_watchdog = false;
-    g_usleep(1500000);
-  }
   if (fail_context) {
     fail_context = false;
     return nullptr;
@@ -443,13 +438,6 @@ int main(int argc, char** argv) {
   gtk_init(&argc, &argv);
   g_assert_cmpint(argc, ==, 2);
   const char* mode = argv[1];
-  if (strcmp(mode, "watchdog-delay") == 0) {
-    // Deterministic watchdog validation only; not a reproduction of a library
-    // stall. The sleep blocks GTK after the production context begin event.
-    std::fprintf(stderr, "Injected 1500ms context delay for watchdog validation\n");
-    delay_context_for_watchdog = true;
-    mode = "renderMermaid";
-  }
   Harness h;
   if (g_str_has_prefix(mode, "video-")) {
     constexpr char video_channel[] = "com.busymark.app/video_player";

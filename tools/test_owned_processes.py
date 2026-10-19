@@ -1,4 +1,4 @@
-"""Ownership admission and anchored snapshot controls; never use unrelated PIDs."""
+"""Ownership admission and descriptor anchoring; never use unrelated PIDs."""
 import os
 from pathlib import Path
 import sys
@@ -23,8 +23,6 @@ class OwnedProcessTest(unittest.TestCase):
         self.root = Path(temp.name)
         self.proc = self.root / 'proc'
         self.proc.mkdir()
-        self.output = self.root / 'capture'
-        self.output.mkdir()
         original_open = os.open
 
         def fixture_open(name, *args, **kwargs):
@@ -42,13 +40,7 @@ class OwnedProcessTest(unittest.TestCase):
         root = self.proc / str(pid)
         root.mkdir()
         (root / 'stat').write_text(stat_line(pid, parent, birth))
-        for field in ['maps', 'cmdline']:
-            (root / field).write_text(text)
-        (root / 'exe').symlink_to('/owned/fixture')
-        task = root / 'task' / str(pid)
-        task.mkdir(parents=True)
-        for field in ['status', 'wchan', 'syscall']:
-            (task / field).write_text(text)
+        (root / 'maps').write_text(text)
         return root
 
     def test_first_admission_rejects_replacement_with_unrelated_parent(self):
@@ -144,63 +136,14 @@ class OwnedProcessTest(unittest.TestCase):
         self.process(200, os.getpid(), 'owned-child')
         self.assertEqual(owned.admit_child(200, 100, 'exited-parent')['identity'], 'owned-child')
 
-    def test_snapshot_rejects_stale_birth_without_reading_payload(self):
-        self.process(200, 999, 'replacement', 'unrelated bytes')
-        original_read = owned.ProcessHandle.read
-
-        def read(handle, name):
-            self.assertEqual(name, 'stat', 'payload read before identity validation')
-            return original_read(handle, name)
-
-        with patch.object(owned.ProcessHandle, 'read', read):
-            result = owned.snapshot_owned(200, 'original', self.output)
-        self.assertEqual(result['status'], 'reused')
-        self.assertEqual(list(self.output.iterdir()), [])
-
-    def test_snapshot_stays_on_same_birth_across_pid_replacement(self):
+    def test_handle_keeps_state_and_payload_on_original_birth_after_path_reuse(self):
         proc = self.process(200, 100, 'original')
-        original_read = owned.ProcessHandle.read
-        replaced = False
-
-        def read(handle, name):
-            nonlocal replaced
-            data = original_read(handle, name)
-            if name == 'stat' and not replaced:
-                replaced = True
-                proc.rename(self.proc / 'retired')
-                self.process(200, 999, 'replacement', 'unrelated bytes')
-            return data
-
-        with patch.object(owned.ProcessHandle, 'read', read):
-            result = owned.snapshot_owned(200, 'original', self.output)
-        self.assertEqual(result['status'], 'running')
-        self.assertEqual((self.output / '200-maps').read_text(), 'owned bytes')
-        self.assertNotIn('unrelated bytes', ''.join(p.read_text() for p in self.output.iterdir()))
-
-    def test_missing_snapshot_is_exit_race_but_inaccessible_is_incomplete(self):
-        self.assertEqual(owned.snapshot_owned(200, 'gone', self.output)['status'], 'gone')
-        with patch.object(owned.ProcessHandle, '__init__', side_effect=PermissionError('inaccessible proc')):
-            result = owned.snapshot_owned(200, 'owned', self.output)
-        self.assertEqual(result['status'], 'unavailable')
-
-    def test_matching_live_unreadable_snapshot_is_incomplete(self):
-        self.process(200, 100, 'original')
-        original_read = owned.ProcessHandle.read
-
-        def read(handle, name):
-            if name == 'maps':
-                raise PermissionError('unreadable live maps')
-            return original_read(handle, name)
-
-        with patch.object(owned.ProcessHandle, 'read', read):
-            result = owned.snapshot_owned(200, 'original', self.output)
-        self.assertEqual(result['status'], 'unavailable')
-        self.assertIn('maps', str(result['fieldErrors']))
-
-    def test_snapshot_publication_failure_is_not_classified_as_exit(self):
-        self.process(200, 100, 'original')
-        with self.assertRaisesRegex(owned.ObservationIncomplete, 'publication'):
-            owned.snapshot_owned(200, 'original', self.output / 'missing')
+        with owned.ProcessHandle(200) as handle:
+            self.assertEqual(handle.state('original')['status'], 'running')
+            proc.rename(self.proc / 'retired')
+            self.process(200, 999, 'replacement', 'unrelated bytes')
+            self.assertEqual(handle.state('original')['status'], 'running')
+            self.assertEqual(handle.read('maps'), b'owned bytes')
 
 
 if __name__ == '__main__':

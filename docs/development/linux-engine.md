@@ -1,9 +1,7 @@
 # Linux development with official Flutter
 
-BusyMark uses the official Flutter SDK pinned in `pubspec.yaml` (3.47.5).
-Put that SDK on `PATH`; use an independent installation for experiments rather
-than changing a shared SDK. No BusyMark engine build, patch, cache, artifact
-receipt or local-engine selection is required or supported by the project.
+Use the official Flutter SDK pinned in `pubspec.yaml` (3.47.5) on `PATH`.
+BusyMark does not build or select a custom engine or GTK runtime.
 
 ```sh
 flutter pub get --enforce-lockfile
@@ -18,54 +16,33 @@ flutter test --concurrency=2
 ```
 
 CI selects the same official version. Snapcraft downloads the checksum-pinned
-official SDK and packages its unmodified release engine. Build/test strict Snaps
-only in a disposable supported environment; never replace a user's installation
-for acceptance. See the README's clean Snapcraft procedure. The local scaffold
-repack helper does not validate dependency or confinement changes.
+SDK and packages its unmodified release engine. Follow the README's clean
+Snapcraft procedure in a disposable supported environment; do not replace an
+installed application for acceptance. The local scaffold repack helper is not
+release or confinement validation. Strict-Snap checks use the normal systemd
+user-session bus for launcher cgroup tracking, not a private D-Bus session.
 
-Ordinary push/PR application checks run in `Flutter Linux`. The explicit
-`Linux native acceptance` workflow owns the full compiled/strict-Snap release
-checks. `Flutter upstream capabilities` separately reports the proposed portal
-behavior on the official engine. See the [observer guide](performance-observers.md)
-for these boundaries; a green ordinary workflow does not clear a native blocker.
+`Flutter Linux` checks ordinary application changes. Run `Linux native acceptance`
+for compiled document/media checks, natural shutdown, strict Snap, debug/profile,
+and X11/Wayland compatibility. See [maintained observers](performance-observers.md).
+A widget-suite pass does not validate the GTK embedder.
 
-Build success is separate from release acceptance. The official Linux engine
-has reproduced a compositor disposal/presentation race; synchronous portal
-initialization can also prevent startup when the service withholds replies.
-Removing the private engine does not correct either defect. Native fatal exits
-and withheld-portal progress failures keep release blocked. Preserve all failed
-samples; a disappearing window or cleanup termination is not natural shutdown.
+## Release blockers
 
-The [upstream evidence package](../upstream/flutter/README.md) preserves the C6,
-ATK and asynchronous local-first portal proposals and deterministic regressions.
-They are review material, never production build inputs. Do not apply them to a
-shared SDK or silently reinstate a custom engine. A proposed Flutter issue/PR
-must be reviewed before publishing.
+The official engine has reproduced a compositor disposal/presentation race.
+Synchronous Flutter settings-portal and GTK Inhibit/Properties.GetAll calls can
+also block startup when the desktop portal withholds replies. These upstream
+runtime failures remain release blockers; removing research tools does not fix
+them. Historical patches, reproductions and crash evidence are archived externally.
+A disappearing window or forced cleanup is not successful natural shutdown.
 
-The pinned Yaru 0.2.2 nullable/retired-window correction remains independent.
-Build-local patched plugin sources and its MPL notice ship with the app; neither
-the pub cache nor Flutter is patched. Run `tools/test_yaru_window_lifecycle.sh`
-and `tools/test_yaru_patch.py`; track an upstream plugin fix separately.
-
-For live acceptance, build `tools/window_close_smoke.dart`, then use
-`tools/application_close_smoke.py` on an owned disposable desktop/profile.
-`--expected-engine /path/to/official/libflutter_linux_gtk.so` optionally verifies
-the actual mapped library without requiring a production receipt. The observer
-requires complete child enumeration, PID/start-time identities, natural exits
-and verified descendant cleanup. The portal gate in `tools/test_portal_application.py`
-retains its five-second progress assertion and independent GTK Inhibit case.
-Neither a later timeout nor successful cleanup makes a failed assertion pass.
-
-Keyboard audits cover the owned content window and later-created child windows
-using core X11 and XI2 counts. They do not observe global/root keyboard payloads;
-events before subscription cannot be reconstructed. Run the live regression
-only on a disposable display:
+The production Yaru 0.2.2 retired-window correction remains required by the current
+plugin integration. CMake patches build-local sources, never the pub cache, and
+ships the MPL notice. Its implementation is unchanged. A supported unmodified
+replacement must pass the same native lifecycle tests before dependency changes
+are approved; patch-free dependency acceptance remains unresolved.
 
 ```sh
-xvfb-run -a dbus-run-session -- /usr/bin/python3 \
-  tools/test_application_input_observer.py --disposable-display
+/usr/bin/python3 -m unittest tools/test_yaru_patch.py
+xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
 ```
-
-If a window disappears during subtree enumeration, only a matching subscribed
-`DestroyNotify` establishes ordinary retirement. The observer records that race;
-an unmatched `BadWindow` or inaccessible observation still fails verification.

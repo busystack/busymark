@@ -67,9 +67,8 @@ view in the same ephemeral context. Process recovery also creates a fresh
 registry. Each engine retains its existing validation,
 configuration, and dependencies. Math includes all offline NewCM font tables.
 First use still pays for the WebKit process, harness, and requested engine;
-subsequent requests reuse them. Those costs must be measured alongside plain
-startup when assessing performance, including preparation that an eager
-baseline completed before receiving its first request.
+subsequent requests reuse them. Measure complete launch-to-output and
+request-to-output paths separately.
 
 Opening an interactive reference first creates the shared context and its
 visible view, without loading the offscreen harness. A later render uses that
@@ -185,46 +184,6 @@ bash tools/test_web_render_host.sh video-no-init video-first video-failure video
 bash tools/test_web_render_host.sh video-playback video-mini-playback
 ```
 
-An external watchdog can stop GDB's inferior and collect native stacks and
-process/thread wait evidence while GTK is blocked:
-
-```bash
-python3 tools/capture_native_slow_operation.py \
-  --output /absolute/new/evidence-directory --threshold-ms 500 --duration 20 \
-  -- build/linux/x64/release/bundle/busymark /absolute/disposable/document.md
-```
-
-For targeted tail capture with less debugger perturbation before the event, add
-`--detach-until-slow`. GDB stops at native `main`, detaches, and remains the
-inferior's ancestor so it can attach after the selected operation exceeds the
-threshold. This requires no ptrace-policy change. Entry under GDB is still
-diagnostic, and attaching perturbs the remainder of a captured operation.
-`detached.json` identifies the owned application for a separate interaction
-probe. Cleanup checks process identities before signalling it or its children.
-Detached runs do not establish a successful natural-exit status.
-
-`--operation` also accepts compiled-in Dart spans, such as
-`restore-journal-session`. An active Future can be waiting on worker I/O while
-GTK remains responsive; inspect the captured threads instead of treating its
-whole duration as main-thread blocking. `--profile-template` copies a disposable
-fixture into the isolated profile without modifying the template. Keep graphics
-caches out of restoration templates when testing fresh-cache behavior.
-
-The watchdog's blocked-operation and already-completed-operation regressions use
-owned synthetic programs, not a reproduction of a historical WebKit stall:
-
-```bash
-python3 tools/test_capture_native_slow_operation.py -v
-```
-
-The watchdog creates an isolated HOME/XDG profile while retaining the desktop
-connection and graphics environment. It inspects only its inferior and children.
-`BUSYMARK_NATIVE_SLOW_CAPTURE_DIR=/absolute/new/capture-root` enables the same
-watchdog for `test_web_render_host.sh`. The optional `watchdog-delay` operation
-injects a 1,500 ms GTK-thread delay to validate capture; it does **not** reproduce
-an unexplained WebKit stall. Debugger and syscall-traced runs are diagnostic
-cohorts, never headline latency measurements.
-
 `BUSYMARK_NATIVE_SYSCALL_TRACE_DIR=/absolute/evidence-directory` records each
 native case with `strace -f -ttt -T`, including file discovery, child creation,
 futex/poll waits, and flush durations. Correlate its wall-clock timestamps with
@@ -324,15 +283,6 @@ A sleep in a polling helper then adds delay per await. Keep dialog interaction,
 document assertions, and actual file publication/rollback checks intact. See
 [Flutter's runAsync contract](https://api.flutter.dev/flutter/flutter_test/WidgetTester/runAsync.html).
 
-The Source unsafe-local-image fallback still checks exact original text for all
-six candidates. Its former helper made 100 attempts, advanced 20 ms of fake time
-per attempt, and yielded at least 5 ms of real time per attempt. Its existing
-`_pumpUntilRealIo` replacement allows 10 seconds of wall time, yields 25 ms per
-attempt, and does not advance fake time. This expanded functional waiting budget
-is not evidence of meeting a performance target. Starting its paste event in the
-real event loop prevents per-await frame scheduling from becoming part of file
-validation. The follow-up changes do not increase these deadlines.
-
 For test-only I/O diagnosis, set `BUSYMARK_TEST_IO_TRACE=1`. Wait and store events
 include PID, Unix wall-clock microseconds, operation, and begin/completion state
 for correlation with a scoped syscall trace. Completed stores use `return await`
@@ -342,7 +292,7 @@ Native tracing checks that the pending case actually reaches shutdown before
 initialization completes. That case uses an isolated test harness with the same
 content security policy that deliberately withholds readiness. This prevents a
 fast harness from finishing during required close persistence; it is a lifecycle
-test, not a reproduction or timing measurement of the historical WebKit stall.
+test, separate from performance measurements.
 The ordinary shipping-executable cohort does not
 require tracing. Cleanup warnings are retained separately from fatal signals.
 
@@ -357,16 +307,6 @@ checks; they establish no physical-desktop performance result.
 Use `--fresh-profile` for a new isolated application and graphics cache for each
 case; its reopen check reuses that case's profile. Previous profiles are retained,
 and no system cache is cleared.
-
-The dictionary-import fixture starts its file-picker/modal flow in `runAsync`
-as well: its continuation remains in the initiating zone after the dialog
-closes. A controlled catalog gate and zero-duration cooperative yield check that
-real-I/O scheduling progresses without another fake widget frame. This models
-a provider retry/yield; it is not a reproduction of the historical flush stall.
-Both the gate and the original installation assertion share the original
-fifteen-second wall budget. The baseline fails
-that scheduling assertion while still completing the original import; the
-corrected fixture passes both.
 
 `dart_test.yaml` bounds independent test-file workers to two. This limits
 concurrent compilation and durable filesystem transactions on development/CI

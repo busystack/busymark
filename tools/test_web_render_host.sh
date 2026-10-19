@@ -37,12 +37,6 @@ for operation in "${operations[@]}"; do
   profile="$fixture_root/$iteration-$operation"
   mkdir -p "$profile"/{home,config,cache,data,state,tmp}
   command=("$fixture_root/probe" "$operation")
-  if [[ -n "${BUSYMARK_NATIVE_SLOW_CAPTURE_DIR:-}" ]]; then
-    command=(python3 "$project_root/tools/capture_native_slow_operation.py"
-      --output "$BUSYMARK_NATIVE_SLOW_CAPTURE_DIR/$iteration-$operation"
-      --threshold-ms "${BUSYMARK_NATIVE_SLOW_THRESHOLD_MS:-500}"
-      --duration 40 --expect-exit -- "${command[@]}")
-  fi
   if [[ -n "${BUSYMARK_NATIVE_SYSCALL_TRACE_DIR:-}" ]]; then
     mkdir -p "$BUSYMARK_NATIVE_SYSCALL_TRACE_DIR"
     command=(strace -f -ttt -T

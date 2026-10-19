@@ -137,14 +137,14 @@ jobs:
         run: flutter build linux --release
 
       # Independent application checks retain their own failure outcomes.
-      - name: Test natural-exit observer and capture cleanup
+      - name: Test owned-process and application observers
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         run: |
           /usr/bin/python3 -m unittest tools/test_owned_processes.py \
             tools/test_application_content_observer.py tools/test_application_close_smoke.py \
             tools/test_run_owned_fixture.py \
-            tools/test_yaru_patch.py tools/test_capture_native_slow_operation.py \
-            tools/test_official_flutter_workflow.py tools/test_portal_test_support.py
+            tools/test_yaru_patch.py \
+            tools/test_official_flutter_workflow.py
 
       - name: Test including bundled D2 and Typst paths
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}

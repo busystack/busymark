@@ -15,7 +15,7 @@ import io
 import ctypes as C
 
 sys.path.insert(0, str(Path(__file__).parent))
-from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, ProcessHandle, accepted, process_children, run_case, seed_local_settings, signal_owned, snap_command, snapshot_mapped_process
+from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, ProcessHandle, accepted, process_children, run_case, signal_owned, snap_command, snapshot_mapped_process
 
 
 class LaunchLifetimeTest(unittest.TestCase):
@@ -386,6 +386,29 @@ report.write_text(json.dumps({'phase':'close-requested','applicationSupport':str
         self.assertFalse(accepted(record))
         self.assertIn('owned-window close', record['error'])
 
+    def test_shipping_close_checks_the_isolated_recovery_checkpoint(self):
+        for clean in [True, False]:
+            with self.subTest(clean=clean), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                closed = root / 'close-requested'
+                source = '''
+import json, os, pathlib, sys, time
+support = pathlib.Path(os.environ['XDG_DATA_HOME']) / 'io.busystack.busymark'
+support.mkdir(parents=True)
+(support / 'recovery.json').write_text(json.dumps({'cleanShutdown': sys.argv[2] == 'True'}))
+while not pathlib.Path(sys.argv[1]).exists():
+    time.sleep(.01)
+'''
+                with patch('application_close_smoke.Desktop') as desktop:
+                    desktop.return_value.close.side_effect = lambda _: closed.touch()
+                    record = run_case([sys.executable, '-c', source, str(closed), str(clean)],
+                                      root / 'case', root / 'profile', 'plain', 5, plain=True)
+                self.assertEqual(record['exitCode'], 0, record)
+                self.assertIs(record.get('durableCleanShutdown'), clean, record)
+                self.assertEqual(accepted(record), clean, record)
+                if not clean:
+                    self.assertIn('Durable clean-shutdown checkpoint missing', record['error'])
+
     def test_fatal_signal_is_rejected_despite_success_checkpoint(self):
         for name in ["SIGABRT", "SIGSEGV"]:
             with self.subTest(signal=name):
@@ -749,46 +772,6 @@ class OwnedInputIsolationTest(unittest.TestCase):
             desktop.close(SimpleNamespace(get_xid=lambda: 123))
 
 
-
-class LocalSettingsFixtureTest(unittest.TestCase):
-    def test_seed_is_private_and_does_not_rewrite_unchanged_database(self):
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            source = root / 'source.db'
-            source.write_bytes(b'synthetic local settings')
-            profile = root / 'profile'
-            seed_local_settings(profile, source)
-            target = profile / 'config/dconf/user'
-            self.assertEqual(target.read_bytes(), source.read_bytes())
-            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
-            original = target.stat()
-            seed_local_settings(profile, source)
-            self.assertEqual(target.stat().st_ino, original.st_ino)
-            self.assertEqual(target.stat().st_mtime_ns, original.st_mtime_ns)
-            target.write_bytes(b'changed local settings')
-            with self.assertRaisesRegex(RuntimeError, 'changed isolated'):
-                seed_local_settings(profile, source)
-            self.assertEqual(target.read_bytes(), b'changed local settings')
-
-    def test_seed_refuses_file_and_directory_symlinks(self):
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            source = root / 'source.db'
-            source.write_bytes(b'fixture')
-            outside = root / 'outside'
-            outside.mkdir()
-            profile = root / 'profile'
-            (profile / 'config').mkdir(parents=True)
-            (profile / 'config/dconf').symlink_to(outside, target_is_directory=True)
-            with self.assertRaisesRegex(RuntimeError, 'symlink'):
-                seed_local_settings(profile, source)
-            self.assertEqual(list(outside.iterdir()), [])
-            (profile / 'config/dconf').unlink()
-            (profile / 'config/dconf').mkdir()
-            (profile / 'config/dconf/user').symlink_to(source)
-            with self.assertRaisesRegex(RuntimeError, 'symlink'):
-                seed_local_settings(profile, source)
-            self.assertEqual(source.read_bytes(), b'fixture')
 
 if __name__ == "__main__":
     unittest.main()

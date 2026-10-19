@@ -1,4 +1,4 @@
-"""Linux owned-process observation shared by close, portal and watchdog tools.
+"""Linux owned-process observation shared by application and fixture supervisors.
 
 One dedicated observer/subreaper per case; no pre-existing or concurrent
 unrelated children. Unknown ownership fails verification and is never signalled.
@@ -49,8 +49,8 @@ def process_state(pid, expected=None):
 class ProcessHandle:
     """Anchor proc reads to one birth. An old proc fd cannot follow PID reuse.
 
-    Paths below this handle are procfs-owned numeric tasks or fixed fields,
-    never application-provided paths. Only exe intentionally follows a link.
+    Fields read through this handle are fixed procfs names, never
+    application-provided paths.
     """
     def __init__(self, pid):
         self.pid = pid
@@ -74,16 +74,6 @@ class ProcessHandle:
             return {'pid': self.pid, 'status': 'gone'}
         except (OSError, IndexError, ValueError) as error:
             return {'pid': self.pid, 'status': 'unavailable', 'error': str(error)}
-
-    def tasks(self):
-        fd = os.open('task', os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW, dir_fd=self.fd)
-        try:
-            return os.listdir(fd)
-        finally:
-            os.close(fd)
-
-    def executable(self):
-        return os.readlink('exe', dir_fd=self.fd)
 
 
 def admit_child(pid, parent, parent_identity):
@@ -120,68 +110,6 @@ def admit_child(pid, parent, parent_identity):
         return {'pid': pid, 'status': 'gone'}
     except OSError as error:
         raise ObservationIncomplete(f'Cannot anchor child {pid}: {error}') from error
-
-
-def snapshot_owned(pid, expected, output):
-    """Copy a matching birth's procfs evidence, never a recycled PID's files.
-
-    Gone/reused processes are normal snapshot races. A matching live process
-    with unreadable fields is incomplete verification. All reads stay relative
-    to one proc directory handle even if that PID is recycled midway through.
-    """
-    result = {'pid': pid, 'identity': expected}
-    errors = []
-    try:
-        with ProcessHandle(pid) as proc:
-            state = proc.state(expected)
-            result['status'] = state['status']
-            if state['status'] != 'running':
-                if state['status'] == 'unavailable':
-                    result['error'] = state.get('error')
-                return result
-
-            def copy(name, target):
-                try:
-                    data = proc.executable().encode() if name == 'exe' else proc.read(name)
-                except OSError as error:
-                    if isinstance(error, (FileNotFoundError, ProcessLookupError)) and name.startswith('task/'):
-                        try:
-                            proc.read('/'.join(name.split('/')[:2]) + '/stat')
-                        except (FileNotFoundError, ProcessLookupError):
-                            return  # This particular thread exited, not lost observation.
-                        except OSError:
-                            pass
-                    errors.append({'field': name, 'error': repr(error)})
-                    return
-                # Publication errors are not a process-exit race.
-                try:
-                    (output / target).write_bytes(data)
-                except OSError as error:
-                    raise ObservationIncomplete(f'Owned snapshot publication failed: {error}') from error
-
-            try:
-                tasks = proc.tasks()
-            except OSError as error:
-                errors.append({'field': 'task', 'error': repr(error)})
-                tasks = []
-            for task in tasks:
-                if not task.isdecimal():
-                    raise ObservationIncomplete('Non-numeric proc task')
-                for field in ('status', 'wchan', 'syscall'):
-                    copy(f'task/{task}/{field}', f'{pid}-{task}-{field}')
-            for field in ('maps', 'stat', 'cmdline', 'exe'):
-                copy(field, f'{pid}-{field}')
-            final = proc.state(expected)
-            result['status'] = final['status']
-            if errors:
-                result['fieldErrors'] = errors
-                if final['status'] not in ('gone', 'reused', 'zombie'):
-                    result['status'] = 'unavailable'
-    except (FileNotFoundError, ProcessLookupError):
-        result['status'] = 'gone'
-    except OSError as error:
-        result.update(status='unavailable', error=repr(error))
-    return result
 
 
 def identity(pid):
