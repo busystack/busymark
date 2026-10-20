@@ -12,11 +12,18 @@ final String? headlessChromePath = [
   '/usr/bin/chromium-browser',
 ].whereType<String>().where((path) => File(path).existsSync()).firstOrNull;
 
-Future<Object?> evaluateInChrome(String htmlPath, String expression) =>
-    HttpOverrides.runWithHttpOverrides(
-      () => _evaluateInChrome(htmlPath, expression),
-      _BrowserHttpOverrides(),
-    );
+Future<Object?> evaluateInChrome(
+  String htmlPath,
+  String expression, {
+  String? browserExecutable,
+}) => HttpOverrides.runWithHttpOverrides(
+  () => _evaluateInChrome(
+    htmlPath,
+    expression,
+    browserExecutable ?? headlessChromePath!,
+  ),
+  _BrowserHttpOverrides(),
+);
 
 class _BrowserHttpOverrides extends HttpOverrides {}
 
@@ -101,15 +108,31 @@ Map<String, String> chromeProcessEnvironment(Map<String, String> parent) {
   return environment;
 }
 
-Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
-  final profile = await Directory.systemTemp.createTemp('html-csp-browser-');
+Future<Object?> _evaluateInChrome(
+  String htmlPath,
+  String expression,
+  String browserExecutable,
+) async {
+  final directory = await Directory.systemTemp.createTemp('html-csp-browser-');
+  final profile = Directory(p.join(directory.path, 'profile'));
+  final report = File(p.join(directory.path, 'processes.json'));
   Process? browser;
+  Future<void>? output;
   Uri? browserEndpoint;
+  Object? failure;
+  var retired = false;
   final documentUri = Uri.file(htmlPath);
   try {
+    // Chromium's launcher can exit before profile-writing descendants. Reuse
+    // the Linux fixture supervisor so deletion follows verified retirement.
     browser = await Process.start(
-      headlessChromePath!,
+      '/usr/bin/python3',
       [
+        p.absolute('tools/run_owned_fixture.py'),
+        '--report',
+        report.path,
+        '--',
+        browserExecutable,
         '--headless=new',
         '--no-first-run',
         '--disable-background-networking',
@@ -123,32 +146,75 @@ Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
       environment: chromeProcessEnvironment(Platform.environment),
       includeParentEnvironment: false,
     );
-    unawaited(browser.stdout.drain<void>());
-    final uri = await browserDevToolsEndpoint(browser.stderr, browser.exitCode);
+    output = browser.stdout.drain<void>();
+    final uri = await browserDevToolsEndpoint(
+      browser.stderr,
+      browser.exitCode.then((code) async {
+        final observation = jsonDecode(await report.readAsString()) as Map;
+        return observation['exitCode'] as int? ?? code;
+      }),
+    );
     browserEndpoint = uri;
     return await evaluateDevToolsDocument(
       browserEndpoint: uri,
       documentUri: documentUri,
       expression: expression,
     );
+  } on Object catch (error) {
+    failure = error;
+    rethrow;
   } finally {
-    if (browser != null) {
-      if (browserEndpoint != null) {
-        final control = await WebSocket.connect(browserEndpoint.toString());
-        control.add(jsonEncode({'id': 2, 'method': 'Browser.close'}));
-        await control.drain<void>().timeout(const Duration(seconds: 5));
+    try {
+      if (browser != null) {
+        Object? closeFailure;
+        try {
+          if (browserEndpoint != null) {
+            final control = await WebSocket.connect(
+              browserEndpoint.toString(),
+            ).timeout(const Duration(seconds: 5));
+            control.add(jsonEncode({'id': 2, 'method': 'Browser.close'}));
+            await control.drain<void>().timeout(const Duration(seconds: 5));
+          } else {
+            await browser.stdin.close();
+          }
+          await browser.exitCode.timeout(const Duration(seconds: 5));
+        } on Object catch (error) {
+          closeFailure = error;
+          // EOF asks the supervisor to retire only verified owned processes.
+          await browser.stdin.close();
+          await browser.exitCode.timeout(const Duration(seconds: 5));
+        }
+        final observation = jsonDecode(await report.readAsString()) as Map;
+        retired =
+            ['unresolvedSurvivors', 'verificationIncomplete'].every(
+              (key) =>
+                  observation[key] is List &&
+                  (observation[key] as List).isEmpty,
+            ) &&
+            (observation['cleanupErrors'] == null ||
+                (observation['cleanupErrors'] is List &&
+                    (observation['cleanupErrors'] as List).isEmpty));
+        await output!.timeout(const Duration(seconds: 5));
+        if (!retired ||
+            closeFailure != null ||
+            (failure == null &&
+                (observation['ok'] != true || await browser.exitCode != 0))) {
+          throw StateError(
+            'Chromium retirement failed: $closeFailure; $observation',
+          );
+        }
       } else {
-        browser.kill();
+        retired = true;
       }
-      await browser.exitCode.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          browser!.kill(ProcessSignal.sigkill);
-          return browser.exitCode;
-        },
-      );
+    } on Object catch (error) {
+      if (failure != null) {
+        throw StateError('$failure\nChromium cleanup: $error');
+      }
+      rethrow;
+    } finally {
+      await browser?.stdin.close();
+      if (retired) await directory.delete(recursive: true);
     }
-    await profile.delete(recursive: true);
   }
 }
 

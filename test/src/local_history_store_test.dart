@@ -2043,7 +2043,9 @@ class _HistoryProcess {
         );
       }
       if (result['cleanupRequired'] == true || result['cancelled'] == true) {
-        throw StateError('History fixture required forced cleanup: $result');
+        throw StateError(
+          'History fixture required forced cleanup: $result\n$diagnostics',
+        );
       }
     } finally {
       if (!exited) {

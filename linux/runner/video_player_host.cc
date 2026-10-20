@@ -1,5 +1,4 @@
 #include "video_player_host.h"
-#include "performance_trace.h"
 
 #include <webkit2/webkit2.h>
 
@@ -539,7 +538,6 @@ VideoPlayer* create_player(BusyMarkVideoPlayerHost* self,
                            const gchar* pause_label,
                            const gchar* border_effect) {
   if (self->context == nullptr) {
-    BusyMarkPerformanceSpan span("video-context");
     self->context = webkit_web_context_new_ephemeral();
     if (self->context == nullptr) {
       g_free(local_uri);
@@ -554,7 +552,6 @@ VideoPlayer* create_player(BusyMarkVideoPlayerHost* self,
     webkit_cookie_manager_set_accept_policy(cookie_manager,
                                             WEBKIT_COOKIE_POLICY_ACCEPT_NEVER);
   }
-  BusyMarkPerformanceSpan span("video-view");
   auto* player = g_new0(VideoPlayer, 1);
   player->kind = kind;
   player->allowed_local_uri = local_uri;
@@ -733,12 +730,6 @@ void busymark_video_player_host_register_channel(
 
 void busymark_video_player_host_shutdown(BusyMarkVideoPlayerHost* self) {
   g_return_if_fail(BUSYMARK_IS_VIDEO_PLAYER_HOST(self));
-  if (g_strcmp0(g_getenv("BUSYMARK_NATIVE_TRACE"), "1") == 0) {
-    g_printerr("busymark-native video-shutdown context=%d players=%u repeated=%d "
-               "time_us=%" G_GINT64_FORMAT "\n",
-               self->context != nullptr, g_hash_table_size(self->players),
-               self->shutting_down, g_get_monotonic_time());
-  }
   if (self->shutting_down) {
     return;
   }

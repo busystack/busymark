@@ -38,7 +38,6 @@ import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
 
 import '../support/widget_async.dart';
-import '../support/io_wait_trace.dart';
 
 const _source =
     '# Issues\n\n**When** selecting all, keep *formatting*.\n\n- [ ] First task\n- [x] Second task\n';
@@ -3949,11 +3948,9 @@ void main() {
       final ingestion = AssetIngestionService(
         hooks: AssetIngestionHooks(
           afterDestinationReserved: (path) async {
-            traceTestIo('image alternatives', 'before-publish', path);
             reserved.add(path);
           },
           afterPublication: (asset) async {
-            traceTestIo('image alternatives', 'published', asset.absolutePath);
             published.add(asset);
           },
           beforeCommit: (asset) async => committed.add(asset),

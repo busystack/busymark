@@ -37,13 +37,6 @@ for operation in "${operations[@]}"; do
   profile="$fixture_root/$iteration-$operation"
   mkdir -p "$profile"/{home,config,cache,data,state,tmp}
   command=("$fixture_root/probe" "$operation")
-  if [[ -n "${BUSYMARK_NATIVE_SYSCALL_TRACE_DIR:-}" ]]; then
-    mkdir -p "$BUSYMARK_NATIVE_SYSCALL_TRACE_DIR"
-    command=(strace -f -ttt -T
-      -o "$BUSYMARK_NATIVE_SYSCALL_TRACE_DIR/$iteration-$operation.strace"
-      -e 'trace=%process,%file,%network,mmap,mprotect,munmap,write,writev,futex,poll,ppoll,epoll_wait,epoll_pwait,fsync,fdatasync'
-      "${command[@]}")
-  fi
   HOME="$profile/home" XDG_CONFIG_HOME="$profile/config" \
     XDG_CACHE_HOME="$profile/cache" XDG_DATA_HOME="$profile/data" \
     XDG_STATE_HOME="$profile/state" TMPDIR="$profile/tmp" \

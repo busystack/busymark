@@ -6,13 +6,13 @@ No successful path calls terminate(), kill(), Dart exit(), or gtk_main_quit().
 """
 import argparse
 import ctypes as C
-from contextlib import contextmanager
 import hashlib
 import json
 import math
 import os
 from pathlib import Path
 import signal
+import stat
 import secrets
 import re
 import shlex
@@ -28,35 +28,13 @@ from owned_processes import (ChildTracker, ObservationIncomplete, ProcessHandle,
                              signal_owned)
 
 
-@contextmanager
-def observation_span(event, name):
-    """Optional in-memory diagnostic hook; the caller owns bounded buffering.
-
-    Wall/CPU timestamps describe observer work, never application completion.
-    Ordinary acceptance does not install a callback or collect these events.
-    """
-    if event is None:
-        yield
-        return
-    def emit(phase):
-        event({'name': name, 'phase': phase, 'monotonic_ns': time.monotonic_ns(),
-               'threadCPU_ns': time.thread_time_ns()})
-    emit('begin')
-    try:
-        yield
-    finally:
-        emit('end')
-
-
-def snapshot_mapped_process(pid, folder, record, event=None):
+def snapshot_mapped_process(pid, folder, record):
     # Keep the historical mapped_ns endpoint after snapshot publication, but
     # expose detection before observer I/O. Neither timestamp is presentation.
     record['mapDetected_ns'] = time.monotonic_ns()
     try:
-        with observation_span(event, 'mapped-process-maps-read'):
-            maps = Path(f'/proc/{pid}/maps').read_text()
-        with observation_span(event, 'mapped-process-maps-write'):
-            (folder / 'maps').write_text(maps)
+        maps = Path(f'/proc/{pid}/maps').read_text()
+        (folder / 'maps').write_text(maps)
     except OSError as error:
         raise ObservationIncomplete('Owned mapped-process snapshot failed: ' + str(error)) from error
     record['mapped_ns'] = time.monotonic_ns()
@@ -64,26 +42,24 @@ def snapshot_mapped_process(pid, folder, record, event=None):
 
 class LoadedEngine:
     """Pin the owned process's mapped engine; hash after exit, outside timing."""
-    def __init__(self, manifest):
+    def __init__(self, library):
         try:
-            path = Path(manifest)
-            with path.open('rb') as stream:
-                elf = stream.read(4) == b'\x7fELF'
+            with os.fdopen(os.open(library, os.O_RDONLY | os.O_CLOEXEC | os.O_NONBLOCK), 'rb') as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise ValueError('Expected a regular ELF shared library')
+                header = stream.read(64)
+                if (len(header) < 52 or header[:4] != b'\x7fELF'
+                        or header[4] not in (1, 2) or header[5] not in (1, 2)
+                        or header[6] != 1 or (header[4] == 2 and len(header) < 64)):
+                    raise ValueError('Expected an ELF shared library')
+                byteorder = 'little' if header[5] == 1 else 'big'
+                if (int.from_bytes(header[16:18], byteorder) != 3
+                        or int.from_bytes(header[20:24], byteorder) != 1):
+                    raise ValueError('Expected an ELF shared library')
                 stream.seek(0)
-                if elf:
-                    self.receipt = {}
-                    self.expected = hashlib.file_digest(stream, 'sha256').hexdigest()
-                else:
-                    # Read historical evidence without requiring production
-                    # build receipts. Current tests supply an official .so.
-                    self.receipt = json.load(stream)
-                    self.expected = (self.receipt['packagedEngineSHA256']
-                                     if 'packagedEngineSHA256' in self.receipt
-                                     else self.receipt['files']['libflutter_linux_gtk.so'])
-        except (OSError, ValueError, KeyError, TypeError) as error:
-            raise ObservationIncomplete('Expected engine identity input unavailable or invalid: ' + str(error)) from error
-        if not isinstance(self.expected, str) or not re.fullmatch(r'[0-9a-f]{64}', self.expected):
-            raise ObservationIncomplete('Invalid expected engine SHA256')
+                self.expected = hashlib.file_digest(stream, 'sha256').hexdigest()
+        except (OSError, ValueError, TypeError) as error:
+            raise ObservationIncomplete('Expected engine library unavailable or invalid: ' + str(error)) from error
         self.fd = None
         self.path = None
         self.stat = None
@@ -137,7 +113,7 @@ class LoadedEngine:
             if (current.st_size, current.st_mtime_ns, current.st_ctime_ns) != (self.stat.st_size, self.stat.st_mtime_ns, self.stat.st_ctime_ns):
                 errors.append('Engine file changed after its mapping was captured')
             actual = h.hexdigest()
-            record['loadedEngine'] = {'path': self.path, 'sha256': actual, 'expectedSHA256': self.expected, 'inode': self.stat.st_ino, 'device': self.stat.st_dev, 'mode': self.receipt.get('mode'), 'key': self.receipt.get('key'), 'confinement': self.confinement}
+            record['loadedEngine'] = {'path': self.path, 'sha256': actual, 'expectedSHA256': self.expected, 'inode': self.stat.st_ino, 'device': self.stat.st_dev, 'confinement': self.confinement}
             if actual != self.expected:
                 errors.append('Actual loaded engine differs from the expected artifact')
         except OSError as error:
@@ -668,7 +644,7 @@ def accepted(record):
     return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors") and not record.get('cleanupErrors') and not record.get('reportingError')
 
 
-def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, engine_manifest=None, isolate_input=False, audit_input=False, observer_event=None, disposable_display=False):
+def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, expected_engine=None, isolate_input=False, audit_input=False, disposable_display=False):
     if scenario == 'window-controls' and not disposable_display:
         raise ValueError('Window drag requires an explicitly disposable desktop')
     if isolate_input and audit_input:
@@ -703,8 +679,6 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             assets.mkdir(exist_ok=True)
             (assets / 'harness.html').write_text(PENDING_HARNESS)
             environment['BUSYMARK_VISUALIZATION_ASSETS'] = str(assets)
-        if not plain:
-            environment['BUSYMARK_NATIVE_TRACE'] = '1'
         application_profile = profile
         if snap_instance:
             # snap-confine needs the real account home. The application gets an
@@ -720,7 +694,6 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                 # The real account HOME is restored for snap-confine above, so
                 # transfer the fixture opt-in only after entering confinement.
                 extra['BUSYMARK_RELEASE_SMOKE'] = '1'
-                extra['BUSYMARK_NATIVE_TRACE'] = '1'
             if scenario == 'pending-initialization' and not plain:
                 extra['BUSYMARK_VISUALIZATION_ASSETS'] = str(profile / 'pending-initialization-assets')
             command = snap_command(snap_instance, leaf, arguments, extra)
@@ -733,7 +706,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         if scenario == 'pending-initialization' and not plain:
             record['controlledPendingHarness'] = True
         phase = 'observer initialization'
-        probe = LoadedEngine(engine_manifest) if engine_manifest is not None else None
+        probe = LoadedEngine(expected_engine) if expected_engine is not None else None
         tracker = ChildTracker()
         tracker.engine = probe
         desktop = Desktop() if plain or scenario in ('video', 'window-controls') or audit_input else None
@@ -757,22 +730,19 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         deadline = time.monotonic() + timeout
         close_sent, first_video = False, None
         while process.poll() is None and time.monotonic() < deadline:
-            with observation_span(observer_event, 'child-and-input-scan'):
-                tracker.scan()
+            tracker.scan()
             if tracker.errors:
                 raise ObservationIncomplete("Child observation is incomplete")
             if (isolate_input or audit_input) and tracker.input_audit is None:
                 observe = desktop.isolate_input if isolate_input else desktop.audit_input
-                with observation_span(observer_event, 'input-observation-setup'):
-                    tracker.input_audit = observe(process.pid)
+                tracker.input_audit = observe(process.pid)
             if plain and not close_sent:
-                with observation_span(observer_event, 'owned-window-query'):
-                    w = desktop.window(process.pid)
+                w = desktop.window(process.pid)
                 if w:
                     if tracker.input_audit is not None and tracker.input_audit.root_window != w.get_xid():
                         raise ObservationIncomplete('Input audit is attached to a different owned window')
                     # BusyMark maps its top-level only after FlView first-frame.
-                    snapshot_mapped_process(process.pid, folder, record, observer_event)
+                    snapshot_mapped_process(process.pid, folder, record)
                     if snap_instance:
                         confinement = Path(f"/proc/{process.pid}/attr/current").read_text().strip()
                         record['confinement'] = confinement
@@ -780,8 +750,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                             raise RuntimeError('Expected genuine strict Snap confinement')
                     if isolate_input and tracker.input_audit is None:
                         raise ObservationIncomplete('No owned pre-map input observation')
-                    with observation_span(observer_event, 'owned-content-probe-and-close'):
-                        desktop.close(w)
+                    desktop.close(w)
                     record["closeRequestSent_ns"] = time.monotonic_ns()
                     close_sent = True
             if report.exists():
@@ -946,7 +915,7 @@ def main():
     parser.add_argument('--disposable-display', action='store_true', help='The caller owns the whole desktop; required for pointer injection in window-controls')
     parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel", "window-controls"], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
     parser.add_argument("--video", type=Path)
-    parser.add_argument("--expected-engine", "--engine-manifest", dest='engine_manifest', type=Path, help="Optional test-only expected engine .so (or historical evidence JSON); hash actual mapped file after exit")
+    parser.add_argument("--expected-engine", type=Path, help="Expected official engine ELF library; hash the actual mapped file after exit")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if 'window-controls' in args.scenarios and not args.disposable_display:
@@ -958,8 +927,8 @@ def main():
         if not re.fullmatch(r'busymark_[a-z0-9]{1,10}', args.snap_instance) or command:
             parser.error('An explicitly named disposable parallel Snap instance is required, without a command')
         if args.snap_fixture:
-            if args.plain or not args.engine_manifest:
-                parser.error('A confined compiled fixture requires --engine-manifest and cannot use --plain')
+            if args.plain or not args.expected_engine:
+                parser.error('A confined compiled fixture requires --expected-engine and cannot use --plain')
         else:
             args.plain = True
     elif args.snap_fixture:
@@ -979,14 +948,14 @@ def main():
     for cycle in range(args.cycles):
         for scenario in scenarios:
             profile = root / "profiles" / f"{cycle}-{scenario}" if args.fresh_profile else root / "profile"
-            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, engine_manifest=args.engine_manifest, isolate_input=args.isolate_input, audit_input=args.audit_input, disposable_display=args.disposable_display)
+            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, expected_engine=args.expected_engine, isolate_input=args.isolate_input, audit_input=args.audit_input, disposable_display=args.disposable_display)
             records.append(record)
             print(json.dumps({"cycle": cycle, "scenario": scenario, "exitCode": record.get("exitCode"), "accepted": accepted(record), "error": record.get("error")}), flush=True)
             if record.get('unresolvedSurvivors') or record.get('verificationIncomplete'):
                 break
             document = record.get('application', {}).get('document')
             if not args.plain and document and accepted(record):
-                reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, snap_instance=args.snap_instance, document=Path(document), engine_manifest=args.engine_manifest, audit_input=args.audit_input)
+                reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, snap_instance=args.snap_instance, document=Path(document), expected_engine=args.expected_engine, audit_input=args.audit_input)
                 records.append(reopened)
                 print(json.dumps({'cycle': cycle, 'scenario': scenario + '-reopen', 'exitCode': reopened.get('exitCode'), 'accepted': accepted(reopened), 'error': reopened.get('error')}), flush=True)
                 if reopened.get('unresolvedSurvivors') or reopened.get('verificationIncomplete'):

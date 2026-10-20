@@ -206,7 +206,7 @@ time.sleep(30)
 
 class MappingObservationTest(unittest.TestCase):
     def test_detection_precedes_snapshot_io_and_legacy_stamp_follows_it(self):
-        record, events, order = {}, [], []
+        record, order = {}, []
         def read(path):
             self.assertEqual(record['mapDetected_ns'], 10)
             self.assertNotIn('mapped_ns', record)
@@ -216,53 +216,69 @@ class MappingObservationTest(unittest.TestCase):
             self.assertEqual(contents, 'controlled maps')
             self.assertNotIn('mapped_ns', record)
             order.append('write')
-        with patch('application_close_smoke.time.monotonic_ns', side_effect=[10, 11, 12, 13, 14, 20]), patch.object(Path, 'read_text', read), patch.object(Path, 'write_text', write):
-            snapshot_mapped_process(123, Path('/owned-case'), record, events.append)
+        with patch('application_close_smoke.time.monotonic_ns', side_effect=[10, 20]), patch.object(Path, 'read_text', read), patch.object(Path, 'write_text', write):
+            snapshot_mapped_process(123, Path('/owned-case'), record)
         self.assertEqual(record, {'mapDetected_ns': 10, 'mapped_ns': 20})
         self.assertEqual(order, ['read', 'write'])
-        self.assertEqual([(e['name'], e['phase']) for e in events], [
-            ('mapped-process-maps-read', 'begin'), ('mapped-process-maps-read', 'end'),
-            ('mapped-process-maps-write', 'begin'), ('mapped-process-maps-write', 'end')])
 
     def test_snapshot_failure_does_not_publish_successful_legacy_stamp(self):
-        record, events = {}, []
+        record = {}
         with patch.object(Path, 'read_text', return_value='maps'), patch.object(Path, 'write_text', side_effect=OSError('snapshot failed')):
             with self.assertRaisesRegex(ObservationIncomplete, 'snapshot failed'):
-                snapshot_mapped_process(123, Path('/owned-case'), record, events.append)
+                snapshot_mapped_process(123, Path('/owned-case'), record)
         self.assertIn('mapDetected_ns', record)
         self.assertNotIn('mapped_ns', record)
-        self.assertEqual(events[-1]['phase'], 'end')
 
-    def test_uninstrumented_snapshot_keeps_both_endpoints_without_cpu_sampling(self):
+    def test_snapshot_keeps_both_endpoints(self):
         record = {}
-        with patch.object(Path, 'read_text', return_value='maps'), patch.object(Path, 'write_text'), patch('application_close_smoke.time.thread_time_ns', side_effect=AssertionError('diagnostic sampling in acceptance')):
+        with patch.object(Path, 'read_text', return_value='maps'), patch.object(Path, 'write_text'):
             snapshot_mapped_process(123, Path('/owned-case'), record)
         self.assertLessEqual(record['mapDetected_ns'], record['mapped_ns'])
 
 
 class LoadedEngineAcceptanceTest(unittest.TestCase):
-    def test_historical_packaged_only_identity_does_not_evaluate_missing_fallback(self):
-        with tempfile.TemporaryDirectory() as temp:
-            receipt = Path(temp) / 'receipt.json'
-            receipt.write_text(json.dumps({'packagedEngineSHA256': 'a' * 64}))
-            self.assertEqual(LoadedEngine(receipt).expected, 'a' * 64)
+    @classmethod
+    def setUpClass(cls):
+        cls.fixture = tempfile.TemporaryDirectory(prefix='bm-engine-elf-')
+        cls.addClassCleanup(cls.fixture.cleanup)
+        library = Path(cls.fixture.name) / 'official-library-control.so'
+        subprocess.run(['clang', '-shared', '-fPIC', '-x', 'c', '-', '-o', str(library)],
+                       input='int engine_identity_control(void) { return 1; }',
+                       text=True, capture_output=True, check=True)
+        cls.library_bytes = library.read_bytes()
 
-    def test_expected_official_library_needs_no_build_receipt(self):
+    def test_invalid_expected_library_is_rejected(self):
+        for data in [b'', b'not ELF', b'\x7fELFtruncated',
+                     json.dumps({'oldIdentity': 'a' * 64}).encode()]:
+            with self.subTest(data=data), tempfile.TemporaryDirectory() as temp:
+                path = Path(temp) / 'invalid'
+                path.write_bytes(data)
+                with self.assertRaisesRegex(ObservationIncomplete, 'library.*invalid'):
+                    LoadedEngine(path)
+        with self.assertRaisesRegex(ObservationIncomplete, 'library.*invalid'):
+            LoadedEngine('/no-such-engine-library')
+        with tempfile.TemporaryDirectory() as temp:
+            fifo = Path(temp) / 'not-a-library'
+            os.mkfifo(fifo)
+            for invalid in [Path(temp), fifo]:
+                with self.subTest(path=invalid), self.assertRaises(ObservationIncomplete):
+                    LoadedEngine(invalid)
+
+
+    def test_expected_library_is_hashed(self):
         with tempfile.TemporaryDirectory() as temp:
             library = Path(temp) / 'libflutter_linux_gtk.so'
-            library.write_bytes(b'\x7fELF' + b'owned test bytes')
+            library.write_bytes(self.library_bytes)
             probe = LoadedEngine(library)
             self.assertEqual(probe.expected, hashlib.sha256(library.read_bytes()).hexdigest())
-            self.assertEqual(probe.receipt, {})
             self.assertIsNone(probe.fd)
 
     def capture(self, root, expected=None, inode_delta=0):
         binary = root / "libflutter_linux_gtk.so"
-        binary.write_bytes(b"controlled mapped engine")
-        want = expected or hashlib.sha256(binary.read_bytes()).hexdigest()
-        receipt = root / "receipt.json"
-        receipt.write_text(json.dumps({"files": {"libflutter_linux_gtk.so": want}}))
-        probe = LoadedEngine(receipt)
+        binary.write_bytes(self.library_bytes)
+        expected_library = root / 'expected.so'
+        expected_library.write_bytes(self.library_bytes + (b'different library' if expected else b''))
+        probe = LoadedEngine(expected_library)
         st = binary.stat()
         maps = f'00001000-00002000 r-xp 00000000 {os.major(st.st_dev):x}:{os.minor(st.st_dev):x} {st.st_ino + inode_delta} {binary}\n'
         tracker = SimpleNamespace(root=os.getpid(), seen={os.getpid(): "owned"}, errors=[])
@@ -276,7 +292,7 @@ class LoadedEngineAcceptanceTest(unittest.TestCase):
     def test_retired_root_is_rejected_before_reading_engine_maps(self):
         with tempfile.TemporaryDirectory() as temp:
             library = Path(temp) / 'libflutter_linux_gtk.so'
-            library.write_bytes(b'\x7fELFowned bytes')
+            library.write_bytes(self.library_bytes)
             probe = LoadedEngine(library)
             tracker = SimpleNamespace(root=os.getpid(), seen={os.getpid(): 'retired'}, errors=[])
             with patch.object(ProcessHandle, 'state', return_value={'status': 'reused'}), patch.object(ProcessHandle, 'read') as read:
@@ -320,9 +336,9 @@ class LoadedEngineAcceptanceTest(unittest.TestCase):
 
     def test_missing_capture_is_incomplete(self):
         with tempfile.TemporaryDirectory() as temp:
-            receipt = Path(temp) / 'receipt.json'
-            receipt.write_text(json.dumps({'files': {'libflutter_linux_gtk.so': '0' * 64}}))
-            probe = LoadedEngine(receipt)
+            library = Path(temp) / 'engine.so'
+            library.write_bytes(self.library_bytes)
+            probe = LoadedEngine(library)
             errors = []
             probe.finish({'exitCode': 0}, errors)
             self.assertIn('incomplete', errors[0])
@@ -607,7 +623,7 @@ os._exit(0)
             records = [{'exitCode': 0, 'application': {'document': document}}, {'exitCode': 0}]
             args = ['close', '--output', str(root), '--scenarios', 'dirty-save',
                     '--snap-instance', 'busymark_fixture', '--snap-fixture',
-                    '--engine-manifest', str(home / 'manifest.json')]
+                    '--expected-engine', str(home / 'libflutter_linux_gtk.so')]
             with patch.object(sys, 'argv', args), patch.object(Path, 'home', return_value=home), patch.object(application_close_smoke, 'run_case', side_effect=records) as run:
                 self.assertEqual(application_close_smoke.main(), 0)
                 self.assertEqual(run.call_count, 2)

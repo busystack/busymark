@@ -6,12 +6,6 @@ bool debugBusyMarkLogging = const bool.fromEnvironment(
   'BUSYMARK_DEBUG_LOGGING',
 );
 
-void busyMarkPerformanceLogLine(String line) {
-  if (const bool.fromEnvironment('BUSYMARK_PERFORMANCE_TRACE')) {
-    stderr.writeln(line);
-  }
-}
-
 void busyMarkDebugLogLines(Iterable<String> lines) {
   if (!debugBusyMarkLogging) {
     return;

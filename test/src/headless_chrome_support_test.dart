@@ -1,11 +1,73 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/headless_chrome.dart';
 
 void main() {
+  test(
+    'browser profile survives launcher exit until its writer retires',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'browser-retire-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final gate = File('${directory.path}/release');
+      expect((await Process.run('mkfifo', [gate.path])).exitCode, 0);
+      final ready = File('${directory.path}/ready');
+      final written = File('${directory.path}/written');
+      final launcher = File('${directory.path}/browser');
+      await launcher.writeAsString('''#!/bin/sh
+for arg do
+  case "\$arg" in --user-data-dir=*) profile=\${arg#*=};; esac
+done
+mkdir -p "\$profile"
+(
+  echo "\$profile" > '${ready.path}'
+  read -r release < '${gate.path}'
+  echo complete > "\$profile/late-write"
+  cp "\$profile/late-write" '${written.path}'
+) &
+echo 'fixture launcher exited before DevTools' >&2
+exit 23
+''');
+      expect((await Process.run('chmod', ['700', launcher.path])).exitCode, 0);
+      var settled = false;
+      final evaluation = evaluateInChrome(
+        '${directory.path}/document.html',
+        'true',
+        browserExecutable: launcher.path,
+      );
+      final assertion = expectLater(
+        evaluation.whenComplete(() => settled = true),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'launcher diagnostics',
+            contains('fixture launcher exited before DevTools'),
+          ),
+        ),
+      );
+      final clock = Stopwatch()..start();
+      while (!await ready.exists()) {
+        if (clock.elapsed > const Duration(seconds: 5)) {
+          fail('Browser writer did not reach its release gate');
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      final profile = Directory((await ready.readAsString()).trim());
+      expect(settled, isFalse);
+      expect(await profile.exists(), isTrue);
+      await gate.writeAsString('release\n');
+      await assertion;
+      expect(await written.readAsString(), 'complete\n');
+      expect(await profile.parent.exists(), isFalse);
+    },
+    skip: !Platform.isLinux,
+  );
+
   test(
     'browser does not inherit Flutter synthetic fonts or read-only cache',
     () {

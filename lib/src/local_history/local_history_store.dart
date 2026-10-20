@@ -7,7 +7,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-import '../core/performance_trace.dart';
 import 'local_history_models.dart';
 import '../workspace/text_format_metadata.dart';
 
@@ -152,7 +151,6 @@ class FileLocalHistoryStore implements LocalHistoryStore {
   final Duration _lockDelay;
   final Future<void> Function(RandomAccessFile) _acquireLock;
   Future<void> _queue = Future<void>.value();
-  var _traceTransaction = 0;
   static final Map<String, Future<void>> _rootQueues = {};
 
   static Future<Directory> _defaultRootDirectory() async {
@@ -621,21 +619,14 @@ class FileLocalHistoryStore implements LocalHistoryStore {
 
   Future<T> _serialized<T>(Future<T> Function(Directory root) operation) {
     final completer = Completer<T>();
-    final traceName = PerformanceTrace.enabled
-        ? 'history-transaction-${++_traceTransaction}'
-        : '';
-    PerformanceTrace.event(traceName, 'queued');
+
     _queue = _queue.then<void>((_) async {
       try {
-        PerformanceTrace.event(traceName, 'instance-dispatched');
         final root = await _rootDirectory();
         await root.create(recursive: true);
-        PerformanceTrace.event(traceName, 'root-queued');
+
         completer.complete(
-          await _serializedForRoot(
-            root,
-            () => PerformanceTrace.async(traceName, () => operation(root)),
-          ),
+          await _serializedForRoot(root, () => operation(root)),
         );
       } on Object catch (error, stackTrace) {
         completer.completeError(error, stackTrace);
@@ -676,15 +667,12 @@ class FileLocalHistoryStore implements LocalHistoryStore {
       final deadline = Stopwatch()..start();
       while (true) {
         try {
-          await PerformanceTrace.async(
-            'history-lock',
-            () => _acquireLock(lock),
-          );
+          await _acquireLock(lock);
           acquired = true;
           break;
         } on FileSystemException catch (error) {
           if (!_isLockContention(error)) rethrow;
-          PerformanceTrace.event('history-lock-contention');
+
           final remaining = _lockBudget - deadline.elapsed;
           if (remaining <= Duration.zero) throw LocalHistoryLockTimeout(error);
           await Future<void>.delayed(

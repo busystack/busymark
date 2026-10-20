@@ -23,8 +23,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-import '../support/io_wait_trace.dart';
-
 void main() {
   late Directory root;
 
@@ -2415,7 +2413,9 @@ void main() {
       final destinationPath = p.join(root.path, 'B.md');
       await File(sourcePath).writeAsString('Original A\n');
       final historyRoot = Directory(p.join(root.path, 'history'));
-      final diskStore = _ObservedFileHistoryStore(historyRoot);
+      final diskStore = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+      );
       final store = _BlockingSaveAsStore(diskStore, destinationPath);
       final timers = <_FakeTimer>[];
       final harness = await _harness(
@@ -2460,7 +2460,6 @@ void main() {
               'pending=${history.pendingSnapshotForBuffer(buffer.id)?.text}, '
               'timer states=${timers.map((timer) => timer.isActive).toList()}, '
               'warning=${state.warning?.detail}, '
-              'storage=${diskStore.observations}, '
               'revisions=${state.snapshot.revisions.map((revision) => '${revision.historicalPath}:${revision.reason.name}').toList()}';
         },
       );
@@ -2510,7 +2509,9 @@ void main() {
         destination.id,
       );
 
-      final reopenedStore = _ObservedFileHistoryStore(historyRoot);
+      final reopenedStore = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+      );
       final reopened = await _harness(reopenedStore);
       final reopenedHistory = reopened.container.read(
         localHistoryControllerProvider.notifier,
@@ -2526,7 +2527,7 @@ void main() {
         diagnostics: () =>
             'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
             'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
-            'storage=${reopenedStore.observations}',
+            'reopened History store',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2543,7 +2544,7 @@ void main() {
         diagnostics: () =>
             'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
             'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
-            'storage=${reopenedStore.observations}',
+            'reopened History store',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2598,7 +2599,9 @@ void main() {
       test('first-save pre-promotion cancellation: $cancellation, '
           '${failCapture ? "failed" : "completed"} pending capture', () async {
         final historyRoot = Directory(p.join(root.path, 'history'));
-        final diskStore = _ObservedFileHistoryStore(historyRoot);
+        final diskStore = FileLocalHistoryStore(
+          rootDirectory: () async => historyRoot,
+        );
         final store = _BlockingPrePromotionCaptureStore(
           diskStore,
           failCapture: failCapture,
@@ -2632,7 +2635,7 @@ void main() {
               'recording=${history.policy.recordingEnabled}, '
               'timers=${timers.map((timer) => timer.isActive).toList()}, '
               'warning=${state.warning?.detail}, '
-              'storage=${diskStore.observations}';
+              'History store';
         }
 
         await harness.controller.createMarkdownFile();
@@ -6260,21 +6263,15 @@ Future<void> _waitFor(
   String Function()? diagnostics,
 }) async {
   final deadline = DateTime.now().add(timeout);
-  final observation = TestIoWaitTrace(operation);
-  var completed = false;
-  try {
-    while (!condition()) {
-      if (DateTime.now().isAfter(deadline)) {
-        fail(
-          '$operation did not complete. ${observation.description}. '
-          '${diagnostics?.call() ?? ''}',
-        );
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail(
+        '$operation did not complete. deadline exceeded. '
+        '${diagnostics?.call() ?? ''}',
+      );
     }
-    completed = true;
-  } finally {
-    observation.finish(completed);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
   }
 }
 
@@ -7148,46 +7145,6 @@ class _BlockingPathBaselineStore extends _FailingProtectiveStore {
     }
     return delegate.capture(request, policy);
   }
-}
-
-// Failure-only diagnostics for the real-storage Save As/reopen scenario. Keep
-// admission and completion separate so a storage wait is not called finished.
-class _ObservedFileHistoryStore extends FileLocalHistoryStore {
-  _ObservedFileHistoryStore(Directory root)
-    : super(rootDirectory: () async => root);
-
-  final observations = <String>[];
-
-  Future<T> _observe<T>(String operation, Future<T> Function() run) async {
-    final clock = Stopwatch()..start();
-    traceTestIo(operation, 'store-begin');
-    observations.add(
-      '$operation admitted pid=$pid '
-      'wallUs=${DateTime.now().microsecondsSinceEpoch}',
-    );
-    try {
-      return await run();
-    } finally {
-      observations.add('$operation completed ${clock.elapsedMilliseconds}ms');
-      traceTestIo(operation, 'store-end', '${clock.elapsedMicroseconds}us');
-    }
-  }
-
-  @override
-  Future<LocalHistorySnapshot> load() => _observe('load', super.load);
-
-  @override
-  Future<LocalHistoryCaptureResult> capture(
-    LocalHistoryCaptureRequest request,
-    LocalHistoryPolicy policy,
-  ) => _observe(
-    'capture ${request.path}:${request.reason.name}',
-    () => super.capture(request, policy),
-  );
-
-  @override
-  Future<void> prune(LocalHistoryPolicy policy, DateTime now) =>
-      _observe('prune', () => super.prune(policy, now));
 }
 
 class _BlockingSaveAsStore extends _FailingProtectiveStore {

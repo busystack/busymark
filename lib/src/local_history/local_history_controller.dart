@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import '../core/performance_trace.dart';
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -590,19 +589,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       // the default retention age must not delete history before a longer saved
       // policy is known. A newer authoritative refresh supersedes this one
       // before maintenance starts, rather than reusing its eventual snapshot.
-      await PerformanceTrace.async(
-        'history-policy-ready',
-        ref.read(appSettingsControllerProvider.notifier).waitUntilLoaded,
-      );
+      await ref.read(appSettingsControllerProvider.notifier).waitUntilLoaded();
       if (!ref.mounted || generation != _loadGeneration) return false;
-      await PerformanceTrace.async(
-        'history-prune',
-        () => _store.prune(policy, _clock()),
-      );
-      final snapshot = await PerformanceTrace.async(
-        'history-load',
-        _store.load,
-      );
+      await _store.prune(policy, _clock());
+      final snapshot = await _store.load();
       if (!ref.mounted || generation != _loadGeneration) return false;
       await _publishSnapshot(
         snapshot,

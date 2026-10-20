@@ -6,7 +6,6 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 
-import '../core/performance_trace.dart';
 import 'visualization_models.dart';
 
 class VisualizationCache {
@@ -28,7 +27,6 @@ class VisualizationCache {
   final LinkedHashMap<String, VisualizationRenderResult> _memory =
       LinkedHashMap();
   Future<void> _trimTail = Future<void>.value();
-  var _trimTraceSequence = 0;
 
   Future<VisualizationRenderResult?> get(String key) async {
     final memoryResult = _memory.remove(key);
@@ -128,20 +126,14 @@ class VisualizationCache {
     final root = diskRoot.absolute.path;
     final entryLimit = maximumDiskEntries;
     final byteLimit = maximumDiskBytes;
-    final traceName = PerformanceTrace.enabled
-        ? 'cache-maintenance-${++_trimTraceSequence}'
-        : '';
-    PerformanceTrace.event(traceName, 'queued');
+
     final trim = () async {
       await previous;
       try {
         // One maintenance worker at a time. Callers still await trimming and
         // occupy their bounded rendering slots; no background writes accrue.
         // Avoid a main-isolate round trip for every cached file's metadata.
-        await PerformanceTrace.async(
-          traceName,
-          () => _trimInWorker(root, entryLimit, byteLimit),
-        );
+        await _trimInWorker(root, entryLimit, byteLimit);
       } on Object {
         // Best-effort LRU maintenance only. Keep the queue usable after failure.
       }
@@ -172,13 +164,6 @@ Future<void> _trimInWorker(String root, int maximumEntries, int maximumBytes) =>
     );
 
 void _trimDirectory(String root, int maximumEntries, int maximumBytes) {
-  PerformanceTrace.sync(
-    'cache-maintenance-worker',
-    () => _trimDirectoryContents(root, maximumEntries, maximumBytes),
-  );
-}
-
-void _trimDirectoryContents(String root, int maximumEntries, int maximumBytes) {
   final files = <({File file, FileStat stat})>[];
   for (final entity in Directory(root).listSync(followLinks: false)) {
     if (entity is! File || p.extension(entity.path) != '.json') continue;

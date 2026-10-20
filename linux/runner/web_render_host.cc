@@ -1,5 +1,4 @@
 #include "web_render_host.h"
-#include "performance_trace.h"
 
 #include <cairo.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -22,37 +21,6 @@ constexpr gsize kMaximumPngBytes = 64 * 1024 * 1024;
 // Scheduled is cancellable before any WebKit resources have been constructed.
 enum class RenderState { dormant, scheduled, loading, ready, failed, stopped };
 
-class InitializationProbe {
- public:
-  explicit InitializationProbe(const char* operation)
-      : operation_(operation),
-        enabled_(g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0),
-        start_(enabled_ ? g_get_monotonic_time() : 0),
-        id_(enabled_ ? BusyMarkPerformanceSpan::NextId() : 0) {
-    if (enabled_) {
-      g_printerr("visualization-init %s begin time_us=%" G_GINT64_FORMAT
-                 " pid=%d span=%" G_GUINT64_FORMAT "\n",
-                 operation_, start_, static_cast<int>(getpid()), id_);
-    }
-  }
-  ~InitializationProbe() {
-    if (enabled_) {
-      g_printerr("visualization-init %s end time_us=%" G_GINT64_FORMAT
-                 " pid=%d span=%" G_GUINT64_FORMAT "\n",
-                 operation_, g_get_monotonic_time(), static_cast<int>(getpid()), id_);
-      g_printerr("visualization-init %s start_us=%" G_GINT64_FORMAT
-                 " duration_us=%" G_GINT64_FORMAT "\n",
-                 operation_, start_, g_get_monotonic_time() - start_);
-    }
-  }
-
- private:
-  const char* operation_;
-  bool enabled_;
-  gint64 start_;
-  guint64 id_;
-};
-
 struct PendingRequest {
   BusyMarkWebRenderHost* host;
   FlMethodCall* method_call;
@@ -65,14 +33,6 @@ struct PendingRequest {
   guint snapshot_wait_source_id;
   gboolean responded;
 };
-
-void trace_request(PendingRequest* request, const char* event) {
-  if (g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0) {
-    g_printerr("visualization-request %s %s %s time_us=%" G_GINT64_FORMAT "\n",
-               request->operation, request->request_id, event,
-               g_get_monotonic_time());
-  }
-}
 
 struct ReferenceLoadData {
   gchar* arguments_json;
@@ -145,7 +105,6 @@ void respond_pending_error(PendingRequest* request,
                            const gchar* code,
                            const gchar* message) {
   if (!request->responded) {
-    trace_request(request, code);
     request->responded = TRUE;
     respond_error(request->method_call, code, message);
   }
@@ -382,7 +341,6 @@ void respond_json(PendingRequest* request, const gchar* json) {
     return;
   }
   request->responded = TRUE;
-  trace_request(request, "completed");
   fl_method_call_respond_success(request->method_call, value, nullptr);
 }
 
@@ -433,7 +391,6 @@ void snapshot_finished_cb(GObject* object,
   g_autoptr(GBytes) owned_bytes = g_byte_array_free_to_bytes(bytes);
   g_autoptr(FlValue) value = fl_value_new_uint8_list_from_bytes(owned_bytes);
   request->responded = TRUE;
-  trace_request(request, "completed");
   fl_method_call_respond_success(request->method_call, value, nullptr);
   gtk_widget_set_size_request(GTK_WIDGET(self->web_view), 1, 1);
   gtk_widget_set_size_request(self->offscreen_window, 1, 1);
@@ -531,7 +488,6 @@ void javascript_finished_cb(GObject* object,
   auto* request = static_cast<PendingRequest*>(user_data);
   BusyMarkWebRenderHost* self = request->host;
   g_autoptr(GError) error = nullptr;
-  trace_request(request, "javascript-delivered");
   JSCValue* value = webkit_web_view_call_async_javascript_function_finish(
       WEBKIT_WEB_VIEW(object), result, &error);
   if (request->responded || self->shutting_down) {
@@ -565,7 +521,6 @@ void javascript_finished_cb(GObject* object,
 }
 
 void start_request(BusyMarkWebRenderHost* self, PendingRequest* request) {
-  trace_request(request, "started");
   self->active = request;
   request->host = BUSYMARK_WEB_RENDER_HOST(g_object_ref(self));
   self->active_cancellable = g_cancellable_new();
@@ -738,11 +693,8 @@ void recreate_render_view(BusyMarkWebRenderHost* self) {
   self->state = RenderState::loading;
   self->offscreen_window = gtk_offscreen_window_new();
   gtk_window_set_default_size(GTK_WINDOW(self->offscreen_window), 1, 1);
-  {
-    InitializationProbe probe("view");
-    self->web_view =
-        WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(self->context));
-  }
+  self->web_view =
+      WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(self->context));
   configure_web_view(self->web_view);
   // GtkOffscreenWindow cannot provide a GL context for compositing. Set this
   // before realizing/loading the view, including after WebKit process recovery.
@@ -760,21 +712,11 @@ void recreate_render_view(BusyMarkWebRenderHost* self) {
   gtk_container_add(GTK_CONTAINER(self->offscreen_window),
                     GTK_WIDGET(self->web_view));
   gtk_widget_set_size_request(GTK_WIDGET(self->web_view), 1, 1);
-  {
-    InitializationProbe probe("offscreen-show");
-    gtk_widget_show_all(self->offscreen_window);
-  }
-  {
-    InitializationProbe probe("harness-dispatch");
-    webkit_web_view_load_uri(self->web_view, kHarnessUri);
-  }
+  gtk_widget_show_all(self->offscreen_window);
+  webkit_web_view_load_uri(self->web_view, kHarnessUri);
 }
 
 gboolean recreate_render_view_cb(gpointer user_data) {
-  if (g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0) {
-    g_printerr("visualization-init dispatched time_us=%" G_GINT64_FORMAT "\n",
-               g_get_monotonic_time());
-  }
   auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
   self->recreate_source_id = 0;
   if (!self->shutting_down && self->recreate_requested) {
@@ -802,10 +744,6 @@ void schedule_render_view_recreation(BusyMarkWebRenderHost* self) {
   }
   if (self->state != RenderState::failed) {
     self->state = RenderState::scheduled;
-  }
-  if (g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0) {
-    g_printerr("visualization-init scheduled time_us=%" G_GINT64_FORMAT "\n",
-               g_get_monotonic_time());
   }
   self->recreate_source_id = g_idle_add_full(
       G_PRIORITY_DEFAULT_IDLE, recreate_render_view_cb, g_object_ref(self),
@@ -1190,7 +1128,6 @@ void method_call_cb(FlMethodChannel*,
           ? g_strdup(fl_value_get_string(request_id_value))
           : g_uuid_string_random();
   request->arguments_json = g_strdup(arguments_json);
-  trace_request(request, "accepted");
   g_queue_push_tail(self->queue, request);
   pump_requests(self);
 }
@@ -1199,16 +1136,9 @@ void method_call_cb(FlMethodChannel*,
 
 void busymark_web_render_host_shutdown(BusyMarkWebRenderHost* self) {
   g_return_if_fail(BUSYMARK_IS_WEB_RENDER_HOST(self));
-  if (g_strcmp0(g_getenv("BUSYMARK_NATIVE_TRACE"), "1") == 0) {
-    g_printerr("busymark-native visualization-shutdown initPending=%d "
-               "state=%d context=%d view=%d active=%d queued=%u repeated=%d "
-               "time_us=%" G_GINT64_FORMAT "\n",
-               self->state == RenderState::scheduled ||
-                   self->state == RenderState::loading,
-               static_cast<int>(self->state), self->context != nullptr,
-               self->web_view != nullptr, self->active != nullptr,
-               g_queue_get_length(self->queue), self->shutting_down,
-               g_get_monotonic_time());
+  if (self->state == RenderState::scheduled ||
+      self->state == RenderState::loading) {
+    g_printerr("visualization-shutdown initPending=1\n");
   }
   if (self->shutting_down) {
     return;
@@ -1280,10 +1210,7 @@ gboolean ensure_context(BusyMarkWebRenderHost* self) {
   if (self->context != nullptr) {
     return TRUE;
   }
-  {
-    InitializationProbe probe("context");
-    self->context = webkit_web_context_new_ephemeral();
-  }
+  self->context = webkit_web_context_new_ephemeral();
   if (self->context == nullptr) {
     return FALSE;
   }

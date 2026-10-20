@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'io_wait_trace.dart';
-
 /// Drives both Flutter's fake clock and real I/O until an observable result.
 Future<void> pumpUntil(
   WidgetTester tester,
@@ -14,30 +12,24 @@ Future<void> pumpUntil(
   String Function()? diagnostics,
 }) async {
   final elapsed = Stopwatch()..start();
-  final observation = TestIoWaitTrace(operation);
-  var completed = false;
-  try {
-    while (!complete()) {
-      if (elapsed.elapsed >= timeout) {
-        throw TimeoutException(
-          '$operation did not complete. ${observation.description}. '
-          '${diagnostics?.call() ?? ''}',
-        );
-      }
-      await tester.pump(frameStep);
-      if (!complete()) {
-        // Advance both clocks: retry/debounce timers may belong to FakeAsync,
-        // while filesystem/isolate completions need a real event-loop yield.
-        // A zero-delay busy loop burns CPU across parallel test processes and
-        // can exhaust a wall-clock deadline without servicing either properly.
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 1)),
-        );
-      }
+
+  while (!complete()) {
+    if (elapsed.elapsed >= timeout) {
+      throw TimeoutException(
+        '$operation did not complete. deadline exceeded. '
+        '${diagnostics?.call() ?? ''}',
+      );
     }
-    await tester.pump();
-    completed = true;
-  } finally {
-    observation.finish(completed);
+    await tester.pump(frameStep);
+    if (!complete()) {
+      // Advance both clocks: retry/debounce timers may belong to FakeAsync,
+      // while filesystem/isolate completions need a real event-loop yield.
+      // A zero-delay busy loop burns CPU across parallel test processes and
+      // can exhaust a wall-clock deadline without servicing either properly.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 1)),
+      );
+    }
   }
+  await tester.pump();
 }
