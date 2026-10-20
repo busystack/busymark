@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Native release acceptance (verify)
@@ -16,6 +19,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Linux build dependencies
+        id: linux-dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -50,6 +54,8 @@ jobs:
             xz-utils
 
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
+        id: web-sandbox
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: |
           probe_bwrap() {
             bwrap --ro-bind / / --unshare-user --unshare-pid \
@@ -66,6 +72,8 @@ jobs:
           probe_bwrap
 
       - name: Set up Node.js for bundled web engines
+        id: node
+        if: ${{ !cancelled() }}
         uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -73,6 +81,8 @@ jobs:
           cache-dependency-path: tools/visualization/package-lock.json
 
       - name: Select official pinned Flutter SDK
+        id: flutter-sdk
+        if: ${{ !cancelled() }}
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -80,13 +90,17 @@ jobs:
           cache: true
 
       - name: Enable Linux desktop
+        if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
         run: flutter config --enable-linux-desktop
 
       - name: Resolve locked dependencies
+        id: flutter-packages
+        if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
         run: flutter pub get --enforce-lockfile
 
       - name: Build Linux release
         id: release-build
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' && steps.node.outcome == 'success' && steps.flutter-packages.outcome == 'success' }}
         run: flutter build linux --release
 
       # Explicit status conditions keep independent checks running after a
@@ -105,9 +119,6 @@ jobs:
             --expected-engine build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so -- \
             build/linux/x64/release/bundle/busymark
 
-      - name: Test production GTK accent channel host and lifecycle
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
 
       - name: Verify release ships catalog and notices without language pairs
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
@@ -138,36 +149,8 @@ jobs:
             --spelling-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
 
-      - name: Exercise demand-driven native visualization lifecycle
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: |
-          xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 NO_AT_BRIDGE=1 \
-            bash tools/test_web_render_host.sh
 
-      - name: Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: |
-          xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
-            /usr/bin/python3 -u tools/visualization_smoke.py \
-            --assets build/linux/x64/release/bundle/share/busymark/visualization \
-            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
-            --demo test/fixtures/markdown/basic.md \
-            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
 
-      - name: Exercise the release binary visualization and PDF paths under X11
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: |
-          report="${RUNNER_TEMP}/visualization-release-x11.json"
-          timeout --signal=TERM 300s \
-            xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 \
-            build/linux/x64/release/bundle/busymark \
-            --visualization-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
-          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
 
       - name: Build compiled-close fixture
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
@@ -175,7 +158,7 @@ jobs:
         run: flutter build linux --release --no-pub -t tools/window_close_smoke.dart
 
       - name: Exercise live application close, persistence, media and reopening
-        if: ${{ !cancelled() && steps.release-fixture.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.release-fixture.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 \
@@ -203,7 +186,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Run spelling and visualization smoke tests under Wayland
-        if: ${{ !cancelled() && steps.release-main.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.release-main.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           runtime_dir="/run/user/$(id -u)"
           sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
@@ -258,6 +241,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Install Snap artifact inspection prerequisites
+        id: snap-inspection
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y squashfs-tools
+
       - name: Prepare clean Snap artifact selection
         run: |
           rm -f ./*.snap
@@ -274,6 +263,7 @@ jobs:
         uses: snapcore/action-build@v1
 
       - name: Select built Snap
+        if: ${{ !cancelled() && steps.snap-inspection.outcome == 'success' && (steps.snapcraft.outcome == 'success' || steps.snapcraft-retry.outcome == 'success') }}
         id: snap-artifact
         env:
           PRIMARY_SNAP: ${{ steps.snapcraft.outputs.snap }}
@@ -301,18 +291,22 @@ jobs:
           echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
 
       - name: Upload Snap artifact
+        if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' }}
         uses: actions/upload-artifact@v7
         with:
           name: busymark-snap
           path: ${{ steps.snap-artifact.outputs.snap }}
 
       - name: Install desktop smoke dependencies
+        id: strict-desktop
+        if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y weston xvfb python3-gi gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session
+          sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session
 
       - name: Install strict Snap
         id: strict-install
+        if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' && steps.strict-desktop.outcome == 'success' }}
         run: >-
           sudo snap install --dangerous
           "${{ steps.snap-artifact.outputs.snap }}"
@@ -620,23 +614,49 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install Linux application prerequisites
+        id: linux-dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config curl xz-utils \
+          sudo apt-get install -y apparmor-profiles bubblewrap clang cmake ninja-build pkg-config curl xz-utils \
             libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
             fonts-noto-core fonts-noto-mono gsettings-desktop-schemas dconf-cli python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
+      - name: Enable Bubblewrap sandbox for WebKitGTK tests
+        id: web-sandbox
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
+        run: |
+          probe_bwrap() {
+            bwrap --ro-bind / / --unshare-user --unshare-pid \
+              --unshare-net /usr/bin/true
+          }
+          if ! probe_bwrap; then
+            profile=/usr/share/apparmor/extra-profiles/bwrap-userns-restrict
+            test -f "$profile"
+            sudo install -m 0644 "$profile" \
+              /etc/apparmor.d/bwrap-userns-restrict
+            sudo apparmor_parser --replace \
+              /etc/apparmor.d/bwrap-userns-restrict
+          fi
+          probe_bwrap
+
       - uses: actions/setup-node@v7
+        id: node
+        if: ${{ !cancelled() }}
         with:
           node-version: '22'
       - name: Select official pinned Flutter SDK
+        id: flutter-sdk
+        if: ${{ !cancelled() }}
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: '3.47.5'
           cache: true
       - run: flutter pub get --enforce-lockfile
+        id: flutter-packages
+        if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
       - name: Build official development mode
         id: mode-build
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' && steps.node.outcome == 'success' && steps.flutter-packages.outcome == 'success' }}
         run: flutter build linux --${{ matrix.mode }} --no-pub
       - name: Verify development mode GTK engine and natural close
         if: ${{ !cancelled() && steps.mode-build.outcome == 'success' }}
@@ -650,7 +670,7 @@ jobs:
         id: mode-fixture
         run: flutter build linux --${{ matrix.mode }} --no-pub -t tools/window_close_smoke.dart
       - name: Verify development-mode documents media and reopening
-        if: ${{ !cancelled() && steps.mode-fixture.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.mode-fixture.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/application_close_smoke.py \
             --output "${RUNNER_TEMP}/features-${{ matrix.mode }}" --cycles 1 --fresh-profile \

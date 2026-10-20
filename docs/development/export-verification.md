@@ -140,7 +140,9 @@ do not certify physical-printer or assistive-technology behavior.
 
 ## CI environment
 
-The explicit native workflow in `.github/workflows/flutter-linux-native.yml` is authoritative for
-native packages, environment flags, X11 and Wayland runs, and the
-strict Snap verification. Keep ordinary build prerequisites in the main README;
+The automatic `.github/workflows/flutter-linux.yml` workflow runs bounded X11
+host, renderer and compiled visualization/PDF checks on pull requests to `main`
+and `release/v0.6.3`. `.github/workflows/flutter-linux-native.yml` retains release
+stress, Wayland and strict Snap verification. Each workflow declares its native
+packages and desktop prerequisites. Keep ordinary build prerequisites in the main README;
 do not copy the larger CI-only dependency set into user installation steps.

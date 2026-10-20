@@ -134,7 +134,6 @@ void main() {
       localSnapBuilder,
       contains('squashfs-root/usr/lib/x86_64-linux-gnu/librsvg-2.so.2'),
     );
-    expect(workflow, contains('Verify GTK SVG icon loader'));
     expect(workflow, contains('libpixbufloader_svg.so'));
     expect(
       workflow,
@@ -891,10 +890,9 @@ String _sharedRuntimeValidationBody() {
   final workflow = File(
     '.github/workflows/flutter-linux-native.yml',
   ).readAsStringSync();
-  const step =
-      '      - name: Verify shared runtimes, packaged tools, media, and resources';
-  final stepAt = workflow.indexOf(step);
-  expect(stepAt, greaterThanOrEqualTo(0));
+  final commandAt = workflow.indexOf('            inspect_dependencies() {');
+  expect(commandAt, greaterThanOrEqualTo(0));
+  final stepAt = workflow.lastIndexOf('      - ', commandAt);
   final bodyAt =
       workflow.indexOf('        run: |\n', stepAt) + '        run: |\n'.length;
   final nextStepAt = workflow.indexOf('\n      - name:', bodyAt);

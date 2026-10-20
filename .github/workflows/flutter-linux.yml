@@ -4,9 +4,13 @@ on:
   pull_request:
     branches:
       - main
+      - release/v0.6.3
   push:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   writerside-conformance:
@@ -27,6 +31,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Linux build dependencies
+        id: linux-dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -61,6 +66,8 @@ jobs:
             xz-utils
 
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
+        id: web-sandbox
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: |
           probe_bwrap() {
             bwrap --ro-bind / / --unshare-user --unshare-pid \
@@ -77,6 +84,8 @@ jobs:
           probe_bwrap
 
       - name: Set up Node.js for bundled web engines
+        id: node
+        if: ${{ !cancelled() }}
         uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -84,6 +93,8 @@ jobs:
           cache-dependency-path: tools/visualization/package-lock.json
 
       - name: Select official pinned Flutter SDK
+        id: flutter-sdk
+        if: ${{ !cancelled() }}
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -91,49 +102,108 @@ jobs:
           cache: true
 
       - name: Enable Linux desktop
+        if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
         run: flutter config --enable-linux-desktop
 
       - name: Resolve locked dependencies
+        id: flutter-packages
+        if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
         run: flutter pub get --enforce-lockfile
 
       - name: Test production GTK accent lookup and observer
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent.sh
 
       - name: Test secure credential namespace policy
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: bash tools/test_secure_credential_policy.sh
 
+      - name: Test native shortcut metadata
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
+        run: bash tools/test_native_shortcut_metadata.sh
+
       - name: Generate localizations
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: flutter gen-l10n
 
       - name: Audit localization catalogs
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: flutter test test/src/localization_audit_test.dart
 
       - name: Verify generated files are committed
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: git diff --exit-code
 
       - name: Check formatting
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: dart format --set-exit-if-changed .
 
       - name: Analyze
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: flutter analyze
 
       - name: Test native Hunspell package explicitly
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' && steps.linux-dependencies.outcome == 'success' }}
         working-directory: packages/busymark_spellcheck_native
         run: |
           dart pub get
           dart test
 
       - name: Prepare all-language spelling test resources
+        id: spelling-resources
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: tools/fetch_spelling_dictionaries.sh build/spelling-test
 
       - name: Validate every supported dictionary with the native engine
+        if: ${{ !cancelled() && steps.spelling-resources.outcome == 'success' && steps.flutter-packages.outcome == 'success' }}
         env:
           BUSYMARK_TEST_SPELLING_ROOT: ${{ github.workspace }}/build/spelling-test
         run: flutter test test/src/spelling_bundle_integration_test.dart
 
       - name: Build Linux release
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' && steps.linux-dependencies.outcome == 'success' && steps.node.outcome == 'success' }}
         id: release-build
         run: flutter build linux --release
+
+      - name: Test production GTK accent channel host and lifecycle
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
+
+
+      - name: Exercise demand-driven native visualization lifecycle
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 NO_AT_BRIDGE=1 \
+            bash tools/test_web_render_host.sh
+
+
+      - name: Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
+            /usr/bin/python3 -u tools/visualization_smoke.py \
+            --assets build/linux/x64/release/bundle/share/busymark/visualization \
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
+            --demo test/fixtures/markdown/basic.md \
+            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
+
+
+      - name: Exercise the release binary visualization and PDF paths under X11
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        run: |
+          report="${RUNNER_TEMP}/visualization-release-x11.json"
+          timeout --signal=TERM 300s \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="${RUNNER_TEMP}/visualization-profile" \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+
 
       # Independent application checks retain their own failure outcomes.
       - name: Test owned-process and application observers
@@ -152,3 +222,13 @@ jobs:
         # Real durable fixtures share the runner's filesystem. Keep the full
         # suite bounded independently of a developer machine's CPU count.
         run: flutter test --concurrency=2
+
+      - name: Preserve compiled visualization report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visualization-release
+          path: |
+            ${{ runner.temp }}/visualization-release-x11.json
+            ${{ runner.temp }}/visualization-smoke.pdf
+          if-no-files-found: ignore

@@ -22,7 +22,9 @@ installed application for acceptance. The local scaffold repack helper is not
 release or confinement validation. Strict-Snap checks use the normal systemd
 user-session bus for launcher cgroup tracking, not a private D-Bus session.
 
-`Flutter Linux` checks ordinary application changes. Run `Linux native acceptance`
+`Flutter Linux` automatically checks ordinary application changes, including
+bounded GTK/WebKit and compiled visualization/PDF regressions for PRs to `main`
+and `release/v0.6.3`. Run `Linux native acceptance`
 for compiled document/media checks, natural shutdown, strict Snap, debug/profile,
 and X11/Wayland compatibility. See [maintained observers](performance-observers.md).
 A widget-suite pass does not validate the GTK embedder.

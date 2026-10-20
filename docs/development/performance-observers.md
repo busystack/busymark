@@ -31,10 +31,11 @@ xvfb-run -a dbus-run-session -- /usr/bin/python3 \
   tools/test_application_input_observer.py --disposable-display
 ```
 
-Tooling tests need system Python, Pillow and PyYAML (`python3-pil`, `python3-yaml`
+Tooling tests need Clang, system Python, Pillow and PyYAML (`python3-pil`, `python3-yaml`
 on Ubuntu). These checks do not establish GTK-engine or strict-Snap acceptance.
 `Flutter Linux` checks formatting, analysis, widget tests, tooling and release
-compilation. `Linux native acceptance` retains 100-close standalone/strict-Snap,
+compilation, plus the GTK host, WebKit/renderer and compiled visualization/PDF
+checks on ordinary PRs to `main` and `release/v0.6.3`. `Linux native acceptance` retains 100-close standalone/strict-Snap,
 debug/profile and compiled document/media checks. Failures remain required;
 prerequisite conditions allow independent checks to continue without bypassing
 failed build/install steps. Neither workflow publishes or deploys.

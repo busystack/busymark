@@ -86,11 +86,9 @@ callbacks retain the host until completion, check its state and view identity,
 and cannot recreate resources after shutdown. Private resource callbacks own
 their resource path independently of the host.
 
-Set `BUSYMARK_VISUALIZATION_TRACE=1` for opt-in monotonic timings on stderr:
-context construction, view construction, offscreen realization/show, harness
-dispatch, and request acceptance, start, JavaScript delivery, and completion. It logs no document source. Moving
-construction to first use removes unused startup work; it does not establish
-the cause or elimination of a rare WebKit construction stall.
+Demand-driven construction avoids initializing unused hosts. Constructor stalls
+remain a separate runtime issue from the application's startup and lifecycle
+contracts.
 
 ## Dependencies and packaging
 
@@ -102,6 +100,7 @@ sources are:
 - `tools/fetch_d2.sh` for the D2 release, architecture, and verified hashes;
 - `tools/fetch_typst.sh` for Typst release artifacts and hashes;
 - `linux/CMakeLists.txt` and `snap/snapcraft.yaml` for bundle layout; and
+- `.github/workflows/flutter-linux.yml` for automatic native and compiled PDF checks;
 - `.github/workflows/flutter-linux-native.yml` for explicit release and Snap verification.
 
 The web bundle is built with `npm ci --ignore-scripts`. Build steps verify direct
@@ -156,12 +155,8 @@ Flutter and visible API-reference windows retain their normal rendering settings
 Smoke tests must not globally disable WebKit compositing; `LIBGL_ALWAYS_SOFTWARE`
 is only used to provide Mesa rendering on headless CI displays.
 
-For native startup/first-use diagnosis, `BUSYMARK_NATIVE_TRACE=1` records
-view realization, host registration, and first-video context/view construction.
-`BUSYMARK_VISUALIZATION_TRACE=1` additionally separates scheduled initialization
-from callback dispatch, synchronous constructors, harness dispatch, and request
-completion. These use GLib's monotonic clock. Registration of either host must
-remain lightweight; only a validated video `show` request creates video resources.
+Host registration remains lightweight; only a validated video `show` request
+creates video resources.
 
 Local video passes its single validated file through WebKit's File API and an
 allowed `blob:` URL. This lets WebKit broker the file into the existing media
@@ -184,28 +179,6 @@ bash tools/test_web_render_host.sh video-no-init video-first video-failure video
 bash tools/test_web_render_host.sh video-playback video-mini-playback
 ```
 
-`BUSYMARK_NATIVE_SYSCALL_TRACE_DIR=/absolute/evidence-directory` records each
-native case with `strace -f -ttt -T`, including file discovery, child creation,
-futex/poll waits, and flush durations. Correlate its wall-clock timestamps with
-the monotonic application events using a clock calibration captured for that
-run; keep these traces separate from the uninstrumented cohort.
-
-For Dart timelines, build with
-`--profile --dart-define=BUSYMARK_PERFORMANCE_TRACE=true`. The opt-in spans await
-future completion, use CLOCK_MONOTONIC on Linux, and log FrameTiming build/raster
-durations without treating callback delivery as presentation. Ordinary release
-builds compile out these diagnostics. For CPU sampling when launching a profile
-bundle directly, the pinned Linux embedder accepts `FLUTTER_ENGINE_SWITCHES=1`
-and `FLUTTER_ENGINE_SWITCH_1=enable-dart-profiling` (the embedder adds `--`).
-
-Restoration spans distinguish recovery readiness, authoritative history,
-journal publication, workspace/file loading, active-document preparation,
-editor publication and required final persistence. Numbered settings, recovery,
-history and controller transactions log queue admission separately from
-execution; history also logs instance dispatch and root-queue admission.
-Lock spans include the asynchronous lock request; explicit contention events
-distinguish retries from I/O-service or event-loop scheduling delays.
-
 Render results are delivered before optional disk-cache publication completes.
 Cache publication still occupies a bounded rendering slot, including the awaited
 write, atomic rename and LRU maintenance. Derived images do not request `fsync`:
@@ -215,9 +188,7 @@ durability use their separate stores. Full-directory metadata scans run in one s
 maintenance isolate at a time per cache, using only its path and numeric limits.
 This avoids one main-isolate asynchronous round trip per cached file. The caller
 still awaits maintenance: no unlimited background writes or maintenance queue
-are introduced. `cache-maintenance-N` separates admission, execution and worker
-completion; `cache-maintenance-worker` measures the scan itself. These spans
-overlap and must not be summed.
+are introduced.
 
 ## Live application closure
 
@@ -283,18 +254,11 @@ A sleep in a polling helper then adds delay per await. Keep dialog interaction,
 document assertions, and actual file publication/rollback checks intact. See
 [Flutter's runAsync contract](https://api.flutter.dev/flutter/flutter_test/WidgetTester/runAsync.html).
 
-For test-only I/O diagnosis, set `BUSYMARK_TEST_IO_TRACE=1`. Wait and store events
-include PID, Unix wall-clock microseconds, operation, and begin/completion state
-for correlation with a scoped syscall trace. Completed stores use `return await`
-so a dispatch is not labeled completion. Diagnostics do not establish display
-presentation timing; expensive syscall tracing belongs outside acceptance timing.
-Native tracing checks that the pending case actually reaches shutdown before
-initialization completes. That case uses an isolated test harness with the same
-content security policy that deliberately withholds readiness. This prevents a
-fast harness from finishing during required close persistence; it is a lifecycle
-test, separate from performance measurements.
-The ordinary shipping-executable cohort does not
-require tracing. Cleanup warnings are retained separately from fatal signals.
+The pending-initialization case requires the focused shutdown marker
+`visualization-shutdown initPending=1`. Its isolated harness deliberately
+withholds readiness under the same content security policy, so a fast harness
+cannot finish during required close persistence. This is a lifecycle check.
+Cleanup warnings remain separate from fatal process exits.
 
 For strict confinement, use an explicitly owned disposable parallel instance
 in a disposable machine. `--snap-instance busymark_close` enters the normal
@@ -311,7 +275,9 @@ and no system cache is cleared.
 `dart_test.yaml` bounds independent test-file workers to two. This limits
 concurrent compilation and durable filesystem transactions on development/CI
 machines; individual multi-process and thread-race tests retain their internal
-concurrency. It changes no assertion, timeout, retention rule, or flush. Override
+concurrency. This is a functional scheduling policy, separate from startup performance.
+The real-I/O readiness helpers and the Enter-based History scenario change wait
+and gesture coverage; focused double-click regressions cover that gesture. Override
 file concurrency explicitly only when evaluating a different resource budget;
 record that condition with failures. A functional suite pass is separate from
 application performance acceptance.
