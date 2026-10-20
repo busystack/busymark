@@ -120,7 +120,7 @@ jobs:
 
       - name: Test native shortcut metadata
         if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
-        run: bash tools/test_native_shortcut_metadata.sh
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_native_shortcut_metadata.sh
 
       - name: Generate localizations
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}

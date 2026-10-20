@@ -192,7 +192,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 self.assertIn('report["ok"]', step['run'])
                 self.assertIn('test -s', step['run'])
 
-    def test_native_shortcut_metadata_runs_with_its_compiler_prerequisite(self):
+    def test_native_shortcut_metadata_runs_with_compiler_and_display_prerequisites(self):
         steps = self.workflow['jobs']['verify']['steps']
         step = next(s for s in steps if 'tools/test_native_shortcut_metadata.sh' in s.get('run', ''))
         dependencies = next(s for s in steps if s.get('id') == 'linux-dependencies')
@@ -200,6 +200,16 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         self.assertIn("steps.linux-dependencies.outcome == 'success'", step['if'])
         self.assertIn('!cancelled()', step['if'])
         self.assertNotIn('continue-on-error', step)
+        commands = [shlex.split(line, comments=True) for line in
+                    dependencies['run'].replace('\\\n', '').splitlines()]
+        installed = {arg for command in commands
+                     if command[:3] == ['sudo', 'apt-get', 'install']
+                     for arg in command[3:]}
+        self.assertTrue({'clang', 'pkg-config', 'libgtk-3-dev', 'xvfb'}.issubset(installed))
+        self.assertEqual(shlex.split(step['run']), [
+            'xvfb-run', '-a', 'env', 'GDK_BACKEND=x11',
+            'bash', 'tools/test_native_shortcut_metadata.sh',
+        ])
 
     def test_native_failures_remain_required_and_independent(self):
         ordinary_counts = {}
