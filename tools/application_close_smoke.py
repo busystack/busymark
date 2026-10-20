@@ -9,6 +9,7 @@ import ctypes as C
 from contextlib import contextmanager
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -576,6 +577,64 @@ class Desktop:
             raise RuntimeError("Owned window rejected close request")
         self.x.XFlush(self.display)
 
+    def drag_window(self, pid, point):
+        """Exercise the titlebar gesture on an explicitly disposable desktop."""
+        window = self.window(pid, require_normal=True)
+        if window is None:
+            raise ObservationIncomplete('Owned drag window is unavailable')
+        xid = window.get_xid()
+        x, y = point.get('x'), point.get('y')
+        if any(type(v) not in (int, float) or not math.isfinite(v) for v in (x, y)):
+            raise ValueError('Invalid owned titlebar point')
+        attrs = WindowAttributes()
+        if not self.x.XGetWindowAttributes(self.display, xid, C.byref(attrs)) or not (
+                0 < x < attrs.width - 120 and 0 < y < attrs.height - 30):
+            raise ObservationIncomplete('Titlebar point is outside the owned drawable')
+        self.x.XTranslateCoordinates.argtypes = [C.c_void_p, C.c_ulong, C.c_ulong,
+                                                C.c_int, C.c_int, C.POINTER(C.c_int),
+                                                C.POINTER(C.c_int), C.POINTER(C.c_ulong)]
+        def origin():
+            owned = self.window(pid, require_normal=True)
+            if owned is None or owned.get_xid() != xid:
+                raise ObservationIncomplete('Owned drag window changed')
+            px, py, child = C.c_int(), C.c_int(), C.c_ulong()
+            if not self.x.XTranslateCoordinates(self.display, xid, self.root, 0, 0,
+                                               C.byref(px), C.byref(py), C.byref(child)):
+                raise ObservationIncomplete('Owned window origin is unavailable')
+            return px.value, py.value
+        start = origin()
+        xtest = C.CDLL('libXtst.so.6')
+        xtest.XTestFakeMotionEvent.argtypes = [C.c_void_p, C.c_int, C.c_int, C.c_int, C.c_ulong]
+        xtest.XTestFakeButtonEvent.argtypes = [C.c_void_p, C.c_uint, C.c_int, C.c_ulong]
+        def motion(dx, dy):
+            origin()  # Revalidate ownership before each injected event.
+            if not xtest.XTestFakeMotionEvent(self.display, 0, int(start[0] + x + dx),
+                                              int(start[1] + y + dy), 0):
+                raise ObservationIncomplete('Disposable desktop rejected pointer motion')
+            self.x.XFlush(self.display)
+        motion(0, 0)
+        pressed = False
+        try:
+            if not xtest.XTestFakeButtonEvent(self.display, 1, 1, 0):
+                raise ObservationIncomplete('Disposable desktop rejected pointer press')
+            pressed = True
+            self.x.XFlush(self.display)
+            for step in range(1, 21):
+                # Pace real input so GTK/Flutter can recognize the pan before
+                # the next motion. This is a functional probe, not a latency test.
+                time.sleep(.05)
+                motion(step * 5, step)
+                current = origin()
+                delta = [current[0] - start[0], current[1] - start[1]]
+                if max(abs(v) for v in delta) >= 8:
+                    return delta
+            raise RuntimeError('Titlebar drag did not move the owned window')
+        finally:
+            if pressed:
+                if not xtest.XTestFakeButtonEvent(self.display, 1, 0, 0):
+                    raise ObservationIncomplete('Disposable pointer release failed')
+                self.x.XFlush(self.display)
+
     def video_sample(self, w):
         # Root-window pixels can belong to an unrelated overlapping window.
         # Confirm decoded changes within this identified application drawable.
@@ -609,7 +668,9 @@ def accepted(record):
     return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors") and not record.get('cleanupErrors') and not record.get('reportingError')
 
 
-def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, engine_manifest=None, isolate_input=False, audit_input=False, observer_event=None):
+def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, engine_manifest=None, isolate_input=False, audit_input=False, observer_event=None, disposable_display=False):
+    if scenario == 'window-controls' and not disposable_display:
+        raise ValueError('Window drag requires an explicitly disposable desktop')
     if isolate_input and audit_input:
         raise ValueError('Select passive isolation or normal-focus input audit')
     if isolate_input and not plain:
@@ -675,7 +736,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         probe = LoadedEngine(engine_manifest) if engine_manifest is not None else None
         tracker = ChildTracker()
         tracker.engine = probe
-        desktop = Desktop() if plain or scenario == "video" or audit_input else None
+        desktop = Desktop() if plain or scenario in ('video', 'window-controls') or audit_input else None
         phase = 'log opening'
         log = (folder / 'application.log').open('x')
         phase = 'process creation'
@@ -730,6 +791,11 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                     status = {}
                 if status.get("phase") == "failed":
                     raise RuntimeError(status.get("error", "Application probe failed"))
+                if status.get('phase') == 'awaiting-window-drag' and 'nativeDragDelta' not in record:
+                    if scenario != 'window-controls' or not disposable_display:
+                        raise RuntimeError('Unexpected pointer-injection request')
+                    record['nativeDragDelta'] = desktop.drag_window(process.pid, status['windowDragPoint'])
+                    Path(str(report) + '.drag-confirmed').touch()
                 if status.get("phase") == "awaiting-video":
                     w = desktop.window(process.pid)
                     sample = desktop.video_sample(w) if w else None
@@ -877,11 +943,14 @@ def main():
     parser.add_argument("--plain", action="store_true", help="Test the unmodified shipping executable using WM_DELETE_WINDOW")
     parser.add_argument("--snap-instance", help="Owned disposable parallel instance, e.g. busymark_close")
     parser.add_argument("--snap-fixture", action="store_true", help="The disposable instance contains the compiled window_close_smoke target; require output in its common directory")
-    parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
+    parser.add_argument('--disposable-display', action='store_true', help='The caller owns the whole desktop; required for pointer injection in window-controls')
+    parser.add_argument("--scenarios", nargs="+", choices=["plain", "visualization", "video", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel", "window-controls"], default=["plain", "visualization", "pending-initialization", "dirty-save", "dirty-discard", "dirty-cancel"])
     parser.add_argument("--video", type=Path)
     parser.add_argument("--expected-engine", "--engine-manifest", dest='engine_manifest', type=Path, help="Optional test-only expected engine .so (or historical evidence JSON); hash actual mapped file after exit")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if 'window-controls' in args.scenarios and not args.disposable_display:
+        parser.error('window-controls requires --disposable-display and a window manager')
     if args.video:
         args.video = args.video.resolve()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -910,7 +979,7 @@ def main():
     for cycle in range(args.cycles):
         for scenario in scenarios:
             profile = root / "profiles" / f"{cycle}-{scenario}" if args.fresh_profile else root / "profile"
-            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, engine_manifest=args.engine_manifest, isolate_input=args.isolate_input, audit_input=args.audit_input)
+            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, engine_manifest=args.engine_manifest, isolate_input=args.isolate_input, audit_input=args.audit_input, disposable_display=args.disposable_display)
             records.append(record)
             print(json.dumps({"cycle": cycle, "scenario": scenario, "exitCode": record.get("exitCode"), "accepted": accepted(record), "error": record.get("error")}), flush=True)
             if record.get('unresolvedSurvivors') or record.get('verificationIncomplete'):

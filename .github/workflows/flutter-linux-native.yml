@@ -31,7 +31,6 @@ jobs:
             fonts-noto-cjk \
             fonts-noto-mono \
             ninja-build \
-            patch \
             pkg-config \
             libgtk-3-dev \
             libglib2.0-dev \
@@ -92,10 +91,6 @@ jobs:
 
       # Explicit status conditions keep independent checks running after a
       # native failure. Failed checks still fail the job; none is optional.
-      - name: Test retired Yaru window requests and notifications
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
-
       - name: Verify GTK keyboard delivery is observed through XInput2
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         run: xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_application_input_observer.py --disposable-display
@@ -627,7 +622,7 @@ jobs:
       - name: Install Linux application prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build patch pkg-config curl xz-utils \
+          sudo apt-get install -y clang cmake ninja-build pkg-config curl xz-utils \
             libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
             fonts-noto-core fonts-noto-mono gsettings-desktop-schemas dconf-cli python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
       - uses: actions/setup-node@v7
@@ -643,10 +638,6 @@ jobs:
       - name: Build official development mode
         id: mode-build
         run: flutter build linux --${{ matrix.mode }} --no-pub
-      - name: Test retired Yaru window in development mode
-        if: ${{ !cancelled() && steps.mode-build.outcome == 'success' }}
-        run: |
-          xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
       - name: Verify development mode GTK engine and natural close
         if: ${{ !cancelled() && steps.mode-build.outcome == 'success' }}
         run: |

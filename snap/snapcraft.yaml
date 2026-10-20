@@ -105,7 +105,6 @@ parts:
       - git
       - unzip
       - rsync
-      - patch
       - fonts-noto-core
       - fonts-noto-mono
       - curl

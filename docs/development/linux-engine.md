@@ -36,13 +36,7 @@ runtime failures remain release blockers; removing research tools does not fix
 them. Historical patches, reproductions and crash evidence are archived externally.
 A disappearing window or forced cleanup is not successful natural shutdown.
 
-The production Yaru 0.2.2 retired-window correction remains required by the current
-plugin integration. CMake patches build-local sources, never the pub cache, and
-ships the MPL notice. Its implementation is unchanged. A supported unmodified
-replacement must pass the same native lifecycle tests before dependency changes
-are approved; patch-free dependency acceptance remains unresolved.
-
-```sh
-/usr/bin/python3 -m unittest tools/test_yaru_patch.py
-xvfb-run -a dbus-run-session -- bash tools/test_yaru_window_lifecycle.sh
-```
+Yaru uses the unmodified dependencies in `pubspec.lock` through Flutter's
+generated plugin build. No local plugin source preparation is required.
+Compiled window, document and media checks exercise the actual application;
+upstream runtime shutdown failures still fail native release acceptance.

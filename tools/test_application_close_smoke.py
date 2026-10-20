@@ -19,6 +19,65 @@ from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, Obse
 
 
 class LaunchLifetimeTest(unittest.TestCase):
+    def test_pointer_injection_requires_an_explicitly_disposable_desktop(self):
+        with patch('application_close_smoke.subprocess.Popen') as launch:
+            with self.assertRaisesRegex(ValueError, 'explicitly disposable'):
+                run_case(['/bin/true'], Path('/unused/case'), Path('/unused/profile'),
+                         'window-controls', 1)
+            launch.assert_not_called()
+
+    def test_drag_rejects_missing_window_before_loading_input_extension(self):
+        desktop = Desktop.__new__(Desktop)
+        desktop.window = Mock(return_value=None)
+        with patch('application_close_smoke.C.CDLL') as extension:
+            with self.assertRaisesRegex(ObservationIncomplete, 'unavailable'):
+                desktop.drag_window(123, {'x': 20, 'y': 20})
+            extension.assert_not_called()
+
+    def test_unexpected_drag_report_cannot_inject_pointer_input(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = '''
+import json, pathlib, sys, time
+pathlib.Path(sys.argv[1]).write_text(json.dumps({'phase': 'awaiting-window-drag',
+                                              'windowDragPoint': {'x': 200, 'y': 20}}))
+time.sleep(30)
+'''
+            with patch.object(Desktop, 'drag_window') as drag:
+                record = run_case([sys.executable, '-c', source], root / 'case',
+                                  root / 'profile', 'plain', 5)
+                drag.assert_not_called()
+            self.assertFalse(accepted(record), record)
+            self.assertIn('Unexpected pointer-injection request', record['error'])
+            self.assertFalse(record.get('unresolvedSurvivors'), record)
+
+    def test_drag_rejects_nonfinite_coordinates_without_injecting_input(self):
+        desktop = Desktop.__new__(Desktop)
+        desktop.window = Mock(return_value=SimpleNamespace(get_xid=lambda: 7))
+        with patch('application_close_smoke.C.CDLL') as extension:
+            with self.assertRaisesRegex(ValueError, 'titlebar point'):
+                desktop.drag_window(123, {'x': float('nan'), 'y': 20})
+            extension.assert_not_called()
+
+    def test_drag_releases_button_when_motion_fails(self):
+        desktop = Desktop.__new__(Desktop)
+        desktop.window = Mock(return_value=SimpleNamespace(get_xid=lambda: 7))
+        desktop.x, desktop.display, desktop.root = Mock(), 1, 2
+        def attributes(_display, _xid, pointer):
+            pointer._obj.width, pointer._obj.height = 1000, 500
+            return 1
+        desktop.x.XGetWindowAttributes.side_effect = attributes
+        desktop.x.XTranslateCoordinates.return_value = 1
+        extension = Mock()
+        extension.XTestFakeMotionEvent.side_effect = [1, RuntimeError('motion failed')]
+        extension.XTestFakeButtonEvent.return_value = 1
+        with patch('application_close_smoke.C.CDLL', return_value=extension), \
+             patch('application_close_smoke.time.sleep'):
+            with self.assertRaisesRegex(RuntimeError, 'motion failed'):
+                desktop.drag_window(123, {'x': 200, 'y': 20})
+        self.assertEqual([call.args[1:3] for call in extension.XTestFakeButtonEvent.call_args_list],
+                         [(1, 1), (1, 0)])
+
     def run_failure(self, command, *, desktop=False, failure=None):
         import application_close_smoke as a
         with tempfile.TemporaryDirectory(prefix='bm-launch-lifetime-') as tmp:

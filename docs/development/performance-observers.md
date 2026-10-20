@@ -16,10 +16,16 @@ Run compiled fixtures on a disposable desktop and never inject input into an
 unrelated window. Owned-window keyboard audits count core/XI2 events without
 recording global keyboard payloads. Missing observation remains a failure.
 
+The compiled fixture's `window-controls` scenario verifies the rendered Yaru
+controls, native state notifications and titlebar dragging. Add
+`--scenarios window-controls --disposable-display` to the compiled close command
+linked above. This requires a window manager and a desktop owned entirely by
+the test; do not run pointer injection on a personal desktop.
+
 ```sh
 /usr/bin/python3 -m unittest tools/test_owned_processes.py \
   tools/test_application_close_smoke.py tools/test_application_content_observer.py \
-  tools/test_yaru_patch.py tools/test_official_flutter_workflow.py \
+  tools/test_official_flutter_workflow.py \
   tools/test_run_owned_fixture.py
 xvfb-run -a dbus-run-session -- /usr/bin/python3 \
   tools/test_application_input_observer.py --disposable-display

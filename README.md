@@ -57,7 +57,6 @@ sudo apt-get install -y \
   libsecret-1-dev \
   libwebkit2gtk-4.1-dev \
   ninja-build \
-  patch \
   pkg-config \
   python3 \
   xz-utils

@@ -42,7 +42,6 @@ jobs:
             fonts-noto-cjk \
             fonts-noto-mono \
             ninja-build \
-            patch \
             pkg-config \
             libgtk-3-dev \
             libglib2.0-dev \
@@ -143,7 +142,6 @@ jobs:
           /usr/bin/python3 -m unittest tools/test_owned_processes.py \
             tools/test_application_content_observer.py tools/test_application_close_smoke.py \
             tools/test_run_owned_fixture.py \
-            tools/test_yaru_patch.py \
             tools/test_official_flutter_workflow.py
 
       - name: Test including bundled D2 and Typst paths

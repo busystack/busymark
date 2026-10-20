@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:yaru/yaru.dart';
 
 import 'package:busymark/main.dart' as application;
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -16,6 +17,7 @@ import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/linux/linux_window_host.dart';
 import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -111,6 +113,77 @@ Future<void> main(List<String> args) async {
     await window.initialize();
     checks['applicationSupport'] =
         (await getApplicationSupportDirectory()).path;
+
+    if (scenario == 'window-controls') {
+      final nativeWindow = YaruWindow.of(context);
+      YaruWindowState? lastState;
+      var notifications = 0;
+      final subscription = nativeWindow.states().listen((state) {
+        lastState = state;
+        notifications++;
+      });
+      try {
+        await _until(() => lastState != null);
+        // Exercise the controls actually rendered by LinuxWindowHost.
+        Future<void> press(YaruWindowControlType type) async {
+          YaruWindowControl? control;
+          await _until(() {
+            for (final element in _elements()) {
+              final widget = element.widget;
+              if (widget is YaruWindowControl &&
+                  widget.type == type &&
+                  widget.onTap != null) {
+                control = widget;
+                return true;
+              }
+            }
+            return false;
+          });
+          control!.onTap!();
+        }
+
+        await press(YaruWindowControlType.maximize);
+        await _until(() => lastState?.isMaximized == true);
+        if (!await windowManager.isMaximized()) {
+          throw StateError('Maximize notification disagrees with GTK state.');
+        }
+        await press(YaruWindowControlType.restore);
+        await _until(() => lastState?.isMaximized == false);
+        await press(YaruWindowControlType.minimize);
+        await _until(() => lastState?.isMinimized == true);
+        if (!await windowManager.isMinimized()) {
+          throw StateError('Minimize notification disagrees with GTK state.');
+        }
+        await nativeWindow.restore();
+        await _until(() => lastState?.isMinimized == false);
+        await windowManager.focus();
+        await binding.endOfFrame;
+        final dragRegion = _elements().firstWhere((element) {
+          final box = element.renderObject;
+          return element.widget is LinuxTitlebarGestureRegion &&
+              box is RenderBox &&
+              box.hasSize &&
+              box.size.width > 100;
+        });
+        final box = dragRegion.renderObject! as RenderBox;
+        final origin = box.localToGlobal(Offset.zero);
+        final ratio = View.of(context).devicePixelRatio;
+        checks['windowDragPoint'] = {
+          'x': (origin.dx + box.size.width / 2) * ratio,
+          'y': (origin.dy + box.size.height / 2) * ratio,
+        };
+        checks['viewPhysicalSize'] = [
+          View.of(context).physicalSize.width,
+          View.of(context).physicalSize.height,
+        ];
+        await publish('awaiting-window-drag');
+        await _until(() => File('${report.path}.drag-confirmed').existsSync());
+        checks['windowControlsVerified'] = true;
+        checks['windowStateNotifications'] = notifications;
+      } finally {
+        await subscription.cancel();
+      }
+    }
 
     final fixture = File('${report.parent.path}/document.md');
     const original = '# Close fixture\n\nOriginal document.\n';
@@ -249,7 +322,16 @@ Future<void> main(List<String> args) async {
     await publish('close-requested');
     // This enters the same prevent-close listener and save/discard/cancel flow
     // as a window-manager delete request. Never call exit() on the success path.
-    await windowManager.close();
+    if (scenario == 'window-controls') {
+      final control = _elements()
+          .map((element) => element.widget)
+          .whereType<YaruWindowControl>()
+          .firstWhere((widget) => widget.type == YaruWindowControlType.close);
+      if (control.onTap == null) throw StateError('Close control is disabled.');
+      control.onTap!();
+    } else {
+      await windowManager.close();
+    }
     if (scenario.startsWith('dirty-')) {
       Future<void> choose(String action) async {
         BusyMarkDialogButton? button;
