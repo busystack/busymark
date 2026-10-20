@@ -55,7 +55,3 @@ result. `tools/run_owned_fixture.py` supervises compiler/runtime descendants,
 handles cancellation with verified cleanup, and prevents subsequent cases when
 observation or retirement is incomplete. These headless checks are separate
 from native runtime and application performance acceptance.
-
-Known official-engine shutdown, synchronous portal startup and unlocalized
-performance tails remain unresolved. See [Linux release blockers](linux-engine.md#release-blockers).
-Archived investigation controls and reports are external, not product dependencies.

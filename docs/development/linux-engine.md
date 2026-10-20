@@ -29,16 +29,8 @@ for compiled document/media checks, natural shutdown, strict Snap, debug/profile
 and X11/Wayland compatibility. See [maintained observers](performance-observers.md).
 A widget-suite pass does not validate the GTK embedder.
 
-## Release blockers
-
-The official engine has reproduced a compositor disposal/presentation race.
-Synchronous Flutter settings-portal and GTK Inhibit/Properties.GetAll calls can
-also block startup when the desktop portal withholds replies. These upstream
-runtime failures remain release blockers; removing research tools does not fix
-them. Historical patches, reproductions and crash evidence are archived externally.
-A disappearing window or forced cleanup is not successful natural shutdown.
-
 Yaru uses the unmodified dependencies in `pubspec.lock` through Flutter's
 generated plugin build. No local plugin source preparation is required.
 Compiled window, document and media checks exercise the actual application;
-upstream runtime shutdown failures still fail native release acceptance.
+runtime shutdown failures still fail native release acceptance. A disappearing
+window or forced cleanup is not successful natural shutdown.
