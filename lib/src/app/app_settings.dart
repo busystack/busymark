@@ -3,14 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import '../core/performance_trace.dart';
 import '../export/export_options.dart';
 import '../spellcheck/spelling_language.dart';
 import 'app_locale.dart';
+import 'shortcut_binding.dart';
 
 enum BusyMarkThemeModePreference { system, light, dark }
 
@@ -47,16 +48,28 @@ extension BusyMarkThemeModePreferenceX on BusyMarkThemeModePreference {
   }
 }
 
-class RecentWorkspace {
-  const RecentWorkspace({
+class RecentResource {
+  const RecentResource({
     required this.path,
     required this.kind,
     required this.lastOpenedAt,
+    this.accountId,
+    this.accountLabel,
+    this.localId,
+    this.ownerRoot,
+    this.title,
+    this.document = false,
   });
 
-  factory RecentWorkspace.fromJson(Map<String, Object?> json) {
-    return RecentWorkspace(
+  factory RecentResource.fromJson(Map<String, Object?> json) {
+    return RecentResource(
       path: json['path']?.toString() ?? '',
+      accountId: json['accountId'] as String?,
+      accountLabel: json['accountLabel'] as String?,
+      localId: json['localId'] as String?,
+      ownerRoot: json['ownerRoot'] as String?,
+      title: json['title'] as String?,
+      document: json['document'] as bool? ?? json['kind'] == 'singleMarkdown',
       kind: json['kind']?.toString() ?? 'unknown',
       lastOpenedAt:
           DateTime.tryParse(json['lastOpenedAt']?.toString() ?? '') ??
@@ -67,12 +80,33 @@ class RecentWorkspace {
   final String path;
   final String kind;
   final DateTime lastOpenedAt;
+  final String? accountId, accountLabel, localId, ownerRoot, title;
+  final bool document;
+  bool get isDocument => document || kind == 'singleMarkdown';
+  String get identity => accountId == null
+      ? p.normalize(p.absolute(path))
+      : '$accountId:${localId ?? 'workspace'}';
 
   Map<String, Object?> toJson() => {
     'path': path,
     'kind': kind,
+    if (accountId != null) 'accountId': accountId,
+    if (accountLabel != null) 'accountLabel': accountLabel,
+    if (localId != null) 'localId': localId,
+    if (ownerRoot != null) 'ownerRoot': ownerRoot,
+    if (title != null) 'title': title,
+    'document': isDocument,
     'lastOpenedAt': lastOpenedAt.toIso8601String(),
   };
+}
+
+// Keep the existing JSON representation and key; resource type never affects
+// retention. Stable identities are deduplicated after timestamp ordering.
+List<RecentResource> _normalizeRecent(Iterable<RecentResource> resources) {
+  final ordered = resources.toList()
+    ..sort((a, b) => b.lastOpenedAt.compareTo(a.lastOpenedAt));
+  final seen = <String>{};
+  return ordered.where((r) => seen.add(r.identity)).take(12).toList();
 }
 
 class AppSettings {
@@ -116,6 +150,7 @@ class AppSettings {
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
+    this.shortcutOverrides = const {},
   });
 
   factory AppSettings.defaults() {
@@ -280,14 +315,18 @@ class AppSettings {
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
           defaults.confirmCloseWithUnsavedChanges,
+      shortcutOverrides: readShortcutOverrides(json['shortcutOverrides']),
       lastOpenedPath: json['lastOpenedPath']?.toString(),
       recentWorkspaces: recent is List
-          ? recent
-                .whereType<Map>()
-                .map((item) => item.cast<String, Object?>())
-                .map(RecentWorkspace.fromJson)
-                .where((item) => item.path.isNotEmpty)
-                .toList()
+          ? _normalizeRecent(
+              recent
+                  .whereType<Map>()
+                  .map((item) => item.cast<String, Object?>())
+                  .map(RecentResource.fromJson)
+                  .where(
+                    (item) => item.path.isNotEmpty || item.accountId != null,
+                  ),
+            )
           : defaults.recentWorkspaces,
     );
   }
@@ -330,13 +369,17 @@ class AppSettings {
   final bool reopenPreviousWorkspaceOnStartup;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
-  final List<RecentWorkspace> recentWorkspaces;
+  final Map<String, BusyMarkKeyBinding?> shortcutOverrides;
+  final List<RecentResource> recentWorkspaces;
 
   ThemeMode get themeMode => themeModePreference.themeMode;
 
   Locale? get locale => busyMarkLocaleFromTag(localeTag);
 
   Map<String, Object?> toJson() => {
+    'shortcutOverrides': {
+      for (final e in shortcutOverrides.entries) e.key: e.value?.toJson(),
+    },
     'themeModePreference': themeModePreference.name,
     'localeTag': localeTag,
     'sidebarVisible': sidebarVisible,
@@ -421,6 +464,7 @@ class AppSettings {
   }
 
   AppSettings copyWith({
+    Map<String, BusyMarkKeyBinding?>? shortcutOverrides,
     BusyMarkThemeModePreference? themeModePreference,
     Object? localeTag = _unset,
     bool? sidebarVisible,
@@ -459,9 +503,10 @@ class AppSettings {
     bool? reopenPreviousWorkspaceOnStartup,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
-    List<RecentWorkspace>? recentWorkspaces,
+    List<RecentResource>? recentWorkspaces,
   }) {
     return AppSettings(
+      shortcutOverrides: shortcutOverrides ?? this.shortcutOverrides,
       themeModePreference: themeModePreference ?? this.themeModePreference,
       localeTag: identical(localeTag, _unset)
           ? this.localeTag
@@ -524,7 +569,9 @@ class AppSettings {
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
-      recentWorkspaces: recentWorkspaces ?? this.recentWorkspaces,
+      recentWorkspaces: recentWorkspaces == null
+          ? this.recentWorkspaces
+          : _normalizeRecent(recentWorkspaces),
     );
   }
 }
@@ -548,7 +595,7 @@ class StartupAppSettings {
     String? acknowledgedJson;
     try {
       settings = AppSettings.fromJson(await store.load());
-      acknowledgedJson = jsonEncode(settings.toJson());
+      acknowledgedJson = _canonicalSettingsJson(settings);
     } on Object {
       // Match the controller's existing failed-load policy. Defaults are usable
       // but are not an acknowledged disk snapshot for write reconciliation.
@@ -653,7 +700,6 @@ class AppSettingsController extends Notifier<AppSettings> {
   late LocalSettingsStore _store;
   Future<void>? _lastSave;
   String? _persistedSettingsJson;
-  var _saveTraceSequence = 0;
   final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
   final _pendingInitialPersistence = <Completer<void>>[];
   var _loaded = false;
@@ -685,6 +731,38 @@ class AppSettingsController extends Notifier<AppSettings> {
       await pending;
       if (identical(pending, _lastSave)) return;
     }
+  }
+
+  /// Invoked after validation against the current in-memory assignments. All
+  /// preferences still use the same ordered writer and settings file.
+  bool _trackShortcutSaves = false;
+  Future<bool> saveShortcutOverrides(
+    Map<String, BusyMarkKeyBinding?> overrides,
+  ) {
+    _trackShortcutSaves = true;
+    final snapshot = Map<String, BusyMarkKeyBinding?>.unmodifiable(overrides);
+    if (!_loaded) return _saveShortcutsAfterLoad(snapshot);
+    return _save(
+      state.copyWith(shortcutOverrides: snapshot),
+      reusePersisted: true,
+    );
+  }
+
+  Future<bool> _saveShortcutsAfterLoad(
+    Map<String, BusyMarkKeyBinding?> overrides,
+  ) async {
+    await waitUntilLoaded();
+    if (!ref.mounted) return false;
+    return _save(
+      state.copyWith(shortcutOverrides: overrides),
+      reusePersisted: true,
+    );
+  }
+
+  Future<bool> retryShortcutSave() async {
+    await waitUntilLoaded();
+    if (!ref.mounted) return false;
+    return _save(state, reusePersisted: true);
   }
 
   Future<void> setPdfExportOptions(PdfExportOptions options) {
@@ -1003,39 +1081,142 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> recordOpenedWorkspace({
     required String path,
     required String kind,
+    String? accountId,
+    String? title,
   }) {
-    final openedAt = DateTime.now();
-    return _mutate((settings) {
-      final recent = [
-        RecentWorkspace(path: path, kind: kind, lastOpenedAt: openedAt),
-        ...settings.recentWorkspaces.where((item) => item.path != path),
-      ].take(12).toList();
-      return settings.copyWith(lastOpenedPath: path, recentWorkspaces: recent);
-    }, propagateFailure: true);
+    return recordRecent(
+      RecentResource(
+        path: accountId == null ? p.normalize(p.absolute(path)) : '',
+        kind: kind,
+        accountId: accountId,
+        title: title,
+        document: kind == 'singleMarkdown',
+        lastOpenedAt: DateTime.now(),
+      ),
+      updateLastOpenedPath: accountId == null,
+    );
   }
 
-  Future<void> clearRecentWorkspaces() {
-    return _mutate((settings) => settings.copyWith(recentWorkspaces: []));
-  }
+  Future<void> recordRecent(
+    RecentResource resource, {
+    bool updateLastOpenedPath = false,
+  }) => _mutate((settings) {
+    final ordered = [
+      resource,
+      ...settings.recentWorkspaces.where(
+        (r) => r.identity != resource.identity,
+      ),
+    ];
+    final retained = _normalizeRecent(ordered);
+    return settings.copyWith(
+      recentWorkspaces: retained,
+      lastOpenedPath: updateLastOpenedPath
+          ? resource.path
+          : settings.lastOpenedPath,
+    );
+  }, propagateFailure: true);
 
-  Future<void> removeRecentWorkspace(String path) {
+  Future<void> clearRecentWorkspaces() =>
+      _mutate((settings) => settings.copyWith(recentWorkspaces: []));
+
+  Future<void> removeRecentWorkspace(String path) => _mutate(
+    (settings) => settings.copyWith(
+      recentWorkspaces: settings.recentWorkspaces
+          .where(
+            (r) =>
+                r.identity != path &&
+                !(r.accountId == null && p.equals(r.path, path)),
+          )
+          .toList(),
+    ),
+  );
+
+  Future<void> updateRecentNoteTitles(Map<(String, String), String> titles) {
+    if (!state.recentWorkspaces.any(
+      (r) =>
+          r.accountId != null &&
+          r.localId != null &&
+          titles[(r.accountId!, r.localId!)] != null &&
+          titles[(r.accountId!, r.localId!)] != r.title,
+    )) {
+      return Future.value();
+    }
     return _mutate(
       (settings) => settings.copyWith(
         recentWorkspaces: [
-          for (final item in settings.recentWorkspaces)
-            if (!p.equals(item.path, path)) item,
+          for (final r in settings.recentWorkspaces)
+            if (r.accountId != null &&
+                r.localId != null &&
+                titles[(r.accountId!, r.localId!)] != null)
+              RecentResource(
+                path: r.path,
+                kind: r.kind,
+                lastOpenedAt: r.lastOpenedAt,
+                document: r.isDocument,
+                accountId: r.accountId,
+                accountLabel: r.accountLabel,
+                localId: r.localId,
+                title: titles[(r.accountId!, r.localId!)],
+                ownerRoot: r.ownerRoot,
+              )
+            else
+              r,
         ],
       ),
     );
   }
 
+  Future<void> removeRecentAccount(String accountId) => _mutate(
+    (settings) => settings.copyWith(
+      recentWorkspaces: settings.recentWorkspaces
+          .where((r) => r.accountId != accountId)
+          .toList(),
+    ),
+  );
+
+  Future<void> moveRecentPath(String from, String to) => _mutate(
+    (settings) => settings.copyWith(
+      recentWorkspaces: [
+        for (final r in settings.recentWorkspaces)
+          if (r.accountId == null &&
+              (p.equals(r.path, from) || p.isWithin(from, r.path)))
+            RecentResource(
+              path: p.equals(r.path, from)
+                  ? to
+                  : p.join(to, p.relative(r.path, from: from)),
+              kind: r.kind,
+              lastOpenedAt: r.lastOpenedAt,
+              document: r.isDocument,
+              ownerRoot: r.ownerRoot == null
+                  ? null
+                  : p.equals(r.ownerRoot!, from)
+                  ? to
+                  : p.isWithin(from, r.ownerRoot!)
+                  ? p.join(to, p.relative(r.ownerRoot!, from: from))
+                  : r.ownerRoot,
+              title: r.title,
+            )
+          else
+            r,
+      ],
+    ),
+  );
+
   Future<void> _load() async {
     AppSettings loaded;
     try {
       loaded = AppSettings.fromJson(await _store.load());
-      _persistedSettingsJson = jsonEncode(loaded.toJson());
+      _persistedSettingsJson = _canonicalSettingsJson(loaded);
     } on Object {
       loaded = AppSettings.defaults();
+    }
+    if (!ref.mounted) {
+      for (final completion in _pendingInitialPersistence) {
+        completion.completeError(StateError('Settings controller disposed'));
+      }
+      _pendingInitialPersistence.clear();
+      _pendingInitialMutations.clear();
+      return;
     }
     // Visibility belongs to this run; retain the preferred inspector width.
     // Explicit requests made during hydration are applied below.
@@ -1087,48 +1268,60 @@ class AppSettingsController extends Notifier<AppSettings> {
     );
   }
 
-  Future<void> _save(
+  Future<bool> _save(
     AppSettings next, {
     bool propagateFailure = false,
     bool reusePersisted = false,
   }) async {
+    if (!ref.mounted) return false;
     state = next;
     final json = next.toJson();
-    final encoded = jsonEncode(json);
+    final encoded = _canonicalSettingsJson(next);
     final previousSave = _lastSave;
-    final traceName = PerformanceTrace.enabled
-        ? 'settings-${++_saveTraceSequence}'
-        : '';
-    PerformanceTrace.event(traceName, 'queued');
     Object? failure;
     StackTrace? failureStack;
     final save = () async {
       await previousSave;
       try {
-        await PerformanceTrace.async(traceName, () async {
-          // Reconcile a restored view mode against the last acknowledged full
-          // settings snapshot, after preceding writes settle. In-memory equality
-          // alone is unsafe after a failed load/save or a queued mode change.
-          if (reusePersisted && encoded == _persistedSettingsJson) {
-            PerformanceTrace.event('$traceName-unchanged');
-            return;
-          }
+        // Compare the entire serialized snapshot only after preceding writes
+        // settle. Failed loads and writes never acknowledge unpersisted state.
+        if (!reusePersisted || encoded != _persistedSettingsJson) {
           await _store.save(json);
           _persistedSettingsJson = encoded;
-        });
+        }
+        return true;
       } on Object catch (error, stack) {
         failure = error;
         failureStack = stack;
-        // Keep the in-memory preference even when local persistence is unavailable.
+        return false;
       }
     }();
-    _lastSave = save;
-    await save;
+    // The queue tail always settles successfully; each caller retains its own
+    // outcome/error without preventing the next admitted publication.
+    _lastSave = save.then<void>((_) {});
+    final succeeded = await save;
+    if (ref.mounted &&
+        _trackShortcutSaves &&
+        mapEquals(state.shortcutOverrides, next.shortcutOverrides)) {
+      ref.read(shortcutPersistenceOutcomeProvider.notifier).complete(succeeded);
+    }
     if (propagateFailure && failure != null) {
       Error.throwWithStackTrace(failure!, failureStack!);
     }
+    return succeeded;
   }
 }
+
+class ShortcutPersistenceOutcome extends Notifier<bool?> {
+  @override
+  bool? build() => null;
+  void complete(bool saved) => state = saved;
+}
+
+final shortcutPersistenceOutcomeProvider =
+    NotifierProvider<ShortcutPersistenceOutcome, bool?>(
+      ShortcutPersistenceOutcome.new,
+    );
 
 final localSettingsStoreProvider = Provider<LocalSettingsStore>(
   (ref) => const JsonFileLocalSettingsStore(),
@@ -1264,4 +1457,18 @@ String? _normalizedStoredGitWorkspacePath(String? value) {
     return null;
   }
   return p.normalize(p.absolute(value));
+}
+
+// Map insertion order is not a preference change. Lists retain their order,
+// including the release target's qualified Recent resources.
+String _canonicalSettingsJson(AppSettings settings) =>
+    jsonEncode(_canonicalSettingsValue(settings.toJson()));
+
+Object? _canonicalSettingsValue(Object? value) {
+  if (value is Map) {
+    final keys = value.keys.cast<String>().toList()..sort();
+    return {for (final key in keys) key: _canonicalSettingsValue(value[key])};
+  }
+  if (value is List) return value.map(_canonicalSettingsValue).toList();
+  return value;
 }

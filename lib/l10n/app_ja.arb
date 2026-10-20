@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "日付",
   "pdfTitlePageTitleRequired": "タイトルページのタイトルを入力してください。",
   "pdfTocSectionNote": "別のページから始まり、複数ページにわたる場合があります。",
-  "sourceSearchZeroLengthUnsupported": "長さがゼロの正規表現の一致には対応していません（^、$、位置のみに一致する先読みなど）。",
   "workspaceSearchIncomplete": "一部の結果のみ表示しています。さらに表示するか、検索を絞り込んでください。",
   "workspaceSearchShowMore": "さらに結果を表示",
   "workspaceSearchSkippedFiles": "検索は未完了です。次のファイルは 1 MiB を超えているか、読み取れませんでした:",
@@ -420,18 +419,6 @@
     "description": "Insert button label."
   },
   "keyboardShortcuts": "キーボードショートカット",
-  "commandPalette": "コマンドパレット",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "コマンドを入力",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "一致するコマンドはありません",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "現在のエディターのコンテキストでは利用できません",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -715,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "このキーボードショートカット一覧を表示",
+  "shortcutKeyboardShortcutsDescription": "アプリケーションのキーボードショートカットを設定",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -1012,7 +999,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "最近使ったワークスペースを消去",
+  "clearRecentWorkspaces": "最近の履歴を消去",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1943,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "大文字と小文字を区別",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "単語単位",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "正規表現",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "置換後",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2137,10 +2112,6 @@
   "saveAs": "名前を付けて保存",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "無効な正規表現",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "大きなファイル：ハイライトと折りたたみを一時停止しています",
   "@sourceLargeFileFeaturesPaused": {
@@ -4865,14 +4836,12 @@
   "exportInvalidCss": "読み取り可能な UTF-8 .css ファイル（最大 256 KiB）を選択してください。インポート、リソース URL、HTML、実行可能な CSS、エスケープを含む CSS は使用できません。",
   "exportInvalidRange": "{field}: {minimum} から {maximum} の数値を入力してください。",
   "clipboardHistory": "コピーボード履歴",
-  "clipboardHistorySearchHint": "クリップボード履歴を検索",
   "clipboardHistoryDescription": "セッション固有のコピーボード履歴を開く。",
   "clipboardCurrent": "現在のコピーボード",
   "clipboardCurrentExternal": "別のアプリケーションからの現在のコピーボード",
   "clipboardDestination": "{name} に貼り付け",
   "clipboardSessionOnly": "このBusyMarkセッションのみに保存されます。",
   "clipboardNoItems": "コピーボード履歴は空です。",
-  "clipboardNoMatches": "この検索に一致するコピーボードの項目はありません。",
   "clipboardDisabled": "コピーボード履歴のコレクションは設定で無効になっています。",
   "clipboardUnavailable": "現在のコピーボードの内容は利用できませんまたはサポートされていません。",
   "clipboardTooLarge": "このクリップボードの項目は大きすぎて保持できません。",
@@ -4889,8 +4858,6 @@
   "findLocalHistoryDescription": "ローカル履歴のドキュメントとリビジョンの内容を検索します。",
   "localHistoryNoDocuments": "まだローカル履歴を持つドキュメントはありません。",
   "localHistoryNoRevisions": "このドキュメントにはローカル履歴の修正はありません。",
-  "localHistoryNoMatches": "この検索に一致するローカル履歴の修正はありません。",
-  "localHistorySearchHint": "ローカル履歴を検索",
   "localHistorySelectedRevision": "選択されたリビジョン",
   "localHistoryCurrentEditor": "現在の編集内容",
   "localHistoryCurrentDisk": "ディスク上の現在の内容",
@@ -5150,5 +5117,61 @@
   "wsInsertElements": "要素を挿入",
   "wsAdmonitionsAndQuotes": "注意書きと引用",
   "wsSemanticText": "セマンティックテキスト",
-  "wsPropertiesUnavailable": "確認中の要素は利用できません。続行するには要素を確認してください。"
+  "wsPropertiesUnavailable": "確認中の要素は利用できません。続行するには要素を確認してください。",
+  "searchDocumentsCategory": "ドキュメント",
+  "searchTopicsCategory": "トピック",
+  "searchCurrentDocument": "現在のドキュメント",
+  "searchCurrentWorkspace": "現在のワークスペース",
+  "browseNotes": "ノートを参照",
+  "searchActionsCommand": "アクションを検索",
+  "searchDocumentsCommand": "ドキュメントを検索",
+  "searchTopicsCommand": "トピックを検索",
+  "searchRecentCommand": "最近の項目を検索",
+  "searchResourceUnavailable": "このリソースは利用できません。",
+  "notesSync": "ノートを同期",
+  "searchInWorkspace": "ワークスペース内検索",
+  "searchCategory": "検索カテゴリ",
+  "clearHistorySearchScope": "すべてのドキュメントの履歴を検索",
+  "searchInDocument": "ドキュメント内を検索",
+  "searchDocumentHint": "このドキュメントを検索…",
+  "searchWorkspaceHint": "このワークスペースを検索…",
+  "searchOutlineHint": "見出しを検索…",
+  "searchHistoryHint": "ローカル履歴を検索…",
+  "searchEnterText": "検索するテキストを入力",
+  "searchAccountUnavailable": "アカウントを利用できません",
+  "searchDocumentsHint": "ドキュメントを検索…",
+  "searchTopicsHint": "トピックを検索…",
+  "searchRecentHint": "最近の項目を検索…",
+  "searchActionsHint": "アクションを検索…",
+  "searchRequiresNotesWorkspace": "ノートのワークスペースが必要です",
+  "searchSidebarLabel": "検索：",
+  "searchDocumentTextCategory": "文書のテキスト",
+  "searchWorkspaceTextCategory": "ワークスペースのテキスト",
+  "searchHeadingsCategory": "見出し",
+  "shortcutUnassigned": "未割り当て",
+  "shortcutPressKeys": "キーの組み合わせを押してください…",
+  "shortcutRecord": "ショートカットを記録",
+  "shortcutRestoreAll": "すべて既定に戻す",
+  "shortcutRestoreAllQuestion": "すべてのアクションのショートカットを既定に戻しますか？独自の割り当ては削除されます。",
+  "shortcutSaveFailed": "ショートカットは有効ですが保存できませんでした。再起動後も保持するには保存を再試行してください。",
+  "shortcutRetry": "保存を再試行",
+  "shortcutChanged": "割り当てが変更されました。現在のショートカットを確認して再試行してください。",
+  "shortcutInvalid": "この組み合わせはこのコンテキストでは割り当てられません。",
+  "shortcutSystemWarning": "この組み合わせはデスクトップで使われている可能性があります。BusyMarkはシステムのショートカットを上書きできません。",
+  "shortcutConflicts": "このショートカットは次のアクションと競合します：",
+  "shortcutRemove": "割り当てを削除",
+  "shortcutRestoreDefault": "既定に戻す",
+  "shortcutAssign": "割り当て",
+  "shortcutReassign": "再割り当て",
+  "shortcutContextApplication": "アプリケーション",
+  "shortcutContextDocument": "文書の表示",
+  "shortcutContextEditor": "エディターとソース",
+  "shortcutContextWritersideSource": "Writersideのソース",
+  "shortcutContextWorkspace": "ワークスペースの移動",
+  "shortcutContextTree": "サイドバーのツリー",
+  "searchHeadingsCommand": "見出しを検索",
+  "shortcutFixed": "エディターが管理するため、変更できません。",
+  "shortcutDefaultConflict": "既定のショートカットがカスタム割り当てと競合しています。",
+  "shortcutCurrentBinding": "現在のショートカット",
+  "shortcutProposedBinding": "新しいショートカット"
 }

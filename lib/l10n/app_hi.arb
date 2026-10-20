@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "तारीख",
   "pdfTitlePageTitleRequired": "शीर्षक पृष्ठ के लिए शीर्षक दर्ज करें।",
   "pdfTocSectionNote": "अलग पृष्ठ से शुरू होता है और कई पृष्ठों तक जा सकता है।",
-  "sourceSearchZeroLengthUnsupported": "शून्य लंबाई वाले रेगेक्स मिलान समर्थित नहीं हैं (जैसे ^, $ या केवल स्थिति से मेल खाने वाले लुकअहेड)।",
   "workspaceSearchIncomplete": "केवल कुछ परिणाम दिखाए गए हैं। अधिक परिणाम देखें या खोज को सीमित करें।",
   "workspaceSearchShowMore": "अधिक परिणाम दिखाएँ",
   "workspaceSearchSkippedFiles": "खोज अधूरी है। ये फ़ाइलें 1 MiB से बड़ी हैं या पढ़ी नहीं जा सकीं:",
@@ -585,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ",
+  "shortcutKeyboardShortcutsDescription": "अनुप्रयोग के कीबोर्ड शॉर्टकट अनुकूलित करें",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -882,7 +881,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "हालिया कार्यस्थान साफ़ करें",
+  "clearRecentWorkspaces": "हाल का इतिहास साफ़ करें",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "अगला मिलान",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "बड़े-छोटे अक्षरों के प्रति संवेदनशील",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "पूरा शब्द",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "रेगुलर एक्सप्रेशन",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "अमान्य रेगुलर एक्सप्रेशन",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं",
   "@sourceLargeFileFeaturesPaused": {
@@ -3209,9 +3192,6 @@
   "diagnosticMarkdownLinkEmptyText": "लिंक टेक्स्ट खाली है; उसके उद्देश्य का वर्णन करने वाला सुलभ नाम दें।",
   "diagnosticMarkdownLinkReviewText": "जाँचें कि लिंक टेक्स्ट “{text}” संदर्भ में उसके उद्देश्य का वर्णन करता है या नहीं।",
   "diagnosticMarkdownTableEmptyHeader": "तालिका शीर्षकों को अपने कॉलम पहचानने चाहिए; हर खाली शीर्षक पूरा करें।",
-  "commandPalette": "कमांड पैलेट",
-  "commandPaletteHint": "कमांड लिखें",
-  "commandPaletteEmpty": "कोई मेल खाता कमांड नहीं",
   "tableAlignmentUnspecified": "संरेखण: अनिर्दिष्ट",
   "tableAlignmentLeft": "संरेखण: बायाँ",
   "tableAlignmentCenter": "संरेखण: मध्य",
@@ -3326,14 +3306,12 @@
   "exportInvalidCss": "256 KiB तक की पढ़ने योग्य UTF-8 .css फ़ाइल चुनें, जिसमें इंपोर्ट, संसाधन URL, HTML और निष्पादन योग्य या एस्केप वाला CSS न हो।",
   "exportInvalidRange": "{field}: {minimum} से {maximum} के बीच संख्या दर्ज करें।",
   "clipboardHistory": "क्लिपबोर्ड इतिहास",
-  "clipboardHistorySearchHint": "क्लिपबोर्ड इतिहास खोजें",
   "clipboardHistoryDescription": "सत्र-विशिष्ट क्लिपबोर्ड इतिहास खोलें।",
   "clipboardCurrent": "वर्तमान क्लिपबोर्ड",
   "clipboardCurrentExternal": "किसी अन्य एप्लिकेशन से वर्तमान क्लिपबोर्ड",
   "clipboardDestination": "{name} में पेस्ट करें",
   "clipboardSessionOnly": "केवल इस BusyMark सत्र के लिए संग्रहीत।",
   "clipboardNoItems": "क्लिपबोर्ड इतिहास खाली है।",
-  "clipboardNoMatches": "कोई क्लिपबोर्ड आइटम इस खोज से मेल नहीं खाता।",
   "clipboardDisabled": "क्लिपबोर्ड इतिहास संग्रह सेटिंग्स में अक्षम है।",
   "clipboardUnavailable": "वर्तमान क्लिपबोर्ड सामग्री अनुपलब्ध या समर्थित नहीं है।",
   "clipboardTooLarge": "यह क्लिपबोर्ड आइटम बहुत बड़ा है और इसे बनाए रखना संभव नहीं है।",
@@ -3350,8 +3328,6 @@
   "findLocalHistoryDescription": "स्थानीय इतिहास में दस्तावेज़ और संशोधन सामग्री खोजें।",
   "localHistoryNoDocuments": "अभी तक किसी भी दस्तावेज़ में स्थानीय इतिहास नहीं है।",
   "localHistoryNoRevisions": "इस दस्तावेज़ में स्थानीय इतिहास में कोई संशोधन नहीं है।",
-  "localHistoryNoMatches": "यह खोज स्थानीय इतिहास संशोधनों से मेल नहीं खाती।",
-  "localHistorySearchHint": "स्थानीय इतिहास खोजें",
   "localHistorySelectedRevision": "चयनित संशोधन",
   "localHistoryCurrentEditor": "वर्तमान संपादक सामग्री",
   "localHistoryCurrentDisk": "डिस्क पर वर्तमान सामग्री",
@@ -3611,5 +3587,61 @@
   "wsInsertElements": "तत्व जोड़ें",
   "wsAdmonitionsAndQuotes": "सूचनाएँ और उद्धरण",
   "wsSemanticText": "अर्थपूर्ण पाठ",
-  "wsPropertiesUnavailable": "जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।"
+  "wsPropertiesUnavailable": "जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।",
+  "searchDocumentsCategory": "दस्तावेज़",
+  "searchTopicsCategory": "विषय",
+  "searchCurrentDocument": "वर्तमान दस्तावेज़",
+  "searchCurrentWorkspace": "वर्तमान कार्यक्षेत्र",
+  "browseNotes": "नोट ब्राउज़ करें",
+  "searchActionsCommand": "क्रियाएँ खोजें",
+  "searchDocumentsCommand": "दस्तावेज़ खोजें",
+  "searchTopicsCommand": "विषय खोजें",
+  "searchRecentCommand": "हाल के आइटम खोजें",
+  "searchResourceUnavailable": "यह संसाधन उपलब्ध नहीं है।",
+  "notesSync": "नोट सिंक करें",
+  "searchInWorkspace": "कार्यस्थान में खोजें",
+  "searchCategory": "खोज श्रेणी",
+  "clearHistorySearchScope": "दस्तावेज़ों के इतिहास में खोजें",
+  "searchInDocument": "दस्तावेज़ में खोजें",
+  "searchDocumentHint": "इस दस्तावेज़ में खोजें…",
+  "searchWorkspaceHint": "इस कार्यक्षेत्र में खोजें…",
+  "searchOutlineHint": "शीर्षक खोजें…",
+  "searchHistoryHint": "स्थानीय इतिहास में खोजें…",
+  "searchEnterText": "खोजने के लिए पाठ दर्ज करें",
+  "searchAccountUnavailable": "खाता उपलब्ध नहीं है",
+  "searchDocumentsHint": "दस्तावेज़ खोजें…",
+  "searchTopicsHint": "विषय खोजें…",
+  "searchRecentHint": "हाल के आइटम खोजें…",
+  "searchActionsHint": "क्रियाएँ खोजें…",
+  "searchRequiresNotesWorkspace": "नोट्स कार्यक्षेत्र आवश्यक है",
+  "searchSidebarLabel": "खोजें:",
+  "searchDocumentTextCategory": "दस्तावेज़ पाठ",
+  "searchWorkspaceTextCategory": "कार्यस्थान पाठ",
+  "searchHeadingsCategory": "शीर्षक",
+  "shortcutUnassigned": "असाइन नहीं किया गया",
+  "shortcutPressKeys": "कुंजी संयोजन दबाएँ…",
+  "shortcutRecord": "शॉर्टकट रिकॉर्ड करें",
+  "shortcutRestoreAll": "सभी डिफ़ॉल्ट पुनर्स्थापित करें",
+  "shortcutRestoreAllQuestion": "सभी क्रियाओं के डिफ़ॉल्ट शॉर्टकट पुनर्स्थापित करें? कस्टम असाइनमेंट हटा दिए जाएँगे।",
+  "shortcutSaveFailed": "शॉर्टकट सक्रिय हैं लेकिन सहेजे नहीं जा सके। पुनः प्रारंभ के बाद रखने के लिए दोबारा सहेजें।",
+  "shortcutRetry": "सहेजने का पुनः प्रयास करें",
+  "shortcutChanged": "असाइनमेंट बदल गए हैं। वर्तमान शॉर्टकट जाँचें और पुनः प्रयास करें।",
+  "shortcutInvalid": "इस संदर्भ में यह संयोजन असाइन नहीं किया जा सकता।",
+  "shortcutSystemWarning": "आपका डेस्कटॉप इस संयोजन का उपयोग कर सकता है। BusyMark सिस्टम शॉर्टकट नहीं बदल सकता।",
+  "shortcutConflicts": "यह शॉर्टकट इन क्रियाओं से टकराता है:",
+  "shortcutRemove": "असाइनमेंट हटाएँ",
+  "shortcutRestoreDefault": "डिफ़ॉल्ट पुनर्स्थापित करें",
+  "shortcutAssign": "असाइन करें",
+  "shortcutReassign": "फिर से असाइन करें",
+  "shortcutContextApplication": "अनुप्रयोग",
+  "shortcutContextDocument": "दस्तावेज़ दृश्य",
+  "shortcutContextEditor": "संपादक और स्रोत",
+  "shortcutContextWritersideSource": "Writerside स्रोत",
+  "shortcutContextWorkspace": "कार्यस्थान नेविगेशन",
+  "shortcutContextTree": "साइडबार ट्री",
+  "searchHeadingsCommand": "शीर्षक खोजें",
+  "shortcutFixed": "संपादक द्वारा प्रबंधित; कॉन्फ़िगर नहीं किया जा सकता।",
+  "shortcutDefaultConflict": "डिफ़ॉल्ट शॉर्टकट का कस्टम असाइनमेंट से टकराव है।",
+  "shortcutCurrentBinding": "वर्तमान शॉर्टकट",
+  "shortcutProposedBinding": "प्रस्तावित शॉर्टकट"
 }

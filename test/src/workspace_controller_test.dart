@@ -63,6 +63,66 @@ void main() {
     },
   );
 
+  testWidgets('cancelled Recent workspace opening restores the prior buffers', (
+    tester,
+  ) async {
+    final service = _ClosingAutosaveWorkspaceService();
+    final creating = _createControllerHarness(service: service);
+    await tester.pump(Duration.zero);
+    final harness = await creating;
+    await harness.settingsController.setAutoSave(false);
+    final controller = harness.controller;
+    await controller.openPath(service.path);
+    final before = controller.state;
+    final recents = harness.settingsController.state.recentWorkspaces;
+    service.pauseLoad = true;
+    var current = true;
+    final opening = controller.openPath(
+      service.bPath,
+      acceptNavigation: () => current,
+    );
+    await tester.pump();
+    expect(service.loadStarted.isCompleted, isTrue);
+    current = false;
+    service.releaseLoad.complete();
+    await tester.pump();
+    await opening;
+    expect(controller.state.workspace!.id, before.workspace!.id);
+    expect(controller.state.activeBufferId, before.activeBufferId);
+    expect(controller.state.activeText, before.activeText);
+    expect(controller.state.isLoading, isFalse);
+    expect(harness.settingsController.state.recentWorkspaces, same(recents));
+  });
+  testWidgets('cancelled search activation cannot publish a parsed tab', (
+    tester,
+  ) async {
+    final service = _ClosingAutosaveWorkspaceService();
+    final creating = _createControllerHarness(service: service);
+    await tester.pump(Duration.zero);
+    final harness = await creating;
+    await harness.settingsController.setValidateOnEdit(false);
+    await harness.settingsController.setAutoSave(false);
+    final controller = harness.controller;
+    await controller.openPath(service.path);
+    await controller.openActiveFile(service.bPath);
+    await controller.openActiveFile(service.path);
+    final original = controller.state.activeBufferId;
+    final recents = harness.settingsController.state.recentWorkspaces;
+    service.pauseActivation = true;
+    var current = true;
+    final opening = controller.openActiveFile(
+      service.bPath,
+      acceptNavigation: () => current,
+    );
+    await tester.pump();
+    expect(service.activationStarted.isCompleted, isTrue);
+    current = false;
+    service.releaseActivation.complete();
+    await tester.pump();
+    expect(await opening, isFalse);
+    expect(controller.state.activeBufferId, original);
+    expect(harness.settingsController.state.recentWorkspaces, same(recents));
+  });
   for (final change in ['session', 'source']) {
     testWidgets(
       'clean close validates source identity during $change updates',
@@ -4591,7 +4651,8 @@ class _WorkspaceControllerDriver {
 
   WorkspaceState get state => _container.read(workspaceControllerProvider);
 
-  Future<void> openPath(String path) => _notifier.openPath(path);
+  Future<void> openPath(String path, {bool Function()? acceptNavigation}) =>
+      _notifier.openPath(path, acceptNavigation: acceptNavigation);
 
   Future<void> createMarkdownFile() => _notifier.createMarkdownFile();
 
@@ -4655,7 +4716,10 @@ class _WorkspaceControllerDriver {
   Future<bool> deleteWritersideTopicFile(String topicPath) =>
       _notifier.deleteWritersideTopicFile(topicPath);
 
-  Future<bool> openActiveFile(String path) => _notifier.openActiveFile(path);
+  Future<bool> openActiveFile(
+    String path, {
+    bool Function()? acceptNavigation,
+  }) => _notifier.openActiveFile(path, acceptNavigation: acceptNavigation);
 
   Future<bool> activateNextOpenFileTab() => _notifier.activateNextOpenFileTab();
 
@@ -5108,6 +5172,19 @@ class _ClosingAutosaveWorkspaceService extends _AutosaveWorkspaceService {
   var pauseActivation = false;
   final activationStarted = Completer<void>();
   final releaseActivation = Completer<void>();
+  bool pauseLoad = false;
+  final loadStarted = Completer<void>();
+  final releaseLoad = Completer<void>();
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (pauseLoad) {
+      pauseLoad = false;
+      loadStarted.complete();
+      await releaseLoad.future;
+    }
+    return super.loadTextWithSnapshot(path);
+  }
 
   @override
   Future<Workspace> reparseDocument(

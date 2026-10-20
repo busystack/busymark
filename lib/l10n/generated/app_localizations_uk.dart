@@ -586,15 +586,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get keyboardShortcuts => 'Комбінації клавіш';
 
   @override
-  String get commandPalette => 'Палітра команд';
-
-  @override
-  String get commandPaletteHint => 'Введіть команду';
-
-  @override
-  String get commandPaletteEmpty => 'Немає відповідних команд';
-
-  @override
   String get commandUnavailableInContext =>
       'Ця команда недоступна в поточному контексті.';
 
@@ -813,7 +804,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Показати довідку з комбінацій клавіш';
+      'Налаштувати сполучення клавіш застосунку';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -1068,8 +1059,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get validateOnEdit => 'Перевіряти під час редагування';
 
   @override
-  String get clearRecentWorkspaces =>
-      'Очистити список останніх робочих областей';
+  String get clearRecentWorkspaces => 'Очистити недавню історію';
 
   @override
   String get editingButtonsPosition => 'Розташування кнопок редагування';
@@ -1874,15 +1864,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sourceSearchNextMatch => 'Наступний збіг';
 
   @override
-  String get sourceSearchCaseSensitive => 'З урахуванням регістру';
-
-  @override
-  String get sourceSearchWholeWord => 'Ціле слово';
-
-  @override
-  String get sourceSearchRegex => 'Регулярний вираз';
-
-  @override
   String get sourceSearchReplacement => 'Замінити на';
 
   @override
@@ -2007,13 +1988,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get saveAs => 'Зберегти як';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Збіги регулярних виразів нульової довжини не підтримуються (наприклад, ^, \$ або перевірки вперед, що збігаються лише з позицією).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4420,9 +4394,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get clipboardHistory => 'Історія Вирізання';
 
   @override
-  String get clipboardHistorySearchHint => 'Пошук в історії буфера обміну';
-
-  @override
   String get clipboardHistoryDescription =>
       'Відкрити історію вирізання, прив\'язану до сесії.';
 
@@ -4443,10 +4414,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Історія вирізання порожня.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Жоден елемент вирізання не відповідає цьому пошуку.';
 
   @override
   String get clipboardDisabled =>
@@ -4504,13 +4471,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Цей документ не має версій локальної історії.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Жодна версія локальної історії не відповідає цьому пошуку.';
-
-  @override
-  String get localHistorySearchHint => 'Пошук у локальній історії';
 
   @override
   String get localHistorySelectedRevision => 'Обрана версія';
@@ -5471,4 +5431,178 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Елемент, що перевіряється, недоступний. Виберіть елемент для продовження.';
+
+  @override
+  String get searchDocumentsCategory => 'Документи';
+
+  @override
+  String get searchTopicsCategory => 'Теми';
+
+  @override
+  String get searchCurrentDocument => 'Поточний документ';
+
+  @override
+  String get searchCurrentWorkspace => 'Поточна робоча область';
+
+  @override
+  String get browseNotes => 'Переглянути нотатки';
+
+  @override
+  String get searchActionsCommand => 'Пошук дій';
+
+  @override
+  String get searchDocumentsCommand => 'Пошук документів';
+
+  @override
+  String get searchTopicsCommand => 'Пошук тем';
+
+  @override
+  String get searchRecentCommand => 'Пошук нещодавніх';
+
+  @override
+  String get searchResourceUnavailable => 'Цей ресурс недоступний.';
+
+  @override
+  String get notesSync => 'Синхронізувати нотатки';
+
+  @override
+  String get searchInWorkspace => 'Пошук у робочій області';
+
+  @override
+  String get searchCategory => 'Категорія пошуку';
+
+  @override
+  String get clearHistorySearchScope => 'Пошук в історії документів';
+
+  @override
+  String get searchInDocument => 'Пошук у документі';
+
+  @override
+  String get searchDocumentHint => 'Пошук у цьому документі…';
+
+  @override
+  String get searchWorkspaceHint => 'Пошук у цьому робочому просторі…';
+
+  @override
+  String get searchOutlineHint => 'Пошук заголовків…';
+
+  @override
+  String get searchHistoryHint => 'Пошук у локальній історії…';
+
+  @override
+  String get searchEnterText => 'Введіть текст для пошуку';
+
+  @override
+  String get searchAccountUnavailable => 'Обліковий запис недоступний';
+
+  @override
+  String get searchDocumentsHint => 'Пошук документів…';
+
+  @override
+  String get searchTopicsHint => 'Пошук тем…';
+
+  @override
+  String get searchRecentHint => 'Пошук нещодавніх…';
+
+  @override
+  String get searchActionsHint => 'Пошук дій…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Потрібен робочий простір нотаток';
+
+  @override
+  String get searchSidebarLabel => 'Пошук:';
+
+  @override
+  String get searchDocumentTextCategory => 'Текст документа';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Текст робочої області';
+
+  @override
+  String get searchHeadingsCategory => 'Заголовки';
+
+  @override
+  String get shortcutUnassigned => 'Не призначено';
+
+  @override
+  String get shortcutPressKeys => 'Натисніть сполучення клавіш…';
+
+  @override
+  String get shortcutRecord => 'Записати сполучення клавіш';
+
+  @override
+  String get shortcutRestoreAll => 'Відновити всі типові значення';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Відновити типові сполучення всіх дій? Власні призначення буде видалено.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Сполучення діють, але їх не збережено. Повторіть збереження, щоб залишити їх після перезапуску.';
+
+  @override
+  String get shortcutRetry => 'Повторити збереження';
+
+  @override
+  String get shortcutChanged =>
+      'Призначення змінилися. Перевірте поточні сполучення та повторіть спробу.';
+
+  @override
+  String get shortcutInvalid =>
+      'Це сполучення не можна призначити в цьому контексті.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Це сполучення може використовуватися стільницею. BusyMark не може перевизначати системні сполучення.';
+
+  @override
+  String get shortcutConflicts => 'Це сполучення конфліктує з такими діями:';
+
+  @override
+  String get shortcutRemove => 'Вилучити призначення';
+
+  @override
+  String get shortcutRestoreDefault => 'Відновити типове';
+
+  @override
+  String get shortcutAssign => 'Призначити';
+
+  @override
+  String get shortcutReassign => 'Перепризначити';
+
+  @override
+  String get shortcutContextApplication => 'Застосунок';
+
+  @override
+  String get shortcutContextDocument => 'Подання документа';
+
+  @override
+  String get shortcutContextEditor => 'Редактор і джерело';
+
+  @override
+  String get shortcutContextWritersideSource => 'Джерело Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Навігація робочою областю';
+
+  @override
+  String get shortcutContextTree => 'Дерева бічної панелі';
+
+  @override
+  String get searchHeadingsCommand => 'Пошук заголовків';
+
+  @override
+  String get shortcutFixed => 'Керується редактором; налаштування недоступне.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Типове сполучення конфліктує з користувацьким призначенням.';
+
+  @override
+  String get shortcutCurrentBinding => 'Поточне сполучення';
+
+  @override
+  String get shortcutProposedBinding => 'Запропоноване сполучення';
 }

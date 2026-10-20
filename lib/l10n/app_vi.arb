@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Ngày",
   "pdfTitlePageTitleRequired": "Nhập tiêu đề cho trang tiêu đề.",
   "pdfTocSectionNote": "Bắt đầu trên trang riêng và có thể kéo dài nhiều trang.",
-  "sourceSearchZeroLengthUnsupported": "Không hỗ trợ kết quả khớp regex có độ dài bằng 0 (ví dụ ^, $ hoặc lookahead chỉ khớp với một vị trí).",
   "workspaceSearchIncomplete": "Chỉ hiển thị một phần kết quả. Hiển thị thêm hoặc thu hẹp tìm kiếm.",
   "workspaceSearchShowMore": "Hiển thị thêm kết quả",
   "workspaceSearchSkippedFiles": "Tìm kiếm chưa đầy đủ. Các tệp này vượt quá 1 MiB hoặc không thể đọc được:",
@@ -420,18 +419,6 @@
     "description": "Insert button label."
   },
   "keyboardShortcuts": "Phím tắt",
-  "commandPalette": "Bảng lệnh",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "Nhập lệnh",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "Không có lệnh phù hợp",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -715,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Hiển thị tham chiếu phím tắt này",
+  "shortcutKeyboardShortcutsDescription": "Tùy chỉnh phím tắt của ứng dụng",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -1012,7 +999,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Xóa không gian làm việc gần đây",
+  "clearRecentWorkspaces": "Xóa lịch sử gần đây",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1943,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Phân biệt chữ hoa, chữ thường",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Toàn bộ từ",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Biểu thức chính quy",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Thay thế bằng",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2137,10 +2112,6 @@
   "saveAs": "Lưu thành",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Biểu thức chính quy không hợp lệ",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Tệp lớn: đã tạm dừng tô sáng và thu gọn",
   "@sourceLargeFileFeaturesPaused": {
@@ -4865,14 +4836,12 @@
   "exportInvalidCss": "Chọn tệp .css UTF-8 đọc được tối đa 256 KiB, không có nhập tài nguyên, URL tài nguyên, HTML, CSS thực thi hoặc ký tự thoát.",
   "exportInvalidRange": "{field}: nhập số từ {minimum} đến {maximum}.",
   "clipboardHistory": "Lịch sử sao chép",
-  "clipboardHistorySearchHint": "Tìm kiếm lịch sử bảng nhớ tạm",
   "clipboardHistoryDescription": "Mở lịch sử sao chép cục bộ phiên.",
   "clipboardCurrent": "Lịch sử sao chép hiện tại",
   "clipboardCurrentExternal": "Lịch sử sao chép từ một ứng dụng khác",
   "clipboardDestination": "Dán vào {name}",
   "clipboardSessionOnly": "Chỉ lưu trong phiên BusyMark này.",
   "clipboardNoItems": "Lịch sử sao chép trống.",
-  "clipboardNoMatches": "Không có mục sao chép nào khớp với tìm kiếm này.",
   "clipboardDisabled": "Bộ sưu tập Lịch sử sao chép bị vô hiệu hóa trong Cài đặt.",
   "clipboardUnavailable": "Nội dung sao chép hiện tại không khả dụng hoặc không được hỗ trợ.",
   "clipboardTooLarge": "Mục này trong clipboard quá lớn để lưu.",
@@ -4889,8 +4858,6 @@
   "findLocalHistoryDescription": "Tìm kiếm các tài liệu và nội dung phiên bản trong Lịch sử cục bộ.",
   "localHistoryNoDocuments": "Chưa có tài liệu nào có Lịch sử cục bộ.",
   "localHistoryNoRevisions": "Tài liệu này không có các phiên bản Lịch sử cục bộ.",
-  "localHistoryNoMatches": "Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.",
-  "localHistorySearchHint": "Tìm kiếm lịch sử cục bộ",
   "localHistorySelectedRevision": "Phiên bản đã chọn",
   "localHistoryCurrentEditor": "Nội dung trình soạn thảo hiện tại",
   "localHistoryCurrentDisk": "Nội dung hiện tại trên ổ đĩa",
@@ -5150,5 +5117,61 @@
   "wsInsertElements": "Chèn phần tử",
   "wsAdmonitionsAndQuotes": "Lưu ý và trích dẫn",
   "wsSemanticText": "Văn bản ngữ nghĩa",
-  "wsPropertiesUnavailable": "Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục."
+  "wsPropertiesUnavailable": "Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.",
+  "searchDocumentsCategory": "Tài liệu",
+  "searchTopicsCategory": "Chủ đề",
+  "searchCurrentDocument": "Tài liệu hiện tại",
+  "searchCurrentWorkspace": "Không gian làm việc hiện tại",
+  "browseNotes": "Duyệt ghi chú",
+  "searchActionsCommand": "Tìm thao tác",
+  "searchDocumentsCommand": "Tìm tài liệu",
+  "searchTopicsCommand": "Tìm chủ đề",
+  "searchRecentCommand": "Tìm mục gần đây",
+  "searchResourceUnavailable": "Tài nguyên này không khả dụng.",
+  "notesSync": "Đồng bộ ghi chú",
+  "searchInWorkspace": "Tìm trong không gian làm việc",
+  "searchCategory": "Danh mục tìm kiếm",
+  "clearHistorySearchScope": "Tìm trong lịch sử tài liệu",
+  "searchInDocument": "Tìm trong tài liệu",
+  "searchDocumentHint": "Tìm trong tài liệu này…",
+  "searchWorkspaceHint": "Tìm trong không gian làm việc này…",
+  "searchOutlineHint": "Tìm tiêu đề…",
+  "searchHistoryHint": "Tìm trong lịch sử cục bộ…",
+  "searchEnterText": "Nhập văn bản để tìm kiếm",
+  "searchAccountUnavailable": "Tài khoản không khả dụng",
+  "searchDocumentsHint": "Tìm tài liệu…",
+  "searchTopicsHint": "Tìm chủ đề…",
+  "searchRecentHint": "Tìm mục gần đây…",
+  "searchActionsHint": "Tìm thao tác…",
+  "searchRequiresNotesWorkspace": "Yêu cầu không gian làm việc Ghi chú",
+  "searchSidebarLabel": "Tìm kiếm:",
+  "searchDocumentTextCategory": "Văn bản tài liệu",
+  "searchWorkspaceTextCategory": "Văn bản không gian làm việc",
+  "searchHeadingsCategory": "Tiêu đề",
+  "shortcutUnassigned": "Chưa gán",
+  "shortcutPressKeys": "Nhấn tổ hợp phím…",
+  "shortcutRecord": "Ghi phím tắt",
+  "shortcutRestoreAll": "Khôi phục tất cả mặc định",
+  "shortcutRestoreAllQuestion": "Khôi phục phím tắt mặc định của mọi thao tác? Các gán tùy chỉnh sẽ bị xóa.",
+  "shortcutSaveFailed": "Phím tắt đang có hiệu lực nhưng chưa lưu được. Thử lưu lại để giữ chúng sau khi khởi động lại.",
+  "shortcutRetry": "Thử lưu lại",
+  "shortcutChanged": "Các gán đã thay đổi. Xem lại phím tắt hiện tại và thử lại.",
+  "shortcutInvalid": "Không thể gán tổ hợp này trong ngữ cảnh này.",
+  "shortcutSystemWarning": "Môi trường màn hình có thể dùng tổ hợp này. BusyMark không thể ghi đè phím tắt hệ thống.",
+  "shortcutConflicts": "Phím tắt này xung đột với các thao tác sau:",
+  "shortcutRemove": "Xóa gán",
+  "shortcutRestoreDefault": "Khôi phục mặc định",
+  "shortcutAssign": "Gán",
+  "shortcutReassign": "Gán lại",
+  "shortcutContextApplication": "Ứng dụng",
+  "shortcutContextDocument": "Chế độ xem tài liệu",
+  "shortcutContextEditor": "Trình sửa và mã nguồn",
+  "shortcutContextWritersideSource": "Mã nguồn Writerside",
+  "shortcutContextWorkspace": "Điều hướng không gian làm việc",
+  "shortcutContextTree": "Cây thanh bên",
+  "searchHeadingsCommand": "Tìm tiêu đề",
+  "shortcutFixed": "Do trình soạn thảo quản lý; không thể cấu hình.",
+  "shortcutDefaultConflict": "Phím tắt mặc định xung đột với gán tùy chỉnh.",
+  "shortcutCurrentBinding": "Phím tắt hiện tại",
+  "shortcutProposedBinding": "Phím tắt đề xuất"
 }

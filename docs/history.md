@@ -6,8 +6,9 @@ document revisions on this device for comparison and recovery.
 
 ## Clipboard History
 
-Open **Clipboard History** from the sidebar, command palette, or an editor
-context menu. Search examines each item's complete text. Select an item and use
+Open **Clipboard History** from the sidebar, Actions search, or an editor
+context menu. The panel shows the current clipboard followed by retained entries,
+without a search field. Select an item and use
 **Paste** or **Paste as Plain Text**; Enter and double-click also insert the
 selected item at the latest editable selection.
 
@@ -48,14 +49,30 @@ plain-text fallbacks outside BusyMark.
 
 ## Local History
 
-Open **Local History** from the sidebar, command palette, an editor or document
-tab context menu, or a file-tree context menu. The revision list normally follows
-the active document.
+Open **Local History** from the sidebar (Ctrl+5 by default), Actions search, an
+editor or document-tab context menu, or a file-tree context menu. The revision
+list normally follows the active document.
 
-Use **Find in Local History…** to locate retained closed, renamed, deleted, and
-previously untitled documents by name, path, or revision content. Selecting a
-result temporarily inspects that document; use Back to return to the active
-document.
+Use **Find in Local History…** (Ctrl+Shift+L by default) to search retained closed,
+renamed, deleted and previously untitled documents by name, current or historical
+path, or revision content. The shared header owns the query and results appear
+in the search sidebar. Scoped history results retain removable document context;
+clear that context to search retained history generally. The ordinary History
+panel has no Search or Find action; its management menu provides Refresh and
+confirmed clearing operations.
+An empty query waits for input and does not enumerate retained documents or read
+revision contents. Clearing the query cancels matching and removes its results.
+
+A document result opens its retained timeline. A content result opens that exact
+revision for comparison and leaves the search sidebar available. Inspection never
+restores content or opens a current file merely because it has the same path.
+Missing revisions produce feedback rather than selecting another revision.
+
+Opening ordinary Local History shows its full timeline, with no private search
+field or remembered filter. Search retains its own query and selection for return
+through the Search button. Both views use the same retained identities and
+comparison operations. Use Back to return from retained inspection to the active
+document. History matching is literal and case-insensitive, without regex options.
 
 BusyMark stores complete source text together with its encoding and line-ending
 policy. It records:

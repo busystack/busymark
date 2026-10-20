@@ -1,3 +1,4 @@
+import '../../search/welcome_notes_action.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -23,14 +24,30 @@ class NextcloudNotesSettings extends ConsumerStatefulWidget {
 class _NextcloudNotesSettingsState
     extends ConsumerState<NextcloudNotesSettings> {
   final _server = TextEditingController();
+  late final WelcomeNotesActionController _pendingWelcome;
+  bool _returningToWelcome = false;
+  @override
+  void initState() {
+    super.initState();
+    _pendingWelcome = ref.read(welcomeNotesActionProvider.notifier);
+  }
+
   @override
   void dispose() {
+    if (!_returningToWelcome) Future<void>.microtask(_pendingWelcome.clear);
     _server.dispose();
     super.dispose();
   }
 
   Future<void> _connect() async {
-    await ref.read(nextcloudConnectionProvider.notifier).connect(_server.text);
+    final connected = await ref
+        .read(nextcloudConnectionProvider.notifier)
+        .connect(_server.text);
+    if (mounted && connected && ref.read(welcomeNotesActionProvider) != null) {
+      _returningToWelcome = true;
+      context.go('/');
+      return;
+    }
     if (!mounted) return;
     final account = ref.read(nextcloudConnectionProvider).account;
     if (account != null) {
@@ -119,7 +136,10 @@ class _NextcloudNotesSettingsState
             if (connection.phase == NextcloudConnectionPhase.awaitingBrowser)
               BusyMarkActionRow(
                 title: context.l10n.cancel,
-                onTap: controller.cancel,
+                onTap: () {
+                  ref.read(welcomeNotesActionProvider.notifier).clear();
+                  controller.cancel();
+                },
               ),
           ],
         ),

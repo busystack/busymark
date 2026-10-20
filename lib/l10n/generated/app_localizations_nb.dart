@@ -589,15 +589,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get keyboardShortcuts => 'Tastatursnarveier';
 
   @override
-  String get commandPalette => 'Kommandopalett';
-
-  @override
-  String get commandPaletteHint => 'Skriv inn en kommando';
-
-  @override
-  String get commandPaletteEmpty => 'Ingen samsvarende kommandoer';
-
-  @override
   String get commandUnavailableInContext =>
       'Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.';
 
@@ -815,7 +806,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Vis denne oversikten over tastatursnarveier';
+      'Tilpass programmets hurtigtaster';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Åpne syntaksreferansen';
@@ -1063,7 +1054,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get validateOnEdit => 'Valider under redigering';
 
   @override
-  String get clearRecentWorkspaces => 'Tøm nylige arbeidsområder';
+  String get clearRecentWorkspaces => 'Tøm nylig historikk';
 
   @override
   String get editingButtonsPosition => 'Plassering av redigeringsknapper';
@@ -1848,15 +1839,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get sourceSearchNextMatch => 'Neste treff';
 
   @override
-  String get sourceSearchCaseSensitive => 'Skill mellom store og små bokstaver';
-
-  @override
-  String get sourceSearchWholeWord => 'Hele ord';
-
-  @override
-  String get sourceSearchRegex => 'Regulært uttrykk';
-
-  @override
   String get sourceSearchReplacement => 'Erstatt med';
 
   @override
@@ -1982,13 +1964,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get saveAs => 'Lagre som';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Ugyldig regulært uttrykk';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Regex-treff med null lengde støttes ikke (for eksempel ^, \$ eller fremoversøk som bare samsvarer med en posisjon).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4360,9 +4335,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get clipboardHistory => 'Utklippshistorie';
 
   @override
-  String get clipboardHistorySearchHint => 'Søk i utklippstavlehistorikken';
-
-  @override
   String get clipboardHistoryDescription =>
       'Åpne historien for utklippet som er lokal for sesjonen.';
 
@@ -4383,10 +4355,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Utklippshistorien er tom.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ingen utklippsposter samsvarer med denne søkingen.';
 
   @override
   String get clipboardDisabled =>
@@ -4444,12 +4412,6 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dette dokumentet har ingen revisjoner i Lokal Historikk.';
-
-  @override
-  String get localHistoryNoMatches => 'Ingen revisjoner matcher denne søken.';
-
-  @override
-  String get localHistorySearchHint => 'Søk i lokal historikk';
 
   @override
   String get localHistorySelectedRevision => 'Valgt revisjon';
@@ -5407,4 +5369,179 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumenter';
+
+  @override
+  String get searchTopicsCategory => 'Emner';
+
+  @override
+  String get searchCurrentDocument => 'Gjeldende dokument';
+
+  @override
+  String get searchCurrentWorkspace => 'Gjeldende arbeidsområde';
+
+  @override
+  String get browseNotes => 'Bla gjennom notater';
+
+  @override
+  String get searchActionsCommand => 'Søk etter handlinger';
+
+  @override
+  String get searchDocumentsCommand => 'Søk etter dokumenter';
+
+  @override
+  String get searchTopicsCommand => 'Søk etter emner';
+
+  @override
+  String get searchRecentCommand => 'Søk i nylige';
+
+  @override
+  String get searchResourceUnavailable => 'Denne ressursen er utilgjengelig.';
+
+  @override
+  String get notesSync => 'Synkroniser notater';
+
+  @override
+  String get searchInWorkspace => 'Søk i arbeidsområde';
+
+  @override
+  String get searchCategory => 'Søkekategori';
+
+  @override
+  String get clearHistorySearchScope => 'Søk i dokumenthistorikken';
+
+  @override
+  String get searchInDocument => 'Søk i dokument';
+
+  @override
+  String get searchDocumentHint => 'Søk i dette dokumentet…';
+
+  @override
+  String get searchWorkspaceHint => 'Søk i dette arbeidsområdet…';
+
+  @override
+  String get searchOutlineHint => 'Søk i overskrifter…';
+
+  @override
+  String get searchHistoryHint => 'Søk i lokal historikk…';
+
+  @override
+  String get searchEnterText => 'Skriv inn tekst for å søke';
+
+  @override
+  String get searchAccountUnavailable => 'Konto utilgjengelig';
+
+  @override
+  String get searchDocumentsHint => 'Søk etter dokumenter…';
+
+  @override
+  String get searchTopicsHint => 'Søk etter emner…';
+
+  @override
+  String get searchRecentHint => 'Søk i nylige…';
+
+  @override
+  String get searchActionsHint => 'Søk etter handlinger…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Krever et notatarbeidsområde';
+
+  @override
+  String get searchSidebarLabel => 'Søk:';
+
+  @override
+  String get searchDocumentTextCategory => 'Dokumenttekst';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Arbeidsområdetekst';
+
+  @override
+  String get searchHeadingsCategory => 'Overskrifter';
+
+  @override
+  String get shortcutUnassigned => 'Ikke tilordnet';
+
+  @override
+  String get shortcutPressKeys => 'Trykk en tastekombinasjon…';
+
+  @override
+  String get shortcutRecord => 'Registrer hurtigtast';
+
+  @override
+  String get shortcutRestoreAll => 'Gjenopprett alle standarder';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Gjenopprette standardhurtigtaster for alle handlinger? Egne tilordninger fjernes.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Hurtigtastene er aktive, men kunne ikke lagres. Prøv igjen for å beholde dem etter omstart.';
+
+  @override
+  String get shortcutRetry => 'Prøv lagring igjen';
+
+  @override
+  String get shortcutChanged =>
+      'Tilordningene er endret. Se gjennom gjeldende hurtigtaster og prøv igjen.';
+
+  @override
+  String get shortcutInvalid =>
+      'Denne kombinasjonen kan ikke tilordnes i denne sammenhengen.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Skrivebordet kan bruke denne kombinasjonen. BusyMark kan ikke overstyre systemhurtigtaster.';
+
+  @override
+  String get shortcutConflicts =>
+      'Denne hurtigtasten overlapper disse handlingene:';
+
+  @override
+  String get shortcutRemove => 'Fjern tilordning';
+
+  @override
+  String get shortcutRestoreDefault => 'Gjenopprett standard';
+
+  @override
+  String get shortcutAssign => 'Tilordne';
+
+  @override
+  String get shortcutReassign => 'Tilordne på nytt';
+
+  @override
+  String get shortcutContextApplication => 'Program';
+
+  @override
+  String get shortcutContextDocument => 'Dokumentvisninger';
+
+  @override
+  String get shortcutContextEditor => 'Redigering og kilde';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside-kilde';
+
+  @override
+  String get shortcutContextWorkspace => 'Arbeidsområdenavigasjon';
+
+  @override
+  String get shortcutContextTree => 'Sidefelttrær';
+
+  @override
+  String get searchHeadingsCommand => 'Søk i overskrifter';
+
+  @override
+  String get shortcutFixed => 'Håndteres av redigereren; kan ikke tilpasses.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Standardhurtigtasten er i konflikt med en egendefinert tilordning.';
+
+  @override
+  String get shortcutCurrentBinding => 'Gjeldende hurtigtast';
+
+  @override
+  String get shortcutProposedBinding => 'Foreslått hurtigtast';
 }

@@ -1,3 +1,6 @@
+import 'package:busymark/src/app/command_registry.dart';
+import 'package:busymark/src/app/keymap_controller.dart';
+import 'package:busymark/src/app/shortcut_binding.dart';
 import 'dart:async';
 
 import 'package:busymark/src/app/app_theme.dart';
@@ -11,6 +14,77 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'modal text input preserves local editing when an application binding overlaps it',
+    (tester) async {
+      var executed = 0;
+      final registry = effectiveCommandRegistry(
+        BusyMarkCommandCatalog.create(
+          executions: {BusyMarkCommandIds.newDocument: () => executed++},
+        ),
+        {
+          'file.newDocument': const BusyMarkKeyBinding(
+            LogicalKeyboardKey.keyA,
+            control: true,
+          ),
+          'text.selectAll': null,
+        },
+      );
+      final text = TextEditingController(text: 'local modal input');
+      addTearDown(text.dispose);
+      late BuildContext host;
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (_, child) => BusyMarkCommandRegistryScope(
+            registry: registry,
+            child: Shortcuts(
+              shortcuts: registry.shortcutIntents(
+                scopes: {BusyMarkCommandScope.application},
+                intentFor: BusyMarkCommandIntent.new,
+              ),
+              child: Actions(
+                actions: {
+                  BusyMarkCommandIntent: CallbackAction<BusyMarkCommandIntent>(
+                    onInvoke: (i) {
+                      registry.execute(i.commandId);
+                      return null;
+                    },
+                  ),
+                },
+                child: child!,
+              ),
+            ),
+          ),
+          home: Builder(
+            builder: (c) {
+              host = c;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      final dialog = showBusyMarkModalDialog<void>(
+        host,
+        builder: (_) =>
+            Dialog(child: TextField(controller: text, autofocus: true)),
+      );
+      await tester.pumpAndSettle();
+      text.selection = const TextSelection.collapsed(offset: 1);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        text.selection,
+        TextSelection(baseOffset: 0, extentOffset: text.text.length),
+      );
+      expect(executed, 0);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await dialog;
+    },
+  );
+
   testWidgets('modal dialogs stop app and editor shortcuts', (tester) async {
     const channel = MethodChannel('com.busymark.test/modal-shortcuts');
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
@@ -33,11 +107,11 @@ void main() {
       MaterialApp(
         builder: (context, child) => Shortcuts(
           shortcuts: <ShortcutActivator, Intent>{
-            BusyMarkAppShortcutActivators.nextTab: const _AppShortcutIntent(),
-            BusyMarkAppShortcutActivators.previousTab:
+            BusyMarkAppShortcuts.nextTab.activator: const _AppShortcutIntent(),
+            BusyMarkAppShortcuts.previousTab.activator:
                 const _AppShortcutIntent(),
-            BusyMarkAppShortcutActivators.closeTab: const _AppShortcutIntent(),
-            BusyMarkEditorShortcutActivators.heading1:
+            BusyMarkAppShortcuts.closeTab.activator: const _AppShortcutIntent(),
+            BusyMarkEditorShortcuts.heading1.activator:
                 const _EditorShortcutIntent(),
           },
           child: Actions(

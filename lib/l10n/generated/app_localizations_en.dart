@@ -584,15 +584,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyboardShortcuts => 'Keyboard Shortcuts';
 
   @override
-  String get commandPalette => 'Command Palette';
-
-  @override
-  String get commandPaletteHint => 'Type a command';
-
-  @override
-  String get commandPaletteEmpty => 'No matching commands';
-
-  @override
   String get commandUnavailableInContext =>
       'Unavailable in the current editor context';
 
@@ -810,7 +801,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Show this keyboard shortcut reference';
+      'Customize application keyboard shortcuts';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Open the Syntax Reference';
@@ -1058,7 +1049,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validateOnEdit => 'Validate on edit';
 
   @override
-  String get clearRecentWorkspaces => 'Clear recent workspaces';
+  String get clearRecentWorkspaces => 'Clear recent history';
 
   @override
   String get editingButtonsPosition => 'Editing buttons position';
@@ -1839,15 +1830,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceSearchNextMatch => 'Next match';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
-
-  @override
-  String get sourceSearchWholeWord => 'Whole word';
-
-  @override
-  String get sourceSearchRegex => 'Regex';
-
-  @override
   String get sourceSearchReplacement => 'Replace with';
 
   @override
@@ -1978,13 +1960,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saveAs => 'Save As';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Invalid regular expression';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4380,9 +4355,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clipboardHistory => 'Clipboard History';
 
   @override
-  String get clipboardHistorySearchHint => 'Search clipboard history';
-
-  @override
   String get clipboardHistoryDescription =>
       'Open the session-local clipboard history.';
 
@@ -4403,9 +4375,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Clipboard history is empty.';
-
-  @override
-  String get clipboardNoMatches => 'No clipboard items match this search.';
 
   @override
   String get clipboardDisabled =>
@@ -4461,13 +4430,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'This document has no Local History revisions.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'No Local History revisions match this search.';
-
-  @override
-  String get localHistorySearchHint => 'Search local history';
 
   @override
   String get localHistorySelectedRevision => 'Selected revision';
@@ -5418,4 +5380,178 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'The inspected element is unavailable. Inspect an element to continue.';
+
+  @override
+  String get searchDocumentsCategory => 'Documents';
+
+  @override
+  String get searchTopicsCategory => 'Topics';
+
+  @override
+  String get searchCurrentDocument => 'Current document';
+
+  @override
+  String get searchCurrentWorkspace => 'Current workspace';
+
+  @override
+  String get browseNotes => 'Browse Notes';
+
+  @override
+  String get searchActionsCommand => 'Search Actions';
+
+  @override
+  String get searchDocumentsCommand => 'Search Documents';
+
+  @override
+  String get searchTopicsCommand => 'Search Topics';
+
+  @override
+  String get searchRecentCommand => 'Search Recent';
+
+  @override
+  String get searchResourceUnavailable => 'This resource is unavailable.';
+
+  @override
+  String get notesSync => 'Sync notes';
+
+  @override
+  String get searchInWorkspace => 'Search in Workspace';
+
+  @override
+  String get searchCategory => 'Search category';
+
+  @override
+  String get clearHistorySearchScope => 'Search history across documents';
+
+  @override
+  String get searchInDocument => 'Search in Document';
+
+  @override
+  String get searchDocumentHint => 'Search this document…';
+
+  @override
+  String get searchWorkspaceHint => 'Search this workspace…';
+
+  @override
+  String get searchOutlineHint => 'Search headings…';
+
+  @override
+  String get searchHistoryHint => 'Search Local History…';
+
+  @override
+  String get searchEnterText => 'Enter text to search';
+
+  @override
+  String get searchAccountUnavailable => 'Account unavailable';
+
+  @override
+  String get searchDocumentsHint => 'Search documents…';
+
+  @override
+  String get searchTopicsHint => 'Search topics…';
+
+  @override
+  String get searchRecentHint => 'Search recent resources…';
+
+  @override
+  String get searchActionsHint => 'Search actions…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Requires a Notes workspace';
+
+  @override
+  String get searchSidebarLabel => 'Search:';
+
+  @override
+  String get searchDocumentTextCategory => 'Document Text';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Workspace Text';
+
+  @override
+  String get searchHeadingsCategory => 'Headings';
+
+  @override
+  String get shortcutUnassigned => 'Unassigned';
+
+  @override
+  String get shortcutPressKeys => 'Press a key combination…';
+
+  @override
+  String get shortcutRecord => 'Record shortcut';
+
+  @override
+  String get shortcutRestoreAll => 'Restore all defaults';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Restore every action’s default shortcut? Custom assignments will be removed.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Shortcuts are active but could not be saved. Retry to keep them after restart.';
+
+  @override
+  String get shortcutRetry => 'Retry saving';
+
+  @override
+  String get shortcutChanged =>
+      'Assignments changed. Review the current shortcuts and try again.';
+
+  @override
+  String get shortcutInvalid =>
+      'This combination cannot be assigned in this context.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'This combination may be used by your desktop. BusyMark cannot override system shortcuts.';
+
+  @override
+  String get shortcutConflicts => 'This shortcut overlaps these actions:';
+
+  @override
+  String get shortcutRemove => 'Remove assignment';
+
+  @override
+  String get shortcutRestoreDefault => 'Restore default';
+
+  @override
+  String get shortcutAssign => 'Assign';
+
+  @override
+  String get shortcutReassign => 'Reassign';
+
+  @override
+  String get shortcutContextApplication => 'Application';
+
+  @override
+  String get shortcutContextDocument => 'Document views';
+
+  @override
+  String get shortcutContextEditor => 'Editor and Source';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside Source';
+
+  @override
+  String get shortcutContextWorkspace => 'Workspace navigation';
+
+  @override
+  String get shortcutContextTree => 'Sidebar trees';
+
+  @override
+  String get searchHeadingsCommand => 'Search Headings';
+
+  @override
+  String get shortcutFixed => 'Handled by the editor; not configurable.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Default shortcut conflicts with a custom assignment.';
+
+  @override
+  String get shortcutCurrentBinding => 'Current shortcut';
+
+  @override
+  String get shortcutProposedBinding => 'Proposed shortcut';
 }

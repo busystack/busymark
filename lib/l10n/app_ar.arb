@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "التاريخ",
   "pdfTitlePageTitleRequired": "أدخل عنوانًا لصفحة العنوان.",
   "pdfTocSectionNote": "يبدأ في صفحة منفصلة وقد يمتد إلى عدة صفحات.",
-  "sourceSearchZeroLengthUnsupported": "لا تُدعم مطابقات التعبير النمطي ذات الطول الصفري (مثل ^ أو $ أو الاستباق الذي يطابق موضعًا فقط).",
   "workspaceSearchIncomplete": "تظهر بعض النتائج فقط. اعرض المزيد أو ضيّق نطاق البحث.",
   "workspaceSearchShowMore": "عرض المزيد من النتائج",
   "workspaceSearchSkippedFiles": "البحث غير مكتمل. تجاوز حجم هذه الملفات 1 MiB أو تعذّرت قراءتها:",
@@ -585,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "إظهار مرجع اختصارات لوحة المفاتيح",
+  "shortcutKeyboardShortcutsDescription": "تخصيص اختصارات لوحة مفاتيح التطبيق",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -882,7 +881,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "مسح مساحات العمل الأخيرة",
+  "clearRecentWorkspaces": "مسح السجل الأخير",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "التطابق التالي",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "حساس لحالة الأحرف",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "الكلمة بالكامل",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "تعبير نمطي",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "تعبير نمطي غير صالح",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "ملف كبير: تم إيقاف التمييز والطي مؤقتًا",
   "@sourceLargeFileFeaturesPaused": {
@@ -3209,9 +3192,6 @@
   "diagnosticMarkdownLinkEmptyText": "نص الرابط فارغ؛ أدخل اسمًا ميسّرًا يصف الغرض منه.",
   "diagnosticMarkdownLinkReviewText": "راجع ما إذا كان نص الرابط «⁨{text}⁩» يصف غرضه ضمن السياق.",
   "diagnosticMarkdownTableEmptyHeader": "يجب أن تعرّف رؤوس الجدول أعمدتها؛ أكمل كل رأس فارغ.",
-  "commandPalette": "لوحة الأوامر",
-  "commandPaletteHint": "اكتب أمرًا",
-  "commandPaletteEmpty": "لا توجد أوامر مطابقة",
   "tableAlignmentUnspecified": "المحاذاة: غير محددة",
   "tableAlignmentLeft": "المحاذاة: إلى اليسار",
   "tableAlignmentCenter": "المحاذاة: إلى الوسط",
@@ -3326,14 +3306,12 @@
   "exportInvalidCss": "اختر ملف .css مقروءًا بترميز UTF-8 حتى 256 KiB، دون استيراد أو عناوين موارد أو HTML أو CSS قابل للتنفيذ أو يحتوي على محارف هروب.",
   "exportInvalidRange": "{field}: أدخل رقمًا بين {minimum} و{maximum}.",
   "clipboardHistory": "سجل النسخ واللصق",
-  "clipboardHistorySearchHint": "البحث في سجل الحافظة",
   "clipboardHistoryDescription": "افتح سجل النسخ واللصق الخاص بالجلسة.",
   "clipboardCurrent": "النسخة واللصق الحالية",
   "clipboardCurrentExternal": "النسخة واللصق من تطبيق آخر",
   "clipboardDestination": "الصق في {name}",
   "clipboardSessionOnly": "مخزن فقط لهذه جلسة BusyMark.",
   "clipboardNoItems": "سجل النسخ واللصق فارغ.",
-  "clipboardNoMatches": "لا توجد عناصر في سجل النسخ واللصق تطابق هذا البحث.",
   "clipboardDisabled": "مجموعة سجل النسخ واللصق معطلة في الإعدادات.",
   "clipboardUnavailable": "محتوى النسخة واللصق الحالي غير متاح أو غير مدعوم.",
   "clipboardTooLarge": "هذا العنصر في النسخة واللصق كبير جدًا بحيث لا يمكن الاحتفاظ به.",
@@ -3350,8 +3328,6 @@
   "findLocalHistoryDescription": "البحث في مستندات التاريخ المحلي ومحتوى الإصدارات.",
   "localHistoryNoDocuments": "لا توجد مستندات لديها تاريخ محلي.",
   "localHistoryNoRevisions": "هذا المستند ليس لديه إصدارات في التاريخ المحلي.",
-  "localHistoryNoMatches": "لا تتطابق أي إصدارات في التاريخ المحلي مع هذا البحث.",
-  "localHistorySearchHint": "البحث في السجل المحلي",
   "localHistorySelectedRevision": "الإصدار المحدد",
   "localHistoryCurrentEditor": "محتوى المحرر الحالي",
   "localHistoryCurrentDisk": "المحتوى الحالي على القرص",
@@ -3611,5 +3587,61 @@
   "wsInsertElements": "إدراج عناصر",
   "wsAdmonitionsAndQuotes": "تنبيهات واقتباسات",
   "wsSemanticText": "نص دلالي",
-  "wsPropertiesUnavailable": "العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة."
+  "wsPropertiesUnavailable": "العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.",
+  "searchDocumentsCategory": "المستندات",
+  "searchTopicsCategory": "المواضيع",
+  "searchCurrentDocument": "المستند الحالي",
+  "searchCurrentWorkspace": "مساحة العمل الحالية",
+  "browseNotes": "تصفح الملاحظات",
+  "searchActionsCommand": "البحث عن إجراءات",
+  "searchDocumentsCommand": "البحث عن مستندات",
+  "searchTopicsCommand": "البحث عن مواضيع",
+  "searchRecentCommand": "البحث في الأخيرة",
+  "searchResourceUnavailable": "هذا المورد غير متاح.",
+  "notesSync": "مزامنة الملاحظات",
+  "searchInWorkspace": "البحث في مساحة العمل",
+  "searchCategory": "فئة البحث",
+  "clearHistorySearchScope": "البحث في سجل المستندات",
+  "searchInDocument": "البحث في المستند",
+  "searchDocumentHint": "ابحث في هذا المستند…",
+  "searchWorkspaceHint": "ابحث في مساحة العمل هذه…",
+  "searchOutlineHint": "ابحث في العناوين…",
+  "searchHistoryHint": "ابحث في السجل المحلي…",
+  "searchEnterText": "أدخل نصًا للبحث",
+  "searchAccountUnavailable": "الحساب غير متاح",
+  "searchDocumentsHint": "البحث عن مستندات…",
+  "searchTopicsHint": "البحث عن مواضيع…",
+  "searchRecentHint": "البحث في الأخيرة…",
+  "searchActionsHint": "البحث عن إجراءات…",
+  "searchRequiresNotesWorkspace": "يتطلب مساحة عمل للملاحظات",
+  "searchSidebarLabel": "بحث:",
+  "searchDocumentTextCategory": "نص المستند",
+  "searchWorkspaceTextCategory": "نص مساحة العمل",
+  "searchHeadingsCategory": "العناوين",
+  "shortcutUnassigned": "غير معيّن",
+  "shortcutPressKeys": "اضغط مجموعة مفاتيح…",
+  "shortcutRecord": "تسجيل اختصار",
+  "shortcutRestoreAll": "استعادة جميع الإعدادات الافتراضية",
+  "shortcutRestoreAllQuestion": "هل تريد استعادة الاختصارات الافتراضية لجميع الإجراءات؟ ستُزال التعيينات المخصصة.",
+  "shortcutSaveFailed": "الاختصارات مفعّلة ولكن تعذر حفظها. أعد المحاولة للاحتفاظ بها بعد إعادة التشغيل.",
+  "shortcutRetry": "إعادة محاولة الحفظ",
+  "shortcutChanged": "تغيرت التعيينات. راجع الاختصارات الحالية وحاول مجددًا.",
+  "shortcutInvalid": "لا يمكن تعيين هذه المجموعة في هذا السياق.",
+  "shortcutSystemWarning": "قد يستخدم سطح المكتب هذه المجموعة. لا يستطيع BusyMark تجاوز اختصارات النظام.",
+  "shortcutConflicts": "يتعارض هذا الاختصار مع الإجراءات التالية:",
+  "shortcutRemove": "إزالة التعيين",
+  "shortcutRestoreDefault": "استعادة الافتراضي",
+  "shortcutAssign": "تعيين",
+  "shortcutReassign": "إعادة التعيين",
+  "shortcutContextApplication": "التطبيق",
+  "shortcutContextDocument": "طرق عرض المستند",
+  "shortcutContextEditor": "المحرر والمصدر",
+  "shortcutContextWritersideSource": "مصدر Writerside",
+  "shortcutContextWorkspace": "التنقل في مساحة العمل",
+  "shortcutContextTree": "أشجار الشريط الجانبي",
+  "searchHeadingsCommand": "البحث عن العناوين",
+  "shortcutFixed": "يتولاه المحرر؛ غير قابل للتخصيص.",
+  "shortcutDefaultConflict": "يتعارض الاختصار الافتراضي مع تعيين مخصص.",
+  "shortcutCurrentBinding": "الاختصار الحالي",
+  "shortcutProposedBinding": "الاختصار المقترح"
 }

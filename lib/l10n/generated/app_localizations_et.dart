@@ -579,15 +579,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get keyboardShortcuts => 'Kiirklahvid';
 
   @override
-  String get commandPalette => 'Käskude palett';
-
-  @override
-  String get commandPaletteHint => 'Sisesta käsk';
-
-  @override
-  String get commandPaletteEmpty => 'Sobivaid käske pole';
-
-  @override
   String get commandUnavailableInContext =>
       'See käsk pole praeguses kontekstis saadaval.';
 
@@ -804,7 +795,8 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutSearchDescription => 'Otsi praegusest tööruumist';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'Kuva kiirklahvide loend';
+  String get shortcutKeyboardShortcutsDescription =>
+      'Kohanda rakenduse kiirklahve';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Ava süntaksiviide';
@@ -1056,7 +1048,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get validateOnEdit => 'Valideeri muutmisel';
 
   @override
-  String get clearRecentWorkspaces => 'Tühjenda hiljutiste tööruumide loend';
+  String get clearRecentWorkspaces => 'Tühjenda hiljutiste kirjete loend';
 
   @override
   String get editingButtonsPosition => 'Redigeerimisnuppude asukoht';
@@ -1840,15 +1832,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get sourceSearchNextMatch => 'Järgmine vaste';
 
   @override
-  String get sourceSearchCaseSensitive => 'Tõstutundlik';
-
-  @override
-  String get sourceSearchWholeWord => 'Terve sõna';
-
-  @override
-  String get sourceSearchRegex => 'Regulaaravaldis';
-
-  @override
   String get sourceSearchReplacement => 'Asenda väärtusega';
 
   @override
@@ -1972,13 +1955,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get saveAs => 'Salvesta nimega';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Vigane regulaaravaldis';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, \$ või ainult asukohta sobitavad ettevaated).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4354,9 +4330,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get clipboardHistory => 'Kleepimiskredi ajalugu';
 
   @override
-  String get clipboardHistorySearchHint => 'Otsi lõikepuhvri ajaloost';
-
-  @override
   String get clipboardHistoryDescription =>
       'Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.';
 
@@ -4378,10 +4351,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Kleepimiskredi ajalugu on tühi.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ei leitud kleepimiskredi elemente, mis vastavad sellele otsingule.';
 
   @override
   String get clipboardDisabled =>
@@ -4438,13 +4407,6 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Selle dokumendil pole kohalist ajaloos.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Ei leidunud kohalise ajalooga versioone.';
-
-  @override
-  String get localHistorySearchHint => 'Otsi kohalikust ajaloost';
 
   @override
   String get localHistorySelectedRevision => 'Valitud versioon';
@@ -5399,4 +5361,179 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Vaadeldav element pole saadaval. Jätkamiseks vali element.';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumendid';
+
+  @override
+  String get searchTopicsCategory => 'Teemad';
+
+  @override
+  String get searchCurrentDocument => 'Praegune dokument';
+
+  @override
+  String get searchCurrentWorkspace => 'Praegune tööruum';
+
+  @override
+  String get browseNotes => 'Sirvi märkmeid';
+
+  @override
+  String get searchActionsCommand => 'Otsi toiminguid';
+
+  @override
+  String get searchDocumentsCommand => 'Otsi dokumente';
+
+  @override
+  String get searchTopicsCommand => 'Otsi teemasid';
+
+  @override
+  String get searchRecentCommand => 'Otsi hiljutisi';
+
+  @override
+  String get searchResourceUnavailable => 'See ressurss pole saadaval.';
+
+  @override
+  String get notesSync => 'Sünkrooni märkmed';
+
+  @override
+  String get searchInWorkspace => 'Otsi tööalast';
+
+  @override
+  String get searchCategory => 'Otsingu kategooria';
+
+  @override
+  String get clearHistorySearchScope => 'Otsi dokumentide ajaloost';
+
+  @override
+  String get searchInDocument => 'Otsi dokumendist';
+
+  @override
+  String get searchDocumentHint => 'Otsi sellest dokumendist…';
+
+  @override
+  String get searchWorkspaceHint => 'Otsi sellest tööruumist…';
+
+  @override
+  String get searchOutlineHint => 'Otsi pealkirju…';
+
+  @override
+  String get searchHistoryHint => 'Otsi kohalikust ajaloost…';
+
+  @override
+  String get searchEnterText => 'Sisesta otsitav tekst';
+
+  @override
+  String get searchAccountUnavailable => 'Konto pole saadaval';
+
+  @override
+  String get searchDocumentsHint => 'Otsi dokumente…';
+
+  @override
+  String get searchTopicsHint => 'Otsi teemasid…';
+
+  @override
+  String get searchRecentHint => 'Otsi hiljutisi…';
+
+  @override
+  String get searchActionsHint => 'Otsi toiminguid…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Vajab märkmete tööruumi';
+
+  @override
+  String get searchSidebarLabel => 'Otsi:';
+
+  @override
+  String get searchDocumentTextCategory => 'Dokumendi tekst';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Tööala tekst';
+
+  @override
+  String get searchHeadingsCategory => 'Pealkirjad';
+
+  @override
+  String get shortcutUnassigned => 'Määramata';
+
+  @override
+  String get shortcutPressKeys => 'Vajuta klahvikombinatsiooni…';
+
+  @override
+  String get shortcutRecord => 'Salvesta kiirklahv';
+
+  @override
+  String get shortcutRestoreAll => 'Taasta kõik vaikeväärtused';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Kas taastada kõigi toimingute vaikekiirklahvid? Kohandatud määrangud eemaldatakse.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Kiirklahvid on aktiivsed, kuid neid ei saanud salvestada. Proovi uuesti, et säilitada need pärast taaskäivitamist.';
+
+  @override
+  String get shortcutRetry => 'Proovi salvestamist uuesti';
+
+  @override
+  String get shortcutChanged =>
+      'Määrangud on muutunud. Vaata praegused kiirklahvid üle ja proovi uuesti.';
+
+  @override
+  String get shortcutInvalid =>
+      'Seda kombinatsiooni ei saa selles kontekstis määrata.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Töölaud võib seda kombinatsiooni kasutada. BusyMark ei saa süsteemi kiirklahve alistada.';
+
+  @override
+  String get shortcutConflicts =>
+      'See kiirklahv kattub järgmiste toimingutega:';
+
+  @override
+  String get shortcutRemove => 'Eemalda määrang';
+
+  @override
+  String get shortcutRestoreDefault => 'Taasta vaikeväärtus';
+
+  @override
+  String get shortcutAssign => 'Määra';
+
+  @override
+  String get shortcutReassign => 'Määra ümber';
+
+  @override
+  String get shortcutContextApplication => 'Rakendus';
+
+  @override
+  String get shortcutContextDocument => 'Dokumendivaated';
+
+  @override
+  String get shortcutContextEditor => 'Redaktor ja lähtekood';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside’i lähtekood';
+
+  @override
+  String get shortcutContextWorkspace => 'Tööala navigeerimine';
+
+  @override
+  String get shortcutContextTree => 'Külgriba puud';
+
+  @override
+  String get searchHeadingsCommand => 'Otsi pealkirju';
+
+  @override
+  String get shortcutFixed => 'Redaktori hallatav; pole seadistatav.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Vaikimisi otsetee on vastuolus kohandatud määranguga.';
+
+  @override
+  String get shortcutCurrentBinding => 'Praegune otsetee';
+
+  @override
+  String get shortcutProposedBinding => 'Pakutud otsetee';
 }

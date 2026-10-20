@@ -556,15 +556,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keyboardShortcuts => '键盘快捷键';
 
   @override
-  String get commandPalette => '命令面板';
-
-  @override
-  String get commandPaletteHint => '输入命令';
-
-  @override
-  String get commandPaletteEmpty => '没有匹配的命令';
-
-  @override
   String get commandUnavailableInContext => '当前编辑器上下文中无法使用此命令';
 
   @override
@@ -776,7 +767,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutSearchDescription => '搜索当前工作区';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '显示此键盘快捷键参考';
+  String get shortcutKeyboardShortcutsDescription => '自定义应用程序键盘快捷键';
 
   @override
   String get shortcutSyntaxReferenceDescription => '打开语法参考';
@@ -1001,7 +992,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get validateOnEdit => '编辑时验证';
 
   @override
-  String get clearRecentWorkspaces => '清除最近使用的工作区';
+  String get clearRecentWorkspaces => '清除最近记录';
 
   @override
   String get editingButtonsPosition => '编辑按钮位置';
@@ -1759,15 +1750,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sourceSearchNextMatch => '下一个匹配项';
 
   @override
-  String get sourceSearchCaseSensitive => '区分大小写';
-
-  @override
-  String get sourceSearchWholeWord => '全字匹配';
-
-  @override
-  String get sourceSearchRegex => '正则表达式';
-
-  @override
   String get sourceSearchReplacement => '替换为';
 
   @override
@@ -1884,13 +1866,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get saveAs => '另存为';
-
-  @override
-  String get sourceSearchInvalidRegex => '无效的正则表达式';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
 
   @override
   String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
@@ -4166,9 +4141,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clipboardHistory => '剪贴板历史';
 
   @override
-  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
-
-  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -4187,9 +4159,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clipboardNoItems => '剪贴板历史为空。';
-
-  @override
-  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
 
   @override
   String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
@@ -4240,12 +4209,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get localHistoryNoRevisions => '此文档没有本地历史修订。';
-
-  @override
-  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
-
-  @override
-  String get localHistorySearchHint => '搜索本地历史记录';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';
@@ -5170,6 +5133,174 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
+
+  @override
+  String get searchDocumentsCategory => '文档';
+
+  @override
+  String get searchTopicsCategory => '主题';
+
+  @override
+  String get searchCurrentDocument => '当前文档';
+
+  @override
+  String get searchCurrentWorkspace => '当前工作区';
+
+  @override
+  String get browseNotes => '浏览笔记';
+
+  @override
+  String get searchActionsCommand => '搜索操作';
+
+  @override
+  String get searchDocumentsCommand => '搜索文档';
+
+  @override
+  String get searchTopicsCommand => '搜索主题';
+
+  @override
+  String get searchRecentCommand => '搜索最近项目';
+
+  @override
+  String get searchResourceUnavailable => '此资源不可用。';
+
+  @override
+  String get notesSync => '同步笔记';
+
+  @override
+  String get searchInWorkspace => '在工作区中搜索';
+
+  @override
+  String get searchCategory => '搜索类别';
+
+  @override
+  String get clearHistorySearchScope => '搜索文档历史记录';
+
+  @override
+  String get searchInDocument => '在文档中搜索';
+
+  @override
+  String get searchDocumentHint => '搜索此文档…';
+
+  @override
+  String get searchWorkspaceHint => '搜索此工作区…';
+
+  @override
+  String get searchOutlineHint => '搜索标题…';
+
+  @override
+  String get searchHistoryHint => '搜索本地历史记录…';
+
+  @override
+  String get searchEnterText => '输入要搜索的文本';
+
+  @override
+  String get searchAccountUnavailable => '账户不可用';
+
+  @override
+  String get searchDocumentsHint => '搜索文档…';
+
+  @override
+  String get searchTopicsHint => '搜索主题…';
+
+  @override
+  String get searchRecentHint => '搜索最近项目…';
+
+  @override
+  String get searchActionsHint => '搜索操作…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '需要笔记工作区';
+
+  @override
+  String get searchSidebarLabel => '搜索：';
+
+  @override
+  String get searchDocumentTextCategory => '文档文本';
+
+  @override
+  String get searchWorkspaceTextCategory => '工作区文本';
+
+  @override
+  String get searchHeadingsCategory => '标题';
+
+  @override
+  String get shortcutUnassigned => '未分配';
+
+  @override
+  String get shortcutPressKeys => '请按下组合键…';
+
+  @override
+  String get shortcutRecord => '录制快捷键';
+
+  @override
+  String get shortcutRestoreAll => '恢复所有默认设置';
+
+  @override
+  String get shortcutRestoreAllQuestion => '恢复所有操作的默认快捷键？自定义分配将被移除。';
+
+  @override
+  String get shortcutSaveFailed => '快捷键已生效，但无法保存。请重试保存以便重启后保留。';
+
+  @override
+  String get shortcutRetry => '重试保存';
+
+  @override
+  String get shortcutChanged => '分配已更改。请检查当前快捷键并重试。';
+
+  @override
+  String get shortcutInvalid => '无法在此上下文中分配此组合键。';
+
+  @override
+  String get shortcutSystemWarning => '桌面可能正在使用此组合键。BusyMark 无法覆盖系统快捷键。';
+
+  @override
+  String get shortcutConflicts => '此快捷键与以下操作冲突：';
+
+  @override
+  String get shortcutRemove => '移除分配';
+
+  @override
+  String get shortcutRestoreDefault => '恢复默认设置';
+
+  @override
+  String get shortcutAssign => '分配';
+
+  @override
+  String get shortcutReassign => '重新分配';
+
+  @override
+  String get shortcutContextApplication => '应用程序';
+
+  @override
+  String get shortcutContextDocument => '文档视图';
+
+  @override
+  String get shortcutContextEditor => '编辑器和源码';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 源码';
+
+  @override
+  String get shortcutContextWorkspace => '工作区导航';
+
+  @override
+  String get shortcutContextTree => '侧栏树';
+
+  @override
+  String get searchHeadingsCommand => '搜索标题';
+
+  @override
+  String get shortcutFixed => '由编辑器管理，无法配置。';
+
+  @override
+  String get shortcutDefaultConflict => '默认快捷键与自定义分配冲突。';
+
+  @override
+  String get shortcutCurrentBinding => '当前快捷键';
+
+  @override
+  String get shortcutProposedBinding => '拟用快捷键';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -5722,15 +5853,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get keyboardShortcuts => '键盘快捷键';
 
   @override
-  String get commandPalette => '命令面板';
-
-  @override
-  String get commandPaletteHint => '输入命令';
-
-  @override
-  String get commandPaletteEmpty => '没有匹配的命令';
-
-  @override
   String get commandUnavailableInContext => '当前编辑器上下文中无法使用此命令';
 
   @override
@@ -5942,7 +6064,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get shortcutSearchDescription => '搜索当前工作区';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '显示此键盘快捷键参考';
+  String get shortcutKeyboardShortcutsDescription => '自定义应用程序键盘快捷键';
 
   @override
   String get shortcutSyntaxReferenceDescription => '打开语法参考';
@@ -6167,7 +6289,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get validateOnEdit => '编辑时验证';
 
   @override
-  String get clearRecentWorkspaces => '清除最近使用的工作区';
+  String get clearRecentWorkspaces => '清除最近记录';
 
   @override
   String get editingButtonsPosition => '编辑按钮位置';
@@ -6925,15 +7047,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get sourceSearchNextMatch => '下一个匹配项';
 
   @override
-  String get sourceSearchCaseSensitive => '区分大小写';
-
-  @override
-  String get sourceSearchWholeWord => '全字匹配';
-
-  @override
-  String get sourceSearchRegex => '正则表达式';
-
-  @override
   String get sourceSearchReplacement => '替换为';
 
   @override
@@ -7050,13 +7163,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get saveAs => '另存为';
-
-  @override
-  String get sourceSearchInvalidRegex => '无效的正则表达式';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
 
   @override
   String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
@@ -9332,9 +9438,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get clipboardHistory => '剪贴板历史';
 
   @override
-  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
-
-  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -9353,9 +9456,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get clipboardNoItems => '剪贴板历史为空。';
-
-  @override
-  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
 
   @override
   String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
@@ -9406,12 +9506,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get localHistoryNoRevisions => '此文档没有本地历史修订。';
-
-  @override
-  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
-
-  @override
-  String get localHistorySearchHint => '搜索本地历史记录';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';
@@ -10336,4 +10430,172 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
+
+  @override
+  String get searchDocumentsCategory => '文档';
+
+  @override
+  String get searchTopicsCategory => '主题';
+
+  @override
+  String get searchCurrentDocument => '当前文档';
+
+  @override
+  String get searchCurrentWorkspace => '当前工作区';
+
+  @override
+  String get browseNotes => '浏览笔记';
+
+  @override
+  String get searchActionsCommand => '搜索操作';
+
+  @override
+  String get searchDocumentsCommand => '搜索文档';
+
+  @override
+  String get searchTopicsCommand => '搜索主题';
+
+  @override
+  String get searchRecentCommand => '搜索最近项目';
+
+  @override
+  String get searchResourceUnavailable => '此资源不可用。';
+
+  @override
+  String get notesSync => '同步笔记';
+
+  @override
+  String get searchInWorkspace => '在工作区中搜索';
+
+  @override
+  String get searchCategory => '搜索类别';
+
+  @override
+  String get clearHistorySearchScope => '搜索文档历史记录';
+
+  @override
+  String get searchInDocument => '在文档中搜索';
+
+  @override
+  String get searchDocumentHint => '搜索此文档…';
+
+  @override
+  String get searchWorkspaceHint => '搜索此工作区…';
+
+  @override
+  String get searchOutlineHint => '搜索标题…';
+
+  @override
+  String get searchHistoryHint => '搜索本地历史记录…';
+
+  @override
+  String get searchEnterText => '输入要搜索的文本';
+
+  @override
+  String get searchAccountUnavailable => '账户不可用';
+
+  @override
+  String get searchDocumentsHint => '搜索文档…';
+
+  @override
+  String get searchTopicsHint => '搜索主题…';
+
+  @override
+  String get searchRecentHint => '搜索最近项目…';
+
+  @override
+  String get searchActionsHint => '搜索操作…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '需要笔记工作区';
+
+  @override
+  String get searchSidebarLabel => '搜索：';
+
+  @override
+  String get searchDocumentTextCategory => '文档文本';
+
+  @override
+  String get searchWorkspaceTextCategory => '工作区文本';
+
+  @override
+  String get searchHeadingsCategory => '标题';
+
+  @override
+  String get shortcutUnassigned => '未分配';
+
+  @override
+  String get shortcutPressKeys => '请按下组合键…';
+
+  @override
+  String get shortcutRecord => '录制快捷键';
+
+  @override
+  String get shortcutRestoreAll => '恢复所有默认设置';
+
+  @override
+  String get shortcutRestoreAllQuestion => '恢复所有操作的默认快捷键？自定义分配将被移除。';
+
+  @override
+  String get shortcutSaveFailed => '快捷键已生效，但无法保存。请重试保存以便重启后保留。';
+
+  @override
+  String get shortcutRetry => '重试保存';
+
+  @override
+  String get shortcutChanged => '分配已更改。请检查当前快捷键并重试。';
+
+  @override
+  String get shortcutInvalid => '无法在此上下文中分配此组合键。';
+
+  @override
+  String get shortcutSystemWarning => '桌面可能正在使用此组合键。BusyMark 无法覆盖系统快捷键。';
+
+  @override
+  String get shortcutConflicts => '此快捷键与以下操作冲突：';
+
+  @override
+  String get shortcutRemove => '移除分配';
+
+  @override
+  String get shortcutRestoreDefault => '恢复默认设置';
+
+  @override
+  String get shortcutAssign => '分配';
+
+  @override
+  String get shortcutReassign => '重新分配';
+
+  @override
+  String get shortcutContextApplication => '应用程序';
+
+  @override
+  String get shortcutContextDocument => '文档视图';
+
+  @override
+  String get shortcutContextEditor => '编辑器和源码';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 源码';
+
+  @override
+  String get shortcutContextWorkspace => '工作区导航';
+
+  @override
+  String get shortcutContextTree => '侧栏树';
+
+  @override
+  String get searchHeadingsCommand => '搜索标题';
+
+  @override
+  String get shortcutFixed => '由编辑器管理，无法配置。';
+
+  @override
+  String get shortcutDefaultConflict => '默认快捷键与自定义分配冲突。';
+
+  @override
+  String get shortcutCurrentBinding => '当前快捷键';
+
+  @override
+  String get shortcutProposedBinding => '拟用快捷键';
 }

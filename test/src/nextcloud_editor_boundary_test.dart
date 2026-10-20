@@ -65,7 +65,6 @@ void main() {
           wordWrap: true,
           searchActive: false,
           searchOptions: const SourceSearchOptions(),
-          onSearchOptionsChanged: (_) {},
           onChanged: (text, _) => edits.add(text),
           onOpenSearch: () {},
           onCloseSearch: () {},

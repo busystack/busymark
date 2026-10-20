@@ -83,3 +83,34 @@ extension BusyDocumentOutline on BusyDocument {
     return List.unmodifiable(headings);
   }
 }
+
+/// A projection of the existing model; browsing keeps the complete tree.
+class DocumentOutlineMatch {
+  const DocumentOutlineMatch(this.heading, this.ancestors);
+  final DocumentOutlineHeading heading;
+  final List<DocumentOutlineHeading> ancestors;
+}
+
+/// Match headings in document order, retaining ancestor context and the exact
+/// source/editor identities. This never parses or changes the outline.
+List<DocumentOutlineMatch> matchDocumentOutline(
+  List<DocumentOutlineHeading> headings,
+  String query, {
+  int maximumResults = 80,
+}) {
+  final normalized = query.trim().toLowerCase();
+  if (normalized.isEmpty || maximumResults <= 0) return const [];
+  final matches = <DocumentOutlineMatch>[];
+  final ancestors = <DocumentOutlineHeading>[];
+  for (final heading in headings) {
+    while (ancestors.isNotEmpty && ancestors.last.level >= heading.level) {
+      ancestors.removeLast();
+    }
+    if (heading.text.toLowerCase().contains(normalized)) {
+      matches.add(DocumentOutlineMatch(heading, List.unmodifiable(ancestors)));
+      if (matches.length >= maximumResults) break;
+    }
+    ancestors.add(heading);
+  }
+  return List.unmodifiable(matches);
+}

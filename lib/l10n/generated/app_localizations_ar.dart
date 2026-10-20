@@ -578,15 +578,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get keyboardShortcuts => 'اختصارات لوحة المفاتيح';
 
   @override
-  String get commandPalette => 'لوحة الأوامر';
-
-  @override
-  String get commandPaletteHint => 'اكتب أمرًا';
-
-  @override
-  String get commandPaletteEmpty => 'لا توجد أوامر مطابقة';
-
-  @override
   String get commandUnavailableInContext =>
       'هذا الأمر غير متاح في السياق الحالي.';
 
@@ -803,7 +794,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'إظهار مرجع اختصارات لوحة المفاتيح';
+      'تخصيص اختصارات لوحة مفاتيح التطبيق';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'فتح مرجع بناء الجملة';
@@ -1045,7 +1036,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get validateOnEdit => 'التحقق أثناء التحرير';
 
   @override
-  String get clearRecentWorkspaces => 'مسح مساحات العمل الأخيرة';
+  String get clearRecentWorkspaces => 'مسح السجل الأخير';
 
   @override
   String get editingButtonsPosition => 'موضع أزرار التحرير';
@@ -1848,15 +1839,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sourceSearchNextMatch => 'التطابق التالي';
 
   @override
-  String get sourceSearchCaseSensitive => 'حساس لحالة الأحرف';
-
-  @override
-  String get sourceSearchWholeWord => 'الكلمة بالكامل';
-
-  @override
-  String get sourceSearchRegex => 'تعبير نمطي';
-
-  @override
   String get sourceSearchReplacement => 'استبدال بـ';
 
   @override
@@ -1980,13 +1962,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get saveAs => 'حفظ باسم';
-
-  @override
-  String get sourceSearchInvalidRegex => 'تعبير نمطي غير صالح';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'لا تُدعم مطابقات التعبير النمطي ذات الطول الصفري (مثل ^ أو \$ أو الاستباق الذي يطابق موضعًا فقط).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4393,9 +4368,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clipboardHistory => 'سجل النسخ واللصق';
 
   @override
-  String get clipboardHistorySearchHint => 'البحث في سجل الحافظة';
-
-  @override
   String get clipboardHistoryDescription =>
       'افتح سجل النسخ واللصق الخاص بالجلسة.';
 
@@ -4415,10 +4387,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'سجل النسخ واللصق فارغ.';
-
-  @override
-  String get clipboardNoMatches =>
-      'لا توجد عناصر في سجل النسخ واللصق تطابق هذا البحث.';
 
   @override
   String get clipboardDisabled => 'مجموعة سجل النسخ واللصق معطلة في الإعدادات.';
@@ -4474,13 +4442,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'هذا المستند ليس لديه إصدارات في التاريخ المحلي.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'لا تتطابق أي إصدارات في التاريخ المحلي مع هذا البحث.';
-
-  @override
-  String get localHistorySearchHint => 'البحث في السجل المحلي';
 
   @override
   String get localHistorySelectedRevision => 'الإصدار المحدد';
@@ -5428,4 +5389,177 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.';
+
+  @override
+  String get searchDocumentsCategory => 'المستندات';
+
+  @override
+  String get searchTopicsCategory => 'المواضيع';
+
+  @override
+  String get searchCurrentDocument => 'المستند الحالي';
+
+  @override
+  String get searchCurrentWorkspace => 'مساحة العمل الحالية';
+
+  @override
+  String get browseNotes => 'تصفح الملاحظات';
+
+  @override
+  String get searchActionsCommand => 'البحث عن إجراءات';
+
+  @override
+  String get searchDocumentsCommand => 'البحث عن مستندات';
+
+  @override
+  String get searchTopicsCommand => 'البحث عن مواضيع';
+
+  @override
+  String get searchRecentCommand => 'البحث في الأخيرة';
+
+  @override
+  String get searchResourceUnavailable => 'هذا المورد غير متاح.';
+
+  @override
+  String get notesSync => 'مزامنة الملاحظات';
+
+  @override
+  String get searchInWorkspace => 'البحث في مساحة العمل';
+
+  @override
+  String get searchCategory => 'فئة البحث';
+
+  @override
+  String get clearHistorySearchScope => 'البحث في سجل المستندات';
+
+  @override
+  String get searchInDocument => 'البحث في المستند';
+
+  @override
+  String get searchDocumentHint => 'ابحث في هذا المستند…';
+
+  @override
+  String get searchWorkspaceHint => 'ابحث في مساحة العمل هذه…';
+
+  @override
+  String get searchOutlineHint => 'ابحث في العناوين…';
+
+  @override
+  String get searchHistoryHint => 'ابحث في السجل المحلي…';
+
+  @override
+  String get searchEnterText => 'أدخل نصًا للبحث';
+
+  @override
+  String get searchAccountUnavailable => 'الحساب غير متاح';
+
+  @override
+  String get searchDocumentsHint => 'البحث عن مستندات…';
+
+  @override
+  String get searchTopicsHint => 'البحث عن مواضيع…';
+
+  @override
+  String get searchRecentHint => 'البحث في الأخيرة…';
+
+  @override
+  String get searchActionsHint => 'البحث عن إجراءات…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'يتطلب مساحة عمل للملاحظات';
+
+  @override
+  String get searchSidebarLabel => 'بحث:';
+
+  @override
+  String get searchDocumentTextCategory => 'نص المستند';
+
+  @override
+  String get searchWorkspaceTextCategory => 'نص مساحة العمل';
+
+  @override
+  String get searchHeadingsCategory => 'العناوين';
+
+  @override
+  String get shortcutUnassigned => 'غير معيّن';
+
+  @override
+  String get shortcutPressKeys => 'اضغط مجموعة مفاتيح…';
+
+  @override
+  String get shortcutRecord => 'تسجيل اختصار';
+
+  @override
+  String get shortcutRestoreAll => 'استعادة جميع الإعدادات الافتراضية';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'هل تريد استعادة الاختصارات الافتراضية لجميع الإجراءات؟ ستُزال التعيينات المخصصة.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'الاختصارات مفعّلة ولكن تعذر حفظها. أعد المحاولة للاحتفاظ بها بعد إعادة التشغيل.';
+
+  @override
+  String get shortcutRetry => 'إعادة محاولة الحفظ';
+
+  @override
+  String get shortcutChanged =>
+      'تغيرت التعيينات. راجع الاختصارات الحالية وحاول مجددًا.';
+
+  @override
+  String get shortcutInvalid => 'لا يمكن تعيين هذه المجموعة في هذا السياق.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'قد يستخدم سطح المكتب هذه المجموعة. لا يستطيع BusyMark تجاوز اختصارات النظام.';
+
+  @override
+  String get shortcutConflicts => 'يتعارض هذا الاختصار مع الإجراءات التالية:';
+
+  @override
+  String get shortcutRemove => 'إزالة التعيين';
+
+  @override
+  String get shortcutRestoreDefault => 'استعادة الافتراضي';
+
+  @override
+  String get shortcutAssign => 'تعيين';
+
+  @override
+  String get shortcutReassign => 'إعادة التعيين';
+
+  @override
+  String get shortcutContextApplication => 'التطبيق';
+
+  @override
+  String get shortcutContextDocument => 'طرق عرض المستند';
+
+  @override
+  String get shortcutContextEditor => 'المحرر والمصدر';
+
+  @override
+  String get shortcutContextWritersideSource => 'مصدر Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'التنقل في مساحة العمل';
+
+  @override
+  String get shortcutContextTree => 'أشجار الشريط الجانبي';
+
+  @override
+  String get searchHeadingsCommand => 'البحث عن العناوين';
+
+  @override
+  String get shortcutFixed => 'يتولاه المحرر؛ غير قابل للتخصيص.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'يتعارض الاختصار الافتراضي مع تعيين مخصص.';
+
+  @override
+  String get shortcutCurrentBinding => 'الاختصار الحالي';
+
+  @override
+  String get shortcutProposedBinding => 'الاختصار المقترح';
 }

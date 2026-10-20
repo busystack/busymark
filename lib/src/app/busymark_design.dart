@@ -10,6 +10,7 @@ import 'package:yaru/yaru.dart';
 import '../platform/native_menu_service.dart';
 import '../platform/gtk_header_icon_service.dart';
 import 'busymark_glyphs.dart';
+import 'path_label.dart';
 
 /// Resolve an explicit six-digit RGB color chosen in a document/export control.
 /// This does not inherit the application's theme accent.
@@ -1507,6 +1508,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon),
           iconColorArgb: item.iconColor?.toARGB32(),
           shortcut: item.shortcut,
+          gtkAccelerator: item.gtkAccelerator,
           enabled: item.enabled,
           checkable: item.trailingCheck,
           selected: item.trailingCheck && item.checked,
@@ -1835,6 +1837,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     IconData? icon,
     Color? iconColor,
     String? shortcut,
+    this.gtkAccelerator,
     super.enabled = true,
     bool checked = false,
     bool trailingCheck = false,
@@ -1869,6 +1872,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   final IconData? icon;
   final Color? iconColor;
   final String? shortcut;
+  final String? gtkAccelerator;
   final bool checked;
   final bool trailingCheck;
   final bool mutuallyExclusive;
@@ -2132,12 +2136,16 @@ class BusyMarkPopupSelectorOption<T> {
     required this.label,
     this.icon,
     this.iconColor,
+    this.shortcut,
+    this.gtkAccelerator,
   });
 
   final T value;
   final String label;
   final IconData? icon;
   final Color? iconColor;
+  final String? shortcut;
+  final String? gtkAccelerator;
 }
 
 /// The shared desktop selector used by Settings-style control rows.
@@ -2155,7 +2163,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
     this.buttonMaxWidth = BusyMarkSizes.languageButtonMaxWidth,
     this.leading,
     this.fullWidth = false,
-    this.contentPadding,
+    this.maxLabelLines = 1,
   });
 
   final T? value;
@@ -2169,10 +2177,12 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final double buttonMaxWidth;
   final Widget? leading;
   final bool fullWidth;
-  final EdgeInsetsGeometry? contentPadding;
-
+  final int maxLabelLines;
   @override
   Widget build(BuildContext context) {
+    // Inherit borderless button geometry and interaction states while keeping
+    // the neutral control foreground rather than an action-link accent.
+    final neutralButtonStyle = Theme.of(context).outlinedButtonTheme.style;
     final selectorEnabled = enabled && options.isNotEmpty;
     final fallbackMenuWidth = (fullWidth ? popupMaxWidth : buttonMaxWidth)
         .clamp(popupMinWidth, popupMaxWidth);
@@ -2194,6 +2204,8 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 label: option.label,
                 icon: option.icon,
                 iconColor: option.iconColor,
+                shortcut: option.shortcut,
+                gtkAccelerator: option.gtkAccelerator,
                 checked: option.value == value,
                 trailingCheck: true,
               ),
@@ -2204,16 +2216,13 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 message: tooltip,
                 child: Semantics(
                   expanded: trigger.isOpen,
-                  child: BusyMarkPushButton.standard(
+                  child: TextButton(
+                    style: ButtonStyle(
+                      foregroundColor: neutralButtonStyle?.foregroundColor,
+                      iconColor: neutralButtonStyle?.iconColor,
+                    ),
                     onPressed: trigger.onPressed,
                     focusNode: trigger.focusNode,
-                    style: Theme.of(context).outlinedButtonTheme.style
-                        ?.copyWith(
-                          side: const WidgetStatePropertyAll(BorderSide.none),
-                          padding: contentPadding == null
-                              ? null
-                              : WidgetStatePropertyAll(contentPadding),
-                        ),
                     child: Row(
                       mainAxisSize: fullWidth
                           ? MainAxisSize.max
@@ -2227,9 +2236,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                           Expanded(
                             child: Text(
                               label,
-                              maxLines: 1,
+                              maxLines: maxLabelLines,
                               overflow: TextOverflow.ellipsis,
-                              softWrap: false,
+                              softWrap: maxLabelLines > 1,
                             ),
                           )
                         else
@@ -2245,9 +2254,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                               ),
                               child: Text(
                                 label,
-                                maxLines: 1,
+                                maxLines: maxLabelLines,
                                 overflow: TextOverflow.ellipsis,
-                                softWrap: false,
+                                softWrap: maxLabelLines > 1,
                               ),
                             ),
                           ),
@@ -2767,8 +2776,14 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     required this.onTap,
     this.title,
     this.subtitle,
+    this.pathSubtitle = false,
     this.content,
     this.selected = false,
+    this.compact = false,
+    this.focusNode,
+    this.geometryKey,
+    this.onFocusChange,
+    this.trailing,
     this.onDoubleTap,
     this.semanticsLabel,
     this.tooltip,
@@ -2792,9 +2807,16 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final IconData icon;
   final String? title;
   final String? subtitle;
+  final bool pathSubtitle;
   final Widget? content;
-  final bool selected;
-  final VoidCallback onTap;
+  final bool selected, compact;
+  final FocusNode? focusNode;
+
+  /// Optional measured anchor; the public row key remains its resource identity.
+  final GlobalKey? geometryKey;
+  final ValueChanged<bool>? onFocusChange;
+  final Widget? trailing;
+  final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
   final String? semanticsLabel;
   final String? tooltip;
@@ -2841,7 +2863,7 @@ class _BusyMarkSidebarRecordRowState<T>
   void _handleTap() {
     final onDoubleTap = widget.onDoubleTap;
     if (onDoubleTap == null) {
-      widget.onTap();
+      widget.onTap?.call();
       return;
     }
     final now = DateTime.now();
@@ -2849,7 +2871,7 @@ class _BusyMarkSidebarRecordRowState<T>
     final doubleTap =
         previous != null && now.difference(previous) <= kDoubleTapTimeout;
     _lastTapAt = doubleTap ? null : now;
-    widget.onTap();
+    widget.onTap?.call();
     if (doubleTap) onDoubleTap();
   }
 
@@ -2888,7 +2910,7 @@ class _BusyMarkSidebarRecordRowState<T>
     final customContent = widget.content;
     final menuItems = widget.menuItemsBuilder?.call(context);
     final trailing = menuItems == null || menuItems.isEmpty
-        ? null
+        ? widget.trailing
         : BusyMarkMenuButton<T>(
             tooltip: widget.menuTooltip!,
             items: menuItems,
@@ -2907,60 +2929,81 @@ class _BusyMarkSidebarRecordRowState<T>
               ),
             ),
           );
-    final content = ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: BusyMarkSizes.sidebarTreeRowHeight * 2,
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Icon(
-            widget.icon,
-            size: BusyMarkSizes.iconSm,
-            color: colors.mutedForeground,
-          ),
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Expanded(
-            child: Padding(
-              padding: customContent == null
-                  ? EdgeInsets.zero
-                  : const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
-              child:
-                  customContent ??
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.title!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.foreground,
-                        ),
-                      ),
-                      if (subtitle != null && subtitle.isNotEmpty) ...[
-                        const SizedBox(height: BusyMarkSpacing.xxs),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colors.mutedForeground),
-                        ),
-                      ],
-                    ],
-                  ),
+    final customRow = customContent == null
+        ? null
+        : ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: widget.compact
+                  ? BusyMarkSizes.sidebarTreeRowHeight
+                  : BusyMarkSizes.sidebarTreeRowHeight * 2,
             ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: BusyMarkSpacing.xs),
-            trailing,
-          ],
-          const SizedBox(width: BusyMarkSpacing.sm),
-        ],
-      ),
-    );
+            child: Row(
+              children: [
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Icon(
+                  widget.icon,
+                  size: BusyMarkSizes.iconSm,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: widget.compact
+                          ? BusyMarkSpacing.xs
+                          : BusyMarkSpacing.sm,
+                    ),
+                    child: customContent,
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: BusyMarkSpacing.xs),
+                  trailing,
+                ],
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
+            ),
+          );
+    // Standard identities use the same native row layout as other BusyMark
+    // lists. Yaru owns their typography, content spacing and minimum extent.
+    final tile = customRow == null
+        ? YaruListTile.square(
+            leading: Icon(
+              widget.icon,
+              size: BusyMarkSizes.iconSm,
+              color: colors.mutedForeground,
+            ),
+            title: Text(
+              widget.title!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: subtitle == null || subtitle.isEmpty
+                ? null
+                : _busyMarkGroupedRowSubtitle(
+                    context,
+                    widget.pathSubtitle
+                        ? BusyMarkPathLabel(path: subtitle)
+                        : Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                  ),
+            trailing: trailing,
+            focusNode: widget.focusNode ?? _rowFocusNode,
+            onFocusChange: widget.onFocusChange,
+            hoverColor: busyMarkRowHoverColor(context),
+            onTap: widget.onTap == null ? null : _handleTap,
+          )
+        : InkWell(
+            hoverColor: busyMarkRowHoverColor(context),
+            focusNode: widget.focusNode ?? _rowFocusNode,
+            onFocusChange: widget.onFocusChange,
+            canRequestFocus: true,
+            onTap: widget.onTap == null ? null : _handleTap,
+            child: customRow,
+          );
     final row = KeyedSubtree(
       key: _rowKey,
       child: Focus(
@@ -2975,17 +3018,14 @@ class _BusyMarkSidebarRecordRowState<T>
                 : BusyMarkLinuxPalette.transparent,
             borderRadius: BorderRadius.circular(BusyMarkRadius.md),
             clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              hoverColor: busyMarkRowHoverColor(context),
-              focusNode: _rowFocusNode,
-              onTap: _handleTap,
+            child: GestureDetector(
               onSecondaryTapUp: !_hasMenu
                   ? null
                   : (details) {
-                      _rowFocusNode.requestFocus();
+                      (widget.focusNode ?? _rowFocusNode).requestFocus();
                       unawaited(_showContextMenu(details.globalPosition));
                     },
-              child: content,
+              child: tile,
             ),
           ),
         ),
@@ -2996,17 +3036,21 @@ class _BusyMarkSidebarRecordRowState<T>
       selected: widget.selected,
       button: true,
       label: widget.semanticsLabel,
-      onTap: _handleTap,
+      enabled: widget.onTap != null,
+      onTap: widget.onTap == null ? null : _handleTap,
       child: row,
     );
     final tooltip = widget.tooltip;
-    return tooltip == null || tooltip.isEmpty
+    final presented = tooltip == null || tooltip.isEmpty
         ? semanticRow
         : Tooltip(
             message: tooltip,
             excludeFromSemantics: true,
             child: semanticRow,
           );
+    return widget.geometryKey == null
+        ? presented
+        : KeyedSubtree(key: widget.geometryKey, child: presented);
   }
 }
 
@@ -3138,7 +3182,10 @@ class BusyMarkGroupedList extends StatelessWidget {
           if (title != null) ...[
             Padding(
               padding: padding,
-              child: Text(title!, style: busyMarkSectionHeaderStyle(context)),
+              child: Semantics(
+                header: true,
+                child: Text(title!, style: busyMarkSectionHeaderStyle(context)),
+              ),
             ),
             if (description != null && description!.isNotEmpty) ...[
               const SizedBox(height: BusyMarkSpacing.xs),

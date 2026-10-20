@@ -110,7 +110,6 @@
   "pdfTitlePageDate": "日期",
   "pdfTitlePageTitleRequired": "请输入标题页的标题。",
   "pdfTocSectionNote": "从单独一页开始，可以跨多页。",
-  "sourceSearchZeroLengthUnsupported": "不支持零长度的正则表达式匹配（例如 ^、$ 或仅匹配位置的前瞻断言）。",
   "workspaceSearchIncomplete": "仅显示了部分结果。请显示更多结果或缩小搜索范围。",
   "workspaceSearchShowMore": "显示更多结果",
   "workspaceSearchSkippedFiles": "搜索不完整。以下文件超过 1 MiB 或无法读取：",
@@ -422,18 +421,6 @@
     "description": "Insert button label."
   },
   "keyboardShortcuts": "键盘快捷键",
-  "commandPalette": "命令面板",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "输入命令",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "没有匹配的命令",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "当前编辑器上下文中无法使用此命令",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -717,7 +704,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "显示此键盘快捷键参考",
+  "shortcutKeyboardShortcutsDescription": "自定义应用程序键盘快捷键",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -1014,7 +1001,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "清除最近使用的工作区",
+  "clearRecentWorkspaces": "清除最近记录",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1945,18 +1932,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "区分大小写",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "全字匹配",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "正则表达式",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "替换为",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2139,10 +2114,6 @@
   "saveAs": "另存为",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "无效的正则表达式",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "大文件：已暂停语法突出显示和折叠",
   "@sourceLargeFileFeaturesPaused": {
@@ -4873,14 +4844,12 @@
   "exportInvalidCss": "请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。",
   "exportInvalidRange": "{field}：请输入 {minimum} 到 {maximum} 之间的数字。",
   "clipboardHistory": "剪贴板历史",
-  "clipboardHistorySearchHint": "搜索剪贴板历史记录",
   "clipboardHistoryDescription": "打开会话本地剪贴板历史。",
   "clipboardCurrent": "当前剪贴板",
   "clipboardCurrentExternal": "来自其他应用程序的当前剪贴板",
   "clipboardDestination": "粘贴到 {name}",
   "clipboardSessionOnly": "仅存储在本次 BusyMark 会话中。",
   "clipboardNoItems": "剪贴板历史为空。",
-  "clipboardNoMatches": "没有匹配此搜索的剪贴板项目。",
   "clipboardDisabled": "剪贴板历史集合在设置中已禁用。",
   "clipboardUnavailable": "当前剪贴板内容不可用或不受支持。",
   "clipboardTooLarge": "此剪贴板内容过大，无法保留。",
@@ -4897,8 +4866,6 @@
   "findLocalHistoryDescription": "搜索本地历史文档和修订内容。",
   "localHistoryNoDocuments": "尚无文档具有本地历史。",
   "localHistoryNoRevisions": "此文档没有本地历史修订。",
-  "localHistoryNoMatches": "没有本地历史修订与此搜索匹配。",
-  "localHistorySearchHint": "搜索本地历史记录",
   "localHistorySelectedRevision": "已选择的修订",
   "localHistoryCurrentEditor": "当前编辑器内容",
   "localHistoryCurrentDisk": "磁盘上的当前内容",
@@ -5162,5 +5129,61 @@
   "wsInsertElements": "插入元素",
   "wsAdmonitionsAndQuotes": "提示和引用",
   "wsSemanticText": "语义文本",
-  "wsPropertiesUnavailable": "所检查的元素不可用。请检查一个元素以继续。"
+  "wsPropertiesUnavailable": "所检查的元素不可用。请检查一个元素以继续。",
+  "searchDocumentsCategory": "文档",
+  "searchTopicsCategory": "主题",
+  "searchCurrentDocument": "当前文档",
+  "searchCurrentWorkspace": "当前工作区",
+  "browseNotes": "浏览笔记",
+  "searchActionsCommand": "搜索操作",
+  "searchDocumentsCommand": "搜索文档",
+  "searchTopicsCommand": "搜索主题",
+  "searchRecentCommand": "搜索最近项目",
+  "searchResourceUnavailable": "此资源不可用。",
+  "notesSync": "同步笔记",
+  "searchInWorkspace": "在工作区中搜索",
+  "searchCategory": "搜索类别",
+  "clearHistorySearchScope": "搜索文档历史记录",
+  "searchInDocument": "在文档中搜索",
+  "searchDocumentHint": "搜索此文档…",
+  "searchWorkspaceHint": "搜索此工作区…",
+  "searchOutlineHint": "搜索标题…",
+  "searchHistoryHint": "搜索本地历史记录…",
+  "searchEnterText": "输入要搜索的文本",
+  "searchAccountUnavailable": "账户不可用",
+  "searchDocumentsHint": "搜索文档…",
+  "searchTopicsHint": "搜索主题…",
+  "searchRecentHint": "搜索最近项目…",
+  "searchActionsHint": "搜索操作…",
+  "searchRequiresNotesWorkspace": "需要笔记工作区",
+  "searchSidebarLabel": "搜索：",
+  "searchDocumentTextCategory": "文档文本",
+  "searchWorkspaceTextCategory": "工作区文本",
+  "searchHeadingsCategory": "标题",
+  "shortcutUnassigned": "未分配",
+  "shortcutPressKeys": "请按下组合键…",
+  "shortcutRecord": "录制快捷键",
+  "shortcutRestoreAll": "恢复所有默认设置",
+  "shortcutRestoreAllQuestion": "恢复所有操作的默认快捷键？自定义分配将被移除。",
+  "shortcutSaveFailed": "快捷键已生效，但无法保存。请重试保存以便重启后保留。",
+  "shortcutRetry": "重试保存",
+  "shortcutChanged": "分配已更改。请检查当前快捷键并重试。",
+  "shortcutInvalid": "无法在此上下文中分配此组合键。",
+  "shortcutSystemWarning": "桌面可能正在使用此组合键。BusyMark 无法覆盖系统快捷键。",
+  "shortcutConflicts": "此快捷键与以下操作冲突：",
+  "shortcutRemove": "移除分配",
+  "shortcutRestoreDefault": "恢复默认设置",
+  "shortcutAssign": "分配",
+  "shortcutReassign": "重新分配",
+  "shortcutContextApplication": "应用程序",
+  "shortcutContextDocument": "文档视图",
+  "shortcutContextEditor": "编辑器和源码",
+  "shortcutContextWritersideSource": "Writerside 源码",
+  "shortcutContextWorkspace": "工作区导航",
+  "shortcutContextTree": "侧栏树",
+  "searchHeadingsCommand": "搜索标题",
+  "shortcutFixed": "由编辑器管理，无法配置。",
+  "shortcutDefaultConflict": "默认快捷键与自定义分配冲突。",
+  "shortcutCurrentBinding": "当前快捷键",
+  "shortcutProposedBinding": "拟用快捷键"
 }

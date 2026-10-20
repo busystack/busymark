@@ -33,18 +33,14 @@ class TextReplacementPreview {
     required this.options,
     required this.replacement,
     required this.matches,
-    this.invalidRegex = false,
     this.truncated = false,
-    this.hasZeroLengthMatches = false,
   });
 
   final String source;
   final SourceSearchOptions options;
   final String replacement;
   final List<TextReplacementMatch> matches;
-  final bool invalidRegex;
   final bool truncated;
-  final bool hasZeroLengthMatches;
 
   String apply({Set<String>? selectedMatchIds}) {
     if (matches.isEmpty) {
@@ -79,8 +75,6 @@ enum WorkspaceReplacementSourceKind { disk, dirtyBuffer }
 enum WorkspaceReplacementIssueKind {
   remoteWorkspaceUnsupported,
   cancelled,
-  invalidRegex,
-  zeroLengthMatches,
   oversized,
   unreadable,
   invalidUtf8,
@@ -147,8 +141,7 @@ class WorkspaceReplacementPreview {
   bool get isComplete => !issues.any(
     (issue) =>
         issue.kind == WorkspaceReplacementIssueKind.truncated ||
-        issue.kind == WorkspaceReplacementIssueKind.cancelled ||
-        issue.kind == WorkspaceReplacementIssueKind.invalidRegex,
+        issue.kind == WorkspaceReplacementIssueKind.cancelled,
   );
 }
 
@@ -186,44 +179,16 @@ class SearchReplacementService {
       maximumMatches: matchLimit + 1,
       stopAfterMaximumMatches: true,
     );
-    if (search.invalidRegex) {
-      return TextReplacementPreview(
-        source: source,
-        options: options,
-        replacement: replacement,
-        matches: const [],
-        invalidRegex: true,
-      );
-    }
-    RegExp? expression;
-    if (options.regex) {
-      expression = RegExp(
-        options.query,
-        caseSensitive: options.caseSensitive,
-        multiLine: true,
-        unicode: true,
-      );
-    }
     final matches = <TextReplacementMatch>[];
     for (final (index, match) in search.matches.take(matchLimit).indexed) {
       final original = source.substring(match.fullStart, match.fullEnd);
-      var renderedReplacement = replacement;
-      if (expression != null) {
-        final regexMatch = expression.matchAsPrefix(source, match.fullStart);
-        if (regexMatch is RegExpMatch && regexMatch.end == match.fullEnd) {
-          renderedReplacement = _expandRegexReplacement(
-            replacement,
-            regexMatch,
-          );
-        }
-      }
       matches.add(
         TextReplacementMatch(
           id: '$idPrefix:$index:${match.fullStart}:${match.fullEnd}',
           start: match.fullStart,
           end: match.fullEnd,
           original: original,
-          replacement: renderedReplacement,
+          replacement: replacement,
         ),
       );
     }
@@ -233,7 +198,6 @@ class SearchReplacementService {
       replacement: replacement,
       matches: List.unmodifiable(matches),
       truncated: search.totalMatchCount > matchLimit,
-      hasZeroLengthMatches: search.hasZeroLengthMatches,
     );
   }
 
@@ -254,48 +218,18 @@ class SearchReplacementService {
         matches: const [],
       );
     }
-    var renderedReplacement = replacement;
-    if (options.regex) {
-      try {
-        final expression = RegExp(
-          options.query,
-          caseSensitive: options.caseSensitive,
-          multiLine: true,
-          unicode: true,
-        );
-        final match = expression.matchAsPrefix(source, start);
-        if (match is! RegExpMatch || match.end != end) {
-          return TextReplacementPreview(
-            source: source,
-            options: options,
-            replacement: replacement,
-            matches: const [],
-          );
-        }
-        renderedReplacement = _expandRegexReplacement(replacement, match);
-      } on FormatException {
-        return TextReplacementPreview(
-          source: source,
-          options: options,
-          replacement: replacement,
-          matches: const [],
-          invalidRegex: true,
-        );
-      }
-    } else {
-      final match = RegExp(
-        RegExp.escape(options.query),
-        caseSensitive: options.caseSensitive,
-        unicode: true,
-      ).matchAsPrefix(source, start);
-      if (match == null || match.end != end) {
-        return TextReplacementPreview(
-          source: source,
-          options: options,
-          replacement: replacement,
-          matches: const [],
-        );
-      }
+    final match = RegExp(
+      RegExp.escape(options.query),
+      caseSensitive: false,
+      unicode: true,
+    ).matchAsPrefix(source, start);
+    if (match == null || match.end != end) {
+      return TextReplacementPreview(
+        source: source,
+        options: options,
+        replacement: replacement,
+        matches: const [],
+      );
     }
     return TextReplacementPreview(
       source: source,
@@ -307,7 +241,7 @@ class SearchReplacementService {
           start: start,
           end: end,
           original: source.substring(start, end),
-          replacement: renderedReplacement,
+          replacement: replacement,
         ),
       ],
     );
@@ -430,23 +364,6 @@ class SearchReplacementService {
             ),
           );
           break;
-        }
-        if (preview.invalidRegex) {
-          issues.add(
-            WorkspaceReplacementIssue(
-              kind: WorkspaceReplacementIssueKind.invalidRegex,
-              filePath: path,
-            ),
-          );
-          break;
-        }
-        if (preview.hasZeroLengthMatches) {
-          issues.add(
-            WorkspaceReplacementIssue(
-              kind: WorkspaceReplacementIssueKind.zeroLengthMatches,
-              filePath: path,
-            ),
-          );
         }
         if (preview.matches.isEmpty && !preview.truncated) {
           continue;
@@ -700,62 +617,6 @@ class SearchReplacementService {
       issues: List.unmodifiable(issues),
     );
   }
-
-  String _expandRegexReplacement(String replacement, RegExpMatch match) {
-    final output = StringBuffer();
-    for (var index = 0; index < replacement.length; index++) {
-      final character = replacement[index];
-      if (character != r'$' || index + 1 >= replacement.length) {
-        output.write(character);
-        continue;
-      }
-      final next = replacement[index + 1];
-      if (next == r'$') {
-        output.write(r'$');
-        index++;
-        continue;
-      }
-      if (next == '&') {
-        output.write(match.group(0) ?? '');
-        index++;
-        continue;
-      }
-      if (next == '{') {
-        final close = replacement.indexOf('}', index + 2);
-        if (close > index + 2) {
-          final name = replacement.substring(index + 2, close);
-          try {
-            output.write(match.namedGroup(name) ?? '');
-            index = close;
-            continue;
-          } on ArgumentError {
-            // Preserve an unknown capture reference literally.
-          }
-        }
-      }
-      if (_isDigit(next)) {
-        var end = index + 1;
-        while (end < replacement.length &&
-            end < index + 3 &&
-            _isDigit(replacement[end])) {
-          end++;
-        }
-        final group = int.parse(replacement.substring(index + 1, end));
-        if (group <= match.groupCount) {
-          output.write(match.group(group) ?? '');
-          index = end - 1;
-          continue;
-        }
-      }
-      output.write(r'$');
-    }
-    return output.toString();
-  }
-
-  bool _isDigit(String value) {
-    final unit = value.codeUnitAt(0);
-    return unit >= 48 && unit <= 57;
-  }
 }
 
 class WorkspaceReplacementCancellation {
@@ -813,9 +674,6 @@ class SearchReplacementWorker {
     final request = <String, Object?>{
       'source': source,
       'query': options.query,
-      'caseSensitive': options.caseSensitive,
-      'wholeWord': options.wholeWord,
-      'regex': options.regex,
       'replacement': replacement,
       'maximumMatches': maximumMatches,
       'targetStart': targetStart,
@@ -869,12 +727,7 @@ class SearchReplacementWorker {
 void _replacementWorkerMain(List<Object?> payload) {
   final sendPort = payload[0] as SendPort;
   final request = payload[1] as Map<Object?, Object?>;
-  final options = SourceSearchOptions(
-    query: request['query']! as String,
-    caseSensitive: request['caseSensitive']! as bool,
-    wholeWord: request['wholeWord']! as bool,
-    regex: request['regex']! as bool,
-  );
+  final options = SourceSearchOptions(query: request['query']! as String);
   final service = SearchReplacementService(
     maximumMatches: request['maximumMatches']! as int,
   );
@@ -896,9 +749,7 @@ void _replacementWorkerMain(List<Object?> payload) {
           replacement: replacement,
         );
   sendPort.send(<Object?, Object?>{
-    'invalidRegex': preview.invalidRegex,
     'truncated': preview.truncated,
-    'hasZeroLengthMatches': preview.hasZeroLengthMatches,
     'matches': [
       for (final match in preview.matches)
         <Object?>[
@@ -933,9 +784,7 @@ TextReplacementPreview _decodeReplacementPreview(
           replacement: item[4]! as String,
         ),
     ]),
-    invalidRegex: payload['invalidRegex']! as bool,
     truncated: payload['truncated']! as bool,
-    hasZeroLengthMatches: payload['hasZeroLengthMatches']! as bool,
   );
 }
 

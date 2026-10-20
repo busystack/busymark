@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Datum",
   "pdfTitlePageTitleRequired": "Voer een titel voor de titelpagina in.",
   "pdfTocSectionNote": "Begint op een aparte pagina en kan meerdere pagina’s beslaan.",
-  "sourceSearchZeroLengthUnsupported": "Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, $ of lookaheads die alleen een positie vinden).",
   "workspaceSearchIncomplete": "Slechts een deel van de resultaten wordt getoond. Toon meer of verfijn de zoekopdracht.",
   "workspaceSearchShowMore": "Meer resultaten tonen",
   "workspaceSearchSkippedFiles": "De zoekopdracht is onvolledig. Deze bestanden zijn groter dan 1 MiB of konden niet worden gelezen:",
@@ -423,18 +422,6 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "commandPalette": "Commandopalet",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "Typ een opdracht",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "Geen overeenkomende opdrachten",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "Niet beschikbaar in de huidige editorcontext",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -715,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Toon deze sneltoetsreferentie",
+  "shortcutKeyboardShortcutsDescription": "Sneltoetsen van de toepassing aanpassen",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -1012,7 +999,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Wis recente werkruimten",
+  "clearRecentWorkspaces": "Recente geschiedenis wissen",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1943,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Hoofdlettergevoelig",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Heel woord",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regex",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Vervangen door",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2137,10 +2112,6 @@
   "saveAs": "Opslaan als",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Ongeldige reguliere expressie",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Groot bestand: markeren en vouwen worden gepauzeerd",
   "@sourceLargeFileFeaturesPaused": {
@@ -4865,14 +4836,12 @@
   "exportInvalidCss": "Kies een leesbaar UTF-8 .css-bestand tot 256 KiB zonder imports, bron-URL’s, HTML of uitvoerbare of ontsnapte CSS.",
   "exportInvalidRange": "{field}: voer een getal tussen {minimum} en {maximum} in.",
   "clipboardHistory": "Historie van de klembord",
-  "clipboardHistorySearchHint": "Klembordgeschiedenis doorzoeken",
   "clipboardHistoryDescription": "Open de klembordgeschiedenis per sessie.",
   "clipboardCurrent": "Huidig klembord",
   "clipboardCurrentExternal": "Huidig klembord van een ander programma",
   "clipboardDestination": "Plakken in {name}",
   "clipboardSessionOnly": "Alleen opgeslagen voor deze BusyMark sessie.",
   "clipboardNoItems": "De klembordgeschiedenis is leeg.",
-  "clipboardNoMatches": "Geen klemborditems komen overeen met deze zoekopdracht.",
   "clipboardDisabled": "De collectie \"Historie van het klembord\" is uitgeschakeld in de instellingen.",
   "clipboardUnavailable": "De inhoud van het huidige klembord is niet beschikbaar of niet ondersteund.",
   "clipboardTooLarge": "Dit item op het klembord is te groot om te bewaren.",
@@ -4889,8 +4858,6 @@
   "findLocalHistoryDescription": "Zoek naar documenten en inhoud van revisies in de lokale geschiedenis.",
   "localHistoryNoDocuments": "Er zijn nog geen documenten met Lokale Geschiedenis.",
   "localHistoryNoRevisions": "Dit document heeft geen revisies van de Lokale Geschiedenis.",
-  "localHistoryNoMatches": "Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.",
-  "localHistorySearchHint": "Lokale geschiedenis doorzoeken",
   "localHistorySelectedRevision": "Geselecteerde revisie",
   "localHistoryCurrentEditor": "Huidige inhoud van de editor",
   "localHistoryCurrentDisk": "Huidige inhoud op schijf",
@@ -5150,5 +5117,61 @@
   "wsInsertElements": "Elementen invoegen",
   "wsAdmonitionsAndQuotes": "Opmerkingen en citaten",
   "wsSemanticText": "Semantische tekst",
-  "wsPropertiesUnavailable": "Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan."
+  "wsPropertiesUnavailable": "Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.",
+  "searchDocumentsCategory": "Documenten",
+  "searchTopicsCategory": "Onderwerpen",
+  "searchCurrentDocument": "Huidig document",
+  "searchCurrentWorkspace": "Huidige werkruimte",
+  "browseNotes": "Notities bekijken",
+  "searchActionsCommand": "Acties zoeken",
+  "searchDocumentsCommand": "Documenten zoeken",
+  "searchTopicsCommand": "Onderwerpen zoeken",
+  "searchRecentCommand": "Recente items zoeken",
+  "searchResourceUnavailable": "Deze bron is niet beschikbaar.",
+  "notesSync": "Notities synchroniseren",
+  "searchInWorkspace": "Zoeken in werkruimte",
+  "searchCategory": "Zoekcategorie",
+  "clearHistorySearchScope": "Zoeken in documentgeschiedenis",
+  "searchInDocument": "Zoeken in document",
+  "searchDocumentHint": "Dit document doorzoeken…",
+  "searchWorkspaceHint": "Deze werkruimte doorzoeken…",
+  "searchOutlineHint": "Koppen zoeken…",
+  "searchHistoryHint": "Lokale geschiedenis doorzoeken…",
+  "searchEnterText": "Voer tekst in om te zoeken",
+  "searchAccountUnavailable": "Account niet beschikbaar",
+  "searchDocumentsHint": "Documenten zoeken…",
+  "searchTopicsHint": "Onderwerpen zoeken…",
+  "searchRecentHint": "Recente items zoeken…",
+  "searchActionsHint": "Acties zoeken…",
+  "searchRequiresNotesWorkspace": "Vereist een notitiewerkruimte",
+  "searchSidebarLabel": "Zoeken:",
+  "searchDocumentTextCategory": "Documenttekst",
+  "searchWorkspaceTextCategory": "Werkruimtetekst",
+  "searchHeadingsCategory": "Koppen",
+  "shortcutUnassigned": "Niet toegewezen",
+  "shortcutPressKeys": "Druk op een toetscombinatie…",
+  "shortcutRecord": "Sneltoets opnemen",
+  "shortcutRestoreAll": "Alle standaardwaarden herstellen",
+  "shortcutRestoreAllQuestion": "Standaardsneltoetsen van alle acties herstellen? Aangepaste toewijzingen worden verwijderd.",
+  "shortcutSaveFailed": "Sneltoetsen zijn actief, maar konden niet worden opgeslagen. Probeer opnieuw om ze na herstart te behouden.",
+  "shortcutRetry": "Opslaan opnieuw proberen",
+  "shortcutChanged": "Toewijzingen zijn gewijzigd. Controleer de huidige sneltoetsen en probeer opnieuw.",
+  "shortcutInvalid": "Deze combinatie kan in deze context niet worden toegewezen.",
+  "shortcutSystemWarning": "Deze combinatie wordt mogelijk door uw bureaublad gebruikt. BusyMark kan systeemsneltoetsen niet overschrijven.",
+  "shortcutConflicts": "Deze sneltoets overlapt met deze acties:",
+  "shortcutRemove": "Toewijzing verwijderen",
+  "shortcutRestoreDefault": "Standaard herstellen",
+  "shortcutAssign": "Toewijzen",
+  "shortcutReassign": "Opnieuw toewijzen",
+  "shortcutContextApplication": "Toepassing",
+  "shortcutContextDocument": "Documentweergaven",
+  "shortcutContextEditor": "Editor en bron",
+  "shortcutContextWritersideSource": "Writerside-bron",
+  "shortcutContextWorkspace": "Werkruimtenavigatie",
+  "shortcutContextTree": "Zijbalkbomen",
+  "searchHeadingsCommand": "Koppen zoeken",
+  "shortcutFixed": "Beheerd door de editor; niet instelbaar.",
+  "shortcutDefaultConflict": "De standaardsneltoets conflicteert met een aangepaste toewijzing.",
+  "shortcutCurrentBinding": "Huidige sneltoets",
+  "shortcutProposedBinding": "Voorgestelde sneltoets"
 }

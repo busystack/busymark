@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'package:busymark/src/search/search_session.dart';
+import 'package:busymark/src/search/search_sidebar.dart';
+import 'package:busymark/src/search/welcome_notes_action.dart';
+import 'package:busymark/src/app/command_registry.dart';
 import 'dart:io';
 import 'dart:convert';
 
@@ -26,6 +31,7 @@ import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -38,7 +44,7 @@ Future<void> settleStorage(WidgetTester tester) async {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 30)),
     );
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 30));
   }
   await tester.pumpAndSettle();
 }
@@ -321,6 +327,13 @@ void main() {
           nextcloudNotesRepositoryProvider.overrideWith(
             (ref) async => repository,
           ),
+          localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+          documentSessionStoreProvider.overrideWithValue(
+            MemoryDocumentSessionStore(),
+          ),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -329,14 +342,351 @@ void main() {
             body: SizedBox(
               width: 500,
               height: 1000,
-              child: NextcloudNotesSidebar(accountId: accountId),
+              child: _NotesSearchHarness(accountId: accountId),
             ),
           ),
         ),
       ),
     );
+    final scope = ProviderScope.containerOf(
+      tester.element(find.byType(_NotesSearchHarness)),
+    );
+    scope.read(appRouterProvider).go('/workspace');
+    await tester.runAsync(
+      () => scope
+          .read(workspaceControllerProvider.notifier)
+          .openNextcloudWorkspace(accountId),
+    );
     await settleStorage(tester);
   }
+
+  Future<ProviderContainer> pumpWelcome(
+    WidgetTester tester, {
+    NextcloudConnectionController? connection,
+    LocalSettingsStore? settings,
+  }) async {
+    tester.view.physicalSize = const Size(1100, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final container = ProviderContainer(
+      overrides: [
+        if (connection != null)
+          nextcloudConnectionProvider.overrideWith(() => connection),
+        nextcloudNotesRepositoryProvider.overrideWith(
+          (ref) async => repository,
+        ),
+        localSettingsStoreProvider.overrideWithValue(
+          settings ?? _TabSettings(),
+        ),
+        linuxAccentPlatformProvider.overrideWithValue(false),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await settleStorage(tester);
+    return container;
+  }
+
+  for (final failSave in [false, true]) {
+    testWidgets(
+      'qualified Recent reopening keeps account identity when save fails=$failSave',
+      (tester) async {
+        const otherAccount = '923e4567-e89b-42d3-a456-426614174000';
+        const localId = '223e4567-e89b-42d3-a456-426614174000';
+        await tester.runAsync(
+          () => repository.upsertAccount(
+            NextcloudAccount(
+              id: otherAccount,
+              server: Uri.parse('https://other.example/'),
+              loginName: 'other',
+              appVersion: '6.1.0',
+            ),
+          ),
+        );
+        final settings = _RecentReopenSettings(
+          failSave: failSave,
+          value: AppSettings.defaults()
+              .copyWith(
+                autoSave: false,
+                reopenPreviousWorkspaceOnStartup: false,
+                recentWorkspaces: [
+                  RecentResource(
+                    path: '',
+                    kind: 'nextcloudNote',
+                    document: true,
+                    accountId: otherAccount,
+                    localId: localId,
+                    title: 'Wrong account row',
+                    lastOpenedAt: DateTime.utc(2026, 10, 21),
+                  ),
+                  RecentResource(
+                    path: '',
+                    kind: 'nextcloudNote',
+                    document: true,
+                    accountId: accountId,
+                    accountLabel: 'Original account',
+                    localId: localId,
+                    title: 'Qualified reopen row',
+                    lastOpenedAt: DateTime.utc(2026, 10, 20),
+                  ),
+                ],
+              )
+              .toJson(),
+        );
+        final container = await pumpWelcome(tester, settings: settings);
+        await tester.tap(find.text('Wrong account row'));
+        await settleStorage(tester);
+        expect(container.read(workspaceControllerProvider).workspace, isNull);
+        await tester.tap(find.text('Qualified reopen row'));
+        await settleStorage(tester);
+        final state = container.read(workspaceControllerProvider);
+        expect(state.workspace!.nextcloudAccountId, accountId);
+        expect(state.activeBuffer!.remoteNote!.accountId, accountId);
+        expect(state.activeBuffer!.remoteNote!.localId, localId);
+        expect(state.activeText, 'private search text');
+        expect(
+          container
+              .read(appRouterProvider)
+              .routeInformationProvider
+              .value
+              .uri
+              .path,
+          '/workspace',
+        );
+        expect(state.message?.code, isNot(WorkspaceMessageCode.openFailed));
+        if (failSave) {
+          expect(
+            state.message?.code,
+            WorkspaceMessageCode.recentWorkspaceUpdateFailed,
+          );
+        }
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .flushPersistence();
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+      },
+    );
+  }
+
+  testWidgets(
+    'Welcome New Note without an account cancels on returning from settings',
+    (tester) async {
+      await tester.runAsync(() async {
+        await repository.dispose();
+        repository = _CachedNotesRepository(
+          store: await NotesStore.open(path: '${root.path}/empty.sqlite3'),
+        );
+        await repository.initialize();
+      });
+      final container = await pumpWelcome(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('welcome-new-nextcloud-note')),
+      );
+      await settleStorage(tester);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/settings',
+      );
+      expect(
+        container.read(welcomeNotesActionProvider),
+        WelcomeNotesAction.create,
+      );
+      expect(repository.notes, isEmpty);
+      container.read(appRouterProvider).go('/');
+      await settleStorage(tester);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/',
+      );
+      expect(container.read(welcomeNotesActionProvider), isNull);
+      expect(repository.notes, isEmpty);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'Welcome resumes exactly one requested note after successful connection',
+    (tester) async {
+      final connection = _ConnectingWelcomeAccount(repository.accounts.first);
+      final container = await pumpWelcome(tester, connection: connection);
+      final before = repository.notes.length;
+      await tester.tap(
+        find.byKey(const ValueKey('welcome-new-nextcloud-note')),
+      );
+      await settleStorage(tester);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/settings',
+      );
+      expect(repository.notes.length, before);
+      await tester.tap(find.text('Connect'));
+      await settleStorage(tester);
+      await tester.runAsync(() async {
+        final deadline = DateTime.now().add(const Duration(seconds: 10));
+        while (container.read(welcomeNotesActionProvider.notifier).busy &&
+            DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+      });
+      await settleStorage(tester);
+      expect(repository.notes.length, before + 1);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/workspace',
+      );
+      expect(container.read(welcomeNotesActionProvider), isNull);
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .remoteNote!
+            .accountId,
+        accountId,
+      );
+      container.read(appRouterProvider).go('/');
+      await settleStorage(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+      container.dispose();
+      await tester.pump();
+      // Settings created this stream inside FakeAsync. Flush its cancellation
+      // while closing the fixture's real SQLite worker.
+      var closed = false;
+      await tester.runAsync(() async {
+        unawaited(repository.dispose().then((_) => closed = true));
+      });
+      for (var i = 0; i < 100 && !closed; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+      expect(
+        closed,
+        isTrue,
+        reason: 'Fixture storage and provider subscriptions must close.',
+      );
+    },
+  );
+
+  testWidgets(
+    'Welcome New Note claims double activation once and records the individual note',
+    (tester) async {
+      final container = await pumpWelcome(tester);
+      final before = repository.notes.length;
+      final registry = container.read(busyMarkCommandRegistryProvider);
+      await tester.runAsync(() async {
+        await Future.wait([
+          registry.execute(BusyMarkCommandIds.newNote),
+          registry.execute(BusyMarkCommandIds.newNote),
+        ]);
+        final deadline = DateTime.now().add(const Duration(seconds: 10));
+        while (container.read(welcomeNotesActionProvider.notifier).busy &&
+            DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+      });
+      await settleStorage(tester);
+      expect(
+        repository.notes.length,
+        before + 1,
+        reason:
+            '${container.read(workspaceControllerProvider).message}; ${container.read(appRouterProvider).routeInformationProvider.value.uri}',
+      );
+      final active = container.read(workspaceControllerProvider).activeBuffer!;
+      expect(active.remoteNote!.accountId, accountId);
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .where(
+              (r) =>
+                  r.accountId == accountId &&
+                  r.localId == active.remoteNote!.localId,
+            ),
+        hasLength(1),
+      );
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/workspace',
+      );
+      container.read(appRouterProvider).go('/');
+      await settleStorage(tester);
+      expect(container.read(searchSessionProvider.notifier).categories, [
+        SearchCategory.recent,
+        SearchCategory.actions,
+      ]);
+      expect(
+        find.byKey(const ValueKey('welcome-new-nextcloud-note')),
+        findsOneWidget,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'pending Welcome Notes operation is cancelled when leaving connection settings',
+    (tester) async {
+      final container = await pumpWelcome(tester);
+      final pending = container.read(welcomeNotesActionProvider.notifier);
+      final before = repository.notes.length;
+      pending.request(WelcomeNotesAction.create);
+      container
+          .read(appRouterProvider)
+          .go(
+            '${settingsLocation(SettingsReturnTarget.welcome)}&page=nextcloudNotes',
+          );
+      await settleStorage(tester);
+      expect(
+        container.read(welcomeNotesActionProvider),
+        WelcomeNotesAction.create,
+      );
+      container.read(appRouterProvider).go('/workspace');
+      await settleStorage(tester);
+      expect(container.read(welcomeNotesActionProvider), isNull);
+      expect(repository.notes.length, before);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   test('Nextcloud settings route selects its dedicated page', () {
     expect(
@@ -352,10 +702,10 @@ void main() {
       await tester.tap(find.text('Recovery').first);
       await settleStorage(tester);
       expect(find.text('Deleted note'), findsOneWidget);
-      await tester.tap(find.byType(TextField).first);
+      await tester.tap(find.byKey(const ValueKey('notes-search-entry')));
       await settleStorage(tester);
       final field = find.descendant(
-        of: find.byType(NotesSearchDialog),
+        of: find.byKey(const ValueKey('shared-search-query')),
         matching: find.byType(TextField),
       );
       await tester.enterText(field, 'title:Deleted');
@@ -363,14 +713,14 @@ void main() {
       await settleStorage(tester);
       expect(
         find.descendant(
-          of: find.byType(NotesSearchDialog),
-          matching: find.widgetWithText(ListTile, 'Deleted note'),
+          of: find.byType(SearchSidebar),
+          matching: find.text('Deleted note'),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
-          of: find.byType(NotesSearchDialog),
+          of: find.byType(SearchSidebar),
           matching: find.text('Personal note'),
         ),
         findsNothing,
@@ -382,7 +732,7 @@ void main() {
   );
 
   testWidgets(
-    'correction: Show more reaches all 320 indexed occurrences through the production dialog',
+    'correction: Show more reaches all 320 indexed occurrences through the shared sidebar',
     (tester) async {
       final expected = <Key>{};
       await tester.runAsync(() async {
@@ -404,11 +754,11 @@ void main() {
         }
       });
       await pump(tester);
-      await tester.tap(find.byType(TextField).first);
+      await tester.tap(find.byKey(const ValueKey('notes-search-entry')));
       await settleStorage(tester);
       await tester.enterText(
         find.descendant(
-          of: find.byType(NotesSearchDialog),
+          of: find.byKey(const ValueKey('shared-search-query')),
           matching: find.byType(TextField),
         ),
         'pagingneedle',
@@ -417,12 +767,12 @@ void main() {
       await settleStorage(tester);
       for (final count in [80, 160, 240, 320]) {
         final list = tester.widget<ListView>(
-          find.byKey(const ValueKey('notes-search-results')),
+          find.byKey(const ValueKey('sidebar-search-results')),
         );
         final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
         expect(delegate.estimatedChildCount, count);
         final context = tester.element(
-          find.byKey(const ValueKey('notes-search-results')),
+          find.byKey(const ValueKey('sidebar-search-results')),
         );
         final keys = {
           for (var i = 0; i < count; i++) delegate.builder(context, i)!.key!,
@@ -473,6 +823,7 @@ void main() {
         await controller.openNextcloudWorkspace(accountId);
         await controller.openNextcloudNote(personalId);
       });
+      container.read(appRouterProvider).go('/workspace');
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
@@ -483,7 +834,7 @@ void main() {
               body: SizedBox(
                 width: 500,
                 height: 1000,
-                child: NextcloudNotesSidebar(accountId: accountId),
+                child: _NotesSearchHarness(accountId: accountId),
               ),
             ),
           ),
@@ -492,11 +843,11 @@ void main() {
       await settleStorage(tester);
       await tester.tap(find.text('Recovery').first);
       await settleStorage(tester);
-      await tester.tap(find.byType(TextField).first);
+      await tester.tap(find.byKey(const ValueKey('notes-search-entry')));
       await settleStorage(tester);
       await tester.enterText(
         find.descendant(
-          of: find.byType(NotesSearchDialog),
+          of: find.byKey(const ValueKey('shared-search-query')),
           matching: find.byType(TextField),
         ),
         'title:Deleted',
@@ -506,7 +857,7 @@ void main() {
       expect(find.byTooltip('Source location'), findsNothing);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await settleStorage(tester);
-      expect(find.byType(NotesSearchDialog), findsNothing);
+      expect(find.byType(SearchSidebar), findsNothing);
       expect(find.byType(NotesRecoveryDialog), findsOneWidget);
       expect(
         tester
@@ -748,11 +1099,11 @@ void main() {
       expect(find.text('Personal note'), findsOneWidget);
       expect(find.text('Shared note'), findsOneWidget);
       expect(find.text('Deleted note'), findsNothing);
-      await tester.tap(find.byType(TextField));
+      await tester.tap(find.byKey(const ValueKey('notes-search-entry')));
       await settleStorage(tester);
-      final dialog = find.byType(NotesSearchDialog);
+      final dialog = find.byType(SearchSidebar);
       final field = find.descendant(
-        of: dialog,
+        of: find.byKey(const ValueKey('shared-search-query')),
         matching: find.byType(TextField),
       );
       await tester.enterText(field, 'private search');
@@ -764,13 +1115,32 @@ void main() {
         await tester.pump();
       }
       expect(
-        find.descendant(of: dialog, matching: find.text('Personal note')),
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining('Personal note'),
+        ),
         findsNWidgets(2),
       );
       expect(
-        find.descendant(of: dialog, matching: find.text('Shared note')),
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining('Shared note'),
+        ),
         findsNothing,
       );
+      final results = ProviderScope.containerOf(
+        tester.element(dialog),
+      ).read(searchSessionProvider).results.cast<NoteSearchResult>();
+      expect(results, hasLength(2));
+      expect(
+        results.every(
+          (r) =>
+              r.accountId == accountId &&
+              r.hit.localId == '223e4567-e89b-42d3-a456-426614174000',
+        ),
+        isTrue,
+      );
+      expect(results.map((r) => (r.hit.start, r.hit.end)), [(0, 7), (8, 14)]);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
@@ -1551,6 +1921,27 @@ void main() {
   }
 }
 
+class _ConnectingWelcomeAccount extends NextcloudConnectionController {
+  _ConnectingWelcomeAccount(this.account);
+  final NextcloudAccount account;
+  bool connected = false;
+  @override
+  NextcloudConnectionState build() => const NextcloudConnectionState();
+  @override
+  Future<void> reload() async => state = NextcloudConnectionState(
+    account: connected ? account : null,
+    phase: connected
+        ? NextcloudConnectionPhase.connected
+        : NextcloudConnectionPhase.idle,
+  );
+  @override
+  Future<bool> connect(String serverUrl) async {
+    connected = true;
+    await reload();
+    return true;
+  }
+}
+
 class _TabSettings implements LocalSettingsStore {
   @override
   Future<Map<String, Object?>> load() async => {'automaticSpelling': false};
@@ -1563,6 +1954,12 @@ class _CachedNotesRepository extends NotesRepository {
     : super(
         clientForAccount: (account) async => NotesApiClient(
           client: MockClient((request) async {
+            if (request.url.path.endsWith('/settings')) {
+              return http.Response(
+                jsonEncode({'notesPath': 'Notes', 'fileSuffix': '.md'}),
+                200,
+              );
+            }
             final id = int.parse(request.url.pathSegments.last);
             final candidate = (await store.notes()).firstWhere(
               (n) => n.serverId == id,
@@ -1588,4 +1985,40 @@ class _CachedNotesRepository extends NotesRepository {
     bool refreshCapabilities = false,
     bool onlyFreshWrites = false,
   }) async {}
+}
+
+class _NotesSearchHarness extends ConsumerWidget {
+  const _NotesSearchHarness({required this.accountId});
+  final String accountId;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final search = ref.watch(searchSessionProvider);
+    return Column(
+      children: [
+        if (search.active) const SearchHeaderField(),
+        Expanded(
+          child: IndexedStack(
+            index: search.active ? 1 : 0,
+            children: [
+              NextcloudNotesSidebar(accountId: accountId),
+              const SearchSidebar(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentReopenSettings implements LocalSettingsStore {
+  _RecentReopenSettings({required this.failSave, required this.value});
+  final bool failSave;
+  Map<String, Object?> value;
+  @override
+  Future<Map<String, Object?>> load() async => value;
+  @override
+  Future<void> save(Map<String, Object?> next) async {
+    if (failSave) throw StateError('injected Recent persistence failure');
+    value = next;
+  }
 }

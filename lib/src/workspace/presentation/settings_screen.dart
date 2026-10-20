@@ -1,3 +1,4 @@
+import 'keyboard_shortcuts_settings.dart';
 import '../../nextcloud_notes/presentation/nextcloud_settings.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -19,11 +20,12 @@ import '../../app/app_locale.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_motion_widgets.dart';
+import '../../app/busymark_search_field.dart';
 import '../../app/linux/linux_page_frame.dart';
 import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
-import '../../app/busymark_shortcuts.dart';
+import '../../app/command_registry.dart';
 import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
@@ -104,6 +106,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       });
     });
     final pageBody = switch (_page) {
+      SettingsPage.keyboardShortcuts => const KeyboardShortcutsSettings(),
       SettingsPage.appearance => BusyMarkGroupedList(
         title: l10n.appearance,
         filled: true,
@@ -491,6 +494,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: BusyMarkClamp(
                   maxWidth: BusyMarkSizes.settingsWidth,
+                  scrollable: _page != SettingsPage.keyboardShortcuts,
                   margin: EdgeInsets.zero,
                   padding: BusyMarkInsets.settingsPage,
                   child: BusyMarkKeyedCrossfade(
@@ -528,7 +532,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             synchronizer: headerBar.configurationSynchronizer,
             configuration: headerConfiguration,
             enabled: headerBar.isAvailable,
-            child: Scaffold(backgroundColor: colors.view, body: body),
+            child: BusyMarkLocalTextEditingShortcuts(
+              child: Scaffold(backgroundColor: colors.view, body: body),
+            ),
           ),
         );
       },
@@ -638,8 +644,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _goBack();
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
-      case HeaderBarAction.keyboardShortcuts:
-        showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case HeaderBarAction.reportIssue:
@@ -682,11 +686,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
         _selectPage(SettingsPage.appearance);
-      case BusyMarkMainMenuAction.keyboardShortcuts:
-        showBusyMarkKeyboardShortcutsDialog(context);
-      case BusyMarkMainMenuAction.quickOpen:
-      case BusyMarkMainMenuAction.commandPalette:
-        return;
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
@@ -1311,6 +1310,7 @@ enum SettingsPage {
   appearance,
   editor,
   spellingDictionaries,
+  keyboardShortcuts,
   validation,
   history,
   ai,
@@ -1321,6 +1321,7 @@ enum SettingsPage {
 const _primarySettingsPages = <SettingsPage>[
   SettingsPage.appearance,
   SettingsPage.editor,
+  SettingsPage.keyboardShortcuts,
   SettingsPage.validation,
   SettingsPage.history,
   SettingsPage.ai,
@@ -1337,6 +1338,7 @@ SettingsPage _settingsNavigationSelection(SettingsPage page) {
 
 SettingsPage settingsPageFromRouteValue(String? value) {
   return switch (value) {
+    'keyboardShortcuts' => SettingsPage.keyboardShortcuts,
     'editor' => SettingsPage.editor,
     'spellingDictionaries' => SettingsPage.spellingDictionaries,
     'validation' => SettingsPage.validation,
@@ -1357,6 +1359,7 @@ String settingsPageRouteValue(SettingsPage page) => page.name;
 String _settingsPageLabel(BuildContext context, SettingsPage page) {
   final l10n = context.l10n;
   return switch (page) {
+    SettingsPage.keyboardShortcuts => l10n.keyboardShortcuts,
     SettingsPage.appearance => l10n.appearance,
     SettingsPage.editor => l10n.editor,
     SettingsPage.spellingDictionaries => l10n.spellingDictionaries,
@@ -1370,6 +1373,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
 
 IconData _settingsPageIcon(SettingsPage page) {
   return switch (page) {
+    SettingsPage.keyboardShortcuts => BusyMarkGlyphs.keyboard,
     SettingsPage.appearance => BusyMarkGlyphs.appearance,
     SettingsPage.editor => BusyMarkGlyphs.editorView,
     SettingsPage.spellingDictionaries => BusyMarkGlyphs.symbols,
@@ -1488,7 +1492,12 @@ class _SettingsFallbackHeader extends StatelessWidget {
             tooltip: context.l10n.back,
             icon: BusyMarkGlyphs.headerBackFor(Directionality.of(context)),
             nativeIcon: BusyMarkLinuxHeaderIcon.back,
-            shortcut: BusyMarkAppShortcutLabels.back,
+            shortcut:
+                (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                        BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                        .back]
+                    ?.shortcut
+                    ?.label,
             onPressed: onBack,
           ),
         ],

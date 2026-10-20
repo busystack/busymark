@@ -1221,9 +1221,14 @@ void main() {
         'base',
       );
       await controller.selectDocumentForBuffer(opened);
-      await controller.search('needle');
+      final id = container
+          .read(localHistoryControllerProvider)
+          .selectedDocumentId;
       expect(
-        container.read(localHistoryControllerProvider).searchMatches,
+        (await controller.findRetained(
+          query: 'needle',
+          documentId: id,
+        ))!.matches,
         isEmpty,
       );
 
@@ -1233,14 +1238,14 @@ void main() {
       timers.last.fire();
       await _waitForHistory(
         container,
-        (state) =>
-            !state.searching &&
-            state.searchQuery == 'needle' &&
-            state.searchMatches.isNotEmpty,
+        (state) => state.selectedRevisions.length == 2,
       );
       var state = container.read(localHistoryControllerProvider);
       expect(
-        state.selectedRevisions.where(state.revisionVisible),
+        (await controller.findRetained(
+          query: 'needle',
+          documentId: id,
+        ))!.matches,
         hasLength(1),
       );
 
@@ -1250,12 +1255,15 @@ void main() {
       timers.last.fire();
       await _waitForHistory(
         container,
-        (value) => !value.searching && value.selectedRevisions.length == 3,
+        (value) => value.selectedRevisions.length == 3,
       );
       state = container.read(localHistoryControllerProvider);
-      expect(state.searchQuery, 'needle');
+      expect(state.selectedRevisions, hasLength(3));
       expect(
-        state.selectedRevisions.where(state.revisionVisible),
+        (await controller.findRetained(
+          query: 'needle',
+          documentId: id,
+        ))!.matches,
         hasLength(1),
       );
     },
@@ -1974,15 +1982,19 @@ void main() {
         contains('authentication'),
       );
 
-      controller.beginDocumentSearch();
-      await controller.search('authentication');
+      controller.browseDocuments();
+      final contents = await controller.findRetained(query: 'authentication');
       var state = container.read(localHistoryControllerProvider);
-      expect(state.findingDocuments, isTrue);
-      expect(state.documentSearchMatches, {state.snapshot.documents.single.id});
+      expect(state.browsingDocuments, isTrue);
+      expect(contents!.matches.map((m) => m.document.id).toSet(), {
+        state.snapshot.documents.single.id,
+      });
 
-      await controller.search('/retired/guides');
+      final paths = await controller.findRetained(query: '/retired/guides');
       state = container.read(localHistoryControllerProvider);
-      expect(state.documentSearchMatches, {state.snapshot.documents.single.id});
+      expect(paths!.matches.map((m) => m.document.id).toSet(), {
+        state.snapshot.documents.single.id,
+      });
       expect(state.snapshot.documents.single.deleted, isTrue);
     },
   );
@@ -2015,28 +2027,28 @@ void main() {
           .read(localHistoryControllerProvider)
           .selectedDocumentId;
 
-      controller.beginDocumentSearch();
-      await controller.search('Unique retained');
+      controller.browseDocuments();
+      final matches = await controller.findRetained(query: 'Unique retained');
       var state = container.read(localHistoryControllerProvider);
       final deleted = state.snapshot.documents.singleWhere(
         (document) =>
             document.currentPath == '/retired/deleted.md' ||
             document.historicalPaths.contains('/retired/deleted.md'),
       );
-      expect(state.documentSearchMatches, {deleted.id});
+      expect(matches!.matches.map((m) => m.document.id).toSet(), {deleted.id});
       controller.inspectRetainedDocument(deleted.id);
       state = container.read(localHistoryControllerProvider);
       expect(state.inspectingRetainedDocument, isTrue);
       expect(state.selectedDocumentId, deleted.id);
       expect(state.selectedDocument?.deleted, isTrue);
-      expect(state.searchQuery, isEmpty);
+      expect(state.selectedRevisions, isNotEmpty);
 
       await controller.selectDocumentForBuffer(current);
       state = container.read(localHistoryControllerProvider);
       expect(state.inspectingRetainedDocument, isFalse);
-      expect(state.findingDocuments, isFalse);
+      expect(state.browsingDocuments, isFalse);
       expect(state.selectedDocumentId, currentId);
-      expect(state.searchQuery, isEmpty);
+      expect(state.selectedRevisions, isNotEmpty);
     },
   );
 
@@ -2082,15 +2094,25 @@ void main() {
       await tester.runAsync(() => workspace.openPath(currentPath));
       final history = container.read(localHistoryControllerProvider.notifier);
       await tester.runAsync(history.refresh);
-      history.beginDocumentSearch();
-      await tester.runAsync(() => history.search('Unique retained'));
+      history.browseDocuments();
+      expect(
+        (await tester.runAsync(
+          () => history.findRetained(query: 'Unique retained'),
+        ))!.matches,
+        isNotEmpty,
+      );
       final retained = container
           .read(localHistoryControllerProvider)
           .snapshot
           .documents
           .singleWhere((document) => document.deleted);
       history.inspectRetainedDocument(retained.id);
-      await tester.runAsync(() => history.search('Unique retained'));
+      expect(
+        (await tester.runAsync(
+          () => history.findRetained(query: 'Unique retained'),
+        ))!.matches,
+        isNotEmpty,
+      );
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -2107,13 +2129,10 @@ void main() {
       final state = container.read(localHistoryControllerProvider);
       expect(state.inspectingRetainedDocument, isTrue);
       expect(state.selectedDocumentId, retained.id);
-      expect(state.searchQuery, 'Unique retained');
+      expect(find.byType(TextField), findsNothing);
+      expect(state.selectedRevisions, isNotEmpty);
       expect(
-        tester.widget<TextField>(find.byType(TextField)).controller!.text,
-        'Unique retained',
-      );
-      expect(
-        find.byKey(const ValueKey('local-history-context-header')),
+        find.byKey(const ValueKey('local-history-document-context')),
         findsOneWidget,
       );
       expect(find.text('deleted.md'), findsOneWidget);
@@ -2144,7 +2163,10 @@ void main() {
       await controller.refresh();
       controller.selectDocument(documentA.id);
 
-      final search = controller.search('Only A');
+      final search = controller.findRetained(
+        query: 'Only A',
+        documentId: documentA.id,
+      );
       await store.started.future;
       controller.selectDocument(documentB.id);
       expect(container.read(localHistoryControllerProvider).loading, isFalse);
@@ -2153,14 +2175,52 @@ void main() {
         documentB.id,
       );
       store.release.complete();
-      await search;
+      final page = await search;
+      expect(page!.matches.map((m) => m.document.id).toSet(), {documentA.id});
 
       final state = container.read(localHistoryControllerProvider);
       expect(state.selectedDocument?.currentPath, '/workspace/b.md');
-      expect(state.searchQuery, isEmpty);
-      expect(state.searchMatches, isEmpty);
-      expect(state.documentSearchMatches, isEmpty);
+      expect(
+        state.selectedRevisions.every((r) => r.documentId == documentB.id),
+        isTrue,
+      );
+      expect(state.selectedRevision, isNull);
       expect(state.loading, isFalse);
+    },
+  );
+
+  test(
+    'cancelled search activation never publishes a delayed revision body',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      await _capturePath(memory, '/retired/deleted.md', 'retained secret');
+      await memory.markDeleted('/retired/deleted.md', recursive: false);
+      final snapshot = await memory.load();
+      final document = snapshot.documents.single;
+      final revision = snapshot.revisions.single;
+      final store = _BlockingRevisionReadStore(memory, revision.id);
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final history = container.read(localHistoryControllerProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+      await history.refresh();
+      history.inspectRetainedDocument(document.id);
+      var currentRequest = true;
+      final loading = history.selectRevision(
+        revision.id,
+        acceptSelection: () => currentRequest,
+      );
+      await store.started.future;
+      expect(container.read(localHistoryControllerProvider).loading, isTrue);
+      currentRequest = false;
+      store.release.complete();
+      await loading;
+      final after = container.read(localHistoryControllerProvider);
+      expect(after.selectedRevision, isNull);
+      expect(after.selectedRevisionId, isNull);
+      expect(after.loading, isFalse);
+      expect(after.selectedDocumentId, document.id);
+      expect((await memory.load()).revisions.map((r) => r.id), [revision.id]);
     },
   );
 
@@ -2184,19 +2244,21 @@ void main() {
       controller.selectDocument(document.id);
 
       store.failReads = true;
-      await controller.search('matching');
+      await expectLater(
+        controller.findRetained(query: 'matching', documentId: document.id),
+        throwsA(isA<StateError>()),
+      );
 
       final state = container.read(localHistoryControllerProvider);
-      expect(state.searching, isFalse);
-      expect(state.searchQuery, 'matching');
+      expect(state.loading, isFalse);
       expect(state.selectedDocumentId, document.id);
-      expect(state.searchMatches, isEmpty);
-      expect(state.warning?.kind, LocalHistoryWarningKind.revisionRead);
+      expect(state.selectedRevision, isNull);
+      expect(state.warning, isNull);
     },
   );
 
   testWidgets(
-    'Local History follows active tabs and clears the visible query without a document dropdown',
+    'ordinary Local History follows active tabs without a private query or document dropdown',
     (tester) async {
       final directory = await tester.runAsync(
         () => Directory.systemTemp.createTemp('busymark-history-follow-'),
@@ -2253,36 +2315,29 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey('local-history-context-header')),
-        findsNothing,
+        find.byKey(const ValueKey('local-history-document-context')),
+        findsOneWidget,
       );
-      expect(find.text('B.md'), findsNothing);
+      expect(find.text('B.md'), findsOneWidget);
       expect(find.byType(DropdownButton<String>), findsNothing);
 
       final searchField = find.byType(TextField);
       final actionsMenu = find.byKey(
         const ValueKey('local-history-actions-menu'),
       );
-      expect(
-        tester.getCenter(actionsMenu).dx,
-        greaterThan(tester.getTopRight(searchField).dx),
+      expect(searchField, findsNothing);
+      final scope = container
+          .read(localHistoryControllerProvider)
+          .selectedDocumentId;
+      final matches = await tester.runAsync(
+        () => container
+            .read(localHistoryControllerProvider.notifier)
+            .findRetained(query: 'Unique B', documentId: scope),
       );
-      expect(searchField, findsOneWidget);
-      expect(
-        tester.widget<TextField>(searchField).decoration?.hintText,
-        'Search local history',
-      );
-      await tester.enterText(searchField, 'Unique B');
-      await tester.runAsync(
-        () => _waitForHistory(
-          container,
-          (state) => !state.searching && state.searchQuery == 'Unique B',
-        ),
-      );
+      expect(matches!.matches, hasLength(1));
       final selectedBeforeFocus = container
           .read(localHistoryControllerProvider)
           .selectedDocumentId;
-      await tester.tap(searchField);
       await tester.pump();
       expect(
         container.read(localHistoryControllerProvider).selectedDocumentId,
@@ -2298,29 +2353,33 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey('local-history-context-header')),
-        findsNothing,
+        find.byKey(const ValueKey('local-history-document-context')),
+        findsOneWidget,
       );
-      expect(find.text('A.md'), findsNothing);
+      expect(find.text('A.md'), findsOneWidget);
+      expect(searchField, findsNothing);
       expect(
-        container.read(localHistoryControllerProvider).searchQuery,
-        isEmpty,
+        container.read(localHistoryControllerProvider).selectedRevisions,
+        isNotEmpty,
       );
-      expect(tester.widget<TextField>(searchField).controller!.text, isEmpty);
 
       final panelContext = tester.element(find.byType(LocalHistoryPanel));
       final refreshLabel = MaterialLocalizations.of(
         panelContext,
       ).refreshIndicatorSemanticLabel;
       expect(
-        tester.getCenter(actionsMenu).dx,
-        greaterThan(tester.getTopRight(searchField).dx),
+        find.byTooltip(
+          AppLocalizations.of(
+            tester.element(find.byType(LocalHistoryPanel)),
+          ).findLocalHistoryEllipsis,
+        ),
+        findsNothing,
       );
       expect(find.byTooltip(refreshLabel), findsNothing);
       await tester.tap(actionsMenu);
       await tester.pumpAndSettle();
       expect(find.text(refreshLabel), findsOneWidget);
-      expect(find.text('Find in Local History…'), findsOneWidget);
+      expect(find.text('Find in Local History…'), findsNothing);
       expect(find.text('Clear This Document’s History'), findsOneWidget);
       expect(find.text('Clear All Local History'), findsOneWidget);
     },
@@ -2415,10 +2474,14 @@ void main() {
         const ValueKey('local-history-actions-menu'),
       );
       expect(actionsMenu, findsOneWidget);
-      expect(searchField, findsOneWidget);
+      expect(searchField, findsNothing);
       expect(
-        tester.getCenter(actionsMenu).dx,
-        greaterThan(tester.getTopRight(searchField).dx),
+        find.byTooltip(
+          AppLocalizations.of(
+            tester.element(find.byType(LocalHistoryPanel)),
+          ).findLocalHistoryEllipsis,
+        ),
+        findsNothing,
       );
       expect(find.text(beforeLabel), findsOneWidget);
       expect(find.text(afterLabel), findsOneWidget);

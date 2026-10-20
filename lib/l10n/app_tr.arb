@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Tarih",
   "pdfTitlePageTitleRequired": "Başlık sayfası için bir başlık girin.",
   "pdfTocSectionNote": "Ayrı bir sayfada başlar ve birden fazla sayfa sürebilir.",
-  "sourceSearchZeroLengthUnsupported": "Sıfır uzunluklu düzenli ifade eşleşmeleri desteklenmez (örneğin ^, $ veya yalnızca bir konumla eşleşen ileri bakışlar).",
   "workspaceSearchIncomplete": "Sonuçların yalnızca bir kısmı gösteriliyor. Daha fazlasını gösterin veya aramayı daraltın.",
   "workspaceSearchShowMore": "Daha fazla sonuç göster",
   "workspaceSearchSkippedFiles": "Arama eksik. Bu dosyalar 1 MiB boyutunu aşıyor veya okunamadı:",
@@ -423,18 +422,6 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "commandPalette": "Komut Paleti",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "Bir komut yazın",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "Eşleşen komut yok",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "Mevcut düzenleyici bağlamında kullanılamıyor",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -715,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Bu klavye kısayolu referansını göster",
+  "shortcutKeyboardShortcutsDescription": "Uygulama klavye kısayollarını özelleştir",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -1012,7 +999,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Son çalışma alanlarını temizle",
+  "clearRecentWorkspaces": "Son geçmişi temizle",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1943,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Büyük-küçük harf duyarlı",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Tam sözcük",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Düzenli ifade",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Şununla değiştir:",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2137,10 +2112,6 @@
   "saveAs": "Farklı Kaydet",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Geçersiz düzenli ifade",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Büyük dosya: vurgulama ve katlama duraklatıldı",
   "@sourceLargeFileFeaturesPaused": {
@@ -4865,14 +4836,12 @@
   "exportInvalidCss": "İçe aktarım, kaynak URL’si, HTML, çalıştırılabilir veya kaçışlı CSS içermeyen, okunabilir UTF-8 .css dosyası seçin (en fazla 256 KiB).",
   "exportInvalidRange": "{field}: {minimum} ile {maximum} arasında bir sayı girin.",
   "clipboardHistory": "Kopyalama Geçmişi",
-  "clipboardHistorySearchHint": "Pano geçmişinde ara",
   "clipboardHistoryDescription": "Oturuma özgü kopyalama geçmişini aç.",
   "clipboardCurrent": "Mevcut kopyalama",
   "clipboardCurrentExternal": "Başka bir uygulamadan mevcut kopyalama",
   "clipboardDestination": "{name}'e yapıştır",
   "clipboardSessionOnly": "Sadece bu BusyMark oturumu için saklanır.",
   "clipboardNoItems": "Kopyalama geçmişi boş.",
-  "clipboardNoMatches": "Bu arama ile eşleşen kopyalama öğesi bulunamadı.",
   "clipboardDisabled": "Kopyalama Geçmişi koleksiyonu Ayarlar'da devre dışıdır.",
   "clipboardUnavailable": "Mevcut kopyalama içeriği mevcut değil veya desteklenmiyor.",
   "clipboardTooLarge": "Bu kopyalanmış öğe, saklamak için çok büyüktür.",
@@ -4889,8 +4858,6 @@
   "findLocalHistoryDescription": "Yerel Geçmişte belgeleri ve revizyon içeriğini arayın.",
   "localHistoryNoDocuments": "Henüz herhangi bir belge Yerel Geçmişe sahip değil.",
   "localHistoryNoRevisions": "Bu belge Yerel Geçmiş revizyonlarına sahip değil.",
-  "localHistoryNoMatches": "Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.",
-  "localHistorySearchHint": "Yerel geçmişte ara",
   "localHistorySelectedRevision": "Seçilen revizyon",
   "localHistoryCurrentEditor": "Mevcut düzenleme içeriği",
   "localHistoryCurrentDisk": "Disk üzerinde mevcut içerik",
@@ -5150,5 +5117,61 @@
   "wsInsertElements": "Öğe ekle",
   "wsAdmonitionsAndQuotes": "Uyarılar ve alıntılar",
   "wsSemanticText": "Anlamsal metin",
-  "wsPropertiesUnavailable": "İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin."
+  "wsPropertiesUnavailable": "İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.",
+  "searchDocumentsCategory": "Belgeler",
+  "searchTopicsCategory": "Konular",
+  "searchCurrentDocument": "Geçerli belge",
+  "searchCurrentWorkspace": "Geçerli çalışma alanı",
+  "browseNotes": "Notlara göz at",
+  "searchActionsCommand": "Eylemleri ara",
+  "searchDocumentsCommand": "Belgeleri ara",
+  "searchTopicsCommand": "Konuları ara",
+  "searchRecentCommand": "Son kullanılanları ara",
+  "searchResourceUnavailable": "Bu kaynak kullanılamıyor.",
+  "notesSync": "Notları eşitle",
+  "searchInWorkspace": "Çalışma Alanında Ara",
+  "searchCategory": "Arama kategorisi",
+  "clearHistorySearchScope": "Belgelerin geçmişinde ara",
+  "searchInDocument": "Belgede ara",
+  "searchDocumentHint": "Bu belgede ara…",
+  "searchWorkspaceHint": "Bu çalışma alanında ara…",
+  "searchOutlineHint": "Başlıklarda ara…",
+  "searchHistoryHint": "Yerel geçmişte ara…",
+  "searchEnterText": "Aranacak metni girin",
+  "searchAccountUnavailable": "Hesap kullanılamıyor",
+  "searchDocumentsHint": "Belgeleri ara…",
+  "searchTopicsHint": "Konuları ara…",
+  "searchRecentHint": "Son kullanılanları ara…",
+  "searchActionsHint": "Eylemleri ara…",
+  "searchRequiresNotesWorkspace": "Notlar çalışma alanı gerektirir",
+  "searchSidebarLabel": "Ara:",
+  "searchDocumentTextCategory": "Belge metni",
+  "searchWorkspaceTextCategory": "Çalışma alanı metni",
+  "searchHeadingsCategory": "Başlıklar",
+  "shortcutUnassigned": "Atanmamış",
+  "shortcutPressKeys": "Bir tuş birleşimine basın…",
+  "shortcutRecord": "Kısayol kaydet",
+  "shortcutRestoreAll": "Tüm varsayılanları geri yükle",
+  "shortcutRestoreAllQuestion": "Tüm eylemlerin varsayılan kısayolları geri yüklensin mi? Özel atamalar kaldırılacak.",
+  "shortcutSaveFailed": "Kısayollar etkin ancak kaydedilemedi. Yeniden başlatmadan sonra korumak için tekrar kaydedin.",
+  "shortcutRetry": "Kaydetmeyi yeniden dene",
+  "shortcutChanged": "Atamalar değişti. Geçerli kısayolları gözden geçirip yeniden deneyin.",
+  "shortcutInvalid": "Bu birleşim bu bağlamda atanamaz.",
+  "shortcutSystemWarning": "Masaüstünüz bu birleşimi kullanıyor olabilir. BusyMark sistem kısayollarını geçersiz kılamaz.",
+  "shortcutConflicts": "Bu kısayol şu eylemlerle çakışıyor:",
+  "shortcutRemove": "Atamayı kaldır",
+  "shortcutRestoreDefault": "Varsayılanı geri yükle",
+  "shortcutAssign": "Ata",
+  "shortcutReassign": "Yeniden ata",
+  "shortcutContextApplication": "Uygulama",
+  "shortcutContextDocument": "Belge görünümleri",
+  "shortcutContextEditor": "Düzenleyici ve kaynak",
+  "shortcutContextWritersideSource": "Writerside kaynağı",
+  "shortcutContextWorkspace": "Çalışma alanı gezintisi",
+  "shortcutContextTree": "Kenar çubuğu ağaçları",
+  "searchHeadingsCommand": "Başlıklarda Ara",
+  "shortcutFixed": "Düzenleyici tarafından yönetilir; yapılandırılamaz.",
+  "shortcutDefaultConflict": "Varsayılan kısayol özel bir atamayla çakışıyor.",
+  "shortcutCurrentBinding": "Geçerli kısayol",
+  "shortcutProposedBinding": "Önerilen kısayol"
 }

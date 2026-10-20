@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Дата",
   "pdfTitlePageTitleRequired": "Введіть заголовок титульної сторінки.",
   "pdfTocSectionNote": "Починається з окремої сторінки й може займати кілька сторінок.",
-  "sourceSearchZeroLengthUnsupported": "Збіги регулярних виразів нульової довжини не підтримуються (наприклад, ^, $ або перевірки вперед, що збігаються лише з позицією).",
   "workspaceSearchIncomplete": "Показано лише частину результатів. Покажіть більше або звузьте пошук.",
   "workspaceSearchShowMore": "Показати більше результатів",
   "workspaceSearchSkippedFiles": "Пошук неповний. Ці файли перевищують 1 MiB або їх не вдалося прочитати:",
@@ -585,7 +584,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Показати довідку з комбінацій клавіш",
+  "shortcutKeyboardShortcutsDescription": "Налаштувати сполучення клавіш застосунку",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -882,7 +881,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Очистити список останніх робочих областей",
+  "clearRecentWorkspaces": "Очистити недавню історію",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1561,22 +1560,6 @@
   "sourceSearchNextMatch": "Наступний збіг",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
-  },
-  "sourceSearchCaseSensitive": "З урахуванням регістру",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Ціле слово",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Регулярний вираз",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
-  "sourceSearchInvalidRegex": "Некоректний регулярний вираз",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "Великий файл: підсвічування та згортання призупинено",
   "@sourceLargeFileFeaturesPaused": {
@@ -3235,9 +3218,6 @@
   "diagnosticMarkdownLinkEmptyText": "Текст посилання порожній; укажіть доступну назву, що описує його призначення.",
   "diagnosticMarkdownLinkReviewText": "Перевірте, чи описує текст посилання «{text}» його призначення в контексті.",
   "diagnosticMarkdownTableEmptyHeader": "Заголовки таблиці мають позначати стовпці; заповніть кожен порожній заголовок.",
-  "commandPalette": "Палітра команд",
-  "commandPaletteHint": "Введіть команду",
-  "commandPaletteEmpty": "Немає відповідних команд",
   "tableAlignmentUnspecified": "Вирівнювання: не вказано",
   "tableAlignmentLeft": "Вирівнювання: ліворуч",
   "tableAlignmentCenter": "Вирівнювання: по центру",
@@ -3352,14 +3332,12 @@
   "exportInvalidCss": "Виберіть читабельний файл .css у UTF-8 до 256 КіБ без імпортів, URL ресурсів, HTML, виконуваного CSS і escape-послідовностей.",
   "exportInvalidRange": "{field}: введіть число від {minimum} до {maximum}.",
   "clipboardHistory": "Історія Вирізання",
-  "clipboardHistorySearchHint": "Пошук в історії буфера обміну",
   "clipboardHistoryDescription": "Відкрити історію вирізання, прив'язану до сесії.",
   "clipboardCurrent": "Поточне вирізання",
   "clipboardCurrentExternal": "Поточне вирізання з іншого додатку",
   "clipboardDestination": "Вставити в {name}",
   "clipboardSessionOnly": "Зберігається лише для цієї сесії BusyMark.",
   "clipboardNoItems": "Історія вирізання порожня.",
-  "clipboardNoMatches": "Жоден елемент вирізання не відповідає цьому пошуку.",
   "clipboardDisabled": "Збірка \"Історія Вирізання\" вимкнена в Налаштуваннях.",
   "clipboardUnavailable": "Поточний вміст вирізання недоступний або не підтримується.",
   "clipboardTooLarge": "Цей елемент буфера обміну занадто великий для зберігання.",
@@ -3376,8 +3354,6 @@
   "findLocalHistoryDescription": "Пошук документів та вмісту версій у локальній історії.",
   "localHistoryNoDocuments": "Жоден документ поки не має локальної історії.",
   "localHistoryNoRevisions": "Цей документ не має версій локальної історії.",
-  "localHistoryNoMatches": "Жодна версія локальної історії не відповідає цьому пошуку.",
-  "localHistorySearchHint": "Пошук у локальній історії",
   "localHistorySelectedRevision": "Обрана версія",
   "localHistoryCurrentEditor": "Поточний вміст редактора",
   "localHistoryCurrentDisk": "Поточний вміст на диску",
@@ -3637,5 +3613,61 @@
   "wsInsertElements": "Вставити елементи",
   "wsAdmonitionsAndQuotes": "Примітки та цитати",
   "wsSemanticText": "Семантичний текст",
-  "wsPropertiesUnavailable": "Елемент, що перевіряється, недоступний. Виберіть елемент для продовження."
+  "wsPropertiesUnavailable": "Елемент, що перевіряється, недоступний. Виберіть елемент для продовження.",
+  "searchDocumentsCategory": "Документи",
+  "searchTopicsCategory": "Теми",
+  "searchCurrentDocument": "Поточний документ",
+  "searchCurrentWorkspace": "Поточна робоча область",
+  "browseNotes": "Переглянути нотатки",
+  "searchActionsCommand": "Пошук дій",
+  "searchDocumentsCommand": "Пошук документів",
+  "searchTopicsCommand": "Пошук тем",
+  "searchRecentCommand": "Пошук нещодавніх",
+  "searchResourceUnavailable": "Цей ресурс недоступний.",
+  "notesSync": "Синхронізувати нотатки",
+  "searchInWorkspace": "Пошук у робочій області",
+  "searchCategory": "Категорія пошуку",
+  "clearHistorySearchScope": "Пошук в історії документів",
+  "searchInDocument": "Пошук у документі",
+  "searchDocumentHint": "Пошук у цьому документі…",
+  "searchWorkspaceHint": "Пошук у цьому робочому просторі…",
+  "searchOutlineHint": "Пошук заголовків…",
+  "searchHistoryHint": "Пошук у локальній історії…",
+  "searchEnterText": "Введіть текст для пошуку",
+  "searchAccountUnavailable": "Обліковий запис недоступний",
+  "searchDocumentsHint": "Пошук документів…",
+  "searchTopicsHint": "Пошук тем…",
+  "searchRecentHint": "Пошук нещодавніх…",
+  "searchActionsHint": "Пошук дій…",
+  "searchRequiresNotesWorkspace": "Потрібен робочий простір нотаток",
+  "searchSidebarLabel": "Пошук:",
+  "searchDocumentTextCategory": "Текст документа",
+  "searchWorkspaceTextCategory": "Текст робочої області",
+  "searchHeadingsCategory": "Заголовки",
+  "shortcutUnassigned": "Не призначено",
+  "shortcutPressKeys": "Натисніть сполучення клавіш…",
+  "shortcutRecord": "Записати сполучення клавіш",
+  "shortcutRestoreAll": "Відновити всі типові значення",
+  "shortcutRestoreAllQuestion": "Відновити типові сполучення всіх дій? Власні призначення буде видалено.",
+  "shortcutSaveFailed": "Сполучення діють, але їх не збережено. Повторіть збереження, щоб залишити їх після перезапуску.",
+  "shortcutRetry": "Повторити збереження",
+  "shortcutChanged": "Призначення змінилися. Перевірте поточні сполучення та повторіть спробу.",
+  "shortcutInvalid": "Це сполучення не можна призначити в цьому контексті.",
+  "shortcutSystemWarning": "Це сполучення може використовуватися стільницею. BusyMark не може перевизначати системні сполучення.",
+  "shortcutConflicts": "Це сполучення конфліктує з такими діями:",
+  "shortcutRemove": "Вилучити призначення",
+  "shortcutRestoreDefault": "Відновити типове",
+  "shortcutAssign": "Призначити",
+  "shortcutReassign": "Перепризначити",
+  "shortcutContextApplication": "Застосунок",
+  "shortcutContextDocument": "Подання документа",
+  "shortcutContextEditor": "Редактор і джерело",
+  "shortcutContextWritersideSource": "Джерело Writerside",
+  "shortcutContextWorkspace": "Навігація робочою областю",
+  "shortcutContextTree": "Дерева бічної панелі",
+  "searchHeadingsCommand": "Пошук заголовків",
+  "shortcutFixed": "Керується редактором; налаштування недоступне.",
+  "shortcutDefaultConflict": "Типове сполучення конфліктує з користувацьким призначенням.",
+  "shortcutCurrentBinding": "Поточне сполучення",
+  "shortcutProposedBinding": "Запропоноване сполучення"
 }

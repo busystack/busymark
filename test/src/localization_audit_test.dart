@@ -1337,6 +1337,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'shortcutGroupGeneral',
   },
   'fr': {
+    'searchDocumentsCategory', // Documents is also the French plural.
     'wsModule', // Module is also the French noun.
     'htmlInstance', // Instance is also the French technical term.
     'actions',
@@ -1405,7 +1406,6 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'file',
     'folder',
     'link',
-    'sourceSearchRegex',
     'tip',
     'pdfMarginNormal',
     'instanceStatus',
@@ -1436,7 +1436,6 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'link',
     'editorPlaceholderCode',
     'toc',
-    'sourceSearchRegex',
     'tip',
     'tab',
     'procedure',

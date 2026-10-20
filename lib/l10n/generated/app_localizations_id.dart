@@ -585,15 +585,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get keyboardShortcuts => 'Pintasan keyboard';
 
   @override
-  String get commandPalette => 'Palet perintah';
-
-  @override
-  String get commandPaletteHint => 'Ketikkan perintah';
-
-  @override
-  String get commandPaletteEmpty => 'Tidak ada perintah yang cocok';
-
-  @override
   String get commandUnavailableInContext =>
       'Tidak tersedia dalam konteks editor saat ini';
 
@@ -811,7 +802,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Tampilkan referensi pintasan keyboard ini';
+      'Sesuaikan pintasan keyboard aplikasi';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Buka referensi sintaks';
@@ -1062,7 +1053,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get validateOnEdit => 'Validasi saat mengedit';
 
   @override
-  String get clearRecentWorkspaces => 'Hapus ruang kerja terbaru';
+  String get clearRecentWorkspaces => 'Hapus riwayat terbaru';
 
   @override
   String get editingButtonsPosition => 'Posisi tombol pengeditan';
@@ -1844,15 +1835,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sourceSearchNextMatch => 'Kecocokan berikutnya';
 
   @override
-  String get sourceSearchCaseSensitive => 'Peka huruf besar-kecil';
-
-  @override
-  String get sourceSearchWholeWord => 'Seluruh kata';
-
-  @override
-  String get sourceSearchRegex => 'Regex';
-
-  @override
   String get sourceSearchReplacement => 'Ganti dengan';
 
   @override
@@ -1977,13 +1959,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get saveAs => 'Simpan sebagai';
-
-  @override
-  String get sourceSearchInvalidRegex => 'Ekspresi reguler tidak valid';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, \$, atau lookahead yang hanya cocok dengan posisi).';
 
   @override
   String get workspaceSearchIncomplete =>
@@ -4364,9 +4339,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get clipboardHistory => 'Sejarah Tempel';
 
   @override
-  String get clipboardHistorySearchHint => 'Cari riwayat papan klip';
-
-  @override
   String get clipboardHistoryDescription => 'Buka riwayat tempel lokal sesi.';
 
   @override
@@ -4385,10 +4357,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Riwayat tempel kosong.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Tidak ada item tempel yang cocok dengan pencarian ini.';
 
   @override
   String get clipboardDisabled =>
@@ -4446,13 +4414,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dokumen ini tidak memiliki revisi Sejarah Lokal.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.';
-
-  @override
-  String get localHistorySearchHint => 'Cari riwayat lokal';
 
   @override
   String get localHistorySelectedRevision => 'Revisi yang dipilih';
@@ -5401,4 +5362,180 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumen';
+
+  @override
+  String get searchTopicsCategory => 'Topik';
+
+  @override
+  String get searchCurrentDocument => 'Dokumen saat ini';
+
+  @override
+  String get searchCurrentWorkspace => 'Ruang kerja saat ini';
+
+  @override
+  String get browseNotes => 'Jelajahi catatan';
+
+  @override
+  String get searchActionsCommand => 'Cari tindakan';
+
+  @override
+  String get searchDocumentsCommand => 'Cari dokumen';
+
+  @override
+  String get searchTopicsCommand => 'Cari topik';
+
+  @override
+  String get searchRecentCommand => 'Cari terbaru';
+
+  @override
+  String get searchResourceUnavailable => 'Sumber daya ini tidak tersedia.';
+
+  @override
+  String get notesSync => 'Sinkronkan catatan';
+
+  @override
+  String get searchInWorkspace => 'Cari dalam Ruang Kerja';
+
+  @override
+  String get searchCategory => 'Kategori pencarian';
+
+  @override
+  String get clearHistorySearchScope => 'Cari riwayat seluruh dokumen';
+
+  @override
+  String get searchInDocument => 'Cari dalam dokumen';
+
+  @override
+  String get searchDocumentHint => 'Cari dalam dokumen ini…';
+
+  @override
+  String get searchWorkspaceHint => 'Cari dalam ruang kerja ini…';
+
+  @override
+  String get searchOutlineHint => 'Cari judul bagian…';
+
+  @override
+  String get searchHistoryHint => 'Cari dalam riwayat lokal…';
+
+  @override
+  String get searchEnterText => 'Masukkan teks untuk mencari';
+
+  @override
+  String get searchAccountUnavailable => 'Akun tidak tersedia';
+
+  @override
+  String get searchDocumentsHint => 'Cari dokumen…';
+
+  @override
+  String get searchTopicsHint => 'Cari topik…';
+
+  @override
+  String get searchRecentHint => 'Cari terbaru…';
+
+  @override
+  String get searchActionsHint => 'Cari tindakan…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Memerlukan ruang kerja Catatan';
+
+  @override
+  String get searchSidebarLabel => 'Cari:';
+
+  @override
+  String get searchDocumentTextCategory => 'Teks dokumen';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Teks ruang kerja';
+
+  @override
+  String get searchHeadingsCategory => 'Judul';
+
+  @override
+  String get shortcutUnassigned => 'Belum ditetapkan';
+
+  @override
+  String get shortcutPressKeys => 'Tekan kombinasi tombol…';
+
+  @override
+  String get shortcutRecord => 'Rekam pintasan';
+
+  @override
+  String get shortcutRestoreAll => 'Pulihkan semua bawaan';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Pulihkan pintasan bawaan semua tindakan? Penetapan khusus akan dihapus.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Pintasan aktif tetapi tidak dapat disimpan. Coba lagi agar tetap tersedia setelah mulai ulang.';
+
+  @override
+  String get shortcutRetry => 'Coba simpan lagi';
+
+  @override
+  String get shortcutChanged =>
+      'Penetapan berubah. Tinjau pintasan saat ini dan coba lagi.';
+
+  @override
+  String get shortcutInvalid =>
+      'Kombinasi ini tidak dapat ditetapkan dalam konteks ini.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Desktop Anda mungkin memakai kombinasi ini. BusyMark tidak dapat mengganti pintasan sistem.';
+
+  @override
+  String get shortcutConflicts =>
+      'Pintasan ini bertentangan dengan tindakan berikut:';
+
+  @override
+  String get shortcutRemove => 'Hapus penetapan';
+
+  @override
+  String get shortcutRestoreDefault => 'Pulihkan bawaan';
+
+  @override
+  String get shortcutAssign => 'Tetapkan';
+
+  @override
+  String get shortcutReassign => 'Tetapkan ulang';
+
+  @override
+  String get shortcutContextApplication => 'Aplikasi';
+
+  @override
+  String get shortcutContextDocument => 'Tampilan dokumen';
+
+  @override
+  String get shortcutContextEditor => 'Editor dan sumber';
+
+  @override
+  String get shortcutContextWritersideSource => 'Sumber Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navigasi ruang kerja';
+
+  @override
+  String get shortcutContextTree => 'Pohon bilah samping';
+
+  @override
+  String get searchHeadingsCommand => 'Cari judul';
+
+  @override
+  String get shortcutFixed =>
+      'Dikelola oleh editor; tidak dapat dikonfigurasi.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Pintasan bawaan bertentangan dengan penetapan khusus.';
+
+  @override
+  String get shortcutCurrentBinding => 'Pintasan saat ini';
+
+  @override
+  String get shortcutProposedBinding => 'Pintasan yang diusulkan';
 }

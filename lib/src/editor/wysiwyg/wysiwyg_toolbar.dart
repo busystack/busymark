@@ -1,8 +1,9 @@
+import '../../app/busymark_shortcuts.dart' show BusyMarkShortcutDefinition;
 import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
-import '../../app/busymark_shortcuts.dart';
+import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_commands.dart';
@@ -119,7 +120,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.bold,
               icon: BusyMarkGlyphs.bold,
-              shortcut: BusyMarkEditorShortcutLabels.bold,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.bold']
+                      ?.shortcut
+                      ?.label,
               onPressed: inlineCommandsEnabled
                   ? () => onInlineCommand(BusyWysiwygInlineCommand.bold)
                   : null,
@@ -128,7 +133,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.italic,
               icon: BusyMarkGlyphs.italic,
-              shortcut: BusyMarkEditorShortcutLabels.italic,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.italic']
+                      ?.shortcut
+                      ?.label,
               onPressed: inlineCommandsEnabled
                   ? () => onInlineCommand(BusyWysiwygInlineCommand.italic)
                   : null,
@@ -137,7 +146,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.underline,
               icon: BusyMarkGlyphs.underline,
-              shortcut: BusyMarkEditorShortcutLabels.underline,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.underline']
+                      ?.shortcut
+                      ?.label,
               onPressed: inlineCommandsEnabled
                   ? () => onInlineCommand(BusyWysiwygInlineCommand.underline)
                   : null,
@@ -146,7 +159,12 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.strikethrough,
               icon: BusyMarkGlyphs.strikethrough,
-              shortcut: BusyMarkEditorShortcutLabels.strikethrough,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog
+                              .metadata)['editor.strikethrough']
+                      ?.shortcut
+                      ?.label,
               onPressed: inlineCommandsEnabled
                   ? () =>
                         onInlineCommand(BusyWysiwygInlineCommand.strikethrough)
@@ -156,7 +174,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.inlineCode,
               icon: BusyMarkGlyphs.code,
-              shortcut: BusyMarkEditorShortcutLabels.inlineCode,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.inlineCode']
+                      ?.shortcut
+                      ?.label,
               onPressed: inlineCommandsEnabled
                   ? () => onInlineCommand(BusyWysiwygInlineCommand.code)
                   : null,
@@ -165,7 +187,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.link,
               icon: BusyMarkGlyphs.link,
-              shortcut: BusyMarkEditorShortcutLabels.link,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.link']
+                      ?.shortcut
+                      ?.label,
               onPressed: inlineCommandsEnabled ? onLinkCommand : null,
             ),
             _button(
@@ -178,7 +204,12 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.hardLineBreak,
               icon: BusyMarkGlyphs.hardBreak,
-              shortcut: BusyMarkEditorShortcutLabels.hardLineBreak,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog
+                              .metadata)['editor.hardLineBreak']
+                      ?.shortcut
+                      ?.label,
               onPressed: inlineCommandsEnabled && lineBreakCommandsEnabled
                   ? onHardBreakCommand
                   : null,
@@ -198,7 +229,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.blockquote,
               icon: BusyMarkGlyphs.blockquote,
-              shortcut: BusyMarkEditorShortcutLabels.blockquote,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.blockquote']
+                      ?.shortcut
+                      ?.label,
               onPressed:
                   _blockCommandEnabled(BusyWysiwygBlockCommand.blockquote)
                   ? () => onBlockCommand(BusyWysiwygBlockCommand.blockquote)
@@ -208,7 +243,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.codeBlock,
               icon: BusyMarkGlyphs.codeBlock,
-              shortcut: BusyMarkEditorShortcutLabels.codeBlock,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.codeBlock']
+                      ?.shortcut
+                      ?.label,
               onPressed: _blockCommandEnabled(BusyWysiwygBlockCommand.codeBlock)
                   ? () => onBlockCommand(BusyWysiwygBlockCommand.codeBlock)
                   : null,
@@ -229,7 +268,12 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.thematicBreak,
               icon: BusyMarkGlyphs.thematicBreak,
-              shortcut: BusyMarkEditorShortcutLabels.thematicBreak,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog
+                              .metadata)['editor.thematicBreak']
+                      ?.shortcut
+                      ?.label,
               onPressed:
                   _blockCommandEnabled(BusyWysiwygBlockCommand.thematicBreak)
                   ? () => onBlockCommand(BusyWysiwygBlockCommand.thematicBreak)
@@ -241,7 +285,12 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.unorderedList,
               icon: BusyMarkGlyphs.unorderedList,
-              shortcut: BusyMarkEditorShortcutLabels.unorderedList,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog
+                              .metadata)['editor.unorderedList']
+                      ?.shortcut
+                      ?.label,
               onPressed:
                   _blockCommandEnabled(BusyWysiwygBlockCommand.unorderedList)
                   ? () => onBlockCommand(BusyWysiwygBlockCommand.unorderedList)
@@ -251,7 +300,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.orderedList,
               icon: BusyMarkGlyphs.orderedList,
-              shortcut: BusyMarkEditorShortcutLabels.orderedList,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.orderedList']
+                      ?.shortcut
+                      ?.label,
               onPressed:
                   _blockCommandEnabled(BusyWysiwygBlockCommand.orderedList)
                   ? () => onBlockCommand(BusyWysiwygBlockCommand.orderedList)
@@ -261,7 +314,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.taskList,
               icon: BusyMarkGlyphs.checkedBox,
-              shortcut: BusyMarkEditorShortcutLabels.taskList,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.taskList']
+                      ?.shortcut
+                      ?.label,
               onPressed: _blockCommandEnabled(BusyWysiwygBlockCommand.taskList)
                   ? () => onBlockCommand(BusyWysiwygBlockCommand.taskList)
                   : null,
@@ -269,6 +326,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             _button(
               context,
               tooltip: context.l10n.toggleTaskChecked,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.toggleTask']
+                      ?.shortcut
+                      ?.label,
               icon: BusyMarkGlyphs.checkedBox,
               onPressed: onToggleTaskCommand,
             ),
@@ -276,14 +338,22 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.indentListItem,
               icon: BusyMarkGlyphs.indentFor(direction),
-              shortcut: BusyMarkEditorShortcutLabels.indent,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.indent']
+                      ?.shortcut
+                      ?.label,
               onPressed: onIndentCommand,
             ),
             _button(
               context,
               tooltip: context.l10n.outdentListItem,
               icon: BusyMarkGlyphs.outdentFor(direction),
-              shortcut: BusyMarkEditorShortcutLabels.outdent,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.outdent']
+                      ?.shortcut
+                      ?.label,
               onPressed: onOutdentCommand,
             ),
           ],
@@ -292,7 +362,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.image,
               icon: BusyMarkGlyphs.image,
-              shortcut: BusyMarkEditorShortcutLabels.image,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.image']
+                      ?.shortcut
+                      ?.label,
               onPressed: _blockCommandEnabled(BusyWysiwygBlockCommand.image)
                   ? onImageCommand
                   : null,
@@ -300,12 +374,22 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             _button(
               context,
               tooltip: context.l10n.inlineImage,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.inlineImage']
+                      ?.shortcut
+                      ?.label,
               icon: BusyMarkGlyphs.inlineImage,
               onPressed: inlineCommandsEnabled ? onInlineImageCommand : null,
             ),
             _button(
               context,
               tooltip: context.l10n.table,
+              shortcut:
+                  (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                          BusyMarkCommandCatalog.metadata)['editor.table']
+                      ?.shortcut
+                      ?.label,
               icon: BusyMarkGlyphs.table,
               onPressed: onTableCommand,
             ),
@@ -337,6 +421,14 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
                 for (final command in BusyWritersideInsertCommand.values)
                   BusyMarkPopupMenuItem(
                     value: BusyWritersideToolbarInsert(command),
+                    shortcut: _writersideShortcut(
+                      context,
+                      BusyWritersideToolbarInsert(command),
+                    )?.label,
+                    gtkAccelerator: _writersideShortcut(
+                      context,
+                      BusyWritersideToolbarInsert(command),
+                    )?.gtkAccelerator,
                     label: busyMarkWritersideInsertLabel(context, command),
                     enabled: isWritersideInsertEnabled?.call(command) ?? true,
                   ),
@@ -349,6 +441,14 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
                 for (final style in BusyAdmonitionStyle.values)
                   BusyMarkPopupMenuItem(
                     value: BusyWritersideToolbarAdmonition(style),
+                    shortcut: _writersideShortcut(
+                      context,
+                      BusyWritersideToolbarAdmonition(style),
+                    )?.label,
+                    gtkAccelerator: _writersideShortcut(
+                      context,
+                      BusyWritersideToolbarAdmonition(style),
+                    )?.gtkAccelerator,
                     label: switch (style) {
                       BusyAdmonitionStyle.tip => context.l10n.tip,
                       BusyAdmonitionStyle.note => context.l10n.note,
@@ -370,6 +470,14 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               ])
                 BusyMarkPopupMenuItem(
                   value: BusyWritersideToolbarSemantic(command),
+                  shortcut: _writersideShortcut(
+                    context,
+                    BusyWritersideToolbarSemantic(command),
+                  )?.label,
+                  gtkAccelerator: _writersideShortcut(
+                    context,
+                    BusyWritersideToolbarSemantic(command),
+                  )?.gtkAccelerator,
                   enabled: inlineCommandsEnabled && semanticCommandsEnabled,
                   label: busyMarkSemanticInlineLabel(context, command),
                 ),
@@ -411,7 +519,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       onCanceled: onMenuCanceled,
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
-      shortcut: BusyMarkEditorShortcutLabels.textStyle,
+      shortcut: null,
       transparent: false,
       elevated: true,
       foregroundColor: BusyMarkLinuxPalette.white,
@@ -421,49 +529,77 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
           value: BusyWysiwygBlockCommand.paragraph,
           label: context.l10n.paragraph,
           icon: BusyMarkGlyphs.paragraph,
-          shortcut: BusyMarkEditorShortcutLabels.paragraph,
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)['editor.paragraph']
+                  ?.shortcut
+                  ?.label,
           enabled: _blockCommandEnabled(BusyWysiwygBlockCommand.paragraph),
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading1,
           label: context.l10n.heading1,
           icon: BusyMarkGlyphs.heading,
-          shortcut: BusyMarkEditorShortcutLabels.heading1,
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)['editor.heading1']
+                  ?.shortcut
+                  ?.label,
           enabled: _blockCommandEnabled(BusyWysiwygBlockCommand.heading1),
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading2,
           label: context.l10n.heading2,
           icon: BusyMarkGlyphs.heading,
-          shortcut: BusyMarkEditorShortcutLabels.heading2,
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)['editor.heading2']
+                  ?.shortcut
+                  ?.label,
           enabled: _blockCommandEnabled(BusyWysiwygBlockCommand.heading2),
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading3,
           label: context.l10n.heading3,
           icon: BusyMarkGlyphs.heading,
-          shortcut: BusyMarkEditorShortcutLabels.heading3,
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)['editor.heading3']
+                  ?.shortcut
+                  ?.label,
           enabled: _blockCommandEnabled(BusyWysiwygBlockCommand.heading3),
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading4,
           label: context.l10n.heading4,
           icon: BusyMarkGlyphs.heading,
-          shortcut: BusyMarkEditorShortcutLabels.heading4,
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)['editor.heading4']
+                  ?.shortcut
+                  ?.label,
           enabled: _blockCommandEnabled(BusyWysiwygBlockCommand.heading4),
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading5,
           label: context.l10n.heading5,
           icon: BusyMarkGlyphs.heading,
-          shortcut: BusyMarkEditorShortcutLabels.heading5,
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)['editor.heading5']
+                  ?.shortcut
+                  ?.label,
           enabled: _blockCommandEnabled(BusyWysiwygBlockCommand.heading5),
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading6,
           label: context.l10n.heading6,
           icon: BusyMarkGlyphs.heading,
-          shortcut: BusyMarkEditorShortcutLabels.heading6,
+          shortcut:
+              (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                      BusyMarkCommandCatalog.metadata)['editor.heading6']
+                  ?.shortcut
+                  ?.label,
           enabled: _blockCommandEnabled(BusyWysiwygBlockCommand.heading6),
         ),
       ],
@@ -506,3 +642,13 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     });
   }
 }
+
+BusyMarkShortcutDefinition? _writersideShortcut(
+  BuildContext context,
+  BusyWritersideToolbarCommand command,
+) =>
+    (BusyMarkCommandRegistryScope.maybeOf(context) ??
+            BusyMarkCommandCatalog.metadata)[writersideToolbarCommandId(
+          command,
+        )]
+        ?.shortcut;

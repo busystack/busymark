@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -393,21 +392,14 @@ class _WritersideExistingTopicPickerState
       title: context.l10n.tocSelectExistingTopic,
       maxWidth: BusyMarkSizes.dialog,
       children: [
-        Focus(
-          onKeyEvent: (_, event) {
-            if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-              return KeyEventResult.ignored;
-            }
-            final key = event.logicalKey;
-            if (key != LogicalKeyboardKey.arrowDown &&
-                key != LogicalKeyboardKey.arrowUp) {
-              return KeyEventResult.ignored;
-            }
+        BusyMarkSearchField(
+          autofocus: true,
+          hintText: context.l10n.search,
+          onMoveSelection: (delta) {
             if (topics.isNotEmpty) {
               setState(
-                () => _selected =
-                    (_selected + (key == LogicalKeyboardKey.arrowDown ? 1 : -1))
-                        .clamp(0, topics.length - 1),
+                () =>
+                    _selected = (_selected + delta).clamp(0, topics.length - 1),
               );
               if (_scroll.hasClients) {
                 _scroll.jumpTo(
@@ -418,20 +410,15 @@ class _WritersideExistingTopicPickerState
                 );
               }
             }
-            return KeyEventResult.handled;
           },
-          child: BusyMarkSearchField(
-            autofocus: true,
-            hintText: context.l10n.search,
-            onEscape: () => Navigator.pop(context),
-            onChanged: (value) => setState(() {
-              _query = value;
-              _selected = 0;
-            }),
-            onSubmitted: (_) {
-              if (topics.isNotEmpty) Navigator.pop(context, topics[_selected]);
-            },
-          ),
+          onEscape: () => Navigator.pop(context),
+          onChanged: (value) => setState(() {
+            _query = value;
+            _selected = 0;
+          }),
+          onSubmitted: (_) {
+            if (topics.isNotEmpty) Navigator.pop(context, topics[_selected]);
+          },
         ),
         SizedBox(
           height: 300,

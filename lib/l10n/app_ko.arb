@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "날짜",
   "pdfTitlePageTitleRequired": "제목 페이지의 제목을 입력하세요.",
   "pdfTocSectionNote": "별도 페이지에서 시작하며 여러 페이지에 걸칠 수 있습니다.",
-  "sourceSearchZeroLengthUnsupported": "길이가 0인 정규식 일치는 지원하지 않습니다(예: ^, $, 위치에만 일치하는 전방 탐색).",
   "workspaceSearchIncomplete": "일부 결과만 표시됩니다. 더 표시하거나 검색 범위를 좁히세요.",
   "workspaceSearchShowMore": "결과 더 보기",
   "workspaceSearchSkippedFiles": "검색이 완료되지 않았습니다. 다음 파일은 1 MiB를 초과하거나 읽을 수 없습니다:",
@@ -423,18 +422,6 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "commandPalette": "명령 팔레트",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "명령을 입력하세요",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "일치하는 명령이 없습니다.",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "현재 편집기 컨텍스트에서는 사용할 수 없습니다.",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -715,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "이 키보드 단축키 참조 표시",
+  "shortcutKeyboardShortcutsDescription": "애플리케이션 키보드 단축키 사용자 지정",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -1012,7 +999,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "최근 작업공간 지우기",
+  "clearRecentWorkspaces": "최근 기록 지우기",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1943,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "대소문자 구분",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "전체 단어",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "정규식",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "다음으로 바꾸기",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2137,10 +2112,6 @@
   "saveAs": "다른 이름으로 저장",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "잘못된 정규식",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "대용량 파일: 강조 표시 및 접기가 일시 중지됩니다.",
   "@sourceLargeFileFeaturesPaused": {
@@ -4865,14 +4836,12 @@
   "exportInvalidCss": "가져오기, 리소스 URL, HTML, 실행 가능하거나 이스케이프된 CSS가 없는 읽기 가능한 UTF-8 .css 파일(최대 256 KiB)을 선택하세요.",
   "exportInvalidRange": "{field}: {minimum}에서 {maximum} 사이의 숫자를 입력하세요.",
   "clipboardHistory": "클립보드 기록",
-  "clipboardHistorySearchHint": "클립보드 기록 검색",
   "clipboardHistoryDescription": "세션별 클립보드 기록을 엽니다.",
   "clipboardCurrent": "현재 클립보드",
   "clipboardCurrentExternal": "다른 애플리케이션의 현재 클립보드",
   "clipboardDestination": "{name}에 붙여넣기",
   "clipboardSessionOnly": "이 BusyMark 세션에만 저장됩니다.",
   "clipboardNoItems": "클립보드 기록이 비어 있습니다.",
-  "clipboardNoMatches": "이 검색과 일치하는 클립보드 항목이 없습니다.",
   "clipboardDisabled": "클립보드 기록 컬렉션이 설정에서 비활성화되었습니다.",
   "clipboardUnavailable": "현재 클립보드 내용은 사용할 수 없거나 지원되지 않습니다.",
   "clipboardTooLarge": "이 클립보드 항목은 저장할 수 없을 정도로 큽니다.",
@@ -4889,8 +4858,6 @@
   "findLocalHistoryDescription": "로컬 히스토리 문서 및 수정 내용 검색.",
   "localHistoryNoDocuments": "아직 로컬 히스토리가 있는 문서는 없습니다.",
   "localHistoryNoRevisions": "이 문서는 로컬 히스토리 수정 사항이 없습니다.",
-  "localHistoryNoMatches": "이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.",
-  "localHistorySearchHint": "로컬 기록 검색",
   "localHistorySelectedRevision": "선택된 수정",
   "localHistoryCurrentEditor": "현재 편집 내용",
   "localHistoryCurrentDisk": "디스크에 있는 현재 내용",
@@ -5150,5 +5117,61 @@
   "wsInsertElements": "요소 삽입",
   "wsAdmonitionsAndQuotes": "안내 및 인용",
   "wsSemanticText": "의미 텍스트",
-  "wsPropertiesUnavailable": "검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요."
+  "wsPropertiesUnavailable": "검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.",
+  "searchDocumentsCategory": "문서",
+  "searchTopicsCategory": "주제",
+  "searchCurrentDocument": "현재 문서",
+  "searchCurrentWorkspace": "현재 작업 공간",
+  "browseNotes": "노트 찾아보기",
+  "searchActionsCommand": "작업 검색",
+  "searchDocumentsCommand": "문서 검색",
+  "searchTopicsCommand": "주제 검색",
+  "searchRecentCommand": "최근 항목 검색",
+  "searchResourceUnavailable": "이 리소스를 사용할 수 없습니다.",
+  "notesSync": "노트 동기화",
+  "searchInWorkspace": "작업 공간에서 검색",
+  "searchCategory": "검색 범주",
+  "clearHistorySearchScope": "문서 기록 전체 검색",
+  "searchInDocument": "문서에서 검색",
+  "searchDocumentHint": "이 문서에서 검색…",
+  "searchWorkspaceHint": "이 작업 공간에서 검색…",
+  "searchOutlineHint": "제목 검색…",
+  "searchHistoryHint": "로컬 기록 검색…",
+  "searchEnterText": "검색할 텍스트 입력",
+  "searchAccountUnavailable": "계정을 사용할 수 없음",
+  "searchDocumentsHint": "문서 검색…",
+  "searchTopicsHint": "주제 검색…",
+  "searchRecentHint": "최근 항목 검색…",
+  "searchActionsHint": "작업 검색…",
+  "searchRequiresNotesWorkspace": "노트 작업 공간 필요",
+  "searchSidebarLabel": "검색:",
+  "searchDocumentTextCategory": "문서 텍스트",
+  "searchWorkspaceTextCategory": "작업 공간 텍스트",
+  "searchHeadingsCategory": "제목",
+  "shortcutUnassigned": "할당되지 않음",
+  "shortcutPressKeys": "키 조합을 누르세요…",
+  "shortcutRecord": "단축키 기록",
+  "shortcutRestoreAll": "모든 기본값 복원",
+  "shortcutRestoreAllQuestion": "모든 동작의 기본 단축키를 복원할까요? 사용자 지정 할당이 제거됩니다.",
+  "shortcutSaveFailed": "단축키가 활성화되었지만 저장하지 못했습니다. 다시 시작 후에도 유지하려면 저장을 다시 시도하세요.",
+  "shortcutRetry": "저장 다시 시도",
+  "shortcutChanged": "할당이 변경되었습니다. 현재 단축키를 확인하고 다시 시도하세요.",
+  "shortcutInvalid": "이 조합은 이 문맥에서 할당할 수 없습니다.",
+  "shortcutSystemWarning": "데스크톱에서 이 조합을 사용할 수 있습니다. BusyMark는 시스템 단축키를 재정의할 수 없습니다.",
+  "shortcutConflicts": "이 단축키는 다음 동작과 충돌합니다:",
+  "shortcutRemove": "할당 제거",
+  "shortcutRestoreDefault": "기본값 복원",
+  "shortcutAssign": "할당",
+  "shortcutReassign": "다시 할당",
+  "shortcutContextApplication": "애플리케이션",
+  "shortcutContextDocument": "문서 보기",
+  "shortcutContextEditor": "편집기 및 소스",
+  "shortcutContextWritersideSource": "Writerside 소스",
+  "shortcutContextWorkspace": "작업 공간 탐색",
+  "shortcutContextTree": "사이드바 트리",
+  "searchHeadingsCommand": "제목 검색",
+  "shortcutFixed": "편집기에서 관리하므로 설정할 수 없습니다.",
+  "shortcutDefaultConflict": "기본 단축키가 사용자 지정 할당과 충돌합니다.",
+  "shortcutCurrentBinding": "현재 단축키",
+  "shortcutProposedBinding": "제안된 단축키"
 }

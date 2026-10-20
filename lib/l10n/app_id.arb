@@ -108,7 +108,6 @@
   "pdfTitlePageDate": "Tanggal",
   "pdfTitlePageTitleRequired": "Masukkan judul untuk halaman judul.",
   "pdfTocSectionNote": "Dimulai pada halaman terpisah dan dapat mencakup beberapa halaman.",
-  "sourceSearchZeroLengthUnsupported": "Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, $, atau lookahead yang hanya cocok dengan posisi).",
   "workspaceSearchIncomplete": "Hanya sebagian hasil yang ditampilkan. Tampilkan lebih banyak atau persempit pencarian.",
   "workspaceSearchShowMore": "Tampilkan lebih banyak hasil",
   "workspaceSearchSkippedFiles": "Pencarian belum lengkap. Berkas ini melebihi 1 MiB atau tidak dapat dibaca:",
@@ -423,18 +422,6 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "commandPalette": "Palet perintah",
-  "@commandPalette": {
-    "description": "Title and command label for the searchable command palette."
-  },
-  "commandPaletteHint": "Ketikkan perintah",
-  "@commandPaletteHint": {
-    "description": "Search hint in the command palette."
-  },
-  "commandPaletteEmpty": "Tidak ada perintah yang cocok",
-  "@commandPaletteEmpty": {
-    "description": "Empty state in the command palette."
-  },
   "commandUnavailableInContext": "Tidak tersedia dalam konteks editor saat ini",
   "@commandUnavailableInContext": {
     "description": "Reason shown for a disabled contextual command."
@@ -715,7 +702,7 @@
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Tampilkan referensi pintasan keyboard ini",
+  "shortcutKeyboardShortcutsDescription": "Sesuaikan pintasan keyboard aplikasi",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -1012,7 +999,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Hapus ruang kerja terbaru",
+  "clearRecentWorkspaces": "Hapus riwayat terbaru",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -1943,18 +1930,6 @@
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Peka huruf besar-kecil",
-  "@sourceSearchCaseSensitive": {
-    "description": "Tooltip for toggling case-sensitive source search."
-  },
-  "sourceSearchWholeWord": "Seluruh kata",
-  "@sourceSearchWholeWord": {
-    "description": "Tooltip for toggling whole-word source search."
-  },
-  "sourceSearchRegex": "Regex",
-  "@sourceSearchRegex": {
-    "description": "Tooltip for toggling regular-expression source search."
-  },
   "sourceSearchReplacement": "Ganti dengan",
   "@sourceSearchReplacement": {
     "description": "Placeholder for the active-document replacement field."
@@ -2137,10 +2112,6 @@
   "saveAs": "Simpan sebagai",
   "@saveAs": {
     "description": "Action that saves the current document to another path."
-  },
-  "sourceSearchInvalidRegex": "Ekspresi reguler tidak valid",
-  "@sourceSearchInvalidRegex": {
-    "description": "Source search status shown when the regular expression is invalid."
   },
   "sourceLargeFileFeaturesPaused": "File besar: penyorotan dan pelipatan dijeda",
   "@sourceLargeFileFeaturesPaused": {
@@ -4865,14 +4836,12 @@
   "exportInvalidCss": "Pilih berkas .css UTF-8 yang dapat dibaca hingga 256 KiB, tanpa impor, URL sumber daya, HTML, atau CSS yang dapat dieksekusi atau memakai escape.",
   "exportInvalidRange": "{field}: masukkan angka antara {minimum} dan {maximum}.",
   "clipboardHistory": "Sejarah Tempel",
-  "clipboardHistorySearchHint": "Cari riwayat papan klip",
   "clipboardHistoryDescription": "Buka riwayat tempel lokal sesi.",
   "clipboardCurrent": "Tempel saat ini",
   "clipboardCurrentExternal": "Tempel saat ini dari aplikasi lain",
   "clipboardDestination": "Tempel ke {name}",
   "clipboardSessionOnly": "Hanya disimpan untuk sesi BusyMark ini.",
   "clipboardNoItems": "Riwayat tempel kosong.",
-  "clipboardNoMatches": "Tidak ada item tempel yang cocok dengan pencarian ini.",
   "clipboardDisabled": "Koleksi Riwayat Tempel dinonaktifkan di Pengaturan.",
   "clipboardUnavailable": "Konten tempel saat ini tidak tersedia atau tidak didukung.",
   "clipboardTooLarge": "Item clipboard ini terlalu besar untuk disimpan.",
@@ -4889,8 +4858,6 @@
   "findLocalHistoryDescription": "Cari dokumen dan isi revisi dalam Sejarah Lokal.",
   "localHistoryNoDocuments": "Tidak ada dokumen yang memiliki Sejarah Lokal.",
   "localHistoryNoRevisions": "Dokumen ini tidak memiliki revisi Sejarah Lokal.",
-  "localHistoryNoMatches": "Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.",
-  "localHistorySearchHint": "Cari riwayat lokal",
   "localHistorySelectedRevision": "Revisi yang dipilih",
   "localHistoryCurrentEditor": "Konten editor saat ini",
   "localHistoryCurrentDisk": "Konten saat ini di disk",
@@ -5150,5 +5117,61 @@
   "wsInsertElements": "Sisipkan elemen",
   "wsAdmonitionsAndQuotes": "Pemberitahuan dan kutipan",
   "wsSemanticText": "Teks semantik",
-  "wsPropertiesUnavailable": "Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan."
+  "wsPropertiesUnavailable": "Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.",
+  "searchDocumentsCategory": "Dokumen",
+  "searchTopicsCategory": "Topik",
+  "searchCurrentDocument": "Dokumen saat ini",
+  "searchCurrentWorkspace": "Ruang kerja saat ini",
+  "browseNotes": "Jelajahi catatan",
+  "searchActionsCommand": "Cari tindakan",
+  "searchDocumentsCommand": "Cari dokumen",
+  "searchTopicsCommand": "Cari topik",
+  "searchRecentCommand": "Cari terbaru",
+  "searchResourceUnavailable": "Sumber daya ini tidak tersedia.",
+  "notesSync": "Sinkronkan catatan",
+  "searchInWorkspace": "Cari dalam Ruang Kerja",
+  "searchCategory": "Kategori pencarian",
+  "clearHistorySearchScope": "Cari riwayat seluruh dokumen",
+  "searchInDocument": "Cari dalam dokumen",
+  "searchDocumentHint": "Cari dalam dokumen ini…",
+  "searchWorkspaceHint": "Cari dalam ruang kerja ini…",
+  "searchOutlineHint": "Cari judul bagian…",
+  "searchHistoryHint": "Cari dalam riwayat lokal…",
+  "searchEnterText": "Masukkan teks untuk mencari",
+  "searchAccountUnavailable": "Akun tidak tersedia",
+  "searchDocumentsHint": "Cari dokumen…",
+  "searchTopicsHint": "Cari topik…",
+  "searchRecentHint": "Cari terbaru…",
+  "searchActionsHint": "Cari tindakan…",
+  "searchRequiresNotesWorkspace": "Memerlukan ruang kerja Catatan",
+  "searchSidebarLabel": "Cari:",
+  "searchDocumentTextCategory": "Teks dokumen",
+  "searchWorkspaceTextCategory": "Teks ruang kerja",
+  "searchHeadingsCategory": "Judul",
+  "shortcutUnassigned": "Belum ditetapkan",
+  "shortcutPressKeys": "Tekan kombinasi tombol…",
+  "shortcutRecord": "Rekam pintasan",
+  "shortcutRestoreAll": "Pulihkan semua bawaan",
+  "shortcutRestoreAllQuestion": "Pulihkan pintasan bawaan semua tindakan? Penetapan khusus akan dihapus.",
+  "shortcutSaveFailed": "Pintasan aktif tetapi tidak dapat disimpan. Coba lagi agar tetap tersedia setelah mulai ulang.",
+  "shortcutRetry": "Coba simpan lagi",
+  "shortcutChanged": "Penetapan berubah. Tinjau pintasan saat ini dan coba lagi.",
+  "shortcutInvalid": "Kombinasi ini tidak dapat ditetapkan dalam konteks ini.",
+  "shortcutSystemWarning": "Desktop Anda mungkin memakai kombinasi ini. BusyMark tidak dapat mengganti pintasan sistem.",
+  "shortcutConflicts": "Pintasan ini bertentangan dengan tindakan berikut:",
+  "shortcutRemove": "Hapus penetapan",
+  "shortcutRestoreDefault": "Pulihkan bawaan",
+  "shortcutAssign": "Tetapkan",
+  "shortcutReassign": "Tetapkan ulang",
+  "shortcutContextApplication": "Aplikasi",
+  "shortcutContextDocument": "Tampilan dokumen",
+  "shortcutContextEditor": "Editor dan sumber",
+  "shortcutContextWritersideSource": "Sumber Writerside",
+  "shortcutContextWorkspace": "Navigasi ruang kerja",
+  "shortcutContextTree": "Pohon bilah samping",
+  "searchHeadingsCommand": "Cari judul",
+  "shortcutFixed": "Dikelola oleh editor; tidak dapat dikonfigurasi.",
+  "shortcutDefaultConflict": "Pintasan bawaan bertentangan dengan penetapan khusus.",
+  "shortcutCurrentBinding": "Pintasan saat ini",
+  "shortcutProposedBinding": "Pintasan yang diusulkan"
 }

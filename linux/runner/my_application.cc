@@ -12,7 +12,7 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "gtk_accent_host.h"
 #include "linux_chrome_host.h"
-#include "performance_trace.h"
+#include "native_shortcut_metadata.h"
 #include "rich_clipboard_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
@@ -70,60 +70,15 @@ struct _MyApplication {
 };
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
-static gchar* gtk_accelerator_from_shortcut_label(const gchar* shortcut) {
-  if (shortcut == nullptr || shortcut[0] == '\0') {
-    return nullptr;
-  }
-
-  guint key = 0;
-  GdkModifierType modifiers = static_cast<GdkModifierType>(0);
-  gtk_accelerator_parse(shortcut, &key, &modifiers);
-  if (key != 0) {
-    return g_strdup(shortcut);
-  }
-
-  gchar** parts = g_strsplit(shortcut, "+", -1);
-  const gsize part_count = g_strv_length(parts);
-  GString* accelerator = g_string_new(nullptr);
-  gboolean valid = part_count > 0;
-  for (gsize index = 0; valid && index + 1 < part_count; index++) {
-    const gchar* part = g_strstrip(parts[index]);
-    if (g_strcmp0(part, "Ctrl") == 0 ||
-        g_strcmp0(part, "Control") == 0) {
-      g_string_append(accelerator, "<Control>");
-    } else if (g_strcmp0(part, "Alt") == 0) {
-      g_string_append(accelerator, "<Alt>");
-    } else if (g_strcmp0(part, "Shift") == 0) {
-      g_string_append(accelerator, "<Shift>");
-    } else if (g_strcmp0(part, "Super") == 0) {
-      g_string_append(accelerator, "<Super>");
-    } else if (g_strcmp0(part, "Meta") == 0) {
-      g_string_append(accelerator, "<Meta>");
-    } else {
-      valid = FALSE;
-    }
-  }
-  if (valid) {
-    const gchar* key_label = g_strstrip(parts[part_count - 1]);
-    g_string_append(accelerator,
-                    g_strcmp0(key_label, "Esc") == 0 ? "Escape" : key_label);
-    key = 0;
-    modifiers = static_cast<GdkModifierType>(0);
-    gtk_accelerator_parse(accelerator->str, &key, &modifiers);
-    valid = key != 0;
-  }
-
-  g_strfreev(parts);
-  return g_string_free(accelerator, !valid);
-}
-
-static void set_menu_item_accelerator(GMenuItem* item,
+static bool set_menu_item_accelerator(GMenuItem* item,
                                       const gchar* shortcut) {
   g_autofree gchar* accelerator =
       gtk_accelerator_from_shortcut_label(shortcut);
   if (accelerator != nullptr) {
     g_menu_item_set_attribute(item, kMenuAccelAttribute, "s", accelerator);
+    return true;
   }
+  return false;
 }
 
 static GdkPixbuf* load_application_icon_at_size(gint size) {
@@ -666,6 +621,8 @@ static gboolean validate_native_menu_entries(FlValue* entries,
               static_cast<gint64>(G_MAXUINT32))) ||
         (selected && !checkable) ||
         (children != nullptr && (separator || checkable)) ||
+        (fl_value_lookup_string(entry, "gtkAccelerator") != nullptr &&
+         fl_lookup_string_arg(entry, "gtkAccelerator") == nullptr) ||
         (fl_value_lookup_string(entry, "shortcut") != nullptr &&
          fl_lookup_string_arg(entry, "shortcut") == nullptr)) {
       respond_native_menu_argument_error(
@@ -765,7 +722,10 @@ static void build_native_menu_model(FlValue* entries,
     // this native boundary; action indexes and clipboard payloads stay intact.
     g_autofree gchar* literal_label = escape_native_menu_label(label);
     const gchar* icon_name = fl_lookup_string_arg(entry, "icon");
-    const gchar* shortcut = fl_lookup_string_arg(entry, "shortcut");
+    // Accelerator metadata is generated from logical keys in Dart. GMenu uses
+    // it for display; Flutter remains the single command dispatch mechanism.
+    const gchar* shortcut = fl_lookup_string_arg(entry, "gtkAccelerator");
+    if (shortcut == nullptr) shortcut = fl_lookup_string_arg(entry, "shortcut");
     gboolean enabled = TRUE;
     gboolean checkable = FALSE;
     gboolean selected = FALSE;
@@ -811,8 +771,13 @@ static void build_native_menu_model(FlValue* entries,
       g_autoptr(GIcon) icon = create_native_menu_icon(icon_name, entry);
       g_menu_item_set_icon(item, icon);
     }
-    if (shortcut != nullptr && shortcut[0] != '\0') {
-      set_menu_item_accelerator(item, shortcut);
+    if (shortcut != nullptr && shortcut[0] != '\0' &&
+        !set_menu_item_accelerator(item, shortcut)) {
+      const gchar* display = fl_lookup_string_arg(entry, "shortcut");
+      if (display != nullptr && display[0] != '\0') {
+        g_autofree gchar* fallback = g_strdup_printf("%s  (%s)", literal_label, display);
+        g_menu_item_set_label(item, fallback);
+      }
     }
     g_menu_append_item(section, item);
     g_object_unref(action);
@@ -1164,21 +1129,13 @@ static void register_asset_input_channel(MyApplication* self, FlView* view) {
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication*, FlView* view) {
-  BusyMarkPerformanceSpan span("first-frame-window-show");
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
-}
-
-static void window_map_cb(GtkWidget*, gpointer) {
-  BusyMarkPerformanceSpan::Event("native-window-map");
 }
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
-  BusyMarkPerformanceSpan activation_span("application-activate");
   MyApplication* self = MY_APPLICATION(application);
-  BusyMarkPerformanceSpan window_span("window-construction");
   GtkWindow* window = GTK_WINDOW(hdy_application_window_new());
-  g_signal_connect(window, "map", G_CALLBACK(window_map_cb), nullptr);
   gtk_application_add_window(GTK_APPLICATION(application), window);
   self->main_window = window;
   gtk_window_set_title(window, kApplicationDisplayName);
@@ -1203,17 +1160,12 @@ static void my_application_activate(GApplication* application) {
     gtk_style_context_add_provider_for_screen(gtk_widget_get_screen(GTK_WIDGET(window)),
         GTK_STYLE_PROVIDER(self->native_surface_css_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   }
-  window_span.End();
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
 
-  FlView* view;
-  {
-    BusyMarkPerformanceSpan span("flutter-view-construction");
-    view = fl_view_new(project);
-  }
+  FlView* view = fl_view_new(project);
   self->flutter_view = GTK_WIDGET(view);
   GdkRGBA background_color;
   gdk_rgba_parse(&background_color, "#00000000");
@@ -1230,20 +1182,10 @@ static void my_application_activate(GApplication* application) {
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
   // Register before realizing the view starts Dart execution.
-  {
-    BusyMarkPerformanceSpan span("accent-host-registration");
-    self->gtk_accent_host = busymark_gtk_accent_host_new(view, GTK_WIDGET(window));
-  }
-  {
-    BusyMarkPerformanceSpan span("flutter-view-realization");
-    gtk_widget_realize(GTK_WIDGET(view));
-  }
+  self->gtk_accent_host = busymark_gtk_accent_host_new(view, GTK_WIDGET(window));
+  gtk_widget_realize(GTK_WIDGET(view));
 
-  BusyMarkPerformanceSpan integrations_span("native-integrations");
-  {
-    BusyMarkPerformanceSpan span("plugin-registration");
-    fl_register_plugins(FL_PLUGIN_REGISTRY(view));
-  }
+  fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   self->chrome_host = busymark_linux_chrome_host_new(view, window, set_gtk_theme_preference);
   register_native_menu_channel(self, view);
   self->writerside_dialog_channel =
@@ -1252,18 +1194,12 @@ static void my_application_activate(GApplication* application) {
   self->rich_clipboard_channel = busymark_rich_clipboard_channel_new(view);
   self->secure_credential_channel =
       busymark_secure_credential_channel_new(view);
-  {
-    BusyMarkPerformanceSpan span("visualization-host-registration");
-    self->visualization_host =
-        busymark_web_render_host_new(GTK_APPLICATION(self), window);
-    busymark_web_render_host_register_channel(self->visualization_host, view);
-  }
-  {
-    BusyMarkPerformanceSpan span("video-host-registration");
-    self->video_player_host =
-        busymark_video_player_host_new(self->flutter_overlay);
-    busymark_video_player_host_register_channel(self->video_player_host, view);
-  }
+  self->visualization_host =
+      busymark_web_render_host_new(GTK_APPLICATION(self), window);
+  busymark_web_render_host_register_channel(self->visualization_host, view);
+  self->video_player_host =
+      busymark_video_player_host_new(self->flutter_overlay);
+  busymark_video_player_host_register_channel(self->video_player_host, view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
@@ -1276,12 +1212,7 @@ static gboolean my_application_local_command_line(GApplication* application,
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
   g_autoptr(GError) error = nullptr;
-  gboolean registered;
-  {
-    BusyMarkPerformanceSpan span("application-registration");
-    registered = g_application_register(application, nullptr, &error);
-  }
-  if (!registered) {
+  if (!g_application_register(application, nullptr, &error)) {
     g_warning("Failed to register: %s", error->message);
     *exit_status = 1;
     return TRUE;
@@ -1295,7 +1226,6 @@ static gboolean my_application_local_command_line(GApplication* application,
 
 // Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
-  BusyMarkPerformanceSpan span("application-startup");
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
   hdy_init();
 
