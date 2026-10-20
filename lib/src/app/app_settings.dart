@@ -629,10 +629,26 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
   @override
   Future<Map<String, Object?>> load() async {
     final file = await _settingsFile();
-    if (!await file.exists()) {
-      return <String, Object?>{};
+    final type = await FileSystemEntity.type(file.path);
+    if (type != FileSystemEntityType.file &&
+        type != FileSystemEntityType.notFound) {
+      throw FileSystemException(
+        'Settings path is not a regular file',
+        file.path,
+      );
     }
-    final content = await file.readAsString();
+    // Other read failures must leave the controller's acknowledged snapshot
+    // unset. A notFound type can also mean that the path is inaccessible.
+    final String content;
+    try {
+      content = await file.readAsString();
+    } on FileSystemException catch (error) {
+      final code = error.osError?.errorCode;
+      if (code == 2 || Platform.isWindows && code == 3) {
+        return <String, Object?>{};
+      }
+      rethrow;
+    }
     if (content.trim().isEmpty) {
       return <String, Object?>{};
     }

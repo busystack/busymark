@@ -13,6 +13,49 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  for (final startupHandoff in [false, true]) {
+    test('unreadable settings do not acknowledge shortcut saves '
+        '(startup handoff: $startupHandoff)', () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-settings-read-failure-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final path = p.join(root.path, 'settings.json');
+      final unreadable = await Directory(path).create();
+      final store = _CountingJsonSettingsStore(path);
+      final startup = startupHandoff
+          ? await StartupAppSettings.load(store)
+          : null;
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      await settings.waitUntilLoaded();
+
+      expect(await settings.saveShortcutOverrides({}), isFalse);
+      expect(container.read(shortcutPersistenceOutcomeProvider), isFalse);
+      expect(store.saves, 1);
+      await expectLater(store.load(), throwsA(isA<FileSystemException>()));
+
+      await unreadable.delete();
+      expect(await settings.retryShortcutSave(), isTrue);
+      expect(store.saves, 2);
+      expect(container.read(shortcutPersistenceOutcomeProvider), isTrue);
+      expect(
+        await store.load(),
+        container.read(appSettingsControllerProvider).toJson(),
+      );
+      expect(await settings.retryShortcutSave(), isTrue);
+      expect(store.saves, 2);
+    });
+  }
+
   test(
     'shortcut failure, retry and dedup share the ordered settings writer',
     () async {
@@ -1872,6 +1915,19 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _CountingJsonSettingsStore extends JsonFileLocalSettingsStore {
+  _CountingJsonSettingsStore(String path)
+    : super(settingsFilePathOverride: path);
+
+  int saves = 0;
+
+  @override
+  Future<void> save(Map<String, Object?> json) {
+    saves++;
+    return super.save(json);
   }
 }
 
