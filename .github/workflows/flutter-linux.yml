@@ -13,6 +13,11 @@ permissions:
   contents: read
 
 jobs:
+  native-product:
+    uses: ./.github/workflows/flutter-linux-native.yml
+    with:
+      run-stress: false
+
   writerside-conformance:
     runs-on: ubuntu-24.04
 

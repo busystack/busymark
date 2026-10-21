@@ -21,12 +21,14 @@ Snapcraft procedure in a disposable supported environment; do not replace an
 installed application for acceptance. The local scaffold repack helper is not
 release or confinement validation. Strict-Snap checks use the normal systemd
 user-session bus for launcher cgroup tracking, not a private D-Bus session.
+Standalone smoke checks use disposable D-Bus sessions to retire desktop helpers.
 
-`Flutter Linux` automatically checks ordinary application changes, including
-bounded GTK/WebKit and compiled visualization/PDF regressions for PRs to `main`
-and `release/v0.6.3`. Run `Linux native acceptance`
-for compiled document/media checks, natural shutdown, strict Snap, debug/profile,
-and X11/Wayland compatibility. See [maintained observers](performance-observers.md).
+`Flutter Linux` automatically runs bounded GTK/WebKit, compiled visualization/PDF,
+dictionary installation/offline restart, Wayland and strict-Snap build/install
+checks for PRs to `main` and `release/v0.6.3`, and pushes to `main`. It reuses
+`Linux native acceptance` with `run-stress: false`. Run that workflow manually
+with `run-stress` enabled for hundred-close, compiled document/media and
+debug/profile campaigns. See [maintained observers](performance-observers.md).
 A widget-suite pass does not validate the GTK embedder.
 
 Yaru uses the unmodified dependencies in `pubspec.lock` through Flutter's

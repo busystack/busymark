@@ -1,10 +1,19 @@
 name: Linux native acceptance
 
-# Explicit, expensive release/runtime acceptance. A green application workflow
-# does not override native fatal exits or other runtime blockers.
+# Automatic CI reuses the ordinary package and desktop checks. Stress campaigns
+# remain explicit release acceptance; native fatal exits still fail their checks.
 on:
   workflow_dispatch:
+    inputs:
+      run-stress:
+        description: Include hundred-close, compiled-close and debug/profile campaigns
+        type: boolean
+        default: true
   workflow_call:
+    inputs:
+      run-stress:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -110,7 +119,7 @@ jobs:
         run: xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_application_input_observer.py --disposable-display
 
       - name: Require 100 natural closes of the shipping release
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.release-build.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 \
@@ -135,7 +144,7 @@ jobs:
           profile="${RUNNER_TEMP}/spelling-profile"
           mkdir -p "$profile"
           xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --spelling-release-smoke="$report"
@@ -143,7 +152,7 @@ jobs:
           sudo unshare --net --fork -- \
             runuser -u "$(id -un)" -- \
             xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --spelling-release-smoke="$report"
@@ -153,12 +162,12 @@ jobs:
 
 
       - name: Build compiled-close fixture
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.release-build.outcome == 'success' }}
         id: release-fixture
         run: flutter build linux --release --no-pub -t tools/window_close_smoke.dart
 
       - name: Exercise live application close, persistence, media and reopening
-        if: ${{ !cancelled() && steps.release-fixture.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.release-fixture.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 \
@@ -171,12 +180,12 @@ jobs:
             build/linux/x64/release/bundle/busymark
 
       - name: Restore main target for Wayland checks
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.release-build.outcome == 'success' }}
         id: release-main
         run: flutter build linux --release --no-pub -t lib/main.dart
 
       - name: Preserve natural-close evidence
-        if: always()
+        if: ${{ always() && inputs.run-stress }}
         uses: actions/upload-artifact@v7
         with:
           name: natural-close-release
@@ -186,7 +195,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Run spelling and visualization smoke tests under Wayland
-        if: ${{ !cancelled() && steps.release-main.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && (!inputs.run-stress || steps.release-main.outcome == 'success') && steps.web-sandbox.outcome == 'success' }}
         run: |
           runtime_dir="/run/user/$(id -u)"
           sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
@@ -194,7 +203,7 @@ jobs:
             weston --backend=headless-backend.so --socket=wayland-99 \
             --idle-time=0 --log="${RUNNER_TEMP}/weston.log" &
           weston_pid=$!
-          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$weston_pid" 2>/dev/null || true; wait "$weston_pid" 2>/dev/null || true' EXIT
           for attempt in {1..40}; do
             if [ -S "$runtime_dir/wayland-99" ]; then
               break
@@ -206,25 +215,35 @@ jobs:
             sleep 0.25
           done
           test -S "$runtime_dir/wayland-99"
+          export runtime_dir
+          checks_failed=0
+          bash -euo pipefail <<'SPELLING' || checks_failed=1
           spelling_report="${RUNNER_TEMP}/spelling-release-wayland.json"
           spelling_profile="${RUNNER_TEMP}/spelling-profile"
           sudo unshare --net --fork -- \
             runuser -u "$(id -un)" -- \
+            dbus-run-session -- \
             env XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             XDG_DATA_HOME="$spelling_profile" GDK_BACKEND=wayland \
             BUSYMARK_RELEASE_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --spelling-release-smoke="$spelling_report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
-          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+          SPELLING
+          bash -euo pipefail <<'RENDERERS' || checks_failed=1
+          dbus-run-session -- env \
+            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1 \
             /usr/bin/python3 -u tools/visualization_smoke.py \
             --assets build/linux/x64/release/bundle/share/busymark/visualization \
             --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
             --demo test/fixtures/markdown/basic.md \
             --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
+          RENDERERS
+          bash -euo pipefail <<'COMPILED' || checks_failed=1
           report="${RUNNER_TEMP}/visualization-release-wayland.json"
-          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+          dbus-run-session -- env \
+            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
             LIBGL_ALWAYS_SOFTWARE=1 \
             timeout --signal=TERM 300s \
@@ -232,6 +251,8 @@ jobs:
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+          COMPILED
+          exit "$checks_failed"
 
   snap:
     name: Native release acceptance (snap)
@@ -323,19 +344,19 @@ jobs:
           echo "DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime_dir/bus" >> "$GITHUB_ENV"
 
       - name: Enable parallel Snap instances
-        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' }}
         id: strict-parallel
         run: sudo snap set system experimental.parallel-instances=true
 
       - name: Install disposable close instance
-        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
         id: strict-close-install
         run: |
           sudo snap install --dangerous --name=busymark_close \
             "${{ steps.snap-artifact.outputs.snap }}"
 
       - name: Require 100 natural closes under strict confinement
-        if: ${{ !cancelled() && steps.strict-close-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-close-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             env GDK_BACKEND=x11 \
@@ -345,7 +366,7 @@ jobs:
             --expected-engine /snap/busymark_close/current/lib/libflutter_linux_gtk.so
 
       - name: Preserve strict natural-close evidence
-        if: always()
+        if: ${{ always() && inputs.run-stress }}
         uses: actions/upload-artifact@v7
         with:
           name: natural-close-strict-snap
@@ -356,6 +377,7 @@ jobs:
         if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
         run: |
           snap run --shell busymark -c '
+            set -eu
             test ! -e \
               "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/librsvg-2.so.2"
             query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
@@ -524,7 +546,17 @@ jobs:
             --idle-time=0 --log="${RUNNER_TEMP}/weston-snap.log" &
           weston_pid=$!
           sudo snap disconnect busymark:network
-          trap 'sudo snap connect busymark:network >/dev/null; kill "$weston_pid" 2>/dev/null || true' EXIT
+          cleanup_wayland() {
+            result=$?
+            trap - EXIT
+            if ! sudo snap connect busymark:network >/dev/null; then
+              result=1
+            fi
+            kill "$weston_pid" 2>/dev/null || true
+            wait "$weston_pid" 2>/dev/null || true
+            return "$result"
+          }
+          trap cleanup_wayland EXIT
           for attempt in {1..40}; do
             if [ -S "$runtime_dir/wayland-99" ]; then
               break
@@ -536,6 +568,9 @@ jobs:
             sleep 0.25
           done
           test -S "$runtime_dir/wayland-99"
+          export runtime_dir
+          checks_failed=0
+          bash -euo pipefail <<'SPELLING' || checks_failed=1
           spelling_report="$HOME/snap/busymark/common/spelling-release-wayland.json"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
@@ -543,6 +578,8 @@ jobs:
             timeout --signal=TERM 300s snap run busymark \
             --spelling-release-smoke="$spelling_report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
+          SPELLING
+          bash -euo pipefail <<'COMPILED' || checks_failed=1
           report="$HOME/snap/busymark/common/visualization-release-wayland.json"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
@@ -551,11 +588,11 @@ jobs:
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
-          sudo snap connect busymark:network
-          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          COMPILED
+          exit "$checks_failed"
 
       - name: Prepare a separate compiled-close fixture package
-        if: ${{ !cancelled() && steps.strict-install.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' }}
         id: strict-fixture-source
         run: |
           cp "${{ steps.snap-artifact.outputs.snap }}" "${RUNNER_TEMP}/shipping-main.snap"
@@ -569,11 +606,11 @@ jobs:
           recipe.write_text(text.replace('--target lib/main.dart', '--target tools/window_close_smoke.dart'))
           PYCODE
       - name: Build genuine strict compiled-close fixture
-        if: ${{ !cancelled() && steps.strict-fixture-source.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-fixture-source.outcome == 'success' }}
         id: close-fixture-snap
         uses: snapcore/action-build@v1
       - name: Install strict compiled-close fixture
-        if: ${{ !cancelled() && steps.close-fixture-snap.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.close-fixture-snap.outcome == 'success' && steps.strict-parallel.outcome == 'success' }}
         id: strict-fixture-install
         run: |
           fixture="${{ steps.close-fixture-snap.outputs.snap }}"
@@ -586,7 +623,7 @@ jobs:
           cp test/fixtures/media/close-testsrc.mp4 "$fixture_root/fixtures/"
 
       - name: Verify strict Save Discard Cancel media rendering and reopening
-        if: ${{ !cancelled() && steps.strict-fixture-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.run-stress && steps.strict-fixture-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
         run: |
           fixture_root="$HOME/snap/busymark_fixture/common"
           xvfb-run -a /usr/bin/python3 tools/application_close_smoke.py \
@@ -596,7 +633,7 @@ jobs:
             --scenarios plain visualization pending-initialization dirty-save dirty-discard dirty-cancel video \
             --video "$fixture_root/fixtures/close-testsrc.mp4"
       - name: Preserve strict compiled-close evidence
-        if: always()
+        if: ${{ always() && inputs.run-stress }}
         uses: actions/upload-artifact@v7
         with:
           name: natural-close-strict-fixture
@@ -606,6 +643,7 @@ jobs:
 
   development-modes:
     name: Native release acceptance (${{ matrix.mode }})
+    if: ${{ inputs.run-stress }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false

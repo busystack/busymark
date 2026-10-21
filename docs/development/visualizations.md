@@ -101,7 +101,7 @@ sources are:
 - `tools/fetch_typst.sh` for Typst release artifacts and hashes;
 - `linux/CMakeLists.txt` and `snap/snapcraft.yaml` for bundle layout; and
 - `.github/workflows/flutter-linux.yml` for automatic native and compiled PDF checks;
-- `.github/workflows/flutter-linux-native.yml` for explicit release and Snap verification.
+- `.github/workflows/flutter-linux-native.yml` for automatic Wayland/Snap checks and opt-in release stress campaigns.
 
 The web bundle is built with `npm ci --ignore-scripts`. Build steps verify direct
 upstream artifacts and stage package metadata, licenses, and notices. Node.js is

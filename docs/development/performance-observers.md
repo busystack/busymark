@@ -35,8 +35,10 @@ Tooling tests need Clang, system Python, Pillow and PyYAML (`python3-pil`, `pyth
 on Ubuntu). These checks do not establish GTK-engine or strict-Snap acceptance.
 `Flutter Linux` checks formatting, analysis, widget tests, tooling and release
 compilation, plus the GTK host, WebKit/renderer and compiled visualization/PDF
-checks on ordinary PRs to `main` and `release/v0.6.3`. `Linux native acceptance` retains 100-close standalone/strict-Snap,
-debug/profile and compiled document/media checks. Failures remain required;
+checks on ordinary PRs to `main` and `release/v0.6.3`, and pushes to `main`.
+It reuses `Linux native acceptance` for dictionary, Wayland and strict-Snap
+build/install checks. That workflow retains opt-in 100-close standalone/strict-Snap,
+debug/profile and compiled document/media campaigns. Failures remain required;
 prerequisite conditions allow independent checks to continue without bypassing
 failed build/install steps. Neither workflow publishes or deploys.
 
