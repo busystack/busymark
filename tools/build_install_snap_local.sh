@@ -326,7 +326,7 @@ echo "== Resolve locked dependencies =="
 if [[ "$SKIP_TESTS" != "1" ]]; then
   echo "== Validate source =="
   "$FLUTTER_BIN" analyze --no-pub
-  "$FLUTTER_BIN" test --no-pub --concurrency=2 --reporter=compact
+  "$FLUTTER_BIN" test --no-pub --reporter=compact
 else
   echo "== Validate source =="
   echo "Skipping tests because SKIP_TESTS=1"

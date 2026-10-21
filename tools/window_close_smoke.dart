@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -77,14 +76,6 @@ Future<void> main(List<String> args) async {
   );
   try {
     await application.main([]);
-    var hardwareKeyEvents = 0;
-    HardwareKeyboard.instance.addHandler((_) {
-      checks['hardwareKeyEvents'] = ++hardwareKeyEvents;
-      // Count only events delivered to this fixture application. Do not record
-      // key values or observe input intended for another desktop window.
-      stderr.writeln('close-smoke hardware-input count=$hardwareKeyEvents');
-      return false;
-    });
     final binding = WidgetsBinding.instance;
     var frames = 0;
     int? readyFrameNumber;

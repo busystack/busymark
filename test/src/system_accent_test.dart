@@ -311,51 +311,6 @@ void main() {
     );
   }
 
-  test('local readiness does not await an unavailable portal accent', () async {
-    final local = Completer<Color?>();
-    final authority = Completer<Color?>();
-    final gtk = FakeAccentSource(() => local.future);
-    final portal = FakeAccentSource(() => authority.future);
-    final coordinator = LinuxAccentCoordinator(sources: [gtk, portal]);
-    var allReady = false;
-    coordinator.initialize().then((_) => allReady = true);
-    final ready = coordinator.initializeLocal();
-    local.complete(null);
-    await ready;
-    expect(allReady, isFalse);
-    expect(coordinator.color, busyMarkDefaultAccentColor);
-    expect(portal.listens, 1);
-    authority.complete(const Color(0xff336699));
-    await coordinator.initialize();
-    expect(coordinator.color, const Color(0xff336699));
-    gtk.events.add(const Color(0xff287b9c));
-    await Future<void>.delayed(Duration.zero);
-    expect(coordinator.color, const Color(0xff287b9c));
-    await coordinator.dispose();
-    await gtk.events.close();
-    await portal.events.close();
-  });
-
-  test(
-    'local readiness waits for local preferences and completes on disposal',
-    () async {
-      final snapshot = Completer<Color?>();
-      final gtk = FakeAccentSource(() => snapshot.future);
-      final coordinator = LinuxAccentCoordinator(sources: [gtk]);
-      var ready = false;
-      coordinator.initializeLocal().then((_) => ready = true);
-      await Future<void>.delayed(Duration.zero);
-      expect(ready, isFalse);
-      await coordinator.dispose();
-      expect(ready, isTrue);
-      snapshot.complete(const Color(0xff336699));
-      await Future<void>.delayed(Duration.zero);
-      expect(coordinator.color, busyMarkDefaultAccentColor);
-      expect(gtk.cancels, 1);
-      await gtk.events.close();
-    },
-  );
-
   test(
     'source errors remain independent and healthy native updates continue',
     () async {

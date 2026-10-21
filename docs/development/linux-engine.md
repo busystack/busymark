@@ -12,7 +12,7 @@ flutter build linux --debug
 flutter build linux --profile
 flutter build linux --release
 flutter analyze
-flutter test --concurrency=2
+flutter test
 ```
 
 CI selects the same official version. Snapcraft downloads the checksum-pinned
@@ -28,7 +28,7 @@ dictionary installation/offline restart, Wayland and strict-Snap build/install
 checks for PRs to `main` and `release/v0.6.3`, and pushes to `main`. It reuses
 `Linux native acceptance` with `run-stress: false`. Run that workflow manually
 with `run-stress` enabled for hundred-close, compiled document/media and
-debug/profile campaigns. See [maintained observers](performance-observers.md).
+debug/profile campaigns. See [compiled application checks](application-smoke-tests.md).
 A widget-suite pass does not validate the GTK embedder.
 
 Yaru uses the unmodified dependencies in `pubspec.lock` through Flutter's
@@ -36,3 +36,9 @@ generated plugin build. No local plugin source preparation is required.
 Compiled window, document and media checks exercise the actual application;
 runtime shutdown failures still fail native release acceptance. A disappearing
 window or forced cleanup is not successful natural shutdown.
+
+Startup resolves the GTK accent or its portal fallback before building the UI,
+using the existing readiness deadline. A valid GTK accent does not wait for the
+portal. Saved preferences are read once before `runApp()` and handed to the
+settings controller; failed reads use defaults without acknowledging them as a
+persisted snapshot.

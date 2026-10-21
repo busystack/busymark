@@ -63,7 +63,6 @@ jobs:
             poppler-utils \
             python3-gi \
             python3-gi-cairo \
-            python3-pil \
             python3-yaml \
             rsync \
             xvfb \
@@ -210,12 +209,101 @@ jobs:
           test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
 
 
-      # Independent application checks retain their own failure outcomes.
-      - name: Test owned-process and application observers
+      - name: Verify release ships catalog and notices without language pairs
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         run: |
+          spelling_root="build/linux/x64/release/bundle/share/busymark/spelling"
+          test -s "$spelling_root/dictionaries.json"
+          test -s "$spelling_root/NOTICE"
+          test -z "$(find "$spelling_root" -type f \( -name '*.aff' -o -name '*.dic' \) -print -quit)"
+
+      - name: Install one dictionary and exercise it after an offline restart
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          report="${RUNNER_TEMP}/spelling-release.json"
+          profile="${RUNNER_TEMP}/spelling-profile"
+          mkdir -p "$profile"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
+          sudo unshare --net --fork -- \
+            runuser -u "$(id -un)" -- \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+
+      - name: Run spelling and visualization smoke tests under Wayland
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        run: |
+          runtime_dir="/run/user/$(id -u)"
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
+          XDG_RUNTIME_DIR="$runtime_dir" \
+            weston --backend=headless-backend.so --socket=wayland-99 \
+            --idle-time=0 --log="${RUNNER_TEMP}/weston.log" &
+          weston_pid=$!
+          trap 'kill "$weston_pid" 2>/dev/null || true; wait "$weston_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..40}; do
+            if [ -S "$runtime_dir/wayland-99" ]; then
+              break
+            fi
+            if ! kill -0 "$weston_pid" 2>/dev/null; then
+              cat "${RUNNER_TEMP}/weston.log"
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test -S "$runtime_dir/wayland-99"
+          export runtime_dir
+          checks_failed=0
+          bash -euo pipefail <<'SPELLING' || checks_failed=1
+          spelling_report="${RUNNER_TEMP}/spelling-release-wayland.json"
+          spelling_profile="${RUNNER_TEMP}/spelling-profile"
+          sudo unshare --net --fork -- \
+            runuser -u "$(id -un)" -- \
+            dbus-run-session -- \
+            env XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            XDG_DATA_HOME="$spelling_profile" GDK_BACKEND=wayland \
+            BUSYMARK_RELEASE_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$spelling_report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
+          SPELLING
+          bash -euo pipefail <<'RENDERERS' || checks_failed=1
+          dbus-run-session -- env \
+            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1 \
+            /usr/bin/python3 -u tools/visualization_smoke.py \
+            --assets build/linux/x64/release/bundle/share/busymark/visualization \
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
+            --demo test/fixtures/markdown/basic.md \
+            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
+          RENDERERS
+          bash -euo pipefail <<'COMPILED' || checks_failed=1
+          report="${RUNNER_TEMP}/visualization-release-wayland.json"
+          dbus-run-session -- env \
+            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout --signal=TERM 300s \
+            build/linux/x64/release/bundle/busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+          COMPILED
+          exit "$checks_failed"
+
+      # Independent application checks retain their own failure outcomes.
+      - name: Test process ownership and application lifecycle tooling
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
+        run: |
           /usr/bin/python3 -m unittest tools/test_owned_processes.py \
-            tools/test_application_content_observer.py tools/test_application_close_smoke.py \
+            tools/test_application_close_smoke.py \
             tools/test_run_owned_fixture.py \
             tools/test_official_flutter_workflow.py
 

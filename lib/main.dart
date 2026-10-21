@@ -37,7 +37,7 @@ Future<void> main(List<String> args) async {
         ? [const LinuxGtkAccentService(), const LinuxPortalAppearance()]
         : [],
   );
-  await accentCoordinator.initializeLocal();
+  await accentCoordinator.initialize();
   final chrome = await Future.wait<Object?>([
     const GtkAnimationSettingsService().getAnimationsEnabled(),
     const GtkWindowPreferencesService().load(),

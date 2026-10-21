@@ -85,7 +85,7 @@ Build and run the standard checks with:
 ```bash
 flutter build linux
 flutter analyze
-flutter test --concurrency=2
+flutter test
 ```
 
 The build assembles BusyMark's runtime components. Packaged users do not need
@@ -93,11 +93,10 @@ separate Typst, Java, Node.js, or Chromium installations.
 
 Linux development and packaging use the official Flutter SDK version pinned in
 `pubspec.yaml` (currently 3.47.5). No custom Flutter engine is built or selected.
-See [Linux development](docs/development/linux-engine.md) for the standard mode
-commands and the upstream shutdown/startup blockers. A successful build does
-not establish release readiness: native fatal exits keep release blocked.
-See [performance and shutdown observers](docs/development/performance-observers.md)
-for maintained process-ownership and content-recognition checks.
+See [Linux development](docs/development/linux-engine.md) for build modes and
+[compiled application checks](docs/development/application-smoke-tests.md) for
+native and document regression commands. A successful widget suite or build
+does not establish native release acceptance.
 
 The CI workflow installs additional packages for headless X11/Wayland, browser,
 PDF, and sandbox verification. Those packages are not required for an ordinary

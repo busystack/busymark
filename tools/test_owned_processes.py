@@ -48,7 +48,6 @@ class OwnedProcessTest(unittest.TestCase):
         tracker = owned.ChildTracker.__new__(owned.ChildTracker)
         tracker.root, tracker.seen = 100, {100: 'owned-root'}
         tracker.admitted_by, tracker.errors, tracker.unidentified = {}, [], {}
-        tracker.engine = tracker.input_audit = None
 
         def children(pid, expected=None):
             return [200] if pid == 100 else []
@@ -76,7 +75,6 @@ class OwnedProcessTest(unittest.TestCase):
             tracker = owned.ChildTracker.__new__(owned.ChildTracker)
             tracker.root, tracker.seen = 100, {100: 'root'}
             tracker.admitted_by, tracker.errors, tracker.unidentified = {}, [], {}
-            tracker.engine = tracker.input_audit = None
             with patch.object(owned, 'process_children', side_effect=lambda parent, expected=None: [pid] if parent == 100 else []), patch.object(
                 owned, 'process_state', return_value={'pid': 100, 'identity': 'root', 'status': 'running'}
             ), patch.object(owned, 'signal_owned') as send:
@@ -106,7 +104,6 @@ class OwnedProcessTest(unittest.TestCase):
         tracker = owned.ChildTracker.__new__(owned.ChildTracker)
         tracker.root, tracker.seen = 100, {100: 'root', 200: 'retired-child'}
         tracker.admitted_by, tracker.errors, tracker.unidentified = {}, [], {}
-        tracker.engine = tracker.input_audit = None
         def children(pid, expected=None):
             return [200] if pid == 100 else []
         def state(pid, expected=None):

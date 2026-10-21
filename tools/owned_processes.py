@@ -116,8 +116,6 @@ def identity(pid):
     return process_state(pid).get('identity')
 
 
-def live(pid, expected):
-    return process_state(pid, expected)['status'] == 'running'
 
 
 def process_children(pid, expected=None):
@@ -178,8 +176,6 @@ class ChildTracker:
         self.root = None
         self.errors = []
         self.unidentified = {}
-        self.engine = None
-        self.input_audit = None
         # Allocate Python state before acquiring the process-wide resource.
         # There must be no fallible initialization after setting subreaper.
         if self.libc.prctl(36, 1, 0, 0, 0) != 0:
@@ -231,10 +227,6 @@ class ChildTracker:
             except ObservationIncomplete as error:
                 self.errors.append(str(error))
         self.errors = list(dict.fromkeys(self.errors))
-        if self.engine is not None:
-            self.engine.capture(self)
-        if self.input_audit is not None:
-            self.input_audit.poll()
 
     def outstanding(self, children_only=False):
         self.scan()

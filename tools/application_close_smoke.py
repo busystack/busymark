@@ -11,7 +11,6 @@ import json
 import math
 import os
 from pathlib import Path
-import signal
 import stat
 import secrets
 import re
@@ -21,27 +20,11 @@ import sys
 import time
 
 
-# Re-export for existing external evidence drivers. The ownership contract is
-# implemented once; diagnostic tools must not bypass it with raw PID reads.
-from owned_processes import (ChildTracker, ObservationIncomplete, ProcessHandle, cleanup_owned,
-                             identity, live, process_children, process_state,
-                             signal_owned)
-
-
-def snapshot_mapped_process(pid, folder, record):
-    # Keep the historical mapped_ns endpoint after snapshot publication, but
-    # expose detection before observer I/O. Neither timestamp is presentation.
-    record['mapDetected_ns'] = time.monotonic_ns()
-    try:
-        maps = Path(f'/proc/{pid}/maps').read_text()
-        (folder / 'maps').write_text(maps)
-    except OSError as error:
-        raise ObservationIncomplete('Owned mapped-process snapshot failed: ' + str(error)) from error
-    record['mapped_ns'] = time.monotonic_ns()
+import owned_processes as owned
 
 
 class LoadedEngine:
-    """Pin the owned process's mapped engine; hash after exit, outside timing."""
+    """Verify the mapped engine through a descriptor retained until process exit."""
     def __init__(self, library):
         try:
             with os.fdopen(os.open(library, os.O_RDONLY | os.O_CLOEXEC | os.O_NONBLOCK), 'rb') as stream:
@@ -59,7 +42,7 @@ class LoadedEngine:
                 stream.seek(0)
                 self.expected = hashlib.file_digest(stream, 'sha256').hexdigest()
         except (OSError, ValueError, TypeError) as error:
-            raise ObservationIncomplete('Expected engine library unavailable or invalid: ' + str(error)) from error
+            raise owned.ObservationIncomplete('Expected engine library unavailable or invalid: ' + str(error)) from error
         self.fd = None
         self.path = None
         self.stat = None
@@ -70,7 +53,7 @@ class LoadedEngine:
         pid = tracker.root
         found = False
         try:
-            with ProcessHandle(pid) as proc:
+            with owned.ProcessHandle(pid) as proc:
                 if proc.state(tracker.seen[pid])['status'] != 'running':
                     return
                 rows = [line.split(None, 5) for line in proc.read('maps').decode().splitlines()]
@@ -80,14 +63,14 @@ class LoadedEngine:
                 found = True
                 paths = {r[5] for r in rows}
                 if len(paths) != 1:
-                    raise ObservationIncomplete('Multiple Flutter engines mapped')
+                    raise owned.ObservationIncomplete('Multiple Flutter engines mapped')
                 self.path = rows[0][5]
                 fd = os.open('root' + self.path, os.O_RDONLY | os.O_CLOEXEC, dir_fd=proc.fd)
                 try:
                     stat = os.fstat(fd)
                     major, minor = (int(x, 16) for x in rows[0][3].split(':'))
                     if stat.st_ino != int(rows[0][4]) or stat.st_dev != os.makedev(major, minor):
-                        raise ObservationIncomplete('Engine descriptor does not match the mapped inode/device')
+                        raise owned.ObservationIncomplete('Engine descriptor does not match the mapped inode/device')
                     if proc.state(tracker.seen[pid])['status'] != 'running':
                         return
                     confinement = proc.read('attr/current').decode().strip()
@@ -96,8 +79,8 @@ class LoadedEngine:
                 finally:
                     if fd is not None:
                         os.close(fd)
-        except (OSError, ValueError, ObservationIncomplete) as error:
-            if found and process_state(pid, tracker.seen[pid])['status'] == 'running':
+        except (OSError, ValueError, owned.ObservationIncomplete) as error:
+            if found and owned.process_state(pid, tracker.seen[pid])['status'] == 'running':
                 tracker.errors.append('Loaded-engine observation: ' + str(error))
 
     def finish(self, record, errors):
@@ -151,282 +134,6 @@ class WindowAttributes(C.Structure):
         ("all_event_masks", C.c_long), ("your_event_mask", C.c_long), ("do_not_propagate_mask", C.c_long),
         ("override_redirect", C.c_int), ("screen", C.c_void_p),
     ]
-
-
-class InputHints(C.Structure):
-    _fields_ = [('flags', C.c_long), ('input', C.c_int), ('initial_state', C.c_int),
-                ('icon_pixmap', C.c_ulong), ('icon_window', C.c_ulong),
-                ('icon_x', C.c_int), ('icon_y', C.c_int), ('icon_mask', C.c_ulong),
-                ('window_group', C.c_ulong)]
-
-
-class AnyEvent(C.Structure):
-    # Do not inspect key codes, characters, coordinates or unrelated windows.
-    _fields_ = [('type', C.c_int), ('serial', C.c_ulong), ('send_event', C.c_int),
-                ('display', C.c_void_p), ('window', C.c_ulong)]
-
-
-class InputEvent(C.Union):
-    _fields_ = [('any', AnyEvent), ('pad', C.c_long * 24)]
-
-
-class WindowLifecycleEvent(C.Structure):
-    # Create/Destroy/Map/Reparent notifications share event/parent then window.
-    _fields_ = AnyEvent._fields_ + [('child', C.c_ulong)]
-
-
-class InputCookie(C.Structure):
-    _fields_ = AnyEvent._fields_[:-1] + [
-        ('extension', C.c_int), ('evtype', C.c_int),
-        ('cookie', C.c_uint), ('data', C.c_void_p),
-    ]
-
-
-class DeviceKeyPrefix(C.Structure):
-    # Only inspect event type/window. Never inspect the key detail or values.
-    _fields_ = AnyEvent._fields_[:-1] + [
-        ('extension', C.c_int), ('evtype', C.c_int), ('time', C.c_ulong),
-        ('deviceid', C.c_int), ('sourceid', C.c_int), ('unused_detail', C.c_int),
-        ('root', C.c_ulong), ('event', C.c_ulong), ('child', C.c_ulong),
-    ]
-
-
-class DeviceEventMask(C.Structure):
-    _fields_ = [('deviceid', C.c_int), ('mask_len', C.c_int),
-                ('mask', C.POINTER(C.c_ubyte))]
-
-
-class InputError(C.Structure):
-    _fields_ = [('type', C.c_int), ('display', C.c_void_p),
-                ('resource', C.c_ulong), ('serial', C.c_ulong),
-                ('error_code', C.c_ubyte), ('request_code', C.c_ubyte),
-                ('minor_code', C.c_ubyte)]
-
-
-class OwnedInputAudit:
-    """Observe event counts only in the identified app's own window subtree.
-
-    Select core and XI2 keys on this observer's separate X connection. GTK
-    consumes XI2 keys, which a core-only selection can miss. No root/raw input
-    listener, input grab, key values, or replacement application handler.
-    """
-    def __init__(self, desktop, window):
-        self.desktop = desktop
-        self.x = desktop.x
-        self.display = desktop.display
-        self.windows = set()
-        self.root_window = window.get_xid()
-        self.window_updates = []
-        self.refresh_required = False
-        self.retired = False
-        self.events = []
-        self.key_presses = self.key_releases = self.activeSamples = self.samples = 0
-        self.focusSamples = 0
-        self.errors = []
-        self.retirement_races = []
-        x = self.x
-        x.XSelectInput.argtypes = [C.c_void_p, C.c_ulong, C.c_long]
-        x.XPending.argtypes = [C.c_void_p]
-        x.XPending.restype = C.c_int
-        x.XNextEvent.argtypes = [C.c_void_p, C.POINTER(InputEvent)]
-        x.XSync.argtypes = [C.c_void_p, C.c_int]
-        x.XSetErrorHandler.argtypes = [C.c_void_p]
-        x.XSetErrorHandler.restype = C.c_void_p
-        x.XGetInputFocus.argtypes = [C.c_void_p, C.POINTER(C.c_ulong), C.POINTER(C.c_int)]
-        self._prepare_xi2()
-        self._refresh_windows()
-
-    def _refresh_windows(self):
-        """Track later-realized children without selecting root/raw input.
-
-        Lifecycle delivery is polled: report the refresh times rather than
-        implying observation of input before a new window was selected.
-        """
-        x = self.x
-        handler_type = C.CFUNCTYPE(C.c_int, C.c_void_p, C.POINTER(InputError))
-        errors = []
-
-        def error(_display, event):
-            errors.append({'code': event.contents.error_code,
-                           'request': event.contents.request_code,
-                           'resource': event.contents.resource})
-            return 0
-
-        handler = handler_type(error)
-        previous = x.XSetErrorHandler(C.cast(handler, C.c_void_p))
-        try:
-            bits = (C.c_ubyte * 1)((1 << 2) | (1 << 3))
-            mask = DeviceEventMask(1, 1, bits)  # XIAllMasterDevices; keys only.
-            pending, current, failed = [self.root_window], set(), set()
-            self.refresh_required = False
-            while pending:
-                xid = pending.pop()
-                if xid in current:
-                    continue
-                if len(current) >= 1024:
-                    raise ObservationIncomplete('Owned input window bound exceeded')
-                current.add(xid)
-                if xid not in self.windows:
-                    x.XSelectInput(self.display, xid, (1 << 0) | (1 << 1) | (1 << 21) | (1 << 19) | (1 << 17))
-                    if self.xi.XISelectEvents(self.display, xid, C.byref(mask), 1) != 0:
-                        raise ObservationIncomplete('Owned XInput2 window selection failed')
-                root, parent, count = C.c_ulong(), C.c_ulong(), C.c_uint()
-                children = C.POINTER(C.c_ulong)()
-                if x.XQueryTree(self.display, xid, C.byref(root), C.byref(parent), C.byref(children), C.byref(count)):
-                    pending.extend(children[:count.value])
-                    if children:
-                        x.XFree(children)
-                else:
-                    failed.add(xid)
-            x.XSync(self.display, 0)
-            # Destruction can occur after poll drained the queue and before
-            # QueryTree reaches the server. Only a matching DestroyNotify on
-            # our already subscribed connection establishes this normal race.
-            # BadWindow alone is not evidence of complete observation.
-            subscribed = self.windows.copy()
-            destroyed = self._drain_events()
-            for item in errors:
-                if (item['code'] == 3 and item['resource'] in destroyed
-                        and item['resource'] in subscribed
-                        and item['request'] in (2, 15, self.xi_opcode)):
-                    if len(self.retirement_races) < 64:
-                        self.retirement_races.append(dict(item, observed_ns=time.monotonic_ns()))
-                else:
-                    self.errors.append(item)
-            if failed - destroyed:
-                raise ObservationIncomplete('Owned window subtree enumeration failed')
-            current = set() if self.retired else current - destroyed
-            if current != self.windows and len(self.window_updates) < 64:
-                self.window_updates.append({'observed_ns': time.monotonic_ns(),
-                                            'added': len(current - self.windows),
-                                            'removed': len(self.windows - current)})
-            self.windows = current
-        finally:
-            x.XSetErrorHandler(previous)
-        if self.errors:
-            raise ObservationIncomplete('Owned input observation unavailable: ' + repr(self.errors))
-
-    def _prepare_xi2(self):
-        x = self.x
-        try:
-            self.xi = C.CDLL('libXi.so.6')
-            opcode, first, error_base = C.c_int(), C.c_int(), C.c_int()
-            x.XQueryExtension.argtypes = [C.c_void_p, C.c_char_p, C.POINTER(C.c_int), C.POINTER(C.c_int), C.POINTER(C.c_int)]
-            if not x.XQueryExtension(self.display, b'XInputExtension', C.byref(opcode), C.byref(first), C.byref(error_base)):
-                raise ObservationIncomplete('Owned keyboard observation requires XInput2')
-            self.xi_opcode = opcode.value
-            self.xi.XIQueryVersion.argtypes = [C.c_void_p, C.POINTER(C.c_int), C.POINTER(C.c_int)]
-            major, minor = C.c_int(2), C.c_int(0)
-            if self.xi.XIQueryVersion(self.display, C.byref(major), C.byref(minor)) != 0 or major.value < 2:
-                raise ObservationIncomplete('XInput2 version 2 keyboard observation unavailable')
-            self.xi.XISelectEvents.argtypes = [C.c_void_p, C.c_ulong, C.POINTER(DeviceEventMask), C.c_int]
-            x.XGetEventData.argtypes = [C.c_void_p, C.POINTER(InputCookie)]
-            x.XFreeEventData.argtypes = [C.c_void_p, C.POINTER(InputCookie)]
-        except (OSError, AttributeError) as failure:
-            raise ObservationIncomplete('Owned XInput2 keyboard observation unavailable: ' + str(failure)) from failure
-
-    def poll(self):
-        self.samples += 1
-        desktop = self.desktop
-        # Drain structure notifications first, so focus queries include a FlView
-        # realized after the initial top-level was found. A destroyed root must
-        # not be queried again during normal process exit.
-        self._drain_events()
-        if self.refresh_required and not self.retired:
-            self._refresh_windows()
-        atom, form, count, remaining = C.c_ulong(), C.c_int(), C.c_ulong(), C.c_ulong()
-        data = C.POINTER(C.c_ubyte)()
-        self.x.XGetWindowProperty(self.display, desktop.root,
-                                 desktop.atom('_NET_ACTIVE_WINDOW'), 0, 1, 0, 0,
-                                 C.byref(atom), C.byref(form), C.byref(count),
-                                 C.byref(remaining), C.byref(data))
-        active = C.cast(data, C.POINTER(C.c_ulong))[0] if count.value and form.value == 32 else None
-        if data:
-            self.x.XFree(data)
-        if active in self.windows:
-            self.activeSamples += 1
-        focused, revert = C.c_ulong(), C.c_int()
-        if not self.x.XGetInputFocus(self.display, C.byref(focused), C.byref(revert)):
-            if 'XGetInputFocus failed' not in self.errors:
-                self.errors.append('XGetInputFocus failed')
-        elif focused.value in self.windows:
-            self.focusSamples += 1
-
-    def _drain_events(self):
-        drained, destroyed = 0, set()
-        while self.x.XPending(self.display):
-            drained += 1
-            if drained > 4096:
-                if 'Owned event queue overflow' not in self.errors:
-                    self.errors.append('Owned event queue overflow')
-                break
-            event = InputEvent()
-            self.x.XNextEvent(self.display, C.byref(event))
-            if event.any.type == 17 and event.any.window in self.windows:
-                lifecycle = C.cast(C.byref(event), C.POINTER(WindowLifecycleEvent)).contents
-                destroyed.add(lifecycle.child)
-            self.observe(event)
-        return destroyed
-
-    def observe(self, event):
-        if event.any.type == 35:  # GenericEvent, not a core XAnyEvent window.
-            cookie = C.cast(C.byref(event), C.POINTER(InputCookie)).contents
-            if cookie.extension != self.xi_opcode or cookie.evtype not in (2, 3):
-                return
-            if not self.x.XGetEventData(self.display, C.byref(cookie)):
-                self.errors.append('Owned XInput2 key-event data unavailable')
-                return
-            try:
-                if not cookie.data:
-                    self.errors.append('Owned XInput2 key-event data missing')
-                    return
-                key = C.cast(cookie.data, C.POINTER(DeviceKeyPrefix)).contents
-                if key.event not in self.windows:
-                    return
-                self._key(key.evtype, bool(key.send_event), 'XI2')
-            finally:
-                self.x.XFreeEventData(self.display, C.byref(cookie))
-            return
-        if event.any.window not in self.windows:
-            return
-        if event.any.type in (16, 17, 19, 21):
-            lifecycle = C.cast(C.byref(event), C.POINTER(WindowLifecycleEvent)).contents
-            if event.any.type == 17 and lifecycle.child == self.root_window:
-                self.retired = True
-                self.windows.clear()
-            self.refresh_required = True
-            return
-        if event.any.type in (2, 3):
-            self._key(event.any.type, bool(event.any.send_event), 'core')
-            return
-        kinds = {9: 'focus-in', 10: 'focus-out'}
-        if event.any.type in kinds and len(self.events) < 16:
-            self.events.append({'kind': kinds[event.any.type],
-                                'synthetic': bool(event.any.send_event),
-                                'observed_ns': time.monotonic_ns()})
-
-    def _key(self, kind, synthetic, source):
-        if kind == 2:
-            self.key_presses += 1
-        if kind == 3:
-            self.key_releases += 1
-        if len(self.events) < 16:
-            self.events.append({'kind': 'key-press' if kind == 2 else 'key-release',
-                                'synthetic': synthetic, 'source': source,
-                                'observed_ns': time.monotonic_ns()})
-
-    def result(self):
-        self.poll()
-        return {'keyPresses': self.key_presses, 'keyReleases': self.key_releases,
-                'activeSamples': self.activeSamples, 'focusSamples': self.focusSamples,
-                'samples': self.samples,
-                'events': self.events, 'errors': self.errors,
-                'windowUpdates': self.window_updates,
-                'windowRetirementRaces': self.retirement_races,
-                'rootWindow': self.root_window,
-                'windowTracking': 'Owned subtree lifecycle notifications; newly realized children selected when polled. Input before a child subscription cannot be reconstructed.',
-                'keyboardMechanism': 'owned-window XInput2 and core events',
-                'scope': 'Identified owned X11 window subtree only; no key values, text, global input or unrelated window identities.'}
 
 
 class Desktop:
@@ -497,47 +204,8 @@ class Desktop:
                     self.x.XFree(children)
         return None
 
-    def isolate_input(self, pid):
-        """Keep only this benchmark window passive; never change global focus."""
-        return self._observe_input(pid, passive=True)
-
-    def audit_input(self, pid):
-        """Observe owned input without changing normal focus or window hints."""
-        return self._observe_input(pid, passive=False)
-
-    def _observe_input(self, pid, passive):
-        # GTK's hidden application leader also has _NET_WM_PID. It is not the
-        # future content window and cannot establish coverage of its siblings.
-        window = self.window(pid, require_mapped=False, require_normal=True)
-        if window is None:
-            return None
-        attrs = WindowAttributes()
-        if not self.x.XGetWindowAttributes(self.display, window.get_xid(), C.byref(attrs)) or attrs.map_state == 2:
-            raise ObservationIncomplete('Owned input observation was not established before window mapping')
-        self.x.XGetWMHints.argtypes = [C.c_void_p, C.c_ulong]
-        self.x.XGetWMHints.restype = C.POINTER(InputHints)
-        self.x.XSetWMHints.argtypes = [C.c_void_p, C.c_ulong, C.POINTER(InputHints)]
-        if passive:
-            original = self.x.XGetWMHints(self.display, window.get_xid())
-            hints = InputHints()
-            if original:
-                C.memmove(C.byref(hints), original, C.sizeof(hints))
-                self.x.XFree(original)
-            hints.flags |= 1  # ICCCM InputHint; retain all existing icon/state hints.
-            hints.input = 0
-            self.x.XSetWMHints(self.display, window.get_xid(), C.byref(hints))
-        watch = OwnedInputAudit(self, window)
-        if not self.x.XGetWindowAttributes(self.display, window.get_xid(), C.byref(attrs)) or attrs.map_state == 2:
-            raise ObservationIncomplete('Window mapped before owned input observation was confirmed')
-        watch.applied_ns = time.monotonic_ns()
-        self.input_audit = watch
-        self.passive_input = passive
-        return watch
 
     def close(self, w):
-        audit = getattr(self, 'input_audit', None)
-        if audit is not None:
-            check_owned_input(audit.result(), require_passive=getattr(self, 'passive_input', True))
         class Data(C.Union):
             _fields_ = [("l", C.c_long * 5)]
         class Message(C.Structure):
@@ -557,7 +225,7 @@ class Desktop:
         """Exercise the titlebar gesture on an explicitly disposable desktop."""
         window = self.window(pid, require_normal=True)
         if window is None:
-            raise ObservationIncomplete('Owned drag window is unavailable')
+            raise owned.ObservationIncomplete('Owned drag window is unavailable')
         xid = window.get_xid()
         x, y = point.get('x'), point.get('y')
         if any(type(v) not in (int, float) or not math.isfinite(v) for v in (x, y)):
@@ -565,18 +233,18 @@ class Desktop:
         attrs = WindowAttributes()
         if not self.x.XGetWindowAttributes(self.display, xid, C.byref(attrs)) or not (
                 0 < x < attrs.width - 120 and 0 < y < attrs.height - 30):
-            raise ObservationIncomplete('Titlebar point is outside the owned drawable')
+            raise owned.ObservationIncomplete('Titlebar point is outside the owned drawable')
         self.x.XTranslateCoordinates.argtypes = [C.c_void_p, C.c_ulong, C.c_ulong,
                                                 C.c_int, C.c_int, C.POINTER(C.c_int),
                                                 C.POINTER(C.c_int), C.POINTER(C.c_ulong)]
         def origin():
-            owned = self.window(pid, require_normal=True)
-            if owned is None or owned.get_xid() != xid:
-                raise ObservationIncomplete('Owned drag window changed')
+            current_window = self.window(pid, require_normal=True)
+            if current_window is None or current_window.get_xid() != xid:
+                raise owned.ObservationIncomplete('Owned drag window changed')
             px, py, child = C.c_int(), C.c_int(), C.c_ulong()
             if not self.x.XTranslateCoordinates(self.display, xid, self.root, 0, 0,
                                                C.byref(px), C.byref(py), C.byref(child)):
-                raise ObservationIncomplete('Owned window origin is unavailable')
+                raise owned.ObservationIncomplete('Owned window origin is unavailable')
             return px.value, py.value
         start = origin()
         xtest = C.CDLL('libXtst.so.6')
@@ -586,13 +254,13 @@ class Desktop:
             origin()  # Revalidate ownership before each injected event.
             if not xtest.XTestFakeMotionEvent(self.display, 0, int(start[0] + x + dx),
                                               int(start[1] + y + dy), 0):
-                raise ObservationIncomplete('Disposable desktop rejected pointer motion')
+                raise owned.ObservationIncomplete('Disposable desktop rejected pointer motion')
             self.x.XFlush(self.display)
         motion(0, 0)
         pressed = False
         try:
             if not xtest.XTestFakeButtonEvent(self.display, 1, 1, 0):
-                raise ObservationIncomplete('Disposable desktop rejected pointer press')
+                raise owned.ObservationIncomplete('Disposable desktop rejected pointer press')
             pressed = True
             self.x.XFlush(self.display)
             for step in range(1, 21):
@@ -608,7 +276,7 @@ class Desktop:
         finally:
             if pressed:
                 if not xtest.XTestFakeButtonEvent(self.display, 1, 0, 0):
-                    raise ObservationIncomplete('Disposable pointer release failed')
+                    raise owned.ObservationIncomplete('Disposable pointer release failed')
                 self.x.XFlush(self.display)
 
     def video_sample(self, w):
@@ -623,35 +291,14 @@ class Desktop:
         return hashlib.sha256(b"".join(samples)).hexdigest() if saturated > len(samples) // 4 else None
 
 
-def check_input_isolation(result):
-    check_owned_input(result, require_passive=True)
-
-
-def check_owned_input(result, require_passive=False):
-    if result['errors']:
-        raise ObservationIncomplete('Owned input observation incomplete: ' + repr(result['errors']))
-    if result['keyPresses'] or result['keyReleases']:
-        raise RuntimeError('Unexpected keyboard input reached the owned benchmark window')
-    if 'focusSamples' not in result:
-        raise ObservationIncomplete('Core keyboard focus observation missing')
-    if require_passive and result['focusSamples']:
-        raise ObservationIncomplete('Benchmark window acquired keyboard focus despite passive input hint')
-    if require_passive and result['activeSamples']:
-        raise ObservationIncomplete('Benchmark window became active despite passive input hint; activation is distinct from core keyboard focus')
-
-
 def accepted(record):
     return record.get("exitCode") == 0 and not record.get("error") and not record.get("survivingChildren") and not record.get("cleanupRequired") and not record.get("verificationIncomplete") and not record.get("unresolvedSurvivors") and not record.get('cleanupErrors') and not record.get('reportingError')
 
 
-def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, expected_engine=None, isolate_input=False, audit_input=False, disposable_display=False):
+def run_case(command, folder, profile, scenario, timeout, plain=False, video=None, snap_instance=None, document=None, child_grace=5, term_grace=2, kill_grace=3, expected_engine=None, disposable_display=False):
     if scenario == 'window-controls' and not disposable_display:
         raise ValueError('Window drag requires an explicitly disposable desktop')
-    if isolate_input and audit_input:
-        raise ValueError('Select passive isolation or normal-focus input audit')
-    if isolate_input and not plain:
-        raise ValueError('Input isolation applies only to plain startup observation')
-    record = {"caseSetup_ns": time.monotonic_ns(), "launch_ns": None, "scenario": scenario,
+    record = {"scenario": scenario,
               "command": command, "plainShippingExecutable": plain,
               "observationInterpreter": sys.executable, "exitCode": None,
               "applicationStarted": False}
@@ -700,28 +347,24 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             arguments = []
 
         record['command'] = command + arguments
-        # Preserve the historical endpoint after profile/command preparation,
-        # before observer initialization. Setup failures have no launch epoch.
-        record['launch_ns'] = time.monotonic_ns()
         if scenario == 'pending-initialization' and not plain:
             record['controlledPendingHarness'] = True
         phase = 'observer initialization'
         probe = LoadedEngine(expected_engine) if expected_engine is not None else None
-        tracker = ChildTracker()
-        tracker.engine = probe
-        desktop = Desktop() if plain or scenario in ('video', 'window-controls') or audit_input else None
+        tracker = owned.ChildTracker()
+        desktop = Desktop() if plain or scenario in ('video', 'window-controls') else None
         phase = 'log opening'
         log = (folder / 'application.log').open('x')
         phase = 'process creation'
-        record['spawnRequest_ns'] = time.monotonic_ns()
+
         record['launchAttempted'] = True
         process = subprocess.Popen(record['command'], env=environment, stdout=log,
                                    stderr=subprocess.STDOUT, start_new_session=True)
         record['applicationStarted'] = True
-        record['spawnReturned_ns'] = time.monotonic_ns()
+
         record['pid'] = process.pid
         tracker.root = process.pid
-        stamp = identity(process.pid)
+        stamp = owned.identity(process.pid)
         if stamp is not None:
             tracker.seen[process.pid] = stamp
         else:
@@ -731,27 +374,20 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         close_sent, first_video = False, None
         while process.poll() is None and time.monotonic() < deadline:
             tracker.scan()
+            if probe is not None:
+                probe.capture(tracker)
             if tracker.errors:
-                raise ObservationIncomplete("Child observation is incomplete")
-            if (isolate_input or audit_input) and tracker.input_audit is None:
-                observe = desktop.isolate_input if isolate_input else desktop.audit_input
-                tracker.input_audit = observe(process.pid)
+                raise owned.ObservationIncomplete("Child observation is incomplete")
             if plain and not close_sent:
                 w = desktop.window(process.pid)
                 if w:
-                    if tracker.input_audit is not None and tracker.input_audit.root_window != w.get_xid():
-                        raise ObservationIncomplete('Input audit is attached to a different owned window')
-                    # BusyMark maps its top-level only after FlView first-frame.
-                    snapshot_mapped_process(process.pid, folder, record)
                     if snap_instance:
                         confinement = Path(f"/proc/{process.pid}/attr/current").read_text().strip()
                         record['confinement'] = confinement
                         if f'snap.{snap_instance}.busymark' not in confinement or '(enforce)' not in confinement:
                             raise RuntimeError('Expected genuine strict Snap confinement')
-                    if isolate_input and tracker.input_audit is None:
-                        raise ObservationIncomplete('No owned pre-map input observation')
                     desktop.close(w)
-                    record["closeRequestSent_ns"] = time.monotonic_ns()
+
                     close_sent = True
             if report.exists():
                 try:
@@ -777,14 +413,9 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
         if process.poll() is None:
             raise TimeoutError("Natural application exit deadline expired")
         record["exitCode"] = process.returncode
-        record["exitObserved_ns"] = time.monotonic_ns()
+
         if plain and not close_sent:
             raise RuntimeError("Process exited before a verified owned-window close request")
-        if isolate_input or audit_input:
-            if tracker.input_audit is None:
-                raise ObservationIncomplete('No owned input observation')
-            record['ownedInput'] = tracker.input_audit.result()
-            check_owned_input(record['ownedInput'], require_passive=isolate_input)
         log.flush()
         application_log = (folder / 'application.log').read_text(errors='replace')
         record['messengerCleanupWarnings'] = application_log.count('Attempted to set message handler on an FlBinaryMessenger without an engine')
@@ -824,7 +455,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
             record['error'] += '; use /usr/bin/python3 with system PyGObject/GdkX11'
         if process is None:
             record['launchSkipped'] = True
-        if isinstance(error, ObservationIncomplete) or phase == 'observer initialization' or not isinstance(error, Exception):
+        if isinstance(error, owned.ObservationIncomplete) or phase == 'observer initialization' or not isinstance(error, Exception):
             record.setdefault('verificationIncomplete', []).append(str(error))
         if process is not None:
             record['exitCode'] = process.poll()
@@ -838,7 +469,7 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                     record['cleanupRequired'] = pending
                 record['observedIdentities'] = dict(tracker.seen)
                 record['admittedAncestry'] = dict(tracker.admitted_by)
-                record['cleanupOutcomes'], record['unresolvedSurvivors'] = cleanup_owned(tracker, term_grace, kill_grace)
+                record['cleanupOutcomes'], record['unresolvedSurvivors'] = owned.cleanup_owned(tracker, term_grace, kill_grace)
             except BaseException as error:
                 cleanup_error('owned processes', error)
                 record['unresolvedSurvivors'] = [{'status': 'unavailable', 'error': repr(error)}]
@@ -848,15 +479,6 @@ def run_case(command, folder, profile, scenario, timeout, plain=False, video=Non
                         process.wait()
                 except BaseException as error:
                     cleanup_error('process reap', error)
-            if (isolate_input or audit_input) and tracker.input_audit is not None:
-                try:
-                    record['ownedInput'] = tracker.input_audit.result()
-                    record['inputAuditEstablished_ns'] = tracker.input_audit.applied_ns
-                    record['inputObservationMode'] = 'passive-hint' if isolate_input else 'normal-focus-audit'
-                    if isolate_input:
-                        record['inputHintApplied_ns'] = tracker.input_audit.applied_ns
-                except BaseException as error:
-                    cleanup_error('input audit', error)
             try:
                 tracker.close()
             except BaseException as error:
@@ -907,8 +529,6 @@ def main():
     parser.add_argument("--cycles", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=60)
     parser.add_argument("--fresh-profile", action="store_true", help="Use a new isolated application and graphics cache for each case, retaining it for its reopen check")
-    parser.add_argument("--isolate-input", action="store_true", help="Plain X11 startup only: apply an owned pre-map passive input hint and reject focus/key interference; never record key values")
-    parser.add_argument("--audit-input", action="store_true", help="Observe owned X11 key-event counts without changing normal focus/window hints; unexpected input or incomplete observation fails")
     parser.add_argument("--plain", action="store_true", help="Test the unmodified shipping executable using WM_DELETE_WINDOW")
     parser.add_argument("--snap-instance", help="Owned disposable parallel instance, e.g. busymark_close")
     parser.add_argument("--snap-fixture", action="store_true", help="The disposable instance contains the compiled window_close_smoke target; require output in its common directory")
@@ -935,10 +555,6 @@ def main():
         parser.error('--snap-fixture requires an explicitly named disposable --snap-instance')
     if (not command and not args.snap_instance) or args.cycles < 1 or ("video" in args.scenarios and not args.video):
         parser.error("Command, positive cycle count and requested video fixture are required")
-    if args.isolate_input and not args.plain:
-        parser.error('Input isolation requires a plain startup case, not an interaction fixture')
-    if args.isolate_input and args.audit_input:
-        parser.error('Select --audit-input or --isolate-input, not both')
     root = args.output.resolve()
     if args.snap_fixture and not root.is_relative_to((Path.home() / 'snap' / args.snap_instance / 'common').resolve()):
         parser.error('Confined fixture output must be inside the disposable instance common directory')
@@ -948,14 +564,14 @@ def main():
     for cycle in range(args.cycles):
         for scenario in scenarios:
             profile = root / "profiles" / f"{cycle}-{scenario}" if args.fresh_profile else root / "profile"
-            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, expected_engine=args.expected_engine, isolate_input=args.isolate_input, audit_input=args.audit_input, disposable_display=args.disposable_display)
+            record = run_case(command, root / f"{cycle}-{scenario}", profile, scenario, args.timeout, args.plain, args.video, args.snap_instance, expected_engine=args.expected_engine, disposable_display=args.disposable_display)
             records.append(record)
             print(json.dumps({"cycle": cycle, "scenario": scenario, "exitCode": record.get("exitCode"), "accepted": accepted(record), "error": record.get("error")}), flush=True)
             if record.get('unresolvedSurvivors') or record.get('verificationIncomplete'):
                 break
             document = record.get('application', {}).get('document')
             if not args.plain and document and accepted(record):
-                reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, snap_instance=args.snap_instance, document=Path(document), expected_engine=args.expected_engine, audit_input=args.audit_input)
+                reopened = run_case(command, root / f'{cycle}-{scenario}-reopen', profile, 'reopen', args.timeout, snap_instance=args.snap_instance, document=Path(document), expected_engine=args.expected_engine)
                 records.append(reopened)
                 print(json.dumps({'cycle': cycle, 'scenario': scenario + '-reopen', 'exitCode': reopened.get('exitCode'), 'accepted': accepted(reopened), 'error': reopened.get('error')}), flush=True)
                 if reopened.get('unresolvedSurvivors') or reopened.get('verificationIncomplete'):

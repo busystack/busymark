@@ -18,7 +18,7 @@ from owned_processes import ChildTracker, ObservationIncomplete, cleanup_owned, 
 
 
 def run(command, report, duration=60, child_grace=1, term_grace=1, kill_grace=2):
-    record = {'command': command, 'started_ns': time.monotonic_ns()}
+    record = {'command': command}
     tracker = process = None
     stopping = False
     owns_report = False
@@ -42,7 +42,7 @@ def run(command, report, duration=60, child_grace=1, term_grace=1, kill_grace=2)
         if stamp is None:
             raise ObservationIncomplete('Fixture identity unavailable after launch')
         tracker.seen[process.pid] = stamp
-        record.update(pid=process.pid, identity=stamp, spawned_ns=time.monotonic_ns())
+        record.update(pid=process.pid, identity=stamp)
         deadline = time.monotonic() + duration
         exited_at = None
         control = b''
@@ -55,7 +55,6 @@ def run(command, report, duration=60, child_grace=1, term_grace=1, kill_grace=2)
                 record['exitCode'] = code
                 if exited_at is None:
                     exited_at = time.monotonic()
-                    record['exited_ns'] = time.monotonic_ns()
                 if not outstanding:
                     break
                 if time.monotonic() - exited_at >= child_grace:

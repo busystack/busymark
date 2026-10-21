@@ -20,7 +20,8 @@ permissions:
 
 jobs:
   verify:
-    name: Native release acceptance (verify)
+    name: Standalone release stress
+    if: ${{ inputs.run-stress }}
     runs-on: ubuntu-24.04
 
     steps:
@@ -51,15 +52,9 @@ jobs:
             libhandy-1-dev \
             libsecret-1-dev \
             libwebkit2gtk-4.1-dev \
-            gir1.2-webkit2-4.1 \
-            poppler-utils \
             python3-gi \
-            python3-gi-cairo \
-            python3-pil \
-            python3-yaml \
             rsync \
             xvfb \
-            weston \
             xz-utils
 
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
@@ -114,12 +109,8 @@ jobs:
 
       # Explicit status conditions keep independent checks running after a
       # native failure. Failed checks still fail the job; none is optional.
-      - name: Verify GTK keyboard delivery is observed through XInput2
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: xvfb-run -a dbus-run-session -- /usr/bin/python3 tools/test_application_input_observer.py --disposable-display
-
       - name: Require 100 natural closes of the shipping release
-        if: ${{ !cancelled() && inputs.run-stress && steps.release-build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 \
@@ -129,45 +120,13 @@ jobs:
             build/linux/x64/release/bundle/busymark
 
 
-      - name: Verify release ships catalog and notices without language pairs
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: |
-          spelling_root="build/linux/x64/release/bundle/share/busymark/spelling"
-          test -s "$spelling_root/dictionaries.json"
-          test -s "$spelling_root/NOTICE"
-          test -z "$(find "$spelling_root" -type f \( -name '*.aff' -o -name '*.dic' \) -print -quit)"
-
-      - name: Install one dictionary and exercise it after an offline restart
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
-        run: |
-          report="${RUNNER_TEMP}/spelling-release.json"
-          profile="${RUNNER_TEMP}/spelling-profile"
-          mkdir -p "$profile"
-          xvfb-run -a -s '-screen 0 1280x1024x24' \
-            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
-            build/linux/x64/release/bundle/busymark \
-            --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
-          sudo unshare --net --fork -- \
-            runuser -u "$(id -un)" -- \
-            xvfb-run -a -s '-screen 0 1280x1024x24' \
-            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
-            build/linux/x64/release/bundle/busymark \
-            --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
-
-
-
-
       - name: Build compiled-close fixture
-        if: ${{ !cancelled() && inputs.run-stress && steps.release-build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         id: release-fixture
         run: flutter build linux --release --no-pub -t tools/window_close_smoke.dart
 
       - name: Exercise live application close, persistence, media and reopening
-        if: ${{ !cancelled() && inputs.run-stress && steps.release-fixture.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.release-fixture.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             dbus-run-session -- env GDK_BACKEND=x11 \
@@ -179,13 +138,8 @@ jobs:
             --video test/fixtures/media/close-testsrc.mp4 -- \
             build/linux/x64/release/bundle/busymark
 
-      - name: Restore main target for Wayland checks
-        if: ${{ !cancelled() && inputs.run-stress && steps.release-build.outcome == 'success' }}
-        id: release-main
-        run: flutter build linux --release --no-pub -t lib/main.dart
-
       - name: Preserve natural-close evidence
-        if: ${{ always() && inputs.run-stress }}
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: natural-close-release
@@ -194,65 +148,6 @@ jobs:
             ${{ runner.temp }}/close-live-application
           if-no-files-found: ignore
 
-      - name: Run spelling and visualization smoke tests under Wayland
-        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && (!inputs.run-stress || steps.release-main.outcome == 'success') && steps.web-sandbox.outcome == 'success' }}
-        run: |
-          runtime_dir="/run/user/$(id -u)"
-          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
-          XDG_RUNTIME_DIR="$runtime_dir" \
-            weston --backend=headless-backend.so --socket=wayland-99 \
-            --idle-time=0 --log="${RUNNER_TEMP}/weston.log" &
-          weston_pid=$!
-          trap 'kill "$weston_pid" 2>/dev/null || true; wait "$weston_pid" 2>/dev/null || true' EXIT
-          for attempt in {1..40}; do
-            if [ -S "$runtime_dir/wayland-99" ]; then
-              break
-            fi
-            if ! kill -0 "$weston_pid" 2>/dev/null; then
-              cat "${RUNNER_TEMP}/weston.log"
-              exit 1
-            fi
-            sleep 0.25
-          done
-          test -S "$runtime_dir/wayland-99"
-          export runtime_dir
-          checks_failed=0
-          bash -euo pipefail <<'SPELLING' || checks_failed=1
-          spelling_report="${RUNNER_TEMP}/spelling-release-wayland.json"
-          spelling_profile="${RUNNER_TEMP}/spelling-profile"
-          sudo unshare --net --fork -- \
-            runuser -u "$(id -un)" -- \
-            dbus-run-session -- \
-            env XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
-            XDG_DATA_HOME="$spelling_profile" GDK_BACKEND=wayland \
-            BUSYMARK_RELEASE_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 \
-            build/linux/x64/release/bundle/busymark \
-            --spelling-release-smoke="$spelling_report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
-          SPELLING
-          bash -euo pipefail <<'RENDERERS' || checks_failed=1
-          dbus-run-session -- env \
-            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
-            GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1 \
-            /usr/bin/python3 -u tools/visualization_smoke.py \
-            --assets build/linux/x64/release/bundle/share/busymark/visualization \
-            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
-            --demo test/fixtures/markdown/basic.md \
-            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
-          RENDERERS
-          bash -euo pipefail <<'COMPILED' || checks_failed=1
-          report="${RUNNER_TEMP}/visualization-release-wayland.json"
-          dbus-run-session -- env \
-            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
-            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 \
-            timeout --signal=TERM 300s \
-            build/linux/x64/release/bundle/busymark \
-            --visualization-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
-          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
-          COMPILED
-          exit "$checks_failed"
 
   snap:
     name: Native release acceptance (snap)

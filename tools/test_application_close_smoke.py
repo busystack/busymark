@@ -15,7 +15,9 @@ import io
 import ctypes as C
 
 sys.path.insert(0, str(Path(__file__).parent))
-from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, ObservationIncomplete, ProcessHandle, accepted, process_children, run_case, signal_owned, snap_command, snapshot_mapped_process
+from application_close_smoke import PENDING_HARNESS, Desktop, LoadedEngine, accepted, run_case, snap_command
+from owned_processes import ObservationIncomplete, ProcessHandle, process_children, signal_owned
+import owned_processes as owned
 
 
 class LaunchLifetimeTest(unittest.TestCase):
@@ -83,7 +85,7 @@ time.sleep(30)
         with tempfile.TemporaryDirectory(prefix='bm-launch-lifetime-') as tmp:
             root = Path(tmp)
             tracker_instances = []
-            class Tracker(a.ChildTracker):
+            class Tracker(owned.ChildTracker):
                 def __init__(self):
                     super().__init__()
                     self.closed = 0
@@ -100,12 +102,12 @@ time.sleep(30)
                 if failure == 'report' and path.name == 'result.json':
                     raise PermissionError('controlled report failure')
                 return original_open(path, *args, **kwargs)
-            with patch.object(a, 'ChildTracker', Tracker), \
+            with patch.object(owned, 'ChildTracker', Tracker), \
                  patch.object(a, 'Desktop', return_value=observer), \
                  patch.object(a.secrets, 'token_hex', return_value=root.name), \
                  patch.object(Path, 'open', opened), redirect_stderr(io.StringIO()) as errors:
                 record = run_case(command(root), root / 'case', root / 'profile', 'plain',
-                                  .5, audit_input=desktop, term_grace=.1, kill_grace=1)
+                                  .5, plain=desktop, term_grace=.1, kill_grace=1)
             self.assertFalse(accepted(record), record)
             self.assertFalse(alias.is_symlink())
             self.assertFalse(record.get('unresolvedSurvivors'), record)
@@ -126,11 +128,6 @@ time.sleep(30)
         self.assertFalse(r['applicationStarted'])
         self.assertTrue(r['launchSkipped'])
 
-    def test_launch_epoch_preserves_pre_observer_boundary_after_case_setup(self):
-        with patch('application_close_smoke.time.monotonic_ns', side_effect=iter(range(10000))):
-            r = self.run_failure(lambda root: [str(root / 'absent')])
-        self.assertLess(r['caseSetup_ns'], r['launch_ns'])
-        self.assertLess(r['launch_ns'], r['spawnRequest_ns'])
 
     def test_real_nonexecutable_file_reports_failed_creation(self):
         def command(root):
@@ -168,7 +165,6 @@ time.sleep(30)
             launch.assert_not_called()
             self.assertFalse(accepted(r))
             self.assertEqual(r['failurePhase'], 'setup')
-            self.assertIsNone(r['launch_ns'])
             self.assertEqual(json.loads((root / 'case/result.json').read_text()), r)
 
     def test_partial_desktop_initialization_releases_its_connection(self):
@@ -193,47 +189,15 @@ time.sleep(30)
         import application_close_smoke as a
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            base = a.ChildTracker.close
+            base = owned.ChildTracker.close
             def close(tracker):
                 base(tracker)
                 raise OSError('controlled close failure')
-            with patch.object(a.ChildTracker, 'close', close):
+            with patch.object(owned.ChildTracker, 'close', close):
                 r = run_case([str(root / 'absent')], root / 'case', root / 'profile', 'plain', 1)
             self.assertEqual(r['errorType'], 'FileNotFoundError')
             self.assertEqual(r['cleanupErrors'][0]['stage'], 'tracker close')
             self.assertFalse(accepted(r))
-
-
-class MappingObservationTest(unittest.TestCase):
-    def test_detection_precedes_snapshot_io_and_legacy_stamp_follows_it(self):
-        record, order = {}, []
-        def read(path):
-            self.assertEqual(record['mapDetected_ns'], 10)
-            self.assertNotIn('mapped_ns', record)
-            order.append('read')
-            return 'controlled maps'
-        def write(path, contents):
-            self.assertEqual(contents, 'controlled maps')
-            self.assertNotIn('mapped_ns', record)
-            order.append('write')
-        with patch('application_close_smoke.time.monotonic_ns', side_effect=[10, 20]), patch.object(Path, 'read_text', read), patch.object(Path, 'write_text', write):
-            snapshot_mapped_process(123, Path('/owned-case'), record)
-        self.assertEqual(record, {'mapDetected_ns': 10, 'mapped_ns': 20})
-        self.assertEqual(order, ['read', 'write'])
-
-    def test_snapshot_failure_does_not_publish_successful_legacy_stamp(self):
-        record = {}
-        with patch.object(Path, 'read_text', return_value='maps'), patch.object(Path, 'write_text', side_effect=OSError('snapshot failed')):
-            with self.assertRaisesRegex(ObservationIncomplete, 'snapshot failed'):
-                snapshot_mapped_process(123, Path('/owned-case'), record)
-        self.assertIn('mapDetected_ns', record)
-        self.assertNotIn('mapped_ns', record)
-
-    def test_snapshot_keeps_both_endpoints(self):
-        record = {}
-        with patch.object(Path, 'read_text', return_value='maps'), patch.object(Path, 'write_text'):
-            snapshot_mapped_process(123, Path('/owned-case'), record)
-        self.assertLessEqual(record['mapDetected_ns'], record['mapped_ns'])
 
 
 class LoadedEngineAcceptanceTest(unittest.TestCase):
@@ -248,8 +212,7 @@ class LoadedEngineAcceptanceTest(unittest.TestCase):
         cls.library_bytes = library.read_bytes()
 
     def test_invalid_expected_library_is_rejected(self):
-        for data in [b'', b'not ELF', b'\x7fELFtruncated',
-                     json.dumps({'oldIdentity': 'a' * 64}).encode()]:
+        for data in [b'', b'not ELF', b'\x7fELFtruncated']:
             with self.subTest(data=data), tempfile.TemporaryDirectory() as temp:
                 path = Path(temp) / 'invalid'
                 path.write_bytes(data)
@@ -285,7 +248,7 @@ class LoadedEngineAcceptanceTest(unittest.TestCase):
         original = ProcessHandle.read
         def read(proc, name):
             return maps.encode() if name == 'maps' else original(proc, name)
-        with patch.object(ProcessHandle, 'read', read), patch.object(ProcessHandle, 'state', return_value={'status': 'running'}), patch('application_close_smoke.process_state', return_value={'status': 'running'}):
+        with patch.object(ProcessHandle, 'read', read), patch.object(ProcessHandle, 'state', return_value={'status': 'running'}), patch('owned_processes.process_state', return_value={'status': 'running'}):
             probe.capture(tracker)
         return probe, tracker, binary
 
@@ -449,9 +412,6 @@ report.write_text(json.dumps({'phase':'close-requested','applicationSupport':str
     def test_natural_zero_exit_is_accepted(self):
         record = self.run_inferior("sys.exit(0)")
         self.assertTrue(accepted(record))
-        self.assertLessEqual(record['launch_ns'], record['spawnRequest_ns'])
-        self.assertLessEqual(record['spawnRequest_ns'], record['spawnReturned_ns'])
-        self.assertLessEqual(record['spawnReturned_ns'], record['exitObserved_ns'])
 
     def test_zero_exit_without_an_owned_window_close_is_rejected(self):
         with patch('application_close_smoke.Desktop') as desktop:
@@ -642,7 +602,7 @@ os._exit(0)
         self.assertFalse(accepted(record))
 
 
-class OwnedInputIsolationTest(unittest.TestCase):
+class DesktopPrerequisiteTest(unittest.TestCase):
     def test_unavailable_desktop_is_recorded_before_launch_and_alias_is_removed(self):
         for error in [ModuleNotFoundError('No module named gi'),
                       RuntimeError('No authenticated X11 display')]:
@@ -662,190 +622,6 @@ class OwnedInputIsolationTest(unittest.TestCase):
                 self.assertFalse(accepted(record))
                 self.assertFalse((Path('/tmp') / ('bm-close-' + root.name)).is_symlink())
                 self.assertEqual(json.loads((root / 'case/result.json').read_text()), record)
-
-    def test_unavailable_input_observation_is_incomplete(self):
-        from application_close_smoke import check_input_isolation
-        with self.assertRaises(ObservationIncomplete):
-            check_input_isolation(dict(errors=['X selection failed'], keyPresses=0,
-                                       keyReleases=0, activeSamples=0))
-
-    def test_keyboard_interference_stays_failed_even_after_successful_cleanup(self):
-        from application_close_smoke import check_input_isolation
-        result = dict(errors=[], keyPresses=1, keyReleases=1, activeSamples=0)
-        with self.assertRaisesRegex(RuntimeError, 'Unexpected keyboard') as error:
-            check_input_isolation(result)
-        self.assertFalse(accepted({'exitCode': 0, 'error': str(error.exception),
-                                   'cleanupOutcomes': [{'terminationVerified': True}]}))
-
-    def test_focus_acquisition_does_not_count_as_verified_isolation(self):
-        from application_close_smoke import check_input_isolation
-        with self.assertRaisesRegex(ObservationIncomplete, 'acquired keyboard focus'):
-            check_input_isolation(dict(errors=[], keyPresses=0, keyReleases=0,
-                                       activeSamples=1, focusSamples=1))
-
-    def test_activation_is_distinct_from_core_keyboard_focus(self):
-        from application_close_smoke import check_input_isolation
-        with self.assertRaisesRegex(ObservationIncomplete, 'became active'):
-            check_input_isolation(dict(errors=[], keyPresses=0, keyReleases=0,
-                                       activeSamples=1, focusSamples=0))
-
-    def test_normal_focus_audit_accepts_focus_without_unexpected_input(self):
-        from application_close_smoke import check_owned_input
-        check_owned_input(dict(errors=[], keyPresses=0, keyReleases=0,
-                               activeSamples=1, focusSamples=1))
-
-    def test_normal_focus_audit_still_rejects_input(self):
-        from application_close_smoke import check_owned_input
-        with self.assertRaisesRegex(RuntimeError, 'Unexpected keyboard'):
-            check_owned_input(dict(errors=[], keyPresses=1, keyReleases=0,
-                                   activeSamples=1, focusSamples=1))
-
-    def test_missing_core_focus_observation_is_incomplete(self):
-        from application_close_smoke import check_owned_input
-        with self.assertRaisesRegex(ObservationIncomplete, 'focus observation missing'):
-            check_owned_input(dict(errors=[], keyPresses=0, keyReleases=0,
-                                   activeSamples=0))
-
-    def test_only_owned_events_are_counted_without_key_payload_and_details_are_bounded(self):
-        from application_close_smoke import OwnedInputAudit, InputEvent
-        audit = OwnedInputAudit.__new__(OwnedInputAudit)
-        audit.windows = {123}
-        audit.events = []
-        audit.key_presses = audit.key_releases = 0
-        event = InputEvent()
-        event.any.type, event.any.window = 2, 999
-        audit.observe(event)
-        self.assertEqual(audit.key_presses, 0)
-        self.assertFalse(audit.events)
-        event.any.window = 123
-        for _ in range(100):
-            audit.observe(event)
-        self.assertEqual(audit.key_presses, 100)
-        self.assertEqual(len(audit.events), 16)
-        self.assertEqual(set(audit.events[0]), {'kind', 'synthetic', 'source', 'observed_ns'})
-
-    def test_xi2_unavailable_is_incomplete_instead_of_core_only_success(self):
-        from application_close_smoke import OwnedInputAudit
-        audit = OwnedInputAudit.__new__(OwnedInputAudit)
-        audit.display = None
-        audit.x = SimpleNamespace(XQueryExtension=Mock(return_value=0))
-        for failure in [OSError('libXi unavailable'), AttributeError('missing symbol')]:
-            with self.subTest(failure=str(failure)), patch('application_close_smoke.C.CDLL', side_effect=failure):
-                with self.assertRaises(ObservationIncomplete):
-                    audit._prepare_xi2()
-        with patch('application_close_smoke.C.CDLL', return_value=SimpleNamespace()):
-            with self.assertRaisesRegex(ObservationIncomplete, 'requires XInput2'):
-                audit._prepare_xi2()
-        audit.x.XQueryExtension.return_value = 1
-        with patch('application_close_smoke.C.CDLL', return_value=SimpleNamespace(XIQueryVersion=Mock(return_value=1))):
-            with self.assertRaisesRegex(ObservationIncomplete, 'version 2'):
-                audit._prepare_xi2()
-
-    def query_retirement(self, *, destroyed, code=3, resource=123):
-        from application_close_smoke import OwnedInputAudit, InputError
-        audit = OwnedInputAudit.__new__(OwnedInputAudit)
-        audit.display, audit.root_window, audit.xi_opcode = None, 123, 131
-        audit.windows, audit.window_updates, audit.errors = {123}, [], []
-        audit.retirement_races, audit.retired = [], False
-        handler = None
-
-        def set_handler(address):
-            nonlocal handler
-            previous, handler = handler, address
-            return previous
-
-        def query(*_):
-            callback = C.CFUNCTYPE(C.c_int, C.c_void_p, C.POINTER(InputError))(handler.value)
-            error = InputError(resource=resource, error_code=code, request_code=15)
-            callback(None, C.byref(error))
-            return 0
-
-        def drain():
-            if 123 in destroyed:
-                audit.retired = True
-                audit.windows.clear()
-            return destroyed
-
-        audit.x = SimpleNamespace(XSetErrorHandler=set_handler, XQueryTree=query,
-                                  XSync=Mock())
-        audit._drain_events = drain
-        return audit
-
-    def test_query_badwindow_requires_matching_owned_destroy_notification(self):
-        for arguments in [dict(destroyed=set()), dict(destroyed={123}, code=10),
-                          dict(destroyed={123}, resource=999)]:
-            with self.subTest(arguments=arguments):
-                audit = self.query_retirement(**arguments)
-                with self.assertRaises(ObservationIncomplete):
-                    audit._refresh_windows()
-                self.assertFalse(audit.retirement_races)
-
-    def test_query_badwindow_after_observed_retirement_is_recorded(self):
-        audit = self.query_retirement(destroyed={123})
-        audit._refresh_windows()
-        self.assertTrue(audit.retired)
-        self.assertFalse(audit.windows)
-        self.assertFalse(audit.errors)
-        self.assertEqual(audit.retirement_races[0]['resource'], 123)
-
-    def xi_event(self, xid=123, kind=2):
-        from application_close_smoke import OwnedInputAudit, InputEvent, InputCookie, DeviceKeyPrefix
-        audit = OwnedInputAudit.__new__(OwnedInputAudit)
-        audit.windows, audit.events, audit.errors = {123}, [], []
-        audit.key_presses = audit.key_releases = 0
-        audit.xi_opcode, audit.display = 131, None
-        audit.x = SimpleNamespace(XGetEventData=Mock(return_value=1), XFreeEventData=Mock())
-        event = InputEvent()
-        cookie = C.cast(C.byref(event), C.POINTER(InputCookie)).contents
-        cookie.type, cookie.extension, cookie.evtype = 35, 131, kind
-        data = DeviceKeyPrefix()
-        data.event, data.evtype = xid, kind
-        cookie.data = C.addressof(data)
-        return audit, event, cookie, data
-
-    def test_xi2_owned_keys_are_counted_without_payload_and_cookie_is_freed(self):
-        for kind in [2, 3]:
-            with self.subTest(kind=kind):
-                audit, event, cookie, data = self.xi_event(kind=kind)
-                audit.observe(event)
-                self.assertEqual((audit.key_presses, audit.key_releases), (1, 0) if kind == 2 else (0, 1))
-                self.assertEqual(audit.events[0]['source'], 'XI2')
-                self.assertEqual(set(audit.events[0]), {'kind', 'synthetic', 'source', 'observed_ns'})
-                audit.x.XFreeEventData.assert_called_once()
-
-    def test_xi2_does_not_observe_unowned_windows_or_other_extension_events(self):
-        audit, event, cookie, data = self.xi_event(xid=999)
-        audit.observe(event)
-        self.assertEqual(audit.key_presses, 0)
-        audit.x.XFreeEventData.assert_called_once()
-        audit.x.XGetEventData.reset_mock()
-        cookie.extension = 999
-        audit.observe(event)
-        cookie.extension, cookie.evtype = 131, 6
-        audit.observe(event)
-        audit.x.XGetEventData.assert_not_called()
-
-    def test_missing_xi2_event_data_makes_verification_incomplete(self):
-        from application_close_smoke import check_owned_input
-        for available in [True, False]:
-            with self.subTest(available=available):
-                audit, event, cookie, data = self.xi_event()
-                if available:
-                    cookie.data = None
-                else:
-                    audit.x.XGetEventData.return_value = 0
-                audit.observe(event)
-                with self.assertRaises(ObservationIncomplete):
-                    check_owned_input(dict(errors=audit.errors))
-                self.assertEqual(audit.x.XFreeEventData.call_count, int(available))
-
-    def test_close_does_not_send_a_request_after_unexpected_input(self):
-        desktop = Desktop.__new__(Desktop)
-        desktop.input_audit = SimpleNamespace(result=lambda: dict(
-            errors=[], keyPresses=1, keyReleases=0, activeSamples=0))
-        with self.assertRaisesRegex(RuntimeError, 'Unexpected keyboard'):
-            desktop.close(SimpleNamespace(get_xid=lambda: 123))
-
 
 
 if __name__ == "__main__":

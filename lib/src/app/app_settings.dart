@@ -595,7 +595,7 @@ class StartupAppSettings {
     String? acknowledgedJson;
     try {
       settings = AppSettings.fromJson(await store.load());
-      acknowledgedJson = _canonicalSettingsJson(settings);
+      acknowledgedJson = _canonicalSettingsJson(settings.toJson());
     } on Object {
       // Match the controller's existing failed-load policy. Defaults are usable
       // but are not an acknowledged disk snapshot for write reconciliation.
@@ -1222,7 +1222,7 @@ class AppSettingsController extends Notifier<AppSettings> {
     AppSettings loaded;
     try {
       loaded = AppSettings.fromJson(await _store.load());
-      _persistedSettingsJson = _canonicalSettingsJson(loaded);
+      _persistedSettingsJson = _canonicalSettingsJson(loaded.toJson());
     } on Object {
       loaded = AppSettings.defaults();
     }
@@ -1292,7 +1292,7 @@ class AppSettingsController extends Notifier<AppSettings> {
     if (!ref.mounted) return false;
     state = next;
     final json = next.toJson();
-    final encoded = _canonicalSettingsJson(next);
+    final encoded = _canonicalSettingsJson(json);
     final previousSave = _lastSave;
     Object? failure;
     StackTrace? failureStack;
@@ -1477,8 +1477,8 @@ String? _normalizedStoredGitWorkspacePath(String? value) {
 
 // Map insertion order is not a preference change. Lists retain their order,
 // including the release target's qualified Recent resources.
-String _canonicalSettingsJson(AppSettings settings) =>
-    jsonEncode(_canonicalSettingsValue(settings.toJson()));
+String _canonicalSettingsJson(Map<String, Object?> json) =>
+    jsonEncode(_canonicalSettingsValue(json));
 
 Object? _canonicalSettingsValue(Object? value) {
   if (value is Map) {

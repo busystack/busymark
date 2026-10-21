@@ -59,7 +59,7 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
         commands = [shlex.split(line, comments=True) for line in script.replace('\\\n', '').splitlines()]
         packages = {arg for command in commands if command[:3] == ['sudo', 'apt-get', 'install']
                     for arg in command[3:]}
-        self.assertTrue({'python3-pil', 'python3-yaml'}.issubset(packages))
+        self.assertTrue({'clang', 'cmake', 'python3-yaml'}.issubset(packages))
 
     def test_snap_build_invokes_selected_sdk_with_locked_inputs(self):
         # Execute the real build preamble in a disposable tree. The SDK spy
@@ -158,7 +158,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         native_triggers = self.native.get('on', self.native.get(True))
         self.assertIn('workflow_dispatch', native_triggers)
 
-    def _automatic_native_jobs(self):
+    def _automatic_product_jobs(self):
         callers = [job for job in self.workflow['jobs'].values()
                    if job.get('uses') == './.github/workflows/flutter-linux-native.yml']
         self.assertEqual(len(callers), 1)
@@ -171,13 +171,15 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         setting = triggers['workflow_call']['inputs']['run-stress']
         self.assertEqual(setting['type'], 'boolean')
         self.assertIs(setting['default'], False)
-        for name in ['verify', 'snap']:
-            self.assertNotIn('if', self.native['jobs'][name])
-            self.assertNotIn('needs', self.native['jobs'][name])
-        return self.native['jobs']
+        self.assertNotIn('if', self.workflow['jobs']['verify'])
+        self.assertNotIn('needs', self.workflow['jobs']['verify'])
+        self.assertNotIn('if', self.native['jobs']['snap'])
+        self.assertNotIn('needs', self.native['jobs']['snap'])
+        return {'verify': self.workflow['jobs']['verify'],
+                'snap': self.native['jobs']['snap']}
 
     def test_automatic_native_checks_reach_packages_dictionaries_and_wayland(self):
-        jobs = self._automatic_native_jobs()
+        jobs = self._automatic_product_jobs()
         required = {
             'verify': [
                 ('test -s "$spelling_root/dictionaries.json"', ['release-build']),
@@ -203,8 +205,6 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     self.assertEqual(len(matches), 1)
                     step = matches[0]
                     gates = [f"steps.{name}.outcome == 'success'" for name in prerequisites]
-                    if job_name == 'verify' and invocation == 'GDK_BACKEND=wayland':
-                        gates.insert(1, "(!inputs.run-stress || steps.release-main.outcome == 'success')")
                     self.assertEqual(step['if'], '${{ !cancelled() && ' + ' && '.join(gates) + ' }}')
                     self.assertNotIn('continue-on-error', step)
                     for prerequisite in prerequisites:
@@ -219,7 +219,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
             self.assertIn(offline, dictionary['run'])
 
     def test_automatic_wayland_checks_prepare_a_compositor_and_shipping_binary(self):
-        jobs = self._automatic_native_jobs()
+        jobs = self._automatic_product_jobs()
         for name in ['verify', 'snap']:
             steps = jobs[name]['steps']
             step = next(s for s in steps if 'GDK_BACKEND=wayland' in s.get('run', ''))
@@ -238,7 +238,6 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                                  '--visualization-release-smoke=', 'report["ok"]', 'test -s']:
                 self.assertIn(prerequisite, step['run'])
             if name == 'verify':
-                self.assertIn("(!inputs.run-stress || steps.release-main.outcome == 'success')", step['if'])
                 self.assertIn('build/linux/x64/release/bundle/busymark', step['run'])
                 self.assertIn('tools/visualization_smoke.py', step['run'])
             else:
@@ -247,11 +246,13 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                 self.assertNotIn('busymark_close', step['run'])
 
     def test_stress_campaigns_remain_explicit(self):
-        jobs = self._automatic_native_jobs()
+        self._automatic_product_jobs()
+        jobs = self.native['jobs']
         triggers = self.native.get('on', self.native.get(True))
         self.assertIs(triggers['workflow_dispatch']['inputs']['run-stress']['default'], True)
+        self.assertEqual(jobs['verify']['if'], '${{ inputs.run-stress }}')
         self.assertEqual(jobs['development-modes']['if'], '${{ inputs.run-stress }}')
-        gated_ids = {'release-fixture', 'release-main', 'strict-parallel',
+        gated_ids = {'release-fixture', 'strict-parallel',
                      'strict-close-install', 'strict-fixture-source',
                      'close-fixture-snap', 'strict-fixture-install'}
         found = set()
@@ -262,11 +263,12 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     found.add(step['id'])
                 if (step.get('id') in gated_ids or '--cycles 100' in script or
                         '--cycles 3 --fresh-profile' in script):
-                    self.assertIn('inputs.run-stress &&', step['if'])
+                    if name == 'snap':
+                        self.assertIn('inputs.run-stress &&', step['if'])
         self.assertEqual(found, gated_ids)
 
     def test_standalone_desktop_sessions_are_scoped(self):
-        steps = self._automatic_native_jobs()['verify']['steps']
+        steps = self._automatic_product_jobs()['verify']['steps']
         dependencies = next(s for s in steps if s.get('id') == 'linux-dependencies')
         commands = [shlex.split(line, comments=True) for line in
                     dependencies['run'].replace('\\\n', '').splitlines()]
@@ -282,7 +284,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
             self.assertNotIn('dbus-launch', command)
 
     def test_wayland_checks_run_independently_and_preserve_failures(self):
-        jobs = self._automatic_native_jobs()
+        jobs = self._automatic_product_jobs()
         block = re.compile(
             r"(?P<start>bash -euo pipefail <<'(?P<tag>\w+)' \|\| checks_failed=1\n)"
             r"(?P<body>.*?)(?P<end>\n(?P=tag)\n)", re.DOTALL)
@@ -343,25 +345,49 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         for invocation in ['tools/test_gtk_accent_host.sh', 'tools/test_web_render_host.sh',
                            'tools/visualization_smoke.py', '--visualization-release-smoke=']:
             matching = [s for s in steps if invocation in s.get('run', '')]
-            self.assertEqual(len(matching), 1, invocation)
-            step = matching[0]
-            self.assertLess(steps.index(build), steps.index(step))
-            self.assertIn("steps.release-build.outcome == 'success'", step['if'])
-            self.assertIn('!cancelled()', step['if'])
-            self.assertIn('xvfb-run', step['run'])
-            self.assertIn('GDK_BACKEND=x11', step['run'])
-            self.assertNotIn('continue-on-error', step)
-            self.assertNotIn('|| true', step['run'])
-            if invocation != 'tools/test_gtk_accent_host.sh':
-                self.assertLess(steps.index(sandbox), steps.index(step))
-                self.assertIn("steps.web-sandbox.outcome == 'success'", step['if'])
-            if invocation == 'tools/visualization_smoke.py':
-                for resource in ['/share/busymark/visualization', '/libexec/busymark/d2']:
-                    self.assertIn('build/linux/x64/release/bundle' + resource, step['run'])
-            if invocation == '--visualization-release-smoke=':
-                self.assertIn('build/linux/x64/release/bundle/busymark', step['run'])
-                self.assertIn('report["ok"]', step['run'])
-                self.assertIn('test -s', step['run'])
+            expected = 1 if invocation.endswith('.sh') else 2
+            self.assertEqual(len(matching), expected, invocation)
+            for step in matching:
+                self.assertLess(steps.index(build), steps.index(step))
+                self.assertIn("steps.release-build.outcome == 'success'", step['if'])
+                self.assertIn('!cancelled()', step['if'])
+                self.assertNotIn('continue-on-error', step)
+                if 'GDK_BACKEND=wayland' in step['run']:
+                    self.assertIn('weston --backend=headless-backend.so', step['run'])
+                    self.assertIn('test -S "$runtime_dir/wayland-99"', step['run'])
+                else:
+                    self.assertIn('xvfb-run', step['run'])
+                    self.assertIn('GDK_BACKEND=x11', step['run'])
+                    self.assertNotIn('|| true', step['run'])
+                if invocation != 'tools/test_gtk_accent_host.sh':
+                    self.assertLess(steps.index(sandbox), steps.index(step))
+                    self.assertIn("steps.web-sandbox.outcome == 'success'", step['if'])
+                if invocation == 'tools/visualization_smoke.py':
+                    for resource in ['/share/busymark/visualization', '/libexec/busymark/d2']:
+                        self.assertIn('build/linux/x64/release/bundle' + resource, step['run'])
+                if invocation == '--visualization-release-smoke=':
+                    self.assertIn('build/linux/x64/release/bundle/busymark', step['run'])
+                    self.assertIn('report["ok"]', step['run'])
+                    self.assertIn('test -s', step['run'])
+
+    def test_ordinary_standalone_checks_share_one_shipping_build(self):
+        self._automatic_product_jobs()
+        steps = self.workflow['jobs']['verify']['steps']
+        builds = [s for s in steps if s.get('run', '').startswith('flutter build linux ')]
+        self.assertEqual(len(builds), 1)
+        self.assertEqual(shlex.split(builds[0]['run']), ['flutter', 'build', 'linux', '--release'])
+        self.assertEqual(builds[0]['id'], 'release-build')
+        for step in steps:
+            if any(command in step.get('run', '') for command in
+                   ['--spelling-release-smoke=', '--visualization-release-smoke=',
+                    'tools/visualization_smoke.py']):
+                self.assertLess(steps.index(builds[0]), steps.index(step))
+                self.assertIn("steps.release-build.outcome == 'success'", step['if'])
+                self.assertIn('build/linux/x64/release/bundle', step['run'])
+        # Static tooling needs its compiler/Python prerequisites, not a passing
+        # application build or another check's outcome.
+        tooling = next(s for s in steps if 'tools/test_owned_processes.py' in s.get('run', ''))
+        self.assertEqual(tooling['if'], "${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}")
 
     def test_native_shortcut_metadata_runs_with_compiler_and_display_prerequisites(self):
         steps = self.workflow['jobs']['verify']['steps']

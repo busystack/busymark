@@ -142,9 +142,9 @@ do not certify physical-printer or assistive-technology behavior.
 
 The automatic `.github/workflows/flutter-linux.yml` workflow runs bounded X11
 host, renderer and compiled visualization/PDF checks on pull requests to `main`
-and `release/v0.6.3`, and pushes to `main`. It calls
-`.github/workflows/flutter-linux-native.yml` for ordinary dictionary, Wayland and
-strict-Snap checks; hundred-close and debug/profile campaigns remain opt-in.
+and `release/v0.6.3`, and pushes to `main`. The same job reuses its release build for dictionary and Wayland checks. It
+calls `.github/workflows/flutter-linux-native.yml` for genuine strict-Snap
+checks; hundred-close and debug/profile campaigns remain opt-in.
 Each workflow declares its native
 packages and desktop prerequisites. Keep ordinary build prerequisites in the main README;
 do not copy the larger CI-only dependency set into user installation steps.

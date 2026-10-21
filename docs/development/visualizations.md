@@ -190,94 +190,14 @@ This avoids one main-isolate asynchronous round trip per cached file. The caller
 still awaits maintenance: no unlimited background writes or maintenance queue
 are introduced.
 
-## Live application closure
+## Compiled application lifecycle checks
 
-A disappearing GTK window is insufficient shutdown acceptance. Run the release
-binary through the normal window-manager close request and require natural exit
-status zero, no hang, and no surviving identified children:
+See [compiled application checks](application-smoke-tests.md) for natural closure,
+Save/Discard/Cancel, reopening, native window controls and video verification.
+Keep these product assertions separate from startup measurements.
 
-```bash
-/usr/bin/python3 tools/application_close_smoke.py \
-  --output /absolute/new/close-evidence --cycles 100 --plain -- \
-  build/linux/x64/release/bundle/busymark
-```
-
-The observer uses only the PID-owned X11 window. It supplies disposable home,
-settings, history, session, recovery, cache, and fixture directories while
-preserving the authenticated desktop connection. A failed run is retained and
-any necessary cleanup is recorded as failure. Linux `/proc` task-child reads and
-an observer-only child subreaper track descendants after their parent exits,
-including helpers that create another session. Missing or inaccessible observation
-is incomplete verification, not an empty child list; ordinary process/thread exit
-races are distinguished. A zombie thread-group leader with remaining threads is
-still a running process: cleanup waits for its workers as well. The observer
-requires no pre-existing children so
-adoption has unambiguous ownership. Cleanup pins and rechecks process identities,
-waits for all identified children independently of the parent, escalates from
-TERM to KILL when necessary, and records verified termination or unresolved
-survivors. Cleanup success preserves the failed-run classification. A cohort
-stops if child observation is incomplete or survivors remain unresolved.
-An empty task snapshot is rechecked against the child's identity and exit state;
-an empty or inaccessible snapshot of a still-live process remains incomplete.
-It never treats a Dart checkpoint
-as successful process exit. This is a functional close test, not a startup
-content observer or a presentation-time benchmark.
-
-To exercise rendered frames, an actual diagram, pending native initialization,
-decoded moving video, dirty-document save/discard/cancel, durable clean shutdown,
-and subsequent reopening through the application controllers:
-
-```bash
-flutter build linux --release -t tools/window_close_smoke.dart
-/usr/bin/python3 tools/application_close_smoke.py \
-  --output /absolute/new/close-live-evidence --cycles 3 --fresh-profile \
-  --scenarios plain visualization pending-initialization \
-    dirty-save dirty-discard dirty-cancel video \
-  --video test/fixtures/media/close-testsrc.mp4 -- \
-  build/linux/x64/release/bundle/busymark
-flutter build linux --release -t lib/main.dart
-```
-
-The alternate entry point calls the real application and its close listener. It
-is test-only and is not the distributable entry point. `FrameTiming` confirms
-live build/raster execution; it does not claim display presentation timing.
-Document checks wait for the requested path and text in the mounted editor and
-two subsequent timed frames. Cancel checks retain the exact unsaved text.
-Video confirmation samples the identified application drawable. Record missing
-video prerequisites separately from completed normal-close attempts.
-
-Widget tests run in Flutter's fake async environment. Start interactive operations
-that perform real filesystem work with `tester.runAsync`, then pump the UI outside
-that callback and await their completion with `runAsync`. Starting the operation
-in fake async can make every filesystem continuation wait for another test frame.
-A sleep in a polling helper then adds delay per await. Keep dialog interaction,
-document assertions, and actual file publication/rollback checks intact. See
-[Flutter's runAsync contract](https://api.flutter.dev/flutter/flutter_test/WidgetTester/runAsync.html).
-
-The pending-initialization case requires the focused shutdown marker
-`visualization-shutdown initPending=1`. Its isolated harness deliberately
-withholds readiness under the same content security policy, so a fast harness
-cannot finish during required close persistence. This is a lifecycle check.
-Cleanup warnings remain separate from fatal process exits.
-
-For strict confinement, use an explicitly owned disposable parallel instance
-in a disposable machine. `--snap-instance busymark_close` enters the normal
-Snap launcher, isolates application paths inside that instance's common directory,
-and verifies its enforced AppArmor label. Do not use this procedure to replace a
-user's installed application. The workflow requires 100 shipping-executable
-natural closes in both standalone and strict-Snap environments and retains
-failure evidence. Headless compositor checks remain functional compatibility
-checks; they establish no physical-desktop performance result.
-Use `--fresh-profile` for a new isolated application and graphics cache for each
-case; its reopen check reuses that case's profile. Previous profiles are retained,
-and no system cache is cleared.
-
-`dart_test.yaml` bounds independent test-file workers to two. This limits
-concurrent compilation and durable filesystem transactions on development/CI
-machines; individual multi-process and thread-race tests retain their internal
-concurrency. This is a functional scheduling policy, separate from startup performance.
-The real-I/O readiness helpers and the Enter-based History scenario change wait
-and gesture coverage; focused double-click regressions cover that gesture. Override
-file concurrency explicitly only when evaluating a different resource budget;
-record that condition with failures. A functional suite pass is separate from
-application performance acceptance.
+Widget tests that perform real filesystem work must start and await that work
+with `tester.runAsync`, pumping UI transitions outside that callback. Readiness
+helpers advance both real I/O and the widget clock within their existing
+budgets. Focused History double-click tests retain pointer-gesture coverage
+alongside keyboard navigation.
