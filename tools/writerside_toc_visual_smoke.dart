@@ -559,7 +559,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _pause();
       var selectedXml = false;
       _text('XML guide title').visitAncestorElements((element) {
-        if (element.widget.runtimeType.toString() == '_SidebarTreeRow') {
+        if (element.widget is BusyMarkSidebarTreeRow) {
           selectedXml = (element.widget as dynamic).selected as bool;
           return false;
         }

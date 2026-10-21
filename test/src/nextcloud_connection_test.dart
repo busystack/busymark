@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
@@ -122,6 +123,60 @@ void main() {
   });
 
   test(
+    'cancel acknowledges slow initialization immediately and cannot connect later',
+    () async {
+      final gate = Completer<http.Response>();
+      final slowClient = MockClient((_) => gate.future);
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          nextcloudNotesRepositoryProvider.overrideWith(
+            (_) async => repository,
+          ),
+          nextcloudSecretStoreProvider.overrideWithValue(secrets),
+          nextcloudHttpClientProvider.overrideWithValue(client),
+          nextcloudLoginFlowProvider.overrideWithValue(
+            NextcloudLoginFlow(
+              client: slowClient,
+              openBrowser: (_) async => true,
+            ),
+          ),
+        ],
+      );
+      final controller = container.read(nextcloudConnectionProvider.notifier);
+      final connecting = controller.connect('https://cloud.example/nextcloud/');
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(nextcloudConnectionProvider).phase,
+        NextcloudConnectionPhase.starting,
+      );
+      controller.cancel();
+      expect(
+        container.read(nextcloudConnectionProvider).phase,
+        NextcloudConnectionPhase.cancelling,
+      );
+      gate.complete(
+        http.Response(
+          jsonEncode({
+            'poll': {
+              'token': 'token',
+              'endpoint': 'https://cloud.example/nextcloud/login/v2/poll',
+            },
+            'login': 'https://cloud.example/nextcloud/login/v2/flow/test',
+          }),
+          200,
+        ),
+      );
+      expect(await connecting, isFalse);
+      expect(container.read(nextcloudConnectionProvider).account, isNull);
+      expect(container.read(nextcloudConnectionProvider).busy, isFalse);
+      expect(repository.accounts, isEmpty);
+      expect(secrets.values, isEmpty);
+      slowClient.close();
+    },
+  );
+
+  test(
     'setup stores password only in secret service and metadata in SQLite',
     () async {
       final controller = container.read(nextcloudConnectionProvider.notifier);
@@ -217,6 +272,10 @@ void main() {
     expect(
       container.read(nextcloudConnectionProvider).error,
       contains('could not clean up the desktop keyring'),
+    );
+    expect(
+      container.read(nextcloudConnectionProvider).failure,
+      isA<NextcloudCredentialException>(),
     );
   });
 

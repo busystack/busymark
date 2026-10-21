@@ -121,8 +121,13 @@ class NotesOfflineController {
       }
     }
     requirements = await repository.store.offlineRequirements(accountId);
-    _attempted.clear();
-    failures.clear();
+    if (noteId == null) {
+      _attempted.clear();
+      failures.clear();
+    } else {
+      _attempted.removeWhere((key) => key.startsWith('$noteId:'));
+      failures.removeWhere((key, _) => key.startsWith('$noteId:'));
+    }
     await reconcile();
   }
 
@@ -181,7 +186,15 @@ class NotesOfflineController {
           (n) => n.accountId == accountId && retained(n) && !isNotesRecovery(n),
         )) {
           if (_disposed || repository.accountById(accountId) == null) return;
-          var status = await inspect(note);
+          NotesOfflineStatus status;
+          try {
+            status = await inspect(note);
+            failures.remove('${note.localId}:inspection');
+          } on Object catch (error) {
+            failures['${note.localId}:inspection'] = error.toString();
+            _emit();
+            continue;
+          }
           if (_disposed) return;
           statuses[note.localId] = status;
           _emit();
@@ -207,8 +220,12 @@ class NotesOfflineController {
               }
               final current = repository.noteById(note.localId);
               if (current != null) {
-                status = await inspect(current);
-                statuses[note.localId] = status;
+                try {
+                  status = await inspect(current);
+                  statuses[note.localId] = status;
+                } on Object catch (error) {
+                  failures['${note.localId}:inspection'] = error.toString();
+                }
                 _emit();
               }
             }

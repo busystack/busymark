@@ -620,7 +620,7 @@ class SearchSessionController extends Notifier<SearchSessionState> {
         : null;
   }
 
-  void open({SearchCategory? category, bool recovery = false}) {
+  void open({SearchCategory? category, bool? recovery}) {
     final available = categories;
     if (available.isEmpty) return;
     final requested =
@@ -635,7 +635,17 @@ class SearchSessionController extends Notifier<SearchSessionState> {
     captureOrigin();
     _resetSourceNavigation();
     _remember();
-    final isRecovery = requested == SearchCategory.workspace && recovery;
+    final accountId = ref
+        .read(workspaceControllerProvider)
+        .workspace
+        ?.nextcloudAccountId;
+    final recoveryDestination =
+        accountId != null &&
+        ref.read(notesNavigationProvider(accountId)).destination ==
+            NotesDestination.recovery;
+    final isRecovery =
+        requested == SearchCategory.workspace &&
+        (recovery ?? recoveryDestination);
     final options = isRecovery
         ? _recoveryOptions
         : _queries[requested] ?? const SourceSearchOptions();

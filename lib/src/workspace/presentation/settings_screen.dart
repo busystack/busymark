@@ -66,7 +66,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void didUpdateWidget(covariant SettingsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialPage != widget.initialPage) {
-      _page = widget.initialPage;
+      _selectPage(widget.initialPage);
     }
   }
 
@@ -603,6 +603,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
 
   void _goBack() {
+    unawaited(_leaveSettings());
+  }
+
+  Future<void> _leaveSettings() async {
+    if (!await confirmNotesSettingsDeparture(context) || !mounted) return;
     if (_page == SettingsPage.spellingDictionaries) {
       _selectPage(SettingsPage.editor);
       return;
@@ -611,7 +616,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _selectPage(SettingsPage page) {
-    if (_page != page) setState(() => _page = page);
+    unawaited(_selectPageSafely(page));
+  }
+
+  Future<void> _selectPageSafely(SettingsPage page) async {
+    if (_page == page) return;
+    if (!await confirmNotesSettingsDeparture(context) || !mounted) return;
+    setState(() => _page = page);
     final router = GoRouter.maybeOf(context);
     final uri = router?.state.uri;
     if (router == null || uri == null || uri.path != settingsRoutePath) {

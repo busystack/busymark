@@ -800,7 +800,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> createNextcloudNote({
     String title = 'New note',
-    String category = '',
+    String? category,
     String content = '',
     bool Function()? acceptNavigation,
   }) async {
@@ -817,7 +817,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final note = await repository.create(
         accountId,
         title: title,
-        category: category,
+        category:
+            category ??
+            (ref.read(notesNavigationProvider(accountId)).destination ==
+                    NotesDestination.category
+                ? ref.read(notesNavigationProvider(accountId)).category
+                : ''),
         content: content,
       );
       final opened = await openNextcloudNote(
@@ -825,11 +830,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         acceptNavigation: acceptNavigation,
       );
       _scheduleRemoteSync(accountId);
+      _publishCreatedNextcloudNote(note, repository.notes);
       return opened;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
       return false;
     }
+  }
+
+  void _publishCreatedNextcloudNote(
+    NextcloudNote note,
+    Iterable<NextcloudNote> notes,
+  ) {
+    final current = notes
+        .where(
+          (n) => n.localId == note.localId && n.accountId == note.accountId,
+        )
+        .firstOrNull;
+    if (current == null) return;
+    ref
+        .read(notesNavigationProvider(current.accountId))
+        .showCreated(current, notes);
+    ref
+        .read(notesCreatedProvider.notifier)
+        .created(note.accountId, note.localId);
   }
 
   void _reportNextcloudFailure(Object error) {
@@ -985,7 +1009,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<void> updateNextcloudNoteMetadata(
+  Future<bool> updateNextcloudNoteMetadata(
     String localId, {
     NotesMetadataSnapshot? snapshot,
     String? title,
@@ -1000,10 +1024,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           .firstOrNull;
       if (buffer?.isDirty == true &&
           !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
-        return;
+        return false;
       }
       final note = repository.noteById(localId);
-      if (note == null) return;
+      if (note == null) return false;
       final updated = await repository.patchMetadata(
         snapshot ?? repository.metadataSnapshot(localId),
         title: title,
@@ -1013,8 +1037,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (updated.revision != beforeRevision) {
         _scheduleRemoteSync(note.accountId);
       }
+      return updated.metadataConflict == null;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
+      return false;
     }
   }
 
@@ -1137,7 +1163,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<void> resolveNextcloudConflict(
+  Future<bool> resolveNextcloudConflict(
     String localId,
     NoteConflictResolution resolution, {
     String? mergedContent,
@@ -1179,14 +1205,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       if (buffer?.isDirty == true &&
           !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
-        return;
+        return false;
       }
       if (buffer != null &&
           !await _localHistory.captureBeforeLoss(
             LocalHistoryBufferSnapshot.fromBuffer(buffer),
             LocalHistoryCaptureReason.beforeRestore,
           )) {
-        return;
+        return false;
       }
       await repository.resolveConflict(
         localId,
@@ -1199,8 +1225,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       final accountId = repository.noteById(localId)?.accountId;
       if (accountId != null) _scheduleRemoteSync(accountId);
+      return true;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
+      return false;
     }
   }
 
@@ -1221,6 +1249,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       final opened = await openNextcloudNote(recovered.localId);
       _scheduleRemoteSync(original.accountId);
+      _publishCreatedNextcloudNote(recovered, repository.notes);
       return opened;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
@@ -1249,6 +1278,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       final opened = await openNextcloudNote(recovered.localId);
       _scheduleRemoteSync(reference.accountId);
+      _publishCreatedNextcloudNote(recovered, repository.notes);
       return opened;
     } on Object catch (error) {
       _reportNextcloudFailure(error);

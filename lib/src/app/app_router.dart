@@ -6,6 +6,7 @@ import '../workspace/presentation/settings_screen.dart';
 import '../workspace/presentation/welcome_screen.dart';
 import '../workspace/presentation/workspace_screen.dart';
 import '../workspace/workspace_controller.dart';
+import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 
 const settingsRoutePath = '/settings';
 const _settingsReturnTargetParameter = 'returnTo';
@@ -94,6 +95,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: settingsRoutePath,
+        onExit: (context, state) => confirmNotesSettingsDeparture(context),
         pageBuilder: (context, state) => NoTransitionPage<void>(
           child: SettingsScreen(
             returnTarget: SettingsReturnTarget.fromSettingsUri(state.uri),

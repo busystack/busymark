@@ -5562,4 +5562,219 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'الاختصار المقترح';
+
+  @override
+  String get notesActions => 'إجراءات الملاحظات';
+
+  @override
+  String get noteActions => 'إجراءات الملاحظة';
+
+  @override
+  String get noteProperties => 'خصائص الملاحظة';
+
+  @override
+  String get notesExportAll => 'تصدير ملاحظات · كل الملاحظات…';
+
+  @override
+  String get notesExportCategory => 'تصدير ملاحظات · الفئة…';
+
+  @override
+  String get notesOfflineAll => 'إتاحة دون اتصال · كل الملاحظات';
+
+  @override
+  String get notesOfflineCategory => 'إتاحة دون اتصال · الفئة';
+
+  @override
+  String get notesOfflineRemoveAll => 'إزالة الاحتفاظ دون اتصال · كل الملاحظات';
+
+  @override
+  String get notesOfflineRemoveCategory => 'إزالة الاحتفاظ دون اتصال · الفئة';
+
+  @override
+  String get notesOfflinePause => 'إيقاف التنزيلات مؤقتًا';
+
+  @override
+  String get notesOfflineResume => 'استئناف التنزيلات';
+
+  @override
+  String get notesOfflineKeep => 'إتاحة دون اتصال';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'إزالة هذا المتطلب تبقي المحتوى المخزن مؤقتًا. قد يظل متطلب الفئة أو الحساب يحتفظ بالملاحظة.';
+
+  @override
+  String get notesOfflineBroader =>
+      'تُحتفظ بهذه الملاحظة أيضًا بسبب متطلب الفئة أو الحساب.';
+
+  @override
+  String get notesOfflineExternal =>
+      'تتطلب الوسائط الخارجية اتصالًا. يحتفظ BusyMark بنص الملاحظة والمرفقات المُدارة فقط.';
+
+  @override
+  String get notesEmptyAll => 'لا توجد ملاحظات بعد. أنشئ ملاحظة للبدء.';
+
+  @override
+  String get notesEmptyFavorites => 'لا توجد ملاحظات مفضلة.';
+
+  @override
+  String get notesEmptyCategory => 'لا توجد ملاحظات في هذه الفئة.';
+
+  @override
+  String get notesEmptyUncategorized => 'لا توجد ملاحظات غير مصنفة.';
+
+  @override
+  String get notesEmptyRecovery => 'لا توجد ملاحظات محفوظة لاستعادتها.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · فشل. إعادة المحاولة';
+
+  @override
+  String get notesOperationFailed =>
+      'تعذر إكمال العملية. المسودة محفوظة. راجع الحفظ والتعارضات ثم أعد المحاولة.';
+
+  @override
+  String get notesInspectionFailed => 'المرفقات · فشل. إعادة المحاولة';
+
+  @override
+  String get notesStartingConnection => 'جارٍ بدء الاتصال بـ Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'جارٍ التحقق من الوصول إلى الملاحظات…';
+
+  @override
+  String get notesCancellingConnection => 'جارٍ إلغاء تسجيل الدخول والتنظيف…';
+
+  @override
+  String get notesRemovingConnection => 'جارٍ إزالة الحساب المحلي…';
+
+  @override
+  String get notesRemovedWarning =>
+      'أُزيل حساب Nextcloud المحلي. لم يُؤكد إبطال كلمة مرور التطبيق. احذف كلمة مرور BusyMark من إعدادات أمان Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'تعذر حفظ جميع الملاحظات المفتوحة محليًا. راجع الحفظ والتعارضات أو التسوية في مساحة العمل. قد تظل التغييرات المحلية بحاجة إلى المزامنة مع Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'حفظ تغييرات إعدادات Nextcloud قبل المغادرة؟';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'إعدادات Notes على الخادم · تغييرات غير محفوظة';
+
+  @override
+  String get notesSettingsReload => 'إعادة تحميل إعدادات الخادم…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'تحل إعدادات Nextcloud الحالية محل المسودة عند إعادة التحميل. أتريد تجاهل المسودة وإعادة التحميل؟';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'قَبِل Nextcloud الإعدادات، لكن تعذر تحديث الملاحظات. القيم المعروضة هي ما أكده الخادم. أعد التحديث من الملاحظات.';
+
+  @override
+  String get notesUnavailable =>
+      'غير متصل · النص متاح محليًا · محفوظ محليًا · المزامنة معلقة';
+
+  @override
+  String get notesStorageFull =>
+      'مساحة Nextcloud ممتلئة. أفرغ مساحة على الخادم ثم أعد المحاولة.';
+
+  @override
+  String get notesRejected =>
+      'رفض Nextcloud هذا التغيير. راجع الملاحظة واحفظ نسخة محلية قبل إعادة المحاولة.';
+
+  @override
+  String get notesThrottled =>
+      'طلب Nextcloud الانتظار. تُستأنف المزامنة بعد انتهاء مهلة إعادة المحاولة.';
+
+  @override
+  String get notesRecoveryRequired => 'تعارضات · مقارنة';
+
+  @override
+  String get notesScanning => 'جارٍ فحص الملفات…';
+
+  @override
+  String get notesCancelling =>
+      'جارٍ الإلغاء… في انتظار انتهاء العملية الحالية.';
+
+  @override
+  String get notesCancelled => 'أُلغي';
+
+  @override
+  String get notesPartial => 'اكتمل جزئيًا';
+
+  @override
+  String get notesTransferFailed => 'فشل. إعادة المحاولة';
+
+  @override
+  String get notesImportPartialHelp =>
+      'قد تكون العناصر السابقة محفوظة محليًا بالفعل. استأنف هذا الاستيراد للمتابعة دون تكرارها.';
+
+  @override
+  String get notesNotStarted => 'لم يبدأ';
+
+  @override
+  String get notesCreated => 'أُنشئ';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'عنوان الخادم · غير مدعوم · حذف · المرفقات';
+
+  @override
+  String get notesCurrentText => 'النص المحلي المحفوظ حاليًا';
+
+  @override
+  String get notesRecovering => 'جارٍ الاستعادة كملاحظة جديدة…';
+
+  @override
+  String get notesReadOnlyHelp => 'للقراءة فقط · المفضلة · حفظ نسخة محلية…';
+
+  @override
+  String get notesSort => 'ترتيب الملاحظات';
+
+  @override
+  String get notesPathRelative =>
+      'مسار مجلد الملاحظات نسبي إلى مساحة تخزين Nextcloud الخاصة بك.';
+
+  @override
+  String get notesSettingsStale =>
+      'تغيرت الإعدادات في Nextcloud. أعد تحميل قيم الخادم وراجعها قبل استبدال المسودة.';
+
+  @override
+  String get notesDownloadsPaused => 'التنزيلات متوقفة مؤقتًا';
+
+  @override
+  String get notesExportNotPublished => 'لم يُنشر أي تصدير.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'افتح قفل سلسلة مفاتيح سطح المكتب وأعد المحاولة.';
+
+  @override
+  String get notesConnectFailed =>
+      'تعذر الاتصال بملاحظات Nextcloud. تحقق من عنوان الخادم وأعد المحاولة.';
+
+  @override
+  String get notesAccountMismatch =>
+      'سجل الدخول إلى حساب Nextcloud نفسه. أزل هذا الحساب أولًا للاتصال بحساب مختلف.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'تعذر تنظيف الحساب المحلي. احتُفظ بالحساب لتتمكن من إعادة محاولة إزالته.';
+
+  @override
+  String get notesTransferring => 'جارٍ نقل الملاحظات…';
+
+  @override
+  String get notesTechnicalDetails => 'تفاصيل تقنية';
+
+  @override
+  String get notesPauseRequirement => 'إيقاف متطلب الإتاحة دون اتصال مؤقتًا';
+
+  @override
+  String get notesResumeRequirement => 'استئناف متطلب الإتاحة دون اتصال';
 }

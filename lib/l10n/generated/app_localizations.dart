@@ -9521,6 +9521,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Proposed shortcut'**
   String get shortcutProposedBinding;
+
+  /// No description provided for @notesActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes actions'**
+  String get notesActions;
+
+  /// No description provided for @noteActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Note actions'**
+  String get noteActions;
+
+  /// No description provided for @noteProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Note Properties'**
+  String get noteProperties;
+
+  /// No description provided for @notesExportAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Export All Notes…'**
+  String get notesExportAll;
+
+  /// No description provided for @notesExportCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Category…'**
+  String get notesExportCategory;
+
+  /// No description provided for @notesOfflineAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep All Notes Available Offline'**
+  String get notesOfflineAll;
+
+  /// No description provided for @notesOfflineCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Category Available Offline'**
+  String get notesOfflineCategory;
+
+  /// No description provided for @notesOfflineRemoveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove All Notes Offline Requirement'**
+  String get notesOfflineRemoveAll;
+
+  /// No description provided for @notesOfflineRemoveCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Category Offline Requirement'**
+  String get notesOfflineRemoveCategory;
+
+  /// No description provided for @notesOfflinePause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause Downloads'**
+  String get notesOfflinePause;
+
+  /// No description provided for @notesOfflineResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume Downloads'**
+  String get notesOfflineResume;
+
+  /// No description provided for @notesOfflineKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this note available offline'**
+  String get notesOfflineKeep;
+
+  /// No description provided for @notesOfflineRetentionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing this requirement keeps existing cached content. A category or account requirement may still retain this note.'**
+  String get notesOfflineRetentionHelp;
+
+  /// No description provided for @notesOfflineBroader.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is also retained by a category or account requirement.'**
+  String get notesOfflineBroader;
+
+  /// No description provided for @notesOfflineExternal.
+  ///
+  /// In en, this message translates to:
+  /// **'External media requires a connection. BusyMark only retains note text and managed attachments.'**
+  String get notesOfflineExternal;
+
+  /// No description provided for @notesEmptyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes yet. Create a note to get started.'**
+  String get notesEmptyAll;
+
+  /// No description provided for @notesEmptyFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorite notes.'**
+  String get notesEmptyFavorites;
+
+  /// No description provided for @notesEmptyCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes in this category.'**
+  String get notesEmptyCategory;
+
+  /// No description provided for @notesEmptyUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'No uncategorized notes.'**
+  String get notesEmptyUncategorized;
+
+  /// No description provided for @notesEmptyRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'No retained notes to recover.'**
+  String get notesEmptyRecovery;
+
+  /// No description provided for @notesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not load the local Notes store. Retry to open your cached notes.'**
+  String get notesLoadFailed;
+
+  /// No description provided for @notesOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The operation could not finish. Your draft is retained. Review Save and any conflicts, then try again.'**
+  String get notesOperationFailed;
+
+  /// No description provided for @notesInspectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not inspect attachments. Retry to review availability.'**
+  String get notesInspectionFailed;
+
+  /// No description provided for @notesStartingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting Nextcloud connection…'**
+  String get notesStartingConnection;
+
+  /// No description provided for @notesVerifyingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying Notes access…'**
+  String get notesVerifyingConnection;
+
+  /// No description provided for @notesCancellingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling login and cleaning up…'**
+  String get notesCancellingConnection;
+
+  /// No description provided for @notesRemovingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing the local account…'**
+  String get notesRemovingConnection;
+
+  /// No description provided for @notesRemovedWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The local Nextcloud account was removed. App-password revocation was not confirmed. Remove BusyMark’s app password in Nextcloud Security settings.'**
+  String get notesRemovedWarning;
+
+  /// No description provided for @notesBuffersNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not save all open notes locally. Review Save, conflicts, or normalization in the workspace before trying again. Pending local changes may still need to synchronize with Nextcloud.'**
+  String get notesBuffersNotSaved;
+
+  /// No description provided for @notesSettingsLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes to Nextcloud settings before leaving?'**
+  String get notesSettingsLeave;
+
+  /// No description provided for @notesSettingsLeaveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Notes folder and suffix changes have not been sent to Nextcloud.'**
+  String get notesSettingsLeaveHelp;
+
+  /// No description provided for @notesSettingsReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload Server Settings…'**
+  String get notesSettingsReload;
+
+  /// No description provided for @notesSettingsReloadHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Reloading replaces your draft with the current settings on Nextcloud. Discard this draft and reload?'**
+  String get notesSettingsReloadHelp;
+
+  /// No description provided for @notesSettingsRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud accepted the settings update, but refreshing notes failed. The displayed settings are the server’s acknowledged values. Retry the refresh from Notes.'**
+  String get notesSettingsRefreshFailed;
+
+  /// No description provided for @notesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud is unavailable. Cached notes remain available; local changes are waiting to synchronize.'**
+  String get notesUnavailable;
+
+  /// No description provided for @notesStorageFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud storage is full. Free space on the server, then retry.'**
+  String get notesStorageFull;
+
+  /// No description provided for @notesRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud rejected this change. Review the note and save a local copy before retrying.'**
+  String get notesRejected;
+
+  /// No description provided for @notesThrottled.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud asked BusyMark to wait. Synchronization resumes after the retry deadline.'**
+  String get notesThrottled;
+
+  /// No description provided for @notesRecoveryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This change requires review before synchronization can continue.'**
+  String get notesRecoveryRequired;
+
+  /// No description provided for @notesScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning files…'**
+  String get notesScanning;
+
+  /// No description provided for @notesCancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling… Waiting for the current operation to settle.'**
+  String get notesCancelling;
+
+  /// No description provided for @notesCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get notesCancelled;
+
+  /// No description provided for @notesPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially completed'**
+  String get notesPartial;
+
+  /// No description provided for @notesTransferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer failed. Review the outcome before retrying.'**
+  String get notesTransferFailed;
+
+  /// No description provided for @notesImportPartialHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier items may already be saved locally. Resume this import to continue without duplicating them.'**
+  String get notesImportPartialHelp;
+
+  /// No description provided for @notesNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get notesNotStarted;
+
+  /// No description provided for @notesCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get notesCreated;
+
+  /// No description provided for @notesRemoteDeleteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support deleting remote attachments.'**
+  String get notesRemoteDeleteUnavailable;
+
+  /// No description provided for @notesCurrentText.
+  ///
+  /// In en, this message translates to:
+  /// **'Current retained text'**
+  String get notesCurrentText;
+
+  /// No description provided for @notesRecovering.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovering as a new note…'**
+  String get notesRecovering;
+
+  /// No description provided for @notesReadOnlyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is read-only. You can change its favorite status or save a local copy.'**
+  String get notesReadOnlyHelp;
+
+  /// No description provided for @notesSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort notes'**
+  String get notesSort;
+
+  /// No description provided for @notesPathRelative.
+  ///
+  /// In en, this message translates to:
+  /// **'The Notes folder path is relative to your Nextcloud storage.'**
+  String get notesPathRelative;
+
+  /// No description provided for @notesSettingsStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The settings changed on Nextcloud. Reload and review the server values before replacing your draft.'**
+  String get notesSettingsStale;
+
+  /// No description provided for @notesDownloadsPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads paused'**
+  String get notesDownloadsPaused;
+
+  /// No description provided for @notesExportNotPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'No export was published.'**
+  String get notesExportNotPublished;
+
+  /// No description provided for @notesKeyringUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock the desktop keyring and try again.'**
+  String get notesKeyringUnavailable;
+
+  /// No description provided for @notesConnectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to Nextcloud Notes. Check the server address and try again.'**
+  String get notesConnectFailed;
+
+  /// No description provided for @notesAccountMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to the same Nextcloud account. Remove this account first to connect a different one.'**
+  String get notesAccountMismatch;
+
+  /// No description provided for @notesLocalRemovalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Local account cleanup failed. The account is retained so you can retry removal.'**
+  String get notesLocalRemovalFailed;
+
+  /// No description provided for @notesTransferring.
+  ///
+  /// In en, this message translates to:
+  /// **'Transferring notes…'**
+  String get notesTransferring;
+
+  /// No description provided for @notesTechnicalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical details'**
+  String get notesTechnicalDetails;
+
+  /// No description provided for @notesPauseRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause Offline Requirement'**
+  String get notesPauseRequirement;
+
+  /// No description provided for @notesResumeRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume Offline Requirement'**
+  String get notesResumeRequirement;
 }
 
 class _AppLocalizationsDelegate

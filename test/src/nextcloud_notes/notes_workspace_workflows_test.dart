@@ -589,7 +589,9 @@ void main() {
         original,
         testAccount().id,
         cancellation: cancel,
-        onProgress: (_, _) => cancel.cancel(),
+        onProgress: (completed, _) {
+          if (completed == 1) cancel.cancel();
+        },
       );
       expect(first, hasLength(1));
       final pending = await f.repository.store.importOperations(
@@ -727,7 +729,9 @@ void main() {
         review,
         testAccount().id,
         cancellation: cancel,
-        onProgress: (_, _) => cancel.cancel(),
+        onProgress: (completed, _) {
+          if (completed == 1) cancel.cancel();
+        },
       );
       final id = first.single.noteId!;
       f.loseNextCreate = true;
@@ -1537,7 +1541,9 @@ void main() {
         review,
         testAccount().id,
         cancellation: cancel,
-        onProgress: (a, b) => cancel.cancel(),
+        onProgress: (a, b) {
+          if (a == 1) cancel.cancel();
+        },
       );
       expect(first.length, 1);
       expect(f.repository.notes.length, 1);
@@ -1556,6 +1562,43 @@ void main() {
       );
     },
   );
+  test(
+    'retrying offline note A preserves note B failures and attempts',
+    () async {
+      f.failMedia = true;
+      for (var id = 1; id <= 2; id++) {
+        f.remote[id] = {
+          ...serverNote(id),
+          'content': '![image](.attachments.$id/a.png)',
+        };
+      }
+      await f.repository.synchronize(testAccount().id, allowWrites: false);
+      final offline = NotesOfflineController(f.repository, testAccount().id);
+      addTearDown(offline.dispose);
+      await offline.initialize();
+      await offline.setRequirement('category', '');
+      final a = f.repository.notes.firstWhere((n) => n.serverId == 1);
+      final b = f.repository.notes.firstWhere((n) => n.serverId == 2);
+      final before = Map<String, String>.fromEntries(
+        offline.failures.entries.where(
+          (e) => e.key.startsWith('${b.localId}:'),
+        ),
+      );
+      expect(before, isNotEmpty);
+      expect(f.downloads, 2);
+      await offline.retry(a.localId);
+      expect(f.downloads, 3);
+      expect(
+        Map<String, String>.fromEntries(
+          offline.failures.entries.where(
+            (e) => e.key.startsWith('${b.localId}:'),
+          ),
+        ),
+        before,
+      );
+    },
+  );
+
   test(
     'note cancellation overrides category work durably and retry resumes',
     () async {

@@ -11,6 +11,7 @@ import '../platform/native_menu_service.dart';
 import '../platform/gtk_header_icon_service.dart';
 import 'busymark_glyphs.dart';
 import 'path_label.dart';
+import 'localization.dart';
 
 /// Resolve an explicit six-digit RGB color chosen in a document/export control.
 /// This does not inherit the application's theme accent.
@@ -4516,4 +4517,316 @@ class SectionLabel extends StatelessWidget {
       child: Text(text, style: busyMarkSectionHeaderStyle(context)),
     );
   }
+}
+
+typedef BusyMarkSidebarTreeMenuRequest =
+    void Function(BuildContext anchorContext, Offset globalPosition);
+
+class BusyMarkSidebarRowSurface extends StatelessWidget {
+  const BusyMarkSidebarRowSurface({
+    super.key,
+    required this.child,
+    required this.enabled,
+    required this.clickable,
+    this.selected = false,
+    this.focusNode,
+    this.onKeyEvent,
+    this.onTap,
+    this.onDoubleTap,
+    this.onSecondaryTapUp,
+    this.onHoverChanged,
+    this.onFocusChange,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final bool clickable;
+  final bool selected;
+  final FocusNode? focusNode;
+  final FocusOnKeyEventCallback? onKeyEvent;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
+  final GestureTapUpCallback? onSecondaryTapUp;
+  final ValueChanged<bool>? onHoverChanged;
+  final ValueChanged<bool>? onFocusChange;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: onHoverChanged == null ? null : (_) => onHoverChanged!(true),
+      onExit: onHoverChanged == null ? null : (_) => onHoverChanged!(false),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
+        child: Material(
+          color: selected
+              ? busyMarkSelectedBackground(context)
+              : BusyMarkLinuxPalette.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          clipBehavior: Clip.antiAlias,
+          child: Focus(
+            onKeyEvent: onKeyEvent,
+            child: InkWell(
+              focusNode: focusNode,
+              hoverColor: clickable
+                  ? busyMarkRowHoverColor(context)
+                  : BusyMarkLinuxPalette.transparent,
+              onTap: enabled ? onTap : null,
+              onDoubleTap: enabled ? onDoubleTap : null,
+              onSecondaryTapUp: enabled ? onSecondaryTapUp : null,
+              onFocusChange: onFocusChange,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: BusyMarkSizes.sidebarTreeRowHeight,
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class BusyMarkSidebarTreeRow extends StatefulWidget {
+  const BusyMarkSidebarTreeRow({
+    super.key,
+    required this.title,
+    required this.depth,
+    this.icon,
+    this.leading,
+    this.trailing,
+    this.tooltip,
+    this.focusNode,
+    this.hasChildren = false,
+    this.expanded = false,
+    this.selected = false,
+    this.enabled = true,
+    this.muted = false,
+    this.compactHierarchyIndent = false,
+    this.vcsColor,
+    this.onToggle,
+    this.onTap,
+    this.onDoubleTap,
+    this.onMenuRequested,
+  });
+
+  final String title;
+  final int depth;
+  final IconData? icon;
+  final Widget? leading;
+  final Widget? trailing;
+  final String? tooltip;
+  final FocusNode? focusNode;
+  final bool hasChildren;
+  final bool expanded;
+  final bool selected;
+  final bool enabled;
+  final bool muted;
+  final bool compactHierarchyIndent;
+  final BusyMarkVcsFileColor? vcsColor;
+  final VoidCallback? onToggle;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
+  final BusyMarkSidebarTreeMenuRequest? onMenuRequested;
+
+  @override
+  State<BusyMarkSidebarTreeRow> createState() => BusyMarkSidebarTreeRowState();
+}
+
+class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
+  var _hovered = false;
+  var _focused = false;
+
+  void showMenuFromKeyboard() {
+    final onMenuRequested = widget.onMenuRequested;
+    if (!widget.enabled || onMenuRequested == null) {
+      return;
+    }
+    onMenuRequested(context, _busyMarkSidebarTreeMenuAnchor(context));
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (widget.enabled && event is KeyDownEvent) {
+      final rtl = Directionality.of(context) == TextDirection.rtl;
+      final expand = rtl
+          ? LogicalKeyboardKey.arrowLeft
+          : LogicalKeyboardKey.arrowRight;
+      final collapse = rtl
+          ? LogicalKeyboardKey.arrowRight
+          : LogicalKeyboardKey.arrowLeft;
+      if (widget.hasChildren &&
+          ((event.logicalKey == expand && !widget.expanded) ||
+              (event.logicalKey == collapse && widget.expanded))) {
+        widget.onToggle?.call();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        node.nextFocus();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        node.previousFocus();
+        return KeyEventResult.handled;
+      }
+    }
+    if (!widget.enabled ||
+        widget.onMenuRequested == null ||
+        !isBusyMarkContextMenuKeyEvent(event)) {
+      return KeyEventResult.ignored;
+    }
+    showMenuFromKeyboard();
+    return KeyEventResult.handled;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final direction = Directionality.of(context);
+    final clickable =
+        widget.enabled &&
+        (widget.onTap != null || widget.onMenuRequested != null);
+    final vcsForeground = widget.vcsColor == null
+        ? null
+        : busyMarkVcsFileStatusColor(context, widget.vcsColor!);
+    final foreground = !widget.enabled || widget.muted
+        ? colors.disabledForeground
+        : vcsForeground ??
+              (widget.selected ? colors.foreground : colors.mutedForeground);
+    final titleColor = !widget.enabled || widget.muted
+        ? colors.disabledForeground
+        : vcsForeground ?? colors.foreground;
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: titleColor);
+    final menuVisible =
+        widget.enabled &&
+        widget.onMenuRequested != null &&
+        (widget.selected || _hovered || _focused);
+    final depthBase = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSizes.sidebarTreeDepthBase;
+    final expanderWidth = widget.compactHierarchyIndent
+        ? BusyMarkSizes.sidebarTreeArrow
+        : BusyMarkSizes.sidebarTreeControl;
+    final expanderGap = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSpacing.xs;
+    final surface = BusyMarkSidebarRowSurface(
+      focusNode: widget.focusNode,
+      enabled: widget.enabled,
+      clickable: clickable,
+      selected: widget.selected,
+      onKeyEvent: _handleKeyEvent,
+      onTap: widget.onTap,
+      onDoubleTap: widget.onDoubleTap,
+      onSecondaryTapUp: widget.onMenuRequested == null
+          ? null
+          : (details) =>
+                widget.onMenuRequested!(context, details.globalPosition),
+      onHoverChanged: (hovered) => setState(() => _hovered = hovered),
+      onFocusChange: (focused) => setState(() => _focused = focused),
+      child: Row(
+        children: [
+          SizedBox(
+            width:
+                depthBase + widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
+          ),
+          SizedBox.square(
+            dimension: expanderWidth,
+            child: widget.hasChildren
+                ? GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.enabled
+                        ? widget.onToggle ?? widget.onTap
+                        : null,
+                    child: AnimatedRotation(
+                      turns: widget.expanded
+                          ? direction == TextDirection.rtl
+                                ? -0.25
+                                : 0.25
+                          : 0,
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : BusyMarkMotion.sidebarExpand,
+                      child: Icon(
+                        BusyMarkGlyphs.collapsedTreeArrowFor(direction),
+                        size: BusyMarkSizes.sidebarTreeArrow,
+                        color: foreground,
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          SizedBox(width: expanderGap),
+          if (widget.leading != null || widget.icon != null) ...[
+            SizedBox.square(
+              dimension: BusyMarkSizes.sidebarTreeControl,
+              child: Center(
+                child:
+                    widget.leading ??
+                    Icon(
+                      widget.icon,
+                      size: BusyMarkSizes.iconSm,
+                      color: foreground,
+                    ),
+              ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+          ],
+          Expanded(
+            child: Text(
+              widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: titleStyle,
+            ),
+          ),
+          if (widget.trailing != null) widget.trailing!,
+          if (widget.onMenuRequested != null)
+            SizedBox(
+              width: BusyMarkSizes.iconButton,
+              child: Center(
+                child: menuVisible
+                    ? Builder(
+                        builder: (buttonContext) => BusyMarkCompactIconButton(
+                          tooltip: context.l10n.actions,
+                          icon: BusyMarkGlyphs.menuVertical,
+                          onPressed: () => widget.onMenuRequested!(
+                            buttonContext,
+                            _busyMarkSidebarTreeMenuAnchor(buttonContext),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            )
+          else
+            const SizedBox(width: BusyMarkSpacing.xs),
+        ],
+      ),
+    );
+    return Semantics(
+      selected: widget.selected,
+      expanded: widget.hasChildren ? widget.expanded : null,
+      enabled: widget.enabled,
+      child: widget.tooltip == null || widget.tooltip!.isEmpty
+          ? surface
+          : Tooltip(message: widget.tooltip!, child: surface),
+    );
+  }
+}
+
+Offset _busyMarkSidebarTreeMenuAnchor(BuildContext context) {
+  final renderObject = context.findRenderObject();
+  if (renderObject is! RenderBox || !renderObject.hasSize) {
+    return Offset.zero;
+  }
+  final direction = Directionality.of(context);
+  return renderObject.localToGlobal(
+    Offset(
+      direction == TextDirection.rtl ? 0 : renderObject.size.width,
+      renderObject.size.height,
+    ),
+  );
 }

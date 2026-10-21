@@ -3,6 +3,7 @@ import '../search/welcome_notes_action.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import '../nextcloud_notes/presentation/notes_workspace_ui.dart';
+import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../references/reference_controller.dart';
 import 'dart:async';
 
@@ -1117,6 +1118,11 @@ class _BusyMarkWindowLifecycleState
     final controller = ref.read(workspaceControllerProvider.notifier);
     await controller.waitForWorkspaceOpening();
     if (!mounted || !context.mounted) return;
+    if (!await confirmNotesSettingsDeparture(context) ||
+        !mounted ||
+        !context.mounted) {
+      return;
+    }
     final settings = ref.read(appSettingsControllerProvider);
     var workspace = ref.read(workspaceControllerProvider);
     if (settings.autoSave && workspace.hasUnsavedChanges) {

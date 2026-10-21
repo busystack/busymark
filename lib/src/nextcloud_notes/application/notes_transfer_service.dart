@@ -14,11 +14,15 @@ import '../domain/notes_models.dart';
 import '../domain/notes_search.dart' show normalizeNotesSearch;
 import 'notes_repository.dart';
 
+class NotesTransferCancelled extends FileSystemException {
+  const NotesTransferCancelled() : super('Transfer cancelled.');
+}
+
 class NotesTransferCancellation {
   bool cancelled = false;
   void cancel() => cancelled = true;
   void check() {
-    if (cancelled) throw const FileSystemException('Transfer cancelled.');
+    if (cancelled) throw const NotesTransferCancelled();
   }
 }
 
@@ -92,6 +96,7 @@ class NotesTransferService {
     required NotesTransferCancellation cancellation,
     void Function(int completed, int total)? onProgress,
   }) async {
+    onProgress?.call(0, notes.length);
     final snapshot = notes is NotesLocalSnapshot
         ? notes
         : NotesLocalSnapshot(
@@ -228,6 +233,7 @@ class NotesTransferService {
     String category = '',
     NotesTransferCancellation? cancellation,
   }) async {
+    cancellation?.check();
     await _safeAbsolute(source);
     final type = await FileSystemEntity.type(source, followLinks: false);
     final root = type == FileSystemEntityType.directory
@@ -392,6 +398,7 @@ class NotesTransferService {
         ),
       );
     }
+    cancellation?.check();
     return NotesImportReview(root, items, issues);
   }
 
@@ -491,6 +498,7 @@ class NotesTransferService {
     );
     final outcomes = <NotesImportOutcome>[];
     final selected = review.items.where((i) => i.selected).toList();
+    onProgress?.call(0, selected.length);
     for (final item in selected) {
       if (cancellation.cancelled) break;
       try {
@@ -546,6 +554,8 @@ class NotesTransferService {
         );
         item.importedNoteId = note.localId;
         outcomes.add(NotesImportOutcome(item.title, noteId: note.localId));
+      } on NotesTransferCancelled {
+        break;
       } on Object catch (error) {
         outcomes.add(NotesImportOutcome(item.title, error: error.toString()));
       }

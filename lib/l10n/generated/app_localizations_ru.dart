@@ -5597,4 +5597,225 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Предлагаемое сочетание';
+
+  @override
+  String get notesActions => 'Действия с заметками';
+
+  @override
+  String get noteActions => 'Действия с заметкой';
+
+  @override
+  String get noteProperties => 'Свойства заметки';
+
+  @override
+  String get notesExportAll => 'Экспорт заметок · Все заметки…';
+
+  @override
+  String get notesExportCategory => 'Экспорт заметок · Категория…';
+
+  @override
+  String get notesOfflineAll => 'Сохранить для работы без сети · Все заметки';
+
+  @override
+  String get notesOfflineCategory =>
+      'Сохранить для работы без сети · Категория';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Убрать сохранение без сети · Все заметки';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Убрать сохранение без сети · Категория';
+
+  @override
+  String get notesOfflinePause => 'Приостановить загрузки';
+
+  @override
+  String get notesOfflineResume => 'Возобновить загрузки';
+
+  @override
+  String get notesOfflineKeep => 'Сохранить для работы без сети';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Удаление требования не удаляет содержимое кэша. Требование категории или учётной записи может по-прежнему сохранять заметку.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Заметка также сохраняется по требованию категории или учётной записи.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Внешние медиа требуют подключения. BusyMark сохраняет только текст и управляемые вложения.';
+
+  @override
+  String get notesEmptyAll => 'Заметок пока нет. Создайте первую.';
+
+  @override
+  String get notesEmptyFavorites => 'Нет избранных заметок.';
+
+  @override
+  String get notesEmptyCategory => 'В этой категории нет заметок.';
+
+  @override
+  String get notesEmptyUncategorized => 'Нет заметок без категории.';
+
+  @override
+  String get notesEmptyRecovery =>
+      'Нет сохранённых заметок для восстановления.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Ошибка. Повторить';
+
+  @override
+  String get notesOperationFailed =>
+      'Не удалось завершить операцию. Черновик сохранён. Проверьте сохранение и конфликты, затем повторите попытку.';
+
+  @override
+  String get notesInspectionFailed => 'Вложения · Ошибка. Повторить';
+
+  @override
+  String get notesStartingConnection => 'Начало подключения к Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'Проверка доступа к заметкам…';
+
+  @override
+  String get notesCancellingConnection => 'Отмена входа и очистка…';
+
+  @override
+  String get notesRemovingConnection => 'Удаление локальной учётной записи…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Локальная учётная запись Nextcloud удалена. Отзыв пароля приложения не подтверждён. Удалите пароль BusyMark в настройках безопасности Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Не удалось сохранить все открытые заметки локально. Проверьте сохранение, конфликты или нормализацию в рабочей области. Локальные изменения могут ещё требовать синхронизации с Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Сохранить изменения настроек Nextcloud перед выходом?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Настройки Notes на сервере · Несохранённые изменения';
+
+  @override
+  String get notesSettingsReload => 'Перезагрузить настройки сервера…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Перезагрузка заменит черновик текущими настройками Nextcloud. Отбросить черновик и перезагрузить?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud принял настройки, но обновить заметки не удалось. Показаны значения, подтверждённые сервером. Повторите обновление из Заметок.';
+
+  @override
+  String get notesUnavailable =>
+      'Нет сети · Текст доступен локально · Сохранено локально · ожидает синхронизации';
+
+  @override
+  String get notesStorageFull =>
+      'Хранилище Nextcloud заполнено. Освободите место на сервере и повторите попытку.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud отклонил это изменение. Проверьте заметку и сохраните локальную копию перед повторной попыткой.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud попросил подождать. Синхронизация продолжится после указанного срока.';
+
+  @override
+  String get notesRecoveryRequired => 'Конфликты · Сравнить';
+
+  @override
+  String get notesScanning => 'Сканирование файлов…';
+
+  @override
+  String get notesCancelling => 'Отмена… Ожидание завершения текущей операции.';
+
+  @override
+  String get notesCancelled => 'Отменено';
+
+  @override
+  String get notesPartial => 'Частично завершено';
+
+  @override
+  String get notesTransferFailed => 'Ошибка. Повторить';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Предыдущие элементы могут быть уже сохранены локально. Возобновите этот импорт, чтобы избежать дубликатов.';
+
+  @override
+  String get notesNotStarted => 'Не начато';
+
+  @override
+  String get notesCreated => 'Создано';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Адрес сервера · Не поддерживается · Удалить · Вложения';
+
+  @override
+  String get notesCurrentText => 'Текущий сохранённый текст';
+
+  @override
+  String get notesRecovering => 'Восстановление в новую заметку…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Только чтение · Избранное · Сохранить локальную копию…';
+
+  @override
+  String get notesSort => 'Сортировка заметок';
+
+  @override
+  String get notesPathRelative =>
+      'Путь папки заметок задаётся относительно вашего хранилища Nextcloud.';
+
+  @override
+  String get notesSettingsStale =>
+      'Настройки на Nextcloud изменились. Перезагрузите и проверьте значения сервера перед заменой черновика.';
+
+  @override
+  String get notesDownloadsPaused => 'Загрузки приостановлены';
+
+  @override
+  String get notesExportNotPublished => 'Экспорт не опубликован.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Разблокируйте системную связку ключей и повторите попытку.';
+
+  @override
+  String get notesConnectFailed =>
+      'Не удалось подключиться к Nextcloud Notes. Проверьте адрес сервера и повторите попытку.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Войдите в ту же учётную запись Nextcloud. Для подключения другой сначала удалите эту.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Не удалось очистить локальные данные. Учётная запись сохранена для повторной попытки удаления.';
+
+  @override
+  String get notesTransferring => 'Передача заметок…';
+
+  @override
+  String get notesTechnicalDetails => 'Технические сведения';
+
+  @override
+  String get notesPauseRequirement =>
+      'Приостановить требование автономного хранения';
+
+  @override
+  String get notesResumeRequirement =>
+      'Возобновить требование автономного хранения';
 }

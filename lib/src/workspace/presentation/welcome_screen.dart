@@ -156,6 +156,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (connection.removedWithWarning)
+              BusyMarkStatusBox(
+                message: context.l10n.notesRemovedWarning,
+                kind: BusyMarkStatusKind.warning,
+              ),
             BusyMarkGroupedList(
               title: context.l10n.create,
               filled: true,

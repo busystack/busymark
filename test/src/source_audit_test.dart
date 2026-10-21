@@ -1397,7 +1397,13 @@ void main() {
       r'bool _canPasteTocTreeEntry',
     ).firstMatch(workspace)!.group(0)!;
 
-    expect(workspace, contains('class _SidebarTreeRow'));
+    final shared = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final notes = File(
+      'lib/src/nextcloud_notes/presentation/notes_sidebar.dart',
+    ).readAsStringSync();
+    expect(shared, contains('class BusyMarkSidebarTreeRow'));
+    expect(workspace, contains('BusyMarkSidebarTreeRow('));
+    expect(notes, contains('BusyMarkSidebarTreeRow('));
     expect(workspace, contains('class _FileTreeNode'));
     expect(workspace, contains('_buildFileTree'));
     expect(workspace, contains('_visibleFileTreeEntries'));
@@ -1411,15 +1417,15 @@ void main() {
     expect(workspace, contains('_buildOutlineTree'));
     expect(workspace, contains('_visibleOutlineTreeEntries'));
     expect(workspace, contains('onToggle: hasChildren ? toggle : null'));
-    expect(workspace, contains('AnimatedRotation'));
-    expect(workspace, contains('BusyMarkGlyphs.collapsedTreeArrowFor('));
+    expect(shared, contains('AnimatedRotation'));
+    expect(shared, contains('BusyMarkGlyphs.collapsedTreeArrowFor('));
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
     expect(workspace, contains('_FileTreeVcsStatusColors.fromSnapshot'));
     expect(workspace, contains('vcsColor: vcsStatusColors.colorForNode(node)'));
     expect(
-      workspace,
+      shared,
       contains('busyMarkVcsFileStatusColor(context, widget.vcsColor!)'),
     );
     expect(workspace, contains('busyMarkVcsFileColorForGitStatus(status)'));
@@ -1427,7 +1433,7 @@ void main() {
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
-    expect(workspace, contains('onSecondaryTapUp'));
+    expect(shared, contains('onSecondaryTapUp'));
     expect(workspace, contains('onMenuRequested'));
     expect(workspace, contains('_ShowSelectedSidebarTreeMenuIntent'));
     expect(workspace, contains('LogicalKeyboardKey.contextMenu'));
@@ -1499,7 +1505,7 @@ void main() {
     );
     expect(tocHeader, contains('class _WritersideInstanceSelector'));
     expect(tocHeader, contains('BusyMarkMenuButton<String>'));
-    expect(tocHeader, contains('_SidebarRowSurface'));
+    expect(tocHeader, contains('BusyMarkSidebarRowSurface'));
     expect(tocHeader, isNot(contains('BusyMarkPopupSelector<String>')));
     expect(tocHeader, isNot(contains('FilledButton')));
     expect(tocHeader, contains('iconColor: writersideInstanceIconColorValue'));
@@ -1514,7 +1520,7 @@ void main() {
       tocHeader,
       isNot(
         contains(
-          'for (final instance in instances)\n            _SidebarTreeRow',
+          'for (final instance in instances)\n            BusyMarkSidebarTreeRow',
         ),
       ),
     );

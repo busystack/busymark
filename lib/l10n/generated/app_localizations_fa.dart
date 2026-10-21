@@ -5574,4 +5574,219 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'میان‌بر پیشنهادی';
+
+  @override
+  String get notesActions => 'کنش‌های یادداشت‌ها';
+
+  @override
+  String get noteActions => 'کنش‌های یادداشت';
+
+  @override
+  String get noteProperties => 'ویژگی‌های یادداشت';
+
+  @override
+  String get notesExportAll => 'صادر کردن یادداشت‌ها · همه یادداشت‌ها…';
+
+  @override
+  String get notesExportCategory => 'صادر کردن یادداشت‌ها · دسته‌بندی…';
+
+  @override
+  String get notesOfflineAll => 'در دسترس کردن آفلاین · همه یادداشت‌ها';
+
+  @override
+  String get notesOfflineCategory => 'در دسترس کردن آفلاین · دسته‌بندی';
+
+  @override
+  String get notesOfflineRemoveAll => 'حذف نگهداری آفلاین · همه یادداشت‌ها';
+
+  @override
+  String get notesOfflineRemoveCategory => 'حذف نگهداری آفلاین · دسته‌بندی';
+
+  @override
+  String get notesOfflinePause => 'مکث بارگیری‌ها';
+
+  @override
+  String get notesOfflineResume => 'ادامهٔ بارگیری‌ها';
+
+  @override
+  String get notesOfflineKeep => 'در دسترس کردن آفلاین';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'حذف این نیازمندی محتوای نهان‌شده را نگه می‌دارد. نیازمندی دسته یا حساب ممکن است همچنان یادداشت را نگه دارد.';
+
+  @override
+  String get notesOfflineBroader =>
+      'این یادداشت به‌دلیل نیازمندی دسته یا حساب نیز نگهداری می‌شود.';
+
+  @override
+  String get notesOfflineExternal =>
+      'رسانهٔ خارجی به اتصال نیاز دارد. BusyMark فقط متن یادداشت و پیوست‌های مدیریت‌شده را نگه می‌دارد.';
+
+  @override
+  String get notesEmptyAll => 'هنوز یادداشتی نیست. یک یادداشت بسازید.';
+
+  @override
+  String get notesEmptyFavorites => 'یادداشت دلخواهی نیست.';
+
+  @override
+  String get notesEmptyCategory => 'در این دسته یادداشتی نیست.';
+
+  @override
+  String get notesEmptyUncategorized => 'یادداشت بدون دسته‌ای نیست.';
+
+  @override
+  String get notesEmptyRecovery => 'یادداشت نگهداری‌شده‌ای برای بازیابی نیست.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · ناموفق. تلاش دوباره';
+
+  @override
+  String get notesOperationFailed =>
+      'عملیات کامل نشد. پیش‌نویس نگهداری شده است. ذخیره و تعارض‌ها را بررسی کنید و دوباره تلاش کنید.';
+
+  @override
+  String get notesInspectionFailed => 'پیوست‌ها · ناموفق. تلاش دوباره';
+
+  @override
+  String get notesStartingConnection => 'در حال آغاز اتصال Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'در حال بررسی دسترسی به یادداشت‌ها…';
+
+  @override
+  String get notesCancellingConnection => 'در حال لغو ورود و پاک‌سازی…';
+
+  @override
+  String get notesRemovingConnection => 'در حال حذف حساب محلی…';
+
+  @override
+  String get notesRemovedWarning =>
+      'حساب محلی Nextcloud حذف شد. لغو گذرواژهٔ برنامه تأیید نشد. گذرواژهٔ BusyMark را در تنظیمات امنیتی Nextcloud حذف کنید.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'همهٔ یادداشت‌های باز به‌صورت محلی ذخیره نشدند. ذخیره، تعارض‌ها یا نرمال‌سازی را در فضای کار بررسی کنید. تغییرات محلی ممکن است هنوز به همگام‌سازی با Nextcloud نیاز داشته باشند.';
+
+  @override
+  String get notesSettingsLeave =>
+      'پیش از خروج تغییرات تنظیمات Nextcloud ذخیره شوند؟';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'تنظیمات Notes سرور · تغییرات ذخیره‌نشده';
+
+  @override
+  String get notesSettingsReload => 'بارگیری دوبارهٔ تنظیمات کارساز…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'بارگیری دوباره پیش‌نویس را با تنظیمات فعلی Nextcloud جایگزین می‌کند. پیش‌نویس دور ریخته و دوباره بارگیری شود؟';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud تنظیمات را پذیرفت ولی تازه‌سازی یادداشت‌ها ناموفق بود. مقادیر نمایش‌داده‌شده تأییدشدهٔ کارسازند. از یادداشت‌ها دوباره تازه‌سازی کنید.';
+
+  @override
+  String get notesUnavailable =>
+      'بدون اتصال · متن به صورت محلی در دسترس است · ذخیرهٔ محلی · در انتظار همگام‌سازی';
+
+  @override
+  String get notesStorageFull =>
+      'فضای Nextcloud پر است. در کارساز جا باز کنید و دوباره تلاش کنید.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud این تغییر را نپذیرفت. یادداشت را بررسی کنید و پیش از تلاش دوباره نسخه‌ای محلی ذخیره کنید.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud درخواست انتظار کرد. همگام‌سازی پس از پایان مهلت دوباره ادامه می‌یابد.';
+
+  @override
+  String get notesRecoveryRequired => 'تداخل‌ها · مقایسه';
+
+  @override
+  String get notesScanning => 'در حال بررسی پرونده‌ها…';
+
+  @override
+  String get notesCancelling => 'در حال لغو… منتظر پایان عملیات جاری.';
+
+  @override
+  String get notesCancelled => 'لغو شد';
+
+  @override
+  String get notesPartial => 'تا حدی کامل شد';
+
+  @override
+  String get notesTransferFailed => 'ناموفق. تلاش دوباره';
+
+  @override
+  String get notesImportPartialHelp =>
+      'موارد قبلی ممکن است از پیش محلی ذخیره شده باشند. همین درون‌ریزی را ادامه دهید تا تکراری ایجاد نشود.';
+
+  @override
+  String get notesNotStarted => 'آغاز نشده';
+
+  @override
+  String get notesCreated => 'ایجاد شد';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'نشانی سرور · پشتیبانی نمی‌شود · حذف · پیوست‌ها';
+
+  @override
+  String get notesCurrentText => 'متن محلی نگهداری‌شدهٔ کنونی';
+
+  @override
+  String get notesRecovering => 'در حال بازیابی به‌عنوان یادداشت تازه…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'فقط خواندنی · علاقه‌مندی‌ها · ذخیرهٔ نسخهٔ محلی…';
+
+  @override
+  String get notesSort => 'مرتب‌سازی یادداشت‌ها';
+
+  @override
+  String get notesPathRelative =>
+      'مسیر پوشهٔ یادداشت‌ها نسبت به فضای ذخیره‌سازی Nextcloud شماست.';
+
+  @override
+  String get notesSettingsStale =>
+      'تنظیمات در Nextcloud تغییر کرده‌اند. پیش از جایگزینی پیش‌نویس، مقادیر کارساز را دوباره بارگیری و بررسی کنید.';
+
+  @override
+  String get notesDownloadsPaused => 'بارگیری‌ها مکث شده‌اند';
+
+  @override
+  String get notesExportNotPublished => 'هیچ برون‌بری منتشر نشد.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'قفل دسته‌کلید میزکار را باز کنید و دوباره تلاش کنید.';
+
+  @override
+  String get notesConnectFailed =>
+      'اتصال به یادداشت‌های Nextcloud ناموفق بود. نشانی کارساز را بررسی و دوباره تلاش کنید.';
+
+  @override
+  String get notesAccountMismatch =>
+      'به همان حساب Nextcloud وارد شوید. برای اتصال به حساب دیگر ابتدا این حساب را حذف کنید.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'پاک‌سازی حساب محلی ناموفق بود. حساب برای تلاش دوبارهٔ حذف نگه داشته شده است.';
+
+  @override
+  String get notesTransferring => 'در حال انتقال یادداشت‌ها…';
+
+  @override
+  String get notesTechnicalDetails => 'جزئیات فنی';
+
+  @override
+  String get notesPauseRequirement => 'مکث نیازمندی آفلاین';
+
+  @override
+  String get notesResumeRequirement => 'ادامهٔ نیازمندی آفلاین';
 }

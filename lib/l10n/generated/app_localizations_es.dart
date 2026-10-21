@@ -5590,4 +5590,225 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Atajo propuesto';
+
+  @override
+  String get notesActions => 'Acciones de notas';
+
+  @override
+  String get noteActions => 'Acciones de la nota';
+
+  @override
+  String get noteProperties => 'Propiedades de la nota';
+
+  @override
+  String get notesExportAll => 'Exportar notas · Todas las notas…';
+
+  @override
+  String get notesExportCategory => 'Exportar notas · Categoría…';
+
+  @override
+  String get notesOfflineAll =>
+      'Hacer disponible sin conexión · Todas las notas';
+
+  @override
+  String get notesOfflineCategory =>
+      'Hacer disponible sin conexión · Categoría';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Quitar conservación sin conexión · Todas las notas';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Quitar conservación sin conexión · Categoría';
+
+  @override
+  String get notesOfflinePause => 'Pausar descargas';
+
+  @override
+  String get notesOfflineResume => 'Reanudar descargas';
+
+  @override
+  String get notesOfflineKeep => 'Hacer disponible sin conexión';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Quitar este requisito conserva el contenido en caché. Un requisito de categoría o cuenta puede seguir reteniendo la nota.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Esta nota también se conserva por un requisito de categoría o cuenta.';
+
+  @override
+  String get notesOfflineExternal =>
+      'El contenido multimedia externo necesita conexión. BusyMark solo conserva el texto y los adjuntos gestionados.';
+
+  @override
+  String get notesEmptyAll => 'Aún no hay notas. Cree una para empezar.';
+
+  @override
+  String get notesEmptyFavorites => 'No hay notas favoritas.';
+
+  @override
+  String get notesEmptyCategory => 'No hay notas en esta categoría.';
+
+  @override
+  String get notesEmptyUncategorized => 'No hay notas sin categoría.';
+
+  @override
+  String get notesEmptyRecovery => 'No hay notas conservadas para recuperar.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Fallido. Reintentar';
+
+  @override
+  String get notesOperationFailed =>
+      'La operación no pudo terminar. El borrador se conserva. Revise el guardado y los conflictos antes de reintentarlo.';
+
+  @override
+  String get notesInspectionFailed => 'Adjuntos · Fallido. Reintentar';
+
+  @override
+  String get notesStartingConnection => 'Iniciando la conexión con Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'Verificando el acceso a Notas…';
+
+  @override
+  String get notesCancellingConnection =>
+      'Cancelando el inicio de sesión y limpiando…';
+
+  @override
+  String get notesRemovingConnection => 'Eliminando la cuenta local…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Se eliminó la cuenta local de Nextcloud. No se confirmó la revocación de la contraseña de aplicación. Elimine la contraseña de BusyMark en los ajustes de seguridad de Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'No se pudieron guardar todas las notas abiertas localmente. Revise el guardado, los conflictos o la normalización en el espacio de trabajo. Los cambios pendientes aún pueden necesitar sincronización con Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      '¿Guardar los cambios de ajustes de Nextcloud antes de salir?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Ajustes de Notes del servidor · Cambios sin guardar';
+
+  @override
+  String get notesSettingsReload => 'Volver a cargar los ajustes del servidor…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'La recarga sustituye el borrador por los ajustes actuales de Nextcloud. ¿Descartar el borrador y recargar?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud aceptó los ajustes, pero falló la actualización de las notas. Se muestran los valores confirmados por el servidor. Reintente actualizar desde Notas.';
+
+  @override
+  String get notesUnavailable =>
+      'Sin conexión · Texto disponible localmente · Guardado localmente · sincronización pendiente';
+
+  @override
+  String get notesStorageFull =>
+      'El almacenamiento de Nextcloud está lleno. Libere espacio en el servidor y reinténtelo.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud rechazó este cambio. Revise la nota y guarde una copia local antes de reintentarlo.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud ha pedido esperar. La sincronización continuará al finalizar el plazo de espera.';
+
+  @override
+  String get notesRecoveryRequired => 'Conflictos · Comparar';
+
+  @override
+  String get notesScanning => 'Examinando archivos…';
+
+  @override
+  String get notesCancelling =>
+      'Cancelando… Esperando a que termine la operación actual.';
+
+  @override
+  String get notesCancelled => 'Cancelado';
+
+  @override
+  String get notesPartial => 'Completado parcialmente';
+
+  @override
+  String get notesTransferFailed => 'Fallido. Reintentar';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Los elementos anteriores pueden estar guardados localmente. Reanude esta importación para continuar sin duplicarlos.';
+
+  @override
+  String get notesNotStarted => 'Sin iniciar';
+
+  @override
+  String get notesCreated => 'Creado';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'URL del servidor · No compatible · Eliminar · Adjuntos';
+
+  @override
+  String get notesCurrentText => 'Texto conservado actual';
+
+  @override
+  String get notesRecovering => 'Recuperando como nota nueva…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Solo lectura · Favoritos · Guardar copia local…';
+
+  @override
+  String get notesSort => 'Ordenar notas';
+
+  @override
+  String get notesPathRelative =>
+      'La ruta de la carpeta de notas es relativa a su almacenamiento Nextcloud.';
+
+  @override
+  String get notesSettingsStale =>
+      'Los ajustes cambiaron en Nextcloud. Recargue y revise los valores del servidor antes de sustituir el borrador.';
+
+  @override
+  String get notesDownloadsPaused => 'Descargas pausadas';
+
+  @override
+  String get notesExportNotPublished => 'No se publicó ninguna exportación.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Desbloquee el llavero del escritorio y reinténtelo.';
+
+  @override
+  String get notesConnectFailed =>
+      'No se pudo conectar con Nextcloud Notes. Compruebe la dirección del servidor y reinténtelo.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Inicie sesión con la misma cuenta Nextcloud. Elimínela primero para conectar otra.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Falló la limpieza local. La cuenta se conserva para poder reintentar su eliminación.';
+
+  @override
+  String get notesTransferring => 'Transfiriendo notas…';
+
+  @override
+  String get notesTechnicalDetails => 'Detalles técnicos';
+
+  @override
+  String get notesPauseRequirement => 'Pausar requisito sin conexión';
+
+  @override
+  String get notesResumeRequirement => 'Reanudar requisito sin conexión';
 }

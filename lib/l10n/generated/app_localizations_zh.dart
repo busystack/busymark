@@ -5301,6 +5301,201 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => '拟用快捷键';
+
+  @override
+  String get notesActions => '笔记操作';
+
+  @override
+  String get noteActions => '此笔记的操作';
+
+  @override
+  String get noteProperties => '笔记属性';
+
+  @override
+  String get notesExportAll => '导出笔记 · 所有笔记…';
+
+  @override
+  String get notesExportCategory => '导出笔记 · 类别…';
+
+  @override
+  String get notesOfflineAll => '设为离线可用 · 所有笔记';
+
+  @override
+  String get notesOfflineCategory => '设为离线可用 · 类别';
+
+  @override
+  String get notesOfflineRemoveAll => '移除离线保留要求 · 所有笔记';
+
+  @override
+  String get notesOfflineRemoveCategory => '移除离线保留要求 · 类别';
+
+  @override
+  String get notesOfflinePause => '暂停下载';
+
+  @override
+  String get notesOfflineResume => '继续下载';
+
+  @override
+  String get notesOfflineKeep => '设为离线可用';
+
+  @override
+  String get notesOfflineRetentionHelp => '移除此保留要求不会删除现有缓存。分类或账户的要求仍可能保留此笔记。';
+
+  @override
+  String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
+
+  @override
+  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+
+  @override
+  String get notesEmptyAll => '还没有笔记。请新建一条笔记。';
+
+  @override
+  String get notesEmptyFavorites => '没有收藏的笔记。';
+
+  @override
+  String get notesEmptyCategory => '此分类中没有笔记。';
+
+  @override
+  String get notesEmptyUncategorized => '没有未分类笔记。';
+
+  @override
+  String get notesEmptyRecovery => '没有可恢复的本地保留笔记。';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · 失败. 重试';
+
+  @override
+  String get notesOperationFailed => '无法完成操作。草稿已保留。请检查保存状态和冲突后重试。';
+
+  @override
+  String get notesInspectionFailed => '附件 · 失败. 重试';
+
+  @override
+  String get notesStartingConnection => '正在连接 Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => '正在验证笔记访问权限…';
+
+  @override
+  String get notesCancellingConnection => '正在取消登录并清理…';
+
+  @override
+  String get notesRemovingConnection => '正在移除本地账户…';
+
+  @override
+  String get notesRemovedWarning =>
+      '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
+
+  @override
+  String get notesBuffersNotSaved =>
+      '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
+
+  @override
+  String get notesSettingsLeave => '离开前保存 Nextcloud 设置更改吗？';
+
+  @override
+  String get notesSettingsLeaveHelp => '服务器 Notes 设置 · 未保存的更改';
+
+  @override
+  String get notesSettingsReload => '重新加载服务器设置…';
+
+  @override
+  String get notesSettingsReloadHelp => '重新加载会用 Nextcloud 当前设置替换草稿。放弃草稿并重新加载吗？';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
+
+  @override
+  String get notesUnavailable => '离线 · 文本已在本地可用 · 已保存到本地 · 等待同步';
+
+  @override
+  String get notesStorageFull => 'Nextcloud 存储空间已满。请释放服务器空间后重试。';
+
+  @override
+  String get notesRejected => 'Nextcloud 拒绝了此更改。请检查笔记并保存本地副本后重试。';
+
+  @override
+  String get notesThrottled => 'Nextcloud 要求稍候。同步将在重试期限后继续。';
+
+  @override
+  String get notesRecoveryRequired => '冲突 · 比较';
+
+  @override
+  String get notesScanning => '正在扫描文件…';
+
+  @override
+  String get notesCancelling => '正在取消…等待当前操作结束。';
+
+  @override
+  String get notesCancelled => '已取消';
+
+  @override
+  String get notesPartial => '部分完成';
+
+  @override
+  String get notesTransferFailed => '失败. 重试';
+
+  @override
+  String get notesImportPartialHelp => '之前的项目可能已保存在本地。请继续本次导入，以免创建重复笔记。';
+
+  @override
+  String get notesNotStarted => '尚未开始';
+
+  @override
+  String get notesCreated => '已创建';
+
+  @override
+  String get notesRemoteDeleteUnavailable => '服务器地址 · 不支持 · 删除 · 附件';
+
+  @override
+  String get notesCurrentText => '当前保留的文本';
+
+  @override
+  String get notesRecovering => '正在恢复为新笔记…';
+
+  @override
+  String get notesReadOnlyHelp => '只读 · 收藏 · 保存本地副本…';
+
+  @override
+  String get notesSort => '笔记排序';
+
+  @override
+  String get notesPathRelative => '笔记文件夹路径相对于您的 Nextcloud 存储空间。';
+
+  @override
+  String get notesSettingsStale => 'Nextcloud 上的设置已更改。请重新加载并检查服务器值，再替换草稿。';
+
+  @override
+  String get notesDownloadsPaused => '下载已暂停';
+
+  @override
+  String get notesExportNotPublished => '未发布任何导出。';
+
+  @override
+  String get notesKeyringUnavailable => '请解锁桌面密钥环后重试。';
+
+  @override
+  String get notesConnectFailed => '无法连接 Nextcloud Notes。请检查服务器地址后重试。';
+
+  @override
+  String get notesAccountMismatch => '请登录同一 Nextcloud 账户。要连接其他账户，请先移除此账户。';
+
+  @override
+  String get notesLocalRemovalFailed => '本地账户清理失败。账户已保留，以便重试移除。';
+
+  @override
+  String get notesTransferring => '正在传输笔记…';
+
+  @override
+  String get notesTechnicalDetails => '技术详情';
+
+  @override
+  String get notesPauseRequirement => '暂停离线保留要求';
+
+  @override
+  String get notesResumeRequirement => '继续离线保留要求';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -10598,4 +10793,199 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get shortcutProposedBinding => '拟用快捷键';
+
+  @override
+  String get notesActions => '笔记操作';
+
+  @override
+  String get noteActions => '此笔记的操作';
+
+  @override
+  String get noteProperties => '笔记属性';
+
+  @override
+  String get notesExportAll => '导出笔记 · 所有笔记…';
+
+  @override
+  String get notesExportCategory => '导出笔记 · 类别…';
+
+  @override
+  String get notesOfflineAll => '设为离线可用 · 所有笔记';
+
+  @override
+  String get notesOfflineCategory => '设为离线可用 · 类别';
+
+  @override
+  String get notesOfflineRemoveAll => '移除离线保留要求 · 所有笔记';
+
+  @override
+  String get notesOfflineRemoveCategory => '移除离线保留要求 · 类别';
+
+  @override
+  String get notesOfflinePause => '暂停下载';
+
+  @override
+  String get notesOfflineResume => '继续下载';
+
+  @override
+  String get notesOfflineKeep => '设为离线可用';
+
+  @override
+  String get notesOfflineRetentionHelp => '移除此保留要求不会删除现有缓存。分类或账户的要求仍可能保留此笔记。';
+
+  @override
+  String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
+
+  @override
+  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+
+  @override
+  String get notesEmptyAll => '还没有笔记。请新建一条笔记。';
+
+  @override
+  String get notesEmptyFavorites => '没有收藏的笔记。';
+
+  @override
+  String get notesEmptyCategory => '此分类中没有笔记。';
+
+  @override
+  String get notesEmptyUncategorized => '没有未分类笔记。';
+
+  @override
+  String get notesEmptyRecovery => '没有可恢复的本地保留笔记。';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · 失败. 重试';
+
+  @override
+  String get notesOperationFailed => '无法完成操作。草稿已保留。请检查保存状态和冲突后重试。';
+
+  @override
+  String get notesInspectionFailed => '附件 · 失败. 重试';
+
+  @override
+  String get notesStartingConnection => '正在连接 Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => '正在验证笔记访问权限…';
+
+  @override
+  String get notesCancellingConnection => '正在取消登录并清理…';
+
+  @override
+  String get notesRemovingConnection => '正在移除本地账户…';
+
+  @override
+  String get notesRemovedWarning =>
+      '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
+
+  @override
+  String get notesBuffersNotSaved =>
+      '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
+
+  @override
+  String get notesSettingsLeave => '离开前保存 Nextcloud 设置更改吗？';
+
+  @override
+  String get notesSettingsLeaveHelp => '服务器 Notes 设置 · 未保存的更改';
+
+  @override
+  String get notesSettingsReload => '重新加载服务器设置…';
+
+  @override
+  String get notesSettingsReloadHelp => '重新加载会用 Nextcloud 当前设置替换草稿。放弃草稿并重新加载吗？';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
+
+  @override
+  String get notesUnavailable => '离线 · 文本已在本地可用 · 已保存到本地 · 等待同步';
+
+  @override
+  String get notesStorageFull => 'Nextcloud 存储空间已满。请释放服务器空间后重试。';
+
+  @override
+  String get notesRejected => 'Nextcloud 拒绝了此更改。请检查笔记并保存本地副本后重试。';
+
+  @override
+  String get notesThrottled => 'Nextcloud 要求稍候。同步将在重试期限后继续。';
+
+  @override
+  String get notesRecoveryRequired => '冲突 · 比较';
+
+  @override
+  String get notesScanning => '正在扫描文件…';
+
+  @override
+  String get notesCancelling => '正在取消…等待当前操作结束。';
+
+  @override
+  String get notesCancelled => '已取消';
+
+  @override
+  String get notesPartial => '部分完成';
+
+  @override
+  String get notesTransferFailed => '失败. 重试';
+
+  @override
+  String get notesImportPartialHelp => '之前的项目可能已保存在本地。请继续本次导入，以免创建重复笔记。';
+
+  @override
+  String get notesNotStarted => '尚未开始';
+
+  @override
+  String get notesCreated => '已创建';
+
+  @override
+  String get notesRemoteDeleteUnavailable => '服务器地址 · 不支持 · 删除 · 附件';
+
+  @override
+  String get notesCurrentText => '当前保留的文本';
+
+  @override
+  String get notesRecovering => '正在恢复为新笔记…';
+
+  @override
+  String get notesReadOnlyHelp => '只读 · 收藏 · 保存本地副本…';
+
+  @override
+  String get notesSort => '笔记排序';
+
+  @override
+  String get notesPathRelative => '笔记文件夹路径相对于您的 Nextcloud 存储空间。';
+
+  @override
+  String get notesSettingsStale => 'Nextcloud 上的设置已更改。请重新加载并检查服务器值，再替换草稿。';
+
+  @override
+  String get notesDownloadsPaused => '下载已暂停';
+
+  @override
+  String get notesExportNotPublished => '未发布任何导出。';
+
+  @override
+  String get notesKeyringUnavailable => '请解锁桌面密钥环后重试。';
+
+  @override
+  String get notesConnectFailed => '无法连接 Nextcloud Notes。请检查服务器地址后重试。';
+
+  @override
+  String get notesAccountMismatch => '请登录同一 Nextcloud 账户。要连接其他账户，请先移除此账户。';
+
+  @override
+  String get notesLocalRemovalFailed => '本地账户清理失败。账户已保留，以便重试移除。';
+
+  @override
+  String get notesTransferring => '正在传输笔记…';
+
+  @override
+  String get notesTechnicalDetails => '技术详情';
+
+  @override
+  String get notesPauseRequirement => '暂停离线保留要求';
+
+  @override
+  String get notesResumeRequirement => '继续离线保留要求';
 }

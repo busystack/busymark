@@ -5536,4 +5536,223 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Pakutud otsetee';
+
+  @override
+  String get notesActions => 'Märkmete toimingud';
+
+  @override
+  String get noteActions => 'Märkme toimingud';
+
+  @override
+  String get noteProperties => 'Märkme omadused';
+
+  @override
+  String get notesExportAll => 'Ekspordi märkmed · Kõik märkmed…';
+
+  @override
+  String get notesExportCategory => 'Ekspordi märkmed · Kategooria…';
+
+  @override
+  String get notesOfflineAll => 'Tee võrguta kättesaadavaks · Kõik märkmed';
+
+  @override
+  String get notesOfflineCategory => 'Tee võrguta kättesaadavaks · Kategooria';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Eemalda võrguta säilitamine · Kõik märkmed';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Eemalda võrguta säilitamine · Kategooria';
+
+  @override
+  String get notesOfflinePause => 'Peata allalaadimised';
+
+  @override
+  String get notesOfflineResume => 'Jätka allalaadimisi';
+
+  @override
+  String get notesOfflineKeep => 'Tee võrguta kättesaadavaks';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Selle nõude eemaldamine jätab vahemälu alles. Kategooria või konto nõue võib märget endiselt säilitada.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Seda märget säilitatakse ka kategooria või konto nõude tõttu.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Väline meedia vajab ühendust. BusyMark säilitab vaid märkmete teksti ja hallatavad manused.';
+
+  @override
+  String get notesEmptyAll => 'Märkmeid veel pole. Alustamiseks loo märge.';
+
+  @override
+  String get notesEmptyFavorites => 'Lemmikmärkmeid pole.';
+
+  @override
+  String get notesEmptyCategory => 'Selles kategoorias pole märkmeid.';
+
+  @override
+  String get notesEmptyUncategorized => 'Kategooriata märkmeid pole.';
+
+  @override
+  String get notesEmptyRecovery => 'Taastamiseks säilitatud märkmeid pole.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Ebaõnnestus. Proovi uuesti';
+
+  @override
+  String get notesOperationFailed =>
+      'Toiming ei lõppenud. Mustand on alles. Kontrolli salvestamist ja konflikte ning proovi uuesti.';
+
+  @override
+  String get notesInspectionFailed => 'Manused · Ebaõnnestus. Proovi uuesti';
+
+  @override
+  String get notesStartingConnection => 'Nextcloudi ühenduse alustamine…';
+
+  @override
+  String get notesVerifyingConnection => 'Märkmete ligipääsu kontrollimine…';
+
+  @override
+  String get notesCancellingConnection =>
+      'Sisselogimise tühistamine ja puhastamine…';
+
+  @override
+  String get notesRemovingConnection => 'Kohaliku konto eemaldamine…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Kohalik Nextcloudi konto eemaldati. Rakenduse parooli tühistamist ei kinnitatud. Eemalda BusyMarki parool Nextcloudi turvaseadetest.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Kõiki avatud märkmeid ei saanud kohalikult salvestada. Kontrolli tööruumis salvestamist, konflikte või normaliseerimist. Kohalikud muudatused võivad veel vajada Nextcloudiga sünkroonimist.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Kas salvestada Nextcloudi seadete muudatused enne lahkumist?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Serveri Notesi seaded · Salvestamata muudatused';
+
+  @override
+  String get notesSettingsReload => 'Laadi serveri seaded uuesti…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Uuesti laadimine asendab mustandi Nextcloudi praeguste seadetega. Kas loobuda mustandist ja laadida uuesti?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud kinnitas seaded, kuid märkmete värskendamine ebaõnnestus. Kuvatakse serveri kinnitatud väärtused. Proovi märkmete värskendamist uuesti.';
+
+  @override
+  String get notesUnavailable =>
+      'Ühenduseta · Tekst on kohalikult saadaval · Salvestatud kohalikult · sünkroonimine ootel';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloudi salvestusruum on täis. Vabasta serveris ruumi ja proovi uuesti.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud lükkas muudatuse tagasi. Kontrolli märget ja salvesta enne uut katset kohalik koopia.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud palus oodata. Sünkroonimine jätkub pärast ooteaja lõppu.';
+
+  @override
+  String get notesRecoveryRequired => 'Konfliktid · Võrdle';
+
+  @override
+  String get notesScanning => 'Failide uurimine…';
+
+  @override
+  String get notesCancelling => 'Tühistamine… Praeguse toimingu lõpu ootamine.';
+
+  @override
+  String get notesCancelled => 'Tühistatud';
+
+  @override
+  String get notesPartial => 'Osaliselt lõpetatud';
+
+  @override
+  String get notesTransferFailed => 'Ebaõnnestus. Proovi uuesti';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Varasemad üksused võivad olla juba kohalikult salvestatud. Jätka sama importi, et vältida duplikaate.';
+
+  @override
+  String get notesNotStarted => 'Alustamata';
+
+  @override
+  String get notesCreated => 'Loodud';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Serveri aadress · Pole toetatud · Kustuta · Manused';
+
+  @override
+  String get notesCurrentText => 'Praegu säilitatud tekst';
+
+  @override
+  String get notesRecovering => 'Taastamine uue märkmena…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Kirjutuskaitstud · Lemmikud · Salvesta kohalik koopia…';
+
+  @override
+  String get notesSort => 'Sordi märkmeid';
+
+  @override
+  String get notesPathRelative =>
+      'Märkmete kaustatee on suhteline sinu Nextcloudi salvestusruumi suhtes.';
+
+  @override
+  String get notesSettingsStale =>
+      'Seaded muutusid Nextcloudis. Laadi serveri väärtused uuesti ja vaata üle enne mustandi asendamist.';
+
+  @override
+  String get notesDownloadsPaused => 'Allalaadimised peatatud';
+
+  @override
+  String get notesExportNotPublished => 'Eksporti ei avaldatud.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Ava töölaua võtmehoidla ja proovi uuesti.';
+
+  @override
+  String get notesConnectFailed =>
+      'Nextcloudi märkmetega ei saanud ühendust. Kontrolli serveri aadressi ja proovi uuesti.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Logi sisse samale Nextcloudi kontole. Teise konto ühendamiseks eemalda esmalt see konto.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Kohaliku konto puhastamine ebaõnnestus. Konto on alles, et saaksid eemaldamist korrata.';
+
+  @override
+  String get notesTransferring => 'Märkmete teisaldamine…';
+
+  @override
+  String get notesTechnicalDetails => 'Tehnilised üksikasjad';
+
+  @override
+  String get notesPauseRequirement => 'Peata võrguühenduseta säilitamise nõue';
+
+  @override
+  String get notesResumeRequirement =>
+      'Jätka võrguühenduseta säilitamise nõuet';
 }

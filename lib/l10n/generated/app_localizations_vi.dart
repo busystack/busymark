@@ -5527,4 +5527,222 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Phím tắt đề xuất';
+
+  @override
+  String get notesActions => 'Thao tác ghi chú';
+
+  @override
+  String get noteActions => 'Thao tác với ghi chú';
+
+  @override
+  String get noteProperties => 'Thuộc tính ghi chú';
+
+  @override
+  String get notesExportAll => 'Xuất ghi chú · Tất cả ghi chú…';
+
+  @override
+  String get notesExportCategory => 'Xuất ghi chú · Danh mục…';
+
+  @override
+  String get notesOfflineAll => 'Cho phép dùng ngoại tuyến · Tất cả ghi chú';
+
+  @override
+  String get notesOfflineCategory => 'Cho phép dùng ngoại tuyến · Danh mục';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Bỏ yêu cầu lưu ngoại tuyến · Tất cả ghi chú';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Bỏ yêu cầu lưu ngoại tuyến · Danh mục';
+
+  @override
+  String get notesOfflinePause => 'Tạm dừng tải xuống';
+
+  @override
+  String get notesOfflineResume => 'Tiếp tục tải xuống';
+
+  @override
+  String get notesOfflineKeep => 'Cho phép dùng ngoại tuyến';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Bỏ yêu cầu này vẫn giữ nội dung đã lưu đệm. Yêu cầu của danh mục hoặc tài khoản có thể vẫn giữ ghi chú này.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Ghi chú này cũng được giữ theo yêu cầu của danh mục hoặc tài khoản.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark chỉ giữ văn bản ghi chú và tệp đính kèm được quản lý.';
+
+  @override
+  String get notesEmptyAll => 'Chưa có ghi chú. Hãy tạo ghi chú đầu tiên.';
+
+  @override
+  String get notesEmptyFavorites => 'Không có ghi chú yêu thích.';
+
+  @override
+  String get notesEmptyCategory => 'Không có ghi chú trong danh mục này.';
+
+  @override
+  String get notesEmptyUncategorized => 'Không có ghi chú chưa phân loại.';
+
+  @override
+  String get notesEmptyRecovery =>
+      'Không có ghi chú được giữ lại để khôi phục.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Thất bại. Thử lại';
+
+  @override
+  String get notesOperationFailed =>
+      'Không thể hoàn tất thao tác. Bản nháp vẫn được giữ. Kiểm tra việc lưu và xung đột rồi thử lại.';
+
+  @override
+  String get notesInspectionFailed => 'Tệp đính kèm · Thất bại. Thử lại';
+
+  @override
+  String get notesStartingConnection => 'Đang bắt đầu kết nối Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection =>
+      'Đang xác minh quyền truy cập ghi chú…';
+
+  @override
+  String get notesCancellingConnection => 'Đang hủy đăng nhập và dọn dẹp…';
+
+  @override
+  String get notesRemovingConnection => 'Đang xóa tài khoản cục bộ…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Đã xóa tài khoản Nextcloud cục bộ. Chưa xác nhận thu hồi mật khẩu ứng dụng. Hãy xóa mật khẩu BusyMark trong cài đặt Bảo mật Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Không thể lưu cục bộ tất cả ghi chú đang mở. Kiểm tra việc lưu, xung đột hoặc chuẩn hóa trong không gian làm việc. Thay đổi cục bộ có thể vẫn cần đồng bộ với Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Lưu thay đổi cài đặt Nextcloud trước khi rời đi?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Cài đặt Notes trên máy chủ · Thay đổi chưa lưu';
+
+  @override
+  String get notesSettingsReload => 'Tải lại cài đặt máy chủ…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Tải lại sẽ thay bản nháp bằng cài đặt Nextcloud hiện tại. Bỏ bản nháp và tải lại?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud đã nhận cài đặt nhưng không làm mới được ghi chú. Giá trị hiển thị đã được máy chủ xác nhận. Hãy thử làm mới từ Ghi chú.';
+
+  @override
+  String get notesUnavailable =>
+      'Ngoại tuyến · Văn bản có sẵn cục bộ · Đã lưu cục bộ · chờ đồng bộ';
+
+  @override
+  String get notesStorageFull =>
+      'Bộ nhớ Nextcloud đã đầy. Giải phóng dung lượng máy chủ rồi thử lại.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud từ chối thay đổi này. Kiểm tra ghi chú và lưu bản sao cục bộ trước khi thử lại.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud yêu cầu chờ. Đồng bộ sẽ tiếp tục sau thời hạn thử lại.';
+
+  @override
+  String get notesRecoveryRequired => 'Xung đột · So sánh';
+
+  @override
+  String get notesScanning => 'Đang quét tệp…';
+
+  @override
+  String get notesCancelling => 'Đang hủy… Đợi thao tác hiện tại kết thúc.';
+
+  @override
+  String get notesCancelled => 'Đã hủy';
+
+  @override
+  String get notesPartial => 'Hoàn tất một phần';
+
+  @override
+  String get notesTransferFailed => 'Thất bại. Thử lại';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Các mục trước có thể đã được lưu cục bộ. Tiếp tục lần nhập này để tránh tạo bản trùng.';
+
+  @override
+  String get notesNotStarted => 'Chưa bắt đầu';
+
+  @override
+  String get notesCreated => 'Đã tạo';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Địa chỉ máy chủ · Không được hỗ trợ · Xóa · Tệp đính kèm';
+
+  @override
+  String get notesCurrentText => 'Văn bản hiện đang được giữ lại';
+
+  @override
+  String get notesRecovering => 'Đang khôi phục thành ghi chú mới…';
+
+  @override
+  String get notesReadOnlyHelp => 'Chỉ đọc · Yêu thích · Lưu bản sao cục bộ…';
+
+  @override
+  String get notesSort => 'Sắp xếp ghi chú';
+
+  @override
+  String get notesPathRelative =>
+      'Đường dẫn thư mục ghi chú tương đối với bộ nhớ Nextcloud của bạn.';
+
+  @override
+  String get notesSettingsStale =>
+      'Cài đặt trên Nextcloud đã thay đổi. Tải lại và kiểm tra giá trị máy chủ trước khi thay bản nháp.';
+
+  @override
+  String get notesDownloadsPaused => 'Đã tạm dừng tải xuống';
+
+  @override
+  String get notesExportNotPublished => 'Không có bản xuất nào được công bố.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Mở khóa kho khóa của máy tính rồi thử lại.';
+
+  @override
+  String get notesConnectFailed =>
+      'Không thể kết nối Nextcloud Notes. Kiểm tra địa chỉ máy chủ rồi thử lại.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Đăng nhập cùng tài khoản Nextcloud. Xóa tài khoản này trước để kết nối tài khoản khác.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Dọn dẹp tài khoản cục bộ thất bại. Tài khoản được giữ để bạn thử xóa lại.';
+
+  @override
+  String get notesTransferring => 'Đang chuyển ghi chú…';
+
+  @override
+  String get notesTechnicalDetails => 'Chi tiết kỹ thuật';
+
+  @override
+  String get notesPauseRequirement => 'Tạm dừng yêu cầu giữ ngoại tuyến';
+
+  @override
+  String get notesResumeRequirement => 'Tiếp tục yêu cầu giữ ngoại tuyến';
 }

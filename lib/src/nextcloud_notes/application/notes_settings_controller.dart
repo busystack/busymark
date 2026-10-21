@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/notes_models.dart';
 import 'nextcloud_connection.dart';
 
+enum NotesSettingsFailure { buffersNotSaved, operation, stale }
+
 enum NotesSettingsPhase { loading, ready, saving, saved, failed }
 
 class NotesSettingsState {
@@ -15,6 +17,9 @@ class NotesSettingsState {
     this.phase = NotesSettingsPhase.loading,
     this.error,
     this.normalized = false,
+    this.failure,
+    this.refreshFailed = false,
+    this.cause,
   });
   final String? accountId;
   final NotesSettings? original;
@@ -22,6 +27,9 @@ class NotesSettingsState {
   final NotesSettingsPhase phase;
   final String? error;
   final bool normalized;
+  final NotesSettingsFailure? failure;
+  final bool refreshFailed;
+  final Object? cause;
   Map<String, String> get patch => {
     if (draft != null &&
         original != null &&
@@ -61,7 +69,12 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
       return;
     }
     final generation = ++_generation;
-    state = NotesSettingsState(accountId: id);
+    final previous = state;
+    state = NotesSettingsState(
+      accountId: id,
+      original: previous.original,
+      draft: previous.draft,
+    );
     try {
       final repository = await ref.read(
         nextcloudNotesRepositoryProvider.future,
@@ -84,12 +97,16 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
         draft: settings,
         phase: NotesSettingsPhase.ready,
       );
-    } on NotesException catch (error) {
+    } on Object catch (error) {
       if (_disposed || generation != _generation) return;
       state = NotesSettingsState(
         accountId: id,
+        original: previous.original,
+        draft: previous.draft,
         phase: NotesSettingsPhase.failed,
-        error: error.message,
+        error: error.toString(),
+        cause: error,
+        failure: NotesSettingsFailure.operation,
       );
     }
   }
@@ -141,6 +158,7 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
             original: original,
             draft: draft,
             phase: NotesSettingsPhase.failed,
+            failure: NotesSettingsFailure.buffersNotSaved,
           );
         }
         return false;
@@ -163,16 +181,34 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
         normalized: patch.entries.any((e) => result.toJson()[e.key] != e.value),
       );
       // Checkpoint invalidation is durable before this authoritative read.
-      await repository.synchronize(id, allowWrites: false);
+      try {
+        await repository.synchronize(id, allowWrites: false);
+      } on Object {
+        if (!_disposed && generation == _generation) {
+          state = NotesSettingsState(
+            accountId: id,
+            original: result,
+            draft: result,
+            phase: NotesSettingsPhase.saved,
+            normalized: state.normalized,
+            refreshFailed: true,
+          );
+        }
+      }
       return true;
-    } on NotesException catch (error) {
+    } on Object catch (error) {
       if (!_disposed && generation == _generation) {
         state = NotesSettingsState(
           accountId: id,
           original: original,
           draft: draft,
           phase: NotesSettingsPhase.failed,
-          error: error.message,
+          error: error.toString(),
+          cause: error,
+          failure:
+              error is NotesException && error.code == NotesFailureCode.conflict
+              ? NotesSettingsFailure.stale
+              : NotesSettingsFailure.operation,
         );
       }
       return false;

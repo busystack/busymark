@@ -5528,4 +5528,223 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'प्रस्तावित शॉर्टकट';
+
+  @override
+  String get notesActions => 'नोटों की कार्रवाइयाँ';
+
+  @override
+  String get noteActions => 'नोट की कार्रवाइयाँ';
+
+  @override
+  String get noteProperties => 'नोट के गुण';
+
+  @override
+  String get notesExportAll => 'नोट्स निर्यात करें · सभी नोट्स…';
+
+  @override
+  String get notesExportCategory => 'नोट्स निर्यात करें · श्रेणी…';
+
+  @override
+  String get notesOfflineAll => 'ऑफ़लाइन उपलब्ध करें · सभी नोट्स';
+
+  @override
+  String get notesOfflineCategory => 'ऑफ़लाइन उपलब्ध करें · श्रेणी';
+
+  @override
+  String get notesOfflineRemoveAll => 'ऑफ़लाइन संरक्षण हटाएँ · सभी नोट्स';
+
+  @override
+  String get notesOfflineRemoveCategory => 'ऑफ़लाइन संरक्षण हटाएँ · श्रेणी';
+
+  @override
+  String get notesOfflinePause => 'डाउनलोड रोकें';
+
+  @override
+  String get notesOfflineResume => 'डाउनलोड जारी रखें';
+
+  @override
+  String get notesOfflineKeep => 'ऑफ़लाइन उपलब्ध करें';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'यह आवश्यकता हटाने से कैश की मौजूदा सामग्री नहीं हटती। श्रेणी या खाते की आवश्यकता अब भी यह नोट सुरक्षित रख सकती है।';
+
+  @override
+  String get notesOfflineBroader =>
+      'यह नोट श्रेणी या खाते की आवश्यकता के कारण भी सुरक्षित है।';
+
+  @override
+  String get notesOfflineExternal =>
+      'बाहरी मीडिया को कनेक्शन चाहिए। BusyMark केवल नोट का पाठ और प्रबंधित संलग्नक सुरक्षित रखता है।';
+
+  @override
+  String get notesEmptyAll =>
+      'अभी कोई नोट नहीं है। शुरू करने के लिए नोट बनाएँ।';
+
+  @override
+  String get notesEmptyFavorites => 'कोई पसंदीदा नोट नहीं है।';
+
+  @override
+  String get notesEmptyCategory => 'इस श्रेणी में कोई नोट नहीं है।';
+
+  @override
+  String get notesEmptyUncategorized => 'कोई बिना श्रेणी वाला नोट नहीं है।';
+
+  @override
+  String get notesEmptyRecovery =>
+      'पुनर्प्राप्ति के लिए कोई सहेजा हुआ नोट नहीं है।';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · विफल. फिर प्रयास करें';
+
+  @override
+  String get notesOperationFailed =>
+      'कार्रवाई पूरी नहीं हुई। आपका मसौदा सुरक्षित है। सहेजने और विरोधों की जाँच करके फिर प्रयास करें।';
+
+  @override
+  String get notesInspectionFailed => 'अटैचमेंट · विफल. फिर प्रयास करें';
+
+  @override
+  String get notesStartingConnection => 'Nextcloud कनेक्शन शुरू हो रहा है…';
+
+  @override
+  String get notesVerifyingConnection => 'नोटों तक पहुँच जाँची जा रही है…';
+
+  @override
+  String get notesCancellingConnection =>
+      'साइन-इन रद्द करके सफ़ाई की जा रही है…';
+
+  @override
+  String get notesRemovingConnection => 'स्थानीय खाता हटाया जा रहा है…';
+
+  @override
+  String get notesRemovedWarning =>
+      'स्थानीय Nextcloud खाता हटा दिया गया। ऐप पासवर्ड रद्द होने की पुष्टि नहीं हुई। Nextcloud की सुरक्षा सेटिंग में BusyMark का ऐप पासवर्ड हटाएँ।';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'सभी खुले नोट स्थानीय रूप से नहीं सहेजे जा सके। कार्यक्षेत्र में सहेजने, विरोधों या सामान्यीकरण की समीक्षा करें। स्थानीय बदलावों को अब भी Nextcloud से समन्वय की ज़रूरत हो सकती है।';
+
+  @override
+  String get notesSettingsLeave =>
+      'जाने से पहले Nextcloud सेटिंग के बदलाव सहेजें?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'सर्वर Notes सेटिंग्स · न सहेजे गए बदलाव';
+
+  @override
+  String get notesSettingsReload => 'सर्वर सेटिंग फिर लोड करें…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'फिर लोड करने से मसौदे की जगह वर्तमान Nextcloud सेटिंग आएगी। मसौदा छोड़कर फिर लोड करें?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud ने सेटिंग स्वीकार की, पर नोट रीफ़्रेश नहीं हुए। दिखाई गई सेटिंग सर्वर द्वारा स्वीकृत हैं। नोटों से रीफ़्रेश फिर आज़माएँ।';
+
+  @override
+  String get notesUnavailable =>
+      'ऑफ़लाइन · पाठ स्थानीय रूप से उपलब्ध है · स्थानीय रूप से सहेजा · सिंक लंबित';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloud का संग्रहण भर गया है। सर्वर पर जगह खाली करके फिर प्रयास करें।';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud ने यह बदलाव अस्वीकार कर दिया। फिर प्रयास करने से पहले नोट जाँचें और स्थानीय प्रति सहेजें।';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud ने प्रतीक्षा को कहा है। फिर प्रयास की समय-सीमा के बाद समन्वय जारी होगा।';
+
+  @override
+  String get notesRecoveryRequired => 'टकराव · तुलना करें';
+
+  @override
+  String get notesScanning => 'फ़ाइलें जाँची जा रही हैं…';
+
+  @override
+  String get notesCancelling =>
+      'रद्द हो रहा है… वर्तमान कार्रवाई समाप्त होने की प्रतीक्षा है।';
+
+  @override
+  String get notesCancelled => 'रद्द किया गया';
+
+  @override
+  String get notesPartial => 'आंशिक रूप से पूरा';
+
+  @override
+  String get notesTransferFailed => 'विफल. फिर प्रयास करें';
+
+  @override
+  String get notesImportPartialHelp =>
+      'पिछले आइटम पहले ही स्थानीय रूप से सहेजे हो सकते हैं। प्रतियाँ बनाए बिना जारी रखने के लिए यही आयात फिर शुरू करें।';
+
+  @override
+  String get notesNotStarted => 'शुरू नहीं हुआ';
+
+  @override
+  String get notesCreated => 'बनाया गया';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'सर्वर का पता · असमर्थित · हटाएँ · अटैचमेंट';
+
+  @override
+  String get notesCurrentText => 'वर्तमान सुरक्षित पाठ';
+
+  @override
+  String get notesRecovering => 'नए नोट के रूप में पुनर्प्राप्त हो रहा है…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'केवल पढ़ने योग्य · पसंदीदा · स्थानीय प्रति सहेजें…';
+
+  @override
+  String get notesSort => 'नोट क्रमबद्ध करें';
+
+  @override
+  String get notesPathRelative =>
+      'नोट फ़ोल्डर का पथ आपके Nextcloud संग्रहण के सापेक्ष है।';
+
+  @override
+  String get notesSettingsStale =>
+      'Nextcloud पर सेटिंग बदल गई है। मसौदा बदलने से पहले सर्वर के मान फिर लोड करके जाँचें।';
+
+  @override
+  String get notesDownloadsPaused => 'डाउनलोड रुके हुए हैं';
+
+  @override
+  String get notesExportNotPublished => 'कोई निर्यात प्रकाशित नहीं हुआ।';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'डेस्कटॉप कीरिंग अनलॉक करके फिर प्रयास करें।';
+
+  @override
+  String get notesConnectFailed =>
+      'Nextcloud Notes से कनेक्ट नहीं हो सका। सर्वर का पता जाँचें और फिर प्रयास करें।';
+
+  @override
+  String get notesAccountMismatch =>
+      'उसी Nextcloud खाते में साइन-इन करें। दूसरे खाते से कनेक्ट करने के लिए पहले यह खाता हटाएँ।';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'स्थानीय खाते की सफ़ाई विफल रही। हटाने का फिर प्रयास करने के लिए खाता रखा गया है।';
+
+  @override
+  String get notesTransferring => 'नोट स्थानांतरित हो रहे हैं…';
+
+  @override
+  String get notesTechnicalDetails => 'तकनीकी विवरण';
+
+  @override
+  String get notesPauseRequirement => 'ऑफ़लाइन आवश्यकता रोकें';
+
+  @override
+  String get notesResumeRequirement => 'ऑफ़लाइन आवश्यकता जारी रखें';
 }

@@ -16,6 +16,7 @@ import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -29,12 +30,14 @@ void main() {
   late http.Client transport;
   var widgetDisposed = false;
   var gets = 0;
+  var failRefresh = false;
   var capabilityChecks = 0;
   final bodies = <Map>[];
   var settings = {'notesPath': 'Notes', 'fileSuffix': '.txt'};
   setUp(() async {
     widgetDisposed = false;
     gets = 0;
+    failRefresh = false;
     capabilityChecks = 0;
     bodies.clear();
     settings = {'notesPath': 'Notes', 'fileSuffix': '.txt'};
@@ -42,7 +45,10 @@ void main() {
     transport = MockClient((request) async {
       if (request.url.path.endsWith('/v1/notes')) {
         expect(request.method, 'GET');
-        return http.Response('[]', 200);
+        return http.Response(
+          failRefresh ? '{}' : '[]',
+          failRefresh ? 503 : 200,
+        );
       }
       expect(
         request.url.path,
@@ -66,7 +72,7 @@ void main() {
         200,
       );
     });
-    repository = NotesRepository(
+    repository = _SettingsRepository(
       store: await NotesStore.open(path: '${directory.path}/notes.sqlite3'),
       clientForAccount: (a) async =>
           NotesApiClient(client: transport, account: a, appPassword: 'fixture'),
@@ -160,6 +166,146 @@ void main() {
     },
   );
 
+  for (final throwsLocally in [false, true]) {
+    test(
+      'settings preserve failure reaches terminal state with draft, throws=$throwsLocally',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (_) async => repository,
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        final subscription = container.listen(notesSettingsProvider, (_, _) {});
+        addTearDown(subscription.close);
+        final controller = container.read(notesSettingsProvider.notifier);
+        await controller.load(testAccount().id);
+        final original = container.read(notesSettingsProvider).original;
+        controller.edit(notesPath: 'Draft/Nested');
+        final saved = await controller.save(
+          preserveBuffers: () async {
+            if (throwsLocally) {
+              throw FileSystemException('fixture local failure');
+            }
+            return false;
+          },
+        );
+        expect(saved, isFalse);
+        final state = container.read(notesSettingsProvider);
+        expect(state.busy, isFalse);
+        expect(state.failure, isNotNull);
+        expect(state.original, same(original));
+        expect(state.draft!.notesPath, 'Draft/Nested');
+        expect(bodies, isEmpty);
+      },
+    );
+  }
+
+  for (final localThrow in [false, true]) {
+    test(
+      'acknowledged settings remain authoritative after refresh failure, local=$localThrow',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (_) async => repository,
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        final subscription = container.listen(notesSettingsProvider, (_, _) {});
+        addTearDown(subscription.close);
+        final controller = container.read(notesSettingsProvider.notifier);
+        await controller.load(testAccount().id);
+        controller.edit(notesPath: ' Server/Normalized ');
+        failRefresh = true;
+        (repository as _SettingsRepository).throwRefresh = localThrow;
+        expect(
+          await controller.save(preserveBuffers: () async => true),
+          isTrue,
+        );
+        final state = container.read(notesSettingsProvider);
+        expect(state.phase, NotesSettingsPhase.saved);
+        expect(state.dirty, isFalse);
+        expect(state.draft!.notesPath, 'Server/Normalized');
+        expect(state.original!.notesPath, 'Server/Normalized');
+        expect(state.normalized, isTrue);
+        expect(state.refreshFailed, localThrow);
+        if (!localThrow) {
+          expect(repository.accountError(testAccount().id), isNotNull);
+        }
+      },
+    );
+  }
+
+  testWidgets(
+    'settings departure Cancel preserves draft and comparison; Discard restores original',
+    (tester) async {
+      for (final name in ['yaru_window', 'yaru_window/events']) {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              MethodChannel(name),
+              (call) async =>
+                  call.method == 'state' ? <String, Object?>{} : null,
+            );
+      }
+      final container = ProviderContainer(
+        overrides: [
+          nextcloudNotesRepositoryProvider.overrideWith(
+            (_) async => repository,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(notesSettingsProvider, (_, _) {});
+      addTearDown(subscription.close);
+      final controller = container.read(notesSettingsProvider.notifier);
+      await tester.runAsync(() => controller.load(testAccount().id));
+      controller.edit(notesPath: 'Draft/Nested');
+      final original = container.read(notesSettingsProvider).original;
+      bool? approved;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () async {
+                    approved = await confirmNotesSettingsDeparture(context);
+                  },
+                  child: const Text('leave'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('leave'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(approved, isFalse);
+      expect(container.read(notesSettingsProvider).original, same(original));
+      expect(
+        container.read(notesSettingsProvider).draft!.notesPath,
+        'Draft/Nested',
+      );
+      expect(bodies, isEmpty);
+      await tester.tap(find.text('leave'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Discard'));
+      await tester.pumpAndSettle();
+      expect(approved, isTrue);
+      expect(container.read(notesSettingsProvider).dirty, isFalse);
+      expect(bodies, isEmpty);
+    },
+  );
+
   testWidgets(
     'server settings controls load, save partial custom suffix and show normalization',
     (tester) async {
@@ -248,4 +394,26 @@ void main() {
       expect(disposed, isTrue);
     },
   );
+}
+
+class _SettingsRepository extends NotesRepository {
+  _SettingsRepository({required super.store, required super.clientForAccount});
+  bool throwRefresh = false;
+  @override
+  Future<void> synchronize(
+    String id, {
+    bool allowWrites = true,
+    bool refreshCapabilities = false,
+    bool onlyFreshWrites = false,
+  }) {
+    if (throwRefresh) {
+      throw const FileSystemException('fixture refresh storage failure');
+    }
+    return super.synchronize(
+      id,
+      allowWrites: allowWrites,
+      refreshCapabilities: refreshCapabilities,
+      onlyFreshWrites: onlyFreshWrites,
+    );
+  }
 }

@@ -5536,4 +5536,223 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Önerilen kısayol';
+
+  @override
+  String get notesActions => 'Not işlemleri';
+
+  @override
+  String get noteActions => 'Bu notun işlemleri';
+
+  @override
+  String get noteProperties => 'Not Özellikleri';
+
+  @override
+  String get notesExportAll => 'Notları dışa aktar · Tüm notlar…';
+
+  @override
+  String get notesExportCategory => 'Notları dışa aktar · Kategori…';
+
+  @override
+  String get notesOfflineAll => 'Çevrimdışı kullanılabilir yap · Tüm notlar';
+
+  @override
+  String get notesOfflineCategory => 'Çevrimdışı kullanılabilir yap · Kategori';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Çevrimdışı saklamayı kaldır · Tüm notlar';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Çevrimdışı saklamayı kaldır · Kategori';
+
+  @override
+  String get notesOfflinePause => 'İndirmeleri Duraklat';
+
+  @override
+  String get notesOfflineResume => 'İndirmeleri Sürdür';
+
+  @override
+  String get notesOfflineKeep => 'Çevrimdışı kullanılabilir yap';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Bu gereksinimin kaldırılması mevcut önbelleği silmez. Kategori veya hesap gereksinimi notu tutmaya devam edebilir.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Bu not bir kategori veya hesap gereksinimi nedeniyle de tutuluyor.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Harici medya bağlantı gerektirir. BusyMark yalnızca not metnini ve yönetilen ekleri tutar.';
+
+  @override
+  String get notesEmptyAll => 'Henüz not yok. Başlamak için bir not oluşturun.';
+
+  @override
+  String get notesEmptyFavorites => 'Favori not yok.';
+
+  @override
+  String get notesEmptyCategory => 'Bu kategoride not yok.';
+
+  @override
+  String get notesEmptyUncategorized => 'Kategorisiz not yok.';
+
+  @override
+  String get notesEmptyRecovery => 'Kurtarılacak saklanmış not yok.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Başarısız. Yeniden dene';
+
+  @override
+  String get notesOperationFailed =>
+      'İşlem tamamlanamadı. Taslağınız korunuyor. Kaydetmeyi ve çakışmaları inceleyip yeniden deneyin.';
+
+  @override
+  String get notesInspectionFailed => 'Ekler · Başarısız. Yeniden dene';
+
+  @override
+  String get notesStartingConnection => 'Nextcloud bağlantısı başlatılıyor…';
+
+  @override
+  String get notesVerifyingConnection => 'Notlar erişimi doğrulanıyor…';
+
+  @override
+  String get notesCancellingConnection =>
+      'Oturum açma iptal ediliyor ve temizleniyor…';
+
+  @override
+  String get notesRemovingConnection => 'Yerel hesap kaldırılıyor…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Yerel Nextcloud hesabı kaldırıldı. Uygulama parolasının iptali doğrulanamadı. Nextcloud Güvenlik ayarlarından BusyMark uygulama parolasını kaldırın.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Tüm açık notlar yerel olarak kaydedilemedi. Çalışma alanında kaydetmeyi, çakışmaları veya normalleştirmeyi inceleyin. Yerel değişikliklerin hâlâ Nextcloud ile eşitlenmesi gerekebilir.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Ayrılmadan önce Nextcloud ayarlarındaki değişiklikler kaydedilsin mi?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Sunucu Notes ayarları · Kaydedilmemiş değişiklikler';
+
+  @override
+  String get notesSettingsReload => 'Sunucu Ayarlarını Yeniden Yükle…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Yeniden yükleme, taslağınızı geçerli Nextcloud ayarlarıyla değiştirir. Taslak atılıp yeniden yüklensin mi?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud ayarları kabul etti ancak notları yenileme başarısız oldu. Gösterilen değerler sunucunun onayladığı değerlerdir. Notlar üzerinden yenilemeyi yeniden deneyin.';
+
+  @override
+  String get notesUnavailable =>
+      'Çevrimdışı · Metin yerel olarak kullanılabilir · Yerel kaydedildi · eşitleme bekliyor';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloud depolaması dolu. Sunucuda yer açıp yeniden deneyin.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud bu değişikliği reddetti. Yeniden denemeden önce notu inceleyin ve yerel bir kopya kaydedin.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud beklemenizi istedi. Eşitleme, yeniden deneme süresi dolunca devam eder.';
+
+  @override
+  String get notesRecoveryRequired => 'Çatışmalar · Karşılaştır';
+
+  @override
+  String get notesScanning => 'Dosyalar taranıyor…';
+
+  @override
+  String get notesCancelling =>
+      'İptal ediliyor… Geçerli işlemin bitmesi bekleniyor.';
+
+  @override
+  String get notesCancelled => 'İptal edildi';
+
+  @override
+  String get notesPartial => 'Kısmen tamamlandı';
+
+  @override
+  String get notesTransferFailed => 'Başarısız. Yeniden dene';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Önceki öğeler zaten yerel olarak kaydedilmiş olabilir. Kopya oluşturmadan devam etmek için bu içe aktarmayı sürdürün.';
+
+  @override
+  String get notesNotStarted => 'Başlatılmadı';
+
+  @override
+  String get notesCreated => 'Oluşturuldu';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Sunucu adresi · Desteklenmiyor · Sil · Ekler';
+
+  @override
+  String get notesCurrentText => 'Şu anda saklanan metin';
+
+  @override
+  String get notesRecovering => 'Yeni bir not olarak kurtarılıyor…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Salt okunur · Sık kullanılanlar · Yerel kopyayı kaydet…';
+
+  @override
+  String get notesSort => 'Notları sırala';
+
+  @override
+  String get notesPathRelative =>
+      'Not klasörü yolu Nextcloud depolamanıza görelidir.';
+
+  @override
+  String get notesSettingsStale =>
+      'Nextcloud ayarları değişti. Taslağı değiştirmeden önce sunucu değerlerini yeniden yükleyip inceleyin.';
+
+  @override
+  String get notesDownloadsPaused => 'İndirmeler duraklatıldı';
+
+  @override
+  String get notesExportNotPublished => 'Hiçbir dışa aktarım yayımlanmadı.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Masaüstü anahtarlığının kilidini açıp yeniden deneyin.';
+
+  @override
+  String get notesConnectFailed =>
+      'Nextcloud Notes bağlantısı kurulamadı. Sunucu adresini denetleyip yeniden deneyin.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Aynı Nextcloud hesabında oturum açın. Başka bir hesap bağlamak için önce bunu kaldırın.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Yerel hesap temizliği başarısız oldu. Kaldırmayı yeniden deneyebilmeniz için hesap korundu.';
+
+  @override
+  String get notesTransferring => 'Notlar aktarılıyor…';
+
+  @override
+  String get notesTechnicalDetails => 'Teknik ayrıntılar';
+
+  @override
+  String get notesPauseRequirement => 'Çevrimdışı Gereksinimini Duraklat';
+
+  @override
+  String get notesResumeRequirement => 'Çevrimdışı Gereksinimini Sürdür';
 }

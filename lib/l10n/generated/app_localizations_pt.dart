@@ -5602,6 +5602,225 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Atalho proposto';
+
+  @override
+  String get notesActions => 'Ações das notas';
+
+  @override
+  String get noteActions => 'Ações da nota';
+
+  @override
+  String get noteProperties => 'Propriedades da nota';
+
+  @override
+  String get notesExportAll => 'Exportar notas · Todas as notas…';
+
+  @override
+  String get notesExportCategory => 'Exportar notas · Categoria…';
+
+  @override
+  String get notesOfflineAll => 'Disponibilizar offline · Todas as notas';
+
+  @override
+  String get notesOfflineCategory => 'Disponibilizar offline · Categoria';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Remover retenção offline · Todas as notas';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Remover retenção offline · Categoria';
+
+  @override
+  String get notesOfflinePause => 'Pausar transferências';
+
+  @override
+  String get notesOfflineResume => 'Retomar transferências';
+
+  @override
+  String get notesOfflineKeep => 'Disponibilizar offline';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Remover este requisito mantém o conteúdo em cache. Um requisito da categoria ou da conta pode continuar a manter a nota.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Esta nota também é mantida por um requisito da categoria ou da conta.';
+
+  @override
+  String get notesOfflineExternal =>
+      'O conteúdo multimédia externo requer ligação. O BusyMark mantém apenas o texto e os anexos geridos.';
+
+  @override
+  String get notesEmptyAll => 'Ainda não há notas. Crie uma para começar.';
+
+  @override
+  String get notesEmptyFavorites => 'Não há notas favoritas.';
+
+  @override
+  String get notesEmptyCategory => 'Não há notas nesta categoria.';
+
+  @override
+  String get notesEmptyUncategorized => 'Não há notas sem categoria.';
+
+  @override
+  String get notesEmptyRecovery => 'Não há notas guardadas para recuperar.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Falhou. Tentar novamente';
+
+  @override
+  String get notesOperationFailed =>
+      'Não foi possível concluir a operação. O rascunho foi mantido. Reveja a gravação e os conflitos e tente novamente.';
+
+  @override
+  String get notesInspectionFailed => 'Anexos · Falhou. Tentar novamente';
+
+  @override
+  String get notesStartingConnection => 'A iniciar ligação ao Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'A verificar o acesso às notas…';
+
+  @override
+  String get notesCancellingConnection =>
+      'A cancelar o início de sessão e a limpar…';
+
+  @override
+  String get notesRemovingConnection => 'A remover a conta local…';
+
+  @override
+  String get notesRemovedWarning =>
+      'A conta local Nextcloud foi removida. Não foi confirmada a revogação da palavra-passe da aplicação. Remova a palavra-passe do BusyMark nas definições de segurança do Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Não foi possível guardar todas as notas abertas localmente. Reveja a gravação, os conflitos ou a normalização na área de trabalho. As alterações locais podem ainda precisar de sincronização com o Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Guardar as alterações às definições do Nextcloud antes de sair?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Definições de Notes do servidor · Alterações não guardadas';
+
+  @override
+  String get notesSettingsReload => 'Recarregar definições do servidor…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Recarregar substitui o rascunho pelas definições atuais do Nextcloud. Descartar o rascunho e recarregar?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'O Nextcloud aceitou as definições, mas a atualização das notas falhou. São apresentados os valores confirmados pelo servidor. Tente atualizar novamente a partir das Notas.';
+
+  @override
+  String get notesUnavailable =>
+      'Sem ligação · Texto disponível localmente · Guardado localmente · sincronização pendente';
+
+  @override
+  String get notesStorageFull =>
+      'O armazenamento Nextcloud está cheio. Liberte espaço no servidor e tente novamente.';
+
+  @override
+  String get notesRejected =>
+      'O Nextcloud rejeitou esta alteração. Reveja a nota e guarde uma cópia local antes de tentar novamente.';
+
+  @override
+  String get notesThrottled =>
+      'O Nextcloud pediu para aguardar. A sincronização será retomada após o prazo de espera.';
+
+  @override
+  String get notesRecoveryRequired => 'Conflitos · Comparar';
+
+  @override
+  String get notesScanning => 'A analisar ficheiros…';
+
+  @override
+  String get notesCancelling =>
+      'A cancelar… A aguardar que a operação atual termine.';
+
+  @override
+  String get notesCancelled => 'Cancelado';
+
+  @override
+  String get notesPartial => 'Parcialmente concluído';
+
+  @override
+  String get notesTransferFailed => 'Falhou. Tentar novamente';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Os itens anteriores podem já estar guardados localmente. Retome esta importação para continuar sem os duplicar.';
+
+  @override
+  String get notesNotStarted => 'Não iniciado';
+
+  @override
+  String get notesCreated => 'Criado';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'URL do servidor · Não suportada · Eliminar · Anexos';
+
+  @override
+  String get notesCurrentText => 'Texto atualmente guardado';
+
+  @override
+  String get notesRecovering => 'A recuperar como nova nota…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Só de leitura · Favoritos · Guardar cópia local…';
+
+  @override
+  String get notesSort => 'Ordenar notas';
+
+  @override
+  String get notesPathRelative =>
+      'O caminho da pasta de notas é relativo ao seu armazenamento Nextcloud.';
+
+  @override
+  String get notesSettingsStale =>
+      'As definições mudaram no Nextcloud. Recarregue e reveja os valores do servidor antes de substituir o rascunho.';
+
+  @override
+  String get notesDownloadsPaused => 'Transferências pausadas';
+
+  @override
+  String get notesExportNotPublished => 'Não foi publicada nenhuma exportação.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Desbloqueie o porta-chaves do ambiente de trabalho e tente novamente.';
+
+  @override
+  String get notesConnectFailed =>
+      'Não foi possível ligar ao Nextcloud Notes. Verifique o endereço do servidor e tente novamente.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Inicie sessão na mesma conta Nextcloud. Remova esta conta primeiro para ligar outra.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'A limpeza local da conta falhou. A conta é mantida para poder tentar removê-la novamente.';
+
+  @override
+  String get notesTransferring => 'A transferir notas…';
+
+  @override
+  String get notesTechnicalDetails => 'Detalhes técnicos';
+
+  @override
+  String get notesPauseRequirement => 'Pausar requisito offline';
+
+  @override
+  String get notesResumeRequirement => 'Retomar requisito offline';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -11197,4 +11416,222 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get shortcutProposedBinding => 'Atalho proposto';
+
+  @override
+  String get notesActions => 'Ações das notas';
+
+  @override
+  String get noteActions => 'Ações da nota';
+
+  @override
+  String get noteProperties => 'Propriedades da nota';
+
+  @override
+  String get notesExportAll => 'Exportar notas · Todas as notas…';
+
+  @override
+  String get notesExportCategory => 'Exportar notas · Categoria…';
+
+  @override
+  String get notesOfflineAll => 'Disponibilizar offline · Todas as notas';
+
+  @override
+  String get notesOfflineCategory => 'Disponibilizar offline · Categoria';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Remover retenção offline · Todas as notas';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Remover retenção offline · Categoria';
+
+  @override
+  String get notesOfflinePause => 'Pausar downloads';
+
+  @override
+  String get notesOfflineResume => 'Retomar downloads';
+
+  @override
+  String get notesOfflineKeep => 'Disponibilizar offline';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Remover este requisito mantém o conteúdo em cache. Um requisito da categoria ou da conta pode continuar retendo a nota.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Esta nota também é retida por um requisito da categoria ou da conta.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Mídia externa exige conexão. O BusyMark mantém apenas texto e anexos gerenciados.';
+
+  @override
+  String get notesEmptyAll => 'Ainda não há notas. Crie uma para começar.';
+
+  @override
+  String get notesEmptyFavorites => 'Não há notas favoritas.';
+
+  @override
+  String get notesEmptyCategory => 'Não há notas nesta categoria.';
+
+  @override
+  String get notesEmptyUncategorized => 'Não há notas sem categoria.';
+
+  @override
+  String get notesEmptyRecovery => 'Não há notas retidas para recuperar.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Falhou. Tentar novamente';
+
+  @override
+  String get notesOperationFailed =>
+      'Não foi possível concluir a operação. Seu rascunho foi mantido. Revise o salvamento e os conflitos e tente novamente.';
+
+  @override
+  String get notesInspectionFailed => 'Anexos · Falhou. Tentar novamente';
+
+  @override
+  String get notesStartingConnection => 'Iniciando conexão com o Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'Verificando o acesso às notas…';
+
+  @override
+  String get notesCancellingConnection => 'Cancelando a entrada e limpando…';
+
+  @override
+  String get notesRemovingConnection => 'Removendo a conta local…';
+
+  @override
+  String get notesRemovedWarning =>
+      'A conta local do Nextcloud foi removida. A revogação da senha de aplicativo não foi confirmada. Remova a senha do BusyMark nas configurações de segurança do Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Não foi possível salvar todas as notas abertas localmente. Revise o salvamento, os conflitos ou a normalização na área de trabalho. As alterações locais ainda podem precisar de sincronização com o Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Salvar alterações nas configurações do Nextcloud antes de sair?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Configurações de Notes do servidor · Alterações não salvas';
+
+  @override
+  String get notesSettingsReload => 'Recarregar configurações do servidor…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Recarregar substitui o rascunho pelas configurações atuais do Nextcloud. Descartar o rascunho e recarregar?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'O Nextcloud aceitou as configurações, mas a atualização das notas falhou. Os valores exibidos foram confirmados pelo servidor. Tente atualizar novamente pelas Notas.';
+
+  @override
+  String get notesUnavailable =>
+      'Sem conexão · Texto disponível localmente · Salvo localmente · sincronização pendente';
+
+  @override
+  String get notesStorageFull =>
+      'O armazenamento do Nextcloud está cheio. Libere espaço no servidor e tente novamente.';
+
+  @override
+  String get notesRejected =>
+      'O Nextcloud rejeitou esta alteração. Revise a nota e salve uma cópia local antes de tentar novamente.';
+
+  @override
+  String get notesThrottled =>
+      'O Nextcloud pediu para aguardar. A sincronização será retomada após o prazo de espera.';
+
+  @override
+  String get notesRecoveryRequired => 'Conflitos · Comparar';
+
+  @override
+  String get notesScanning => 'Verificando arquivos…';
+
+  @override
+  String get notesCancelling =>
+      'Cancelando… Aguardando a conclusão da operação atual.';
+
+  @override
+  String get notesCancelled => 'Cancelado';
+
+  @override
+  String get notesPartial => 'Parcialmente concluído';
+
+  @override
+  String get notesTransferFailed => 'Falhou. Tentar novamente';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Itens anteriores podem já estar salvos localmente. Retome esta importação para continuar sem duplicá-los.';
+
+  @override
+  String get notesNotStarted => 'Não iniciado';
+
+  @override
+  String get notesCreated => 'Criado';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'URL do servidor · Não compatível · Excluir · Anexos';
+
+  @override
+  String get notesCurrentText => 'Texto retido atualmente';
+
+  @override
+  String get notesRecovering => 'Recuperando como nova nota…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Somente leitura · Favoritos · Salvar cópia local…';
+
+  @override
+  String get notesSort => 'Ordenar notas';
+
+  @override
+  String get notesPathRelative =>
+      'O caminho da pasta de notas é relativo ao seu armazenamento Nextcloud.';
+
+  @override
+  String get notesSettingsStale =>
+      'As configurações mudaram no Nextcloud. Recarregue e revise os valores do servidor antes de substituir o rascunho.';
+
+  @override
+  String get notesDownloadsPaused => 'Downloads pausados';
+
+  @override
+  String get notesExportNotPublished => 'Nenhuma exportação foi publicada.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Desbloqueie o chaveiro da área de trabalho e tente novamente.';
+
+  @override
+  String get notesConnectFailed =>
+      'Não foi possível conectar ao Nextcloud Notes. Verifique o endereço do servidor e tente novamente.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Entre na mesma conta Nextcloud. Remova esta conta primeiro para conectar outra.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'A limpeza local da conta falhou. A conta foi mantida para que você possa tentar removê-la novamente.';
+
+  @override
+  String get notesTransferring => 'Transferindo notas…';
+
+  @override
+  String get notesTechnicalDetails => 'Detalhes técnicos';
+
+  @override
+  String get notesPauseRequirement => 'Pausar requisito offline';
+
+  @override
+  String get notesResumeRequirement => 'Retomar requisito offline';
 }

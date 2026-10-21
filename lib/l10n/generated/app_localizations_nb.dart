@@ -5544,4 +5544,223 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Foreslått hurtigtast';
+
+  @override
+  String get notesActions => 'Notathandlinger';
+
+  @override
+  String get noteActions => 'Handlinger for notatet';
+
+  @override
+  String get noteProperties => 'Notategenskaper';
+
+  @override
+  String get notesExportAll => 'Eksporter notater · Alle notater…';
+
+  @override
+  String get notesExportCategory => 'Eksporter notater · Kategori…';
+
+  @override
+  String get notesOfflineAll => 'Gjør tilgjengelig frakoblet · Alle notater';
+
+  @override
+  String get notesOfflineCategory => 'Gjør tilgjengelig frakoblet · Kategori';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Fjern frakoblet oppbevaring · Alle notater';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Fjern frakoblet oppbevaring · Kategori';
+
+  @override
+  String get notesOfflinePause => 'Sett nedlastinger på pause';
+
+  @override
+  String get notesOfflineResume => 'Fortsett nedlastinger';
+
+  @override
+  String get notesOfflineKeep => 'Gjør tilgjengelig frakoblet';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Å fjerne dette kravet beholder eksisterende hurtigbuffer. Et kategori- eller kontokrav kan fortsatt beholde notatet.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Notatet beholdes også av et kategori- eller kontokrav.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Eksterne medier krever en tilkobling. BusyMark beholder bare notattekst og administrerte vedlegg.';
+
+  @override
+  String get notesEmptyAll =>
+      'Ingen notater ennå. Opprett et notat for å begynne.';
+
+  @override
+  String get notesEmptyFavorites => 'Ingen favorittnotater.';
+
+  @override
+  String get notesEmptyCategory => 'Ingen notater i denne kategorien.';
+
+  @override
+  String get notesEmptyUncategorized => 'Ingen ukategoriserte notater.';
+
+  @override
+  String get notesEmptyRecovery => 'Ingen beholdte notater å gjenopprette.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Mislyktes. Prøv igjen';
+
+  @override
+  String get notesOperationFailed =>
+      'Handlingen kunne ikke fullføres. Utkastet er beholdt. Kontroller lagring og konflikter, og prøv igjen.';
+
+  @override
+  String get notesInspectionFailed => 'Vedlegg · Mislyktes. Prøv igjen';
+
+  @override
+  String get notesStartingConnection => 'Starter Nextcloud-tilkoblingen…';
+
+  @override
+  String get notesVerifyingConnection => 'Kontrollerer tilgang til notater…';
+
+  @override
+  String get notesCancellingConnection => 'Avbryter innlogging og rydder opp…';
+
+  @override
+  String get notesRemovingConnection => 'Fjerner den lokale kontoen…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Den lokale Nextcloud-kontoen er fjernet. Tilbakekalling av app-passordet er ikke bekreftet. Fjern BusyMarks passord i sikkerhetsinnstillingene i Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Ikke alle åpne notater kunne lagres lokalt. Kontroller lagring, konflikter eller normalisering i arbeidsområdet. Lokale endringer må kanskje fortsatt synkroniseres med Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Lagre endringer i Nextcloud-innstillinger før du går videre?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Notes-innstillinger på serveren · Ulagrede endringer';
+
+  @override
+  String get notesSettingsReload => 'Last inn serverinnstillinger på nytt…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Ny innlasting erstatter utkastet med gjeldende Nextcloud-innstillinger. Forkaste utkastet og laste inn på nytt?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud godtok innstillingene, men oppdatering av notatene mislyktes. Verdiene som vises er bekreftet av serveren. Prøv å oppdatere fra Notater igjen.';
+
+  @override
+  String get notesUnavailable =>
+      'Frakoblet · Tekst tilgjengelig lokalt · Lagret lokalt · venter på synkronisering';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloud-lagringen er full. Frigjør plass på serveren og prøv igjen.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud avviste endringen. Kontroller notatet og lagre en lokal kopi før du prøver igjen.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud ba om en pause. Synkroniseringen fortsetter etter ventefristen.';
+
+  @override
+  String get notesRecoveryRequired => 'Konflikter · Sammenlign';
+
+  @override
+  String get notesScanning => 'Skanner filer…';
+
+  @override
+  String get notesCancelling =>
+      'Avbryter… Venter på at gjeldende handling avsluttes.';
+
+  @override
+  String get notesCancelled => 'Avbrutt';
+
+  @override
+  String get notesPartial => 'Delvis fullført';
+
+  @override
+  String get notesTransferFailed => 'Mislyktes. Prøv igjen';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Tidligere elementer kan allerede være lagret lokalt. Fortsett denne importen for å unngå duplikater.';
+
+  @override
+  String get notesNotStarted => 'Ikke startet';
+
+  @override
+  String get notesCreated => 'Opprettet';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Serveradresse · Ikke støttet · Slett · Vedlegg';
+
+  @override
+  String get notesCurrentText => 'Gjeldende beholdte tekst';
+
+  @override
+  String get notesRecovering => 'Gjenoppretter som et nytt notat…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Skrivebeskyttet · Favoritter · Lagre lokal kopi…';
+
+  @override
+  String get notesSort => 'Sorter notater';
+
+  @override
+  String get notesPathRelative =>
+      'Notatmappens sti er relativ til Nextcloud-lagringen din.';
+
+  @override
+  String get notesSettingsStale =>
+      'Innstillingene er endret i Nextcloud. Last inn og kontroller serververdiene før du erstatter utkastet.';
+
+  @override
+  String get notesDownloadsPaused => 'Nedlastinger satt på pause';
+
+  @override
+  String get notesExportNotPublished => 'Ingen eksport ble publisert.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Lås opp skrivebordets nøkkelring og prøv igjen.';
+
+  @override
+  String get notesConnectFailed =>
+      'Kunne ikke koble til Nextcloud Notes. Kontroller serveradressen og prøv igjen.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Logg inn på samme Nextcloud-konto. Fjern denne kontoen først for å koble til en annen.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Lokal kontoopprydding mislyktes. Kontoen beholdes slik at du kan prøve å fjerne den igjen.';
+
+  @override
+  String get notesTransferring => 'Overfører notater…';
+
+  @override
+  String get notesTechnicalDetails => 'Tekniske detaljer';
+
+  @override
+  String get notesPauseRequirement => 'Sett frakoblet krav på pause';
+
+  @override
+  String get notesResumeRequirement => 'Fortsett frakoblet krav';
 }

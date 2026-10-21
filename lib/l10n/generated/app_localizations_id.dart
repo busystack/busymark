@@ -5538,4 +5538,223 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Pintasan yang diusulkan';
+
+  @override
+  String get notesActions => 'Tindakan catatan';
+
+  @override
+  String get noteActions => 'Tindakan untuk catatan';
+
+  @override
+  String get noteProperties => 'Properti Catatan';
+
+  @override
+  String get notesExportAll => 'Ekspor catatan · Semua catatan…';
+
+  @override
+  String get notesExportCategory => 'Ekspor catatan · Kategori…';
+
+  @override
+  String get notesOfflineAll => 'Sediakan secara luring · Semua catatan';
+
+  @override
+  String get notesOfflineCategory => 'Sediakan secara luring · Kategori';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Hapus penyimpanan luring · Semua catatan';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Hapus penyimpanan luring · Kategori';
+
+  @override
+  String get notesOfflinePause => 'Jeda unduhan';
+
+  @override
+  String get notesOfflineResume => 'Lanjutkan unduhan';
+
+  @override
+  String get notesOfflineKeep => 'Sediakan secara luring';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Menghapus persyaratan ini mempertahankan cache yang ada. Persyaratan kategori atau akun mungkin masih menyimpan catatan ini.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Catatan ini juga disimpan oleh persyaratan kategori atau akun.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Media eksternal memerlukan koneksi. BusyMark hanya menyimpan teks catatan dan lampiran terkelola.';
+
+  @override
+  String get notesEmptyAll => 'Belum ada catatan. Buat catatan untuk memulai.';
+
+  @override
+  String get notesEmptyFavorites => 'Tidak ada catatan favorit.';
+
+  @override
+  String get notesEmptyCategory => 'Tidak ada catatan dalam kategori ini.';
+
+  @override
+  String get notesEmptyUncategorized => 'Tidak ada catatan tanpa kategori.';
+
+  @override
+  String get notesEmptyRecovery =>
+      'Tidak ada catatan tersimpan untuk dipulihkan.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Gagal. Coba lagi';
+
+  @override
+  String get notesOperationFailed =>
+      'Operasi tidak dapat diselesaikan. Draf Anda tetap disimpan. Tinjau penyimpanan dan konflik, lalu coba lagi.';
+
+  @override
+  String get notesInspectionFailed => 'Lampiran · Gagal. Coba lagi';
+
+  @override
+  String get notesStartingConnection => 'Memulai koneksi Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'Memverifikasi akses Catatan…';
+
+  @override
+  String get notesCancellingConnection => 'Membatalkan masuk dan membersihkan…';
+
+  @override
+  String get notesRemovingConnection => 'Menghapus akun lokal…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Akun Nextcloud lokal telah dihapus. Pencabutan kata sandi aplikasi tidak dikonfirmasi. Hapus kata sandi BusyMark di pengaturan Keamanan Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Tidak semua catatan terbuka dapat disimpan secara lokal. Tinjau penyimpanan, konflik, atau normalisasi di ruang kerja. Perubahan lokal mungkin masih perlu disinkronkan dengan Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Simpan perubahan pengaturan Nextcloud sebelum keluar?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Pengaturan Notes server · Perubahan yang belum disimpan';
+
+  @override
+  String get notesSettingsReload => 'Muat ulang pengaturan server…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Memuat ulang mengganti draf dengan pengaturan Nextcloud saat ini. Buang draf dan muat ulang?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud menerima pengaturan, tetapi penyegaran catatan gagal. Nilai yang ditampilkan telah dikonfirmasi server. Coba segarkan lagi dari Catatan.';
+
+  @override
+  String get notesUnavailable =>
+      'Luring · Teks tersedia secara lokal · Disimpan lokal · sinkronisasi tertunda';
+
+  @override
+  String get notesStorageFull =>
+      'Penyimpanan Nextcloud penuh. Kosongkan ruang di server, lalu coba lagi.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud menolak perubahan ini. Tinjau catatan dan simpan salinan lokal sebelum mencoba lagi.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud meminta BusyMark menunggu. Sinkronisasi berlanjut setelah batas waktu percobaan ulang.';
+
+  @override
+  String get notesRecoveryRequired => 'Konflik · Bandingkan';
+
+  @override
+  String get notesScanning => 'Memindai berkas…';
+
+  @override
+  String get notesCancelling =>
+      'Membatalkan… Menunggu operasi saat ini selesai.';
+
+  @override
+  String get notesCancelled => 'Dibatalkan';
+
+  @override
+  String get notesPartial => 'Selesai sebagian';
+
+  @override
+  String get notesTransferFailed => 'Gagal. Coba lagi';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Item sebelumnya mungkin telah disimpan secara lokal. Lanjutkan impor ini untuk meneruskan tanpa duplikat.';
+
+  @override
+  String get notesNotStarted => 'Belum dimulai';
+
+  @override
+  String get notesCreated => 'Dibuat';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'URL server · Tidak didukung · Hapus · Lampiran';
+
+  @override
+  String get notesCurrentText => 'Teks yang saat ini disimpan';
+
+  @override
+  String get notesRecovering => 'Memulihkan sebagai catatan baru…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Hanya baca · Favorit · Simpan salinan lokal…';
+
+  @override
+  String get notesSort => 'Urutkan catatan';
+
+  @override
+  String get notesPathRelative =>
+      'Jalur folder catatan relatif terhadap penyimpanan Nextcloud Anda.';
+
+  @override
+  String get notesSettingsStale =>
+      'Pengaturan berubah di Nextcloud. Muat ulang dan tinjau nilai server sebelum mengganti draf.';
+
+  @override
+  String get notesDownloadsPaused => 'Unduhan dijeda';
+
+  @override
+  String get notesExportNotPublished => 'Tidak ada ekspor yang dipublikasikan.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Buka kunci keyring desktop dan coba lagi.';
+
+  @override
+  String get notesConnectFailed =>
+      'Tidak dapat terhubung ke Nextcloud Notes. Periksa alamat server dan coba lagi.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Masuk ke akun Nextcloud yang sama. Hapus akun ini terlebih dahulu untuk menghubungkan akun lain.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Pembersihan akun lokal gagal. Akun dipertahankan agar penghapusan dapat dicoba lagi.';
+
+  @override
+  String get notesTransferring => 'Mentransfer catatan…';
+
+  @override
+  String get notesTechnicalDetails => 'Detail teknis';
+
+  @override
+  String get notesPauseRequirement => 'Jeda persyaratan luring';
+
+  @override
+  String get notesResumeRequirement => 'Lanjutkan persyaratan luring';
 }

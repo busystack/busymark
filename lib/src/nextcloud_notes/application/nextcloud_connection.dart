@@ -16,6 +16,7 @@ import '../data/notes_store.dart';
 import '../data/server_uri.dart';
 import '../domain/notes_models.dart';
 import 'notes_repository.dart';
+import 'notes_navigation.dart';
 
 final nextcloudHttpClientProvider = Provider<http.Client>((ref) {
   final client = http.Client();
@@ -112,6 +113,8 @@ final nextcloudNotesRepositoryProvider = FutureProvider<NotesRepository>((
 
 enum NextcloudConnectionPhase {
   idle,
+  starting,
+  cancelling,
   awaitingBrowser,
   verifying,
   connected,
@@ -123,13 +126,21 @@ class NextcloudConnectionState {
     this.account,
     this.phase = NextcloudConnectionPhase.idle,
     this.error,
+    this.removedWithWarning = false,
+    this.failure,
+    this.removalFailed = false,
   });
 
   final NextcloudAccount? account;
   final NextcloudConnectionPhase phase;
   final String? error;
+  final bool removedWithWarning;
+  final Object? failure;
+  final bool removalFailed;
 
   bool get busy =>
+      phase == NextcloudConnectionPhase.starting ||
+      phase == NextcloudConnectionPhase.cancelling ||
       phase == NextcloudConnectionPhase.awaitingBrowser ||
       phase == NextcloudConnectionPhase.verifying ||
       phase == NextcloudConnectionPhase.removing;
@@ -193,7 +204,7 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
     var retainedAccount = previous ?? state.account;
     state = NextcloudConnectionState(
       account: retainedAccount,
-      phase: NextcloudConnectionPhase.awaitingBrowser,
+      phase: NextcloudConnectionPhase.starting,
     );
     NextcloudLoginCredentials? credentials;
     String? accountId;
@@ -212,6 +223,7 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
         retainedAccount = repository.accounts.first;
         throw const NextcloudCredentialException(
           'Remove the connected Nextcloud account before connecting another account.',
+          code: NextcloudCredentialFailure.alreadyConnected,
         );
       }
       if (previous != null) {
@@ -221,6 +233,16 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
       credentials = await loginFlow.authenticate(
         server,
         cancellation: cancellation,
+        onAwaitingBrowser: () {
+          if (!_disposed &&
+              generation == _generation &&
+              !cancellation.isCancelled) {
+            state = NextcloudConnectionState(
+              account: retainedAccount,
+              phase: NextcloudConnectionPhase.awaitingBrowser,
+            );
+          }
+        },
       );
       cancellation.throwIfCancelled();
       if (previous != null &&
@@ -228,6 +250,7 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
               previous.loginName != credentials.loginName)) {
         throw const NextcloudCredentialException(
           'Sign in to the same Nextcloud account when reconnecting. Remove this account first to connect a different account.',
+          code: NextcloudCredentialFailure.identityMismatch,
         );
       }
       state = NextcloudConnectionState(
@@ -296,6 +319,9 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
               phase: retainedAccount == null
                   ? NextcloudConnectionPhase.idle
                   : NextcloudConnectionPhase.connected,
+              failure: const NextcloudCredentialException(
+                'Desktop keyring cleanup failed.',
+              ),
               error:
                   'Nextcloud setup failed and BusyMark could not clean up the desktop keyring. Unlock the keyring and reconnect.',
             );
@@ -317,16 +343,15 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
         phase: retainedAccount == null
             ? NextcloudConnectionPhase.idle
             : NextcloudConnectionPhase.connected,
+        failure: error,
         error: switch (error) {
           NextcloudLoginException(code: NextcloudLoginFailure.cancelled) =>
             null,
           NextcloudLoginException(:final message) => message,
           NextcloudCapabilityException(:final message) => message,
           NextcloudCredentialException(:final message) => message,
-          FormatException(:final message) =>
-            message == 'Enter a valid HTTPS Nextcloud server URL.'
-                ? message
-                : 'Enter a valid Nextcloud server URL.',
+          NextcloudServerUrlException(:final message) => message,
+          FormatException() => 'Enter a valid Nextcloud server URL.',
           _ => 'BusyMark could not finish connecting to Nextcloud Notes.',
         },
       );
@@ -336,7 +361,17 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
     }
   }
 
-  void cancel() => _cancellation?.cancel();
+  void cancel() {
+    final cancellation = _cancellation;
+    if (cancellation == null || cancellation.isCancelled) return;
+    cancellation.cancel();
+    if (!_disposed) {
+      state = NextcloudConnectionState(
+        account: state.account,
+        phase: NextcloudConnectionPhase.cancelling,
+      );
+    }
+  }
 
   /// Remote revocation is best effort; keyring and cache removal are required.
   Future<bool> disconnect() async {
@@ -367,11 +402,13 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
         account.id,
         beforeRemove: () => secrets.delete(account.id),
       );
+      ref.invalidate(notesNavigationProvider(account.id));
       await ref
           .read(appSettingsControllerProvider.notifier)
           .removeRecentAccount(account.id);
       if (!_disposed) {
         state = NextcloudConnectionState(
+          removedWithWarning: !revoked,
           error: revoked
               ? null
               : 'The local Nextcloud account was removed. BusyMark could not confirm app-password revocation; remove its password in Nextcloud Security settings.',
@@ -383,6 +420,8 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
         state = NextcloudConnectionState(
           account: account,
           phase: NextcloudConnectionPhase.connected,
+          failure: error,
+          removalFailed: true,
           error: error is NextcloudCredentialException
               ? error.message
               : 'BusyMark could not remove the local Nextcloud account data. Try again.',
