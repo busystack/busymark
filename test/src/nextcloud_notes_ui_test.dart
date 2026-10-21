@@ -68,8 +68,10 @@ Future<void> settleStorage(WidgetTester tester) async {
 void main() {
   late Directory root;
   late NotesRepository repository;
+  var fixtureClosed = false;
   const accountId = '123e4567-e89b-42d3-a456-426614174000';
   setUp(() async {
+    fixtureClosed = false;
     // Recovery dialogs also use Yaru's window state stream. Give every widget
     // test its own native boundary rather than inheriting a prior test's mock.
     for (final channelName in ['yaru_window', 'yaru_window/events']) {
@@ -324,7 +326,7 @@ void main() {
     await repository.initialize();
   });
   tearDown(() async {
-    await repository.dispose();
+    if (!fixtureClosed) await repository.dispose();
     await root.delete(recursive: true);
     for (final channelName in ['yaru_window', 'yaru_window/events']) {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -435,6 +437,23 @@ void main() {
     );
     await settleStorage(tester);
     return container;
+  }
+
+  Future<void> closeFixture(WidgetTester tester) async {
+    var closed = false;
+    unawaited(repository.dispose().then((_) => closed = true));
+    for (var i = 0; i < 1000 && !closed; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(
+      closed,
+      isTrue,
+      reason: 'Finish durability and listener cleanup before leaving fake time',
+    );
+    fixtureClosed = true;
   }
 
   testWidgets('native close protects a dirty or saving server settings draft', (
@@ -1596,16 +1615,340 @@ void main() {
   );
 
   testWidgets(
+    'overflow keyboard sessions capture their own note, including the first opening',
+    (tester) async {
+      late NextcloudNote alpha, beta;
+      await tester.runAsync(() async {
+        final account = repository.accountById(accountId)!;
+        await repository.removeAccount(accountId);
+        await repository.upsertAccount(account);
+        alpha = await repository.create(accountId, title: 'Alpha');
+        beta = await repository.create(accountId, title: 'Beta');
+      });
+      await pump(tester);
+      Finder button(NextcloudNote note) => find.descendant(
+        of: find.byKey(ValueKey('nextcloud-note-${note.localId}')),
+        matching: find.byType(BusyMarkCompactIconButton),
+      );
+      Future<void> keyboardOpen(NextcloudNote note) async {
+        final focus = tester
+            .widget<BusyMarkCompactIconButton>(button(note))
+            .focusNode!;
+        for (var i = 0; i < 40 && !focus.hasPrimaryFocus; i++) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pump();
+        }
+        expect(focus.hasPrimaryFocus, isTrue);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+      }
+
+      await keyboardOpen(beta);
+      await tester.tap(find.text('Favorites').last);
+      await settleStorage(tester);
+      expect(repository.noteById(beta.localId)!.favorite, isTrue);
+      expect(repository.noteById(alpha.localId)!.favorite, isFalse);
+      await tester.tap(button(alpha));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await keyboardOpen(beta);
+      await tester.tap(find.text('Remove favorite'));
+      await settleStorage(tester);
+      expect(repository.noteById(beta.localId)!.favorite, isFalse);
+      expect(repository.noteById(alpha.localId)!.favorite, isFalse);
+      await tester.tap(button(alpha));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await keyboardOpen(beta);
+      await tester.tap(find.text('Note Properties'));
+      await settleStorage(tester);
+      final field = find.descendant(
+        of: find.byType(BusyMarkGroupedTextEntry).first,
+        matching: find.byType(TextField),
+      );
+      expect(tester.widget<TextField>(field).controller!.text, 'Beta');
+      await tester.enterText(field, 'Only Beta renamed');
+      await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Save'));
+      await settleStorage(tester);
+      expect(repository.noteById(beta.localId)!.title, 'Only Beta renamed');
+      expect(repository.noteById(alpha.localId)!.title, 'Alpha');
+      await tester.pumpWidget(const SizedBox.shrink());
+      await settleStorage(tester);
+      await closeFixture(tester);
+    },
+  );
+
+  testWidgets(
+    'retained conflict requires review of changed remote before retry and preserves merge',
+    (tester) async {
+      const id = '723e4567-e89b-42d3-a456-426614174000';
+      final fixture = repository as _CachedNotesRepository;
+      fixture.serverNotes[8] = fixture.noteById(id)!.remote!;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (_) async => repository,
+            ),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: NextcloudNoteStatus(localId: id, unsaved: false),
+            ),
+          ),
+        ),
+      );
+      await settleStorage(tester);
+      await tester.tap(find.text('Compare'));
+      await settleStorage(tester);
+      final field = find.descendant(
+        of: find.byType(BusyMarkGroupedTextEntry).last,
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(field, 'Distinctive manual merge against A');
+      fixture.serverNotes[8] = const NoteState(
+        id: 8,
+        etag: 'B',
+        content: 'Unreviewed remote version B',
+        title: 'Server B title',
+        category: '',
+        favorite: false,
+        readonly: false,
+        modified: 2,
+      );
+      final submit = find.widgetWithText(BusyMarkDialogButton, 'Merge');
+      await tester.runAsync(() => tester.tap(submit));
+      await settleStorage(tester);
+      expect(fixture.noteById(id)!.syncState, NoteSyncState.conflict);
+      expect(fixture.noteById(id)!.remote!.etag, 'B');
+      expect(
+        tester.widget<TextField>(field).controller!.text,
+        'Distinctive manual merge against A',
+      );
+      expect(tester.widget<BusyMarkDialogButton>(submit).onPressed, isNull);
+      expect(
+        find.textContaining('Your merge draft is retained'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Unreviewed remote version B', findRichText: true),
+        findsWidgets,
+      );
+      await tester.ensureVisible(
+        find.text('I have reviewed the current server version'),
+      );
+      await tester.tap(find.text('I have reviewed the current server version'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<BusyMarkDialogButton>(submit).onPressed, isNull);
+      await tester.ensureVisible(
+        find.byType(BusyMarkComboRow<NotesMergeChoice?>),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(BusyMarkComboRow<NotesMergeChoice?>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Take remote: Server B title'));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() => tester.tap(submit));
+      await settleStorage(tester);
+      expect(find.byType(BusyMarkDialogShell), findsNothing);
+      expect(
+        repository.noteById(id)!.content,
+        'Distinctive manual merge against A',
+      );
+      expect(repository.noteById(id)!.base!.etag, 'B');
+      expect(repository.noteById(id)!.title, 'Server B title');
+      await tester.pumpWidget(const SizedBox.shrink());
+      await closeFixture(tester);
+    },
+  );
+
+  for (final adopting in [true, false]) {
+    testWidgets(
+      'manual conflict merge survives successful attachment ${adopting ? 'adoption' : 'retry'}',
+      (tester) async {
+        const id = '723e4567-e89b-42d3-a456-426614174000';
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              nextcloudNotesRepositoryProvider.overrideWith(
+                (_) async => repository,
+              ),
+              localHistoryStoreProvider.overrideWithValue(
+                MemoryLocalHistoryStore(),
+              ),
+              documentSessionStoreProvider.overrideWithValue(
+                MemoryDocumentSessionStore(),
+              ),
+              documentRecoveryStoreProvider.overrideWithValue(
+                MemoryDocumentRecoveryStore(),
+              ),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const Scaffold(
+                body: NextcloudNoteStatus(localId: id, unsaved: false),
+              ),
+            ),
+          ),
+        );
+        await settleStorage(tester);
+        await tester.tap(find.text('Compare'));
+        await settleStorage(tester);
+        final merge = find.descendant(
+          of: find.byWidgetPredicate(
+            (w) => w is BusyMarkGroupedTextEntry && w.label == 'Merge',
+          ),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(
+          merge,
+          'Manual merge remains after attachment action',
+        );
+        if (adopting) {
+          final reference = find.descendant(
+            of: find.byWidgetPredicate(
+              (w) => w is BusyMarkGroupedTextEntry && w.label != 'Merge',
+            ),
+            matching: find.byType(TextField),
+          );
+          await tester.enterText(reference, '.attachments.8/uncertain.pdf');
+          final button = find.descendant(
+            of: find.widgetWithText(BusyMarkActionRow, 'uncertain.pdf'),
+            matching: find.text('Take remote'),
+          );
+          await tester.ensureVisible(button);
+          await tester.pumpAndSettle();
+          expect(button.hitTestable(), findsOneWidget);
+          await tester.runAsync(() => tester.tap(button));
+        } else {
+          await tester.tap(find.widgetWithText(BusyMarkActionRow, 'Retry'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 250));
+          await tester.runAsync(
+            () =>
+                tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Retry')),
+          );
+        }
+        await settleStorage(tester);
+        expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+        expect(
+          tester.widget<TextField>(merge).controller!.text,
+          'Manual merge remains after attachment action',
+        );
+        final attachments = await tester.runAsync(
+          () => repository.attachments(id),
+        );
+        expect(attachments!.single.state, adopting ? 'uploaded' : 'pending');
+        expect(
+          find.widgetWithText(BusyMarkActionRow, 'uncertain.pdf'),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await closeFixture(tester);
+      },
+    );
+  }
+
+  testWidgets('mixed batch keeps each skipped and conflicted reason visible', (
+    tester,
+  ) async {
+    const ids = [
+      '223e4567-e89b-42d3-a456-426614174000',
+      '323e4567-e89b-42d3-a456-426614174000',
+      'metadata-server',
+    ];
+    final reviewed = [for (final id in ids) repository.metadataSnapshot(id)];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          nextcloudNotesRepositoryProvider.overrideWith(
+            (_) async => repository,
+          ),
+          localHistoryStoreProvider.overrideWithValue(
+            MemoryLocalHistoryStore(),
+          ),
+          documentSessionStoreProvider.overrideWithValue(
+            MemoryDocumentSessionStore(),
+          ),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) => TextButton(
+                onPressed: () => showNotesBatch(
+                  context,
+                  ref,
+                  ids,
+                  initialAction: 'move',
+                  reviewedTargets: reviewed,
+                ),
+                child: const Text('Review batch'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Review batch'));
+    await settleStorage(tester);
+    await tester.enterText(find.byType(TextField), 'Batch category');
+    await tester.runAsync(
+      () => repository.patchMetadata(
+        repository.metadataSnapshot('metadata-server'),
+        category: 'Concurrent category',
+      ),
+    );
+    await tester.runAsync(
+      () => tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Save')),
+    );
+    await settleStorage(tester);
+    expect(repository.noteById(ids[0])!.category, 'Batch category');
+    expect(repository.noteById(ids[1])!.category, 'Projects/BusyMark');
+    expect(repository.noteById(ids[2])!.metadataConflict, isNotNull);
+    expect(find.textContaining('This note is read-only.'), findsOneWidget);
+    expect(
+      find.textContaining('This note changed after review.'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Saved locally · sync pending: 1'),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
     'properties retain metadata across secondary actions and failed durable saves',
     (tester) async {
       await pump(tester);
-      final row = tester.widget<BusyMarkSidebarRecordRow<String>>(
-        find.byKey(
-          const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
-        ),
+      final row = find.byKey(
+        const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
       );
-      row.onMenuOpening!();
-      row.onMenuSelected!('properties');
+      await tester.tap(
+        find.descendant(of: row, matching: find.byTooltip('Note actions')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note Properties'));
       await settleStorage(tester);
       final title = find.descendant(
         of: find.byType(BusyMarkGroupedTextEntry).first,
@@ -1672,13 +2015,14 @@ void main() {
         ),
       );
       await pump(tester);
-      final row = tester.widget<BusyMarkSidebarRecordRow<String>>(
-        find.byKey(
-          const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
-        ),
+      final row = find.byKey(
+        const ValueKey('nextcloud-note-223e4567-e89b-42d3-a456-426614174000'),
       );
-      row.onMenuOpening!();
-      row.onMenuSelected!('properties');
+      await tester.tap(
+        find.descendant(of: row, matching: find.byTooltip('Note actions')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note Properties'));
       await settleStorage(tester);
       final attachment = find.widgetWithText(BusyMarkActionRow, 'report.pdf');
       expect(
@@ -1932,7 +2276,8 @@ void main() {
       await settleStorage(tester);
       expect(find.text('New note'), findsOneWidget);
       await tester.tap(find.text('Discard'));
-      await settleStorage(tester);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(find.text('Discard'), findsNWidgets(3));
       expect(find.text('Recoverable edit'), findsOneWidget);
       await tester.tap(find.text('Cancel').last);
@@ -2421,10 +2766,17 @@ class _TabSettings implements LocalSettingsStore {
 }
 
 class _CachedNotesRepository extends NotesRepository {
-  _CachedNotesRepository({required super.store})
+  _CachedNotesRepository({
+    required NotesStore store,
+    Map<int, NoteState>? serverNotes,
+  }) : this._(store: store, serverNotes: serverNotes ?? {});
+  _CachedNotesRepository._({required super.store, required this.serverNotes})
     : super(
         clientForAccount: (account) async => NotesApiClient(
           client: MockClient((request) async {
+            if (request.url.path.contains('/attachment/')) {
+              return http.Response.bytes([1, 2, 3], 200);
+            }
             if (request.url.path.endsWith('/settings')) {
               return http.Response(
                 jsonEncode({'notesPath': 'Notes', 'fileSuffix': '.md'}),
@@ -2432,6 +2784,9 @@ class _CachedNotesRepository extends NotesRepository {
               );
             }
             final id = int.parse(request.url.pathSegments.last);
+            if (serverNotes[id] case final remote?) {
+              return http.Response(jsonEncode(remote.toJson()), 200);
+            }
             final candidate = (await store.notes()).firstWhere(
               (n) => n.serverId == id,
             );
@@ -2441,6 +2796,8 @@ class _CachedNotesRepository extends NotesRepository {
           appPassword: 'fixture',
         ),
       );
+
+  final Map<int, NoteState> serverNotes;
 
   bool failMetadata = false;
   @override

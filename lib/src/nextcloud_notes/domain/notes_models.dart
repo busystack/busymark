@@ -108,6 +108,36 @@ class NotesException implements Exception {
   String toString() => message;
 }
 
+/// Consent to resolve applies to the remote snapshot shown by the dialog.
+class NotesConflictReviewChanged extends NotesException {
+  const NotesConflictReviewChanged(NoteState remote)
+    : super(
+        NotesFailureCode.conflict,
+        'Review the changed server version before resolving this note.',
+        remote: remote,
+      );
+}
+
+class NotesRecoveryResult {
+  const NotesRecoveryResult({this.noteId, this.opened = false, this.failure});
+  final String? noteId;
+  final bool opened;
+  final Object? failure;
+  bool get created => noteId != null;
+}
+
+enum NotesSettingsConflictReason { stale, pendingNotes, pendingAttachments }
+
+class NotesSettingsConflict extends NotesException {
+  const NotesSettingsConflict(this.reason, String message)
+    : super(
+        NotesFailureCode.conflict,
+        message,
+        scope: NotesRequestScope.settings,
+      );
+  final NotesSettingsConflictReason reason;
+}
+
 class NextcloudAccount {
   const NextcloudAccount({
     required this.id,

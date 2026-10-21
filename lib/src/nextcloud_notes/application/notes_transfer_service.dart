@@ -18,6 +18,32 @@ class NotesTransferCancelled extends FileSystemException {
   const NotesTransferCancelled() : super('Transfer cancelled.');
 }
 
+enum NotesTransferFailureReason {
+  sourceChanged,
+  sourceUnreadable,
+  invalidSnapshot,
+  mediaTooLarge,
+  unsafeSource,
+  destinationUnavailable,
+  exportChanged,
+  operation,
+}
+
+class NotesTransferException extends FileSystemException {
+  const NotesTransferException(this.reason, String message, [String path = ''])
+    : super(message, path);
+  final NotesTransferFailureReason reason;
+}
+
+NotesTransferFailureReason notesTransferFailureReason(Object? error) =>
+    switch (error) {
+      NotesTransferException(:final reason) => reason,
+      FormatException() ||
+      TypeError() => NotesTransferFailureReason.invalidSnapshot,
+      FileSystemException() => NotesTransferFailureReason.sourceUnreadable,
+      _ => NotesTransferFailureReason.operation,
+    };
+
 class NotesTransferCancellation {
   bool cancelled = false;
   void cancel() => cancelled = true;
@@ -73,10 +99,14 @@ class NotesImportOutcome {
     this.noteId,
     this.error,
     this.alreadyImported = false,
+    this.reason,
+    this.cause,
   });
   final String item;
   final String? noteId, error;
   final bool alreadyImported;
+  final NotesTransferFailureReason? reason;
+  final Object? cause;
 }
 
 /// Portable snapshots contain document metadata only. Every note is an
@@ -118,7 +148,8 @@ class NotesTransferService {
           snapshot.accountGenerations.entries.any(
             (e) => repository.accountGeneration(e.key) != e.value,
           )) {
-        throw const FileSystemException(
+        throw const NotesTransferException(
+          NotesTransferFailureReason.exportChanged,
           'Export media changed; capture the snapshot again.',
         );
       }
@@ -136,6 +167,7 @@ class NotesTransferService {
     final omissions = <String>[];
     final directories = <String, String>{'': ''};
     final used = <String>{};
+    var didPublish = false;
     try {
       for (final note in snapshot) {
         checkSnapshot();
@@ -217,13 +249,16 @@ class NotesTransferService {
         throw const FileSystemException('Export destination already exists.');
       }
       await staging.rename(published);
+      didPublish = true;
       return NotesExportResult(
         published,
         documents.length,
         List.unmodifiable(omissions),
       );
     } finally {
-      if (await staging.exists()) await staging.delete(recursive: true);
+      if (!didPublish && await staging.exists()) {
+        await staging.delete(recursive: true);
+      }
     }
   }
 
@@ -521,7 +556,11 @@ class NotesTransferService {
         final file = File(item.path);
         if (await file.length() > maximumDocumentBytes ||
             await file.readAsString() != item.content) {
-          throw const FileSystemException('Document changed after review.');
+          throw NotesTransferException(
+            NotesTransferFailureReason.sourceChanged,
+            'Document changed after review.',
+            item.path,
+          );
         }
         final media = <String, ({String filename, Uint8List bytes})>{};
         var total = 0;
@@ -532,11 +571,19 @@ class NotesTransferService {
           final length = await asset.length();
           total += length;
           if (length > maximumManagedAssetBytes || total > 256 * 1024 * 1024) {
-            throw const FileSystemException('Media exceeds import size limit.');
+            throw NotesTransferException(
+              NotesTransferFailureReason.mediaTooLarge,
+              'Media exceeds import size limit.',
+              entry.value.path,
+            );
           }
           final bytes = await asset.readAsBytes();
           if (sha256.convert(bytes).toString() != entry.value.digest) {
-            throw const FileSystemException('Media changed after review.');
+            throw NotesTransferException(
+              NotesTransferFailureReason.sourceChanged,
+              'Media changed after review.',
+              entry.value.path,
+            );
           }
           media[entry.key] = (filename: entry.value.filename, bytes: bytes);
         }
@@ -557,7 +604,14 @@ class NotesTransferService {
       } on NotesTransferCancelled {
         break;
       } on Object catch (error) {
-        outcomes.add(NotesImportOutcome(item.title, error: error.toString()));
+        outcomes.add(
+          NotesImportOutcome(
+            item.title,
+            error: error.toString(),
+            reason: notesTransferFailureReason(error),
+            cause: error,
+          ),
+        );
       }
       onProgress?.call(outcomes.length, selected.length);
     }
@@ -623,12 +677,18 @@ class NotesTransferService {
 
   static Future<void> _within(String root, String path) async {
     if (!p.isWithin(root, path)) {
-      throw const FileSystemException('Import path escapes source.');
+      throw const NotesTransferException(
+        NotesTransferFailureReason.unsafeSource,
+        'Import path escapes source.',
+      );
     }
     await _safeAbsolute(path);
     final resolved = await File(path).resolveSymbolicLinks();
     if (!p.isWithin(root, resolved)) {
-      throw const FileSystemException('Import path escapes source.');
+      throw const NotesTransferException(
+        NotesTransferFailureReason.unsafeSource,
+        'Import path escapes source.',
+      );
     }
   }
 
@@ -636,7 +696,8 @@ class NotesTransferService {
     var current = p.normalize(p.absolute(path));
     while (true) {
       if (await FileSystemEntity.isLink(current)) {
-        throw const FileSystemException(
+        throw const NotesTransferException(
+          NotesTransferFailureReason.unsafeSource,
           'Symbolic links are not allowed in transfers.',
         );
       }

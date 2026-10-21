@@ -69,6 +69,7 @@ class NotesOfflineController {
     String target, {
     bool required = true,
     bool paused = false,
+    bool waitForDownloads = true,
   }) async {
     await repository.setOfflineRequirement(
       accountId,
@@ -96,13 +97,19 @@ class NotesOfflineController {
         failures.removeWhere((key, _) => key.startsWith('${note.localId}:'));
       }
     }
-    await reconcile();
+    _emit();
+    final job = reconcile();
+    if (waitForDownloads) {
+      await job;
+    } else {
+      unawaited(job);
+    }
   }
 
   Future<void> cancelNote(String id) =>
-      setRequirement('pause', id, paused: true);
+      setRequirement('pause', id, paused: true, waitForDownloads: false);
 
-  Future<void> retry([String? noteId]) async {
+  Future<void> retry([String? noteId, bool waitForDownloads = true]) async {
     for (final r in requirements.toList()) {
       if (r['kind'] == 'pause' && (noteId == null || r['target'] == noteId)) {
         await repository.setOfflineRequirement(
@@ -128,7 +135,14 @@ class NotesOfflineController {
       _attempted.removeWhere((key) => key.startsWith('$noteId:'));
       failures.removeWhere((key, _) => key.startsWith('$noteId:'));
     }
-    await reconcile();
+    _generation++;
+    _emit();
+    final job = reconcile();
+    if (waitForDownloads) {
+      await job;
+    } else {
+      unawaited(job);
+    }
   }
 
   void _schedule() {
@@ -213,7 +227,7 @@ class NotesOfflineController {
                 );
                 if (path == null) failures[key] = 'Attachment unavailable';
               } on Object catch (error) {
-                failures[key] = error.toString();
+                if (_active(note)) failures[key] = error.toString();
               }
               if (_disposed || repository.accountById(accountId) == null) {
                 return;

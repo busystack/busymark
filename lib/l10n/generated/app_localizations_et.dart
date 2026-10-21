@@ -11,6 +11,129 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud palus pausi. Oota enne uuesti sisselogimist.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Notes värskendamine pärast seadete kinnitamist';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Eksport nurjus enne avaldamist. Kontrolli allikat ja sihtkohta ning ekspordi uuesti.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Taastatud märge on salvestatud, kuid ei avanenud. Lahenda ootel redaktori- või omaduste muudatused ning ava see olemasolev märge.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Ootel märkmed, konfliktid või ebakindlad loomised takistavad muudatust. Sünkrooni või vaata need Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Ootel manuste toimingud takistavad muudatust. Vaata manused Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Kasuta Nextcloudi kanoonilist HTTPS-aadressi ja logi uuesti sisse. Aadressi või ümbersuunamist ei saanud kinnitada.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes pole saadaval või API pole toetatud. Luba Nextcloud Notes API põhiversiooniga 1, alamversiooniga 4 või uuemaga.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud lükkas pääsuandmed tagasi. Volita konto uuesti või ühenda uuesti.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud keelas Notes’i võimaluste kontrolli. Palu administraatoril see lubada ja proovi uuesti.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloudi vastust ei saanud kinnitada. Kontrolli serveri paigaldust ja logi uuesti sisse.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Sisselogimise aeg sai läbi. Alusta uuesti ja lõpeta volitamine brauseris.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Süsteemi brauser ei avanenud. Kontrolli vaikebrauserit ja logi uuesti sisse.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloudiga ei saadud ühendust. Kontrolli võrku ja serverit ning logi uuesti sisse.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud lükkas võimaluste päringu tagasi. Kontrolli administraatoriga ligipääsu ja proovi uuesti.';
+
+  @override
+  String get notesAccountFailed =>
+      'Konto seadistamine nurjus. Proovi uuesti sisse logida.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Allikas muutus pärast ülevaatust. Vaata praegune fail üle või loo uus hetktõmmis.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Allikat ei saanud lugeda. Kontrolli faili või kausta ligipääsu ja vaata uuesti üle.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Hetktõmmis on vigane või toetamata. Vali kehtiv BusyMark Notes’i hetktõmmis või Markdown-allikas.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Meedia ületab impordi mahupiiri. Vähenda vastava kirje meediat ja vaata uuesti üle.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Allikas sisaldab ohtlikku teed. Vali failid allikakausta seest ja vaata uuesti üle.';
+
+  @override
+  String get notesTransferDestination =>
+      'Eksporti ei saanud kirjutada. Kontrolli sihtkoha ligipääsu ja vaba ruumi ning proovi uuesti.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Edastus ei lõppenud. Vaata vastavad kirjed üle ja proovi uuesti. Varem imporditud kirjed on salvestatud.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Eksport on saadaval koos väljajättudega';
+
+  @override
+  String get notesBatchUnchanged => 'Soovitud väärtused olid juba määratud.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Märge on kirjutuskaitstud. Kaitstud omadusi muuta ei saa; lemmikuks märkimine on lubatud.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Märge muutus pärast ülevaatust. Vaata selle praegune olek enne toimingu kordamist üle.';
+
+  @override
+  String get notesBatchMissing =>
+      'Märge pole enam saadaval. Värskenda loendit ja vaata sihtkirjed uuesti üle.';
+
+  @override
+  String get notesBatchStorage =>
+      'Kohalik salvestamine nurjus. Kontrolli andmeruumi ja proovi seda kirjet uuesti; õnnestunud kirjed on salvestatud.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Serveri märge muutus. Liitmise mustand säilis. Vaata uus võrdlus üle ja vali lahendus uuesti.';
+
+  @override
+  String get notesReviewRemote =>
+      'Olen serveri praeguse versiooni üle vaadanud';
+
+  @override
   String get wsModuleCapsNotPublished => 'Mooduli suurtähereeglit ei avaldata.';
 
   @override

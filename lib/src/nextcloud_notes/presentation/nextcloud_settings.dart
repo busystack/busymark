@@ -28,6 +28,8 @@ class _NextcloudNotesSettingsState
   late final WelcomeNotesActionController _pendingWelcome;
   bool _returningToWelcome = false;
   bool _localSaveFailed = false;
+  Timer? _retryTimer;
+  DateTime? _retryDeadline;
   @override
   void initState() {
     super.initState();
@@ -36,6 +38,7 @@ class _NextcloudNotesSettingsState
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
     if (!_returningToWelcome) Future<void>.microtask(_pendingWelcome.clear);
     _server.dispose();
     super.dispose();
@@ -73,8 +76,20 @@ class _NextcloudNotesSettingsState
     ref.watch(nextcloudNotesChangesProvider);
     final repositoryState = ref.watch(nextcloudNotesRepositoryProvider);
     final repository = repositoryState.value;
+    final deadline = connection.retryNotBefore;
+    final throttled = deadline?.isAfter(DateTime.now()) ?? false;
+    if (_retryDeadline != deadline) {
+      _retryDeadline = deadline;
+      _retryTimer?.cancel();
+      if (throttled) {
+        _retryTimer = Timer(deadline!.difference(DateTime.now()), () {
+          if (mounted) setState(() {});
+        });
+      }
+    }
     final actionsEnabled =
         !connection.busy &&
+        !throttled &&
         !repositoryState.isLoading &&
         !repositoryState.hasError;
     final account = connection.account == null
@@ -225,6 +240,7 @@ class _NextcloudNotesSettingsState
                 ? BusyMarkStatusKind.warning
                 : BusyMarkStatusKind.error,
           ),
+        if (throttled) Text(notesLocalDate(context, deadline!)),
       ],
     );
   }
@@ -370,6 +386,10 @@ class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
                 ? context.l10n.notesBuffersNotSaved
                 : settings.failure == NotesSettingsFailure.stale
                 ? context.l10n.notesSettingsStale
+                : settings.failure == NotesSettingsFailure.pendingNotes
+                ? context.l10n.notesSettingsPendingNotes
+                : settings.failure == NotesSettingsFailure.pendingAttachments
+                ? context.l10n.notesSettingsPendingAttachments
                 : localizeNotesFailure(context, settings.cause),
             kind: BusyMarkStatusKind.error,
           ),
@@ -377,6 +397,10 @@ class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
           BusyMarkStatusBox(
             message: context.l10n.notesSettingsRefreshFailed,
             kind: BusyMarkStatusKind.warning,
+          ),
+        if (settings.refreshing)
+          LinearProgressIndicator(
+            semanticsLabel: context.l10n.notesSettingsRefreshing,
           ),
         if (settings.phase == NotesSettingsPhase.saved)
           Text(
@@ -462,11 +486,15 @@ Future<bool> confirmNotesSettingsDeparture(BuildContext context) async {
     return true;
   }
   if (decision != 'save') return false;
-  return controller.save(
+  final saved = await controller.save(
     preserveBuffers: () async =>
         (await container.read(workspaceControllerProvider.notifier).saveAll())
             .succeeded,
   );
+  return saved &&
+      context.mounted &&
+      !container.read(notesSettingsProvider).dirty &&
+      !container.read(notesSettingsProvider).busy;
 }
 
 Future<void> reloadNotesSettings(BuildContext context, String accountId) async {

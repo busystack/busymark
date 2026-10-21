@@ -11,6 +11,128 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud ba om en pause. Vent før du starter innloggingen på nytt.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Oppdaterer Notes etter bekreftet innstillingsendring';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Eksporten mislyktes før publisering. Kontroller kilde og mål, og eksporter igjen.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Den gjenopprettede notaten er lagret, men kunne ikke åpnes. Avklar ventende redigerings- eller egenskapsendringer, og åpne denne eksisterende notaten.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Ventende notater, konflikter eller usikre opprettelser blokkerer endringen. Synkroniser eller gjennomgå dem i Notes, og prøv det bevarte innstillingsutkastet igjen.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Ventende vedleggsoperasjoner blokkerer endringen. Gjennomgå vedlegg i Notes, og prøv det bevarte innstillingsutkastet igjen.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Bruk Nextclouds kanoniske HTTPS-adresse og start innloggingen på nytt. Adressen eller videresendingen kunne ikke bekreftes.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes er utilgjengelig eller API-et støttes ikke. Aktiver Nextcloud Notes med API-hovedversjon 1, underversjon 4 eller nyere.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud avviste påloggingsinformasjonen. Godkjenn kontoen på nytt eller koble til igjen.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud nektet kontroll av Notes-funksjoner. Be administratoren tillate den, og prøv igjen.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloud-svaret kunne ikke bekreftes. Kontroller serverinstallasjonen og logg inn igjen.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Innloggingen ble tidsavbrutt. Start igjen og fullfør godkjenningen i nettleseren.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Systemnettleseren kunne ikke åpnes. Kontroller standardnettleseren og logg inn igjen.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud kunne ikke nås. Kontroller tilkobling og server, og logg inn igjen.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud avviste funksjonsforespørselen. Kontroller tilgang med administratoren og prøv igjen.';
+
+  @override
+  String get notesAccountFailed =>
+      'Kontooppsettet kunne ikke fullføres. Prøv å logge inn igjen.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Kilden ble endret etter gjennomgang. Gjennomgå gjeldende fil eller lag et nytt øyeblikksbilde før nytt forsøk.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Kilden kunne ikke leses. Kontroller tilgang til fil eller mappe, og gjennomgå igjen.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Øyeblikksbildet er ugyldig eller ustøttet. Velg et gyldig BusyMark Notes-bilde eller en Markdown-kilde.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Medier overskrider importgrensen. Reduser mediene for berørt element og gjennomgå igjen.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Kilden inneholder en utrygg sti. Velg filer i kildemappen og gjennomgå igjen.';
+
+  @override
+  String get notesTransferDestination =>
+      'Eksporten kunne ikke skrives. Kontroller tilgang og ledig plass på målet, og eksporter igjen.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Overføringen kunne ikke fullføres. Gjennomgå berørte elementer og prøv igjen. Tidligere importerte elementer er lagret.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Eksport tilgjengelig med utelatelser';
+
+  @override
+  String get notesBatchUnchanged => 'De ønskede verdiene var allerede angitt.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Notaten er skrivebeskyttet. Beskyttede egenskaper kan ikke endres; Favoritt er fortsatt tillatt.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Notaten ble endret etter gjennomgang. Gjennomgå gjeldende tilstand før handlingen gjentas.';
+
+  @override
+  String get notesBatchMissing =>
+      'Notaten er ikke lenger tilgjengelig. Oppdater listen og gjennomgå målene igjen.';
+
+  @override
+  String get notesBatchStorage =>
+      'Lokal lagring mislyktes. Kontroller lagringsplassen og prøv dette elementet igjen; vellykkede elementer er lagret.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Servernotaten ble endret. Fletteutkastet er bevart. Gjennomgå den oppdaterte sammenligningen og velg løsning på nytt.';
+
+  @override
+  String get notesReviewRemote => 'Jeg har gjennomgått gjeldende serverversjon';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Modulens bokstavstil publiseres ikke.';
 

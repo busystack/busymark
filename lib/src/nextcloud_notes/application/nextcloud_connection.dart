@@ -137,6 +137,11 @@ class NextcloudConnectionState {
   final bool removedWithWarning;
   final Object? failure;
   final bool removalFailed;
+  DateTime? get retryNotBefore => switch (failure) {
+    NextcloudCapabilityException(:final retryNotBefore) => retryNotBefore,
+    NotesException(:final retryNotBefore) => retryNotBefore,
+    _ => null,
+  };
 
   bool get busy =>
       phase == NextcloudConnectionPhase.starting ||
@@ -197,7 +202,10 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
   }
 
   Future<bool> _connect(String serverUrl, {NextcloudAccount? previous}) async {
-    if (state.busy) return false;
+    if (state.busy ||
+        (state.retryNotBefore?.isAfter(DateTime.now()) ?? false)) {
+      return false;
+    }
     final generation = ++_generation;
     final cancellation = NextcloudLoginCancellation();
     _cancellation = cancellation;

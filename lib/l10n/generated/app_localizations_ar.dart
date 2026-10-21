@@ -11,6 +11,127 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'طلب Nextcloud التوقف مؤقتًا. انتظر قبل بدء تسجيل الدخول مجددًا.';
+
+  @override
+  String get notesSettingsRefreshing => 'جارٍ تحديث Notes بعد تأكيد الإعدادات';
+
+  @override
+  String get notesExportOperationFailed =>
+      'فشل التصدير قبل النشر. تحقق من المصدر والوجهة ثم أعد التصدير.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'حُفظت الملاحظة المستردة لكن تعذر فتحها. عالج تعديلات المحرر أو الخصائص المعلقة ثم افتح هذه الملاحظة الموجودة.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'تمنع الملاحظات المعلقة أو التعارضات أو عمليات الإنشاء غير المؤكدة هذا التغيير. زامنها أو راجعها في Notes ثم أعد حفظ مسودة الإعدادات المحفوظة.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'تمنع عمليات المرفقات المعلقة هذا التغيير. راجع المرفقات في Notes ثم أعد حفظ مسودة الإعدادات المحفوظة.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'استخدم عنوان HTTPS الأساسي لخادم Nextcloud وأعد تسجيل الدخول. تعذر التحقق من العنوان أو إعادة التوجيه.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes غير متاح أو واجهته غير مدعومة. فعّل Nextcloud Notes بواجهة API ذات الإصدار الرئيسي 1 والفرعي 4 أو أحدث.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'رفض Nextcloud بيانات الاعتماد. أعد تفويض الحساب أو الاتصال به.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'رفض Nextcloud فحص إمكانات Notes. اطلب من مسؤول الخادم السماح به ثم أعد المحاولة.';
+
+  @override
+  String get notesAccountMalformed =>
+      'تعذر التحقق من استجابة Nextcloud. تحقق من تثبيت الخادم ثم أعد تسجيل الدخول.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'انتهت مهلة تسجيل الدخول. ابدأ مجددًا وأكمل التفويض في المتصفح.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'تعذر فتح متصفح النظام. تحقق من المتصفح الافتراضي ثم أعد تسجيل الدخول.';
+
+  @override
+  String get notesAccountNetwork =>
+      'تعذر الوصول إلى Nextcloud. تحقق من الاتصال والخادم ثم أعد تسجيل الدخول.';
+
+  @override
+  String get notesAccountRejected =>
+      'رفض Nextcloud طلب الإمكانات. تحقق من صلاحية الوصول مع المسؤول ثم أعد المحاولة.';
+
+  @override
+  String get notesAccountFailed =>
+      'تعذر إكمال إعداد الحساب. أعد محاولة تسجيل الدخول.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'تغير المصدر بعد المراجعة. راجع الملف الحالي أو التقط نسخة جديدة قبل إعادة المحاولة.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'تعذرت قراءة المصدر. تحقق من الوصول إلى الملف أو المجلد ثم راجعه مجددًا.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'النسخة غير صالحة أو غير مدعومة. اختر نسخة BusyMark Notes صالحة أو مصدر Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'تتجاوز الوسائط حد الاستيراد. قلل وسائط العنصر المتأثر ثم راجعه مجددًا.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'يحتوي المصدر على مسار غير آمن. اختر ملفات داخل مجلد المصدر ثم راجعها مجددًا.';
+
+  @override
+  String get notesTransferDestination =>
+      'تعذرت كتابة التصدير. تحقق من الوصول والمساحة المتاحة في الوجهة ثم أعد التصدير.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'تعذر إكمال النقل. راجع العناصر المتأثرة وأعد المحاولة. تبقى العناصر المستوردة سابقًا محفوظة.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'التصدير متاح مع عناصر مستثناة';
+
+  @override
+  String get notesBatchUnchanged => 'القيم المطلوبة مضبوطة بالفعل.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'هذه الملاحظة للقراءة فقط. لا يمكن تغيير الخصائص المحمية؛ ما زال تغيير المفضلة مسموحًا.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'تغيرت هذه الملاحظة بعد المراجعة. راجع حالتها الحالية قبل تطبيق الإجراء مجددًا.';
+
+  @override
+  String get notesBatchMissing =>
+      'لم تعد هذه الملاحظة متاحة. حدّث القائمة وراجع العناصر المستهدفة مجددًا.';
+
+  @override
+  String get notesBatchStorage =>
+      'فشل الحفظ المحلي. تحقق من التخزين وأعد محاولة هذا العنصر؛ تبقى العناصر الناجحة محفوظة.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'تغيرت ملاحظة الخادم. مسودة الدمج محفوظة. راجع المقارنة المحدثة واختر طريقة الحل مجددًا.';
+
+  @override
+  String get notesReviewRemote => 'راجعت إصدار الخادم الحالي';
+
+  @override
   String get wsModuleCapsNotPublished => 'لا يُنشر تنسيق أحرف الوحدة.';
 
   @override

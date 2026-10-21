@@ -11,6 +11,128 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud yêu cầu tạm dừng. Hãy đợi trước khi đăng nhập lại.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Đang làm mới Notes sau khi xác nhận cài đặt';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Xuất thất bại trước khi công bố. Kiểm tra nguồn và đích rồi xuất lại.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Ghi chú khôi phục đã được lưu nhưng không mở được. Giải quyết thay đổi đang chờ trong trình soạn thảo hoặc thuộc tính rồi mở ghi chú hiện có này.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Ghi chú đang chờ, xung đột hoặc lần tạo chưa rõ kết quả đang chặn thay đổi. Đồng bộ hoặc xem xét trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Thao tác tệp đính kèm đang chờ đang chặn thay đổi. Xem xét tệp đính kèm trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Dùng địa chỉ HTTPS chuẩn của Nextcloud rồi đăng nhập lại. Không thể xác minh địa chỉ hoặc chuyển hướng.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes không khả dụng hoặc API không được hỗ trợ. Bật Nextcloud Notes với API phiên bản chính 1, phụ từ 4 trở lên.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud từ chối thông tin xác thực. Cấp quyền lại hoặc kết nối lại tài khoản.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud cấm kiểm tra khả năng Notes. Nhờ quản trị viên cho phép rồi thử lại.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Không thể xác minh phản hồi Nextcloud. Kiểm tra cài đặt máy chủ rồi đăng nhập lại.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Đăng nhập hết thời gian. Bắt đầu lại và hoàn tất cấp quyền trong trình duyệt.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Không mở được trình duyệt hệ thống. Kiểm tra trình duyệt mặc định rồi đăng nhập lại.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Không thể kết nối Nextcloud. Kiểm tra kết nối và máy chủ rồi đăng nhập lại.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud từ chối yêu cầu khả năng. Kiểm tra quyền truy cập với quản trị viên rồi thử lại.';
+
+  @override
+  String get notesAccountFailed =>
+      'Không hoàn tất thiết lập tài khoản. Hãy đăng nhập lại.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Nguồn đã đổi sau khi xem xét. Xem xét tệp hiện tại hoặc tạo ảnh chụp mới trước khi thử lại.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Không thể đọc nguồn. Kiểm tra quyền truy cập tệp hoặc thư mục rồi xem xét lại.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Ảnh chụp không hợp lệ hoặc không được hỗ trợ. Chọn ảnh chụp BusyMark Notes hợp lệ hoặc nguồn Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Nội dung đa phương tiện vượt giới hạn nhập. Giảm kích thước của mục liên quan rồi xem xét lại.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Nguồn chứa đường dẫn không an toàn. Chọn tệp trong thư mục nguồn rồi xem xét lại.';
+
+  @override
+  String get notesTransferDestination =>
+      'Không thể ghi bản xuất. Kiểm tra quyền truy cập và chỗ trống ở đích rồi xuất lại.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Không hoàn tất truyền. Xem xét các mục liên quan rồi thử lại. Các mục đã nhập vẫn được lưu.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Bản xuất có sẵn nhưng có mục bị bỏ qua';
+
+  @override
+  String get notesBatchUnchanged => 'Các giá trị yêu cầu đã được đặt.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Ghi chú này chỉ đọc. Không thể sửa thuộc tính được bảo vệ; vẫn có thể đổi Yêu thích.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Ghi chú đã đổi sau khi xem xét. Xem xét trạng thái hiện tại trước khi thực hiện lại.';
+
+  @override
+  String get notesBatchMissing =>
+      'Ghi chú không còn khả dụng. Làm mới danh sách rồi xem xét lại các mục đích.';
+
+  @override
+  String get notesBatchStorage =>
+      'Lưu cục bộ thất bại. Kiểm tra bộ nhớ rồi thử lại mục này; các mục thành công vẫn được lưu.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Ghi chú trên máy chủ đã đổi. Bản nháp hợp nhất được giữ. Xem xét so sánh mới rồi chọn lại cách giải quyết.';
+
+  @override
+  String get notesReviewRemote => 'Tôi đã xem xét phiên bản máy chủ hiện tại';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Quy tắc viết hoa của mô-đun không được xuất bản.';
 

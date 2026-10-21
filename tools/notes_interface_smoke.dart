@@ -27,6 +27,7 @@ import 'package:busymark/src/search/search_session.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/outline_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -276,6 +277,10 @@ class _DriverState extends ConsumerState<_Driver> {
       '${widget.output.path}/$name.png',
     ).writeAsBytes(data!.buffer.asUint8List());
     image.dispose();
+    // Boundary readback and the native window present on separate timelines.
+    // Present another frame before reading X11 so both images show settled text.
+    WidgetsBinding.instance.scheduleFrame();
+    await settle();
     stdout.writeln('CAPTURE $name');
     final native = await Process.run('/usr/bin/python3', [
       '-c',
@@ -310,7 +315,6 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
   }
 
   Future<void> key(String value) async {
-    await windowManager.focus();
     final result = await Process.run(
       '/usr/bin/python3',
       ['tools/nextcloud_notes_native_key.py', value],
@@ -347,8 +351,11 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
         (r) => r.key == ValueKey('nextcloud-note-${_noteId(0)}'),
       );
   Future<void> properties(String name) async {
-    firstNote.onMenuOpening!();
-    firstNote.onMenuSelected!('properties');
+    await click(firstNote, button: 3);
+    await key('home');
+    await key('down');
+    await key('down');
+    await key('enter');
     await until(
       () => widgets<BusyMarkDialogShell>().isNotEmpty,
       'properties opened',
@@ -691,6 +698,7 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
   }
 
   Future<void> run() async {
+    await windowManager.focus();
     try {
       final workspace = ref.read(workspaceControllerProvider.notifier);
       await workspace.openNextcloudWorkspace(_account);
@@ -855,8 +863,136 @@ Gdk.pixbuf_get_from_window(root,0,0,root.get_width(),root.get_height()).savev(sy
         await capture('notes-pointer-menu');
         await key('escape');
         if (widget.keyboardOnly) {
+          final repository = ref.read(nextcloudNotesRepositoryProvider).value!;
+          BusyMarkCompactIconButton triggerFor(String id) {
+            final rows = widgets<BusyMarkSidebarRecordRow>();
+            final index = rows.indexWhere(
+              (r) => r.key == ValueKey('nextcloud-note-$id'),
+            );
+            return widgets<BusyMarkCompactIconButton>()
+                .where((b) => b.tooltip == 'Note actions')
+                .elementAt(index);
+          }
+
+          final a = _noteId(0), b = _noteId(1);
+          final favoriteA = repository.noteById(a)!.favorite;
+          await click(triggerFor(a));
+          await key('escape');
+          final rowB = widgets<BusyMarkSidebarRecordRow>().firstWhere(
+            (r) => r.key == ValueKey('nextcloud-note-$b'),
+          );
+          rowB.focusNode!.requestFocus();
+          await settle();
+          for (
+            var i = 0;
+            i < 40 && triggerFor(b).focusNode?.hasPrimaryFocus != true;
+            i++
+          ) {
+            await key('tab');
+          }
+          if (triggerFor(b).focusNode?.hasPrimaryFocus != true) {
+            throw StateError('Tab did not focus B overflow');
+          }
+          await key('enter');
+          await capture('note-b-keyboard-overflow');
+          await key('home');
+          await key('enter');
+          await until(
+            () => repository.noteById(b)!.favorite,
+            'Keyboard Favorite targets B',
+          );
+          if (repository.noteById(a)!.favorite != favoriteA) {
+            throw StateError('B menu changed A');
+          }
+          await click(triggerFor(a));
+          await key('escape');
+          widgets<BusyMarkSidebarRecordRow>()
+              .firstWhere((r) => r.key == ValueKey('nextcloud-note-$b'))
+              .focusNode!
+              .requestFocus();
+          await settle();
+          for (
+            var i = 0;
+            i < 40 && triggerFor(b).focusNode?.hasPrimaryFocus != true;
+            i++
+          ) {
+            await key('tab');
+          }
+          if (triggerFor(b).focusNode?.hasPrimaryFocus != true) {
+            throw StateError('Tab did not return to B overflow');
+          }
+          await key('enter');
+          await key('home');
+          await key('down');
+          await key('down');
+          await key('enter');
+          await until(
+            () => widgets<BusyMarkDialogShell>().isNotEmpty,
+            'B Properties opened',
+          );
+          final title = widgets<BusyMarkGroupedTextEntry>().first;
+          if (title.controller?.text != repository.noteById(b)!.title &&
+              title.initialValue != repository.noteById(b)!.title) {
+            throw StateError('B Properties displayed another note');
+          }
+          await capture('note-b-keyboard-properties');
+          await dismissModal();
+
+          await workspace.openNextcloudNote(a);
+          workspace.updateActiveText(
+            [
+              for (var i = 0; i < 60; i++)
+                '# Heading ${i.toString().padLeft(2, '0')}\n\nParagraph $i.\n',
+            ].join('\n'),
+          );
+          await key('ctrl+3');
+          BusyMarkSidebarTreeRow? focusedHeading() => FocusManager
+              .instance
+              .primaryFocus
+              ?.context
+              ?.findAncestorWidgetOfExactType<BusyMarkSidebarTreeRow>();
+          for (
+            var i = 0;
+            i < 15 && focusedHeading()?.title != 'Heading 00';
+            i++
+          ) {
+            await key('tab');
+          }
+          if (focusedHeading()?.title != 'Heading 00') {
+            throw StateError('Tab did not reach Outline heading row');
+          }
+          await key('down');
+          if (!widgets<BusyMarkSidebarTreeRow>().any(
+            (r) => r.title == 'Heading 01' && r.selected,
+          )) {
+            throw StateError('Outline Down did not select heading 01');
+          }
+          await key('up');
+          if (!widgets<BusyMarkSidebarTreeRow>().any(
+            (r) => r.title == 'Heading 00' && r.selected,
+          )) {
+            throw StateError('Outline Up did not select heading 00');
+          }
+          await capture('outline-tabbed-row-arrows');
+          for (var i = 0; i < 35; i++) {
+            await key('down');
+          }
+          if (!widgets<BusyMarkSidebarTreeRow>().any(
+            (r) => r.title == 'Heading 35' && r.selected,
+          )) {
+            throw StateError('Outline did not reveal heading 35');
+          }
+          await key('enter');
+          final headings = activeDocumentOutline(
+            ref.read(workspaceControllerProvider),
+          );
+          if (ref.read(outlineNavigationTargetProvider)?.headingId !=
+              headings[35].id) {
+            throw StateError('Outline activation used the wrong heading');
+          }
+          await capture('outline-keyboard-reveal-activation');
           await File('${widget.output.path}/result.txt').writeAsString(
-            'PASS: native category Left/Right, note Down/PageDown/PageUp/End/Home, Shift+F10, overflow and pointer menus.\n',
+            'PASS: native category Left/Right, note Down/PageDown/PageUp/End/Home, Shift+F10, overflow and pointer menus; pointer A then Tab/Enter on B targets Favorite and Properties only on B; Tab into Outline row, Up/Down selection, scrolling reveal and Enter activation.\n',
           );
           return;
         }

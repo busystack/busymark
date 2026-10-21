@@ -53,6 +53,7 @@ bindings = {
     'page-down': [b'Next'],
     'page-up': [b'Prior'],
     'down': [b'Down'],
+    'up': [b'Up'],
     'left': [b'Left'],
     'right': [b'Right'],
     'tab': [b'Tab'],

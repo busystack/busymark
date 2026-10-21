@@ -11,6 +11,128 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud попросив зачекати. Зачекайте перед повторним входом.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Оновлення Notes після підтвердження налаштувань';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Експорт не опубліковано. Перевірте джерело та призначення й повторіть.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Відновлену нотатку збережено, але не відкрито. Завершіть зміни редактора або властивостей і відкрийте цю наявну нотатку.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Зміні заважають очікувані нотатки, конфлікти або непевні створення. Синхронізуйте чи перевірте їх у Notes і повторіть збереження чернетки налаштувань.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Зміні заважають операції з вкладеннями. Перевірте їх у Notes і повторіть збереження збереженої чернетки.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Використайте канонічну HTTPS-адресу Nextcloud та ввійдіть знову. Адресу або перенаправлення не вдалося перевірити.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes недоступний або API не підтримується. Увімкніть Nextcloud Notes з основною версією API 1, додатковою 4 або новішою.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud відхилив облікові дані. Повторно авторизуйте або підключіть обліковий запис.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud заборонив перевірку можливостей Notes. Попросіть адміністратора дозволити її й повторіть.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Не вдалося перевірити відповідь Nextcloud. Перевірте встановлення сервера та ввійдіть знову.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Час входу минув. Почніть знову та завершіть авторизацію в браузері.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Системний браузер не відкрився. Перевірте типовий браузер і ввійдіть знову.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud недоступний. Перевірте з’єднання та сервер і ввійдіть знову.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud відхилив запит можливостей. Перевірте доступ з адміністратором і повторіть.';
+
+  @override
+  String get notesAccountFailed =>
+      'Налаштування облікового запису не завершено. Повторіть вхід.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Джерело змінилося після перевірки. Перевірте поточний файл або створіть новий знімок.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Не вдалося прочитати джерело. Перевірте доступ до файлу чи теки й перевірте знову.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Знімок недійсний або не підтримується. Виберіть коректний знімок BusyMark Notes або джерело Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Медіа перевищують ліміт імпорту. Зменште медіа відповідного елемента й перевірте знову.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Джерело містить небезпечний шлях. Виберіть файли в межах вихідної теки та перевірте знову.';
+
+  @override
+  String get notesTransferDestination =>
+      'Не вдалося записати експорт. Перевірте доступ і вільне місце в призначенні й повторіть.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Передавання не завершено. Перевірте відповідні елементи й повторіть. Раніше імпортовані елементи збережено.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Експорт доступний із пропусками';
+
+  @override
+  String get notesBatchUnchanged => 'Запитані значення вже встановлено.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Нотатка лише для читання. Захищені властивості змінювати не можна; обране змінювати можна.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Нотатка змінилася після перевірки. Перевірте поточний стан перед повторенням дії.';
+
+  @override
+  String get notesBatchMissing =>
+      'Нотатка більше недоступна. Оновіть список і перевірте вибрані елементи.';
+
+  @override
+  String get notesBatchStorage =>
+      'Локальне збереження не вдалося. Перевірте сховище й повторіть цей елемент; успішні елементи збережено.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Нотатка сервера змінилася. Чернетку злиття збережено. Перевірте нове порівняння й виберіть рішення знову.';
+
+  @override
+  String get notesReviewRemote => 'Я перевірив поточну версію сервера';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Правило регістру модуля не публікується.';
 

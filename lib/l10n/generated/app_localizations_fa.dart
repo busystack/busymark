@@ -11,6 +11,128 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud درخواست مکث کرد. پیش از آغاز دوبارهٔ ورود منتظر بمانید.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'در حال تازه‌سازی Notes پس از تأیید تنظیمات';
+
+  @override
+  String get notesExportOperationFailed =>
+      'برون‌بری پیش از انتشار شکست خورد. مبدأ و مقصد را بررسی و دوباره برون‌بری کنید.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'یادداشت بازیابی‌شده ذخیره شد اما باز نشد. تغییرات معلق ویرایشگر یا ویژگی‌ها را رفع و همین یادداشت را باز کنید.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'یادداشت‌های معلق، تعارض‌ها یا ایجادهای نامطمئن مانع این تغییرند. در Notes همگام‌سازی یا بازبینی کنید، سپس ذخیرهٔ پیش‌نویس حفظ‌شده را تکرار کنید.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'عملیات معلق پیوست‌ها مانع این تغییرند. پیوست‌ها را در Notes بازبینی و ذخیرهٔ پیش‌نویس حفظ‌شده را تکرار کنید.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'از نشانی HTTPS اصلی Nextcloud استفاده و ورود را دوباره آغاز کنید. نشانی یا تغییرمسیر تأیید نشد.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes در دسترس نیست یا API پشتیبانی نمی‌شود. Nextcloud Notes را با نسخهٔ اصلی API برابر 1 و فرعی 4 یا بالاتر فعال کنید.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud اطلاعات ورود را رد کرد. حساب را دوباره مجاز یا متصل کنید.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud بررسی قابلیت‌های Notes را نپذیرفت. از مدیر سرور مجوز بخواهید و دوباره تلاش کنید.';
+
+  @override
+  String get notesAccountMalformed =>
+      'پاسخ Nextcloud تأیید نشد. نصب سرور را بررسی و ورود را دوباره آغاز کنید.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'مهلت ورود تمام شد. دوباره آغاز و مجوز را در مرورگر تکمیل کنید.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'مرورگر سیستم باز نشد. مرورگر پیش‌فرض را بررسی و ورود را دوباره آغاز کنید.';
+
+  @override
+  String get notesAccountNetwork =>
+      'دسترسی به Nextcloud ممکن نشد. اتصال و سرور را بررسی و دوباره وارد شوید.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud درخواست قابلیت‌ها را رد کرد. دسترسی را با مدیر بررسی و دوباره تلاش کنید.';
+
+  @override
+  String get notesAccountFailed =>
+      'راه‌اندازی حساب کامل نشد. دوباره وارد شوید.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'مبدأ پس از بازبینی تغییر کرده است. فایل فعلی را دوباره بازبینی یا تصویر تازه‌ای تهیه کنید.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'مبدأ خوانده نشد. دسترسی فایل یا پوشه را بررسی و دوباره بازبینی کنید.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'تصویر نامعتبر یا پشتیبانی‌نشده است. یک تصویر معتبر BusyMark Notes یا مبدأ Markdown انتخاب کنید.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'رسانه از محدودیت اندازهٔ درون‌بری بیشتر است. رسانهٔ مورد مربوط را کوچک‌تر و دوباره بازبینی کنید.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'مبدأ مسیر ناامن دارد. فایل‌هایی از داخل پوشهٔ مبدأ انتخاب و دوباره بازبینی کنید.';
+
+  @override
+  String get notesTransferDestination =>
+      'برون‌بری نوشته نشد. دسترسی و فضای آزاد مقصد را بررسی و دوباره برون‌بری کنید.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'انتقال کامل نشد. موارد مربوط را بازبینی و دوباره تلاش کنید. موارد درون‌برده‌شدهٔ قبلی ذخیره می‌مانند.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'برون‌بری با موارد حذف‌شده در دسترس است';
+
+  @override
+  String get notesBatchUnchanged => 'مقادیر خواسته‌شده از قبل تنظیم بودند.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'این یادداشت فقط‌خواندنی است. ویژگی‌های محافظت‌شده تغییر نمی‌کنند؛ تغییر علاقه‌مندی همچنان مجاز است.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'یادداشت پس از بازبینی تغییر کرده است. پیش از اجرای دوبارهٔ عمل، وضعیت فعلی را بازبینی کنید.';
+
+  @override
+  String get notesBatchMissing =>
+      'این یادداشت دیگر در دسترس نیست. فهرست و اهداف را دوباره بررسی کنید.';
+
+  @override
+  String get notesBatchStorage =>
+      'ذخیرهٔ محلی شکست خورد. فضای ذخیره‌سازی را بررسی و این مورد را تکرار کنید؛ موارد موفق ذخیره می‌مانند.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'یادداشت سرور تغییر کرد. پیش‌نویس ادغام حفظ شده است. مقایسهٔ به‌روز را بازبینی و راه‌حل را دوباره انتخاب کنید.';
+
+  @override
+  String get notesReviewRemote => 'نسخهٔ فعلی سرور را بازبینی کردم';
+
+  @override
   String get wsModuleCapsNotPublished => 'سبک حروف ماژول منتشر نمی‌شود.';
 
   @override

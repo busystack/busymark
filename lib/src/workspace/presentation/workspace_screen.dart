@@ -8929,6 +8929,8 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         _navigationEntries.length - 1,
       ),
     );
+    // Navigation belongs to the tree; retain it as rows are virtualized away.
+    _navigationFocus.requestFocus();
     if (_treeScrollController.hasClients) {
       _treeScrollController.jumpTo(
         (_keyboardIndex * _treeRowExtent).clamp(
@@ -8949,6 +8951,22 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
             .node
             .heading;
     _navigateHeading(heading);
+  }
+
+  KeyEventResult _handleNavigationKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+        event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      _moveOutlineSelection(
+        event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
+      );
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter) {
+      _activateOutlineSelection();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   void _navigateHeading(DocumentOutlineHeading heading) {
@@ -9225,21 +9243,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     };
     return Focus(
       focusNode: _navigationFocus,
-      onKeyEvent: (_, event) {
-        if (event is! KeyDownEvent) return KeyEventResult.ignored;
-        if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
-            event.logicalKey == LogicalKeyboardKey.arrowUp) {
-          _moveOutlineSelection(
-            event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
-          );
-          return KeyEventResult.handled;
-        }
-        if (event.logicalKey == LogicalKeyboardKey.enter) {
-          _activateOutlineSelection();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
+      onKeyEvent: _handleNavigationKeyEvent,
       child: ListView.builder(
         key: const ValueKey('workspace-sidebar-outline-tree'),
         controller: _treeScrollController,
@@ -9274,6 +9278,23 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
             key: ValueKey('workspace-sidebar-outline-row-$headingIndex'),
             child: BusyMarkSidebarTreeRow(
               title: heading.text,
+              onNavigationKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    {
+                      LogicalKeyboardKey.arrowDown,
+                      LogicalKeyboardKey.arrowUp,
+                      LogicalKeyboardKey.enter,
+                    }.contains(event.logicalKey)) {
+                  _keyboardIndex = index;
+                  return _handleNavigationKeyEvent(node, event);
+                }
+                return KeyEventResult.ignored;
+              },
+              onFocusChange: (focused) {
+                if (focused && _keyboardIndex != index) {
+                  setState(() => _keyboardIndex = index);
+                }
+              },
               depth: entry.depth,
               icon: BusyMarkGlyphs.tag,
               leading: _HeadingBadge(level: heading.level),

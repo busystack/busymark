@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -85,7 +86,6 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
   final _noteViewportKey = GlobalKey();
   final _rowFocus = <String, FocusNode>{};
   final _navigationFocus = <Object, FocusNode>{};
-  List<NotesMetadataSnapshot> _reviewed = const [];
   List<String> _exportTargets = const [];
   String _offlineScope = '';
   StreamSubscription<void>? _notesSubscription;
@@ -419,18 +419,21 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
     ];
   }
 
-  void _captureTargets(NextcloudNote note) {
+  List<NotesMetadataSnapshot> _captureTargets(NextcloudNote note) {
     final repository = ref.read(nextcloudNotesRepositoryProvider).value;
-    _reviewed = [
+    return List.unmodifiable([
       for (final id in _navigation.contextTargets(note.localId))
         if (repository?.noteById(id) != null) repository!.metadataSnapshot(id),
-    ];
+    ]);
   }
 
-  Future<void> _noteAction(String action, NextcloudNote note) async {
-    final reviewed = List<NotesMetadataSnapshot>.of(_reviewed);
+  Future<void> _noteAction(
+    String action,
+    List<NotesMetadataSnapshot> reviewed,
+  ) async {
     if (reviewed.isEmpty) return;
     final targets = reviewed.map((s) => s.note.localId).toList();
+    final note = reviewed.first.note;
     if ({'favorite', 'unfavorite', 'move'}.contains(action)) {
       if (reviewed.length == 1 && action != 'move') {
         await ref
@@ -747,6 +750,7 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                     NotesDestination.recovery,
                   ][index];
                   return BusyMarkSidebarTreeRow(
+                    traverseWithArrows: true,
                     key: ValueKey(destination),
                     focusNode: _focusForDestination(destination),
                     title: label(destination),
@@ -762,6 +766,7 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                 }
                 final category = categoryRows[index - 4];
                 return BusyMarkSidebarTreeRow(
+                  traverseWithArrows: true,
                   key: ValueKey('notes-category-$category'),
                   focusNode: _focusForDestination(category),
                   title: category.split('/').last,
@@ -895,9 +900,11 @@ class NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                           menuTooltip: context.l10n.noteActions,
                           menuItemsBuilder: (context) =>
                               _noteActions(context, note),
-                          onMenuOpening: () => _captureTargets(note),
-                          onMenuSelected: (action) =>
-                              unawaited(_noteAction(action, note)),
+                          menuSelectionForSession: () {
+                            final reviewed = _captureTargets(note);
+                            return (action) =>
+                                unawaited(_noteAction(action, reviewed));
+                          },
                           onTap: () {
                             _rowFocus[note.localId]?.requestFocus();
                             final keyboard = HardwareKeyboard.instance;
@@ -1359,14 +1366,16 @@ Future<void> showNextcloudConflict(
   final current = repository.noteById(note.localId);
   if (current == null || !context.mounted) return;
   note = current;
-  final localMetadata = note.metadataConflict != null;
-  final remote = note.remote;
+  var localMetadata = note.metadataConflict != null;
+  var remote = note.remote;
   final creationCandidates = note.serverId == null && !localMetadata
       ? repository.uncertainCreationCandidates(note.localId)
       : const <NextcloudNote>[];
   var creationCandidateServerId = remote?.id;
   NoteState? selectedCreationRemote() {
-    if (remote != null && remote.id == creationCandidateServerId) return remote;
+    if (remote != null && remote!.id == creationCandidateServerId) {
+      return remote;
+    }
     return creationCandidates
         .where((candidate) => candidate.serverId == creationCandidateServerId)
         .map((candidate) => candidate.base)
@@ -1374,20 +1383,20 @@ Future<void> showNextcloudConflict(
         .firstOrNull;
   }
 
-  final canOverwriteRemote = localMetadata
+  var canOverwriteRemote = localMetadata
       ? !note.readonly && !note.error
       : note.serverId != null &&
             remote != null &&
             !remote.readonly &&
             !remote.error;
-  final deletedRemotely =
+  var deletedRemotely =
       note.syncState == NoteSyncState.deletedRemotely && remote == null;
-  final merge = localMetadata
+  var merge = localMetadata
       ? NotesConflictMerge.metadata(note)
       : remote == null
       ? null
       : NotesConflictMerge(note, remote);
-  final canMergeRemote =
+  var canMergeRemote =
       canOverwriteRemote ||
       (!localMetadata &&
           note.serverId != null &&
@@ -1408,15 +1417,56 @@ Future<void> showNextcloudConflict(
       NotesMergeAttribute.favorite: merge!.favorite,
   };
   var busy = false;
-  var submitting = false;
+  var needsReview = false;
   String? failure;
+  void refreshReview() {
+    note = repository.noteById(note.localId) ?? note;
+    localMetadata = note.metadataConflict != null;
+    remote = note.remote;
+    deletedRemotely =
+        note.syncState == NoteSyncState.deletedRemotely && remote == null;
+    merge = localMetadata
+        ? NotesConflictMerge.metadata(note)
+        : remote == null
+        ? null
+        : NotesConflictMerge(note, remote!);
+    canOverwriteRemote = localMetadata
+        ? !note.readonly && !note.error
+        : note.serverId != null &&
+              remote != null &&
+              !remote!.readonly &&
+              !remote!.error;
+    canMergeRemote =
+        canOverwriteRemote ||
+        (!localMetadata &&
+            note.serverId != null &&
+            remote != null &&
+            remote!.readonly &&
+            !remote!.error &&
+            merge!.content.value == remote!.content &&
+            merge!.title.value == remote!.title &&
+            merge!.category.value == remote!.category);
+    conflicts.clear();
+    if (merge?.title.conflicted == true) {
+      conflicts[NotesMergeAttribute.title] = merge!.title;
+    }
+    if (merge?.category.conflicted == true) {
+      conflicts[NotesMergeAttribute.category] = merge!.category;
+    }
+    if (merge?.favorite.conflicted == true) {
+      conflicts[NotesMergeAttribute.favorite] = merge!.favorite;
+    }
+    choices.clear();
+    needsReview = true;
+  }
+
   await showBusyMarkModalDialog<void>(
     context,
     barrierDismissible: false,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) {
         Future<void> apply(NoteConflictResolution? resolution) async {
-          if (busy || resolution == null) return;
+          if (busy || needsReview || resolution == null) return;
           setDialogState(() {
             busy = true;
             failure = null;
@@ -1469,7 +1519,6 @@ Future<void> showNextcloudConflict(
               if (confirmed != true) return;
             }
             if (!context.mounted) return;
-            setDialogState(() => submitting = true);
             final selected = selectedCreationRemote();
             final review =
                 resolution == NoteConflictResolution.useServerNote &&
@@ -1495,6 +1544,7 @@ Future<void> showNextcloudConflict(
                         : null,
                     creationCandidateServerId: creationCandidateServerId,
                     creationReview: review,
+                    reviewedRemote: remote,
                   );
               if (!context.mounted) return;
               if (success) {
@@ -1504,6 +1554,13 @@ Future<void> showNextcloudConflict(
                   () => failure = context.l10n.notesOperationFailed,
                 );
               }
+            }
+          } on NotesConflictReviewChanged {
+            if (context.mounted) {
+              setDialogState(() {
+                refreshReview();
+                failure = context.l10n.notesRemoteReviewChanged;
+              });
             }
           } on Object catch (error) {
             if (context.mounted) {
@@ -1515,7 +1572,6 @@ Future<void> showNextcloudConflict(
             if (context.mounted) {
               setDialogState(() {
                 busy = false;
-                submitting = false;
               });
             }
           }
@@ -1623,16 +1679,30 @@ Future<void> showNextcloudConflict(
                         icon: button.icon,
                         destructive: button.destructive,
                         suggested: button.suggested,
-                        onPressed: busy ? null : button.onPressed,
+                        onPressed:
+                            busy ||
+                                (needsReview &&
+                                    button.label != context.l10n.cancel)
+                            ? null
+                            : button.onPressed,
                       ),
                     )
                     .toList(),
             children: [
-              if (submitting) const LinearProgressIndicator(),
+              if (busy) const LinearProgressIndicator(),
               if (failure != null)
                 BusyMarkStatusBox(
                   message: failure!,
                   kind: BusyMarkStatusKind.error,
+                ),
+              if (needsReview)
+                BusyMarkActionRow(
+                  title: context.l10n.notesReviewRemote,
+                  enabled: !busy,
+                  onTap: () => setDialogState(() {
+                    needsReview = false;
+                    failure = null;
+                  }),
                 ),
               if (note.errorMessage != null)
                 Text(nextcloudSyncLabel(context, note.syncState)),
@@ -1678,7 +1748,43 @@ Future<void> showNextcloudConflict(
                 Text(context.l10n.nextcloudUseServerNoteExplanation),
               ],
               if (note.serverId != null && !deletedRemotely)
-                _UncertainAttachments(note: note),
+                _UncertainAttachments(
+                  note: note,
+                  enabled: !busy,
+                  run: (operation) async {
+                    if (busy) return;
+                    setDialogState(() {
+                      busy = true;
+                      failure = null;
+                    });
+                    final before = note;
+                    try {
+                      await operation();
+                      await ref
+                          .read(workspaceControllerProvider.notifier)
+                          .refreshNextcloudNotes();
+                      if (!context.mounted) return;
+                      final after = repository.noteById(note.localId);
+                      setDialogState(() {
+                        if (after != null &&
+                            (after.revision != before.revision ||
+                                jsonEncode(after.remote?.toJson()) !=
+                                    jsonEncode(before.remote?.toJson()))) {
+                          refreshReview();
+                          failure = context.l10n.notesRemoteReviewChanged;
+                        }
+                      });
+                    } on Object catch (error) {
+                      if (context.mounted) {
+                        setDialogState(
+                          () => failure = localizeNotesFailure(context, error),
+                        );
+                      }
+                    } finally {
+                      if (context.mounted) setDialogState(() => busy = false);
+                    }
+                  },
+                ),
               SizedBox(
                 height: MediaQuery.sizeOf(context).height * .3,
                 child: SourceComparisonView(comparison: comparison),
@@ -1771,34 +1877,19 @@ Future<void> _retryAttachments(
     ),
   );
   if (confirmed != true || !context.mounted) return;
-  try {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    await repository.retryUncertainAttachments(note.localId);
-    await ref
-        .read(workspaceControllerProvider.notifier)
-        .refreshNextcloudNotes();
-    if (context.mounted) Navigator.pop(context);
-  } on Object catch (error) {
-    if (!context.mounted) return;
-    await showBusyMarkModalDialog<void>(
-      context,
-      builder: (context) => BusyMarkDialogShell(
-        title: context.l10n.warning,
-        actions: [
-          BusyMarkDialogButton(
-            label: context.l10n.close,
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-        children: [Text(localizeNotesFailure(context, error))],
-      ),
-    );
-  }
+  final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+  await repository.retryUncertainAttachments(note.localId);
 }
 
 class _UncertainAttachments extends ConsumerStatefulWidget {
-  const _UncertainAttachments({required this.note});
+  const _UncertainAttachments({
+    required this.note,
+    required this.enabled,
+    required this.run,
+  });
   final NextcloudNote note;
+  final bool enabled;
+  final Future<void> Function(Future<void> Function()) run;
   @override
   ConsumerState<_UncertainAttachments> createState() =>
       _UncertainAttachmentsState();
@@ -1963,6 +2054,7 @@ class _UncertainAttachmentsState extends ConsumerState<_UncertainAttachments> {
         children: [
           BusyMarkGroupedTextEntry(
             label: context.l10n.nextcloudAttachmentReference,
+            enabled: widget.enabled,
             onChanged: (value) => _serverReference = value,
             errorText: _error,
           ),
@@ -1971,37 +2063,44 @@ class _UncertainAttachmentsState extends ConsumerState<_UncertainAttachments> {
               title: attachment.filename,
               trailing: BusyMarkPushButton.standard(
                 child: Text(context.l10n.nextcloudTakeRemote),
-                onPressed: () => unawaited(_adopt(attachment)),
+                onPressed: widget.enabled
+                    ? () => unawaited(_perform(() => _adopt(attachment)))
+                    : null,
               ),
             ),
           BusyMarkActionRow(
             title: context.l10n.visualizationRetry,
             subtitle: context.l10n.nextcloudAttachmentRetryWarning,
-            onTap: () =>
-                unawaited(_retryAttachments(context, ref, widget.note)),
+            enabled: widget.enabled,
+            onTap: widget.enabled
+                ? () => unawaited(
+                    _perform(
+                      () => _retryAttachments(context, ref, widget.note),
+                    ),
+                  )
+                : null,
           ),
         ],
       );
     },
   );
-  Future<void> _adopt(NotesAttachment attachment) async {
-    try {
-      final repository = await ref.read(
-        nextcloudNotesRepositoryProvider.future,
-      );
-      await repository.adoptUncertainAttachment(
-        widget.note.localId,
-        attachment.reference,
-        _serverReference,
-      );
-      await ref
-          .read(workspaceControllerProvider.notifier)
-          .refreshNextcloudNotes();
-      if (mounted) Navigator.pop(context);
-    } on Object catch (error) {
-      if (mounted) {
-        setState(() => _error = localizeNotesFailure(context, error));
-      }
+  Future<void> _perform(Future<void> Function() operation) async {
+    await widget.run(operation);
+    if (mounted) {
+      setState(() {
+        _attachments = ref
+            .read(nextcloudNotesRepositoryProvider.future)
+            .then((r) => r.attachments(widget.note.localId));
+      });
     }
+  }
+
+  Future<void> _adopt(NotesAttachment attachment) async {
+    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+    await repository.adoptUncertainAttachment(
+      widget.note.localId,
+      attachment.reference,
+      _serverReference,
+    );
   }
 }

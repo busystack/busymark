@@ -5,7 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/notes_models.dart';
 import 'nextcloud_connection.dart';
 
-enum NotesSettingsFailure { buffersNotSaved, operation, stale }
+enum NotesSettingsFailure {
+  buffersNotSaved,
+  operation,
+  stale,
+  pendingNotes,
+  pendingAttachments,
+}
 
 enum NotesSettingsPhase { loading, ready, saving, saved, failed }
 
@@ -20,6 +26,7 @@ class NotesSettingsState {
     this.failure,
     this.refreshFailed = false,
     this.cause,
+    this.refreshing = false,
   });
   final String? accountId;
   final NotesSettings? original;
@@ -30,6 +37,7 @@ class NotesSettingsState {
   final NotesSettingsFailure? failure;
   final bool refreshFailed;
   final Object? cause;
+  final bool refreshing;
   Map<String, String> get patch => {
     if (draft != null &&
         original != null &&
@@ -122,6 +130,7 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
         fileSuffix: fileSuffix ?? draft.fileSuffix,
       ),
       phase: NotesSettingsPhase.ready,
+      refreshing: state.refreshing,
     );
   }
 
@@ -178,24 +187,31 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
         original: result,
         draft: result,
         phase: NotesSettingsPhase.saved,
+        refreshing: true,
         normalized: patch.entries.any((e) => result.toJson()[e.key] != e.value),
       );
       // Checkpoint invalidation is durable before this authoritative read.
+      var refreshFailed = false;
       try {
         await repository.synchronize(id, allowWrites: false);
       } on Object {
-        if (!_disposed && generation == _generation) {
-          state = NotesSettingsState(
-            accountId: id,
-            original: result,
-            draft: result,
-            phase: NotesSettingsPhase.saved,
-            normalized: state.normalized,
-            refreshFailed: true,
-          );
-        }
+        refreshFailed = true;
       }
-      return true;
+      if (_disposed || generation != _generation) return false;
+      // The acknowledged response is already the baseline. Refresh owns only
+      // its progress/warning, never input entered since that acknowledgement.
+      state = NotesSettingsState(
+        accountId: state.accountId,
+        original: state.original,
+        draft: state.draft,
+        phase: state.phase,
+        normalized: state.normalized,
+        error: state.error,
+        cause: state.cause,
+        failure: state.failure,
+        refreshFailed: refreshFailed,
+      );
+      return state.accountId == id && !state.dirty;
     } on Object catch (error) {
       if (!_disposed && generation == _generation) {
         state = NotesSettingsState(
@@ -205,10 +221,19 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
           phase: NotesSettingsPhase.failed,
           error: error.toString(),
           cause: error,
-          failure:
-              error is NotesException && error.code == NotesFailureCode.conflict
-              ? NotesSettingsFailure.stale
-              : NotesSettingsFailure.operation,
+          failure: switch (error) {
+            NotesSettingsConflict(reason: NotesSettingsConflictReason.stale) =>
+              NotesSettingsFailure.stale,
+            NotesSettingsConflict(
+              reason: NotesSettingsConflictReason.pendingNotes,
+            ) =>
+              NotesSettingsFailure.pendingNotes,
+            NotesSettingsConflict(
+              reason: NotesSettingsConflictReason.pendingAttachments,
+            ) =>
+              NotesSettingsFailure.pendingAttachments,
+            _ => NotesSettingsFailure.operation,
+          },
         );
       }
       return false;

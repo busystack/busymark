@@ -11,6 +11,129 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud demande une pause. Attendez avant de relancer la connexion.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Actualisation de Notes après confirmation des paramètres';
+
+  @override
+  String get notesExportOperationFailed =>
+      'L’export a échoué avant publication. Vérifiez la source et la destination, puis réessayez.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'La note récupérée est enregistrée, mais son ouverture a échoué. Réglez les modifications en attente dans l’éditeur ou les propriétés, puis ouvrez cette note.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Des notes en attente, conflits ou créations incertaines bloquent ce changement. Synchronisez ou examinez-les dans Notes, puis réessayez ce brouillon conservé.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Des opérations de pièces jointes bloquent ce changement. Examinez-les dans Notes, puis réessayez ce brouillon de paramètres conservé.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Utilisez l’adresse HTTPS canonique de Nextcloud et relancez la connexion. L’adresse ou la redirection n’a pas pu être vérifiée.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes est indisponible ou son API incompatible. Activez Nextcloud Notes avec l’API majeure 1, mineure 4 ou ultérieure.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud a refusé les identifiants. Autorisez à nouveau ce compte ou reconnectez-le.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud a interdit la vérification des fonctionnalités Notes. Demandez son autorisation à l’administrateur, puis réessayez.';
+
+  @override
+  String get notesAccountMalformed =>
+      'La réponse Nextcloud n’a pas pu être vérifiée. Vérifiez l’installation du serveur, puis relancez la connexion.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'La connexion a expiré. Relancez-la et terminez l’autorisation dans le navigateur.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Impossible d’ouvrir le navigateur système. Vérifiez le navigateur par défaut, puis relancez la connexion.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud est injoignable. Vérifiez la connexion et le serveur, puis réessayez.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud a refusé la demande de fonctionnalités. Vérifiez l’accès avec l’administrateur, puis réessayez.';
+
+  @override
+  String get notesAccountFailed =>
+      'La configuration du compte a échoué. Réessayez de vous connecter.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'La source a changé depuis son examen. Examinez le fichier actuel ou créez un nouvel instantané avant de réessayer.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Impossible de lire la source. Vérifiez l’accès au fichier ou au dossier, puis examinez-la à nouveau.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Instantané invalide ou incompatible. Choisissez un instantané BusyMark Notes valide ou une source Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Les médias dépassent la limite d’importation. Réduisez ceux de l’élément concerné avant de le réexaminer.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'La source contient un chemin non sûr. Choisissez des fichiers dans le dossier source, puis réexaminez-les.';
+
+  @override
+  String get notesTransferDestination =>
+      'Impossible d’écrire l’export. Vérifiez l’accès et l’espace libre à destination, puis réessayez.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Le transfert a échoué. Examinez les éléments concernés et réessayez. Les éléments déjà importés restent enregistrés.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Export disponible avec des omissions';
+
+  @override
+  String get notesBatchUnchanged =>
+      'Les valeurs demandées étaient déjà définies.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Cette note est en lecture seule. Ses propriétés protégées ne peuvent pas changer ; le favori reste modifiable.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Cette note a changé depuis son examen. Examinez son état actuel avant de réappliquer l’action.';
+
+  @override
+  String get notesBatchMissing =>
+      'Cette note n’est plus disponible. Actualisez la liste et vérifiez les cibles.';
+
+  @override
+  String get notesBatchStorage =>
+      'Échec de l’enregistrement local. Vérifiez le stockage et réessayez cet élément ; les éléments réussis restent enregistrés.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'La note du serveur a changé. Votre brouillon de fusion est conservé. Examinez la comparaison actualisée et choisissez à nouveau la résolution.';
+
+  @override
+  String get notesReviewRemote => 'J’ai examiné la version actuelle du serveur';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'La casse du module n’est pas publiée.';
 

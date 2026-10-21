@@ -139,6 +139,192 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// No description provided for @notesAccountThrottled.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud requested a pause. Wait before starting sign-in again.'**
+  String get notesAccountThrottled;
+
+  /// No description provided for @notesSettingsRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing Notes after the acknowledged settings update'**
+  String get notesSettingsRefreshing;
+
+  /// No description provided for @notesExportOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The export failed before publication. Check the source and destination, then export again.'**
+  String get notesExportOperationFailed;
+
+  /// No description provided for @notesRecoveryCreatedNotOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'The recovered note was saved. Opening it failed. Resolve pending editor or property changes, then open this existing note.'**
+  String get notesRecoveryCreatedNotOpened;
+
+  /// No description provided for @notesSettingsPendingNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending notes, conflicts, or uncertain creations block this collection change. Open Notes and synchronize or review them, then retry this retained settings draft.'**
+  String get notesSettingsPendingNotes;
+
+  /// No description provided for @notesSettingsPendingAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending attachment operations block this collection change. Open Notes and review the attachments, then retry this retained settings draft.'**
+  String get notesSettingsPendingAttachments;
+
+  /// No description provided for @notesAccountServerAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the canonical HTTPS address of your Nextcloud server, then start sign-in again. The address or redirect could not be verified.'**
+  String get notesAccountServerAddress;
+
+  /// No description provided for @notesAccountUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes is unavailable or its API is unsupported. Enable Nextcloud Notes with API major version 1, minor version 4 or later.'**
+  String get notesAccountUnsupported;
+
+  /// No description provided for @notesAccountAuthorizeAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud rejected the credentials. Authorize this account again or reconnect.'**
+  String get notesAccountAuthorizeAgain;
+
+  /// No description provided for @notesAccountCheckForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud denied the Notes capability check. Ask the server administrator to allow it, then try again.'**
+  String get notesAccountCheckForbidden;
+
+  /// No description provided for @notesAccountMalformed.
+  ///
+  /// In en, this message translates to:
+  /// **'The Nextcloud response could not be verified. Check the server installation, then start sign-in again.'**
+  String get notesAccountMalformed;
+
+  /// No description provided for @notesAccountTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in timed out. Start sign-in again and complete authorization in your browser.'**
+  String get notesAccountTimedOut;
+
+  /// No description provided for @notesAccountBrowserUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The system browser could not open. Check your default browser, then start sign-in again.'**
+  String get notesAccountBrowserUnavailable;
+
+  /// No description provided for @notesAccountNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not reach Nextcloud. Check your connection and the server, then try signing in again.'**
+  String get notesAccountNetwork;
+
+  /// No description provided for @notesAccountRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud rejected the capability request. Check server access with your administrator, then try again.'**
+  String get notesAccountRejected;
+
+  /// No description provided for @notesAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not complete account setup. Try signing in again.'**
+  String get notesAccountFailed;
+
+  /// No description provided for @notesTransferSourceChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The source changed after review. Review the current file or capture a new snapshot before retrying.'**
+  String get notesTransferSourceChanged;
+
+  /// No description provided for @notesTransferUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The source could not be read. Check access to the file or folder, then review it again.'**
+  String get notesTransferUnreadable;
+
+  /// No description provided for @notesTransferInvalidSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'The snapshot is invalid or unsupported. Choose a valid BusyMark Notes snapshot or Markdown source.'**
+  String get notesTransferInvalidSnapshot;
+
+  /// No description provided for @notesTransferMediaLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Media exceeds the import size limit. Reduce the affected item\'s media before reviewing it again.'**
+  String get notesTransferMediaLimit;
+
+  /// No description provided for @notesTransferUnsafeSource.
+  ///
+  /// In en, this message translates to:
+  /// **'The source contains an unsafe path. Choose files within the selected source folder and review again.'**
+  String get notesTransferUnsafeSource;
+
+  /// No description provided for @notesTransferDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'The export could not be written. Check access and free space at the destination, then export again.'**
+  String get notesTransferDestination;
+
+  /// No description provided for @notesTransferOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The transfer could not finish. Review the affected items and try again. Earlier imported items remain saved.'**
+  String get notesTransferOperationFailed;
+
+  /// No description provided for @notesExportPublishedWithOmissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Export available with omissions'**
+  String get notesExportPublishedWithOmissions;
+
+  /// No description provided for @notesBatchUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested values were already set.'**
+  String get notesBatchUnchanged;
+
+  /// No description provided for @notesBatchReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is read-only. Protected properties cannot change; Favorite is still permitted.'**
+  String get notesBatchReadOnly;
+
+  /// No description provided for @notesBatchReviewChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This note changed after review. Review its current state before applying this action again.'**
+  String get notesBatchReviewChanged;
+
+  /// No description provided for @notesBatchMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is no longer available. Refresh the list and review the targets again.'**
+  String get notesBatchMissing;
+
+  /// No description provided for @notesBatchStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'The local save failed. Check local storage and retry this item; successful items remain saved.'**
+  String get notesBatchStorage;
+
+  /// No description provided for @notesRemoteReviewChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The server note changed. Your merge draft is retained. Review the updated comparison and choose how to resolve it again.'**
+  String get notesRemoteReviewChanged;
+
+  /// No description provided for @notesReviewRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'I have reviewed the current server version'**
+  String get notesReviewRemote;
+
   /// No description provided for @wsModuleCapsNotPublished.
   ///
   /// In en, this message translates to:

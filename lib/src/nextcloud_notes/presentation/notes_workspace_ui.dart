@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -208,17 +209,36 @@ Future<void> showNotesBatch(
                         title: snapshot.note.title,
                         subtitle: outcomes == null
                             ? snapshot.note.category
-                            : statusLabel(
-                                outcomes!
-                                    .firstWhere(
-                                      (o) => o.localId == snapshot.note.localId,
-                                    )
-                                    .status,
-                              ),
+                            : null,
+                        subtitleWidget: outcomes == null
+                            ? null
+                            : Text(() {
+                                final outcome = outcomes!.firstWhere(
+                                  (o) => o.localId == snapshot.note.localId,
+                                );
+                                final reason = localizeNotesBatchReason(
+                                  context,
+                                  outcome,
+                                );
+                                return [
+                                  statusLabel(outcome.status),
+                                  if (reason.isNotEmpty) reason,
+                                ].join(' · ');
+                              }()),
                       ),
                   ],
                 ),
               ),
+              if (outcomes?.any((o) => o.detail != null) == true)
+                ExpansionTile(
+                  title: Text(context.l10n.notesTechnicalDetails),
+                  children: [
+                    for (final outcome in outcomes!.where(
+                      (o) => o.detail != null,
+                    ))
+                      SelectableText('${outcome.title}: ${outcome.detail}'),
+                  ],
+                ),
             ],
           ),
         );
@@ -251,6 +271,7 @@ class _NotesOfflineDialogState extends ConsumerState<NotesOfflineDialog> {
   StreamSubscription<void>? _subscription;
   int _generation = 0;
   bool _loading = true, _busy = false;
+  bool _pausing = false;
   String? _error;
   @override
   void initState() {
@@ -304,11 +325,18 @@ class _NotesOfflineDialogState extends ConsumerState<NotesOfflineDialog> {
   }
 
   Future<void> _run(
-    Future<void> Function(NotesOfflineController) action,
-  ) async {
-    if (_busy || _controller == null) return;
+    Future<void> Function(NotesOfflineController) action, {
+    bool interrupt = false,
+  }) async {
+    if ((interrupt ? _pausing : _busy || _pausing) || _controller == null) {
+      return;
+    }
     setState(() {
-      _busy = true;
+      if (interrupt) {
+        _pausing = true;
+      } else {
+        _busy = true;
+      }
       _error = null;
     });
     try {
@@ -317,7 +345,15 @@ class _NotesOfflineDialogState extends ConsumerState<NotesOfflineDialog> {
     } on Object {
       if (mounted) setState(() => _error = context.l10n.notesOperationFailed);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          if (interrupt) {
+            _pausing = false;
+          } else {
+            _busy = false;
+          }
+        });
+      }
     }
   }
 
@@ -356,15 +392,21 @@ class _NotesOfflineDialogState extends ConsumerState<NotesOfflineDialog> {
             label: context.l10n.notesOfflineResume,
             onPressed: _busy
                 ? null
-                : () => unawaited(_run((c) => c.retry(widget.note.localId))),
+                : () => unawaited(
+                    _run((c) => c.retry(widget.note.localId, false)),
+                  ),
           )
         else if (status?.running == true)
           BusyMarkDialogButton(
             label: context.l10n.notesOfflinePause,
-            onPressed: _busy
+            onPressed: _pausing
                 ? null
-                : () =>
-                      unawaited(_run((c) => c.cancelNote(widget.note.localId))),
+                : () => unawaited(
+                    _run(
+                      (c) => c.cancelNote(widget.note.localId),
+                      interrupt: true,
+                    ),
+                  ),
           ),
         if (failed ||
             _error != null ||
@@ -379,7 +421,7 @@ class _NotesOfflineDialogState extends ConsumerState<NotesOfflineDialog> {
                 : () => unawaited(
                     controller == null
                         ? _reload()
-                        : _run((c) => c.retry(widget.note.localId)),
+                        : _run((c) => c.retry(widget.note.localId, false)),
                   ),
           ),
         BusyMarkDialogButton(
@@ -400,12 +442,13 @@ class _NotesOfflineDialogState extends ConsumerState<NotesOfflineDialog> {
                 'note',
                 widget.note.localId,
                 required: value,
+                waitForDownloads: false,
               ),
             ),
           ),
         ),
         if (broader) Text(context.l10n.notesOfflineBroader),
-        if (_loading || _busy) const LinearProgressIndicator(),
+        if (_loading || _busy || _pausing) const LinearProgressIndicator(),
         if (_error != null)
           BusyMarkStatusBox(message: _error!, kind: BusyMarkStatusKind.error),
         if (status != null) ...[
@@ -464,6 +507,7 @@ class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
   int _generation = 0;
   bool _loading = true, _busy = false;
   String? _error;
+  String? _createdNoteId;
 
   @override
   void initState() {
@@ -498,7 +542,7 @@ class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
   }
 
   Future<void> _select(String id, {int? generation}) async {
-    if (_busy) return;
+    if (_busy || _createdNoteId != null) return;
     final request = generation ?? ++_generation;
     setState(() {
       _selected = id;
@@ -560,7 +604,17 @@ class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
     });
     try {
       final controller = ref.read(workspaceControllerProvider.notifier);
-      final success = revision == null || document == null
+      if (_createdNoteId != null) {
+        final opened = await controller.openNextcloudNote(_createdNoteId!);
+        if (!mounted) return;
+        if (opened) {
+          Navigator.pop(context);
+        } else {
+          setState(() => _error = context.l10n.notesRecoveryCreatedNotOpened);
+        }
+        return;
+      }
+      final result = revision == null || document == null
           ? await controller.recoverDeletedNextcloudNote(
               widget.note.localId,
               content: source,
@@ -570,10 +624,15 @@ class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
               revision: revision,
             );
       if (!mounted) return;
-      if (success) {
+      _createdNoteId = result.noteId;
+      if (result.opened) {
         Navigator.pop(context);
       } else {
-        setState(() => _error = context.l10n.notesOperationFailed);
+        setState(
+          () => _error = result.created
+              ? context.l10n.notesRecoveryCreatedNotOpened
+              : localizeNotesFailure(context, result.failure),
+        );
       }
     } on Object catch (failure) {
       if (mounted) {
@@ -602,7 +661,7 @@ class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
           label: context.l10n.close,
           onPressed: _busy ? null : () => Navigator.pop(context),
         ),
-        if (_error != null)
+        if (_error != null && _createdNoteId == null)
           BusyMarkDialogButton(
             label: context.l10n.visualizationRetry,
             onPressed: _busy
@@ -612,8 +671,9 @@ class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
                   ),
           ),
         BusyMarkDialogButton(
-          label:
-              '${context.l10n.notesRecovery}: ${context.l10n.nextcloudNewNote}',
+          label: _createdNoteId != null
+              ? context.l10n.open
+              : '${context.l10n.notesRecovery}: ${context.l10n.nextcloudNewNote}',
           onPressed:
               _busy ||
                   _loading ||
@@ -630,7 +690,7 @@ class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
         BusyMarkComboRow<String>(
           title: context.l10n.localHistory,
           selected: _selected,
-          enabled: !_busy,
+          enabled: !_busy && _createdNoteId == null,
           values: ['', for (final summary in _summaries) summary.id],
           labelFor: (id) => id.isEmpty
               ? context.l10n.notesCurrentText
@@ -1011,12 +1071,14 @@ class NotesTransferResult {
     this.destination,
     this.omissions = const [],
     this.items = const [],
+    this.failure,
   });
   final NotesTransferPhase phase;
   final int created, skipped, failed, notStarted;
   final String? destination;
   final List<String> omissions;
   final List<NotesImportOutcome> items;
+  final Object? failure;
 }
 
 String _transferLabel(BuildContext context, NotesTransferPhase phase) =>
@@ -1077,13 +1139,14 @@ class _NotesTransferProgressDialogState
         phase: NotesTransferPhase.cancelled,
         notStarted: _total - _completed,
       );
-    } on Object {
+    } on Object catch (error) {
       result = NotesTransferResult(
-        phase: _completed > 0
+        phase: !widget.exporting && _completed > 0
             ? NotesTransferPhase.partial
             : NotesTransferPhase.failed,
         failed: 1,
         notStarted: (_total - _completed).clamp(0, _total),
+        failure: error,
       );
     }
     if (mounted) {
@@ -1128,7 +1191,13 @@ class _NotesTransferProgressDialogState
         children: [
           Semantics(
             liveRegion: true,
-            child: Text(_transferLabel(context, _phase)),
+            child: Text(
+              widget.exporting &&
+                      result?.destination != null &&
+                      _phase == NotesTransferPhase.partial
+                  ? context.l10n.notesExportPublishedWithOmissions
+                  : _transferLabel(context, _phase),
+            ),
           ),
           if (result == null) ...[
             if (_total > 0) Text('$_completed/$_total'),
@@ -1139,12 +1208,31 @@ class _NotesTransferProgressDialogState
             if (result.destination != null) SelectableText(result.destination!),
             if (widget.exporting && result.destination == null)
               Text(context.l10n.notesExportNotPublished),
-            Text(
-              '${context.l10n.notesCreated}: ${result.created} · ${context.l10n.notesSkipped}: ${result.skipped} · ${context.l10n.notesFailed}: ${result.failed} · ${context.l10n.notesNotStarted}: ${result.notStarted}',
-            ),
-            if (result.phase == NotesTransferPhase.partial ||
-                result.phase == NotesTransferPhase.cancelled)
+            if (!widget.exporting)
+              Text(
+                '${context.l10n.notesCreated}: ${result.created} · ${context.l10n.notesSkipped}: ${result.skipped} · ${context.l10n.notesFailed}: ${result.failed} · ${context.l10n.notesNotStarted}: ${result.notStarted}',
+              ),
+            if (!widget.exporting &&
+                (result.phase == NotesTransferPhase.partial ||
+                    result.phase == NotesTransferPhase.cancelled))
               Text(context.l10n.notesImportPartialHelp),
+            if (result.failure != null) ...[
+              Text(
+                localizeNotesTransferFailure(
+                  context,
+                  widget.exporting &&
+                          result.failure is FileSystemException &&
+                          result.failure is! NotesTransferException
+                      ? NotesTransferFailureReason.destinationUnavailable
+                      : notesTransferFailureReason(result.failure),
+                  exporting: widget.exporting,
+                ),
+              ),
+              ExpansionTile(
+                title: Text(context.l10n.notesTechnicalDetails),
+                children: [SelectableText('${result.failure}')],
+              ),
+            ],
             SizedBox(
               height: MediaQuery.sizeOf(context).height * .3,
               child: ListView(
@@ -1152,11 +1240,27 @@ class _NotesTransferProgressDialogState
                   for (final item in result.items)
                     BusyMarkActionRow(
                       title: item.item,
+                      subtitleWidget: item.error != null
+                          ? Text(
+                              localizeNotesTransferFailure(
+                                context,
+                                item.reason ??
+                                    notesTransferFailureReason(item.cause),
+                              ),
+                            )
+                          : null,
                       subtitle: item.error != null
-                          ? context.l10n.notesFailed
+                          ? null
                           : item.alreadyImported
                           ? context.l10n.notesImportAlreadyImported
                           : context.l10n.nextcloudSavedLocally,
+                    ),
+                  for (final item in result.items.where((i) => i.error != null))
+                    ExpansionTile(
+                      title: Text(
+                        '${item.item} · ${context.l10n.notesTechnicalDetails}',
+                      ),
+                      children: [SelectableText(item.error!)],
                     ),
                   for (final omission in result.omissions)
                     Text('${context.l10n.notesIncomplete}: $omission'),
@@ -1183,6 +1287,7 @@ class _NotesImportScanDialogState extends State<NotesImportScanDialog> {
   final _cancel = NotesTransferCancellation();
   NotesTransferPhase _phase = NotesTransferPhase.scanning;
   bool _settled = false;
+  Object? _failure;
   @override
   void initState() {
     super.initState();
@@ -1204,6 +1309,7 @@ class _NotesImportScanDialogState extends State<NotesImportScanDialog> {
       if (mounted) {
         setState(() {
           _settled = true;
+          _failure = error is NotesTransferCancelled ? null : error;
           _phase = error is NotesTransferCancelled
               ? NotesTransferPhase.cancelled
               : NotesTransferPhase.failed;
@@ -1247,6 +1353,18 @@ class _NotesImportScanDialogState extends State<NotesImportScanDialog> {
           child: Text(_transferLabel(context, _phase)),
         ),
         if (!_settled) const LinearProgressIndicator(),
+        if (_failure != null) ...[
+          Text(
+            localizeNotesTransferFailure(
+              context,
+              notesTransferFailureReason(_failure),
+            ),
+          ),
+          ExpansionTile(
+            title: Text(context.l10n.notesTechnicalDetails),
+            children: [SelectableText('$_failure')],
+          ),
+        ],
       ],
     ),
   );

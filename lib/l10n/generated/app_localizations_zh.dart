@@ -11,6 +11,106 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get notesAccountThrottled => 'Nextcloud 要求暂停。请等待后再重新登录。';
+
+  @override
+  String get notesSettingsRefreshing => '正在按已确认的设置更新笔记';
+
+  @override
+  String get notesExportOperationFailed => '导出在发布前失败。请检查来源和目标后重新导出。';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
+
+  @override
+  String get notesAccountServerAddress =>
+      '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
+
+  @override
+  String get notesAccountUnsupported =>
+      '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
+
+  @override
+  String get notesAccountAuthorizeAgain => 'Nextcloud 拒绝了凭据。请重新授权或重新连接账户。';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
+
+  @override
+  String get notesAccountMalformed => '无法验证 Nextcloud 的响应。请检查服务器安装并重新登录。';
+
+  @override
+  String get notesAccountTimedOut => '登录超时。请重新登录并在浏览器中完成授权。';
+
+  @override
+  String get notesAccountBrowserUnavailable => '无法打开系统浏览器。请检查默认浏览器并重新登录。';
+
+  @override
+  String get notesAccountNetwork => '无法连接 Nextcloud。请检查网络和服务器后重新登录。';
+
+  @override
+  String get notesAccountRejected => 'Nextcloud 拒绝了功能请求。请与管理员确认访问权限后重试。';
+
+  @override
+  String get notesAccountFailed => '无法完成账户设置。请重新登录。';
+
+  @override
+  String get notesTransferSourceChanged => '来源在审核后已更改。请重新审核当前文件或创建新快照后重试。';
+
+  @override
+  String get notesTransferUnreadable => '无法读取来源。请检查文件或文件夹的访问权限，再重新审核。';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
+
+  @override
+  String get notesTransferMediaLimit => '媒体超出导入大小限制。请缩小受影响项目的媒体，再重新审核。';
+
+  @override
+  String get notesTransferUnsafeSource => '来源包含不安全的路径。请选择来源文件夹内的文件并重新审核。';
+
+  @override
+  String get notesTransferDestination => '无法写入导出内容。请检查目标的访问权限和可用空间后重新导出。';
+
+  @override
+  String get notesTransferOperationFailed => '传输未能完成。请检查受影响的项目并重试。之前导入的项目仍已保存。';
+
+  @override
+  String get notesExportPublishedWithOmissions => '导出已发布，但有遗漏';
+
+  @override
+  String get notesBatchUnchanged => '请求的值已经设置。';
+
+  @override
+  String get notesBatchReadOnly => '此笔记为只读。受保护的属性无法更改，但仍可修改收藏状态。';
+
+  @override
+  String get notesBatchReviewChanged => '此笔记在审核后已更改。请审核当前状态后重新执行操作。';
+
+  @override
+  String get notesBatchMissing => '此笔记已不可用。请刷新列表并重新检查操作目标。';
+
+  @override
+  String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
+
+  @override
+  String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
+
+  @override
+  String get notesReviewRemote => '我已审核当前服务器版本';
+
+  @override
   String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';
 
   @override
@@ -5501,6 +5601,106 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in China (`zh_CN`).
 class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
+
+  @override
+  String get notesAccountThrottled => 'Nextcloud 要求暂停。请等待后再重新登录。';
+
+  @override
+  String get notesSettingsRefreshing => '正在按已确认的设置更新笔记';
+
+  @override
+  String get notesExportOperationFailed => '导出在发布前失败。请检查来源和目标后重新导出。';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
+
+  @override
+  String get notesAccountServerAddress =>
+      '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
+
+  @override
+  String get notesAccountUnsupported =>
+      '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
+
+  @override
+  String get notesAccountAuthorizeAgain => 'Nextcloud 拒绝了凭据。请重新授权或重新连接账户。';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
+
+  @override
+  String get notesAccountMalformed => '无法验证 Nextcloud 的响应。请检查服务器安装并重新登录。';
+
+  @override
+  String get notesAccountTimedOut => '登录超时。请重新登录并在浏览器中完成授权。';
+
+  @override
+  String get notesAccountBrowserUnavailable => '无法打开系统浏览器。请检查默认浏览器并重新登录。';
+
+  @override
+  String get notesAccountNetwork => '无法连接 Nextcloud。请检查网络和服务器后重新登录。';
+
+  @override
+  String get notesAccountRejected => 'Nextcloud 拒绝了功能请求。请与管理员确认访问权限后重试。';
+
+  @override
+  String get notesAccountFailed => '无法完成账户设置。请重新登录。';
+
+  @override
+  String get notesTransferSourceChanged => '来源在审核后已更改。请重新审核当前文件或创建新快照后重试。';
+
+  @override
+  String get notesTransferUnreadable => '无法读取来源。请检查文件或文件夹的访问权限，再重新审核。';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
+
+  @override
+  String get notesTransferMediaLimit => '媒体超出导入大小限制。请缩小受影响项目的媒体，再重新审核。';
+
+  @override
+  String get notesTransferUnsafeSource => '来源包含不安全的路径。请选择来源文件夹内的文件并重新审核。';
+
+  @override
+  String get notesTransferDestination => '无法写入导出内容。请检查目标的访问权限和可用空间后重新导出。';
+
+  @override
+  String get notesTransferOperationFailed => '传输未能完成。请检查受影响的项目并重试。之前导入的项目仍已保存。';
+
+  @override
+  String get notesExportPublishedWithOmissions => '导出已发布，但有遗漏';
+
+  @override
+  String get notesBatchUnchanged => '请求的值已经设置。';
+
+  @override
+  String get notesBatchReadOnly => '此笔记为只读。受保护的属性无法更改，但仍可修改收藏状态。';
+
+  @override
+  String get notesBatchReviewChanged => '此笔记在审核后已更改。请审核当前状态后重新执行操作。';
+
+  @override
+  String get notesBatchMissing => '此笔记已不可用。请刷新列表并重新检查操作目标。';
+
+  @override
+  String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
+
+  @override
+  String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
+
+  @override
+  String get notesReviewRemote => '我已审核当前服务器版本';
 
   @override
   String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';

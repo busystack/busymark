@@ -149,10 +149,30 @@ class NotesNavigationController {
 
 enum NotesBatchStatus { changed, skipped, conflicted, failed }
 
+enum NotesBatchReason {
+  unchanged,
+  readOnly,
+  reviewChanged,
+  needsReview,
+  missing,
+  storage,
+  editorNotSaved,
+  unavailable,
+}
+
 class NotesBatchOutcome {
-  const NotesBatchOutcome(this.localId, this.title, this.status, [this.detail]);
+  const NotesBatchOutcome(
+    this.localId,
+    this.title,
+    this.status, [
+    this.detail,
+    this.reason,
+    this.cause,
+  ]);
   final String localId;
   final String title;
   final NotesBatchStatus status;
   final String? detail;
+  final NotesBatchReason? reason;
+  final Object? cause;
 }

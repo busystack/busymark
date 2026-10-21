@@ -11,6 +11,128 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud prosi o przerwę. Zaczekaj przed ponownym logowaniem.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Odświeżanie Notes po potwierdzeniu ustawień';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Eksport nie został opublikowany. Sprawdź źródło i miejsce docelowe, a następnie ponów.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Odzyskana notatka została zapisana, ale nie otwarta. Rozwiąż oczekujące zmiany edytora lub właściwości i otwórz tę istniejącą notatkę.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Oczekujące notatki, konflikty lub niepewne utworzenia blokują zmianę. Zsynchronizuj lub sprawdź je w Notes, potem ponów zapis zachowanej wersji roboczej ustawień.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Operacje załączników blokują zmianę. Sprawdź załączniki w Notes, potem ponów zapis zachowanej wersji roboczej ustawień.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Użyj kanonicznego adresu HTTPS Nextcloud i zaloguj się ponownie. Nie udało się zweryfikować adresu lub przekierowania.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes jest niedostępne lub API nieobsługiwane. Włącz Nextcloud Notes z główną wersją API 1 i podrzędną co najmniej 4.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud odrzucił dane logowania. Ponownie autoryzuj konto lub połącz je.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud zabronił sprawdzenia możliwości Notes. Poproś administratora o zgodę i ponów.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nie udało się zweryfikować odpowiedzi Nextcloud. Sprawdź instalację serwera i zaloguj się ponownie.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Czas logowania upłynął. Rozpocznij ponownie i dokończ autoryzację w przeglądarce.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Nie udało się otworzyć przeglądarki systemowej. Sprawdź domyślną przeglądarkę i ponów logowanie.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud jest nieosiągalny. Sprawdź połączenie i serwer, a następnie ponów logowanie.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud odrzucił żądanie możliwości. Sprawdź dostęp z administratorem i ponów.';
+
+  @override
+  String get notesAccountFailed =>
+      'Nie udało się skonfigurować konta. Zaloguj się ponownie.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Źródło zmieniło się po przeglądzie. Sprawdź bieżący plik lub utwórz nową migawkę przed ponowieniem.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Nie można odczytać źródła. Sprawdź dostęp do pliku lub katalogu i przejrzyj ponownie.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Migawka jest nieprawidłowa lub nieobsługiwana. Wybierz poprawną migawkę BusyMark Notes lub źródło Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Media przekraczają limit importu. Zmniejsz media danego elementu i przejrzyj ponownie.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Źródło zawiera niebezpieczną ścieżkę. Wybierz pliki wewnątrz katalogu źródłowego i przejrzyj ponownie.';
+
+  @override
+  String get notesTransferDestination =>
+      'Nie można zapisać eksportu. Sprawdź dostęp i wolne miejsce w miejscu docelowym i ponów.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Transfer nie został ukończony. Sprawdź elementy i ponów. Wcześniej zaimportowane elementy pozostają zapisane.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Eksport dostępny z pominięciami';
+
+  @override
+  String get notesBatchUnchanged => 'Żądane wartości były już ustawione.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Notatka jest tylko do odczytu. Nie można zmieniać chronionych właściwości; Ulubione pozostaje dozwolone.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Notatka zmieniła się po przeglądzie. Sprawdź jej aktualny stan przed ponowieniem działania.';
+
+  @override
+  String get notesBatchMissing =>
+      'Notatka nie jest już dostępna. Odśwież listę i sprawdź wybrane elementy.';
+
+  @override
+  String get notesBatchStorage =>
+      'Zapis lokalny nie powiódł się. Sprawdź pamięć i ponów ten element; udane elementy są zapisane.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Notatka na serwerze się zmieniła. Wersja robocza scalania jest zachowana. Sprawdź nowe porównanie i ponownie wybierz rozwiązanie.';
+
+  @override
+  String get notesReviewRemote => 'Sprawdzono aktualną wersję na serwerze';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Reguła wielkości liter modułu nie jest publikowana.';
 

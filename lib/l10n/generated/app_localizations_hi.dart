@@ -11,6 +11,129 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud ने विराम माँगा है। फिर साइन इन शुरू करने से पहले प्रतीक्षा करें।';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'पुष्टि किए गए सेटिंग बदलाव के बाद Notes ताज़ा हो रहा है';
+
+  @override
+  String get notesExportOperationFailed =>
+      'प्रकाशन से पहले निर्यात विफल हुआ। स्रोत और गंतव्य जाँचकर फिर निर्यात करें।';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'पुनर्प्राप्त नोट सहेजा गया, पर खुल नहीं सका। संपादक या गुणों के लंबित बदलाव सुलझाएँ, फिर इसी मौजूदा नोट को खोलें।';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'लंबित नोट, विरोध या अनिश्चित निर्माण इस बदलाव को रोक रहे हैं। Notes में समन्वय या समीक्षा करें, फिर सुरक्षित रखा गया सेटिंग मसौदा दोबारा सहेजें।';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'लंबित संलग्नक कार्य इस बदलाव को रोक रहे हैं। Notes में संलग्नकों की समीक्षा करें, फिर सुरक्षित रखा गया सेटिंग मसौदा दोबारा सहेजें।';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Nextcloud का मानक HTTPS पता उपयोग करें और फिर साइन इन करें। पते या रीडायरेक्ट की पुष्टि नहीं हो सकी।';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes उपलब्ध नहीं है या API समर्थित नहीं है। मुख्य API संस्करण 1 और गौण संस्करण 4 या नए वाला Nextcloud Notes सक्षम करें।';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud ने पहचान जानकारी अस्वीकार की। खाते को फिर अधिकृत करें या दोबारा कनेक्ट करें।';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud ने Notes क्षमता जाँच की अनुमति नहीं दी। व्यवस्थापक से अनुमति लेकर फिर प्रयास करें।';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloud के उत्तर की पुष्टि नहीं हो सकी। सर्वर स्थापना जाँचें और फिर साइन इन करें।';
+
+  @override
+  String get notesAccountTimedOut =>
+      'साइन इन का समय समाप्त हुआ। फिर शुरू करें और ब्राउज़र में अनुमति पूरी करें।';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'सिस्टम ब्राउज़र नहीं खुल सका। डिफ़ॉल्ट ब्राउज़र जाँचें और फिर साइन इन करें।';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud से संपर्क नहीं हो सका। कनेक्शन और सर्वर जाँचें, फिर साइन इन करें।';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud ने क्षमता अनुरोध अस्वीकार किया। व्यवस्थापक के साथ पहुँच जाँचकर फिर प्रयास करें।';
+
+  @override
+  String get notesAccountFailed =>
+      'खाता सेटअप पूरा नहीं हुआ। फिर साइन इन करें।';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'समीक्षा के बाद स्रोत बदल गया। फिर प्रयास से पहले मौजूदा फ़ाइल की समीक्षा करें या नया स्नैपशॉट लें।';
+
+  @override
+  String get notesTransferUnreadable =>
+      'स्रोत पढ़ा नहीं जा सका। फ़ाइल या फ़ोल्डर की पहुँच जाँचकर फिर समीक्षा करें।';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'स्नैपशॉट अमान्य या असमर्थित है। मान्य BusyMark Notes स्नैपशॉट या Markdown स्रोत चुनें।';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'मीडिया आयात आकार सीमा से बड़ा है। प्रभावित आइटम का मीडिया छोटा करके फिर समीक्षा करें।';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'स्रोत में असुरक्षित पथ है। स्रोत फ़ोल्डर के अंदर की फ़ाइलें चुनकर फिर समीक्षा करें।';
+
+  @override
+  String get notesTransferDestination =>
+      'निर्यात लिखा नहीं जा सका। गंतव्य की पहुँच और खाली स्थान जाँचकर फिर निर्यात करें।';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'स्थानांतरण पूरा नहीं हुआ। प्रभावित आइटम की समीक्षा करके फिर प्रयास करें। पहले आयात किए आइटम सहेजे हुए हैं।';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'कुछ चीज़ें छूटी हैं, निर्यात उपलब्ध है';
+
+  @override
+  String get notesBatchUnchanged => 'माँगे गए मान पहले से तय हैं।';
+
+  @override
+  String get notesBatchReadOnly =>
+      'यह नोट केवल पढ़ने योग्य है। सुरक्षित गुण नहीं बदल सकते; पसंदीदा स्थिति बदलना अनुमत है।';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'समीक्षा के बाद नोट बदल गया। कार्य दोबारा लागू करने से पहले उसकी मौजूदा स्थिति की समीक्षा करें।';
+
+  @override
+  String get notesBatchMissing =>
+      'यह नोट अब उपलब्ध नहीं है। सूची ताज़ा करके लक्ष्यों की समीक्षा करें।';
+
+  @override
+  String get notesBatchStorage =>
+      'स्थानीय सहेजना विफल हुआ। संग्रहण जाँचकर इस आइटम पर फिर प्रयास करें; सफल आइटम सहेजे हुए हैं।';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'सर्वर का नोट बदल गया। आपका विलय मसौदा सुरक्षित है। नई तुलना की समीक्षा करें और समाधान फिर चुनें।';
+
+  @override
+  String get notesReviewRemote =>
+      'मैंने सर्वर के मौजूदा संस्करण की समीक्षा की है';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'मॉड्यूल का अक्षर-शैली नियम प्रकाशित नहीं होता।';
 

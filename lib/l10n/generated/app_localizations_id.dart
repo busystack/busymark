@@ -11,6 +11,128 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud meminta jeda. Tunggu sebelum mulai masuk lagi.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Menyegarkan Notes setelah pembaruan pengaturan dikonfirmasi';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Ekspor gagal sebelum diterbitkan. Periksa sumber dan tujuan, lalu ekspor lagi.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Catatan yang dipulihkan sudah tersimpan, tetapi gagal dibuka. Selesaikan perubahan editor atau properti yang tertunda, lalu buka catatan yang sudah ada ini.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Catatan tertunda, konflik, atau pembuatan yang belum pasti menghalangi perubahan ini. Sinkronkan atau tinjau di Notes, lalu simpan lagi draf pengaturan yang dipertahankan.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Operasi lampiran tertunda menghalangi perubahan ini. Tinjau lampiran di Notes, lalu simpan lagi draf pengaturan yang dipertahankan.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Gunakan alamat HTTPS kanonis Nextcloud, lalu masuk lagi. Alamat atau pengalihan tidak dapat diverifikasi.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes tidak tersedia atau API tidak didukung. Aktifkan Nextcloud Notes dengan API versi utama 1, minor 4 atau lebih baru.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud menolak kredensial. Otorisasi ulang atau hubungkan kembali akun ini.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud melarang pemeriksaan kemampuan Notes. Minta administrator mengizinkannya, lalu coba lagi.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Respons Nextcloud tidak dapat diverifikasi. Periksa pemasangan server, lalu masuk lagi.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Waktu masuk habis. Mulai lagi dan selesaikan otorisasi di peramban.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Peramban sistem tidak dapat dibuka. Periksa peramban bawaan, lalu masuk lagi.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud tidak dapat dijangkau. Periksa koneksi dan server, lalu masuk lagi.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud menolak permintaan kemampuan. Periksa akses bersama administrator, lalu coba lagi.';
+
+  @override
+  String get notesAccountFailed =>
+      'Penyiapan akun tidak selesai. Coba masuk lagi.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Sumber berubah setelah ditinjau. Tinjau berkas saat ini atau buat snapshot baru sebelum mencoba lagi.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Sumber tidak dapat dibaca. Periksa akses berkas atau folder, lalu tinjau lagi.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Snapshot tidak valid atau tidak didukung. Pilih snapshot BusyMark Notes yang valid atau sumber Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Media melebihi batas impor. Perkecil media item terkait sebelum meninjaunya lagi.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Sumber berisi jalur tidak aman. Pilih berkas di dalam folder sumber, lalu tinjau lagi.';
+
+  @override
+  String get notesTransferDestination =>
+      'Ekspor tidak dapat ditulis. Periksa akses dan ruang kosong di tujuan, lalu ekspor lagi.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Transfer tidak selesai. Tinjau item terkait dan coba lagi. Item yang sudah diimpor tetap tersimpan.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Ekspor tersedia dengan beberapa bagian terlewat';
+
+  @override
+  String get notesBatchUnchanged => 'Nilai yang diminta sudah ditetapkan.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Catatan ini hanya-baca. Properti terlindungi tidak dapat diubah; Favorit tetap diizinkan.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Catatan berubah setelah ditinjau. Tinjau keadaan saat ini sebelum menerapkan tindakan lagi.';
+
+  @override
+  String get notesBatchMissing =>
+      'Catatan ini tidak lagi tersedia. Segarkan daftar dan tinjau sasaran lagi.';
+
+  @override
+  String get notesBatchStorage =>
+      'Penyimpanan lokal gagal. Periksa penyimpanan dan coba item ini lagi; item yang berhasil tetap tersimpan.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Catatan server berubah. Draf penggabungan Anda dipertahankan. Tinjau perbandingan terbaru dan pilih penyelesaian lagi.';
+
+  @override
+  String get notesReviewRemote => 'Saya telah meninjau versi server saat ini';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Kapitalisasi modul tidak diterbitkan.';
 

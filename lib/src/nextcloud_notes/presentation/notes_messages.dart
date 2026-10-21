@@ -5,6 +5,9 @@ import '../domain/notes_models.dart';
 import '../data/server_uri.dart';
 import '../data/login_flow.dart';
 import '../data/notes_secret_store.dart';
+import '../data/notes_capabilities.dart';
+import '../application/notes_transfer_service.dart';
+import '../application/notes_navigation.dart';
 
 /// Presentation is selected by typed failures, never by persisted English text.
 String localizeNotesFailure(BuildContext context, Object? error) {
@@ -45,10 +48,86 @@ String notesLocalDate(BuildContext context, DateTime value) {
   return '${localizations.formatShortDate(date)} ${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(date))}';
 }
 
-String localizeNotesConnectionFailure(BuildContext context, Object? error) =>
-    switch (error) {
-      NextcloudCredentialException() ||
-      NextcloudServerUrlException() ||
-      NextcloudLoginException() => localizeNotesFailure(context, error),
-      _ => context.l10n.notesConnectFailed,
-    };
+String localizeNotesTransferFailure(
+  BuildContext context,
+  NotesTransferFailureReason reason, {
+  bool exporting = false,
+}) => switch (reason) {
+  NotesTransferFailureReason.sourceChanged ||
+  NotesTransferFailureReason.exportChanged =>
+    context.l10n.notesTransferSourceChanged,
+  NotesTransferFailureReason.sourceUnreadable =>
+    context.l10n.notesTransferUnreadable,
+  NotesTransferFailureReason.invalidSnapshot =>
+    context.l10n.notesTransferInvalidSnapshot,
+  NotesTransferFailureReason.mediaTooLarge =>
+    context.l10n.notesTransferMediaLimit,
+  NotesTransferFailureReason.unsafeSource =>
+    context.l10n.notesTransferUnsafeSource,
+  NotesTransferFailureReason.destinationUnavailable =>
+    context.l10n.notesTransferDestination,
+  NotesTransferFailureReason.operation =>
+    exporting
+        ? context.l10n.notesExportOperationFailed
+        : context.l10n.notesTransferOperationFailed,
+};
+
+String localizeNotesBatchReason(
+  BuildContext context,
+  NotesBatchOutcome outcome,
+) => switch (outcome.reason) {
+  NotesBatchReason.unchanged => context.l10n.notesBatchUnchanged,
+  NotesBatchReason.readOnly => context.l10n.notesBatchReadOnly,
+  NotesBatchReason.reviewChanged => context.l10n.notesBatchReviewChanged,
+  NotesBatchReason.needsReview => context.l10n.notesRecoveryRequired,
+  NotesBatchReason.missing => context.l10n.notesBatchMissing,
+  NotesBatchReason.storage => context.l10n.notesBatchStorage,
+  NotesBatchReason.editorNotSaved => context.l10n.notesBuffersNotSaved,
+  NotesBatchReason.unavailable => localizeNotesFailure(context, outcome.cause),
+  null => '',
+};
+
+String localizeNotesConnectionFailure(
+  BuildContext context,
+  Object? error,
+) => switch (error) {
+  NextcloudCredentialException() => localizeNotesFailure(context, error),
+  NextcloudServerUrlException() => context.l10n.notesAccountServerAddress,
+  NextcloudCapabilityException(code: NextcloudCapabilityFailure.unsupported) =>
+    context.l10n.notesAccountUnsupported,
+  NextcloudCapabilityException(code: NextcloudCapabilityFailure.unauthorized) ||
+  NotesException(
+    code: NotesFailureCode.authentication,
+  ) => context.l10n.notesAccountAuthorizeAgain,
+  NextcloudCapabilityException(code: NextcloudCapabilityFailure.forbidden) ||
+  NotesException(
+    code: NotesFailureCode.forbidden,
+  ) => context.l10n.notesAccountCheckForbidden,
+  NextcloudCapabilityException(code: NextcloudCapabilityFailure.throttled) ||
+  NotesException(
+    code: NotesFailureCode.throttled,
+  ) => context.l10n.notesAccountThrottled,
+  NextcloudCapabilityException(code: NextcloudCapabilityFailure.malformed) ||
+  NextcloudLoginException(code: NextcloudLoginFailure.malformedResponse) ||
+  NotesException(
+    code: NotesFailureCode.invalidResponse,
+  ) => context.l10n.notesAccountMalformed,
+  NextcloudLoginException(code: NextcloudLoginFailure.unsafeRedirect) =>
+    context.l10n.notesAccountServerAddress,
+  NextcloudLoginException(code: NextcloudLoginFailure.timedOut) =>
+    context.l10n.notesAccountTimedOut,
+  NextcloudLoginException(code: NextcloudLoginFailure.browserUnavailable) =>
+    context.l10n.notesAccountBrowserUnavailable,
+  NextcloudLoginException(code: NextcloudLoginFailure.cancelled) =>
+    context.l10n.notesCancelled,
+  NextcloudLoginException(
+    code: NextcloudLoginFailure.network || NextcloudLoginFailure.server,
+  ) ||
+  NextcloudCapabilityException(code: NextcloudCapabilityFailure.network) ||
+  NotesException(
+    code: NotesFailureCode.network || NotesFailureCode.server,
+  ) => context.l10n.notesAccountNetwork,
+  NextcloudCapabilityException(code: NextcloudCapabilityFailure.rejected) =>
+    context.l10n.notesAccountRejected,
+  _ => context.l10n.notesAccountFailed,
+};

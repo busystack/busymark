@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,14 +54,28 @@ void main() {
     );
     // Browser authentication is scoped to the dedicated Notes integration.
     // Keep the removed-domain ban everywhere else, including other l10n keys.
+    final notesAccountMessages =
+        (jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+                as Map<String, dynamic>)
+            .entries
+            .where((e) => e.key.startsWith('notesAccount') && e.value is String)
+            .map((e) => (e.value as String).toLowerCase());
     for (final file in files) {
       if (file.path.startsWith('lib/src/nextcloud_notes/')) continue;
+      if (file.path == 'test/src/nextcloud_notes_account_failures_test.dart') {
+        continue;
+      }
       var source = file.readAsStringSync().toLowerCase();
       if ({
         'lib/l10n/app_en.arb',
         'lib/l10n/generated/app_localizations.dart',
         'lib/l10n/generated/app_localizations_en.dart',
       }.contains(file.path)) {
+        // Permit only Notes account prose in its catalogs and generated docs.
+        // Other translations and application surfaces retain the same ban.
+        for (final message in notesAccountMessages) {
+          source = source.replaceAll(message, '');
+        }
         source = source.replaceAll(
           'complete sign'
               '-in in your browser.',

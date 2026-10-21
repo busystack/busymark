@@ -11,6 +11,128 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud vraagt om een pauze. Wacht voordat u opnieuw aanmeldt.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Notes vernieuwen na de bevestigde instellingenwijziging';
+
+  @override
+  String get notesExportOperationFailed =>
+      'De export is vóór publicatie mislukt. Controleer bron en bestemming en exporteer opnieuw.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'De herstelde notitie is opgeslagen maar kon niet worden geopend. Los openstaande editor- of eigenschapswijzigingen op en open deze bestaande notitie.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Openstaande notities, conflicten of onzekere aanmaak blokkeren deze wijziging. Synchroniseer of beoordeel ze in Notes en probeer dit bewaarde concept opnieuw.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Openstaande bijlagebewerkingen blokkeren deze wijziging. Beoordeel ze in Notes en probeer dit bewaarde instellingenconcept opnieuw.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Gebruik het canonieke HTTPS-adres van Nextcloud en meld opnieuw aan. Het adres of de omleiding kon niet worden geverifieerd.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes is niet beschikbaar of de API wordt niet ondersteund. Schakel Nextcloud Notes in met API-hoofdversie 1, subversie 4 of hoger.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud heeft de aanmeldgegevens geweigerd. Autoriseer dit account opnieuw of verbind opnieuw.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud heeft de controle van Notes-mogelijkheden geweigerd. Vraag toestemming aan de beheerder en probeer opnieuw.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Het Nextcloud-antwoord kon niet worden geverifieerd. Controleer de serverinstallatie en meld opnieuw aan.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'De aanmelding is verlopen. Begin opnieuw en voltooi de toestemming in de browser.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'De systeembrowser kon niet worden geopend. Controleer de standaardbrowser en meld opnieuw aan.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud is onbereikbaar. Controleer de verbinding en server en meld opnieuw aan.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud heeft het mogelijkhedenverzoek geweigerd. Controleer toegang met de beheerder en probeer opnieuw.';
+
+  @override
+  String get notesAccountFailed =>
+      'Accountinstelling is mislukt. Probeer opnieuw aan te melden.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'De bron is na beoordeling gewijzigd. Beoordeel het huidige bestand of maak een nieuwe momentopname.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'De bron kon niet worden gelezen. Controleer toegang tot het bestand of de map en beoordeel opnieuw.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Ongeldige of niet-ondersteunde momentopname. Kies een geldige BusyMark Notes-momentopname of Markdown-bron.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Media overschrijden de importlimiet. Verklein de media van het betreffende item en beoordeel opnieuw.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'De bron bevat een onveilig pad. Kies bestanden binnen de bronmap en beoordeel opnieuw.';
+
+  @override
+  String get notesTransferDestination =>
+      'De export kon niet worden geschreven. Controleer toegang en vrije ruimte bij de bestemming en exporteer opnieuw.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'De overdracht is mislukt. Beoordeel de betreffende items en probeer opnieuw. Eerder geïmporteerde items blijven opgeslagen.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Export met weglatingen beschikbaar';
+
+  @override
+  String get notesBatchUnchanged => 'De gevraagde waarden waren al ingesteld.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Deze notitie is alleen-lezen. Beveiligde eigenschappen kunnen niet wijzigen; Favoriet blijft toegestaan.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Deze notitie is na beoordeling gewijzigd. Beoordeel de huidige staat voordat u de actie herhaalt.';
+
+  @override
+  String get notesBatchMissing =>
+      'Deze notitie is niet meer beschikbaar. Vernieuw de lijst en beoordeel de doelen opnieuw.';
+
+  @override
+  String get notesBatchStorage =>
+      'Lokaal opslaan is mislukt. Controleer de opslag en probeer dit item opnieuw; geslaagde items blijven opgeslagen.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'De servernotitie is gewijzigd. Uw samenvoegconcept blijft bewaard. Beoordeel de nieuwe vergelijking en kies opnieuw een oplossing.';
+
+  @override
+  String get notesReviewRemote => 'Ik heb de huidige serverversie beoordeeld';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Hoofdlettergebruik van de module wordt niet gepubliceerd.';
 

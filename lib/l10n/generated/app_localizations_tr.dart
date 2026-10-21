@@ -11,6 +11,128 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get notesAccountThrottled =>
+      'Nextcloud beklemenizi istedi. Yeniden oturum açmadan önce bekleyin.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Onaylanan ayar güncellemesinden sonra Notes yenileniyor';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Dışa aktarma yayımlanmadan başarısız oldu. Kaynağı ve hedefi denetleyip yeniden deneyin.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Kurtarılan not kaydedildi ancak açılamadı. Bekleyen düzenleyici veya özellik değişikliklerini çözün ve bu mevcut notu açın.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Bekleyen notlar, çakışmalar veya belirsiz oluşturmalar bu değişikliği engelliyor. Notes içinde eşitleyin ya da inceleyin, ardından korunan ayar taslağını yeniden kaydedin.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Bekleyen ek işlemleri değişikliği engelliyor. Notes içinde ekleri inceleyip korunan ayar taslağını yeniden kaydedin.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Nextcloud’un kurallı HTTPS adresini kullanıp yeniden oturum açın. Adres veya yönlendirme doğrulanamadı.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes kullanılamıyor veya API desteklenmiyor. Ana API sürümü 1, alt sürümü en az 4 olan Nextcloud Notes’u etkinleştirin.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud kimlik bilgilerini reddetti. Hesabı yeniden yetkilendirin veya bağlayın.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud, Notes yetenek denetimini engelledi. Yöneticiden izin isteyip yeniden deneyin.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloud yanıtı doğrulanamadı. Sunucu kurulumunu denetleyip yeniden oturum açın.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Oturum açma zaman aşımına uğradı. Yeniden başlatıp tarayıcıda yetkilendirmeyi tamamlayın.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Sistem tarayıcısı açılamadı. Varsayılan tarayıcıyı denetleyip yeniden oturum açın.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud’a ulaşılamadı. Bağlantıyı ve sunucuyu denetleyip yeniden oturum açın.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud yetenek isteğini reddetti. Erişimi yöneticiyle denetleyip yeniden deneyin.';
+
+  @override
+  String get notesAccountFailed =>
+      'Hesap kurulumu tamamlanamadı. Yeniden oturum açmayı deneyin.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Kaynak incelemeden sonra değişti. Yeniden denemeden önce güncel dosyayı inceleyin veya yeni bir anlık görüntü alın.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Kaynak okunamadı. Dosya veya klasör erişimini denetleyip yeniden inceleyin.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Anlık görüntü geçersiz veya desteklenmiyor. Geçerli bir BusyMark Notes görüntüsü veya Markdown kaynağı seçin.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Medya içe aktarma boyut sınırını aşıyor. İlgili öğenin medyasını küçültüp yeniden inceleyin.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Kaynak güvensiz bir yol içeriyor. Kaynak klasörü içindeki dosyaları seçip yeniden inceleyin.';
+
+  @override
+  String get notesTransferDestination =>
+      'Dışa aktarma yazılamadı. Hedef erişimini ve boş alanı denetleyip yeniden deneyin.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Aktarım tamamlanamadı. İlgili öğeleri inceleyip yeniden deneyin. Önceden içe aktarılan öğeler kayıtlı kalır.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Eksikleri olan dışa aktarma kullanılabilir';
+
+  @override
+  String get notesBatchUnchanged => 'İstenen değerler zaten ayarlanmıştı.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Bu not salt okunurdur. Korunan özellikler değiştirilemez; Favori yine değiştirilebilir.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Bu not incelemeden sonra değişti. İşlemi yeniden uygulamadan önce güncel durumunu inceleyin.';
+
+  @override
+  String get notesBatchMissing =>
+      'Bu not artık kullanılamıyor. Listeyi yenileyip hedefleri yeniden inceleyin.';
+
+  @override
+  String get notesBatchStorage =>
+      'Yerel kayıt başarısız oldu. Depolamayı denetleyip bu öğeyi yeniden deneyin; başarılı öğeler kayıtlı kalır.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Sunucu notu değişti. Birleştirme taslağınız korunuyor. Güncel karşılaştırmayı inceleyip çözümü yeniden seçin.';
+
+  @override
+  String get notesReviewRemote => 'Güncel sunucu sürümünü inceledim';
+
+  @override
   String get wsModuleCapsNotPublished => 'Modülün harf biçimi yayımlanmaz.';
 
   @override

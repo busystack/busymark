@@ -372,6 +372,229 @@ void main() {
     expect(result, isNull);
     expect(find.byType(NotesImportReviewDialog), findsNothing);
   });
+  for (final historical in [false, true]) {
+    testWidgets(
+      'created recovery retries opening without creating again, history=$historical',
+      (tester) async {
+        await launch(tester);
+        if (historical) {
+          await tester.tap(find.byType(BusyMarkComboRow<String>));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byWidgetPredicate(
+              (w) => w is PopupMenuItem<int> && w.value == 1,
+            ),
+          );
+          await _settle(tester);
+        }
+        repository.recoverGate = Completer<void>();
+        await tester.runAsync(
+          () => tester.tap(
+            find.byWidgetPredicate(
+              (w) => w is BusyMarkDialogButton && w.label.contains('New note'),
+            ),
+          ),
+        );
+        await _settle(tester);
+        expect(repository.recoveries, 1);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        final draft = workspace.propertyEdits.bind(
+          'reject-open-after-commit',
+          '',
+          (_) => false,
+        );
+        workspace.propertyEdits.edit(draft, 'unflushed property draft');
+        repository.recoverGate!.complete();
+        await _settle(tester);
+        expect(repository.notes, hasLength(3));
+        final createdId = repository.notes
+            .singleWhere((n) => n.localId != 'retained' && n.localId != 'live')
+            .localId;
+        expect(
+          find.textContaining('The recovered note was saved'),
+          findsOneWidget,
+        );
+        expect(find.byType(NotesRecoveryDialog), findsOneWidget);
+        await tester.runAsync(
+          () => tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Open')),
+        );
+        await _settle(tester);
+        expect(repository.recoveries, 1);
+        expect(repository.notes, hasLength(3));
+        workspace.propertyEdits.revert(draft);
+        await tester.runAsync(
+          () => tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Open')),
+        );
+        await _settle(tester);
+        expect(repository.notes, hasLength(3));
+        expect(repository.recoveries, 1);
+        expect(
+          container
+              .read(workspaceControllerProvider)
+              .activeBuffer!
+              .remoteNote!
+              .localId,
+          createdId,
+        );
+        expect(find.byType(NotesRecoveryDialog), findsNothing);
+      },
+    );
+  }
+
+  testWidgets(
+    'export staging progress followed by failure reports no publication',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          NotesTransferProgressDialog(
+            title: 'Export notes',
+            exporting: true,
+            operation: (cancel, progress) async {
+              progress(1, 2);
+              throw const FileSystemException('fixture disk full');
+            },
+          ),
+        ),
+      );
+      await _settle(tester);
+      expect(find.textContaining('Transfer failed'), findsOneWidget);
+      expect(find.text('No export was published.'), findsOneWidget);
+      expect(find.textContaining('Earlier imported'), findsNothing);
+      expect(find.textContaining('Resume'), findsNothing);
+      expect(
+        find.textContaining('Check access and free space'),
+        findsOneWidget,
+      );
+    },
+  );
+  testWidgets(
+    'cancelled export creates no snapshot and gives no import advice',
+    (tester) async {
+      final gate = Completer<NotesTransferResult>();
+      await tester.pumpWidget(
+        _app(
+          NotesTransferProgressDialog(
+            title: 'Export notes',
+            exporting: true,
+            operation: (cancel, progress) async {
+              progress(1, 2);
+              await gate.future;
+              cancel.check();
+              throw StateError('unreachable');
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('Cancel'));
+      await tester.pump();
+      gate.complete(
+        const NotesTransferResult(phase: NotesTransferPhase.cancelled),
+      );
+      await _settle(tester);
+      expect(find.text('Cancelled'), findsOneWidget);
+      expect(find.text('No export was published.'), findsOneWidget);
+      expect(find.textContaining('Resume'), findsNothing);
+    },
+  );
+  testWidgets(
+    'published export with omissions reports destination and no import advice',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          NotesTransferProgressDialog(
+            title: 'Export notes',
+            exporting: true,
+            operation: (_, progress) async => const NotesTransferResult(
+              phase: NotesTransferPhase.partial,
+              created: 2,
+              destination: '/published/with-omissions',
+              omissions: ['Example: unavailable.png'],
+            ),
+          ),
+        ),
+      );
+      await _settle(tester);
+      expect(find.text('Export available with omissions'), findsOneWidget);
+      expect(find.text('/published/with-omissions'), findsOneWidget);
+      expect(find.textContaining('Example: unavailable.png'), findsOneWidget);
+      expect(find.textContaining('Resume'), findsNothing);
+    },
+  );
+
+  testWidgets('changed import source retains its reason in results', (
+    tester,
+  ) async {
+    final file = File('${root.path}/reviewed.md');
+    await tester.runAsync(() => file.writeAsString('reviewed content'));
+    final service = NotesTransferService(repository);
+    final review = await tester.runAsync(
+      () => service.review(file.path, _account),
+    );
+    await tester.runAsync(() => file.writeAsString('changed after review'));
+    await tester.pumpWidget(
+      _app(
+        NotesTransferProgressDialog(
+          title: 'Import notes',
+          operation: (cancel, progress) async {
+            final items = await service.importReviewed(
+              review!,
+              _account,
+              cancellation: cancel,
+              onProgress: progress,
+            );
+            return NotesTransferResult(
+              phase: NotesTransferPhase.failed,
+              failed: 1,
+              items: items,
+            );
+          },
+        ),
+      ),
+    );
+    await _settle(tester);
+    expect(
+      find.textContaining('The source changed after review'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Review the current file'), findsOneWidget);
+    expect(repository.notes, hasLength(2));
+  });
+  for (final malformed in [true, false]) {
+    testWidgets('scan failure keeps actionable reason, malformed=$malformed', (
+      tester,
+    ) async {
+      final source = malformed
+          ? Directory('${root.path}/invalid-snapshot')
+          : Directory('${root.path}/missing-source');
+      if (malformed) {
+        await tester.runAsync(() async {
+          await source.create();
+          await File(
+            '${source.path}/${NotesTransferService.manifestName}',
+          ).writeAsString('{"format":"unsupported"}');
+        });
+      }
+      await tester.pumpWidget(
+        _app(
+          NotesImportScanDialog(
+            scan: (cancel) => NotesTransferService(
+              repository,
+            ).review(source.path, _account, cancellation: cancel),
+          ),
+        ),
+      );
+      await _settle(tester);
+      expect(
+        find.textContaining(
+          malformed ? 'snapshot is invalid' : 'source could not be read',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Technical details'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+    });
+  }
   testWidgets(
     'a published export remains completed when cancellation races its result',
     (tester) async {
@@ -380,6 +603,7 @@ void main() {
         _app(
           NotesTransferProgressDialog(
             title: 'Export notes',
+            exporting: true,
             operation: (cancel, progress) async {
               progress(0, 2);
               return gate.future;

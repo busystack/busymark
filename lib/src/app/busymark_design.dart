@@ -1976,6 +1976,7 @@ class BusyMarkMenuButton<T> extends StatefulWidget {
     this.enabled = true,
     this.nativeMenuService = const NativeMenuService(),
     this.fallbackMenuWidth,
+    this.selectionForSession,
   });
 
   final String tooltip;
@@ -1985,6 +1986,10 @@ class BusyMarkMenuButton<T> extends StatefulWidget {
   final bool enabled;
   final NativeMenuService nativeMenuService;
   final double? fallbackMenuWidth;
+
+  /// Captures the reviewed targets once, for every input path that opens a menu.
+  /// The returned callback belongs to this opening, even if the trigger rebuilds.
+  final ValueChanged<T> Function()? selectionForSession;
 
   @override
   State<BusyMarkMenuButton<T>> createState() => _BusyMarkMenuButtonState<T>();
@@ -2076,7 +2081,7 @@ class _BusyMarkMenuButtonState<T> extends State<BusyMarkMenuButton<T>> {
       return;
     }
     final items = List<PopupMenuEntry<T>>.unmodifiable(widget.items);
-    final onSelected = widget.onSelected;
+    final onSelected = widget.selectionForSession?.call() ?? widget.onSelected;
     final session = BusyMarkMenuSession();
     _activeMenuSession = session;
     setState(() => _open = true);
@@ -2792,12 +2797,14 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     this.menuItemsBuilder,
     this.onMenuSelected,
     this.onMenuOpening,
+    this.menuSelectionForSession,
   }) : assert(
          (title == null) != (content == null),
          'Supply either the standard title or custom content.',
        ),
        assert(
-         (menuItemsBuilder == null) == (onMenuSelected == null),
+         (menuItemsBuilder == null) ==
+             (onMenuSelected == null && menuSelectionForSession == null),
          'Menu items and selection handling must be supplied together.',
        ),
        assert(
@@ -2826,6 +2833,9 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final ValueChanged<T>? onMenuSelected;
   final VoidCallback? onMenuOpening;
 
+  /// Freezes this opening's targets independently of later row rebuilds.
+  final ValueChanged<T> Function()? menuSelectionForSession;
+
   @override
   State<BusyMarkSidebarRecordRow<T>> createState() =>
       _BusyMarkSidebarRecordRowState<T>();
@@ -2839,7 +2849,8 @@ class _BusyMarkSidebarRecordRowState<T>
   DateTime? _lastTapAt;
 
   bool get _hasMenu =>
-      widget.menuItemsBuilder != null && widget.onMenuSelected != null;
+      widget.menuItemsBuilder != null &&
+      (widget.onMenuSelected != null || widget.menuSelectionForSession != null);
 
   @override
   void initState() {
@@ -2880,12 +2891,15 @@ class _BusyMarkSidebarRecordRowState<T>
     if (!_hasMenu || _contextMenuOpen) return;
     final rowContext = _rowKey.currentContext;
     if (rowContext == null) return;
+    final items = widget.menuItemsBuilder!(rowContext);
+    if (items.isEmpty) return;
 
     widget.onMenuOpening?.call();
+    final onSelected =
+        widget.menuSelectionForSession?.call() ?? widget.onMenuSelected!;
     setState(() => _contextMenuOpen = true);
     T? action;
     try {
-      final items = widget.menuItemsBuilder!(rowContext);
       action = position == null
           ? await showBusyMarkMenu<T>(
               context: rowContext,
@@ -2901,7 +2915,7 @@ class _BusyMarkSidebarRecordRowState<T>
     } finally {
       if (mounted) setState(() => _contextMenuOpen = false);
     }
-    if (mounted && action != null) widget.onMenuSelected!(action);
+    if (mounted && action != null) onSelected(action);
   }
 
   @override
@@ -2915,18 +2929,18 @@ class _BusyMarkSidebarRecordRowState<T>
         : BusyMarkMenuButton<T>(
             tooltip: widget.menuTooltip!,
             items: menuItems,
-            onSelected: widget.onMenuSelected!,
+            onSelected: widget.onMenuSelected ?? (_) {},
+            selectionForSession: () {
+              widget.onMenuOpening?.call();
+              return widget.menuSelectionForSession?.call() ??
+                  widget.onMenuSelected!;
+            },
             triggerBuilder: (context, trigger) => trigger.anchor(
               child: BusyMarkCompactIconButton(
                 tooltip: widget.menuTooltip!,
                 icon: BusyMarkGlyphs.menuVertical,
                 focusNode: trigger.focusNode,
-                onPressed: trigger.onPressed == null
-                    ? null
-                    : () {
-                        widget.onMenuOpening?.call();
-                        trigger.onPressed!();
-                      },
+                onPressed: trigger.onPressed,
               ),
             ),
           );
@@ -4598,7 +4612,10 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
     this.trailing,
     this.tooltip,
     this.focusNode,
+    this.traverseWithArrows = false,
+    this.onFocusChange,
     this.hasChildren = false,
+    this.onNavigationKeyEvent,
     this.expanded = false,
     this.selected = false,
     this.enabled = true,
@@ -4618,6 +4635,11 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
   final Widget? trailing;
   final String? tooltip;
   final FocusNode? focusNode;
+  final bool traverseWithArrows;
+  final ValueChanged<bool>? onFocusChange;
+
+  /// Owners can keep selection and reveal policy instead of generic traversal.
+  final FocusOnKeyEventCallback? onNavigationKeyEvent;
   final bool hasChildren;
   final bool expanded;
   final bool selected;
@@ -4647,6 +4669,12 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    final navigation = widget.enabled
+        ? widget.onNavigationKeyEvent?.call(node, event)
+        : null;
+    if (navigation != null && navigation != KeyEventResult.ignored) {
+      return navigation;
+    }
     if (widget.enabled && event is KeyDownEvent) {
       final rtl = Directionality.of(context) == TextDirection.rtl;
       final expand = rtl
@@ -4661,11 +4689,13 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
         widget.onToggle?.call();
         return KeyEventResult.handled;
       }
-      if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      if (widget.traverseWithArrows &&
+          event.logicalKey == LogicalKeyboardKey.arrowDown) {
         node.nextFocus();
         return KeyEventResult.handled;
       }
-      if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      if (widget.traverseWithArrows &&
+          event.logicalKey == LogicalKeyboardKey.arrowUp) {
         node.previousFocus();
         return KeyEventResult.handled;
       }
@@ -4725,7 +4755,10 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
           : (details) =>
                 widget.onMenuRequested!(context, details.globalPosition),
       onHoverChanged: (hovered) => setState(() => _hovered = hovered),
-      onFocusChange: (focused) => setState(() => _focused = focused),
+      onFocusChange: (focused) {
+        setState(() => _focused = focused);
+        widget.onFocusChange?.call(focused);
+      },
       child: Row(
         children: [
           SizedBox(
