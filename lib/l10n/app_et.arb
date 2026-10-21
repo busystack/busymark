@@ -1987,6 +1987,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Hiljutisi üksusi ei saanud uuendada: {error}.",
   "workspaceErrorOpenFailed": "Avamine nurjus: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

@@ -370,6 +370,12 @@ class WritersideEditingAdapter {
       filePath: filePath,
       source: source,
     );
+    return fromAuthoredXml(authored);
+  }
+
+  /// Projects a validated, unresolved authored tree without parsing it again.
+  /// Callers must match the tree's path and source to the editor revision.
+  BusyDocument? fromAuthoredXml(WritersideDocument authored) {
     if (!authored.isWellFormed ||
         authored.rootElement?.name != 'topic' ||
         authored.nodes.whereType<WritersideElementNode>().length != 1) {
@@ -377,9 +383,9 @@ class WritersideEditingAdapter {
     }
     var index = 0;
     return BusyDocument(
-      filePath: filePath,
+      filePath: authored.filePath,
       mode: MarkdownMode.writersideMarkdown,
-      source: source,
+      source: authored.source,
       authoredXml: authored,
       title: authored.rootElement?.attributes['title'],
       blocks: [

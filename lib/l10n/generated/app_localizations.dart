@@ -3769,6 +3769,12 @@ abstract class AppLocalizations {
   /// **'Resource file'**
   String get documentKindResourceFile;
 
+  /// Warning when updating Recent items fails after a successful open or save.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update Recent items: {error}.'**
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error);
+
   /// Workspace error message shown when opening a path fails.
   ///
   /// In en, this message translates to:

@@ -2254,6 +2254,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "无法更新最近使用的项目：{error}。",
   "workspaceErrorOpenFailed": "打开失败：{error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

@@ -2449,6 +2449,10 @@ pix.savev(sys.argv[1], 'png', [], [])
         'Ctrl+3 opens ordinary Outline without a query',
       );
       await key('ctrl+f');
+      await wait(
+        () => widgets<BusyMarkPopupSelector<SearchCategory>>().length == 1,
+        'Outline search category selector mounted',
+      );
       widgets<BusyMarkPopupSelector<SearchCategory>>().single.onSelected(
         SearchCategory.outline,
       );

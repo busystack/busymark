@@ -13,6 +13,490 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  for (final startupHandoff in [false, true]) {
+    test('unreadable settings do not acknowledge shortcut saves '
+        '(startup handoff: $startupHandoff)', () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-settings-read-failure-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final path = p.join(root.path, 'settings.json');
+      final unreadable = await Directory(path).create();
+      final store = _CountingJsonSettingsStore(path);
+      final startup = startupHandoff
+          ? await StartupAppSettings.load(store)
+          : null;
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      await settings.waitUntilLoaded();
+
+      expect(await settings.saveShortcutOverrides({}), isFalse);
+      expect(container.read(shortcutPersistenceOutcomeProvider), isFalse);
+      expect(store.saves, 1);
+      await expectLater(store.load(), throwsA(isA<FileSystemException>()));
+
+      await unreadable.delete();
+      expect(await settings.retryShortcutSave(), isTrue);
+      expect(store.saves, 2);
+      expect(container.read(shortcutPersistenceOutcomeProvider), isTrue);
+      expect(
+        await store.load(),
+        container.read(appSettingsControllerProvider).toJson(),
+      );
+      expect(await settings.retryShortcutSave(), isTrue);
+      expect(store.saves, 2);
+    });
+  }
+
+  test(
+    'shortcut failure, retry and dedup share the ordered settings writer',
+    () async {
+      const first = BusyMarkKeyBinding(LogicalKeyboardKey.f8);
+      const second = BusyMarkKeyBinding(LogicalKeyboardKey.f9);
+      final store = _ViewModeSettingsStore()
+        ..saveGate = Completer<void>()
+        ..failSave = true;
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      await settings.waitUntilLoaded();
+      final saving = settings.saveShortcutOverrides({
+        'file.save': first,
+        'search.find': second,
+      });
+      var reconciled = false;
+      final reconciling = settings
+          .setDocumentViewMode(DocumentViewModePreference.editor)
+          .then((_) => reconciled = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(reconciled, isFalse);
+      expect(store.saves, hasLength(1));
+      store.saveGate!.complete();
+      expect(await saving, isFalse);
+      await reconciling;
+      expect(container.read(shortcutPersistenceOutcomeProvider), isFalse);
+      expect(store.saves, hasLength(2));
+      store.failSave = false;
+      expect(await settings.retryShortcutSave(), isTrue);
+      await settings.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(
+        await settings.saveShortcutOverrides({
+          'search.find': second,
+          'file.save': first,
+        }),
+        isTrue,
+      );
+      expect(
+        store.saves,
+        hasLength(3),
+        reason: 'Map order and acknowledged view mode need no new publication',
+      );
+      expect(container.read(shortcutPersistenceOutcomeProvider), isTrue);
+      expect(AppSettings.fromJson(store.value).shortcutOverrides, {
+        'file.save': first,
+        'search.find': second,
+      });
+    },
+  );
+
+  test(
+    'shortcut dedup includes failed qualified Recent changes in its retry',
+    () async {
+      const binding = BusyMarkKeyBinding(LogicalKeyboardKey.f8);
+      final store = _ViewModeSettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      await settings.waitUntilLoaded();
+      expect(
+        await settings.saveShortcutOverrides({'file.save': binding}),
+        isTrue,
+      );
+      store.failSave = true;
+      final recent = RecentResource(
+        path: '',
+        kind: 'nextcloudNote',
+        document: true,
+        accountId: 'account-one',
+        accountLabel: 'One',
+        localId: 'shared-local-id',
+        ownerRoot: '/owner',
+        title: 'Qualified title',
+        lastOpenedAt: DateTime.utc(2026, 10, 20),
+      );
+      await expectLater(settings.recordRecent(recent), throwsStateError);
+      store.failSave = false;
+      expect(
+        await settings.saveShortcutOverrides({'file.save': binding}),
+        isTrue,
+      );
+      final persisted = AppSettings.fromJson(store.value);
+      expect(persisted.recentWorkspaces.single.toJson(), recent.toJson());
+      expect(persisted.shortcutOverrides, {'file.save': binding});
+      final publications = store.saves.length;
+      expect(await settings.retryShortcutSave(), isTrue);
+      expect(store.saves, hasLength(publications));
+      await settings.recordRecent(
+        RecentResource(
+          path: '',
+          kind: 'nextcloudNote',
+          document: true,
+          accountId: 'account-two',
+          localId: 'shared-local-id',
+          title: 'Other account',
+          lastOpenedAt: DateTime.utc(2026, 10, 21),
+        ),
+      );
+      await settings.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(
+        AppSettings.fromJson(
+          store.value,
+        ).recentWorkspaces.map((r) => r.identity),
+        ['account-two:shared-local-id', 'account-one:shared-local-id'],
+      );
+    },
+  );
+
+  test(
+    'shortcut save during hydration retains loaded and pending preferences',
+    () async {
+      final store = _ViewModeSettingsStore()
+        ..loadGate = Completer<Map<String, Object?>>();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      final opening = settings.recordOpenedWorkspace(
+        path: '/fixture/a.md',
+        kind: 'singleMarkdown',
+      );
+      final saving = settings.saveShortcutOverrides({
+        'file.save': const BusyMarkKeyBinding(LogicalKeyboardKey.f8),
+      });
+      store.loadGate!.complete(
+        AppSettings.defaults()
+            .copyWith(wordWrap: false, editorFontSize: 19)
+            .toJson(),
+      );
+      await opening;
+      expect(await saving, isTrue);
+      final persisted = AppSettings.fromJson(store.value);
+      expect(persisted.wordWrap, isFalse);
+      expect(persisted.editorFontSize, 19);
+      expect(persisted.recentWorkspaces.single.path, '/fixture/a.md');
+      expect(persisted.shortcutOverrides.keys, ['file.save']);
+    },
+  );
+
+  test(
+    'disposal during hydration settles admitted Recent and shortcut callers',
+    () async {
+      final store = _ViewModeSettingsStore()
+        ..loadGate = Completer<Map<String, Object?>>();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      final opening = expectLater(
+        settings.recordOpenedWorkspace(
+          path: '/fixture/a.md',
+          kind: 'singleMarkdown',
+        ),
+        throwsStateError,
+      );
+      final saving = settings.saveShortcutOverrides(const {});
+      container.dispose();
+      store.loadGate!.complete(AppSettings.defaults().toJson());
+      await opening;
+      expect(await saving, isFalse);
+      expect(store.saves, isEmpty);
+    },
+  );
+
+  testWidgets('saved local theme is present in the first constructed frame', (
+    tester,
+  ) async {
+    final store = _ViewModeSettingsStore();
+    store.value['themeModePreference'] = 'dark';
+    final startup = await tester.runAsync(() => StartupAppSettings.load(store));
+    final frames = <BusyMarkThemeModePreference>[];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) {
+            final settings = ref.watch(appSettingsControllerProvider);
+            frames.add(settings.themeModePreference);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(frames, [BusyMarkThemeModePreference.dark]);
+    expect(store.loads, 1);
+    expect(store.saves, isEmpty);
+  });
+
+  test(
+    'startup settings are one-use and bound to their acknowledged store',
+    () async {
+      final store = _ViewModeSettingsStore();
+      store.value['themeModePreference'] = 'dark';
+      final startup = await StartupAppSettings.load(store);
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      expect(
+        container.read(appSettingsControllerProvider).themeModePreference,
+        BusyMarkThemeModePreference.dark,
+      );
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(store.loads, 1);
+      expect(store.saves, isEmpty);
+      store.value['themeModePreference'] = 'light';
+      container.invalidate(appSettingsControllerProvider);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      expect(
+        container.read(appSettingsControllerProvider).themeModePreference,
+        BusyMarkThemeModePreference.light,
+      );
+      expect(store.loads, 2);
+
+      final original = _ViewModeSettingsStore();
+      original.value['themeModePreference'] = 'dark';
+      final other = _ViewModeSettingsStore();
+      other.value['themeModePreference'] = 'light';
+      final mismatched = await StartupAppSettings.load(original);
+      final different = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(other),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: mismatched),
+          ),
+        ],
+      );
+      addTearDown(different.dispose);
+      await different
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      expect(
+        different.read(appSettingsControllerProvider).themeModePreference,
+        BusyMarkThemeModePreference.light,
+      );
+      expect(other.loads, 1);
+    },
+  );
+
+  test(
+    'failed startup load cannot acknowledge default settings for reuse',
+    () async {
+      final store = _ViewModeSettingsStore()..failLoad = true;
+      final startup = await StartupAppSettings.load(store);
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(store),
+          appSettingsControllerProvider.overrideWith(
+            () => AppSettingsController(startupSettings: startup),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(store.loads, 1);
+      expect(store.saves, hasLength(1));
+    },
+  );
+
+  test(
+    'view-mode reconciliation reuses acknowledged unchanged settings',
+    () async {
+      final store = _ViewModeSettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      var propertyFlushes = 0;
+      controller.processPendingProperties = () {
+        propertyFlushes++;
+        return true;
+      };
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(propertyFlushes, 1);
+      expect(store.saves, isEmpty);
+      await controller.setDocumentViewMode(DocumentViewModePreference.source);
+      expect(store.saves, hasLength(1));
+      expect(store.value['documentViewMode'], 'source');
+      expect(store.value['previewVisible'], isFalse);
+      await controller.setDocumentViewMode(DocumentViewModePreference.source);
+      expect(store.saves, hasLength(1));
+    },
+  );
+
+  test('view-mode reconciliation waits for preceding durable writes', () async {
+    final store = _ViewModeSettingsStore()..saveGate = Completer<void>();
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await controller.waitUntilLoaded();
+    final changing = controller.setWordWrap(false);
+    var completed = false;
+    final reconciling = controller
+        .setDocumentViewMode(DocumentViewModePreference.editor)
+        .then((_) => completed = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(completed, isFalse);
+    expect(store.saves, hasLength(1));
+    store.saveGate!.complete();
+    await changing;
+    await reconciling;
+    expect(store.saves, hasLength(1));
+    expect(store.value['wordWrap'], isFalse);
+  });
+
+  test(
+    'view-mode reconciliation cannot reuse state before a queued mode change',
+    () async {
+      final store = _ViewModeSettingsStore()..saveGate = Completer<void>();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      final source = controller.setDocumentViewMode(
+        DocumentViewModePreference.source,
+      );
+      final editor = controller.setDocumentViewMode(
+        DocumentViewModePreference.editor,
+      );
+      await Future<void>.delayed(Duration.zero);
+      store.saveGate!.complete();
+      await source;
+      await editor;
+      expect(store.saves, hasLength(2));
+      expect(store.value['documentViewMode'], 'editor');
+    },
+  );
+
+  test('view-mode reconciliation retries a failed write', () async {
+    final store = _ViewModeSettingsStore()..failSave = true;
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await controller.waitUntilLoaded();
+    await controller.setDocumentViewMode(DocumentViewModePreference.source);
+    expect(store.value['documentViewMode'], 'editor');
+    store.failSave = false;
+    await controller.setDocumentViewMode(DocumentViewModePreference.source);
+    expect(store.saves, hasLength(2));
+    expect(store.value['documentViewMode'], 'source');
+  });
+
+  test(
+    'view-mode reconciliation does not acknowledge a failed settings load',
+    () async {
+      final store = _ViewModeSettingsStore()..failLoad = true;
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      expect(store.saves, hasLength(1));
+    },
+  );
+
+  test(
+    'view-mode reconciliation preserves requests during hydration',
+    () async {
+      final store = _ViewModeSettingsStore()
+        ..loadGate = Completer<Map<String, Object?>>();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.setDocumentViewMode(DocumentViewModePreference.editor);
+      store.loadGate!.complete(
+        AppSettings.defaults()
+            .copyWith(
+              documentViewMode: DocumentViewModePreference.source,
+              previewVisible: false,
+            )
+            .toJson(),
+      );
+      await controller.waitUntilLoaded();
+      expect(store.saves, hasLength(1));
+      expect(store.value['documentViewMode'], 'editor');
+      expect(store.value['previewVisible'], isTrue);
+    },
+  );
+
+  test(
+    'recent workspace write failures propagate and leave the save queue usable',
+    () async {
+      final store = _FailingRecentSettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await expectLater(
+        controller.recordOpenedWorkspace(
+          path: '/fixture/first.md',
+          kind: 'singleMarkdown',
+        ),
+        throwsStateError,
+      );
+      store.fail = false;
+      await controller.recordOpenedWorkspace(
+        path: '/fixture/second.md',
+        kind: 'singleMarkdown',
+      );
+      expect(store.value['lastOpenedPath'], '/fixture/second.md');
+      expect(
+        container.read(appSettingsControllerProvider).recentWorkspaces,
+        hasLength(2),
+      );
+    },
+  );
+
   test(
     'new search defaults preserve saved assignments and resolve explicitly',
     () async {
@@ -1193,7 +1677,16 @@ void main() {
       );
 
       await Future<void>.delayed(Duration.zero);
-      expect(initialActionsCompleted, isTrue);
+      expect(initialActionsCompleted, isFalse);
+      expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .single
+            .path,
+        '/tmp/new.md',
+      );
 
       store.completeLoad(
         AppSettings.defaults()
@@ -1210,6 +1703,8 @@ void main() {
             .toJson(),
       );
       await store.saved;
+      await Future.wait([autoSaveFuture, recentFuture]);
+      expect(initialActionsCompleted, isTrue);
 
       final settings = container.read(appSettingsControllerProvider);
       expect(settings.wordWrap, isFalse);
@@ -1423,6 +1918,44 @@ class _MemorySettingsStore implements LocalSettingsStore {
   }
 }
 
+class _CountingJsonSettingsStore extends JsonFileLocalSettingsStore {
+  _CountingJsonSettingsStore(String path)
+    : super(settingsFilePathOverride: path);
+
+  int saves = 0;
+
+  @override
+  Future<void> save(Map<String, Object?> json) {
+    saves++;
+    return super.save(json);
+  }
+}
+
+class _ViewModeSettingsStore implements LocalSettingsStore {
+  Map<String, Object?> value = AppSettings.defaults().toJson();
+  final saves = <Map<String, Object?>>[];
+  Completer<void>? saveGate;
+  Completer<Map<String, Object?>>? loadGate;
+  bool failSave = false;
+  bool failLoad = false;
+  int loads = 0;
+
+  @override
+  Future<Map<String, Object?>> load() async {
+    loads++;
+    if (failLoad) throw StateError('injected settings load failure');
+    return loadGate == null ? value : await loadGate!.future;
+  }
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    saves.add(Map.of(json));
+    await saveGate?.future;
+    if (failSave) throw StateError('injected settings write failure');
+    value = Map.of(json);
+  }
+}
+
 class _DelayedSettingsStore implements LocalSettingsStore {
   final _load = Completer<Map<String, Object?>>();
   final _saved = Completer<void>();
@@ -1444,6 +1977,15 @@ class _DelayedSettingsStore implements LocalSettingsStore {
     if (!_saved.isCompleted) {
       _saved.complete();
     }
+  }
+}
+
+class _FailingRecentSettingsStore extends _MemorySettingsStore {
+  bool fail = true;
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    if (fail) throw StateError('injected settings write failure');
+    await super.save(json);
   }
 }
 

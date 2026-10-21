@@ -134,21 +134,19 @@ Future<void> openRecentResource(
     }
   }
   if (opened && context.mounted) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .recordRecent(
-          RecentResource(
-            path: resource.path,
-            kind: resource.kind,
-            accountId: resource.accountId,
-            accountLabel: resource.accountLabel,
-            localId: resource.localId,
-            title: resource.title,
-            ownerRoot: resource.ownerRoot,
-            document: resource.isDocument,
-            lastOpenedAt: DateTime.now(),
-          ),
-        );
+    await controller.recordRecentResource(
+      RecentResource(
+        path: resource.path,
+        kind: resource.kind,
+        accountId: resource.accountId,
+        accountLabel: resource.accountLabel,
+        localId: resource.localId,
+        title: resource.title,
+        ownerRoot: resource.ownerRoot,
+        document: resource.isDocument,
+        lastOpenedAt: DateTime.now(),
+      ),
+    );
     if (!context.mounted || !currentRequest()) return;
     revealOpenedDocument(ref);
     ref.read(searchSessionProvider.notifier).close(restoreFocus: false);

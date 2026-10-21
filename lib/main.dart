@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:yaru/yaru.dart';
 
+import 'src/app/app_settings.dart';
 import 'src/app/busymark_app.dart';
 import 'src/app/startup_path.dart';
 import 'src/app/system_accent.dart';
+
 import 'src/git/application/git_controller.dart';
 import 'src/git/data/git_cli_gateway.dart';
 import 'src/platform/gtk_animation_settings_service.dart';
@@ -21,7 +23,9 @@ import 'src/visualization/visualization_release_smoke.dart';
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
-  if (Platform.isLinux) await YaruWindow.ensureInitialized();
+  if (Platform.isLinux) {
+    await YaruWindow.ensureInitialized();
+  }
   if (visualizationReleaseSmokeReportPath(args) case final reportPath?) {
     exit(await runVisualizationReleaseSmoke(reportPath));
   }
@@ -40,9 +44,16 @@ Future<void> main(List<String> args) async {
   ]);
   final headerIcons = GtkHeaderIconService();
   await headerIcons.initialize();
+  const settingsStore = JsonFileLocalSettingsStore();
+  final startupSettings = await StartupAppSettings.load(settingsStore);
+
   runApp(
     ProviderScope(
       overrides: [
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        appSettingsControllerProvider.overrideWith(
+          () => AppSettingsController(startupSettings: startupSettings),
+        ),
         initialGtkAnimationsEnabledProvider.overrideWithValue(
           chrome[0] as bool?,
         ),

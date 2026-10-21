@@ -43,6 +43,8 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
+  bool _navigateWhenContentReady = false;
+
   XTypeGroup _markdownTypes(BuildContext context) => XTypeGroup(
     label: context.l10n.fileTypeMarkdown,
     extensions: <String>['md', 'markdown'],
@@ -51,6 +53,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
+    ref.listen(workspaceControllerProvider, (previous, next) {
+      if (_navigateWhenContentReady &&
+          previous?.isLoading == true &&
+          !next.isLoading &&
+          next.workspace != null &&
+          mounted) {
+        _navigateWhenContentReady = false;
+        context.go('/workspace');
+      }
+    });
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final colors = BusyMarkSurfaceColors.of(context);
@@ -97,19 +109,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         if (!mounted) {
           return;
         }
-        final settingsController = ref.read(
-          appSettingsControllerProvider.notifier,
-        );
-        await settingsController.waitUntilLoaded();
-        if (!mounted) {
-          return;
-        }
-        final reopenCleanSession = ref
-            .read(appSettingsControllerProvider)
-            .reopenPreviousWorkspaceOnStartup;
+        // Register startup restoration before awaiting settings so an early
+        // close also waits for recovery publication and sees its dirty state.
         final restored = await ref
             .read(workspaceControllerProvider.notifier)
-            .restoreStartupSession(reopenCleanSession: reopenCleanSession);
+            .restoreStartupSession();
         if (restored && mounted) {
           this.context.go('/workspace');
         }
@@ -537,7 +541,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     if (!safe) {
       return;
     }
-    await ref.read(workspaceControllerProvider.notifier).openPath(path);
+    _navigateWhenContentReady = true;
+    try {
+      // The operation still awaits bookkeeping and reports its errors. The
+      // listener may publish the prepared, monitored editor while that write
+      // is pending, without making it a fire-and-forget persistence operation.
+      await ref.read(workspaceControllerProvider.notifier).openPath(path);
+    } finally {
+      _navigateWhenContentReady = false;
+    }
     if (!mounted) {
       return;
     }
@@ -891,6 +903,7 @@ BusyMarkStatusKind busyMarkWorkspaceMessageStatusKind(
       BusyMarkStatusKind.information,
     WorkspaceMessageCode.recoveryRestored => BusyMarkStatusKind.information,
     WorkspaceMessageCode.saveBlockedFileChangedOnDisk ||
+    WorkspaceMessageCode.recentWorkspaceUpdateFailed ||
     WorkspaceMessageCode.recoveryDamaged => BusyMarkStatusKind.warning,
     WorkspaceMessageCode.openFailed ||
     WorkspaceMessageCode.createWritersideProjectFailed ||

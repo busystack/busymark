@@ -3363,12 +3363,10 @@ void main() {
         ),
       ),
     );
-    for (var frame = 0; frame < 8; frame++) {
-      await tester.pump(const Duration(milliseconds: 20));
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 5)),
-      );
-    }
+    await _pumpWidgetUntil(
+      tester,
+      () => controller.personalWords.wordsFor('en-Test').contains('BusyBrand'),
+    );
     expect(reads, 2);
     expect(controller.personalWords.wordsFor('en-Test'), ['BusyBrand']);
     BusyMarkActionRow personalRow() => tester.widget<BusyMarkActionRow>(

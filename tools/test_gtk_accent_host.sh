@@ -18,5 +18,9 @@ trap 'rm -rf "$fixture_root"' EXIT
   -o "$fixture_root/probe"
 # The probe enables the AT-SPI bridge and keeps GTK warnings fatal. Give its
 # accessibility service (at-spi2-core) a private bus, including on headless CI.
-dbus-run-session -- env G_DEBUG=fatal-warnings \
+mkdir -p "$fixture_root"/{home,config,cache,data,state,tmp}
+HOME="$fixture_root/home" XDG_CONFIG_HOME="$fixture_root/config" \
+  XDG_CACHE_HOME="$fixture_root/cache" XDG_DATA_HOME="$fixture_root/data" \
+  XDG_STATE_HOME="$fixture_root/state" TMPDIR="$fixture_root/tmp" \
+  GSETTINGS_BACKEND=memory dbus-run-session -- env G_DEBUG=fatal-warnings \
   "$fixture_root/probe" "$fixture_root/data"

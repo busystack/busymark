@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:busymark/src/local_history/local_history_models.dart';
@@ -16,6 +17,10 @@ void main() {
   late Directory root;
   late int ids;
   late FileLocalHistoryStore store;
+
+  // Only interprocess cases need the compiled fixture. Preparation is shared
+  // across concurrent starts and stays outside child-operation deadlines.
+  tearDownAll(_HistoryProcess.disposeRuntime);
 
   setUp(() async {
     root = await Directory.systemTemp.createTemp(
@@ -53,6 +58,109 @@ void main() {
   const policy = LocalHistoryPolicy(
     retentionAge: Duration(days: 30),
     maximumBytes: 16 * 1024 * 1024,
+  );
+
+  final sentinelTime = DateTime.utc(2000);
+  LocalHistoryCaptureRequest journalRequest(String text, int minute) =>
+      request(text, DateTime.utc(2026, 10, 17).add(Duration(minutes: minute)));
+
+  test(
+    'unchanged tombstone journal is retained while index and revision commit',
+    () async {
+      await store.capture(journalRequest('Original A\n', 0), policy);
+      final journal = File(p.join(root.path, 'tombstones.json'));
+      final before = await journal.readAsString();
+      await journal.setLastModified(sentinelTime);
+      await store.capture(journalRequest('Changed A\n', 1), policy);
+      expect(await journal.readAsString(), before);
+      expect(
+        (await journal.lastModified()).millisecondsSinceEpoch,
+        sentinelTime.millisecondsSinceEpoch,
+      );
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      final snapshot = await reopened.load();
+      expect(snapshot.revisions, hasLength(2));
+      expect(
+        await Future.wait(
+          snapshot.revisions.map(
+            (r) async => (await reopened.readRevision(r.id))!.source,
+          ),
+        ),
+        unorderedEquals(['Original A\n', 'Changed A\n']),
+      );
+    },
+  );
+  test(
+    'existing deletion tombstones survive index-only publication without rewriting',
+    () async {
+      final first = await store.capture(
+        journalRequest('Original A\n', 0),
+        policy,
+      );
+      await store.clearDocument(first.document.id);
+      await store.capture(journalRequest('Replacement A\n', 1), policy);
+      final journal = File(p.join(root.path, 'tombstones.json'));
+      final contents = await journal.readAsString();
+      expect(jsonDecode(contents), contains(first.revision!.id));
+      await journal.setLastModified(sentinelTime);
+      await store.capture(journalRequest('Replacement A changed\n', 2), policy);
+      expect(await journal.readAsString(), contents);
+      expect(
+        (await journal.lastModified()).millisecondsSinceEpoch,
+        sentinelTime.millisecondsSinceEpoch,
+      );
+      final snapshot = await store.load();
+      expect(snapshot.revisions, hasLength(2));
+      expect(
+        await Future.wait(
+          snapshot.revisions.map(
+            (r) async => (await store.readRevision(r.id))!.source,
+          ),
+        ),
+        isNot(contains('Original A\n')),
+      );
+    },
+  );
+  for (final missing in [true, false]) {
+    test(
+      'index publication repairs ${missing ? 'missing' : 'corrupt'} tombstone journal',
+      () async {
+        await store.capture(journalRequest('Original A\n', 0), policy);
+        final journal = File(p.join(root.path, 'tombstones.json'));
+        if (missing) {
+          await journal.delete();
+        } else {
+          await journal.writeAsString('broken journal');
+        }
+        await store.capture(journalRequest('Changed A\n', 1), policy);
+        expect(jsonDecode(await journal.readAsString()), isEmpty);
+        expect((await store.load()).revisions, hasLength(2));
+      },
+    );
+  }
+  test(
+    'matching symlink journal is replaced without changing its target',
+    () async {
+      await store.capture(journalRequest('Original A\n', 0), policy);
+      final journal = File(p.join(root.path, 'tombstones.json'));
+      final target = File(p.join(root.path, 'unrelated-target.json'));
+      final contents = await journal.readAsString();
+      await target.writeAsString(contents);
+      await target.setLastModified(sentinelTime);
+      await journal.delete();
+      await Link(journal.path).create(target.path);
+      await store.capture(journalRequest('Changed A\n', 1), policy);
+      expect(
+        await FileSystemEntity.type(journal.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await target.readAsString(), contents);
+      expect(
+        (await target.lastModified()).millisecondsSinceEpoch,
+        sentinelTime.millisecondsSinceEpoch,
+      );
+      expect((await store.load()).revisions, hasLength(2));
+    },
   );
 
   for (final memory in [false, true]) {
@@ -262,12 +370,31 @@ void main() {
   test(
     'independent production writers preserve both identities and revisions',
     () async {
-      final first = await _HistoryProcess.start(root, 'write', 'first');
-      addTearDown(first.close);
-      final second = await _HistoryProcess.start(root, 'write', 'second');
-      addTearDown(second.close);
+      Future<_HistoryProcess> start(String owner) async {
+        final child = await _HistoryProcess.start(root, 'write', owner);
+        addTearDown(child.close);
+        return child;
+      }
+
+      final [first, second] = await Future.wait([
+        start('first'),
+        start('second'),
+      ]);
       await Future.wait([first.ready(), second.ready()]);
+      // Both independent OS processes execute the same prepared production
+      // fixture, without a Flutter tool/compiler or PID-file launcher layer.
+      // Reports are published on retirement, so inspect the recorded commands
+      // after the normal release below rather than treating dispatch as done.
       await Future.wait([first.release(), second.release()]);
+      final firstCommand =
+          (jsonDecode(await first.report.readAsString()) as Map)['command']
+              as List;
+      final secondCommand =
+          (jsonDecode(await second.report.readAsString()) as Map)['command']
+              as List;
+      expect(p.basename(firstCommand.first as String), 'flutter_tester');
+      expect(secondCommand, firstCommand);
+      expect(firstCommand.last, endsWith('/assets/kernel_blob.bin'));
       final snapshot = await store.load();
       expect(snapshot.documents, hasLength(2));
       expect(snapshot.documents.map((d) => d.id).toSet(), hasLength(2));
@@ -1037,6 +1164,65 @@ void main() {
   });
 
   test(
+    'retention publishes once and repair cannot resurrect evicted data',
+    () async {
+      final old = await store.capture(
+        request('expired', DateTime.utc(2020, 1, 1)),
+        policy,
+      );
+      final revision = File(
+        p.join(
+          root.path,
+          'revisions',
+          old.document.id,
+          '${old.revision!.id}.json',
+        ),
+      );
+      final bytes = await revision.readAsBytes();
+      final before = ids;
+      await store.prune(policy, DateTime.utc(2020, 2, 1));
+      // Only the tombstone and index staging identities are allocated: their
+      // publication precedes cleanup and needs no identical second transaction.
+      expect(ids - before, 2);
+      expect(await revision.exists(), isFalse);
+      expect(
+        jsonDecode(
+          await File(p.join(root.path, 'tombstones.json')).readAsString(),
+        ),
+        contains(old.revision!.id),
+      );
+      // Simulate interrupted cleanup followed by loss of the derived index.
+      await revision.parent.create(recursive: true);
+      await revision.writeAsBytes(bytes);
+      await File(p.join(root.path, 'index.json')).delete();
+      final repaired = await store.load();
+      expect(repaired.revisions, isEmpty);
+      expect(repaired.documents, isEmpty);
+    },
+  );
+
+  test(
+    'capture retention does not republish an unchanged retained index',
+    () async {
+      await store.capture(request('expired', DateTime.utc(2020, 1, 1)), policy);
+      final before = ids;
+      final current = await store.capture(
+        request('current', DateTime.utc(2020, 2, 1)),
+        policy,
+      );
+      // Revision identity/stage and changed index, then the retained journal
+      // and index. The initial capture reuses the unchanged tombstone journal.
+      expect(ids - before, 5);
+      final snapshot = await store.load();
+      expect(snapshot.revisions.map((r) => r.id), [current.revision!.id]);
+      expect(
+        (await store.readRevision(current.revision!.id))!.source,
+        'current',
+      );
+    },
+  );
+
+  test(
     'rename, directory move, delete, and per-document clearing retain lineage',
     () async {
       final result = await store.capture(
@@ -1538,6 +1724,71 @@ void main() {
     expect(windowsPolicy.excludes(r'c:\WORKSPACE\PRIVATE\secret.md'), isTrue);
     expect(windowsPolicy.excludes(r'C:\workspace\public\guide.md'), isFalse);
   });
+
+  test(
+    'history cleanup verifies retirement when release publication fails',
+    () async {
+      final child = await _HistoryProcess.start(root, 'hold', 'release-error');
+      addTearDown(child.close);
+      await child.ready();
+      // A stale PID file must grant no signal authority. The supervisor owns
+      // its actual child identity independently of fixture-provided files.
+      await File('${child.signal}.pid').writeAsString('$pid');
+      await Directory('${child.signal}.release').create();
+      await expectLater(
+        child.close(),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'original release failure',
+            contains('History fixture release failed'),
+          ),
+        ),
+      );
+      final observation = jsonDecode(await child.report.readAsString()) as Map;
+      expect(observation['cancelled'], isTrue);
+      expect(observation['ok'], isFalse);
+      expect(observation['unresolvedSurvivors'], isEmpty);
+      expect(observation['verificationIncomplete'], isEmpty);
+      expect(
+        (observation['observedIdentities'] as Map).keys,
+        isNot(contains('$pid')),
+      );
+      final next = await _HistoryProcess.start(
+        root,
+        'hold',
+        'after-release-error',
+      );
+      addTearDown(next.close);
+      await next.ready();
+      await next.release();
+    },
+  );
+
+  test(
+    'history process startup preserves the child failure before readiness',
+    () async {
+      final child = await _HistoryProcess.start(
+        root,
+        'fail-before-ready',
+        'failed',
+      );
+      addTearDown(child.close);
+      await expectLater(
+        child.ready(),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'child diagnostics',
+            allOf(
+              contains('exited 1 before readiness'),
+              contains('Controlled history process failure before readiness'),
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _LockSettingsStore implements LocalSettingsStore {
@@ -1548,17 +1799,47 @@ class _LockSettingsStore implements LocalSettingsStore {
 }
 
 class _HistoryProcess {
-  _HistoryProcess(this.process, this.signal, this.output);
+  _HistoryProcess(this.process, this.signal, this.report) {
+    output = Future.wait([
+      _collectOutput(process.stdout, _stdout),
+      _collectOutput(process.stderr, _stderr),
+    ]);
+    unawaited(process.exitCode.then((code) => _exitCode = code));
+  }
   final Process process;
   final String signal;
-  final Future<List<String>> output;
+  final File report;
+  static Directory? _runtimeDirectory;
+  static Future<void>? _preparation;
+  static late String _tester;
+  static late String _icu;
+  static String? _cleanupFailure;
+  late final Future<List<String>> output;
+  final _stdout = _HistoryProcessOutput();
+  final _stderr = _HistoryProcessOutput();
+  int? _exitCode;
   bool exited = false;
 
-  static Future<_HistoryProcess> start(
-    Directory root,
-    String mode,
-    String owner,
+  static Future<String> _collectOutput(
+    Stream<List<int>> stream,
+    _HistoryProcessOutput buffer,
   ) async {
+    await for (final chunk in stream.transform(utf8.decoder)) {
+      buffer.add(chunk);
+    }
+    return buffer.contents;
+  }
+
+  String get diagnostics =>
+      'launcher pid=${process.pid}, signal=$signal, exit=${_exitCode ?? 'pending'}'
+      '\nstdout:\n${_stdout.contents}\nstderr:\n${_stderr.contents}';
+
+  static Future<void> _prepare() async {
+    if (!Platform.isLinux) {
+      throw UnsupportedError(
+        'The owned History process fixture requires Linux',
+      );
+    }
     final config =
         jsonDecode(await File('.dart_tool/package_config.json').readAsString())
             as Map;
@@ -1570,25 +1851,84 @@ class _HistoryProcess {
       '.dart_tool/package_config.json',
     ).absolute.uri.resolve(flutter['rootUri'] as String).toFilePath();
     final sdk = p.dirname(p.dirname(p.normalize(packageRoot)));
-    final signal = p.join(root.path, 'process-$owner');
-    final process = await Process.start(
-      p.join(
-        sdk,
-        'bin',
-        'cache',
-        'dart-sdk',
-        'bin',
-        Platform.isWindows ? 'dart.exe' : 'dart',
+    final architecture = switch (Abi.current()) {
+      Abi.linuxX64 => 'x64',
+      Abi.linuxArm64 => 'arm64',
+      final abi => throw UnsupportedError(
+        'Unsupported History fixture ABI: $abi',
       ),
+    };
+    final engine = p.join(
+      sdk,
+      'bin/cache/artifacts/engine/linux-$architecture',
+    );
+    _tester = p.join(engine, 'flutter_tester');
+    _icu = p.join(engine, 'icudtl.dat');
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-history-runtime-',
+    );
+    _runtimeDirectory = directory;
+    // Use Flutter's public build command instead of depending on its private
+    // frontend-server flags and snapshot layout. Prepare once; child readiness
+    // still measures only the independent runtime's store/lock operations.
+    final command = [
+      p.join(sdk, 'bin/flutter'),
+      'build',
+      'bundle',
+      '--debug',
+      '--no-pub',
+      '--target-platform=linux-$architecture',
+      '--asset-dir',
+      p.join(directory.path, 'assets'),
+      '--depfile',
+      p.join(directory.path, 'bundle.d'),
+      '--target',
+      p.absolute('test/support/local_history_store_process.dart'),
+    ];
+    final compiler = await _launch(
+      command,
+      p.join(directory.path, 'compile'),
+      File(p.join(directory.path, 'compile.json')),
+    );
+    try {
+      await compiler._finish(const Duration(seconds: 60));
+    } finally {
+      await compiler.close();
+    }
+  }
+
+  static Future<void> disposeRuntime() async {
+    final directory = _runtimeDirectory;
+    if (directory != null && _cleanupFailure == null) {
+      await directory.delete(recursive: true);
+    }
+  }
+
+  static Future<_HistoryProcess> start(
+    Directory root,
+    String mode,
+    String owner,
+  ) async {
+    if (_cleanupFailure != null) {
+      throw StateError(
+        'Previous fixture cleanup is unresolved: $_cleanupFailure',
+      );
+    }
+    await (_preparation ??= _prepare());
+    final signal = p.join(root.path, 'process-$owner');
+    return _launch(
       [
-        p.join(sdk, 'bin', 'cache', 'flutter_tools.snapshot'),
-        'test',
-        '--no-pub',
-        '--concurrency=1',
-        '--reporter=expanded',
-        'test/support/local_history_store_process.dart',
+        _tester,
+        '--disable-vm-service',
+        '--enable-checked-mode',
+        '--verify-entry-points',
+        '--enable-software-rendering',
+        '--non-interactive',
+        '--icu-data-file-path=$_icu',
+        p.join(_runtimeDirectory!.path, 'assets/kernel_blob.bin'),
       ],
-      workingDirectory: Directory.current.path,
+      signal,
+      File('$signal.observation.json'),
       environment: {
         'BUSYMARK_HISTORY_PROCESS_ROOT': root.path,
         'BUSYMARK_HISTORY_PROCESS_SIGNAL': signal,
@@ -1596,18 +1936,41 @@ class _HistoryProcess {
         'BUSYMARK_HISTORY_PROCESS_OWNER': owner,
       },
     );
-    final output = Future.wait([
-      process.stdout.transform(utf8.decoder).join(),
-      process.stderr.transform(utf8.decoder).join(),
-    ]);
-    return _HistoryProcess(process, signal, output);
+  }
+
+  static Future<_HistoryProcess> _launch(
+    List<String> command,
+    String signal,
+    File report, {
+    Map<String, String> environment = const {},
+  }) async {
+    final process = await Process.start(
+      '/usr/bin/python3',
+      [
+        p.absolute('tools/run_owned_fixture.py'),
+        '--report',
+        report.path,
+        '--',
+        ...command,
+      ],
+      workingDirectory: Directory.current.path,
+      environment: environment,
+    );
+    return _HistoryProcess(process, signal, report);
   }
 
   Future<void> ready() async {
     final deadline = Stopwatch()..start();
     while (!await File('$signal.ready').exists()) {
+      if (_exitCode != null) {
+        await _observation();
+        await output.timeout(const Duration(seconds: 5));
+        throw StateError(
+          'History child exited $_exitCode before readiness.\n$diagnostics',
+        );
+      }
       if (deadline.elapsed > const Duration(seconds: 60)) {
-        throw TimeoutException('History child was not ready');
+        throw TimeoutException('History child was not ready.\n$diagnostics');
       }
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
@@ -1615,26 +1978,106 @@ class _HistoryProcess {
 
   Future<void> release() async {
     await File('$signal.release').writeAsString('release');
-    final code = await process.exitCode.timeout(const Duration(seconds: 30));
+    await _finish(const Duration(seconds: 30));
+  }
+
+  Future<Map<String, dynamic>> _observation() async {
+    try {
+      final result =
+          jsonDecode(await report.readAsString()) as Map<String, dynamic>;
+      if ((result['unresolvedSurvivors'] as List? ?? []).isNotEmpty ||
+          (result['verificationIncomplete'] as List? ?? []).isNotEmpty ||
+          (result['cleanupErrors'] as List? ?? []).isNotEmpty) {
+        _cleanupFailure = result.toString();
+        throw StateError('Incomplete fixture retirement: $result');
+      }
+      return result;
+    } on Object catch (error) {
+      _cleanupFailure ??= error.toString();
+      rethrow;
+    }
+  }
+
+  Future<void> _finish(Duration timeout) async {
+    final code = await process.exitCode.timeout(timeout);
+    final result = await _observation();
+    await output.timeout(const Duration(seconds: 5));
     exited = true;
-    expect(code, 0, reason: (await output).join('\n'));
+    if (code != 0 || result['ok'] != true) {
+      throw StateError('History fixture failed: $result\n$diagnostics');
+    }
   }
 
   Future<void> close() async {
-    if (exited) return;
-    await File('$signal.release').writeAsString('cleanup');
-    try {
-      await process.exitCode.timeout(const Duration(seconds: 10));
-    } on TimeoutException {
-      // Only this helper's recorded runtime and launcher are targets.
-      final pidFile = File('$signal.pid');
-      if (await pidFile.exists()) {
-        Process.killPid(int.parse(await pidFile.readAsString()));
-      }
-      process.kill();
-      await process.exitCode.timeout(const Duration(seconds: 5));
+    if (exited) {
+      await process.stdin.close();
+      return;
     }
-    await output;
-    exited = true;
+    Object? releaseError;
+    try {
+      await File('$signal.release').writeAsString('cleanup');
+    } on Object catch (error) {
+      releaseError = error;
+    }
+    try {
+      var needsRetirement = releaseError != null;
+      if (!needsRetirement) {
+        try {
+          await process.exitCode.timeout(const Duration(seconds: 10));
+        } on TimeoutException {
+          needsRetirement = true;
+        }
+      }
+      if (needsRetirement) {
+        // Only the dedicated supervisor can signal verified owned identities.
+        // EOF works even when publishing the normal release file failed.
+        await process.stdin.close();
+        await process.exitCode.timeout(const Duration(seconds: 5));
+      }
+      final result = await _observation();
+      await output.timeout(const Duration(seconds: 5));
+      exited = true;
+      if (releaseError != null) {
+        throw StateError(
+          'History fixture release failed: $releaseError; retirement: $result',
+        );
+      }
+      if (result['cleanupRequired'] == true || result['cancelled'] == true) {
+        throw StateError(
+          'History fixture required forced cleanup: $result\n$diagnostics',
+        );
+      }
+    } finally {
+      if (!exited) {
+        _cleanupFailure ??= 'Fixture retirement was not verified. $diagnostics';
+      }
+      await process.stdin.close();
+    }
   }
+}
+
+/// Retain the first error and recent progress without unbounded child output.
+class _HistoryProcessOutput {
+  static const _prefixLimit = 8 * 1024;
+  static const _tailLimit = 56 * 1024;
+  String _prefix = '';
+  String _tail = '';
+  bool _elided = false;
+
+  void add(String chunk) {
+    final remaining = _prefixLimit - _prefix.length;
+    if (remaining > 0) {
+      final count = chunk.length < remaining ? chunk.length : remaining;
+      _prefix += chunk.substring(0, count);
+      chunk = chunk.substring(count);
+    }
+    _tail += chunk;
+    if (_tail.length > _tailLimit) {
+      _tail = _tail.substring(_tail.length - _tailLimit);
+      _elided = true;
+    }
+  }
+
+  String get contents =>
+      '$_prefix${_elided ? '\n[output elided]\n' : ''}$_tail';
 }

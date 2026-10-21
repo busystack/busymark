@@ -2066,6 +2066,11 @@ class AppLocalizationsEt extends AppLocalizations {
   String get documentKindResourceFile => 'Ressursifail';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Hiljutisi üksusi ei saanud uuendada: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Avamine nurjus: $error';
   }

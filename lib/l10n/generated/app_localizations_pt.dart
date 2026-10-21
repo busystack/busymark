@@ -2082,6 +2082,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get documentKindResourceFile => 'Ficheiro de recursos';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Não foi possível atualizar os itens recentes: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Falha ao abrir: $error';
   }
@@ -7674,6 +7679,11 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get documentKindResourceFile => 'Arquivo de recursos';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Não foi possível atualizar os itens recentes: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {

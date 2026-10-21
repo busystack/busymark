@@ -2070,6 +2070,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get documentKindResourceFile => 'Resource file';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Could not update Recent items: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Open failed: $error';
   }

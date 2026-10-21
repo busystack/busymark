@@ -581,6 +581,41 @@ abstract class LocalSettingsStore {
   Future<void> save(Map<String, Object?> json);
 }
 
+/// One-use handoff of local preferences read before the first application frame.
+/// Bound to the store that acknowledged them; later controller initialization
+/// reads the store again instead of reusing a startup snapshot.
+class StartupAppSettings {
+  StartupAppSettings._(this._store, this._snapshot);
+
+  final LocalSettingsStore _store;
+  ({AppSettings settings, String? acknowledgedJson})? _snapshot;
+
+  static Future<StartupAppSettings> load(LocalSettingsStore store) async {
+    AppSettings settings;
+    String? acknowledgedJson;
+    try {
+      settings = AppSettings.fromJson(await store.load());
+      acknowledgedJson = _canonicalSettingsJson(settings.toJson());
+    } on Object {
+      // Match the controller's existing failed-load policy. Defaults are usable
+      // but are not an acknowledged disk snapshot for write reconciliation.
+      settings = AppSettings.defaults();
+    }
+    return StartupAppSettings._(store, (
+      settings: settings,
+      acknowledgedJson: acknowledgedJson,
+    ));
+  }
+
+  ({AppSettings settings, String? acknowledgedJson})? _take(
+    LocalSettingsStore store,
+  ) {
+    final snapshot = _snapshot;
+    _snapshot = null;
+    return identical(store, _store) ? snapshot : null;
+  }
+}
+
 class JsonFileLocalSettingsStore implements LocalSettingsStore {
   const JsonFileLocalSettingsStore({
     String? settingsFilePathOverride,
@@ -594,10 +629,26 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
   @override
   Future<Map<String, Object?>> load() async {
     final file = await _settingsFile();
-    if (!await file.exists()) {
-      return <String, Object?>{};
+    final type = await FileSystemEntity.type(file.path);
+    if (type != FileSystemEntityType.file &&
+        type != FileSystemEntityType.notFound) {
+      throw FileSystemException(
+        'Settings path is not a regular file',
+        file.path,
+      );
     }
-    final content = await file.readAsString();
+    // Other read failures must leave the controller's acknowledged snapshot
+    // unset. A notFound type can also mean that the path is inaccessible.
+    final String content;
+    try {
+      content = await file.readAsString();
+    } on FileSystemException catch (error) {
+      final code = error.osError?.errorCode;
+      if (code == 2 || Platform.isWindows && code == 3) {
+        return <String, Object?>{};
+      }
+      rethrow;
+    }
     if (content.trim().isEmpty) {
       return <String, Object?>{};
     }
@@ -648,6 +699,10 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
 }
 
 class AppSettingsController extends Notifier<AppSettings> {
+  AppSettingsController({StartupAppSettings? startupSettings})
+    : _startupSettings = startupSettings;
+
+  final StartupAppSettings? _startupSettings;
   bool Function()? processPendingProperties;
   Future<void> setElementPropertiesVisible(bool value) {
     if (!value && processPendingProperties?.call() == false) {
@@ -660,19 +715,39 @@ class AppSettingsController extends Notifier<AppSettings> {
       _mutate((s) => s.copyWith(elementPropertiesWidth: value.clamp(260, 600)));
   late LocalSettingsStore _store;
   Future<void>? _lastSave;
+  String? _persistedSettingsJson;
   final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
+  final _pendingInitialPersistence = <Completer<void>>[];
   var _loaded = false;
   late Future<void> _loadFuture;
 
   @override
   AppSettings build() {
     _store = ref.read(localSettingsStoreProvider);
+    final startup = _startupSettings?._take(_store);
+    if (startup != null) {
+      _loaded = true;
+      _persistedSettingsJson = startup.acknowledgedJson;
+      _loadFuture = Future<void>.value();
+      return startup.settings.copyWith(elementPropertiesVisible: false);
+    }
+    _loaded = false;
+    _persistedSettingsJson = null;
     _loadFuture = _load();
     unawaited(_loadFuture);
     return AppSettings.defaults();
   }
 
   Future<void> waitUntilLoaded() => _loadFuture;
+
+  Future<void> flushPersistence() async {
+    await waitUntilLoaded();
+    while (true) {
+      final pending = _lastSave;
+      await pending;
+      if (identical(pending, _lastSave)) return;
+    }
+  }
 
   /// Invoked after validation against the current in-memory assignments. All
   /// preferences still use the same ordered writer and settings file.
@@ -681,12 +756,30 @@ class AppSettingsController extends Notifier<AppSettings> {
     Map<String, BusyMarkKeyBinding?> overrides,
   ) {
     _trackShortcutSaves = true;
+    final snapshot = Map<String, BusyMarkKeyBinding?>.unmodifiable(overrides);
+    if (!_loaded) return _saveShortcutsAfterLoad(snapshot);
     return _save(
-      state.copyWith(shortcutOverrides: Map.unmodifiable(overrides)),
+      state.copyWith(shortcutOverrides: snapshot),
+      reusePersisted: true,
     );
   }
 
-  Future<bool> retryShortcutSave() => _save(state);
+  Future<bool> _saveShortcutsAfterLoad(
+    Map<String, BusyMarkKeyBinding?> overrides,
+  ) async {
+    await waitUntilLoaded();
+    if (!ref.mounted) return false;
+    return _save(
+      state.copyWith(shortcutOverrides: overrides),
+      reusePersisted: true,
+    );
+  }
+
+  Future<bool> retryShortcutSave() async {
+    await waitUntilLoaded();
+    if (!ref.mounted) return false;
+    return _save(state, reusePersisted: true);
+  }
 
   Future<void> setPdfExportOptions(PdfExportOptions options) {
     options.validateOrThrow();
@@ -752,6 +845,7 @@ class AppSettingsController extends Notifier<AppSettings> {
         documentViewMode: mode,
         previewVisible: mode != DocumentViewModePreference.source,
       ),
+      reusePersisted: true,
     );
   }
 
@@ -1036,7 +1130,7 @@ class AppSettingsController extends Notifier<AppSettings> {
           ? resource.path
           : settings.lastOpenedPath,
     );
-  });
+  }, propagateFailure: true);
 
   Future<void> clearRecentWorkspaces() =>
       _mutate((settings) => settings.copyWith(recentWorkspaces: []));
@@ -1128,10 +1222,18 @@ class AppSettingsController extends Notifier<AppSettings> {
     AppSettings loaded;
     try {
       loaded = AppSettings.fromJson(await _store.load());
+      _persistedSettingsJson = _canonicalSettingsJson(loaded.toJson());
     } on Object {
       loaded = AppSettings.defaults();
     }
-    if (!ref.mounted) return;
+    if (!ref.mounted) {
+      for (final completion in _pendingInitialPersistence) {
+        completion.completeError(StateError('Settings controller disposed'));
+      }
+      _pendingInitialPersistence.clear();
+      _pendingInitialMutations.clear();
+      return;
+    }
     // Visibility belongs to this run; retain the preferred inspector width.
     // Explicit requests made during hydration are applied below.
     loaded = loaded.copyWith(elementPropertiesVisible: false);
@@ -1140,42 +1242,87 @@ class AppSettingsController extends Notifier<AppSettings> {
       loaded = mutation(loaded);
     }
     _pendingInitialMutations.clear();
+    final completions = List<Completer<void>>.of(_pendingInitialPersistence);
+    _pendingInitialPersistence.clear();
     _loaded = true;
     state = loaded;
     if (hadPendingInitialMutations) {
-      await _save(loaded);
+      try {
+        // Initial actions share one publication, but opening callers retain
+        // its authoritative completion/error instead of a dispatch future.
+        await _save(loaded, propagateFailure: completions.isNotEmpty);
+        for (final completion in completions) {
+          completion.complete();
+        }
+      } on Object catch (error, stack) {
+        for (final completion in completions) {
+          completion.completeError(error, stack);
+        }
+      }
     }
   }
 
-  Future<void> _mutate(AppSettings Function(AppSettings) mutation) {
+  Future<void> _mutate(
+    AppSettings Function(AppSettings) mutation, {
+    bool propagateFailure = false,
+    bool reusePersisted = false,
+  }) {
     if (!_loaded) {
       _pendingInitialMutations.add(mutation);
       state = mutation(state);
+      if (propagateFailure) {
+        final completion = Completer<void>();
+        _pendingInitialPersistence.add(completion);
+        return completion.future;
+      }
       return Future<void>.value();
     }
-    return _save(mutation(state));
+    return _save(
+      mutation(state),
+      propagateFailure: propagateFailure,
+      reusePersisted: reusePersisted,
+    );
   }
 
-  Future<bool> _save(AppSettings next) async {
+  Future<bool> _save(
+    AppSettings next, {
+    bool propagateFailure = false,
+    bool reusePersisted = false,
+  }) async {
+    if (!ref.mounted) return false;
     state = next;
     final json = next.toJson();
+    final encoded = _canonicalSettingsJson(json);
     final previousSave = _lastSave;
+    Object? failure;
+    StackTrace? failureStack;
     final save = () async {
       await previousSave;
       try {
-        await _store.save(json);
+        // Compare the entire serialized snapshot only after preceding writes
+        // settle. Failed loads and writes never acknowledge unpersisted state.
+        if (!reusePersisted || encoded != _persistedSettingsJson) {
+          await _store.save(json);
+          _persistedSettingsJson = encoded;
+        }
         return true;
-      } on Object {
-        // Runtime preferences stay visible; keymap callers observe this outcome.
+      } on Object catch (error, stack) {
+        failure = error;
+        failureStack = stack;
         return false;
       }
     }();
-    _lastSave = save;
+    // The queue tail always settles successfully; each caller retains its own
+    // outcome/error without preventing the next admitted publication.
+    _lastSave = save.then<void>((_) {});
     final succeeded = await save;
     if (ref.mounted &&
         _trackShortcutSaves &&
         mapEquals(state.shortcutOverrides, next.shortcutOverrides)) {
       ref.read(shortcutPersistenceOutcomeProvider.notifier).complete(succeeded);
+    }
+    if (propagateFailure && failure != null) {
+      Error.throwWithStackTrace(failure!, failureStack!);
     }
     return succeeded;
   }
@@ -1326,4 +1473,18 @@ String? _normalizedStoredGitWorkspacePath(String? value) {
     return null;
   }
   return p.normalize(p.absolute(value));
+}
+
+// Map insertion order is not a preference change. Lists retain their order,
+// including the release target's qualified Recent resources.
+String _canonicalSettingsJson(Map<String, Object?> json) =>
+    jsonEncode(_canonicalSettingsValue(json));
+
+Object? _canonicalSettingsValue(Object? value) {
+  if (value is Map) {
+    final keys = value.keys.cast<String>().toList()..sort();
+    return {for (final key in keys) key: _canonicalSettingsValue(value[key])};
+  }
+  if (value is List) return value.map(_canonicalSettingsValue).toList();
+  return value;
 }

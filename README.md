@@ -58,6 +58,7 @@ sudo apt-get install -y \
   libwebkit2gtk-4.1-dev \
   ninja-build \
   pkg-config \
+  python3 \
   xz-utils
 ```
 
@@ -67,17 +68,16 @@ components.
 Prepare and run the application:
 
 ```bash
-flutter doctor
-flutter pub get
+flutter pub get --enforce-lockfile
 flutter run -d linux
 ```
 
-Pass a Markdown file or documentation directory after `--` to open it at
-startup:
+Pass a Markdown file or documentation directory as a Dart entrypoint argument
+to open it at startup:
 
 ```bash
-flutter run -d linux -- /absolute/path/to/document.md
-flutter run -d linux -- /absolute/path/to/documentation
+flutter run -d linux --dart-entrypoint-args=/absolute/path/to/document.md
+flutter run -d linux --dart-entrypoint-args=/absolute/path/to/documentation
 ```
 
 Build and run the standard checks with:
@@ -91,9 +91,16 @@ flutter test
 The build assembles BusyMark's runtime components. Packaged users do not need
 separate Typst, Java, Node.js, or Chromium installations.
 
+Linux development and packaging use the official Flutter SDK version pinned in
+`pubspec.yaml` (currently 3.47.5). No custom Flutter engine is built or selected.
+See [Linux development](docs/development/linux-engine.md) for build modes and
+[compiled application checks](docs/development/application-smoke-tests.md) for
+native and document regression commands. A successful widget suite or build
+does not establish native release acceptance.
+
 The CI workflow installs additional packages for headless X11/Wayland, browser,
 PDF, and sandbox verification. Those packages are not required for an ordinary
-local build; see [the Linux workflow](.github/workflows/flutter-linux.yml) when
+local build; see [native acceptance](.github/workflows/flutter-linux-native.yml) when
 reproducing release verification.
 
 ## Snap release and security builds
@@ -113,7 +120,7 @@ sha256sum ./busymark_*.snap
 
 Inspect and test the exact file emitted by the final `snapcraft` command. A
 failed build must not fall back to an older `.snap`. The `snap` job in
-[the Linux workflow](.github/workflows/flutter-linux.yml) follows this route,
+[native acceptance](.github/workflows/flutter-linux-native.yml) follows this route,
 installs that selected artifact, and runs the strict-confinement smoke checks.
 Build information embeds the original recipe for the workflow's identity check.
 
@@ -122,6 +129,8 @@ the Flutter payload in an installed Snap scaffold for quick development and
 may retain that scaffold's Ubuntu libraries and bundled tools. Even with
 `--no-install`, its output is not a dependency refresh and must not be used for
 a release, a security update, or validation of `stage-packages` changes.
+It selects Flutter from PATH; `BUSYMARK_FLUTTER_BIN` can select an executable
+by command name or path. The selected SDK must match the pinned version.
 
 ## Screenshots
 

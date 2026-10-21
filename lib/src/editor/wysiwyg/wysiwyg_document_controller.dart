@@ -60,6 +60,20 @@ BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
 
 enum BusyWysiwygReplacementScope { fieldContent, documentRange }
 
+class _BlockPosition {
+  const _BlockPosition(this.block, this.parent, this.rootIndex);
+  final BusyBlock block;
+  final _BlockPosition? parent;
+  final int rootIndex;
+}
+
+class _HeadingPosition {
+  const _HeadingPosition(this.block, this.parent, this.level);
+  final BusyBlock block;
+  final _HeadingPosition? parent;
+  final int level;
+}
+
 class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyMarkWysiwygDocumentController({
     required BusyDocument document,
@@ -72,6 +86,40 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyDocument _document;
   final BusyMarkMarkdownSerializer _serializer;
   int _generatedBlockIndex = 0;
+  BusyDocument? _indexedDocument;
+  final _positions = <String, _BlockPosition>{};
+  final _headingsByRoot = <_HeadingPosition?>[];
+
+  void _ensureBlockIndex() {
+    if (identical(_indexedDocument, _document)) return;
+    _positions.clear();
+    _headingsByRoot.clear();
+    void visit(BusyBlock block, _BlockPosition? parent, int rootIndex) {
+      final position = _BlockPosition(block, parent, rootIndex);
+      // Match the existing depth-first first-match behavior, including models
+      // with duplicate IDs. Parent links use positions, rather than ID lookups.
+      _positions.putIfAbsent(block.id, () => position);
+      for (final child in block.children) {
+        visit(child, position, rootIndex);
+      }
+    }
+
+    _HeadingPosition? heading;
+    final firstRootIndices = <String, int>{};
+    for (var i = 0; i < _document.blocks.length; i++) {
+      final block = _document.blocks[i];
+      if (block.kind == BusyBlockKind.heading) {
+        final level = int.tryParse(block.attributes['level'] ?? '') ?? 1;
+        while (heading != null && heading.level >= level) {
+          heading = heading.parent;
+        }
+        heading = _HeadingPosition(block, heading, level);
+      }
+      _headingsByRoot.add(heading);
+      visit(block, null, firstRootIndices.putIfAbsent(block.id, () => i));
+    }
+    _indexedDocument = _document;
+  }
 
   BusyDocument get document => _document;
 
@@ -215,6 +263,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   @override
   void notifyListeners() {
+    _indexedDocument = null;
     _document = _ensureEditableDocument(_document);
     super.notifyListeners();
   }
@@ -232,30 +281,27 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   List<BusyBlock> elementPath(String blockId) {
-    List<BusyBlock>? find(List<BusyBlock> blocks) {
-      for (final block in blocks) {
-        if (block.id == blockId) return [block];
-        final path = find(block.children);
-        if (path != null) return [block, ...path];
-      }
-      return null;
+    _ensureBlockIndex();
+    final position = _positions[blockId];
+    if (position == null) return [];
+    final reversed = <BusyBlock>[];
+    for (var current = position; ;) {
+      reversed.add(current.block);
+      final parent = current.parent;
+      if (parent == null) break;
+      current = parent;
     }
-
-    final path = find(_document.blocks) ?? [];
+    final path = reversed.reversed.toList();
     if (!_document.isXmlTopic && path.isNotEmpty) {
-      final rootIndex = _document.blocks.indexWhere(
-        (b) => b.id == path.first.id,
-      );
       final headings = <BusyBlock>[];
-      for (final candidate in _document.blocks.take(rootIndex + 1)) {
-        if (candidate.kind != BusyBlockKind.heading) continue;
-        final level = int.tryParse(candidate.attributes['level'] ?? '') ?? 1;
-        headings.removeWhere(
-          (h) => (int.tryParse(h.attributes['level'] ?? '') ?? 1) >= level,
-        );
-        if (candidate.id != blockId) headings.add(candidate);
+      for (
+        var heading = _headingsByRoot[position.rootIndex];
+        heading != null;
+        heading = heading.parent
+      ) {
+        if (heading.block.id != blockId) headings.add(heading.block);
       }
-      return [...headings, ...path];
+      return [...headings.reversed, ...path];
     }
     return path;
   }
@@ -2178,12 +2224,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   BusyBlock? blockById(String blockId) {
-    for (final block in _flatten(_document.blocks)) {
-      if (block.id == blockId) {
-        return block;
-      }
-    }
-    return null;
+    _ensureBlockIndex();
+    return _positions[blockId]?.block;
   }
 
   String admonitionTargetId(String blockId) {

@@ -2093,6 +2093,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get documentKindResourceFile => 'Ressourcendatei';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Zuletzt verwendete Elemente konnten nicht aktualisiert werden: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Öffnen fehlgeschlagen: $error';
   }

@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
@@ -25,6 +26,7 @@ class VisualizationCache {
 
   final LinkedHashMap<String, VisualizationRenderResult> _memory =
       LinkedHashMap();
+  Future<void> _trimTail = Future<void>.value();
 
   Future<VisualizationRenderResult?> get(String key) async {
     final memoryResult = _memory.remove(key);
@@ -80,7 +82,11 @@ class VisualizationCache {
         final temporary = File(
           '${file.path}.tmp-$pid-${DateTime.now().microsecondsSinceEpoch}',
         );
-        await temporary.writeAsBytes(bytes, flush: true);
+        // Derived images are disposable. Await the complete write and atomic
+        // rename, but avoid a durable flush that can hold rendering slots for
+        // seconds behind unrelated filesystem writes. Incomplete cache entries
+        // are rejected on read and recomputed.
+        await temporary.writeAsBytes(bytes);
         try {
           await temporary.rename(file.path);
         } on FileSystemException {
@@ -115,32 +121,25 @@ class VisualizationCache {
     }
   }
 
-  Future<void> _trimDiskBestEffort() async {
-    try {
-      final files = <({File file, FileStat stat})>[];
-      await for (final entity in diskRoot.list(followLinks: false)) {
-        if (entity is! File || p.extension(entity.path) != '.json') {
-          continue;
-        }
-        final stat = await entity.stat();
-        files.add((file: entity, stat: stat));
+  Future<void> _trimDiskBestEffort() {
+    final previous = _trimTail;
+    final root = diskRoot.absolute.path;
+    final entryLimit = maximumDiskEntries;
+    final byteLimit = maximumDiskBytes;
+
+    final trim = () async {
+      await previous;
+      try {
+        // One maintenance worker at a time. Callers still await trimming and
+        // occupy their bounded rendering slots; no background writes accrue.
+        // Avoid a main-isolate round trip for every cached file's metadata.
+        await _trimInWorker(root, entryLimit, byteLimit);
+      } on Object {
+        // Best-effort LRU maintenance only. Keep the queue usable after failure.
       }
-      files.sort(
-        (left, right) => left.stat.modified.compareTo(right.stat.modified),
-      );
-      var bytes = files.fold<int>(0, (sum, entry) => sum + entry.stat.size);
-      var count = files.length;
-      for (final entry in files) {
-        if (count <= maximumDiskEntries && bytes <= maximumDiskBytes) {
-          break;
-        }
-        await entry.file.delete();
-        count--;
-        bytes -= entry.stat.size;
-      }
-    } on Object {
-      // Best-effort LRU maintenance only.
-    }
+    }();
+    _trimTail = trim;
+    return trim;
   }
 
   static Directory _defaultDiskRoot(Map<String, String>? environment) {
@@ -153,6 +152,33 @@ class VisualizationCache {
             '.cache',
           );
     return Directory(p.join(base, 'busymark', 'visualizations', 'v1'));
+  }
+}
+
+// This closure's scope contains only explicit primitive inputs, rather than a
+// cache, rendered images, queued Futures or other main-isolate state.
+Future<void> _trimInWorker(String root, int maximumEntries, int maximumBytes) =>
+    Isolate.run(
+      () => _trimDirectory(root, maximumEntries, maximumBytes),
+      debugName: 'Visualization cache maintenance',
+    );
+
+void _trimDirectory(String root, int maximumEntries, int maximumBytes) {
+  final files = <({File file, FileStat stat})>[];
+  for (final entity in Directory(root).listSync(followLinks: false)) {
+    if (entity is! File || p.extension(entity.path) != '.json') continue;
+    files.add((file: entity, stat: entity.statSync()));
+  }
+  files.sort(
+    (left, right) => left.stat.modified.compareTo(right.stat.modified),
+  );
+  var bytes = files.fold<int>(0, (sum, entry) => sum + entry.stat.size);
+  var count = files.length;
+  for (final entry in files) {
+    if (count <= maximumEntries && bytes <= maximumBytes) break;
+    entry.file.deleteSync();
+    count--;
+    bytes -= entry.stat.size;
   }
 }
 

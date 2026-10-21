@@ -2000,6 +2000,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get documentKindResourceFile => 'リソースファイル';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return '最近使った項目を更新できませんでした: $error。';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return '開くことができませんでした：$error';
   }

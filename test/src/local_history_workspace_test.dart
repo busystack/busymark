@@ -2453,6 +2453,15 @@ void main() {
       await _waitFor(
         () => timers.any((timer) => timer.isActive),
         operation: 'Save As checkpoint timer',
+        diagnostics: () {
+          final state = harness.container.read(localHistoryControllerProvider);
+          final buffer = harness.state.activeBuffer!;
+          return 'active=${buffer.filePath}, dirty=${buffer.isDirty}, '
+              'pending=${history.pendingSnapshotForBuffer(buffer.id)?.text}, '
+              'timer states=${timers.map((timer) => timer.isActive).toList()}, '
+              'warning=${state.warning?.detail}, '
+              'revisions=${state.snapshot.revisions.map((revision) => '${revision.historicalPath}:${revision.reason.name}').toList()}';
+        },
       );
       for (final timer in List<_FakeTimer>.of(timers)) {
         timer.fire();
@@ -2514,6 +2523,11 @@ void main() {
               reopened.state.activeBuffer!.id,
             ) !=
             null,
+        operation: 'Reopened A history binding',
+        diagnostics: () =>
+            'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
+            'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
+            'reopened History store',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2526,6 +2540,11 @@ void main() {
               reopened.state.activeBuffer!.id,
             ) !=
             null,
+        operation: 'Reopened B history binding',
+        diagnostics: () =>
+            'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
+            'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
+            'reopened History store',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2606,6 +2625,19 @@ void main() {
         final settings = harness.container.read(
           appSettingsControllerProvider.notifier,
         );
+        String diagnostics() {
+          final state = harness.container.read(localHistoryControllerProvider);
+          final buffer = harness.state.activeBuffer!;
+          return 'active=${buffer.filePath}, dirty=${buffer.isDirty}, '
+              'text=${buffer.text}, '
+              'pending=${history.pendingSnapshotForBuffer(buffer.id)?.text}, '
+              'document=${history.documentIdForBuffer(buffer.id)}, '
+              'recording=${history.policy.recordingEnabled}, '
+              'timers=${timers.map((timer) => timer.isActive).toList()}, '
+              'warning=${state.warning?.detail}, '
+              'History store';
+        }
+
         await harness.controller.createMarkdownFile();
         final bufferId = harness.state.activeBuffer!.id;
 
@@ -2641,6 +2673,8 @@ void main() {
           () =>
               history.pendingSnapshotForBuffer(bufferId)?.text ==
               'Pending at first save\n',
+          operation: 'Pre-promotion edit checkpoint admission',
+          diagnostics: diagnostics,
         );
         store.blockNextUntitledCheckpoint = true;
         final destination = p.join(root.path, 'Guide.md');
@@ -2711,13 +2745,19 @@ void main() {
         harness.controller.updateActiveText(
           'Named checkpoint after cancellation\n',
         );
-        await _waitFor(() => timers.any((timer) => timer.isActive));
+        await _waitFor(
+          () => timers.any((timer) => timer.isActive),
+          operation: 'Post-cancellation named checkpoint timer',
+          diagnostics: diagnostics,
+        );
         final namedTimer = timers.singleWhere((timer) => timer.isActive);
         expect(namedTimer.duration, const Duration(seconds: 60));
         now = now.add(namedTimer.duration);
         namedTimer.fire();
         await _waitFor(
           () => history.pendingSnapshotForBuffer(bufferId) == null,
+          operation: 'Post-cancellation named checkpoint completion',
+          diagnostics: diagnostics,
         );
         final captured = await diskStore.load();
         final document = captured.documents.single;
@@ -6223,9 +6263,13 @@ Future<void> _waitFor(
   String Function()? diagnostics,
 }) async {
   final deadline = DateTime.now().add(timeout);
+
   while (!condition()) {
     if (DateTime.now().isAfter(deadline)) {
-      fail('$operation did not complete. ${diagnostics?.call() ?? ''}');
+      fail(
+        '$operation did not complete. deadline exceeded. '
+        '${diagnostics?.call() ?? ''}',
+      );
     }
     await Future<void>.delayed(const Duration(milliseconds: 10));
   }

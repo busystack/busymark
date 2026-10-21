@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../core/linux_private_permissions.dart';
+
 import 'document_buffer.dart';
 import 'session_persistence.dart';
 import 'text_format_metadata.dart';
@@ -538,6 +540,7 @@ class JsonDocumentRecoveryStore implements DocumentRecoveryStore {
 
   Future<T> _serialized<T>(Future<T> Function() operation) {
     final completer = Completer<T>();
+
     _queue = _queue.then((_) async {
       try {
         completer.complete(await operation());
@@ -577,10 +580,19 @@ int? _linuxProcessStartIdentity(int processId) {
 
 Future<T> _withRecoveryLock<T>(File recovery, Future<T> Function() body) async {
   await recovery.parent.create(recursive: true);
-  final lock = await File('${recovery.path}.lock').open(mode: FileMode.append);
+  final lockFile = File('${recovery.path}.lock');
+  final lock = await lockFile.open(mode: FileMode.append);
   final deadline = DateTime.now().add(const Duration(seconds: 30));
   var acquired = false;
   try {
+    // Protect a newly created lock before releasing its first handle. Otherwise
+    // an owner-read-stripping creation mask prevents subsequent checkpoints.
+    if (Platform.isLinux) {
+      await LinuxPrivatePermissions.instance.restrict(
+        lockFile.path,
+        directory: false,
+      );
+    }
     while (!acquired) {
       try {
         await lock.lock(FileLock.exclusive);
@@ -593,6 +605,7 @@ Future<T> _withRecoveryLock<T>(File recovery, Future<T> Function() body) async {
             ? code == 33
             : false;
         if (!contention || !DateTime.now().isBefore(deadline)) rethrow;
+
         await Future<void>.delayed(const Duration(milliseconds: 25));
       }
     }

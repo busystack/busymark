@@ -2066,6 +2066,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get documentKindResourceFile => 'Kaynak dosyası';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Son öğeler güncellenemedi: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Açma başarısız oldu: $error';
   }

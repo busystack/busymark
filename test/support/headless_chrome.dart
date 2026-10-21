@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 /// Optional browser integration, using the installed browser's DevTools API.
 final String? headlessChromePath = [
   Platform.environment['BUSYMARK_CHROME_PATH'],
@@ -10,67 +12,209 @@ final String? headlessChromePath = [
   '/usr/bin/chromium-browser',
 ].whereType<String>().where((path) => File(path).existsSync()).firstOrNull;
 
-Future<Object?> evaluateInChrome(String htmlPath, String expression) =>
-    HttpOverrides.runWithHttpOverrides(
-      () => _evaluateInChrome(htmlPath, expression),
-      _BrowserHttpOverrides(),
-    );
+Future<Object?> evaluateInChrome(
+  String htmlPath,
+  String expression, {
+  String? browserExecutable,
+}) => HttpOverrides.runWithHttpOverrides(
+  () => _evaluateInChrome(
+    htmlPath,
+    expression,
+    browserExecutable ?? headlessChromePath!,
+  ),
+  _BrowserHttpOverrides(),
+);
 
 class _BrowserHttpOverrides extends HttpOverrides {}
 
-Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
-  final profile = await Directory.systemTemp.createTemp('html-csp-browser-');
-  Process? browser;
-  Uri? browserEndpoint;
-  final documentUri = Uri.file(htmlPath);
-  try {
-    final endpoint = Completer<Uri>();
-    browser = await Process.start(headlessChromePath!, [
-      '--headless=new',
-      '--no-first-run',
-      '--disable-background-networking',
-      '--disable-component-update',
-      '--remote-debugging-port=0',
-      '--user-data-dir=${profile.path}',
-      '--proxy-server=http://127.0.0.1:9',
-      '--proxy-bypass-list=127.0.0.1;localhost',
-      documentUri.toString(),
-    ]);
-    unawaited(browser.stdout.drain<void>());
-    browser.stderr
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((line) {
+/// Keep the existing startup deadline, but report early browser exits and the
+/// bounded stderr tail instead of waiting for an endpoint that cannot arrive.
+/// This is functional-test diagnostics, not a performance measurement.
+Future<Uri> browserDevToolsEndpoint(
+  Stream<List<int>> stderr,
+  Future<int> exitCode, {
+  Duration timeout = const Duration(seconds: 15),
+}) {
+  final endpoint = Completer<Uri>();
+  final diagnostics = <String>[];
+  final elapsed = Stopwatch()..start();
+  String detail(String message) =>
+      '$message after ${elapsed.elapsedMilliseconds} ms. '
+      'Browser stderr (last 20 lines, 512 characters each):\n'
+      '${diagnostics.join('\n')}';
+  stderr
+      .transform(utf8.decoder)
+      .transform(const LineSplitter())
+      .listen(
+        (line) {
+          diagnostics.add(line.length > 512 ? line.substring(0, 512) : line);
+          if (diagnostics.length > 20) diagnostics.removeAt(0);
           const prefix = 'DevTools listening on ';
           if (line.startsWith(prefix) && !endpoint.isCompleted) {
-            endpoint.complete(Uri.parse(line.substring(prefix.length)));
+            final uri = Uri.tryParse(line.substring(prefix.length));
+            if (uri != null && uri.scheme == 'ws' && uri.hasPort) {
+              endpoint.complete(uri);
+            }
           }
-        });
-    final uri = await endpoint.future.timeout(const Duration(seconds: 15));
+        },
+        onError: (Object error, StackTrace stack) {
+          if (!endpoint.isCompleted) {
+            endpoint.completeError(
+              StateError(
+                detail('Cannot read Chromium startup diagnostics: $error'),
+              ),
+              stack,
+            );
+          }
+        },
+      );
+  unawaited(
+    exitCode.then<void>(
+      (code) {
+        if (!endpoint.isCompleted) {
+          endpoint.completeError(
+            StateError(
+              detail('Chromium exited $code before its DevTools endpoint'),
+            ),
+          );
+        }
+      },
+      onError: (Object error, StackTrace stack) {
+        if (!endpoint.isCompleted) endpoint.completeError(error, stack);
+      },
+    ),
+  );
+  return endpoint.future.timeout(
+    timeout,
+    onTimeout: () => throw TimeoutException(
+      detail('Chromium DevTools startup did not complete'),
+      timeout,
+    ),
+  );
+}
+
+/// Flutter's widget runner exports a synthetic Fontconfig file pointing at
+/// SDK test fonts with only /var/cache/fontconfig as a cache. A separate real
+/// browser must use its normal font configuration and isolated XDG cache.
+/// Preserve an explicitly supplied ordinary Fontconfig configuration.
+Map<String, String> chromeProcessEnvironment(Map<String, String> parent) {
+  final environment = Map<String, String>.of(parent);
+  final config = environment['FONTCONFIG_FILE'];
+  if (config != null &&
+      p.basename(config) == 'fonts.conf' &&
+      p.basename(p.dirname(config)).startsWith('flutter_test_fonts.')) {
+    environment.remove('FONTCONFIG_FILE');
+  }
+  return environment;
+}
+
+Future<Object?> _evaluateInChrome(
+  String htmlPath,
+  String expression,
+  String browserExecutable,
+) async {
+  final directory = await Directory.systemTemp.createTemp('html-csp-browser-');
+  final profile = Directory(p.join(directory.path, 'profile'));
+  final report = File(p.join(directory.path, 'processes.json'));
+  Process? browser;
+  Future<void>? output;
+  Uri? browserEndpoint;
+  Object? failure;
+  var retired = false;
+  final documentUri = Uri.file(htmlPath);
+  try {
+    // Chromium's launcher can exit before profile-writing descendants. Reuse
+    // the Linux fixture supervisor so deletion follows verified retirement.
+    browser = await Process.start(
+      '/usr/bin/python3',
+      [
+        p.absolute('tools/run_owned_fixture.py'),
+        '--report',
+        report.path,
+        '--',
+        browserExecutable,
+        '--headless=new',
+        '--no-first-run',
+        '--disable-background-networking',
+        '--disable-component-update',
+        '--remote-debugging-port=0',
+        '--user-data-dir=${profile.path}',
+        '--proxy-server=http://127.0.0.1:9',
+        '--proxy-bypass-list=127.0.0.1;localhost',
+        documentUri.toString(),
+      ],
+      environment: chromeProcessEnvironment(Platform.environment),
+      includeParentEnvironment: false,
+    );
+    output = browser.stdout.drain<void>();
+    final uri = await browserDevToolsEndpoint(
+      browser.stderr,
+      browser.exitCode.then((code) async {
+        final observation = jsonDecode(await report.readAsString()) as Map;
+        return observation['exitCode'] as int? ?? code;
+      }),
+    );
     browserEndpoint = uri;
     return await evaluateDevToolsDocument(
       browserEndpoint: uri,
       documentUri: documentUri,
       expression: expression,
     );
+  } on Object catch (error) {
+    failure = error;
+    rethrow;
   } finally {
-    if (browser != null) {
-      if (browserEndpoint != null) {
-        final control = await WebSocket.connect(browserEndpoint.toString());
-        control.add(jsonEncode({'id': 2, 'method': 'Browser.close'}));
-        await control.drain<void>().timeout(const Duration(seconds: 5));
+    try {
+      if (browser != null) {
+        Object? closeFailure;
+        try {
+          if (browserEndpoint != null) {
+            final control = await WebSocket.connect(
+              browserEndpoint.toString(),
+            ).timeout(const Duration(seconds: 5));
+            control.add(jsonEncode({'id': 2, 'method': 'Browser.close'}));
+            await control.drain<void>().timeout(const Duration(seconds: 5));
+          } else {
+            await browser.stdin.close();
+          }
+          await browser.exitCode.timeout(const Duration(seconds: 5));
+        } on Object catch (error) {
+          closeFailure = error;
+          // EOF asks the supervisor to retire only verified owned processes.
+          await browser.stdin.close();
+          await browser.exitCode.timeout(const Duration(seconds: 5));
+        }
+        final observation = jsonDecode(await report.readAsString()) as Map;
+        retired =
+            ['unresolvedSurvivors', 'verificationIncomplete'].every(
+              (key) =>
+                  observation[key] is List &&
+                  (observation[key] as List).isEmpty,
+            ) &&
+            (observation['cleanupErrors'] == null ||
+                (observation['cleanupErrors'] is List &&
+                    (observation['cleanupErrors'] as List).isEmpty));
+        await output!.timeout(const Duration(seconds: 5));
+        if (!retired ||
+            closeFailure != null ||
+            (failure == null &&
+                (observation['ok'] != true || await browser.exitCode != 0))) {
+          throw StateError(
+            'Chromium retirement failed: $closeFailure; $observation',
+          );
+        }
       } else {
-        browser.kill();
+        retired = true;
       }
-      await browser.exitCode.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          browser!.kill(ProcessSignal.sigkill);
-          return browser.exitCode;
-        },
-      );
+    } on Object catch (error) {
+      if (failure != null) {
+        throw StateError('$failure\nChromium cleanup: $error');
+      }
+      rethrow;
+    } finally {
+      await browser?.stdin.close();
+      if (retired) await directory.delete(recursive: true);
     }
-    await profile.delete(recursive: true);
   }
 }
 
@@ -174,7 +318,8 @@ Future<Object?> evaluateDevToolsDocument({
         final remaining = readinessTimeout - readyClock.elapsed;
         if (remaining <= Duration.zero) {
           throw StateError(
-            'Chromium DevTools response timed out for $documentUri '
+            'Chromium did not finish loading $documentUri: '
+            'DevTools response timed out '
             '(request $id); last page state: $lastPageState',
           );
         }
@@ -183,7 +328,8 @@ Future<Object?> evaluateDevToolsDocument({
           hasMessage = await messages.moveNext().timeout(remaining);
         } on TimeoutException {
           throw StateError(
-            'Chromium DevTools response timed out for $documentUri '
+            'Chromium did not finish loading $documentUri: '
+            'DevTools response timed out '
             '(request $id); last page state: $lastPageState',
           );
         }

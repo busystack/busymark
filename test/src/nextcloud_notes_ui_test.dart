@@ -31,6 +31,7 @@ import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -53,6 +54,15 @@ void main() {
   late NotesRepository repository;
   const accountId = '123e4567-e89b-42d3-a456-426614174000';
   setUp(() async {
+    // Recovery dialogs also use Yaru's window state stream. Give every widget
+    // test its own native boundary rather than inheriting a prior test's mock.
+    for (final channelName in ['yaru_window', 'yaru_window/events']) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            MethodChannel(channelName),
+            (call) async => call.method == 'state' ? <String, Object?>{} : null,
+          );
+    }
     root = await Directory.systemTemp.createTemp('notes-ui-test-');
     final store = await NotesStore.open(
       path: p.join(root.path, 'notes.sqlite3'),
@@ -300,6 +310,10 @@ void main() {
   tearDown(() async {
     await repository.dispose();
     await root.delete(recursive: true);
+    for (final channelName in ['yaru_window', 'yaru_window/events']) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(MethodChannel(channelName), null);
+    }
   });
 
   Future<void> pump(WidgetTester tester) async {
@@ -349,6 +363,7 @@ void main() {
   Future<ProviderContainer> pumpWelcome(
     WidgetTester tester, {
     NextcloudConnectionController? connection,
+    LocalSettingsStore? settings,
   }) async {
     tester.view.physicalSize = const Size(1100, 1000);
     tester.view.devicePixelRatio = 1;
@@ -361,7 +376,9 @@ void main() {
         nextcloudNotesRepositoryProvider.overrideWith(
           (ref) async => repository,
         ),
-        localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+        localSettingsStoreProvider.overrideWithValue(
+          settings ?? _TabSettings(),
+        ),
         linuxAccentPlatformProvider.overrideWithValue(false),
         localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
         documentSessionStoreProvider.overrideWithValue(
@@ -381,6 +398,89 @@ void main() {
     );
     await settleStorage(tester);
     return container;
+  }
+
+  for (final failSave in [false, true]) {
+    testWidgets(
+      'qualified Recent reopening keeps account identity when save fails=$failSave',
+      (tester) async {
+        const otherAccount = '923e4567-e89b-42d3-a456-426614174000';
+        const localId = '223e4567-e89b-42d3-a456-426614174000';
+        await tester.runAsync(
+          () => repository.upsertAccount(
+            NextcloudAccount(
+              id: otherAccount,
+              server: Uri.parse('https://other.example/'),
+              loginName: 'other',
+              appVersion: '6.1.0',
+            ),
+          ),
+        );
+        final settings = _RecentReopenSettings(
+          failSave: failSave,
+          value: AppSettings.defaults()
+              .copyWith(
+                autoSave: false,
+                reopenPreviousWorkspaceOnStartup: false,
+                recentWorkspaces: [
+                  RecentResource(
+                    path: '',
+                    kind: 'nextcloudNote',
+                    document: true,
+                    accountId: otherAccount,
+                    localId: localId,
+                    title: 'Wrong account row',
+                    lastOpenedAt: DateTime.utc(2026, 10, 21),
+                  ),
+                  RecentResource(
+                    path: '',
+                    kind: 'nextcloudNote',
+                    document: true,
+                    accountId: accountId,
+                    accountLabel: 'Original account',
+                    localId: localId,
+                    title: 'Qualified reopen row',
+                    lastOpenedAt: DateTime.utc(2026, 10, 20),
+                  ),
+                ],
+              )
+              .toJson(),
+        );
+        final container = await pumpWelcome(tester, settings: settings);
+        await tester.tap(find.text('Wrong account row'));
+        await settleStorage(tester);
+        expect(container.read(workspaceControllerProvider).workspace, isNull);
+        await tester.tap(find.text('Qualified reopen row'));
+        await settleStorage(tester);
+        final state = container.read(workspaceControllerProvider);
+        expect(state.workspace!.nextcloudAccountId, accountId);
+        expect(state.activeBuffer!.remoteNote!.accountId, accountId);
+        expect(state.activeBuffer!.remoteNote!.localId, localId);
+        expect(state.activeText, 'private search text');
+        expect(
+          container
+              .read(appRouterProvider)
+              .routeInformationProvider
+              .value
+              .uri
+              .path,
+          '/workspace',
+        );
+        expect(state.message?.code, isNot(WorkspaceMessageCode.openFailed));
+        if (failSave) {
+          expect(
+            state.message?.code,
+            WorkspaceMessageCode.recentWorkspaceUpdateFailed,
+          );
+        }
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .flushPersistence();
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+      },
+    );
   }
 
   testWidgets(
@@ -1907,5 +2007,18 @@ class _NotesSearchHarness extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+class _RecentReopenSettings implements LocalSettingsStore {
+  _RecentReopenSettings({required this.failSave, required this.value});
+  final bool failSave;
+  Map<String, Object?> value;
+  @override
+  Future<Map<String, Object?>> load() async => value;
+  @override
+  Future<void> save(Map<String, Object?> next) async {
+    if (failSave) throw StateError('injected Recent persistence failure');
+    value = next;
   }
 }

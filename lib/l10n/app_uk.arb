@@ -1694,6 +1694,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Не вдалося оновити нещодавні елементи: {error}.",
   "workspaceErrorOpenFailed": "Не вдалося відкрити: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

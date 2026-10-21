@@ -359,7 +359,11 @@ void main() {
   testWidgets('Files editor stages new content, cancels and persists on OK', (
     tester,
   ) async {
-    await show(tester, const WritersideTemplatesEditor(createNew: true));
+    await show(
+      tester,
+      const WritersideTemplatesEditor(createNew: true),
+      ready: find.byKey(const ValueKey('template-editor-source')),
+    );
     await tester.enterText(
       editableUnderKey('template-editor-name'),
       'My template',
@@ -402,7 +406,11 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    await show(tester, const WritersideTemplatesEditor(createNew: true));
+    await show(
+      tester,
+      const WritersideTemplatesEditor(createNew: true),
+      ready: find.byKey(const ValueKey('template-editor-source')),
+    );
 
     final source = find.byKey(const ValueKey('template-editor-source'));
     final surface = find.byKey(

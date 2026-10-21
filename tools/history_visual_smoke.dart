@@ -825,131 +825,109 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
     LocalHistoryController localHistory,
     String deletePath,
   ) async {
-    final trace = Platform.environment['BUSYMARK_HISTORY_TRACE'] == '1'
-        ? ref.listenManual(localHistoryControllerProvider, (before, after) {
-            stdout.writeln(
-              'History inspection: document=${after.selectedDocumentId} '
-              'revision=${after.selectedRevisionId} loaded=${after.selectedRevision != null} '
-              'retained=${after.inspectingRetainedDocument} loading=${after.loading} '
-              'warning=${after.warning?.kind}',
-            );
-            if (before?.selectedRevisionId != null &&
-                after.selectedRevisionId == null) {
-              stdout.writeln(StackTrace.current);
-            }
-          })
-        : null;
-    try {
-      for (final view in [
-        (
-          BusyMarkCommandIds.viewEditor,
-          'Editor',
-          DocumentViewModePreference.editor,
+    for (final view in [
+      (
+        BusyMarkCommandIds.viewEditor,
+        'Editor',
+        DocumentViewModePreference.editor,
+      ),
+      (
+        BusyMarkCommandIds.viewReading,
+        'Reading',
+        DocumentViewModePreference.preview,
+      ),
+    ]) {
+      _check(
+        await ref.read(busyMarkCommandRegistryProvider).execute(view.$1),
+        '${view.$2} view for missing-document recovery',
+      );
+      _check(
+        await workspace.openActiveFile(deletePath),
+        '${view.$2} recovery file open',
+      );
+      _check(
+        ref.read(workspaceControllerProvider).activeBuffer?.editorState.mode ==
+            view.$3,
+        '${view.$2} recovery view is active',
+      );
+      _check(
+        await workspace.deleteWorkspaceEntity(deletePath),
+        '${view.$2} document delete',
+      );
+      await _waitForEditorSourceToSettle();
+      ref.read(localHistoryOpenRequestProvider.notifier).request();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final deletedDocument = ref
+          .read(localHistoryControllerProvider)
+          .snapshot
+          .documents
+          .firstWhere(
+            (document) =>
+                document.deleted &&
+                document.historicalPaths.any(
+                  (path) => p.equals(path, deletePath),
+                ),
+          );
+      localHistory.inspectRetainedDocument(deletedDocument.id);
+      final revisionSummary = ref
+          .read(localHistoryControllerProvider)
+          .selectedRevisions
+          .first;
+      await localHistory.selectRevision(revisionSummary.id);
+      await _waitFor(
+        () =>
+            ref.read(localHistoryControllerProvider).selectedDocumentId ==
+                deletedDocument.id &&
+            ref
+                    .read(localHistoryControllerProvider)
+                    .selectedRevision
+                    ?.summary
+                    .id ==
+                revisionSummary.id,
+        'exact deleted document revision selected for inspection',
+      );
+      await _capture(
+        '${widget.mode}-${view.$2}-deleted-comparison-1920x1080.png',
+      );
+      final revision = ref
+          .read(localHistoryControllerProvider)
+          .selectedRevision!;
+      _check(
+        await workspace.restoreMissingLocalHistoryRevision(
+          document: deletedDocument,
+          revision: revision,
+          destinationPath: deletePath,
+          overwriteExisting: false,
         ),
-        (
-          BusyMarkCommandIds.viewReading,
-          'Reading',
-          DocumentViewModePreference.preview,
-        ),
-      ]) {
-        _check(
-          await ref.read(busyMarkCommandRegistryProvider).execute(view.$1),
-          '${view.$2} view for missing-document recovery',
-        );
-        _check(
-          await workspace.openActiveFile(deletePath),
-          '${view.$2} recovery file open',
-        );
-        _check(
-          ref
-                  .read(workspaceControllerProvider)
-                  .activeBuffer
-                  ?.editorState
-                  .mode ==
-              view.$3,
-          '${view.$2} recovery view is active',
-        );
-        _check(
-          await workspace.deleteWorkspaceEntity(deletePath),
-          '${view.$2} document delete',
-        );
-        await _waitForEditorSourceToSettle();
-        ref.read(localHistoryOpenRequestProvider.notifier).request();
-        await Future<void>.delayed(const Duration(milliseconds: 300));
-        final deletedDocument = ref
-            .read(localHistoryControllerProvider)
-            .snapshot
-            .documents
-            .firstWhere(
-              (document) =>
-                  document.deleted &&
-                  document.historicalPaths.any(
-                    (path) => p.equals(path, deletePath),
-                  ),
-            );
-        localHistory.inspectRetainedDocument(deletedDocument.id);
-        final revisionSummary = ref
-            .read(localHistoryControllerProvider)
-            .selectedRevisions
-            .first;
-        await localHistory.selectRevision(revisionSummary.id);
-        await _waitFor(
-          () =>
-              ref.read(localHistoryControllerProvider).selectedDocumentId ==
-                  deletedDocument.id &&
-              ref
-                      .read(localHistoryControllerProvider)
-                      .selectedRevision
-                      ?.summary
-                      .id ==
-                  revisionSummary.id,
-          'exact deleted document revision selected for inspection',
-        );
-        await _capture(
-          '${widget.mode}-${view.$2}-deleted-comparison-1920x1080.png',
-        );
-        final revision = ref
-            .read(localHistoryControllerProvider)
-            .selectedRevision!;
-        _check(
-          await workspace.restoreMissingLocalHistoryRevision(
-            document: deletedDocument,
-            revision: revision,
-            destinationPath: deletePath,
-            overwriteExisting: false,
-          ),
-          '${view.$2} deleted document recovery',
-        );
-        _check(
-          ref.read(workspaceControllerProvider).activeText == revision.source,
-          '${view.$2} recovered exact revision contents',
-        );
-        await _capture(
-          '${widget.mode}-${view.$2}-deleted-recovered-1920x1080.png',
-        );
-        _check(workspace.undoActiveBuffer(), '${view.$2} recovery Undo');
-        final destinationSource = decodeUtf8Document(
-          revision.format.encode(''),
-        ).text;
-        _check(
-          ref.read(workspaceControllerProvider).activeText == destinationSource,
-          '${view.$2} recovery Undo restores formatted destination',
-        );
-        _check(workspace.redoActiveBuffer(), '${view.$2} recovery Redo');
-        _check(
-          ref.read(workspaceControllerProvider).activeText == revision.source,
-          '${view.$2} recovery Redo restores exact source',
-        );
-        _check(await workspace.saveActive(), '${view.$2} recovery save');
-        _check(
-          await File(deletePath).readAsString() == revision.source,
-          '${view.$2} recovered file contents',
-        );
-        _checks['${view.$2}DeletedFileRecovered'] = true;
-        _checks['deletedFileRecovered'] = await File(deletePath).exists();
-      }
-    } finally {
-      trace?.close();
+        '${view.$2} deleted document recovery',
+      );
+      _check(
+        ref.read(workspaceControllerProvider).activeText == revision.source,
+        '${view.$2} recovered exact revision contents',
+      );
+      await _capture(
+        '${widget.mode}-${view.$2}-deleted-recovered-1920x1080.png',
+      );
+      _check(workspace.undoActiveBuffer(), '${view.$2} recovery Undo');
+      final destinationSource = decodeUtf8Document(
+        revision.format.encode(''),
+      ).text;
+      _check(
+        ref.read(workspaceControllerProvider).activeText == destinationSource,
+        '${view.$2} recovery Undo restores formatted destination',
+      );
+      _check(workspace.redoActiveBuffer(), '${view.$2} recovery Redo');
+      _check(
+        ref.read(workspaceControllerProvider).activeText == revision.source,
+        '${view.$2} recovery Redo restores exact source',
+      );
+      _check(await workspace.saveActive(), '${view.$2} recovery save');
+      _check(
+        await File(deletePath).readAsString() == revision.source,
+        '${view.$2} recovered file contents',
+      );
+      _checks['${view.$2}DeletedFileRecovered'] = true;
+      _checks['deletedFileRecovered'] = await File(deletePath).exists();
     }
   }
 

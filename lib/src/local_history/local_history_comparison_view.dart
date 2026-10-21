@@ -27,13 +27,18 @@ typedef LocalHistoryComparisonComputer =
 /// Read-only rendering of the shared source-comparison model. Refactoring
 /// previews reuse this instead of maintaining a second diff presentation.
 class SourceComparisonView extends StatelessWidget {
-  const SourceComparisonView({super.key, required this.comparison});
+  const SourceComparisonView({super.key, required this.comparison})
+    : _sliver = false;
+
+  const SourceComparisonView.sliver({super.key, required this.comparison})
+    : _sliver = true;
 
   final SourceComparison comparison;
+  final bool _sliver;
 
   @override
   Widget build(BuildContext context) =>
-      _UnifiedComparisonPane(comparison: comparison);
+      _UnifiedComparisonPane(comparison: comparison, sliver: _sliver);
 }
 
 final localHistoryComparisonComputerProvider =
@@ -527,9 +532,10 @@ class _ComparisonBody extends StatelessWidget {
 }
 
 class _UnifiedComparisonPane extends StatelessWidget {
-  const _UnifiedComparisonPane({required this.comparison});
+  const _UnifiedComparisonPane({required this.comparison, this.sliver = false});
 
   final SourceComparison comparison;
+  final bool sliver;
 
   @override
   Widget build(BuildContext context) {
@@ -594,6 +600,12 @@ class _UnifiedComparisonPane extends StatelessWidget {
     }
     if (rows.isEmpty) {
       rows.add(_UnifiedSourceChunk(source: comparison.currentInput.source));
+    }
+    if (sliver) {
+      return SliverPadding(
+        padding: const EdgeInsets.all(BusyMarkSpacing.md),
+        sliver: SliverList.list(children: rows),
+      );
     }
     return ListView(
       padding: const EdgeInsets.all(BusyMarkSpacing.md),

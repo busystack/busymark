@@ -60,18 +60,51 @@ apps:
       BUSYMARK_SPELLING_INSTALL_ROOT: $SNAP_USER_COMMON/spelling/dictionaries
 
 parts:
+  flutter-sdk:
+    plugin: nil
+    source: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.5-stable.tar.xz
+    source-checksum: sha256/2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb
+    override-build: |
+      cp -r "$CRAFT_PART_SRC" "$CRAFT_PART_INSTALL/flutter-sdk"
+    prime:
+      - '-*'
+
+  flutter-runtime:
+    after: [flutter-sdk]
+    plugin: nil
+    build-attributes: [no-patchelf]
+    override-build: |
+      # Preserve the official library's GNU build-ID notes. This part copies
+      # the unmodified SDK payload; it does not compile or patch an engine.
+      install -Dm755 \
+        "$CRAFT_STAGE/flutter-sdk/bin/cache/artifacts/engine/linux-x64-release/libflutter_linux_gtk.so" \
+        "$CRAFT_PART_INSTALL/lib/libflutter_linux_gtk.so"
+
   busymark:
-    plugin: flutter
+    after: [flutter-runtime]
+    plugin: nil
     build-attributes:
       - enable-patchelf
     source: .
-    flutter-target: lib/main.dart
-    flutter-channel: stable
-    build-environment:
-      - BUSYMARK_FLUTTER_VERSION: "3.47.5"
+    override-pull: |
+      # Pull source inputs only; generated build state is never a package input.
+      rsync -a --delete \
+        --exclude=/.git/ --exclude=/.build/ --exclude=/.dart_tool/ \
+        --exclude=/build/ --exclude=/linux/flutter/ephemeral/ \
+        --exclude=/.craft/ --exclude=/parts/ --exclude=/stage/ --exclude=/prime/ \
+        --exclude='/*.snap' \
+        "$CRAFT_PROJECT_DIR/" "$CRAFT_PART_SRC/"
     build-snaps:
       - node/24/stable
     build-packages:
+      - clang
+      - cmake
+      - ninja-build
+      - pkg-config
+      - libgtk-3-dev
+      - git
+      - unzip
+      - rsync
       - fonts-noto-core
       - fonts-noto-mono
       - curl
@@ -96,22 +129,45 @@ parts:
       rm -rf "$CRAFT_PART_BUILD/build"
       rm -rf "$CRAFT_PART_BUILD/.dart_tool"
       rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
-      flutter_sdk="$CRAFT_PART_BUILD/flutter-distro"
-      flutter_sdk_version="$(git -C "$flutter_sdk" describe --tags --exact-match HEAD 2>/dev/null || true)"
-      if [ ! -x "$flutter_sdk/bin/flutter" ] || \
-          [ "$flutter_sdk_version" != "$BUSYMARK_FLUTTER_VERSION" ]; then
-        rm -rf "$flutter_sdk"
-        git clone --depth 1 --branch "$BUSYMARK_FLUTTER_VERSION" \
-          https://github.com/flutter/flutter.git "$flutter_sdk"
-      fi
-      test "$(git -C "$flutter_sdk" describe --tags --exact-match HEAD)" = \
-        "$BUSYMARK_FLUTTER_VERSION"
+      export FLUTTER_ROOT="$CRAFT_STAGE/flutter-sdk"
+      export PATH="$FLUTTER_ROOT/bin:$PATH"
       export CI=true
-      "$flutter_sdk/bin/flutter" --no-version-check precache --linux
-      "$flutter_sdk/bin/flutter" --no-version-check pub get
-      "$flutter_sdk/bin/flutter" --no-version-check build linux --release --verbose \
+      flutter pub get --enforce-lockfile
+      flutter build linux --release --no-pub --verbose \
         --target lib/main.dart
       cp -r build/linux/*/release/bundle/* "$CRAFT_PART_INSTALL/"
+      # The unmodified official engine belongs to flutter-runtime so only
+      # the application/plugins receive Snapcraft's runtime path adjustments.
+      rm "$CRAFT_PART_INSTALL/lib/libflutter_linux_gtk.so"
+
+      # Normalize owned resources before staging so incremental clean/rebuild
+      # tracks these symlinks, rather than leaving untracked prime aliases.
+      # CMake installs the deterministic Typst font set at the bundle-relative
+      # path used by the application. The same files are staged for fontconfig;
+      # require them to be identical before consolidating the bundle copy.
+      for bundled_font in "$CRAFT_PART_INSTALL/share/busymark/fonts"/Noto*.ttf; do
+        staged_font="$CRAFT_PART_INSTALL/usr/share/fonts/truetype/noto/${bundled_font##*/}"
+        test -f "$staged_font"
+        cmp -s "$bundled_font" "$staged_font"
+      done
+      rm -rf "$CRAFT_PART_INSTALL/share/busymark/fonts"
+      ln -s ../../usr/share/fonts/truetype/noto \
+        "$CRAFT_PART_INSTALL/share/busymark/fonts"
+
+      # BusyMark checks both standard XDG roots for user-selected Yaru variants.
+      # Preserve both lookup paths without storing a second copy of each theme.
+      mkdir -p "$CRAFT_PART_INSTALL/share/themes" "$CRAFT_PART_INSTALL/share/icons"
+      for resource_kind in themes icons; do
+        for staged_resource in \
+          "$CRAFT_PART_INSTALL/usr/share/$resource_kind"/Yaru*; do
+          test -e "$staged_resource"
+          resource_name="${staged_resource##*/}"
+          linked_resource="$CRAFT_PART_INSTALL/share/$resource_kind/$resource_name"
+          rm -rf "$linked_resource"
+          ln -s "../../usr/share/$resource_kind/$resource_name" \
+            "$linked_resource"
+        done
+      done
 
   desktop-integration:
     after: [busymark]
@@ -124,6 +180,9 @@ parts:
       # GNOME/Mesa launcher's library selection. Preserve the patched paths as
       # RUNPATH so the connected platform supplies its matching shared runtime.
       for bundled_elf in "$CRAFT_PRIME/busymark" "$CRAFT_PRIME/lib"/*.so; do
+        case "$bundled_elf" in
+          */libflutter_linux_gtk.so) continue ;;
+        esac
         existing_rpath="$(patchelf --print-rpath "$bundled_elf")"
         if [ -n "$existing_rpath" ]; then
           patchelf --set-rpath "$existing_rpath" "$bundled_elf"
@@ -159,32 +218,6 @@ parts:
       # together; otherwise every SVG-backed GTK symbolic icon fails to load.
       rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*
 
-      # CMake installs the deterministic Typst font set at the bundle-relative
-      # path used by the application. The same files are staged for fontconfig;
-      # require them to be identical before consolidating the bundle copy.
-      for bundled_font in "$CRAFT_PRIME/share/busymark/fonts"/Noto*.ttf; do
-        staged_font="$CRAFT_PRIME/usr/share/fonts/truetype/noto/${bundled_font##*/}"
-        test -f "$staged_font"
-        cmp -s "$bundled_font" "$staged_font"
-      done
-      rm -rf "$CRAFT_PRIME/share/busymark/fonts"
-      ln -s ../../usr/share/fonts/truetype/noto \
-        "$CRAFT_PRIME/share/busymark/fonts"
-
-      # BusyMark checks both standard XDG roots for user-selected Yaru variants.
-      # Preserve both lookup paths without storing a second copy of each theme.
-      mkdir -p "$CRAFT_PRIME/share/themes" "$CRAFT_PRIME/share/icons"
-      for resource_kind in themes icons; do
-        for staged_resource in \
-          "$CRAFT_PRIME/usr/share/$resource_kind"/Yaru*; do
-          test -e "$staged_resource"
-          resource_name="${staged_resource##*/}"
-          linked_resource="$CRAFT_PRIME/share/$resource_kind/$resource_name"
-          rm -rf "$linked_resource"
-          ln -s "../../usr/share/$resource_kind/$resource_name" \
-            "$linked_resource"
-        done
-      done
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
         "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
@@ -195,3 +228,22 @@ parts:
         "$CRAFT_PRIME/share/metainfo/io.busystack.busymark.metainfo.xml"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
         "$CRAFT_PRIME/share/icons/hicolor/scalable/apps/io.busystack.busymark.svg"
+
+      # The GNOME launcher otherwise regenerates every bundled theme cache in
+      # each fresh profile. These are portable indices of packaged icons;
+      # generate and validate them with the existing GNOME SDK at build time.
+      icon_cache_tool=/snap/gnome-46-2404-sdk/current/usr/bin/gtk-update-icon-cache
+      test -x "$icon_cache_tool"
+      for icon_theme in \
+        "$CRAFT_PRIME"/usr/share/icons/* "$CRAFT_PRIME"/share/icons/*; do
+        if [ -f "$icon_theme/index.theme" ]; then
+          if [ ! -f "$icon_theme/icon-theme.cache" ]; then
+            "$icon_cache_tool" --force --quiet "$icon_theme"
+          fi
+          # Empty inherited themes contain no icons and emit no cache.
+          if [ -f "$icon_theme/icon-theme.cache" ]; then
+            "$icon_cache_tool" --validate "$icon_theme"
+          fi
+        fi
+      done
+      test -s "$CRAFT_PRIME/usr/share/icons/Yaru/icon-theme.cache"

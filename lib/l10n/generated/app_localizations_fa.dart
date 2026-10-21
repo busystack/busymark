@@ -2109,6 +2109,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get documentKindResourceFile => 'فایل منبع';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'به‌روزرسانی موارد اخیر ممکن نشد: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'باز کردن ناموفق بود: ⁨$error⁩';
   }

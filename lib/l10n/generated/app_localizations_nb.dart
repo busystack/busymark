@@ -2074,6 +2074,11 @@ class AppLocalizationsNb extends AppLocalizations {
   String get documentKindResourceFile => 'Ressursfil';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Kunne ikke oppdatere nylige elementer: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Åpning mislyktes: $error';
   }

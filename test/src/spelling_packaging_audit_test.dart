@@ -136,7 +136,7 @@ void main() {
     'strict Snap smoke performs and verifies a local revision transition',
     () {
       final workflow = File(
-        '.github/workflows/flutter-linux.yml',
+        '.github/workflows/flutter-linux-native.yml',
       ).readAsStringSync();
       expect(workflow, isNot(contains('snap refresh --dangerous')));
       expect(workflow, contains('sudo snap install --dangerous'));

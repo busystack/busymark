@@ -203,6 +203,48 @@ void main() {
       ),
     );
   });
+
+  test('a response deadline retains the known loading state', () async {
+    var requests = 0;
+    final devTools = await _FakeDevTools.start(
+      documentUri,
+      onEvaluate: (socket, request) {
+        requests++;
+        if (requests == 1) {
+          socket.add(
+            _response(request, {
+              'ready': false,
+              'url': '$documentUri',
+              'state': 'loading',
+              'styles': 0,
+            }),
+          );
+        }
+      },
+    );
+    addTearDown(devTools.close);
+
+    await expectLater(
+      _evaluate(
+        browserEndpoint: devTools.browserEndpoint,
+        documentUri: documentUri,
+        expression: 'document.title',
+        readinessTimeout: const Duration(seconds: 1),
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.toString(),
+          'diagnostic',
+          allOf(
+            contains('did not finish loading'),
+            contains('DevTools response timed out'),
+            contains('state: loading'),
+          ),
+        ),
+      ),
+    );
+    expect(requests, 2);
+  });
 }
 
 Future<Object?> _evaluate({

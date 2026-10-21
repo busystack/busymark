@@ -1694,6 +1694,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Nie udało się zaktualizować ostatnich elementów: {error}.",
   "workspaceErrorOpenFailed": "Otwieranie nie powiodło się: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

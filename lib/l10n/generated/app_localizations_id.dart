@@ -2069,6 +2069,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get documentKindResourceFile => 'File sumber daya';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Tidak dapat memperbarui item terbaru: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return 'Gagal dibuka: $error';
   }

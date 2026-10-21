@@ -1997,6 +1997,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get documentKindResourceFile => '리소스 파일';
 
   @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return '최근 항목을 업데이트하지 못했습니다: $error.';
+  }
+
+  @override
   String workspaceErrorOpenFailed(String error) {
     return '열기 실패: $error';
   }

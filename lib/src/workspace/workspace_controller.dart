@@ -3,6 +3,7 @@ import '../references/markdown_move_service.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import 'dart:async';
 import 'dart:io';
+
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
@@ -274,6 +275,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   final _restoredRecoveryOwnerIdsByBuffer = <String, String>{};
 
   late Future<RecoverySnapshot> _recoveryStart;
+  final _workspaceOpenings = <Future<void>>{};
   Future<void> _persistenceWrites = Future.value();
 
   int get editRevision => state.activeBuffer?.revision ?? _editRevision;
@@ -694,15 +696,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       _schedulePersistence();
       if (restoredTabs == null) {
-        await _settingsController.recordOpenedWorkspace(
-          path: '',
-          kind: 'nextcloudNotes',
-          accountId: accountId,
-          title: repository.accounts
-              .where((a) => a.id == accountId)
-              .firstOrNull
-              ?.server
-              .toString(),
+        await _publishRecent(
+          () => _settingsController.recordOpenedWorkspace(
+            path: '',
+            kind: 'nextcloudNotes',
+            accountId: accountId,
+            title: repository.accounts
+                .where((a) => a.id == accountId)
+                .firstOrNull
+                ?.server
+                .toString(),
+          ),
         );
       }
       unawaited(
@@ -1269,7 +1273,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await flushPersistence();
   }
 
-  Future<bool> restorePreviousSession() async {
+  Future<bool> restorePreviousSession() =>
+      _trackWorkspaceOpening(() => _restorePreviousSession());
+
+  Future<T> _trackWorkspaceOpening<T>(Future<T> Function() operation) async {
+    final settled = Completer<void>();
+    _workspaceOpenings.add(settled.future);
+    try {
+      return await operation();
+    } finally {
+      _workspaceOpenings.remove(settled.future);
+      settled.complete();
+    }
+  }
+
+  /// Wait before reading dirty state or persisting a shutdown snapshot.
+  /// Recovery ownership can already be adopted while the editor is unpublished.
+  /// Opening itself must not await this barrier (including its persistence).
+  Future<void> waitForWorkspaceOpening() async {
+    while (_workspaceOpenings.isNotEmpty) {
+      await Future.wait(_workspaceOpenings.toList(growable: false));
+    }
+  }
+
+  Future<bool> _restorePreviousSession() async {
     if (state.workspace != null) {
       return state.documentBuffers.isNotEmpty;
     }
@@ -1285,7 +1312,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       // an authoritative snapshot before consuming any durable journal: an
       // early failure must leave the persisted workspace and its obligations
       // untouched for the next startup.
-      if (!await _localHistory.refresh()) return false;
+      if (!await _localHistory.refresh()) {
+        return false;
+      }
       if (session?.pendingLocalHistoryReconciliations.any(
             (operation) => _localHistoryOperationOwnerIsLiveOtherProcess(
               operation.operationId,
@@ -1553,7 +1582,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
         final buffers = <DocumentBuffer>[];
         final consumedRecoveries = <(String?, String)>{};
-        for (final entry in sessionEntries) {
+        Future<({DocumentBuffer? buffer, DocumentRecoveryEntry? recovery})>
+        loadSessionEntry(DocumentSessionEntry entry) async {
           final ownedById = recoverEntries
               .where(
                 (recovery) =>
@@ -1577,11 +1607,36 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               : ownedById.isEmpty && ownedByPath.length == 1
               ? ownedByPath.single
               : null;
+
           final buffer = await _restoreSessionBuffer(entry, recovered);
-          if (buffer != null) {
-            buffers.add(buffer);
-            if (recovered != null) {
-              consumedRecoveries.add((recovered.ownerId, recovered.id));
+          return (buffer: buffer, recovery: recovered);
+        }
+
+        // Bound file reads/decoding while preserving session order. A failed
+        // batch drains every admitted read before recovery can be released;
+        // no partial batch is published or left running after failure.
+        const readBatchSize = 4;
+        for (
+          var offset = 0;
+          offset < sessionEntries.length;
+          offset += readBatchSize
+        ) {
+          if (!ref.mounted) return false;
+          final end = offset + readBatchSize < sessionEntries.length
+              ? offset + readBatchSize
+              : sessionEntries.length;
+          final loaded = await Future.wait([
+            for (var index = offset; index < end; index++)
+              loadSessionEntry(sessionEntries[index]),
+          ], eagerError: false);
+          for (final item in loaded) {
+            final buffer = item.buffer;
+            if (buffer != null) {
+              buffers.add(buffer);
+              final recovered = item.recovery;
+              if (recovered != null) {
+                consumedRecoveries.add((recovered.ownerId, recovered.id));
+              }
             }
           }
         }
@@ -1635,6 +1690,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         if (!ref.mounted || !_preparedInputsCurrent(reparsed, buffers)) {
           return false;
         }
+
         state = WorkspaceState(
           workspace: reparsed,
           preview: _safePreview(reparsed, active),
@@ -1652,6 +1708,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
                 )
               : null,
         );
+
         for (final entry in sessionEntries) {
           final recoveryOwnerId = entry.recoveryOwnerId;
           if (recoveryOwnerId != null &&
@@ -2203,15 +2260,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   /// Restores startup state when the previous run needs recovery, or when the
   /// user has explicitly enabled clean-session reopening.
-  Future<bool> restoreStartupSession({required bool reopenCleanSession}) async {
-    final recovery = await _recoveryStart;
-    final needsRecovery =
-        !recovery.cleanShutdown || recovery.entries.isNotEmpty;
-    if (!reopenCleanSession && !needsRecovery) {
-      return false;
-    }
-    return restorePreviousSession();
-  }
+  Future<bool> restoreStartupSession({bool? reopenCleanSession}) =>
+      _trackWorkspaceOpening(() async {
+        await _settingsController.waitUntilLoaded();
+        final recovery = await _recoveryStart;
+        final needsRecovery =
+            !recovery.cleanShutdown || recovery.entries.isNotEmpty;
+        if (!(reopenCleanSession ??
+                _settingsController.state.reopenPreviousWorkspaceOnStartup) &&
+            !needsRecovery) {
+          return false;
+        }
+        return _restorePreviousSession();
+      });
 
   Future<void> _persistRestoredLocalHistoryJournal(
     WorkspaceSessionSnapshot original, {
@@ -2392,6 +2453,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final pendingHistorySaveAs = _localHistory.pendingSaveAsOperations;
     final retainedHistoryCaptures = _localHistory.retainedDetachedCaptures;
     final prior = _persistenceWrites.then<void>((_) {}, onError: (_, _) {});
+
     final write = prior.then(
       (_) => _persistSnapshot(
         snapshot,
@@ -2599,8 +2661,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> _settleWritesForShutdown() async {
+    await waitForWorkspaceOpening();
     _cancelAllAutoSaves();
     await _drainBufferWrites();
+    await _settingsController.flushPersistence();
     // A write that retained a newer dirty revision can schedule another
     // debounce while the queue is draining. Shutdown owns the final save or
     // recovery decision, so do not let that timer outlive it.
@@ -3919,7 +3983,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await _startMonitoring(state.workspace ?? workspace);
   }
 
-  Future<void> openPath(
+  Future<void> openPath(String path, {bool Function()? acceptNavigation}) =>
+      _trackWorkspaceOpening(
+        () => _openPath(path, acceptNavigation: acceptNavigation),
+      );
+
+  Future<void> _openPath(
     String path, {
     bool Function()? acceptNavigation,
   }) async {
@@ -3953,7 +4022,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ? null
           : await _service.loadTextWithSnapshot(active);
       final text = load?.text ?? '';
-      final loadedWorkspace = load == null
+      var loadedWorkspace = load == null
           ? workspace
           : workspace.copyWith(activeFileSnapshot: load.snapshot);
       final buffer = load == null || active == null
@@ -3963,6 +4032,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               load,
               mode: _settingsController.state.documentViewMode,
             );
+      // The service model and this validated reread can straddle an external
+      // edit. Prepare the reread revision before publishing it, so the initial
+      // editor never synchronously reparses a mismatching model during build.
+      final markdown = loadedWorkspace.markdown;
+      if (buffer != null &&
+          (_writersideSourceMismatch(loadedWorkspace, buffer) ||
+              (markdown != null &&
+                  p.equals(markdown.filePath, active!) &&
+                  markdown.source != buffer.text))) {
+        loadedWorkspace = await _service.prepareDocument(
+          loadedWorkspace,
+          buffer,
+          {active!: buffer.text},
+        );
+      }
       final preview = buffer == null
           ? null
           : _safePreview(loadedWorkspace, buffer);
@@ -3977,6 +4061,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return;
       }
       state = WorkspaceState(
+        isLoading: true,
         workspace: loadedWorkspace,
         activeText: text,
         preview: preview,
@@ -3990,18 +4075,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         _requestDerivedRefresh(rebuildPreview: true);
       }
       await _startMonitoring(loadedWorkspace);
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) return;
+      state = state.copyWith(isLoading: false);
       _schedulePersistence();
       _resetSaveTracking();
       final recentPath = workspace.kind == WorkspaceKind.singleMarkdown
           ? workspace.activeFilePath ?? workspace.rootPath
           : workspace.rootPath;
-      await _settingsController.recordOpenedWorkspace(
-        path: recentPath,
-        kind: workspace.kind.name,
+      await _publishRecent(
+        () => _settingsController.recordOpenedWorkspace(
+          path: recentPath,
+          kind: workspace.kind.name,
+        ),
       );
       if (buffer?.filePath != null &&
           p.equals(p.absolute(path), p.absolute(buffer!.filePath!))) {
-        unawaited(_recordOpenedDocument());
+        await _recordOpenedDocument();
       }
     } on Object catch (error, stackTrace) {
       busyMarkDebugLogError(
@@ -4101,9 +4190,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await _startMonitoring(loadedWorkspace);
       _schedulePersistence();
       _resetSaveTracking();
-      await _settingsController.recordOpenedWorkspace(
-        path: workspace.rootPath,
-        kind: workspace.kind.name,
+      await _publishRecent(
+        () => _settingsController.recordOpenedWorkspace(
+          path: workspace.rootPath,
+          kind: workspace.kind.name,
+        ),
       );
       return true;
     } on Object catch (error, stackTrace) {
@@ -4238,39 +4329,70 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return opened;
   }
 
+  Future<void> recordRecentResource(RecentResource resource) =>
+      _publishRecent(() => _settingsController.recordRecent(resource));
+
+  Future<void> _publishRecent(Future<void> Function() publish) async {
+    final workspaceId = state.workspace?.id;
+    try {
+      await publish();
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Could not update recent resources',
+        error,
+        stackTrace,
+      );
+      // Content and its required persistence have their own completion. A
+      // failed ancillary Recent write must not turn a successful open into an
+      // opening failure, or publish into a different/disposed workspace.
+      if (ref.mounted && state.workspace?.id == workspaceId) {
+        state = state.copyWith(
+          message: WorkspaceMessage(
+            WorkspaceMessageCode.recentWorkspaceUpdateFailed,
+            error: error,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _recordOpenedDocument([DocumentBuffer? opened]) async {
     final workspace = state.workspace;
     final buffer = opened ?? state.activeBuffer;
     if (workspace == null || buffer == null) return;
     final remote = buffer.remoteNote;
     if (remote != null) {
-      await _settingsController.recordRecent(
-        RecentResource(
-          path: '',
-          kind: 'nextcloudNote',
-          document: true,
-          accountId: remote.accountId,
-          accountLabel: _notesRepository
-              ?.accountById(remote.accountId)
-              ?.server
-              .toString(),
-          localId: remote.localId,
-          title: buffer.remoteTitle,
-          lastOpenedAt: DateTime.now(),
+      await _publishRecent(
+        () => _settingsController.recordRecent(
+          RecentResource(
+            path: '',
+            kind: 'nextcloudNote',
+            document: true,
+            accountId: remote.accountId,
+            accountLabel: _notesRepository
+                ?.accountById(remote.accountId)
+                ?.server
+                .toString(),
+            localId: remote.localId,
+            title: buffer.remoteTitle,
+            lastOpenedAt: DateTime.now(),
+          ),
         ),
       );
     } else if (buffer.filePath case final path?) {
       final context = resolveWorkspaceDocumentContext(workspace, buffer);
-      await _settingsController.recordRecent(
-        RecentResource(
-          path: p.normalize(p.absolute(path)),
-          kind: workspace.kind == WorkspaceKind.singleMarkdown
-              ? workspace.kind.name
-              : context.kind.name,
-          document: true,
-          ownerRoot: context.isWritersideOwned ? workspace.rootPath : null,
-          title: context.writersideTopic?.title,
-          lastOpenedAt: DateTime.now(),
+      await _publishRecent(
+        () => _settingsController.recordRecent(
+          RecentResource(
+            path: p.normalize(p.absolute(path)),
+            kind: workspace.kind == WorkspaceKind.singleMarkdown
+                ? workspace.kind.name
+                : context.kind.name,
+            document: true,
+            ownerRoot: context.isWritersideOwned ? workspace.rootPath : null,
+            title: context.writersideTopic?.title,
+            lastOpenedAt: DateTime.now(),
+          ),
         ),
       );
     }
@@ -7320,9 +7442,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
       }
       if (savedWorkspace.kind == WorkspaceKind.singleMarkdown) {
-        await _settingsController.recordOpenedWorkspace(
-          path: path,
-          kind: savedWorkspace.kind.name,
+        await _publishRecent(
+          () => _settingsController.recordOpenedWorkspace(
+            path: path,
+            kind: savedWorkspace.kind.name,
+          ),
         );
       }
       unawaited(_recordOpenedDocument(savedBuffer));

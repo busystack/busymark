@@ -11,6 +11,11 @@ dependency resolution, and bounded memory and disk caches. Cache keys include
 the engine and sanitizer versions, source, theme, render profile, options, and
 hashes of local dependencies.
 
+Successful renders are published before optional disk-cache persistence finishes.
+The cache warms memory before its first I/O await; the coordinator retains the
+render's concurrency slot until persistence settles, bounding pending writes
+without putting disk flushes on the visible-result path.
+
 The Linux runner exposes a first-party platform channel backed by WebKitGTK 4.1.
 One reusable hidden render view handles Mermaid, PlantUML, OpenAPI parsing, SVG
 rasterization, and MathJax. BusyMark-owned windows are created only for the full
@@ -62,9 +67,8 @@ view in the same ephemeral context. Process recovery also creates a fresh
 registry. Each engine retains its existing validation,
 configuration, and dependencies. Math includes all offline NewCM font tables.
 First use still pays for the WebKit process, harness, and requested engine;
-subsequent requests reuse them. Those costs must be measured alongside plain
-startup when assessing performance, including preparation that an eager
-baseline completed before receiving its first request.
+subsequent requests reuse them. Measure complete launch-to-output and
+request-to-output paths separately.
 
 Opening an interactive reference first creates the shared context and its
 visible view, without loading the offscreen harness. A later render uses that
@@ -82,11 +86,9 @@ callbacks retain the host until completion, check its state and view identity,
 and cannot recreate resources after shutdown. Private resource callbacks own
 their resource path independently of the host.
 
-Set `BUSYMARK_VISUALIZATION_TRACE=1` for opt-in monotonic timings on stderr:
-context construction, view construction, offscreen realization/show, harness
-dispatch, and request acceptance, start, JavaScript delivery, and completion. It logs no document source. Moving
-construction to first use removes unused startup work; it does not establish
-the cause or elimination of a rare WebKit construction stall.
+Demand-driven construction avoids initializing unused hosts. Constructor stalls
+remain a separate runtime issue from the application's startup and lifecycle
+contracts.
 
 ## Dependencies and packaging
 
@@ -98,7 +100,8 @@ sources are:
 - `tools/fetch_d2.sh` for the D2 release, architecture, and verified hashes;
 - `tools/fetch_typst.sh` for Typst release artifacts and hashes;
 - `linux/CMakeLists.txt` and `snap/snapcraft.yaml` for bundle layout; and
-- `.github/workflows/flutter-linux.yml` for release and Snap verification.
+- `.github/workflows/flutter-linux.yml` for automatic native and compiled PDF checks;
+- `.github/workflows/flutter-linux-native.yml` for automatic Wayland/Snap checks and opt-in release stress campaigns.
 
 The web bundle is built with `npm ci --ignore-scripts`. Build steps verify direct
 upstream artifacts and stage package metadata, licenses, and notices. Node.js is
@@ -151,3 +154,50 @@ requires. Normal startup does not require a WebKit environment override, and
 Flutter and visible API-reference windows retain their normal rendering settings.
 Smoke tests must not globally disable WebKit compositing; `LIBGL_ALWAYS_SOFTWARE`
 is only used to provide Mesa rendering on headless CI displays.
+
+Host registration remains lightweight; only a validated video `show` request
+creates video resources.
+
+Local video passes its single validated file through WebKit's File API and an
+allowed `blob:` URL. This lets WebKit broker the file into the existing media
+pipeline; GStreamer's direct `file:` reader cannot see arbitrary local paths
+inside the WebProcess sandbox. The fixed local-player shell alone can select
+that file. No chooser is shown, no video copy is staged, and the sandbox, CSP,
+network restrictions, and separate visualization/video contexts are retained.
+Each video player owns its WebKit widget until host cleanup. Closing the parent
+window can destroy the overlay first; host cleanup must still disconnect player
+callbacks and release that widget safely. The native `video-parent-destroy`
+regression exercises this order and observes ownership through shutdown.
+
+The native regression script accepts individual operations and an optional
+repeat count, with a fresh isolated profile for each process:
+
+```bash
+BUSYMARK_NATIVE_PROBE_REPETITIONS=100 \
+  bash tools/test_web_render_host.sh renderMermaid
+bash tools/test_web_render_host.sh video-no-init video-first video-failure video-view-failure
+bash tools/test_web_render_host.sh video-playback video-mini-playback
+```
+
+Render results are delivered before optional disk-cache publication completes.
+Cache publication still occupies a bounded rendering slot, including the awaited
+write, atomic rename and LRU maintenance. Derived images do not request `fsync`:
+their disk cache is disposable, and invalid or incomplete entries are rejected
+and recomputed after interruption. Document, session, recovery and Local History
+durability use their separate stores. Full-directory metadata scans run in one short-lived
+maintenance isolate at a time per cache, using only its path and numeric limits.
+This avoids one main-isolate asynchronous round trip per cached file. The caller
+still awaits maintenance: no unlimited background writes or maintenance queue
+are introduced.
+
+## Compiled application lifecycle checks
+
+See [compiled application checks](application-smoke-tests.md) for natural closure,
+Save/Discard/Cancel, reopening, native window controls and video verification.
+Keep these product assertions separate from startup measurements.
+
+Widget tests that perform real filesystem work must start and await that work
+with `tester.runAsync`, pumping UI transitions outside that callback. Readiness
+helpers advance both real I/O and the widget clock within their existing
+budgets. Focused History double-click tests retain pointer-gesture coverage
+alongside keyboard navigation.
