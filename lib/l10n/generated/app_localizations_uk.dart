@@ -2099,7 +2099,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Успішно відкрито, але не вдалося оновити список нещодавніх робочих областей: $error';
+    return 'Не вдалося оновити нещодавні елементи: $error.';
   }
 
   @override

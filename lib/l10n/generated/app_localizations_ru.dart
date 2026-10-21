@@ -2091,7 +2091,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Открыто успешно, но не удалось обновить список недавних рабочих областей: $error';
+    return 'Не удалось обновить недавние элементы: $error.';
   }
 
   @override

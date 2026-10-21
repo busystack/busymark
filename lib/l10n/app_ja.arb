@@ -2252,7 +2252,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorRecentWorkspaceUpdateFailed": "正常に開きましたが、最近使ったワークスペースを更新できませんでした: {error}",
+  "workspaceErrorRecentWorkspaceUpdateFailed": "最近使った項目を更新できませんでした: {error}。",
   "workspaceErrorOpenFailed": "開くことができませんでした：{error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

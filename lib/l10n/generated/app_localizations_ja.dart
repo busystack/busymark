@@ -2001,7 +2001,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return '正常に開きましたが、最近使ったワークスペースを更新できませんでした: $error';
+    return '最近使った項目を更新できませんでした: $error。';
   }
 
   @override

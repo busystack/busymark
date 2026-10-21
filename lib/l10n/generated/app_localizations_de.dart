@@ -2094,7 +2094,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Erfolgreich geöffnet, aber die zuletzt verwendeten Arbeitsbereiche konnten nicht aktualisiert werden: $error';
+    return 'Zuletzt verwendete Elemente konnten nicht aktualisiert werden: $error.';
   }
 
   @override

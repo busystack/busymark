@@ -2110,7 +2110,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'با موفقیت باز شد، اما به‌روزرسانی فضاهای کاری اخیر ممکن نشد: $error';
+    return 'به‌روزرسانی موارد اخیر ممکن نشد: $error.';
   }
 
   @override

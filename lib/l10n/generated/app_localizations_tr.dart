@@ -2067,7 +2067,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Başarıyla açıldı, ancak son çalışma alanları güncellenemedi: $error';
+    return 'Son öğeler güncellenemedi: $error.';
   }
 
   @override

@@ -2073,7 +2073,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'تم الفتح بنجاح، ولكن تعذر تحديث مساحات العمل الأخيرة: $error';
+    return 'تعذر تحديث العناصر الأخيرة: $error.';
   }
 
   @override

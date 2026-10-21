@@ -2085,7 +2085,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Geopend, maar de recente werkruimten konden niet worden bijgewerkt: $error';
+    return 'Recente items konden niet worden bijgewerkt: $error.';
   }
 
   @override

@@ -1998,7 +1998,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return '열기는 성공했지만 최근 작업 공간을 업데이트하지 못했습니다: $error';
+    return '최근 항목을 업데이트하지 못했습니다: $error.';
   }
 
   @override

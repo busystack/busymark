@@ -2067,7 +2067,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Avamine õnnestus, kuid hiljutisi tööruume ei saanud uuendada: $error';
+    return 'Hiljutisi üksusi ei saanud uuendada: $error.';
   }
 
   @override

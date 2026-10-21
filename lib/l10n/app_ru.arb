@@ -1694,7 +1694,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorRecentWorkspaceUpdateFailed": "Открыто успешно, но не удалось обновить список недавних рабочих областей: {error}",
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Не удалось обновить недавние элементы: {error}.",
   "workspaceErrorOpenFailed": "Не удалось открыть: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

@@ -1973,7 +1973,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return '已成功打开，但无法更新最近的工作区：$error';
+    return '无法更新最近使用的项目：$error。';
   }
 
   @override
@@ -7270,7 +7270,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return '已成功打开，但无法更新最近的工作区：$error';
+    return '无法更新最近使用的项目：$error。';
   }
 
   @override

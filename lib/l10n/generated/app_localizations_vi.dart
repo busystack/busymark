@@ -2064,7 +2064,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Đã mở thành công nhưng không thể cập nhật các không gian làm việc gần đây: $error';
+    return 'Không thể cập nhật các mục gần đây: $error.';
   }
 
   @override

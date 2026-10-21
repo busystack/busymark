@@ -2065,7 +2065,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'सफलतापूर्वक खोला गया, लेकिन हाल के कार्यस्थल अपडेट नहीं हो सके: $error';
+    return 'हाल के आइटम अपडेट नहीं किए जा सके: $error.';
   }
 
   @override

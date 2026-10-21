@@ -2252,7 +2252,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorRecentWorkspaceUpdateFailed": "Đã mở thành công nhưng không thể cập nhật các không gian làm việc gần đây: {error}",
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Không thể cập nhật các mục gần đây: {error}.",
   "workspaceErrorOpenFailed": "Mở không thành công: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

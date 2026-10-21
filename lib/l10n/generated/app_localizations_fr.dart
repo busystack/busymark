@@ -2097,7 +2097,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Ouverture réussie, mais impossible de mettre à jour les espaces de travail récents : $error';
+    return 'Impossible de mettre à jour les éléments récents : $error.';
   }
 
   @override

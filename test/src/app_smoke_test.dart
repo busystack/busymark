@@ -221,6 +221,15 @@ void main() {
           container.read(workspaceControllerProvider).message?.code,
           isNot(WorkspaceMessageCode.openFailed),
         );
+        if (fail) {
+          final message = container.read(workspaceControllerProvider).message!;
+          final warning = 'Could not update Recent items: ${message.error}.';
+          expect(find.text(warning), findsOneWidget);
+          expect(
+            busyMarkWorkspaceMessageStatusKind(message.code),
+            BusyMarkStatusKind.warning,
+          );
+        }
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );

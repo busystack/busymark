@@ -2083,7 +2083,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Aberto com sucesso, mas não foi possível atualizar os espaços de trabalho recentes: $error';
+    return 'Não foi possível atualizar os itens recentes: $error.';
   }
 
   @override
@@ -7682,7 +7682,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Aberto com sucesso, mas não foi possível atualizar os espaços de trabalho recentes: $error';
+    return 'Não foi possível atualizar os itens recentes: $error.';
   }
 
   @override

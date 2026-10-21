@@ -2252,7 +2252,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorRecentWorkspaceUpdateFailed": "Berhasil dibuka, tetapi ruang kerja terbaru tidak dapat diperbarui: {error}",
+  "workspaceErrorRecentWorkspaceUpdateFailed": "Tidak dapat memperbarui item terbaru: {error}.",
   "workspaceErrorOpenFailed": "Gagal dibuka: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",

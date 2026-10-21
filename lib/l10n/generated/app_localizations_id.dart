@@ -2070,7 +2070,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Berhasil dibuka, tetapi ruang kerja terbaru tidak dapat diperbarui: $error';
+    return 'Tidak dapat memperbarui item terbaru: $error.';
   }
 
   @override

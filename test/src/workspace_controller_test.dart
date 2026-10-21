@@ -41,6 +41,48 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  for (final operation in ['open', 'Save As']) {
+    test('Recent failure preserves successful $operation', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-recent-warning-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'document.md'));
+      const text = '# Successful document operation\n';
+      final settings = _FailingRecentSettingsStore();
+      final harness = await _createControllerHarness(
+        settingsStore: settings,
+        sessionStore: MemoryDocumentSessionStore(),
+        recoveryStore: MemoryDocumentRecoveryStore(),
+        localHistoryStore: MemoryLocalHistoryStore(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      settings.failRecentWrites = true;
+      final controller = harness.controller;
+      if (operation == 'open') {
+        await file.writeAsString(text);
+        await controller.openPath(file.path);
+      } else {
+        await controller.createMarkdownFile();
+        controller.updateActiveText(text);
+        expect(await controller.saveActiveAs(file.path), isTrue);
+      }
+      await harness._container
+          .read(appSettingsControllerProvider.notifier)
+          .flushPersistence();
+      expect(settings.failedWrites, greaterThan(0));
+      expect(controller.state.activeBuffer?.filePath, file.path);
+      expect(controller.state.activeText, text);
+      expect(controller.state.isDirty, isFalse);
+      expect(await file.readAsString(), text);
+      expect(
+        controller.state.message?.code,
+        WorkspaceMessageCode.recentWorkspaceUpdateFailed,
+      );
+      expect((settings.value['recentWorkspaces'] as List?) ?? [], isEmpty);
+    });
+  }
+
   test(
     'opening reconciles a changed reread before publishing the editor model',
     () async {
@@ -4606,6 +4648,7 @@ Future<void> _waitFor(bool Function() condition) async {
 
 Future<_WorkspaceControllerHarness> _createControllerHarness({
   WorkspaceService service = const WorkspaceService(),
+  LocalSettingsStore? settingsStore,
   WorkspaceFileMonitor? fileMonitor,
   DocumentSessionStore? sessionStore,
   DocumentRecoveryStore? recoveryStore,
@@ -4613,7 +4656,9 @@ Future<_WorkspaceControllerHarness> _createControllerHarness({
 }) async {
   final container = ProviderContainer(
     overrides: [
-      localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+      localSettingsStoreProvider.overrideWithValue(
+        settingsStore ?? _MemorySettingsStore(),
+      ),
       workspaceServiceProvider.overrideWithValue(service),
       if (fileMonitor != null)
         workspaceFileMonitorProvider.overrideWithValue(fileMonitor),
@@ -4854,6 +4899,21 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _FailingRecentSettingsStore extends _MemorySettingsStore {
+  bool failRecentWrites = false;
+  int failedWrites = 0;
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    if (failRecentWrites &&
+        ((json['recentWorkspaces'] as List?)?.isNotEmpty ?? false)) {
+      failedWrites++;
+      throw StateError('Recent storage unavailable');
+    }
+    await super.save(json);
   }
 }
 

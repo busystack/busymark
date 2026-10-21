@@ -2075,7 +2075,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
-    return 'Åpnet, men kunne ikke oppdatere nylige arbeidsområder: $error';
+    return 'Kunne ikke oppdatere nylige elementer: $error.';
   }
 
   @override
