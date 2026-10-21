@@ -1389,6 +1389,8 @@ Future<void> showNextcloudConflict(
             remote != null &&
             !remote.readonly &&
             !remote.error;
+  // Losing remote write permission must not hide a merge the user could edit.
+  var retainMergeEditor = canOverwriteRemote;
   var deletedRemotely =
       note.syncState == NoteSyncState.deletedRemotely && remote == null;
   var merge = localMetadata
@@ -1436,6 +1438,7 @@ Future<void> showNextcloudConflict(
               remote != null &&
               !remote!.readonly &&
               !remote!.error;
+    retainMergeEditor = retainMergeEditor || canOverwriteRemote;
     canMergeRemote =
         canOverwriteRemote ||
         (!localMetadata &&
@@ -1615,7 +1618,7 @@ Future<void> showNextcloudConflict(
                       BusyMarkDialogButton(
                         label: note.serverId == null && !localMetadata
                             ? context.l10n.nextcloudCreateSeparate
-                            : context.l10n.nextcloudNewNote,
+                            : context.l10n.notesNewFromRetainedText,
                         onPressed: () =>
                             unawaited(apply(NoteConflictResolution.saveAsNew)),
                       ),
@@ -1666,7 +1669,10 @@ Future<void> showNextcloudConflict(
                       if (canMergeRemote)
                         BusyMarkDialogButton(
                           label: context.l10n.nextcloudMerge,
-                          onPressed: choices.length != conflicts.length
+                          onPressed:
+                              choices.length != conflicts.length ||
+                                  (!canOverwriteRemote &&
+                                      merged != remote?.content)
                               ? null
                               : () => unawaited(
                                   apply(NoteConflictResolution.merge),
@@ -1837,10 +1843,14 @@ Future<void> showNextcloudConflict(
                       }
                     }),
                   ),
-              if (canOverwriteRemote)
+              if (!canOverwriteRemote && retainMergeEditor)
+                Text(context.l10n.nextcloudReadOnly),
+              if (canOverwriteRemote || retainMergeEditor)
                 BusyMarkGroupedTextEntry(
+                  key: const ValueKey('nextcloud-conflict-merge'),
                   label: context.l10n.nextcloudMerge,
                   enabled: !busy,
+                  readOnly: !canOverwriteRemote,
                   initialValue: merged,
                   minLines: 5,
                   maxLines: 12,

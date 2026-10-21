@@ -11,6 +11,10 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText =>
+      'Nouvelle note à partir du texte conservé';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud demande une pause. Attendez avant de relancer la connexion.';
 

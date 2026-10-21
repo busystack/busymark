@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Ghi chú mới từ văn bản được giữ lại",
   "notesAccountThrottled": "Nextcloud yêu cầu tạm dừng. Hãy đợi trước khi đăng nhập lại.",
   "notesSettingsRefreshing": "Đang làm mới Notes sau khi xác nhận cài đặt",
   "notesExportOperationFailed": "Xuất thất bại trước khi công bố. Kiểm tra nguồn và đích rồi xuất lại.",

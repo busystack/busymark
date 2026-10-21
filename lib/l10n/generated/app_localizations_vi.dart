@@ -11,6 +11,9 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Ghi chú mới từ văn bản được giữ lại';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud yêu cầu tạm dừng. Hãy đợi trước khi đăng nhập lại.';
 

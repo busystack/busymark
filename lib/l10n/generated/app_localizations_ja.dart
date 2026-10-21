@@ -11,6 +11,9 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => '保持されたテキストから新規ノートを作成';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud が待機を求めています。しばらく待ってから再度ログインしてください。';
 

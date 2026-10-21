@@ -134,12 +134,19 @@ Widget _app(Widget child) => MaterialApp(
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(body: child),
 );
-Future<void> _settle(WidgetTester tester) async {
-  for (var i = 0; i < 20; i++) {
+Future<void> _settle(WidgetTester tester, {bool Function()? until}) async {
+  final elapsed = Stopwatch()..start();
+  var rounds = 0;
+  do {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 10)),
     );
     await tester.pump(const Duration(milliseconds: 20));
+    rounds++;
+  } while ((rounds < 20 || until?.call() == false) &&
+      elapsed.elapsed < const Duration(seconds: 10));
+  if (until != null) {
+    expect(until(), isTrue, reason: 'Expected operation did not settle');
   }
 }
 
@@ -405,7 +412,15 @@ void main() {
         );
         workspace.propertyEdits.edit(draft, 'unflushed property draft');
         repository.recoverGate!.complete();
-        await _settle(tester);
+        await _settle(
+          tester,
+          until: () =>
+              repository.notes.length == 3 &&
+              find
+                  .textContaining('The recovered note was saved')
+                  .evaluate()
+                  .isNotEmpty,
+        );
         expect(repository.notes, hasLength(3));
         final createdId = repository.notes
             .singleWhere((n) => n.localId != 'retained' && n.localId != 'live')

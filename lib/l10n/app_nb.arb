@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Nytt notat fra bevart tekst",
   "notesAccountThrottled": "Nextcloud ba om en pause. Vent før du starter innloggingen på nytt.",
   "notesSettingsRefreshing": "Oppdaterer Notes etter bekreftet innstillingsendring",
   "notesExportOperationFailed": "Eksporten mislyktes før publisering. Kontroller kilde og mål, og eksporter igjen.",

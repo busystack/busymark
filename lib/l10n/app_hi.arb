@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "सहेजे गए पाठ से नया नोट",
   "notesAccountThrottled": "Nextcloud ने विराम माँगा है। फिर साइन इन शुरू करने से पहले प्रतीक्षा करें।",
   "notesSettingsRefreshing": "पुष्टि किए गए सेटिंग बदलाव के बाद Notes ताज़ा हो रहा है",
   "notesExportOperationFailed": "प्रकाशन से पहले निर्यात विफल हुआ। स्रोत और गंतव्य जाँचकर फिर निर्यात करें।",

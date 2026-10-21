@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Catatan baru dari teks tersimpan",
   "notesAccountThrottled": "Nextcloud meminta jeda. Tunggu sebelum mulai masuk lagi.",
   "notesSettingsRefreshing": "Menyegarkan Notes setelah pembaruan pengaturan dikonfirmasi",
   "notesExportOperationFailed": "Ekspor gagal sebelum diterbitkan. Periksa sumber dan tujuan, lalu ekspor lagi.",

@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "ملاحظة جديدة من النص المحتفَظ به",
   "notesAccountThrottled": "طلب Nextcloud التوقف مؤقتًا. انتظر قبل بدء تسجيل الدخول مجددًا.",
   "notesSettingsRefreshing": "جارٍ تحديث Notes بعد تأكيد الإعدادات",
   "notesExportOperationFailed": "فشل التصدير قبل النشر. تحقق من المصدر والوجهة ثم أعد التصدير.",

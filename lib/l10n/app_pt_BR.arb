@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Nova nota a partir do texto preservado",
   "notesAccountThrottled": "Nextcloud pediu uma pausa. Aguarde antes de entrar novamente.",
   "notesSettingsRefreshing": "A atualizar Notes após a confirmação das configurações",
   "notesExportOperationFailed": "A exportação falhou antes da publicação. Verifique a origem e o destino e volte a exportar.",

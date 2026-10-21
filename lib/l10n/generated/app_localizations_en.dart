@@ -11,6 +11,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'New note from retained text';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud requested a pause. Wait before starting sign-in again.';
 

@@ -11,6 +11,9 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Nowa notatka z zachowanego tekstu';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud prosi o przerwę. Zaczekaj przed ponownym logowaniem.';
 

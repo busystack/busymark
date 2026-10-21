@@ -11,6 +11,9 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Nytt notat fra bevart tekst';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud ba om en pause. Vent før du starter innloggingen på nytt.';
 

@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "یادداشت جدید از متن نگه‌داری‌شده",
   "notesAccountThrottled": "Nextcloud درخواست مکث کرد. پیش از آغاز دوبارهٔ ورود منتظر بمانید.",
   "notesSettingsRefreshing": "در حال تازه‌سازی Notes پس از تأیید تنظیمات",
   "notesExportOperationFailed": "برون‌بری پیش از انتشار شکست خورد. مبدأ و مقصد را بررسی و دوباره برون‌بری کنید.",

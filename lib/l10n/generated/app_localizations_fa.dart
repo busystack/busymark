@@ -11,6 +11,9 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'یادداشت جدید از متن نگه‌داری‌شده';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud درخواست مکث کرد. پیش از آغاز دوبارهٔ ورود منتظر بمانید.';
 

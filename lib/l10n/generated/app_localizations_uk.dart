@@ -11,6 +11,9 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Нова нотатка зі збереженого тексту';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud попросив зачекати. Зачекайте перед повторним входом.';
 

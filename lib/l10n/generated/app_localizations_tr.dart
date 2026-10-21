@@ -11,6 +11,9 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Saklanan metinden yeni not';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud beklemenizi istedi. Yeniden oturum açmadan önce bekleyin.';
 

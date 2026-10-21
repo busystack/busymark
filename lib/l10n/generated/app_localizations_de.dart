@@ -11,6 +11,9 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Neue Notiz aus aufbewahrtem Text';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud hat um eine Pause gebeten. Warte, bevor du die Anmeldung erneut startest.';
 

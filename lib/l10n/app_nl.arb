@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Nieuwe notitie van bewaarde tekst",
   "notesAccountThrottled": "Nextcloud vraagt om een pauze. Wacht voordat u opnieuw aanmeldt.",
   "notesSettingsRefreshing": "Notes vernieuwen na de bevestigde instellingenwijziging",
   "notesExportOperationFailed": "De export is vóór publicatie mislukt. Controleer bron en bestemming en exporteer opnieuw.",

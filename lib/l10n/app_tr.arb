@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Saklanan metinden yeni not",
   "notesAccountThrottled": "Nextcloud beklemenizi istedi. Yeniden oturum açmadan önce bekleyin.",
   "notesSettingsRefreshing": "Onaylanan ayar güncellemesinden sonra Notes yenileniyor",
   "notesExportOperationFailed": "Dışa aktarma yayımlanmadan başarısız oldu. Kaynağı ve hedefi denetleyip yeniden deneyin.",

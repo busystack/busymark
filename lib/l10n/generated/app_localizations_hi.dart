@@ -11,6 +11,9 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'सहेजे गए पाठ से नया नोट';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud ने विराम माँगा है। फिर साइन इन शुरू करने से पहले प्रतीक्षा करें।';
 

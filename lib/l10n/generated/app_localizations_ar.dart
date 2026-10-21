@@ -11,6 +11,9 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'ملاحظة جديدة من النص المحتفَظ به';
+
+  @override
   String get notesAccountThrottled =>
       'طلب Nextcloud التوقف مؤقتًا. انتظر قبل بدء تسجيل الدخول مجددًا.';
 

@@ -11,6 +11,9 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Uus märge säilitatud tekstist';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud palus pausi. Oota enne uuesti sisselogimist.';
 

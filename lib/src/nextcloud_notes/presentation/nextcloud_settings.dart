@@ -89,9 +89,9 @@ class _NextcloudNotesSettingsState
     }
     final actionsEnabled =
         !connection.busy &&
-        !throttled &&
         !repositoryState.isLoading &&
         !repositoryState.hasError;
+    final signInEnabled = actionsEnabled && !throttled;
     final account = connection.account == null
         ? null
         : repository == null
@@ -115,14 +115,14 @@ class _NextcloudNotesSettingsState
                 autocorrect: false,
                 enableSuggestions: false,
                 onSubmitted: (_) =>
-                    actionsEnabled ? unawaited(_connect()) : null,
+                    signInEnabled ? unawaited(_connect()) : null,
               ),
               BusyMarkActionRow(
                 key: const ValueKey('nextcloud-connect'),
                 title: context.l10n.nextcloudConnect,
                 subtitle: context.l10n.nextcloudSignInBrowser,
-                enabled: actionsEnabled,
-                onTap: actionsEnabled ? () => unawaited(_connect()) : null,
+                enabled: signInEnabled,
+                onTap: signInEnabled ? () => unawaited(_connect()) : null,
               ),
             ] else ...[
               BusyMarkActionRow(
@@ -143,8 +143,8 @@ class _NextcloudNotesSettingsState
               ),
               BusyMarkActionRow(
                 title: context.l10n.nextcloudReconnect,
-                enabled: actionsEnabled,
-                onTap: !actionsEnabled
+                enabled: signInEnabled,
+                onTap: !signInEnabled
                     ? null
                     : () async {
                         if (await confirmNotesSettingsDeparture(context)) {

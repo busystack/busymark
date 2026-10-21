@@ -11,6 +11,10 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText =>
+      'Nova nota a partir do texto preservado';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud pediu uma pausa. Aguarde antes de voltar a autenticar-se.';
 
@@ -5948,6 +5952,10 @@ class AppLocalizationsPt extends AppLocalizations {
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
 class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get notesNewFromRetainedText =>
+      'Nova nota a partir do texto preservado';
 
   @override
   String get notesAccountThrottled =>

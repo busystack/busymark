@@ -11,6 +11,9 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Nieuwe notitie van bewaarde tekst';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud vraagt om een pauze. Wacht voordat u opnieuw aanmeldt.';
 

@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Новая заметка из сохранённого текста",
   "notesAccountThrottled": "Nextcloud запросил паузу. Подождите перед повторным входом.",
   "notesSettingsRefreshing": "Обновление Notes после подтверждения настроек",
   "notesExportOperationFailed": "Экспорт не опубликован. Проверьте источник и место назначения, затем повторите.",

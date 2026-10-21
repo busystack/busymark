@@ -1680,100 +1680,183 @@ void main() {
     },
   );
 
-  testWidgets(
-    'retained conflict requires review of changed remote before retry and preserves merge',
-    (tester) async {
-      const id = '723e4567-e89b-42d3-a456-426614174000';
-      final fixture = repository as _CachedNotesRepository;
-      fixture.serverNotes[8] = fixture.noteById(id)!.remote!;
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            nextcloudNotesRepositoryProvider.overrideWith(
-              (_) async => repository,
-            ),
-            localHistoryStoreProvider.overrideWithValue(
-              MemoryLocalHistoryStore(),
-            ),
-            documentSessionStoreProvider.overrideWithValue(
-              MemoryDocumentSessionStore(),
-            ),
-            documentRecoveryStoreProvider.overrideWithValue(
-              MemoryDocumentRecoveryStore(),
-            ),
-          ],
-          child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(
-              body: NextcloudNoteStatus(localId: id, unsaved: false),
+  for (final becomesReadOnly in [false, true]) {
+    testWidgets(
+      'retained conflict requires review of changed remote before retry and preserves merge: readonly=$becomesReadOnly',
+      (tester) async {
+        const id = '723e4567-e89b-42d3-a456-426614174000';
+        final fixture = repository as _CachedNotesRepository;
+        fixture.serverNotes[8] = fixture.noteById(id)!.remote!;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              nextcloudNotesRepositoryProvider.overrideWith(
+                (_) async => repository,
+              ),
+              localHistoryStoreProvider.overrideWithValue(
+                MemoryLocalHistoryStore(),
+              ),
+              documentSessionStoreProvider.overrideWithValue(
+                MemoryDocumentSessionStore(),
+              ),
+              documentRecoveryStoreProvider.overrideWithValue(
+                MemoryDocumentRecoveryStore(),
+              ),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const Scaffold(
+                body: NextcloudNoteStatus(localId: id, unsaved: false),
+              ),
             ),
           ),
-        ),
-      );
-      await settleStorage(tester);
-      await tester.tap(find.text('Compare'));
-      await settleStorage(tester);
-      final field = find.descendant(
-        of: find.byType(BusyMarkGroupedTextEntry).last,
-        matching: find.byType(TextField),
-      );
-      await tester.enterText(field, 'Distinctive manual merge against A');
-      fixture.serverNotes[8] = const NoteState(
-        id: 8,
-        etag: 'B',
-        content: 'Unreviewed remote version B',
-        title: 'Server B title',
-        category: '',
-        favorite: false,
-        readonly: false,
-        modified: 2,
-      );
-      final submit = find.widgetWithText(BusyMarkDialogButton, 'Merge');
-      await tester.runAsync(() => tester.tap(submit));
-      await settleStorage(tester);
-      expect(fixture.noteById(id)!.syncState, NoteSyncState.conflict);
-      expect(fixture.noteById(id)!.remote!.etag, 'B');
-      expect(
-        tester.widget<TextField>(field).controller!.text,
-        'Distinctive manual merge against A',
-      );
-      expect(tester.widget<BusyMarkDialogButton>(submit).onPressed, isNull);
-      expect(
-        find.textContaining('Your merge draft is retained'),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('Unreviewed remote version B', findRichText: true),
-        findsWidgets,
-      );
-      await tester.ensureVisible(
-        find.text('I have reviewed the current server version'),
-      );
-      await tester.tap(find.text('I have reviewed the current server version'));
-      await tester.pumpAndSettle();
-      expect(tester.widget<BusyMarkDialogButton>(submit).onPressed, isNull);
-      await tester.ensureVisible(
-        find.byType(BusyMarkComboRow<NotesMergeChoice?>),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(BusyMarkComboRow<NotesMergeChoice?>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Take remote: Server B title'));
-      await tester.pumpAndSettle();
-      await tester.runAsync(() => tester.tap(submit));
-      await settleStorage(tester);
-      expect(find.byType(BusyMarkDialogShell), findsNothing);
-      expect(
-        repository.noteById(id)!.content,
-        'Distinctive manual merge against A',
-      );
-      expect(repository.noteById(id)!.base!.etag, 'B');
-      expect(repository.noteById(id)!.title, 'Server B title');
-      await tester.pumpWidget(const SizedBox.shrink());
-      await closeFixture(tester);
-    },
-  );
+        );
+        await settleStorage(tester);
+        await tester.tap(find.text('Compare'));
+        await settleStorage(tester);
+        final field = find.descendant(
+          of: find.byWidgetPredicate(
+            (w) => w is BusyMarkGroupedTextEntry && w.label == 'Merge',
+          ),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(field, 'Distinctive manual merge against A');
+        fixture.serverNotes[8] = NoteState(
+          id: 8,
+          etag: 'B',
+          content: 'Unreviewed remote version B',
+          title: 'Server B title',
+          category: '',
+          favorite: false,
+          readonly: becomesReadOnly,
+          modified: 2,
+        );
+        final submit = find.widgetWithText(BusyMarkDialogButton, 'Merge');
+        await tester.runAsync(() => tester.tap(submit));
+        await settleStorage(tester);
+        expect(fixture.noteById(id)!.syncState, NoteSyncState.conflict);
+        expect(fixture.noteById(id)!.remote!.etag, 'B');
+        expect(
+          tester.widget<TextField>(field).controller!.text,
+          'Distinctive manual merge against A',
+        );
+        if (becomesReadOnly) {
+          expect(submit, findsNothing);
+        } else {
+          expect(tester.widget<BusyMarkDialogButton>(submit).onPressed, isNull);
+        }
+        expect(
+          find.textContaining('Your merge draft is retained'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            'Unreviewed remote version B',
+            findRichText: true,
+          ),
+          findsWidgets,
+        );
+        await tester.ensureVisible(
+          find.text('I have reviewed the current server version'),
+        );
+        await tester.tap(
+          find.text('I have reviewed the current server version'),
+        );
+        await tester.pumpAndSettle();
+        if (becomesReadOnly) {
+          expect(tester.widget<TextField>(field).readOnly, isTrue);
+          expect(tester.widget<TextField>(field).enabled, isTrue);
+          expect(
+            find.widgetWithText(BusyMarkDialogButton, 'Merge'),
+            findsNothing,
+          );
+          expect(
+            find.widgetWithText(BusyMarkDialogButton, 'Keep Mine'),
+            findsNothing,
+          );
+          String? copied;
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            (call) async {
+              if (call.method == 'Clipboard.setData') {
+                copied = (call.arguments as Map)['text'] as String;
+              }
+              return null;
+            },
+          );
+          addTearDown(
+            () => tester.binding.defaultBinaryMessenger
+                .setMockMethodCallHandler(SystemChannels.platform, null),
+          );
+          await tester.ensureVisible(field);
+          await tester.tap(field);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          expect(copied, 'Distinctive manual merge against A');
+          final retained = repository.noteById(id)!.content;
+          final priorIds = repository.notes.map((n) => n.localId).toSet();
+          await tester.tap(
+            find.widgetWithText(
+              BusyMarkDialogButton,
+              'New note from retained text',
+            ),
+          );
+          await settleStorage(tester);
+          final recovered = repository.notes.singleWhere(
+            (n) => !priorIds.contains(n.localId),
+          );
+          final reference = RegExp(
+            r'busymark-attachment:[^)]+',
+          ).firstMatch(recovered.content)!.group(0)!;
+          expect(
+            reference,
+            startsWith('busymark-attachment:$accountId:${recovered.localId}:'),
+          );
+          expect(
+            recovered.content,
+            retained.replaceAll('busymark-attachment:uncertain', reference),
+          );
+          expect(recovered.content, isNot(copied));
+          expect(repository.noteById(id)!.content, retained);
+          expect(
+            fixture.serverRequests.every((r) => r.method == 'GET'),
+            isTrue,
+          );
+          expect(
+            fixture.serverNotes[8]!.content,
+            'Unreviewed remote version B',
+          );
+          await tester.pumpWidget(const SizedBox.shrink());
+          await closeFixture(tester);
+          return;
+        }
+        expect(tester.widget<BusyMarkDialogButton>(submit).onPressed, isNull);
+        await tester.ensureVisible(
+          find.byType(BusyMarkComboRow<NotesMergeChoice?>),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(BusyMarkComboRow<NotesMergeChoice?>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Take remote: Server B title'));
+        await tester.pumpAndSettle();
+        await tester.runAsync(() => tester.tap(submit));
+        await settleStorage(tester);
+        expect(find.byType(BusyMarkDialogShell), findsNothing);
+        expect(
+          repository.noteById(id)!.content,
+          'Distinctive manual merge against A',
+        );
+        expect(repository.noteById(id)!.base!.etag, 'B');
+        expect(repository.noteById(id)!.title, 'Server B title');
+        await tester.pumpWidget(const SizedBox.shrink());
+        await closeFixture(tester);
+      },
+    );
+  }
 
   for (final adopting in [true, false]) {
     testWidgets(
@@ -2274,7 +2357,7 @@ void main() {
       );
       await tester.tap(find.text('Resolve'));
       await settleStorage(tester);
-      expect(find.text('New note'), findsOneWidget);
+      expect(find.text('New note from retained text'), findsOneWidget);
       await tester.tap(find.text('Discard'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 250));
@@ -2353,7 +2436,7 @@ void main() {
       'Use previous edit',
       'Keep Mine',
       'Merge',
-      'New note',
+      'New note from retained text',
     ]) {
       testWidgets(
         'local metadata review applies the displayed choice: draft=$draft $choice',
@@ -2440,7 +2523,7 @@ void main() {
             );
           });
           final completion = Stopwatch()..start();
-          bool finished() => choice == 'New note'
+          bool finished() => choice == 'New note from retained text'
               ? repository.notes.any((n) => n.localId != id && n.title == 'C')
               : repository.noteById(id)!.metadataConflict == null;
           while (!finished() &&
@@ -2452,14 +2535,16 @@ void main() {
           }
           await settleStorage(tester);
           expect(finished(), isTrue);
-          final selected = choice == 'New note'
+          final selected = choice == 'New note from retained text'
               ? repository.notes.singleWhere(
                   (n) => n.localId != id && n.title == 'C',
                 )
               : repository.noteById(id)!;
           expect(
             selected.title,
-            choice == 'Keep Mine' || choice == 'New note' ? 'C' : 'B',
+            choice == 'Keep Mine' || choice == 'New note from retained text'
+                ? 'C'
+                : 'B',
           );
           expect(tester.takeException(), isNull);
           final container = ProviderScope.containerOf(
@@ -2726,7 +2811,7 @@ void main() {
         await settleStorage(tester);
         await tester.tap(find.text('Compare'));
         await settleStorage(tester);
-        expect(find.text('New note'), findsOneWidget);
+        expect(find.text('New note from retained text'), findsOneWidget);
         expect(find.text('Merge'), findsNothing);
         expect(find.text('Keep Mine'), findsNothing);
         await tester.tap(find.text('Cancel'));
@@ -2769,35 +2854,40 @@ class _CachedNotesRepository extends NotesRepository {
   _CachedNotesRepository({
     required NotesStore store,
     Map<int, NoteState>? serverNotes,
-  }) : this._(store: store, serverNotes: serverNotes ?? {});
-  _CachedNotesRepository._({required super.store, required this.serverNotes})
-    : super(
-        clientForAccount: (account) async => NotesApiClient(
-          client: MockClient((request) async {
-            if (request.url.path.contains('/attachment/')) {
-              return http.Response.bytes([1, 2, 3], 200);
-            }
-            if (request.url.path.endsWith('/settings')) {
-              return http.Response(
-                jsonEncode({'notesPath': 'Notes', 'fileSuffix': '.md'}),
-                200,
-              );
-            }
-            final id = int.parse(request.url.pathSegments.last);
-            if (serverNotes[id] case final remote?) {
-              return http.Response(jsonEncode(remote.toJson()), 200);
-            }
-            final candidate = (await store.notes()).firstWhere(
-              (n) => n.serverId == id,
-            );
-            return http.Response(jsonEncode(candidate.base!.toJson()), 200);
-          }),
-          account: account,
-          appPassword: 'fixture',
-        ),
-      );
+  }) : this._(store: store, serverNotes: serverNotes ?? {}, serverRequests: []);
+  _CachedNotesRepository._({
+    required super.store,
+    required this.serverNotes,
+    required this.serverRequests,
+  }) : super(
+         clientForAccount: (account) async => NotesApiClient(
+           client: MockClient((request) async {
+             serverRequests.add(request);
+             if (request.url.path.contains('/attachment/')) {
+               return http.Response.bytes([1, 2, 3], 200);
+             }
+             if (request.url.path.endsWith('/settings')) {
+               return http.Response(
+                 jsonEncode({'notesPath': 'Notes', 'fileSuffix': '.md'}),
+                 200,
+               );
+             }
+             final id = int.parse(request.url.pathSegments.last);
+             if (serverNotes[id] case final remote?) {
+               return http.Response(jsonEncode(remote.toJson()), 200);
+             }
+             final candidate = (await store.notes()).firstWhere(
+               (n) => n.serverId == id,
+             );
+             return http.Response(jsonEncode(candidate.base!.toJson()), 200);
+           }),
+           account: account,
+           appPassword: 'fixture',
+         ),
+       );
 
   final Map<int, NoteState> serverNotes;
+  final List<http.Request> serverRequests;
 
   bool failMetadata = false;
   @override

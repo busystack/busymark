@@ -139,6 +139,12 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// No description provided for @notesNewFromRetainedText.
+  ///
+  /// In en, this message translates to:
+  /// **'New note from retained text'**
+  String get notesNewFromRetainedText;
+
   /// No description provided for @notesAccountThrottled.
   ///
   /// In en, this message translates to:

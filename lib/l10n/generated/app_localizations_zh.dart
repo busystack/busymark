@@ -11,6 +11,9 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => '从保留的文本新建笔记';
+
+  @override
   String get notesAccountThrottled => 'Nextcloud 要求暂停。请等待后再重新登录。';
 
   @override
@@ -5601,6 +5604,9 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in China (`zh_CN`).
 class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
+
+  @override
+  String get notesNewFromRetainedText => '从保留的文本新建笔记';
 
   @override
   String get notesAccountThrottled => 'Nextcloud 要求暂停。请等待后再重新登录。';

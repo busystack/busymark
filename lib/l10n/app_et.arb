@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "Uus märge säilitatud tekstist",
   "notesAccountThrottled": "Nextcloud palus pausi. Oota enne uuesti sisselogimist.",
   "notesSettingsRefreshing": "Notes värskendamine pärast seadete kinnitamist",
   "notesExportOperationFailed": "Eksport nurjus enne avaldamist. Kontrolli allikat ja sihtkohta ning ekspordi uuesti.",

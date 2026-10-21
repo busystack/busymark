@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "保持されたテキストから新規ノートを作成",
   "notesAccountThrottled": "Nextcloud が待機を求めています。しばらく待ってから再度ログインしてください。",
   "notesSettingsRefreshing": "確認済みの設定に基づいて Notes を更新中",
   "notesExportOperationFailed": "公開前にエクスポートが失敗しました。元と保存先を確認して再実行してください。",

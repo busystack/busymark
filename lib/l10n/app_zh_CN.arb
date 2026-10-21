@@ -1,4 +1,5 @@
 {
+  "notesNewFromRetainedText": "从保留的文本新建笔记",
   "notesAccountThrottled": "Nextcloud 要求暂停。请等待后再重新登录。",
   "notesSettingsRefreshing": "正在按已确认的设置更新笔记",
   "notesExportOperationFailed": "导出在发布前失败。请检查来源和目标后重新导出。",

@@ -11,6 +11,9 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => '보관된 텍스트로 새 노트 만들기';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud가 일시 중지를 요청했습니다. 기다린 뒤 다시 로그인하세요.';
 

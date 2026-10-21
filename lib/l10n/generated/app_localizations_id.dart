@@ -11,6 +11,9 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Catatan baru dari teks tersimpan';
+
+  @override
   String get notesAccountThrottled =>
       'Nextcloud meminta jeda. Tunggu sebelum mulai masuk lagi.';
 
