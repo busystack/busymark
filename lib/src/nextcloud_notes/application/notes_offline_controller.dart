@@ -69,6 +69,7 @@ class NotesOfflineController {
     String target, {
     bool required = true,
     bool paused = false,
+    bool waitForDownloads = true,
   }) async {
     await repository.setOfflineRequirement(
       accountId,
@@ -96,13 +97,19 @@ class NotesOfflineController {
         failures.removeWhere((key, _) => key.startsWith('${note.localId}:'));
       }
     }
-    await reconcile();
+    _emit();
+    final job = reconcile();
+    if (waitForDownloads) {
+      await job;
+    } else {
+      unawaited(job);
+    }
   }
 
   Future<void> cancelNote(String id) =>
-      setRequirement('pause', id, paused: true);
+      setRequirement('pause', id, paused: true, waitForDownloads: false);
 
-  Future<void> retry([String? noteId]) async {
+  Future<void> retry([String? noteId, bool waitForDownloads = true]) async {
     for (final r in requirements.toList()) {
       if (r['kind'] == 'pause' && (noteId == null || r['target'] == noteId)) {
         await repository.setOfflineRequirement(
@@ -121,9 +128,21 @@ class NotesOfflineController {
       }
     }
     requirements = await repository.store.offlineRequirements(accountId);
-    _attempted.clear();
-    failures.clear();
-    await reconcile();
+    if (noteId == null) {
+      _attempted.clear();
+      failures.clear();
+    } else {
+      _attempted.removeWhere((key) => key.startsWith('$noteId:'));
+      failures.removeWhere((key, _) => key.startsWith('$noteId:'));
+    }
+    _generation++;
+    _emit();
+    final job = reconcile();
+    if (waitForDownloads) {
+      await job;
+    } else {
+      unawaited(job);
+    }
   }
 
   void _schedule() {
@@ -181,7 +200,15 @@ class NotesOfflineController {
           (n) => n.accountId == accountId && retained(n) && !isNotesRecovery(n),
         )) {
           if (_disposed || repository.accountById(accountId) == null) return;
-          var status = await inspect(note);
+          NotesOfflineStatus status;
+          try {
+            status = await inspect(note);
+            failures.remove('${note.localId}:inspection');
+          } on Object catch (error) {
+            failures['${note.localId}:inspection'] = error.toString();
+            _emit();
+            continue;
+          }
           if (_disposed) return;
           statuses[note.localId] = status;
           _emit();
@@ -200,15 +227,19 @@ class NotesOfflineController {
                 );
                 if (path == null) failures[key] = 'Attachment unavailable';
               } on Object catch (error) {
-                failures[key] = error.toString();
+                if (_active(note)) failures[key] = error.toString();
               }
               if (_disposed || repository.accountById(accountId) == null) {
                 return;
               }
               final current = repository.noteById(note.localId);
               if (current != null) {
-                status = await inspect(current);
-                statuses[note.localId] = status;
+                try {
+                  status = await inspect(current);
+                  statuses[note.localId] = status;
+                } on Object catch (error) {
+                  failures['${note.localId}:inspection'] = error.toString();
+                }
                 _emit();
               }
             }

@@ -13,6 +13,7 @@ import '../../workspace/workspace_safety.dart';
 import '../application/nextcloud_connection.dart';
 import '../application/notes_settings_controller.dart';
 import 'notes_sidebar.dart' show nextcloudNotesChangesProvider;
+import 'notes_messages.dart';
 
 class NextcloudNotesSettings extends ConsumerStatefulWidget {
   const NextcloudNotesSettings({super.key});
@@ -26,6 +27,9 @@ class _NextcloudNotesSettingsState
   final _server = TextEditingController();
   late final WelcomeNotesActionController _pendingWelcome;
   bool _returningToWelcome = false;
+  bool _localSaveFailed = false;
+  Timer? _retryTimer;
+  DateTime? _retryDeadline;
   @override
   void initState() {
     super.initState();
@@ -34,6 +38,7 @@ class _NextcloudNotesSettingsState
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
     if (!_returningToWelcome) Future<void>.microtask(_pendingWelcome.clear);
     _server.dispose();
     super.dispose();
@@ -56,6 +61,7 @@ class _NextcloudNotesSettingsState
   }
 
   Future<void> _openAccount(String accountId) async {
+    if (!await confirmNotesSettingsDeparture(context) || !mounted) return;
     if (!await confirmSafeToContinue(context, ref) || !mounted) return;
     final opened = await ref
         .read(workspaceControllerProvider.notifier)
@@ -68,7 +74,24 @@ class _NextcloudNotesSettingsState
     final connection = ref.watch(nextcloudConnectionProvider);
     final controller = ref.read(nextcloudConnectionProvider.notifier);
     ref.watch(nextcloudNotesChangesProvider);
-    final repository = ref.watch(nextcloudNotesRepositoryProvider).value;
+    final repositoryState = ref.watch(nextcloudNotesRepositoryProvider);
+    final repository = repositoryState.value;
+    final deadline = connection.retryNotBefore;
+    final throttled = deadline?.isAfter(DateTime.now()) ?? false;
+    if (_retryDeadline != deadline) {
+      _retryDeadline = deadline;
+      _retryTimer?.cancel();
+      if (throttled) {
+        _retryTimer = Timer(deadline!.difference(DateTime.now()), () {
+          if (mounted) setState(() {});
+        });
+      }
+    }
+    final actionsEnabled =
+        !connection.busy &&
+        !repositoryState.isLoading &&
+        !repositoryState.hasError;
+    final signInEnabled = actionsEnabled && !throttled;
     final account = connection.account == null
         ? null
         : repository == null
@@ -86,54 +109,84 @@ class _NextcloudNotesSettingsState
                 key: const ValueKey('nextcloud-server'),
                 label: context.l10n.nextcloudServer,
                 controller: _server,
-                enabled: !connection.busy,
+                enabled: actionsEnabled,
                 keyboardType: TextInputType.url,
+                textDirection: TextDirection.ltr,
                 autocorrect: false,
                 enableSuggestions: false,
                 onSubmitted: (_) =>
-                    connection.busy ? null : unawaited(_connect()),
+                    signInEnabled ? unawaited(_connect()) : null,
               ),
               BusyMarkActionRow(
                 key: const ValueKey('nextcloud-connect'),
                 title: context.l10n.nextcloudConnect,
                 subtitle: context.l10n.nextcloudSignInBrowser,
-                onTap: connection.busy ? null : () => unawaited(_connect()),
+                enabled: signInEnabled,
+                onTap: signInEnabled ? () => unawaited(_connect()) : null,
               ),
             ] else ...[
               BusyMarkActionRow(
                 title: account.loginName,
-                subtitle: account.server.toString(),
-                trailing: Text(
-                  '${context.l10n.nextcloudNotes} ${account.appVersion} · ${account.apiVersion}',
+                subtitleWidget: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(account.server.toString()),
                 ),
+                tooltip:
+                    '${context.l10n.nextcloudNotes} ${account.appVersion} · ${account.apiVersion}',
               ),
               BusyMarkActionRow(
                 title: context.l10n.open,
-                onTap: connection.busy
+                enabled: actionsEnabled,
+                onTap: !actionsEnabled
                     ? null
                     : () => unawaited(_openAccount(account.id)),
               ),
               BusyMarkActionRow(
                 title: context.l10n.nextcloudReconnect,
-                onTap: connection.busy
+                enabled: signInEnabled,
+                onTap: !signInEnabled
                     ? null
-                    : () => unawaited(controller.reconnect()),
+                    : () async {
+                        if (await confirmNotesSettingsDeparture(context)) {
+                          await controller.reconnect();
+                        }
+                      },
               ),
               BusyMarkActionRow(
                 title: context.l10n.nextcloudDisconnect,
-                onTap: connection.busy ? null : () => unawaited(_disconnect()),
+                destructive: true,
+                enabled: actionsEnabled,
+                onTap: actionsEnabled ? () => unawaited(_disconnect()) : null,
               ),
             ],
             if (connection.busy)
-              BusyMarkActionRow(
-                title: context.l10n.nextcloudSignInBrowser,
-                trailing: const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+              Semantics(
+                liveRegion: true,
+                child: BusyMarkActionRow(
+                  title: switch (connection.phase) {
+                    NextcloudConnectionPhase.starting =>
+                      context.l10n.notesStartingConnection,
+                    NextcloudConnectionPhase.awaitingBrowser =>
+                      context.l10n.nextcloudSignInBrowser,
+                    NextcloudConnectionPhase.verifying =>
+                      context.l10n.notesVerifyingConnection,
+                    NextcloudConnectionPhase.cancelling =>
+                      context.l10n.notesCancellingConnection,
+                    NextcloudConnectionPhase.removing =>
+                      context.l10n.notesRemovingConnection,
+                    _ => context.l10n.nextcloudNotes,
+                  },
+                  trailing: const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               ),
-            if (connection.phase == NextcloudConnectionPhase.awaitingBrowser)
+            if ({
+              NextcloudConnectionPhase.starting,
+              NextcloudConnectionPhase.awaitingBrowser,
+            }.contains(connection.phase))
               BusyMarkActionRow(
                 title: context.l10n.cancel,
                 onTap: () {
@@ -143,24 +196,57 @@ class _NextcloudNotesSettingsState
               ),
           ],
         ),
+        if (repositoryState.isLoading && !connection.busy)
+          LinearProgressIndicator(semanticsLabel: context.l10n.nextcloudNotes),
+        if (repositoryState.hasError) ...[
+          BusyMarkStatusBox(
+            message: context.l10n.notesLoadFailed,
+            kind: BusyMarkStatusKind.error,
+          ),
+          BusyMarkActionRow(
+            title: context.l10n.visualizationRetry,
+            enabled: !connection.busy && !repositoryState.isLoading,
+            onTap: connection.busy || repositoryState.isLoading
+                ? null
+                : () {
+                    ref.invalidate(nextcloudNotesRepositoryProvider);
+                    unawaited(controller.reload());
+                  },
+          ),
+        ],
         if (account != null) ...[
           _ServerNotesSettings(accountId: account.id),
           if (repository?.accountError(account.id) case final error?)
             BusyMarkStatusBox(
-              message: error.message,
+              message: localizeNotesFailure(context, error),
               kind: BusyMarkStatusKind.error,
             ),
         ],
-        if (connection.error != null)
+        if (_localSaveFailed)
           BusyMarkStatusBox(
-            message: connection.error!,
+            message: context.l10n.notesBuffersNotSaved,
             kind: BusyMarkStatusKind.error,
           ),
+        if (connection.error != null &&
+            !repositoryState.hasError &&
+            !repositoryState.isLoading)
+          BusyMarkStatusBox(
+            message: connection.removedWithWarning
+                ? context.l10n.notesRemovedWarning
+                : connection.removalFailed
+                ? context.l10n.notesLocalRemovalFailed
+                : localizeNotesConnectionFailure(context, connection.failure),
+            kind: connection.removedWithWarning
+                ? BusyMarkStatusKind.warning
+                : BusyMarkStatusKind.error,
+          ),
+        if (throttled) Text(notesLocalDate(context, deadline!)),
       ],
     );
   }
 
   Future<void> _disconnect() async {
+    if (!await confirmNotesSettingsDeparture(context) || !mounted) return;
     final confirmed = await showBusyMarkModalDialog<bool>(
       context,
       builder: (context) => BusyMarkDialogShell(
@@ -183,7 +269,10 @@ class _NextcloudNotesSettingsState
       final saved = await ref
           .read(workspaceControllerProvider.notifier)
           .saveAll();
-      if (!saved.succeeded) return;
+      if (!saved.succeeded) {
+        if (mounted) setState(() => _localSaveFailed = true);
+        return;
+      }
       if (!mounted) return;
       final accountId = ref.read(nextcloudConnectionProvider).account?.id;
       final removed = await ref
@@ -267,6 +356,7 @@ class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
             BusyMarkGroupedTextEntry(
               key: const ValueKey('notes-settings-suffix'),
               label: context.l10n.nextcloudFileSuffix,
+              textDirection: TextDirection.ltr,
               controller: _suffix,
               enabled: draft != null && !settings.busy,
               onChanged: (value) => controller.edit(fileSuffix: value),
@@ -274,6 +364,7 @@ class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
           ],
         ),
         Text(context.l10n.nextcloudServerSettingsExplanation),
+        Text(context.l10n.notesPathRelative),
         if (settings.busy) ...[
           Semantics(
             liveRegion: true,
@@ -289,10 +380,27 @@ class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
                 : context.l10n.nextcloudSettingsSaving,
           ),
         ],
-        if (settings.error != null)
+        if (settings.failure != null || settings.error != null)
           BusyMarkStatusBox(
-            message: settings.error!,
+            message: settings.failure == NotesSettingsFailure.buffersNotSaved
+                ? context.l10n.notesBuffersNotSaved
+                : settings.failure == NotesSettingsFailure.stale
+                ? context.l10n.notesSettingsStale
+                : settings.failure == NotesSettingsFailure.pendingNotes
+                ? context.l10n.notesSettingsPendingNotes
+                : settings.failure == NotesSettingsFailure.pendingAttachments
+                ? context.l10n.notesSettingsPendingAttachments
+                : localizeNotesFailure(context, settings.cause),
             kind: BusyMarkStatusKind.error,
+          ),
+        if (settings.refreshFailed)
+          BusyMarkStatusBox(
+            message: context.l10n.notesSettingsRefreshFailed,
+            kind: BusyMarkStatusKind.warning,
+          ),
+        if (settings.refreshing)
+          LinearProgressIndicator(
+            semanticsLabel: context.l10n.notesSettingsRefreshing,
           ),
         if (settings.phase == NotesSettingsPhase.saved)
           Text(
@@ -301,7 +409,9 @@ class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
                 : context.l10n.nextcloudSettingsSaved,
           ),
         if (settings.dirty) Text(context.l10n.closeUnsavedChangesTitle),
-        Row(
+        Wrap(
+          spacing: BusyMarkSpacing.sm,
+          runSpacing: BusyMarkSpacing.sm,
           children: [
             BusyMarkPushButton.standard(
               key: const ValueKey('notes-settings-save'),
@@ -325,14 +435,92 @@ class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
               child: Text(context.l10n.cancel),
             ),
             BusyMarkPushButton.standard(
-              onPressed: !settings.busy && !settings.dirty
-                  ? () => unawaited(controller.load(widget.accountId))
+              onPressed: !settings.busy
+                  ? () => unawaited(
+                      reloadNotesSettings(context, widget.accountId),
+                    )
                   : null,
-              child: Text(context.l10n.visualizationRetry),
+              child: Text(context.l10n.notesSettingsReload),
             ),
           ],
         ),
       ],
     );
   }
+}
+
+/// Every settings departure uses the same decision, including native Back and
+/// programmatic route exits. Keep the provider alive until the decision settles.
+Future<bool> confirmNotesSettingsDeparture(BuildContext context) async {
+  final container = ProviderScope.containerOf(context, listen: false);
+  if (!container.exists(notesSettingsProvider)) return true;
+  final settings = container.read(notesSettingsProvider);
+  if (settings.phase == NotesSettingsPhase.saving) return false;
+  if (!settings.dirty) return true;
+  final decision = await showBusyMarkModalDialog<String>(
+    context,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.notesSettingsLeave,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.discard,
+          destructive: true,
+          onPressed: () => Navigator.pop(context, 'discard'),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.save,
+          onPressed: () => Navigator.pop(context, 'save'),
+        ),
+      ],
+      children: [Text(context.l10n.notesSettingsLeaveHelp)],
+    ),
+  );
+  if (!context.mounted) return false;
+  final controller = container.read(notesSettingsProvider.notifier);
+  if (decision == 'discard') {
+    controller.cancel();
+    return true;
+  }
+  if (decision != 'save') return false;
+  final saved = await controller.save(
+    preserveBuffers: () async =>
+        (await container.read(workspaceControllerProvider.notifier).saveAll())
+            .succeeded,
+  );
+  return saved &&
+      context.mounted &&
+      !container.read(notesSettingsProvider).dirty &&
+      !container.read(notesSettingsProvider).busy;
+}
+
+Future<void> reloadNotesSettings(BuildContext context, String accountId) async {
+  final container = ProviderScope.containerOf(context, listen: false);
+  if (container.read(notesSettingsProvider).dirty) {
+    final discard = await showBusyMarkModalDialog<bool>(
+      context,
+      builder: (context) => BusyMarkDialogShell(
+        title: context.l10n.notesSettingsReload,
+        actions: [
+          BusyMarkDialogButton(
+            label: context.l10n.cancel,
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          BusyMarkDialogButton(
+            label: context.l10n.discard,
+            destructive: true,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+        children: [Text(context.l10n.notesSettingsReloadHelp)],
+      ),
+    );
+    if (discard != true || !context.mounted) return;
+  }
+  await container
+      .read(notesSettingsProvider.notifier)
+      .load(accountId, discard: true);
 }

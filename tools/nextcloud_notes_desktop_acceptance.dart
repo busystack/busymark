@@ -973,7 +973,14 @@ class _HarnessState extends ConsumerState<_Harness> {
                 onProgress: progress,
               );
           check(exported.complete, 'workspacePortableExportComplete');
-          return [exported.path];
+          return NotesTransferResult(
+            phase: exported.complete
+                ? NotesTransferPhase.completed
+                : NotesTransferPhase.partial,
+            created: exported.count,
+            destination: exported.path,
+            omissions: exported.omissions,
+          );
         },
       ),
     );
@@ -1036,7 +1043,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     Element? element;
     await wait(() {
       void visit(Element e) {
-        if (e.widget.runtimeType.toString() == '_SidebarTreeRow' &&
+        if (e.widget is BusyMarkSidebarTreeRow &&
             (e.widget as dynamic).title.toString().contains(name)) {
           element = e;
         }

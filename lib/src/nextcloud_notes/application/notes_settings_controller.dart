@@ -5,6 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/notes_models.dart';
 import 'nextcloud_connection.dart';
 
+enum NotesSettingsFailure {
+  buffersNotSaved,
+  operation,
+  stale,
+  pendingNotes,
+  pendingAttachments,
+}
+
 enum NotesSettingsPhase { loading, ready, saving, saved, failed }
 
 class NotesSettingsState {
@@ -15,6 +23,10 @@ class NotesSettingsState {
     this.phase = NotesSettingsPhase.loading,
     this.error,
     this.normalized = false,
+    this.failure,
+    this.refreshFailed = false,
+    this.cause,
+    this.refreshing = false,
   });
   final String? accountId;
   final NotesSettings? original;
@@ -22,6 +34,10 @@ class NotesSettingsState {
   final NotesSettingsPhase phase;
   final String? error;
   final bool normalized;
+  final NotesSettingsFailure? failure;
+  final bool refreshFailed;
+  final Object? cause;
+  final bool refreshing;
   Map<String, String> get patch => {
     if (draft != null &&
         original != null &&
@@ -61,7 +77,12 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
       return;
     }
     final generation = ++_generation;
-    state = NotesSettingsState(accountId: id);
+    final previous = state;
+    state = NotesSettingsState(
+      accountId: id,
+      original: previous.original,
+      draft: previous.draft,
+    );
     try {
       final repository = await ref.read(
         nextcloudNotesRepositoryProvider.future,
@@ -84,12 +105,16 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
         draft: settings,
         phase: NotesSettingsPhase.ready,
       );
-    } on NotesException catch (error) {
+    } on Object catch (error) {
       if (_disposed || generation != _generation) return;
       state = NotesSettingsState(
         accountId: id,
+        original: previous.original,
+        draft: previous.draft,
         phase: NotesSettingsPhase.failed,
-        error: error.message,
+        error: error.toString(),
+        cause: error,
+        failure: NotesSettingsFailure.operation,
       );
     }
   }
@@ -105,6 +130,7 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
         fileSuffix: fileSuffix ?? draft.fileSuffix,
       ),
       phase: NotesSettingsPhase.ready,
+      refreshing: state.refreshing,
     );
   }
 
@@ -141,6 +167,7 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
             original: original,
             draft: draft,
             phase: NotesSettingsPhase.failed,
+            failure: NotesSettingsFailure.buffersNotSaved,
           );
         }
         return false;
@@ -160,19 +187,53 @@ class NotesSettingsController extends Notifier<NotesSettingsState> {
         original: result,
         draft: result,
         phase: NotesSettingsPhase.saved,
+        refreshing: true,
         normalized: patch.entries.any((e) => result.toJson()[e.key] != e.value),
       );
       // Checkpoint invalidation is durable before this authoritative read.
-      await repository.synchronize(id, allowWrites: false);
-      return true;
-    } on NotesException catch (error) {
+      var refreshFailed = false;
+      try {
+        await repository.synchronize(id, allowWrites: false);
+      } on Object {
+        refreshFailed = true;
+      }
+      if (_disposed || generation != _generation) return false;
+      // The acknowledged response is already the baseline. Refresh owns only
+      // its progress/warning, never input entered since that acknowledgement.
+      state = NotesSettingsState(
+        accountId: state.accountId,
+        original: state.original,
+        draft: state.draft,
+        phase: state.phase,
+        normalized: state.normalized,
+        error: state.error,
+        cause: state.cause,
+        failure: state.failure,
+        refreshFailed: refreshFailed,
+      );
+      return state.accountId == id && !state.dirty;
+    } on Object catch (error) {
       if (!_disposed && generation == _generation) {
         state = NotesSettingsState(
           accountId: id,
           original: original,
           draft: draft,
           phase: NotesSettingsPhase.failed,
-          error: error.message,
+          error: error.toString(),
+          cause: error,
+          failure: switch (error) {
+            NotesSettingsConflict(reason: NotesSettingsConflictReason.stale) =>
+              NotesSettingsFailure.stale,
+            NotesSettingsConflict(
+              reason: NotesSettingsConflictReason.pendingNotes,
+            ) =>
+              NotesSettingsFailure.pendingNotes,
+            NotesSettingsConflict(
+              reason: NotesSettingsConflictReason.pendingAttachments,
+            ) =>
+              NotesSettingsFailure.pendingAttachments,
+            _ => NotesSettingsFailure.operation,
+          },
         );
       }
       return false;

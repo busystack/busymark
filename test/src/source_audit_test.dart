@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,14 +54,28 @@ void main() {
     );
     // Browser authentication is scoped to the dedicated Notes integration.
     // Keep the removed-domain ban everywhere else, including other l10n keys.
+    final notesAccountMessages =
+        (jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+                as Map<String, dynamic>)
+            .entries
+            .where((e) => e.key.startsWith('notesAccount') && e.value is String)
+            .map((e) => (e.value as String).toLowerCase());
     for (final file in files) {
       if (file.path.startsWith('lib/src/nextcloud_notes/')) continue;
+      if (file.path == 'test/src/nextcloud_notes_account_failures_test.dart') {
+        continue;
+      }
       var source = file.readAsStringSync().toLowerCase();
       if ({
         'lib/l10n/app_en.arb',
         'lib/l10n/generated/app_localizations.dart',
         'lib/l10n/generated/app_localizations_en.dart',
       }.contains(file.path)) {
+        // Permit only Notes account prose in its catalogs and generated docs.
+        // Other translations and application surfaces retain the same ban.
+        for (final message in notesAccountMessages) {
+          source = source.replaceAll(message, '');
+        }
         source = source.replaceAll(
           'complete sign'
               '-in in your browser.',
@@ -1397,7 +1412,13 @@ void main() {
       r'bool _canPasteTocTreeEntry',
     ).firstMatch(workspace)!.group(0)!;
 
-    expect(workspace, contains('class _SidebarTreeRow'));
+    final shared = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final notes = File(
+      'lib/src/nextcloud_notes/presentation/notes_sidebar.dart',
+    ).readAsStringSync();
+    expect(shared, contains('class BusyMarkSidebarTreeRow'));
+    expect(workspace, contains('BusyMarkSidebarTreeRow('));
+    expect(notes, contains('BusyMarkSidebarTreeRow('));
     expect(workspace, contains('class _FileTreeNode'));
     expect(workspace, contains('_buildFileTree'));
     expect(workspace, contains('_visibleFileTreeEntries'));
@@ -1411,15 +1432,15 @@ void main() {
     expect(workspace, contains('_buildOutlineTree'));
     expect(workspace, contains('_visibleOutlineTreeEntries'));
     expect(workspace, contains('onToggle: hasChildren ? toggle : null'));
-    expect(workspace, contains('AnimatedRotation'));
-    expect(workspace, contains('BusyMarkGlyphs.collapsedTreeArrowFor('));
+    expect(shared, contains('AnimatedRotation'));
+    expect(shared, contains('BusyMarkGlyphs.collapsedTreeArrowFor('));
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
     expect(workspace, contains('_FileTreeVcsStatusColors.fromSnapshot'));
     expect(workspace, contains('vcsColor: vcsStatusColors.colorForNode(node)'));
     expect(
-      workspace,
+      shared,
       contains('busyMarkVcsFileStatusColor(context, widget.vcsColor!)'),
     );
     expect(workspace, contains('busyMarkVcsFileColorForGitStatus(status)'));
@@ -1427,7 +1448,7 @@ void main() {
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
-    expect(workspace, contains('onSecondaryTapUp'));
+    expect(shared, contains('onSecondaryTapUp'));
     expect(workspace, contains('onMenuRequested'));
     expect(workspace, contains('_ShowSelectedSidebarTreeMenuIntent'));
     expect(workspace, contains('LogicalKeyboardKey.contextMenu'));
@@ -1499,7 +1520,7 @@ void main() {
     );
     expect(tocHeader, contains('class _WritersideInstanceSelector'));
     expect(tocHeader, contains('BusyMarkMenuButton<String>'));
-    expect(tocHeader, contains('_SidebarRowSurface'));
+    expect(tocHeader, contains('BusyMarkSidebarRowSurface'));
     expect(tocHeader, isNot(contains('BusyMarkPopupSelector<String>')));
     expect(tocHeader, isNot(contains('FilledButton')));
     expect(tocHeader, contains('iconColor: writersideInstanceIconColorValue'));
@@ -1514,7 +1535,7 @@ void main() {
       tocHeader,
       isNot(
         contains(
-          'for (final instance in instances)\n            _SidebarTreeRow',
+          'for (final instance in instances)\n            BusyMarkSidebarTreeRow',
         ),
       ),
     );

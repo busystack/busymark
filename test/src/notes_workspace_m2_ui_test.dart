@@ -185,10 +185,16 @@ void main() {
       await tester.pumpWidget(_app(NotesImportReviewDialog(review: review)));
       await tester.pumpAndSettle();
       expect(find.text('Import as a distinct note'), findsOneWidget);
-      expect(find.text('Incomplete: missing.png'), findsOneWidget);
-      await tester.enterText(find.byType(TextFormField), 'Corrected/子');
+      expect(find.text('Incomplete'), findsOneWidget);
+      await tester.tap(find.text('Technical details'));
+      await tester.pumpAndSettle();
+      expect(find.text('missing.png'), findsOneWidget);
+      await tester.enterText(
+        find.byType(BusyMarkGroupedTextEntry),
+        'Corrected/子',
+      );
       expect(item.category, 'Corrected/子');
-      await tester.tap(find.byType(CheckboxListTile));
+      await tester.tap(find.text('Same title'));
       await tester.pump();
       expect(item.selected, false);
       final button = tester.widget<BusyMarkDialogButton>(
@@ -251,17 +257,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Already imported in this operation'), findsOneWidget);
-      expect(
-        tester
-            .widget<CheckboxListTile>(find.byType(CheckboxListTile))
-            .onChanged,
-        isNull,
-      );
+      final selected = item.selected;
+      await tester.tap(find.text('Imported'));
+      await tester.pump();
+      expect(item.selected, selected);
       expect(
         tester
             .widget<TextField>(
               find.descendant(
-                of: find.byType(TextFormField),
+                of: find.byType(BusyMarkGroupedTextEntry),
                 matching: find.byType(TextField),
               ),
             )

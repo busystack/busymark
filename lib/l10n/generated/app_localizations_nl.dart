@@ -11,6 +11,131 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Nieuwe notitie van bewaarde tekst';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud vraagt om een pauze. Wacht voordat u opnieuw aanmeldt.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Notes vernieuwen na de bevestigde instellingenwijziging';
+
+  @override
+  String get notesExportOperationFailed =>
+      'De export is vóór publicatie mislukt. Controleer bron en bestemming en exporteer opnieuw.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'De herstelde notitie is opgeslagen maar kon niet worden geopend. Los openstaande editor- of eigenschapswijzigingen op en open deze bestaande notitie.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Openstaande notities, conflicten of onzekere aanmaak blokkeren deze wijziging. Synchroniseer of beoordeel ze in Notes en probeer dit bewaarde concept opnieuw.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Openstaande bijlagebewerkingen blokkeren deze wijziging. Beoordeel ze in Notes en probeer dit bewaarde instellingenconcept opnieuw.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Gebruik het canonieke HTTPS-adres van Nextcloud en meld opnieuw aan. Het adres of de omleiding kon niet worden geverifieerd.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes is niet beschikbaar of de API wordt niet ondersteund. Schakel Nextcloud Notes in met API-hoofdversie 1, subversie 4 of hoger.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud heeft de aanmeldgegevens geweigerd. Autoriseer dit account opnieuw of verbind opnieuw.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud heeft de controle van Notes-mogelijkheden geweigerd. Vraag toestemming aan de beheerder en probeer opnieuw.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Het Nextcloud-antwoord kon niet worden geverifieerd. Controleer de serverinstallatie en meld opnieuw aan.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'De aanmelding is verlopen. Begin opnieuw en voltooi de toestemming in de browser.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'De systeembrowser kon niet worden geopend. Controleer de standaardbrowser en meld opnieuw aan.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud is onbereikbaar. Controleer de verbinding en server en meld opnieuw aan.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud heeft het mogelijkhedenverzoek geweigerd. Controleer toegang met de beheerder en probeer opnieuw.';
+
+  @override
+  String get notesAccountFailed =>
+      'Accountinstelling is mislukt. Probeer opnieuw aan te melden.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'De bron is na beoordeling gewijzigd. Beoordeel het huidige bestand of maak een nieuwe momentopname.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'De bron kon niet worden gelezen. Controleer toegang tot het bestand of de map en beoordeel opnieuw.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Ongeldige of niet-ondersteunde momentopname. Kies een geldige BusyMark Notes-momentopname of Markdown-bron.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Media overschrijden de importlimiet. Verklein de media van het betreffende item en beoordeel opnieuw.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'De bron bevat een onveilig pad. Kies bestanden binnen de bronmap en beoordeel opnieuw.';
+
+  @override
+  String get notesTransferDestination =>
+      'De export kon niet worden geschreven. Controleer toegang en vrije ruimte bij de bestemming en exporteer opnieuw.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'De overdracht is mislukt. Beoordeel de betreffende items en probeer opnieuw. Eerder geïmporteerde items blijven opgeslagen.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Export met weglatingen beschikbaar';
+
+  @override
+  String get notesBatchUnchanged => 'De gevraagde waarden waren al ingesteld.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Deze notitie is alleen-lezen. Beveiligde eigenschappen kunnen niet wijzigen; Favoriet blijft toegestaan.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Deze notitie is na beoordeling gewijzigd. Beoordeel de huidige staat voordat u de actie herhaalt.';
+
+  @override
+  String get notesBatchMissing =>
+      'Deze notitie is niet meer beschikbaar. Vernieuw de lijst en beoordeel de doelen opnieuw.';
+
+  @override
+  String get notesBatchStorage =>
+      'Lokaal opslaan is mislukt. Controleer de opslag en probeer dit item opnieuw; geslaagde items blijven opgeslagen.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'De servernotitie is gewijzigd. Uw samenvoegconcept blijft bewaard. Beoordeel de nieuwe vergelijking en kies opnieuw een oplossing.';
+
+  @override
+  String get notesReviewRemote => 'Ik heb de huidige serverversie beoordeeld';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Hoofdlettergebruik van de module wordt niet gepubliceerd.';
 
@@ -5588,4 +5713,223 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Voorgestelde sneltoets';
+
+  @override
+  String get notesActions => 'Notitieacties';
+
+  @override
+  String get noteActions => 'Acties voor deze notitie';
+
+  @override
+  String get noteProperties => 'Notitie-eigenschappen';
+
+  @override
+  String get notesExportAll => 'Notities exporteren · Alle notities…';
+
+  @override
+  String get notesExportCategory => 'Notities exporteren · Categorie…';
+
+  @override
+  String get notesOfflineAll => 'Offline beschikbaar maken · Alle notities';
+
+  @override
+  String get notesOfflineCategory => 'Offline beschikbaar maken · Categorie';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Offlinebewaring verwijderen · Alle notities';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Offlinebewaring verwijderen · Categorie';
+
+  @override
+  String get notesOfflinePause => 'Downloads pauzeren';
+
+  @override
+  String get notesOfflineResume => 'Downloads hervatten';
+
+  @override
+  String get notesOfflineKeep => 'Offline beschikbaar maken';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Het verwijderen van deze vereiste behoudt de cache. Een categorie- of accountvereiste kan de notitie nog steeds bewaren.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Deze notitie wordt ook bewaard door een categorie- of accountvereiste.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Externe media vereisen een verbinding. BusyMark bewaart alleen notitietekst en beheerde bijlagen.';
+
+  @override
+  String get notesEmptyAll =>
+      'Nog geen notities. Maak een notitie om te beginnen.';
+
+  @override
+  String get notesEmptyFavorites => 'Geen favoriete notities.';
+
+  @override
+  String get notesEmptyCategory => 'Geen notities in deze categorie.';
+
+  @override
+  String get notesEmptyUncategorized => 'Geen notities zonder categorie.';
+
+  @override
+  String get notesEmptyRecovery => 'Geen bewaarde notities om te herstellen.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Mislukt. Opnieuw proberen';
+
+  @override
+  String get notesOperationFailed =>
+      'De bewerking kon niet worden voltooid. Uw concept blijft bewaard. Controleer opslaan en conflicten en probeer opnieuw.';
+
+  @override
+  String get notesInspectionFailed => 'Bijlagen · Mislukt. Opnieuw proberen';
+
+  @override
+  String get notesStartingConnection => 'Nextcloud-verbinding starten…';
+
+  @override
+  String get notesVerifyingConnection => 'Toegang tot Notities controleren…';
+
+  @override
+  String get notesCancellingConnection => 'Aanmelden annuleren en opruimen…';
+
+  @override
+  String get notesRemovingConnection => 'Lokaal account verwijderen…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Het lokale Nextcloud-account is verwijderd. Het intrekken van het app-wachtwoord is niet bevestigd. Verwijder het wachtwoord van BusyMark in de beveiligingsinstellingen van Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Niet alle open notities konden lokaal worden opgeslagen. Controleer opslaan, conflicten of normalisatie in de werkruimte. Lokale wijzigingen moeten mogelijk nog met Nextcloud synchroniseren.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Wijzigingen in Nextcloud-instellingen opslaan voor vertrek?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Notes-instellingen op de server · Niet-opgeslagen wijzigingen';
+
+  @override
+  String get notesSettingsReload => 'Serverinstellingen opnieuw laden…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Opnieuw laden vervangt uw concept door de huidige Nextcloud-instellingen. Concept verwerpen en opnieuw laden?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud heeft de instellingen geaccepteerd, maar het vernieuwen van notities is mislukt. De getoonde waarden zijn door de server bevestigd. Vernieuw opnieuw vanuit Notities.';
+
+  @override
+  String get notesUnavailable =>
+      'Geen verbinding · Tekst lokaal beschikbaar · Lokaal opgeslagen · synchronisatie in behandeling';
+
+  @override
+  String get notesStorageFull =>
+      'De Nextcloud-opslag is vol. Maak ruimte vrij op de server en probeer opnieuw.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud heeft deze wijziging geweigerd. Controleer de notitie en sla een lokale kopie op voordat u opnieuw probeert.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud heeft gevraagd te wachten. Synchronisatie gaat verder na de wachttijd.';
+
+  @override
+  String get notesRecoveryRequired => 'Conflicten · Vergelijken';
+
+  @override
+  String get notesScanning => 'Bestanden scannen…';
+
+  @override
+  String get notesCancelling =>
+      'Annuleren… Wachten tot de huidige bewerking is afgerond.';
+
+  @override
+  String get notesCancelled => 'Geannuleerd';
+
+  @override
+  String get notesPartial => 'Gedeeltelijk voltooid';
+
+  @override
+  String get notesTransferFailed => 'Mislukt. Opnieuw proberen';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Eerdere items kunnen al lokaal opgeslagen zijn. Hervat deze import om zonder duplicaten verder te gaan.';
+
+  @override
+  String get notesNotStarted => 'Niet gestart';
+
+  @override
+  String get notesCreated => 'Gemaakt';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Server-URL · Niet ondersteund · Verwijderen · Bijlagen';
+
+  @override
+  String get notesCurrentText => 'Huidige bewaarde tekst';
+
+  @override
+  String get notesRecovering => 'Herstellen als nieuwe notitie…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Alleen lezen · Favorieten · Lokale kopie opslaan…';
+
+  @override
+  String get notesSort => 'Notities sorteren';
+
+  @override
+  String get notesPathRelative =>
+      'Het pad van de notitiemap is relatief aan uw Nextcloud-opslag.';
+
+  @override
+  String get notesSettingsStale =>
+      'De instellingen zijn gewijzigd op Nextcloud. Laad en controleer de serverwaarden voordat u het concept vervangt.';
+
+  @override
+  String get notesDownloadsPaused => 'Downloads gepauzeerd';
+
+  @override
+  String get notesExportNotPublished => 'Er is geen export gepubliceerd.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Ontgrendel de bureaubladsleutelbos en probeer opnieuw.';
+
+  @override
+  String get notesConnectFailed =>
+      'Kan niet verbinden met Nextcloud Notes. Controleer het serveradres en probeer opnieuw.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Meld u aan bij hetzelfde Nextcloud-account. Verwijder dit account eerst om een ander te verbinden.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Het lokaal opruimen is mislukt. Het account blijft bewaard zodat u de verwijdering opnieuw kunt proberen.';
+
+  @override
+  String get notesTransferring => 'Notities overdragen…';
+
+  @override
+  String get notesTechnicalDetails => 'Technische details';
+
+  @override
+  String get notesPauseRequirement => 'Offlinevereiste pauzeren';
+
+  @override
+  String get notesResumeRequirement => 'Offlinevereiste hervatten';
 }

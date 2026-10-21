@@ -1651,6 +1651,7 @@ class _Sidebar extends ConsumerStatefulWidget {
 
 class _SidebarState extends ConsumerState<_Sidebar> {
   final _outlineKey = GlobalKey<_OutlineTabState>();
+  final _notesKey = GlobalKey<NextcloudNotesSidebarState>();
   late final WorkspaceController _topicActionController;
   late int _tab;
   late String _workspaceId;
@@ -1781,87 +1782,103 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     ),
                   ),
                 ),
-                if (widget.searchState.active ||
-                    selectedTab != _SidebarTab.outline)
-                  BusyMarkKeyedCrossfade(
-                    transitionKey: widget.searchState.active
-                        ? 'search'
-                        : _topicRenameReview != null
-                        ? 'rename'
-                        : _topicUsageReview != null
-                        ? 'usages'
-                        : selectedTab ?? 'empty',
-                    child: widget.searchState.active
-                        ? SearchSidebar(
-                            onReviewReplacement: _reviewWorkspaceReplacement,
-                          )
-                        : _topicRenameReview != null
-                        ? _WritersideTopicRenameSidebar(
-                            plan: _topicRenameReview!,
-                            onBack: () =>
-                                setState(() => _topicRenameReview = null),
-                            onDoRefactor: () =>
-                                _applyReviewedTopicRename(context),
-                          )
-                        : _topicUsageReview != null
-                        ? _WritersideTopicUsagesSidebar(
-                            review: _topicUsageReview!,
-                            onBack: _closeTopicUsageReview,
-                            onOpenUsage: (usage) =>
-                                _openWritersideTopicUsage(context, usage),
-                            onDoRefactor: () =>
-                                _resumeWritersideTopicRemoval(context),
-                          )
-                        : switch (selectedTab) {
-                            _SidebarTab.notes => NextcloudNotesSidebar(
-                              accountId: widget.workspace.nextcloudAccountId!,
-                            ),
-                            _SidebarTab.files => _FilesTab(
-                              workspace: widget.workspace,
-                              onShowFileHistory: _showFileHistory,
-                              onRenameTopic: (path) =>
-                                  _startWritersideTopicRename(context, path),
-                              onRequestTopicRemoval: (target) =>
-                                  _runWritersideTopicRemoval(context, target),
-                            ),
-                            _SidebarTab.toc => _TocTab(
-                              workspace: widget.workspace,
-                              onShowFileHistory: _showFileHistory,
-                              onRenameTopic: (path) =>
-                                  _startWritersideTopicRename(context, path),
-                              onRequestTopicRemoval: (target) =>
-                                  _runWritersideTopicRemoval(context, target),
-                            ),
-                            _SidebarTab.outline => const SizedBox.shrink(),
-                            _SidebarTab.git => GitSidebarTab(
-                              workspace: widget.workspace,
-                              onOpenFile: (relativePath) =>
-                                  _openGitDiffFile(context, ref, relativePath),
-                              onConfirmDiscard: (files) =>
-                                  _confirmDiscardGitFiles(context, ref, files),
-                              onAfterWorkspaceFilesChanged: () =>
-                                  _refreshWorkspaceAfterGitFileChanges(ref),
-                              onConfirmSwitchBranch: (branchName) =>
-                                  _confirmSwitchGitBranch(
-                                    context,
-                                    ref,
-                                    branchName,
-                                  ),
-                              onConfirmPushSetUpstream: () =>
-                                  _confirmGitPushSetUpstream(context, ref),
-                            ),
-                            _SidebarTab.clipboard => ClipboardHistoryPanel(
-                              onEscape: () => ref
-                                  .read(clipboardInsertionRegistryProvider)
-                                  .target
-                                  ?.requestEditorFocus(),
-                            ),
-                            _SidebarTab.references => const ReferencesPanel(),
-                            _SidebarTab.localHistory =>
-                              const LocalHistoryPanel(),
-                            null => const SizedBox.shrink(),
-                          },
+                Offstage(
+                  offstage:
+                      !widget.searchState.active &&
+                      selectedTab == _SidebarTab.outline,
+                  child: ExcludeFocus(
+                    excluding:
+                        !widget.searchState.active &&
+                        selectedTab == _SidebarTab.outline,
+                    child: BusyMarkKeyedCrossfade(
+                      transitionKey: widget.searchState.active
+                          ? 'search'
+                          : _topicRenameReview != null
+                          ? 'rename'
+                          : _topicUsageReview != null
+                          ? 'usages'
+                          : selectedTab ?? 'empty',
+                      child: widget.searchState.active
+                          ? SearchSidebar(
+                              onReviewReplacement: _reviewWorkspaceReplacement,
+                            )
+                          : _topicRenameReview != null
+                          ? _WritersideTopicRenameSidebar(
+                              plan: _topicRenameReview!,
+                              onBack: () =>
+                                  setState(() => _topicRenameReview = null),
+                              onDoRefactor: () =>
+                                  _applyReviewedTopicRename(context),
+                            )
+                          : _topicUsageReview != null
+                          ? _WritersideTopicUsagesSidebar(
+                              review: _topicUsageReview!,
+                              onBack: _closeTopicUsageReview,
+                              onOpenUsage: (usage) =>
+                                  _openWritersideTopicUsage(context, usage),
+                              onDoRefactor: () =>
+                                  _resumeWritersideTopicRemoval(context),
+                            )
+                          : switch (selectedTab) {
+                              _SidebarTab.notes => NextcloudNotesSidebar(
+                                key: _notesKey,
+                                accountId: widget.workspace.nextcloudAccountId!,
+                              ),
+                              _SidebarTab.files => _FilesTab(
+                                workspace: widget.workspace,
+                                onShowFileHistory: _showFileHistory,
+                                onRenameTopic: (path) =>
+                                    _startWritersideTopicRename(context, path),
+                                onRequestTopicRemoval: (target) =>
+                                    _runWritersideTopicRemoval(context, target),
+                              ),
+                              _SidebarTab.toc => _TocTab(
+                                workspace: widget.workspace,
+                                onShowFileHistory: _showFileHistory,
+                                onRenameTopic: (path) =>
+                                    _startWritersideTopicRename(context, path),
+                                onRequestTopicRemoval: (target) =>
+                                    _runWritersideTopicRemoval(context, target),
+                              ),
+                              _SidebarTab.outline => const SizedBox.shrink(),
+                              _SidebarTab.git => GitSidebarTab(
+                                workspace: widget.workspace,
+                                onOpenFile: (relativePath) => _openGitDiffFile(
+                                  context,
+                                  ref,
+                                  relativePath,
+                                ),
+                                onConfirmDiscard: (files) =>
+                                    _confirmDiscardGitFiles(
+                                      context,
+                                      ref,
+                                      files,
+                                    ),
+                                onAfterWorkspaceFilesChanged: () =>
+                                    _refreshWorkspaceAfterGitFileChanges(ref),
+                                onConfirmSwitchBranch: (branchName) =>
+                                    _confirmSwitchGitBranch(
+                                      context,
+                                      ref,
+                                      branchName,
+                                    ),
+                                onConfirmPushSetUpstream: () =>
+                                    _confirmGitPushSetUpstream(context, ref),
+                              ),
+                              _SidebarTab.clipboard => ClipboardHistoryPanel(
+                                onEscape: () => ref
+                                    .read(clipboardInsertionRegistryProvider)
+                                    .target
+                                    ?.requestEditorFocus(),
+                              ),
+                              _SidebarTab.references => const ReferencesPanel(),
+                              _SidebarTab.localHistory =>
+                                const LocalHistoryPanel(),
+                              null => const SizedBox.shrink(),
+                            },
+                    ),
                   ),
+                ),
               ],
             ),
           ),
@@ -1883,10 +1900,14 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     setState(() {
       _tab = index;
     });
-    if (tab == _SidebarTab.outline) {
+    if (tab == _SidebarTab.outline || tab == _SidebarTab.notes) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !ref.read(searchSessionProvider).active) {
-          _outlineKey.currentState?.requestNavigationFocus();
+          if (tab == _SidebarTab.outline) {
+            _outlineKey.currentState?.requestNavigationFocus();
+          } else {
+            _notesKey.currentState?.requestNavigationFocus();
+          }
         }
       });
     }
@@ -3966,7 +3987,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
   late String _workspaceId;
   late Set<String> _expandedPaths;
   late final FocusNode _treeFocusNode;
-  final _selectedRowMenuKey = GlobalKey<_SidebarTreeRowState>();
+  final _selectedRowMenuKey = GlobalKey<BusyMarkSidebarTreeRowState>();
   String? _selectedPath;
   _FileTreeClipboardEntry? _cutEntry;
 
@@ -4135,7 +4156,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                 );
               }
 
-              return _SidebarTreeRow(
+              return BusyMarkSidebarTreeRow(
                 key: selected ? _selectedRowMenuKey : null,
                 title: busyMarkLtrIsolateFor(context, node.name),
                 depth: entry.depth,
@@ -4783,271 +4804,6 @@ Future<bool> _confirmDeleteFileTreeEntry(
   return confirmed ?? false;
 }
 
-typedef _SidebarTreeMenuRequest =
-    void Function(BuildContext anchorContext, Offset globalPosition);
-
-class _SidebarRowSurface extends StatelessWidget {
-  const _SidebarRowSurface({
-    super.key,
-    required this.child,
-    required this.enabled,
-    required this.clickable,
-    this.selected = false,
-    this.focusNode,
-    this.onKeyEvent,
-    this.onTap,
-    this.onDoubleTap,
-    this.onSecondaryTapUp,
-    this.onHoverChanged,
-    this.onFocusChange,
-  });
-
-  final Widget child;
-  final bool enabled;
-  final bool clickable;
-  final bool selected;
-  final FocusNode? focusNode;
-  final FocusOnKeyEventCallback? onKeyEvent;
-  final VoidCallback? onTap;
-  final VoidCallback? onDoubleTap;
-  final GestureTapUpCallback? onSecondaryTapUp;
-  final ValueChanged<bool>? onHoverChanged;
-  final ValueChanged<bool>? onFocusChange;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: onHoverChanged == null ? null : (_) => onHoverChanged!(true),
-      onExit: onHoverChanged == null ? null : (_) => onHoverChanged!(false),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-        child: Material(
-          color: selected
-              ? busyMarkSelectedBackground(context)
-              : BusyMarkLinuxPalette.transparent,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          clipBehavior: Clip.antiAlias,
-          child: Focus(
-            onKeyEvent: onKeyEvent,
-            child: InkWell(
-              focusNode: focusNode,
-              hoverColor: clickable
-                  ? busyMarkRowHoverColor(context)
-                  : BusyMarkLinuxPalette.transparent,
-              onTap: enabled ? onTap : null,
-              onDoubleTap: enabled ? onDoubleTap : null,
-              onSecondaryTapUp: enabled ? onSecondaryTapUp : null,
-              onFocusChange: onFocusChange,
-              child: SizedBox(
-                height: BusyMarkSizes.sidebarTreeRowHeight,
-                child: child,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SidebarTreeRow extends StatefulWidget {
-  const _SidebarTreeRow({
-    super.key,
-    required this.title,
-    required this.depth,
-    this.icon,
-    this.leading,
-    this.trailing,
-    this.tooltip,
-    this.hasChildren = false,
-    this.expanded = false,
-    this.selected = false,
-    this.enabled = true,
-    this.muted = false,
-    this.compactHierarchyIndent = false,
-    this.vcsColor,
-    this.onToggle,
-    this.onTap,
-    this.onDoubleTap,
-    this.onMenuRequested,
-  });
-
-  final String title;
-  final int depth;
-  final IconData? icon;
-  final Widget? leading;
-  final Widget? trailing;
-  final String? tooltip;
-  final bool hasChildren;
-  final bool expanded;
-  final bool selected;
-  final bool enabled;
-  final bool muted;
-  final bool compactHierarchyIndent;
-  final BusyMarkVcsFileColor? vcsColor;
-  final VoidCallback? onToggle;
-  final VoidCallback? onTap;
-  final VoidCallback? onDoubleTap;
-  final _SidebarTreeMenuRequest? onMenuRequested;
-
-  @override
-  State<_SidebarTreeRow> createState() => _SidebarTreeRowState();
-}
-
-class _SidebarTreeRowState extends State<_SidebarTreeRow> {
-  var _hovered = false;
-  var _focused = false;
-
-  void showMenuFromKeyboard() {
-    final onMenuRequested = widget.onMenuRequested;
-    if (!widget.enabled || onMenuRequested == null) {
-      return;
-    }
-    onMenuRequested(context, _sidebarTreeMenuAnchor(context));
-  }
-
-  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (!widget.enabled ||
-        widget.onMenuRequested == null ||
-        !isBusyMarkContextMenuKeyEvent(event)) {
-      return KeyEventResult.ignored;
-    }
-    showMenuFromKeyboard();
-    return KeyEventResult.handled;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final direction = Directionality.of(context);
-    final clickable =
-        widget.enabled &&
-        (widget.onTap != null || widget.onMenuRequested != null);
-    final vcsForeground = widget.vcsColor == null
-        ? null
-        : busyMarkVcsFileStatusColor(context, widget.vcsColor!);
-    final foreground = !widget.enabled || widget.muted
-        ? colors.disabledForeground
-        : vcsForeground ??
-              (widget.selected ? colors.foreground : colors.mutedForeground);
-    final titleColor = !widget.enabled || widget.muted
-        ? colors.disabledForeground
-        : vcsForeground ?? colors.foreground;
-    final titleStyle = Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(color: titleColor);
-    final menuVisible =
-        widget.enabled &&
-        widget.onMenuRequested != null &&
-        (widget.selected || _hovered || _focused);
-    final depthBase = widget.compactHierarchyIndent
-        ? 0.0
-        : BusyMarkSizes.sidebarTreeDepthBase;
-    final expanderWidth = widget.compactHierarchyIndent
-        ? BusyMarkSizes.sidebarTreeArrow
-        : BusyMarkSizes.sidebarTreeControl;
-    final expanderGap = widget.compactHierarchyIndent
-        ? 0.0
-        : BusyMarkSpacing.xs;
-    final surface = _SidebarRowSurface(
-      enabled: widget.enabled,
-      clickable: clickable,
-      selected: widget.selected,
-      onKeyEvent: _handleKeyEvent,
-      onTap: widget.onTap,
-      onDoubleTap: widget.onDoubleTap,
-      onSecondaryTapUp: widget.onMenuRequested == null
-          ? null
-          : (details) =>
-                widget.onMenuRequested!(context, details.globalPosition),
-      onHoverChanged: (hovered) => setState(() => _hovered = hovered),
-      onFocusChange: (focused) => setState(() => _focused = focused),
-      child: Row(
-        children: [
-          SizedBox(
-            width:
-                depthBase + widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
-          ),
-          SizedBox.square(
-            dimension: expanderWidth,
-            child: widget.hasChildren
-                ? GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: widget.enabled
-                        ? widget.onToggle ?? widget.onTap
-                        : null,
-                    child: AnimatedRotation(
-                      turns: widget.expanded
-                          ? direction == TextDirection.rtl
-                                ? -0.25
-                                : 0.25
-                          : 0,
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : BusyMarkMotion.sidebarExpand,
-                      child: Icon(
-                        BusyMarkGlyphs.collapsedTreeArrowFor(direction),
-                        size: BusyMarkSizes.sidebarTreeArrow,
-                        color: foreground,
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          SizedBox(width: expanderGap),
-          if (widget.leading != null || widget.icon != null) ...[
-            SizedBox.square(
-              dimension: BusyMarkSizes.sidebarTreeControl,
-              child: Center(
-                child:
-                    widget.leading ??
-                    Icon(
-                      widget.icon,
-                      size: BusyMarkSizes.iconSm,
-                      color: foreground,
-                    ),
-              ),
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-          ],
-          Expanded(
-            child: Text(
-              widget.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: titleStyle,
-            ),
-          ),
-          if (widget.trailing != null) widget.trailing!,
-          if (widget.onMenuRequested != null)
-            SizedBox(
-              width: BusyMarkSizes.iconButton,
-              child: Center(
-                child: menuVisible
-                    ? Builder(
-                        builder: (buttonContext) => BusyMarkCompactIconButton(
-                          tooltip: context.l10n.actions,
-                          icon: BusyMarkGlyphs.menuVertical,
-                          onPressed: () => widget.onMenuRequested!(
-                            buttonContext,
-                            _sidebarTreeMenuAnchor(buttonContext),
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-            )
-          else
-            const SizedBox(width: BusyMarkSpacing.xs),
-        ],
-      ),
-    );
-    return widget.tooltip == null || widget.tooltip!.isEmpty
-        ? surface
-        : Tooltip(message: widget.tooltip!, child: surface);
-  }
-}
-
 Offset _sidebarTreeMenuAnchor(BuildContext context) {
   final renderObject = context.findRenderObject();
   if (renderObject is! RenderBox || !renderObject.hasSize) {
@@ -5373,7 +5129,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
   String? _selectedInstanceTreePath;
   late Set<String> _expandedNodeKeys;
   late final FocusNode _treeFocusNode;
-  final _rowMenuKeys = <String, GlobalKey<_SidebarTreeRowState>>{};
+  final _rowMenuKeys = <String, GlobalKey<BusyMarkSidebarTreeRowState>>{};
   final _rowMenuPositions = <String, int>{};
   final _pointerModifiers = <String, _TreeSelectionModifiers>{};
   String? _selectedNodePathKey;
@@ -5575,7 +5331,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
       final key = entries[i].pathKey;
       if (_rowMenuPositions[key] != i) {
         _rowMenuPositions[key] = i;
-        _rowMenuKeys[key] = GlobalKey<_SidebarTreeRowState>();
+        _rowMenuKeys[key] = GlobalKey<BusyMarkSidebarTreeRowState>();
       }
     }
     _TocTreeEntry? selectedEntry;
@@ -5904,7 +5660,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       }
                     }
                   },
-                  child: _SidebarTreeRow(
+                  child: BusyMarkSidebarTreeRow(
                     key: _rowMenuKeys[key],
                     title: label,
                     enabled: true,
@@ -8378,7 +8134,7 @@ class _WritersideInstanceSelector extends StatelessWidget {
           message: context.l10n.instances,
           child: Semantics(
             expanded: trigger.isOpen,
-            child: _SidebarRowSurface(
+            child: BusyMarkSidebarRowSurface(
               key: const ValueKey('writerside-instance-selector-trigger'),
               enabled: selectorEnabled,
               clickable: selectorEnabled,
@@ -9173,6 +8929,8 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         _navigationEntries.length - 1,
       ),
     );
+    // Navigation belongs to the tree; retain it as rows are virtualized away.
+    _navigationFocus.requestFocus();
     if (_treeScrollController.hasClients) {
       _treeScrollController.jumpTo(
         (_keyboardIndex * _treeRowExtent).clamp(
@@ -9193,6 +8951,22 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
             .node
             .heading;
     _navigateHeading(heading);
+  }
+
+  KeyEventResult _handleNavigationKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+        event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      _moveOutlineSelection(
+        event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
+      );
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter) {
+      _activateOutlineSelection();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   void _navigateHeading(DocumentOutlineHeading heading) {
@@ -9469,21 +9243,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     };
     return Focus(
       focusNode: _navigationFocus,
-      onKeyEvent: (_, event) {
-        if (event is! KeyDownEvent) return KeyEventResult.ignored;
-        if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
-            event.logicalKey == LogicalKeyboardKey.arrowUp) {
-          _moveOutlineSelection(
-            event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
-          );
-          return KeyEventResult.handled;
-        }
-        if (event.logicalKey == LogicalKeyboardKey.enter) {
-          _activateOutlineSelection();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
+      onKeyEvent: _handleNavigationKeyEvent,
       child: ListView.builder(
         key: const ValueKey('workspace-sidebar-outline-tree'),
         controller: _treeScrollController,
@@ -9516,8 +9276,25 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
 
           return KeyedSubtree(
             key: ValueKey('workspace-sidebar-outline-row-$headingIndex'),
-            child: _SidebarTreeRow(
+            child: BusyMarkSidebarTreeRow(
               title: heading.text,
+              onNavigationKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    {
+                      LogicalKeyboardKey.arrowDown,
+                      LogicalKeyboardKey.arrowUp,
+                      LogicalKeyboardKey.enter,
+                    }.contains(event.logicalKey)) {
+                  _keyboardIndex = index;
+                  return _handleNavigationKeyEvent(node, event);
+                }
+                return KeyEventResult.ignored;
+              },
+              onFocusChange: (focused) {
+                if (focused && _keyboardIndex != index) {
+                  setState(() => _keyboardIndex = index);
+                }
+              },
               depth: entry.depth,
               icon: BusyMarkGlyphs.tag,
               leading: _HeadingBadge(level: heading.level),

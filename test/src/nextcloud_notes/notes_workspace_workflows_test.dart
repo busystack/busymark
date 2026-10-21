@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_offline_controller.dart';
@@ -13,6 +12,12 @@ import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_search.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:path/path.dart' as p;
@@ -21,6 +26,7 @@ import 'package:sqlite3/sqlite3.dart';
 import 'notes_api_test.dart' show testAccount, serverNote;
 
 class _Fixture {
+  bool closed = false;
   late Directory root;
   late NotesRepository repository;
   bool offline = false, failMedia = false;
@@ -165,8 +171,8 @@ void main() {
     await f.open();
   });
   tearDown(() async {
-    f.mediaGate?.complete();
-    await f.repository.dispose();
+    if (f.mediaGate?.isCompleted == false) f.mediaGate!.complete();
+    if (!f.closed) await f.repository.dispose();
     await f.root.delete(recursive: true);
   });
 
@@ -182,6 +188,132 @@ void main() {
     ]);
     expect(search.state.truncated, false);
   });
+
+  for (final mode in ['keep', 'retry', 'resume']) {
+    testWidgets(
+      'offline $mode permits Pause during a held download and preserves cache',
+      (tester) async {
+        for (final name in ['yaru_window', 'yaru_window/events']) {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(
+                MethodChannel(name),
+                (call) async =>
+                    call.method == 'state' ? <String, Object?>{} : null,
+              );
+        }
+        await tester.runAsync(() async {
+          f.remote[1] = {
+            ...serverNote(1),
+            'content': '![cached](.attachments.1/cached.png)',
+          };
+          await f.repository.synchronize(testAccount().id, allowWrites: false);
+          final note = f.repository.notes.single;
+          await f.repository.resolveMedia(
+            testAccount().id,
+            note.localId,
+            '.attachments.1/cached.png',
+          );
+          f.remote[1] = {
+            ...f.remote[1]!,
+            'etag': 'more-media',
+            'content':
+                '![cached](.attachments.1/cached.png) ![first](.attachments.1/first.png) ![second](.attachments.1/second.png)',
+          };
+          await f.repository.synchronize(testAccount().id, allowWrites: false);
+        });
+        final note = f.repository.notes.single;
+        final offline = NotesOfflineController(f.repository, testAccount().id);
+        await tester.runAsync(() async {
+          await offline.initialize();
+          if (mode == 'retry') {
+            f.failMedia = true;
+            await offline.setRequirement('note', note.localId);
+            f.failMedia = false;
+          } else if (mode == 'resume') {
+            await offline.setRequirement('note', note.localId, paused: true);
+          }
+        });
+        offline.failures['another-note:held-failure'] =
+            'Retain this separate failure';
+        final before = f.downloads;
+        f.mediaGate = Completer<void>();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              notesOfflineProvider(
+                testAccount().id,
+              ).overrideWith((ref) async => offline),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(body: NotesOfflineDialog(note: note)),
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          for (var i = 0; i < 20; i++) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 10)),
+            );
+            await tester.pump(const Duration(milliseconds: 30));
+          }
+        }
+
+        await settle();
+        if (mode == 'keep') {
+          await tester.tap(find.byType(BusyMarkSwitchRow));
+        } else {
+          await tester.tap(
+            find.widgetWithText(
+              BusyMarkDialogButton,
+              mode == 'retry' ? 'Retry' : 'Resume Downloads',
+            ),
+          );
+        }
+        await settle();
+        expect(f.downloads, before + 1);
+        expect(f.mediaGate!.isCompleted, isFalse);
+        final pause = find.widgetWithText(
+          BusyMarkDialogButton,
+          'Pause Downloads',
+        );
+        expect(tester.widget<BusyMarkDialogButton>(pause).onPressed, isNotNull);
+        await tester.tap(pause);
+        await settle();
+        expect(
+          (await tester.runAsync(() => offline.inspect(note)))!.paused,
+          isTrue,
+        );
+        expect(find.text('Downloads paused'), findsOneWidget);
+        expect(f.mediaGate!.isCompleted, isFalse);
+        expect(f.downloads, before + 1);
+        expect(
+          offline.failures['another-note:held-failure'],
+          'Retain this separate failure',
+        );
+        final available = await tester.runAsync(
+          () => f.repository.attachmentAvailability(note.localId),
+        );
+        expect(available!.available, contains('.attachments.1/cached.png'));
+        f.mediaGate!.complete();
+        await settle();
+        expect(f.downloads, before + 1);
+        await tester.pumpWidget(const SizedBox.shrink());
+        var offlineClosed = false;
+        unawaited(offline.dispose().then((_) => offlineClosed = true));
+        for (var i = 0; i < 100 && !offlineClosed; i++) {
+          await settle();
+        }
+        expect(offlineClosed, isTrue);
+        unawaited(f.repository.dispose().then((_) => f.closed = true));
+        for (var i = 0; i < 100 && !f.closed; i++) {
+          await settle();
+        }
+        expect(f.closed, isTrue);
+      },
+    );
+  }
 
   test(
     'correction: database pages preserve all document identities and offsets',
@@ -589,7 +721,9 @@ void main() {
         original,
         testAccount().id,
         cancellation: cancel,
-        onProgress: (_, _) => cancel.cancel(),
+        onProgress: (completed, _) {
+          if (completed == 1) cancel.cancel();
+        },
       );
       expect(first, hasLength(1));
       final pending = await f.repository.store.importOperations(
@@ -727,7 +861,9 @@ void main() {
         review,
         testAccount().id,
         cancellation: cancel,
-        onProgress: (_, _) => cancel.cancel(),
+        onProgress: (completed, _) {
+          if (completed == 1) cancel.cancel();
+        },
       );
       final id = first.single.noteId!;
       f.loseNextCreate = true;
@@ -1537,7 +1673,9 @@ void main() {
         review,
         testAccount().id,
         cancellation: cancel,
-        onProgress: (a, b) => cancel.cancel(),
+        onProgress: (a, b) {
+          if (a == 1) cancel.cancel();
+        },
       );
       expect(first.length, 1);
       expect(f.repository.notes.length, 1);
@@ -1556,6 +1694,43 @@ void main() {
       );
     },
   );
+  test(
+    'retrying offline note A preserves note B failures and attempts',
+    () async {
+      f.failMedia = true;
+      for (var id = 1; id <= 2; id++) {
+        f.remote[id] = {
+          ...serverNote(id),
+          'content': '![image](.attachments.$id/a.png)',
+        };
+      }
+      await f.repository.synchronize(testAccount().id, allowWrites: false);
+      final offline = NotesOfflineController(f.repository, testAccount().id);
+      addTearDown(offline.dispose);
+      await offline.initialize();
+      await offline.setRequirement('category', '');
+      final a = f.repository.notes.firstWhere((n) => n.serverId == 1);
+      final b = f.repository.notes.firstWhere((n) => n.serverId == 2);
+      final before = Map<String, String>.fromEntries(
+        offline.failures.entries.where(
+          (e) => e.key.startsWith('${b.localId}:'),
+        ),
+      );
+      expect(before, isNotEmpty);
+      expect(f.downloads, 2);
+      await offline.retry(a.localId);
+      expect(f.downloads, 3);
+      expect(
+        Map<String, String>.fromEntries(
+          offline.failures.entries.where(
+            (e) => e.key.startsWith('${b.localId}:'),
+          ),
+        ),
+        before,
+      );
+    },
+  );
+
   test(
     'note cancellation overrides category work durably and retry resumes',
     () async {

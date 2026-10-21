@@ -11,6 +11,128 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => '보관된 텍스트로 새 노트 만들기';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud가 일시 중지를 요청했습니다. 기다린 뒤 다시 로그인하세요.';
+
+  @override
+  String get notesSettingsRefreshing => '확인된 설정 변경 후 Notes 새로 고치는 중';
+
+  @override
+  String get notesExportOperationFailed =>
+      '게시 전에 내보내기가 실패했습니다. 원본과 대상을 확인하고 다시 내보내세요.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      '복구한 노트는 저장되었지만 열지 못했습니다. 보류 중인 편집 또는 속성 변경을 해결한 뒤 이 기존 노트를 여세요.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      '보류 중인 노트, 충돌 또는 생성 결과가 불확실한 노트가 변경을 막고 있습니다. Notes에서 동기화하거나 검토한 뒤 보존된 설정 초안을 다시 저장하세요.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      '보류 중인 첨부 작업이 변경을 막고 있습니다. Notes에서 첨부를 검토한 뒤 보존된 설정 초안을 다시 저장하세요.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Nextcloud의 정식 HTTPS 주소로 다시 로그인하세요. 주소 또는 리디렉션을 확인할 수 없었습니다.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes를 사용할 수 없거나 API가 지원되지 않습니다. 주 버전 1, 부 버전 4 이상의 API를 제공하는 Nextcloud Notes를 활성화하세요.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud가 인증 정보를 거부했습니다. 계정을 다시 인증하거나 연결하세요.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud가 Notes 기능 확인을 거부했습니다. 관리자에게 허용을 요청한 뒤 다시 시도하세요.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloud 응답을 검증할 수 없었습니다. 서버 설치를 확인하고 다시 로그인하세요.';
+
+  @override
+  String get notesAccountTimedOut =>
+      '로그인 시간이 초과되었습니다. 다시 시작하고 브라우저에서 인증을 완료하세요.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      '시스템 브라우저를 열지 못했습니다. 기본 브라우저를 확인하고 다시 로그인하세요.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud에 연결하지 못했습니다. 연결과 서버를 확인하고 다시 로그인하세요.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud가 기능 요청을 거부했습니다. 관리자와 접근 권한을 확인하고 다시 시도하세요.';
+
+  @override
+  String get notesAccountFailed => '계정 설정을 완료하지 못했습니다. 다시 로그인하세요.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      '검토 후 원본이 변경되었습니다. 현재 파일을 다시 검토하거나 새 스냅샷을 만든 뒤 재시도하세요.';
+
+  @override
+  String get notesTransferUnreadable =>
+      '원본을 읽을 수 없습니다. 파일 또는 폴더 접근 권한을 확인하고 다시 검토하세요.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      '스냅샷이 올바르지 않거나 지원되지 않습니다. 유효한 BusyMark Notes 스냅샷 또는 Markdown 원본을 선택하세요.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      '미디어가 가져오기 크기 제한을 초과합니다. 해당 항목의 미디어를 줄이고 다시 검토하세요.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      '원본에 안전하지 않은 경로가 있습니다. 원본 폴더 안의 파일을 선택하고 다시 검토하세요.';
+
+  @override
+  String get notesTransferDestination =>
+      '내보내기를 기록하지 못했습니다. 대상의 접근 권한과 여유 공간을 확인하고 다시 내보내세요.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      '전송을 완료하지 못했습니다. 해당 항목을 검토하고 다시 시도하세요. 이전에 가져온 항목은 저장되어 있습니다.';
+
+  @override
+  String get notesExportPublishedWithOmissions => '누락된 항목이 있는 내보내기 사용 가능';
+
+  @override
+  String get notesBatchUnchanged => '요청한 값이 이미 설정되어 있습니다.';
+
+  @override
+  String get notesBatchReadOnly =>
+      '이 노트는 읽기 전용입니다. 보호된 속성은 바꿀 수 없지만 즐겨찾기는 변경할 수 있습니다.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      '검토 후 노트가 변경되었습니다. 현재 상태를 검토한 뒤 작업을 다시 적용하세요.';
+
+  @override
+  String get notesBatchMissing =>
+      '이 노트를 더 이상 사용할 수 없습니다. 목록을 새로 고치고 대상을 다시 검토하세요.';
+
+  @override
+  String get notesBatchStorage =>
+      '로컬 저장에 실패했습니다. 저장소를 확인하고 이 항목을 다시 시도하세요. 성공한 항목은 저장되어 있습니다.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      '서버 노트가 변경되었습니다. 병합 초안은 보존됩니다. 새 비교를 검토하고 해결 방법을 다시 선택하세요.';
+
+  @override
+  String get notesReviewRemote => '현재 서버 버전을 검토했습니다';
+
+  @override
   String get wsModuleCapsNotPublished => '모듈의 대소문자 설정은 게시되지 않습니다.';
 
   @override
@@ -5383,4 +5505,210 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => '제안된 단축키';
+
+  @override
+  String get notesActions => '노트 작업';
+
+  @override
+  String get noteActions => '이 노트의 작업';
+
+  @override
+  String get noteProperties => '노트 속성';
+
+  @override
+  String get notesExportAll => '노트 내보내기 · 모든 노트…';
+
+  @override
+  String get notesExportCategory => '노트 내보내기 · 범주…';
+
+  @override
+  String get notesOfflineAll => '오프라인 사용 설정 · 모든 노트';
+
+  @override
+  String get notesOfflineCategory => '오프라인 사용 설정 · 범주';
+
+  @override
+  String get notesOfflineRemoveAll => '오프라인 보존 해제 · 모든 노트';
+
+  @override
+  String get notesOfflineRemoveCategory => '오프라인 보존 해제 · 범주';
+
+  @override
+  String get notesOfflinePause => '다운로드 일시 중지';
+
+  @override
+  String get notesOfflineResume => '다운로드 재개';
+
+  @override
+  String get notesOfflineKeep => '오프라인 사용 설정';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      '이 요구 사항을 제거해도 기존 캐시 내용은 유지됩니다. 범주나 계정 요구 사항에 따라 노트가 계속 보관될 수 있습니다.';
+
+  @override
+  String get notesOfflineBroader => '이 노트는 범주 또는 계정 요구 사항에 따라서도 보관됩니다.';
+
+  @override
+  String get notesOfflineExternal =>
+      '외부 미디어에는 연결이 필요합니다. BusyMark는 노트 텍스트와 관리되는 첨부 파일만 보관합니다.';
+
+  @override
+  String get notesEmptyAll => '아직 노트가 없습니다. 새 노트를 만드세요.';
+
+  @override
+  String get notesEmptyFavorites => '즐겨찾는 노트가 없습니다.';
+
+  @override
+  String get notesEmptyCategory => '이 범주에 노트가 없습니다.';
+
+  @override
+  String get notesEmptyUncategorized => '분류되지 않은 노트가 없습니다.';
+
+  @override
+  String get notesEmptyRecovery => '복구할 보관 노트가 없습니다.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · 실패. 다시 시도';
+
+  @override
+  String get notesOperationFailed =>
+      '작업을 완료하지 못했습니다. 초안은 보관됩니다. 저장과 충돌을 검토한 뒤 다시 시도하세요.';
+
+  @override
+  String get notesInspectionFailed => '첨부 파일 · 실패. 다시 시도';
+
+  @override
+  String get notesStartingConnection => 'Nextcloud 연결 시작 중…';
+
+  @override
+  String get notesVerifyingConnection => '노트 접근 확인 중…';
+
+  @override
+  String get notesCancellingConnection => '로그인을 취소하고 정리 중…';
+
+  @override
+  String get notesRemovingConnection => '로컬 계정 제거 중…';
+
+  @override
+  String get notesRemovedWarning =>
+      '로컬 Nextcloud 계정을 제거했습니다. 앱 암호 해지를 확인하지 못했습니다. Nextcloud 보안 설정에서 BusyMark의 앱 암호를 제거하세요.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      '열린 노트를 모두 로컬에 저장하지 못했습니다. 작업 공간에서 저장, 충돌 또는 정규화를 검토하세요. 로컬 변경 사항은 아직 Nextcloud와 동기화해야 할 수 있습니다.';
+
+  @override
+  String get notesSettingsLeave => '나가기 전에 Nextcloud 설정 변경 사항을 저장할까요?';
+
+  @override
+  String get notesSettingsLeaveHelp => '서버 Notes 설정 · 저장되지 않은 변경 사항';
+
+  @override
+  String get notesSettingsReload => '서버 설정 다시 불러오기…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      '다시 불러오면 초안이 현재 Nextcloud 설정으로 대체됩니다. 초안을 버리고 다시 불러올까요?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud가 설정을 수락했지만 노트 새로 고침에 실패했습니다. 표시된 값은 서버에서 확인한 값입니다. 노트에서 새로 고침을 다시 시도하세요.';
+
+  @override
+  String get notesUnavailable => '오프라인 · 텍스트를 로컬에서 사용 가능 · 로컬에 저장됨 · 동기화 대기';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloud 저장 공간이 가득 찼습니다. 서버 공간을 확보한 뒤 다시 시도하세요.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud가 이 변경을 거부했습니다. 노트를 검토하고 로컬 사본을 저장한 뒤 다시 시도하세요.';
+
+  @override
+  String get notesThrottled => 'Nextcloud가 대기를 요청했습니다. 재시도 기한이 지나면 동기화가 재개됩니다.';
+
+  @override
+  String get notesRecoveryRequired => '충돌 · 비교';
+
+  @override
+  String get notesScanning => '파일 검색 중…';
+
+  @override
+  String get notesCancelling => '취소 중… 현재 작업이 끝나기를 기다리는 중입니다.';
+
+  @override
+  String get notesCancelled => '취소됨';
+
+  @override
+  String get notesPartial => '부분 완료';
+
+  @override
+  String get notesTransferFailed => '실패. 다시 시도';
+
+  @override
+  String get notesImportPartialHelp =>
+      '이전 항목은 이미 로컬에 저장되었을 수 있습니다. 중복을 방지하려면 이 가져오기를 재개하세요.';
+
+  @override
+  String get notesNotStarted => '시작하지 않음';
+
+  @override
+  String get notesCreated => '생성됨';
+
+  @override
+  String get notesRemoteDeleteUnavailable => '서버 주소 · 지원되지 않음 · 삭제 · 첨부 파일';
+
+  @override
+  String get notesCurrentText => '현재 보관된 텍스트';
+
+  @override
+  String get notesRecovering => '새 노트로 복구 중…';
+
+  @override
+  String get notesReadOnlyHelp => '읽기 전용 · 즐겨찾기 · 로컬 사본 저장…';
+
+  @override
+  String get notesSort => '노트 정렬';
+
+  @override
+  String get notesPathRelative => '노트 폴더 경로는 Nextcloud 저장소 기준의 상대 경로입니다.';
+
+  @override
+  String get notesSettingsStale =>
+      'Nextcloud에서 설정이 변경되었습니다. 초안을 대체하기 전에 서버 값을 다시 불러와 검토하세요.';
+
+  @override
+  String get notesDownloadsPaused => '다운로드 일시 중지됨';
+
+  @override
+  String get notesExportNotPublished => '내보내기가 게시되지 않았습니다.';
+
+  @override
+  String get notesKeyringUnavailable => '데스크톱 키링을 잠금 해제한 뒤 다시 시도하세요.';
+
+  @override
+  String get notesConnectFailed =>
+      'Nextcloud Notes에 연결하지 못했습니다. 서버 주소를 확인하고 다시 시도하세요.';
+
+  @override
+  String get notesAccountMismatch =>
+      '같은 Nextcloud 계정으로 로그인하세요. 다른 계정을 연결하려면 이 계정을 먼저 제거하세요.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      '로컬 계정 정리에 실패했습니다. 제거를 다시 시도할 수 있도록 계정을 유지합니다.';
+
+  @override
+  String get notesTransferring => '노트 전송 중…';
+
+  @override
+  String get notesTechnicalDetails => '기술 정보';
+
+  @override
+  String get notesPauseRequirement => '오프라인 보관 요구 사항 일시 중지';
+
+  @override
+  String get notesResumeRequirement => '오프라인 보관 요구 사항 재개';
 }

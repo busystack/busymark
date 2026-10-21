@@ -800,7 +800,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> createNextcloudNote({
     String title = 'New note',
-    String category = '',
+    String? category,
     String content = '',
     bool Function()? acceptNavigation,
   }) async {
@@ -817,7 +817,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final note = await repository.create(
         accountId,
         title: title,
-        category: category,
+        category:
+            category ??
+            (ref.read(notesNavigationProvider(accountId)).destination ==
+                    NotesDestination.category
+                ? ref.read(notesNavigationProvider(accountId)).category
+                : ''),
         content: content,
       );
       final opened = await openNextcloudNote(
@@ -825,11 +830,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         acceptNavigation: acceptNavigation,
       );
       _scheduleRemoteSync(accountId);
+      _publishCreatedNextcloudNote(note, repository.notes);
       return opened;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
       return false;
     }
+  }
+
+  void _publishCreatedNextcloudNote(
+    NextcloudNote note,
+    Iterable<NextcloudNote> notes,
+  ) {
+    final current = notes
+        .where(
+          (n) => n.localId == note.localId && n.accountId == note.accountId,
+        )
+        .firstOrNull;
+    if (current == null) return;
+    ref
+        .read(notesNavigationProvider(current.accountId))
+        .showCreated(current, notes);
+    ref
+        .read(notesCreatedProvider.notifier)
+        .created(note.accountId, note.localId);
   }
 
   void _reportNextcloudFailure(Object error) {
@@ -985,7 +1009,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<void> updateNextcloudNoteMetadata(
+  Future<bool> updateNextcloudNoteMetadata(
     String localId, {
     NotesMetadataSnapshot? snapshot,
     String? title,
@@ -1000,10 +1024,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           .firstOrNull;
       if (buffer?.isDirty == true &&
           !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
-        return;
+        return false;
       }
       final note = repository.noteById(localId);
-      if (note == null) return;
+      if (note == null) return false;
       final updated = await repository.patchMetadata(
         snapshot ?? repository.metadataSnapshot(localId),
         title: title,
@@ -1013,8 +1037,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (updated.revision != beforeRevision) {
         _scheduleRemoteSync(note.accountId);
       }
+      return updated.metadataConflict == null;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
+      return false;
     }
   }
 
@@ -1038,6 +1064,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             snapshot.note.title,
             NotesBatchStatus.failed,
             'Editor save failed.',
+            NotesBatchReason.editorNotSaved,
           ),
         );
       } else {
@@ -1137,7 +1164,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<void> resolveNextcloudConflict(
+  /// A changed remote review is returned as [NotesConflictReviewChanged]; the
+  /// caller must present it before another decision. Other failures return false.
+  Future<bool> resolveNextcloudConflict(
     String localId,
     NoteConflictResolution resolution, {
     String? mergedContent,
@@ -1145,6 +1174,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     int? expectedRevision,
     int? creationCandidateServerId,
     NotesCreationReview? creationReview,
+    NoteState? reviewedRemote,
   }) async {
     try {
       final repository = await _ensureNotesRepository();
@@ -1179,14 +1209,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       if (buffer?.isDirty == true &&
           !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
-        return;
+        return false;
       }
       if (buffer != null &&
           !await _localHistory.captureBeforeLoss(
             LocalHistoryBufferSnapshot.fromBuffer(buffer),
             LocalHistoryCaptureReason.beforeRestore,
           )) {
-        return;
+        return false;
       }
       await repository.resolveConflict(
         localId,
@@ -1196,50 +1226,59 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         expectedRevision: expectedRevision,
         creationCandidateServerId: creationCandidateServerId,
         creationReview: creationReview,
+        reviewedRemote: reviewedRemote,
       );
       final accountId = repository.noteById(localId)?.accountId;
       if (accountId != null) _scheduleRemoteSync(accountId);
-    } on Object catch (error) {
-      _reportNextcloudFailure(error);
-    }
-  }
-
-  Future<bool> recoverDeletedNextcloudNote(
-    String localId, {
-    String? content,
-  }) async {
-    try {
-      final repository = await _ensureNotesRepository();
-      final original = repository.noteById(localId);
-      if (original == null ||
-          state.workspace?.nextcloudAccountId != original.accountId) {
-        return false;
-      }
-      final recovered = await repository.recoverAsNew(
-        localId,
-        content: content,
-      );
-      final opened = await openNextcloudNote(recovered.localId);
-      _scheduleRemoteSync(original.accountId);
-      return opened;
+      return true;
+    } on NotesConflictReviewChanged {
+      rethrow;
     } on Object catch (error) {
       _reportNextcloudFailure(error);
       return false;
     }
   }
 
-  Future<bool> recoverNextcloudHistoryRevision({
+  Future<NotesRecoveryResult> recoverDeletedNextcloudNote(
+    String localId, {
+    String? content,
+  }) async {
+    String? recoveredId;
+    try {
+      final repository = await _ensureNotesRepository();
+      final original = repository.noteById(localId);
+      if (original == null ||
+          state.workspace?.nextcloudAccountId != original.accountId) {
+        return const NotesRecoveryResult();
+      }
+      final recovered = await repository.recoverAsNew(
+        localId,
+        content: content,
+      );
+      recoveredId = recovered.localId;
+      _scheduleRemoteSync(original.accountId);
+      _publishCreatedNextcloudNote(recovered, repository.notes);
+      final opened = await openNextcloudNote(recovered.localId);
+      return NotesRecoveryResult(noteId: recoveredId, opened: opened);
+    } on Object catch (error) {
+      _reportNextcloudFailure(error);
+      return NotesRecoveryResult(noteId: recoveredId, failure: error);
+    }
+  }
+
+  Future<NotesRecoveryResult> recoverNextcloudHistoryRevision({
     required LocalHistoryDocument document,
     required LocalHistoryRevision revision,
   }) async {
+    String? recoveredId;
     try {
       final reference = document.remoteNote;
       if (reference == null || revision.summary.documentId != document.id) {
-        return false;
+        return const NotesRecoveryResult();
       }
       if (state.workspace?.nextcloudAccountId != reference.accountId &&
           !await openNextcloudWorkspace(reference.accountId)) {
-        return false;
+        return const NotesRecoveryResult();
       }
       final repository = await _ensureNotesRepository();
       final recovered = await repository.recoverAsNew(
@@ -1247,12 +1286,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         title: document.displayName,
         content: revision.source,
       );
-      final opened = await openNextcloudNote(recovered.localId);
+      recoveredId = recovered.localId;
       _scheduleRemoteSync(reference.accountId);
-      return opened;
+      _publishCreatedNextcloudNote(recovered, repository.notes);
+      final opened = await openNextcloudNote(recovered.localId);
+      return NotesRecoveryResult(noteId: recoveredId, opened: opened);
     } on Object catch (error) {
       _reportNextcloudFailure(error);
-      return false;
+      return NotesRecoveryResult(noteId: recoveredId, failure: error);
     }
   }
 

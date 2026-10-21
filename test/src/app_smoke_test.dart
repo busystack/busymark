@@ -13124,6 +13124,103 @@ Gamma body.
     );
   });
 
+  testWidgets(
+    'tabbed Outline row delegates arrows, reveal and activation to Outline',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 720);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final source = [
+        for (var i = 0; i < 60; i++)
+          '# Heading ${i.toString().padLeft(2, '0')}\n\nParagraph $i.\n',
+      ].join('\n');
+      final settings = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              documentViewMode: DocumentViewModePreference.preview,
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          localSettingsStoreProvider.overrideWithValue(settings),
+          workspaceServiceProvider.overrideWithValue(
+            _SearchWorkspaceService(source),
+          ),
+          startupPathProvider.overrideWithValue('/tmp/outline-row-keyboard.md'),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final registry = container.read(busyMarkCommandRegistryProvider);
+      await registry.execute(BusyMarkCommandIds.sidebarOutline);
+      await tester.pumpAndSettle();
+      BusyMarkSidebarTreeRow? focusedRow() => FocusManager
+          .instance
+          .primaryFocus
+          ?.context
+          ?.findAncestorWidgetOfExactType<BusyMarkSidebarTreeRow>();
+      for (var i = 0; i < 100 && focusedRow()?.title != 'Heading 00'; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+      }
+      expect(focusedRow()?.title, 'Heading 00');
+      BusyMarkSidebarTreeRow row(int index) =>
+          tester.widget<BusyMarkSidebarTreeRow>(
+            find.descendant(
+              of: find.byKey(ValueKey('workspace-sidebar-outline-row-$index')),
+              matching: find.byType(BusyMarkSidebarTreeRow),
+            ),
+          );
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(row(1).selected, isTrue);
+      expect(row(0).selected, isFalse);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(row(0).selected, isTrue);
+      for (var i = 0; i < 40; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+      }
+      expect(row(40).selected, isTrue);
+      final outlineScroll = tester
+          .widget<ListView>(
+            find.byKey(const ValueKey('workspace-sidebar-outline-tree')),
+          )
+          .controller!;
+      expect(outlineScroll.offset, greaterThan(0));
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      final state = container.read(workspaceControllerProvider);
+      final heading = state.preview!.outline[40];
+      final blockIndex = state.preview!.blocks.indexWhere(
+        (b) => b.attributes['id'] == heading.id,
+      );
+      final positions = tester
+          .widget<ScrollablePositionedList>(
+            find.byKey(const ValueKey('preview-document-scroll')),
+          )
+          .itemPositionsNotifier!
+          .itemPositions
+          .value;
+      expect(
+        positions.any(
+          (p) => p.index == blockIndex && p.itemLeadingEdge.abs() < .01,
+        ),
+        isTrue,
+      );
+    },
+  );
+
   testWidgets('outline highlights the heading at the document viewport', (
     tester,
   ) async {

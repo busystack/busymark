@@ -11,6 +11,126 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => '保持されたテキストから新規ノートを作成';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud が待機を求めています。しばらく待ってから再度ログインしてください。';
+
+  @override
+  String get notesSettingsRefreshing => '確認済みの設定に基づいて Notes を更新中';
+
+  @override
+  String get notesExportOperationFailed =>
+      '公開前にエクスポートが失敗しました。元と保存先を確認して再実行してください。';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      '復旧したノートは保存済みですが、開けませんでした。未処理の編集やプロパティ変更を解決し、この既存ノートを開いてください。';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      '未処理のノート、競合、作成結果の不確定なノートが変更を妨げています。Notes で同期または確認し、保持された設定の下書きを再保存してください。';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      '未処理の添付操作が変更を妨げています。Notes で添付を確認し、保持された設定の下書きを再保存してください。';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Nextcloud の正規の HTTPS アドレスでログインをやり直してください。アドレスまたはリダイレクトを確認できませんでした。';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes が利用できないか API が未対応です。API メジャーバージョン 1、マイナーバージョン 4 以降の Nextcloud Notes を有効にしてください。';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud が認証情報を拒否しました。再認証または再接続してください。';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud が Notes の機能確認を拒否しました。管理者に許可を依頼して再試行してください。';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloud の応答を検証できませんでした。サーバーの設定を確認し、再度ログインしてください。';
+
+  @override
+  String get notesAccountTimedOut => 'ログインがタイムアウトしました。やり直してブラウザーで認証を完了してください。';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'システムのブラウザーを開けませんでした。既定のブラウザーを確認して再度ログインしてください。';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud に接続できませんでした。接続とサーバーを確認して再度ログインしてください。';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud が機能リクエストを拒否しました。管理者とアクセス権を確認して再試行してください。';
+
+  @override
+  String get notesAccountFailed => 'アカウント設定を完了できませんでした。再度ログインしてください。';
+
+  @override
+  String get notesTransferSourceChanged =>
+      '確認後に元の内容が変わりました。現在のファイルを再確認するか、新しいスナップショットを作成してください。';
+
+  @override
+  String get notesTransferUnreadable =>
+      '元の内容を読めませんでした。ファイルやフォルダーのアクセス権を確認して再確認してください。';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      '無効または未対応のスナップショットです。有効な BusyMark Notes スナップショットか Markdown を選んでください。';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'メディアがインポートのサイズ制限を超えています。該当項目のメディアを小さくして再確認してください。';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      '元の内容に安全でないパスがあります。元のフォルダー内のファイルを選び、再確認してください。';
+
+  @override
+  String get notesTransferDestination =>
+      'エクスポートを書き込めませんでした。保存先のアクセス権と空き容量を確認して再実行してください。';
+
+  @override
+  String get notesTransferOperationFailed =>
+      '転送を完了できませんでした。該当項目を確認して再試行してください。すでにインポートした項目は保存されています。';
+
+  @override
+  String get notesExportPublishedWithOmissions => '一部を除いてエクスポート済み';
+
+  @override
+  String get notesBatchUnchanged => '要求された値はすでに設定されています。';
+
+  @override
+  String get notesBatchReadOnly =>
+      'このノートは読み取り専用です。保護されたプロパティは変更できませんが、お気に入りは変更できます。';
+
+  @override
+  String get notesBatchReviewChanged =>
+      '確認後にノートが変わりました。現在の状態を確認してから操作をやり直してください。';
+
+  @override
+  String get notesBatchMissing => 'このノートは利用できなくなりました。一覧を更新して対象を再確認してください。';
+
+  @override
+  String get notesBatchStorage =>
+      'ローカル保存に失敗しました。保存領域を確認してこの項目を再試行してください。成功した項目は保存済みです。';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'サーバーのノートが変わりました。マージの下書きは保持されています。更新された比較を確認し、解決方法を再度選んでください。';
+
+  @override
+  String get notesReviewRemote => '現在のサーバーバージョンを確認しました';
+
+  @override
   String get wsModuleCapsNotPublished => 'モジュールの大文字・小文字設定は公開されません。';
 
   @override
@@ -5385,4 +5505,209 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => '新しいショートカット';
+
+  @override
+  String get notesActions => 'ノートの操作';
+
+  @override
+  String get noteActions => 'このノートの操作';
+
+  @override
+  String get noteProperties => 'ノートのプロパティ';
+
+  @override
+  String get notesExportAll => 'ノートをエクスポート · すべてのノート…';
+
+  @override
+  String get notesExportCategory => 'ノートをエクスポート · カテゴリ…';
+
+  @override
+  String get notesOfflineAll => 'オフラインで利用可能にする · すべてのノート';
+
+  @override
+  String get notesOfflineCategory => 'オフラインで利用可能にする · カテゴリ';
+
+  @override
+  String get notesOfflineRemoveAll => 'オフライン保持を解除 · すべてのノート';
+
+  @override
+  String get notesOfflineRemoveCategory => 'オフライン保持を解除 · カテゴリ';
+
+  @override
+  String get notesOfflinePause => 'ダウンロードを一時停止';
+
+  @override
+  String get notesOfflineResume => 'ダウンロードを再開';
+
+  @override
+  String get notesOfflineKeep => 'オフラインで利用可能にする';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'この要件を解除しても既存のキャッシュは削除されません。カテゴリやアカウントの要件により保持される場合があります。';
+
+  @override
+  String get notesOfflineBroader => 'このノートはカテゴリまたはアカウントの要件によっても保持されています。';
+
+  @override
+  String get notesOfflineExternal =>
+      '外部メディアには接続が必要です。BusyMark が保持するのはノート本文と管理対象の添付ファイルのみです。';
+
+  @override
+  String get notesEmptyAll => 'ノートはまだありません。新しく作成してください。';
+
+  @override
+  String get notesEmptyFavorites => 'お気に入りのノートはありません。';
+
+  @override
+  String get notesEmptyCategory => 'このカテゴリにノートはありません。';
+
+  @override
+  String get notesEmptyUncategorized => '未分類のノートはありません。';
+
+  @override
+  String get notesEmptyRecovery => '復元できる保存済みノートはありません。';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · 失敗. 再試行';
+
+  @override
+  String get notesOperationFailed =>
+      '処理を完了できませんでした。下書きは保持されています。保存と競合を確認して再試行してください。';
+
+  @override
+  String get notesInspectionFailed => '添付ファイル · 失敗. 再試行';
+
+  @override
+  String get notesStartingConnection => 'Nextcloud への接続を開始中…';
+
+  @override
+  String get notesVerifyingConnection => 'ノートへのアクセスを確認中…';
+
+  @override
+  String get notesCancellingConnection => 'サインインをキャンセルして後処理中…';
+
+  @override
+  String get notesRemovingConnection => 'ローカルアカウントを削除中…';
+
+  @override
+  String get notesRemovedWarning =>
+      'ローカルの Nextcloud アカウントを削除しました。アプリパスワードの失効は確認できませんでした。Nextcloud のセキュリティ設定で BusyMark のパスワードを削除してください。';
+
+  @override
+  String get notesBuffersNotSaved =>
+      '開いているすべてのノートをローカルに保存できませんでした。ワークスペースで保存、競合、正規化を確認してください。ローカルの変更は Nextcloud との同期がまだ必要な場合があります。';
+
+  @override
+  String get notesSettingsLeave => '移動する前に Nextcloud 設定の変更を保存しますか？';
+
+  @override
+  String get notesSettingsLeaveHelp => 'サーバーのNotes設定 · 未保存の変更';
+
+  @override
+  String get notesSettingsReload => 'サーバー設定を再読み込み…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      '再読み込みすると下書きが現在の Nextcloud 設定に置き換わります。下書きを破棄して再読み込みしますか？';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud は設定を受理しましたが、ノートの更新に失敗しました。表示値はサーバーが確認した値です。ノートから更新を再試行してください。';
+
+  @override
+  String get notesUnavailable => 'オフライン · テキストはローカルで利用可能 · ローカルに保存済み・同期待ち';
+
+  @override
+  String get notesStorageFull => 'Nextcloud の空き容量がありません。サーバーの容量を空けて再試行してください。';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud が変更を拒否しました。ノートを確認してローカルコピーを保存してから再試行してください。';
+
+  @override
+  String get notesThrottled => 'Nextcloud が待機を要求しました。指定された再試行時刻を過ぎると同期が再開します。';
+
+  @override
+  String get notesRecoveryRequired => '競合 · 比較';
+
+  @override
+  String get notesScanning => 'ファイルをスキャン中…';
+
+  @override
+  String get notesCancelling => 'キャンセル中… 現在の処理の終了を待っています。';
+
+  @override
+  String get notesCancelled => 'キャンセル済み';
+
+  @override
+  String get notesPartial => '一部完了';
+
+  @override
+  String get notesTransferFailed => '失敗. 再試行';
+
+  @override
+  String get notesImportPartialHelp =>
+      '以前の項目はすでにローカルに保存されている場合があります。重複を防ぐため、このインポートを再開してください。';
+
+  @override
+  String get notesNotStarted => '未開始';
+
+  @override
+  String get notesCreated => '作成済み';
+
+  @override
+  String get notesRemoteDeleteUnavailable => 'サーバーURL · 未対応 · 削除 · 添付ファイル';
+
+  @override
+  String get notesCurrentText => '現在保持されているテキスト';
+
+  @override
+  String get notesRecovering => '新しいノートとして復元中…';
+
+  @override
+  String get notesReadOnlyHelp => '読み取り専用 · お気に入り · ローカルコピーを保存…';
+
+  @override
+  String get notesSort => 'ノートの並べ替え';
+
+  @override
+  String get notesPathRelative => 'ノートフォルダーのパスは Nextcloud ストレージからの相対パスです。';
+
+  @override
+  String get notesSettingsStale =>
+      'Nextcloud の設定が変更されました。サーバーの値を再読み込みして確認してから下書きを置き換えてください。';
+
+  @override
+  String get notesDownloadsPaused => 'ダウンロードは一時停止中です';
+
+  @override
+  String get notesExportNotPublished => 'エクスポートは公開されませんでした。';
+
+  @override
+  String get notesKeyringUnavailable => 'デスクトップのキーリングを解除して再試行してください。';
+
+  @override
+  String get notesConnectFailed =>
+      'Nextcloud Notes に接続できませんでした。サーバーのアドレスを確認して再試行してください。';
+
+  @override
+  String get notesAccountMismatch =>
+      '同じ Nextcloud アカウントでサインインしてください。別のアカウントを接続するには現在のアカウントを先に削除してください。';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'ローカルアカウントの後処理に失敗しました。削除を再試行できるようアカウントを保持しています。';
+
+  @override
+  String get notesTransferring => 'ノートを転送中…';
+
+  @override
+  String get notesTechnicalDetails => '技術情報';
+
+  @override
+  String get notesPauseRequirement => 'オフライン保持要件を一時停止';
+
+  @override
+  String get notesResumeRequirement => 'オフライン保持要件を再開';
 }

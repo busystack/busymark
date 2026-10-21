@@ -61,6 +61,9 @@ class _LocalHistoryComparisonViewState
     extends ConsumerState<LocalHistoryComparisonView> {
   Future<_ComparisonSnapshot?>? _future;
   _ComparisonRequest? _request;
+  bool _recovering = false;
+  final _recoveredNotes = <String, String>{};
+  String? _recoveryError;
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +128,9 @@ class _LocalHistoryComparisonViewState
         return _ComparisonBody(
           snapshot: data,
           remoteRecovery: document.remoteNote != null,
+          recoveryCreated: _recoveredNotes.containsKey(revision.summary.id),
+          recoveryBusy: _recovering,
+          recoveryError: _recoveryError,
           onClose: () => ref
               .read(localHistoryControllerProvider.notifier)
               .clearComparison(),
@@ -252,13 +258,40 @@ class _LocalHistoryComparisonViewState
     LocalHistoryDocument document,
     LocalHistoryRevision revision,
   ) async {
-    if (!await confirmSafeToContinue(context, ref) || !mounted) return;
-    await ref
-        .read(workspaceControllerProvider.notifier)
-        .recoverNextcloudHistoryRevision(
-          document: document,
-          revision: revision,
+    if (_recovering) return;
+    setState(() {
+      _recovering = true;
+      _recoveryError = null;
+    });
+    try {
+      final controller = ref.read(workspaceControllerProvider.notifier);
+      final existing = _recoveredNotes[revision.summary.id];
+      if (existing != null) {
+        if (!await controller.openNextcloudNote(existing) && mounted) {
+          setState(
+            () => _recoveryError = context.l10n.notesRecoveryCreatedNotOpened,
+          );
+        }
+        return;
+      }
+      if (!await confirmSafeToContinue(context, ref) || !mounted) return;
+      final result = await controller.recoverNextcloudHistoryRevision(
+        document: document,
+        revision: revision,
+      );
+      if (result.noteId != null) {
+        _recoveredNotes[revision.summary.id] = result.noteId!;
+      }
+      if (mounted && !result.opened) {
+        setState(
+          () => _recoveryError = result.created
+              ? context.l10n.notesRecoveryCreatedNotOpened
+              : context.l10n.notesOperationFailed,
         );
+      }
+    } finally {
+      if (mounted) setState(() => _recovering = false);
+    }
   }
 
   Future<void> _restoreMissing(
@@ -394,6 +427,9 @@ class _ComparisonBody extends StatelessWidget {
     required this.onRestoreOriginal,
     required this.onRestoreNewLocation,
     this.remoteRecovery = false,
+    this.recoveryCreated = false,
+    this.recoveryBusy = false,
+    this.recoveryError,
   });
 
   final _ComparisonSnapshot snapshot;
@@ -403,6 +439,8 @@ class _ComparisonBody extends StatelessWidget {
   final VoidCallback? onRestoreOriginal;
   final VoidCallback? onRestoreNewLocation;
   final bool remoteRecovery;
+  final bool recoveryCreated, recoveryBusy;
+  final String? recoveryError;
 
   @override
   Widget build(BuildContext context) {
@@ -451,9 +489,11 @@ class _ComparisonBody extends StatelessWidget {
             actions: [
               if (onRestoreOriginal != null)
                 OutlinedButton(
-                  onPressed: onRestoreOriginal,
+                  onPressed: recoveryBusy ? null : onRestoreOriginal,
                   child: Text(
-                    remoteRecovery
+                    recoveryCreated
+                        ? context.l10n.open
+                        : remoteRecovery
                         ? context.l10n.nextcloudNewNote
                         : context.l10n.localHistoryRestoreOriginalLocation,
                   ),
@@ -464,6 +504,12 @@ class _ComparisonBody extends StatelessWidget {
                   child: Text(context.l10n.localHistoryRestoreNewLocation),
                 ),
             ],
+          ),
+        if (recoveryBusy) const LinearProgressIndicator(),
+        if (recoveryError != null)
+          BusyMarkStatusBox(
+            message: recoveryError!,
+            kind: BusyMarkStatusKind.warning,
           ),
         if (comparison.simplified)
           _ComparisonNotice(

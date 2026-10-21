@@ -8,9 +8,19 @@ abstract interface class NextcloudSecretStore {
   Future<void> delete(String accountId);
 }
 
+enum NextcloudCredentialFailure {
+  unavailable,
+  identityMismatch,
+  alreadyConnected,
+}
+
 class NextcloudCredentialException implements Exception {
-  const NextcloudCredentialException(this.message);
+  const NextcloudCredentialException(
+    this.message, {
+    this.code = NextcloudCredentialFailure.unavailable,
+  });
   final String message;
+  final NextcloudCredentialFailure code;
   @override
   String toString() => message;
 }

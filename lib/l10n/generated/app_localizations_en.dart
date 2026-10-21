@@ -11,6 +11,131 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'New note from retained text';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud requested a pause. Wait before starting sign-in again.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Refreshing Notes after the acknowledged settings update';
+
+  @override
+  String get notesExportOperationFailed =>
+      'The export failed before publication. Check the source and destination, then export again.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'The recovered note was saved. Opening it failed. Resolve pending editor or property changes, then open this existing note.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Pending notes, conflicts, or uncertain creations block this collection change. Open Notes and synchronize or review them, then retry this retained settings draft.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Pending attachment operations block this collection change. Open Notes and review the attachments, then retry this retained settings draft.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Use the canonical HTTPS address of your Nextcloud server, then start sign-in again. The address or redirect could not be verified.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes is unavailable or its API is unsupported. Enable Nextcloud Notes with API major version 1, minor version 4 or later.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud rejected the credentials. Authorize this account again or reconnect.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud denied the Notes capability check. Ask the server administrator to allow it, then try again.';
+
+  @override
+  String get notesAccountMalformed =>
+      'The Nextcloud response could not be verified. Check the server installation, then start sign-in again.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Sign-in timed out. Start sign-in again and complete authorization in your browser.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'The system browser could not open. Check your default browser, then start sign-in again.';
+
+  @override
+  String get notesAccountNetwork =>
+      'BusyMark could not reach Nextcloud. Check your connection and the server, then try signing in again.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud rejected the capability request. Check server access with your administrator, then try again.';
+
+  @override
+  String get notesAccountFailed =>
+      'BusyMark could not complete account setup. Try signing in again.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'The source changed after review. Review the current file or capture a new snapshot before retrying.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'The source could not be read. Check access to the file or folder, then review it again.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'The snapshot is invalid or unsupported. Choose a valid BusyMark Notes snapshot or Markdown source.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Media exceeds the import size limit. Reduce the affected item\'s media before reviewing it again.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'The source contains an unsafe path. Choose files within the selected source folder and review again.';
+
+  @override
+  String get notesTransferDestination =>
+      'The export could not be written. Check access and free space at the destination, then export again.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'The transfer could not finish. Review the affected items and try again. Earlier imported items remain saved.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Export available with omissions';
+
+  @override
+  String get notesBatchUnchanged => 'The requested values were already set.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'This note is read-only. Protected properties cannot change; Favorite is still permitted.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'This note changed after review. Review its current state before applying this action again.';
+
+  @override
+  String get notesBatchMissing =>
+      'This note is no longer available. Refresh the list and review the targets again.';
+
+  @override
+  String get notesBatchStorage =>
+      'The local save failed. Check local storage and retry this item; successful items remain saved.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'The server note changed. Your merge draft is retained. Review the updated comparison and choose how to resolve it again.';
+
+  @override
+  String get notesReviewRemote => 'I have reviewed the current server version';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Module capitalization is not published.';
 
@@ -5554,4 +5679,225 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutProposedBinding => 'Proposed shortcut';
+
+  @override
+  String get notesActions => 'Notes actions';
+
+  @override
+  String get noteActions => 'Note actions';
+
+  @override
+  String get noteProperties => 'Note Properties';
+
+  @override
+  String get notesExportAll => 'Export All Notes…';
+
+  @override
+  String get notesExportCategory => 'Export Category…';
+
+  @override
+  String get notesOfflineAll => 'Keep All Notes Available Offline';
+
+  @override
+  String get notesOfflineCategory => 'Keep Category Available Offline';
+
+  @override
+  String get notesOfflineRemoveAll => 'Remove All Notes Offline Requirement';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Remove Category Offline Requirement';
+
+  @override
+  String get notesOfflinePause => 'Pause Downloads';
+
+  @override
+  String get notesOfflineResume => 'Resume Downloads';
+
+  @override
+  String get notesOfflineKeep => 'Keep this note available offline';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Removing this requirement keeps existing cached content. A category or account requirement may still retain this note.';
+
+  @override
+  String get notesOfflineBroader =>
+      'This note is also retained by a category or account requirement.';
+
+  @override
+  String get notesOfflineExternal =>
+      'External media requires a connection. BusyMark only retains note text and managed attachments.';
+
+  @override
+  String get notesEmptyAll => 'No notes yet. Create a note to get started.';
+
+  @override
+  String get notesEmptyFavorites => 'No favorite notes.';
+
+  @override
+  String get notesEmptyCategory => 'No notes in this category.';
+
+  @override
+  String get notesEmptyUncategorized => 'No uncategorized notes.';
+
+  @override
+  String get notesEmptyRecovery => 'No retained notes to recover.';
+
+  @override
+  String get notesLoadFailed =>
+      'BusyMark could not load the local Notes store. Retry to open your cached notes.';
+
+  @override
+  String get notesOperationFailed =>
+      'The operation could not finish. Your draft is retained. Review Save and any conflicts, then try again.';
+
+  @override
+  String get notesInspectionFailed =>
+      'BusyMark could not inspect attachments. Retry to review availability.';
+
+  @override
+  String get notesStartingConnection => 'Starting Nextcloud connection…';
+
+  @override
+  String get notesVerifyingConnection => 'Verifying Notes access…';
+
+  @override
+  String get notesCancellingConnection => 'Cancelling login and cleaning up…';
+
+  @override
+  String get notesRemovingConnection => 'Removing the local account…';
+
+  @override
+  String get notesRemovedWarning =>
+      'The local Nextcloud account was removed. App-password revocation was not confirmed. Remove BusyMark’s app password in Nextcloud Security settings.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'BusyMark could not save all open notes locally. Review Save, conflicts, or normalization in the workspace before trying again. Pending local changes may still need to synchronize with Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Save changes to Nextcloud settings before leaving?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Your Notes folder and suffix changes have not been sent to Nextcloud.';
+
+  @override
+  String get notesSettingsReload => 'Reload Server Settings…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Reloading replaces your draft with the current settings on Nextcloud. Discard this draft and reload?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud accepted the settings update, but refreshing notes failed. The displayed settings are the server’s acknowledged values. Retry the refresh from Notes.';
+
+  @override
+  String get notesUnavailable =>
+      'Nextcloud is unavailable. Cached notes remain available; local changes are waiting to synchronize.';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloud storage is full. Free space on the server, then retry.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud rejected this change. Review the note and save a local copy before retrying.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud asked BusyMark to wait. Synchronization resumes after the retry deadline.';
+
+  @override
+  String get notesRecoveryRequired =>
+      'This change requires review before synchronization can continue.';
+
+  @override
+  String get notesScanning => 'Scanning files…';
+
+  @override
+  String get notesCancelling =>
+      'Cancelling… Waiting for the current operation to settle.';
+
+  @override
+  String get notesCancelled => 'Cancelled';
+
+  @override
+  String get notesPartial => 'Partially completed';
+
+  @override
+  String get notesTransferFailed =>
+      'Transfer failed. Review the outcome before retrying.';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Earlier items may already be saved locally. Resume this import to continue without duplicating them.';
+
+  @override
+  String get notesNotStarted => 'Not started';
+
+  @override
+  String get notesCreated => 'Created';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'This server does not support deleting remote attachments.';
+
+  @override
+  String get notesCurrentText => 'Current retained text';
+
+  @override
+  String get notesRecovering => 'Recovering as a new note…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'This note is read-only. You can change its favorite status or save a local copy.';
+
+  @override
+  String get notesSort => 'Sort notes';
+
+  @override
+  String get notesPathRelative =>
+      'The Notes folder path is relative to your Nextcloud storage.';
+
+  @override
+  String get notesSettingsStale =>
+      'The settings changed on Nextcloud. Reload and review the server values before replacing your draft.';
+
+  @override
+  String get notesDownloadsPaused => 'Downloads paused';
+
+  @override
+  String get notesExportNotPublished => 'No export was published.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Unlock the desktop keyring and try again.';
+
+  @override
+  String get notesConnectFailed =>
+      'Could not connect to Nextcloud Notes. Check the server address and try again.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Sign in to the same Nextcloud account. Remove this account first to connect a different one.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Local account cleanup failed. The account is retained so you can retry removal.';
+
+  @override
+  String get notesTransferring => 'Transferring notes…';
+
+  @override
+  String get notesTechnicalDetails => 'Technical details';
+
+  @override
+  String get notesPauseRequirement => 'Pause Offline Requirement';
+
+  @override
+  String get notesResumeRequirement => 'Resume Offline Requirement';
 }

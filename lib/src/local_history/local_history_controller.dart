@@ -3955,6 +3955,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     if (document != null) selectDocument(document.id);
   }
 
+  Future<LocalHistorySnapshot> readRecoveryHistory() => _store.load();
+
+  /// Reads recovery content without changing History or editor navigation.
+  Future<LocalHistoryRevision?> readRecoveryRevision(
+    String documentId,
+    String revisionId,
+  ) async {
+    final revision = await _store.readRevision(revisionId);
+    return revision?.summary.documentId == documentId ? revision : null;
+  }
+
   Future<void> selectRevision(
     String revisionId, {
     bool Function()? acceptSelection,
