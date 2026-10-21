@@ -23,9 +23,14 @@ void main() {
     expect(searchPanel, isNot(contains('DecoratedBox(')));
     expect(searchPanel, isNot(contains('Border.all(')));
     expect(searchPanel, isNot(contains('elevation:')));
-    expect(RegExp(r'YaruIconButton\(').allMatches(searchButtons).length, 2);
+    expect(searchPanel, isNot(contains('SearchOptionButton(')));
+    expect(
+      File('lib/src/search/search_option_button.dart').existsSync(),
+      isFalse,
+    );
+    expect(RegExp(r'YaruIconButton\(').allMatches(searchButtons).length, 1);
     expect(searchButtons, contains('iconSize: 28'));
-    expect(searchButtons, contains('isSelected: selected'));
+    expect(searchButtons, isNot(contains('isSelected: selected')));
     expect(searchButtons, isNot(contains('WidgetStateProperty.resolveWith')));
     expect(searchButtons, isNot(contains('backgroundColor:')));
     expect(searchButtons, isNot(contains('fixedSize:')));
@@ -76,7 +81,7 @@ void main() {
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
     final problemsList = RegExp(
-      r'class _ProblemsList[\s\S]*?class _SearchSidebar',
+      r'class _ProblemsList[\s\S]*?@visibleForTesting',
     ).firstMatch(workspace)!.group(0)!;
 
     expect(problemsList, contains('return BusyMarkGroupedSurface('));

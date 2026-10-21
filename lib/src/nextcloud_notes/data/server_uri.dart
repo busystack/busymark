@@ -1,3 +1,9 @@
+/// A typed validation failure; presentation must not parse diagnostic text.
+class NextcloudServerUrlException extends FormatException {
+  const NextcloudServerUrlException()
+    : super('Enter a valid HTTPS Nextcloud server URL.');
+}
+
 /// Validates a Nextcloud installation URL without losing its path prefix.
 Uri normalizeNextcloudServer(String input) {
   final value = input.trim();
@@ -17,7 +23,7 @@ Uri normalizeNextcloudServer(String input) {
         );
         return decoded == '.' || decoded == '..';
       })) {
-    throw const FormatException('Enter a valid HTTPS Nextcloud server URL.');
+    throw const NextcloudServerUrlException();
   }
   final uri = Uri.tryParse(value);
   if (uri == null ||
@@ -38,7 +44,7 @@ Uri normalizeNextcloudServer(String input) {
             part.contains('\\') ||
             part.contains(RegExp(r'[\x00-\x1f\x7f]')),
       )) {
-    throw const FormatException('Enter a valid HTTPS Nextcloud server URL.');
+    throw const NextcloudServerUrlException();
   }
   // Preserve the installation prefix. Production never permits plaintext auth.
   final path = uri.path.replaceFirst(RegExp(r'/+$'), '');

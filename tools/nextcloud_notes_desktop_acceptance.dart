@@ -1,3 +1,4 @@
+import 'package:busymark/src/search/search_session.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -51,6 +52,7 @@ import 'package:window_manager/window_manager.dart';
 enum _Scenario {
   full('full'),
   workspace('workspace'),
+  unifiedSearch('unified-search'),
   offlineStart('offline-start'),
   offlineResume('offline-resume'),
   references('references'),
@@ -183,6 +185,8 @@ Future<void> main(List<String> args) async {
         output: output,
         containerName: args[3],
         scenario: scenario,
+        secondaryLogin: credentials['secondaryLoginName'] as String?,
+        secondaryPassword: credentials['secondaryAppPassword'] as String?,
       ),
     ),
   );
@@ -282,20 +286,18 @@ class _Settings implements LocalSettingsStore {
 }
 
 class _Secrets implements NextcloudSecretStore {
-  _Secrets(this.id, this.password);
-  final String id;
-  String? password;
+  _Secrets(String id, String password) : passwords = {id: password};
+  final Map<String, String> passwords;
   @override
-  Future<String?> read(String accountId) async =>
-      accountId == id ? password : null;
+  Future<String?> read(String accountId) async => passwords[accountId];
   @override
   Future<void> write(String accountId, String value) async {
-    password = value;
+    passwords[accountId] = value;
   }
 
   @override
   Future<void> delete(String accountId) async {
-    password = null;
+    passwords.remove(accountId);
   }
 }
 
@@ -307,6 +309,8 @@ class _Harness extends ConsumerStatefulWidget {
     required this.output,
     required this.containerName,
     required this.scenario,
+    this.secondaryLogin,
+    this.secondaryPassword,
   });
   final NextcloudAccount account;
   final _Transport transport;
@@ -314,6 +318,8 @@ class _Harness extends ConsumerStatefulWidget {
   final Directory output;
   final String containerName;
   final _Scenario scenario;
+  final String? secondaryLogin;
+  final String? secondaryPassword;
   bool get resumeOffline => scenario == _Scenario.offlineResume;
   bool get stopOffline => scenario == _Scenario.offlineStart;
   bool get correctionsStart => scenario == _Scenario.recoveryStart;
@@ -362,9 +368,28 @@ class _HarnessState extends ConsumerState<_Harness> {
     }
   }
 
+  SearchSessionState get searchState => ref.read(searchSessionProvider);
+  Future<void> openSidebarSearch(
+    SearchCategory category, {
+    String query = '',
+    String? account,
+    bool recovery = false,
+  }) async {
+    if (account != null &&
+        ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId !=
+            account) {
+      throw StateError('Search account changed.');
+    }
+    final controller = ref.read(searchSessionProvider.notifier);
+    controller.open(category: category, recovery: recovery);
+    controller.query(query);
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
   List<T> widgets<T extends Widget>() {
     final result = <T>[];
     void visit(Element e) {
+      if (e.widget is Offstage && (e.widget as Offstage).offstage) return;
       if (e.widget is T) result.add(e.widget as T);
       e.visitChildren(visit);
     }
@@ -770,13 +795,15 @@ class _HarnessState extends ConsumerState<_Harness> {
         return;
       }
     }
-    final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
+    final quick = openSidebarSearch(SearchCategory.documents);
     await wait(
-      () => widgets<QuickOpenDialog>().isNotEmpty,
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
       'quick open dialog',
     );
     widgets<TextField>()
-        .firstWhere((f) => f.decoration?.labelText == 'Quick Open')
+        .firstWhere((f) => f.decoration?.hintText == 'Search Documents…')
         .onChanged!('Workspace desktop');
     await wait(
       () => widgets<ListTile>().any(
@@ -801,13 +828,14 @@ class _HarnessState extends ConsumerState<_Harness> {
           draft.localId,
       'workspaceQuickOpenStableIdentity',
     );
-    final search = showNotesSearch(
-      rootNavigatorKey.currentContext!,
-      ref,
+    final search = openSidebarSearch(
+      SearchCategory.workspace,
       query: '"alpha beta" category:Workspace',
     );
     await wait(
-      () => widgets<NotesSearchDialog>().isNotEmpty,
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.workspace),
       'notes search dialog',
     );
     await wait(
@@ -945,7 +973,14 @@ class _HarnessState extends ConsumerState<_Harness> {
                 onProgress: progress,
               );
           check(exported.complete, 'workspacePortableExportComplete');
-          return [exported.path];
+          return NotesTransferResult(
+            phase: exported.complete
+                ? NotesTransferPhase.completed
+                : NotesTransferPhase.partial,
+            created: exported.count,
+            destination: exported.path,
+            omissions: exported.omissions,
+          );
         },
       ),
     );
@@ -1008,7 +1043,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     Element? element;
     await wait(() {
       void visit(Element e) {
-        if (e.widget.runtimeType.toString() == '_SidebarTreeRow' &&
+        if (e.widget is BusyMarkSidebarTreeRow &&
             (e.widget as dynamic).title.toString().contains(name)) {
           element = e;
         }
@@ -1466,7 +1501,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.decoration?.labelText == 'Quick Open',
+        (f) => f.decoration?.hintText == 'Search Documents…',
       ),
       search,
     );
@@ -1638,7 +1673,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.decoration?.labelText == 'Quick Open',
+        (f) => f.decoration?.hintText == 'Search Documents…',
       ),
       'References portable target',
     );
@@ -1798,9 +1833,8 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   Future<void> correctionSearch(String query, List<int> counts) async {
-    final searching = showNotesSearch(
-      rootNavigatorKey.currentContext!,
-      ref,
+    final searching = openSidebarSearch(
+      SearchCategory.workspace,
       account: widget.account.id,
       query: query,
     );
@@ -1808,13 +1842,13 @@ class _HarnessState extends ConsumerState<_Harness> {
       await wait(
         () => widgets<ListView>().any(
           (l) =>
-              l.key == const ValueKey('notes-search-results') &&
+              l.key == const ValueKey('sidebar-search-results') &&
               l.childrenDelegate.estimatedChildCount == count,
         ),
         'correction results $count',
       );
       final list = widgets<ListView>().singleWhere(
-        (l) => l.key == const ValueKey('notes-search-results'),
+        (l) => l.key == const ValueKey('sidebar-search-results'),
       );
       final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
       final keys = <Object>{};
@@ -1831,10 +1865,12 @@ class _HarnessState extends ConsumerState<_Harness> {
       !widgets<Text>().any((t) => t.data == 'Show more results'),
       'correctionSearchNoHiddenFinalOccurrences${counts.last}',
     );
-    Navigator.of(rootNavigatorKey.currentContext!).pop();
+    ref.read(searchSessionProvider.notifier).close();
     await searching;
     await wait(
-      () => widgets<NotesSearchDialog>().isEmpty,
+      () =>
+          (!searchState.active ||
+          searchState.category != SearchCategory.workspace),
       'correction search route closed',
     );
   }
@@ -1890,20 +1926,21 @@ class _HarnessState extends ConsumerState<_Harness> {
         .activeBuffer
         ?.remoteNote
         ?.localId;
-    widgets<TextField>()
-        .firstWhere((f) => f.readOnly && f.decoration?.hintText == 'Search')
-        .onTap!();
+    ref
+        .read(searchSessionProvider.notifier)
+        .open(category: SearchCategory.workspace, recovery: true);
     await wait(
-      () => widgets<NotesSearchDialog>().isNotEmpty,
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.workspace),
       'correction Recovery Search',
     );
-    check(
-      widgets<NotesSearchDialog>().single.recovery,
-      'correctionRecoverySearchExplicitScope',
-    );
+    check(searchState.recovery, 'correctionRecoverySearchExplicitScope');
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.controller != null && f.decoration?.labelText == 'Search',
+        (f) =>
+            f.controller != null &&
+            f.decoration?.hintText == 'Search in Workspace…',
       ),
       'retainedcorrectionneedle',
     );
@@ -1918,7 +1955,9 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     widgets<ListTile>().firstWhere(recoveryHit).onTap!();
     await wait(
-      () => widgets<NotesSearchDialog>().isEmpty,
+      () =>
+          (!searchState.active ||
+          searchState.category != SearchCategory.workspace),
       'correction Recovery search route closed',
     );
     await wait(
@@ -2288,10 +2327,11 @@ class _HarnessState extends ConsumerState<_Harness> {
     await capture('workspace-10000-sidebar');
     Future<int> quickSample(String? screenshot) async {
       final watch = Stopwatch()..start();
-      final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
+      final quick = openSidebarSearch(SearchCategory.documents);
       await wait(
         () =>
-            widgets<QuickOpenDialog>().isNotEmpty &&
+            (searchState.active &&
+                searchState.category == SearchCategory.documents) &&
             widgets<ListTile>().any(
               (t) =>
                   t.title is Text &&
@@ -2301,10 +2341,12 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       watch.stop();
       if (screenshot != null) await capture(screenshot);
-      Navigator.of(rootNavigatorKey.currentContext!).pop();
+      ref.read(searchSessionProvider.notifier).close();
       await quick;
       await wait(
-        () => widgets<QuickOpenDialog>().isEmpty,
+        () =>
+            (!searchState.active ||
+            searchState.category != SearchCategory.documents),
         'quick open dismissal before the next sample',
       );
       return watch.elapsedMilliseconds;
@@ -2336,19 +2378,19 @@ class _HarnessState extends ConsumerState<_Harness> {
     await querying;
     check(search.state.hits.isNotEmpty, 'workspaceLargeUiSearchDuringEdit');
     await search.dispose();
-    final dialog = showNotesSearch(
-      rootNavigatorKey.currentContext!,
-      ref,
+    final dialog = openSidebarSearch(
+      SearchCategory.workspace,
       query: repository.notes.first.title,
     );
     await wait(
       () =>
-          widgets<NotesSearchDialog>().isNotEmpty &&
+          (searchState.active &&
+              searchState.category == SearchCategory.workspace) &&
           widgets<IconButton>().any((b) => b.tooltip == 'Source location'),
       'large indexed search UI',
     );
     await capture('workspace-10000-search');
-    Navigator.of(rootNavigatorKey.currentContext!).pop();
+    ref.read(searchSessionProvider.notifier).close();
     await dialog;
     await File('${widget.output.path}/ui-performance.json').writeAsString(
       jsonEncode({
@@ -2367,11 +2409,16 @@ class _HarnessState extends ConsumerState<_Harness> {
     NextcloudNote note,
   ) async {
     await workspace.openNextcloudNote(note.localId);
-    await nativeShortcut('ctrl+p');
-    await wait(() => widgets<QuickOpenDialog>().isNotEmpty, 'native Ctrl+P');
+    await nativeShortcut('ctrl+shift+d');
+    await wait(
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
+      'native Ctrl+Shift+D',
+    );
     edit(
       widgets<TextField>().firstWhere(
-        (f) => f.decoration?.labelText == 'Quick Open',
+        (f) => f.decoration?.hintText == 'Search Documents…',
       ),
       note.title,
     );
@@ -2384,14 +2431,18 @@ class _HarnessState extends ConsumerState<_Harness> {
     // The imported copy has the same title/category. Capture the selected
     // document identity before Enter instead of guessing from duplicate titles.
     final selectedIdentity = rankQuickOpen(
-      widgets<QuickOpenDialog>().single.documents,
+      searchState.results
+          .whereType<DocumentSearchResult>()
+          .map((r) => r.document)
+          .toList(),
       note.title,
     ).first.localId;
     await capture('workspace-restart-native-quick-open');
     await nativeShortcut('enter');
     await wait(
       () =>
-          widgets<QuickOpenDialog>().isEmpty &&
+          (!searchState.active ||
+              searchState.category != SearchCategory.documents) &&
           ref
                   .read(workspaceControllerProvider)
                   .activeBuffer
@@ -2401,24 +2452,35 @@ class _HarnessState extends ConsumerState<_Harness> {
       'native Quick Open Enter',
     );
     check(true, 'nativeCtrlPEnterStableIdentity');
-    await nativeShortcut('ctrl+p');
+    await nativeShortcut('ctrl+shift+d');
     await wait(
-      () => widgets<QuickOpenDialog>().isNotEmpty,
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
       'Quick Open reopened',
     );
     await nativeShortcut('escape');
-    await wait(() => widgets<QuickOpenDialog>().isEmpty, 'Quick Open Escape');
+    await wait(
+      () =>
+          (!searchState.active ||
+          searchState.category != SearchCategory.documents),
+      'Quick Open Escape',
+    );
     check(true, 'nativeQuickOpenEscape');
     await nativeShortcut('ctrl+shift+p');
     await wait(
       () =>
-          widgets<Text>().any((t) => t.data == 'Command Palette') &&
-          widgets<QuickOpenDialog>().isEmpty,
+          (searchState.active &&
+              searchState.category == SearchCategory.actions) &&
+          (!searchState.active ||
+              searchState.category != SearchCategory.documents),
       'native Ctrl+Shift+P',
     );
     await nativeShortcut('escape');
     await wait(
-      () => !widgets<Text>().any((t) => t.data == 'Command Palette'),
+      () =>
+          !(searchState.active &&
+              searchState.category == SearchCategory.actions),
       'command palette Escape',
     );
     check(true, 'nativeCtrlShiftPCommandPalette');
@@ -2430,8 +2492,13 @@ class _HarnessState extends ConsumerState<_Harness> {
     await file.writeAsString('# Local Markdown\nlocal search smoke');
     await workspace.openFolder(folder.path);
     await workspace.openActiveFile(file.path);
-    final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
-    await wait(() => widgets<QuickOpenDialog>().isNotEmpty, 'local Quick Open');
+    final quick = openSidebarSearch(SearchCategory.documents);
+    await wait(
+      () =>
+          (searchState.active &&
+          searchState.category == SearchCategory.documents),
+      'local Quick Open',
+    );
     await wait(
       () => widgets<ListTile>().any(
         (t) => t.title is Text && (t.title as Text).data == 'local',
@@ -2462,10 +2529,11 @@ class _HarnessState extends ConsumerState<_Harness> {
     await workspace.openFolder(writerside.path);
     await workspace.openActiveFile('${writerside.path}/topics/intro.md');
     await localSearchSmoke('Introduction', 'workspace-writerside-search');
-    final writerQuick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
+    final writerQuick = openSidebarSearch(SearchCategory.documents);
     await wait(
       () =>
-          widgets<QuickOpenDialog>().isNotEmpty &&
+          (searchState.active &&
+              searchState.category == SearchCategory.documents) &&
           widgets<ListTile>().any(
             (t) => t.title is Text && (t.title as Text).data == 'install',
           ),
@@ -2495,7 +2563,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await wait(
       () => widgets<TextField>().any(
         (f) =>
-            f.decoration?.hintText == 'Search' &&
+            f.decoration?.hintText == 'Search this document…' &&
             f.onChanged != null &&
             f.controller != null,
       ),
@@ -2504,7 +2572,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     edit(
       widgets<TextField>().lastWhere(
         (f) =>
-            f.decoration?.hintText == 'Search' &&
+            f.decoration?.hintText == 'Search this document…' &&
             f.onChanged != null &&
             f.controller != null,
       ),
@@ -2515,7 +2583,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'local indexed result $query',
     );
     await capture(screenshot);
-    ref.read(workspaceSearchCloseRequestProvider.notifier).request();
+    ref.read(searchSessionProvider.notifier).close();
     check(true, screenshot);
   }
 
@@ -2528,6 +2596,207 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     if (result.exitCode != 0) {
       throw StateError('Native acceptance key failed: $key');
+    }
+  }
+
+  Future<void> unifiedSearchJourney(WorkspaceController workspace) async {
+    Future<void> query(String value) async {
+      await wait(
+        () => widgets<TextField>().any(
+          (f) =>
+              f.decoration?.hintText?.startsWith('Search ') == true &&
+              f.onChanged != null,
+        ),
+        'shared query',
+      );
+      edit(
+        widgets<TextField>().singleWhere(
+          (f) =>
+              f.decoration?.hintText?.startsWith('Search ') == true &&
+              f.onChanged != null,
+        ),
+        value,
+      );
+      await wait(() => !searchState.searching, 'completed shared search');
+      check(searchState.error == null, 'unifiedQueryHasNoError');
+    }
+
+    final note = await repository.create(
+      widget.account.id,
+      title: 'Connected shared search',
+      category: 'Qualification/Search',
+      content: '# Connected\nunique-connected-body',
+    );
+    await repository.synchronize(widget.account.id);
+    created.add(repository.noteById(note.localId)!.serverId!);
+    check(
+      await workspace.openNextcloudNote(note.localId),
+      'connectedOpenIndividualNote',
+    );
+    await nativeShortcut('ctrl+f');
+    await query('unique-connected-body');
+    check(
+      searchState.fileActive && searchState.results.single is TextSearchResult,
+      'connectedCtrlFUsesOnlyNoteBuffer',
+    );
+    await nativeShortcut('ctrl+shift+f');
+    await query('unique-connected-body');
+    check(
+      searchState.results.whereType<NoteSearchResult>().single.hit.localId ==
+          note.localId,
+      'connectedSynchronizedBodySearch',
+    );
+    await nativeShortcut('ctrl+shift+d');
+    await query('unique-connected-body');
+    check(searchState.results.isEmpty, 'connectedDocumentsExcludesBodies');
+    await query('Qualification/Search');
+    check(
+      searchState.results
+              .whereType<DocumentSearchResult>()
+              .single
+              .document
+              .localId ==
+          note.localId,
+      'connectedDocumentsUsesCategories',
+    );
+    await nativeShortcut('escape');
+    widget.transport.offline = true;
+    check(
+      await workspace.createNextcloudNote(
+        title: 'Offline unified identity',
+        content: 'offline-connected-needle',
+      ),
+      'connectedOfflineCreation',
+    );
+    final localId = ref
+        .read(workspaceControllerProvider)
+        .activeBuffer!
+        .remoteNote!
+        .localId;
+    check(
+      repository.noteById(localId)!.serverId == null,
+      'connectedOfflineHasNoServerId',
+    );
+    check(await workspace.saveActive(), 'connectedOfflineDurability');
+    widget.transport.offline = false;
+    await repository.synchronize(widget.account.id);
+    final synchronized = repository.noteById(localId)!;
+    check(synchronized.serverId != null, 'connectedOfflineLaterSynchronized');
+    created.add(synchronized.serverId!);
+    check(
+      ref
+              .read(appSettingsControllerProvider)
+              .recentWorkspaces
+              .where(
+                (r) => r.accountId == widget.account.id && r.localId == localId,
+              )
+              .length ==
+          1,
+      'connectedRecentStableLocalIdentity',
+    );
+    await nativeShortcut('ctrl+shift+f');
+    await query('offline-connected-needle');
+    check(
+      searchState.results.whereType<NoteSearchResult>().single.hit.localId ==
+          localId,
+      'connectedSearchRefreshAfterSynchronization',
+    );
+
+    final login = widget.secondaryLogin;
+    final password = widget.secondaryPassword;
+    if (login == null || password == null) {
+      throw StateError('unified-search requires a second disposable account');
+    }
+    final capabilities = await fetchNotesCapabilities(
+      client: widget.transport,
+      server: widget.account.server,
+      loginName: login,
+      appPassword: password,
+    );
+    final other = NextcloudAccount(
+      id: const Uuid().v4(),
+      server: widget.account.server,
+      loginName: login,
+      appVersion: capabilities.appVersion,
+      apiVersion: capabilities.apiVersion,
+    );
+    await ref.read(nextcloudSecretStoreProvider).write(other.id, password);
+    await repository.upsertAccount(other);
+    final second = await repository.create(
+      other.id,
+      title: 'Connected shared search',
+      content: 'other-account-only-needle',
+    );
+    await repository.synchronize(other.id);
+    final otherApi = NotesApiClient(
+      client: widget.transport,
+      account: other,
+      appPassword: password,
+    );
+    try {
+      ref.read(searchSessionProvider.notifier).query('unique-connected-body');
+      check(
+        await workspace.openNextcloudWorkspace(other.id),
+        'connectedSwitchAccountDuringSearch',
+      );
+      await query('unique-connected-body');
+      check(searchState.results.isEmpty, 'connectedSearchAccountIsolation');
+      await query('other-account-only-needle');
+      check(
+        searchState.results.whereType<NoteSearchResult>().single.accountId ==
+            other.id,
+        'connectedSecondAccountSearch',
+      );
+      await nativeShortcut('ctrl+shift+r');
+      await query('Offline unified identity');
+      await nativeShortcut('enter');
+      await wait(
+        () =>
+            ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.remoteNote
+                ?.localId ==
+            localId,
+        'connected Recent direct note reopening',
+      );
+      check(
+        ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId ==
+            widget.account.id,
+        'connectedRecentPreservesOriginatingAccount',
+      );
+      await capture('connected-recent-note');
+      // Remove only these fixture notes before revoking the fixture credential.
+      for (final id in created.toList()) {
+        await api.delete(id);
+      }
+      created.clear();
+      original = null;
+      check(
+        await ref.read(nextcloudConnectionProvider.notifier).disconnect(),
+        'connectedAccountRemoval',
+      );
+      check(
+        ref
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .every((r) => r.accountId != widget.account.id),
+        'connectedRemovalClearsRecent',
+      );
+      check(
+        await workspace.openNextcloudWorkspace(other.id),
+        'connectedRemainingAccountAvailable',
+      );
+      await nativeShortcut('ctrl+shift+r');
+      await query('Offline unified identity');
+      check(
+        searchState.results.isEmpty &&
+            repository.accounts.every((a) => a.id != widget.account.id),
+        'connectedRemovedAccountDoesNotReconnectOrFallback',
+      );
+    } finally {
+      final remote = repository.noteById(second.localId)?.serverId;
+      if (remote != null) await otherApi.delete(remote);
     }
   }
 
@@ -2572,6 +2841,8 @@ class _HarnessState extends ConsumerState<_Harness> {
             await correctionJourney(workspace);
           case _Scenario.performance:
             await performanceJourney(workspace);
+          case _Scenario.unifiedSearch:
+            await unifiedSearchJourney(workspace);
           case _Scenario.workspace ||
               _Scenario.offlineStart ||
               _Scenario.offlineResume:

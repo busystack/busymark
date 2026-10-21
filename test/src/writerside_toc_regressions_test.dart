@@ -189,21 +189,14 @@ void main() {
     await _settle(tester);
   }
 
-  bool selected(WidgetTester tester, String path) =>
-      (tester.widget(
-                    find.descendant(
-                      of: find.byKey(
-                        ValueKey('workspace-sidebar-toc-row-$path'),
-                      ),
-                      matching: find.byWidgetPredicate(
-                        (widget) =>
-                            widget.runtimeType.toString() == '_SidebarTreeRow',
-                      ),
-                    ),
-                  )
-                  as dynamic)
-              .selected
-          as bool;
+  bool selected(WidgetTester tester, String path) => tester
+      .widget<BusyMarkSidebarTreeRow>(
+        find.descendant(
+          of: find.byKey(ValueKey('workspace-sidebar-toc-row-$path')),
+          matching: find.byType(BusyMarkSidebarTreeRow),
+        ),
+      )
+      .selected;
 
   testWidgets(
     'tree-to-editor sync opens selected topic even with a .tree editor active',

@@ -47,6 +47,59 @@ void main() {
     directory = await Directory.systemTemp.createTemp('busymark-notes-test-');
     path = '${directory.path}/notes.sqlite3';
   });
+  test(
+    'a rejected remote review cannot be replayed using the refreshed cache',
+    () async {
+      final a = NoteState.fromJson(serverNote(1, etag: 'reviewed-A'));
+      final b = NoteState.fromJson({
+        ...serverNote(1, etag: 'unreviewed-B'),
+        'content': 'new remote work',
+      });
+      final seed = await NotesStore.open(path: path);
+      await seed.saveAccount(testAccount());
+      await seed.saveNote(
+        testNote().copyWith(
+          remote: a,
+          syncState: NoteSyncState.conflict,
+          revision: 2,
+          ackRevision: 1,
+        ),
+      );
+      await seed.close();
+      var writes = 0;
+      final repository = await open(
+        MockClient((request) async {
+          if (request.method != 'GET') writes++;
+          return http.Response(jsonEncode(b.toJson()), 200);
+        }),
+        addAccount: false,
+      );
+      final id = testNote().localId;
+      for (var attempt = 0; attempt < 2; attempt++) {
+        await expectLater(
+          repository.resolveConflict(
+            id,
+            NoteConflictResolution.merge,
+            expectedRevision: 2,
+            reviewedRemote: a,
+            mergedContent: 'manual merge against A',
+          ),
+          throwsA(isA<NotesConflictReviewChanged>()),
+        );
+        expect(repository.noteById(id)!.remote!.etag, 'unreviewed-B');
+        expect(repository.noteById(id)!.revision, 2);
+        expect(repository.noteById(id)!.syncState, NoteSyncState.conflict);
+      }
+      expect(writes, 0);
+      await repository.resolveConflict(
+        id,
+        NoteConflictResolution.keepLocal,
+        expectedRevision: 2,
+        reviewedRemote: b,
+      );
+      expect(repository.noteById(id)!.base!.etag, 'unreviewed-B');
+    },
+  );
   tearDown(() async {
     for (final repository in repositories) {
       await repository.dispose();

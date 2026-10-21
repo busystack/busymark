@@ -1,15 +1,15 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
-import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
+import '../../app/path_label.dart';
+import 'notes_messages.dart';
 import '../../local_history/local_history_controller.dart';
 import '../../local_history/local_history_models.dart';
 import '../../workspace/workspace_controller.dart';
@@ -17,10 +17,8 @@ import '../application/nextcloud_connection.dart';
 import '../application/notes_navigation.dart';
 import '../application/notes_repository.dart';
 import '../application/notes_offline_controller.dart';
-import '../application/notes_search_controller.dart';
 import '../application/notes_transfer_service.dart';
 import '../domain/notes_models.dart';
-import '../domain/notes_search.dart';
 
 final notesOfflineProvider = FutureProvider.autoDispose
     .family<NotesOfflineController, String>((ref, accountId) async {
@@ -49,9 +47,11 @@ class NotesMatchNavigation {
     this.start,
     this.end,
     this.digest,
-    this.request,
-  );
+    this.request, {
+    this.accountId,
+  });
   final String localId, digest;
+  final String? accountId;
   final int start, end, request;
 }
 
@@ -63,392 +63,20 @@ final notesMatchNavigationProvider =
 class NotesMatchNavigationController extends Notifier<NotesMatchNavigation?> {
   @override
   NotesMatchNavigation? build() => null;
-  void navigate(String id, int start, int end, String digest) {
+  void navigate(
+    String id,
+    int start,
+    int end,
+    String digest, {
+    String? accountId,
+  }) {
     state = NotesMatchNavigation(
       id,
       start,
       end,
       digest,
       (state?.request ?? 0) + 1,
-    );
-  }
-}
-
-Future<void> showNotesSearch(
-  BuildContext context,
-  WidgetRef ref, {
-  String query = '',
-  String? account,
-  bool recovery = false,
-}) async {
-  final accountId =
-      account ??
-      ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId;
-  if (accountId == null) return;
-  final focus = FocusManager.instance.primaryFocus;
-  final choice =
-      await showBusyMarkModalDialog<
-        ({NotesSearchHit hit, String query, bool wholeWord, bool source})
-      >(
-        context,
-        builder: (_) => NotesSearchDialog(
-          accountId: accountId,
-          initialQuery: query,
-          recovery: recovery,
-        ),
-      );
-  if (!context.mounted) return;
-  if (choice == null) {
-    if (focus?.context?.mounted == true) focus!.requestFocus();
-    return;
-  }
-  if (ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId !=
-      accountId) {
-    return;
-  }
-  if (recovery) {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    final note = repository.noteById(choice.hit.localId);
-    if (context.mounted &&
-        note != null &&
-        note.accountId == accountId &&
-        isNotesRecovery(note)) {
-      await showNotesRecovery(context, ref, note);
-    }
-    return;
-  }
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  if (!await controller.openNextcloudNote(choice.hit.localId) ||
-      !context.mounted) {
-    return;
-  }
-  final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-  if (buffer?.remoteNote?.localId != choice.hit.localId) return;
-  final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-  final note = repository.noteById(choice.hit.localId);
-  if (note == null) return;
-  var hit = choice.hit;
-  // Even a revision collision cannot apply offsets to a different document.
-  if (buffer!.revision != hit.revision ||
-      notesSearchDigest(buffer.text) != hit.digest) {
-    final refreshed = await relocateNotesSearchHit(
-      NotesSearchQuery(choice.query, wholeWord: choice.wholeWord),
-      NotesSearchOverlay(
-        note.localId,
-        buffer.revision,
-        note.title,
-        note.category,
-        buffer.text,
-      ),
-      hit.start ?? 0,
-    );
-    if (refreshed == null || !context.mounted) return;
-    final current = ref.read(workspaceControllerProvider).activeBuffer;
-    if (current?.remoteNote?.localId != note.localId ||
-        current!.revision != refreshed.revision ||
-        notesSearchDigest(current.text) != refreshed.digest) {
-      return;
-    }
-    hit = refreshed;
-  }
-  if (hit.start == null || hit.end == null) return;
-  if (choice.source) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .setDocumentViewMode(DocumentViewModePreference.source);
-  }
-  ref
-      .read(notesMatchNavigationProvider.notifier)
-      .navigate(hit.localId, hit.start!, hit.end!, hit.digest);
-}
-
-class NotesSearchDialog extends ConsumerStatefulWidget {
-  const NotesSearchDialog({
-    super.key,
-    required this.accountId,
-    this.initialQuery = '',
-    this.recovery = false,
-  });
-  final String accountId, initialQuery;
-  final bool recovery;
-  @override
-  ConsumerState<NotesSearchDialog> createState() => _NotesSearchDialogState();
-}
-
-class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
-  NotesSearchController? _controller;
-  StreamSubscription<NotesSearchState>? _results;
-  StreamSubscription<void>? _repositoryChanges;
-  Timer? _debounce;
-  late final _text = TextEditingController(text: widget.initialQuery);
-  late final _focus = FocusNode(onKeyEvent: _key);
-  final _scroll = ScrollController();
-  NotesSearchState _state = const NotesSearchState(loading: true);
-  bool _wholeWord = false;
-  int _selected = 0, _limit = 80;
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_initialize());
-  }
-
-  Future<void> _initialize() async {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    if (!mounted) return;
-    _controller = NotesSearchController(
-      repository.store,
-      widget.accountId,
-      recovery: widget.recovery,
-    );
-    _results = _controller!.changes.listen((state) {
-      if (mounted) {
-        setState(() {
-          _state = state;
-          _selected = 0;
-        });
-      }
-    });
-    _repositoryChanges = repository.changes.listen((_) => _schedule());
-    _search();
-  }
-
-  void _schedule() {
-    _controller?.cancel();
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 150), _search);
-  }
-
-  void _search() {
-    final repository = ref.read(nextcloudNotesRepositoryProvider).value;
-    if (repository == null || _controller == null) return;
-    final overlays = [
-      for (final buffer
-          in ref.read(workspaceControllerProvider).documentBuffers)
-        if (!widget.recovery &&
-            buffer.isDirty &&
-            buffer.remoteNote?.accountId == widget.accountId &&
-            repository.noteById(buffer.remoteNote!.localId) != null)
-          NotesSearchOverlay(
-            buffer.remoteNote!.localId,
-            buffer.revision,
-            repository.noteById(buffer.remoteNote!.localId)!.title,
-            repository.noteById(buffer.remoteNote!.localId)!.category,
-            buffer.text,
-          ),
-    ];
-    unawaited(
-      _controller!.search(
-        _text.text,
-        wholeWord: _wholeWord,
-        limit: _limit,
-        overlays: overlays,
-      ),
-    );
-  }
-
-  KeyEventResult _key(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
-      Navigator.pop(context);
-      return KeyEventResult.handled;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.enter) {
-      _open();
-      return KeyEventResult.handled;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
-        event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      if (_state.hits.isNotEmpty) {
-        setState(
-          () => _selected =
-              (_selected +
-                      (event.logicalKey == LogicalKeyboardKey.arrowDown
-                          ? 1
-                          : -1))
-                  .clamp(0, _state.hits.length - 1),
-        );
-        if (_scroll.hasClients) {
-          _scroll.animateTo(
-            (_selected * 90.0).clamp(0, _scroll.position.maxScrollExtent),
-            duration: const Duration(milliseconds: 100),
-            curve: Curves.easeOut,
-          );
-        }
-      }
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
-  void _open({bool source = false, int? index}) {
-    if (_state.loading || _state.hits.isEmpty) return;
-    Navigator.pop(context, (
-      hit: _state.hits[index ?? _selected],
-      query: _text.text,
-      wholeWord: _wholeWord,
-      source: source,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    unawaited(_results?.cancel());
-    unawaited(_repositoryChanges?.cancel());
-    unawaited(_controller?.dispose());
-    _text.dispose();
-    _focus.dispose();
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(
-      workspaceControllerProvider.select((s) => s.documentBuffers),
-      (a, b) => _schedule(),
-    );
-    return BusyMarkDialogShell(
-      title: widget.recovery
-          ? '${context.l10n.notesRecovery} · ${context.l10n.search}'
-          : context.l10n.search,
-      maxWidth: 760,
-      children: [
-        TextField(
-          autofocus: true,
-          focusNode: _focus,
-          controller: _text,
-          decoration: InputDecoration(labelText: context.l10n.search),
-          onChanged: (_) {
-            _limit = 80;
-            _schedule();
-          },
-        ),
-        if (widget.recovery) Text(context.l10n.notesRecoveryHelp),
-        Text(
-          context.l10n.notesSearchHelp,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        CheckboxListTile(
-          dense: true,
-          title: Text(context.l10n.sourceSearchWholeWord),
-          value: _wholeWord,
-          onChanged: (v) => setState(() {
-            _wholeWord = v ?? false;
-            _schedule();
-          }),
-        ),
-        if (_state.loading) const LinearProgressIndicator(),
-        if (_state.indexing) Text(context.l10n.notesIndexing),
-        if (_state.error != null)
-          Text('${context.l10n.warning}: ${_state.error}'),
-        SizedBox(
-          height: 360,
-          child: _state.hits.isEmpty
-              ? Center(
-                  child: Text(
-                    _state.loading
-                        ? context.l10n.notesIndexing
-                        : context.l10n.noResults,
-                  ),
-                )
-              : ListView.builder(
-                  key: const ValueKey('notes-search-results'),
-                  controller: _scroll,
-                  itemCount: _state.hits.length,
-                  itemBuilder: (context, index) {
-                    final hit = _state.hits[index];
-                    final from =
-                        hit.snippetMatchStart ??
-                        (hit.start == null
-                            ? 0
-                            : (hit.start! - hit.snippetStart).clamp(
-                                0,
-                                hit.snippet.length,
-                              ));
-                    final to =
-                        hit.snippetMatchEnd ??
-                        (hit.end == null
-                            ? 0
-                            : (hit.end! - hit.snippetStart).clamp(
-                                from,
-                                hit.snippet.length,
-                              ));
-                    return ListTile(
-                      key: ValueKey((
-                        'notes-search-hit',
-                        hit.localId,
-                        hit.start,
-                        hit.end,
-                      )),
-                      selected: index == _selected,
-                      title: Text(
-                        hit.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (hit.category.isNotEmpty)
-                            Text(
-                              hit.category,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: hit.snippet
-                                      .substring(0, from)
-                                      .replaceAll(RegExp(r'[\r\n\t]'), ' '),
-                                ),
-                                TextSpan(
-                                  text: hit.snippet
-                                      .substring(from, to)
-                                      .replaceAll(RegExp(r'[\r\n\t]'), ' '),
-                                  style: TextStyle(
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.primaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: hit.snippet
-                                      .substring(to)
-                                      .replaceAll(RegExp(r'[\r\n\t]'), ' '),
-                                ),
-                              ],
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                      trailing: widget.recovery || hit.start == null
-                          ? null
-                          : IconButton(
-                              tooltip: context.l10n.notesSourceLocation,
-                              icon: const Icon(BusyMarkGlyphs.code),
-                              onPressed: () =>
-                                  _open(source: true, index: index),
-                            ),
-                      onTap: () => _open(index: index),
-                    );
-                  },
-                ),
-        ),
-        if (_state.truncated)
-          TextButton(
-            onPressed: () {
-              _limit += 80;
-              _search();
-            },
-            child: Text(context.l10n.workspaceSearchShowMore),
-          ),
-      ],
+      accountId: accountId,
     );
   }
 }
@@ -469,97 +97,152 @@ Future<void> showNotesBatch(
       ];
   if (!context.mounted || reviewed.isEmpty) return;
   var action = initialAction ?? 'favorite';
-  var category = '';
-  final confirmed = await showBusyMarkModalDialog<bool>(
-    context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setDialogState) => BusyMarkDialogShell(
-        title: '${context.l10n.notesSelected} (${reviewed.length})',
-        actions: [
-          BusyMarkDialogButton(
-            label: context.l10n.cancel,
-            onPressed: () => Navigator.pop(context, false),
-          ),
-          BusyMarkDialogButton(
-            label: context.l10n.save,
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-        children: [
-          SizedBox(
-            height: 140,
-            child: ListView(
-              children: [
-                for (final snapshot in reviewed)
-                  ListTile(
-                    dense: true,
-                    title: Text(snapshot.note.title),
-                    subtitle: Text(snapshot.note.category),
-                  ),
-              ],
-            ),
-          ),
-          DropdownButton<String>(
-            isExpanded: true,
-            value: action,
-            items: [
-              DropdownMenuItem(
-                value: 'favorite',
-                child: Text(context.l10n.nextcloudFavorites),
-              ),
-              DropdownMenuItem(
-                value: 'unfavorite',
-                child: Text(context.l10n.notesRemoveFavorite),
-              ),
-              DropdownMenuItem(
-                value: 'move',
-                child: Text(context.l10n.notesMove),
-              ),
-            ],
-            onChanged: (v) => setDialogState(() => action = v!),
-          ),
-          if (action == 'move')
-            TextField(
-              decoration: InputDecoration(
-                labelText: context.l10n.syntaxReferenceCategory,
-              ),
-              onChanged: (v) => category = v,
-            ),
-        ],
-      ),
-    ),
-  );
-  if (confirmed != true || !context.mounted) return;
-  final outcomes = await ref
-      .read(workspaceControllerProvider.notifier)
-      .batchNextcloudMetadata(
-        reviewed,
-        category: action == 'move' ? category : null,
-        favorite: action == 'move' ? null : action == 'favorite',
-      );
-  if (!context.mounted) return;
+  var category = reviewed.length == 1 ? reviewed.single.note.category : '';
+  var busy = false;
+  List<NotesBatchOutcome>? outcomes;
+  String? error;
   await showBusyMarkModalDialog<void>(
     context,
-    builder: (context) => BusyMarkDialogShell(
-      title: context.l10n.notesSelected,
-      children: [
-        for (final outcome in outcomes)
-          ListTile(
-            title: Text(outcome.title),
-            subtitle: Text(
-              [
-                switch (outcome.status) {
-                  NotesBatchStatus.changed =>
-                    context.l10n.nextcloudSavedLocally,
-                  NotesBatchStatus.skipped => context.l10n.notesSkipped,
-                  NotesBatchStatus.conflicted => context.l10n.gitConflicts,
-                  NotesBatchStatus.failed => context.l10n.notesFailed,
-                },
-                if (outcome.detail != null) outcome.detail!,
-              ].join(' · '),
-            ),
+    barrierDismissible: false,
+    builder: (context) => StatefulBuilder(
+      builder: (context, update) {
+        String actionLabel(String value) => switch (value) {
+          'move' => context.l10n.notesMove,
+          'unfavorite' => context.l10n.notesRemoveFavorite,
+          _ => context.l10n.nextcloudFavorites,
+        };
+        String statusLabel(NotesBatchStatus value) => switch (value) {
+          NotesBatchStatus.changed => context.l10n.nextcloudSavedLocally,
+          NotesBatchStatus.skipped => context.l10n.notesSkipped,
+          NotesBatchStatus.conflicted => context.l10n.gitConflicts,
+          NotesBatchStatus.failed => context.l10n.notesFailed,
+        };
+        return PopScope(
+          canPop: !busy,
+          child: BusyMarkDialogShell(
+            title: '${actionLabel(action)} (${reviewed.length})',
+            closable: !busy,
+            actions: [
+              BusyMarkDialogButton(
+                label: outcomes == null
+                    ? context.l10n.cancel
+                    : context.l10n.close,
+                onPressed: busy ? null : () => Navigator.pop(context),
+              ),
+              if (outcomes == null)
+                BusyMarkDialogButton(
+                  label: context.l10n.save,
+                  onPressed: busy
+                      ? null
+                      : () async {
+                          update(() {
+                            busy = true;
+                            error = null;
+                          });
+                          try {
+                            final result = await ref
+                                .read(workspaceControllerProvider.notifier)
+                                .batchNextcloudMetadata(
+                                  reviewed,
+                                  category: action == 'move' ? category : null,
+                                  favorite: action == 'move'
+                                      ? null
+                                      : action == 'favorite',
+                                );
+                            if (context.mounted) {
+                              update(() => outcomes = result);
+                            }
+                          } on Object catch (failure) {
+                            if (context.mounted) {
+                              update(
+                                () => error = localizeNotesFailure(
+                                  context,
+                                  failure,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (context.mounted) update(() => busy = false);
+                          }
+                        },
+                ),
+            ],
+            children: [
+              if (initialAction == null && outcomes == null)
+                BusyMarkComboRow<String>(
+                  title: context.l10n.notesActions,
+                  values: const ['favorite', 'unfavorite', 'move'],
+                  selected: action,
+                  labelFor: actionLabel,
+                  enabled: !busy,
+                  onSelected: (value) => update(() => action = value),
+                ),
+              if (action == 'move' && outcomes == null)
+                BusyMarkGroupedTextEntry(
+                  label: context.l10n.syntaxReferenceCategory,
+                  initialValue: category,
+                  enabled: !busy,
+                  onChanged: (value) => category = value,
+                ),
+              if (busy) const LinearProgressIndicator(),
+              if (error != null)
+                BusyMarkStatusBox(
+                  message: error!,
+                  kind: BusyMarkStatusKind.error,
+                ),
+              if (outcomes != null)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    [
+                      for (final status in NotesBatchStatus.values)
+                        '${statusLabel(status)}: ${outcomes!.where((o) => o.status == status).length}',
+                    ].join(' · '),
+                  ),
+                ),
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * .3,
+                child: ListView(
+                  children: [
+                    for (final snapshot in reviewed)
+                      BusyMarkActionRow(
+                        title: snapshot.note.title,
+                        subtitle: outcomes == null
+                            ? snapshot.note.category
+                            : null,
+                        subtitleWidget: outcomes == null
+                            ? null
+                            : Text(() {
+                                final outcome = outcomes!.firstWhere(
+                                  (o) => o.localId == snapshot.note.localId,
+                                );
+                                final reason = localizeNotesBatchReason(
+                                  context,
+                                  outcome,
+                                );
+                                return [
+                                  statusLabel(outcome.status),
+                                  if (reason.isNotEmpty) reason,
+                                ].join(' · ');
+                              }()),
+                      ),
+                  ],
+                ),
+              ),
+              if (outcomes?.any((o) => o.detail != null) == true)
+                ExpansionTile(
+                  title: Text(context.l10n.notesTechnicalDetails),
+                  children: [
+                    for (final outcome in outcomes!.where(
+                      (o) => o.detail != null,
+                    ))
+                      SelectableText('${outcome.title}: ${outcome.detail}'),
+                  ],
+                ),
+            ],
           ),
-      ],
+        );
+      },
     ),
   );
 }
@@ -569,66 +252,229 @@ Future<void> showNotesOffline(
   WidgetRef ref,
   NextcloudNote note,
 ) async {
-  final controller = await ref.read(
-    notesOfflineProvider(note.accountId).future,
-  );
-  if (!context.mounted) return;
   await showBusyMarkModalDialog<void>(
     context,
-    builder: (context) => StreamBuilder<void>(
-      stream: controller.changes,
-      builder: (context, _) => FutureBuilder<NotesOfflineStatus>(
-        future: controller.inspect(note),
-        builder: (context, snapshot) {
-          final status = snapshot.data;
-          return BusyMarkDialogShell(
-            title: context.l10n.notesOffline,
-            actions: [
-              BusyMarkDialogButton(
-                label: context.l10n.visualizationRetry,
-                onPressed: () => unawaited(controller.retry(note.localId)),
-              ),
-              BusyMarkDialogButton(
-                label: context.l10n.cancel,
-                onPressed: () => unawaited(controller.cancelNote(note.localId)),
-              ),
-              BusyMarkDialogButton(
-                label: controller.individuallyRetained(note.localId)
-                    ? context.l10n.notesOfflineRemove
-                    : context.l10n.notesOffline,
-                onPressed: () => unawaited(
-                  controller.setRequirement(
-                    'note',
-                    note.localId,
-                    required: !controller.individuallyRetained(note.localId),
-                  ),
-                ),
-              ),
-            ],
-            children: [
-              Text(note.title),
-              if (status == null)
-                const LinearProgressIndicator()
-              else ...[
-                Text(context.l10n.notesTextAvailable),
-                Text(
-                  '${status.available ? context.l10n.notesAvailableOffline : context.l10n.notesIncomplete} · ${status.availableCount}/${status.requiredCount}',
-                ),
-                if (status.running) const LinearProgressIndicator(),
-                for (final reference in status.missing) Text(reference),
-                for (final reference in status.external)
-                  Text('${context.l10n.notesIncomplete}: $reference'),
-                for (final failure in controller.failures.entries.where(
-                  (e) => e.key.startsWith('${note.localId}:'),
-                ))
-                  Text(failure.value),
-              ],
-            ],
-          );
-        },
-      ),
-    ),
+    builder: (_) => NotesOfflineDialog(note: note),
   );
+}
+
+class NotesOfflineDialog extends ConsumerStatefulWidget {
+  const NotesOfflineDialog({super.key, required this.note});
+  final NextcloudNote note;
+  @override
+  ConsumerState<NotesOfflineDialog> createState() => _NotesOfflineDialogState();
+}
+
+class _NotesOfflineDialogState extends ConsumerState<NotesOfflineDialog> {
+  NotesOfflineController? _controller;
+  NotesOfflineStatus? _status;
+  StreamSubscription<void>? _subscription;
+  int _generation = 0;
+  bool _loading = true, _busy = false;
+  bool _pausing = false;
+  String? _error;
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_initialize());
+  }
+
+  Future<void> _initialize() async {
+    try {
+      final controller = await ref.read(
+        notesOfflineProvider(widget.note.accountId).future,
+      );
+      if (!mounted) return;
+      _controller = controller;
+      _subscription = controller.changes.listen((_) => unawaited(_inspect()));
+      await _inspect();
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = context.l10n.notesInspectionFailed;
+        });
+      }
+    }
+  }
+
+  Future<void> _reload() async {
+    ref.invalidate(notesOfflineProvider(widget.note.accountId));
+    await _initialize();
+  }
+
+  Future<void> _inspect() async {
+    final request = ++_generation;
+    try {
+      final status = await _controller!.inspect(widget.note);
+      if (mounted && request == _generation) {
+        setState(() {
+          _status = status;
+          _loading = false;
+          _error = null;
+        });
+      }
+    } on Object {
+      if (mounted && request == _generation) {
+        setState(() {
+          _loading = false;
+          _error = context.l10n.notesInspectionFailed;
+        });
+      }
+    }
+  }
+
+  Future<void> _run(
+    Future<void> Function(NotesOfflineController) action, {
+    bool interrupt = false,
+  }) async {
+    if ((interrupt ? _pausing : _busy || _pausing) || _controller == null) {
+      return;
+    }
+    setState(() {
+      if (interrupt) {
+        _pausing = true;
+      } else {
+        _busy = true;
+      }
+      _error = null;
+    });
+    try {
+      await action(_controller!);
+      await _inspect();
+    } on Object {
+      if (mounted) setState(() => _error = context.l10n.notesOperationFailed);
+    } finally {
+      if (mounted) {
+        setState(() {
+          if (interrupt) {
+            _pausing = false;
+          } else {
+            _busy = false;
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _generation++;
+    unawaited(_subscription?.cancel());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Keep the controller's auto-dispose owner alive for the whole dialog.
+    ref.watch(notesOfflineProvider(widget.note.accountId));
+    final controller = _controller;
+    final status = _status;
+    final failed =
+        controller?.failures.keys.any(
+          (key) => key.startsWith('${widget.note.localId}:'),
+        ) ??
+        false;
+    final retained =
+        controller?.individuallyRetained(widget.note.localId) ?? false;
+    final broader =
+        controller?.requirements.any(
+          (r) =>
+              r['kind'] == 'category' &&
+              categoryIncludes(r['target'] as String, widget.note.category),
+        ) ??
+        false;
+    return BusyMarkDialogShell(
+      title: context.l10n.notesOffline,
+      actions: [
+        if (status?.paused == true)
+          BusyMarkDialogButton(
+            label: context.l10n.notesOfflineResume,
+            onPressed: _busy
+                ? null
+                : () => unawaited(
+                    _run((c) => c.retry(widget.note.localId, false)),
+                  ),
+          )
+        else if (status?.running == true)
+          BusyMarkDialogButton(
+            label: context.l10n.notesOfflinePause,
+            onPressed: _pausing
+                ? null
+                : () => unawaited(
+                    _run(
+                      (c) => c.cancelNote(widget.note.localId),
+                      interrupt: true,
+                    ),
+                  ),
+          ),
+        if (failed ||
+            _error != null ||
+            (status != null &&
+                status.missing.isNotEmpty &&
+                !status.running &&
+                !status.paused))
+          BusyMarkDialogButton(
+            label: context.l10n.visualizationRetry,
+            onPressed: _busy
+                ? null
+                : () => unawaited(
+                    controller == null
+                        ? _reload()
+                        : _run((c) => c.retry(widget.note.localId, false)),
+                  ),
+          ),
+        BusyMarkDialogButton(
+          label: context.l10n.close,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+      children: [
+        Text(widget.note.title),
+        BusyMarkSwitchRow(
+          title: context.l10n.notesOfflineKeep,
+          subtitle: context.l10n.notesOfflineRetentionHelp,
+          value: retained,
+          enabled: !_busy && controller != null,
+          onChanged: (value) => unawaited(
+            _run(
+              (c) => c.setRequirement(
+                'note',
+                widget.note.localId,
+                required: value,
+                waitForDownloads: false,
+              ),
+            ),
+          ),
+        ),
+        if (broader) Text(context.l10n.notesOfflineBroader),
+        if (_loading || _busy || _pausing) const LinearProgressIndicator(),
+        if (_error != null)
+          BusyMarkStatusBox(message: _error!, kind: BusyMarkStatusKind.error),
+        if (status != null) ...[
+          Text(context.l10n.notesTextAvailable),
+          Text(
+            '${status.available && status.external.isEmpty
+                ? context.l10n.notesAvailableOffline
+                : status.available
+                ? context.l10n.notesTextAvailable
+                : context.l10n.notesIncomplete} · ${context.l10n.notesAttachments}: ${status.availableCount}/${status.requiredCount}',
+          ),
+          if (status.paused) Text(context.l10n.notesDownloadsPaused),
+          if (status.running) const LinearProgressIndicator(),
+          if (failed)
+            BusyMarkStatusBox(
+              message: context.l10n.notesInspectionFailed,
+              kind: BusyMarkStatusKind.warning,
+            ),
+          for (final reference in status.missing)
+            Text('${context.l10n.notesIncomplete}: $reference'),
+          if (status.external.isNotEmpty)
+            Text(context.l10n.notesOfflineExternal),
+        ],
+      ],
+    );
+  }
 }
 
 Future<void> showNotesRecovery(
@@ -636,10 +482,9 @@ Future<void> showNotesRecovery(
   WidgetRef ref,
   NextcloudNote note,
 ) async {
-  await ref.read(localHistoryControllerProvider.notifier).refresh();
-  if (!context.mounted) return;
   await showBusyMarkModalDialog<void>(
     context,
+    barrierDismissible: false,
     builder: (_) => NotesRecoveryDialog(note: note),
   );
 }
@@ -654,138 +499,237 @@ class NotesRecoveryDialog extends ConsumerStatefulWidget {
 
 class _NotesRecoveryDialogState extends ConsumerState<NotesRecoveryDialog> {
   LocalHistoryDocument? _document;
+  List<LocalHistoryRevisionSummary> _summaries = const [];
   LocalHistoryRevision? _revision;
   late String _source = widget.note.content;
+  String _selected = '';
   NotesOfflineStatus? _availability;
   int _generation = 0;
+  bool _loading = true, _busy = false;
+  String? _error;
+  String? _createdNoteId;
+
   @override
   void initState() {
     super.initState();
-    unawaited(_inspect());
+    unawaited(_load());
   }
 
-  Future<void> _inspect() async {
+  Future<void> _load() async {
     final generation = ++_generation;
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    final availability = await _inspectRecoveryAvailability(
-      repository,
-      widget.note,
-      source: _source,
-    );
-    if (mounted && generation == _generation) {
-      setState(() => _availability = availability);
+    try {
+      final history = await ref
+          .read(localHistoryControllerProvider.notifier)
+          .readRecoveryHistory();
+      if (!mounted || generation != _generation) return;
+      _document = history.documents
+          .where(
+            (d) =>
+                d.remoteNote?.accountId == widget.note.accountId &&
+                d.remoteNote?.localId == widget.note.localId,
+          )
+          .firstOrNull;
+      _summaries = _document == null ? [] : history.revisionsFor(_document!.id);
+      await _select('', generation: generation);
+    } on Object {
+      if (mounted && generation == _generation) {
+        setState(() {
+          _loading = false;
+          _error = context.l10n.notesOperationFailed;
+        });
+      }
+    }
+  }
+
+  Future<void> _select(String id, {int? generation}) async {
+    if (_busy || _createdNoteId != null) return;
+    final request = generation ?? ++_generation;
+    setState(() {
+      _selected = id;
+      _loading = true;
+      _error = null;
+      _availability = null;
+    });
+    try {
+      final revision = id.isEmpty
+          ? null
+          : await ref
+                .read(localHistoryControllerProvider.notifier)
+                .readRecoveryRevision(_document!.id, id);
+      if (!mounted || request != _generation) return;
+      if (id.isNotEmpty && revision == null) {
+        throw StateError('Missing revision');
+      }
+      final source = revision?.source ?? widget.note.content;
+      final repository = await ref.read(
+        nextcloudNotesRepositoryProvider.future,
+      );
+      if (!mounted || request != _generation) return;
+      final availability = await _inspectRecoveryAvailability(
+        repository,
+        widget.note,
+        source: source,
+      );
+      if (!mounted || request != _generation) return;
+      setState(() {
+        _revision = revision;
+        _source = source;
+        _availability = availability;
+        _loading = false;
+      });
+    } on Object {
+      if (mounted && request == _generation) {
+        setState(() {
+          _loading = false;
+          _error = context.l10n.notesInspectionFailed;
+        });
+      }
+    }
+  }
+
+  Future<void> _recover() async {
+    if (_busy ||
+        _loading ||
+        _availability == null ||
+        _availability!.missing.isNotEmpty) {
+      return;
+    }
+    // Freeze the reviewed source before any await and reject repeated activation.
+    final revision = _revision;
+    final document = _document;
+    final source = _source;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final controller = ref.read(workspaceControllerProvider.notifier);
+      if (_createdNoteId != null) {
+        final opened = await controller.openNextcloudNote(_createdNoteId!);
+        if (!mounted) return;
+        if (opened) {
+          Navigator.pop(context);
+        } else {
+          setState(() => _error = context.l10n.notesRecoveryCreatedNotOpened);
+        }
+        return;
+      }
+      final result = revision == null || document == null
+          ? await controller.recoverDeletedNextcloudNote(
+              widget.note.localId,
+              content: source,
+            )
+          : await controller.recoverNextcloudHistoryRevision(
+              document: document,
+              revision: revision,
+            );
+      if (!mounted) return;
+      _createdNoteId = result.noteId;
+      if (result.opened) {
+        Navigator.pop(context);
+      } else {
+        setState(
+          () => _error = result.created
+              ? context.l10n.notesRecoveryCreatedNotOpened
+              : localizeNotesFailure(context, result.failure),
+        );
+      }
+    } on Object catch (failure) {
+      if (mounted) {
+        setState(() => _error = localizeNotesFailure(context, failure));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final history = ref.watch(localHistoryControllerProvider);
-    _document ??= history.snapshot.documents
-        .where(
-          (d) =>
-              d.remoteNote?.accountId == widget.note.accountId &&
-              d.remoteNote?.localId == widget.note.localId,
-        )
-        .firstOrNull;
-    final summaries = _document == null
-        ? <LocalHistoryRevisionSummary>[]
-        : history.snapshot.revisionsFor(_document!.id);
-    return BusyMarkDialogShell(
+  void dispose() {
+    _generation++;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_busy,
+    child: BusyMarkDialogShell(
       title: context.l10n.notesRecovery,
       maxWidth: 760,
+      closable: !_busy,
       actions: [
         BusyMarkDialogButton(
-          label:
-              '${context.l10n.notesRecovery}: ${context.l10n.nextcloudNewNote}',
-          onPressed: _availability == null || _availability!.missing.isNotEmpty
+          label: context.l10n.close,
+          onPressed: _busy ? null : () => Navigator.pop(context),
+        ),
+        if (_error != null && _createdNoteId == null)
+          BusyMarkDialogButton(
+            label: context.l10n.visualizationRetry,
+            onPressed: _busy
+                ? null
+                : () => unawaited(
+                    _document == null ? _load() : _select(_selected),
+                  ),
+          ),
+        BusyMarkDialogButton(
+          label: _createdNoteId != null
+              ? context.l10n.open
+              : '${context.l10n.notesRecovery}: ${context.l10n.nextcloudNewNote}',
+          onPressed:
+              _busy ||
+                  _loading ||
+                  _availability == null ||
+                  _availability!.missing.isNotEmpty
               ? null
-              : () async {
-                  final controller = ref.read(
-                    workspaceControllerProvider.notifier,
-                  );
-                  final success = _revision == null || _document == null
-                      ? await controller.recoverDeletedNextcloudNote(
-                          widget.note.localId,
-                          content: _source,
-                        )
-                      : await controller.recoverNextcloudHistoryRevision(
-                          document: _document!,
-                          revision: _revision!,
-                        );
-                  if (context.mounted && success) Navigator.pop(context);
-                },
+              : () => unawaited(_recover()),
         ),
       ],
       children: [
         Text(widget.note.title),
         Text(context.l10n.notesRecoveryHelp),
-        if (summaries.isEmpty) Text(context.l10n.notesNoHistory),
-        if (!ref
-            .read(localHistoryControllerProvider.notifier)
-            .policy
-            .recordingEnabled)
-          Text(context.l10n.localHistoryWarningRecordingDisabled),
-        DropdownButton<String>(
-          isExpanded: true,
-          value: _revision?.summary.id ?? '',
-          items: [
-            DropdownMenuItem(
-              value: '',
-              child: Text(context.l10n.notesTextAvailable),
-            ),
-            for (final summary in summaries)
-              DropdownMenuItem(
-                value: summary.id,
-                child: Text(summary.capturedAt.toLocal().toString()),
-              ),
-          ],
-          onChanged: (id) async {
-            if (id == '') {
-              setState(() {
-                _revision = null;
-                _source = widget.note.content;
-                _availability = null;
-              });
-              await _inspect();
-              return;
-            }
-            if (_document == null) return;
-            final controller = ref.read(
-              localHistoryControllerProvider.notifier,
-            );
-            controller.selectDocument(_document!.id);
-            await controller.selectRevision(id!);
-            final revision = ref
-                .read(localHistoryControllerProvider)
-                .selectedRevision;
-            if (mounted && revision != null) {
-              setState(() {
-                _revision = revision;
-                _source = revision.source;
-                _availability = null;
-              });
-              await _inspect();
-            }
-          },
+        if (!_loading && _summaries.isEmpty) Text(context.l10n.notesNoHistory),
+        BusyMarkComboRow<String>(
+          title: context.l10n.localHistory,
+          selected: _selected,
+          enabled: !_busy && _createdNoteId == null,
+          values: ['', for (final summary in _summaries) summary.id],
+          labelFor: (id) => id.isEmpty
+              ? context.l10n.notesCurrentText
+              : notesLocalDate(
+                  context,
+                  _summaries.firstWhere((s) => s.id == id).capturedAt,
+                ),
+          onSelected: (id) => unawaited(_select(id)),
         ),
-        if (_availability == null)
-          const LinearProgressIndicator()
-        else ...[
-          Text(
-            '${context.l10n.notesAvailableOffline}: ${_availability!.availableCount}/${_availability!.requiredCount}',
+        if (_loading || _busy) const LinearProgressIndicator(),
+        if (_busy)
+          Semantics(
+            liveRegion: true,
+            child: Text(context.l10n.notesRecovering),
           ),
-          for (final item in _availability!.missing)
+        if (_error != null)
+          Semantics(
+            liveRegion: true,
+            child: BusyMarkStatusBox(
+              message: _error!,
+              kind: BusyMarkStatusKind.error,
+            ),
+          ),
+        if (_availability case final status?) ...[
+          Text(
+            '${context.l10n.notesTextAvailable} · ${context.l10n.notesAttachments}: ${status.availableCount}/${status.requiredCount}',
+          ),
+          for (final item in status.missing)
             Text('${context.l10n.notesIncomplete}: $item'),
-          for (final item in _availability!.external)
-            Text('${context.l10n.notesIncomplete}: $item'),
+          if (status.external.isNotEmpty)
+            Text(context.l10n.notesOfflineExternal),
         ],
         SizedBox(
-          height: 260,
+          height: MediaQuery.sizeOf(context).height * .3,
           child: SingleChildScrollView(child: SelectableText(_source)),
         ),
       ],
-    );
-  }
+    ),
+  );
 }
 
 Future<void> showNotesExport(
@@ -793,7 +737,6 @@ Future<void> showNotesExport(
   WidgetRef ref,
   List<String> ids,
 ) async {
-  final completedLabel = context.l10n.notesCompleted;
   final incompleteLabel = context.l10n.notesIncomplete;
   final parent = await getDirectoryPath(
     confirmButtonText: context.l10n.notesExport,
@@ -828,6 +771,7 @@ Future<void> showNotesExport(
     barrierDismissible: false,
     builder: (_) => NotesTransferProgressDialog(
       title: context.l10n.notesExport,
+      exporting: true,
       operation: (cancel, progress) async {
         final result = await NotesTransferService(repository).exportSnapshot(
           notes: captured,
@@ -835,12 +779,14 @@ Future<void> showNotesExport(
           cancellation: cancel,
           onProgress: progress,
         );
-        return [
-          result.complete ? completedLabel : incompleteLabel,
-          '${result.count}',
-          result.path,
-          ...result.omissions,
-        ];
+        return NotesTransferResult(
+          phase: result.complete
+              ? NotesTransferPhase.completed
+              : NotesTransferPhase.partial,
+          created: result.count,
+          destination: result.path,
+          omissions: result.omissions,
+        );
       },
     ),
   );
@@ -856,9 +802,6 @@ Future<void> showNotesImport(
       .workspace
       ?.nextcloudAccountId;
   if (accountId == null) return;
-  final savedLocally = context.l10n.nextcloudSavedLocally;
-  final alreadyImported = context.l10n.notesImportAlreadyImported;
-  final synced = context.l10n.nextcloudSynced;
   final source = folder
       ? await getDirectoryPath(confirmButtonText: context.l10n.notesImport)
       : (await openFile(
@@ -872,11 +815,20 @@ Future<void> showNotesImport(
   if (source == null || !context.mounted) return;
   final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
   final service = NotesTransferService(repository);
+  if (!context.mounted) return;
   try {
-    var review = await service.review(source, accountId);
+    var review = await showBusyMarkModalDialog<NotesImportReview>(
+      context,
+      barrierDismissible: false,
+      builder: (_) => NotesImportScanDialog(
+        scan: (cancel) =>
+            service.review(source, accountId, cancellation: cancel),
+      ),
+    );
+    if (review == null || !context.mounted) return;
     final pending = (await repository.store.importOperations(
       accountId,
-    )).where((o) => o['root'] == review.root).toList();
+    )).where((o) => o['root'] == review!.root).toList();
     if (!context.mounted) return;
     if (pending.isNotEmpty) {
       final choice = await showBusyMarkModalDialog<String>(
@@ -891,7 +843,7 @@ Future<void> showNotesImport(
     }
     final confirmed = await showBusyMarkModalDialog<bool>(
       context,
-      builder: (_) => NotesImportReviewDialog(review: review),
+      builder: (_) => NotesImportReviewDialog(review: review!),
     );
     if (confirmed != true || !context.mounted) return;
     await showBusyMarkModalDialog<void>(
@@ -901,7 +853,7 @@ Future<void> showNotesImport(
         title: context.l10n.notesImport,
         operation: (cancel, progress) async {
           final results = await service.importReviewed(
-            review,
+            review!,
             accountId,
             cancellation: cancel,
             onProgress: progress,
@@ -909,10 +861,27 @@ Future<void> showNotesImport(
           ref
               .read(workspaceControllerProvider.notifier)
               .synchronizeImportedNotes(accountId);
-          return [
-            for (final result in results)
-              '${result.item}: ${result.error ?? [if (result.alreadyImported) alreadyImported, repository.noteById(result.noteId ?? '')?.hasPendingChanges == false ? synced : savedLocally].join(' · ')}',
-          ];
+          final total = review!.items.where((item) => item.selected).length;
+          final failures = results.where((item) => item.error != null).length;
+          final skipped = results.where((item) => item.alreadyImported).length;
+          final created = results
+              .where((item) => item.noteId != null && !item.alreadyImported)
+              .length;
+          final notStarted = total - results.length;
+          return NotesTransferResult(
+            phase: notStarted == 0 && failures == 0
+                ? NotesTransferPhase.completed
+                : created > 0 || skipped > 0
+                ? NotesTransferPhase.partial
+                : cancel.cancelled
+                ? NotesTransferPhase.cancelled
+                : NotesTransferPhase.failed,
+            created: created,
+            skipped: skipped,
+            failed: failures,
+            notStarted: notStarted,
+            items: results,
+          );
         },
       ),
     );
@@ -922,7 +891,7 @@ Future<void> showNotesImport(
         context,
         builder: (context) => BusyMarkDialogShell(
           title: context.l10n.warning,
-          children: [Text(error.toString())],
+          children: [Text(localizeNotesFailure(context, error))],
         ),
       );
     }
@@ -944,18 +913,34 @@ class NotesImportOperationDialog extends StatelessWidget {
       ),
     ],
     children: [
-      ListTile(
-        title: Text(context.l10n.notesImportNew),
-        onTap: () => Navigator.pop(context, ''),
-      ),
-      for (final operation in operations)
-        ListTile(
-          title: Text(context.l10n.notesImportResume),
-          subtitle: Text(
-            '${operation['root']}\n${DateTime.fromMillisecondsSinceEpoch((operation['created_at'] as int) * 1000).toLocal()}',
+      BusyMarkGroupedList(
+        filled: true,
+        children: [
+          BusyMarkActionRow(
+            title: context.l10n.notesImportNew,
+            onTap: () => Navigator.pop(context, ''),
           ),
-          onTap: () => Navigator.pop(context, operation['id'] as String),
-        ),
+          for (final operation in operations)
+            BusyMarkActionRow(
+              title: context.l10n.notesImportResume,
+              subtitleWidget: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BusyMarkPathLabel(path: operation['root'] as String),
+                  Text(
+                    notesLocalDate(
+                      context,
+                      DateTime.fromMillisecondsSinceEpoch(
+                        (operation['created_at'] as int) * 1000,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              onTap: () => Navigator.pop(context, operation['id'] as String),
+            ),
+        ],
+      ),
     ],
   );
 }
@@ -986,9 +971,20 @@ class _NotesImportReviewDialogState extends State<NotesImportReviewDialog> {
       ),
     ],
     children: [
-      for (final issue in widget.review.issues) Text(issue),
+      if (widget.review.issues.isNotEmpty) ...[
+        BusyMarkStatusBox(
+          message: context.l10n.notesIncomplete,
+          kind: BusyMarkStatusKind.warning,
+        ),
+        ExpansionTile(
+          title: Text(context.l10n.notesTechnicalDetails),
+          children: [
+            for (final issue in widget.review.issues) SelectableText(issue),
+          ],
+        ),
+      ],
       SizedBox(
-        height: 400,
+        height: (MediaQuery.sizeOf(context).height * .5).clamp(0.0, 400.0),
         child: ListView.builder(
           itemCount: widget.review.items.length,
           itemBuilder: (context, index) {
@@ -996,33 +992,55 @@ class _NotesImportReviewDialogState extends State<NotesImportReviewDialog> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                CheckboxListTile(
-                  value: item.selected,
-                  onChanged: item.alreadyImported
-                      ? null
-                      : (v) => setState(() => item.selected = v ?? false),
-                  title: Text(item.title),
-                  subtitle: Text(
-                    item.alreadyImported
-                        ? context.l10n.notesImportAlreadyImported
-                        : item.collision
-                        ? context.l10n.notesImportDistinct
-                        : item.path,
-                  ),
-                ),
-                TextFormField(
-                  initialValue: item.category,
-                  readOnly: item.alreadyImported,
-                  decoration: InputDecoration(
-                    labelText: context.l10n.syntaxReferenceCategory,
-                  ),
-                  onChanged: (v) => item.category = v,
+                BusyMarkGroupedList(
+                  filled: true,
+                  children: [
+                    MergeSemantics(
+                      child: BusyMarkActionRow(
+                        title: item.title,
+                        subtitle: item.alreadyImported
+                            ? context.l10n.notesImportAlreadyImported
+                            : item.collision
+                            ? context.l10n.notesImportDistinct
+                            : item.path,
+                        enabled: !item.alreadyImported,
+                        leading: ExcludeFocus(
+                          child: BusyMarkCheckbox(
+                            value: item.selected,
+                            onChanged: item.alreadyImported
+                                ? null
+                                : (value) => setState(
+                                    () => item.selected = value ?? false,
+                                  ),
+                          ),
+                        ),
+                        onTap: item.alreadyImported
+                            ? null
+                            : () => setState(
+                                () => item.selected = !item.selected,
+                              ),
+                      ),
+                    ),
+                    BusyMarkGroupedTextEntry(
+                      label: context.l10n.syntaxReferenceCategory,
+                      initialValue: item.category,
+                      readOnly: item.alreadyImported,
+                      onChanged: (value) => item.category = value,
+                    ),
+                  ],
                 ),
                 Text('${context.l10n.notesAttachments}: ${item.media.length}'),
                 for (final reference in item.media.keys)
                   Text(reference, style: Theme.of(context).textTheme.bodySmall),
-                for (final issue in item.issues)
-                  Text('${context.l10n.notesIncomplete}: $issue'),
+                if (item.issues.isNotEmpty) ...[
+                  Text(context.l10n.notesIncomplete),
+                  ExpansionTile(
+                    title: Text(context.l10n.notesTechnicalDetails),
+                    children: [
+                      for (final issue in item.issues) SelectableText(issue),
+                    ],
+                  ),
+                ],
                 const Divider(),
               ],
             );
@@ -1033,14 +1051,57 @@ class _NotesImportReviewDialogState extends State<NotesImportReviewDialog> {
   );
 }
 
+enum NotesTransferPhase {
+  scanning,
+  running,
+  cancelling,
+  cancelled,
+  completed,
+  partial,
+  failed,
+}
+
+class NotesTransferResult {
+  const NotesTransferResult({
+    required this.phase,
+    this.created = 0,
+    this.skipped = 0,
+    this.failed = 0,
+    this.notStarted = 0,
+    this.destination,
+    this.omissions = const [],
+    this.items = const [],
+    this.failure,
+  });
+  final NotesTransferPhase phase;
+  final int created, skipped, failed, notStarted;
+  final String? destination;
+  final List<String> omissions;
+  final List<NotesImportOutcome> items;
+  final Object? failure;
+}
+
+String _transferLabel(BuildContext context, NotesTransferPhase phase) =>
+    switch (phase) {
+      NotesTransferPhase.scanning => context.l10n.notesScanning,
+      NotesTransferPhase.running => context.l10n.notesTransferring,
+      NotesTransferPhase.cancelling => context.l10n.notesCancelling,
+      NotesTransferPhase.cancelled => context.l10n.notesCancelled,
+      NotesTransferPhase.completed => context.l10n.notesCompleted,
+      NotesTransferPhase.partial => context.l10n.notesPartial,
+      NotesTransferPhase.failed => context.l10n.notesTransferFailed,
+    };
+
 class NotesTransferProgressDialog extends StatefulWidget {
   const NotesTransferProgressDialog({
     super.key,
     required this.title,
     required this.operation,
+    this.exporting = false,
   });
+  final bool exporting;
   final String title;
-  final Future<List<String>> Function(
+  final Future<NotesTransferResult> Function(
     NotesTransferCancellation,
     void Function(int, int),
   )
@@ -1054,7 +1115,8 @@ class _NotesTransferProgressDialogState
     extends State<NotesTransferProgressDialog> {
   final _cancel = NotesTransferCancellation();
   int _completed = 0, _total = 0;
-  List<String>? _result;
+  NotesTransferPhase _phase = NotesTransferPhase.running;
+  NotesTransferResult? _result;
   @override
   void initState() {
     super.initState();
@@ -1062,7 +1124,7 @@ class _NotesTransferProgressDialogState
   }
 
   Future<void> _run() async {
-    List<String> result;
+    NotesTransferResult result;
     try {
       result = await widget.operation(_cancel, (a, b) {
         if (mounted) {
@@ -1072,10 +1134,188 @@ class _NotesTransferProgressDialogState
           });
         }
       });
+    } on NotesTransferCancelled {
+      result = NotesTransferResult(
+        phase: NotesTransferPhase.cancelled,
+        notStarted: _total - _completed,
+      );
     } on Object catch (error) {
-      result = [error.toString()];
+      result = NotesTransferResult(
+        phase: !widget.exporting && _completed > 0
+            ? NotesTransferPhase.partial
+            : NotesTransferPhase.failed,
+        failed: 1,
+        notStarted: (_total - _completed).clamp(0, _total),
+        failure: error,
+      );
     }
-    if (mounted) setState(() => _result = result);
+    if (mounted) {
+      setState(() {
+        _result = result;
+        _phase = result.phase;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _cancel.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = _result;
+    return PopScope(
+      canPop: result != null,
+      child: BusyMarkDialogShell(
+        title: widget.title,
+        closable: result != null,
+        actions: [
+          BusyMarkDialogButton(
+            label: result == null ? context.l10n.cancel : context.l10n.close,
+            onPressed: _phase == NotesTransferPhase.cancelling
+                ? null
+                : () {
+                    if (result == null) {
+                      setState(() {
+                        _cancel.cancel();
+                        _phase = NotesTransferPhase.cancelling;
+                      });
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
+          ),
+        ],
+        children: [
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              widget.exporting &&
+                      result?.destination != null &&
+                      _phase == NotesTransferPhase.partial
+                  ? context.l10n.notesExportPublishedWithOmissions
+                  : _transferLabel(context, _phase),
+            ),
+          ),
+          if (result == null) ...[
+            if (_total > 0) Text('$_completed/$_total'),
+            LinearProgressIndicator(
+              value: _total > 0 ? _completed / _total : null,
+            ),
+          ] else ...[
+            if (result.destination != null) SelectableText(result.destination!),
+            if (widget.exporting && result.destination == null)
+              Text(context.l10n.notesExportNotPublished),
+            if (!widget.exporting)
+              Text(
+                '${context.l10n.notesCreated}: ${result.created} · ${context.l10n.notesSkipped}: ${result.skipped} · ${context.l10n.notesFailed}: ${result.failed} · ${context.l10n.notesNotStarted}: ${result.notStarted}',
+              ),
+            if (!widget.exporting &&
+                (result.phase == NotesTransferPhase.partial ||
+                    result.phase == NotesTransferPhase.cancelled))
+              Text(context.l10n.notesImportPartialHelp),
+            if (result.failure != null) ...[
+              Text(
+                localizeNotesTransferFailure(
+                  context,
+                  widget.exporting &&
+                          result.failure is FileSystemException &&
+                          result.failure is! NotesTransferException
+                      ? NotesTransferFailureReason.destinationUnavailable
+                      : notesTransferFailureReason(result.failure),
+                  exporting: widget.exporting,
+                ),
+              ),
+              ExpansionTile(
+                title: Text(context.l10n.notesTechnicalDetails),
+                children: [SelectableText('${result.failure}')],
+              ),
+            ],
+            SizedBox(
+              height: MediaQuery.sizeOf(context).height * .3,
+              child: ListView(
+                children: [
+                  for (final item in result.items)
+                    BusyMarkActionRow(
+                      title: item.item,
+                      subtitleWidget: item.error != null
+                          ? Text(
+                              localizeNotesTransferFailure(
+                                context,
+                                item.reason ??
+                                    notesTransferFailureReason(item.cause),
+                              ),
+                            )
+                          : null,
+                      subtitle: item.error != null
+                          ? null
+                          : item.alreadyImported
+                          ? context.l10n.notesImportAlreadyImported
+                          : context.l10n.nextcloudSavedLocally,
+                    ),
+                  for (final item in result.items.where((i) => i.error != null))
+                    ExpansionTile(
+                      title: Text(
+                        '${item.item} · ${context.l10n.notesTechnicalDetails}',
+                      ),
+                      children: [SelectableText(item.error!)],
+                    ),
+                  for (final omission in result.omissions)
+                    Text('${context.l10n.notesIncomplete}: $omission'),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The review scan shares the service cancellation boundary. A cancelled scan
+/// can never return a review for a later route or selection.
+class NotesImportScanDialog extends StatefulWidget {
+  const NotesImportScanDialog({super.key, required this.scan});
+  final Future<NotesImportReview> Function(NotesTransferCancellation) scan;
+  @override
+  State<NotesImportScanDialog> createState() => _NotesImportScanDialogState();
+}
+
+class _NotesImportScanDialogState extends State<NotesImportScanDialog> {
+  final _cancel = NotesTransferCancellation();
+  NotesTransferPhase _phase = NotesTransferPhase.scanning;
+  bool _settled = false;
+  Object? _failure;
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_run());
+  }
+
+  Future<void> _run() async {
+    try {
+      final review = await widget.scan(_cancel);
+      if (!mounted) return;
+      setState(() {
+        _settled = true;
+        _phase = _cancel.cancelled
+            ? NotesTransferPhase.cancelled
+            : NotesTransferPhase.completed;
+      });
+      if (!_cancel.cancelled) Navigator.pop(context, review);
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() {
+          _settled = true;
+          _failure = error is NotesTransferCancelled ? null : error;
+          _phase = error is NotesTransferCancelled
+              ? NotesTransferPhase.cancelled
+              : NotesTransferPhase.failed;
+        });
+      }
+    }
   }
 
   @override
@@ -1086,34 +1326,45 @@ class _NotesTransferProgressDialogState
 
   @override
   Widget build(BuildContext context) => PopScope(
-    canPop: _result != null,
+    canPop: _settled,
     child: BusyMarkDialogShell(
-      title: widget.title,
-      closable: _result != null,
+      title: context.l10n.notesImport,
+      closable: _settled,
       actions: [
         BusyMarkDialogButton(
-          label: _result == null ? context.l10n.cancel : context.l10n.close,
-          onPressed: () {
-            if (_result == null) {
-              setState(_cancel.cancel);
-            } else {
-              Navigator.pop(context);
-            }
-          },
+          label: _settled ? context.l10n.close : context.l10n.cancel,
+          onPressed: _phase == NotesTransferPhase.cancelling
+              ? null
+              : () {
+                  if (_settled) {
+                    Navigator.pop(context);
+                  } else {
+                    setState(() {
+                      _cancel.cancel();
+                      _phase = NotesTransferPhase.cancelling;
+                    });
+                  }
+                },
         ),
       ],
       children: [
-        Text('$_completed/$_total'),
-        if (_result == null)
-          const LinearProgressIndicator()
-        else
-          SizedBox(
-            height: 300,
-            child: ListView(
-              children: [for (final line in _result!) Text(line)],
+        Semantics(
+          liveRegion: true,
+          child: Text(_transferLabel(context, _phase)),
+        ),
+        if (!_settled) const LinearProgressIndicator(),
+        if (_failure != null) ...[
+          Text(
+            localizeNotesTransferFailure(
+              context,
+              notesTransferFailureReason(_failure),
             ),
           ),
-        if (_cancel.cancelled) Text(context.l10n.notesIncomplete),
+          ExpansionTile(
+            title: Text(context.l10n.notesTechnicalDetails),
+            children: [SelectableText('$_failure')],
+          ),
+        ],
       ],
     ),
   );

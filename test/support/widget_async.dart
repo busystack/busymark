@@ -8,21 +8,27 @@ Future<void> pumpUntil(
   bool Function() complete, {
   required String operation,
   Duration timeout = const Duration(seconds: 10),
-  Duration frameStep = Duration.zero,
+  Duration frameStep = const Duration(milliseconds: 1),
   String Function()? diagnostics,
 }) async {
   final elapsed = Stopwatch()..start();
+
   while (!complete()) {
     if (elapsed.elapsed >= timeout) {
       throw TimeoutException(
-        '$operation did not complete. ${diagnostics?.call() ?? ''}',
+        '$operation did not complete. deadline exceeded. '
+        '${diagnostics?.call() ?? ''}',
       );
     }
     await tester.pump(frameStep);
     if (!complete()) {
-      // Let file/isolate events run, then flush their FakeAsync continuations
-      // on the next pump. Sleeping here adds latency to every I/O boundary.
-      await tester.runAsync(() => Future<void>(() {}));
+      // Advance both clocks: retry/debounce timers may belong to FakeAsync,
+      // while filesystem/isolate completions need a real event-loop yield.
+      // A zero-delay busy loop burns CPU across parallel test processes and
+      // can exhaust a wall-clock deadline without servicing either properly.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 1)),
+      );
     }
   }
   await tester.pump();

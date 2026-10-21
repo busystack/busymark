@@ -224,6 +224,134 @@ void main() {
       expect((repaired! as SvgVisualizationResult).svg, replacement.svg);
     });
 
+    for (final byteLimited in [false, true]) {
+      test(
+        'concurrent publication trims a full cache by '
+        '${byteLimited ? 'bytes' : 'entry count'} and preserves other files',
+        () async {
+          const result = SvgVisualizationResult(
+            svg: '<svg viewBox="0 0 10 20"/>',
+            width: 10,
+            height: 20,
+          );
+          await VisualizationCache(diskRoot: directory).put('template', result);
+          final templateFile = File('${directory.path}/template.json');
+          final template = jsonDecode(await templateFile.readAsString()) as Map;
+          await templateFile.delete();
+          var recordBytes = 0;
+          for (var i = 0; i < 300; i++) {
+            final key = 'old${i.toString().padLeft(3, '0')}';
+            final encoded = jsonEncode({...template, 'key': key});
+            recordBytes = utf8.encode(encoded).length;
+            File('${directory.path}/$key.json')
+              ..writeAsStringSync(encoded)
+              ..setLastModifiedSync(
+                DateTime.utc(2020).add(Duration(seconds: i)),
+              );
+          }
+          final unrelated = File('${directory.path}/metadata')
+            ..writeAsStringSync('keep');
+          final nested = Directory('${directory.path}/nested')..createSync();
+          final nestedFile = File('${nested.path}/keep.json')
+            ..writeAsStringSync('keep nested');
+          final outside = File(
+            '${directory.parent.path}/outside-${directory.uri.pathSegments.where((s) => s.isNotEmpty).last}',
+          )..writeAsStringSync('keep outside');
+          addTearDown(() async {
+            if (await outside.exists()) await outside.delete();
+          });
+          Link? link;
+          if (!Platform.isWindows) {
+            link = Link('${directory.path}/linked.json')
+              ..createSync(outside.path);
+          }
+
+          final cache = VisualizationCache(
+            diskRoot: directory,
+            maximumDiskBytes: byteLimited
+                ? recordBytes * 10
+                : 256 * 1024 * 1024,
+          );
+          await Future.wait([
+            for (var i = 0; i < 8; i++)
+              cache.put('new${i.toString().padLeft(3, '0')}', result),
+          ]);
+          final files = directory
+              .listSync(followLinks: false)
+              .whereType<File>()
+              .where((file) => file.path.endsWith('.json'))
+              .toList();
+          final expectedCount = byteLimited ? 10 : 256;
+          expect(files, hasLength(expectedCount));
+          expect(
+            files.fold<int>(0, (sum, file) => sum + file.lengthSync()),
+            lessThanOrEqualTo(cache.maximumDiskBytes),
+          );
+          final firstRetained = 308 - expectedCount;
+          expect(
+            File(
+              '${directory.path}/old${(firstRetained - 1).toString().padLeft(3, '0')}.json',
+            ).existsSync(),
+            isFalse,
+          );
+          expect(
+            File(
+              '${directory.path}/old${firstRetained.toString().padLeft(3, '0')}.json',
+            ).existsSync(),
+            isTrue,
+          );
+          final reader = VisualizationCache(diskRoot: directory);
+          for (var i = 0; i < 8; i++) {
+            expect(
+              await reader.get('new${i.toString().padLeft(3, '0')}'),
+              isA<SvgVisualizationResult>(),
+            );
+          }
+          expect(unrelated.readAsStringSync(), 'keep');
+          expect(nestedFile.readAsStringSync(), 'keep nested');
+          expect(outside.readAsStringSync(), 'keep outside');
+          if (link != null) expect(link.existsSync(), isTrue);
+        },
+      );
+    }
+
+    test('a failed maintenance scan does not poison subsequent puts', () async {
+      if (Platform.isWindows) return;
+      const result = SvgVisualizationResult(
+        svg: '<svg viewBox="0 0 1 1"/>',
+        width: 1,
+        height: 1,
+      );
+      final cache = VisualizationCache(
+        diskRoot: directory,
+        maximumDiskEntries: 1,
+      );
+      try {
+        expect(
+          (await Process.run('chmod', ['300', directory.path])).exitCode,
+          0,
+        );
+        // Creation/rename are allowed, but listing the directory is not.
+        expect(directory.listSync, throwsA(isA<FileSystemException>()));
+        await cache.put('first', result);
+        expect(await cache.get('first'), isA<SvgVisualizationResult>());
+        File(
+          '${directory.path}/first.json',
+        ).setLastModifiedSync(DateTime.utc(2020));
+      } finally {
+        expect(
+          (await Process.run('chmod', ['700', directory.path])).exitCode,
+          0,
+        );
+      }
+      await cache.put('second', result);
+      expect(File('${directory.path}/first.json').existsSync(), isFalse);
+      expect(
+        await VisualizationCache(diskRoot: directory).get('second'),
+        isA<SvgVisualizationResult>(),
+      );
+    });
+
     test('derives the XDG cache path without changing the environment', () {
       final cache = VisualizationCache(
         environment: const {'XDG_CACHE_HOME': '/tmp/custom-cache'},

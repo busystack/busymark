@@ -41,6 +41,130 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  for (final operation in ['open', 'Save As']) {
+    test('Recent failure preserves successful $operation', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-recent-warning-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'document.md'));
+      const text = '# Successful document operation\n';
+      final settings = _FailingRecentSettingsStore();
+      final harness = await _createControllerHarness(
+        settingsStore: settings,
+        sessionStore: MemoryDocumentSessionStore(),
+        recoveryStore: MemoryDocumentRecoveryStore(),
+        localHistoryStore: MemoryLocalHistoryStore(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      settings.failRecentWrites = true;
+      final controller = harness.controller;
+      if (operation == 'open') {
+        await file.writeAsString(text);
+        await controller.openPath(file.path);
+      } else {
+        await controller.createMarkdownFile();
+        controller.updateActiveText(text);
+        expect(await controller.saveActiveAs(file.path), isTrue);
+      }
+      await harness._container
+          .read(appSettingsControllerProvider.notifier)
+          .flushPersistence();
+      expect(settings.failedWrites, greaterThan(0));
+      expect(controller.state.activeBuffer?.filePath, file.path);
+      expect(controller.state.activeText, text);
+      expect(controller.state.isDirty, isFalse);
+      expect(await file.readAsString(), text);
+      expect(
+        controller.state.message?.code,
+        WorkspaceMessageCode.recentWorkspaceUpdateFailed,
+      );
+      expect((settings.value['recentWorkspaces'] as List?) ?? [], isEmpty);
+    });
+  }
+
+  test(
+    'opening reconciles a changed reread before publishing the editor model',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark-open-race-');
+      addTearDown(() => root.delete(recursive: true));
+      final file = File(p.join(root.path, 'race.md'));
+      await file.writeAsString('# Original\n');
+      final service = _ChangedDuringOpenService();
+      final harness = await _createControllerHarness(service: service);
+      await harness.controller.openPath(file.path);
+      final state = harness.controller.state;
+      expect(state.activeText, '# Changed externally\n');
+      expect(state.workspace!.markdown!.source, state.activeText);
+      expect(state.activeBuffer!.lastSavedText, state.activeText);
+      expect(
+        state.activeBuffer!.diskSnapshot!.contentHash,
+        (await service.fileSnapshot(file.path)).contentHash,
+      );
+      expect(state.activeBuffer!.isDirty, isFalse);
+    },
+  );
+
+  testWidgets('cancelled Recent workspace opening restores the prior buffers', (
+    tester,
+  ) async {
+    final service = _ClosingAutosaveWorkspaceService();
+    final creating = _createControllerHarness(service: service);
+    await tester.pump(Duration.zero);
+    final harness = await creating;
+    await harness.settingsController.setAutoSave(false);
+    final controller = harness.controller;
+    await controller.openPath(service.path);
+    final before = controller.state;
+    final recents = harness.settingsController.state.recentWorkspaces;
+    service.pauseLoad = true;
+    var current = true;
+    final opening = controller.openPath(
+      service.bPath,
+      acceptNavigation: () => current,
+    );
+    await tester.pump();
+    expect(service.loadStarted.isCompleted, isTrue);
+    current = false;
+    service.releaseLoad.complete();
+    await tester.pump();
+    await opening;
+    expect(controller.state.workspace!.id, before.workspace!.id);
+    expect(controller.state.activeBufferId, before.activeBufferId);
+    expect(controller.state.activeText, before.activeText);
+    expect(controller.state.isLoading, isFalse);
+    expect(harness.settingsController.state.recentWorkspaces, same(recents));
+  });
+  testWidgets('cancelled search activation cannot publish a parsed tab', (
+    tester,
+  ) async {
+    final service = _ClosingAutosaveWorkspaceService();
+    final creating = _createControllerHarness(service: service);
+    await tester.pump(Duration.zero);
+    final harness = await creating;
+    await harness.settingsController.setValidateOnEdit(false);
+    await harness.settingsController.setAutoSave(false);
+    final controller = harness.controller;
+    await controller.openPath(service.path);
+    await controller.openActiveFile(service.bPath);
+    await controller.openActiveFile(service.path);
+    final original = controller.state.activeBufferId;
+    final recents = harness.settingsController.state.recentWorkspaces;
+    service.pauseActivation = true;
+    var current = true;
+    final opening = controller.openActiveFile(
+      service.bPath,
+      acceptNavigation: () => current,
+    );
+    await tester.pump();
+    expect(service.activationStarted.isCompleted, isTrue);
+    current = false;
+    service.releaseActivation.complete();
+    await tester.pump();
+    expect(await opening, isFalse);
+    expect(controller.state.activeBufferId, original);
+    expect(harness.settingsController.state.recentWorkspaces, same(recents));
+  });
   for (final change in ['session', 'source']) {
     testWidgets(
       'clean close validates source identity during $change updates',
@@ -2984,6 +3108,166 @@ CommonMark paragraph.
     expect(controller.state.isDirty, isFalse);
   });
 
+  for (final failFirst in [false, true]) {
+    test('restoration bounds tab reads and settles them before publication '
+        '(failure=$failFirst)', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-restore-reads-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final paths = [
+        for (var i = 0; i < 9; i++) p.join(directory.path, 'tab$i.md'),
+      ];
+      for (var i = 0; i < paths.length; i++) {
+        await File(paths[i]).writeAsString('# Restored $i\n\nПривет ⛵ $i.\n');
+      }
+      final service = _RestoreReadGateService(paths, failFirst: failFirst);
+      final sessions = MemoryDocumentSessionStore()
+        ..value = WorkspaceSessionSnapshot(
+          workspacePath: directory.path,
+          activeBufferId: 'tab7',
+          tabs: [
+            for (var i = 0; i < paths.length; i++)
+              DocumentSessionEntry(
+                id: 'tab$i',
+                filePath: paths[i],
+                untitledName: null,
+                editorState: DocumentEditorState(
+                  mode: DocumentViewModePreference.values[i % 4],
+                ),
+              ),
+          ],
+        );
+      final harness = await _createControllerHarness(
+        service: service,
+        sessionStore: sessions,
+        recoveryStore: MemoryDocumentRecoveryStore(),
+        localHistoryStore: MemoryLocalHistoryStore(),
+      );
+      var settled = false;
+      final restoring = harness.controller.restorePreviousSession().then((
+        value,
+      ) {
+        settled = true;
+        return value;
+      });
+      await service.started.future;
+      // The fake path check completes in microtasks; file-read completion is
+      // held by explicit gates. This observes admission without an I/O timeout.
+      var openingBarrierSettled = false;
+      final openingBarrier = harness.controller._notifier
+          .waitForWorkspaceOpening()
+          .then((_) => openingBarrierSettled = true);
+      await Future<void>.delayed(Duration.zero);
+      final admitted = service.pending;
+      var settledWhilePeersPending = false;
+      if (admitted == 4) {
+        service.release(failFirst ? paths[0] : paths[3]);
+        await service.finished[failFirst ? paths[0] : paths[3]]!.future;
+        await Future<void>.delayed(Duration.zero);
+        settledWhilePeersPending = settled;
+        expect(openingBarrierSettled, isFalse);
+        expect(harness.controller.state.workspace, isNull);
+      }
+      service.releaseAll();
+      final restored = await restoring;
+      await openingBarrier;
+      expect(admitted, 4);
+      expect(settledWhilePeersPending, isFalse);
+      expect(service.maximumPending, lessThanOrEqualTo(4));
+      expect(service.pending, 0);
+      expect(restored, !failFirst);
+      if (failFirst) {
+        expect(harness.controller.state.workspace, isNull);
+        expect(sessions.value!.tabs, hasLength(9));
+      } else {
+        final buffers = harness.controller.state.documentBuffers;
+        expect(buffers.map((b) => b.id), [for (var i = 0; i < 9; i++) 'tab$i']);
+        expect(harness.controller.state.activeBufferId, 'tab7');
+        for (var i = 0; i < buffers.length; i++) {
+          expect(buffers[i].text, await File(paths[i]).readAsString());
+          expect(buffers[i].diskSnapshot, isNotNull);
+          expect(
+            buffers[i].editorState.mode,
+            DocumentViewModePreference.values[i % 4],
+          );
+        }
+      }
+    });
+  }
+
+  test('clean shutdown waits for adopted recovery to be published', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-close-during-restore-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'recovered.md'));
+    await file.writeAsString('# Saved\n');
+    final service = _RestoreOpenGateService();
+    final load = await service.loadTextWithSnapshot(file.path);
+    final sessions = MemoryDocumentSessionStore()
+      ..value = WorkspaceSessionSnapshot(
+        workspacePath: file.path,
+        activeBufferId: 'recovered',
+        tabs: [
+          DocumentSessionEntry(
+            id: 'recovered',
+            filePath: file.path,
+            untitledName: null,
+            editorState: const DocumentEditorState(),
+          ),
+        ],
+      );
+    final recovery = MemoryDocumentRecoveryStore()
+      ..value = RecoverySnapshot(
+        cleanShutdown: false,
+        entries: [
+          DocumentRecoveryEntry(
+            id: 'recovered',
+            workspacePath: file.path,
+            filePath: file.path,
+            untitledName: null,
+            text: '# Retained edit\n',
+            lastSavedText: load.text,
+            diskSnapshot: load.snapshot,
+            format: load.format,
+            editorState: const DocumentEditorState(),
+            revision: 1,
+          ),
+        ],
+      );
+    final harness = await _createControllerHarness(
+      service: service,
+      sessionStore: sessions,
+      recoveryStore: recovery,
+    );
+    await harness.settingsController.setAutoSave(false);
+    final restoring = harness.controller.restoreStartupSession(
+      reopenCleanSession: false,
+    );
+    await service.started.future;
+    expect(harness.controller.state.workspace, isNull);
+    expect(recovery.value.entries.single.ownerId, recovery.ownerId);
+    var closed = false;
+    final closing = harness.controller.markCleanShutdown().then((_) {
+      closed = true;
+    });
+    // A real synchronization barrier, not a timing-dependent slow file read.
+    for (var turn = 0; turn < 10; turn++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    final closedBeforePublication = closed;
+    service.release.complete();
+    expect(await restoring, isTrue);
+    await closing;
+    expect(closedBeforePublication, isFalse);
+    expect(harness.controller.state.activeBuffer!.text, '# Retained edit\n');
+    expect(recovery.value.entries.single.text, '# Retained edit\n');
+    expect(recovery.value.cleanShutdown, isFalse);
+    expect(sessions.value!.tabs.single.filePath, file.path);
+    expect(await file.readAsString(), '# Saved\n');
+  });
+
   test('clean shutdown waits for in-flight document writes', () async {
     final service = _AutosaveWorkspaceService(pauseFirstSave: true);
     final harness = await _createControllerHarness(service: service);
@@ -4364,6 +4648,7 @@ Future<void> _waitFor(bool Function() condition) async {
 
 Future<_WorkspaceControllerHarness> _createControllerHarness({
   WorkspaceService service = const WorkspaceService(),
+  LocalSettingsStore? settingsStore,
   WorkspaceFileMonitor? fileMonitor,
   DocumentSessionStore? sessionStore,
   DocumentRecoveryStore? recoveryStore,
@@ -4371,7 +4656,9 @@ Future<_WorkspaceControllerHarness> _createControllerHarness({
 }) async {
   final container = ProviderContainer(
     overrides: [
-      localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+      localSettingsStoreProvider.overrideWithValue(
+        settingsStore ?? _MemorySettingsStore(),
+      ),
       workspaceServiceProvider.overrideWithValue(service),
       if (fileMonitor != null)
         workspaceFileMonitorProvider.overrideWithValue(fileMonitor),
@@ -4409,7 +4696,8 @@ class _WorkspaceControllerDriver {
 
   WorkspaceState get state => _container.read(workspaceControllerProvider);
 
-  Future<void> openPath(String path) => _notifier.openPath(path);
+  Future<void> openPath(String path, {bool Function()? acceptNavigation}) =>
+      _notifier.openPath(path, acceptNavigation: acceptNavigation);
 
   Future<void> createMarkdownFile() => _notifier.createMarkdownFile();
 
@@ -4473,7 +4761,10 @@ class _WorkspaceControllerDriver {
   Future<bool> deleteWritersideTopicFile(String topicPath) =>
       _notifier.deleteWritersideTopicFile(topicPath);
 
-  Future<bool> openActiveFile(String path) => _notifier.openActiveFile(path);
+  Future<bool> openActiveFile(
+    String path, {
+    bool Function()? acceptNavigation,
+  }) => _notifier.openActiveFile(path, acceptNavigation: acceptNavigation);
 
   Future<bool> activateNextOpenFileTab() => _notifier.activateNextOpenFileTab();
 
@@ -4608,6 +4899,21 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _FailingRecentSettingsStore extends _MemorySettingsStore {
+  bool failRecentWrites = false;
+  int failedWrites = 0;
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    if (failRecentWrites &&
+        ((json['recentWorkspaces'] as List?)?.isNotEmpty ?? false)) {
+      failedWrites++;
+      throw StateError('Recent storage unavailable');
+    }
+    await super.save(json);
   }
 }
 
@@ -4926,6 +5232,19 @@ class _ClosingAutosaveWorkspaceService extends _AutosaveWorkspaceService {
   var pauseActivation = false;
   final activationStarted = Completer<void>();
   final releaseActivation = Completer<void>();
+  bool pauseLoad = false;
+  final loadStarted = Completer<void>();
+  final releaseLoad = Completer<void>();
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (pauseLoad) {
+      pauseLoad = false;
+      loadStarted.complete();
+      await releaseLoad.future;
+    }
+    return super.loadTextWithSnapshot(path);
+  }
 
   @override
   Future<Workspace> reparseDocument(
@@ -5840,6 +6159,15 @@ void _registerResponsivenessTests() {
   );
 }
 
+class _ChangedDuringOpenService extends WorkspaceService {
+  @override
+  Future<Workspace> openPath(String path) async {
+    final workspace = await super.openPath(path);
+    await File(path).writeAsString('# Changed externally\n');
+    return workspace;
+  }
+}
+
 class _GatedClosedSourcesService extends WorkspaceService {
   _GatedClosedSourcesService(responsiveness.CountingModule loader)
     : super(writersideService: loader);
@@ -6511,7 +6839,7 @@ void _registerCorrectionBoundaryTests() {
             '# Changed after model load\n',
           );
           expect(service.preparations, 1);
-          if (automatic) {
+          if (automatic || !creating) {
             expect(
               controller.state.workspace!.markdown!.source,
               '# Changed after model load\n',
@@ -6843,6 +7171,73 @@ class _PostDeleteRefreshGateService extends WorkspaceService {
       await release.future;
     }
     return result;
+  }
+}
+
+class _RestoreReadGateService extends WorkspaceService {
+  _RestoreReadGateService(this.paths, {required this.failFirst});
+  final List<String> paths;
+  final bool failFirst;
+  final started = Completer<void>();
+  final gates = <String, Completer<void>>{};
+  final finished = <String, Completer<void>>{};
+  bool armed = false;
+  bool released = false;
+  int pending = 0;
+  int maximumPending = 0;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    final workspace = await super.openPath(path);
+    armed = true;
+    return workspace;
+  }
+
+  @override
+  Future<bool> pathExists(String path) => armed && paths.contains(path)
+      ? Future.value(true)
+      : super.pathExists(path);
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (!armed || !paths.contains(path)) {
+      return super.loadTextWithSnapshot(path);
+    }
+    pending++;
+    if (pending > maximumPending) maximumPending = pending;
+    final gate = gates.putIfAbsent(path, Completer<void>.new);
+    final done = finished.putIfAbsent(path, Completer<void>.new);
+    if (!started.isCompleted) started.complete();
+    try {
+      if (!released) await gate.future;
+      if (failFirst && path == paths.first) {
+        throw StateError('injected restore read failure');
+      }
+      return await super.loadTextWithSnapshot(path);
+    } finally {
+      pending--;
+      if (!done.isCompleted) done.complete();
+    }
+  }
+
+  void release(String path) => gates[path]!.complete();
+  void releaseAll() {
+    released = true;
+    for (final gate in gates.values) {
+      if (!gate.isCompleted) gate.complete();
+    }
+  }
+}
+
+class _RestoreOpenGateService extends WorkspaceService {
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    started.complete();
+    await release.future;
+    return super.openPath(path);
   }
 }
 

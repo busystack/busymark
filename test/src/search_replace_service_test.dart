@@ -12,8 +12,8 @@ import 'package:path/path.dart' as p;
 void main() {
   const replacementService = SearchReplacementService();
 
-  test('Unicode regex replacement preserves complete characters', () async {
-    const options = SourceSearchOptions(query: '.', regex: true);
+  test('Unicode literal replacement preserves complete characters', () async {
+    const options = SourceSearchOptions(query: '😀');
     final worker = SearchReplacementWorker();
     addTearDown(worker.dispose);
     final all = await worker.previewText(
@@ -43,15 +43,15 @@ void main() {
     }
   });
 
-  test('zero-length replacement limitation survives worker transfer', () async {
+  test('regex anchors are literal across worker transfer', () async {
     final worker = SearchReplacementWorker();
     addTearDown(worker.dispose);
     final preview = await worker.previewText(
       source: 'cat',
-      options: const SourceSearchOptions(query: '^', regex: true),
+      options: const SourceSearchOptions(query: '^'),
       replacement: 'X',
     );
-    expect(preview!.hasZeroLengthMatches, isTrue);
+    expect(preview!.matches, isEmpty);
     expect(preview.apply(), 'cat');
   });
 
@@ -89,7 +89,7 @@ void main() {
     });
   }
 
-  test('workspace replacement cancels a running expensive regex', () async {
+  test('workspace replacement cancels an asynchronous preview', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-search-cancel-',
     );
@@ -111,11 +111,10 @@ void main() {
     final pending = replacementService.previewWorkspace(
       state: state,
       workspaceService: const WorkspaceService(),
-      options: const SourceSearchOptions(query: r'^(a+)+$', regex: true),
+      options: const SourceSearchOptions(query: 'a'),
       replacement: 'X',
       cancellation: cancellation,
     );
-    await Future<void>.delayed(const Duration(milliseconds: 100));
     cancellation.cancel();
     final preview = await pending.timeout(const Duration(seconds: 5));
     expect(preview.isComplete, isFalse);
@@ -191,15 +190,19 @@ void main() {
     },
   );
 
-  test('previews and applies plain whole-word replacements', () {
+  test('previews and applies case-insensitive substring replacements', () {
     final preview = replacementService.previewText(
       source: 'cat scatter Cat',
-      options: const SourceSearchOptions(query: 'cat', wholeWord: true),
+      options: const SourceSearchOptions(query: 'cat'),
       replacement: 'dog',
     );
 
-    expect(preview.matches.map((match) => match.original), ['cat', 'Cat']);
-    expect(preview.apply(), 'dog scatter dog');
+    expect(preview.matches.map((match) => match.original), [
+      'cat',
+      'cat',
+      'Cat',
+    ]);
+    expect(preview.apply(), 'dog sdogter dog');
   });
 
   test('text replacement previews enforce their match limit', () {
@@ -215,21 +218,24 @@ void main() {
     expect(preview.truncated, isTrue);
   });
 
-  test('replacement worker expands one accepted regex match', () async {
-    final worker = SearchReplacementWorker();
-    addTearDown(worker.dispose);
+  test(
+    'replacement worker keeps replacement references literal for one accepted match',
+    () async {
+      final worker = SearchReplacementWorker();
+      addTearDown(worker.dispose);
 
-    final preview = await worker.previewText(
-      source: 'Ada Lovelace',
-      options: const SourceSearchOptions(query: r'(\w+) (\w+)', regex: true),
-      replacement: r'$2, $1',
-      targetStart: 0,
-      targetEnd: 12,
-    );
+      final preview = await worker.previewText(
+        source: 'Ada Lovelace',
+        options: const SourceSearchOptions(query: 'Ada Lovelace'),
+        replacement: r'$2, $1',
+        targetStart: 0,
+        targetEnd: 12,
+      );
 
-    expect(preview, isNotNull);
-    expect(preview!.matches.single.replacement, 'Lovelace, Ada');
-  });
+      expect(preview, isNotNull);
+      expect(preview!.matches.single.replacement, r'$2, $1');
+    },
+  );
 
   test('replacement worker cancels stale plans', () async {
     final worker = SearchReplacementWorker();
@@ -249,23 +255,20 @@ void main() {
     expect((await current)!.apply(), 'fresh');
   });
 
-  test('expands numbered and named regex capture groups', () {
+  test('numbered and named replacement references are literal', () {
     final numbered = replacementService.previewText(
       source: 'Ada Lovelace; Grace Hopper',
-      options: const SourceSearchOptions(query: r'(\w+) (\w+)', regex: true),
+      options: const SourceSearchOptions(query: 'Ada Lovelace'),
       replacement: r'$2, $1',
     );
     final named = replacementService.previewText(
       source: 'x=42',
-      options: const SourceSearchOptions(
-        query: r'(?<name>\w+)=(?<value>\d+)',
-        regex: true,
-      ),
+      options: const SourceSearchOptions(query: 'x=42'),
       replacement: r'${value}:${name}:$$:$&',
     );
 
-    expect(numbered.apply(), 'Lovelace, Ada; Hopper, Grace');
-    expect(named.apply(), r'42:x:$:x=42');
+    expect(numbered.apply(), r'$2, $1; Grace Hopper');
+    expect(named.apply(), r'${value}:${name}:$$:$&');
   });
 
   test('applies only selected preview matches', () {

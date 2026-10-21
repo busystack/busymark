@@ -11,6 +11,132 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Nueva nota del texto conservado';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud solicitó una pausa. Espere antes de iniciar sesión de nuevo.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Actualizando Notes tras confirmar los ajustes';
+
+  @override
+  String get notesExportOperationFailed =>
+      'La exportación falló antes de publicarse. Compruebe el origen y el destino y vuelva a exportar.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'La nota recuperada se guardó, pero no pudo abrirse. Resuelva los cambios pendientes del editor o de propiedades y abra esta nota existente.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Hay notas pendientes, conflictos o creaciones inciertas que bloquean este cambio. Sincronícelos o revíselos en Notes y vuelva a guardar este borrador conservado.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Hay operaciones de adjuntos que bloquean este cambio. Revise los adjuntos en Notes y vuelva a guardar este borrador conservado.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Use la dirección HTTPS canónica de Nextcloud y vuelva a iniciar sesión. No se pudo verificar la dirección o la redirección.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes no está disponible o su API no es compatible. Active Nextcloud Notes con la API de versión principal 1 y secundaria 4 o posterior.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud rechazó las credenciales. Vuelva a autorizar la cuenta o a conectarla.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud denegó la comprobación de funciones de Notes. Solicite permiso al administrador y reinténtelo.';
+
+  @override
+  String get notesAccountMalformed =>
+      'No se pudo verificar la respuesta de Nextcloud. Compruebe la instalación del servidor y vuelva a iniciar sesión.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'El inicio de sesión caducó. Reinícielo y complete la autorización en el navegador.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'No se pudo abrir el navegador del sistema. Compruebe el navegador predeterminado y vuelva a iniciar sesión.';
+
+  @override
+  String get notesAccountNetwork =>
+      'No se pudo contactar con Nextcloud. Compruebe la conexión y el servidor y vuelva a iniciar sesión.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud rechazó la solicitud de funciones. Revise el acceso con el administrador y reinténtelo.';
+
+  @override
+  String get notesAccountFailed =>
+      'No se pudo configurar la cuenta. Vuelva a iniciar sesión.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'El origen cambió desde la revisión. Revise el archivo actual o capture otra instantánea antes de reintentar.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'No se pudo leer el origen. Compruebe el acceso al archivo o carpeta y vuelva a revisarlo.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'La instantánea no es válida o compatible. Elija una instantánea válida de BusyMark Notes o un origen Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Los medios superan el límite de importación. Reduzca los del elemento afectado y vuelva a revisarlo.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'El origen contiene una ruta insegura. Elija archivos dentro de la carpeta de origen y revíselos.';
+
+  @override
+  String get notesTransferDestination =>
+      'No se pudo escribir la exportación. Compruebe el acceso y el espacio libre en el destino y reinténtelo.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'La transferencia falló. Revise los elementos afectados y reinténtelo. Los ya importados siguen guardados.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Exportación disponible con omisiones';
+
+  @override
+  String get notesBatchUnchanged =>
+      'Los valores solicitados ya estaban establecidos.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Esta nota es de solo lectura. Las propiedades protegidas no pueden cambiar; Favorito sigue permitido.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Esta nota cambió desde la revisión. Revise su estado actual antes de repetir la acción.';
+
+  @override
+  String get notesBatchMissing =>
+      'Esta nota ya no está disponible. Actualice la lista y revise los destinos.';
+
+  @override
+  String get notesBatchStorage =>
+      'Falló el guardado local. Compruebe el almacenamiento y reintente este elemento; los correctos siguen guardados.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'La nota del servidor cambió. Se conserva su borrador de combinación. Revise la nueva comparación y decida de nuevo cómo resolverla.';
+
+  @override
+  String get notesReviewRemote => 'He revisado la versión actual del servidor';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'No se publica la capitalización del módulo.';
 
@@ -587,15 +713,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get keyboardShortcuts => 'Atajos de teclado';
 
   @override
-  String get commandPalette => 'Paleta de comandos';
-
-  @override
-  String get commandPaletteHint => 'Escribe un comando';
-
-  @override
-  String get commandPaletteEmpty => 'No hay comandos coincidentes';
-
-  @override
   String get commandUnavailableInContext =>
       'Este comando no está disponible en el contexto actual.';
 
@@ -814,7 +931,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Mostrar esta referencia de atajos de teclado';
+      'Personalizar los atajos de teclado de la aplicación';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -1073,7 +1190,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get validateOnEdit => 'Validar al editar';
 
   @override
-  String get clearRecentWorkspaces => 'Borrar espacios de trabajo recientes';
+  String get clearRecentWorkspaces => 'Borrar el historial reciente';
 
   @override
   String get editingButtonsPosition => 'Posición de los botones de edición';
@@ -1862,15 +1979,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sourceSearchNextMatch => 'Coincidencia siguiente';
 
   @override
-  String get sourceSearchCaseSensitive => 'Distinguir mayúsculas y minúsculas';
-
-  @override
-  String get sourceSearchWholeWord => 'Palabra completa';
-
-  @override
-  String get sourceSearchRegex => 'Expresión regular';
-
-  @override
   String get sourceSearchReplacement => 'Reemplazar por';
 
   @override
@@ -1998,13 +2106,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get saveAs => 'Guardar como';
 
   @override
-  String get sourceSearchInvalidRegex => 'Expresión regular no válida';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'No se admiten coincidencias de longitud cero (por ejemplo, ^, \$ o anticipaciones que solo coinciden con una posición).';
-
-  @override
   String get workspaceSearchIncomplete =>
       'Solo se muestran algunos resultados. Muestre más o limite la búsqueda.';
 
@@ -2112,6 +2213,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => 'Archivo de recursos';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'No se pudieron actualizar los elementos recientes: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4390,10 +4496,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clipboardHistory => 'Historial de la Copia';
 
   @override
-  String get clipboardHistorySearchHint =>
-      'Buscar en el historial del portapapeles';
-
-  @override
   String get clipboardHistoryDescription =>
       'Abrir el historial de la copia local de la sesión.';
 
@@ -4414,10 +4516,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'El historial de la copia está vacío.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ningún elemento de la copia coincide con esta búsqueda.';
 
   @override
   String get clipboardDisabled =>
@@ -4475,13 +4573,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Este documento no tiene revisiones en el Historial Local.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Ninguna revisión del Historial Local coincide con esta búsqueda.';
-
-  @override
-  String get localHistorySearchHint => 'Buscar en el historial local';
 
   @override
   String get localHistorySelectedRevision => 'Revisión seleccionada';
@@ -5448,4 +5539,402 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'El elemento inspeccionado no está disponible. Inspeccione otro elemento para continuar.';
+
+  @override
+  String get searchDocumentsCategory => 'Documentos';
+
+  @override
+  String get searchTopicsCategory => 'Temas';
+
+  @override
+  String get searchCurrentDocument => 'Documento actual';
+
+  @override
+  String get searchCurrentWorkspace => 'Espacio de trabajo actual';
+
+  @override
+  String get browseNotes => 'Explorar notas';
+
+  @override
+  String get searchActionsCommand => 'Buscar acciones';
+
+  @override
+  String get searchDocumentsCommand => 'Buscar documentos';
+
+  @override
+  String get searchTopicsCommand => 'Buscar temas';
+
+  @override
+  String get searchRecentCommand => 'Buscar recientes';
+
+  @override
+  String get searchResourceUnavailable => 'Este recurso no está disponible.';
+
+  @override
+  String get notesSync => 'Sincronizar notas';
+
+  @override
+  String get searchInWorkspace => 'Buscar en espacio de trabajo';
+
+  @override
+  String get searchCategory => 'Categoría de búsqueda';
+
+  @override
+  String get clearHistorySearchScope => 'Buscar en el historial de documentos';
+
+  @override
+  String get searchInDocument => 'Buscar en el documento';
+
+  @override
+  String get searchDocumentHint => 'Buscar en este documento…';
+
+  @override
+  String get searchWorkspaceHint => 'Buscar en este espacio de trabajo…';
+
+  @override
+  String get searchOutlineHint => 'Buscar encabezados…';
+
+  @override
+  String get searchHistoryHint => 'Buscar en el historial local…';
+
+  @override
+  String get searchEnterText => 'Introduce texto para buscar';
+
+  @override
+  String get searchAccountUnavailable => 'Cuenta no disponible';
+
+  @override
+  String get searchDocumentsHint => 'Buscar documentos…';
+
+  @override
+  String get searchTopicsHint => 'Buscar temas…';
+
+  @override
+  String get searchRecentHint => 'Buscar recientes…';
+
+  @override
+  String get searchActionsHint => 'Buscar acciones…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Requiere un espacio de trabajo de Notas';
+
+  @override
+  String get searchSidebarLabel => 'Buscar:';
+
+  @override
+  String get searchDocumentTextCategory => 'Texto del documento';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Texto del espacio de trabajo';
+
+  @override
+  String get searchHeadingsCategory => 'Encabezados';
+
+  @override
+  String get shortcutUnassigned => 'Sin asignar';
+
+  @override
+  String get shortcutPressKeys => 'Pulse una combinación de teclas…';
+
+  @override
+  String get shortcutRecord => 'Capturar atajo';
+
+  @override
+  String get shortcutRestoreAll =>
+      'Restaurar todos los valores predeterminados';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      '¿Restaurar los atajos predeterminados de todas las acciones? Se eliminarán las asignaciones personalizadas.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Los atajos están activos, pero no se pudieron guardar. Reintente para conservarlos tras reiniciar.';
+
+  @override
+  String get shortcutRetry => 'Reintentar guardado';
+
+  @override
+  String get shortcutChanged =>
+      'Las asignaciones cambiaron. Revise los atajos actuales y reintente.';
+
+  @override
+  String get shortcutInvalid =>
+      'Esta combinación no se puede asignar en este contexto.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'El escritorio puede usar esta combinación. BusyMark no puede sustituir atajos del sistema.';
+
+  @override
+  String get shortcutConflicts =>
+      'Este atajo entra en conflicto con estas acciones:';
+
+  @override
+  String get shortcutRemove => 'Quitar asignación';
+
+  @override
+  String get shortcutRestoreDefault => 'Restaurar valor predeterminado';
+
+  @override
+  String get shortcutAssign => 'Asignar';
+
+  @override
+  String get shortcutReassign => 'Reasignar';
+
+  @override
+  String get shortcutContextApplication => 'Aplicación';
+
+  @override
+  String get shortcutContextDocument => 'Vistas del documento';
+
+  @override
+  String get shortcutContextEditor => 'Editor y código fuente';
+
+  @override
+  String get shortcutContextWritersideSource => 'Código fuente de Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navegación del espacio de trabajo';
+
+  @override
+  String get shortcutContextTree => 'Árboles laterales';
+
+  @override
+  String get searchHeadingsCommand => 'Buscar encabezados';
+
+  @override
+  String get shortcutFixed => 'Lo gestiona el editor; no se puede configurar.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'El atajo predeterminado entra en conflicto con una asignación personalizada.';
+
+  @override
+  String get shortcutCurrentBinding => 'Atajo actual';
+
+  @override
+  String get shortcutProposedBinding => 'Atajo propuesto';
+
+  @override
+  String get notesActions => 'Acciones de notas';
+
+  @override
+  String get noteActions => 'Acciones de la nota';
+
+  @override
+  String get noteProperties => 'Propiedades de la nota';
+
+  @override
+  String get notesExportAll => 'Exportar notas · Todas las notas…';
+
+  @override
+  String get notesExportCategory => 'Exportar notas · Categoría…';
+
+  @override
+  String get notesOfflineAll =>
+      'Hacer disponible sin conexión · Todas las notas';
+
+  @override
+  String get notesOfflineCategory =>
+      'Hacer disponible sin conexión · Categoría';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Quitar conservación sin conexión · Todas las notas';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Quitar conservación sin conexión · Categoría';
+
+  @override
+  String get notesOfflinePause => 'Pausar descargas';
+
+  @override
+  String get notesOfflineResume => 'Reanudar descargas';
+
+  @override
+  String get notesOfflineKeep => 'Hacer disponible sin conexión';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Quitar este requisito conserva el contenido en caché. Un requisito de categoría o cuenta puede seguir reteniendo la nota.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Esta nota también se conserva por un requisito de categoría o cuenta.';
+
+  @override
+  String get notesOfflineExternal =>
+      'El contenido multimedia externo necesita conexión. BusyMark solo conserva el texto y los adjuntos gestionados.';
+
+  @override
+  String get notesEmptyAll => 'Aún no hay notas. Cree una para empezar.';
+
+  @override
+  String get notesEmptyFavorites => 'No hay notas favoritas.';
+
+  @override
+  String get notesEmptyCategory => 'No hay notas en esta categoría.';
+
+  @override
+  String get notesEmptyUncategorized => 'No hay notas sin categoría.';
+
+  @override
+  String get notesEmptyRecovery => 'No hay notas conservadas para recuperar.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Fallido. Reintentar';
+
+  @override
+  String get notesOperationFailed =>
+      'La operación no pudo terminar. El borrador se conserva. Revise el guardado y los conflictos antes de reintentarlo.';
+
+  @override
+  String get notesInspectionFailed => 'Adjuntos · Fallido. Reintentar';
+
+  @override
+  String get notesStartingConnection => 'Iniciando la conexión con Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'Verificando el acceso a Notas…';
+
+  @override
+  String get notesCancellingConnection =>
+      'Cancelando el inicio de sesión y limpiando…';
+
+  @override
+  String get notesRemovingConnection => 'Eliminando la cuenta local…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Se eliminó la cuenta local de Nextcloud. No se confirmó la revocación de la contraseña de aplicación. Elimine la contraseña de BusyMark en los ajustes de seguridad de Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'No se pudieron guardar todas las notas abiertas localmente. Revise el guardado, los conflictos o la normalización en el espacio de trabajo. Los cambios pendientes aún pueden necesitar sincronización con Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      '¿Guardar los cambios de ajustes de Nextcloud antes de salir?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Ajustes de Notes del servidor · Cambios sin guardar';
+
+  @override
+  String get notesSettingsReload => 'Volver a cargar los ajustes del servidor…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'La recarga sustituye el borrador por los ajustes actuales de Nextcloud. ¿Descartar el borrador y recargar?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud aceptó los ajustes, pero falló la actualización de las notas. Se muestran los valores confirmados por el servidor. Reintente actualizar desde Notas.';
+
+  @override
+  String get notesUnavailable =>
+      'Sin conexión · Texto disponible localmente · Guardado localmente · sincronización pendiente';
+
+  @override
+  String get notesStorageFull =>
+      'El almacenamiento de Nextcloud está lleno. Libere espacio en el servidor y reinténtelo.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud rechazó este cambio. Revise la nota y guarde una copia local antes de reintentarlo.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud ha pedido esperar. La sincronización continuará al finalizar el plazo de espera.';
+
+  @override
+  String get notesRecoveryRequired => 'Conflictos · Comparar';
+
+  @override
+  String get notesScanning => 'Examinando archivos…';
+
+  @override
+  String get notesCancelling =>
+      'Cancelando… Esperando a que termine la operación actual.';
+
+  @override
+  String get notesCancelled => 'Cancelado';
+
+  @override
+  String get notesPartial => 'Completado parcialmente';
+
+  @override
+  String get notesTransferFailed => 'Fallido. Reintentar';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Los elementos anteriores pueden estar guardados localmente. Reanude esta importación para continuar sin duplicarlos.';
+
+  @override
+  String get notesNotStarted => 'Sin iniciar';
+
+  @override
+  String get notesCreated => 'Creado';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'URL del servidor · No compatible · Eliminar · Adjuntos';
+
+  @override
+  String get notesCurrentText => 'Texto conservado actual';
+
+  @override
+  String get notesRecovering => 'Recuperando como nota nueva…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Solo lectura · Favoritos · Guardar copia local…';
+
+  @override
+  String get notesSort => 'Ordenar notas';
+
+  @override
+  String get notesPathRelative =>
+      'La ruta de la carpeta de notas es relativa a su almacenamiento Nextcloud.';
+
+  @override
+  String get notesSettingsStale =>
+      'Los ajustes cambiaron en Nextcloud. Recargue y revise los valores del servidor antes de sustituir el borrador.';
+
+  @override
+  String get notesDownloadsPaused => 'Descargas pausadas';
+
+  @override
+  String get notesExportNotPublished => 'No se publicó ninguna exportación.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Desbloquee el llavero del escritorio y reinténtelo.';
+
+  @override
+  String get notesConnectFailed =>
+      'No se pudo conectar con Nextcloud Notes. Compruebe la dirección del servidor y reinténtelo.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Inicie sesión con la misma cuenta Nextcloud. Elimínela primero para conectar otra.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Falló la limpieza local. La cuenta se conserva para poder reintentar su eliminación.';
+
+  @override
+  String get notesTransferring => 'Transfiriendo notas…';
+
+  @override
+  String get notesTechnicalDetails => 'Detalles técnicos';
+
+  @override
+  String get notesPauseRequirement => 'Pausar requisito sin conexión';
+
+  @override
+  String get notesResumeRequirement => 'Reanudar requisito sin conexión';
 }

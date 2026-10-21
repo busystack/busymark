@@ -1008,12 +1008,23 @@ void main() {
       WidgetTester tester,
       LogicalKeyboardKey key, {
       bool shift = false,
+      bool startsRealIo = false,
     }) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyEvent(key);
-      if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      Future<void> send() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(key);
+        if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+
+      if (startsRealIo) {
+        // Start filesystem continuations in the real event loop. Otherwise
+        // each completed I/O await needs another fake-clock widget frame.
+        await tester.runAsync(send);
+      } else {
+        await send();
+      }
       await tester.pump();
     }
 
@@ -3366,7 +3377,7 @@ void main() {
       (tester) async {
         final root = (await tester.runAsync(
           () => Directory.systemTemp.createTemp(
-            'busymark-clipboard-image-snapshot-',
+            'busymark-clipboard_image-snapshot-',
           ),
         ))!;
         addTearDown(() async {
@@ -3536,7 +3547,16 @@ void main() {
           ClipboardPasteResult.inserted,
         );
         await tester.pump();
-        expect(plain, '${sourceFile.path}\n');
+        // Plain text keeps the literal path in the editor; Markdown source
+        // escapes underscores, including those in a caller's TMPDIR.
+        expect(plain, '${sourceFile.path.replaceAll('_', r'\_')}\n');
+        expect(
+          tester
+              .widget<TextField>(find.byType(TextField).first)
+              .controller!
+              .text,
+          sourceFile.path,
+        );
         expect(
           await tester.runAsync(
             () => Directory('${plainDirectory.path}/images').exists(),
@@ -3632,8 +3652,11 @@ void main() {
 
       final pathRow = find.text(sourceFile.path).first;
       await tester.tap(pathRow);
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.tap(pathRow);
+      await tester.pump();
+      // This tests the panel's retention ownership, not its wall-clock double
+      // tap interval. Keyboard activation remains deterministic under suite
+      // load, which can exceed that interval between two tester.tap calls.
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await waitForImageIo(
         tester,
         () => find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
@@ -3924,8 +3947,12 @@ void main() {
       final reserved = <String>[];
       final ingestion = AssetIngestionService(
         hooks: AssetIngestionHooks(
-          afterDestinationReserved: (path) async => reserved.add(path),
-          afterPublication: (asset) async => published.add(asset),
+          afterDestinationReserved: (path) async {
+            reserved.add(path);
+          },
+          afterPublication: (asset) async {
+            published.add(asset);
+          },
           beforeCommit: (asset) async => committed.add(asset),
           afterRollback: (asset) async => rolledBack.add(asset),
         ),
@@ -3975,7 +4002,9 @@ void main() {
       Future<void> chooseImage(File file, int publicationCount) async {
         final commitsBefore = committed.length;
         picks.add(file.path);
-        await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
+        await tester.runAsync(
+          () => tester.tap(find.byKey(BusyMarkImageDialogKeys.choose)),
+        );
         await waitForCount(published, publicationCount);
         final sourceField = find.descendant(
           of: find.byKey(BusyMarkImageDialogKeys.source),
@@ -4002,7 +4031,7 @@ void main() {
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
         assetIngestionService: ingestion,
       );
-      await key(tester, LogicalKeyboardKey.keyV);
+      await key(tester, LogicalKeyboardKey.keyV, startsRealIo: true);
       await waitForCount(published, 1);
       await waitForDialog();
       await chooseImage(files[1], 2);
@@ -4024,7 +4053,7 @@ void main() {
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
         assetIngestionService: ingestion,
       );
-      await key(tester, LogicalKeyboardKey.keyV);
+      await key(tester, LogicalKeyboardKey.keyV, startsRealIo: true);
       await waitForCount(published, 3);
       await waitForDialog();
       await chooseImage(files[1], 4);
@@ -4057,7 +4086,7 @@ void main() {
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
         assetIngestionService: ingestion,
       );
-      await key(tester, LogicalKeyboardKey.keyV);
+      await key(tester, LogicalKeyboardKey.keyV, startsRealIo: true);
       await waitForCount(published, 6);
       await waitForDialog();
       await chooseImage(files[1], 7);
@@ -4367,9 +4396,15 @@ void main() {
         extentOffset: 4,
       );
       await tester.pump();
-      final tablePaste = registry.paste(payload);
+      late Future<ClipboardPasteResult> tablePaste;
+      await tester.runAsync(() async {
+        tablePaste = registry.paste(payload);
+      });
       await submitImage();
-      expect(await tablePaste, ClipboardPasteResult.inserted);
+      expect(
+        await tester.runAsync(() => tablePaste),
+        ClipboardPasteResult.inserted,
+      );
       expect(tableResult, contains('![Image](images/routed.png)'));
       expect(tableResult, contains('| H |'));
       await key(tester, LogicalKeyboardKey.keyZ);
@@ -4388,9 +4423,15 @@ void main() {
       );
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyA);
-      final multiPaste = registry.paste(payload);
+      late Future<ClipboardPasteResult> multiPaste;
+      await tester.runAsync(() async {
+        multiPaste = registry.paste(payload);
+      });
       await submitImage();
-      expect(await multiPaste, ClipboardPasteResult.inserted);
+      expect(
+        await tester.runAsync(() => multiPaste),
+        ClipboardPasteResult.inserted,
+      );
       expect(multiResult, contains('![Image](images/routed.png)'));
       expect(multiResult, isNot(contains('First')));
       expect(multiResult, isNot(contains('Second')));
@@ -4421,7 +4462,7 @@ void main() {
       addTearDown(() async {
         if (await root.exists()) await root.delete(recursive: true);
       });
-      final image = File('${root.path}/image.png');
+      final image = File('${root.path}/image_path.png');
       await tester.runAsync(() => image.writeAsBytes([1, 2, 3]));
       systemData = {'text': image.path};
       final ingestion = _CountingAssetIngestionService();
@@ -4438,7 +4479,11 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyV, shift: true);
 
-      expect(result, '${image.path}\n');
+      expect(result, '${image.path.replaceAll('_', r'\_')}\n');
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        image.path,
+      );
       expect(ingestion.fileCalls, 0);
       expect(ingestion.byteCalls, 0);
       expect(find.byKey(BusyMarkImageDialogKeys.submit), findsNothing);
@@ -4594,19 +4639,21 @@ void main() {
           'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
         );
         ClipboardPasteResult? pasteResult;
-        registry
-            .paste(
-              BusyMarkClipboardPayload(
-                id: 'composing-image-history',
-                acquiredAt: DateTime.utc(2026),
-                kind: BusyMarkClipboardContentKind.image,
-                imageBytes: png,
-                imageMimeType: 'image/png',
-                imageDisplayName: 'composing.png',
-                external: true,
-              ),
-            )
-            .then((value) => pasteResult = value);
+        await tester.runAsync(() async {
+          registry
+              .paste(
+                BusyMarkClipboardPayload(
+                  id: 'composing-image-history',
+                  acquiredAt: DateTime.utc(2026),
+                  kind: BusyMarkClipboardContentKind.image,
+                  imageBytes: png,
+                  imageMimeType: 'image/png',
+                  imageDisplayName: 'composing.png',
+                  external: true,
+                ),
+              )
+              .then((value) => pasteResult = value);
+        });
         await tester.pump();
         expect(ingestion.started.isCompleted, isTrue);
 

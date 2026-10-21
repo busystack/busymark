@@ -11,6 +11,131 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'یادداشت جدید از متن نگه‌داری‌شده';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud درخواست مکث کرد. پیش از آغاز دوبارهٔ ورود منتظر بمانید.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'در حال تازه‌سازی Notes پس از تأیید تنظیمات';
+
+  @override
+  String get notesExportOperationFailed =>
+      'برون‌بری پیش از انتشار شکست خورد. مبدأ و مقصد را بررسی و دوباره برون‌بری کنید.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'یادداشت بازیابی‌شده ذخیره شد اما باز نشد. تغییرات معلق ویرایشگر یا ویژگی‌ها را رفع و همین یادداشت را باز کنید.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'یادداشت‌های معلق، تعارض‌ها یا ایجادهای نامطمئن مانع این تغییرند. در Notes همگام‌سازی یا بازبینی کنید، سپس ذخیرهٔ پیش‌نویس حفظ‌شده را تکرار کنید.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'عملیات معلق پیوست‌ها مانع این تغییرند. پیوست‌ها را در Notes بازبینی و ذخیرهٔ پیش‌نویس حفظ‌شده را تکرار کنید.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'از نشانی HTTPS اصلی Nextcloud استفاده و ورود را دوباره آغاز کنید. نشانی یا تغییرمسیر تأیید نشد.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes در دسترس نیست یا API پشتیبانی نمی‌شود. Nextcloud Notes را با نسخهٔ اصلی API برابر 1 و فرعی 4 یا بالاتر فعال کنید.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud اطلاعات ورود را رد کرد. حساب را دوباره مجاز یا متصل کنید.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud بررسی قابلیت‌های Notes را نپذیرفت. از مدیر سرور مجوز بخواهید و دوباره تلاش کنید.';
+
+  @override
+  String get notesAccountMalformed =>
+      'پاسخ Nextcloud تأیید نشد. نصب سرور را بررسی و ورود را دوباره آغاز کنید.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'مهلت ورود تمام شد. دوباره آغاز و مجوز را در مرورگر تکمیل کنید.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'مرورگر سیستم باز نشد. مرورگر پیش‌فرض را بررسی و ورود را دوباره آغاز کنید.';
+
+  @override
+  String get notesAccountNetwork =>
+      'دسترسی به Nextcloud ممکن نشد. اتصال و سرور را بررسی و دوباره وارد شوید.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud درخواست قابلیت‌ها را رد کرد. دسترسی را با مدیر بررسی و دوباره تلاش کنید.';
+
+  @override
+  String get notesAccountFailed =>
+      'راه‌اندازی حساب کامل نشد. دوباره وارد شوید.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'مبدأ پس از بازبینی تغییر کرده است. فایل فعلی را دوباره بازبینی یا تصویر تازه‌ای تهیه کنید.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'مبدأ خوانده نشد. دسترسی فایل یا پوشه را بررسی و دوباره بازبینی کنید.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'تصویر نامعتبر یا پشتیبانی‌نشده است. یک تصویر معتبر BusyMark Notes یا مبدأ Markdown انتخاب کنید.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'رسانه از محدودیت اندازهٔ درون‌بری بیشتر است. رسانهٔ مورد مربوط را کوچک‌تر و دوباره بازبینی کنید.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'مبدأ مسیر ناامن دارد. فایل‌هایی از داخل پوشهٔ مبدأ انتخاب و دوباره بازبینی کنید.';
+
+  @override
+  String get notesTransferDestination =>
+      'برون‌بری نوشته نشد. دسترسی و فضای آزاد مقصد را بررسی و دوباره برون‌بری کنید.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'انتقال کامل نشد. موارد مربوط را بازبینی و دوباره تلاش کنید. موارد درون‌برده‌شدهٔ قبلی ذخیره می‌مانند.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'برون‌بری با موارد حذف‌شده در دسترس است';
+
+  @override
+  String get notesBatchUnchanged => 'مقادیر خواسته‌شده از قبل تنظیم بودند.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'این یادداشت فقط‌خواندنی است. ویژگی‌های محافظت‌شده تغییر نمی‌کنند؛ تغییر علاقه‌مندی همچنان مجاز است.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'یادداشت پس از بازبینی تغییر کرده است. پیش از اجرای دوبارهٔ عمل، وضعیت فعلی را بازبینی کنید.';
+
+  @override
+  String get notesBatchMissing =>
+      'این یادداشت دیگر در دسترس نیست. فهرست و اهداف را دوباره بررسی کنید.';
+
+  @override
+  String get notesBatchStorage =>
+      'ذخیرهٔ محلی شکست خورد. فضای ذخیره‌سازی را بررسی و این مورد را تکرار کنید؛ موارد موفق ذخیره می‌مانند.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'یادداشت سرور تغییر کرد. پیش‌نویس ادغام حفظ شده است. مقایسهٔ به‌روز را بازبینی و راه‌حل را دوباره انتخاب کنید.';
+
+  @override
+  String get notesReviewRemote => 'نسخهٔ فعلی سرور را بازبینی کردم';
+
+  @override
   String get wsModuleCapsNotPublished => 'سبک حروف ماژول منتشر نمی‌شود.';
 
   @override
@@ -582,15 +707,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get keyboardShortcuts => 'میانبرهای صفحه‌کلید';
 
   @override
-  String get commandPalette => 'پالت فرمان';
-
-  @override
-  String get commandPaletteHint => 'یک فرمان وارد کنید';
-
-  @override
-  String get commandPaletteEmpty => 'هیچ فرمان منطبقی وجود ندارد';
-
-  @override
   String get commandUnavailableInContext =>
       'این فرمان در زمینهٔ فعلی در دسترس نیست.';
 
@@ -808,7 +924,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'نمایش مرجع میانبرهای صفحه‌کلید';
+      'سفارشی‌سازی میان‌برهای صفحه‌کلید برنامه';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'باز کردن راهنمای نحو';
@@ -1053,7 +1169,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get validateOnEdit => 'اعتبارسنجی هنگام ویرایش';
 
   @override
-  String get clearRecentWorkspaces => 'پاک کردن فضاهای کاری اخیر';
+  String get clearRecentWorkspaces => 'پاک کردن تاریخچهٔ اخیر';
 
   @override
   String get editingButtonsPosition => 'موقعیت دکمه‌های ویرایش';
@@ -1879,15 +1995,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sourceSearchNextMatch => 'تطابق بعدی';
 
   @override
-  String get sourceSearchCaseSensitive => 'حساس به بزرگی و کوچکی حروف';
-
-  @override
-  String get sourceSearchWholeWord => 'تمام کلمه';
-
-  @override
-  String get sourceSearchRegex => 'عبارت منظم';
-
-  @override
   String get sourceSearchReplacement => 'جایگزینی با';
 
   @override
@@ -2014,13 +2121,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get saveAs => 'ذخیره با نام';
 
   @override
-  String get sourceSearchInvalidRegex => 'عبارت منظم نامعتبر است';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'تطبیق‌های با طول صفر در عبارت منظم پشتیبانی نمی‌شوند (مانند ^، \$ یا نگاه‌به‌جلو که فقط با یک موقعیت تطبیق دارد).';
-
-  @override
   String get workspaceSearchIncomplete =>
       'فقط بخشی از نتایج نمایش داده می‌شود. نتایج بیشتری نمایش دهید یا جستجو را محدود کنید.';
 
@@ -2132,6 +2232,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => 'فایل منبع';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'به‌روزرسانی موارد اخیر ممکن نشد: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4397,9 +4502,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get clipboardHistory => 'تاریخچه کپی و پیست';
 
   @override
-  String get clipboardHistorySearchHint => 'جستجو در تاریخچه کلیپ‌بورد';
-
-  @override
   String get clipboardHistoryDescription =>
       'باز کردن تاریخچه کپی و پیست مخصوص جلسه.';
 
@@ -4419,10 +4521,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'تاریخچه کپی و پیست خالی است.';
-
-  @override
-  String get clipboardNoMatches =>
-      'هیچ آیتم کپی و پیستی با این جستجو مطابقت ندارد.';
 
   @override
   String get clipboardDisabled =>
@@ -4479,13 +4577,6 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'این سند دارای هیچ نسخه‌ای از تاریخ محلی نیست.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'هیچ نسخه‌ای از تاریخ محلی با این جستجو مطابقت ندارد.';
-
-  @override
-  String get localHistorySearchHint => 'جستجو در تاریخچه محلی';
 
   @override
   String get localHistorySelectedRevision => 'نسخه انتخاب شده';
@@ -5434,4 +5525,393 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.';
+
+  @override
+  String get searchDocumentsCategory => 'سندها';
+
+  @override
+  String get searchTopicsCategory => 'موضوع‌ها';
+
+  @override
+  String get searchCurrentDocument => 'سند کنونی';
+
+  @override
+  String get searchCurrentWorkspace => 'فضای کاری کنونی';
+
+  @override
+  String get browseNotes => 'مرور یادداشت‌ها';
+
+  @override
+  String get searchActionsCommand => 'جستجوی کنش‌ها';
+
+  @override
+  String get searchDocumentsCommand => 'جستجوی سندها';
+
+  @override
+  String get searchTopicsCommand => 'جستجوی موضوع‌ها';
+
+  @override
+  String get searchRecentCommand => 'جستجوی موارد اخیر';
+
+  @override
+  String get searchResourceUnavailable => 'این منبع در دسترس نیست.';
+
+  @override
+  String get notesSync => 'همگام‌سازی یادداشت‌ها';
+
+  @override
+  String get searchInWorkspace => 'جستجو در فضای کاری';
+
+  @override
+  String get searchCategory => 'دستهٔ جستجو';
+
+  @override
+  String get clearHistorySearchScope => 'جستجو در تاریخچهٔ سندها';
+
+  @override
+  String get searchInDocument => 'جستجو در سند';
+
+  @override
+  String get searchDocumentHint => 'جستجو در این سند…';
+
+  @override
+  String get searchWorkspaceHint => 'جستجو در این فضای کاری…';
+
+  @override
+  String get searchOutlineHint => 'جستجوی عنوان‌ها…';
+
+  @override
+  String get searchHistoryHint => 'جستجو در تاریخچهٔ محلی…';
+
+  @override
+  String get searchEnterText => 'متن جستجو را وارد کنید';
+
+  @override
+  String get searchAccountUnavailable => 'حساب در دسترس نیست';
+
+  @override
+  String get searchDocumentsHint => 'جستجوی سندها…';
+
+  @override
+  String get searchTopicsHint => 'جستجوی موضوع‌ها…';
+
+  @override
+  String get searchRecentHint => 'جستجوی موارد اخیر…';
+
+  @override
+  String get searchActionsHint => 'جستجوی کنش‌ها…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'به فضای کاری یادداشت‌ها نیاز دارد';
+
+  @override
+  String get searchSidebarLabel => 'جستجو:';
+
+  @override
+  String get searchDocumentTextCategory => 'متن سند';
+
+  @override
+  String get searchWorkspaceTextCategory => 'متن فضای کاری';
+
+  @override
+  String get searchHeadingsCategory => 'عنوان‌ها';
+
+  @override
+  String get shortcutUnassigned => 'تخصیص داده نشده';
+
+  @override
+  String get shortcutPressKeys => 'یک ترکیب کلید را فشار دهید…';
+
+  @override
+  String get shortcutRecord => 'ثبت میان‌بر';
+
+  @override
+  String get shortcutRestoreAll => 'بازیابی همهٔ پیش‌فرض‌ها';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'میان‌برهای پیش‌فرض همهٔ کنش‌ها بازیابی شوند؟ تخصیص‌های سفارشی حذف می‌شوند.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'میان‌برها فعال‌اند اما ذخیره نشدند. برای حفظ آن‌ها پس از راه‌اندازی مجدد، دوباره ذخیره کنید.';
+
+  @override
+  String get shortcutRetry => 'تلاش دوباره برای ذخیره';
+
+  @override
+  String get shortcutChanged =>
+      'تخصیص‌ها تغییر کرده‌اند. میان‌برهای فعلی را بررسی و دوباره تلاش کنید.';
+
+  @override
+  String get shortcutInvalid => 'این ترکیب را نمی‌توان در این زمینه تخصیص داد.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'ممکن است میزکار از این ترکیب استفاده کند. BusyMark نمی‌تواند میان‌برهای سیستم را بازنویسی کند.';
+
+  @override
+  String get shortcutConflicts => 'این میان‌بر با کنش‌های زیر تداخل دارد:';
+
+  @override
+  String get shortcutRemove => 'حذف تخصیص';
+
+  @override
+  String get shortcutRestoreDefault => 'بازیابی پیش‌فرض';
+
+  @override
+  String get shortcutAssign => 'تخصیص';
+
+  @override
+  String get shortcutReassign => 'تخصیص مجدد';
+
+  @override
+  String get shortcutContextApplication => 'برنامه';
+
+  @override
+  String get shortcutContextDocument => 'نماهای سند';
+
+  @override
+  String get shortcutContextEditor => 'ویرایشگر و منبع';
+
+  @override
+  String get shortcutContextWritersideSource => 'منبع Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'پیمایش فضای کاری';
+
+  @override
+  String get shortcutContextTree => 'درخت‌های نوار کناری';
+
+  @override
+  String get searchHeadingsCommand => 'جستجوی عنوان‌ها';
+
+  @override
+  String get shortcutFixed => 'توسط ویرایشگر مدیریت می‌شود؛ قابل تنظیم نیست.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'میان‌بر پیش‌فرض با تخصیص سفارشی تداخل دارد.';
+
+  @override
+  String get shortcutCurrentBinding => 'میان‌بر فعلی';
+
+  @override
+  String get shortcutProposedBinding => 'میان‌بر پیشنهادی';
+
+  @override
+  String get notesActions => 'کنش‌های یادداشت‌ها';
+
+  @override
+  String get noteActions => 'کنش‌های یادداشت';
+
+  @override
+  String get noteProperties => 'ویژگی‌های یادداشت';
+
+  @override
+  String get notesExportAll => 'صادر کردن یادداشت‌ها · همه یادداشت‌ها…';
+
+  @override
+  String get notesExportCategory => 'صادر کردن یادداشت‌ها · دسته‌بندی…';
+
+  @override
+  String get notesOfflineAll => 'در دسترس کردن آفلاین · همه یادداشت‌ها';
+
+  @override
+  String get notesOfflineCategory => 'در دسترس کردن آفلاین · دسته‌بندی';
+
+  @override
+  String get notesOfflineRemoveAll => 'حذف نگهداری آفلاین · همه یادداشت‌ها';
+
+  @override
+  String get notesOfflineRemoveCategory => 'حذف نگهداری آفلاین · دسته‌بندی';
+
+  @override
+  String get notesOfflinePause => 'مکث بارگیری‌ها';
+
+  @override
+  String get notesOfflineResume => 'ادامهٔ بارگیری‌ها';
+
+  @override
+  String get notesOfflineKeep => 'در دسترس کردن آفلاین';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'حذف این نیازمندی محتوای نهان‌شده را نگه می‌دارد. نیازمندی دسته یا حساب ممکن است همچنان یادداشت را نگه دارد.';
+
+  @override
+  String get notesOfflineBroader =>
+      'این یادداشت به‌دلیل نیازمندی دسته یا حساب نیز نگهداری می‌شود.';
+
+  @override
+  String get notesOfflineExternal =>
+      'رسانهٔ خارجی به اتصال نیاز دارد. BusyMark فقط متن یادداشت و پیوست‌های مدیریت‌شده را نگه می‌دارد.';
+
+  @override
+  String get notesEmptyAll => 'هنوز یادداشتی نیست. یک یادداشت بسازید.';
+
+  @override
+  String get notesEmptyFavorites => 'یادداشت دلخواهی نیست.';
+
+  @override
+  String get notesEmptyCategory => 'در این دسته یادداشتی نیست.';
+
+  @override
+  String get notesEmptyUncategorized => 'یادداشت بدون دسته‌ای نیست.';
+
+  @override
+  String get notesEmptyRecovery => 'یادداشت نگهداری‌شده‌ای برای بازیابی نیست.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · ناموفق. تلاش دوباره';
+
+  @override
+  String get notesOperationFailed =>
+      'عملیات کامل نشد. پیش‌نویس نگهداری شده است. ذخیره و تعارض‌ها را بررسی کنید و دوباره تلاش کنید.';
+
+  @override
+  String get notesInspectionFailed => 'پیوست‌ها · ناموفق. تلاش دوباره';
+
+  @override
+  String get notesStartingConnection => 'در حال آغاز اتصال Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'در حال بررسی دسترسی به یادداشت‌ها…';
+
+  @override
+  String get notesCancellingConnection => 'در حال لغو ورود و پاک‌سازی…';
+
+  @override
+  String get notesRemovingConnection => 'در حال حذف حساب محلی…';
+
+  @override
+  String get notesRemovedWarning =>
+      'حساب محلی Nextcloud حذف شد. لغو گذرواژهٔ برنامه تأیید نشد. گذرواژهٔ BusyMark را در تنظیمات امنیتی Nextcloud حذف کنید.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'همهٔ یادداشت‌های باز به‌صورت محلی ذخیره نشدند. ذخیره، تعارض‌ها یا نرمال‌سازی را در فضای کار بررسی کنید. تغییرات محلی ممکن است هنوز به همگام‌سازی با Nextcloud نیاز داشته باشند.';
+
+  @override
+  String get notesSettingsLeave =>
+      'پیش از خروج تغییرات تنظیمات Nextcloud ذخیره شوند؟';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'تنظیمات Notes سرور · تغییرات ذخیره‌نشده';
+
+  @override
+  String get notesSettingsReload => 'بارگیری دوبارهٔ تنظیمات کارساز…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'بارگیری دوباره پیش‌نویس را با تنظیمات فعلی Nextcloud جایگزین می‌کند. پیش‌نویس دور ریخته و دوباره بارگیری شود؟';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud تنظیمات را پذیرفت ولی تازه‌سازی یادداشت‌ها ناموفق بود. مقادیر نمایش‌داده‌شده تأییدشدهٔ کارسازند. از یادداشت‌ها دوباره تازه‌سازی کنید.';
+
+  @override
+  String get notesUnavailable =>
+      'بدون اتصال · متن به صورت محلی در دسترس است · ذخیرهٔ محلی · در انتظار همگام‌سازی';
+
+  @override
+  String get notesStorageFull =>
+      'فضای Nextcloud پر است. در کارساز جا باز کنید و دوباره تلاش کنید.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud این تغییر را نپذیرفت. یادداشت را بررسی کنید و پیش از تلاش دوباره نسخه‌ای محلی ذخیره کنید.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud درخواست انتظار کرد. همگام‌سازی پس از پایان مهلت دوباره ادامه می‌یابد.';
+
+  @override
+  String get notesRecoveryRequired => 'تداخل‌ها · مقایسه';
+
+  @override
+  String get notesScanning => 'در حال بررسی پرونده‌ها…';
+
+  @override
+  String get notesCancelling => 'در حال لغو… منتظر پایان عملیات جاری.';
+
+  @override
+  String get notesCancelled => 'لغو شد';
+
+  @override
+  String get notesPartial => 'تا حدی کامل شد';
+
+  @override
+  String get notesTransferFailed => 'ناموفق. تلاش دوباره';
+
+  @override
+  String get notesImportPartialHelp =>
+      'موارد قبلی ممکن است از پیش محلی ذخیره شده باشند. همین درون‌ریزی را ادامه دهید تا تکراری ایجاد نشود.';
+
+  @override
+  String get notesNotStarted => 'آغاز نشده';
+
+  @override
+  String get notesCreated => 'ایجاد شد';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'نشانی سرور · پشتیبانی نمی‌شود · حذف · پیوست‌ها';
+
+  @override
+  String get notesCurrentText => 'متن محلی نگهداری‌شدهٔ کنونی';
+
+  @override
+  String get notesRecovering => 'در حال بازیابی به‌عنوان یادداشت تازه…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'فقط خواندنی · علاقه‌مندی‌ها · ذخیرهٔ نسخهٔ محلی…';
+
+  @override
+  String get notesSort => 'مرتب‌سازی یادداشت‌ها';
+
+  @override
+  String get notesPathRelative =>
+      'مسیر پوشهٔ یادداشت‌ها نسبت به فضای ذخیره‌سازی Nextcloud شماست.';
+
+  @override
+  String get notesSettingsStale =>
+      'تنظیمات در Nextcloud تغییر کرده‌اند. پیش از جایگزینی پیش‌نویس، مقادیر کارساز را دوباره بارگیری و بررسی کنید.';
+
+  @override
+  String get notesDownloadsPaused => 'بارگیری‌ها مکث شده‌اند';
+
+  @override
+  String get notesExportNotPublished => 'هیچ برون‌بری منتشر نشد.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'قفل دسته‌کلید میزکار را باز کنید و دوباره تلاش کنید.';
+
+  @override
+  String get notesConnectFailed =>
+      'اتصال به یادداشت‌های Nextcloud ناموفق بود. نشانی کارساز را بررسی و دوباره تلاش کنید.';
+
+  @override
+  String get notesAccountMismatch =>
+      'به همان حساب Nextcloud وارد شوید. برای اتصال به حساب دیگر ابتدا این حساب را حذف کنید.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'پاک‌سازی حساب محلی ناموفق بود. حساب برای تلاش دوبارهٔ حذف نگه داشته شده است.';
+
+  @override
+  String get notesTransferring => 'در حال انتقال یادداشت‌ها…';
+
+  @override
+  String get notesTechnicalDetails => 'جزئیات فنی';
+
+  @override
+  String get notesPauseRequirement => 'مکث نیازمندی آفلاین';
+
+  @override
+  String get notesResumeRequirement => 'ادامهٔ نیازمندی آفلاین';
 }

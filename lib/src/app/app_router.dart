@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../workspace/presentation/settings_screen.dart';
 import '../workspace/presentation/welcome_screen.dart';
 import '../workspace/presentation/workspace_screen.dart';
+import '../workspace/workspace_controller.dart';
+import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 
 const settingsRoutePath = '/settings';
 const _settingsReturnTargetParameter = 'returnTo';
@@ -45,6 +47,33 @@ String settingsLocationForUri(Uri currentUri) {
   return settingsLocation(settingsReturnTargetForUri(currentUri));
 }
 
+void openKeyboardShortcutsSettings(BuildContext context) {
+  final router = GoRouter.of(context);
+  final uri = router.routeInformationProvider.value.uri;
+  if (uri.path == '/workspace') {
+    final container = ProviderScope.containerOf(context, listen: false);
+    if (!container
+        .read(workspaceControllerProvider.notifier)
+        .propertyEdits
+        .flush()) {
+      return;
+    }
+  }
+  final location = Uri.parse(settingsLocationForUri(uri))
+      .replace(
+        queryParameters: {
+          ...Uri.parse(settingsLocationForUri(uri)).queryParameters,
+          'page': 'keyboardShortcuts',
+        },
+      )
+      .toString();
+  if (uri.path == settingsRoutePath) {
+    router.replace(location);
+  } else {
+    router.go(location);
+  }
+}
+
 final rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'BusyMark root navigator',
 );
@@ -66,6 +95,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: settingsRoutePath,
+        onExit: (context, state) => confirmNotesSettingsDeparture(context),
         pageBuilder: (context, state) => NoTransitionPage<void>(
           child: SettingsScreen(
             returnTarget: SettingsReturnTarget.fromSettingsUri(state.uri),

@@ -1,4 +1,25 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../domain/notes_models.dart';
+
+/// Account-local browsing state, retained for this application session.
+final notesNavigationProvider =
+    Provider.family<NotesNavigationController, String>(
+      (ref, id) => NotesNavigationController(),
+    );
+final notesCreatedProvider =
+    NotifierProvider<
+      NotesCreatedController,
+      ({String accountId, String localId})?
+    >(NotesCreatedController.new);
+
+class NotesCreatedController
+    extends Notifier<({String accountId, String localId})?> {
+  @override
+  ({String accountId, String localId})? build() => null;
+  void created(String accountId, String localId) =>
+      state = (accountId: accountId, localId: localId);
+}
 
 enum NotesDestination { all, favorites, uncategorized, category, recovery }
 
@@ -14,10 +35,12 @@ class NotesNavigationController {
   NotesDestination destination = NotesDestination.all;
   NotesSort sort = NotesSort.recent;
   String category = '';
+  double scrollOffset = 0;
   final collapsed = <String>{};
   final selected = <String>{};
   String? focused;
   String? anchor;
+  String? pendingReveal;
   List<NextcloudNote> visible = const [];
   Map<String, int> categoryCounts = const {};
   List<String> categoryPaths = const [];
@@ -80,11 +103,24 @@ class NotesNavigationController {
     selected.retainAll(visible.map((n) => n.localId));
     if (!visible.any((n) => n.localId == focused)) focused = null;
     if (!visible.any((n) => n.localId == anchor)) anchor = null;
+    if (!visible.any((n) => n.localId == pendingReveal)) pendingReveal = null;
+  }
+
+  void showCreated(NextcloudNote note, Iterable<NextcloudNote> notes) {
+    destination = note.category.isEmpty
+        ? NotesDestination.all
+        : NotesDestination.category;
+    category = note.category;
+    collapsed.removeWhere((parent) => note.category.startsWith('$parent/'));
+    update(notes, note.accountId);
+    select(note.localId);
+    pendingReveal = note.localId;
   }
 
   void select(String id, {bool toggle = false, bool range = false}) {
     final ids = visible.map((n) => n.localId).toList();
     if (!ids.contains(id)) return;
+    if (pendingReveal != id) pendingReveal = null;
     focused = id;
     if (range && anchor != null && ids.contains(anchor)) {
       final a = ids.indexOf(anchor!);
@@ -113,10 +149,30 @@ class NotesNavigationController {
 
 enum NotesBatchStatus { changed, skipped, conflicted, failed }
 
+enum NotesBatchReason {
+  unchanged,
+  readOnly,
+  reviewChanged,
+  needsReview,
+  missing,
+  storage,
+  editorNotSaved,
+  unavailable,
+}
+
 class NotesBatchOutcome {
-  const NotesBatchOutcome(this.localId, this.title, this.status, [this.detail]);
+  const NotesBatchOutcome(
+    this.localId,
+    this.title,
+    this.status, [
+    this.detail,
+    this.reason,
+    this.cause,
+  ]);
   final String localId;
   final String title;
   final NotesBatchStatus status;
   final String? detail;
+  final NotesBatchReason? reason;
+  final Object? cause;
 }

@@ -24,7 +24,32 @@ import '../writerside/writerside_schema.dart';
 // resolve inside the opened workspace. Targets outside that root, unsupported
 // file types, and oversized files are not inspected.
 const int _maxLocalReferenceTargetBytes = 2 * 1024 * 1024;
-const int _backgroundParseThresholdBytes = 64 * 1024;
+// Release measurements put structured 4 Ki code-unit inputs beyond a frame
+// budget, with about 1–3 ms of worker overhead. Count UTF-16 code units (the
+// parser's offsets), rather than doing a UTF-8 encoding just for this decision.
+const int _backgroundParseThresholdCodeUnits = 4 * 1024;
+
+typedef _MarkdownParseInput = ({
+  String filePath,
+  String source,
+  MarkdownMode mode,
+  String? workspaceRoot,
+  bool preserveHtmlSemantics,
+});
+
+// Keep the Isolate.run closure outside the parser method: it owns only this
+// explicit input, never the parser receiver or caller's controller graph.
+Future<ParsedMarkdownDocument> _parseInWorker(_MarkdownParseInput input) =>
+    Isolate.run(
+      () => MarkdownParser(preserveHtmlSemantics: input.preserveHtmlSemantics)
+          .parse(
+            filePath: input.filePath,
+            source: input.source,
+            mode: input.mode,
+            workspaceRoot: input.workspaceRoot,
+            validateLocalReferences: false,
+          ),
+    );
 
 class MarkdownParser {
   const MarkdownParser({this.preserveHtmlSemantics = false});
@@ -78,7 +103,7 @@ class MarkdownParser {
     Map<String, String> sourceOverrides = const {},
   }) async {
     final parsed =
-        source.length < _backgroundParseThresholdBytes ||
+        source.length < _backgroundParseThresholdCodeUnits ||
             runtimeType != MarkdownParser
         ? parse(
             filePath: filePath,
@@ -87,15 +112,13 @@ class MarkdownParser {
             workspaceRoot: workspaceRoot,
             validateLocalReferences: false,
           )
-        : await Isolate.run(
-            () => parse(
-              filePath: filePath,
-              source: source,
-              mode: mode,
-              workspaceRoot: workspaceRoot,
-              validateLocalReferences: false,
-            ),
-          );
+        : await _parseInWorker((
+            filePath: filePath,
+            source: source,
+            mode: mode,
+            workspaceRoot: workspaceRoot,
+            preserveHtmlSemantics: preserveHtmlSemantics,
+          ));
     if (!validateLocalReferences) {
       return parsed;
     }

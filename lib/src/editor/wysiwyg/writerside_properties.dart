@@ -1083,12 +1083,19 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         BusyMarkCommandCatalog.metadata;
     return Shortcuts(
       shortcuts: {
+        ...commands.blockedDefaultIntents(const {
+          BusyMarkCommandScope.textEditing,
+        }),
         if (!readOnly && onUndo != null)
-          commands['text.undo']!.shortcut!.activator:
-              const _PropertyHistoryIntent(false),
+          ...commands.bindingIntents(
+            'text.undo',
+            const _PropertyHistoryIntent(false),
+          ),
         if (!readOnly && onRedo != null)
-          commands['text.redo']!.shortcut!.activator:
-              const _PropertyHistoryIntent(true),
+          ...commands.bindingIntents(
+            'text.redo',
+            const _PropertyHistoryIntent(true),
+          ),
       },
       child: Actions(
         actions: {

@@ -427,6 +427,15 @@ class NotesRepository {
                 : updated.revision == before
                 ? NotesBatchStatus.skipped
                 : NotesBatchStatus.changed,
+            null,
+            updated.metadataConflict != null ||
+                    updated.syncState == NoteSyncState.conflict
+                ? (before != original.revision
+                      ? NotesBatchReason.reviewChanged
+                      : NotesBatchReason.needsReview)
+                : updated.revision == before
+                ? NotesBatchReason.unchanged
+                : null,
           ),
         );
       } on NotesException catch (error) {
@@ -441,15 +450,30 @@ class NotesRepository {
                 ? NotesBatchStatus.conflicted
                 : NotesBatchStatus.failed,
             error.message,
+            switch (error.code) {
+              NotesFailureCode.forbidden =>
+                original.readonly
+                    ? NotesBatchReason.readOnly
+                    : NotesBatchReason.unavailable,
+              NotesFailureCode.missing => NotesBatchReason.missing,
+              NotesFailureCode.conflict =>
+                noteById(original.localId)?.revision != original.revision
+                    ? NotesBatchReason.reviewChanged
+                    : NotesBatchReason.needsReview,
+              _ => NotesBatchReason.unavailable,
+            },
+            error,
           ),
         );
-      } on Object {
+      } on Object catch (error) {
         outcomes.add(
           NotesBatchOutcome(
             original.localId,
             original.title,
             NotesBatchStatus.failed,
             'Local transaction failed; successful items remain saved.',
+            NotesBatchReason.storage,
+            error,
           ),
         );
       }
@@ -783,10 +807,9 @@ class NotesRepository {
       for (final field in patch.keys) {
         if (fresh.toJson()[field] != original.toJson()[field] &&
             fresh.toJson()[field] != patch[field]) {
-          throw const NotesException(
-            NotesFailureCode.conflict,
+          throw const NotesSettingsConflict(
+            NotesSettingsConflictReason.stale,
             'Server settings changed while this form was open. Reload and review them.',
-            scope: NotesRequestScope.settings,
           );
         }
       }
@@ -817,10 +840,11 @@ class NotesRepository {
                       _notes[a.noteId]?.accountId == id &&
                       !{'cached', 'uploaded', 'deleted'}.contains(a.state),
                 ))) {
-          throw const NotesException(
-            NotesFailureCode.conflict,
+          throw NotesSettingsConflict(
+            hasSettingsBlockers(id)
+                ? NotesSettingsConflictReason.pendingNotes
+                : NotesSettingsConflictReason.pendingAttachments,
             'Synchronize or resolve pending notes, conflicts and attachment operations before changing the server collection.',
-            scope: NotesRequestScope.settings,
           );
         }
         final current = _accounts[id]!.copyWith(settingsAttempt: attempt);
@@ -2425,6 +2449,7 @@ class NotesRepository {
     int? expectedRevision,
     int? creationCandidateServerId,
     NotesCreationReview? creationReview,
+    NoteState? reviewedRemote,
   }) async {
     final original = _require(localId);
     if (expectedRevision != null && original.revision != expectedRevision) {
@@ -2505,8 +2530,9 @@ class NotesRepository {
           'New local edits appeared while resolving this note. Review them before applying the resolution.',
         );
       }
-      if (original.remote != null &&
-          jsonEncode(fresh.toJson()) != jsonEncode(original.remote!.toJson())) {
+      final reviewed = reviewedRemote ?? original.remote;
+      if (reviewed != null &&
+          jsonEncode(fresh.toJson()) != jsonEncode(reviewed.toJson())) {
         final changedAgain = current.copyWith(
           remote: fresh,
           readonly: fresh.readonly,
@@ -2517,11 +2543,7 @@ class NotesRepository {
         await store.saveNote(changedAgain);
         _notes[localId] = changedAgain;
         _notify();
-        throw NotesException(
-          NotesFailureCode.conflict,
-          changedAgain.errorMessage!,
-          remote: fresh,
-        );
+        throw NotesConflictReviewChanged(fresh);
       }
       final merge = NotesConflictMerge(current, fresh);
       final merging = resolution == NoteConflictResolution.merge;

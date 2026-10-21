@@ -134,8 +134,8 @@ the newly written or protective record.
 
 Local History scopes ordinary browsing to the active buffer. Scope, snapshot,
 and query generations prevent a delayed read or search from publishing into a
-new document scope. Store-wide document search is a temporary discovery mode
-for retained identities that no longer have an open file.
+new document scope. Shared Local History search discovers retained identities independently of
+ordinary browsing, including identities that no longer have an open file.
 
 `SourceComparisonInput` identifies immutable source versions. Comparison uses
 patience anchors, bounded local LCS, and intraline refinement in Dart UTF-16
@@ -214,3 +214,38 @@ JSON reports for inspection. Its optional `--application` mode opens a supplied
 file in the full application and requires the exact synthetic table fixture
 checked by the driver; use an isolated application profile and disposable files
 for that mode.
+
+Session and recovery JSON publication protects each staged inode before its
+atomic rename. Linux performs permission changes off the UI isolate through a
+held descriptor. Configured directory links are followed and their targets
+pinned; final state-file links are rejected. Retargeting a pathname cannot
+redirect an admitted permission change. Unreadable inodes use the same held
+identity through procfs. Permission or inspection failures fail the transaction;
+private modes, lock ownership, flush and recovery ordering remain mandatory.
+
+Startup capture and pruning wait for the saved History policy. Restoration
+reads at most four files concurrently, preserves session order and drains
+admitted reads after a failure. Adopted recovery remains protected until
+restoration and required persistence finish, including when close is requested
+before an editor is published.
+
+Opening can display validated content while Recent persistence completes. A
+failed Recent update remains a warning after a successful open or save. Settings
+writes retain ordered completion and retry failed publications; shutdown drains
+the queue before retiring recovery ownership.
+
+## Shared Local History search
+
+`SearchCategory.localHistory` owns the header query and optional retained-document
+ID. `findRetained()` reads the existing store and returns bounded document or
+revision metadata without changing browsing, comparison, recording or buffer
+ownership. Each request checks cancellation and the retained snapshot generation;
+clear and account removal invalidate affected results. Revision bodies are read
+sequentially and discarded after matching, rather than kept in widget state.
+
+Activation revalidates stable document/revision IDs and checksum before the
+existing comparison workflow reads a revision. Its selection callback also checks
+the originating search request after the read. Ordinary History navigation keeps
+the complete timeline and has no search entry points or private query controller.
+The shared coordinator retains explicit removable document scopes independently
+of the browsing panel.

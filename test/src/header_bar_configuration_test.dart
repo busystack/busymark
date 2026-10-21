@@ -447,6 +447,9 @@ void main() {
     );
     expect(_labels.toMap(), isNot(contains('markdownAndHtml')));
     for (final removedLabel in <String>{
+      'keyboardShortcuts',
+      'keyboardShortcutsShortcut',
+      'keyboardShortcutsGtkAccelerator',
       'clipboardHistory',
       'localHistory',
       'findLocalHistory',
@@ -517,9 +520,6 @@ const _labels = HeaderBarLabels(
   settings: 'Settings',
   settingsShortcut: 'Ctrl+,',
   settingsGtkAccelerator: '<Primary>comma',
-  keyboardShortcuts: 'Keyboard Shortcuts',
-  keyboardShortcutsShortcut: 'Ctrl+?',
-  keyboardShortcutsGtkAccelerator: '<Primary>question',
   syntaxReference: 'Syntax Reference',
   syntaxReferenceShortcut: 'F1',
   syntaxReferenceGtkAccelerator: 'F1',

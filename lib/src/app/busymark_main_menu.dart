@@ -13,9 +13,6 @@ enum BusyMarkMainMenuAction {
   export,
   fullScreen,
   settings,
-  keyboardShortcuts,
-  commandPalette,
-  quickOpen,
   syntaxReference,
   reportIssue,
   aboutBusyMark,
@@ -34,9 +31,8 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final commands =
-        BusyMarkCommandRegistryScope.maybeOf(context) ??
-        BusyMarkCommandCatalog.metadata;
+    final boundCommands = BusyMarkCommandRegistryScope.maybeOf(context);
+    final commands = boundCommands ?? BusyMarkCommandCatalog.metadata;
     BusyMarkCommand command(String id) => commands[id]!;
     final fullScreen = ref.watch(
       windowControlServiceProvider.select((service) => service.isFullScreen),
@@ -50,6 +46,9 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           label: command(BusyMarkCommandIds.export).label(context),
           icon: BusyMarkGlyphs.exportPdf,
           shortcut: command(BusyMarkCommandIds.export).shortcut?.label,
+          gtkAccelerator: command(
+            BusyMarkCommandIds.export,
+          ).shortcut?.gtkAccelerator,
           enabled: canExport,
         ),
         BusyMarkPopupMenuItem(
@@ -57,6 +56,9 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           label: command(BusyMarkCommandIds.fullScreen).label(context),
           icon: BusyMarkGlyphs.fullScreen,
           shortcut: command(BusyMarkCommandIds.fullScreen).shortcut?.label,
+          gtkAccelerator: command(
+            BusyMarkCommandIds.fullScreen,
+          ).shortcut?.gtkAccelerator,
           checked: fullScreen,
           trailingCheck: true,
           mutuallyExclusive: false,
@@ -66,32 +68,18 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           label: command(BusyMarkCommandIds.settings).label(context),
           icon: BusyMarkGlyphs.settings,
           shortcut: command(BusyMarkCommandIds.settings).shortcut?.label,
-        ),
-        BusyMarkPopupMenuItem(
-          value: BusyMarkMainMenuAction.keyboardShortcuts,
-          label: command(BusyMarkCommandIds.keyboardShortcuts).label(context),
-          icon: BusyMarkGlyphs.keyboard,
-          shortcut: command(
-            BusyMarkCommandIds.keyboardShortcuts,
-          ).shortcut?.label,
-        ),
-        BusyMarkPopupMenuItem(
-          value: BusyMarkMainMenuAction.quickOpen,
-          label: command(BusyMarkCommandIds.quickOpen).label(context),
-          icon: BusyMarkGlyphs.search,
-          shortcut: command(BusyMarkCommandIds.quickOpen).shortcut?.label,
-        ),
-        BusyMarkPopupMenuItem(
-          value: BusyMarkMainMenuAction.commandPalette,
-          label: command(BusyMarkCommandIds.commandPalette).label(context),
-          icon: BusyMarkGlyphs.search,
-          shortcut: command(BusyMarkCommandIds.commandPalette).shortcut?.label,
+          gtkAccelerator: command(
+            BusyMarkCommandIds.settings,
+          ).shortcut?.gtkAccelerator,
         ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.syntaxReference,
           label: command(BusyMarkCommandIds.syntaxReference).label(context),
           icon: BusyMarkGlyphs.markdownFile,
           shortcut: command(BusyMarkCommandIds.syntaxReference).shortcut?.label,
+          gtkAccelerator: command(
+            BusyMarkCommandIds.syntaxReference,
+          ).shortcut?.gtkAccelerator,
         ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.reportIssue,
@@ -109,11 +97,6 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           BusyMarkMainMenuAction.export => BusyMarkCommandIds.export,
           BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
-          BusyMarkMainMenuAction.keyboardShortcuts =>
-            BusyMarkCommandIds.keyboardShortcuts,
-          BusyMarkMainMenuAction.quickOpen => BusyMarkCommandIds.quickOpen,
-          BusyMarkMainMenuAction.commandPalette =>
-            BusyMarkCommandIds.commandPalette,
           BusyMarkMainMenuAction.syntaxReference =>
             BusyMarkCommandIds.syntaxReference,
           BusyMarkMainMenuAction.reportIssue ||

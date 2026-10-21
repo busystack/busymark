@@ -10,6 +10,8 @@ import 'package:yaru/yaru.dart';
 import '../platform/native_menu_service.dart';
 import '../platform/gtk_header_icon_service.dart';
 import 'busymark_glyphs.dart';
+import 'path_label.dart';
+import 'localization.dart';
 
 /// Resolve an explicit six-digit RGB color chosen in a document/export control.
 /// This does not inherit the application's theme accent.
@@ -1507,6 +1509,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon),
           iconColorArgb: item.iconColor?.toARGB32(),
           shortcut: item.shortcut,
+          gtkAccelerator: item.gtkAccelerator,
           enabled: item.enabled,
           checkable: item.trailingCheck,
           selected: item.trailingCheck && item.checked,
@@ -1835,6 +1838,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     IconData? icon,
     Color? iconColor,
     String? shortcut,
+    this.gtkAccelerator,
     super.enabled = true,
     bool checked = false,
     bool trailingCheck = false,
@@ -1869,6 +1873,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   final IconData? icon;
   final Color? iconColor;
   final String? shortcut;
+  final String? gtkAccelerator;
   final bool checked;
   final bool trailingCheck;
   final bool mutuallyExclusive;
@@ -1971,6 +1976,7 @@ class BusyMarkMenuButton<T> extends StatefulWidget {
     this.enabled = true,
     this.nativeMenuService = const NativeMenuService(),
     this.fallbackMenuWidth,
+    this.selectionForSession,
   });
 
   final String tooltip;
@@ -1980,6 +1986,10 @@ class BusyMarkMenuButton<T> extends StatefulWidget {
   final bool enabled;
   final NativeMenuService nativeMenuService;
   final double? fallbackMenuWidth;
+
+  /// Captures the reviewed targets once, for every input path that opens a menu.
+  /// The returned callback belongs to this opening, even if the trigger rebuilds.
+  final ValueChanged<T> Function()? selectionForSession;
 
   @override
   State<BusyMarkMenuButton<T>> createState() => _BusyMarkMenuButtonState<T>();
@@ -2071,7 +2081,7 @@ class _BusyMarkMenuButtonState<T> extends State<BusyMarkMenuButton<T>> {
       return;
     }
     final items = List<PopupMenuEntry<T>>.unmodifiable(widget.items);
-    final onSelected = widget.onSelected;
+    final onSelected = widget.selectionForSession?.call() ?? widget.onSelected;
     final session = BusyMarkMenuSession();
     _activeMenuSession = session;
     setState(() => _open = true);
@@ -2132,12 +2142,16 @@ class BusyMarkPopupSelectorOption<T> {
     required this.label,
     this.icon,
     this.iconColor,
+    this.shortcut,
+    this.gtkAccelerator,
   });
 
   final T value;
   final String label;
   final IconData? icon;
   final Color? iconColor;
+  final String? shortcut;
+  final String? gtkAccelerator;
 }
 
 /// The shared desktop selector used by Settings-style control rows.
@@ -2155,7 +2169,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
     this.buttonMaxWidth = BusyMarkSizes.languageButtonMaxWidth,
     this.leading,
     this.fullWidth = false,
-    this.contentPadding,
+    this.maxLabelLines = 1,
   });
 
   final T? value;
@@ -2169,10 +2183,12 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final double buttonMaxWidth;
   final Widget? leading;
   final bool fullWidth;
-  final EdgeInsetsGeometry? contentPadding;
-
+  final int maxLabelLines;
   @override
   Widget build(BuildContext context) {
+    // Inherit borderless button geometry and interaction states while keeping
+    // the neutral control foreground rather than an action-link accent.
+    final neutralButtonStyle = Theme.of(context).outlinedButtonTheme.style;
     final selectorEnabled = enabled && options.isNotEmpty;
     final fallbackMenuWidth = (fullWidth ? popupMaxWidth : buttonMaxWidth)
         .clamp(popupMinWidth, popupMaxWidth);
@@ -2194,6 +2210,8 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 label: option.label,
                 icon: option.icon,
                 iconColor: option.iconColor,
+                shortcut: option.shortcut,
+                gtkAccelerator: option.gtkAccelerator,
                 checked: option.value == value,
                 trailingCheck: true,
               ),
@@ -2204,16 +2222,13 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 message: tooltip,
                 child: Semantics(
                   expanded: trigger.isOpen,
-                  child: BusyMarkPushButton.standard(
+                  child: TextButton(
+                    style: ButtonStyle(
+                      foregroundColor: neutralButtonStyle?.foregroundColor,
+                      iconColor: neutralButtonStyle?.iconColor,
+                    ),
                     onPressed: trigger.onPressed,
                     focusNode: trigger.focusNode,
-                    style: Theme.of(context).outlinedButtonTheme.style
-                        ?.copyWith(
-                          side: const WidgetStatePropertyAll(BorderSide.none),
-                          padding: contentPadding == null
-                              ? null
-                              : WidgetStatePropertyAll(contentPadding),
-                        ),
                     child: Row(
                       mainAxisSize: fullWidth
                           ? MainAxisSize.max
@@ -2227,9 +2242,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                           Expanded(
                             child: Text(
                               label,
-                              maxLines: 1,
+                              maxLines: maxLabelLines,
                               overflow: TextOverflow.ellipsis,
-                              softWrap: false,
+                              softWrap: maxLabelLines > 1,
                             ),
                           )
                         else
@@ -2245,9 +2260,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                               ),
                               child: Text(
                                 label,
-                                maxLines: 1,
+                                maxLines: maxLabelLines,
                                 overflow: TextOverflow.ellipsis,
-                                softWrap: false,
+                                softWrap: maxLabelLines > 1,
                               ),
                             ),
                           ),
@@ -2767,8 +2782,14 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     required this.onTap,
     this.title,
     this.subtitle,
+    this.pathSubtitle = false,
     this.content,
     this.selected = false,
+    this.compact = false,
+    this.focusNode,
+    this.geometryKey,
+    this.onFocusChange,
+    this.trailing,
     this.onDoubleTap,
     this.semanticsLabel,
     this.tooltip,
@@ -2776,12 +2797,14 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     this.menuItemsBuilder,
     this.onMenuSelected,
     this.onMenuOpening,
+    this.menuSelectionForSession,
   }) : assert(
          (title == null) != (content == null),
          'Supply either the standard title or custom content.',
        ),
        assert(
-         (menuItemsBuilder == null) == (onMenuSelected == null),
+         (menuItemsBuilder == null) ==
+             (onMenuSelected == null && menuSelectionForSession == null),
          'Menu items and selection handling must be supplied together.',
        ),
        assert(
@@ -2792,9 +2815,16 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final IconData icon;
   final String? title;
   final String? subtitle;
+  final bool pathSubtitle;
   final Widget? content;
-  final bool selected;
-  final VoidCallback onTap;
+  final bool selected, compact;
+  final FocusNode? focusNode;
+
+  /// Optional measured anchor; the public row key remains its resource identity.
+  final GlobalKey? geometryKey;
+  final ValueChanged<bool>? onFocusChange;
+  final Widget? trailing;
+  final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
   final String? semanticsLabel;
   final String? tooltip;
@@ -2802,6 +2832,9 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final BusyMarkSidebarRecordMenuBuilder<T>? menuItemsBuilder;
   final ValueChanged<T>? onMenuSelected;
   final VoidCallback? onMenuOpening;
+
+  /// Freezes this opening's targets independently of later row rebuilds.
+  final ValueChanged<T> Function()? menuSelectionForSession;
 
   @override
   State<BusyMarkSidebarRecordRow<T>> createState() =>
@@ -2816,7 +2849,8 @@ class _BusyMarkSidebarRecordRowState<T>
   DateTime? _lastTapAt;
 
   bool get _hasMenu =>
-      widget.menuItemsBuilder != null && widget.onMenuSelected != null;
+      widget.menuItemsBuilder != null &&
+      (widget.onMenuSelected != null || widget.menuSelectionForSession != null);
 
   @override
   void initState() {
@@ -2841,7 +2875,7 @@ class _BusyMarkSidebarRecordRowState<T>
   void _handleTap() {
     final onDoubleTap = widget.onDoubleTap;
     if (onDoubleTap == null) {
-      widget.onTap();
+      widget.onTap?.call();
       return;
     }
     final now = DateTime.now();
@@ -2849,7 +2883,7 @@ class _BusyMarkSidebarRecordRowState<T>
     final doubleTap =
         previous != null && now.difference(previous) <= kDoubleTapTimeout;
     _lastTapAt = doubleTap ? null : now;
-    widget.onTap();
+    widget.onTap?.call();
     if (doubleTap) onDoubleTap();
   }
 
@@ -2857,12 +2891,15 @@ class _BusyMarkSidebarRecordRowState<T>
     if (!_hasMenu || _contextMenuOpen) return;
     final rowContext = _rowKey.currentContext;
     if (rowContext == null) return;
+    final items = widget.menuItemsBuilder!(rowContext);
+    if (items.isEmpty) return;
 
     widget.onMenuOpening?.call();
+    final onSelected =
+        widget.menuSelectionForSession?.call() ?? widget.onMenuSelected!;
     setState(() => _contextMenuOpen = true);
     T? action;
     try {
-      final items = widget.menuItemsBuilder!(rowContext);
       action = position == null
           ? await showBusyMarkMenu<T>(
               context: rowContext,
@@ -2878,7 +2915,7 @@ class _BusyMarkSidebarRecordRowState<T>
     } finally {
       if (mounted) setState(() => _contextMenuOpen = false);
     }
-    if (mounted && action != null) widget.onMenuSelected!(action);
+    if (mounted && action != null) onSelected(action);
   }
 
   @override
@@ -2888,79 +2925,100 @@ class _BusyMarkSidebarRecordRowState<T>
     final customContent = widget.content;
     final menuItems = widget.menuItemsBuilder?.call(context);
     final trailing = menuItems == null || menuItems.isEmpty
-        ? null
+        ? widget.trailing
         : BusyMarkMenuButton<T>(
             tooltip: widget.menuTooltip!,
             items: menuItems,
-            onSelected: widget.onMenuSelected!,
+            onSelected: widget.onMenuSelected ?? (_) {},
+            selectionForSession: () {
+              widget.onMenuOpening?.call();
+              return widget.menuSelectionForSession?.call() ??
+                  widget.onMenuSelected!;
+            },
             triggerBuilder: (context, trigger) => trigger.anchor(
               child: BusyMarkCompactIconButton(
                 tooltip: widget.menuTooltip!,
                 icon: BusyMarkGlyphs.menuVertical,
                 focusNode: trigger.focusNode,
-                onPressed: trigger.onPressed == null
-                    ? null
-                    : () {
-                        widget.onMenuOpening?.call();
-                        trigger.onPressed!();
-                      },
+                onPressed: trigger.onPressed,
               ),
             ),
           );
-    final content = ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: BusyMarkSizes.sidebarTreeRowHeight * 2,
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Icon(
-            widget.icon,
-            size: BusyMarkSizes.iconSm,
-            color: colors.mutedForeground,
-          ),
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Expanded(
-            child: Padding(
-              padding: customContent == null
-                  ? EdgeInsets.zero
-                  : const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
-              child:
-                  customContent ??
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.title!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.foreground,
-                        ),
-                      ),
-                      if (subtitle != null && subtitle.isNotEmpty) ...[
-                        const SizedBox(height: BusyMarkSpacing.xxs),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colors.mutedForeground),
-                        ),
-                      ],
-                    ],
-                  ),
+    final customRow = customContent == null
+        ? null
+        : ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: widget.compact
+                  ? BusyMarkSizes.sidebarTreeRowHeight
+                  : BusyMarkSizes.sidebarTreeRowHeight * 2,
             ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: BusyMarkSpacing.xs),
-            trailing,
-          ],
-          const SizedBox(width: BusyMarkSpacing.sm),
-        ],
-      ),
-    );
+            child: Row(
+              children: [
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Icon(
+                  widget.icon,
+                  size: BusyMarkSizes.iconSm,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: widget.compact
+                          ? BusyMarkSpacing.xs
+                          : BusyMarkSpacing.sm,
+                    ),
+                    child: customContent,
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: BusyMarkSpacing.xs),
+                  trailing,
+                ],
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
+            ),
+          );
+    // Standard identities use the same native row layout as other BusyMark
+    // lists. Yaru owns their typography, content spacing and minimum extent.
+    final tile = customRow == null
+        ? YaruListTile.square(
+            leading: Icon(
+              widget.icon,
+              size: BusyMarkSizes.iconSm,
+              color: colors.mutedForeground,
+            ),
+            title: Text(
+              widget.title!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: subtitle == null || subtitle.isEmpty
+                ? null
+                : _busyMarkGroupedRowSubtitle(
+                    context,
+                    widget.pathSubtitle
+                        ? BusyMarkPathLabel(path: subtitle)
+                        : Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                  ),
+            trailing: trailing,
+            focusNode: widget.focusNode ?? _rowFocusNode,
+            onFocusChange: widget.onFocusChange,
+            hoverColor: busyMarkRowHoverColor(context),
+            onTap: widget.onTap == null ? null : _handleTap,
+          )
+        : InkWell(
+            hoverColor: busyMarkRowHoverColor(context),
+            focusNode: widget.focusNode ?? _rowFocusNode,
+            onFocusChange: widget.onFocusChange,
+            canRequestFocus: true,
+            onTap: widget.onTap == null ? null : _handleTap,
+            child: customRow,
+          );
     final row = KeyedSubtree(
       key: _rowKey,
       child: Focus(
@@ -2975,17 +3033,14 @@ class _BusyMarkSidebarRecordRowState<T>
                 : BusyMarkLinuxPalette.transparent,
             borderRadius: BorderRadius.circular(BusyMarkRadius.md),
             clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              hoverColor: busyMarkRowHoverColor(context),
-              focusNode: _rowFocusNode,
-              onTap: _handleTap,
+            child: GestureDetector(
               onSecondaryTapUp: !_hasMenu
                   ? null
                   : (details) {
-                      _rowFocusNode.requestFocus();
+                      (widget.focusNode ?? _rowFocusNode).requestFocus();
                       unawaited(_showContextMenu(details.globalPosition));
                     },
-              child: content,
+              child: tile,
             ),
           ),
         ),
@@ -2996,17 +3051,21 @@ class _BusyMarkSidebarRecordRowState<T>
       selected: widget.selected,
       button: true,
       label: widget.semanticsLabel,
-      onTap: _handleTap,
+      enabled: widget.onTap != null,
+      onTap: widget.onTap == null ? null : _handleTap,
       child: row,
     );
     final tooltip = widget.tooltip;
-    return tooltip == null || tooltip.isEmpty
+    final presented = tooltip == null || tooltip.isEmpty
         ? semanticRow
         : Tooltip(
             message: tooltip,
             excludeFromSemantics: true,
             child: semanticRow,
           );
+    return widget.geometryKey == null
+        ? presented
+        : KeyedSubtree(key: widget.geometryKey, child: presented);
   }
 }
 
@@ -3138,7 +3197,10 @@ class BusyMarkGroupedList extends StatelessWidget {
           if (title != null) ...[
             Padding(
               padding: padding,
-              child: Text(title!, style: busyMarkSectionHeaderStyle(context)),
+              child: Semantics(
+                header: true,
+                child: Text(title!, style: busyMarkSectionHeaderStyle(context)),
+              ),
             ),
             if (description != null && description!.isNotEmpty) ...[
               const SizedBox(height: BusyMarkSpacing.xs),
@@ -4469,4 +4531,335 @@ class SectionLabel extends StatelessWidget {
       child: Text(text, style: busyMarkSectionHeaderStyle(context)),
     );
   }
+}
+
+typedef BusyMarkSidebarTreeMenuRequest =
+    void Function(BuildContext anchorContext, Offset globalPosition);
+
+class BusyMarkSidebarRowSurface extends StatelessWidget {
+  const BusyMarkSidebarRowSurface({
+    super.key,
+    required this.child,
+    required this.enabled,
+    required this.clickable,
+    this.selected = false,
+    this.focusNode,
+    this.onKeyEvent,
+    this.onTap,
+    this.onDoubleTap,
+    this.onSecondaryTapUp,
+    this.onHoverChanged,
+    this.onFocusChange,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final bool clickable;
+  final bool selected;
+  final FocusNode? focusNode;
+  final FocusOnKeyEventCallback? onKeyEvent;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
+  final GestureTapUpCallback? onSecondaryTapUp;
+  final ValueChanged<bool>? onHoverChanged;
+  final ValueChanged<bool>? onFocusChange;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: onHoverChanged == null ? null : (_) => onHoverChanged!(true),
+      onExit: onHoverChanged == null ? null : (_) => onHoverChanged!(false),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
+        child: Material(
+          color: selected
+              ? busyMarkSelectedBackground(context)
+              : BusyMarkLinuxPalette.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          clipBehavior: Clip.antiAlias,
+          child: Focus(
+            onKeyEvent: onKeyEvent,
+            child: InkWell(
+              focusNode: focusNode,
+              hoverColor: clickable
+                  ? busyMarkRowHoverColor(context)
+                  : BusyMarkLinuxPalette.transparent,
+              onTap: enabled ? onTap : null,
+              onDoubleTap: enabled ? onDoubleTap : null,
+              onSecondaryTapUp: enabled ? onSecondaryTapUp : null,
+              onFocusChange: onFocusChange,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: BusyMarkSizes.sidebarTreeRowHeight,
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class BusyMarkSidebarTreeRow extends StatefulWidget {
+  const BusyMarkSidebarTreeRow({
+    super.key,
+    required this.title,
+    required this.depth,
+    this.icon,
+    this.leading,
+    this.trailing,
+    this.tooltip,
+    this.focusNode,
+    this.traverseWithArrows = false,
+    this.onFocusChange,
+    this.hasChildren = false,
+    this.onNavigationKeyEvent,
+    this.expanded = false,
+    this.selected = false,
+    this.enabled = true,
+    this.muted = false,
+    this.compactHierarchyIndent = false,
+    this.vcsColor,
+    this.onToggle,
+    this.onTap,
+    this.onDoubleTap,
+    this.onMenuRequested,
+  });
+
+  final String title;
+  final int depth;
+  final IconData? icon;
+  final Widget? leading;
+  final Widget? trailing;
+  final String? tooltip;
+  final FocusNode? focusNode;
+  final bool traverseWithArrows;
+  final ValueChanged<bool>? onFocusChange;
+
+  /// Owners can keep selection and reveal policy instead of generic traversal.
+  final FocusOnKeyEventCallback? onNavigationKeyEvent;
+  final bool hasChildren;
+  final bool expanded;
+  final bool selected;
+  final bool enabled;
+  final bool muted;
+  final bool compactHierarchyIndent;
+  final BusyMarkVcsFileColor? vcsColor;
+  final VoidCallback? onToggle;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
+  final BusyMarkSidebarTreeMenuRequest? onMenuRequested;
+
+  @override
+  State<BusyMarkSidebarTreeRow> createState() => BusyMarkSidebarTreeRowState();
+}
+
+class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
+  var _hovered = false;
+  var _focused = false;
+
+  void showMenuFromKeyboard() {
+    final onMenuRequested = widget.onMenuRequested;
+    if (!widget.enabled || onMenuRequested == null) {
+      return;
+    }
+    onMenuRequested(context, _busyMarkSidebarTreeMenuAnchor(context));
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    final navigation = widget.enabled
+        ? widget.onNavigationKeyEvent?.call(node, event)
+        : null;
+    if (navigation != null && navigation != KeyEventResult.ignored) {
+      return navigation;
+    }
+    if (widget.enabled && event is KeyDownEvent) {
+      final rtl = Directionality.of(context) == TextDirection.rtl;
+      final expand = rtl
+          ? LogicalKeyboardKey.arrowLeft
+          : LogicalKeyboardKey.arrowRight;
+      final collapse = rtl
+          ? LogicalKeyboardKey.arrowRight
+          : LogicalKeyboardKey.arrowLeft;
+      if (widget.hasChildren &&
+          ((event.logicalKey == expand && !widget.expanded) ||
+              (event.logicalKey == collapse && widget.expanded))) {
+        widget.onToggle?.call();
+        return KeyEventResult.handled;
+      }
+      if (widget.traverseWithArrows &&
+          event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        node.nextFocus();
+        return KeyEventResult.handled;
+      }
+      if (widget.traverseWithArrows &&
+          event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        node.previousFocus();
+        return KeyEventResult.handled;
+      }
+    }
+    if (!widget.enabled ||
+        widget.onMenuRequested == null ||
+        !isBusyMarkContextMenuKeyEvent(event)) {
+      return KeyEventResult.ignored;
+    }
+    showMenuFromKeyboard();
+    return KeyEventResult.handled;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final direction = Directionality.of(context);
+    final clickable =
+        widget.enabled &&
+        (widget.onTap != null || widget.onMenuRequested != null);
+    final vcsForeground = widget.vcsColor == null
+        ? null
+        : busyMarkVcsFileStatusColor(context, widget.vcsColor!);
+    final foreground = !widget.enabled || widget.muted
+        ? colors.disabledForeground
+        : vcsForeground ??
+              (widget.selected ? colors.foreground : colors.mutedForeground);
+    final titleColor = !widget.enabled || widget.muted
+        ? colors.disabledForeground
+        : vcsForeground ?? colors.foreground;
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: titleColor);
+    final menuVisible =
+        widget.enabled &&
+        widget.onMenuRequested != null &&
+        (widget.selected || _hovered || _focused);
+    final depthBase = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSizes.sidebarTreeDepthBase;
+    final expanderWidth = widget.compactHierarchyIndent
+        ? BusyMarkSizes.sidebarTreeArrow
+        : BusyMarkSizes.sidebarTreeControl;
+    final expanderGap = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSpacing.xs;
+    final surface = BusyMarkSidebarRowSurface(
+      focusNode: widget.focusNode,
+      enabled: widget.enabled,
+      clickable: clickable,
+      selected: widget.selected,
+      onKeyEvent: _handleKeyEvent,
+      onTap: widget.onTap,
+      onDoubleTap: widget.onDoubleTap,
+      onSecondaryTapUp: widget.onMenuRequested == null
+          ? null
+          : (details) =>
+                widget.onMenuRequested!(context, details.globalPosition),
+      onHoverChanged: (hovered) => setState(() => _hovered = hovered),
+      onFocusChange: (focused) {
+        setState(() => _focused = focused);
+        widget.onFocusChange?.call(focused);
+      },
+      child: Row(
+        children: [
+          SizedBox(
+            width:
+                depthBase + widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
+          ),
+          SizedBox.square(
+            dimension: expanderWidth,
+            child: widget.hasChildren
+                ? GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.enabled
+                        ? widget.onToggle ?? widget.onTap
+                        : null,
+                    child: AnimatedRotation(
+                      turns: widget.expanded
+                          ? direction == TextDirection.rtl
+                                ? -0.25
+                                : 0.25
+                          : 0,
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : BusyMarkMotion.sidebarExpand,
+                      child: Icon(
+                        BusyMarkGlyphs.collapsedTreeArrowFor(direction),
+                        size: BusyMarkSizes.sidebarTreeArrow,
+                        color: foreground,
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          SizedBox(width: expanderGap),
+          if (widget.leading != null || widget.icon != null) ...[
+            SizedBox.square(
+              dimension: BusyMarkSizes.sidebarTreeControl,
+              child: Center(
+                child:
+                    widget.leading ??
+                    Icon(
+                      widget.icon,
+                      size: BusyMarkSizes.iconSm,
+                      color: foreground,
+                    ),
+              ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+          ],
+          Expanded(
+            child: Text(
+              widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: titleStyle,
+            ),
+          ),
+          if (widget.trailing != null) widget.trailing!,
+          if (widget.onMenuRequested != null)
+            SizedBox(
+              width: BusyMarkSizes.iconButton,
+              child: Center(
+                child: menuVisible
+                    ? Builder(
+                        builder: (buttonContext) => BusyMarkCompactIconButton(
+                          tooltip: context.l10n.actions,
+                          icon: BusyMarkGlyphs.menuVertical,
+                          onPressed: () => widget.onMenuRequested!(
+                            buttonContext,
+                            _busyMarkSidebarTreeMenuAnchor(buttonContext),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            )
+          else
+            const SizedBox(width: BusyMarkSpacing.xs),
+        ],
+      ),
+    );
+    return Semantics(
+      selected: widget.selected,
+      expanded: widget.hasChildren ? widget.expanded : null,
+      enabled: widget.enabled,
+      child: widget.tooltip == null || widget.tooltip!.isEmpty
+          ? surface
+          : Tooltip(message: widget.tooltip!, child: surface),
+    );
+  }
+}
+
+Offset _busyMarkSidebarTreeMenuAnchor(BuildContext context) {
+  final renderObject = context.findRenderObject();
+  if (renderObject is! RenderBox || !renderObject.hasSize) {
+    return Offset.zero;
+  }
+  final direction = Directionality.of(context);
+  return renderObject.localToGlobal(
+    Offset(
+      direction == TextDirection.rtl ? 0 : renderObject.size.width,
+      renderObject.size.height,
+    ),
+  );
 }

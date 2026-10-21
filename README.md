@@ -21,7 +21,7 @@ Markdown, Writerside, and Nextcloud Notes editor for Linux.
 * **Writerside projects** — Open and create Writerside-compatible projects; edit Markdown and XML topics; manage instances, tables of contents, reusable TOC libraries, and project structure.
 * **Nextcloud Notes** — Connect to a Nextcloud server, create and edit notes offline, synchronize changes, search and filter notes, manage categories and favorites, and work with attachments.
 * **References and links** — Incoming/outgoing references, document/topic/heading target chooser, reviewed local Markdown rename/move, and portable Nextcloud note URLs. See [reference workflows](docs/references.md).
-* **Navigation and search** — Files, Topics, and Outline views, tabbed documents, command palette, keyboard shortcuts, document search and replace, reviewed replacement across local workspaces, and Markdown TOC generation.
+* **Navigation and search** — Files, Topics, and Outline views, tabbed documents, Actions search, configurable keyboard shortcuts, document search and replace, reviewed replacement across local workspaces, and Markdown TOC generation.
 * **Technical documentation** — Local rendering of Mermaid, PlantUML, D2, fenced OpenAPI specifications, and MathJax mathematical expressions.
 * **PDF and HTML publishing** — Export Markdown documents and Writerside instances to configurable PDF or portable offline HTML, with controls for layout, typography, tables of contents, heading numbering, and HTML styling.
 * **Git integration for local workspaces** — Review changes and diffs, stage and unstage files, commit, create and switch branches, fetch, pull, push, inspect file and project history, compare historical versions, and restore earlier file versions.
@@ -58,6 +58,7 @@ sudo apt-get install -y \
   libwebkit2gtk-4.1-dev \
   ninja-build \
   pkg-config \
+  python3 \
   xz-utils
 ```
 
@@ -67,17 +68,16 @@ components.
 Prepare and run the application:
 
 ```bash
-flutter doctor
-flutter pub get
+flutter pub get --enforce-lockfile
 flutter run -d linux
 ```
 
-Pass a Markdown file or documentation directory after `--` to open it at
-startup:
+Pass a Markdown file or documentation directory as a Dart entrypoint argument
+to open it at startup:
 
 ```bash
-flutter run -d linux -- /absolute/path/to/document.md
-flutter run -d linux -- /absolute/path/to/documentation
+flutter run -d linux --dart-entrypoint-args=/absolute/path/to/document.md
+flutter run -d linux --dart-entrypoint-args=/absolute/path/to/documentation
 ```
 
 Build and run the standard checks with:
@@ -91,9 +91,16 @@ flutter test
 The build assembles BusyMark's runtime components. Packaged users do not need
 separate Typst, Java, Node.js, or Chromium installations.
 
+Linux development and packaging use the official Flutter SDK version pinned in
+`pubspec.yaml` (currently 3.47.5). No custom Flutter engine is built or selected.
+See [Linux development](docs/development/linux-engine.md) for build modes and
+[compiled application checks](docs/development/application-smoke-tests.md) for
+native and document regression commands. A successful widget suite or build
+does not establish native release acceptance.
+
 The CI workflow installs additional packages for headless X11/Wayland, browser,
 PDF, and sandbox verification. Those packages are not required for an ordinary
-local build; see [the Linux workflow](.github/workflows/flutter-linux.yml) when
+local build; see [native acceptance](.github/workflows/flutter-linux-native.yml) when
 reproducing release verification.
 
 ## Snap release and security builds
@@ -113,7 +120,7 @@ sha256sum ./busymark_*.snap
 
 Inspect and test the exact file emitted by the final `snapcraft` command. A
 failed build must not fall back to an older `.snap`. The `snap` job in
-[the Linux workflow](.github/workflows/flutter-linux.yml) follows this route,
+[native acceptance](.github/workflows/flutter-linux-native.yml) follows this route,
 installs that selected artifact, and runs the strict-confinement smoke checks.
 Build information embeds the original recipe for the workflow's identity check.
 
@@ -122,6 +129,8 @@ the Flutter payload in an installed Snap scaffold for quick development and
 may retain that scaffold's Ubuntu libraries and bundled tools. Even with
 `--no-install`, its output is not a dependency refresh and must not be used for
 a release, a security update, or validation of `stage-packages` changes.
+It selects Flutter from PATH; `BUSYMARK_FLUTTER_BIN` can select an executable
+by command name or path. The selected SDK must match the pinned version.
 
 ## Screenshots
 
@@ -145,9 +154,10 @@ a release, a security update, or validation of `stage-packages` changes.
       <sub><b>Reading view</b> for rendered documentation.</sub>
     </td>
     <td width="50%">
-      <img src="docs/screenshots/busymark-keyboard-shortcuts.png" alt="BusyMark keyboard shortcuts dialog">
+      <b>Keyboard Shortcuts</b> in Settings
       <br>
-      <sub><b>Keyboard shortcuts</b> reference.</sub>
+      Find actions or record a combination, assign shortcuts, resolve conflicts,
+      and restore defaults. <a href="docs/search-and-replace.md#keyboard-shortcut-settings">Shortcut guide</a>.
     </td>
   </tr>
   <tr>
@@ -202,17 +212,17 @@ BusyMark can open a **Nextcloud Notes** workspace alongside its local Markdown a
 ### Connect your account
 
 1. Ensure the **Notes** app is enabled on your Nextcloud server.
-2. On BusyMark’s welcome screen, choose **Nextcloud Notes**. You can also open **Settings → Nextcloud Notes**.
+2. On BusyMark’s welcome screen, choose **Browse Notes** or **New note** (both Nextcloud actions). You can also open **Settings → Nextcloud Notes**.
 3. Enter the full **HTTPS** address of your Nextcloud server and click **Connect**.
 4. Complete authorization in your default web browser. BusyMark verifies Notes compatibility and opens the note workspace.
 
-Once connected, select **Nextcloud Notes** on the welcome screen to reopen the workspace. Use **Settings → Nextcloud Notes** to open it, reconnect, or disconnect the account. **One Nextcloud account can be connected at a time.**
+Once connected, select **Browse Notes** on Welcome to reopen normal Notes navigation, or **New note** to create and open one note. Individual notes also reopen through Recent or Documents search. Use **Settings → Nextcloud Notes** to open it, reconnect, or disconnect the account. **One Nextcloud account can be connected at a time.**
 
 ### Work with notes
 
 * **Create and edit:** Create notes from the Notes sidebar and edit them using the normal Markdown editor. Use each note’s menu to change its title, category, or favorite status, save a separate local copy, or delete the note.
 * **Find and organize:** Use All notes, Favorites, Uncategorized, Recovery, or a category and its descendants. Sort by activity or title. Ctrl-click toggles selection, Shift-click selects a range, and Ctrl+A selects the current list; the selected-notes action reviews batch favorite/category changes and reports partial outcomes.
-* **Quick Open and search:** Ctrl+P finds titles/categories, including unopened cached notes; Ctrl+Shift+P opens the command palette. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, whole words, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
+* **Sidebar search:** Ctrl+Shift+D searches Documents by titles/categories, including unopened cached notes; Ctrl+Shift+P searches Actions. Ctrl+F searches only the current note’s buffer, while Ctrl+Shift+F searches the active account. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
 * **Work offline:** Edits and new notes are saved locally before synchronization and survive restart. **Make available offline** retains a note or category/subtree's supported managed media. Its status lists available/missing bytes and offers deliberate retry/cancellation. Offline availability, freshness, and acknowledged synchronization are separate states; external dependencies remain identified.
 * **Review conflicts:** If a note changes on the server while you have local edits, BusyMark preserves the competing versions for review instead of silently overwriting one. The comparison workflow supports choosing a version, merging changes, or recovering content as a separate note. Ambiguous note-creation results also require explicit review.
 * **Use attachments:** Add files to notes, view supported images and media, and include managed resources when exporting Markdown or HTML. PDF export includes supported images but does not embed arbitrary file attachments. New uploads are limited to **100 MiB per file**.
@@ -231,7 +241,7 @@ See the [Notes workspace guide](docs/development/nextcloud-notes.md#everyday-not
 BusyMark supports active-document replacement and reviewed workspace-wide
 replacement for local workspaces. Nextcloud Notes supports replacement within
 individual notes, but not workspace-wide replacement. See [Search and replace](docs/search-and-replace.md) for search
-options, scope, preview behavior, and stale-result handling.
+matching, scopes, preview behavior, and stale-result handling.
 
 ## Diagrams and mathematics
 

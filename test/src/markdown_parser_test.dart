@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/core/diagnostic.dart';
@@ -762,6 +763,38 @@ void main() {
       contains('writerside.topic.missing-title'),
     );
   });
+
+  test(
+    'medium multibyte parsing yields and preserves lossless offsets',
+    () async {
+      final source = List.generate(
+        150,
+        (i) => '## 日本語 😀 $i\n\nParagraph **bold** $i.\n',
+      ).join('\n');
+      expect(source.length, inInclusiveRange(4096, 64 * 1024 - 1));
+      var eventDelivered = false;
+      Timer.run(() {
+        eventDelivered = true;
+      });
+      final parsed = await parser.parseAsync(
+        filePath: 'medium.md',
+        source: source,
+        validateLocalReferences: false,
+      );
+      expect(eventDelivered, isTrue);
+      expect(parsed.source, source);
+      expect(parsed.headings, hasLength(150));
+      final sync = parser.parse(
+        filePath: 'medium.md',
+        source: source,
+        validateLocalReferences: false,
+      );
+      expect(
+        parsed.headings.map((h) => h.span.toJson()),
+        sync.headings.map((h) => h.span.toJson()),
+      );
+    },
+  );
 
   test('parseAsync handles documents above the background threshold', () async {
     final source = List.generate(

@@ -11,6 +11,131 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Нова нотатка зі збереженого тексту';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud попросив зачекати. Зачекайте перед повторним входом.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Оновлення Notes після підтвердження налаштувань';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Експорт не опубліковано. Перевірте джерело та призначення й повторіть.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Відновлену нотатку збережено, але не відкрито. Завершіть зміни редактора або властивостей і відкрийте цю наявну нотатку.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Зміні заважають очікувані нотатки, конфлікти або непевні створення. Синхронізуйте чи перевірте їх у Notes і повторіть збереження чернетки налаштувань.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Зміні заважають операції з вкладеннями. Перевірте їх у Notes і повторіть збереження збереженої чернетки.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Використайте канонічну HTTPS-адресу Nextcloud та ввійдіть знову. Адресу або перенаправлення не вдалося перевірити.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes недоступний або API не підтримується. Увімкніть Nextcloud Notes з основною версією API 1, додатковою 4 або новішою.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud відхилив облікові дані. Повторно авторизуйте або підключіть обліковий запис.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud заборонив перевірку можливостей Notes. Попросіть адміністратора дозволити її й повторіть.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Не вдалося перевірити відповідь Nextcloud. Перевірте встановлення сервера та ввійдіть знову.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Час входу минув. Почніть знову та завершіть авторизацію в браузері.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Системний браузер не відкрився. Перевірте типовий браузер і ввійдіть знову.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud недоступний. Перевірте з’єднання та сервер і ввійдіть знову.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud відхилив запит можливостей. Перевірте доступ з адміністратором і повторіть.';
+
+  @override
+  String get notesAccountFailed =>
+      'Налаштування облікового запису не завершено. Повторіть вхід.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Джерело змінилося після перевірки. Перевірте поточний файл або створіть новий знімок.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Не вдалося прочитати джерело. Перевірте доступ до файлу чи теки й перевірте знову.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Знімок недійсний або не підтримується. Виберіть коректний знімок BusyMark Notes або джерело Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Медіа перевищують ліміт імпорту. Зменште медіа відповідного елемента й перевірте знову.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Джерело містить небезпечний шлях. Виберіть файли в межах вихідної теки та перевірте знову.';
+
+  @override
+  String get notesTransferDestination =>
+      'Не вдалося записати експорт. Перевірте доступ і вільне місце в призначенні й повторіть.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Передавання не завершено. Перевірте відповідні елементи й повторіть. Раніше імпортовані елементи збережено.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Експорт доступний із пропусками';
+
+  @override
+  String get notesBatchUnchanged => 'Запитані значення вже встановлено.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Нотатка лише для читання. Захищені властивості змінювати не можна; обране змінювати можна.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Нотатка змінилася після перевірки. Перевірте поточний стан перед повторенням дії.';
+
+  @override
+  String get notesBatchMissing =>
+      'Нотатка більше недоступна. Оновіть список і перевірте вибрані елементи.';
+
+  @override
+  String get notesBatchStorage =>
+      'Локальне збереження не вдалося. Перевірте сховище й повторіть цей елемент; успішні елементи збережено.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Нотатка сервера змінилася. Чернетку злиття збережено. Перевірте нове порівняння й виберіть рішення знову.';
+
+  @override
+  String get notesReviewRemote => 'Я перевірив поточну версію сервера';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Правило регістру модуля не публікується.';
 
@@ -586,15 +711,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get keyboardShortcuts => 'Комбінації клавіш';
 
   @override
-  String get commandPalette => 'Палітра команд';
-
-  @override
-  String get commandPaletteHint => 'Введіть команду';
-
-  @override
-  String get commandPaletteEmpty => 'Немає відповідних команд';
-
-  @override
   String get commandUnavailableInContext =>
       'Ця команда недоступна в поточному контексті.';
 
@@ -813,7 +929,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Показати довідку з комбінацій клавіш';
+      'Налаштувати сполучення клавіш застосунку';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
@@ -1068,8 +1184,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get validateOnEdit => 'Перевіряти під час редагування';
 
   @override
-  String get clearRecentWorkspaces =>
-      'Очистити список останніх робочих областей';
+  String get clearRecentWorkspaces => 'Очистити недавню історію';
 
   @override
   String get editingButtonsPosition => 'Розташування кнопок редагування';
@@ -1874,15 +1989,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sourceSearchNextMatch => 'Наступний збіг';
 
   @override
-  String get sourceSearchCaseSensitive => 'З урахуванням регістру';
-
-  @override
-  String get sourceSearchWholeWord => 'Ціле слово';
-
-  @override
-  String get sourceSearchRegex => 'Регулярний вираз';
-
-  @override
   String get sourceSearchReplacement => 'Замінити на';
 
   @override
@@ -2009,13 +2115,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get saveAs => 'Зберегти як';
 
   @override
-  String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Збіги регулярних виразів нульової довжини не підтримуються (наприклад, ^, \$ або перевірки вперед, що збігаються лише з позицією).';
-
-  @override
   String get workspaceSearchIncomplete =>
       'Показано лише частину результатів. Покажіть більше або звузьте пошук.';
 
@@ -2122,6 +2221,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => 'Файл ресурсів';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Не вдалося оновити нещодавні елементи: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4415,9 +4519,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get clipboardHistory => 'Історія Вирізання';
 
   @override
-  String get clipboardHistorySearchHint => 'Пошук в історії буфера обміну';
-
-  @override
   String get clipboardHistoryDescription =>
       'Відкрити історію вирізання, прив\'язану до сесії.';
 
@@ -4438,10 +4539,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Історія вирізання порожня.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Жоден елемент вирізання не відповідає цьому пошуку.';
 
   @override
   String get clipboardDisabled =>
@@ -4499,13 +4596,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Цей документ не має версій локальної історії.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Жодна версія локальної історії не відповідає цьому пошуку.';
-
-  @override
-  String get localHistorySearchHint => 'Пошук у локальній історії';
 
   @override
   String get localHistorySelectedRevision => 'Обрана версія';
@@ -5466,4 +5556,400 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Елемент, що перевіряється, недоступний. Виберіть елемент для продовження.';
+
+  @override
+  String get searchDocumentsCategory => 'Документи';
+
+  @override
+  String get searchTopicsCategory => 'Теми';
+
+  @override
+  String get searchCurrentDocument => 'Поточний документ';
+
+  @override
+  String get searchCurrentWorkspace => 'Поточна робоча область';
+
+  @override
+  String get browseNotes => 'Переглянути нотатки';
+
+  @override
+  String get searchActionsCommand => 'Пошук дій';
+
+  @override
+  String get searchDocumentsCommand => 'Пошук документів';
+
+  @override
+  String get searchTopicsCommand => 'Пошук тем';
+
+  @override
+  String get searchRecentCommand => 'Пошук нещодавніх';
+
+  @override
+  String get searchResourceUnavailable => 'Цей ресурс недоступний.';
+
+  @override
+  String get notesSync => 'Синхронізувати нотатки';
+
+  @override
+  String get searchInWorkspace => 'Пошук у робочій області';
+
+  @override
+  String get searchCategory => 'Категорія пошуку';
+
+  @override
+  String get clearHistorySearchScope => 'Пошук в історії документів';
+
+  @override
+  String get searchInDocument => 'Пошук у документі';
+
+  @override
+  String get searchDocumentHint => 'Пошук у цьому документі…';
+
+  @override
+  String get searchWorkspaceHint => 'Пошук у цьому робочому просторі…';
+
+  @override
+  String get searchOutlineHint => 'Пошук заголовків…';
+
+  @override
+  String get searchHistoryHint => 'Пошук у локальній історії…';
+
+  @override
+  String get searchEnterText => 'Введіть текст для пошуку';
+
+  @override
+  String get searchAccountUnavailable => 'Обліковий запис недоступний';
+
+  @override
+  String get searchDocumentsHint => 'Пошук документів…';
+
+  @override
+  String get searchTopicsHint => 'Пошук тем…';
+
+  @override
+  String get searchRecentHint => 'Пошук нещодавніх…';
+
+  @override
+  String get searchActionsHint => 'Пошук дій…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Потрібен робочий простір нотаток';
+
+  @override
+  String get searchSidebarLabel => 'Пошук:';
+
+  @override
+  String get searchDocumentTextCategory => 'Текст документа';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Текст робочої області';
+
+  @override
+  String get searchHeadingsCategory => 'Заголовки';
+
+  @override
+  String get shortcutUnassigned => 'Не призначено';
+
+  @override
+  String get shortcutPressKeys => 'Натисніть сполучення клавіш…';
+
+  @override
+  String get shortcutRecord => 'Записати сполучення клавіш';
+
+  @override
+  String get shortcutRestoreAll => 'Відновити всі типові значення';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Відновити типові сполучення всіх дій? Власні призначення буде видалено.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Сполучення діють, але їх не збережено. Повторіть збереження, щоб залишити їх після перезапуску.';
+
+  @override
+  String get shortcutRetry => 'Повторити збереження';
+
+  @override
+  String get shortcutChanged =>
+      'Призначення змінилися. Перевірте поточні сполучення та повторіть спробу.';
+
+  @override
+  String get shortcutInvalid =>
+      'Це сполучення не можна призначити в цьому контексті.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Це сполучення може використовуватися стільницею. BusyMark не може перевизначати системні сполучення.';
+
+  @override
+  String get shortcutConflicts => 'Це сполучення конфліктує з такими діями:';
+
+  @override
+  String get shortcutRemove => 'Вилучити призначення';
+
+  @override
+  String get shortcutRestoreDefault => 'Відновити типове';
+
+  @override
+  String get shortcutAssign => 'Призначити';
+
+  @override
+  String get shortcutReassign => 'Перепризначити';
+
+  @override
+  String get shortcutContextApplication => 'Застосунок';
+
+  @override
+  String get shortcutContextDocument => 'Подання документа';
+
+  @override
+  String get shortcutContextEditor => 'Редактор і джерело';
+
+  @override
+  String get shortcutContextWritersideSource => 'Джерело Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Навігація робочою областю';
+
+  @override
+  String get shortcutContextTree => 'Дерева бічної панелі';
+
+  @override
+  String get searchHeadingsCommand => 'Пошук заголовків';
+
+  @override
+  String get shortcutFixed => 'Керується редактором; налаштування недоступне.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Типове сполучення конфліктує з користувацьким призначенням.';
+
+  @override
+  String get shortcutCurrentBinding => 'Поточне сполучення';
+
+  @override
+  String get shortcutProposedBinding => 'Запропоноване сполучення';
+
+  @override
+  String get notesActions => 'Дії з нотатками';
+
+  @override
+  String get noteActions => 'Дії з нотаткою';
+
+  @override
+  String get noteProperties => 'Властивості нотатки';
+
+  @override
+  String get notesExportAll => 'Експорт нотаток · Усі нотатки…';
+
+  @override
+  String get notesExportCategory => 'Експорт нотаток · Категорія…';
+
+  @override
+  String get notesOfflineAll => 'Зберегти для роботи без мережі · Усі нотатки';
+
+  @override
+  String get notesOfflineCategory =>
+      'Зберегти для роботи без мережі · Категорія';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Вилучити збереження без мережі · Усі нотатки';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Вилучити збереження без мережі · Категорія';
+
+  @override
+  String get notesOfflinePause => 'Призупинити завантаження';
+
+  @override
+  String get notesOfflineResume => 'Відновити завантаження';
+
+  @override
+  String get notesOfflineKeep => 'Зберегти для роботи без мережі';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Видалення вимоги не видаляє вміст кешу. Вимога категорії чи облікового запису може й надалі зберігати нотатку.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Ця нотатка також зберігається за вимогою категорії чи облікового запису.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Зовнішні медіа потребують з’єднання. BusyMark зберігає лише текст і керовані вкладення.';
+
+  @override
+  String get notesEmptyAll => 'Нотаток ще немає. Створіть першу.';
+
+  @override
+  String get notesEmptyFavorites => 'Немає улюблених нотаток.';
+
+  @override
+  String get notesEmptyCategory => 'У цій категорії немає нотаток.';
+
+  @override
+  String get notesEmptyUncategorized => 'Немає нотаток без категорії.';
+
+  @override
+  String get notesEmptyRecovery => 'Немає збережених нотаток для відновлення.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Помилка. Повторити';
+
+  @override
+  String get notesOperationFailed =>
+      'Не вдалося завершити операцію. Чернетку збережено. Перевірте збереження та конфлікти й повторіть спробу.';
+
+  @override
+  String get notesInspectionFailed => 'Вкладення · Помилка. Повторити';
+
+  @override
+  String get notesStartingConnection => 'Початок підключення до Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'Перевірка доступу до нотаток…';
+
+  @override
+  String get notesCancellingConnection => 'Скасування входу та очищення…';
+
+  @override
+  String get notesRemovingConnection =>
+      'Видалення локального облікового запису…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Локальний обліковий запис Nextcloud видалено. Відкликання пароля застосунку не підтверджено. Видаліть пароль BusyMark у налаштуваннях безпеки Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Не вдалося зберегти всі відкриті нотатки локально. Перевірте збереження, конфлікти чи нормалізацію в робочому просторі. Локальні зміни можуть ще потребувати синхронізації з Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Зберегти зміни налаштувань Nextcloud перед виходом?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Налаштування Notes на сервері · Незбережені зміни';
+
+  @override
+  String get notesSettingsReload => 'Перезавантажити налаштування сервера…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Перезавантаження замінить чернетку поточними налаштуваннями Nextcloud. Відкинути чернетку й перезавантажити?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud прийняв налаштування, але оновлення нотаток не вдалося. Показано значення, підтверджені сервером. Повторіть оновлення з Нотаток.';
+
+  @override
+  String get notesUnavailable =>
+      'Немає мережі · Текст доступний локально · Збережено локально · очікує синхронізації';
+
+  @override
+  String get notesStorageFull =>
+      'Сховище Nextcloud заповнене. Звільніть місце на сервері та повторіть спробу.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud відхилив цю зміну. Перевірте нотатку та збережіть локальну копію перед повторенням.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud попросив зачекати. Синхронізація продовжиться після зазначеного терміну.';
+
+  @override
+  String get notesRecoveryRequired => 'Конфлікти · Порівняти';
+
+  @override
+  String get notesScanning => 'Сканування файлів…';
+
+  @override
+  String get notesCancelling =>
+      'Скасування… Очікування завершення поточної операції.';
+
+  @override
+  String get notesCancelled => 'Скасовано';
+
+  @override
+  String get notesPartial => 'Частково завершено';
+
+  @override
+  String get notesTransferFailed => 'Помилка. Повторити';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Попередні елементи можуть уже бути збережені локально. Відновіть цей імпорт, щоб уникнути дублікатів.';
+
+  @override
+  String get notesNotStarted => 'Не розпочато';
+
+  @override
+  String get notesCreated => 'Створено';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Адреса сервера · Не підтримується · Видалити · Вкладення';
+
+  @override
+  String get notesCurrentText => 'Поточний збережений текст';
+
+  @override
+  String get notesRecovering => 'Відновлення як нової нотатки…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Лише читання · Обране · Зберегти локальну копію…';
+
+  @override
+  String get notesSort => 'Сортування нотаток';
+
+  @override
+  String get notesPathRelative =>
+      'Шлях папки нотаток задається відносно вашого сховища Nextcloud.';
+
+  @override
+  String get notesSettingsStale =>
+      'Налаштування на Nextcloud змінилися. Перезавантажте й перевірте значення сервера перед заміною чернетки.';
+
+  @override
+  String get notesDownloadsPaused => 'Завантаження призупинено';
+
+  @override
+  String get notesExportNotPublished => 'Експорт не опубліковано.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Розблокуйте системну в’язку ключів і повторіть спробу.';
+
+  @override
+  String get notesConnectFailed =>
+      'Не вдалося підключитися до Nextcloud Notes. Перевірте адресу сервера та повторіть спробу.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Увійдіть до того самого облікового запису Nextcloud. Щоб підключити інший, спершу видаліть цей.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Не вдалося очистити локальні дані. Обліковий запис збережено для повторного видалення.';
+
+  @override
+  String get notesTransferring => 'Передавання нотаток…';
+
+  @override
+  String get notesTechnicalDetails => 'Технічні відомості';
+
+  @override
+  String get notesPauseRequirement =>
+      'Призупинити вимогу автономного зберігання';
+
+  @override
+  String get notesResumeRequirement =>
+      'Відновити вимогу автономного зберігання';
 }

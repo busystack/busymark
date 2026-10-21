@@ -29,10 +29,10 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(pubspec, contains(RegExp(r'^version: 0\.6\.2$', multiLine: true)));
+    expect(pubspec, contains(RegExp(r'^version: 0\.6\.3$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "0\.6\.2"$', multiLine: true)),
+      contains(RegExp(r'^version: "0\.6\.3"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
@@ -57,7 +57,7 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="0.6.2"'));
+    expect(metainfo, contains('<release version="0.6.3"'));
     expect(pubspec, isNot(contains('0.6.11')));
     expect(snapcraft, isNot(contains('0.6.11')));
   });
@@ -161,15 +161,14 @@ void main() {
   });
 
   test('Linux CI builds and exercises the bundled visualization stack', () {
-    final workflow = File(
+    final applicationWorkflow = File(
       '.github/workflows/flutter-linux.yml',
     ).readAsStringSync();
+    final nativeWorkflow = File(
+      '.github/workflows/flutter-linux-native.yml',
+    ).readAsStringSync();
+    final workflow = '$applicationWorkflow\n$nativeWorkflow';
 
-    expect(
-      workflow,
-      isNot(contains("      - 'Release/**'")),
-      reason: 'Linux CI is intentionally limited to main-branch changes.',
-    );
     expect(workflow, contains('libwebkit2gtk-4.1-dev'));
     expect(workflow, contains('apparmor-profiles'));
     expect(workflow, contains('bwrap-userns-restrict'));
@@ -183,10 +182,13 @@ void main() {
     expect(workflow, contains('actions/setup-node@v7'));
     expect(workflow, contains('actions/upload-artifact@v7'));
     expect(workflow, contains("node-version: '22'"));
-    expect(workflow, contains('BUSYMARK_D2_PATH:'));
-    expect(workflow, contains('BUSYMARK_TYPST_PATH:'));
-    expect(workflow, contains('tools/visualization_smoke.py'));
-    expect(workflow, contains('--demo test/fixtures/markdown/basic.md'));
+    expect(applicationWorkflow, contains('BUSYMARK_D2_PATH:'));
+    expect(applicationWorkflow, contains('BUSYMARK_TYPST_PATH:'));
+    expect(applicationWorkflow, contains('tools/visualization_smoke.py'));
+    expect(
+      applicationWorkflow,
+      contains('--demo test/fixtures/markdown/basic.md'),
+    );
     expect(
       workflow,
       contains(
@@ -195,7 +197,7 @@ void main() {
       ),
     );
     expect(workflow, contains('GDK_BACKEND=wayland'));
-    expect(workflow, contains('GDK_BACKEND=x11'));
+    expect(applicationWorkflow, contains('GDK_BACKEND=x11'));
     expect(
       workflow,
       isNot(contains('WEBKIT_DISABLE_COMPOSITING_MODE')),
@@ -203,13 +205,16 @@ void main() {
           'Native smoke tests must exercise the offscreen view policy '
           'without globally disabling WebKit compositing.',
     );
-    expect(workflow, contains('snapcore/action-build@v1'));
+    expect(nativeWorkflow, contains('snapcore/action-build@v1'));
+    expect(nativeWorkflow, contains('squashfs-tools'));
+    // Parsed trigger, invocation, prerequisite and artifact-selection controls
+    // run in tools/test_official_flutter_workflow.py.
     expect(workflow, contains("if: steps.snapcraft.outcome == 'failure'"));
     expect(workflow, isNot(contains(r'${PRIMARY_SNAP:-$RETRY_SNAP}')));
     expect(workflow, contains(r'test "$PRIMARY_OUTCOME" = failure'));
     expect(workflow, contains(r'test "$RETRY_OUTCOME" = success'));
     expect(workflow, contains('busymark-snap-build-start'));
-    expect(workflow, contains('Refusing Snap outside the clean checkout'));
+    expect(nativeWorkflow, contains(r'case "$snap_path" in'));
     expect(
       workflow,
       contains(r'unsquashfs -cat "$snap_path" snap/snapcraft.yaml'),
@@ -218,9 +223,9 @@ void main() {
     expect(workflow, contains('sudo snap install --dangerous'));
     expect(workflow, isNot(contains('--dangerous --classic')));
     expect(workflow, contains('snap run busymark'));
-    expect(workflow, contains('--visualization-release-smoke='));
-    expect(workflow, contains('BUSYMARK_RELEASE_SMOKE=1'));
-    expect(workflow, contains('visualization-smoke.pdf'));
+    expect(applicationWorkflow, contains('--visualization-release-smoke='));
+    expect(applicationWorkflow, contains('BUSYMARK_RELEASE_SMOKE=1'));
+    expect(applicationWorkflow, contains('visualization-smoke.pdf'));
     final smoke = File('tools/visualization_smoke.py').readAsStringSync();
     expect(smoke, isNot(contains('demo/')));
     for (final fixture in <String>[

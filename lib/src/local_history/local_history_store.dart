@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show listEquals, visibleForTesting;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -357,14 +357,13 @@ class FileLocalHistoryStore implements LocalHistoryStore {
           await _deleteFileBestEffort(target);
           throw const LocalHistoryCaptureCancelled();
         }
-        final retained = await _applyRetention(
+        await _applyRetention(
           root,
           index,
           policy,
           revisionId,
           request.capturedAt.toUtc(),
         );
-        if (!identical(retained, index)) await _publishIndex(root, retained);
         return LocalHistoryCaptureResult(document: document, revision: summary);
       });
     });
@@ -394,14 +393,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     (root) => _withFileLock(root, () async {
       policy.validate();
       final index = await _loadIndexUnlocked(root, repair: true);
-      final retained = await _applyRetention(
-        root,
-        index,
-        policy,
-        null,
-        now.toUtc(),
-      );
-      if (!identical(retained, index)) await _publishIndex(root, retained);
+      await _applyRetention(root, index, policy, null, now.toUtc());
     }),
   );
 
@@ -627,10 +619,12 @@ class FileLocalHistoryStore implements LocalHistoryStore {
 
   Future<T> _serialized<T>(Future<T> Function(Directory root) operation) {
     final completer = Completer<T>();
+
     _queue = _queue.then<void>((_) async {
       try {
         final root = await _rootDirectory();
         await root.create(recursive: true);
+
         completer.complete(
           await _serializedForRoot(root, () => operation(root)),
         );
@@ -678,6 +672,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
           break;
         } on FileSystemException catch (error) {
           if (!_isLockContention(error)) rethrow;
+
           final remaining = _lockBudget - deadline.elapsed;
           if (remaining <= Duration.zero) throw LocalHistoryLockTimeout(error);
           await Future<void>.delayed(
@@ -1077,7 +1072,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     }
   }
 
-  Future<_Index> _applyRetention(
+  Future<void> _applyRetention(
     Directory root,
     _Index index,
     LocalHistoryPolicy policy,
@@ -1111,7 +1106,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         if (retainedDocumentIds.contains(document.id)) document,
     ];
     if (removed.isEmpty && documents.length == index.documents.length) {
-      return index;
+      return;
     }
     final retained = index.copyWith(
       documents: documents,
@@ -1127,20 +1122,44 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         _revisionFile(root, revision.documentId, revision.id),
       );
     }
-    return retained;
+    // The retained index is already durable before deletion. Republishing the
+    // identical index afterward adds two flushes without another state change.
   }
 
   Future<void> _publishIndex(Directory root, _Index index) async {
-    await _publishReplacingFile(
-      File(p.join(root.path, 'tombstones.json')),
-      const JsonEncoder.withIndent(
-        ' ',
-      ).convert(index.tombstones.toList()..sort()),
-    );
+    final journal = File(p.join(root.path, 'tombstones.json'));
+    final tombstones = const JsonEncoder.withIndent(
+      ' ',
+    ).convert(index.tombstones.toList()..sort());
+    // Every caller holds the store's interprocess lock. Reuse only the exact
+    // regular journal already on disk; never cache completed authority across
+    // transactions. New tombstones still commit before the index or deletion.
+    if (!await _journalMatches(journal, tombstones)) {
+      await _publishReplacingFile(journal, tombstones);
+    }
     await _publishReplacingFile(
       File(p.join(root.path, 'index.json')),
       const JsonEncoder.withIndent(' ').convert(index.toJson()),
     );
+  }
+
+  Future<bool> _journalMatches(File journal, String content) async {
+    try {
+      if (await FileSystemEntity.type(journal.path, followLinks: false) !=
+          FileSystemEntityType.file) {
+        return false;
+      }
+      final expected = utf8.encode(content);
+      if (await journal.length() != expected.length) return false;
+      final matches = listEquals(await journal.readAsBytes(), expected);
+      return matches &&
+          await FileSystemEntity.type(journal.path, followLinks: false) ==
+              FileSystemEntityType.file;
+    } on FileSystemException {
+      // A missing/unreadable journal cannot be reused. Attempt the same atomic
+      // publication as before; any publication failure still propagates.
+      return false;
+    }
   }
 
   Future<void> _publishNewFile(File target, String content) async {

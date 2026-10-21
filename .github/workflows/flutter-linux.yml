@@ -4,11 +4,20 @@ on:
   pull_request:
     branches:
       - main
+      - release/v0.6.3
   push:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
+  native-product:
+    uses: ./.github/workflows/flutter-linux-native.yml
+    with:
+      run-stress: false
+
   writerside-conformance:
     runs-on: ubuntu-24.04
 
@@ -27,6 +36,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Linux build dependencies
+        id: linux-dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -36,6 +46,8 @@ jobs:
             clang \
             cmake \
             dbus-daemon \
+            gsettings-desktop-schemas \
+            dconf-cli \
             fonts-noto-core \
             fonts-noto-cjk \
             fonts-noto-mono \
@@ -51,11 +63,15 @@ jobs:
             poppler-utils \
             python3-gi \
             python3-gi-cairo \
+            python3-yaml \
+            rsync \
             xvfb \
             weston \
             xz-utils
 
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
+        id: web-sandbox
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: |
           probe_bwrap() {
             bwrap --ro-bind / / --unshare-user --unshare-pid \
@@ -72,106 +88,102 @@ jobs:
           probe_bwrap
 
       - name: Set up Node.js for bundled web engines
+        id: node
+        if: ${{ !cancelled() }}
         uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: tools/visualization/package-lock.json
 
-      - name: Set up Flutter
+      - name: Select official pinned Flutter SDK
+        id: flutter-sdk
+        if: ${{ !cancelled() }}
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version-file: pubspec.yaml
+          flutter-version: '3.47.5'
           cache: true
 
       - name: Enable Linux desktop
+        if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
         run: flutter config --enable-linux-desktop
 
       - name: Resolve locked dependencies
+        id: flutter-packages
+        if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
         run: flutter pub get --enforce-lockfile
 
       - name: Test production GTK accent lookup and observer
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent.sh
 
       - name: Test secure credential namespace policy
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: bash tools/test_secure_credential_policy.sh
 
+      - name: Test native shortcut metadata
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_native_shortcut_metadata.sh
+
       - name: Generate localizations
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: flutter gen-l10n
 
       - name: Audit localization catalogs
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: flutter test test/src/localization_audit_test.dart
 
       - name: Verify generated files are committed
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: git diff --exit-code
 
       - name: Check formatting
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: dart format --set-exit-if-changed .
 
       - name: Analyze
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
         run: flutter analyze
 
       - name: Test native Hunspell package explicitly
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' && steps.linux-dependencies.outcome == 'success' }}
         working-directory: packages/busymark_spellcheck_native
         run: |
           dart pub get
           dart test
 
       - name: Prepare all-language spelling test resources
+        id: spelling-resources
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: tools/fetch_spelling_dictionaries.sh build/spelling-test
 
       - name: Validate every supported dictionary with the native engine
+        if: ${{ !cancelled() && steps.spelling-resources.outcome == 'success' && steps.flutter-packages.outcome == 'success' }}
         env:
           BUSYMARK_TEST_SPELLING_ROOT: ${{ github.workspace }}/build/spelling-test
         run: flutter test test/src/spelling_bundle_integration_test.dart
 
       - name: Build Linux release
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' && steps.linux-dependencies.outcome == 'success' && steps.node.outcome == 'success' }}
+        id: release-build
         run: flutter build linux --release
 
       - name: Test production GTK accent channel host and lifecycle
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
 
-      - name: Verify release ships catalog and notices without language pairs
-        run: |
-          spelling_root="build/linux/x64/release/bundle/share/busymark/spelling"
-          test -s "$spelling_root/dictionaries.json"
-          test -s "$spelling_root/NOTICE"
-          test -z "$(find "$spelling_root" -type f \( -name '*.aff' -o -name '*.dic' \) -print -quit)"
-
-      - name: Install one dictionary and exercise it after an offline restart
-        run: |
-          report="${RUNNER_TEMP}/spelling-release.json"
-          profile="${RUNNER_TEMP}/spelling-profile"
-          mkdir -p "$profile"
-          xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
-            build/linux/x64/release/bundle/busymark \
-            --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
-          sudo unshare --net --fork -- \
-            runuser -u "$(id -un)" -- \
-            xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
-            build/linux/x64/release/bundle/busymark \
-            --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
-
-      - name: Test including bundled D2 and Typst paths
-        env:
-          BUSYMARK_D2_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/d2
-          BUSYMARK_TYPST_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/typst
-        run: flutter test
 
       - name: Exercise demand-driven native visualization lifecycle
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 NO_AT_BRIDGE=1 \
             bash tools/test_web_render_host.sh
 
+
       - name: Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
@@ -181,19 +193,53 @@ jobs:
             --demo test/fixtures/markdown/basic.md \
             --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
 
+
       - name: Exercise the release binary visualization and PDF paths under X11
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           report="${RUNNER_TEMP}/visualization-release-x11.json"
           timeout --signal=TERM 300s \
             xvfb-run -a -s '-screen 0 1280x1024x24' \
             env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="${RUNNER_TEMP}/visualization-profile" \
             LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
 
+
+      - name: Verify release ships catalog and notices without language pairs
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          spelling_root="build/linux/x64/release/bundle/share/busymark/spelling"
+          test -s "$spelling_root/dictionaries.json"
+          test -s "$spelling_root/NOTICE"
+          test -z "$(find "$spelling_root" -type f \( -name '*.aff' -o -name '*.dic' \) -print -quit)"
+
+      - name: Install one dictionary and exercise it after an offline restart
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        run: |
+          report="${RUNNER_TEMP}/spelling-release.json"
+          profile="${RUNNER_TEMP}/spelling-profile"
+          mkdir -p "$profile"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
+          sudo unshare --net --fork -- \
+            runuser -u "$(id -un)" -- \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            dbus-run-session -- env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+
       - name: Run spelling and visualization smoke tests under Wayland
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' && steps.web-sandbox.outcome == 'success' }}
         run: |
           runtime_dir="/run/user/$(id -u)"
           sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
@@ -201,7 +247,7 @@ jobs:
             weston --backend=headless-backend.so --socket=wayland-99 \
             --idle-time=0 --log="${RUNNER_TEMP}/weston.log" &
           weston_pid=$!
-          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$weston_pid" 2>/dev/null || true; wait "$weston_pid" 2>/dev/null || true' EXIT
           for attempt in {1..40}; do
             if [ -S "$runtime_dir/wayland-99" ]; then
               break
@@ -213,25 +259,35 @@ jobs:
             sleep 0.25
           done
           test -S "$runtime_dir/wayland-99"
+          export runtime_dir
+          checks_failed=0
+          bash -euo pipefail <<'SPELLING' || checks_failed=1
           spelling_report="${RUNNER_TEMP}/spelling-release-wayland.json"
           spelling_profile="${RUNNER_TEMP}/spelling-profile"
           sudo unshare --net --fork -- \
             runuser -u "$(id -un)" -- \
+            dbus-run-session -- \
             env XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             XDG_DATA_HOME="$spelling_profile" GDK_BACKEND=wayland \
             BUSYMARK_RELEASE_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --spelling-release-smoke="$spelling_report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
-          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+          SPELLING
+          bash -euo pipefail <<'RENDERERS' || checks_failed=1
+          dbus-run-session -- env \
+            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1 \
             /usr/bin/python3 -u tools/visualization_smoke.py \
             --assets build/linux/x64/release/bundle/share/busymark/visualization \
             --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
             --demo test/fixtures/markdown/basic.md \
             --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
+          RENDERERS
+          bash -euo pipefail <<'COMPILED' || checks_failed=1
           report="${RUNNER_TEMP}/visualization-release-wayland.json"
-          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+          dbus-run-session -- env \
+            XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
             LIBGL_ALWAYS_SOFTWARE=1 \
             timeout --signal=TERM 300s \
@@ -239,254 +295,33 @@ jobs:
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+          COMPILED
+          exit "$checks_failed"
 
-  snap:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Prepare clean Snap artifact selection
+      # Independent application checks retain their own failure outcomes.
+      - name: Test process ownership and application lifecycle tooling
+        if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
         run: |
-          rm -f ./*.snap
-          touch "${RUNNER_TEMP}/busymark-snap-build-start"
+          /usr/bin/python3 -m unittest tools/test_owned_processes.py \
+            tools/test_application_close_smoke.py \
+            tools/test_run_owned_fixture.py \
+            tools/test_official_flutter_workflow.py
 
-      - name: Build strict Snap from a clean core24 environment (attempt 1)
-        id: snapcraft
-        uses: snapcore/action-build@v1
-        continue-on-error: true
-
-      - name: Retry strict Snap build after an infrastructure failure
-        id: snapcraft-retry
-        if: steps.snapcraft.outcome == 'failure'
-        uses: snapcore/action-build@v1
-
-      - name: Select built Snap
-        id: snap-artifact
+      - name: Test including bundled D2 and Typst paths
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
         env:
-          PRIMARY_SNAP: ${{ steps.snapcraft.outputs.snap }}
-          PRIMARY_OUTCOME: ${{ steps.snapcraft.outcome }}
-          RETRY_SNAP: ${{ steps.snapcraft-retry.outputs.snap }}
-          RETRY_OUTCOME: ${{ steps.snapcraft-retry.outcome }}
-        run: |
-          if [ "$PRIMARY_OUTCOME" = success ]; then
-            snap_path="$PRIMARY_SNAP"
-          else
-            test "$PRIMARY_OUTCOME" = failure
-            test "$RETRY_OUTCOME" = success
-            snap_path="$RETRY_SNAP"
-          fi
-          test -n "$snap_path"
-          test -f "$snap_path"
-          test "$snap_path" -nt "${RUNNER_TEMP}/busymark-snap-build-start"
-          snap_path="$(realpath "$snap_path")"
-          case "$snap_path" in
-            "$GITHUB_WORKSPACE"/*.snap) ;;
-            *) echo "Refusing Snap outside the clean checkout: $snap_path" >&2; exit 1 ;;
-          esac
-          test "$(unsquashfs -cat "$snap_path" snap/snapcraft.yaml | sha256sum | cut -d' ' -f1)" = \
-            "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
-          echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
+          BUSYMARK_D2_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/d2
+          BUSYMARK_TYPST_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/typst
+        # Real durable fixtures share the runner's filesystem. Keep the full
+        # suite bounded independently of a developer machine's CPU count.
+        run: flutter test --concurrency=2
 
-      - name: Upload Snap artifact
+      - name: Preserve compiled visualization report
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: busymark-snap
-          path: ${{ steps.snap-artifact.outputs.snap }}
-
-      - name: Install desktop smoke dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y weston xvfb
-
-      - name: Install strict Snap
-        run: >-
-          sudo snap install --dangerous
-          "${{ steps.snap-artifact.outputs.snap }}"
-
-      - name: Verify GTK SVG icon loader
-        run: |
-          snap run --shell busymark -c '
-            test ! -e \
-              "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/librsvg-2.so.2"
-            query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
-            loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
-            "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
-          '
-
-      - name: Verify shared runtimes, packaged tools, media, and resources
-        run: |
-          snap run --shell busymark -c '
-            set -eu
-            inspect_dependencies() {
-              dependency_object="$1"
-              if dependency_output="$(ldd "$dependency_object" 2>&1)"; then
-                :
-              else
-                printf "Dependency inspection failed: %s\n%s\n" \
-                  "$dependency_object" "$dependency_output" >&2
-                exit 1
-              fi
-              case "$dependency_output" in
-                *"not found"*)
-                  printf "Unresolved dependencies: %s\n%s\n" \
-                    "$dependency_object" "$dependency_output" >&2
-                  exit 1
-                  ;;
-              esac
-            }
-            require_resolution() {
-              required_library="$1"
-              required_path="$2"
-              resolved_path="$(printf "%s\n" "$dependency_output" | \
-                awk -v name="$required_library" \
-                  "\$1 == name && \$2 == \"=>\" { print \$3; exit }")"
-              if [ -z "$resolved_path" ] || \
-                  ! expected_real="$(readlink -e "$required_path")" || \
-                  ! resolved_real="$(readlink -e "$resolved_path")" || \
-                  [ "$resolved_real" != "$expected_real" ]; then
-                printf "Unexpected resolution for %s in %s; expected %s\n%s\n" \
-                  "$required_library" "$dependency_object" \
-                  "$required_path" "$dependency_output" >&2
-                exit 1
-              fi
-            }
-            app_lib="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
-            inspect_dependencies "$SNAP/busymark"
-            for library in \
-              libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 \
-              libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
-              test ! -e "$app_lib/$library"
-              require_resolution "$library" \
-                "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
-            done
-            graphics_lib="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
-            for library in \
-              libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 \
-              libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 \
-              libwayland-cursor.so.0 libwayland-egl.so.1; do
-              test ! -e "$app_lib/$library"
-              test -e "$graphics_lib/$library"
-              require_resolution "$library" "$graphics_lib/$library"
-            done
-            for helper in WebKitWebProcess WebKitNetworkProcess WebKitGPUProcess; do
-              test -x "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/webkit2gtk-4.1/$helper"
-            done
-            test -x "$SNAP/usr/bin/git"
-            test -x "$SNAP/usr/bin/ssh"
-            test -x "$SNAP/usr/bin/setsid"
-            inspect_dependencies "$SNAP/usr/lib/git-core/git-remote-http"
-            require_resolution libcurl-gnutls.so.4 \
-              "$app_lib/libcurl-gnutls.so.4"
-            GIT_EXEC_PATH="$SNAP/usr/lib/git-core" \
-              "$SNAP/usr/bin/git" --exec-path | grep -Fx "$SNAP/usr/lib/git-core"
-            "$SNAP/usr/bin/ssh" -V
-            provider_plugins="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
-            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
-              libgstogg.so libgsttheora.so libgstvpx.so; do
-              test -f "$provider_plugins/$plugin"
-              inspect_dependencies "$provider_plugins/$plugin"
-            done
-            private_plugins="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
-            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
-              libgstogg.so libgsttheora.so libgstvpx.so; do
-              test ! -e "$private_plugins/$plugin"
-            done
-            for plugin in libgstlibav.so libgstvideoparsersbad.so \
-              libgstmpeg2dec.so; do
-              test -f "$private_plugins/$plugin"
-              inspect_dependencies "$private_plugins/$plugin"
-            done
-            test -L "$SNAP/share/busymark/fonts"
-            test "$(readlink "$SNAP/share/busymark/fonts")" = \
-              ../../usr/share/fonts/truetype/noto
-            test -f "$SNAP/share/busymark/fonts/NotoSans-Regular.ttf"
-            test -f "$SNAP/usr/share/doc/fonts-noto-core/copyright"
-            test -f "$SNAP/usr/share/doc/fonts-noto-mono/copyright"
-            for resource_kind in themes icons; do
-              for resource_name in Yaru Yaru-dark; do
-                resource="$SNAP/share/$resource_kind/$resource_name"
-                test -L "$resource"
-                test -e "$resource"
-              done
-            done
-          '
-
-      - name: Install one strict-Snap dictionary and verify refresh/offline use
-        run: |
-          report="$HOME/snap/busymark/common/spelling-release.json"
-          rm -f "$report"
-          xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
-            --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
-          test -d "$HOME/snap/busymark/common/spelling/dictionaries/downloaded/en-US"
-          before_revision="$(snap list busymark | awk 'NR == 2 {print $3}')"
-          sudo snap install --dangerous \
-            "${{ steps.snap-artifact.outputs.snap }}"
-          after_revision="$(snap list busymark | awk 'NR == 2 {print $3}')"
-          test -n "$before_revision"
-          test -n "$after_revision"
-          test "$before_revision" != "$after_revision"
-          sudo snap disconnect busymark:network
-          trap 'sudo snap connect busymark:network >/dev/null' EXIT
-          xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
-            --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
-          sudo snap connect busymark:network
-          trap - EXIT
-
-      - name: Exercise strict Snap visualization and PDF paths under X11
-        run: |
-          report="$HOME/snap/busymark/common/visualization-release-x11.json"
-          mkdir -p "$(dirname "$report")"
-          timeout --signal=TERM 300s \
-            xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
-            --visualization-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
-          test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
-
-      - name: Exercise strict Snap spelling and visualization under Wayland
-        run: |
-          runtime_dir="/run/user/$(id -u)"
-          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
-          XDG_RUNTIME_DIR="$runtime_dir" \
-            weston --backend=headless-backend.so --socket=wayland-99 \
-            --idle-time=0 --log="${RUNNER_TEMP}/weston-snap.log" &
-          weston_pid=$!
-          sudo snap disconnect busymark:network
-          trap 'sudo snap connect busymark:network >/dev/null; kill "$weston_pid" 2>/dev/null || true' EXIT
-          for attempt in {1..40}; do
-            if [ -S "$runtime_dir/wayland-99" ]; then
-              break
-            fi
-            if ! kill -0 "$weston_pid" 2>/dev/null; then
-              cat "${RUNNER_TEMP}/weston-snap.log"
-              exit 1
-            fi
-            sleep 0.25
-          done
-          test -S "$runtime_dir/wayland-99"
-          spelling_report="$HOME/snap/busymark/common/spelling-release-wayland.json"
-          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
-            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 \
-            timeout --signal=TERM 300s snap run busymark \
-            --spelling-release-smoke="$spelling_report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
-          report="$HOME/snap/busymark/common/visualization-release-wayland.json"
-          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
-            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 \
-            timeout --signal=TERM 300s snap run busymark \
-            --visualization-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
-          test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
-          sudo snap connect busymark:network
-          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          name: visualization-release
+          path: |
+            ${{ runner.temp }}/visualization-release-x11.json
+            ${{ runner.temp }}/visualization-smoke.pdf
+          if-no-files-found: ignore

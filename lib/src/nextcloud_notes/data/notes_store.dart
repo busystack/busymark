@@ -237,7 +237,6 @@ class NotesStore {
     await _call('searchChunk', {
           'account': accountId,
           'query': query.text,
-          'wholeWord': query.wholeWord,
           'after': after,
           'continuation': continuation,
           'recovery': recovery,
@@ -462,10 +461,7 @@ Object? _execute(Database db, String action, dynamic argument) {
       return null;
     case 'searchChunk':
       final a = argument as Map;
-      final query = NotesSearchQuery(
-        a['query'] as String,
-        wholeWord: a['wholeWord'] as bool,
-      );
+      final query = NotesSearchQuery(a['query'] as String);
       final expression = query.ftsCandidates;
       final recovery = a['recovery'] == true;
       final rows = db.select(

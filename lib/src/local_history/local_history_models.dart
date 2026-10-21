@@ -201,6 +201,32 @@ class LocalHistoryRevision {
   bool get isIntact => sourceChecksum(source) == summary.checksum;
 }
 
+/// Search returns navigation metadata only. Revision bodies remain in the store.
+sealed class LocalHistorySearchMatch {
+  const LocalHistorySearchMatch(this.document);
+  final LocalHistoryDocument document;
+  String get identity;
+}
+
+final class LocalHistoryDocumentMatch extends LocalHistorySearchMatch {
+  const LocalHistoryDocumentMatch(super.document);
+  @override
+  String get identity => 'history-document:${document.id}';
+}
+
+final class LocalHistoryRevisionMatch extends LocalHistorySearchMatch {
+  const LocalHistoryRevisionMatch(super.document, this.revision);
+  final LocalHistoryRevisionSummary revision;
+  @override
+  String get identity => 'history-revision:${document.id}:${revision.id}';
+}
+
+class LocalHistorySearchPage {
+  const LocalHistorySearchPage(this.matches, {this.truncated = false});
+  final List<LocalHistorySearchMatch> matches;
+  final bool truncated;
+}
+
 @immutable
 class LocalHistorySnapshot {
   const LocalHistorySnapshot({

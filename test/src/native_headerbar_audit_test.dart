@@ -117,7 +117,7 @@ void main() {
       'tools/build_install_snap_local.sh',
     ).readAsStringSync();
     final workflow = File(
-      '.github/workflows/flutter-linux.yml',
+      '.github/workflows/flutter-linux-native.yml',
     ).readAsStringSync();
 
     expect(
@@ -134,7 +134,6 @@ void main() {
       localSnapBuilder,
       contains('squashfs-root/usr/lib/x86_64-linux-gnu/librsvg-2.so.2'),
     );
-    expect(workflow, contains('Verify GTK SVG icon loader'));
     expect(workflow, contains('libpixbufloader_svg.so'));
     expect(
       workflow,
@@ -182,11 +181,11 @@ void main() {
     expect(script, contains('development repack'));
     expect(script, contains('does not perform a dependency/security refresh'));
     expect(script, contains('For release/security refreshes'));
+    final sdkValidation = script.indexOf('actual_flutter_version=');
+    expect(sdkValidation, greaterThanOrEqualTo(0));
     expect(
       script.indexOf('NOTICE: this helper creates a development repack'),
-      lessThan(
-        script.indexOf(r'select_project_flutter "$REQUIRED_FLUTTER_VERSION"'),
-      ),
+      lessThan(sdkValidation),
     );
 
     final help = Process.runSync('bash', [
@@ -294,7 +293,7 @@ void main() {
     }
   });
 
-  test('local snap builder uses the project Flutter toolchain', () {
+  test('local snap builder uses the official Flutter toolchain', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final script = File('tools/build_install_snap_local.sh').readAsStringSync();
 
@@ -303,9 +302,11 @@ void main() {
       isTrue,
     );
     expect(script, contains('project_flutter_version'));
-    expect(script, contains('select_project_flutter'));
     expect(script, contains('BUSYMARK_FLUTTER_BIN'));
-    expect(script, contains(r'--branch "$required_version"'));
+    expect(script, contains('--version --machine'));
+    expect(script, contains('expected official Flutter'));
+    expect(script, isNot(contains('tools/flutter_engine')));
+    expect(script, isNot(contains('select_project_flutter')));
     expect(script, contains(r'"$FLUTTER_BIN" pub get --enforce-lockfile'));
     expect(script, contains(r'"$FLUTTER_BIN" analyze --no-pub'));
     expect(script, contains(r'"$FLUTTER_BIN" test --no-pub'));
@@ -320,19 +321,25 @@ void main() {
       multiLine: true,
     ).firstMatch(pubspec)!.group(1)!;
 
-    expect(snapcraft, contains('BUSYMARK_FLUTTER_VERSION: "$projectVersion"'));
     expect(
       snapcraft,
-      contains(r'git clone --depth 1 --branch "$BUSYMARK_FLUTTER_VERSION"'),
+      contains(
+        'source: https://storage.googleapis.com/flutter_infra_release/'
+        'releases/stable/linux/flutter_linux_$projectVersion-stable.tar.xz',
+      ),
     );
+    expect(snapcraft, matches(RegExp(r'source-checksum: sha256/[a-f0-9]{64}')));
     expect(
       snapcraft,
-      contains(r'git -C "$flutter_sdk" describe --tags --exact-match HEAD'),
+      contains(r'export FLUTTER_ROOT="$CRAFT_STAGE/flutter-sdk"'),
     );
-    expect(
-      snapcraft,
-      contains(r'"$flutter_sdk/bin/flutter" --no-version-check build linux'),
-    );
+    expect(snapcraft, contains('flutter build linux --release --no-pub'));
+    expect(snapcraft, isNot(contains('tools/flutter_engine')));
+    expect(snapcraft, isNot(contains('BUSYMARK_ENGINE_CACHE')));
+    expect(snapcraft, contains('build-attributes: [no-patchelf]'));
+    expect(snapcraft, contains('*/libflutter_linux_gtk.so) continue'));
+    expect(snapcraft, isNot(contains('--packaged')));
+    expect(snapcraft, isNot(contains('plugin: flutter')));
     expect(snapcraft, isNot(contains('git clone --depth 1 -b stable')));
   });
 
@@ -459,6 +466,7 @@ void main() {
     expect(nativeMenu, contains('cairo_curve_to('));
     expect(nativeMenu, contains('gtk_icon_info_load_symbolic('));
     expect(design, contains('shortcut: item.shortcut'));
+    expect(design, contains('gtkAccelerator: item.gtkAccelerator'));
     expect(design, contains('checkable: item.trailingCheck'));
     expect(design, contains('mutuallyExclusive: item.mutuallyExclusive'));
     expect(probe, contains('command == "assert-check"'));
@@ -476,10 +484,7 @@ void main() {
       'heading5',
       'heading6',
     ]) {
-      expect(
-        toolbar,
-        contains('shortcut: BusyMarkEditorShortcutLabels.$shortcut'),
-      );
+      expect(toolbar, contains("['editor.$shortcut']"));
     }
   });
 
@@ -591,7 +596,7 @@ void main() {
         isNot(contains('libflutter_secure_storage_linux_plugin.so')),
       );
       final workflow = File(
-        '.github/workflows/flutter-linux.yml',
+        '.github/workflows/flutter-linux-native.yml',
       ).readAsStringSync();
       expect(workflow, contains(r'graphics_lib="$SNAP/gpu-2404/usr/lib/'));
       expect(workflow, contains('libwayland-egl.so.1'));
@@ -685,16 +690,7 @@ void main() {
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
     expect(snapcraft, contains('export CI=true'));
-    expect(
-      snapcraft,
-      contains(
-        r'"$flutter_sdk/bin/flutter" --no-version-check precache --linux',
-      ),
-    );
-    expect(
-      snapcraft,
-      contains(r'"$flutter_sdk/bin/flutter" --no-version-check pub get'),
-    );
+    expect(snapcraft, contains('flutter pub get --enforce-lockfile'));
     expect(
       snapcraft,
       contains(r'ln -s "../../usr/share/$resource_kind/$resource_name"'),
@@ -765,7 +761,7 @@ void _verifyLocalFontRepack({required bool linkedScaffold}) {
     final root = '${fixture.path}/root';
     final tools = '$project/tools';
     final stubBin = '${fixture.path}/stub-bin';
-    final flutterSdk = '${fixture.path}/flutter-sdk';
+    final versionMarker = '${fixture.path}/official-version-selected';
     final fontDir = '$scaffold/share/busymark/fonts';
     final stagedFont =
         '$scaffold/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf';
@@ -801,15 +797,17 @@ void _verifyLocalFontRepack({required bool linkedScaffold}) {
     } else {
       _writeFixtureFile('$fontDir/NotoSans-Regular.ttf', 'old bundle font');
     }
-    _writeFixtureFile(
-      '$flutterSdk/bin/cache/flutter.version.json',
-      '{"frameworkVersion":"3.47.5"}\n',
-    );
-    _writeFixtureExecutable('$flutterSdk/bin/flutter', r'''#!/bin/sh
+    _writeFixtureExecutable('$stubBin/flutter', r'''#!/bin/sh
 set -eu
 case "$1" in
-  pub) exit 0 ;;
+  --version)
+    test "$2" = --machine
+    printf '{"frameworkVersion":"3.47.5"}\n'
+    touch "$STUB_FLUTTER_VERSION_MARKER"
+    exit 0 ;;
+  pub) test -f "$STUB_FLUTTER_VERSION_MARKER"; exit 0 ;;
   build)
+    test -f "$STUB_FLUTTER_VERSION_MARKER"
     bundle="$STUB_PROJECT/build/linux/x64/release/bundle"
     mkdir -p "$bundle/share/busymark/fonts"
     printf 'new bundle font bytes' > "$bundle/share/busymark/fonts/NotoSans-Regular.ttf"
@@ -853,7 +851,8 @@ exit 1
       environment: {
         ...Platform.environment,
         'PATH': '$stubBin:${Platform.environment['PATH']}',
-        'BUSYMARK_FLUTTER_BIN': '$flutterSdk/bin/flutter',
+        'STUB_FLUTTER_VERSION_MARKER': versionMarker,
+        'BUSYMARK_FLUTTER_BIN': '$stubBin/flutter',
         'BUSYMARK_BUILD_TMP_ROOT': '${fixture.path}/build-tmp',
         'STUB_PROJECT': project,
         'STUB_SNAP_ROOT': root,
@@ -865,6 +864,7 @@ exit 1
       0,
       reason: 'linked=$linkedScaffold\n${result.stdout}\n${result.stderr}',
     );
+    expect(File(versionMarker).existsSync(), isTrue);
     expect(File('${fixture.path}/local.snap').existsSync(), isTrue);
     expect(Link('$root/share/busymark/fonts').existsSync(), isFalse);
     expect(
@@ -888,12 +888,11 @@ exit 1
 
 String _sharedRuntimeValidationBody() {
   final workflow = File(
-    '.github/workflows/flutter-linux.yml',
+    '.github/workflows/flutter-linux-native.yml',
   ).readAsStringSync();
-  const step =
-      '      - name: Verify shared runtimes, packaged tools, media, and resources';
-  final stepAt = workflow.indexOf(step);
-  expect(stepAt, greaterThanOrEqualTo(0));
+  final commandAt = workflow.indexOf('            inspect_dependencies() {');
+  expect(commandAt, greaterThanOrEqualTo(0));
+  final stepAt = workflow.lastIndexOf('      - ', commandAt);
   final bodyAt =
       workflow.indexOf('        run: |\n', stepAt) + '        run: |\n'.length;
   final nextStepAt = workflow.indexOf('\n      - name:', bodyAt);

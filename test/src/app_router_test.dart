@@ -71,6 +71,10 @@ void main() {
     expect(settingsPageFromRouteValue(null), SettingsPage.appearance);
     expect(settingsPageFromRouteValue('editor'), SettingsPage.editor);
     expect(
+      settingsPageFromRouteValue('keyboardShortcuts'),
+      SettingsPage.keyboardShortcuts,
+    );
+    expect(
       settingsPageFromRouteValue('spellingDictionaries'),
       SettingsPage.spellingDictionaries,
     );
@@ -120,7 +124,7 @@ void main() {
       );
 
       await tester.tap(
-        find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+        find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
       );
       await tester.pumpAndSettle();
 
@@ -158,7 +162,7 @@ void main() {
     for (var index = 0; index < 30; index += 1) {
       await tester.pump(const Duration(milliseconds: 100));
       if (find
-          .byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})')
+          .byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})')
           .evaluate()
           .isNotEmpty) {
         break;
@@ -166,18 +170,18 @@ void main() {
     }
 
     expect(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
       findsOneWidget,
     );
     await tester.tap(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
     );
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text(l10n.createMarkdownFile), findsOneWidget);
     expect(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcuts.back.label})'),
       findsNothing,
     );
   });
@@ -213,9 +217,7 @@ class _StaleWorkspaceController extends WorkspaceController {
   }
 
   @override
-  Future<bool> restoreStartupSession({
-    required bool reopenCleanSession,
-  }) async => false;
+  Future<bool> restoreStartupSession({bool? reopenCleanSession}) async => false;
 }
 
 class _RestoringWorkspaceController extends WorkspaceController {
@@ -223,7 +225,7 @@ class _RestoringWorkspaceController extends WorkspaceController {
   WorkspaceState build() => const WorkspaceState();
 
   @override
-  Future<bool> restoreStartupSession({required bool reopenCleanSession}) =>
+  Future<bool> restoreStartupSession({bool? reopenCleanSession}) =>
       restorePreviousSession();
 
   @override

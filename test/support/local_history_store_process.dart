@@ -1,22 +1,26 @@
-// Runs under Flutter's test runtime because the production store's dependency
-// graph includes dart:ui. Each invocation is an independent OS process.
+// Prepared once with `flutter build bundle` and run by the selected official
+// flutter_tester because the production store's dependency graph includes
+// dart:ui. Each invocation is an independent OS process; no nested flutter
+// test/tool startup is involved.
 import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-void main() {
+Future<void> main() async {
   final rootPath = Platform.environment['BUSYMARK_HISTORY_PROCESS_ROOT'];
   if (rootPath == null) return;
-  test('independent history process', () async {
+  try {
     final root = Directory(rootPath);
     final signal = Platform.environment['BUSYMARK_HISTORY_PROCESS_SIGNAL']!;
     final mode = Platform.environment['BUSYMARK_HISTORY_PROCESS_MODE']!;
-    await File('$signal.pid').writeAsString('$pid');
+    stderr.writeln('HISTORY_FIXTURE runtime-entered pid=$pid');
+    if (mode == 'fail-before-ready') {
+      throw StateError('Controlled history process failure before readiness');
+    }
     Future<void> waitForRelease() async {
       final deadline = Stopwatch()..start();
       while (!await File('$signal.release').exists()) {
@@ -39,7 +43,7 @@ void main() {
       } finally {
         await handle.close();
       }
-      return;
+      exit(0);
     }
     if (mode == 'replace-paths') {
       final store = FileLocalHistoryStore(rootDirectory: () async => root);
@@ -79,7 +83,7 @@ void main() {
       );
       await File('$signal.ready').writeAsString('replaced');
       await waitForRelease();
-      return;
+      exit(0);
     }
     final owner = Platform.environment['BUSYMARK_HISTORY_PROCESS_OWNER']!;
     final store = FileLocalHistoryStore(rootDirectory: () async => root);
@@ -98,7 +102,7 @@ void main() {
       );
       await File('$signal.ready').writeAsString('recaptured');
       await waitForRelease();
-      return;
+      exit(0);
     }
     await File('$signal.ready').writeAsString('ready');
     await waitForRelease();
@@ -119,6 +123,13 @@ void main() {
       documentId = result.document.id;
       await File('$signal.progress').writeAsString('${index + 1}');
     }
-    expect((await store.load()).revisionsFor(documentId!), hasLength(8));
-  }, timeout: const Timeout(Duration(seconds: 60)));
+    final snapshot = await store.load();
+    if (snapshot.revisionsFor(documentId!).length != 8) {
+      throw StateError('Expected eight production revisions for $documentId');
+    }
+    exit(0);
+  } on Object catch (error, stack) {
+    stderr.writeln('$error\n$stack');
+    exit(1);
+  }
 }

@@ -11,6 +11,109 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => '从保留的文本新建笔记';
+
+  @override
+  String get notesAccountThrottled => 'Nextcloud 要求暂停。请等待后再重新登录。';
+
+  @override
+  String get notesSettingsRefreshing => '正在按已确认的设置更新笔记';
+
+  @override
+  String get notesExportOperationFailed => '导出在发布前失败。请检查来源和目标后重新导出。';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
+
+  @override
+  String get notesAccountServerAddress =>
+      '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
+
+  @override
+  String get notesAccountUnsupported =>
+      '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
+
+  @override
+  String get notesAccountAuthorizeAgain => 'Nextcloud 拒绝了凭据。请重新授权或重新连接账户。';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
+
+  @override
+  String get notesAccountMalformed => '无法验证 Nextcloud 的响应。请检查服务器安装并重新登录。';
+
+  @override
+  String get notesAccountTimedOut => '登录超时。请重新登录并在浏览器中完成授权。';
+
+  @override
+  String get notesAccountBrowserUnavailable => '无法打开系统浏览器。请检查默认浏览器并重新登录。';
+
+  @override
+  String get notesAccountNetwork => '无法连接 Nextcloud。请检查网络和服务器后重新登录。';
+
+  @override
+  String get notesAccountRejected => 'Nextcloud 拒绝了功能请求。请与管理员确认访问权限后重试。';
+
+  @override
+  String get notesAccountFailed => '无法完成账户设置。请重新登录。';
+
+  @override
+  String get notesTransferSourceChanged => '来源在审核后已更改。请重新审核当前文件或创建新快照后重试。';
+
+  @override
+  String get notesTransferUnreadable => '无法读取来源。请检查文件或文件夹的访问权限，再重新审核。';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
+
+  @override
+  String get notesTransferMediaLimit => '媒体超出导入大小限制。请缩小受影响项目的媒体，再重新审核。';
+
+  @override
+  String get notesTransferUnsafeSource => '来源包含不安全的路径。请选择来源文件夹内的文件并重新审核。';
+
+  @override
+  String get notesTransferDestination => '无法写入导出内容。请检查目标的访问权限和可用空间后重新导出。';
+
+  @override
+  String get notesTransferOperationFailed => '传输未能完成。请检查受影响的项目并重试。之前导入的项目仍已保存。';
+
+  @override
+  String get notesExportPublishedWithOmissions => '导出已发布，但有遗漏';
+
+  @override
+  String get notesBatchUnchanged => '请求的值已经设置。';
+
+  @override
+  String get notesBatchReadOnly => '此笔记为只读。受保护的属性无法更改，但仍可修改收藏状态。';
+
+  @override
+  String get notesBatchReviewChanged => '此笔记在审核后已更改。请审核当前状态后重新执行操作。';
+
+  @override
+  String get notesBatchMissing => '此笔记已不可用。请刷新列表并重新检查操作目标。';
+
+  @override
+  String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
+
+  @override
+  String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
+
+  @override
+  String get notesReviewRemote => '我已审核当前服务器版本';
+
+  @override
   String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';
 
   @override
@@ -556,15 +659,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keyboardShortcuts => '键盘快捷键';
 
   @override
-  String get commandPalette => '命令面板';
-
-  @override
-  String get commandPaletteHint => '输入命令';
-
-  @override
-  String get commandPaletteEmpty => '没有匹配的命令';
-
-  @override
   String get commandUnavailableInContext => '当前编辑器上下文中无法使用此命令';
 
   @override
@@ -776,7 +870,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutSearchDescription => '搜索当前工作区';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '显示此键盘快捷键参考';
+  String get shortcutKeyboardShortcutsDescription => '自定义应用程序键盘快捷键';
 
   @override
   String get shortcutSyntaxReferenceDescription => '打开语法参考';
@@ -1001,7 +1095,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get validateOnEdit => '编辑时验证';
 
   @override
-  String get clearRecentWorkspaces => '清除最近使用的工作区';
+  String get clearRecentWorkspaces => '清除最近记录';
 
   @override
   String get editingButtonsPosition => '编辑按钮位置';
@@ -1759,15 +1853,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sourceSearchNextMatch => '下一个匹配项';
 
   @override
-  String get sourceSearchCaseSensitive => '区分大小写';
-
-  @override
-  String get sourceSearchWholeWord => '全字匹配';
-
-  @override
-  String get sourceSearchRegex => '正则表达式';
-
-  @override
   String get sourceSearchReplacement => '替换为';
 
   @override
@@ -1886,13 +1971,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get saveAs => '另存为';
 
   @override
-  String get sourceSearchInvalidRegex => '无效的正则表达式';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
-
-  @override
   String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
 
   @override
@@ -1995,6 +2073,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => '资源文件';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return '无法更新最近使用的项目：$error。';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4161,9 +4244,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clipboardHistory => '剪贴板历史';
 
   @override
-  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
-
-  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -4182,9 +4262,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clipboardNoItems => '剪贴板历史为空。';
-
-  @override
-  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
 
   @override
   String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
@@ -4235,12 +4312,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get localHistoryNoRevisions => '此文档没有本地历史修订。';
-
-  @override
-  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
-
-  @override
-  String get localHistorySearchHint => '搜索本地历史记录';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';
@@ -5165,6 +5236,369 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
+
+  @override
+  String get searchDocumentsCategory => '文档';
+
+  @override
+  String get searchTopicsCategory => '主题';
+
+  @override
+  String get searchCurrentDocument => '当前文档';
+
+  @override
+  String get searchCurrentWorkspace => '当前工作区';
+
+  @override
+  String get browseNotes => '浏览笔记';
+
+  @override
+  String get searchActionsCommand => '搜索操作';
+
+  @override
+  String get searchDocumentsCommand => '搜索文档';
+
+  @override
+  String get searchTopicsCommand => '搜索主题';
+
+  @override
+  String get searchRecentCommand => '搜索最近项目';
+
+  @override
+  String get searchResourceUnavailable => '此资源不可用。';
+
+  @override
+  String get notesSync => '同步笔记';
+
+  @override
+  String get searchInWorkspace => '在工作区中搜索';
+
+  @override
+  String get searchCategory => '搜索类别';
+
+  @override
+  String get clearHistorySearchScope => '搜索文档历史记录';
+
+  @override
+  String get searchInDocument => '在文档中搜索';
+
+  @override
+  String get searchDocumentHint => '搜索此文档…';
+
+  @override
+  String get searchWorkspaceHint => '搜索此工作区…';
+
+  @override
+  String get searchOutlineHint => '搜索标题…';
+
+  @override
+  String get searchHistoryHint => '搜索本地历史记录…';
+
+  @override
+  String get searchEnterText => '输入要搜索的文本';
+
+  @override
+  String get searchAccountUnavailable => '账户不可用';
+
+  @override
+  String get searchDocumentsHint => '搜索文档…';
+
+  @override
+  String get searchTopicsHint => '搜索主题…';
+
+  @override
+  String get searchRecentHint => '搜索最近项目…';
+
+  @override
+  String get searchActionsHint => '搜索操作…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '需要笔记工作区';
+
+  @override
+  String get searchSidebarLabel => '搜索：';
+
+  @override
+  String get searchDocumentTextCategory => '文档文本';
+
+  @override
+  String get searchWorkspaceTextCategory => '工作区文本';
+
+  @override
+  String get searchHeadingsCategory => '标题';
+
+  @override
+  String get shortcutUnassigned => '未分配';
+
+  @override
+  String get shortcutPressKeys => '请按下组合键…';
+
+  @override
+  String get shortcutRecord => '录制快捷键';
+
+  @override
+  String get shortcutRestoreAll => '恢复所有默认设置';
+
+  @override
+  String get shortcutRestoreAllQuestion => '恢复所有操作的默认快捷键？自定义分配将被移除。';
+
+  @override
+  String get shortcutSaveFailed => '快捷键已生效，但无法保存。请重试保存以便重启后保留。';
+
+  @override
+  String get shortcutRetry => '重试保存';
+
+  @override
+  String get shortcutChanged => '分配已更改。请检查当前快捷键并重试。';
+
+  @override
+  String get shortcutInvalid => '无法在此上下文中分配此组合键。';
+
+  @override
+  String get shortcutSystemWarning => '桌面可能正在使用此组合键。BusyMark 无法覆盖系统快捷键。';
+
+  @override
+  String get shortcutConflicts => '此快捷键与以下操作冲突：';
+
+  @override
+  String get shortcutRemove => '移除分配';
+
+  @override
+  String get shortcutRestoreDefault => '恢复默认设置';
+
+  @override
+  String get shortcutAssign => '分配';
+
+  @override
+  String get shortcutReassign => '重新分配';
+
+  @override
+  String get shortcutContextApplication => '应用程序';
+
+  @override
+  String get shortcutContextDocument => '文档视图';
+
+  @override
+  String get shortcutContextEditor => '编辑器和源码';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 源码';
+
+  @override
+  String get shortcutContextWorkspace => '工作区导航';
+
+  @override
+  String get shortcutContextTree => '侧栏树';
+
+  @override
+  String get searchHeadingsCommand => '搜索标题';
+
+  @override
+  String get shortcutFixed => '由编辑器管理，无法配置。';
+
+  @override
+  String get shortcutDefaultConflict => '默认快捷键与自定义分配冲突。';
+
+  @override
+  String get shortcutCurrentBinding => '当前快捷键';
+
+  @override
+  String get shortcutProposedBinding => '拟用快捷键';
+
+  @override
+  String get notesActions => '笔记操作';
+
+  @override
+  String get noteActions => '此笔记的操作';
+
+  @override
+  String get noteProperties => '笔记属性';
+
+  @override
+  String get notesExportAll => '导出笔记 · 所有笔记…';
+
+  @override
+  String get notesExportCategory => '导出笔记 · 类别…';
+
+  @override
+  String get notesOfflineAll => '设为离线可用 · 所有笔记';
+
+  @override
+  String get notesOfflineCategory => '设为离线可用 · 类别';
+
+  @override
+  String get notesOfflineRemoveAll => '移除离线保留要求 · 所有笔记';
+
+  @override
+  String get notesOfflineRemoveCategory => '移除离线保留要求 · 类别';
+
+  @override
+  String get notesOfflinePause => '暂停下载';
+
+  @override
+  String get notesOfflineResume => '继续下载';
+
+  @override
+  String get notesOfflineKeep => '设为离线可用';
+
+  @override
+  String get notesOfflineRetentionHelp => '移除此保留要求不会删除现有缓存。分类或账户的要求仍可能保留此笔记。';
+
+  @override
+  String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
+
+  @override
+  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+
+  @override
+  String get notesEmptyAll => '还没有笔记。请新建一条笔记。';
+
+  @override
+  String get notesEmptyFavorites => '没有收藏的笔记。';
+
+  @override
+  String get notesEmptyCategory => '此分类中没有笔记。';
+
+  @override
+  String get notesEmptyUncategorized => '没有未分类笔记。';
+
+  @override
+  String get notesEmptyRecovery => '没有可恢复的本地保留笔记。';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · 失败. 重试';
+
+  @override
+  String get notesOperationFailed => '无法完成操作。草稿已保留。请检查保存状态和冲突后重试。';
+
+  @override
+  String get notesInspectionFailed => '附件 · 失败. 重试';
+
+  @override
+  String get notesStartingConnection => '正在连接 Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => '正在验证笔记访问权限…';
+
+  @override
+  String get notesCancellingConnection => '正在取消登录并清理…';
+
+  @override
+  String get notesRemovingConnection => '正在移除本地账户…';
+
+  @override
+  String get notesRemovedWarning =>
+      '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
+
+  @override
+  String get notesBuffersNotSaved =>
+      '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
+
+  @override
+  String get notesSettingsLeave => '离开前保存 Nextcloud 设置更改吗？';
+
+  @override
+  String get notesSettingsLeaveHelp => '服务器 Notes 设置 · 未保存的更改';
+
+  @override
+  String get notesSettingsReload => '重新加载服务器设置…';
+
+  @override
+  String get notesSettingsReloadHelp => '重新加载会用 Nextcloud 当前设置替换草稿。放弃草稿并重新加载吗？';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
+
+  @override
+  String get notesUnavailable => '离线 · 文本已在本地可用 · 已保存到本地 · 等待同步';
+
+  @override
+  String get notesStorageFull => 'Nextcloud 存储空间已满。请释放服务器空间后重试。';
+
+  @override
+  String get notesRejected => 'Nextcloud 拒绝了此更改。请检查笔记并保存本地副本后重试。';
+
+  @override
+  String get notesThrottled => 'Nextcloud 要求稍候。同步将在重试期限后继续。';
+
+  @override
+  String get notesRecoveryRequired => '冲突 · 比较';
+
+  @override
+  String get notesScanning => '正在扫描文件…';
+
+  @override
+  String get notesCancelling => '正在取消…等待当前操作结束。';
+
+  @override
+  String get notesCancelled => '已取消';
+
+  @override
+  String get notesPartial => '部分完成';
+
+  @override
+  String get notesTransferFailed => '失败. 重试';
+
+  @override
+  String get notesImportPartialHelp => '之前的项目可能已保存在本地。请继续本次导入，以免创建重复笔记。';
+
+  @override
+  String get notesNotStarted => '尚未开始';
+
+  @override
+  String get notesCreated => '已创建';
+
+  @override
+  String get notesRemoteDeleteUnavailable => '服务器地址 · 不支持 · 删除 · 附件';
+
+  @override
+  String get notesCurrentText => '当前保留的文本';
+
+  @override
+  String get notesRecovering => '正在恢复为新笔记…';
+
+  @override
+  String get notesReadOnlyHelp => '只读 · 收藏 · 保存本地副本…';
+
+  @override
+  String get notesSort => '笔记排序';
+
+  @override
+  String get notesPathRelative => '笔记文件夹路径相对于您的 Nextcloud 存储空间。';
+
+  @override
+  String get notesSettingsStale => 'Nextcloud 上的设置已更改。请重新加载并检查服务器值，再替换草稿。';
+
+  @override
+  String get notesDownloadsPaused => '下载已暂停';
+
+  @override
+  String get notesExportNotPublished => '未发布任何导出。';
+
+  @override
+  String get notesKeyringUnavailable => '请解锁桌面密钥环后重试。';
+
+  @override
+  String get notesConnectFailed => '无法连接 Nextcloud Notes。请检查服务器地址后重试。';
+
+  @override
+  String get notesAccountMismatch => '请登录同一 Nextcloud 账户。要连接其他账户，请先移除此账户。';
+
+  @override
+  String get notesLocalRemovalFailed => '本地账户清理失败。账户已保留，以便重试移除。';
+
+  @override
+  String get notesTransferring => '正在传输笔记…';
+
+  @override
+  String get notesTechnicalDetails => '技术详情';
+
+  @override
+  String get notesPauseRequirement => '暂停离线保留要求';
+
+  @override
+  String get notesResumeRequirement => '继续离线保留要求';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -5172,6 +5606,109 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
 
   @override
+  String get notesNewFromRetainedText => '从保留的文本新建笔记';
+
+  @override
+  String get notesAccountThrottled => 'Nextcloud 要求暂停。请等待后再重新登录。';
+
+  @override
+  String get notesSettingsRefreshing => '正在按已确认的设置更新笔记';
+
+  @override
+  String get notesExportOperationFailed => '导出在发布前失败。请检查来源和目标后重新导出。';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
+
+  @override
+  String get notesAccountServerAddress =>
+      '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
+
+  @override
+  String get notesAccountUnsupported =>
+      '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
+
+  @override
+  String get notesAccountAuthorizeAgain => 'Nextcloud 拒绝了凭据。请重新授权或重新连接账户。';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
+
+  @override
+  String get notesAccountMalformed => '无法验证 Nextcloud 的响应。请检查服务器安装并重新登录。';
+
+  @override
+  String get notesAccountTimedOut => '登录超时。请重新登录并在浏览器中完成授权。';
+
+  @override
+  String get notesAccountBrowserUnavailable => '无法打开系统浏览器。请检查默认浏览器并重新登录。';
+
+  @override
+  String get notesAccountNetwork => '无法连接 Nextcloud。请检查网络和服务器后重新登录。';
+
+  @override
+  String get notesAccountRejected => 'Nextcloud 拒绝了功能请求。请与管理员确认访问权限后重试。';
+
+  @override
+  String get notesAccountFailed => '无法完成账户设置。请重新登录。';
+
+  @override
+  String get notesTransferSourceChanged => '来源在审核后已更改。请重新审核当前文件或创建新快照后重试。';
+
+  @override
+  String get notesTransferUnreadable => '无法读取来源。请检查文件或文件夹的访问权限，再重新审核。';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
+
+  @override
+  String get notesTransferMediaLimit => '媒体超出导入大小限制。请缩小受影响项目的媒体，再重新审核。';
+
+  @override
+  String get notesTransferUnsafeSource => '来源包含不安全的路径。请选择来源文件夹内的文件并重新审核。';
+
+  @override
+  String get notesTransferDestination => '无法写入导出内容。请检查目标的访问权限和可用空间后重新导出。';
+
+  @override
+  String get notesTransferOperationFailed => '传输未能完成。请检查受影响的项目并重试。之前导入的项目仍已保存。';
+
+  @override
+  String get notesExportPublishedWithOmissions => '导出已发布，但有遗漏';
+
+  @override
+  String get notesBatchUnchanged => '请求的值已经设置。';
+
+  @override
+  String get notesBatchReadOnly => '此笔记为只读。受保护的属性无法更改，但仍可修改收藏状态。';
+
+  @override
+  String get notesBatchReviewChanged => '此笔记在审核后已更改。请审核当前状态后重新执行操作。';
+
+  @override
+  String get notesBatchMissing => '此笔记已不可用。请刷新列表并重新检查操作目标。';
+
+  @override
+  String get notesBatchStorage => '本地保存失败。请检查存储并重试此项目；成功的项目仍已保存。';
+
+  @override
+  String get notesRemoteReviewChanged => '服务器笔记已更改。合并草稿已保留。请审核更新的比较并重新选择解决方式。';
+
+  @override
+  String get notesReviewRemote => '我已审核当前服务器版本';
+
+  @override
   String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';
 
   @override
@@ -5717,15 +6254,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get keyboardShortcuts => '键盘快捷键';
 
   @override
-  String get commandPalette => '命令面板';
-
-  @override
-  String get commandPaletteHint => '输入命令';
-
-  @override
-  String get commandPaletteEmpty => '没有匹配的命令';
-
-  @override
   String get commandUnavailableInContext => '当前编辑器上下文中无法使用此命令';
 
   @override
@@ -5937,7 +6465,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get shortcutSearchDescription => '搜索当前工作区';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => '显示此键盘快捷键参考';
+  String get shortcutKeyboardShortcutsDescription => '自定义应用程序键盘快捷键';
 
   @override
   String get shortcutSyntaxReferenceDescription => '打开语法参考';
@@ -6162,7 +6690,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get validateOnEdit => '编辑时验证';
 
   @override
-  String get clearRecentWorkspaces => '清除最近使用的工作区';
+  String get clearRecentWorkspaces => '清除最近记录';
 
   @override
   String get editingButtonsPosition => '编辑按钮位置';
@@ -6920,15 +7448,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get sourceSearchNextMatch => '下一个匹配项';
 
   @override
-  String get sourceSearchCaseSensitive => '区分大小写';
-
-  @override
-  String get sourceSearchWholeWord => '全字匹配';
-
-  @override
-  String get sourceSearchRegex => '正则表达式';
-
-  @override
   String get sourceSearchReplacement => '替换为';
 
   @override
@@ -7047,13 +7566,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get saveAs => '另存为';
 
   @override
-  String get sourceSearchInvalidRegex => '无效的正则表达式';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
-
-  @override
   String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
 
   @override
@@ -7156,6 +7668,11 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get documentKindResourceFile => '资源文件';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return '无法更新最近使用的项目：$error。';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -9322,9 +9839,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get clipboardHistory => '剪贴板历史';
 
   @override
-  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
-
-  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -9343,9 +9857,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get clipboardNoItems => '剪贴板历史为空。';
-
-  @override
-  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
 
   @override
   String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
@@ -9396,12 +9907,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get localHistoryNoRevisions => '此文档没有本地历史修订。';
-
-  @override
-  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
-
-  @override
-  String get localHistorySearchHint => '搜索本地历史记录';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';
@@ -10326,4 +10831,367 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
+
+  @override
+  String get searchDocumentsCategory => '文档';
+
+  @override
+  String get searchTopicsCategory => '主题';
+
+  @override
+  String get searchCurrentDocument => '当前文档';
+
+  @override
+  String get searchCurrentWorkspace => '当前工作区';
+
+  @override
+  String get browseNotes => '浏览笔记';
+
+  @override
+  String get searchActionsCommand => '搜索操作';
+
+  @override
+  String get searchDocumentsCommand => '搜索文档';
+
+  @override
+  String get searchTopicsCommand => '搜索主题';
+
+  @override
+  String get searchRecentCommand => '搜索最近项目';
+
+  @override
+  String get searchResourceUnavailable => '此资源不可用。';
+
+  @override
+  String get notesSync => '同步笔记';
+
+  @override
+  String get searchInWorkspace => '在工作区中搜索';
+
+  @override
+  String get searchCategory => '搜索类别';
+
+  @override
+  String get clearHistorySearchScope => '搜索文档历史记录';
+
+  @override
+  String get searchInDocument => '在文档中搜索';
+
+  @override
+  String get searchDocumentHint => '搜索此文档…';
+
+  @override
+  String get searchWorkspaceHint => '搜索此工作区…';
+
+  @override
+  String get searchOutlineHint => '搜索标题…';
+
+  @override
+  String get searchHistoryHint => '搜索本地历史记录…';
+
+  @override
+  String get searchEnterText => '输入要搜索的文本';
+
+  @override
+  String get searchAccountUnavailable => '账户不可用';
+
+  @override
+  String get searchDocumentsHint => '搜索文档…';
+
+  @override
+  String get searchTopicsHint => '搜索主题…';
+
+  @override
+  String get searchRecentHint => '搜索最近项目…';
+
+  @override
+  String get searchActionsHint => '搜索操作…';
+
+  @override
+  String get searchRequiresNotesWorkspace => '需要笔记工作区';
+
+  @override
+  String get searchSidebarLabel => '搜索：';
+
+  @override
+  String get searchDocumentTextCategory => '文档文本';
+
+  @override
+  String get searchWorkspaceTextCategory => '工作区文本';
+
+  @override
+  String get searchHeadingsCategory => '标题';
+
+  @override
+  String get shortcutUnassigned => '未分配';
+
+  @override
+  String get shortcutPressKeys => '请按下组合键…';
+
+  @override
+  String get shortcutRecord => '录制快捷键';
+
+  @override
+  String get shortcutRestoreAll => '恢复所有默认设置';
+
+  @override
+  String get shortcutRestoreAllQuestion => '恢复所有操作的默认快捷键？自定义分配将被移除。';
+
+  @override
+  String get shortcutSaveFailed => '快捷键已生效，但无法保存。请重试保存以便重启后保留。';
+
+  @override
+  String get shortcutRetry => '重试保存';
+
+  @override
+  String get shortcutChanged => '分配已更改。请检查当前快捷键并重试。';
+
+  @override
+  String get shortcutInvalid => '无法在此上下文中分配此组合键。';
+
+  @override
+  String get shortcutSystemWarning => '桌面可能正在使用此组合键。BusyMark 无法覆盖系统快捷键。';
+
+  @override
+  String get shortcutConflicts => '此快捷键与以下操作冲突：';
+
+  @override
+  String get shortcutRemove => '移除分配';
+
+  @override
+  String get shortcutRestoreDefault => '恢复默认设置';
+
+  @override
+  String get shortcutAssign => '分配';
+
+  @override
+  String get shortcutReassign => '重新分配';
+
+  @override
+  String get shortcutContextApplication => '应用程序';
+
+  @override
+  String get shortcutContextDocument => '文档视图';
+
+  @override
+  String get shortcutContextEditor => '编辑器和源码';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside 源码';
+
+  @override
+  String get shortcutContextWorkspace => '工作区导航';
+
+  @override
+  String get shortcutContextTree => '侧栏树';
+
+  @override
+  String get searchHeadingsCommand => '搜索标题';
+
+  @override
+  String get shortcutFixed => '由编辑器管理，无法配置。';
+
+  @override
+  String get shortcutDefaultConflict => '默认快捷键与自定义分配冲突。';
+
+  @override
+  String get shortcutCurrentBinding => '当前快捷键';
+
+  @override
+  String get shortcutProposedBinding => '拟用快捷键';
+
+  @override
+  String get notesActions => '笔记操作';
+
+  @override
+  String get noteActions => '此笔记的操作';
+
+  @override
+  String get noteProperties => '笔记属性';
+
+  @override
+  String get notesExportAll => '导出笔记 · 所有笔记…';
+
+  @override
+  String get notesExportCategory => '导出笔记 · 类别…';
+
+  @override
+  String get notesOfflineAll => '设为离线可用 · 所有笔记';
+
+  @override
+  String get notesOfflineCategory => '设为离线可用 · 类别';
+
+  @override
+  String get notesOfflineRemoveAll => '移除离线保留要求 · 所有笔记';
+
+  @override
+  String get notesOfflineRemoveCategory => '移除离线保留要求 · 类别';
+
+  @override
+  String get notesOfflinePause => '暂停下载';
+
+  @override
+  String get notesOfflineResume => '继续下载';
+
+  @override
+  String get notesOfflineKeep => '设为离线可用';
+
+  @override
+  String get notesOfflineRetentionHelp => '移除此保留要求不会删除现有缓存。分类或账户的要求仍可能保留此笔记。';
+
+  @override
+  String get notesOfflineBroader => '此笔记也因分类或账户的要求而被保留。';
+
+  @override
+  String get notesOfflineExternal => '外部媒体需要网络连接。BusyMark 只保留笔记文本和托管附件。';
+
+  @override
+  String get notesEmptyAll => '还没有笔记。请新建一条笔记。';
+
+  @override
+  String get notesEmptyFavorites => '没有收藏的笔记。';
+
+  @override
+  String get notesEmptyCategory => '此分类中没有笔记。';
+
+  @override
+  String get notesEmptyUncategorized => '没有未分类笔记。';
+
+  @override
+  String get notesEmptyRecovery => '没有可恢复的本地保留笔记。';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · 失败. 重试';
+
+  @override
+  String get notesOperationFailed => '无法完成操作。草稿已保留。请检查保存状态和冲突后重试。';
+
+  @override
+  String get notesInspectionFailed => '附件 · 失败. 重试';
+
+  @override
+  String get notesStartingConnection => '正在连接 Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => '正在验证笔记访问权限…';
+
+  @override
+  String get notesCancellingConnection => '正在取消登录并清理…';
+
+  @override
+  String get notesRemovingConnection => '正在移除本地账户…';
+
+  @override
+  String get notesRemovedWarning =>
+      '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
+
+  @override
+  String get notesBuffersNotSaved =>
+      '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
+
+  @override
+  String get notesSettingsLeave => '离开前保存 Nextcloud 设置更改吗？';
+
+  @override
+  String get notesSettingsLeaveHelp => '服务器 Notes 设置 · 未保存的更改';
+
+  @override
+  String get notesSettingsReload => '重新加载服务器设置…';
+
+  @override
+  String get notesSettingsReloadHelp => '重新加载会用 Nextcloud 当前设置替换草稿。放弃草稿并重新加载吗？';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
+
+  @override
+  String get notesUnavailable => '离线 · 文本已在本地可用 · 已保存到本地 · 等待同步';
+
+  @override
+  String get notesStorageFull => 'Nextcloud 存储空间已满。请释放服务器空间后重试。';
+
+  @override
+  String get notesRejected => 'Nextcloud 拒绝了此更改。请检查笔记并保存本地副本后重试。';
+
+  @override
+  String get notesThrottled => 'Nextcloud 要求稍候。同步将在重试期限后继续。';
+
+  @override
+  String get notesRecoveryRequired => '冲突 · 比较';
+
+  @override
+  String get notesScanning => '正在扫描文件…';
+
+  @override
+  String get notesCancelling => '正在取消…等待当前操作结束。';
+
+  @override
+  String get notesCancelled => '已取消';
+
+  @override
+  String get notesPartial => '部分完成';
+
+  @override
+  String get notesTransferFailed => '失败. 重试';
+
+  @override
+  String get notesImportPartialHelp => '之前的项目可能已保存在本地。请继续本次导入，以免创建重复笔记。';
+
+  @override
+  String get notesNotStarted => '尚未开始';
+
+  @override
+  String get notesCreated => '已创建';
+
+  @override
+  String get notesRemoteDeleteUnavailable => '服务器地址 · 不支持 · 删除 · 附件';
+
+  @override
+  String get notesCurrentText => '当前保留的文本';
+
+  @override
+  String get notesRecovering => '正在恢复为新笔记…';
+
+  @override
+  String get notesReadOnlyHelp => '只读 · 收藏 · 保存本地副本…';
+
+  @override
+  String get notesSort => '笔记排序';
+
+  @override
+  String get notesPathRelative => '笔记文件夹路径相对于您的 Nextcloud 存储空间。';
+
+  @override
+  String get notesSettingsStale => 'Nextcloud 上的设置已更改。请重新加载并检查服务器值，再替换草稿。';
+
+  @override
+  String get notesDownloadsPaused => '下载已暂停';
+
+  @override
+  String get notesExportNotPublished => '未发布任何导出。';
+
+  @override
+  String get notesKeyringUnavailable => '请解锁桌面密钥环后重试。';
+
+  @override
+  String get notesConnectFailed => '无法连接 Nextcloud Notes。请检查服务器地址后重试。';
+
+  @override
+  String get notesAccountMismatch => '请登录同一 Nextcloud 账户。要连接其他账户，请先移除此账户。';
+
+  @override
+  String get notesLocalRemovalFailed => '本地账户清理失败。账户已保留，以便重试移除。';
+
+  @override
+  String get notesTransferring => '正在传输笔记…';
+
+  @override
+  String get notesTechnicalDetails => '技术详情';
+
+  @override
+  String get notesPauseRequirement => '暂停离线保留要求';
+
+  @override
+  String get notesResumeRequirement => '继续离线保留要求';
 }

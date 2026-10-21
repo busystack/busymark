@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/core/linux_private_permissions.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
@@ -12,7 +14,130 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+typedef _UmaskNative = Uint32 Function(Uint32);
+typedef _UmaskDart = int Function(int);
+
 void main() {
+  for (final mask in [0x3f, 0x100, 0x1ff]) {
+    test(
+      'atomic publication protects files created with umask $mask',
+      () async {
+        if (!Platform.isLinux) return;
+        final directory = await Directory.systemTemp.createTemp(
+          'busymark-mask-',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final umask = DynamicLibrary.open(
+          'libc.so.6',
+        ).lookupFunction<_UmaskNative, _UmaskDart>('umask');
+        final target = File(p.join(directory.path, 'state.json'));
+        final previous = umask(mask);
+        try {
+          await writeAtomicJson(target, {'revision': 1});
+        } finally {
+          umask(previous);
+        }
+        expect(jsonDecode(await target.readAsString()), {'revision': 1});
+        expect((await directory.stat()).mode & 511, 448);
+        expect((await target.stat()).mode & 511, 384);
+        expect(await directory.list().length, 1);
+      },
+    );
+    test('recovery lock remains reusable under umask $mask', () async {
+      if (!Platform.isLinux) return;
+      final directory = await Directory.systemTemp.createTemp('busymark-lock-');
+      addTearDown(() async {
+        await Process.run('chmod', ['-R', 'u+rwX', directory.path]);
+        await directory.delete(recursive: true);
+      });
+      final umask = DynamicLibrary.open(
+        'libc.so.6',
+      ).lookupFunction<_UmaskNative, _UmaskDart>('umask');
+      final path = p.join(directory.path, 'recovery.json');
+      final store = JsonDocumentRecoveryStore(filePathOverride: path);
+      final previous = umask(mask);
+      try {
+        await store.beginRun();
+        await store.markCleanShutdown();
+      } finally {
+        umask(previous);
+      }
+      expect((await File('$path.lock').stat()).mode & 511, 384);
+      expect((await File(path).stat()).mode & 511, 384);
+      expect(
+        jsonDecode(await File(path).readAsString())['cleanShutdown'],
+        isTrue,
+      );
+    });
+  }
+
+  test(
+    'atomic publication repairs an unreadable owned state directory',
+    () async {
+      if (!Platform.isLinux) return;
+      final directory = await Directory.systemTemp.createTemp('busymark-mode-');
+      addTearDown(() async {
+        // Also restore access when the regression fails before normalization.
+        await Process.run('chmod', ['700', directory.path]);
+        await directory.delete(recursive: true);
+      });
+      expect((await Process.run('chmod', ['300', directory.path])).exitCode, 0);
+      final target = File(p.join(directory.path, 'state.json'));
+      await writeAtomicJson(target, {'revision': 1});
+      expect((await directory.stat()).mode & 511, 448);
+      expect((await target.stat()).mode & 511, 384);
+      expect(jsonDecode(await target.readAsString()), {'revision': 1});
+      expect(await directory.list().length, 1);
+    },
+  );
+
+  test(
+    'Linux state files reject symlinks and preserve private publication',
+    () async {
+      if (!Platform.isLinux) return;
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-private-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final state = File(p.join(directory.path, 'state.json'));
+      await writeAtomicJson(state, {'revision': 1});
+      expect((await directory.stat()).mode & 511, 448);
+      expect((await state.stat()).mode & 511, 384);
+      await writeAtomicJson(state, {'revision': 2});
+      expect(jsonDecode(await state.readAsString()), {'revision': 2});
+      expect((await state.stat()).mode & 511, 384);
+      final outside = File(p.join(directory.path, 'outside'));
+      await outside.writeAsString('untouched');
+      final beforeMode = (await outside.stat()).mode;
+      final link = Link(p.join(directory.path, 'link'));
+      await link.create(outside.path);
+      await expectLater(
+        () => LinuxPrivatePermissions.instance.restrict(
+          link.path,
+          directory: false,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect((await outside.stat()).mode, beforeMode);
+      expect(await outside.readAsString(), 'untouched');
+      await expectLater(
+        () => LinuxPrivatePermissions.instance.restrict(
+          '${outside.path}\u0000/unexpected',
+          directory: false,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect((await outside.stat()).mode, beforeMode);
+      await expectLater(
+        () => LinuxPrivatePermissions.instance.restrict(
+          p.join(directory.path, 'missing'),
+          directory: false,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+    },
+  );
+
   test('file-backed edits update final-newline metadata', () {
     final buffer = DocumentBuffer.file(
       id: 'file:note',

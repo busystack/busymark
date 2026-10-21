@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
-import '../app/busymark_search_field.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import 'clipboard_history_controller.dart';
@@ -24,7 +23,6 @@ class ClipboardHistoryPanel extends ConsumerStatefulWidget {
 }
 
 class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
-  final _searchController = TextEditingController();
   final _listScrollController = ScrollController();
   final _listFocusNode = FocusNode(debugLabel: 'Clipboard History list');
   final _entryKeys = <String, GlobalKey>{};
@@ -46,7 +44,6 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     _listScrollController.dispose();
     _listFocusNode.dispose();
     super.dispose();
@@ -57,14 +54,11 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     final state = ref.watch(clipboardHistoryControllerProvider);
     final controller = ref.read(clipboardHistoryControllerProvider.notifier);
     final registry = ref.watch(clipboardInsertionRegistryProvider);
-    final query = _searchController.text.toLowerCase();
     final current = state.currentClipboard;
     final visible = <BusyMarkClipboardPayload>[
-      if (current != null && _matches(current, query)) current,
+      if (current != null) current,
       for (final entry in state.entries)
-        if ((current == null || !current.equivalentTo(entry)) &&
-            _matches(entry, query))
-          entry,
+        if (current == null || !current.equivalentTo(entry)) entry,
     ];
     if (_selectedId != null &&
         !visible.any((entry) => entry.id == _selectedId)) {
@@ -86,17 +80,13 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
               BusyMarkSpacing.sm,
             ),
             child: Row(
-              textDirection: TextDirection.ltr,
               children: [
                 Expanded(
-                  child: BusyMarkSearchField(
-                    controller: _searchController,
-                    hintText: context.l10n.clipboardHistorySearchHint,
-                    onChanged: (_) => setState(() {}),
-                    onEscape: widget.onEscape,
+                  child: Text(
+                    context.l10n.clipboardHistory,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
-                const SizedBox(width: BusyMarkSpacing.sm),
                 BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>(
                   key: const ValueKey('clipboard-history-actions-menu'),
                   tooltip: context.l10n.actions,
@@ -147,9 +137,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
           Expanded(
             child: visible.isEmpty
                 ? _PanelEmpty(
-                    text: query.isNotEmpty
-                        ? context.l10n.clipboardNoMatches
-                        : state.clipboardAvailable
+                    text: state.clipboardAvailable
                         ? context.l10n.clipboardNoItems
                         : context.l10n.clipboardUnavailable,
                   )
@@ -201,17 +189,6 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     );
   }
 
-  bool _matches(BusyMarkClipboardPayload payload, String query) {
-    if (query.isEmpty) return true;
-    return [
-      payload.text,
-      payload.sourceText,
-      payload.imageDisplayName,
-      payload.origin?.documentName,
-      payload.origin?.documentPath,
-    ].whereType<String>().any((value) => value.toLowerCase().contains(query));
-  }
-
   KeyEventResult _handleKey(
     KeyEvent event,
     List<BusyMarkClipboardPayload> visible,
@@ -222,9 +199,8 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
       widget.onEscape?.call();
       return KeyEventResult.handled;
     }
-    // Key events bubble through this Focus even while the search field owns
-    // primary focus. List navigation, activation, and especially deletion must
-    // never consume text-editing keys from that descendant.
+    // Descendant controls and popups own their keys. List navigation,
+    // activation and deletion require primary focus on the list itself.
     if (!_listFocusNode.hasPrimaryFocus) return KeyEventResult.ignored;
     if (visible.isEmpty) return KeyEventResult.ignored;
     final index = visible.indexWhere((entry) => entry.id == _selectedId);
@@ -377,7 +353,6 @@ class _ClipboardEntryTile extends StatelessWidget {
               busyMarkLtrIsolateFor(context, originPath),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              textDirection: TextDirection.ltr,
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),

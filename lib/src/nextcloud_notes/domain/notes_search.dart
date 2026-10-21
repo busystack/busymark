@@ -16,7 +16,7 @@ class NotesSearchTerm {
 /// Only these two field prefixes and quotes are grammar. Everything else,
 /// including SQL/FTS operators, punctuation and wildcards, is literal text.
 class NotesSearchQuery {
-  NotesSearchQuery(this.text, {this.wholeWord = false}) {
+  NotesSearchQuery(this.text) {
     if (text.length > 512) throw const FormatException('Search is too long.');
     if ('"'.allMatches(text).length.isOdd) {
       throw const FormatException('Close the quoted phrase.');
@@ -37,7 +37,6 @@ class NotesSearchQuery {
     }
   }
   final String text;
-  final bool wholeWord;
   late final List<NotesSearchTerm> terms;
   String? get ftsCandidates {
     final indexable = terms.where((t) => t.literal.runes.length >= 3);
@@ -105,46 +104,15 @@ class NotesSearchHit {
 
 String notesSearchDigest(String source) =>
     sha256.convert(utf8.encode(source)).toString();
-final _word = RegExp(r'[\p{L}\p{M}\p{N}_]', unicode: true);
-
-Iterable<({int start, int end})> _ranges(
-  String normalized,
-  String term,
-  bool wholeWord,
-) sync* {
+Iterable<({int start, int end})> _ranges(String normalized, String term) sync* {
   var position = 0;
   while (position <= normalized.length) {
     final start = normalized.indexOf(term, position);
     if (start < 0) break;
     final end = start + term.length;
-    // Unicode identifier boundaries; punctuation in the query remains literal.
-    if (!wholeWord ||
-        ((start == 0 ||
-                !_word.hasMatch(
-                  String.fromCharCode(normalized.runesBefore(start)),
-                )) &&
-            (end == normalized.length ||
-                !_word.hasMatch(
-                  String.fromCharCode(normalized.runesAt(end)),
-                )))) {
-      yield (start: start, end: end);
-    }
+    yield (start: start, end: end);
     position = end;
   }
-}
-
-extension on String {
-  int runesBefore(int offset) {
-    var start = offset - 1;
-    if (start > 0 &&
-        codeUnitAt(start) >= 0xdc00 &&
-        codeUnitAt(start) <= 0xdfff) {
-      start--;
-    }
-    return substring(start, offset).runes.first;
-  }
-
-  int runesAt(int offset) => substring(offset).runes.first;
 }
 
 /// Shared verifier for indexed durable documents, dirty overlays and stale
@@ -169,15 +137,15 @@ List<NotesSearchHit> matchNotesDocument({
   for (final term in query.terms) {
     final contentMatches =
         (term.field == null
-                ? _ranges(body, term.literal, query.wholeWord)
+                ? _ranges(body, term.literal)
                 : const <({int start, int end})>[])
             .iterator;
     final hasContent = contentMatches.moveNext();
     final titleMatches = term.field != 'category'
-        ? _ranges(normalizedTitle, term.literal, query.wholeWord)
+        ? _ranges(normalizedTitle, term.literal)
         : <({int start, int end})>[];
     final categoryMatches = term.field != 'title'
-        ? _ranges(normalizedCategory, term.literal, query.wholeWord)
+        ? _ranges(normalizedCategory, term.literal)
         : <({int start, int end})>[];
     if (!hasContent && titleMatches.isEmpty && categoryMatches.isEmpty) {
       return [];

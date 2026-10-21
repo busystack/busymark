@@ -53,7 +53,6 @@ class NotesSearchController {
 
   Future<void> search(
     String text, {
-    bool wholeWord = false,
     int limit = 80,
     List<NotesSearchOverlay> overlays = const [],
   }) async {
@@ -61,7 +60,11 @@ class NotesSearchController {
     bool current() => !_disposed && generation == _generation;
     _publish(const NotesSearchState(loading: true, indexing: true));
     try {
-      final query = NotesSearchQuery(text, wholeWord: wholeWord);
+      final query = NotesSearchQuery(text);
+      if (query.terms.isEmpty) {
+        if (current()) _publish(const NotesSearchState());
+        return;
+      }
       while (await store.indexStep() != 0) {
         if (!current()) return;
       }

@@ -820,6 +820,80 @@ void main() {
     );
   });
 
+  for (final native in [false, true]) {
+    testWidgets(
+      'selector forwards effective shortcut metadata to ${native ? 'GTK' : 'fallback'}',
+      (tester) async {
+        const channel = MethodChannel(nativeMenuChannelName);
+        Map<Object?, Object?>? arguments;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          (call) async {
+            if (!native) throw MissingPluginException();
+            if (call.method == 'show') {
+              arguments = call.arguments as Map<Object?, Object?>;
+              return 1;
+            }
+            return false;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            channel,
+            null,
+          ),
+        );
+        String? selected;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: BusyMarkPopupSelector<String>(
+                value: 'file',
+                label: 'Document Text',
+                tooltip: 'Search category',
+                fullWidth: true,
+                options: const [
+                  BusyMarkPopupSelectorOption(
+                    value: 'file',
+                    label: 'Document Text',
+                    shortcut: 'F8',
+                    gtkAccelerator: 'F8',
+                  ),
+                  BusyMarkPopupSelectorOption(
+                    value: 'actions',
+                    label: 'Actions',
+                  ),
+                ],
+                onSelected: (v) => selected = v,
+              ),
+            ),
+          ),
+        );
+        final button = tester.widget<BusyMarkMenuButton<String>>(
+          find.byType(BusyMarkMenuButton<String>),
+        );
+        final item = button.items.first as BusyMarkPopupMenuItem<String>;
+        expect(item.shortcut, 'F8');
+        expect(item.gtkAccelerator, 'F8');
+        await tester.tap(find.byTooltip('Search category'));
+        await tester.pumpAndSettle();
+        if (native) {
+          final entries = arguments!['entries'] as List;
+          expect((entries.first as Map)['shortcut'], 'F8');
+          expect((entries.first as Map)['gtkAccelerator'], 'F8');
+          expect((entries[1] as Map)['shortcut'], isNull);
+          expect(selected, 'actions');
+        } else {
+          expect(find.text('F8'), findsOneWidget);
+          expect(item.checked, isTrue);
+          await tester.tap(find.text('Actions'));
+          await tester.pumpAndSettle();
+          expect(selected, 'actions');
+        }
+      },
+    );
+  }
+
   testWidgets('desktop tooltips use one explicit natural-width geometry', (
     tester,
   ) async {
@@ -1980,26 +2054,19 @@ void main() {
     final selector = tester.widget<BusyMarkMenuButton<String>>(menuFinder);
     final selectorFinder = find.descendant(
       of: find.byType(BusyMarkPopupSelector<String>),
-      matching: find.byType(FilledButton),
+      matching: find.byType(TextButton),
     );
-    final selectorButton = tester.widget<FilledButton>(selectorFinder);
+    final selectorButton = tester.widget<TextButton>(selectorFinder);
     expect(
-      selectorButton.style?.backgroundColor?.resolve({}),
-      BusyMarkLinuxPalette.transparent,
-    );
-    expect(selectorButton.style?.side?.resolve({}), BorderSide.none);
-    expect(
-      selectorButton.style?.minimumSize?.resolve({}),
-      theme.outlinedButtonTheme.style?.minimumSize?.resolve({}),
+      selectorButton.style?.foregroundColor,
+      same(theme.outlinedButtonTheme.style?.foregroundColor),
+      reason: 'The borderless selector retains the neutral themed foreground',
     );
     expect(
-      selectorButton.style?.padding?.resolve({}),
-      theme.outlinedButtonTheme.style?.padding?.resolve({}),
+      selectorButton.style?.iconColor,
+      same(theme.outlinedButtonTheme.style?.iconColor),
     );
-    expect(
-      selectorButton.style?.shape?.resolve({}),
-      theme.outlinedButtonTheme.style?.shape?.resolve({}),
-    );
+    expect(selectorButton.style?.side, isNull);
     expect(selector.enabled, isTrue);
     expect(selector.items, hasLength(2));
 
@@ -2010,6 +2077,110 @@ void main() {
     await tester.pumpAndSettle();
     expect(selectedTheme, 'light');
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('sidebar and Settings selectors share borderless theme states '
+        'in ${brightness.name}', (tester) async {
+      final theme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: const Color(0xFF3584E4),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Directionality(
+              textDirection: TextDirection.rtl,
+              child: MediaQuery(
+                data: const MediaQueryData(textScaler: TextScaler.linear(1.6)),
+                child: SizedBox(
+                  width: 300,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Text('Search:'),
+                          Expanded(
+                            child: BusyMarkPopupSelector<String>(
+                              key: const ValueKey('sidebar-selector'),
+                              value: 'document',
+                              label: 'Document Text',
+                              tooltip: 'Search category',
+                              fullWidth: true,
+                              maxLabelLines: 2,
+                              options: const [
+                                BusyMarkPopupSelectorOption(
+                                  value: 'document',
+                                  label: 'Document Text',
+                                ),
+                              ],
+                              onSelected: (_) {},
+                            ),
+                          ),
+                        ],
+                      ),
+                      BusyMarkGroupedList(
+                        filled: true,
+                        children: [
+                          BusyMarkActionRow(
+                            title: 'Theme',
+                            trailing: BusyMarkPopupSelector<String>(
+                              key: const ValueKey('settings-selector'),
+                              value: 'system',
+                              label: 'System',
+                              tooltip: 'Theme',
+                              options: const [
+                                BusyMarkPopupSelectorOption(
+                                  value: 'system',
+                                  label: 'System',
+                                ),
+                              ],
+                              onSelected: (_) {},
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      for (final key in ['sidebar-selector', 'settings-selector']) {
+        final button = find.descendant(
+          of: find.byKey(ValueKey(key)),
+          matching: find.byType(TextButton),
+        );
+        final control = tester.widget<TextButton>(button);
+        final materialFinder = find.descendant(
+          of: button,
+          matching: find.byType(Material),
+        );
+        void expectBorderless() {
+          final material = tester.widget<Material>(materialFinder);
+          expect((material.shape! as OutlinedBorder).side, BorderSide.none);
+          expect(material.color, BusyMarkLinuxPalette.transparent);
+          expect(tester.takeException(), isNull);
+        }
+
+        expectBorderless();
+        control.focusNode!.requestFocus();
+        await tester.pumpAndSettle();
+        expect(control.focusNode!.hasFocus, isTrue);
+        expectBorderless();
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(button));
+        await tester.pumpAndSettle();
+        expectBorderless();
+        await mouse.removePointer();
+        await tester.pumpAndSettle();
+      }
+    });
+  }
 
   for (final brightness in Brightness.values) {
     testWidgets('WYSIWYG toolbar uses accent controls in ${brightness.name}', (

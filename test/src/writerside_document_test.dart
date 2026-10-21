@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:busymark/src/core/diagnostic.dart';
+import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -18,6 +20,50 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test('large XML retains exact spans and reuses its authored editor tree', () {
+    final source =
+        '<topic id="large" title="Large">\r\n'
+        '${List.generate(2000, (i) => '<p id="p$i">日本語 😀 <b>bold $i</b></p>\r\n').join()}'
+        '</topic>';
+    final parsed = const WritersideDocumentParser().parseXml(
+      filePath: 'large.topic',
+      source: source,
+    );
+    expect(parsed.isWellFormed, isTrue);
+    final mapper = SourceLocationMapper(source);
+    void check(WritersideDocumentNode node) {
+      final span = node.span;
+      expect(
+        source.substring(span.startOffset, span.endOffset),
+        node.rawSource,
+      );
+      final start = mapper.locationForOffset(span.startOffset);
+      final end = mapper.locationForOffset(span.endOffset);
+      expect((span.startLine, span.startColumn), (start.line, start.column));
+      expect((span.endLine, span.endColumn), (end.line, end.column));
+      if (node is WritersideElementNode) {
+        for (final child in node.children) {
+          check(child);
+        }
+      }
+    }
+
+    for (final node in parsed.nodes) {
+      check(node);
+    }
+    final editor = const WritersideEditingAdapter().fromAuthoredXml(parsed)!;
+    expect(identical(editor.authoredXml, parsed), isTrue);
+    expect(editor.source, source);
+    expect(editor.filePath, 'large.topic');
+    expect(const WritersideDocumentSerializer().serialize(parsed), source);
+    final different = const WritersideDocumentParser().parseXml(
+      filePath: 'other.topic',
+      source: '<topic id="other"><p>Other</p></topic>',
+    );
+    expect(different.rootElement!.span.startLine, 1);
+    expect(different.rootElement!.span.endLine, 1);
+  });
+
   for (final protectedSource in [false, true]) {
     test(
       'complex Markdown retains semantic XML spans (protected=$protectedSource)',

@@ -11,6 +11,131 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Catatan baru dari teks tersimpan';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud meminta jeda. Tunggu sebelum mulai masuk lagi.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Menyegarkan Notes setelah pembaruan pengaturan dikonfirmasi';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Ekspor gagal sebelum diterbitkan. Periksa sumber dan tujuan, lalu ekspor lagi.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Catatan yang dipulihkan sudah tersimpan, tetapi gagal dibuka. Selesaikan perubahan editor atau properti yang tertunda, lalu buka catatan yang sudah ada ini.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Catatan tertunda, konflik, atau pembuatan yang belum pasti menghalangi perubahan ini. Sinkronkan atau tinjau di Notes, lalu simpan lagi draf pengaturan yang dipertahankan.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Operasi lampiran tertunda menghalangi perubahan ini. Tinjau lampiran di Notes, lalu simpan lagi draf pengaturan yang dipertahankan.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Gunakan alamat HTTPS kanonis Nextcloud, lalu masuk lagi. Alamat atau pengalihan tidak dapat diverifikasi.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes tidak tersedia atau API tidak didukung. Aktifkan Nextcloud Notes dengan API versi utama 1, minor 4 atau lebih baru.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud menolak kredensial. Otorisasi ulang atau hubungkan kembali akun ini.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud melarang pemeriksaan kemampuan Notes. Minta administrator mengizinkannya, lalu coba lagi.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Respons Nextcloud tidak dapat diverifikasi. Periksa pemasangan server, lalu masuk lagi.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Waktu masuk habis. Mulai lagi dan selesaikan otorisasi di peramban.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Peramban sistem tidak dapat dibuka. Periksa peramban bawaan, lalu masuk lagi.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud tidak dapat dijangkau. Periksa koneksi dan server, lalu masuk lagi.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud menolak permintaan kemampuan. Periksa akses bersama administrator, lalu coba lagi.';
+
+  @override
+  String get notesAccountFailed =>
+      'Penyiapan akun tidak selesai. Coba masuk lagi.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Sumber berubah setelah ditinjau. Tinjau berkas saat ini atau buat snapshot baru sebelum mencoba lagi.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Sumber tidak dapat dibaca. Periksa akses berkas atau folder, lalu tinjau lagi.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Snapshot tidak valid atau tidak didukung. Pilih snapshot BusyMark Notes yang valid atau sumber Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Media melebihi batas impor. Perkecil media item terkait sebelum meninjaunya lagi.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Sumber berisi jalur tidak aman. Pilih berkas di dalam folder sumber, lalu tinjau lagi.';
+
+  @override
+  String get notesTransferDestination =>
+      'Ekspor tidak dapat ditulis. Periksa akses dan ruang kosong di tujuan, lalu ekspor lagi.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Transfer tidak selesai. Tinjau item terkait dan coba lagi. Item yang sudah diimpor tetap tersimpan.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Ekspor tersedia dengan beberapa bagian terlewat';
+
+  @override
+  String get notesBatchUnchanged => 'Nilai yang diminta sudah ditetapkan.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Catatan ini hanya-baca. Properti terlindungi tidak dapat diubah; Favorit tetap diizinkan.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Catatan berubah setelah ditinjau. Tinjau keadaan saat ini sebelum menerapkan tindakan lagi.';
+
+  @override
+  String get notesBatchMissing =>
+      'Catatan ini tidak lagi tersedia. Segarkan daftar dan tinjau sasaran lagi.';
+
+  @override
+  String get notesBatchStorage =>
+      'Penyimpanan lokal gagal. Periksa penyimpanan dan coba item ini lagi; item yang berhasil tetap tersimpan.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Catatan server berubah. Draf penggabungan Anda dipertahankan. Tinjau perbandingan terbaru dan pilih penyelesaian lagi.';
+
+  @override
+  String get notesReviewRemote => 'Saya telah meninjau versi server saat ini';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Kapitalisasi modul tidak diterbitkan.';
 
@@ -585,15 +710,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get keyboardShortcuts => 'Pintasan keyboard';
 
   @override
-  String get commandPalette => 'Palet perintah';
-
-  @override
-  String get commandPaletteHint => 'Ketikkan perintah';
-
-  @override
-  String get commandPaletteEmpty => 'Tidak ada perintah yang cocok';
-
-  @override
   String get commandUnavailableInContext =>
       'Tidak tersedia dalam konteks editor saat ini';
 
@@ -811,7 +927,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Tampilkan referensi pintasan keyboard ini';
+      'Sesuaikan pintasan keyboard aplikasi';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Buka referensi sintaks';
@@ -1062,7 +1178,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get validateOnEdit => 'Validasi saat mengedit';
 
   @override
-  String get clearRecentWorkspaces => 'Hapus ruang kerja terbaru';
+  String get clearRecentWorkspaces => 'Hapus riwayat terbaru';
 
   @override
   String get editingButtonsPosition => 'Posisi tombol pengeditan';
@@ -1844,15 +1960,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sourceSearchNextMatch => 'Kecocokan berikutnya';
 
   @override
-  String get sourceSearchCaseSensitive => 'Peka huruf besar-kecil';
-
-  @override
-  String get sourceSearchWholeWord => 'Seluruh kata';
-
-  @override
-  String get sourceSearchRegex => 'Regex';
-
-  @override
   String get sourceSearchReplacement => 'Ganti dengan';
 
   @override
@@ -1979,13 +2086,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get saveAs => 'Simpan sebagai';
 
   @override
-  String get sourceSearchInvalidRegex => 'Ekspresi reguler tidak valid';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, \$, atau lookahead yang hanya cocok dengan posisi).';
-
-  @override
   String get workspaceSearchIncomplete =>
       'Hanya sebagian hasil yang ditampilkan. Tampilkan lebih banyak atau persempit pencarian.';
 
@@ -2092,6 +2192,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => 'File sumber daya';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Tidak dapat memperbarui item terbaru: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4359,9 +4464,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get clipboardHistory => 'Sejarah Tempel';
 
   @override
-  String get clipboardHistorySearchHint => 'Cari riwayat papan klip';
-
-  @override
   String get clipboardHistoryDescription => 'Buka riwayat tempel lokal sesi.';
 
   @override
@@ -4380,10 +4482,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Riwayat tempel kosong.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Tidak ada item tempel yang cocok dengan pencarian ini.';
 
   @override
   String get clipboardDisabled =>
@@ -4441,13 +4539,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Dokumen ini tidak memiliki revisi Sejarah Lokal.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.';
-
-  @override
-  String get localHistorySearchHint => 'Cari riwayat lokal';
 
   @override
   String get localHistorySelectedRevision => 'Revisi yang dipilih';
@@ -5396,4 +5487,399 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumen';
+
+  @override
+  String get searchTopicsCategory => 'Topik';
+
+  @override
+  String get searchCurrentDocument => 'Dokumen saat ini';
+
+  @override
+  String get searchCurrentWorkspace => 'Ruang kerja saat ini';
+
+  @override
+  String get browseNotes => 'Jelajahi catatan';
+
+  @override
+  String get searchActionsCommand => 'Cari tindakan';
+
+  @override
+  String get searchDocumentsCommand => 'Cari dokumen';
+
+  @override
+  String get searchTopicsCommand => 'Cari topik';
+
+  @override
+  String get searchRecentCommand => 'Cari terbaru';
+
+  @override
+  String get searchResourceUnavailable => 'Sumber daya ini tidak tersedia.';
+
+  @override
+  String get notesSync => 'Sinkronkan catatan';
+
+  @override
+  String get searchInWorkspace => 'Cari dalam Ruang Kerja';
+
+  @override
+  String get searchCategory => 'Kategori pencarian';
+
+  @override
+  String get clearHistorySearchScope => 'Cari riwayat seluruh dokumen';
+
+  @override
+  String get searchInDocument => 'Cari dalam dokumen';
+
+  @override
+  String get searchDocumentHint => 'Cari dalam dokumen ini…';
+
+  @override
+  String get searchWorkspaceHint => 'Cari dalam ruang kerja ini…';
+
+  @override
+  String get searchOutlineHint => 'Cari judul bagian…';
+
+  @override
+  String get searchHistoryHint => 'Cari dalam riwayat lokal…';
+
+  @override
+  String get searchEnterText => 'Masukkan teks untuk mencari';
+
+  @override
+  String get searchAccountUnavailable => 'Akun tidak tersedia';
+
+  @override
+  String get searchDocumentsHint => 'Cari dokumen…';
+
+  @override
+  String get searchTopicsHint => 'Cari topik…';
+
+  @override
+  String get searchRecentHint => 'Cari terbaru…';
+
+  @override
+  String get searchActionsHint => 'Cari tindakan…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Memerlukan ruang kerja Catatan';
+
+  @override
+  String get searchSidebarLabel => 'Cari:';
+
+  @override
+  String get searchDocumentTextCategory => 'Teks dokumen';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Teks ruang kerja';
+
+  @override
+  String get searchHeadingsCategory => 'Judul';
+
+  @override
+  String get shortcutUnassigned => 'Belum ditetapkan';
+
+  @override
+  String get shortcutPressKeys => 'Tekan kombinasi tombol…';
+
+  @override
+  String get shortcutRecord => 'Rekam pintasan';
+
+  @override
+  String get shortcutRestoreAll => 'Pulihkan semua bawaan';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Pulihkan pintasan bawaan semua tindakan? Penetapan khusus akan dihapus.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Pintasan aktif tetapi tidak dapat disimpan. Coba lagi agar tetap tersedia setelah mulai ulang.';
+
+  @override
+  String get shortcutRetry => 'Coba simpan lagi';
+
+  @override
+  String get shortcutChanged =>
+      'Penetapan berubah. Tinjau pintasan saat ini dan coba lagi.';
+
+  @override
+  String get shortcutInvalid =>
+      'Kombinasi ini tidak dapat ditetapkan dalam konteks ini.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Desktop Anda mungkin memakai kombinasi ini. BusyMark tidak dapat mengganti pintasan sistem.';
+
+  @override
+  String get shortcutConflicts =>
+      'Pintasan ini bertentangan dengan tindakan berikut:';
+
+  @override
+  String get shortcutRemove => 'Hapus penetapan';
+
+  @override
+  String get shortcutRestoreDefault => 'Pulihkan bawaan';
+
+  @override
+  String get shortcutAssign => 'Tetapkan';
+
+  @override
+  String get shortcutReassign => 'Tetapkan ulang';
+
+  @override
+  String get shortcutContextApplication => 'Aplikasi';
+
+  @override
+  String get shortcutContextDocument => 'Tampilan dokumen';
+
+  @override
+  String get shortcutContextEditor => 'Editor dan sumber';
+
+  @override
+  String get shortcutContextWritersideSource => 'Sumber Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Navigasi ruang kerja';
+
+  @override
+  String get shortcutContextTree => 'Pohon bilah samping';
+
+  @override
+  String get searchHeadingsCommand => 'Cari judul';
+
+  @override
+  String get shortcutFixed =>
+      'Dikelola oleh editor; tidak dapat dikonfigurasi.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Pintasan bawaan bertentangan dengan penetapan khusus.';
+
+  @override
+  String get shortcutCurrentBinding => 'Pintasan saat ini';
+
+  @override
+  String get shortcutProposedBinding => 'Pintasan yang diusulkan';
+
+  @override
+  String get notesActions => 'Tindakan catatan';
+
+  @override
+  String get noteActions => 'Tindakan untuk catatan';
+
+  @override
+  String get noteProperties => 'Properti Catatan';
+
+  @override
+  String get notesExportAll => 'Ekspor catatan · Semua catatan…';
+
+  @override
+  String get notesExportCategory => 'Ekspor catatan · Kategori…';
+
+  @override
+  String get notesOfflineAll => 'Sediakan secara luring · Semua catatan';
+
+  @override
+  String get notesOfflineCategory => 'Sediakan secara luring · Kategori';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Hapus penyimpanan luring · Semua catatan';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Hapus penyimpanan luring · Kategori';
+
+  @override
+  String get notesOfflinePause => 'Jeda unduhan';
+
+  @override
+  String get notesOfflineResume => 'Lanjutkan unduhan';
+
+  @override
+  String get notesOfflineKeep => 'Sediakan secara luring';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Menghapus persyaratan ini mempertahankan cache yang ada. Persyaratan kategori atau akun mungkin masih menyimpan catatan ini.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Catatan ini juga disimpan oleh persyaratan kategori atau akun.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Media eksternal memerlukan koneksi. BusyMark hanya menyimpan teks catatan dan lampiran terkelola.';
+
+  @override
+  String get notesEmptyAll => 'Belum ada catatan. Buat catatan untuk memulai.';
+
+  @override
+  String get notesEmptyFavorites => 'Tidak ada catatan favorit.';
+
+  @override
+  String get notesEmptyCategory => 'Tidak ada catatan dalam kategori ini.';
+
+  @override
+  String get notesEmptyUncategorized => 'Tidak ada catatan tanpa kategori.';
+
+  @override
+  String get notesEmptyRecovery =>
+      'Tidak ada catatan tersimpan untuk dipulihkan.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Gagal. Coba lagi';
+
+  @override
+  String get notesOperationFailed =>
+      'Operasi tidak dapat diselesaikan. Draf Anda tetap disimpan. Tinjau penyimpanan dan konflik, lalu coba lagi.';
+
+  @override
+  String get notesInspectionFailed => 'Lampiran · Gagal. Coba lagi';
+
+  @override
+  String get notesStartingConnection => 'Memulai koneksi Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection => 'Memverifikasi akses Catatan…';
+
+  @override
+  String get notesCancellingConnection => 'Membatalkan masuk dan membersihkan…';
+
+  @override
+  String get notesRemovingConnection => 'Menghapus akun lokal…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Akun Nextcloud lokal telah dihapus. Pencabutan kata sandi aplikasi tidak dikonfirmasi. Hapus kata sandi BusyMark di pengaturan Keamanan Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Tidak semua catatan terbuka dapat disimpan secara lokal. Tinjau penyimpanan, konflik, atau normalisasi di ruang kerja. Perubahan lokal mungkin masih perlu disinkronkan dengan Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Simpan perubahan pengaturan Nextcloud sebelum keluar?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Pengaturan Notes server · Perubahan yang belum disimpan';
+
+  @override
+  String get notesSettingsReload => 'Muat ulang pengaturan server…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Memuat ulang mengganti draf dengan pengaturan Nextcloud saat ini. Buang draf dan muat ulang?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud menerima pengaturan, tetapi penyegaran catatan gagal. Nilai yang ditampilkan telah dikonfirmasi server. Coba segarkan lagi dari Catatan.';
+
+  @override
+  String get notesUnavailable =>
+      'Luring · Teks tersedia secara lokal · Disimpan lokal · sinkronisasi tertunda';
+
+  @override
+  String get notesStorageFull =>
+      'Penyimpanan Nextcloud penuh. Kosongkan ruang di server, lalu coba lagi.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud menolak perubahan ini. Tinjau catatan dan simpan salinan lokal sebelum mencoba lagi.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud meminta BusyMark menunggu. Sinkronisasi berlanjut setelah batas waktu percobaan ulang.';
+
+  @override
+  String get notesRecoveryRequired => 'Konflik · Bandingkan';
+
+  @override
+  String get notesScanning => 'Memindai berkas…';
+
+  @override
+  String get notesCancelling =>
+      'Membatalkan… Menunggu operasi saat ini selesai.';
+
+  @override
+  String get notesCancelled => 'Dibatalkan';
+
+  @override
+  String get notesPartial => 'Selesai sebagian';
+
+  @override
+  String get notesTransferFailed => 'Gagal. Coba lagi';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Item sebelumnya mungkin telah disimpan secara lokal. Lanjutkan impor ini untuk meneruskan tanpa duplikat.';
+
+  @override
+  String get notesNotStarted => 'Belum dimulai';
+
+  @override
+  String get notesCreated => 'Dibuat';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'URL server · Tidak didukung · Hapus · Lampiran';
+
+  @override
+  String get notesCurrentText => 'Teks yang saat ini disimpan';
+
+  @override
+  String get notesRecovering => 'Memulihkan sebagai catatan baru…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Hanya baca · Favorit · Simpan salinan lokal…';
+
+  @override
+  String get notesSort => 'Urutkan catatan';
+
+  @override
+  String get notesPathRelative =>
+      'Jalur folder catatan relatif terhadap penyimpanan Nextcloud Anda.';
+
+  @override
+  String get notesSettingsStale =>
+      'Pengaturan berubah di Nextcloud. Muat ulang dan tinjau nilai server sebelum mengganti draf.';
+
+  @override
+  String get notesDownloadsPaused => 'Unduhan dijeda';
+
+  @override
+  String get notesExportNotPublished => 'Tidak ada ekspor yang dipublikasikan.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Buka kunci keyring desktop dan coba lagi.';
+
+  @override
+  String get notesConnectFailed =>
+      'Tidak dapat terhubung ke Nextcloud Notes. Periksa alamat server dan coba lagi.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Masuk ke akun Nextcloud yang sama. Hapus akun ini terlebih dahulu untuk menghubungkan akun lain.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Pembersihan akun lokal gagal. Akun dipertahankan agar penghapusan dapat dicoba lagi.';
+
+  @override
+  String get notesTransferring => 'Mentransfer catatan…';
+
+  @override
+  String get notesTechnicalDetails => 'Detail teknis';
+
+  @override
+  String get notesPauseRequirement => 'Jeda persyaratan luring';
+
+  @override
+  String get notesResumeRequirement => 'Lanjutkan persyaratan luring';
 }

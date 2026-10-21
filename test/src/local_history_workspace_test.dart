@@ -894,6 +894,115 @@ void main() {
     },
   );
 
+  for (final change in [
+    'session',
+    'refresh',
+    'edit-undone',
+    'mode',
+    'mode-return',
+    'navigation',
+    'disk',
+    'encoding',
+  ]) {
+    test(
+      'History restore validates source and target rather than session identity: $change',
+      () async {
+        final destination = p.join(root.path, 'destination.md');
+        final anchor = p.join(root.path, 'anchor.md');
+        await File(destination).writeAsString('Protected destination\n');
+        await File(anchor).writeAsString('# Anchor\n');
+        final memory = MemoryLocalHistoryStore();
+        final captured = await _capture(
+          memory,
+          p.join(root.path, 'deleted.md'),
+          'Recovered source\n',
+        );
+        final revision = (await memory.readRevision(captured.revision!.id))!;
+        final blocking = _BlockingProtectiveStore(memory);
+        final harness = await _harness(blocking);
+        await harness.controller.openPath(root.path);
+        await harness.controller.openActiveFile(destination);
+        final before = harness.state.activeBuffer!;
+        final restore = harness.controller.restoreMissingLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+          destinationPath: destination,
+          overwriteExisting: true,
+        );
+        await blocking.started.future;
+        switch (change) {
+          case 'session':
+            harness.controller.updateActiveEditorState(
+              before.editorState.copyWith(scrollOffset: 12),
+            );
+          case 'refresh':
+            expect(
+              await harness.controller
+                  .refreshWorkspaceFromDiskPreservingOpenTabs(),
+              isTrue,
+            );
+          case 'edit-undone':
+            harness.controller.updateActiveText('Concurrent edit\n');
+            expect(harness.controller.undoActiveBuffer(), isTrue);
+            expect(harness.state.activeText, before.text);
+          case 'mode':
+            harness.controller.updateActiveEditorMode(
+              DocumentViewModePreference.source,
+            );
+          case 'mode-return':
+            harness.controller.updateActiveEditorMode(
+              DocumentViewModePreference.source,
+            );
+            harness.controller.updateActiveEditorMode(before.editorState.mode);
+          case 'navigation':
+            await harness.controller.openActiveFile(anchor);
+            await harness.controller.openActiveFile(destination);
+          case 'disk':
+            await File(
+              destination,
+            ).writeAsString('Concurrent disk replacement\n');
+          case 'encoding':
+            await File(
+              destination,
+            ).writeAsString('\uFEFFProtected destination\r\n');
+            expect(
+              await harness.controller
+                  .refreshWorkspaceFromDiskPreservingOpenTabs(),
+              isTrue,
+            );
+            expect(harness.state.activeText, before.text);
+        }
+        blocking.release.complete();
+        final accepted = change == 'session' || change == 'refresh';
+        expect(await restore, accepted);
+        expect(
+          harness.state.activeText,
+          accepted ? revision.source : before.text,
+        );
+        expect(
+          await File(destination).readAsString(),
+          change == 'disk'
+              ? 'Concurrent disk replacement\n'
+              : change == 'encoding'
+              ? 'Protected destination\r\n'
+              : before.text,
+        );
+        if (change == 'encoding') {
+          expect((await File(destination).readAsBytes()).take(3), [
+            0xef,
+            0xbb,
+            0xbf,
+          ]);
+        }
+        if (change == 'session') {
+          expect(harness.controller.undoActiveBuffer(), isTrue);
+          expect(harness.state.activeText, before.text);
+          expect(harness.state.activeBuffer!.editorState.scrollOffset, 12);
+        }
+      },
+    );
+  }
+
   test(
     'autosaved existing-destination recovery never publishes an empty file',
     () async {
@@ -2344,6 +2453,15 @@ void main() {
       await _waitFor(
         () => timers.any((timer) => timer.isActive),
         operation: 'Save As checkpoint timer',
+        diagnostics: () {
+          final state = harness.container.read(localHistoryControllerProvider);
+          final buffer = harness.state.activeBuffer!;
+          return 'active=${buffer.filePath}, dirty=${buffer.isDirty}, '
+              'pending=${history.pendingSnapshotForBuffer(buffer.id)?.text}, '
+              'timer states=${timers.map((timer) => timer.isActive).toList()}, '
+              'warning=${state.warning?.detail}, '
+              'revisions=${state.snapshot.revisions.map((revision) => '${revision.historicalPath}:${revision.reason.name}').toList()}';
+        },
       );
       for (final timer in List<_FakeTimer>.of(timers)) {
         timer.fire();
@@ -2405,6 +2523,11 @@ void main() {
               reopened.state.activeBuffer!.id,
             ) !=
             null,
+        operation: 'Reopened A history binding',
+        diagnostics: () =>
+            'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
+            'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
+            'reopened History store',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2417,6 +2540,11 @@ void main() {
               reopened.state.activeBuffer!.id,
             ) !=
             null,
+        operation: 'Reopened B history binding',
+        diagnostics: () =>
+            'loading=${reopened.container.read(localHistoryControllerProvider).loading}, '
+            'warning=${reopened.container.read(localHistoryControllerProvider).warning?.detail}, '
+            'reopened History store',
       );
       expect(
         reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
@@ -2497,6 +2625,19 @@ void main() {
         final settings = harness.container.read(
           appSettingsControllerProvider.notifier,
         );
+        String diagnostics() {
+          final state = harness.container.read(localHistoryControllerProvider);
+          final buffer = harness.state.activeBuffer!;
+          return 'active=${buffer.filePath}, dirty=${buffer.isDirty}, '
+              'text=${buffer.text}, '
+              'pending=${history.pendingSnapshotForBuffer(buffer.id)?.text}, '
+              'document=${history.documentIdForBuffer(buffer.id)}, '
+              'recording=${history.policy.recordingEnabled}, '
+              'timers=${timers.map((timer) => timer.isActive).toList()}, '
+              'warning=${state.warning?.detail}, '
+              'History store';
+        }
+
         await harness.controller.createMarkdownFile();
         final bufferId = harness.state.activeBuffer!.id;
 
@@ -2532,6 +2673,8 @@ void main() {
           () =>
               history.pendingSnapshotForBuffer(bufferId)?.text ==
               'Pending at first save\n',
+          operation: 'Pre-promotion edit checkpoint admission',
+          diagnostics: diagnostics,
         );
         store.blockNextUntitledCheckpoint = true;
         final destination = p.join(root.path, 'Guide.md');
@@ -2602,13 +2745,19 @@ void main() {
         harness.controller.updateActiveText(
           'Named checkpoint after cancellation\n',
         );
-        await _waitFor(() => timers.any((timer) => timer.isActive));
+        await _waitFor(
+          () => timers.any((timer) => timer.isActive),
+          operation: 'Post-cancellation named checkpoint timer',
+          diagnostics: diagnostics,
+        );
         final namedTimer = timers.singleWhere((timer) => timer.isActive);
         expect(namedTimer.duration, const Duration(seconds: 60));
         now = now.add(namedTimer.duration);
         namedTimer.fire();
         await _waitFor(
           () => history.pendingSnapshotForBuffer(bufferId) == null,
+          operation: 'Post-cancellation named checkpoint completion',
+          diagnostics: diagnostics,
         );
         final captured = await diskStore.load();
         final document = captured.documents.single;
@@ -6114,9 +6263,13 @@ Future<void> _waitFor(
   String Function()? diagnostics,
 }) async {
   final deadline = DateTime.now().add(timeout);
+
   while (!condition()) {
     if (DateTime.now().isAfter(deadline)) {
-      fail('$operation did not complete. ${diagnostics?.call() ?? ''}');
+      fail(
+        '$operation did not complete. deadline exceeded. '
+        '${diagnostics?.call() ?? ''}',
+      );
     }
     await Future<void>.delayed(const Duration(milliseconds: 10));
   }

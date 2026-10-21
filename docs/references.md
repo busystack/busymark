@@ -1,6 +1,6 @@
 # References and links
 
-Open **References** from the sidebar menu or Command Palette. The panel follows
+Open **References** from the sidebar menu or Search Actions. The panel follows
 the current document and shows its workspace/account scope. Switch between
 Incoming and Outgoing, or choose a parsed heading, topic element, or reusable
 fragment. Rows show the authored context, destination, and resolution status.

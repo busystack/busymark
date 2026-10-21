@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import '../core/linux_private_permissions.dart';
+
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -676,6 +678,7 @@ Future<T> _withSessionLock<T>(
         break;
       } on FileSystemException catch (error) {
         if (!_isSessionLockContention(error)) rethrow;
+
         final remaining = budget - elapsed.elapsed;
         if (remaining <= Duration.zero) {
           throw FileSystemException(
@@ -729,16 +732,16 @@ Future<void> _writeAtomic(File target, Map<String, Object?> json) async {
   await target.parent.create(recursive: true);
   await _setPrivatePermissions(target.parent, directory: true);
   final staging = await target.parent.createTemp('.busymark-state-');
-  await _setPrivatePermissions(staging, directory: true);
   final staged = File(p.join(staging.path, p.basename(target.path)));
   try {
+    await _setPrivatePermissions(staging, directory: true);
     await staged.writeAsString(
       const JsonEncoder.withIndent('  ').convert(json),
       flush: true,
     );
     await _setPrivatePermissions(staged, directory: false);
     await staged.rename(target.path);
-    await _setPrivatePermissions(target, directory: false);
+    // Rename publishes the already-private inode, preserving its permissions.
   } finally {
     try {
       if (await staged.exists()) {
@@ -762,6 +765,13 @@ Future<void> _setPrivatePermissions(
   required bool directory,
 }) async {
   if (Platform.isWindows) {
+    return;
+  }
+  if (Platform.isLinux) {
+    await LinuxPrivatePermissions.instance.restrict(
+      entity.path,
+      directory: directory,
+    );
     return;
   }
   final result = await Process.run('chmod', [

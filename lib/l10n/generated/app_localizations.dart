@@ -139,6 +139,198 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// No description provided for @notesNewFromRetainedText.
+  ///
+  /// In en, this message translates to:
+  /// **'New note from retained text'**
+  String get notesNewFromRetainedText;
+
+  /// No description provided for @notesAccountThrottled.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud requested a pause. Wait before starting sign-in again.'**
+  String get notesAccountThrottled;
+
+  /// No description provided for @notesSettingsRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing Notes after the acknowledged settings update'**
+  String get notesSettingsRefreshing;
+
+  /// No description provided for @notesExportOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The export failed before publication. Check the source and destination, then export again.'**
+  String get notesExportOperationFailed;
+
+  /// No description provided for @notesRecoveryCreatedNotOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'The recovered note was saved. Opening it failed. Resolve pending editor or property changes, then open this existing note.'**
+  String get notesRecoveryCreatedNotOpened;
+
+  /// No description provided for @notesSettingsPendingNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending notes, conflicts, or uncertain creations block this collection change. Open Notes and synchronize or review them, then retry this retained settings draft.'**
+  String get notesSettingsPendingNotes;
+
+  /// No description provided for @notesSettingsPendingAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending attachment operations block this collection change. Open Notes and review the attachments, then retry this retained settings draft.'**
+  String get notesSettingsPendingAttachments;
+
+  /// No description provided for @notesAccountServerAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the canonical HTTPS address of your Nextcloud server, then start sign-in again. The address or redirect could not be verified.'**
+  String get notesAccountServerAddress;
+
+  /// No description provided for @notesAccountUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes is unavailable or its API is unsupported. Enable Nextcloud Notes with API major version 1, minor version 4 or later.'**
+  String get notesAccountUnsupported;
+
+  /// No description provided for @notesAccountAuthorizeAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud rejected the credentials. Authorize this account again or reconnect.'**
+  String get notesAccountAuthorizeAgain;
+
+  /// No description provided for @notesAccountCheckForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud denied the Notes capability check. Ask the server administrator to allow it, then try again.'**
+  String get notesAccountCheckForbidden;
+
+  /// No description provided for @notesAccountMalformed.
+  ///
+  /// In en, this message translates to:
+  /// **'The Nextcloud response could not be verified. Check the server installation, then start sign-in again.'**
+  String get notesAccountMalformed;
+
+  /// No description provided for @notesAccountTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in timed out. Start sign-in again and complete authorization in your browser.'**
+  String get notesAccountTimedOut;
+
+  /// No description provided for @notesAccountBrowserUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The system browser could not open. Check your default browser, then start sign-in again.'**
+  String get notesAccountBrowserUnavailable;
+
+  /// No description provided for @notesAccountNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not reach Nextcloud. Check your connection and the server, then try signing in again.'**
+  String get notesAccountNetwork;
+
+  /// No description provided for @notesAccountRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud rejected the capability request. Check server access with your administrator, then try again.'**
+  String get notesAccountRejected;
+
+  /// No description provided for @notesAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not complete account setup. Try signing in again.'**
+  String get notesAccountFailed;
+
+  /// No description provided for @notesTransferSourceChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The source changed after review. Review the current file or capture a new snapshot before retrying.'**
+  String get notesTransferSourceChanged;
+
+  /// No description provided for @notesTransferUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The source could not be read. Check access to the file or folder, then review it again.'**
+  String get notesTransferUnreadable;
+
+  /// No description provided for @notesTransferInvalidSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'The snapshot is invalid or unsupported. Choose a valid BusyMark Notes snapshot or Markdown source.'**
+  String get notesTransferInvalidSnapshot;
+
+  /// No description provided for @notesTransferMediaLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Media exceeds the import size limit. Reduce the affected item\'s media before reviewing it again.'**
+  String get notesTransferMediaLimit;
+
+  /// No description provided for @notesTransferUnsafeSource.
+  ///
+  /// In en, this message translates to:
+  /// **'The source contains an unsafe path. Choose files within the selected source folder and review again.'**
+  String get notesTransferUnsafeSource;
+
+  /// No description provided for @notesTransferDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'The export could not be written. Check access and free space at the destination, then export again.'**
+  String get notesTransferDestination;
+
+  /// No description provided for @notesTransferOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The transfer could not finish. Review the affected items and try again. Earlier imported items remain saved.'**
+  String get notesTransferOperationFailed;
+
+  /// No description provided for @notesExportPublishedWithOmissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Export available with omissions'**
+  String get notesExportPublishedWithOmissions;
+
+  /// No description provided for @notesBatchUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested values were already set.'**
+  String get notesBatchUnchanged;
+
+  /// No description provided for @notesBatchReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is read-only. Protected properties cannot change; Favorite is still permitted.'**
+  String get notesBatchReadOnly;
+
+  /// No description provided for @notesBatchReviewChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This note changed after review. Review its current state before applying this action again.'**
+  String get notesBatchReviewChanged;
+
+  /// No description provided for @notesBatchMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is no longer available. Refresh the list and review the targets again.'**
+  String get notesBatchMissing;
+
+  /// No description provided for @notesBatchStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'The local save failed. Check local storage and retry this item; successful items remain saved.'**
+  String get notesBatchStorage;
+
+  /// No description provided for @notesRemoteReviewChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The server note changed. Your merge draft is retained. Review the updated comparison and choose how to resolve it again.'**
+  String get notesRemoteReviewChanged;
+
+  /// No description provided for @notesReviewRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'I have reviewed the current server version'**
+  String get notesReviewRemote;
+
   /// No description provided for @wsModuleCapsNotPublished.
   ///
   /// In en, this message translates to:
@@ -1189,24 +1381,6 @@ abstract class AppLocalizations {
   /// **'Keyboard Shortcuts'**
   String get keyboardShortcuts;
 
-  /// Title and command label for the searchable command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'Command Palette'**
-  String get commandPalette;
-
-  /// Search hint in the command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'Type a command'**
-  String get commandPaletteHint;
-
-  /// Empty state in the command palette.
-  ///
-  /// In en, this message translates to:
-  /// **'No matching commands'**
-  String get commandPaletteEmpty;
-
   /// Reason shown for a disabled contextual command.
   ///
   /// In en, this message translates to:
@@ -1630,7 +1804,7 @@ abstract class AppLocalizations {
   /// Keyboard shortcut description for opening shortcuts.
   ///
   /// In en, this message translates to:
-  /// **'Show this keyboard shortcut reference'**
+  /// **'Customize application keyboard shortcuts'**
   String get shortcutKeyboardShortcutsDescription;
 
   /// Keyboard shortcut description for opening the Syntax Reference.
@@ -2077,10 +2251,10 @@ abstract class AppLocalizations {
   /// **'Validate on edit'**
   String get validateOnEdit;
 
-  /// Settings action label for clearing recent workspaces.
+  /// Settings action for clearing Recent navigation metadata in both document and workspace sections.
   ///
   /// In en, this message translates to:
-  /// **'Clear recent workspaces'**
+  /// **'Clear recent history'**
   String get clearRecentWorkspaces;
 
   /// Settings label for WYSIWYG editing button position.
@@ -3391,24 +3565,6 @@ abstract class AppLocalizations {
   /// **'Next match'**
   String get sourceSearchNextMatch;
 
-  /// Tooltip for toggling case-sensitive source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Case sensitive'**
-  String get sourceSearchCaseSensitive;
-
-  /// Tooltip for toggling whole-word source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Whole word'**
-  String get sourceSearchWholeWord;
-
-  /// Tooltip for toggling regular-expression source search.
-  ///
-  /// In en, this message translates to:
-  /// **'Regex'**
-  String get sourceSearchRegex;
-
   /// Placeholder for the active-document replacement field.
   ///
   /// In en, this message translates to:
@@ -3613,18 +3769,6 @@ abstract class AppLocalizations {
   /// **'Save As'**
   String get saveAs;
 
-  /// Source search status shown when the regular expression is invalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid regular expression'**
-  String get sourceSearchInvalidRegex;
-
-  /// No description provided for @sourceSearchZeroLengthUnsupported.
-  ///
-  /// In en, this message translates to:
-  /// **'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).'**
-  String get sourceSearchZeroLengthUnsupported;
-
   /// No description provided for @workspaceSearchIncomplete.
   ///
   /// In en, this message translates to:
@@ -3816,6 +3960,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resource file'**
   String get documentKindResourceFile;
+
+  /// Warning when updating Recent items fails after a successful open or save.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update Recent items: {error}.'**
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error);
 
   /// Workspace error message shown when opening a path fails.
   ///
@@ -7368,12 +7518,6 @@ abstract class AppLocalizations {
   /// **'Clipboard History'**
   String get clipboardHistory;
 
-  /// No description provided for @clipboardHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search clipboard history'**
-  String get clipboardHistorySearchHint;
-
   /// No description provided for @clipboardHistoryDescription.
   ///
   /// In en, this message translates to:
@@ -7409,12 +7553,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clipboard history is empty.'**
   String get clipboardNoItems;
-
-  /// No description provided for @clipboardNoMatches.
-  ///
-  /// In en, this message translates to:
-  /// **'No clipboard items match this search.'**
-  String get clipboardNoMatches;
 
   /// No description provided for @clipboardDisabled.
   ///
@@ -7511,18 +7649,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This document has no Local History revisions.'**
   String get localHistoryNoRevisions;
-
-  /// No description provided for @localHistoryNoMatches.
-  ///
-  /// In en, this message translates to:
-  /// **'No Local History revisions match this search.'**
-  String get localHistoryNoMatches;
-
-  /// No description provided for @localHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search local history'**
-  String get localHistorySearchHint;
 
   /// No description provided for @localHistorySelectedRevision.
   ///
@@ -9251,6 +9377,726 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The inspected element is unavailable. Inspect an element to continue.'**
   String get wsPropertiesUnavailable;
+
+  /// No description provided for @searchDocumentsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get searchDocumentsCategory;
+
+  /// No description provided for @searchTopicsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Topics'**
+  String get searchTopicsCategory;
+
+  /// No description provided for @searchCurrentDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Current document'**
+  String get searchCurrentDocument;
+
+  /// No description provided for @searchCurrentWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Current workspace'**
+  String get searchCurrentWorkspace;
+
+  /// No description provided for @browseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Notes'**
+  String get browseNotes;
+
+  /// No description provided for @searchActionsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Actions'**
+  String get searchActionsCommand;
+
+  /// No description provided for @searchDocumentsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Documents'**
+  String get searchDocumentsCommand;
+
+  /// No description provided for @searchTopicsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Topics'**
+  String get searchTopicsCommand;
+
+  /// No description provided for @searchRecentCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Recent'**
+  String get searchRecentCommand;
+
+  /// No description provided for @searchResourceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This resource is unavailable.'**
+  String get searchResourceUnavailable;
+
+  /// Command to synchronize the active Nextcloud Notes account.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync notes'**
+  String get notesSync;
+
+  /// No description provided for @searchInWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Workspace'**
+  String get searchInWorkspace;
+
+  /// No description provided for @searchCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Search category'**
+  String get searchCategory;
+
+  /// No description provided for @clearHistorySearchScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Search history across documents'**
+  String get clearHistorySearchScope;
+
+  /// No description provided for @searchInDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Document'**
+  String get searchInDocument;
+
+  /// No description provided for @searchDocumentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this document…'**
+  String get searchDocumentHint;
+
+  /// No description provided for @searchWorkspaceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this workspace…'**
+  String get searchWorkspaceHint;
+
+  /// No description provided for @searchOutlineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search headings…'**
+  String get searchOutlineHint;
+
+  /// No description provided for @searchHistoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Local History…'**
+  String get searchHistoryHint;
+
+  /// No description provided for @searchEnterText.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to search'**
+  String get searchEnterText;
+
+  /// No description provided for @searchAccountUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Account unavailable'**
+  String get searchAccountUnavailable;
+
+  /// No description provided for @searchDocumentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search documents…'**
+  String get searchDocumentsHint;
+
+  /// No description provided for @searchTopicsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search topics…'**
+  String get searchTopicsHint;
+
+  /// No description provided for @searchRecentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recent resources…'**
+  String get searchRecentHint;
+
+  /// No description provided for @searchActionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search actions…'**
+  String get searchActionsHint;
+
+  /// No description provided for @searchRequiresNotesWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires a Notes workspace'**
+  String get searchRequiresNotesWorkspace;
+
+  /// Search and keyboard shortcut settings: searchSidebarLabel
+  ///
+  /// In en, this message translates to:
+  /// **'Search:'**
+  String get searchSidebarLabel;
+
+  /// Search and keyboard shortcut settings: searchDocumentTextCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Document Text'**
+  String get searchDocumentTextCategory;
+
+  /// Search and keyboard shortcut settings: searchWorkspaceTextCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace Text'**
+  String get searchWorkspaceTextCategory;
+
+  /// Search and keyboard shortcut settings: searchHeadingsCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Headings'**
+  String get searchHeadingsCategory;
+
+  /// Search and keyboard shortcut settings: shortcutUnassigned
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get shortcutUnassigned;
+
+  /// Search and keyboard shortcut settings: shortcutPressKeys
+  ///
+  /// In en, this message translates to:
+  /// **'Press a key combination…'**
+  String get shortcutPressKeys;
+
+  /// Search and keyboard shortcut settings: shortcutRecord
+  ///
+  /// In en, this message translates to:
+  /// **'Record shortcut'**
+  String get shortcutRecord;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreAll
+  ///
+  /// In en, this message translates to:
+  /// **'Restore all defaults'**
+  String get shortcutRestoreAll;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreAllQuestion
+  ///
+  /// In en, this message translates to:
+  /// **'Restore every action’s default shortcut? Custom assignments will be removed.'**
+  String get shortcutRestoreAllQuestion;
+
+  /// Search and keyboard shortcut settings: shortcutSaveFailed
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcuts are active but could not be saved. Retry to keep them after restart.'**
+  String get shortcutSaveFailed;
+
+  /// Search and keyboard shortcut settings: shortcutRetry
+  ///
+  /// In en, this message translates to:
+  /// **'Retry saving'**
+  String get shortcutRetry;
+
+  /// Search and keyboard shortcut settings: shortcutChanged
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments changed. Review the current shortcuts and try again.'**
+  String get shortcutChanged;
+
+  /// Search and keyboard shortcut settings: shortcutInvalid
+  ///
+  /// In en, this message translates to:
+  /// **'This combination cannot be assigned in this context.'**
+  String get shortcutInvalid;
+
+  /// Search and keyboard shortcut settings: shortcutSystemWarning
+  ///
+  /// In en, this message translates to:
+  /// **'This combination may be used by your desktop. BusyMark cannot override system shortcuts.'**
+  String get shortcutSystemWarning;
+
+  /// Search and keyboard shortcut settings: shortcutConflicts
+  ///
+  /// In en, this message translates to:
+  /// **'This shortcut overlaps these actions:'**
+  String get shortcutConflicts;
+
+  /// Search and keyboard shortcut settings: shortcutRemove
+  ///
+  /// In en, this message translates to:
+  /// **'Remove assignment'**
+  String get shortcutRemove;
+
+  /// Search and keyboard shortcut settings: shortcutRestoreDefault
+  ///
+  /// In en, this message translates to:
+  /// **'Restore default'**
+  String get shortcutRestoreDefault;
+
+  /// Search and keyboard shortcut settings: shortcutAssign
+  ///
+  /// In en, this message translates to:
+  /// **'Assign'**
+  String get shortcutAssign;
+
+  /// Search and keyboard shortcut settings: shortcutReassign
+  ///
+  /// In en, this message translates to:
+  /// **'Reassign'**
+  String get shortcutReassign;
+
+  /// Search and keyboard shortcut settings: shortcutContextApplication
+  ///
+  /// In en, this message translates to:
+  /// **'Application'**
+  String get shortcutContextApplication;
+
+  /// Search and keyboard shortcut settings: shortcutContextDocument
+  ///
+  /// In en, this message translates to:
+  /// **'Document views'**
+  String get shortcutContextDocument;
+
+  /// Search and keyboard shortcut settings: shortcutContextEditor
+  ///
+  /// In en, this message translates to:
+  /// **'Editor and Source'**
+  String get shortcutContextEditor;
+
+  /// Search and keyboard shortcut settings: shortcutContextWritersideSource
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside Source'**
+  String get shortcutContextWritersideSource;
+
+  /// Search and keyboard shortcut settings: shortcutContextWorkspace
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace navigation'**
+  String get shortcutContextWorkspace;
+
+  /// Search and keyboard shortcut settings: shortcutContextTree
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar trees'**
+  String get shortcutContextTree;
+
+  /// No description provided for @searchHeadingsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Headings'**
+  String get searchHeadingsCommand;
+
+  /// No description provided for @shortcutFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Handled by the editor; not configurable.'**
+  String get shortcutFixed;
+
+  /// No description provided for @shortcutDefaultConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Default shortcut conflicts with a custom assignment.'**
+  String get shortcutDefaultConflict;
+
+  /// No description provided for @shortcutCurrentBinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Current shortcut'**
+  String get shortcutCurrentBinding;
+
+  /// No description provided for @shortcutProposedBinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposed shortcut'**
+  String get shortcutProposedBinding;
+
+  /// No description provided for @notesActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes actions'**
+  String get notesActions;
+
+  /// No description provided for @noteActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Note actions'**
+  String get noteActions;
+
+  /// No description provided for @noteProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Note Properties'**
+  String get noteProperties;
+
+  /// No description provided for @notesExportAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Export All Notes…'**
+  String get notesExportAll;
+
+  /// No description provided for @notesExportCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Category…'**
+  String get notesExportCategory;
+
+  /// No description provided for @notesOfflineAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep All Notes Available Offline'**
+  String get notesOfflineAll;
+
+  /// No description provided for @notesOfflineCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Category Available Offline'**
+  String get notesOfflineCategory;
+
+  /// No description provided for @notesOfflineRemoveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove All Notes Offline Requirement'**
+  String get notesOfflineRemoveAll;
+
+  /// No description provided for @notesOfflineRemoveCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Category Offline Requirement'**
+  String get notesOfflineRemoveCategory;
+
+  /// No description provided for @notesOfflinePause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause Downloads'**
+  String get notesOfflinePause;
+
+  /// No description provided for @notesOfflineResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume Downloads'**
+  String get notesOfflineResume;
+
+  /// No description provided for @notesOfflineKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this note available offline'**
+  String get notesOfflineKeep;
+
+  /// No description provided for @notesOfflineRetentionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing this requirement keeps existing cached content. A category or account requirement may still retain this note.'**
+  String get notesOfflineRetentionHelp;
+
+  /// No description provided for @notesOfflineBroader.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is also retained by a category or account requirement.'**
+  String get notesOfflineBroader;
+
+  /// No description provided for @notesOfflineExternal.
+  ///
+  /// In en, this message translates to:
+  /// **'External media requires a connection. BusyMark only retains note text and managed attachments.'**
+  String get notesOfflineExternal;
+
+  /// No description provided for @notesEmptyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes yet. Create a note to get started.'**
+  String get notesEmptyAll;
+
+  /// No description provided for @notesEmptyFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorite notes.'**
+  String get notesEmptyFavorites;
+
+  /// No description provided for @notesEmptyCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes in this category.'**
+  String get notesEmptyCategory;
+
+  /// No description provided for @notesEmptyUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'No uncategorized notes.'**
+  String get notesEmptyUncategorized;
+
+  /// No description provided for @notesEmptyRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'No retained notes to recover.'**
+  String get notesEmptyRecovery;
+
+  /// No description provided for @notesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not load the local Notes store. Retry to open your cached notes.'**
+  String get notesLoadFailed;
+
+  /// No description provided for @notesOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The operation could not finish. Your draft is retained. Review Save and any conflicts, then try again.'**
+  String get notesOperationFailed;
+
+  /// No description provided for @notesInspectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not inspect attachments. Retry to review availability.'**
+  String get notesInspectionFailed;
+
+  /// No description provided for @notesStartingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting Nextcloud connection…'**
+  String get notesStartingConnection;
+
+  /// No description provided for @notesVerifyingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying Notes access…'**
+  String get notesVerifyingConnection;
+
+  /// No description provided for @notesCancellingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling login and cleaning up…'**
+  String get notesCancellingConnection;
+
+  /// No description provided for @notesRemovingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing the local account…'**
+  String get notesRemovingConnection;
+
+  /// No description provided for @notesRemovedWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The local Nextcloud account was removed. App-password revocation was not confirmed. Remove BusyMark’s app password in Nextcloud Security settings.'**
+  String get notesRemovedWarning;
+
+  /// No description provided for @notesBuffersNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not save all open notes locally. Review Save, conflicts, or normalization in the workspace before trying again. Pending local changes may still need to synchronize with Nextcloud.'**
+  String get notesBuffersNotSaved;
+
+  /// No description provided for @notesSettingsLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes to Nextcloud settings before leaving?'**
+  String get notesSettingsLeave;
+
+  /// No description provided for @notesSettingsLeaveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Notes folder and suffix changes have not been sent to Nextcloud.'**
+  String get notesSettingsLeaveHelp;
+
+  /// No description provided for @notesSettingsReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload Server Settings…'**
+  String get notesSettingsReload;
+
+  /// No description provided for @notesSettingsReloadHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Reloading replaces your draft with the current settings on Nextcloud. Discard this draft and reload?'**
+  String get notesSettingsReloadHelp;
+
+  /// No description provided for @notesSettingsRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud accepted the settings update, but refreshing notes failed. The displayed settings are the server’s acknowledged values. Retry the refresh from Notes.'**
+  String get notesSettingsRefreshFailed;
+
+  /// No description provided for @notesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud is unavailable. Cached notes remain available; local changes are waiting to synchronize.'**
+  String get notesUnavailable;
+
+  /// No description provided for @notesStorageFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud storage is full. Free space on the server, then retry.'**
+  String get notesStorageFull;
+
+  /// No description provided for @notesRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud rejected this change. Review the note and save a local copy before retrying.'**
+  String get notesRejected;
+
+  /// No description provided for @notesThrottled.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud asked BusyMark to wait. Synchronization resumes after the retry deadline.'**
+  String get notesThrottled;
+
+  /// No description provided for @notesRecoveryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This change requires review before synchronization can continue.'**
+  String get notesRecoveryRequired;
+
+  /// No description provided for @notesScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning files…'**
+  String get notesScanning;
+
+  /// No description provided for @notesCancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling… Waiting for the current operation to settle.'**
+  String get notesCancelling;
+
+  /// No description provided for @notesCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get notesCancelled;
+
+  /// No description provided for @notesPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially completed'**
+  String get notesPartial;
+
+  /// No description provided for @notesTransferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer failed. Review the outcome before retrying.'**
+  String get notesTransferFailed;
+
+  /// No description provided for @notesImportPartialHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier items may already be saved locally. Resume this import to continue without duplicating them.'**
+  String get notesImportPartialHelp;
+
+  /// No description provided for @notesNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get notesNotStarted;
+
+  /// No description provided for @notesCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get notesCreated;
+
+  /// No description provided for @notesRemoteDeleteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support deleting remote attachments.'**
+  String get notesRemoteDeleteUnavailable;
+
+  /// No description provided for @notesCurrentText.
+  ///
+  /// In en, this message translates to:
+  /// **'Current retained text'**
+  String get notesCurrentText;
+
+  /// No description provided for @notesRecovering.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovering as a new note…'**
+  String get notesRecovering;
+
+  /// No description provided for @notesReadOnlyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is read-only. You can change its favorite status or save a local copy.'**
+  String get notesReadOnlyHelp;
+
+  /// No description provided for @notesSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort notes'**
+  String get notesSort;
+
+  /// No description provided for @notesPathRelative.
+  ///
+  /// In en, this message translates to:
+  /// **'The Notes folder path is relative to your Nextcloud storage.'**
+  String get notesPathRelative;
+
+  /// No description provided for @notesSettingsStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The settings changed on Nextcloud. Reload and review the server values before replacing your draft.'**
+  String get notesSettingsStale;
+
+  /// No description provided for @notesDownloadsPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads paused'**
+  String get notesDownloadsPaused;
+
+  /// No description provided for @notesExportNotPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'No export was published.'**
+  String get notesExportNotPublished;
+
+  /// No description provided for @notesKeyringUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock the desktop keyring and try again.'**
+  String get notesKeyringUnavailable;
+
+  /// No description provided for @notesConnectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to Nextcloud Notes. Check the server address and try again.'**
+  String get notesConnectFailed;
+
+  /// No description provided for @notesAccountMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to the same Nextcloud account. Remove this account first to connect a different one.'**
+  String get notesAccountMismatch;
+
+  /// No description provided for @notesLocalRemovalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Local account cleanup failed. The account is retained so you can retry removal.'**
+  String get notesLocalRemovalFailed;
+
+  /// No description provided for @notesTransferring.
+  ///
+  /// In en, this message translates to:
+  /// **'Transferring notes…'**
+  String get notesTransferring;
+
+  /// No description provided for @notesTechnicalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical details'**
+  String get notesTechnicalDetails;
+
+  /// No description provided for @notesPauseRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause Offline Requirement'**
+  String get notesPauseRequirement;
+
+  /// No description provided for @notesResumeRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume Offline Requirement'**
+  String get notesResumeRequirement;
 }
 
 class _AppLocalizationsDelegate

@@ -11,6 +11,131 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Ghi chú mới từ văn bản được giữ lại';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud yêu cầu tạm dừng. Hãy đợi trước khi đăng nhập lại.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Đang làm mới Notes sau khi xác nhận cài đặt';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Xuất thất bại trước khi công bố. Kiểm tra nguồn và đích rồi xuất lại.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Ghi chú khôi phục đã được lưu nhưng không mở được. Giải quyết thay đổi đang chờ trong trình soạn thảo hoặc thuộc tính rồi mở ghi chú hiện có này.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Ghi chú đang chờ, xung đột hoặc lần tạo chưa rõ kết quả đang chặn thay đổi. Đồng bộ hoặc xem xét trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Thao tác tệp đính kèm đang chờ đang chặn thay đổi. Xem xét tệp đính kèm trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Dùng địa chỉ HTTPS chuẩn của Nextcloud rồi đăng nhập lại. Không thể xác minh địa chỉ hoặc chuyển hướng.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes không khả dụng hoặc API không được hỗ trợ. Bật Nextcloud Notes với API phiên bản chính 1, phụ từ 4 trở lên.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud từ chối thông tin xác thực. Cấp quyền lại hoặc kết nối lại tài khoản.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud cấm kiểm tra khả năng Notes. Nhờ quản trị viên cho phép rồi thử lại.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Không thể xác minh phản hồi Nextcloud. Kiểm tra cài đặt máy chủ rồi đăng nhập lại.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Đăng nhập hết thời gian. Bắt đầu lại và hoàn tất cấp quyền trong trình duyệt.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Không mở được trình duyệt hệ thống. Kiểm tra trình duyệt mặc định rồi đăng nhập lại.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Không thể kết nối Nextcloud. Kiểm tra kết nối và máy chủ rồi đăng nhập lại.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud từ chối yêu cầu khả năng. Kiểm tra quyền truy cập với quản trị viên rồi thử lại.';
+
+  @override
+  String get notesAccountFailed =>
+      'Không hoàn tất thiết lập tài khoản. Hãy đăng nhập lại.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Nguồn đã đổi sau khi xem xét. Xem xét tệp hiện tại hoặc tạo ảnh chụp mới trước khi thử lại.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Không thể đọc nguồn. Kiểm tra quyền truy cập tệp hoặc thư mục rồi xem xét lại.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Ảnh chụp không hợp lệ hoặc không được hỗ trợ. Chọn ảnh chụp BusyMark Notes hợp lệ hoặc nguồn Markdown.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Nội dung đa phương tiện vượt giới hạn nhập. Giảm kích thước của mục liên quan rồi xem xét lại.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Nguồn chứa đường dẫn không an toàn. Chọn tệp trong thư mục nguồn rồi xem xét lại.';
+
+  @override
+  String get notesTransferDestination =>
+      'Không thể ghi bản xuất. Kiểm tra quyền truy cập và chỗ trống ở đích rồi xuất lại.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Không hoàn tất truyền. Xem xét các mục liên quan rồi thử lại. Các mục đã nhập vẫn được lưu.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Bản xuất có sẵn nhưng có mục bị bỏ qua';
+
+  @override
+  String get notesBatchUnchanged => 'Các giá trị yêu cầu đã được đặt.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Ghi chú này chỉ đọc. Không thể sửa thuộc tính được bảo vệ; vẫn có thể đổi Yêu thích.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Ghi chú đã đổi sau khi xem xét. Xem xét trạng thái hiện tại trước khi thực hiện lại.';
+
+  @override
+  String get notesBatchMissing =>
+      'Ghi chú không còn khả dụng. Làm mới danh sách rồi xem xét lại các mục đích.';
+
+  @override
+  String get notesBatchStorage =>
+      'Lưu cục bộ thất bại. Kiểm tra bộ nhớ rồi thử lại mục này; các mục thành công vẫn được lưu.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Ghi chú trên máy chủ đã đổi. Bản nháp hợp nhất được giữ. Xem xét so sánh mới rồi chọn lại cách giải quyết.';
+
+  @override
+  String get notesReviewRemote => 'Tôi đã xem xét phiên bản máy chủ hiện tại';
+
+  @override
   String get wsModuleCapsNotPublished =>
       'Quy tắc viết hoa của mô-đun không được xuất bản.';
 
@@ -583,15 +708,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get keyboardShortcuts => 'Phím tắt';
 
   @override
-  String get commandPalette => 'Bảng lệnh';
-
-  @override
-  String get commandPaletteHint => 'Nhập lệnh';
-
-  @override
-  String get commandPaletteEmpty => 'Không có lệnh phù hợp';
-
-  @override
   String get commandUnavailableInContext =>
       'Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại';
 
@@ -810,7 +926,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Hiển thị tham chiếu phím tắt này';
+      'Tùy chỉnh phím tắt của ứng dụng';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Mở tham chiếu cú pháp';
@@ -1055,7 +1171,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get validateOnEdit => 'Kiểm tra khi chỉnh sửa';
 
   @override
-  String get clearRecentWorkspaces => 'Xóa không gian làm việc gần đây';
+  String get clearRecentWorkspaces => 'Xóa lịch sử gần đây';
 
   @override
   String get editingButtonsPosition => 'Vị trí các nút chỉnh sửa';
@@ -1837,15 +1953,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sourceSearchNextMatch => 'Kết quả khớp tiếp theo';
 
   @override
-  String get sourceSearchCaseSensitive => 'Phân biệt chữ hoa, chữ thường';
-
-  @override
-  String get sourceSearchWholeWord => 'Toàn bộ từ';
-
-  @override
-  String get sourceSearchRegex => 'Biểu thức chính quy';
-
-  @override
   String get sourceSearchReplacement => 'Thay thế bằng';
 
   @override
@@ -1972,13 +2079,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get saveAs => 'Lưu thành';
 
   @override
-  String get sourceSearchInvalidRegex => 'Biểu thức chính quy không hợp lệ';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Không hỗ trợ kết quả khớp regex có độ dài bằng 0 (ví dụ ^, \$ hoặc lookahead chỉ khớp với một vị trí).';
-
-  @override
   String get workspaceSearchIncomplete =>
       'Chỉ hiển thị một phần kết quả. Hiển thị thêm hoặc thu hẹp tìm kiếm.';
 
@@ -2086,6 +2186,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => 'Tệp tài nguyên';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Không thể cập nhật các mục gần đây: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4348,9 +4453,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get clipboardHistory => 'Lịch sử sao chép';
 
   @override
-  String get clipboardHistorySearchHint => 'Tìm kiếm lịch sử bảng nhớ tạm';
-
-  @override
   String get clipboardHistoryDescription => 'Mở lịch sử sao chép cục bộ phiên.';
 
   @override
@@ -4370,10 +4472,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Lịch sử sao chép trống.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Không có mục sao chép nào khớp với tìm kiếm này.';
 
   @override
   String get clipboardDisabled =>
@@ -4430,13 +4528,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Tài liệu này không có các phiên bản Lịch sử cục bộ.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.';
-
-  @override
-  String get localHistorySearchHint => 'Tìm kiếm lịch sử cục bộ';
 
   @override
   String get localHistorySelectedRevision => 'Phiên bản đã chọn';
@@ -5387,4 +5478,396 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
+
+  @override
+  String get searchDocumentsCategory => 'Tài liệu';
+
+  @override
+  String get searchTopicsCategory => 'Chủ đề';
+
+  @override
+  String get searchCurrentDocument => 'Tài liệu hiện tại';
+
+  @override
+  String get searchCurrentWorkspace => 'Không gian làm việc hiện tại';
+
+  @override
+  String get browseNotes => 'Duyệt ghi chú';
+
+  @override
+  String get searchActionsCommand => 'Tìm thao tác';
+
+  @override
+  String get searchDocumentsCommand => 'Tìm tài liệu';
+
+  @override
+  String get searchTopicsCommand => 'Tìm chủ đề';
+
+  @override
+  String get searchRecentCommand => 'Tìm mục gần đây';
+
+  @override
+  String get searchResourceUnavailable => 'Tài nguyên này không khả dụng.';
+
+  @override
+  String get notesSync => 'Đồng bộ ghi chú';
+
+  @override
+  String get searchInWorkspace => 'Tìm trong không gian làm việc';
+
+  @override
+  String get searchCategory => 'Danh mục tìm kiếm';
+
+  @override
+  String get clearHistorySearchScope => 'Tìm trong lịch sử tài liệu';
+
+  @override
+  String get searchInDocument => 'Tìm trong tài liệu';
+
+  @override
+  String get searchDocumentHint => 'Tìm trong tài liệu này…';
+
+  @override
+  String get searchWorkspaceHint => 'Tìm trong không gian làm việc này…';
+
+  @override
+  String get searchOutlineHint => 'Tìm tiêu đề…';
+
+  @override
+  String get searchHistoryHint => 'Tìm trong lịch sử cục bộ…';
+
+  @override
+  String get searchEnterText => 'Nhập văn bản để tìm kiếm';
+
+  @override
+  String get searchAccountUnavailable => 'Tài khoản không khả dụng';
+
+  @override
+  String get searchDocumentsHint => 'Tìm tài liệu…';
+
+  @override
+  String get searchTopicsHint => 'Tìm chủ đề…';
+
+  @override
+  String get searchRecentHint => 'Tìm mục gần đây…';
+
+  @override
+  String get searchActionsHint => 'Tìm thao tác…';
+
+  @override
+  String get searchRequiresNotesWorkspace =>
+      'Yêu cầu không gian làm việc Ghi chú';
+
+  @override
+  String get searchSidebarLabel => 'Tìm kiếm:';
+
+  @override
+  String get searchDocumentTextCategory => 'Văn bản tài liệu';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Văn bản không gian làm việc';
+
+  @override
+  String get searchHeadingsCategory => 'Tiêu đề';
+
+  @override
+  String get shortcutUnassigned => 'Chưa gán';
+
+  @override
+  String get shortcutPressKeys => 'Nhấn tổ hợp phím…';
+
+  @override
+  String get shortcutRecord => 'Ghi phím tắt';
+
+  @override
+  String get shortcutRestoreAll => 'Khôi phục tất cả mặc định';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Khôi phục phím tắt mặc định của mọi thao tác? Các gán tùy chỉnh sẽ bị xóa.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Phím tắt đang có hiệu lực nhưng chưa lưu được. Thử lưu lại để giữ chúng sau khi khởi động lại.';
+
+  @override
+  String get shortcutRetry => 'Thử lưu lại';
+
+  @override
+  String get shortcutChanged =>
+      'Các gán đã thay đổi. Xem lại phím tắt hiện tại và thử lại.';
+
+  @override
+  String get shortcutInvalid => 'Không thể gán tổ hợp này trong ngữ cảnh này.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Môi trường màn hình có thể dùng tổ hợp này. BusyMark không thể ghi đè phím tắt hệ thống.';
+
+  @override
+  String get shortcutConflicts => 'Phím tắt này xung đột với các thao tác sau:';
+
+  @override
+  String get shortcutRemove => 'Xóa gán';
+
+  @override
+  String get shortcutRestoreDefault => 'Khôi phục mặc định';
+
+  @override
+  String get shortcutAssign => 'Gán';
+
+  @override
+  String get shortcutReassign => 'Gán lại';
+
+  @override
+  String get shortcutContextApplication => 'Ứng dụng';
+
+  @override
+  String get shortcutContextDocument => 'Chế độ xem tài liệu';
+
+  @override
+  String get shortcutContextEditor => 'Trình sửa và mã nguồn';
+
+  @override
+  String get shortcutContextWritersideSource => 'Mã nguồn Writerside';
+
+  @override
+  String get shortcutContextWorkspace => 'Điều hướng không gian làm việc';
+
+  @override
+  String get shortcutContextTree => 'Cây thanh bên';
+
+  @override
+  String get searchHeadingsCommand => 'Tìm tiêu đề';
+
+  @override
+  String get shortcutFixed => 'Do trình soạn thảo quản lý; không thể cấu hình.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Phím tắt mặc định xung đột với gán tùy chỉnh.';
+
+  @override
+  String get shortcutCurrentBinding => 'Phím tắt hiện tại';
+
+  @override
+  String get shortcutProposedBinding => 'Phím tắt đề xuất';
+
+  @override
+  String get notesActions => 'Thao tác ghi chú';
+
+  @override
+  String get noteActions => 'Thao tác với ghi chú';
+
+  @override
+  String get noteProperties => 'Thuộc tính ghi chú';
+
+  @override
+  String get notesExportAll => 'Xuất ghi chú · Tất cả ghi chú…';
+
+  @override
+  String get notesExportCategory => 'Xuất ghi chú · Danh mục…';
+
+  @override
+  String get notesOfflineAll => 'Cho phép dùng ngoại tuyến · Tất cả ghi chú';
+
+  @override
+  String get notesOfflineCategory => 'Cho phép dùng ngoại tuyến · Danh mục';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Bỏ yêu cầu lưu ngoại tuyến · Tất cả ghi chú';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Bỏ yêu cầu lưu ngoại tuyến · Danh mục';
+
+  @override
+  String get notesOfflinePause => 'Tạm dừng tải xuống';
+
+  @override
+  String get notesOfflineResume => 'Tiếp tục tải xuống';
+
+  @override
+  String get notesOfflineKeep => 'Cho phép dùng ngoại tuyến';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Bỏ yêu cầu này vẫn giữ nội dung đã lưu đệm. Yêu cầu của danh mục hoặc tài khoản có thể vẫn giữ ghi chú này.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Ghi chú này cũng được giữ theo yêu cầu của danh mục hoặc tài khoản.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark chỉ giữ văn bản ghi chú và tệp đính kèm được quản lý.';
+
+  @override
+  String get notesEmptyAll => 'Chưa có ghi chú. Hãy tạo ghi chú đầu tiên.';
+
+  @override
+  String get notesEmptyFavorites => 'Không có ghi chú yêu thích.';
+
+  @override
+  String get notesEmptyCategory => 'Không có ghi chú trong danh mục này.';
+
+  @override
+  String get notesEmptyUncategorized => 'Không có ghi chú chưa phân loại.';
+
+  @override
+  String get notesEmptyRecovery =>
+      'Không có ghi chú được giữ lại để khôi phục.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Thất bại. Thử lại';
+
+  @override
+  String get notesOperationFailed =>
+      'Không thể hoàn tất thao tác. Bản nháp vẫn được giữ. Kiểm tra việc lưu và xung đột rồi thử lại.';
+
+  @override
+  String get notesInspectionFailed => 'Tệp đính kèm · Thất bại. Thử lại';
+
+  @override
+  String get notesStartingConnection => 'Đang bắt đầu kết nối Nextcloud…';
+
+  @override
+  String get notesVerifyingConnection =>
+      'Đang xác minh quyền truy cập ghi chú…';
+
+  @override
+  String get notesCancellingConnection => 'Đang hủy đăng nhập và dọn dẹp…';
+
+  @override
+  String get notesRemovingConnection => 'Đang xóa tài khoản cục bộ…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Đã xóa tài khoản Nextcloud cục bộ. Chưa xác nhận thu hồi mật khẩu ứng dụng. Hãy xóa mật khẩu BusyMark trong cài đặt Bảo mật Nextcloud.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Không thể lưu cục bộ tất cả ghi chú đang mở. Kiểm tra việc lưu, xung đột hoặc chuẩn hóa trong không gian làm việc. Thay đổi cục bộ có thể vẫn cần đồng bộ với Nextcloud.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Lưu thay đổi cài đặt Nextcloud trước khi rời đi?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Cài đặt Notes trên máy chủ · Thay đổi chưa lưu';
+
+  @override
+  String get notesSettingsReload => 'Tải lại cài đặt máy chủ…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Tải lại sẽ thay bản nháp bằng cài đặt Nextcloud hiện tại. Bỏ bản nháp và tải lại?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud đã nhận cài đặt nhưng không làm mới được ghi chú. Giá trị hiển thị đã được máy chủ xác nhận. Hãy thử làm mới từ Ghi chú.';
+
+  @override
+  String get notesUnavailable =>
+      'Ngoại tuyến · Văn bản có sẵn cục bộ · Đã lưu cục bộ · chờ đồng bộ';
+
+  @override
+  String get notesStorageFull =>
+      'Bộ nhớ Nextcloud đã đầy. Giải phóng dung lượng máy chủ rồi thử lại.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud từ chối thay đổi này. Kiểm tra ghi chú và lưu bản sao cục bộ trước khi thử lại.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud yêu cầu chờ. Đồng bộ sẽ tiếp tục sau thời hạn thử lại.';
+
+  @override
+  String get notesRecoveryRequired => 'Xung đột · So sánh';
+
+  @override
+  String get notesScanning => 'Đang quét tệp…';
+
+  @override
+  String get notesCancelling => 'Đang hủy… Đợi thao tác hiện tại kết thúc.';
+
+  @override
+  String get notesCancelled => 'Đã hủy';
+
+  @override
+  String get notesPartial => 'Hoàn tất một phần';
+
+  @override
+  String get notesTransferFailed => 'Thất bại. Thử lại';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Các mục trước có thể đã được lưu cục bộ. Tiếp tục lần nhập này để tránh tạo bản trùng.';
+
+  @override
+  String get notesNotStarted => 'Chưa bắt đầu';
+
+  @override
+  String get notesCreated => 'Đã tạo';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Địa chỉ máy chủ · Không được hỗ trợ · Xóa · Tệp đính kèm';
+
+  @override
+  String get notesCurrentText => 'Văn bản hiện đang được giữ lại';
+
+  @override
+  String get notesRecovering => 'Đang khôi phục thành ghi chú mới…';
+
+  @override
+  String get notesReadOnlyHelp => 'Chỉ đọc · Yêu thích · Lưu bản sao cục bộ…';
+
+  @override
+  String get notesSort => 'Sắp xếp ghi chú';
+
+  @override
+  String get notesPathRelative =>
+      'Đường dẫn thư mục ghi chú tương đối với bộ nhớ Nextcloud của bạn.';
+
+  @override
+  String get notesSettingsStale =>
+      'Cài đặt trên Nextcloud đã thay đổi. Tải lại và kiểm tra giá trị máy chủ trước khi thay bản nháp.';
+
+  @override
+  String get notesDownloadsPaused => 'Đã tạm dừng tải xuống';
+
+  @override
+  String get notesExportNotPublished => 'Không có bản xuất nào được công bố.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Mở khóa kho khóa của máy tính rồi thử lại.';
+
+  @override
+  String get notesConnectFailed =>
+      'Không thể kết nối Nextcloud Notes. Kiểm tra địa chỉ máy chủ rồi thử lại.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Đăng nhập cùng tài khoản Nextcloud. Xóa tài khoản này trước để kết nối tài khoản khác.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Dọn dẹp tài khoản cục bộ thất bại. Tài khoản được giữ để bạn thử xóa lại.';
+
+  @override
+  String get notesTransferring => 'Đang chuyển ghi chú…';
+
+  @override
+  String get notesTechnicalDetails => 'Chi tiết kỹ thuật';
+
+  @override
+  String get notesPauseRequirement => 'Tạm dừng yêu cầu giữ ngoại tuyến';
+
+  @override
+  String get notesResumeRequirement => 'Tiếp tục yêu cầu giữ ngoại tuyến';
 }

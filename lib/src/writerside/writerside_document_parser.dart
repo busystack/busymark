@@ -13,6 +13,14 @@ class WritersideDocumentParser {
   WritersideDocument parseXml({
     required String filePath,
     required String source,
+  }) => SourceLocationMapper.withSource(
+    source,
+    () => _parseXml(filePath: filePath, source: source),
+  );
+
+  WritersideDocument _parseXml({
+    required String filePath,
+    required String source,
   }) {
     try {
       return WritersideDocument(

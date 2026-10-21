@@ -23,7 +23,10 @@ class FixtureIndex extends ReferenceController {
 
 class FixtureWorkspace extends WorkspaceController {
   @override
-  Future<bool> openActiveFile(String path) async => true;
+  Future<bool> openActiveFile(
+    String path, {
+    bool Function()? acceptNavigation,
+  }) async => acceptNavigation?.call() != false;
   @override
   WorkspaceState build() => WorkspaceState(
     workspace: Workspace(
@@ -69,7 +72,11 @@ class NavigableFixtureWorkspace extends FixtureWorkspace {
     ],
   );
   @override
-  Future<bool> openActiveFile(String path) async {
+  Future<bool> openActiveFile(
+    String path, {
+    bool Function()? acceptNavigation,
+  }) async {
+    if (acceptNavigation?.call() == false) return false;
     final doc = index.documents[path]!;
     state = state.copyWith(
       activeBufferId: path,

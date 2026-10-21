@@ -5,6 +5,7 @@ import '../core/busymark_exception.dart';
 
 enum WorkspaceMessageCode {
   openFailed,
+  recentWorkspaceUpdateFailed,
   createWritersideProjectFailed,
   createWritersideTopicFailed,
   couldNotOpenFile,
@@ -32,6 +33,8 @@ String localizeWorkspaceMessage(
   final error = _localizeWorkspaceError(context, message.error);
   return switch (message.code) {
     WorkspaceMessageCode.openFailed => l10n.workspaceErrorOpenFailed(error),
+    WorkspaceMessageCode.recentWorkspaceUpdateFailed =>
+      l10n.workspaceErrorRecentWorkspaceUpdateFailed(error),
     WorkspaceMessageCode.createWritersideProjectFailed =>
       l10n.workspaceErrorCreateWritersideProjectFailed(error),
     WorkspaceMessageCode.createWritersideTopicFailed =>

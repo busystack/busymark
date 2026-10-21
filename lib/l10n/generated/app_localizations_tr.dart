@@ -11,6 +11,131 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Saklanan metinden yeni not';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud beklemenizi istedi. Yeniden oturum açmadan önce bekleyin.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Onaylanan ayar güncellemesinden sonra Notes yenileniyor';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Dışa aktarma yayımlanmadan başarısız oldu. Kaynağı ve hedefi denetleyip yeniden deneyin.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Kurtarılan not kaydedildi ancak açılamadı. Bekleyen düzenleyici veya özellik değişikliklerini çözün ve bu mevcut notu açın.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Bekleyen notlar, çakışmalar veya belirsiz oluşturmalar bu değişikliği engelliyor. Notes içinde eşitleyin ya da inceleyin, ardından korunan ayar taslağını yeniden kaydedin.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Bekleyen ek işlemleri değişikliği engelliyor. Notes içinde ekleri inceleyip korunan ayar taslağını yeniden kaydedin.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Nextcloud’un kurallı HTTPS adresini kullanıp yeniden oturum açın. Adres veya yönlendirme doğrulanamadı.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes kullanılamıyor veya API desteklenmiyor. Ana API sürümü 1, alt sürümü en az 4 olan Nextcloud Notes’u etkinleştirin.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud kimlik bilgilerini reddetti. Hesabı yeniden yetkilendirin veya bağlayın.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud, Notes yetenek denetimini engelledi. Yöneticiden izin isteyip yeniden deneyin.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloud yanıtı doğrulanamadı. Sunucu kurulumunu denetleyip yeniden oturum açın.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Oturum açma zaman aşımına uğradı. Yeniden başlatıp tarayıcıda yetkilendirmeyi tamamlayın.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Sistem tarayıcısı açılamadı. Varsayılan tarayıcıyı denetleyip yeniden oturum açın.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloud’a ulaşılamadı. Bağlantıyı ve sunucuyu denetleyip yeniden oturum açın.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud yetenek isteğini reddetti. Erişimi yöneticiyle denetleyip yeniden deneyin.';
+
+  @override
+  String get notesAccountFailed =>
+      'Hesap kurulumu tamamlanamadı. Yeniden oturum açmayı deneyin.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Kaynak incelemeden sonra değişti. Yeniden denemeden önce güncel dosyayı inceleyin veya yeni bir anlık görüntü alın.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Kaynak okunamadı. Dosya veya klasör erişimini denetleyip yeniden inceleyin.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Anlık görüntü geçersiz veya desteklenmiyor. Geçerli bir BusyMark Notes görüntüsü veya Markdown kaynağı seçin.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Medya içe aktarma boyut sınırını aşıyor. İlgili öğenin medyasını küçültüp yeniden inceleyin.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Kaynak güvensiz bir yol içeriyor. Kaynak klasörü içindeki dosyaları seçip yeniden inceleyin.';
+
+  @override
+  String get notesTransferDestination =>
+      'Dışa aktarma yazılamadı. Hedef erişimini ve boş alanı denetleyip yeniden deneyin.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Aktarım tamamlanamadı. İlgili öğeleri inceleyip yeniden deneyin. Önceden içe aktarılan öğeler kayıtlı kalır.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Eksikleri olan dışa aktarma kullanılabilir';
+
+  @override
+  String get notesBatchUnchanged => 'İstenen değerler zaten ayarlanmıştı.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Bu not salt okunurdur. Korunan özellikler değiştirilemez; Favori yine değiştirilebilir.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Bu not incelemeden sonra değişti. İşlemi yeniden uygulamadan önce güncel durumunu inceleyin.';
+
+  @override
+  String get notesBatchMissing =>
+      'Bu not artık kullanılamıyor. Listeyi yenileyip hedefleri yeniden inceleyin.';
+
+  @override
+  String get notesBatchStorage =>
+      'Yerel kayıt başarısız oldu. Depolamayı denetleyip bu öğeyi yeniden deneyin; başarılı öğeler kayıtlı kalır.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Sunucu notu değişti. Birleştirme taslağınız korunuyor. Güncel karşılaştırmayı inceleyip çözümü yeniden seçin.';
+
+  @override
+  String get notesReviewRemote => 'Güncel sunucu sürümünü inceledim';
+
+  @override
   String get wsModuleCapsNotPublished => 'Modülün harf biçimi yayımlanmaz.';
 
   @override
@@ -583,15 +708,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get keyboardShortcuts => 'Klavye Kısayolları';
 
   @override
-  String get commandPalette => 'Komut Paleti';
-
-  @override
-  String get commandPaletteHint => 'Bir komut yazın';
-
-  @override
-  String get commandPaletteEmpty => 'Eşleşen komut yok';
-
-  @override
   String get commandUnavailableInContext =>
       'Mevcut düzenleyici bağlamında kullanılamıyor';
 
@@ -809,7 +925,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Bu klavye kısayolu referansını göster';
+      'Uygulama klavye kısayollarını özelleştir';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Sözdizimi başvurusunu aç';
@@ -1060,7 +1176,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get validateOnEdit => 'Düzenlemede doğrula';
 
   @override
-  String get clearRecentWorkspaces => 'Son çalışma alanlarını temizle';
+  String get clearRecentWorkspaces => 'Son geçmişi temizle';
 
   @override
   String get editingButtonsPosition => 'Düzenleme düğmelerinin konumu';
@@ -1841,15 +1957,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sourceSearchNextMatch => 'Sonraki eşleşme';
 
   @override
-  String get sourceSearchCaseSensitive => 'Büyük-küçük harf duyarlı';
-
-  @override
-  String get sourceSearchWholeWord => 'Tam sözcük';
-
-  @override
-  String get sourceSearchRegex => 'Düzenli ifade';
-
-  @override
   String get sourceSearchReplacement => 'Şununla değiştir:';
 
   @override
@@ -1975,13 +2082,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get saveAs => 'Farklı Kaydet';
 
   @override
-  String get sourceSearchInvalidRegex => 'Geçersiz düzenli ifade';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Sıfır uzunluklu düzenli ifade eşleşmeleri desteklenmez (örneğin ^, \$ veya yalnızca bir konumla eşleşen ileri bakışlar).';
-
-  @override
   String get workspaceSearchIncomplete =>
       'Sonuçların yalnızca bir kısmı gösteriliyor. Daha fazlasını gösterin veya aramayı daraltın.';
 
@@ -2089,6 +2189,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => 'Kaynak dosyası';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Son öğeler güncellenemedi: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4351,9 +4456,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clipboardHistory => 'Kopyalama Geçmişi';
 
   @override
-  String get clipboardHistorySearchHint => 'Pano geçmişinde ara';
-
-  @override
   String get clipboardHistoryDescription =>
       'Oturuma özgü kopyalama geçmişini aç.';
 
@@ -4375,10 +4477,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Kopyalama geçmişi boş.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Bu arama ile eşleşen kopyalama öğesi bulunamadı.';
 
   @override
   String get clipboardDisabled =>
@@ -4436,13 +4534,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Bu belge Yerel Geçmiş revizyonlarına sahip değil.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.';
-
-  @override
-  String get localHistorySearchHint => 'Yerel geçmişte ara';
 
   @override
   String get localHistorySelectedRevision => 'Seçilen revizyon';
@@ -5396,4 +5487,397 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
+
+  @override
+  String get searchDocumentsCategory => 'Belgeler';
+
+  @override
+  String get searchTopicsCategory => 'Konular';
+
+  @override
+  String get searchCurrentDocument => 'Geçerli belge';
+
+  @override
+  String get searchCurrentWorkspace => 'Geçerli çalışma alanı';
+
+  @override
+  String get browseNotes => 'Notlara göz at';
+
+  @override
+  String get searchActionsCommand => 'Eylemleri ara';
+
+  @override
+  String get searchDocumentsCommand => 'Belgeleri ara';
+
+  @override
+  String get searchTopicsCommand => 'Konuları ara';
+
+  @override
+  String get searchRecentCommand => 'Son kullanılanları ara';
+
+  @override
+  String get searchResourceUnavailable => 'Bu kaynak kullanılamıyor.';
+
+  @override
+  String get notesSync => 'Notları eşitle';
+
+  @override
+  String get searchInWorkspace => 'Çalışma Alanında Ara';
+
+  @override
+  String get searchCategory => 'Arama kategorisi';
+
+  @override
+  String get clearHistorySearchScope => 'Belgelerin geçmişinde ara';
+
+  @override
+  String get searchInDocument => 'Belgede ara';
+
+  @override
+  String get searchDocumentHint => 'Bu belgede ara…';
+
+  @override
+  String get searchWorkspaceHint => 'Bu çalışma alanında ara…';
+
+  @override
+  String get searchOutlineHint => 'Başlıklarda ara…';
+
+  @override
+  String get searchHistoryHint => 'Yerel geçmişte ara…';
+
+  @override
+  String get searchEnterText => 'Aranacak metni girin';
+
+  @override
+  String get searchAccountUnavailable => 'Hesap kullanılamıyor';
+
+  @override
+  String get searchDocumentsHint => 'Belgeleri ara…';
+
+  @override
+  String get searchTopicsHint => 'Konuları ara…';
+
+  @override
+  String get searchRecentHint => 'Son kullanılanları ara…';
+
+  @override
+  String get searchActionsHint => 'Eylemleri ara…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Notlar çalışma alanı gerektirir';
+
+  @override
+  String get searchSidebarLabel => 'Ara:';
+
+  @override
+  String get searchDocumentTextCategory => 'Belge metni';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Çalışma alanı metni';
+
+  @override
+  String get searchHeadingsCategory => 'Başlıklar';
+
+  @override
+  String get shortcutUnassigned => 'Atanmamış';
+
+  @override
+  String get shortcutPressKeys => 'Bir tuş birleşimine basın…';
+
+  @override
+  String get shortcutRecord => 'Kısayol kaydet';
+
+  @override
+  String get shortcutRestoreAll => 'Tüm varsayılanları geri yükle';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Tüm eylemlerin varsayılan kısayolları geri yüklensin mi? Özel atamalar kaldırılacak.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Kısayollar etkin ancak kaydedilemedi. Yeniden başlatmadan sonra korumak için tekrar kaydedin.';
+
+  @override
+  String get shortcutRetry => 'Kaydetmeyi yeniden dene';
+
+  @override
+  String get shortcutChanged =>
+      'Atamalar değişti. Geçerli kısayolları gözden geçirip yeniden deneyin.';
+
+  @override
+  String get shortcutInvalid => 'Bu birleşim bu bağlamda atanamaz.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Masaüstünüz bu birleşimi kullanıyor olabilir. BusyMark sistem kısayollarını geçersiz kılamaz.';
+
+  @override
+  String get shortcutConflicts => 'Bu kısayol şu eylemlerle çakışıyor:';
+
+  @override
+  String get shortcutRemove => 'Atamayı kaldır';
+
+  @override
+  String get shortcutRestoreDefault => 'Varsayılanı geri yükle';
+
+  @override
+  String get shortcutAssign => 'Ata';
+
+  @override
+  String get shortcutReassign => 'Yeniden ata';
+
+  @override
+  String get shortcutContextApplication => 'Uygulama';
+
+  @override
+  String get shortcutContextDocument => 'Belge görünümleri';
+
+  @override
+  String get shortcutContextEditor => 'Düzenleyici ve kaynak';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside kaynağı';
+
+  @override
+  String get shortcutContextWorkspace => 'Çalışma alanı gezintisi';
+
+  @override
+  String get shortcutContextTree => 'Kenar çubuğu ağaçları';
+
+  @override
+  String get searchHeadingsCommand => 'Başlıklarda Ara';
+
+  @override
+  String get shortcutFixed =>
+      'Düzenleyici tarafından yönetilir; yapılandırılamaz.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Varsayılan kısayol özel bir atamayla çakışıyor.';
+
+  @override
+  String get shortcutCurrentBinding => 'Geçerli kısayol';
+
+  @override
+  String get shortcutProposedBinding => 'Önerilen kısayol';
+
+  @override
+  String get notesActions => 'Not işlemleri';
+
+  @override
+  String get noteActions => 'Bu notun işlemleri';
+
+  @override
+  String get noteProperties => 'Not Özellikleri';
+
+  @override
+  String get notesExportAll => 'Notları dışa aktar · Tüm notlar…';
+
+  @override
+  String get notesExportCategory => 'Notları dışa aktar · Kategori…';
+
+  @override
+  String get notesOfflineAll => 'Çevrimdışı kullanılabilir yap · Tüm notlar';
+
+  @override
+  String get notesOfflineCategory => 'Çevrimdışı kullanılabilir yap · Kategori';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Çevrimdışı saklamayı kaldır · Tüm notlar';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Çevrimdışı saklamayı kaldır · Kategori';
+
+  @override
+  String get notesOfflinePause => 'İndirmeleri Duraklat';
+
+  @override
+  String get notesOfflineResume => 'İndirmeleri Sürdür';
+
+  @override
+  String get notesOfflineKeep => 'Çevrimdışı kullanılabilir yap';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Bu gereksinimin kaldırılması mevcut önbelleği silmez. Kategori veya hesap gereksinimi notu tutmaya devam edebilir.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Bu not bir kategori veya hesap gereksinimi nedeniyle de tutuluyor.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Harici medya bağlantı gerektirir. BusyMark yalnızca not metnini ve yönetilen ekleri tutar.';
+
+  @override
+  String get notesEmptyAll => 'Henüz not yok. Başlamak için bir not oluşturun.';
+
+  @override
+  String get notesEmptyFavorites => 'Favori not yok.';
+
+  @override
+  String get notesEmptyCategory => 'Bu kategoride not yok.';
+
+  @override
+  String get notesEmptyUncategorized => 'Kategorisiz not yok.';
+
+  @override
+  String get notesEmptyRecovery => 'Kurtarılacak saklanmış not yok.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Başarısız. Yeniden dene';
+
+  @override
+  String get notesOperationFailed =>
+      'İşlem tamamlanamadı. Taslağınız korunuyor. Kaydetmeyi ve çakışmaları inceleyip yeniden deneyin.';
+
+  @override
+  String get notesInspectionFailed => 'Ekler · Başarısız. Yeniden dene';
+
+  @override
+  String get notesStartingConnection => 'Nextcloud bağlantısı başlatılıyor…';
+
+  @override
+  String get notesVerifyingConnection => 'Notlar erişimi doğrulanıyor…';
+
+  @override
+  String get notesCancellingConnection =>
+      'Oturum açma iptal ediliyor ve temizleniyor…';
+
+  @override
+  String get notesRemovingConnection => 'Yerel hesap kaldırılıyor…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Yerel Nextcloud hesabı kaldırıldı. Uygulama parolasının iptali doğrulanamadı. Nextcloud Güvenlik ayarlarından BusyMark uygulama parolasını kaldırın.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Tüm açık notlar yerel olarak kaydedilemedi. Çalışma alanında kaydetmeyi, çakışmaları veya normalleştirmeyi inceleyin. Yerel değişikliklerin hâlâ Nextcloud ile eşitlenmesi gerekebilir.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Ayrılmadan önce Nextcloud ayarlarındaki değişiklikler kaydedilsin mi?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Sunucu Notes ayarları · Kaydedilmemiş değişiklikler';
+
+  @override
+  String get notesSettingsReload => 'Sunucu Ayarlarını Yeniden Yükle…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Yeniden yükleme, taslağınızı geçerli Nextcloud ayarlarıyla değiştirir. Taslak atılıp yeniden yüklensin mi?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud ayarları kabul etti ancak notları yenileme başarısız oldu. Gösterilen değerler sunucunun onayladığı değerlerdir. Notlar üzerinden yenilemeyi yeniden deneyin.';
+
+  @override
+  String get notesUnavailable =>
+      'Çevrimdışı · Metin yerel olarak kullanılabilir · Yerel kaydedildi · eşitleme bekliyor';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloud depolaması dolu. Sunucuda yer açıp yeniden deneyin.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud bu değişikliği reddetti. Yeniden denemeden önce notu inceleyin ve yerel bir kopya kaydedin.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud beklemenizi istedi. Eşitleme, yeniden deneme süresi dolunca devam eder.';
+
+  @override
+  String get notesRecoveryRequired => 'Çatışmalar · Karşılaştır';
+
+  @override
+  String get notesScanning => 'Dosyalar taranıyor…';
+
+  @override
+  String get notesCancelling =>
+      'İptal ediliyor… Geçerli işlemin bitmesi bekleniyor.';
+
+  @override
+  String get notesCancelled => 'İptal edildi';
+
+  @override
+  String get notesPartial => 'Kısmen tamamlandı';
+
+  @override
+  String get notesTransferFailed => 'Başarısız. Yeniden dene';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Önceki öğeler zaten yerel olarak kaydedilmiş olabilir. Kopya oluşturmadan devam etmek için bu içe aktarmayı sürdürün.';
+
+  @override
+  String get notesNotStarted => 'Başlatılmadı';
+
+  @override
+  String get notesCreated => 'Oluşturuldu';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Sunucu adresi · Desteklenmiyor · Sil · Ekler';
+
+  @override
+  String get notesCurrentText => 'Şu anda saklanan metin';
+
+  @override
+  String get notesRecovering => 'Yeni bir not olarak kurtarılıyor…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Salt okunur · Sık kullanılanlar · Yerel kopyayı kaydet…';
+
+  @override
+  String get notesSort => 'Notları sırala';
+
+  @override
+  String get notesPathRelative =>
+      'Not klasörü yolu Nextcloud depolamanıza görelidir.';
+
+  @override
+  String get notesSettingsStale =>
+      'Nextcloud ayarları değişti. Taslağı değiştirmeden önce sunucu değerlerini yeniden yükleyip inceleyin.';
+
+  @override
+  String get notesDownloadsPaused => 'İndirmeler duraklatıldı';
+
+  @override
+  String get notesExportNotPublished => 'Hiçbir dışa aktarım yayımlanmadı.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Masaüstü anahtarlığının kilidini açıp yeniden deneyin.';
+
+  @override
+  String get notesConnectFailed =>
+      'Nextcloud Notes bağlantısı kurulamadı. Sunucu adresini denetleyip yeniden deneyin.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Aynı Nextcloud hesabında oturum açın. Başka bir hesap bağlamak için önce bunu kaldırın.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Yerel hesap temizliği başarısız oldu. Kaldırmayı yeniden deneyebilmeniz için hesap korundu.';
+
+  @override
+  String get notesTransferring => 'Notlar aktarılıyor…';
+
+  @override
+  String get notesTechnicalDetails => 'Teknik ayrıntılar';
+
+  @override
+  String get notesPauseRequirement => 'Çevrimdışı Gereksinimini Duraklat';
+
+  @override
+  String get notesResumeRequirement => 'Çevrimdışı Gereksinimini Sürdür';
 }

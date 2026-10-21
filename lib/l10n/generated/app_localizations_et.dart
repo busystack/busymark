@@ -11,6 +11,132 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get notesNewFromRetainedText => 'Uus märge säilitatud tekstist';
+
+  @override
+  String get notesAccountThrottled =>
+      'Nextcloud palus pausi. Oota enne uuesti sisselogimist.';
+
+  @override
+  String get notesSettingsRefreshing =>
+      'Notes värskendamine pärast seadete kinnitamist';
+
+  @override
+  String get notesExportOperationFailed =>
+      'Eksport nurjus enne avaldamist. Kontrolli allikat ja sihtkohta ning ekspordi uuesti.';
+
+  @override
+  String get notesRecoveryCreatedNotOpened =>
+      'Taastatud märge on salvestatud, kuid ei avanenud. Lahenda ootel redaktori- või omaduste muudatused ning ava see olemasolev märge.';
+
+  @override
+  String get notesSettingsPendingNotes =>
+      'Ootel märkmed, konfliktid või ebakindlad loomised takistavad muudatust. Sünkrooni või vaata need Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
+
+  @override
+  String get notesSettingsPendingAttachments =>
+      'Ootel manuste toimingud takistavad muudatust. Vaata manused Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
+
+  @override
+  String get notesAccountServerAddress =>
+      'Kasuta Nextcloudi kanoonilist HTTPS-aadressi ja logi uuesti sisse. Aadressi või ümbersuunamist ei saanud kinnitada.';
+
+  @override
+  String get notesAccountUnsupported =>
+      'Notes pole saadaval või API pole toetatud. Luba Nextcloud Notes API põhiversiooniga 1, alamversiooniga 4 või uuemaga.';
+
+  @override
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud lükkas pääsuandmed tagasi. Volita konto uuesti või ühenda uuesti.';
+
+  @override
+  String get notesAccountCheckForbidden =>
+      'Nextcloud keelas Notes’i võimaluste kontrolli. Palu administraatoril see lubada ja proovi uuesti.';
+
+  @override
+  String get notesAccountMalformed =>
+      'Nextcloudi vastust ei saanud kinnitada. Kontrolli serveri paigaldust ja logi uuesti sisse.';
+
+  @override
+  String get notesAccountTimedOut =>
+      'Sisselogimise aeg sai läbi. Alusta uuesti ja lõpeta volitamine brauseris.';
+
+  @override
+  String get notesAccountBrowserUnavailable =>
+      'Süsteemi brauser ei avanenud. Kontrolli vaikebrauserit ja logi uuesti sisse.';
+
+  @override
+  String get notesAccountNetwork =>
+      'Nextcloudiga ei saadud ühendust. Kontrolli võrku ja serverit ning logi uuesti sisse.';
+
+  @override
+  String get notesAccountRejected =>
+      'Nextcloud lükkas võimaluste päringu tagasi. Kontrolli administraatoriga ligipääsu ja proovi uuesti.';
+
+  @override
+  String get notesAccountFailed =>
+      'Konto seadistamine nurjus. Proovi uuesti sisse logida.';
+
+  @override
+  String get notesTransferSourceChanged =>
+      'Allikas muutus pärast ülevaatust. Vaata praegune fail üle või loo uus hetktõmmis.';
+
+  @override
+  String get notesTransferUnreadable =>
+      'Allikat ei saanud lugeda. Kontrolli faili või kausta ligipääsu ja vaata uuesti üle.';
+
+  @override
+  String get notesTransferInvalidSnapshot =>
+      'Hetktõmmis on vigane või toetamata. Vali kehtiv BusyMark Notes’i hetktõmmis või Markdown-allikas.';
+
+  @override
+  String get notesTransferMediaLimit =>
+      'Meedia ületab impordi mahupiiri. Vähenda vastava kirje meediat ja vaata uuesti üle.';
+
+  @override
+  String get notesTransferUnsafeSource =>
+      'Allikas sisaldab ohtlikku teed. Vali failid allikakausta seest ja vaata uuesti üle.';
+
+  @override
+  String get notesTransferDestination =>
+      'Eksporti ei saanud kirjutada. Kontrolli sihtkoha ligipääsu ja vaba ruumi ning proovi uuesti.';
+
+  @override
+  String get notesTransferOperationFailed =>
+      'Edastus ei lõppenud. Vaata vastavad kirjed üle ja proovi uuesti. Varem imporditud kirjed on salvestatud.';
+
+  @override
+  String get notesExportPublishedWithOmissions =>
+      'Eksport on saadaval koos väljajättudega';
+
+  @override
+  String get notesBatchUnchanged => 'Soovitud väärtused olid juba määratud.';
+
+  @override
+  String get notesBatchReadOnly =>
+      'Märge on kirjutuskaitstud. Kaitstud omadusi muuta ei saa; lemmikuks märkimine on lubatud.';
+
+  @override
+  String get notesBatchReviewChanged =>
+      'Märge muutus pärast ülevaatust. Vaata selle praegune olek enne toimingu kordamist üle.';
+
+  @override
+  String get notesBatchMissing =>
+      'Märge pole enam saadaval. Värskenda loendit ja vaata sihtkirjed uuesti üle.';
+
+  @override
+  String get notesBatchStorage =>
+      'Kohalik salvestamine nurjus. Kontrolli andmeruumi ja proovi seda kirjet uuesti; õnnestunud kirjed on salvestatud.';
+
+  @override
+  String get notesRemoteReviewChanged =>
+      'Serveri märge muutus. Liitmise mustand säilis. Vaata uus võrdlus üle ja vali lahendus uuesti.';
+
+  @override
+  String get notesReviewRemote =>
+      'Olen serveri praeguse versiooni üle vaadanud';
+
+  @override
   String get wsModuleCapsNotPublished => 'Mooduli suurtähereeglit ei avaldata.';
 
   @override
@@ -579,15 +705,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get keyboardShortcuts => 'Kiirklahvid';
 
   @override
-  String get commandPalette => 'Käskude palett';
-
-  @override
-  String get commandPaletteHint => 'Sisesta käsk';
-
-  @override
-  String get commandPaletteEmpty => 'Sobivaid käske pole';
-
-  @override
   String get commandUnavailableInContext =>
       'See käsk pole praeguses kontekstis saadaval.';
 
@@ -804,7 +921,8 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutSearchDescription => 'Otsi praegusest tööruumist';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'Kuva kiirklahvide loend';
+  String get shortcutKeyboardShortcutsDescription =>
+      'Kohanda rakenduse kiirklahve';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Ava süntaksiviide';
@@ -1056,7 +1174,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get validateOnEdit => 'Valideeri muutmisel';
 
   @override
-  String get clearRecentWorkspaces => 'Tühjenda hiljutiste tööruumide loend';
+  String get clearRecentWorkspaces => 'Tühjenda hiljutiste kirjete loend';
 
   @override
   String get editingButtonsPosition => 'Redigeerimisnuppude asukoht';
@@ -1840,15 +1958,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get sourceSearchNextMatch => 'Järgmine vaste';
 
   @override
-  String get sourceSearchCaseSensitive => 'Tõstutundlik';
-
-  @override
-  String get sourceSearchWholeWord => 'Terve sõna';
-
-  @override
-  String get sourceSearchRegex => 'Regulaaravaldis';
-
-  @override
   String get sourceSearchReplacement => 'Asenda väärtusega';
 
   @override
@@ -1974,13 +2083,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get saveAs => 'Salvesta nimega';
 
   @override
-  String get sourceSearchInvalidRegex => 'Vigane regulaaravaldis';
-
-  @override
-  String get sourceSearchZeroLengthUnsupported =>
-      'Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, \$ või ainult asukohta sobitavad ettevaated).';
-
-  @override
   String get workspaceSearchIncomplete =>
       'Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.';
 
@@ -2088,6 +2190,11 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get documentKindResourceFile => 'Ressursifail';
+
+  @override
+  String workspaceErrorRecentWorkspaceUpdateFailed(String error) {
+    return 'Hiljutisi üksusi ei saanud uuendada: $error.';
+  }
 
   @override
   String workspaceErrorOpenFailed(String error) {
@@ -4349,9 +4456,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get clipboardHistory => 'Kleepimiskredi ajalugu';
 
   @override
-  String get clipboardHistorySearchHint => 'Otsi lõikepuhvri ajaloost';
-
-  @override
   String get clipboardHistoryDescription =>
       'Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.';
 
@@ -4373,10 +4477,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get clipboardNoItems => 'Kleepimiskredi ajalugu on tühi.';
-
-  @override
-  String get clipboardNoMatches =>
-      'Ei leitud kleepimiskredi elemente, mis vastavad sellele otsingule.';
 
   @override
   String get clipboardDisabled =>
@@ -4433,13 +4533,6 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get localHistoryNoRevisions =>
       'Selle dokumendil pole kohalist ajaloos.';
-
-  @override
-  String get localHistoryNoMatches =>
-      'Ei leidunud kohalise ajalooga versioone.';
-
-  @override
-  String get localHistorySearchHint => 'Otsi kohalikust ajaloost';
 
   @override
   String get localHistorySelectedRevision => 'Valitud versioon';
@@ -5394,4 +5487,398 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Vaadeldav element pole saadaval. Jätkamiseks vali element.';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumendid';
+
+  @override
+  String get searchTopicsCategory => 'Teemad';
+
+  @override
+  String get searchCurrentDocument => 'Praegune dokument';
+
+  @override
+  String get searchCurrentWorkspace => 'Praegune tööruum';
+
+  @override
+  String get browseNotes => 'Sirvi märkmeid';
+
+  @override
+  String get searchActionsCommand => 'Otsi toiminguid';
+
+  @override
+  String get searchDocumentsCommand => 'Otsi dokumente';
+
+  @override
+  String get searchTopicsCommand => 'Otsi teemasid';
+
+  @override
+  String get searchRecentCommand => 'Otsi hiljutisi';
+
+  @override
+  String get searchResourceUnavailable => 'See ressurss pole saadaval.';
+
+  @override
+  String get notesSync => 'Sünkrooni märkmed';
+
+  @override
+  String get searchInWorkspace => 'Otsi tööalast';
+
+  @override
+  String get searchCategory => 'Otsingu kategooria';
+
+  @override
+  String get clearHistorySearchScope => 'Otsi dokumentide ajaloost';
+
+  @override
+  String get searchInDocument => 'Otsi dokumendist';
+
+  @override
+  String get searchDocumentHint => 'Otsi sellest dokumendist…';
+
+  @override
+  String get searchWorkspaceHint => 'Otsi sellest tööruumist…';
+
+  @override
+  String get searchOutlineHint => 'Otsi pealkirju…';
+
+  @override
+  String get searchHistoryHint => 'Otsi kohalikust ajaloost…';
+
+  @override
+  String get searchEnterText => 'Sisesta otsitav tekst';
+
+  @override
+  String get searchAccountUnavailable => 'Konto pole saadaval';
+
+  @override
+  String get searchDocumentsHint => 'Otsi dokumente…';
+
+  @override
+  String get searchTopicsHint => 'Otsi teemasid…';
+
+  @override
+  String get searchRecentHint => 'Otsi hiljutisi…';
+
+  @override
+  String get searchActionsHint => 'Otsi toiminguid…';
+
+  @override
+  String get searchRequiresNotesWorkspace => 'Vajab märkmete tööruumi';
+
+  @override
+  String get searchSidebarLabel => 'Otsi:';
+
+  @override
+  String get searchDocumentTextCategory => 'Dokumendi tekst';
+
+  @override
+  String get searchWorkspaceTextCategory => 'Tööala tekst';
+
+  @override
+  String get searchHeadingsCategory => 'Pealkirjad';
+
+  @override
+  String get shortcutUnassigned => 'Määramata';
+
+  @override
+  String get shortcutPressKeys => 'Vajuta klahvikombinatsiooni…';
+
+  @override
+  String get shortcutRecord => 'Salvesta kiirklahv';
+
+  @override
+  String get shortcutRestoreAll => 'Taasta kõik vaikeväärtused';
+
+  @override
+  String get shortcutRestoreAllQuestion =>
+      'Kas taastada kõigi toimingute vaikekiirklahvid? Kohandatud määrangud eemaldatakse.';
+
+  @override
+  String get shortcutSaveFailed =>
+      'Kiirklahvid on aktiivsed, kuid neid ei saanud salvestada. Proovi uuesti, et säilitada need pärast taaskäivitamist.';
+
+  @override
+  String get shortcutRetry => 'Proovi salvestamist uuesti';
+
+  @override
+  String get shortcutChanged =>
+      'Määrangud on muutunud. Vaata praegused kiirklahvid üle ja proovi uuesti.';
+
+  @override
+  String get shortcutInvalid =>
+      'Seda kombinatsiooni ei saa selles kontekstis määrata.';
+
+  @override
+  String get shortcutSystemWarning =>
+      'Töölaud võib seda kombinatsiooni kasutada. BusyMark ei saa süsteemi kiirklahve alistada.';
+
+  @override
+  String get shortcutConflicts =>
+      'See kiirklahv kattub järgmiste toimingutega:';
+
+  @override
+  String get shortcutRemove => 'Eemalda määrang';
+
+  @override
+  String get shortcutRestoreDefault => 'Taasta vaikeväärtus';
+
+  @override
+  String get shortcutAssign => 'Määra';
+
+  @override
+  String get shortcutReassign => 'Määra ümber';
+
+  @override
+  String get shortcutContextApplication => 'Rakendus';
+
+  @override
+  String get shortcutContextDocument => 'Dokumendivaated';
+
+  @override
+  String get shortcutContextEditor => 'Redaktor ja lähtekood';
+
+  @override
+  String get shortcutContextWritersideSource => 'Writerside’i lähtekood';
+
+  @override
+  String get shortcutContextWorkspace => 'Tööala navigeerimine';
+
+  @override
+  String get shortcutContextTree => 'Külgriba puud';
+
+  @override
+  String get searchHeadingsCommand => 'Otsi pealkirju';
+
+  @override
+  String get shortcutFixed => 'Redaktori hallatav; pole seadistatav.';
+
+  @override
+  String get shortcutDefaultConflict =>
+      'Vaikimisi otsetee on vastuolus kohandatud määranguga.';
+
+  @override
+  String get shortcutCurrentBinding => 'Praegune otsetee';
+
+  @override
+  String get shortcutProposedBinding => 'Pakutud otsetee';
+
+  @override
+  String get notesActions => 'Märkmete toimingud';
+
+  @override
+  String get noteActions => 'Märkme toimingud';
+
+  @override
+  String get noteProperties => 'Märkme omadused';
+
+  @override
+  String get notesExportAll => 'Ekspordi märkmed · Kõik märkmed…';
+
+  @override
+  String get notesExportCategory => 'Ekspordi märkmed · Kategooria…';
+
+  @override
+  String get notesOfflineAll => 'Tee võrguta kättesaadavaks · Kõik märkmed';
+
+  @override
+  String get notesOfflineCategory => 'Tee võrguta kättesaadavaks · Kategooria';
+
+  @override
+  String get notesOfflineRemoveAll =>
+      'Eemalda võrguta säilitamine · Kõik märkmed';
+
+  @override
+  String get notesOfflineRemoveCategory =>
+      'Eemalda võrguta säilitamine · Kategooria';
+
+  @override
+  String get notesOfflinePause => 'Peata allalaadimised';
+
+  @override
+  String get notesOfflineResume => 'Jätka allalaadimisi';
+
+  @override
+  String get notesOfflineKeep => 'Tee võrguta kättesaadavaks';
+
+  @override
+  String get notesOfflineRetentionHelp =>
+      'Selle nõude eemaldamine jätab vahemälu alles. Kategooria või konto nõue võib märget endiselt säilitada.';
+
+  @override
+  String get notesOfflineBroader =>
+      'Seda märget säilitatakse ka kategooria või konto nõude tõttu.';
+
+  @override
+  String get notesOfflineExternal =>
+      'Väline meedia vajab ühendust. BusyMark säilitab vaid märkmete teksti ja hallatavad manused.';
+
+  @override
+  String get notesEmptyAll => 'Märkmeid veel pole. Alustamiseks loo märge.';
+
+  @override
+  String get notesEmptyFavorites => 'Lemmikmärkmeid pole.';
+
+  @override
+  String get notesEmptyCategory => 'Selles kategoorias pole märkmeid.';
+
+  @override
+  String get notesEmptyUncategorized => 'Kategooriata märkmeid pole.';
+
+  @override
+  String get notesEmptyRecovery => 'Taastamiseks säilitatud märkmeid pole.';
+
+  @override
+  String get notesLoadFailed => 'Nextcloud Notes · Ebaõnnestus. Proovi uuesti';
+
+  @override
+  String get notesOperationFailed =>
+      'Toiming ei lõppenud. Mustand on alles. Kontrolli salvestamist ja konflikte ning proovi uuesti.';
+
+  @override
+  String get notesInspectionFailed => 'Manused · Ebaõnnestus. Proovi uuesti';
+
+  @override
+  String get notesStartingConnection => 'Nextcloudi ühenduse alustamine…';
+
+  @override
+  String get notesVerifyingConnection => 'Märkmete ligipääsu kontrollimine…';
+
+  @override
+  String get notesCancellingConnection =>
+      'Sisselogimise tühistamine ja puhastamine…';
+
+  @override
+  String get notesRemovingConnection => 'Kohaliku konto eemaldamine…';
+
+  @override
+  String get notesRemovedWarning =>
+      'Kohalik Nextcloudi konto eemaldati. Rakenduse parooli tühistamist ei kinnitatud. Eemalda BusyMarki parool Nextcloudi turvaseadetest.';
+
+  @override
+  String get notesBuffersNotSaved =>
+      'Kõiki avatud märkmeid ei saanud kohalikult salvestada. Kontrolli tööruumis salvestamist, konflikte või normaliseerimist. Kohalikud muudatused võivad veel vajada Nextcloudiga sünkroonimist.';
+
+  @override
+  String get notesSettingsLeave =>
+      'Kas salvestada Nextcloudi seadete muudatused enne lahkumist?';
+
+  @override
+  String get notesSettingsLeaveHelp =>
+      'Serveri Notesi seaded · Salvestamata muudatused';
+
+  @override
+  String get notesSettingsReload => 'Laadi serveri seaded uuesti…';
+
+  @override
+  String get notesSettingsReloadHelp =>
+      'Uuesti laadimine asendab mustandi Nextcloudi praeguste seadetega. Kas loobuda mustandist ja laadida uuesti?';
+
+  @override
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud kinnitas seaded, kuid märkmete värskendamine ebaõnnestus. Kuvatakse serveri kinnitatud väärtused. Proovi märkmete värskendamist uuesti.';
+
+  @override
+  String get notesUnavailable =>
+      'Ühenduseta · Tekst on kohalikult saadaval · Salvestatud kohalikult · sünkroonimine ootel';
+
+  @override
+  String get notesStorageFull =>
+      'Nextcloudi salvestusruum on täis. Vabasta serveris ruumi ja proovi uuesti.';
+
+  @override
+  String get notesRejected =>
+      'Nextcloud lükkas muudatuse tagasi. Kontrolli märget ja salvesta enne uut katset kohalik koopia.';
+
+  @override
+  String get notesThrottled =>
+      'Nextcloud palus oodata. Sünkroonimine jätkub pärast ooteaja lõppu.';
+
+  @override
+  String get notesRecoveryRequired => 'Konfliktid · Võrdle';
+
+  @override
+  String get notesScanning => 'Failide uurimine…';
+
+  @override
+  String get notesCancelling => 'Tühistamine… Praeguse toimingu lõpu ootamine.';
+
+  @override
+  String get notesCancelled => 'Tühistatud';
+
+  @override
+  String get notesPartial => 'Osaliselt lõpetatud';
+
+  @override
+  String get notesTransferFailed => 'Ebaõnnestus. Proovi uuesti';
+
+  @override
+  String get notesImportPartialHelp =>
+      'Varasemad üksused võivad olla juba kohalikult salvestatud. Jätka sama importi, et vältida duplikaate.';
+
+  @override
+  String get notesNotStarted => 'Alustamata';
+
+  @override
+  String get notesCreated => 'Loodud';
+
+  @override
+  String get notesRemoteDeleteUnavailable =>
+      'Serveri aadress · Pole toetatud · Kustuta · Manused';
+
+  @override
+  String get notesCurrentText => 'Praegu säilitatud tekst';
+
+  @override
+  String get notesRecovering => 'Taastamine uue märkmena…';
+
+  @override
+  String get notesReadOnlyHelp =>
+      'Kirjutuskaitstud · Lemmikud · Salvesta kohalik koopia…';
+
+  @override
+  String get notesSort => 'Sordi märkmeid';
+
+  @override
+  String get notesPathRelative =>
+      'Märkmete kaustatee on suhteline sinu Nextcloudi salvestusruumi suhtes.';
+
+  @override
+  String get notesSettingsStale =>
+      'Seaded muutusid Nextcloudis. Laadi serveri väärtused uuesti ja vaata üle enne mustandi asendamist.';
+
+  @override
+  String get notesDownloadsPaused => 'Allalaadimised peatatud';
+
+  @override
+  String get notesExportNotPublished => 'Eksporti ei avaldatud.';
+
+  @override
+  String get notesKeyringUnavailable =>
+      'Ava töölaua võtmehoidla ja proovi uuesti.';
+
+  @override
+  String get notesConnectFailed =>
+      'Nextcloudi märkmetega ei saanud ühendust. Kontrolli serveri aadressi ja proovi uuesti.';
+
+  @override
+  String get notesAccountMismatch =>
+      'Logi sisse samale Nextcloudi kontole. Teise konto ühendamiseks eemalda esmalt see konto.';
+
+  @override
+  String get notesLocalRemovalFailed =>
+      'Kohaliku konto puhastamine ebaõnnestus. Konto on alles, et saaksid eemaldamist korrata.';
+
+  @override
+  String get notesTransferring => 'Märkmete teisaldamine…';
+
+  @override
+  String get notesTechnicalDetails => 'Tehnilised üksikasjad';
+
+  @override
+  String get notesPauseRequirement => 'Peata võrguühenduseta säilitamise nõue';
+
+  @override
+  String get notesResumeRequirement =>
+      'Jätka võrguühenduseta säilitamise nõuet';
 }
