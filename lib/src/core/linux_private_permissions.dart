@@ -21,8 +21,9 @@ typedef _ErrnoNative = Pointer<Int32> Function();
 typedef _ErrnoDart = Pointer<Int32> Function();
 
 /// Restricts an existing Linux state inode without launching a subprocess.
-/// O_NOFOLLOW rejects final-component symlinks; fchmod applies to the opened
-/// inode even if another process replaces the pathname in the meantime.
+/// State directories may be configured through symbolic links. Files reject
+/// final-component links; protection always applies to the opened inode, even
+/// if another process replaces the pathname in the meantime.
 final class LinuxPrivatePermissions {
   LinuxPrivatePermissions._() : _library = 'libc.so.6';
 
@@ -82,23 +83,21 @@ final class _NativePermissions {
     if (path.contains('\u0000')) {
       throw FileSystemException('Invalid application state path', path);
     }
-    // Linux UAPI: O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOFOLLOW, optionally
-    // O_DIRECTORY. O_NONBLOCK prevents an unexpected FIFO from blocking GTK.
-    const flags = 0x800 | 0x80000 | 0x20000;
+    // Linux UAPI: O_DIRECTORY follows a configured directory link and pins its
+    // target. Files use O_NOFOLLOW. O_NONBLOCK prevents an unexpected FIFO from
+    // blocking the worker; O_CLOEXEC keeps descriptors out of child processes.
+    final typeFlags = directory ? 0x10000 : 0x20000;
     final nativePath = path.toNativeUtf8();
     var descriptor = -1;
     var pathDescriptor = false;
     int? error;
     try {
-      descriptor = _open(nativePath, flags | (directory ? 0x10000 : 0));
+      descriptor = _open(nativePath, 0x800 | 0x80000 | typeFlags);
       if (descriptor < 0 && _errno().value == 13) {
         // chmod does not require read permission on an owned inode. A creation
         // mask can remove read access even from a just-written staging file.
         // Pin the inode without I/O; validate O_PATH symlinks below before use.
-        descriptor = _open(
-          nativePath,
-          0x200000 | 0x80000 | 0x20000 | (directory ? 0x10000 : 0),
-        );
+        descriptor = _open(nativePath, 0x200000 | 0x80000 | typeFlags);
         pathDescriptor = true;
       }
       if (descriptor < 0) error = _errno().value;
@@ -108,7 +107,9 @@ final class _NativePermissions {
     if (error != null) _fail(path, error);
     try {
       if (pathDescriptor) {
-        _rejectHeldSymlink(descriptor, path);
+        // O_DIRECTORY already guarantees a directory. O_PATH | O_NOFOLLOW
+        // permits holding a file symlink itself, so inspect that descriptor.
+        if (!directory) _rejectHeldSymlink(descriptor, path);
         // fchmod rejects O_PATH descriptors. This procfs magic link resolves
         // the held inode, not the original (possibly replaced) pathname. Keep
         // the descriptor open until chmod completes; unavailable procfs fails

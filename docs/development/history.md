@@ -215,79 +215,21 @@ file in the full application and requires the exact synthetic table fixture
 checked by the driver; use an isolated application profile and disposable files
 for that mode.
 
-Session and recovery JSON publication restricts each staged inode before its
-atomic rename. On Linux, the focused `LinuxPrivatePermissions` helper opens the
-existing inode with `O_NOFOLLOW`/`O_CLOEXEC` and uses `fchmod`, avoiding a `chmod`
-subprocess at every transaction boundary. Rename retains those permissions;
-there is no second path-based chmod after publication. Permission failures still
-fail the transaction, and locking, flush, recovery adoption, and journal ordering
-remain mandatory. Other POSIX platforms retain their subprocess implementation.
+Session and recovery JSON publication protects each staged inode before its
+atomic rename. Linux performs permission changes off the UI isolate through a
+held descriptor. Configured directory links are followed and their targets
+pinned; final state-file links are rejected. Retargeting a pathname cannot
+redirect an admitted permission change. Unreadable inodes use the same held
+identity through procfs. Permission or inspection failures fail the transaction;
+private modes, lock ownership, flush and recovery ordering remain mandatory.
 
-An owned directory or newly written file can require permission repair without
-being readable, including files created under a restrictive umask. On access
-denied, the same worker pins the inode with `O_PATH | O_NOFOLLOW` (plus
-`O_DIRECTORY` for directories). Empty-path `statx` rejects a held symlink
-before `chmod` through `/proc/self/fd/N`. The descriptor stays open throughout,
-so replacing the original pathname cannot redirect protection. Unavailable
-inspection/procfs or failed protection still fails the transaction. Normal
-readable state continues to use `fchmod` directly.
-Recovery also protects a newly admitted lock inode before its first handle is
-closed, so a restrictive creation mask cannot prevent the next checkpoint from
-reopening it. Protection failure still closes the handle and fails the operation.
+Startup capture and pruning wait for the saved History policy. Restoration
+reads at most four files concurrently, preserves session order and drains
+admitted reads after a failure. Adopted recovery remains protected until
+restoration and required persistence finish, including when close is requested
+before an editor is published.
 
-Opening publishes the existing editor after validated content and file monitoring
-are ready. The opening future still waits for recent-workspace settings to be
-published and reports a failed write. Settings mutations made during initial
-hydration share one publication with that completion; shutdown drains the settings
-queue before retiring recovery state. UI tests that create a controller in the
-widget clock must pump its initial settings hydration before awaiting file I/O
-inside `tester.runAsync`.
-
-Restoring a view mode still joins the settings write queue. Once earlier writes
-settle, an identical complete settings snapshot may reuse its successful load or
-publication instead of performing another atomic write. Failed loads/writes do
-not acknowledge new state; changed preferences and hydration-time requests retain
-their existing publication path. Session, recovery, and Local History flushes
-and the close-during-restoration barrier remain mandatory.
-
-Session restoration admits at most four tab reads at once. Each read keeps its
-text, format, and conflict snapshot together; completed batches retain the saved
-tab order. A failed batch settles all admitted reads before releasing recovery
-ownership. No partial batch is published, and shutdown still waits for the
-complete restoration operation and its required persistence.
-
-Retention commits its tombstones and retained index before removing expired
-revision files. Both capture-time retention and startup pruning await that
-transaction directly; they do not publish an identical second index after
-cleanup. Repair still consults the durable tombstones if deletion is interrupted.
-
-Index publication checks the existing regular tombstone journal under the store
-lock and reuses it only when its bytes already match the complete intended
-journal. Ordinary captures and metadata changes therefore avoid another identical
-atomic write and flush. No completed authority is cached between transactions.
-New tombstones still publish before the index and cleanup; revision and index
-flushes remain mandatory. Missing, corrupt, changed, or linked journals take the
-existing atomic publication path, including its error handling.
-
-Startup maintenance and captures wait for saved settings before applying their
-policy. Defaults are presentation state during hydration and must not delete
-history governed by a longer saved policy or override disabled recording.
-Captures retain their cancellation generations across that wait. A superseded
-refresh returns before pruning; restoration still requests its own authoritative
-snapshot.
-
-## Shared Local History search
-
-`SearchCategory.localHistory` owns the header query and optional retained-document
-ID. `findRetained()` reads the existing store and returns bounded document or
-revision metadata without changing browsing, comparison, recording or buffer
-ownership. Each request checks cancellation and the retained snapshot generation;
-clear and account removal invalidate affected results. Revision bodies are read
-sequentially and discarded after matching, rather than kept in widget state.
-
-Activation revalidates stable document/revision IDs and checksum before the
-existing comparison workflow reads a revision. Its selection callback also checks
-the originating search request after the read. Ordinary History navigation keeps
-the complete timeline and has no search entry points or private query controller.
-The shared coordinator retains explicit removable document scopes independently
-of the browsing panel.
+Opening can display validated content while Recent persistence completes. A
+failed Recent update remains a warning after a successful open or save. Settings
+writes retain ordered completion and retry failed publications; shutdown drains
+the queue before retiring recovery ownership.

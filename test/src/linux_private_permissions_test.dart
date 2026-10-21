@@ -187,7 +187,13 @@ void main() {
   });
 
   for (final directory in [true, false]) {
-    for (final mode in [5, 6, 7, 8]) {
+    // Only file descriptors need statx type inspection (failure modes 7/8).
+    // Both kinds retain chmod/close failure coverage (modes 5/6).
+    for (final mode in [
+      5,
+      6,
+      if (!directory) ...[7, 8],
+    ]) {
       test(
         'fallback directory=$directory failure $mode closes fd and preserves queue',
         () async {
@@ -241,22 +247,49 @@ void main() {
     },
   );
 
-  test('directory fallback rejects a final symlink', () async {
-    expect(configure(4), 0);
-    final directory = await Directory('${root.path}/linked-directory').create();
-    expect((await Process.run('chmod', ['755', directory.path])).exitCode, 0);
-    final link = await Link(
-      '${root.path}/directory-link',
-    ).create(directory.path);
-    await expectLater(
-      permissions.restrict(link.path, directory: true),
-      throwsA(isA<FileSystemException>()),
+  for (final mode in [1, 4]) {
+    test(
+      'directory link retargeting cannot redirect protection (mode=$mode)',
+      () async {
+        expect(configure(mode), 0);
+        final original = await Directory(
+          '${root.path}/original-$mode',
+        ).create();
+        final replacement = await Directory(
+          '${root.path}/replacement-$mode',
+        ).create();
+        expect(
+          (await Process.run('chmod', [
+            '755',
+            original.path,
+            replacement.path,
+          ])).exitCode,
+          0,
+        );
+        final link = await Link(
+          '${root.path}/directory-link-$mode',
+        ).create(original.path);
+        final operation = permissions.restrict(link.path, directory: true);
+        try {
+          final deadline = Stopwatch()..start();
+          while (entered() == 0) {
+            expect(deadline.elapsed, lessThan(const Duration(seconds: 10)));
+            await Future<void>.delayed(const Duration(milliseconds: 1));
+          }
+          await link.delete();
+          await link.create(replacement.path);
+        } finally {
+          expect(release(), 1);
+          await operation;
+        }
+        expect((await original.stat()).mode & 511, 448);
+        expect((await replacement.stat()).mode & 511, 493);
+        expect(await link.target(), replacement.path);
+        expect(closes(), 1);
+        expect(configure(0), 0);
+      },
     );
-    expect(opens(), 0);
-    expect(entered(), 0);
-    expect((await directory.stat()).mode & 511, 493);
-    expect(configure(0), 0);
-  });
+  }
 
   test('rejected paths leave their target and worker queue intact', () async {
     expect(configure(0), 0);

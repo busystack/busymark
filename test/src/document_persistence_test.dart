@@ -92,7 +92,7 @@ void main() {
   );
 
   test(
-    'Linux state permissions reject symlinks and preserve private publication',
+    'Linux state files reject symlinks and preserve private publication',
     () async {
       if (!Platform.isLinux) return;
       final directory = await Directory.systemTemp.createTemp(
