@@ -233,3 +233,19 @@ Opening can display validated content while Recent persistence completes. A
 failed Recent update remains a warning after a successful open or save. Settings
 writes retain ordered completion and retry failed publications; shutdown drains
 the queue before retiring recovery ownership.
+
+## Shared Local History search
+
+`SearchCategory.localHistory` owns the header query and optional retained-document
+ID. `findRetained()` reads the existing store and returns bounded document or
+revision metadata without changing browsing, comparison, recording or buffer
+ownership. Each request checks cancellation and the retained snapshot generation;
+clear and account removal invalidate affected results. Revision bodies are read
+sequentially and discarded after matching, rather than kept in widget state.
+
+Activation revalidates stable document/revision IDs and checksum before the
+existing comparison workflow reads a revision. Its selection callback also checks
+the originating search request after the read. Ordinary History navigation keeps
+the complete timeline and has no search entry points or private query controller.
+The shared coordinator retains explicit removable document scopes independently
+of the browsing panel.
