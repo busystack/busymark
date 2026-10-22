@@ -25,7 +25,7 @@ Standalone smoke checks use disposable D-Bus sessions to retire desktop helpers.
 
 `Flutter Linux` automatically runs bounded GTK/WebKit, compiled visualization/PDF,
 dictionary installation/offline restart, Wayland and strict-Snap build/install
-checks for PRs to `main` and `release/v0.6.3`, and pushes to `main`. It reuses
+checks for PRs to `main` and `release/v0.7.0`, and pushes to `main`. It reuses
 `Linux native acceptance` with `run-stress: false`. Run that workflow manually
 with `run-stress` enabled for hundred-close, compiled document/media and
 debug/profile campaigns. See [compiled application checks](application-smoke-tests.md).

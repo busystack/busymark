@@ -148,7 +148,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
 
     def test_pull_requests_cover_the_integrated_release_and_main(self):
         triggers = self.workflow.get('on', self.workflow.get(True))
-        self.assertTrue({'main', 'release/v0.6.3'}.issubset(triggers['pull_request']['branches']))
+        self.assertTrue({'main', 'release/v0.7.0'}.issubset(triggers['pull_request']['branches']))
         self.assertIn('main', triggers['push']['branches'])
         for event in ['pull_request', 'push']:
             self.assertNotIn('paths', triggers[event])

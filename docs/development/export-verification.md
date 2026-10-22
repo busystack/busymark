@@ -142,7 +142,7 @@ do not certify physical-printer or assistive-technology behavior.
 
 The automatic `.github/workflows/flutter-linux.yml` workflow runs bounded X11
 host, renderer and compiled visualization/PDF checks on pull requests to `main`
-and `release/v0.6.3`, and pushes to `main`. The same job reuses its release build for dictionary and Wayland checks. It
+and `release/v0.7.0`, and pushes to `main`. The same job reuses its release build for dictionary and Wayland checks. It
 calls `.github/workflows/flutter-linux-native.yml` for genuine strict-Snap
 checks; hundred-close and debug/profile campaigns remain opt-in.
 Each workflow declares its native
