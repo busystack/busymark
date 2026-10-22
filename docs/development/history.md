@@ -118,6 +118,10 @@ sources in Local History and the latest branch in dirty-document recovery.
 The maintained suites exercise these state transitions through production
 editors/controllers and real keyboard or action dispatch:
 
+The fifteen-minute fixtures inject the clock read by each editor, send keyboard
+Undo/Redo through the production workspace controller, and compare the shared
+source with the visible controller and live rich serialization.
+
 | Trigger | Required result |
 | --- | --- |
 | Fifteen minutes of one-second typing, including Source line breaks | Multiple finite groups; one Undo removes only the latest group. The injected clock is actually read by grouping. |

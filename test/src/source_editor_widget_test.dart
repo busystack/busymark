@@ -57,6 +57,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
+import '../support/document_history_harness.dart';
+
 void main() {
   testWidgets(
     'Source identity changes keep the focused input client registered',
@@ -222,11 +224,11 @@ void main() {
     (tester) async {
       var now = Duration.zero;
       var clockReads = 0;
-      var buffer = DocumentBuffer.untitled(
-        id: 'long-typing',
-        name: 'typing.md',
-        text: 'abc',
+      final history = await DocumentHistoryHarness.create(
+        mode: DocumentViewModePreference.source,
       );
+      addTearDown(history.dispose);
+      DocumentBuffer buffer() => history.buffer;
       Duration clock() {
         clockReads++;
         return now;
@@ -239,7 +241,7 @@ void main() {
           home: Scaffold(
             body: BusyMarkSourceEditor(
               text: 'abc',
-              documentId: buffer.id,
+              documentId: buffer().id,
               filePath: null,
               language: SourceSyntaxLanguage.markdown,
               diagnostics: const [],
@@ -248,13 +250,17 @@ void main() {
               searchActive: false,
               searchOptions: const SourceSearchOptions(),
               undoClock: clock,
+              readEditBase: history.readBase,
+              readSelection: () => buffer().editorState.selection,
+              onUndo: history.undoText,
+              onRedo: history.redoText,
               onChanged: (_, _) {},
               onCloseSearch: () {},
               onTransactionalChanged: (text, _, before, after, group) =>
-                  buffer = buffer.edited(
+                  history.controller.updateActiveSourceText(
                     text,
                     previousSelection: before,
-                    nextSelection: after,
+                    selection: after,
                     undoGroup: group,
                   ),
             ),
@@ -282,7 +288,7 @@ void main() {
             selection: TextSelection.collapsed(offset: text.length),
           ),
         );
-        final group = buffer.editorState.undoState.activeGroup;
+        final group = buffer().editorState.undoState.activeGroup;
         if (group != null) sizes.update(group, (n) => n + 1, ifAbsent: () => 1);
         if (i % 50 == 0) await tester.pump();
       }
@@ -294,19 +300,22 @@ void main() {
       );
       expect(sizes.length, greaterThanOrEqualTo(90));
       expect(sizes.values, everyElement(lessThanOrEqualTo(10)));
-      final previous = buffer.editorState.undoState.undo.last;
+      final previous = buffer().editorState.undoState.undo.last;
       expect(previous.text.length, greaterThan(880));
-      expect(buffer.text.length - previous.text.length, lessThanOrEqualTo(10));
-      // Exactly one document undo restores this bounded group's baseline.
-      buffer = buffer.copyWith(
-        text: previous.text,
-        editorState: buffer.editorState.copyWith(
-          undoState: buffer.editorState.undoState.afterUndo(
-            buffer.historyState,
-          ),
-        ),
+      expect(
+        buffer().text.length - previous.text.length,
+        lessThanOrEqualTo(10),
       );
-      expect(buffer.text, previous.text);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      expect(buffer().text, previous.text);
+      expect(tester.widget<TextField>(field).controller!.text, previous.text);
+      expect(
+        tester.widget<TextField>(field).controller!.selection,
+        previous.selection,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+      expect(buffer().text, text);
+      expect(tester.widget<TextField>(field).controller!.text, text);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

@@ -14,6 +14,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../support/document_history_harness.dart';
+
 final _sessionReportProvider = NotifierProvider<_SessionReportNotifier, int>(
   _SessionReportNotifier.new,
 );
@@ -134,11 +136,13 @@ void main() {
   ) async {
     var now = Duration.zero;
     var clockReads = 0;
-    var buffer = DocumentBuffer.untitled(
-      id: 'long-typing',
-      name: 'typing.md',
-      text: 'abc',
-    );
+    final history = await DocumentHistoryHarness.create();
+    addTearDown(history.dispose);
+    DocumentBuffer buffer() => history.buffer;
+    var document = const MarkdownParser()
+        .parse(filePath: 'typing.md', source: 'abc')
+        .busyDocument;
+    final key = GlobalKey<BusyMarkWysiwygEditorState>();
     Duration clock() {
       clockReads++;
       return now;
@@ -147,15 +151,28 @@ void main() {
     await tester.pumpWidget(
       _app(
         BusyMarkWysiwygEditor(
-          document: const MarkdownParser()
-              .parse(filePath: 'typing.md', source: 'abc')
-              .busyDocument,
-          documentId: buffer.id,
+          key: key,
+          document: document,
+          documentId: buffer().id,
           undoClock: clock,
           useExternalUndoHistory: true,
+          readEditBase: history.readBase,
+          readSessionState: () => buffer().editorState.wysiwygState,
+          onUndo: history.controller.undoActiveBuffer,
+          onRedo: history.controller.redoActiveBuffer,
+          onSessionChanged: (id, session) =>
+              history.controller.updateDocumentEditorState(
+                id,
+                buffer().editorState.copyWith(wysiwygState: session),
+              ),
+          onDocumentChanged: (value) => document = value,
           onSourceChanged: (_, _) {},
           onTransactionalSourceChanged: (_, text, group) =>
-              buffer = buffer.edited(text, undoGroup: group),
+              history.controller.updateActiveWysiwygText(
+                text,
+                document: document,
+                undoGroup: group,
+              ),
         ),
       ),
     );
@@ -180,7 +197,7 @@ void main() {
           selection: TextSelection.collapsed(offset: text.length),
         ),
       );
-      final group = buffer.editorState.undoState.activeGroup;
+      final group = buffer().editorState.undoState.activeGroup;
       if (group != null) sizes.update(group, (n) => n + 1, ifAbsent: () => 1);
       if (i % 50 == 0) await tester.pump();
     }
@@ -192,17 +209,23 @@ void main() {
     );
     expect(sizes.length, greaterThanOrEqualTo(90));
     expect(sizes.values, everyElement(lessThanOrEqualTo(10)));
-    final previous = buffer.editorState.undoState.undo.last;
+    final previous = buffer().editorState.undoState.undo.last;
     expect(previous.text.length, greaterThan(880));
-    expect(buffer.text.length - previous.text.length, lessThanOrEqualTo(10));
-    // Exactly one document undo restores this bounded group's baseline.
-    buffer = buffer.copyWith(
-      text: previous.text,
-      editorState: buffer.editorState.copyWith(
-        undoState: buffer.editorState.undoState.afterUndo(buffer.historyState),
-      ),
-    );
-    expect(buffer.text, previous.text);
+    expect(buffer().text.length - previous.text.length, lessThanOrEqualTo(10));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(buffer().text, previous.text);
+    expect(tester.widget<TextField>(field).controller!.text, previous.text);
+    expect(key.currentState!.serializedSource, previous.text);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(buffer().text, text);
+    expect(tester.widget<TextField>(field).controller!.text, text);
+    expect(key.currentState!.serializedSource, text);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
