@@ -42,6 +42,13 @@ import 'package:yaru/yaru.dart';
 
 import '../support/memory_rich_clipboard.dart';
 
+Iterable<BusyBlock> _structuralBlocks(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _structuralBlocks(block.children);
+  }
+}
+
 void main() {
   const parser = MarkdownParser();
 
@@ -749,6 +756,69 @@ void main() {}
     expect(reparsedParent.attributes['marker'], '100.');
     expect(reparsedParent.children.single.plainText, 'Changed');
   });
+
+  for (final mode in MarkdownMode.values) {
+    for (final marker in ['-', '3.', '- [ ]']) {
+      for (final loose in [false, true]) {
+        test(
+          'nested task ownership survives parent edits $mode $marker loose=$loose',
+          () {
+            final indent = marker == '3.' ? '   ' : '  ';
+            final source =
+                '$marker Parent\n${loose ? '\n' : ''}$indent- [x] Child\n$indent  - [ ] Grandchild\n';
+            final document = parser
+                .parse(filePath: 'tasks.md', source: source, mode: mode)
+                .busyDocument;
+            final controller = BusyMarkWysiwygDocumentController(
+              document: document,
+            );
+            addTearDown(controller.dispose);
+            void check(BusyDocument value, String parentText) {
+              final blocks = _structuralBlocks(value.blocks).toList();
+              final parent = blocks.singleWhere(
+                (b) => b.plainText == parentText,
+              );
+              expect(
+                parent.kind,
+                marker == '3.'
+                    ? BusyBlockKind.orderedListItem
+                    : marker == '-'
+                    ? BusyBlockKind.unorderedListItem
+                    : BusyBlockKind.taskListItem,
+              );
+              final child = _structuralBlocks(
+                parent.children,
+              ).singleWhere((b) => b.plainText == 'Child');
+              final grandchild = _structuralBlocks(
+                child.children,
+              ).singleWhere((b) => b.plainText == 'Grandchild');
+              expect(child.kind, BusyBlockKind.taskListItem);
+              expect(child.attributes['task'], 'true');
+              expect(grandchild.kind, BusyBlockKind.taskListItem);
+              expect(grandchild.attributes['task'], 'false');
+            }
+
+            check(controller.document, 'Parent');
+            final parent = _structuralBlocks(
+              controller.document.blocks,
+            ).singleWhere((b) => b.plainText == 'Parent');
+            controller.updateBlockText(parent.id, 'Changed');
+            final saved = controller.markdown;
+            expect(saved, contains('[x] Child'));
+            expect(saved, contains('[ ] Grandchild'));
+            controller.rebaseCommittedSource(saved);
+            check(controller.document, 'Changed');
+            check(
+              parser
+                  .parse(filePath: 'tasks.md', source: saved, mode: mode)
+                  .busyDocument,
+              'Changed',
+            );
+          },
+        );
+      }
+    }
+  }
 
   test('WYSIWYG nested blockquote edit preserves surrounding source', () {
     const source =
@@ -5707,6 +5777,196 @@ void main() {}
         '$url/new?q=x&next=y',
       );
       expect(rich.markdown, '$url/new?q=x&next=y\n');
+    },
+  );
+
+  test(
+    'heading leading Enter and Backspace are inverse for generated and explicit H1-H6',
+    () {
+      for (var level = 1; level <= 6; level++) {
+        for (final explicit in [false, true]) {
+          final source =
+              'Intro\n\n${'#' * level} About the job${explicit ? ' {id="job"}' : ''}\n';
+          final document = parser
+              .parse(filePath: 'heading.md', source: source)
+              .busyDocument;
+          final heading = document.blocks.last;
+          final controller = BusyMarkWysiwygDocumentController(
+            document: document,
+          );
+          addTearDown(controller.dispose);
+          final inserted = controller.applyEnterAt(heading.id, 0);
+          expect(inserted?.blockId, heading.id);
+          expect(controller.document.blocks[1].kind, BusyBlockKind.paragraph);
+          final removed = controller.applyBackspaceAtStart(heading.id);
+          expect(removed?.blockId, heading.id);
+          expect(removed?.offset, 0);
+          expect(
+            controller.document.blocks.last.attributes,
+            heading.attributes,
+          );
+          expect(controller.document.blocks.last.inlines, heading.inlines);
+          expect(controller.markdown, source);
+        }
+      }
+    },
+  );
+
+  test(
+    'empty heading Enter retains the established empty-heading/end behavior',
+    () {
+      final document = parser
+          .parse(filePath: 'heading.md', source: '##\n')
+          .busyDocument;
+      final heading = document.blocks.single;
+      expect(heading.kind, BusyBlockKind.heading);
+      expect(heading.plainText, isEmpty);
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      controller.applyEnterAt(heading.id, 0);
+      expect(controller.document.blocks.map((b) => b.kind), [
+        BusyBlockKind.heading,
+        BusyBlockKind.paragraph,
+      ]);
+      expect(controller.document.blocks.first.id, heading.id);
+    },
+  );
+
+  test('newline input into an empty heading retains its end-split policy', () {
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parser
+          .parse(filePath: 'heading.md', source: '##\n')
+          .busyDocument,
+    );
+    addTearDown(controller.dispose);
+    final heading = controller.document.blocks.single;
+    controller.replaceBlockTextWithParagraphs(heading.id, '\nAbout', 6);
+    expect(controller.document.blocks.first.id, heading.id);
+    expect(controller.document.blocks.first.kind, BusyBlockKind.heading);
+    expect(controller.document.blocks.first.plainText, isEmpty);
+    expect(controller.document.blocks.last.kind, BusyBlockKind.paragraph);
+    expect(controller.document.blocks.last.plainText, 'About');
+  });
+
+  test(
+    'leading zero-width heading objects stay in the retained heading for both split paths',
+    () {
+      final document = parser
+          .parse(
+            filePath: 'heading.md',
+            source: '## **![](first.png)![](second.png)About**\n',
+          )
+          .busyDocument;
+      final heading = document.blocks.single;
+      expect(busyInlineSemanticAnchors(heading.inlines).map((a) => a.offset), [
+        0,
+        0,
+      ], reason: heading.plainText);
+      for (final input in [false, true]) {
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        if (input) {
+          controller.replaceBlockTextWithParagraphs(heading.id, '\n\nAbout', 2);
+        } else {
+          controller.applyEnterAt(heading.id, 0);
+        }
+        final kept = controller.document.blocks.last;
+        expect(kept.id, heading.id);
+        expect(kept.kind, BusyBlockKind.heading);
+        final anchors = busyInlineSemanticAnchors(kept.inlines);
+        expect(anchors.map((a) => a.offset), [0, 0]);
+        expect(
+          anchors.map((a) => a.inline.kind),
+          everyElement(BusyInlineKind.strong),
+        );
+        expect(
+          anchors.expand((a) => a.inline.children).map((i) => i.destination),
+          ['first.png', 'second.png'],
+        );
+        expect(
+          controller.document.blocks
+              .take(controller.document.blocks.length - 1)
+              .every((b) => busyInlineSemanticAnchors(b.inlines).isEmpty),
+          isTrue,
+        );
+        expect(controller.markdown, contains('## **![](first.png)'));
+      }
+    },
+  );
+
+  test(
+    'Backspace does not treat a semantic-only paragraph as removable whitespace',
+    () {
+      final document = parser
+          .parse(
+            filePath: 'heading.md',
+            source: 'a![](image.png)b\n\n## Heading\n',
+          )
+          .busyDocument;
+      final paragraph = document.blocks.first;
+      final heading = document.blocks.last;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      controller.updateBlockText(paragraph.id, '');
+      expect(controller.blockById(paragraph.id)!.plainText, isEmpty);
+      final result = controller.applyBackspaceAtStart(heading.id);
+      expect(result?.blockId, paragraph.id);
+      expect(controller.markdown, contains('![](image.png)'));
+      expect(controller.document.blocks.single.kind, BusyBlockKind.paragraph);
+    },
+  );
+
+  test('nested Backspace does not cross a structural owner boundary', () {
+    final document = parser
+        .parse(filePath: 'heading.md', source: 'Outside\n\n> ## Heading\n')
+        .busyDocument;
+    final heading = document.blocks.last.children.single;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    addTearDown(controller.dispose);
+    expect(controller.applyBackspaceAtStart(heading.id), isNull);
+    expect(controller.markdown, 'Outside\n\n> ## Heading\n');
+  });
+
+  test(
+    'empty task items retain checkbox semantics after Enter and source rebinding',
+    () {
+      for (final mode in MarkdownMode.values) {
+        final document = parser
+            .parse(filePath: 'tasks.md', mode: mode, source: '- [ ] Parent\n')
+            .busyDocument;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        final parent = controller.document.blocks.firstWhere(
+          (b) => b.kind == BusyBlockKind.taskListItem,
+          orElse: () => controller.document.blocks.single.children.single,
+        );
+        final next = controller.applyEnterAt(
+          parent.id,
+          parent.plainText.length,
+        )!;
+        final saved = controller.markdown;
+        final reopened = parser
+            .parse(filePath: 'tasks.md', source: saved, mode: mode)
+            .busyDocument;
+        final tasks = _structuralBlocks(
+          reopened.blocks,
+        ).where((b) => b.kind == BusyBlockKind.taskListItem).toList();
+        expect(tasks, hasLength(2), reason: '$mode $saved');
+        expect(tasks.last.plainText, isEmpty);
+        controller.rebaseCommittedSource(saved);
+        expect(
+          controller.blockById(parent.id)?.kind,
+          BusyBlockKind.taskListItem,
+        );
+        expect(
+          controller.blockById(next.blockId)?.kind,
+          BusyBlockKind.taskListItem,
+        );
+      }
     },
   );
 

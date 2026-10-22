@@ -1,4 +1,5 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/assets/document_media_context.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
@@ -18,6 +19,7 @@ import '../support/memory_rich_clipboard.dart';
 
 void main() {
   const parser = MarkdownParser();
+  _structuralBoundaryRegressions(parser);
 
   test(
     'formatting a URL suffix retains the complete live link and round trips',
@@ -1542,6 +1544,936 @@ Body.
     expect(state.debugUndoControllerCount, 1);
   });
 }
+
+void _structuralBoundaryRegressions(MarkdownParser parser) {
+  group('structural boundaries', () {
+    test(
+      'ordinary edits preserve formatting around zero-width inline objects on reopen',
+      () {
+        final document = parser
+            .parse(
+              filePath: 'image.md',
+              source: '**a![](first.png)![](second.png)b**![](third.png)c\n',
+            )
+            .busyDocument;
+        final block = document.blocks.single;
+        expect(block.plainText, 'abc');
+        final expected = busyInlineSemanticAnchors(
+          block.inlines,
+        ).map((a) => _inlineSignatures([a.inline])).toList();
+        expect(expected, hasLength(3));
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        controller.updateBlockText(block.id, 'abcX');
+        final saved = controller.markdown;
+        final reopened = parser
+            .parse(filePath: 'image.md', source: saved)
+            .busyDocument
+            .blocks
+            .single;
+        expect(reopened.plainText, 'abcX', reason: saved);
+        expect(
+          busyInlineSemanticAnchors(
+            reopened.inlines,
+          ).map((a) => _inlineSignatures([a.inline])).toList(),
+          expected,
+          reason: saved,
+        );
+      },
+    );
+
+    test(
+      'Writerside Backspace inverse after source publication removes the inserted paragraph source',
+      () {
+        const source =
+            '# Topic\n\n## About the job {id="job" collapsible="true" default-state="expanded"}\n\nBody.\n';
+        final controller = BusyMarkWysiwygDocumentController(
+          document: parser
+              .parse(
+                filePath: 'topic.md',
+                source: source,
+                mode: MarkdownMode.writersideMarkdown,
+              )
+              .busyDocument,
+        );
+        addTearDown(controller.dispose);
+        final heading = controller.document.blocks.singleWhere(
+          (b) => b.plainText == 'About the job',
+        );
+        final entered = controller.applyEnterAt(heading.id, 0)!;
+        expect(entered.blockId, heading.id);
+        controller.rebaseCommittedSource(controller.markdown);
+        final result = controller.applyBackspaceAtStart(heading.id);
+        expect(result?.blockId, heading.id);
+        expect(
+          controller.document.blocks.where(
+            (b) => b.kind == BusyBlockKind.paragraph && b.plainText.isEmpty,
+          ),
+          isEmpty,
+        );
+        expect(controller.markdown, source);
+        controller.rebaseCommittedSource(controller.markdown);
+        expect(controller.markdown, source);
+        expect(
+          controller.blockById(heading.id)!.attributes['collapsible'],
+          'true',
+        );
+      },
+    );
+
+    for (final icon in [BusyMarkGlyphs.hardBreak, BusyMarkGlyphs.blankLine]) {
+      testWidgets('read-only line-break toolbar $icon cannot create history', (
+        tester,
+      ) async {
+        final document = parser
+            .parse(filePath: 'heading.md', source: '## About the job\n')
+            .busyDocument;
+        var publications = 0;
+        await tester.pumpWidget(
+          _app(
+            DocumentReadOnlyScope(
+              readOnly: true,
+              child: BusyMarkWysiwygEditor(
+                document: document,
+                onSourceChanged: (_, _) => publications++,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'About the job'),
+        );
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection.collapsed(offset: 3);
+        await tester.pump();
+        final button = find.byWidgetPredicate(
+          (w) => w is BusyMarkHeaderIconButton && w.icon == icon,
+        );
+        await tester.ensureVisible(button);
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        expect(publications, 0);
+        expect(
+          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
+              .debugUndoSnapshotCount,
+          0,
+        );
+        expect(field.controller!.text, 'About the job');
+      });
+    }
+
+    testWidgets(
+      'read-only Enter cannot create structural history or disturb focus',
+      (tester) async {
+        final document = parser
+            .parse(filePath: 'heading.md', source: '## About the job\n')
+            .busyDocument;
+        var publications = 0;
+        await tester.pumpWidget(
+          _app(
+            DocumentReadOnlyScope(
+              readOnly: true,
+              child: BusyMarkWysiwygEditor(
+                document: document,
+                onSourceChanged: (_, _) => publications++,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'About the job'),
+        );
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection.collapsed(offset: 0);
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(publications, 0);
+        expect(
+          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
+              .debugUndoSnapshotCount,
+          0,
+        );
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(
+          field.controller!.selection,
+          const TextSelection.collapsed(offset: 0),
+        );
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(
+          field.controller!.selection,
+          const TextSelection.collapsed(offset: 1),
+        );
+      },
+    );
+
+    test('table cells reject document-block splitting and sibling merging', () {
+      final document = parser
+          .parse(
+            filePath: 'table.md',
+            source: '| A | B |\n| --- | --- |\n| one | two |\n',
+          )
+          .busyDocument;
+      final cell = document.blocks.single.children.last.children.last;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      final before = controller.markdown;
+      expect(controller.applyBackspaceAtStart(cell.id), isNull);
+      expect(controller.applyEnterAt(cell.id, 0), isNull);
+      expect(controller.markdown, before);
+    });
+
+    for (final scope in BusyWysiwygReplacementScope.values) {
+      for (final end in [5, 13]) {
+        test(
+          'range replacement newline scope=$scope end=$end is position-aware',
+          () {
+            final document = parser
+                .parse(
+                  filePath: 'heading.md',
+                  source: '## About the job {id="job"}\n',
+                )
+                .busyDocument;
+            final heading = document.blocks.single;
+            final controller = BusyMarkWysiwygDocumentController(
+              document: document,
+            );
+            addTearDown(controller.dispose);
+            final result = controller.replaceTextSelectionWithText(
+              firstBlockId: heading.id,
+              firstStartOffset: 0,
+              lastBlockId: heading.id,
+              lastEndOffset: end,
+              removedBlockIds: [heading.id],
+              replacementText: '\n',
+              activeInlineKinds: const [],
+              preserveTextWhitespace: true,
+              replacementScope: scope,
+            );
+            expect(result, isNotNull);
+            if (end == 13) {
+              expect(
+                controller.document.blocks.map((b) => b.kind),
+                everyElement(BusyBlockKind.paragraph),
+              );
+            } else {
+              expect(controller.document.blocks.last.id, heading.id);
+              expect(
+                controller.document.blocks.last.kind,
+                BusyBlockKind.heading,
+              );
+              expect(controller.document.blocks.last.plainText, ' the job');
+            }
+          },
+        );
+      }
+    }
+
+    testWidgets(
+      'rejected text-input list exit cannot fall back to a local newline',
+      (tester) async {
+        final document = parser
+            .parse(
+              filePath: 'topic.md',
+              mode: MarkdownMode.writersideMarkdown,
+              source: '- Parent\n\n{id="owner"}\n',
+            )
+            .busyDocument;
+        var publications = 0;
+        await tester.pumpWidget(
+          _app(
+            BusyMarkWysiwygEditor(
+              document: document,
+              onSourceChanged: (_, _) => publications++,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'Parent'),
+        );
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection(
+          baseOffset: 0,
+          extentOffset: 6,
+        );
+        await tester.pump();
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: '\n',
+            selection: TextSelection.collapsed(offset: 1),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(publications, 0);
+        expect(field.controller!.text, 'Parent');
+        expect(
+          field.controller!.selection,
+          const TextSelection(baseOffset: 0, extentOffset: 6),
+        );
+        expect(
+          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
+              .debugUndoSnapshotCount,
+          0,
+        );
+      },
+    );
+
+    for (final selectedEnd in [5, 15]) {
+      testWidgets(
+        'local selection Enter at heading prefix $selectedEnd is one edit',
+        (tester) async {
+          final document = parser
+              .parse(filePath: 'heading.md', source: '## About the job\n')
+              .busyDocument;
+          final heading = document.blocks.single;
+          BusyDocument? live;
+          var publications = 0;
+          await tester.pumpWidget(
+            _app(
+              BusyMarkWysiwygEditor(
+                document: document,
+                onDocumentChanged: (value) => live = value,
+                onSourceChanged: (_, _) => publications++,
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final field = tester.widget<TextField>(
+            find.byKey(ValueKey('wysiwyg-field-heading.md-${heading.id}')),
+          );
+          field.focusNode!.requestFocus();
+          field.controller!.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: selectedEnd.clamp(0, heading.plainText.length),
+          );
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          expect(publications, 1);
+          if (selectedEnd < heading.plainText.length) {
+            expect(live!.blocks.last.id, heading.id);
+            expect(live!.blocks.last.kind, BusyBlockKind.heading);
+            expect(
+              live!.blocks.last.plainText,
+              heading.plainText.substring(selectedEnd),
+            );
+          } else {
+            expect(
+              live!.blocks.where((b) => b.kind == BusyBlockKind.heading),
+              isEmpty,
+            );
+          }
+        },
+      );
+    }
+
+    testWidgets('rejected Enter over attributed sole list member is atomic', (
+      tester,
+    ) async {
+      final document = parser
+          .parse(
+            filePath: 'topic.md',
+            mode: MarkdownMode.writersideMarkdown,
+            source: '- Parent\n\n{id="owner"}\n',
+          )
+          .busyDocument;
+      final member = _blocksDepthFirst(
+        document.blocks,
+      ).singleWhere((b) => b.plainText == 'Parent');
+      BusyDocument? live;
+      var publications = 0;
+      await tester.pumpWidget(
+        _app(
+          BusyMarkWysiwygEditor(
+            document: document,
+            onDocumentChanged: (value) => live = value,
+            onSourceChanged: (_, _) => publications++,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find.byKey(ValueKey('wysiwyg-field-topic.md-${member.id}')),
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 6,
+      );
+      await tester.pump();
+      final beforeUndo =
+          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
+              .debugUndoSnapshotCount;
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(publications, 0);
+      expect(live, isNull);
+      expect(field.controller!.text, 'Parent');
+      expect(
+        field.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 6),
+      );
+      expect(
+        (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
+            .debugUndoSnapshotCount,
+        beforeUndo,
+      );
+      // A later edit publishes the model too: do not mask a staged deletion.
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'Parent!',
+          selection: TextSelection.collapsed(offset: 7),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        _blocksDepthFirst(live!.blocks).where((b) => b.plainText == 'Parent!'),
+        hasLength(1),
+      );
+    });
+
+    test(
+      'property publication followed by nested split preserves source and edited properties',
+      () {
+        final controller = BusyMarkWysiwygDocumentController(
+          document: parser
+              .parse(
+                filePath: 'topic.md',
+                mode: MarkdownMode.writersideMarkdown,
+                source: '# Topic\n\n> AlphaBeta\n\n{id="quote"}\n',
+              )
+              .busyDocument,
+        );
+        addTearDown(controller.dispose);
+        final quote = controller.document.blocks.last;
+        final paragraph = quote.children.single;
+        expect(
+          controller.updateWritersideProperty(quote.id, 'id', 'changed'),
+          isTrue,
+        );
+        final committed = controller.markdown;
+        controller.rebaseCommittedSource(committed);
+        controller.applyEnterAt(paragraph.id, 5);
+        final saved = controller.markdown;
+        expect(saved, contains('> Alpha\n>\n> Beta'));
+        expect(saved, contains('id="changed"'));
+        controller.rebaseCommittedSource(saved);
+        expect(controller.markdown, saved);
+      },
+    );
+
+    test(
+      'protected and generated blocks reject direct structural operations',
+      () {
+        final parsed = parser
+            .parse(filePath: 'heading.md', source: '## About\n')
+            .busyDocument;
+        for (final block in [
+          parsed.blocks.single.copyWith(isSourceProtected: true),
+          parsed.blocks.single.copyWith(isSourceOnly: true),
+          parsed.blocks.single.copyWith(isGenerated: true),
+          parsed.blocks.single.copyWith(preserveRaw: true),
+        ]) {
+          final controller = BusyMarkWysiwygDocumentController(
+            document: parsed.copyWith(blocks: [block]),
+          );
+          addTearDown(controller.dispose);
+          final before = controller.document;
+          expect(controller.applyEnterAt(block.id, 0), isNull);
+          expect(
+            controller.replaceBlockTextWithParagraphs(block.id, '\nAbout', 1),
+            isNull,
+          );
+          expect(controller.document, same(before));
+        }
+      },
+    );
+
+    test('semantic-only list item cannot exit and discard its object', () {
+      final document = parser
+          .parse(filePath: 'list.md', source: '- ![](image.png)\n')
+          .busyDocument;
+      final item = document.blocks.single;
+      expect(item.plainText, isEmpty);
+      for (final input in [false, true]) {
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        if (input) {
+          controller.replaceBlockTextWithParagraphs(item.id, '\n', 1);
+        } else {
+          controller.applyEnterAt(item.id, 0);
+        }
+        expect(controller.markdown, contains('![](image.png)'));
+        expect(
+          busyInlineSemanticAnchors(controller.blockById(item.id)!.inlines),
+          hasLength(1),
+        );
+      }
+    });
+
+    for (final later in [false, true]) {
+      for (final mode in MarkdownMode.values) {
+        for (var level = 1; level <= 6; level++) {
+          for (final path in ['Enter', 'text input', 'paste']) {
+            test(
+              '$mode H$level start via $path retains heading identity later=$later',
+              () {
+                final document = parser
+                    .parse(
+                      filePath: 'heading.md',
+                      mode: mode,
+                      source:
+                          '${later ? 'Introduction\n\n' : ''}${'#' * level} **About** ![](image.png)the job {id="job"}\n',
+                    )
+                    .busyDocument;
+                final heading = document.blocks.last;
+                final controller = BusyMarkWysiwygDocumentController(
+                  document: document,
+                );
+                addTearDown(controller.dispose);
+                final result = path == 'Enter'
+                    ? controller.applyEnterAt(heading.id, 0)
+                    : controller.replaceBlockTextWithParagraphs(
+                        heading.id,
+                        '\n${heading.plainText}',
+                        1,
+                        allowListExit: path != 'paste',
+                        preserveTextWhitespace: path == 'paste',
+                      );
+                expect(result?.blockId, heading.id);
+                expect(result?.offset, 0);
+                expect(
+                  controller.document.blocks
+                      .skip(later ? 1 : 0)
+                      .map((b) => b.kind),
+                  [BusyBlockKind.paragraph, BusyBlockKind.heading],
+                );
+                final kept = controller.blockById(heading.id)!;
+                expect(kept.attributes['level'], '$level');
+                expect(kept.attributes['id'], 'job');
+                expect(kept.attributes['generatedId'], 'false');
+                expect(
+                  _inlineSignatures(kept.inlines),
+                  _inlineSignatures(heading.inlines),
+                );
+                final paragraph = controller.document.blocks[later ? 1 : 0];
+                expect(paragraph.id, isNot(heading.id));
+                expect(paragraph.plainText, isEmpty);
+                expect(busyInlineSemanticAnchors(paragraph.inlines), isEmpty);
+                expect(paragraph.attributes, isNot(contains('id')));
+                final saved = controller.markdown;
+                controller.rebaseCommittedSource(saved);
+                expect(controller.markdown, saved);
+                final reopened = parser
+                    .parse(filePath: 'heading.md', source: saved, mode: mode)
+                    .busyDocument;
+                expect(reopened.blocks.last.kind, BusyBlockKind.heading);
+                expect(reopened.blocks.last.attributes['level'], '$level');
+                expect(
+                  _inlineSignatures(reopened.blocks.last.inlines),
+                  _inlineSignatures(heading.inlines),
+                );
+              },
+            );
+          }
+        }
+      }
+    }
+
+    for (final mode in MarkdownMode.values) {
+      for (var level = 1; level <= 6; level++) {
+        for (final offset in [3, 6]) {
+          test(
+            '$mode H$level heading middle/end $offset keeps existing split semantics',
+            () {
+              final document = parser
+                  .parse(
+                    filePath: 'heading.md',
+                    mode: mode,
+                    source: '${'#' * level} abcdef\n',
+                  )
+                  .busyDocument;
+              for (final input in [false, true]) {
+                final controller = BusyMarkWysiwygDocumentController(
+                  document: document,
+                );
+                addTearDown(controller.dispose);
+                final heading = document.blocks.single;
+                final result = input
+                    ? controller.replaceBlockTextWithParagraphs(
+                        heading.id,
+                        'abcdef'.replaceRange(offset, offset, '\n'),
+                        offset + 1,
+                      )
+                    : controller.applyEnterAt(heading.id, offset);
+                expect(controller.document.blocks.first.id, heading.id);
+                expect(
+                  controller.document.blocks.first.kind,
+                  BusyBlockKind.heading,
+                );
+                expect(
+                  controller.document.blocks.first.plainText,
+                  'abcdef'.substring(0, offset),
+                );
+                expect(
+                  controller.document.blocks.last.kind,
+                  BusyBlockKind.paragraph,
+                );
+                expect(
+                  controller.document.blocks.last.plainText,
+                  'abcdef'.substring(offset),
+                );
+                expect(result?.blockId, controller.document.blocks.last.id);
+              }
+            },
+          );
+        }
+      }
+    }
+
+    for (final offset in [0, 3, 6]) {
+      test('Writerside heading attributes stay with heading at $offset', () {
+        for (final input in [false, true]) {
+          final document = parser
+              .parse(
+                filePath: 'topic.md',
+                mode: MarkdownMode.writersideMarkdown,
+                source:
+                    '# Topic\n\n## abcdef {id="section" collapsible="true" default-state="expanded"}\n',
+              )
+              .busyDocument;
+          final heading = document.blocks.last;
+          final controller = BusyMarkWysiwygDocumentController(
+            document: document,
+          );
+          addTearDown(controller.dispose);
+          if (input) {
+            controller.replaceBlockTextWithParagraphs(
+              heading.id,
+              'abcdef'.replaceRange(offset, offset, '\n'),
+              offset + 1,
+            );
+          } else {
+            controller.applyEnterAt(heading.id, offset);
+          }
+          final paragraph = controller.document.blocks.singleWhere(
+            (b) => b.kind == BusyBlockKind.paragraph,
+          );
+          for (final key in [
+            'id',
+            'level',
+            'generatedId',
+            'collapsible',
+            'default-state',
+            'busymark-writerside-source-attributes',
+            'busymark-property-edits',
+          ]) {
+            expect(paragraph.attributes, isNot(contains(key)), reason: key);
+          }
+          final saved = controller.markdown;
+          expect('collapsible='.allMatches(saved), hasLength(1));
+          expect('default-state='.allMatches(saved), hasLength(1));
+          controller.rebaseCommittedSource(saved);
+          expect(controller.markdown, saved);
+          final reopened = parser
+              .parse(
+                filePath: 'topic.md',
+                source: saved,
+                mode: MarkdownMode.writersideMarkdown,
+              )
+              .busyDocument;
+          final section = reopened.blocks.singleWhere(
+            (b) => b.attributes['id'] == 'section',
+          );
+          expect(section.kind, BusyBlockKind.heading);
+          expect(section.attributes['collapsible'], 'true');
+          expect(section.attributes['default-state'], 'expanded');
+        }
+      });
+    }
+
+    for (final nested in [false, true]) {
+      test(
+        'Backspace removes only the empty preceding paragraph nested=$nested',
+        () {
+          final source = nested
+              ? '> Clear\n>\n> ## **About** ![](image.png)job {id="job"}\n'
+              : 'Clear\n\n## **About** ![](image.png)job {id="job"}\n';
+          final document = parser
+              .parse(filePath: 'heading.md', source: source)
+              .busyDocument;
+          final siblings = nested
+              ? document.blocks.single.children
+              : document.blocks;
+          final paragraph = siblings.first;
+          final heading = siblings.last;
+          final controller = BusyMarkWysiwygDocumentController(
+            document: document,
+          );
+          addTearDown(controller.dispose);
+          controller.updateBlockText(paragraph.id, '');
+          final result = controller.applyBackspaceAtStart(heading.id);
+          expect(result?.blockId, heading.id);
+          expect(result?.offset, 0);
+          final kept = controller.blockById(heading.id)!;
+          expect(kept.kind, BusyBlockKind.heading);
+          expect(kept.attributes['id'], 'job');
+          expect(
+            _inlineSignatures(kept.inlines),
+            _inlineSignatures(heading.inlines),
+          );
+          expect(controller.blockById(paragraph.id), isNull);
+          final reopened = parser
+              .parse(filePath: 'heading.md', source: controller.markdown)
+              .busyDocument;
+          expect(
+            _blocksDepthFirst(
+              reopened.blocks,
+            ).where((b) => b.kind == BusyBlockKind.heading),
+            hasLength(1),
+          );
+        },
+      );
+    }
+
+    for (final marker in ['-', '1.', '- [ ]']) {
+      for (final input in [false, true]) {
+        for (final clear in [false, true]) {
+          test(
+            'list $marker start input=$input clear=$clear retains parent subtree',
+            () {
+              final indent = marker == '1.' ? '   ' : '  ';
+              final document = parser
+                  .parse(
+                    filePath: 'list.md',
+                    source:
+                        '$marker Parent\n$indent- Child\n$indent  - Grandchild\n',
+                  )
+                  .busyDocument;
+              final parent = document.blocks.single;
+              final controller = BusyMarkWysiwygDocumentController(
+                document: document,
+              );
+              addTearDown(controller.dispose);
+              if (clear) controller.updateBlockText(parent.id, '');
+              final result = input
+                  ? controller.replaceBlockTextWithParagraphs(
+                      parent.id,
+                      '\n${clear ? '' : parent.plainText}',
+                      1,
+                    )
+                  : controller.applyEnterAt(parent.id, 0);
+              expect(result?.blockId, parent.id);
+              expect(controller.document.blocks.last.id, parent.id);
+              expect(controller.document.blocks.first.children, isEmpty);
+              final kept = controller.blockById(parent.id)!;
+              expect(kept.kind, parent.kind);
+              expect(kept.children.single.id, parent.children.single.id);
+              expect(_blocksDepthFirst(kept.children).map((b) => b.plainText), [
+                'Child',
+                'Grandchild',
+              ]);
+              final saved = controller.markdown;
+              final reopened = parser
+                  .parse(filePath: 'list.md', source: saved)
+                  .busyDocument;
+              expect(
+                _blocksDepthFirst(
+                  reopened.blocks,
+                ).where((b) => b.plainText == 'Child'),
+                hasLength(1),
+                reason: saved,
+              );
+              expect(
+                _blocksDepthFirst(
+                  reopened.blocks,
+                ).where((b) => b.plainText == 'Grandchild'),
+                hasLength(1),
+                reason: saved,
+              );
+              expect(
+                reopened.blocks.last.children.single.plainText,
+                'Child',
+                reason: saved,
+              );
+            },
+          );
+        }
+      }
+    }
+
+    for (final operation in ['newline', 'hard break', 'blank line']) {
+      for (final offset in [0, 1, 2, 3]) {
+        test('$operation preserves ordered inline objects at $offset', () {
+          final document = parser
+              .parse(
+                filePath: 'image.md',
+                source: '**a![](first.png)![](second.png)b**![](third.png)c\n',
+              )
+              .busyDocument;
+          final block = document.blocks.single;
+          expect(block.plainText, 'abc');
+          expect(
+            busyInlineStyleRanges(
+              block.inlines,
+            ).where((r) => r.kind == BusyInlineKind.strong),
+            isNotEmpty,
+          );
+          final expected = busyInlineSemanticAnchors(
+            block.inlines,
+          ).map((a) => _inlineSignatures([a.inline])).toList();
+          expect(expected, hasLength(3));
+          final controller = BusyMarkWysiwygDocumentController(
+            document: document,
+          );
+          addTearDown(controller.dispose);
+          switch (operation) {
+            case 'newline':
+              controller.replaceBlockTextWithParagraphs(
+                block.id,
+                block.plainText.replaceRange(offset, offset, '\n'),
+                offset + 1,
+                allowListExit: false,
+              );
+            case 'hard break':
+              controller.insertHardBreak(block.id, offset);
+            case 'blank line':
+              controller.insertBlankLine(block.id, offset);
+          }
+          final objects = [
+            for (final b in controller.document.blocks)
+              ...busyInlineSemanticAnchors(
+                b.inlines,
+              ).map((a) => _inlineSignatures([a.inline])),
+          ];
+          expect(objects, expected);
+          var precedingText = 0;
+          final actualOffsets = <int>[];
+          for (final fragment in controller.document.blocks) {
+            actualOffsets.addAll(
+              busyInlineSemanticAnchors(
+                fragment.inlines,
+              ).map((a) => precedingText + a.offset),
+            );
+            precedingText +=
+                fragment.plainText.length + (operation == 'newline' ? 1 : 0);
+          }
+          final insertedLength = operation == 'blank line' ? 2 : 1;
+          expect(
+            actualOffsets,
+            busyInlineSemanticAnchors(block.inlines).map(
+              (a) => a.offset <= offset ? a.offset : a.offset + insertedLength,
+            ),
+          );
+          final saved = controller.markdown;
+          final reopened = parser
+              .parse(filePath: 'image.md', source: saved)
+              .busyDocument;
+          expect(
+            [
+              for (final b in reopened.blocks)
+                ...busyInlineSemanticAnchors(
+                  b.inlines,
+                ).map((a) => _inlineSignatures([a.inline])),
+            ],
+            expected,
+            reason: saved,
+          );
+        });
+      }
+    }
+
+    testWidgets(
+      'physical Enter at heading start keeps focus, publishes once and undoes',
+      (tester) async {
+        final document = parser
+            .parse(
+              filePath: 'header_test_text.md',
+              source: '## About the job\n',
+            )
+            .busyDocument;
+        final heading = document.blocks.single;
+        var publications = 0;
+        var source = document.source!;
+        BusyDocument? live;
+        await tester.pumpWidget(
+          _app(
+            BusyMarkWysiwygEditor(
+              document: document,
+              onDocumentChanged: (value) => live = value,
+              onSourceChanged: (_, value) {
+                source = value;
+                publications++;
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.byKey(
+            ValueKey('wysiwyg-field-header_test_text.md-${heading.id}'),
+          ),
+        );
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection.collapsed(offset: 0);
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(publications, 1);
+        expect(live!.blocks.map((b) => b.kind), [
+          BusyBlockKind.paragraph,
+          BusyBlockKind.heading,
+        ]);
+        final kept = tester.widget<TextField>(
+          find.byKey(
+            ValueKey('wysiwyg-field-header_test_text.md-${heading.id}'),
+          ),
+        );
+        expect(kept.focusNode!.hasFocus, isTrue);
+        expect(
+          kept.controller!.selection,
+          const TextSelection.collapsed(offset: 0),
+        );
+        expect(source, contains('## About the job'));
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(source, '## About the job\n');
+        expect(live!.blocks, hasLength(1));
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(live!.blocks.map((b) => b.kind), [
+          BusyBlockKind.paragraph,
+          BusyBlockKind.heading,
+        ]);
+      },
+    );
+  });
+}
+
+List<Object?> _inlineSignatures(List<BusyInline> inlines) => [
+  for (final inline in inlines)
+    [
+      inline.kind,
+      inline.text,
+      inline.destination,
+      inline.attributes,
+      _inlineSignatures(inline.children),
+    ],
+];
 
 Iterable<BusyBlock> _blocksDepthFirst(Iterable<BusyBlock> blocks) sync* {
   for (final block in blocks) {

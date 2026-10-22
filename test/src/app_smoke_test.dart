@@ -1328,6 +1328,164 @@ void main() {
     }
   });
 
+  testWidgets(
+    'heading boundary survives workspace undo, view switching, save and reopen',
+    (tester) async {
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-heading-boundary-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      const original = '## About the job\n';
+      final file = File('${root.path}/header_test_text.md')
+        ..writeAsStringSync(original);
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(
+            _MemorySettingsStore()
+              ..value = AppSettings.defaults()
+                  .copyWith(
+                    autoSave: false,
+                    documentViewMode: DocumentViewModePreference.editor,
+                  )
+                  .toJson(),
+          ),
+          localHistoryStoreProvider.overrideWithValue(
+            MemoryLocalHistoryStore(),
+          ),
+          documentSessionStoreProvider.overrideWithValue(
+            MemoryDocumentSessionStore(),
+          ),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
+          startupPathProvider.overrideWithValue(file.path),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await _waitForSearchCondition(
+        tester,
+        () => find.byType(BusyMarkWysiwygEditor).evaluate().isNotEmpty,
+      );
+      await tester.pumpAndSettle();
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      final field = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'About the job'),
+      );
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection.collapsed(offset: 0);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      final edited = container.read(workspaceControllerProvider).activeBuffer!;
+      final savedSource = edited.text;
+      expect(edited.editorState.undoState.undo, hasLength(1));
+      expect(edited.isDirty, isTrue);
+      expect(savedSource, contains('## About the job'));
+      expect(savedSource, isNot(contains('## \n')));
+      final kept = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'About the job'),
+      );
+      expect(kept.focusNode!.hasFocus, isTrue);
+      expect(
+        kept.controller!.selection,
+        const TextSelection.collapsed(offset: 0),
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(container.read(workspaceControllerProvider).activeText, original);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        savedSource,
+      );
+      // External history restores source through the production parser. Blank
+      // paragraphs remain transient; redo must preserve the heading, not invent
+      // a semantic paragraph that save/reopen intentionally does not retain.
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkWysiwygEditor),
+          matching: find.byWidgetPredicate(
+            (w) => w is TextField && w.controller?.text.isEmpty == true,
+          ),
+        ),
+        findsNothing,
+      );
+      for (final mode in [
+        DocumentViewModePreference.source,
+        DocumentViewModePreference.preview,
+        DocumentViewModePreference.split,
+        DocumentViewModePreference.editor,
+      ]) {
+        workspace.updateActiveEditorMode(mode);
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .setDocumentViewMode(mode);
+        await tester.pumpAndSettle();
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          savedSource,
+        );
+        final parsed = const MarkdownParser()
+            .parse(filePath: file.path, source: savedSource)
+            .busyDocument;
+        expect(parsed.blocks.single.kind, BusyBlockKind.heading);
+        expect(parsed.blocks.single.attributes['level'], '2');
+        expect(parsed.blocks.single.plainText, 'About the job');
+      }
+      bool? saved;
+      unawaited(workspace.saveActive().then((value) => saved = value));
+      await _waitForSearchCondition(tester, () => saved != null);
+      expect(saved, isTrue);
+      await tester.pumpAndSettle();
+      expect(file.readAsStringSync(), savedSource);
+      bool? closed;
+      unawaited(
+        workspace.closeActiveOpenFileTab().then((value) => closed = value),
+      );
+      await _waitForSearchCondition(tester, () => closed != null);
+      expect(closed, isTrue);
+      unawaited(workspace.openPath(file.path));
+      await _waitForSearchCondition(
+        tester,
+        () => find
+            .widgetWithText(TextField, 'About the job')
+            .evaluate()
+            .isNotEmpty,
+      );
+      await tester.pumpAndSettle();
+      final reopened = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      expect(reopened.text, savedSource);
+      expect(reopened.isDirty, isFalse);
+      expect(
+        tester
+            .widget<BusyMarkWysiwygEditor>(find.byType(BusyMarkWysiwygEditor))
+            .document
+            .blocks
+            .single
+            .kind,
+        BusyBlockKind.heading,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   testWidgets('workspace coalesces pixel viewport sessions without edits', (
     tester,
   ) async {

@@ -233,6 +233,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _textUndoControllers = <String, UndoHistoryController>{};
   final _focusNodes = <String, FocusNode>{};
   final _tableCellControllers = <String, BusyMarkWysiwygTextController>{};
+  final _modelTextSelections = <String, TextSelection>{};
   final _tableCellFocusNodes = <String, FocusNode>{};
   final _tableCellKeys = <String, GlobalKey>{};
   final _spellingEditableKeys = <String, GlobalKey>{};
@@ -731,6 +732,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       focusNode.dispose();
     }
     _textControllers.clear();
+    _modelTextSelections.clear();
     _tableCellControllers.clear();
     _textUndoControllers.clear();
     _focusNodes.clear();
@@ -2322,6 +2324,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     for (final id in _textControllers.keys.toList()) {
       if (!ids.contains(id)) {
         _textControllers.remove(id)?.dispose();
+        _modelTextSelections.remove(id);
       }
     }
     for (final entry in _tableCellControllers.entries) {
@@ -2459,6 +2462,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     String targetId,
     TextEditingController controller,
   ) {
+    _rememberModelTextSelection(targetId, controller);
     if (_documentController.document.isWriterside &&
         _activeBlockId == targetId &&
         mounted) {
@@ -2480,6 +2484,17 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if (controller.selection.extentOffset != continuous.caret) {
       _continuousTextEdit = null;
+    }
+  }
+
+  void _rememberModelTextSelection(
+    String targetId,
+    TextEditingController controller,
+  ) {
+    if (identical(_textControllers[targetId], controller) &&
+        controller.text == _documentController.blockText(targetId) &&
+        controller.selection.isValid) {
+      _modelTextSelections[targetId] = controller.selection;
     }
   }
 
@@ -2988,11 +3003,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (origin == _WysiwygTextEditOrigin.paste) {
       _continuousTextEdit = null;
     }
-    _recordUndoSnapshot();
+    final undoSnapshot = _historySnapshot();
     final currentBlock = _documentController.blockById(blockId);
     if (currentBlock != null &&
         busyMarkWysiwygBlockContainsMath(currentBlock)) {
       _documentController.updateMathSource(blockId, value);
+      _recordUndoSnapshot(undoSnapshot);
       _emitMarkdown(undoGroup: undoGroup);
       return;
     }
@@ -3002,16 +3018,38 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final pendingInlineKinds =
         _pendingInlineKindsByBlockId[blockId]?.toList(growable: false) ??
         const <BusyInlineKind>[];
+    final paragraphBreakEdit = _documentController.hasParagraphBreakEdit(
+      blockId,
+      value,
+    );
+    final previousSelection = _modelTextSelections[blockId];
     final splitResult = _documentController.replaceBlockTextWithParagraphs(
       blockId,
       value,
       offset,
       preserveTextWhitespace: origin == _WysiwygTextEditOrigin.paste,
       allowListExit: origin != _WysiwygTextEditOrigin.paste,
+      replaceWholeBlock:
+          previousSelection != null &&
+          !previousSelection.isCollapsed &&
+          previousSelection.start == 0 &&
+          previousSelection.end == oldText.length,
     );
     if (splitResult != null) {
+      _recordUndoSnapshot(undoSnapshot);
       _emitMarkdown(undoGroup: undoGroup);
       _focusBlockAfterFrame(splitResult.blockId, offset: splitResult.offset);
+      return;
+    }
+    if (paragraphBreakEdit) {
+      // Null means rejection here, not an ordinary single-block edit. Do not
+      // let the platform text-input fallback bypass structural protection.
+      if (controller != null) {
+        controller.value = TextEditingValue(
+          text: oldText,
+          selection: previousSelection ?? TextSelection.collapsed(offset: 0),
+        );
+      }
       return;
     }
     _documentController.updateBlockText(
@@ -3021,6 +3059,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       preserveTextWhitespace: origin == _WysiwygTextEditOrigin.paste,
       normalizePastedFormatting: origin == _WysiwygTextEditOrigin.paste,
     );
+    _recordUndoSnapshot(undoSnapshot);
+    if (controller != null) _rememberModelTextSelection(blockId, controller);
     if (value.isNotEmpty) {
       _pendingInlineKindsByBlockId.remove(blockId);
     }
@@ -4336,6 +4376,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
+    if (DocumentReadOnlyScope.of(context) &&
+        {
+          LogicalKeyboardKey.enter,
+          LogicalKeyboardKey.backspace,
+          LogicalKeyboardKey.delete,
+          LogicalKeyboardKey.tab,
+        }.contains(key)) {
+      return KeyEventResult.ignored;
+    }
     final commands =
         BusyMarkCommandRegistryScope.read(context) ??
         BusyMarkCommandCatalog.metadata;
@@ -4545,16 +4594,16 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             .clamp(start, controller.text.length)
             .toInt();
         final activeInlineKinds = _activeInlineKindsAt(blockId, start);
-        _recordUndoSnapshot();
-        _documentController.updateBlockText(
+        final undoSnapshot = _historySnapshot();
+        final result = _documentController.applyEnterAt(
           blockId,
-          controller.text.replaceRange(start, end, ''),
-          activeInlineKinds: activeInlineKinds,
+          start,
+          selectionEnd: end,
         );
-        final result = _documentController.applyEnterAt(blockId, start);
         if (result == null) {
-          return KeyEventResult.ignored;
+          return KeyEventResult.handled;
         }
+        _recordUndoSnapshot(undoSnapshot);
         if (_documentController.blockText(result.blockId).isEmpty) {
           _setPendingInlineKinds(result.blockId, activeInlineKinds);
         }
@@ -4583,11 +4632,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         : LogicalKeyboardKey.arrowRight;
     if (key == LogicalKeyboardKey.enter) {
       final activeInlineKinds = _activeInlineKindsAt(blockId, offset);
-      _recordUndoSnapshot();
+      final undoSnapshot = _historySnapshot();
       final result = _documentController.applyEnterAt(blockId, offset);
       if (result == null) {
-        return KeyEventResult.ignored;
+        return KeyEventResult.handled;
       }
+      _recordUndoSnapshot(undoSnapshot);
       if (_documentController.blockText(result.blockId).isEmpty) {
         _setPendingInlineKinds(result.blockId, activeInlineKinds);
       }
@@ -7168,6 +7218,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _applyHardBreakCommand() {
+    if (DocumentReadOnlyScope.of(context)) return;
     final target = _activeTextTarget();
     if (target == null || _activeCellId != null) {
       return;
@@ -7186,6 +7237,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _applyBlankLineCommand() {
+    if (DocumentReadOnlyScope.of(context)) return;
     final target = _activeTextTarget();
     if (target == null || _activeCellId != null) {
       return;
