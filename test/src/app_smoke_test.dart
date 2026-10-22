@@ -53,6 +53,7 @@ import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
@@ -1325,6 +1326,86 @@ void main() {
     for (final definition in BusyMarkDocumentViewShortcuts.definitions.values) {
       expect(existingActivators, isNot(contains(definition.activator)));
     }
+  });
+
+  testWidgets('workspace coalesces pixel viewport sessions without edits', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore()
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  documentViewMode: DocumentViewModePreference.editor,
+                )
+                .toJson(),
+        ),
+        workspaceServiceProvider.overrideWithValue(
+          const _SearchWorkspaceService('Reading target.'),
+        ),
+        startupPathProvider.overrideWithValue('/tmp/viewport-session.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await _pumpUntilFound(tester, find.byType(BusyMarkWysiwygEditor));
+    await tester.pumpAndSettle();
+    final editor = tester.widget<BusyMarkWysiwygEditor>(
+      find.byType(BusyMarkWysiwygEditor),
+    );
+    final before = container.read(workspaceControllerProvider).activeBuffer!;
+    final saved = before.editorState.wysiwygState;
+    WysiwygEditorSessionState pixels(double offset) =>
+        WysiwygEditorSessionState(
+          activeBlockId: saved.activeBlockId,
+          activeCellId: saved.activeCellId,
+          anchorBlockId: saved.anchorBlockId,
+          anchorOffset: saved.anchorOffset,
+          extentBlockId: saved.extentBlockId,
+          extentOffset: saved.extentOffset,
+          viewportBlockId: saved.viewportBlockId,
+          viewportAlignment: saved.viewportAlignment,
+          viewportOffset: offset,
+          viewportEditingOffset: -offset,
+          viewportLayoutSignature: saved.viewportLayoutSignature,
+          sourceSignature: saved.sourceSignature,
+          sourceBindings: saved.sourceBindings,
+        );
+    final first = pixels(2300.25);
+    editor.onSessionChanged!(editor.documentId!, first);
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .wysiwygState,
+      same(first),
+    );
+    editor.onSessionChanged!(editor.documentId!, pixels(2300.26));
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .wysiwygState,
+      same(first),
+    );
+    final second = pixels(2300.5);
+    editor.onSessionChanged!(editor.documentId!, second);
+    final after = container.read(workspaceControllerProvider).activeBuffer!;
+    expect(after.editorState.wysiwygState, same(second));
+    expect(after.text, before.text);
+    expect(after.dirty, before.dirty);
+    expect(after.editorState.undoState, same(before.editorState.undoState));
   });
 
   testWidgets(

@@ -55,8 +55,142 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
+import '../support/desktop_focus.dart';
 
 void main() {
+  testWidgets(
+    'new Source scrolling takes precedence over pending session restoration',
+    (tester) async {
+      double? requested;
+      tester.binding.addPostFrameCallback((_) {
+        final position = tester
+            .widget<TextField>(find.byType(TextField))
+            .scrollController!
+            .position;
+        position.pointerScroll(600);
+        requested = position.pixels;
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: BusyMarkSourceEditor(
+              text: List.generate(300, (i) => 'Line $i for reading').join('\n'),
+              filePath: '/source-pending.md',
+              language: SourceSyntaxLanguage.markdown,
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onChanged: (_, _) => fail('Scroll must not edit'),
+              onCloseSearch: () {},
+              initialScrollOffset: 1200,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(requested, 600);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.scrollController!.offset, closeTo(requested!, 0.1));
+    },
+  );
+
+  for (final wrap in [true, false]) {
+    for (final composing in [false, true]) {
+      testWidgets(
+        'desktop Source return preserves direct scroll wrap=$wrap composing=$composing',
+        (tester) async {
+          enableDesktopFocusLifecycle(tester);
+          final source = List.generate(
+            150,
+            (i) => 'line $i ${'words ' * 100}',
+          ).join('\n');
+          var edits = 0;
+          await tester.pumpWidget(
+            MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: BusyMarkSourceEditor(
+                  text: source,
+                  filePath: '/disposable-focus.md',
+                  language: SourceSyntaxLanguage.markdown,
+                  diagnostics: const [],
+                  editorFontSize: 14,
+                  wordWrap: wrap,
+                  searchActive: false,
+                  searchOptions: const SourceSearchOptions(),
+                  onChanged: (_, _) => edits++,
+                  onOpenSearch: () {},
+                  onCloseSearch: () {},
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final field = tester.widget<TextField>(find.byType(TextField));
+          field.focusNode!.requestFocus();
+          field.controller!.selection = const TextSelection(
+            baseOffset: 8,
+            extentOffset: 3,
+          );
+          await tester.pumpAndSettle();
+          if (composing) {
+            tester.testTextInput.updateEditingValue(
+              TextEditingValue(
+                text: source,
+                selection: const TextSelection.collapsed(offset: 5),
+                composing: const TextRange(start: 0, end: 9),
+              ),
+            );
+            await tester.pumpAndSettle();
+          }
+          field.scrollController!.jumpTo(1800);
+          final horizontal = tester
+              .widget<SingleChildScrollView>(
+                find.byKey(const ValueKey('source-horizontal-scroll-view')),
+              )
+              .controller!;
+          if (!wrap) horizontal.jumpTo(400);
+          await tester.pumpAndSettle();
+          final verticalOffset = field.scrollController!.offset;
+          final horizontalOffset = horizontal.offset;
+          final value = field.controller!.value;
+          await pumpDesktopFocusCycle(
+            tester,
+            target: field.focusNode!,
+            inactiveFrames: 90,
+            verifyViewport: () {
+              expect(
+                field.scrollController!.offset,
+                closeTo(verticalOffset, 0.1),
+              );
+              expect(horizontal.offset, closeTo(horizontalOffset, 0.1));
+              expect(field.controller!.selection, value.selection);
+            },
+          );
+          expect(edits, 0);
+          expect(field.controller!.text, source);
+          tester.testTextInput.updateEditingValue(
+            value.copyWith(
+              text: source.replaceRange(3, 8, 'Z'),
+              selection: const TextSelection.collapsed(offset: 4),
+              composing: TextRange.empty,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(edits, 1);
+          expect(field.scrollController!.offset, lessThan(100));
+          expect(horizontal.offset, lessThan(100));
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.linux),
+      );
+    }
+  }
+
   testWidgets(
     'Source consumes shared pages and replaces in an unsaved buffer',
     (tester) async {

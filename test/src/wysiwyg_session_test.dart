@@ -26,6 +26,34 @@ class _SessionReportNotifier extends Notifier<int> {
 void main() {
   const parser = MarkdownParser();
 
+  test(
+    'viewport pixel anchors round trip while older sessions remain readable',
+    () {
+      final old = WysiwygEditorSessionState.fromJson({
+        'viewportBlockId': 'old',
+        'viewportAlignment': 0.2,
+      });
+      expect(old.viewportOffset, 0);
+      expect(old.viewportEditingOffset, isNull);
+      const session = WysiwygEditorSessionState(
+        activeBlockId: 'edit',
+        viewportBlockId: 'reading',
+        viewportOffset: 2300.25,
+        viewportEditingOffset: -5000.5,
+        viewportLayoutSignature: 'layout',
+        sourceSignature: 'source',
+        sourceBindings: {
+          'reading': (start: 4, end: 9, kind: 'paragraph', tag: 'p'),
+        },
+      );
+      final restored = WysiwygEditorSessionState.fromJson(session.toJson());
+      expect(restored.toJson(), session.toJson());
+      expect(restored.viewportOffset, 2300.25);
+      expect(restored.viewportEditingOffset, -5000.5);
+      expect(restored.sourceBindings, session.sourceBindings);
+    },
+  );
+
   testWidgets(
     'pinned non-list Markdown owner refreshes direct edits with authored positions',
     (tester) async {

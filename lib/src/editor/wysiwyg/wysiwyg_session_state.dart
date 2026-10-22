@@ -8,6 +8,9 @@ class WysiwygEditorSessionState {
     this.extentOffset = 0,
     this.viewportBlockId,
     this.viewportAlignment = 0,
+    this.viewportOffset = 0,
+    this.viewportEditingOffset,
+    this.viewportLayoutSignature,
     this.sourceSignature,
     this.sourceBindings = const {},
   });
@@ -20,6 +23,16 @@ class WysiwygEditorSessionState {
   final int extentOffset;
   final String? viewportBlockId;
   final double viewportAlignment;
+
+  /// Logical pixels clipped from the leading edge of [viewportBlockId]. Old
+  /// sessions without this field retain their original alignment semantics.
+  final double viewportOffset;
+
+  /// The retained editing block's leading edge relative to the viewport. This
+  /// lets an unchanged session mount that one editable and scroll naturally,
+  /// preserving its input client even when the reading anchor is far away.
+  final double? viewportEditingOffset;
+  final String? viewportLayoutSignature;
 
   // Writerside authoring IDs can differ after an exact saved source is reparsed.
   // Bind caret/viewport locations to that representation, never to an ordinal.
@@ -36,6 +49,11 @@ class WysiwygEditorSessionState {
     'extentOffset': extentOffset,
     'viewportBlockId': viewportBlockId,
     'viewportAlignment': viewportAlignment,
+    if (viewportOffset != 0) 'viewportOffset': viewportOffset,
+    if (viewportEditingOffset != null)
+      'viewportEditingOffset': viewportEditingOffset,
+    if (viewportLayoutSignature != null)
+      'viewportLayoutSignature': viewportLayoutSignature,
     if (sourceSignature != null) 'sourceSignature': sourceSignature,
     if (sourceBindings.isNotEmpty)
       'sourceBindings': {
@@ -59,6 +77,10 @@ class WysiwygEditorSessionState {
       extentOffset: (json['extentOffset'] as num?)?.toInt() ?? 0,
       viewportBlockId: json['viewportBlockId']?.toString(),
       viewportAlignment: (json['viewportAlignment'] as num?)?.toDouble() ?? 0,
+      viewportOffset: (json['viewportOffset'] as num?)?.toDouble() ?? 0,
+      viewportEditingOffset: (json['viewportEditingOffset'] as num?)
+          ?.toDouble(),
+      viewportLayoutSignature: json['viewportLayoutSignature'] as String?,
       sourceSignature: json['sourceSignature'] as String?,
       sourceBindings: {
         if (json['sourceBindings'] case final Map bindings)

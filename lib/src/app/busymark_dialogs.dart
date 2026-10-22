@@ -214,8 +214,14 @@ Future<T?> _coordinateBusyMarkModal<T>(
   try {
     return await showSurface();
   } finally {
+    final closingFocus = FocusManager.instance.primaryFocus;
     await releaseBusyMarkModalBarrier(headerBarService);
-    if (previousFocus?.context != null && previousFocus!.canRequestFocus) {
+    final currentFocus = FocusManager.instance.primaryFocus;
+    if (previousFocus?.context?.mounted == true &&
+        previousFocus!.canRequestFocus &&
+        (currentFocus == closingFocus ||
+            currentFocus == previousFocus ||
+            currentFocus is FocusScopeNode)) {
       previousFocus.requestFocus();
     }
   }

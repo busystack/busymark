@@ -14,6 +14,69 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('delayed modal barrier release respects a newer focus owner', (
+    tester,
+  ) async {
+    const channel = MethodChannel('com.busymark.test/focus-modal-barrier');
+    final release = Completer<void>();
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      if (call.method == 'initialize') return true;
+      if (call.method == 'setModalBarrierDepth' && call.arguments == 0) {
+        await release.future;
+      }
+      return null;
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      ),
+    );
+    final service = LinuxHeaderBarService(channel: channel);
+    await service.initialize();
+    final previous = FocusNode();
+    final newer = FocusNode();
+    addTearDown(previous.dispose);
+    addTearDown(newer.dispose);
+    late BuildContext host;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            host = context;
+            return Scaffold(
+              body: Column(
+                children: [
+                  TextField(focusNode: previous),
+                  TextField(focusNode: newer),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    previous.requestFocus();
+    await tester.pumpAndSettle();
+    final result = showBusyMarkModalDialog<void>(
+      host,
+      headerBarService: service,
+      builder: (_) => const Text('Modal focus test'),
+    );
+    await tester.pumpAndSettle();
+    Navigator.of(host, rootNavigator: true).pop();
+    await tester.pumpAndSettle();
+    newer.requestFocus();
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, same(newer));
+    release.complete();
+    await result;
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, same(newer));
+  });
+
   testWidgets(
     'modal text input preserves local editing when an application binding overlaps it',
     (tester) async {

@@ -23,6 +23,7 @@ import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_video.dart';
 import '../editor_text_context_menu.dart';
+import '../editor_focus_restoration.dart';
 import 'wysiwyg_inline_controller.dart';
 import 'wysiwyg_visualization_navigation.dart';
 
@@ -484,7 +485,9 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       );
     }
     final renderedMath =
-        busyMarkWysiwygBlockContainsMath(block) && !focusNode.hasFocus
+        busyMarkWysiwygBlockContainsMath(block) &&
+            !focusNode.hasFocus &&
+            !BusyMarkEditorFocusRestoration.keepsEditingWhileInactive(focusNode)
         ? Focus(
             focusNode: focusNode,
             child: GestureDetector(
@@ -540,60 +543,68 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                             selectionRange: selectionRange,
                             child: KeyedSubtree(
                               key: spellingEditableKey,
-                              child: TextField(
+                              child: BusyMarkEditorFocusRestoration(
                                 readOnly: DocumentReadOnlyScope.of(context),
-                                key: ValueKey(
-                                  'wysiwyg-field-$documentFilePath-${block.id}',
-                                ),
-                                controller: controller,
-                                undoController: undoController,
                                 focusNode: focusNode,
-                                enableInteractiveSelection:
-                                    !documentSelectionDragging,
-                                maxLines: null,
-                                minLines: 1,
-                                textDirection: textDirection,
-                                style: style,
-                                cursorWidth: BusyMarkDocumentTextGeometry
-                                    .editableCursorWidth,
-                                selectionHeightStyle:
-                                    BusyMarkDocumentTextGeometry
-                                        .selectionHeightStyle,
-                                selectionWidthStyle:
-                                    BusyMarkDocumentTextGeometry
-                                        .selectionWidthStyle,
-                                decoration: const InputDecoration(
-                                  isCollapsed: true,
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  filled: false,
-                                  hoverColor: BusyMarkLinuxPalette.transparent,
-                                  contentPadding: EdgeInsets.zero,
+                                controller: controller,
+                                builder: (context, caretScrollController) => TextField(
+                                  readOnly: DocumentReadOnlyScope.of(context),
+                                  key: ValueKey(
+                                    'wysiwyg-field-$documentFilePath-${block.id}',
+                                  ),
+                                  controller: controller,
+                                  undoController: undoController,
+                                  focusNode: focusNode,
+                                  scrollController: caretScrollController,
+                                  enableInteractiveSelection:
+                                      !documentSelectionDragging,
+                                  maxLines: null,
+                                  minLines: 1,
+                                  textDirection: textDirection,
+                                  style: style,
+                                  cursorWidth: BusyMarkDocumentTextGeometry
+                                      .editableCursorWidth,
+                                  selectionHeightStyle:
+                                      BusyMarkDocumentTextGeometry
+                                          .selectionHeightStyle,
+                                  selectionWidthStyle:
+                                      BusyMarkDocumentTextGeometry
+                                          .selectionWidthStyle,
+                                  decoration: const InputDecoration(
+                                    isCollapsed: true,
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    filled: false,
+                                    hoverColor:
+                                        BusyMarkLinuxPalette.transparent,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  contextMenuBuilder: documentSelectionActive
+                                      ? (context, editableTextState) =>
+                                            const SizedBox.shrink()
+                                      : (
+                                          context,
+                                          editableTextState,
+                                        ) => buildBusyMarkEditorTextContextMenu(
+                                          context,
+                                          editableTextState,
+                                          refineWithAiLabel:
+                                              context.l10n.aiRefineWithAi,
+                                          onRefineWithAi: onRefineWithAi,
+                                          onCut: onCut,
+                                          onCopy: onCopy,
+                                          onPaste: onPaste,
+                                          onPastePlainText: onPastePlainText,
+                                          readPasteAvailability:
+                                              readPasteAvailability,
+                                          onCopyPlainText: onCopyPlainText,
+                                          readSpellingItems: spellingMenuReader,
+                                          onCheckSpelling: onCheckSpelling,
+                                        ),
+                                  onTap: onFocused,
+                                  onChanged: onChanged,
                                 ),
-                                contextMenuBuilder: documentSelectionActive
-                                    ? (context, editableTextState) =>
-                                          const SizedBox.shrink()
-                                    : (context, editableTextState) =>
-                                          buildBusyMarkEditorTextContextMenu(
-                                            context,
-                                            editableTextState,
-                                            refineWithAiLabel:
-                                                context.l10n.aiRefineWithAi,
-                                            onRefineWithAi: onRefineWithAi,
-                                            onCut: onCut,
-                                            onCopy: onCopy,
-                                            onPaste: onPaste,
-                                            onPastePlainText: onPastePlainText,
-                                            readPasteAvailability:
-                                                readPasteAvailability,
-                                            onCopyPlainText: onCopyPlainText,
-                                            readSpellingItems:
-                                                spellingMenuReader,
-                                            onCheckSpelling: onCheckSpelling,
-                                          ),
-                                onTap: onFocused,
-                                onChanged: onChanged,
                               ),
                             ),
                           ),
@@ -699,7 +710,12 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final level = int.tryParse(block.attributes['level'] ?? '') ?? 0;
     return switch (block.kind) {
       BusyBlockKind.heading => busyMarkDocumentHeadingTextStyle(context, level),
-      _ when busyMarkWysiwygBlockContainsMath(block) && focusNode.hasFocus =>
+      _
+          when busyMarkWysiwygBlockContainsMath(block) &&
+              (focusNode.hasFocus ||
+                  BusyMarkEditorFocusRestoration.keepsEditingWhileInactive(
+                    focusNode,
+                  )) =>
         busyMarkDocumentCodeTextStyle(context),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
       _ => busyMarkDocumentBodyTextStyle(context),
@@ -1780,6 +1796,10 @@ class _TableBlockEditorState extends State<_TableBlockEditor> {
       layoutInfo.childPaintTransform,
       Offset.zero & layoutInfo.childSize,
     );
+    // A retained editable can be outside the sliver's layout cache. Its paint
+    // transform is then zero: the input remains alive, but it has no overlay
+    // anchor until the table returns to the painted portion of the viewport.
+    if (!tableRect.isFinite) return const SizedBox.shrink();
     final controlSize = BusyMarkSizes.iconButton;
     final rowRect = active == null || active.row >= _rowAnchorContexts.length
         ? null
@@ -2245,7 +2265,10 @@ class _TableCellEditorState extends State<_TableCellEditor> {
     }
     if (mounted) {
       setState(() {
-        if (!_focusNode.hasFocus) {
+        if (!_focusNode.hasFocus &&
+            !BusyMarkEditorFocusRestoration.keepsEditingWhileInactive(
+              _focusNode,
+            )) {
           _sourceEditing = false;
         }
       });
@@ -2265,7 +2288,8 @@ class _TableCellEditorState extends State<_TableCellEditor> {
     }
     if (busyMarkWysiwygBlockContainsMath(cell) &&
         !_sourceEditing &&
-        !_focusNode.hasFocus) {
+        !_focusNode.hasFocus &&
+        !BusyMarkEditorFocusRestoration.keepsEditingWhileInactive(_focusNode)) {
       return Padding(
         padding: BusyMarkInsets.documentTableCell,
         child: GestureDetector(
@@ -2307,69 +2331,81 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                         end: _controller.text.length,
                       )
                     : null,
-                child: TextField(
+                child: BusyMarkEditorFocusRestoration(
                   readOnly: DocumentReadOnlyScope.of(context),
-                  key: ValueKey(cell.id),
-                  controller: _controller,
                   focusNode: _focusNode,
-                  enableInteractiveSelection: !widget.documentSelectionDragging,
-                  undoController: widget.undoController,
-                  minLines: 1,
-                  maxLines: 1,
-                  inputFormatters: const [_SingleLineTableCellFormatter()],
-                  style: textStyle,
-                  textAlign: textAlign,
-                  selectionHeightStyle:
-                      BusyMarkDocumentTextGeometry.selectionHeightStyle,
-                  selectionWidthStyle:
-                      BusyMarkDocumentTextGeometry.selectionWidthStyle,
-                  decoration: InputDecoration(
-                    isCollapsed: true,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    hoverColor: BusyMarkLinuxPalette.transparent,
-                    hintText: widget.header
-                        ? context.l10n.tableHeaderHint
-                        : context.l10n.tableCellHint,
-                    hintStyle: textStyle.copyWith(
-                      color: colors.mutedForeground,
+                  controller: _controller,
+                  builder: (context, caretScrollController) => TextField(
+                    readOnly: DocumentReadOnlyScope.of(context),
+                    key: ValueKey(cell.id),
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    // A table cell owns its caret/range, including when a menu
+                    // or dialog returns focus. Explicit Select All is handled
+                    // by the editor's cell/document keyboard commands.
+                    selectAllOnFocus: false,
+                    scrollController: caretScrollController,
+                    enableInteractiveSelection:
+                        !widget.documentSelectionDragging,
+                    undoController: widget.undoController,
+                    minLines: 1,
+                    maxLines: 1,
+                    inputFormatters: const [_SingleLineTableCellFormatter()],
+                    style: textStyle,
+                    textAlign: textAlign,
+                    selectionHeightStyle:
+                        BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                    selectionWidthStyle:
+                        BusyMarkDocumentTextGeometry.selectionWidthStyle,
+                    decoration: InputDecoration(
+                      isCollapsed: true,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      hoverColor: BusyMarkLinuxPalette.transparent,
+                      hintText: widget.header
+                          ? context.l10n.tableHeaderHint
+                          : context.l10n.tableCellHint,
+                      hintStyle: textStyle.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                      contentPadding: EdgeInsets.zero,
                     ),
-                    contentPadding: EdgeInsets.zero,
+                    contextMenuBuilder: widget.suppressContextMenu
+                        ? (context, editableTextState) =>
+                              const SizedBox.shrink()
+                        : (context, editableTextState) =>
+                              buildBusyMarkEditorTextContextMenu(
+                                context,
+                                editableTextState,
+                                refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                onCut: widget.onCut,
+                                onCopy: widget.onCopy,
+                                onPaste: widget.onPaste,
+                                onPastePlainText: widget.onPastePlainText,
+                                readPasteAvailability:
+                                    widget.readPasteAvailability,
+                                onCopyPlainText: widget.onCopyPlainText,
+                                readSpellingItems: widget.spellingMenuReader,
+                                onCheckSpelling: widget.onCheckSpelling,
+                              ),
+                    onTap: () {
+                      final onCellFocused = widget.onCellFocused;
+                      if (onCellFocused == null) {
+                        widget.onFocused();
+                      } else {
+                        onCellFocused(cell.id);
+                      }
+                    },
+                    onChanged: (value) {
+                      if (_sourceEditing) {
+                        widget.onSourceChanged(cell.id, value);
+                      } else {
+                        widget.onChanged(cell.id, value);
+                      }
+                    },
                   ),
-                  contextMenuBuilder: widget.suppressContextMenu
-                      ? (context, editableTextState) => const SizedBox.shrink()
-                      : (context, editableTextState) =>
-                            buildBusyMarkEditorTextContextMenu(
-                              context,
-                              editableTextState,
-                              refineWithAiLabel: context.l10n.aiRefineWithAi,
-                              onCut: widget.onCut,
-                              onCopy: widget.onCopy,
-                              onPaste: widget.onPaste,
-                              onPastePlainText: widget.onPastePlainText,
-                              readPasteAvailability:
-                                  widget.readPasteAvailability,
-                              onCopyPlainText: widget.onCopyPlainText,
-                              readSpellingItems: widget.spellingMenuReader,
-                              onCheckSpelling: widget.onCheckSpelling,
-                            ),
-                  onTap: () {
-                    final onCellFocused = widget.onCellFocused;
-                    if (onCellFocused == null) {
-                      widget.onFocused();
-                    } else {
-                      onCellFocused(cell.id);
-                    }
-                  },
-                  onChanged: (value) {
-                    if (_sourceEditing) {
-                      widget.onSourceChanged(cell.id, value);
-                    } else {
-                      widget.onChanged(cell.id, value);
-                    }
-                  },
                 ),
               ),
             ),
