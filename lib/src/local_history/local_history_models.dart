@@ -14,6 +14,7 @@ enum LocalHistoryCaptureReason {
   beforeReload,
   beforeDiscard,
   beforeRestore,
+  beforeHistoryTraversal,
   beforeDelete,
   externalChange,
 }

@@ -60,6 +60,64 @@ void main() {
     maximumBytes: 16 * 1024 * 1024,
   );
 
+  for (final memory in [false, true]) {
+    test(
+      'equal-time ordinary captures use the latest revision (memory=$memory)',
+      () async {
+        final LocalHistoryStore tested = memory
+            ? MemoryLocalHistoryStore()
+            : store;
+        final time = DateTime(2026);
+        await tested.capture(request('first', time), policy);
+        final latest = await tested.capture(request('second', time), policy);
+        final duplicate = await tested.capture(request('second', time), policy);
+        expect(duplicate.deduplicated, isTrue);
+        expect(duplicate.revision!.id, latest.revision!.id);
+        expect((await tested.load()).revisions, hasLength(2));
+        final returned = await tested.capture(request('first', time), policy);
+        expect(returned.deduplicated, isFalse);
+        expect((await tested.load()).revisions, hasLength(3));
+      },
+    );
+    test(
+      'traversal protection reuses exact durable content (memory=$memory)',
+      () async {
+        final LocalHistoryStore tested = memory
+            ? MemoryLocalHistoryStore()
+            : store;
+        final first = await tested.capture(
+          request('original', DateTime(2026)),
+          policy,
+        );
+        await tested.capture(request('later', DateTime(2026, 1, 2)), policy);
+        final protection = await tested.capture(
+          request(
+            'original',
+            DateTime(2026, 1, 3),
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        );
+        expect(protection.deduplicated, isTrue);
+        expect(protection.revision!.id, first.revision!.id);
+        expect((await tested.load()).revisions, hasLength(2));
+        final differentFormat = await tested.capture(
+          LocalHistoryCaptureRequest(
+            path: '/workspace/guide.md',
+            displayName: 'guide.md',
+            source: 'original',
+            format: TextFormatMetadata.utf8Lf.copyWith(hasUtf8Bom: true),
+            capturedAt: DateTime(2026, 1, 4),
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        );
+        expect(differentFormat.deduplicated, isFalse);
+        expect((await tested.load()).revisions, hasLength(3));
+      },
+    );
+  }
+
   final sentinelTime = DateTime.utc(2000);
   LocalHistoryCaptureRequest journalRequest(String text, int minute) =>
       request(text, DateTime.utc(2026, 10, 17).add(Duration(minutes: minute)));

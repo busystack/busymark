@@ -1,3 +1,4 @@
+import '../../editor/document_edit_history.dart';
 import '../../search/search_result_preview.dart';
 import '../../search/search_session.dart';
 import '../../search/search_sidebar.dart';
@@ -11731,6 +11732,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                   ).writersideModule?.config.settings ??
                                   const WritersideSettingsConfig(),
                               key: _wysiwygEditorKey,
+                              readEditBase: () => _readEditorBase(
+                                activeBuffer.id,
+                                source: false,
+                              ),
+                              readSessionState: () => ref
+                                  .read(workspaceControllerProvider)
+                                  .activeBuffer!
+                                  .editorState
+                                  .wysiwygState,
                               document: wysiwygDocument,
                               documentId: activeBuffer.id,
                               contentRevision: activeBuffer.revision,
@@ -11899,6 +11909,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               onChooseLink: () =>
                                   showReferenceLinkChooser(context),
                               key: _sourceEditorKey,
+                              readEditBase: () => _readEditorBase(
+                                activeBuffer?.id,
+                                source: true,
+                              ),
+                              readSelection: () => ref
+                                  .read(workspaceControllerProvider)
+                                  .activeBuffer
+                                  ?.editorState
+                                  .selection,
                               text: widget.state.activeText,
                               language: _sourceSyntaxLanguage(
                                 widget.state.workspace,
@@ -13977,6 +13996,23 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
   }
 
+  DocumentEditBase? _readEditorBase(String? bufferId, {required bool source}) {
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    if (buffer == null || buffer.id != bufferId) return null;
+    final mode = buffer.editorState.mode;
+    if (source
+        ? mode != DocumentViewModePreference.source &&
+              mode != DocumentViewModePreference.split
+        : mode != DocumentViewModePreference.editor) {
+      return null;
+    }
+    return DocumentEditBase(
+      buffer.text,
+      buffer.revision,
+      buffer.editorState.undoState,
+    );
+  }
+
   void _handleTransactionalSourceChanged(
     String? expectedBufferId,
     String value,
@@ -13999,6 +14035,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         .updateActiveSourceText(
           value,
           sourceBufferId: expectedBufferId,
+          expectedSource: _sourceEditorKey.currentState?.publicationBase.source,
+          expectedRevision:
+              _sourceEditorKey.currentState?.publicationBase.revision,
           sourceFilePath: sourceFilePath ?? activePath,
           previousSelection: previousSelection,
           selection: selection,
@@ -14025,6 +14064,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       controller.updateActiveText(
         value,
         sourceBufferId: expectedBufferId,
+        expectedSource: _wysiwygEditorKey.currentState?.publicationBase.source,
+        expectedRevision:
+            _wysiwygEditorKey.currentState?.publicationBase.revision,
         sourceFilePath: filePath,
       );
       return;
@@ -14033,6 +14075,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       value,
       document: document,
       sourceBufferId: expectedBufferId,
+      expectedSource: _wysiwygEditorKey.currentState?.publicationBase.source,
+      expectedRevision:
+          _wysiwygEditorKey.currentState?.publicationBase.revision,
       sourceFilePath: filePath,
       undoGroup: undoGroup,
     );
@@ -14065,6 +14110,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       value,
       document: document,
       sourceBufferId: expectedBufferId,
+      expectedSource: _wysiwygEditorKey.currentState?.publicationBase.source,
+      expectedRevision:
+          _wysiwygEditorKey.currentState?.publicationBase.revision,
       sourceFilePath: filePath,
       undoGroup: null,
       previousWysiwygState: beforeSession,
@@ -14076,6 +14124,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   void _cacheCommittedWysiwygDocument(String bufferId, BusyDocument document) {
     final committed = ref.read(workspaceControllerProvider).activeBuffer;
     if (committed == null || committed.id != bufferId) return;
+    final source = document.source;
+    final expected = source == null
+        ? null
+        : committed.format.hasFinalNewline
+        ? (source.endsWith('\n') ? source : '$source\n')
+        : source.replaceFirst(RegExp(r'\n+$'), '');
+    if (expected != committed.text) {
+      _clearWysiwygCache();
+      return;
+    }
     // Workspace final-newline policy can change the emitted Markdown. Rebind
     // the live tree to that committed source, retaining its editor block IDs.
     // Reparsing here would give spelling targets IDs the mounted editor never

@@ -487,22 +487,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     editorState: editorState ?? const DocumentEditorState(),
   );
 
-  DocumentEditorState _remoteEditorState(
-    DocumentBuffer buffer,
-    String content,
-  ) => buffer.editorState.copyWith(
-    selection: buffer.editorState.selection.copyWith(
-      baseOffset: buffer.editorState.selection.baseOffset.clamp(
-        0,
-        content.length,
-      ),
-      extentOffset: buffer.editorState.selection.extentOffset.clamp(
-        0,
-        content.length,
-      ),
-    ),
-  );
-
   void _notesChanged() {
     if (!ref.mounted || state.workspace?.isRemote != true) return;
     final repository = _notesRepository;
@@ -543,30 +527,31 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
         contentChanged |= text != buffer.text;
         buffers.add(
-          buffer.copyWith(
-            text: text,
-            editorState: _remoteEditorState(buffer, text),
-            remoteTitle: note.title,
-            readonly: note.readonly || note.error,
-            revision: text == buffer.text
-                ? buffer.revision
-                : math.max(buffer.revision, note.revision) + 1,
-          ),
+          buffer
+              .replaced(text)
+              .copyWith(
+                remoteTitle: note.title,
+                readonly: note.readonly || note.error,
+                revision: text == buffer.text
+                    ? buffer.revision
+                    : math.max(buffer.revision, note.revision) + 1,
+              ),
         );
       } else {
         contentChanged |= note.content != buffer.text;
         buffers.add(
-          buffer.copyWith(
-            text: note.content,
-            editorState: _remoteEditorState(buffer, note.content),
-            lastSavedText: note.content,
-            remoteEditBase: repository.editorBase(note.localId),
-            revision: note.content == buffer.text
-                ? math.max(buffer.revision, note.revision)
-                : math.max(buffer.revision, note.revision) + 1,
-            remoteTitle: note.title,
-            readonly: note.readonly || note.error,
-          ),
+          buffer
+              .replaced(note.content)
+              .copyWith(
+                dirty: false,
+                lastSavedText: note.content,
+                remoteEditBase: repository.editorBase(note.localId),
+                revision: note.content == buffer.text
+                    ? math.max(buffer.revision, note.revision)
+                    : math.max(buffer.revision, note.revision) + 1,
+                remoteTitle: note.title,
+                readonly: note.readonly || note.error,
+              ),
         );
       }
     }
@@ -902,20 +887,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         state = state.copyWith(
           documentBuffers: _replaceBuffer(
             state.documentBuffers,
-            latest.copyWith(
-              text: text,
-              editorState: _remoteEditorState(latest, text),
-              lastSavedText: saved.content,
-              remoteEditBase: unchanged
-                  ? repository.editorBase(reference.localId)
-                  : latest.remoteEditBase,
-              dirty: text != saved.content,
-              revision: unchanged
-                  ? saved.revision
-                  : math.max(latest.revision, saved.revision + 1),
-              remoteTitle: saved.title,
-              readonly: saved.readonly || saved.error,
-            ),
+            latest
+                .replaced(text)
+                .copyWith(
+                  lastSavedText: saved.content,
+                  remoteEditBase: unchanged
+                      ? repository.editorBase(reference.localId)
+                      : latest.remoteEditBase,
+                  dirty: text != saved.content,
+                  revision: unchanged
+                      ? saved.revision
+                      : math.max(latest.revision, saved.revision + 1),
+                  remoteTitle: saved.title,
+                  readonly: saved.readonly || saved.error,
+                ),
           ),
         );
         if (text != latest.text) {
@@ -3126,17 +3111,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
         return;
       }
-      final reloaded = latest.copyWith(
-        text: disk.text,
-        lastSavedText: disk.text,
-        dirty: false,
-        diskSnapshot: disk.snapshot,
-        format: disk.format,
-        revision: latest.revision + 1,
-        diskState: DocumentDiskState.present,
-        diskVersionText: null,
-        diskVersionSnapshot: null,
-      );
+      final reloaded = latest
+          .replaced(disk.text)
+          .copyWith(
+            lastSavedText: disk.text,
+            dirty: false,
+            diskSnapshot: disk.snapshot,
+            format: disk.format,
+            revision: latest.revision + 1,
+            diskState: DocumentDiskState.present,
+            diskVersionText: null,
+            diskVersionSnapshot: null,
+          );
       _updateBufferFromMonitor(
         reloaded,
         workspaceGeneration: workspaceGeneration,
@@ -3806,18 +3792,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       force: false,
     );
     if (!_bufferOperationTargetIsCurrent(buffer)) return false;
-    final reloaded = buffer.copyWith(
-      text: disk.text,
-      lastSavedText: disk.text,
-      dirty: false,
-      diskSnapshot: disk.snapshot,
-      format: disk.format,
-      revision: buffer.revision + 1,
-      diskState: DocumentDiskState.present,
-      diskVersionText: null,
-      diskVersionSnapshot: null,
-      recovered: false,
-    );
+    final reloaded = buffer
+        .replaced(disk.text)
+        .copyWith(
+          lastSavedText: disk.text,
+          dirty: false,
+          diskSnapshot: disk.snapshot,
+          format: disk.format,
+          revision: buffer.revision + 1,
+          diskState: DocumentDiskState.present,
+          diskVersionText: null,
+          diskVersionSnapshot: null,
+          recovered: false,
+        );
     _updateBufferFromMonitor(reloaded);
     final derivedWorkspace = state.workspace;
     final derivedOperationRevision = _activeDocumentRevision;
@@ -6194,7 +6181,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (buffer == null || buffer.editorState.mode == mode) {
       return;
     }
-    updateActiveEditorState(buffer.editorState.copyWith(mode: mode));
+    updateActiveEditorState(
+      buffer.editorState.copyWith(
+        mode: mode,
+        undoState: buffer.editorState.undoState.closeGroup(),
+      ),
+    );
     if (_modeShowsPreview(mode) && _activePreviewIsStale) {
       _requestDerivedRefresh(rebuildPreview: true);
     }
@@ -6209,15 +6201,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final undo = buffer.editorState.undoState;
     final target = undo.undo.last;
-    final current = DocumentHistoryState(
-      text: buffer.text,
-      selection: buffer.editorState.selection,
-      wysiwygState: buffer.editorState.wysiwygState,
-    );
+    final current = buffer.historyState;
     final next = buffer.copyWith(
       text: target.text,
       dirty: target.text != buffer.lastSavedText || buffer.isUntitled,
-      format: buffer.format.copyWith(
+      format: (target.format ?? buffer.format).copyWith(
         hasFinalNewline: target.text.endsWith('\n'),
       ),
       revision: buffer.revision + 1,
@@ -6230,7 +6218,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
-    _localHistory.observeEdit(buffer, next);
+    _localHistory.observeHistoryTraversal(buffer, next);
     _requestDerivedRefresh(
       rebuildPreview: _activeModeShowsPreview,
       refreshOutline: !_activeModeShowsPreview,
@@ -6249,15 +6237,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final undo = buffer.editorState.undoState;
     final target = undo.redo.last;
-    final current = DocumentHistoryState(
-      text: buffer.text,
-      selection: buffer.editorState.selection,
-      wysiwygState: buffer.editorState.wysiwygState,
-    );
+    final current = buffer.historyState;
     final next = buffer.copyWith(
       text: target.text,
       dirty: target.text != buffer.lastSavedText || buffer.isUntitled,
-      format: buffer.format.copyWith(
+      format: (target.format ?? buffer.format).copyWith(
         hasFinalNewline: target.text.endsWith('\n'),
       ),
       revision: buffer.revision + 1,
@@ -6270,7 +6254,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
-    _localHistory.observeEdit(buffer, next);
+    _localHistory.observeHistoryTraversal(buffer, next);
     _requestDerivedRefresh(
       rebuildPreview: _activeModeShowsPreview,
       refreshOutline: !_activeModeShowsPreview,
@@ -6283,11 +6267,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   void updateActiveText(
     String text, {
     String? sourceBufferId,
+    String? expectedSource,
+    int? expectedRevision,
     String? sourceFilePath,
   }) {
     _updateActiveText(
       text,
       sourceBufferId: sourceBufferId,
+      expectedSource: expectedSource,
+      expectedRevision: expectedRevision,
       sourceFilePath: sourceFilePath,
       rebuildPreview:
           state.activeBuffer?.editorState.mode !=
@@ -6325,6 +6313,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   void updateActiveSourceText(
     String text, {
     String? sourceBufferId,
+    String? expectedSource,
+    int? expectedRevision,
     String? sourceFilePath,
     required TextSelection previousSelection,
     required TextSelection selection,
@@ -6333,6 +6323,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _updateActiveText(
       text,
       sourceBufferId: sourceBufferId,
+      expectedSource: expectedSource,
+      expectedRevision: expectedRevision,
       sourceFilePath: sourceFilePath,
       rebuildPreview: _activeModeShowsPreview,
       previousSelection: previousSelection,
@@ -6347,6 +6339,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String text, {
     required BusyDocument document,
     String? sourceBufferId,
+    String? expectedSource,
+    int? expectedRevision,
     String? sourceFilePath,
     String? undoGroup,
     WysiwygEditorSessionState? previousWysiwygState,
@@ -6355,6 +6349,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _updateActiveText(
       text,
       sourceBufferId: sourceBufferId,
+      expectedSource: expectedSource,
+      expectedRevision: expectedRevision,
       sourceFilePath: sourceFilePath,
       rebuildPreview: false,
       liveOutline: document.outline,
@@ -6466,6 +6462,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String text, {
     required bool rebuildPreview,
     String? sourceBufferId,
+    String? expectedSource,
+    int? expectedRevision,
     String? sourceFilePath,
     List<DocumentOutlineHeading>? liveOutline,
     bool preserveFinalNewline = false,
@@ -6481,6 +6479,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return;
     }
     if (sourceBufferId != null && activeBuffer.id != sourceBufferId) return;
+    if (expectedSource != null && activeBuffer.text != expectedSource) return;
+    if (expectedRevision != null && activeBuffer.revision != expectedRevision) {
+      return;
+    }
     final activeEditorPath = workspace == null
         ? activeBuffer.filePath
         : resolveWorkspaceDocumentContext(workspace, activeBuffer).parserPath;
@@ -8136,12 +8138,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = state.copyWith(
         documentBuffers: _replaceBuffer(
           state.documentBuffers,
-          current.copyWith(
-            text: cached.content,
-            lastSavedText: cached.content,
-            dirty: false,
-            revision: math.max(cached.revision, current.revision + 1),
-          ),
+          current
+              .replaced(cached.content)
+              .copyWith(
+                lastSavedText: cached.content,
+                dirty: false,
+                revision: math.max(cached.revision, current.revision + 1),
+              ),
         ),
       );
       _requestDerivedRefresh(
@@ -8177,18 +8180,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (currentBuffer == null) {
         return false;
       }
-      final discardedBuffer = currentBuffer.copyWith(
-        text: load.text,
-        lastSavedText: load.text,
-        dirty: false,
-        diskSnapshot: load.snapshot,
-        format: load.format,
-        revision: currentBuffer.revision + 1,
-        diskState: DocumentDiskState.present,
-        diskVersionText: null,
-        diskVersionSnapshot: null,
-        recovered: false,
-      );
+      final discardedBuffer = currentBuffer
+          .replaced(load.text)
+          .copyWith(
+            lastSavedText: load.text,
+            dirty: false,
+            diskSnapshot: load.snapshot,
+            format: load.format,
+            revision: currentBuffer.revision + 1,
+            diskState: DocumentDiskState.present,
+            diskVersionText: null,
+            diskVersionSnapshot: null,
+            recovered: false,
+          );
       final remainsActive = state.activeBufferId == refreshedTarget.bufferId;
       final currentWorkspace = state.workspace;
       if (currentWorkspace == null ||
@@ -8306,17 +8310,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         final sourceChanged = requested.text != load.text;
         replacements[requested.id] = _WorkspaceRefreshBufferReplacement(
           requested: requested,
-          replacement: requested.copyWith(
-            text: load.text,
-            lastSavedText: load.text,
-            dirty: false,
-            diskSnapshot: load.snapshot,
-            format: load.format,
-            revision: sourceChanged
-                ? requested.revision + 1
-                : requested.revision,
-            diskState: DocumentDiskState.present,
-          ),
+          replacement: requested
+              .replaced(load.text)
+              .copyWith(
+                lastSavedText: load.text,
+                dirty: false,
+                diskSnapshot: load.snapshot,
+                format: load.format,
+                revision: sourceChanged
+                    ? requested.revision + 1
+                    : requested.revision,
+                diskState: DocumentDiskState.present,
+              ),
         );
       }
       if (!_isCurrentWorkspaceRefresh(refreshRevision, workspace.id)) {
@@ -9356,7 +9361,9 @@ List<DocumentBuffer> _reconcileWorkspaceRefreshBuffers(
     for (final live in liveBuffers)
       if (replacements[live.id] case final result?)
         if (_workspaceRefreshRequestStillMatches(live, result.requested))
-          result.replacement.copyWith(editorState: live.editorState)
+          result.replacement.copyWith(
+            editorState: live.replaced(result.replacement.text).editorState,
+          )
         else
           live
       else

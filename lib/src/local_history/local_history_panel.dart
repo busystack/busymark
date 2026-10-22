@@ -421,6 +421,8 @@ String _reason(BuildContext context, LocalHistoryCaptureReason reason) {
       l10n.localHistoryReasonBeforeReload,
     LocalHistoryCaptureReason.beforeDiscard =>
       l10n.localHistoryReasonBeforeDiscard,
+    LocalHistoryCaptureReason.beforeHistoryTraversal =>
+      '${l10n.undo} / ${l10n.redo}',
     LocalHistoryCaptureReason.beforeRestore =>
       l10n.localHistoryReasonBeforeRestore,
     LocalHistoryCaptureReason.beforeDelete =>

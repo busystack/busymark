@@ -36,6 +36,437 @@ void main() {
     if (await root.exists()) await root.delete(recursive: true);
   });
 
+  test(
+    'reload is an undoable replacement after an existing redo branch',
+    () async {
+      final path = p.join(root.path, 'replacement.md');
+      await File(path).writeAsString('original');
+      final store = MemoryLocalHistoryStore();
+      final h = await _harness(store);
+      await h.controller.openPath(path);
+      h.controller.updateActiveText('first');
+      h.controller.updateActiveText('second');
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      expect(h.state.activeText, 'first');
+      expect(h.state.activeBuffer!.editorState.undoState.redo, isNotEmpty);
+      await File(path).writeAsString('disk replacement\n');
+      expect(
+        await h.controller.reloadBufferFromDisk(h.state.activeBuffer!.id),
+        isTrue,
+      );
+      expect(h.state.activeText, 'disk replacement\n');
+      expect(h.state.activeBuffer!.isDirty, isFalse);
+      expect(h.controller.redoActiveBuffer(), isFalse);
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      expect(h.state.activeText, 'first');
+      expect(h.state.activeBuffer!.isDirty, isTrue);
+      expect(h.controller.redoActiveBuffer(), isTrue);
+      expect(h.state.activeText, 'disk replacement\n');
+      expect(h.state.activeBuffer!.isDirty, isFalse);
+    },
+  );
+
+  for (final autoSave in [false, true]) {
+    test(
+      'pre-traversal recovery survives branch and reopen (autosave=$autoSave)',
+      () async {
+        final path = p.join(root.path, 'traversal.md');
+        await File(path).writeAsString('baseline');
+        final store = FileLocalHistoryStore(
+          rootDirectory: () async => Directory(p.join(root.path, 'history')),
+        );
+        final sessions = MemoryDocumentSessionStore();
+        final recovery = MemoryDocumentRecoveryStore();
+        final h = await _harness(
+          store,
+          sessionStore: sessions,
+          recoveryStore: recovery,
+        );
+        await h.container
+            .read(appSettingsControllerProvider.notifier)
+            .setAutoSave(autoSave);
+        await h.controller.openPath(path);
+        final history = h.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        h.controller.updateActiveText('uncheckpointed work to recover');
+        expect(h.controller.undoActiveBuffer(), isTrue);
+        h.controller.updateActiveText('new branch');
+        expect(h.controller.redoActiveBuffer(), isFalse);
+        if (autoSave) {
+          await _waitFor(
+            () => !h.state.activeBuffer!.isDirty,
+            operation: 'autosave after branch',
+          );
+        }
+        expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        expect(
+          await h.controller.closeDocumentBuffer(
+            h.state.activeBuffer!.id,
+            discard: true,
+          ),
+          isTrue,
+        );
+        await h.controller.flushPersistence();
+        h.container.dispose();
+        final reopened = await _harness(
+          store,
+          sessionStore: sessions,
+          recoveryStore: recovery,
+        );
+        await reopened.controller.openPath(path);
+        final sources = await _revisionSources(
+          store,
+          (await store.load()).revisions,
+        );
+        expect(sources, contains('uncheckpointed work to recover'));
+        expect(sources, contains('new branch'));
+      },
+    );
+  }
+
+  test(
+    'failed traversal protections remain independent and restart from disk',
+    () async {
+      final path = p.join(root.path, 'failed-traversal.md');
+      await File(path).writeAsString('baseline');
+      final historyRoot = Directory(p.join(root.path, 'history'));
+      final disk = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+      );
+      final store = _ControllableHistoryStore(disk);
+      final sessionPath = p.join(root.path, 'session.json');
+      final recoveryPath = p.join(root.path, 'recovery.json');
+      final h = await _harness(
+        store,
+        sessionStore: JsonDocumentSessionStore(filePathOverride: sessionPath),
+        recoveryStore: JsonDocumentRecoveryStore(
+          filePathOverride: recoveryPath,
+        ),
+      );
+      await h.controller.openPath(path);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      store.capturesAvailable = false;
+      h.controller.updateActiveText('first unresolved source');
+      h.controller.updateActiveText('second unresolved source');
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      h.controller.updateActiveText('new branch after two undos');
+      expect(await history.flushAll(h.state.documentBuffers), isFalse);
+      expect(history.warningForBuffer(h.state.activeBuffer!.id), isNotNull);
+      final protected = history.retainedDetachedCaptures
+          .map((c) => c.protection?.snapshot.source)
+          .toList();
+      expect(
+        protected,
+        containsAll(['first unresolved source', 'second unresolved source']),
+      );
+      await h.controller.flushPersistence();
+      // Inspect a fresh disk reader before retiring the old owner. A queued
+      // in-memory snapshot alone does not satisfy the recovery assertion.
+      final durable = await JsonDocumentSessionStore(
+        filePathOverride: sessionPath,
+      ).load();
+      expect(
+        durable!.retainedLocalHistoryCaptures.map(
+          (c) => c.protection?.snapshot.source,
+        ),
+        containsAll(['first unresolved source', 'second unresolved source']),
+      );
+      h.container.dispose();
+      final restarted = await _harness(
+        FileLocalHistoryStore(rootDirectory: () async => historyRoot),
+        sessionStore: JsonDocumentSessionStore(filePathOverride: sessionPath),
+        recoveryStore: JsonDocumentRecoveryStore(
+          filePathOverride: recoveryPath,
+        ),
+      );
+      expect(await restarted.controller.restorePreviousSession(), isTrue);
+      expect(restarted.state.activeText, 'new branch after two undos');
+      final resumed = restarted.container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      expect(await resumed.flushAll(restarted.state.documentBuffers), isTrue);
+      expect(
+        await _revisionSources(disk, (await disk.load()).revisions),
+        containsAll(['first unresolved source', 'second unresolved source']),
+      );
+    },
+  );
+
+  test(
+    'delayed traversal capture cannot be overwritten by later protection',
+    () async {
+      final path = p.join(root.path, 'delayed.md');
+      await File(path).writeAsString('baseline');
+      final store = _BlockingTraversalStore();
+      final h = await _harness(store);
+      await h.controller.openPath(path);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      h.controller.updateActiveText('first');
+      h.controller.updateActiveText('second');
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      await store.started.future;
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      h.controller.updateActiveText('branch');
+      expect(
+        history.retainedDetachedCaptures.map(
+          (c) => c.protection?.snapshot.source,
+        ),
+        containsAll(['first', 'second']),
+      );
+      store.release.complete();
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      final sources = await _revisionSources(
+        store,
+        (await store.load()).revisions,
+      );
+      expect(sources, containsAll(['first', 'second', 'branch']));
+      // Repeated traversal of already protected sources is deduplicated.
+      final count = sources.length;
+      for (var i = 0; i < 12; i++) {
+        h.controller.undoActiveBuffer();
+        h.controller.redoActiveBuffer();
+      }
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      expect(
+        (await store.load()).revisions.length,
+        lessThanOrEqualTo(count + 2),
+      );
+    },
+  );
+
+  for (final excluded in [false, true]) {
+    test(
+      'history traversal respects ${excluded ? "excluded paths" : "disabled recording"}',
+      () async {
+        final path = p.join(root.path, 'private.md');
+        await File(path).writeAsString('private baseline');
+        final store = MemoryLocalHistoryStore();
+        final h = await _harness(store);
+        final settings = h.container.read(
+          appSettingsControllerProvider.notifier,
+        );
+        if (excluded) {
+          await settings.setLocalHistoryExcludedPaths([path]);
+        } else {
+          await settings.setLocalHistoryRecordingEnabled(false);
+        }
+        await h.controller.openPath(path);
+        h.controller.updateActiveText('private edit');
+        expect(h.controller.undoActiveBuffer(), isTrue);
+        expect(h.controller.redoActiveBuffer(), isTrue);
+        h.controller.updateActiveText('private branch');
+        final history = h.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        expect(history.retainedDetachedCaptures, isEmpty);
+        expect((await store.load()).revisions, isEmpty);
+      },
+    );
+  }
+
+  for (final refresh in [false, true]) {
+    test(
+      '${refresh ? "workspace refresh" : "file monitor"} replacement closes undo and redo boundaries',
+      () async {
+        final path = p.join(root.path, 'monitored.md');
+        await File(path).writeAsString('baseline');
+        final monitor = _ControlledFileMonitor();
+        final h = await _harness(
+          MemoryLocalHistoryStore(),
+          fileMonitor: monitor,
+        );
+        await h.controller.openPath(path);
+        h.controller.updateActiveText('first');
+        h.controller.updateActiveText('second');
+        expect(h.controller.undoActiveBuffer(), isTrue);
+        expect(await h.controller.saveActive(), isTrue);
+        await File(path).writeAsString('external replacement');
+        if (refresh) {
+          await h.controller.refreshWorkspaceFromDiskPreservingOpenTabs();
+        } else {
+          monitor.emitChange(path);
+          await _waitFor(
+            () => h.state.activeText == 'external replacement',
+            operation: 'external replacement',
+          );
+        }
+        expect(h.state.activeText, 'external replacement');
+        expect(h.controller.redoActiveBuffer(), isFalse);
+        expect(h.controller.undoActiveBuffer(), isTrue);
+        expect(h.state.activeText, 'first');
+        expect(h.controller.redoActiveBuffer(), isTrue);
+        expect(h.state.activeText, 'external replacement');
+      },
+    );
+  }
+
+  test(
+    'replacement traversal restores BOM, CRLF, final newline and selection',
+    () async {
+      final path = p.join(root.path, 'format.md');
+      await File(
+        path,
+      ).writeAsBytes([0xef, 0xbb, 0xbf, ...'one\r\ntwo\r\n'.codeUnits]);
+      final h = await _harness(MemoryLocalHistoryStore());
+      await h.controller.openPath(path);
+      h.controller.updateActiveSourceText(
+        'one\r\ntwo edited',
+        previousSelection: const TextSelection.collapsed(offset: 2),
+        selection: const TextSelection.collapsed(offset: 9),
+      );
+      h.controller.updateActiveText('another edit');
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      await File(path).writeAsString('replacement\n');
+      expect(
+        await h.controller.reloadBufferFromDisk(h.state.activeBuffer!.id),
+        isTrue,
+      );
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      final restored = h.state.activeBuffer!;
+      expect(restored.text, 'one\r\ntwo edited');
+      expect(restored.format.hasUtf8Bom, isTrue);
+      expect(restored.format.lineEnding, DocumentLineEnding.crlf);
+      expect(restored.format.hasFinalNewline, isFalse);
+      expect(restored.editorState.selection.extentOffset, 9);
+      expect(await h.controller.saveActive(), isTrue);
+      expect(await File(path).readAsBytes(), [
+        0xef,
+        0xbb,
+        0xbf,
+        ...'one\r\ntwo edited'.codeUnits,
+      ]);
+      expect(h.controller.redoActiveBuffer(), isTrue);
+      expect(h.state.activeBuffer!.format.hasUtf8Bom, isFalse);
+      expect(h.state.activeBuffer!.format.lineEnding, DocumentLineEnding.lf);
+      expect(h.state.activeBuffer!.format.hasFinalNewline, isTrue);
+      expect(await h.controller.saveActive(), isTrue);
+      expect(await File(path).readAsString(), 'replacement\n');
+    },
+  );
+
+  test('same-content reload preserves the valid redo branch', () async {
+    final path = p.join(root.path, 'same.md');
+    await File(path).writeAsString('baseline');
+    final h = await _harness(MemoryLocalHistoryStore());
+    await h.controller.openPath(path);
+    h.controller.updateActiveText('first');
+    h.controller.updateActiveText('second');
+    h.controller.undoActiveBuffer();
+    expect(await h.controller.saveActive(), isTrue);
+    final undo = h.state.activeBuffer!.editorState.undoState;
+    expect(
+      await h.controller.reloadBufferFromDisk(h.state.activeBuffer!.id),
+      isTrue,
+    );
+    expect(h.state.activeBuffer!.editorState.undoState, same(undo));
+    expect(h.controller.redoActiveBuffer(), isTrue);
+    expect(h.state.activeText, 'second');
+  });
+
+  test(
+    'source preconditions accept consecutive edits and reject invalidated bases',
+    () async {
+      final path = p.join(root.path, 'preconditions.md');
+      await File(path).writeAsString('baseline');
+      final h = await _harness(MemoryLocalHistoryStore());
+      await h.controller.openPath(path);
+      void edit(String expectedSource, int expectedRevision, String source) =>
+          h.controller.updateActiveSourceText(
+            source,
+            sourceBufferId: h.state.activeBuffer!.id,
+            expectedSource: expectedSource,
+            expectedRevision: expectedRevision,
+            previousSelection: const TextSelection.collapsed(offset: 0),
+            selection: const TextSelection.collapsed(offset: 0),
+          );
+      edit('baseline', h.state.activeBuffer!.revision, 'first');
+      final first = h.state.activeBuffer!;
+      edit('first', first.revision, 'second');
+      expect(h.state.activeText, 'second');
+      h.controller.undoActiveBuffer();
+      expect(h.state.activeText, 'first');
+      final restored = h.state.activeBuffer!;
+      edit('first', first.revision, 'stale first editor');
+      expect(h.state.activeBuffer, same(restored));
+      edit('second', restored.revision, 'stale second editor');
+      expect(h.state.activeBuffer, same(restored));
+      edit('first', restored.revision, 'legitimate next edit');
+      expect(h.state.activeText, 'legitimate next edit');
+      expect(h.controller.redoActiveBuffer(), isFalse);
+    },
+  );
+
+  test(
+    'transient retained-journal failure keeps Undo and recovery usable',
+    () async {
+      final path = p.join(root.path, 'journal-failure.md');
+      await File(path).writeAsString('baseline');
+      final store = MemoryLocalHistoryStore();
+      final sessions = _TransientTraversalSessionStore();
+      final h = await _harness(
+        store,
+        sessionStore: sessions,
+        recoveryStore: MemoryDocumentRecoveryStore(),
+      );
+      await h.controller.openPath(path);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      await h.controller.flushPersistence();
+      h.controller.updateActiveText('work before Undo');
+      await _waitFor(
+        () =>
+            history.pendingSnapshotForBuffer(h.state.activeBuffer!.id)?.text ==
+            'work before Undo',
+        operation: 'edit observation before journal failure',
+      );
+      sessions.failNext = true;
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      expect(h.state.activeText, 'baseline');
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      await h.controller.flushPersistence();
+      expect(sessions.failures, 1);
+      expect(
+        await _revisionSources(store, (await store.load()).revisions),
+        contains('work before Undo'),
+      );
+      h.controller.updateActiveText('new branch');
+      expect(h.controller.redoActiveBuffer(), isFalse);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+    },
+  );
+
+  test(
+    'first untitled Undo retains its existing single history lineage',
+    () async {
+      final store = MemoryLocalHistoryStore();
+      final h = await _harness(store);
+      expect(await h.controller.createMarkdownWorkspace(), isTrue);
+      expect(h.state.activeText, isEmpty);
+      h.controller.updateActiveText('first uncheckpointed work');
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      h.controller.updateActiveText('new branch');
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      final snapshot = await store.load();
+      expect(snapshot.documents, hasLength(1));
+      final id = history.documentIdForBuffer(h.state.activeBuffer!.id);
+      expect(id, isNotNull);
+      expect(
+        await _revisionSources(
+          store,
+          snapshot.revisions.where((r) => r.documentId == id).toList(),
+        ),
+        containsAll(['first uncheckpointed work', 'new branch']),
+      );
+    },
+  );
+
   test('pristine empty draft discards without protective storage', () async {
     final store = _UnavailableCaptureStore();
     final harness = await _harness(store);
@@ -7283,6 +7714,10 @@ class _ControlledFileMonitor extends WorkspaceFileMonitor {
   @override
   Stream<WorkspaceFileMonitorEvent> get events => _events.stream;
 
+  void emitChange(String path) => _events.add(
+    WorkspaceFileMonitorEvent(kind: WorkspaceFileEventKind.changed, path: path),
+  );
+
   void emitMove(
     String sourcePath,
     String destinationPath, {
@@ -7426,5 +7861,38 @@ class _DelayedSaveWorkspaceService extends WorkspaceService {
       text,
       expectedSnapshot: expectedSnapshot,
     );
+  }
+}
+
+class _BlockingTraversalStore extends MemoryLocalHistoryStore {
+  final started = Completer<void>();
+  final release = Completer<void>();
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.beforeHistoryTraversal &&
+        !release.isCompleted) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
+    }
+    return super.capture(request, policy);
+  }
+}
+
+class _TransientTraversalSessionStore extends MemoryDocumentSessionStore {
+  bool failNext = false;
+  int failures = 0;
+  @override
+  Future<void> save(WorkspaceSessionSnapshot snapshot) async {
+    if (failNext) {
+      failNext = false;
+      failures++;
+      throw const FileSystemException(
+        'Injected retained-journal write failure',
+      );
+    }
+    return super.save(snapshot);
   }
 }

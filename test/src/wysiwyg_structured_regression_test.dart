@@ -1489,6 +1489,7 @@ Body.
           key: key,
           document: document,
           useExternalUndoHistory: true,
+          undoClock: () => Duration.zero,
           onSourceChanged: (_, _) {},
           onTransactionalSourceChanged: (_, value, group) {
             groups.add(group);
@@ -1498,6 +1499,12 @@ Body.
       ),
     );
     await tester.pump();
+    tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!
+        .selection = const TextSelection.collapsed(
+      offset: 1,
+    );
     await tester.enterText(find.byType(TextField).first, 'ab');
     await tester.pump();
     await tester.enterText(find.byType(TextField).first, 'abc');

@@ -350,6 +350,9 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   final _documentIdsByBuffer = <String, String>{};
   final _clearingDocumentIdsByBuffer = <String, String>{};
   final _pending = <String, LocalHistoryBufferSnapshot>{};
+  // Only deduplication metadata. The actual obligations live in independently
+  // owned retained protections, including after this bounded set rolls over.
+  final _traversalCaptures = <(String, String, String, String, int, int)>{};
   // A baseline cannot coalesce with edited text: both snapshots are needed.
   final _baselines = <String, LocalHistoryBufferSnapshot>{};
   final _baselinesRequiringVacantPath = <String>{};
@@ -416,10 +419,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     _store = ref.read(localHistoryStoreProvider);
     _clock = ref.read(localHistoryClockProvider);
     _timerFactory = ref.read(localHistoryTimerFactoryProvider);
-    ref.listen<AppSettings>(
-      appSettingsControllerProvider,
-      (previous, next) => unawaited(_applyRecordingPolicy(next)),
-    );
+    ref.listen<AppSettings>(appSettingsControllerProvider, (previous, next) {
+      if (previous?.localHistoryRecordingEnabled !=
+              next.localHistoryRecordingEnabled ||
+          !listEquals(
+            previous?.localHistoryExcludedPaths,
+            next.localHistoryExcludedPaths,
+          )) {
+        _traversalCaptures.clear();
+      }
+      unawaited(_applyRecordingPolicy(next));
+    });
     ref.onDispose(() {
       _liveOperationOwners.remove(_operationOwnerToken);
       _historyGeneration++;
@@ -698,6 +708,95 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         acceptedBufferGeneration: bufferGeneration,
       );
     });
+  }
+
+  /// Traversal must not coalesce the source being left into the latest pending
+  /// checkpoint. Stage a separate retained obligation before observing the new
+  /// source. Every unresolved source has its own durable owner and retry state.
+  void observeHistoryTraversal(
+    DocumentBuffer previous,
+    DocumentBuffer current,
+  ) {
+    if (previous.text == current.text ||
+        !policy.recordingEnabled ||
+        policy.excludes(previous.filePath)) {
+      return;
+    }
+    final fingerprint = (
+      previous.id,
+      previous.identity,
+      sourceChecksum(previous.text),
+      jsonEncode(previous.format.toJson()),
+      _historyGeneration,
+      _bufferGeneration(previous.id),
+    );
+    if (_traversalCaptures.add(fingerprint)) {
+      if (_traversalCaptures.length > DocumentUndoState.historyLimit * 2) {
+        _traversalCaptures.remove(_traversalCaptures.first);
+      }
+      final owner = _newDetachedOwner(
+        'history-capture:traversal:${previous.id}',
+      );
+      final previousSnapshot = _acceptAtCurrentClearEpoch(
+        LocalHistoryBufferSnapshot.fromBuffer(previous),
+      );
+      final snapshot = previousSnapshot
+          .forBuffer(owner)
+          .withCaptureId(_newPathOperationId());
+      final historyGeneration = _historyGeneration;
+      final bufferGeneration = _bufferGeneration(previous.id);
+      final documentId = _documentIdsByBuffer[previous.id];
+      if (documentId != null) _documentIdsByBuffer[owner] = documentId;
+      _protections[owner] = (
+        snapshot: snapshot,
+        reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+        force: false,
+        ignoreBinding: false,
+        allowPathChange: false,
+        bindResult: false,
+        requireVacantPath: false,
+        expectedTarget: null,
+        captureId: snapshot.captureId,
+      );
+      _closedBuffers.add(owner);
+      // Synchronous Undo remains responsive. Durability is established when
+      // retained-work persistence or the revision write completes, not here.
+      final persistence = _persistDurableStateNow();
+      unawaited(
+        _enqueue(previous.id, () async {
+          await persistence;
+          if (!_protections.containsKey(owner) ||
+              !_operationIsCurrent(
+                previous.id,
+                historyGeneration,
+                bufferGeneration,
+              )) {
+            return;
+          }
+          // The first edit of an empty untitled document has no baseline yet.
+          // Establish its source lineage before the independent protection,
+          // just as observeEdit would have done for the traversal itself.
+          if (!_documentIdsByBuffer.containsKey(previous.id) &&
+              !_baselines.containsKey(previous.id) &&
+              !(previousSnapshot.untitled && previousSnapshot.text.isEmpty)) {
+            await _captureBaseline(
+              previousSnapshot,
+              LocalHistoryCaptureReason.baseline,
+              acceptedHistoryGeneration: historyGeneration,
+              acceptedBufferGeneration: bufferGeneration,
+            );
+          }
+          // Opening/baseline work may have established the lineage meanwhile.
+          final binding = _documentIdsByBuffer[previous.id];
+          if (binding != null && _protections.containsKey(owner)) {
+            _documentIdsByBuffer[owner] = binding;
+          }
+          await _enqueue(owner, () => _settleBufferWork(owner));
+        }),
+      );
+      _scheduleCheckpoint(owner);
+    }
+    observeEdit(previous, current);
   }
 
   void observeEdit(DocumentBuffer previous, DocumentBuffer current) {
@@ -5827,7 +5926,13 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   ) => _captureFailures[id]?[stage];
 
   _LocalHistoryCaptureFailure? _ownerFailure(String? id) {
-    final failures = _captureFailures[id];
+    if (id == null) return null;
+    final failures =
+        _captureFailures[id] ??
+        _captureFailures.entries
+            .where((entry) => _detachedClosedSourceId(entry.key) == id)
+            .map((entry) => entry.value)
+            .firstOrNull;
     // Prefer the operation preventing an explicit protective action, followed
     // by identity and original-source obligations, then coalesced checkpoints.
     return failures?[_LocalHistoryFailureStage.protection] ??
@@ -5868,8 +5973,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   );
 
   String? _detachedClosedSourceId(String owner) {
-    const prefix = 'history-capture:closed:';
-    if (!owner.startsWith(prefix)) return null;
+    final prefix = [
+      'history-capture:closed:',
+      'history-capture:traversal:',
+    ].where(owner.startsWith).firstOrNull;
+    if (prefix == null) return null;
     var sourceAndSuffix = owner.substring(prefix.length);
     // _newDetachedOwner appends one process token and one sequence field.
     // Strip exactly those fields so buffer IDs containing ':' remain intact.

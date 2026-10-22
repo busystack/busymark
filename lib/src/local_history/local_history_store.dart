@@ -275,17 +275,27 @@ class FileLocalHistoryStore implements LocalHistoryStore {
               null,
               (latest, revision) =>
                   latest == null ||
-                      revision.capturedAt.isAfter(latest.capturedAt)
+                      !revision.capturedAt.isBefore(latest.capturedAt)
                   ? revision
                   : latest,
             );
-        if (!request.force && adjacent?.checksum == checksum) {
-          final adjacentRevision = await _readRevisionFile(
-            _revisionFile(root, document.id, adjacent!.id),
-            expected: adjacent,
+        // A safety protection can reuse any exact durable revision in this
+        // lineage. Ordinary captures retain their adjacent-only timeline rule.
+        final candidates =
+            request.reason == LocalHistoryCaptureReason.beforeHistoryTraversal
+            ? index.revisions.where(
+                (r) => r.documentId == document!.id && r.checksum == checksum,
+              )
+            : [if (adjacent?.checksum == checksum) adjacent!];
+        for (final candidate
+            in request.force ? <LocalHistoryRevisionSummary>[] : candidates) {
+          final existing = await _readRevisionFile(
+            _revisionFile(root, document.id, candidate.id),
+            expected: candidate,
           );
-          if (adjacentRevision != null &&
-              _sameTextFormat(adjacentRevision.format, request.format)) {
+          if (existing != null &&
+              existing.source == request.source &&
+              _sameTextFormat(existing.format, request.format)) {
             _requireCaptureStillAccepted(request);
             index = index.withDocument(document);
             await _publishIndex(root, index);
@@ -295,7 +305,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
             }
             return LocalHistoryCaptureResult(
               document: document,
-              revision: adjacent,
+              revision: candidate,
               deduplicated: true,
             );
           }
@@ -1783,17 +1793,27 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
         .fold<LocalHistoryRevisionSummary?>(
           null,
           (latest, revision) =>
-              latest == null || revision.capturedAt.isAfter(latest.capturedAt)
+              latest == null || !revision.capturedAt.isBefore(latest.capturedAt)
               ? revision
               : latest,
         );
-    if (!request.force && adjacent?.checksum == checksum) {
-      final adjacentRevision = _revisions[adjacent!.id];
-      if (adjacentRevision != null &&
-          _sameTextFormat(adjacentRevision.format, request.format)) {
+    final candidates =
+        request.reason == LocalHistoryCaptureReason.beforeHistoryTraversal
+        ? _revisions.values
+              .map((r) => r.summary)
+              .where(
+                (r) => r.documentId == document!.id && r.checksum == checksum,
+              )
+        : [if (adjacent?.checksum == checksum) adjacent!];
+    for (final candidate
+        in request.force ? <LocalHistoryRevisionSummary>[] : candidates) {
+      final existing = _revisions[candidate.id];
+      if (existing != null &&
+          existing.source == request.source &&
+          _sameTextFormat(existing.format, request.format)) {
         return LocalHistoryCaptureResult(
           document: document,
-          revision: adjacent,
+          revision: candidate,
           deduplicated: true,
         );
       }
