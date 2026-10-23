@@ -337,6 +337,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   _PendingTextFocus? _pendingTextFocus;
   Object? _focusRestoreRequest;
   Object? _sessionRestoreRequest;
+  FocusNode? _lastNonRootFocus;
+  VoidCallback? _retrySelectionExtentFocus;
+  VoidCallback? _cancelSelectionExtentFocus;
 
   String get _documentId => widget.documentId ?? widget.document.filePath;
 
@@ -607,6 +610,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       debugLabel: 'BusyMark WYSIWYG document selection',
       onKeyEvent: _handleDocumentSelectionKeyEvent,
     );
+    _lastNonRootFocus = FocusManager.instance.primaryFocus;
+    FocusManager.instance.addListener(_handleSelectionFocusOwnerChanged);
     _documentController = BusyMarkWysiwygDocumentController(
       document: widget.document,
     )..addListener(_handleDocumentControllerChanged);
@@ -682,6 +687,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @override
   void dispose() {
+    FocusManager.instance.removeListener(_handleSelectionFocusOwnerChanged);
     _releaseSelectionDrag(rebuild: false);
     _pendingTextFocus = null;
     widget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
@@ -1088,8 +1094,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       child: ExcludeSemantics(
                         child: IgnorePointer(
                           child: _DocumentSelectionTextInput(
-                            key: ObjectKey(selection),
-                            isCurrent: _documentSelectionInputGuard(selection),
+                            key:
+                                GlobalObjectKey<
+                                  _DocumentSelectionTextInputState
+                                >(selection),
                             onKeyEvent: _handleDocumentSelectionKeyEvent,
                             onEditingValue: _documentSelectionInputHandler(
                               selection,
@@ -5608,7 +5616,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _applyAsyncToolbarCommand(Future<void> Function() command) {
-    unawaited(command().whenComplete(_restoreEditingFocusAfterFrame));
+    unawaited(
+      command().whenComplete(() {
+        // The surface may have finished releasing after a different control
+        // acquired focus. Completion is not a new request to return to editing.
+        if (mounted && _mayRestoreEditingFocus()) {
+          _restoreEditingFocusAfterFrame();
+        }
+      }),
+    );
   }
 
   void _restoreEditingFocusAfterFrame() {
@@ -5623,6 +5639,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final owner = FocusManager.instance.primaryFocus;
     final navigation = widget.scrollRequest;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // A newer post-frame focus request may not be primaryFocus yet.
+      FocusManager.instance.applyFocusChangesIfNeeded();
       final currentOwner = FocusManager.instance.primaryFocus;
       final lifecycle = WidgetsBinding.instance.lifecycleState;
       if (!mounted ||
@@ -8652,19 +8671,117 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _scheduleDocumentSelectionExtentFocus() {
+    _cancelSelectionExtentFocus?.call();
     final selection = _documentSelection;
     if (selection == null) return;
+    final manager = FocusManager.instance;
+    manager.applyFocusChangesIfNeeded();
+    final inactive =
+        WidgetsBinding.instance.lifecycleState != null &&
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed;
+    final owner = inactive && manager.primaryFocus == manager.rootScope
+        ? _lastNonRootFocus
+        : manager.primaryFocus;
+    final ownerContext = owner?.context;
+    final editorOwnsFocus =
+        ownerContext?.mounted == true &&
+        identical(
+          ownerContext!.findAncestorStateOfType<BusyMarkWysiwygEditorState>(),
+          this,
+        );
+    if (!editorOwnsFocus && (inactive || !_mayRestoreEditingFocus())) {
+      _preserveSelectionFocusCallbacks = 0;
+      return;
+    }
     final gesture = _selectionGestureGeneration;
     final generation = _documentGeneration;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          gesture == _selectionGestureGeneration &&
-          generation == _documentGeneration &&
-          identical(selection, _documentSelection)) {
+    final documentId = _documentId;
+    final navigation = widget.scrollRequest;
+    var canceled = false;
+    var framePending = false;
+    final extentNode = _focusNodes[selection.extent.blockId];
+    final releaseTarget = extentNode == null
+        ? null
+        : BusyMarkEditorFocusRestoration.retainPendingTarget(extentNode);
+    bool isCurrent() =>
+        mounted &&
+        !canceled &&
+        gesture == _selectionGestureGeneration &&
+        generation == _documentGeneration &&
+        documentId == _documentId &&
+        navigation == widget.scrollRequest &&
+        identical(selection, _documentSelection);
+    bool owns(FocusNode? current) =>
+        current == owner ||
+        current == _selectionFocusNode ||
+        current == _focusNodes[selection.extent.blockId] ||
+        current ==
+            GlobalObjectKey<_DocumentSelectionTextInputState>(
+              selection,
+            ).currentState?._focusNode;
+    void cancel() {
+      if (canceled) return;
+      canceled = true;
+      _retrySelectionExtentFocus = null;
+      _cancelSelectionExtentFocus = null;
+      releaseTarget?.call();
+    }
+
+    void schedule() {
+      if (!isCurrent()) {
+        cancel();
+        return;
+      }
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
+        // Keep the handoff only while the desktop has suspended its owner.
+        // FocusManager's real restoration wakes it; no timer/frame retry does.
+        if (manager.primaryFocus != manager.rootScope &&
+            !owns(manager.primaryFocus)) {
+          cancel();
+        }
+        return;
+      }
+      if (!owns(manager.primaryFocus) || !_mayRestoreEditingFocus()) {
+        cancel();
+        return;
+      }
+      if (framePending) return;
+      framePending = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        framePending = false;
+        if (!isCurrent()) {
+          cancel();
+          return;
+        }
+        final lifecycle = WidgetsBinding.instance.lifecycleState;
+        if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+        manager.applyFocusChangesIfNeeded();
+        if (!isCurrent() ||
+            !owns(manager.primaryFocus) ||
+            !_mayRestoreEditingFocus()) {
+          cancel();
+          return;
+        }
+        cancel();
         _focusDocumentSelectionExtent();
         _preserveSelectionFocusCallbacks = 0;
-      }
-    });
+      });
+      WidgetsBinding.instance.scheduleFrame();
+    }
+
+    _cancelSelectionExtentFocus = cancel;
+    _retrySelectionExtentFocus = schedule;
+    schedule();
+  }
+
+  void _handleSelectionFocusOwnerChanged() {
+    final owner = FocusManager.instance.primaryFocus;
+    if (owner != null && owner != FocusManager.instance.rootScope) {
+      // Root focus during inactivity is not evidence of editor ownership.
+      _lastNonRootFocus = owner;
+    }
+    _retrySelectionExtentFocus?.call();
   }
 
   bool _collapseEmptyDocumentSelection() {
@@ -8675,6 +8792,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _releaseSelectionDrag({bool rebuild = true}) {
+    _cancelSelectionExtentFocus?.call();
     final active = _selectionPointer != null;
     _selectionPointer = null;
     _pointerSelectionAnchor = null;
@@ -8853,8 +8971,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _focusDocumentSelectionExtent() {
-    final extent = _documentSelection?.extent;
-    if (extent == null) {
+    final selection = _documentSelection;
+    final extent = selection?.extent;
+    if (extent == null || !_mayRestoreEditingFocus()) {
       return;
     }
     final block = _documentController.blockById(extent.blockId);
@@ -8863,7 +8982,17 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if (!_isFocusableTextBlock(block)) {
       _setActiveBlock(block.id);
-      _selectionFocusNode.requestFocus();
+      final input = GlobalObjectKey<_DocumentSelectionTextInputState>(
+        selection!,
+      ).currentState;
+      // The same guarded handoff owns table input too; the child must not
+      // request focus independently after a newer control/lifecycle change.
+      if (input != null) {
+        input._focusNode.requestFocus();
+      } else {
+        _selectionFocusNode.requestFocus();
+        _scheduleDocumentSelectionExtentFocus();
+      }
       _scheduleSessionReport();
       return;
     }
@@ -9672,12 +9801,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 class _DocumentSelectionTextInput extends StatefulWidget {
   const _DocumentSelectionTextInput({
     super.key,
-    required this.isCurrent,
     required this.onEditingValue,
     required this.onKeyEvent,
   });
 
-  final bool Function() isCurrent;
   final bool Function(TextEditingValue) onEditingValue;
   final KeyEventResult Function(FocusNode, KeyEvent) onKeyEvent;
 
@@ -9699,9 +9826,6 @@ class _DocumentSelectionTextInputState
   void initState() {
     super.initState();
     _controller.addListener(_handleEditingValue);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && widget.isCurrent()) _focusNode.requestFocus();
-    });
   }
 
   void _handleEditingValue() {

@@ -7,9 +7,11 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -122,6 +124,7 @@ Future<WysiwygEditableHarnessState> _mount(
   bool externalHistory = false,
   bool renderMath = false,
   BusyMarkClipboardInsertionRegistry? registry,
+  LinuxHeaderBarService? headerBarService,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1000, 1100));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -129,6 +132,8 @@ Future<WysiwygEditableHarnessState> _mount(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        if (headerBarService != null)
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         if (renderMath)
           webRenderHostProvider.overrideWithValue(_LifecycleMathHost()),
       ],
@@ -287,7 +292,485 @@ void _expectTableGeometry(WidgetTester tester) {
   }
 }
 
+void _deferredExtentFocusRegressions() {
+  for (final table in [false, true]) {
+    testWidgets(
+      'deferred extent preserves new reading geometry and input table=$table',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        addTearDown(
+          () => tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          ),
+        );
+        final source =
+            '${table ? _surrounded : '$_before\n\nMiddle selected.\n\n$_after\n'}\n${[for (var i = 0; i < 80; i++) 'Reading $i ${'words ' * 12}'.trimRight()].join('\n\n')}\n';
+        final state = await _mount(tester, source, MemoryRichClipboard());
+        final gesture = await tester.startGesture(
+          _caret(tester, _before, 2),
+          pointer: 1101,
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.moveTo(
+          _caret(tester, table ? 'End!' : _after, table ? 4 : 5),
+        );
+        await tester.pumpAndSettle();
+        final saved = state.session;
+        final position = tester
+            .state<ScrollableState>(
+              find
+                  .descendant(
+                    of: find.byType(ScrollablePositionedList),
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
+            )
+            .position;
+        await gesture.up();
+        position.jumpTo(2500);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        expect(
+          FocusManager.instance.primaryFocus,
+          same(FocusManager.instance.rootScope),
+        );
+        for (var frame = 0; frame < 90; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(FocusManager.instance.rootScope),
+          );
+          expect(position.pixels, closeTo(2500, 0.1));
+        }
+        final anchorText = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .where((w) => w.controller!.text.startsWith('Reading '))
+            .map((w) => w.controller!.text)
+            .firstWhere(
+              (text) =>
+                  tester.getTopLeft(_field(text)).dy > 100 &&
+                  tester.getTopLeft(_field(text)).dy < 900,
+            );
+        final anchorTop = tester.getTopLeft(_field(anchorText)).dy;
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        for (var frame = 0; frame < 30; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(position.pixels, closeTo(2500, 0.1));
+          expect(
+            tester.getTopLeft(_field(anchorText)).dy,
+            closeTo(anchorTop, 0.1),
+          );
+        }
+        expect(state.changes, isEmpty);
+        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(
+          tester
+              .widgetList<BusyMarkWysiwygBlockField>(
+                find.byType(BusyMarkWysiwygBlockField),
+              )
+              .length,
+          lessThan(state.document.blocks.length),
+        );
+        expect(state.session.anchorBlockId, saved.anchorBlockId);
+        expect(state.session.anchorOffset, saved.anchorOffset);
+        expect(state.session.extentBlockId, saved.extentBlockId);
+        expect(state.session.extentOffset, saved.extentOffset);
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+        final value = TextEditingValue.fromJSON(
+          tester.testTextInput.editingState!,
+        );
+        final offset = value.selection.extentOffset;
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: value.text.replaceRange(offset, offset, 'Z'),
+            selection: TextSelection.collapsed(offset: offset + 1),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(state.changes, hasLength(1));
+        expect(state.source, startsWith('BeZ'));
+        final changedText = state.document.blocks.first.plainText;
+        expect(_caret(tester, changedText, 3).dy, inInclusiveRange(0, 1100));
+        await _command(tester, LogicalKeyboardKey.keyZ);
+        expect(state.source, source);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+  testWidgets(
+    'deferred toolbar restoration honors a pending newer focus request',
+    (tester) async {
+      final state = await _mount(
+        tester,
+        'Original target.\n',
+        MemoryRichClipboard(),
+      );
+      final newer = FocusNode(debugLabel: 'Pending search focus');
+      final entry = OverlayEntry(
+        builder: (_) => Positioned(
+          left: 750,
+          top: 0,
+          width: 200,
+          height: 40,
+          child: Material(child: TextField(focusNode: newer)),
+        ),
+      );
+      Overlay.of(
+        tester.element(find.byType(BusyMarkWysiwygEditor)),
+      ).insert(entry);
+      await tester.pumpAndSettle();
+      tester.binding.addPostFrameCallback((_) => newer.requestFocus());
+      state.editorKey.currentState!.restoreEditingFocus();
+      tester.binding.scheduleFrame();
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(newer));
+      expect(state.changes, isEmpty);
+      entry.remove();
+      await tester.pumpAndSettle();
+      entry.dispose();
+      newer.dispose();
+    },
+  );
+  for (final inactive in [false, true]) {
+    testWidgets(
+      'deferred toolbar dialog completion preserves newer owner inactive=$inactive',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        final barrier = _DelayedSelectionBarrier();
+        addTearDown(barrier.dispose);
+        addTearDown(() {
+          if (!barrier.release.isCompleted) barrier.release.complete();
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          );
+        });
+        final paragraphs = [
+          'Original editing target.',
+          for (var i = 0; i < 80; i++)
+            'Reading $i ${'words ' * 12}'.trimRight(),
+        ];
+        final state = await _mount(
+          tester,
+          '${paragraphs.join('\n\n')}\n',
+          MemoryRichClipboard(),
+          headerBarService: barrier,
+        );
+        final target = tester.widget<TextField>(_field(paragraphs.first));
+        target.controller!.selection = const TextSelection(
+          baseOffset: 8,
+          extentOffset: 2,
+        );
+        await tester.pumpAndSettle();
+        final position = tester
+            .state<ScrollableState>(
+              find
+                  .descendant(
+                    of: find.byType(ScrollablePositionedList),
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
+            )
+            .position;
+        position.jumpTo(3500);
+        await tester.pumpAndSettle();
+        final pixels = position.pixels;
+        final other = FocusNode(
+          debugLabel: 'Search selected during dialog release',
+        );
+        final entry = OverlayEntry(
+          builder: (_) => Positioned(
+            left: 750,
+            top: 0,
+            width: 200,
+            height: 40,
+            child: Material(child: TextField(focusNode: other)),
+          ),
+        );
+        Overlay.of(
+          tester.element(find.byType(BusyMarkWysiwygEditor)),
+        ).insert(entry);
+        await tester.pumpAndSettle();
+        final link = find.byWidgetPredicate(
+          (w) => w is BusyMarkHeaderIconButton && w.icon == BusyMarkGlyphs.link,
+        );
+        await tester.ensureVisible(link);
+        await tester.tap(link, pointer: 1102);
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('wysiwyg-link-destination-field')),
+          findsOneWidget,
+        );
+        Navigator.of(
+          tester.element(find.byType(BusyMarkWysiwygEditor)),
+          rootNavigator: true,
+        ).pop();
+        await tester.pumpAndSettle();
+        expect(barrier.releaseStarted, isTrue);
+        other.requestFocus();
+        await tester.pumpAndSettle();
+        expect(FocusManager.instance.primaryFocus, same(other));
+        if (inactive) {
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.inactive,
+          );
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(FocusManager.instance.rootScope),
+          );
+        }
+        barrier.release.complete();
+        for (var frame = 0; frame < 30; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(inactive ? FocusManager.instance.rootScope : other),
+          );
+          expect(position.pixels, closeTo(pixels, 0.1));
+        }
+        if (inactive) {
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          );
+          await tester.pumpAndSettle();
+        }
+        expect(FocusManager.instance.primaryFocus, same(other));
+        expect(
+          target.controller!.selection,
+          const TextSelection(baseOffset: 8, extentOffset: 2),
+        );
+        expect(state.changes, isEmpty);
+        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        entry.remove();
+        await tester.pumpAndSettle();
+        entry.dispose();
+        other.dispose();
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+  for (final (table, reverse) in [
+    for (final table in [false, true])
+      for (final reverse in [false, true]) (table, reverse),
+  ]) {
+    for (final scenario in [
+      'newer owner',
+      'inactive',
+      'inactive cancel',
+      'inactive disposal',
+      'newer owner inactive',
+      'lifecycle round trip',
+      'newer owner then scope',
+      'document replacement',
+      'disposal',
+      'ordinary completion',
+      'new caret',
+    ]) {
+      testWidgets(
+        'deferred extent focus table=$table reverse=$reverse respects $scenario',
+        (tester) async {
+          enableDesktopFocusLifecycle(tester);
+          addTearDown(() {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.resumed,
+            );
+          });
+          final original = table
+              ? _surrounded
+              : '$_before\n\nMiddle selected.\n\n$_after\n';
+          final state = await _mount(tester, original, MemoryRichClipboard());
+          final other = FocusNode(debugLabel: 'Newer search owner');
+          final text = TextEditingController(text: 'search');
+          final overlay = Overlay.of(
+            tester.element(find.byType(BusyMarkWysiwygEditor)),
+          );
+          final entry = OverlayEntry(
+            builder: (_) => Positioned(
+              top: 0,
+              left: 0,
+              width: 200,
+              height: 40,
+              child: Material(
+                child: TextField(focusNode: other, controller: text),
+              ),
+            ),
+          );
+          overlay.insert(entry);
+          await tester.pumpAndSettle();
+          final gesture = await tester.startGesture(
+            _caret(
+              tester,
+              reverse ? (table ? 'End!' : _after) : _before,
+              reverse ? (table ? 4 : 5) : 2,
+            ),
+            pointer: 1103,
+            kind: PointerDeviceKind.mouse,
+          );
+          await gesture.moveTo(
+            _caret(
+              tester,
+              reverse ? _before : (table ? 'End!' : _after),
+              reverse ? 2 : (table ? 4 : 5),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final selection = state.session;
+          expect(
+            selection.anchorBlockId,
+            reverse
+                ? state.document.blocks[table ? 1 : 2].id
+                : state.document.blocks.first.id,
+          );
+          expect(selection.extentBlockId, isNot(selection.anchorBlockId));
+          if (scenario == 'inactive cancel') {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.inactive,
+            );
+            await gesture.cancel();
+          } else {
+            await gesture.up();
+          }
+          // Deliver a real focus change before the pending post-frame handoff.
+          if (scenario.contains('newer')) {
+            other.requestFocus();
+            FocusManager.instance.applyFocusChangesIfNeeded();
+            expect(FocusManager.instance.primaryFocus, same(other));
+          }
+          final inactive = scenario.contains('inactive');
+          if (inactive || scenario == 'lifecycle round trip') {
+            if (scenario != 'inactive cancel') {
+              tester.binding.handleAppLifecycleStateChanged(
+                AppLifecycleState.inactive,
+              );
+            }
+            expect(
+              FocusManager.instance.primaryFocus,
+              same(FocusManager.instance.rootScope),
+            );
+            if (!inactive) {
+              tester.binding.handleAppLifecycleStateChanged(
+                AppLifecycleState.resumed,
+              );
+            }
+          }
+          if (scenario == 'newer owner then scope') {
+            other.unfocus();
+            FocusManager.instance.applyFocusChangesIfNeeded();
+          }
+          if (scenario == 'document replacement') {
+            state.replaceSource('Replacement document.\n', id: 'replacement');
+          }
+          if (scenario == 'new caret') {
+            await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+          }
+          if (scenario.contains('disposal')) {
+            entry.remove();
+            await tester.pumpWidget(const SizedBox());
+          }
+          final expectedOwner = FocusManager.instance.primaryFocus;
+          for (
+            var frame = 0;
+            frame < (scenario == 'inactive cancel' ? 90 : 30);
+            frame++
+          ) {
+            await tester.pump(const Duration(milliseconds: 16));
+            if (inactive || scenario.contains('newer')) {
+              expect(FocusManager.instance.primaryFocus, same(expectedOwner));
+            }
+          }
+          if (inactive) {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.resumed,
+            );
+            await tester.pumpAndSettle();
+          }
+          if (scenario.contains('newer') &&
+              scenario != 'newer owner then scope') {
+            expect(FocusManager.instance.primaryFocus, same(other));
+            expect(tester.testTextInput.hasAnyClients, isTrue);
+            tester.testTextInput.updateEditingValue(
+              const TextEditingValue(
+                text: 'search!',
+                selection: TextSelection.collapsed(offset: 7),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(text.text, 'search!');
+          } else if (scenario == 'inactive' ||
+              scenario == 'inactive cancel' ||
+              scenario == 'lifecycle round trip' ||
+              scenario == 'ordinary completion') {
+            expect(state.session.anchorBlockId, selection.anchorBlockId);
+            expect(state.session.anchorOffset, selection.anchorOffset);
+            expect(state.session.extentBlockId, selection.extentBlockId);
+            expect(state.session.extentOffset, selection.extentOffset);
+            expect(tester.testTextInput.hasAnyClients, isTrue);
+            final value = TextEditingValue.fromJSON(
+              tester.testTextInput.editingState!,
+            );
+            final offset = value.selection.extentOffset;
+            tester.testTextInput.updateEditingValue(
+              TextEditingValue(
+                text: value.text.replaceRange(offset, offset, 'Z'),
+                selection: TextSelection.collapsed(offset: offset + 1),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(state.changes, hasLength(1));
+            expect(state.source, startsWith('${_before.substring(0, 2)}Z'));
+          } else if (scenario == 'new caret') {
+            expect(_selected(tester), isEmpty);
+            expect(state.changes, isEmpty);
+            expect(tester.testTextInput.hasAnyClients, isTrue);
+            final value = TextEditingValue.fromJSON(
+              tester.testTextInput.editingState!,
+            );
+            final offset = value.selection.extentOffset;
+            tester.testTextInput.updateEditingValue(
+              TextEditingValue(
+                text: value.text.replaceRange(offset, offset, 'Z'),
+                selection: TextSelection.collapsed(offset: offset + 1),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(state.changes, hasLength(1));
+            expect(state.document.blocks.first.plainText, _before);
+          }
+          if (!scenario.contains('disposal')) entry.remove();
+          await tester.pumpAndSettle();
+          entry.dispose();
+          other.dispose();
+          text.dispose();
+          expect(tester.takeException(), isNull);
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.linux),
+      );
+    }
+  }
+}
+
+class _DelayedSelectionBarrier extends LinuxHeaderBarService {
+  _DelayedSelectionBarrier()
+    : super(
+        channel: const MethodChannel(
+          'com.busymark.test/selection-modal-release',
+        ),
+      );
+  final release = Completer<void>();
+  bool releaseStarted = false;
+  @override
+  Future<void> setModalBarrierDepth(int depth) async {
+    if (depth == 0) {
+      releaseStarted = true;
+      await release.future;
+    }
+  }
+}
+
 void main() {
+  _deferredExtentFocusRegressions();
   testWidgets(
     'short table input after desktop return reveals the original cell',
     (tester) async {

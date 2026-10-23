@@ -2,10 +2,13 @@
 """Run the focus probe on an owned GNOME headless desktop, never the user's.
 
 Usage: dbus-run-session -- /usr/bin/python3 tools/focus_restoration_native.py
-       BUNDLE_EXECUTABLE NEW_OUTPUT_DIRECTORY x11|wayland editor|source|split|table
+       BUNDLE_EXECUTABLE NEW_OUTPUT_DIRECTORY x11|wayland MODE
        [full|alt-tab|minimize] [markdown|writerside]
+MODE: editor, source, split, table, deferred-dialog, deferred-selection,
+      deferred-selection-table (selection gestures require XWayland).
 Requires GNOME Mutter RemoteDesktop input support and system PyGObject.
 """
+import ctypes as C
 import json
 import os
 from pathlib import Path
@@ -142,6 +145,73 @@ def run(binary, output, backend, mode, transitions="full", document_format="mark
         probe = output / "probe"
         probe.mkdir()
         app = launch([str(Path(binary).resolve()), str(fixture), str(probe), mode], "application")
+        wait_for(lambda: any((probe / name).exists() for name in
+                            ["ready", "dialog-ready", "selection-ready", "activation-needed", "done"]) or app.poll() is not None)
+        if (probe / "activation-needed").exists():
+            chord(56, 15)  # Wayland may not activate a subprocess on mapping.
+            wait_for(lambda: any((probe / name).exists() for name in
+                                ["ready", "dialog-ready", "selection-ready", "done"]) or app.poll() is not None)
+        if (probe / "dialog-ready").exists():
+            # Deterministic production Navigator dismissal; focus switching and
+            # subsequent input still come from the actual native GTK embedder.
+            (probe / "dismiss-dialog").touch()
+            actions.append({"time": time.monotonic(), "programmatic-dialog-dismissal": True})
+        if (probe / "selection-ready").exists():
+            if backend != "x11":
+                raise RuntimeError("Native selection gesture currently requires the owned X11 window")
+            os.environ.update({key: env[key] for key in ("DISPLAY", "XAUTHORITY", "GDK_BACKEND") if key in env})
+            from application_close_smoke import Desktop
+            desktop = Desktop()
+            try:
+                desktop.Gdk.init([])
+                window = desktop.window(app.pid, require_mapped=True, require_normal=True)
+                if window is None:
+                    raise RuntimeError("Missing owned selection window")
+                points = json.loads((probe / "selection-gesture.json").read_text())
+                start, end = points["start"], points["end"]
+                if not all(0 < p[0] < window.get_width() and 0 < p[1] < window.get_height() for p in [start, end]):
+                    raise RuntimeError("Selection point outside owned window")
+                _, origin_x, origin_y = window.get_origin()
+                # Exclude GTK's invisible CSD shadow as well as any header.
+                actual, fmt, count, remaining = C.c_ulong(), C.c_int(), C.c_ulong(), C.c_ulong()
+                data = C.POINTER(C.c_ubyte)()
+                desktop.x.XGetWindowProperty(desktop.display, window.get_xid(), desktop.atom("_GTK_FRAME_EXTENTS"), 0, 4, 0, 0, C.byref(actual), C.byref(fmt), C.byref(count), C.byref(remaining), C.byref(data))
+                try:
+                    if count.value != 4 or fmt.value != 32:
+                        raise RuntimeError("Missing owned GTK frame extents")
+                    left, right, top, bottom = C.cast(data, C.POINTER(C.c_ulong))[:4]
+                finally:
+                    if data:
+                        desktop.x.XFree(data)
+                header = window.get_height() - bottom - points["viewHeight"]
+                if not 0 <= header < 120:
+                    raise RuntimeError(f"Unexpected native header height: {header}")
+                (output / "native-selection.json").write_text(json.dumps({
+                    "origin": [origin_x, origin_y], "header": header,
+                    "size": [window.get_width(), window.get_height()], "points": points}))
+                picture = desktop.Gdk.pixbuf_get_from_window(window, 0, 0, window.get_width(), window.get_height())
+                if picture is not None:
+                    picture.savev(str(output / "native-selection.png"), "png", [], [])
+                xtest = C.CDLL("libXtst.so.6")
+                xtest.XTestFakeMotionEvent.argtypes = [C.c_void_p, C.c_int, C.c_int, C.c_int, C.c_ulong]
+                xtest.XTestFakeButtonEvent.argtypes = [C.c_void_p, C.c_uint, C.c_int, C.c_ulong]
+                def pointer(point=None, pressed=None):
+                    current = desktop.window(app.pid, require_mapped=True, require_normal=True)
+                    if current is None or current.get_xid() != window.get_xid():
+                        raise RuntimeError("Owned selection window changed")
+                    accepted = xtest.XTestFakeMotionEvent(desktop.display, 0, int(origin_x + left + point[0]), int(origin_y + header + point[1]), 0) if point is not None else xtest.XTestFakeButtonEvent(desktop.display, 1, pressed, 0)
+                    if not accepted:
+                        raise RuntimeError("Owned desktop rejected selection input")
+                    desktop.x.XFlush(desktop.display)
+                pointer(start)
+                pointer(pressed=True)
+                time.sleep(0.2)
+                pointer(end)
+                time.sleep(0.2)
+                pointer(pressed=False)
+                actions.append({"time": time.monotonic(), "native-selection": mode, "points": points})
+            finally:
+                desktop.dispose()
         wait_for(lambda: (probe / "ready").exists() or (probe / "done").exists() or app.poll() is not None)
         if not (probe / "ready").exists():
             raise RuntimeError("Application did not reach focus acceptance; see application.log/probe/error.txt")
@@ -226,6 +296,12 @@ def run(binary, output, backend, mode, transitions="full", document_format="mark
         print(json.dumps(result))
         if not all(value for group in result.values() for value in group.values()):
             raise RuntimeError("Native acceptance assertions failed")
+        if mode.startswith("deferred-"):
+            wait_for(lambda: app.poll() is not None, timeout=30)
+            if app.returncode != 0:
+                raise RuntimeError(f"Native application exit failed: {app.returncode}")
+            actions.append({"time": time.monotonic(), "naturalApplicationExit": app.returncode})
+            (output / "actions.json").write_text(json.dumps({"backend": backend, "coverage": transitions, "documentFormat": document_format, "actions": actions}, indent=2))
     finally:
         for process in reversed(processes):
             if process.poll() is None:

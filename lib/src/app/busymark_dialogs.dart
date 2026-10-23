@@ -203,7 +203,7 @@ Future<T?> showBusyMarkModalDialog<T>(
 Future<T?> _coordinateBusyMarkModal<T>(
   BuildContext context, {
   required LinuxHeaderBarService? headerBarService,
-  required Future<T?> Function() showSurface,
+  required ({Future<T?> result, ModalRoute<T> route}) Function() showSurface,
 }) async {
   final previousFocus = FocusManager.instance.primaryFocus;
   await acquireBusyMarkModalBarrier(headerBarService);
@@ -211,23 +211,91 @@ Future<T?> _coordinateBusyMarkModal<T>(
     await releaseBusyMarkModalBarrier(headerBarService);
     return null;
   }
+  ModalRoute<T>? closingRoute;
   try {
-    return await showSurface();
+    final surface = showSurface();
+    closingRoute = surface.route;
+    return await surface.result;
   } finally {
-    final closingFocus = FocusManager.instance.primaryFocus;
-    await releaseBusyMarkModalBarrier(headerBarService);
-    final currentFocus = FocusManager.instance.primaryFocus;
-    if (previousFocus?.context?.mounted == true &&
-        previousFocus!.canRequestFocus &&
-        (currentFocus == closingFocus ||
-            currentFocus == previousFocus ||
-            currentFocus is FocusScopeNode)) {
-      previousFocus.requestFocus();
+    final restoration = _ModalFocusRestoration(previousFocus, closingRoute);
+    try {
+      await releaseBusyMarkModalBarrier(headerBarService);
+      if (context.mounted && restoration.mayRestore) {
+        previousFocus!.requestFocus();
+      }
+    } finally {
+      restoration.dispose();
     }
   }
 }
 
-Future<T?> _showBusyMarkFlutterDialog<T>(
+/// Permission for this one closing surface, not a snapshot of primaryFocus.
+/// A newer owner or lifecycle transition permanently supersedes its release.
+class _ModalFocusRestoration with WidgetsBindingObserver {
+  _ModalFocusRestoration(this.previous, this.closingRoute)
+    : _previousScopes = {...?previous?.ancestors.whereType<FocusScopeNode>()} {
+    _current = _isResumed && _owns(FocusManager.instance.primaryFocus);
+    if (_current) {
+      _listening = true;
+      FocusManager.instance.addListener(_focusChanged);
+      WidgetsBinding.instance.addObserver(this);
+    }
+  }
+
+  final FocusNode? previous;
+  final ModalRoute<dynamic>? closingRoute;
+  final Set<FocusScopeNode> _previousScopes;
+  bool _current = true;
+  bool _listening = false;
+
+  bool get _isResumed =>
+      WidgetsBinding.instance.lifecycleState == null ||
+      WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+
+  bool _owns(FocusNode? node) =>
+      node == null ||
+      node == previous ||
+      _previousScopes.contains(node) ||
+      (closingRoute != null &&
+          node.context?.mounted == true &&
+          ModalRoute.of(node.context!) == closingRoute);
+
+  void _focusChanged() {
+    if (previous?.context?.mounted != true ||
+        !_owns(FocusManager.instance.primaryFocus)) {
+      _invalidate();
+    }
+  }
+
+  void _invalidate() {
+    _current = false;
+    dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _invalidate();
+  }
+
+  bool get mayRestore {
+    // Honor a newer request even if FocusManager has not notified it yet.
+    FocusManager.instance.applyFocusChangesIfNeeded();
+    return _current &&
+        _isResumed &&
+        previous?.context?.mounted == true &&
+        previous!.canRequestFocus &&
+        _owns(FocusManager.instance.primaryFocus);
+  }
+
+  void dispose() {
+    if (!_listening) return;
+    _listening = false;
+    FocusManager.instance.removeListener(_focusChanged);
+    WidgetsBinding.instance.removeObserver(this);
+  }
+}
+
+({Future<T?> result, ModalRoute<T> route}) _showBusyMarkFlutterDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   Color? barrierColor,
@@ -235,16 +303,15 @@ Future<T?> _showBusyMarkFlutterDialog<T>(
 }) {
   final navigator = Navigator.of(context, rootNavigator: true);
   final themes = InheritedTheme.capture(from: context, to: navigator.context);
-  return navigator.push<T>(
-    _BusyMarkDialogRoute<T>(
-      context: context,
-      builder: builder,
-      themes: themes,
-      fixedBarrierColor: barrierColor,
-      initialBarrierColor: barrierColor ?? busyMarkModalBarrierColor(context),
-      barrierDismissible: barrierDismissible,
-    ),
+  final route = _BusyMarkDialogRoute<T>(
+    context: context,
+    builder: builder,
+    themes: themes,
+    fixedBarrierColor: barrierColor,
+    initialBarrierColor: barrierColor ?? busyMarkModalBarrierColor(context),
+    barrierDismissible: barrierDismissible,
   );
+  return (result: navigator.push<T>(route), route: route);
 }
 
 class _BusyMarkDialogRoute<T> extends DialogRoute<T> {

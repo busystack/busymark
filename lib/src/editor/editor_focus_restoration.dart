@@ -42,6 +42,11 @@ class BusyMarkEditorFocusRestoration extends StatefulWidget {
   /// For purposeful commands that request focus without changing the caret.
   static void reveal(FocusNode node) => _fields[node]?._allowReveal();
 
+  /// Keep one pending editing target mounted without requesting focus. A
+  /// deferred selection handoff may outlive the viewport cache while inactive.
+  static VoidCallback? retainPendingTarget(FocusNode node) =>
+      _fields[node]?._retainPendingTarget();
+
   static bool ownsDocumentFocus(FocusNode node, String documentId) {
     final field = _fields[node];
     return field?.mounted == true &&
@@ -66,10 +71,23 @@ class _EditorFocusRestorationState extends State<BusyMarkEditorFocusRestoration>
   bool _pendingFocusReveal = false;
   bool _intentionalFocus = false;
   bool _retainEditingTarget = false;
+  final _pendingTargetRetentions = <Object>{};
   InheritedElement? _scope;
 
   @override
-  bool get wantKeepAlive => _retainEditingTarget;
+  bool get wantKeepAlive =>
+      _retainEditingTarget || _pendingTargetRetentions.isNotEmpty;
+
+  VoidCallback _retainPendingTarget() {
+    final request = Object();
+    _pendingTargetRetentions.add(request);
+    updateKeepAlive();
+    return () {
+      if (_pendingTargetRetentions.remove(request) && mounted) {
+        updateKeepAlive();
+      }
+    };
+  }
 
   @override
   void initState() {

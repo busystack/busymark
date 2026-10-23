@@ -13,7 +13,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/desktop_focus.dart';
+
 void main() {
+  _delayedModalFocusRegressions();
   testWidgets('delayed modal barrier release respects a newer focus owner', (
     tester,
   ) async {
@@ -588,6 +591,146 @@ class _AppShortcutIntent extends Intent {
 
 class _EditorShortcutIntent extends Intent {
   const _EditorShortcutIntent();
+}
+
+void _delayedModalFocusRegressions() {
+  for (final scenario in [
+    'inactive editor',
+    'inactive newer owner',
+    'resumed newer owner',
+    'newer owner before close',
+    'newer owner then scope',
+    'disposed host',
+    'ordinary return',
+  ]) {
+    testWidgets('deferred modal focus respects $scenario', (tester) async {
+      enableDesktopFocusLifecycle(tester);
+      final barrier = _GatedFocusBarrierService();
+      addTearDown(barrier.dispose);
+      addTearDown(() {
+        if (!barrier.release.isCompleted) barrier.release.complete();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+      });
+      final previous = FocusNode(debugLabel: 'Previous editor');
+      final newer = FocusNode(debugLabel: 'Newer search control');
+      final text = TextEditingController(text: 'search');
+      addTearDown(previous.dispose);
+      addTearDown(newer.dispose);
+      addTearDown(text.dispose);
+      late BuildContext host;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              host = context;
+              return Scaffold(
+                body: Column(
+                  children: [
+                    TextField(focusNode: previous),
+                    TextField(focusNode: newer, controller: text),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      previous.requestFocus();
+      await tester.pumpAndSettle();
+      final dialog = showBusyMarkModalDialog<void>(
+        host,
+        headerBarService: barrier,
+        builder: (_) => const AlertDialog(content: Text('Dismiss focus race')),
+      );
+      await tester.pumpAndSettle();
+      Navigator.of(host, rootNavigator: true).pop();
+      if (scenario == 'newer owner before close') {
+        newer.requestFocus();
+        FocusManager.instance.applyFocusChangesIfNeeded();
+      }
+      await tester.pumpAndSettle();
+      expect(barrier.releaseStarted, isTrue);
+      if (scenario.contains('newer')) {
+        newer.requestFocus();
+        await tester.pumpAndSettle();
+        expect(FocusManager.instance.primaryFocus, same(newer));
+      }
+      final inactive = scenario.startsWith('inactive');
+      if (inactive || scenario == 'resumed newer owner') {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        expect(
+          FocusManager.instance.primaryFocus,
+          same(FocusManager.instance.rootScope),
+        );
+        for (var frame = 0; frame < 30; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        if (!inactive) {
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          );
+          await tester.pumpAndSettle();
+          expect(FocusManager.instance.primaryFocus, same(newer));
+        }
+      }
+      if (scenario == 'newer owner then scope') {
+        newer.unfocus();
+        await tester.pumpAndSettle();
+      }
+      if (scenario == 'disposed host') {
+        await tester.pumpWidget(const SizedBox());
+      }
+      final owner = FocusManager.instance.primaryFocus;
+      barrier.release.complete();
+      await dialog;
+      for (var frame = 0; frame < 30; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(FocusManager.instance.primaryFocus, same(owner));
+      }
+      if (inactive) {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          FocusManager.instance.primaryFocus,
+          same(scenario.contains('newer') ? newer : previous),
+        );
+      }
+      if (scenario.contains('newer') && scenario != 'newer owner then scope') {
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'search!',
+            selection: TextSelection.collapsed(offset: 7),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(text.text, 'search!');
+      }
+      expect(tester.takeException(), isNull);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+  }
+}
+
+class _GatedFocusBarrierService extends LinuxHeaderBarService {
+  _GatedFocusBarrierService()
+    : super(channel: const MethodChannel('com.busymark.test/deferred-focus'));
+
+  final release = Completer<void>();
+  bool releaseStarted = false;
+
+  @override
+  Future<void> setModalBarrierDepth(int depth) async {
+    if (depth == 0) {
+      releaseStarted = true;
+      await release.future;
+    }
+  }
 }
 
 class _FailingModalBarrierService extends LinuxHeaderBarService {
