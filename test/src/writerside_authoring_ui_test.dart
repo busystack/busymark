@@ -14,6 +14,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_effective_properties.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
@@ -23,6 +24,29 @@ import 'package:flutter/gestures.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/desktop_focus.dart';
+
+class _GatedSemanticDialogBarrier extends LinuxHeaderBarService {
+  _GatedSemanticDialogBarrier()
+    : super(channel: const MethodChannel('busymark/test/semantic-focus'));
+
+  final release = Completer<void>();
+  bool releaseStarted = false;
+  bool releaseFinished = false;
+
+  @override
+  bool get isAvailable => true;
+
+  @override
+  Future<void> setModalBarrierDepth(int depth) async {
+    if (depth == 0) {
+      releaseStarted = true;
+      await release.future;
+      releaseFinished = true;
+    }
+  }
+}
 
 BusyDocument _document(bool xml, {String? source}) => xml
     ? const WritersideEditingAdapter().parseXml(
@@ -806,6 +830,186 @@ void main() {
       );
     }
   }
+  for (final xml in [false, true]) {
+    for (final label in ['UI Control', 'File / Path']) {
+      for (final newerOwner in [false, true]) {
+        testWidgets(
+          '${xml ? "XML" : "Markdown"} delayed semantic cancellation $label newerOwner=$newerOwner',
+          (tester) async {
+            enableDesktopFocusLifecycle(tester);
+            final barrier = _GatedSemanticDialogBarrier();
+            final newer = FocusNode(debugLabel: 'Search after semantic dialog');
+            final search = TextEditingController(text: 'Search');
+            OverlayEntry? entry;
+            addTearDown(() {
+              if (!barrier.release.isCompleted) barrier.release.complete();
+              entry?.remove();
+              entry?.dispose();
+              newer.dispose();
+              search.dispose();
+              barrier.dispose();
+            });
+            final paragraphs = [
+              'Text',
+              for (var i = 0; i < 80; i++)
+                'Reading $i ${'words ' * 16}'.trimRight(),
+            ];
+            final original = xml
+                ? '<topic id="a" title="Title">${paragraphs.map((p) => '<p>$p</p>').join()}</topic>'
+                : '# Title\n\n${paragraphs.join('\n\n')}\n';
+            var saved = original;
+            final changes = <String>[];
+            final key = GlobalKey<BusyMarkWysiwygEditorState>();
+            await mount(
+              tester,
+              BusyMarkWysiwygEditor(
+                key: key,
+                document: _document(xml, source: original),
+                headerBarService: barrier,
+                onSourceChanged: (_, source) {
+                  saved = source;
+                  changes.add(source);
+                },
+              ),
+              openProperties: false,
+            );
+            await tester.tap(_textField('Text'), pointer: 1201);
+            final body = tester.widget<TextField>(_textField('Text'));
+            const selection = TextSelection.collapsed(offset: 2);
+            body.controller!.selection = selection;
+            await tester.pumpAndSettle();
+            final position = Scrollable.of(
+              tester.element(_textField('Text')),
+              axis: Axis.vertical,
+            ).position;
+            position.jumpTo(2500);
+            await tester.pumpAndSettle();
+            final pixels = position.pixels;
+            final reading =
+                _contentFields().evaluate().firstWhere((e) {
+                      final text = (e.widget as TextField).controller!.text;
+                      final y = tester.getTopLeft(find.byWidget(e.widget)).dy;
+                      return text.startsWith('Reading ') && y > 100 && y < 650;
+                    }).widget
+                    as TextField;
+            final readingText = reading.controller!.text;
+            final readingTop = tester.getTopLeft(_textField(readingText)).dy;
+            final generation = key.currentState!.spellingDocumentGeneration;
+            expect(key.currentState!.debugUndoSnapshotCount, 0);
+            labels.add(label);
+            await tester.tap(
+              find.byKey(const ValueKey('wysiwyg-writerside')),
+              pointer: 1202,
+            );
+            await tester.pumpAndSettle();
+            expect(
+              find.byKey(const ValueKey('wysiwyg-semantic-text')),
+              findsOneWidget,
+            );
+            await tester.tap(find.text('Cancel'), pointer: 1203);
+            await tester.pumpAndSettle();
+            expect(barrier.releaseStarted, isTrue);
+            expect(
+              find.byKey(const ValueKey('wysiwyg-semantic-text')),
+              findsNothing,
+            );
+            if (newerOwner) {
+              entry = OverlayEntry(
+                builder: (_) => Positioned(
+                  left: 750,
+                  top: 0,
+                  width: 220,
+                  height: 40,
+                  child: Material(
+                    child: TextField(focusNode: newer, controller: search),
+                  ),
+                ),
+              );
+              Overlay.of(
+                tester.element(find.byType(BusyMarkWysiwygEditor)),
+              ).insert(entry);
+              await tester.pumpAndSettle();
+              newer.requestFocus();
+              await tester.pumpAndSettle();
+              expect(FocusManager.instance.primaryFocus, same(newer));
+            }
+            expect(key.currentState!.spellingDocumentGeneration, generation);
+            barrier.release.complete();
+            for (var frame = 0; frame < 30; frame++) {
+              // A gated release can finish after the route animation has
+              // stopped. Drive the render phase so post-frame restoration
+              // really runs, rather than only advancing the fake clock.
+              tester.binding.scheduleFrame();
+              await tester.pump(const Duration(milliseconds: 16));
+              expect(
+                FocusManager.instance.primaryFocus,
+                same(newerOwner ? newer : body.focusNode),
+              );
+              expect(position.pixels, closeTo(pixels, 0.1));
+              expect(
+                tester.getTopLeft(_textField(readingText)).dy,
+                closeTo(readingTop, 0.1),
+              );
+            }
+            expect(barrier.releaseFinished, isTrue);
+            expect(
+              FocusManager.instance.primaryFocus,
+              same(newerOwner ? newer : body.focusNode),
+            );
+            expect(body.controller!.selection, selection);
+            expect(saved, original);
+            expect(changes, isEmpty);
+            expect(key.currentState!.debugUndoSnapshotCount, 0);
+            expect(tester.testTextInput.hasAnyClients, isTrue);
+            // Use the existing IME connection; enterText would refocus and
+            // conceal a cancellation callback that stole the newer owner.
+            tester.testTextInput.updateEditingValue(
+              TextEditingValue(
+                text: newerOwner ? 'Search!' : 'Te!xt',
+                selection: TextSelection.collapsed(offset: newerOwner ? 7 : 3),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(
+              FocusManager.instance.primaryFocus,
+              same(newerOwner ? newer : body.focusNode),
+            );
+            if (newerOwner) {
+              expect(search.text, 'Search!');
+              expect(saved, original);
+              expect(changes, isEmpty);
+              expect(body.controller!.selection, selection);
+              expect(key.currentState!.debugUndoSnapshotCount, 0);
+              expect(position.pixels, closeTo(pixels, 0.1));
+            } else {
+              expect(saved, original.replaceFirst('Text', 'Te!xt'));
+              expect(changes, hasLength(1));
+              expect(key.currentState!.debugUndoSnapshotCount, 1);
+              expect(
+                tester.getTopLeft(_textField('Te!xt')).dy,
+                inInclusiveRange(0, 850),
+              );
+              final edited = saved;
+              await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+              await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+              await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+              await tester.pumpAndSettle();
+              expect(saved, original);
+              await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+              await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+              await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+              await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+              await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+              await tester.pumpAndSettle();
+              expect(saved, edited);
+            }
+            expect(tester.takeException(), isNull);
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.linux),
+        );
+      }
+    }
+  }
   for (final xml in [true, false]) {
     for (final pair in const [
       ('UI Control', 'control'),
@@ -848,6 +1052,8 @@ void main() {
           await tester.tap(find.text('Cancel'));
           await tester.pumpAndSettle();
           expect(saved, original);
+          expect(body.focusNode!.hasPrimaryFocus, isTrue);
+          expect(tester.testTextInput.hasAnyClients, isTrue);
           expect(
             body.controller!.selection,
             const TextSelection.collapsed(offset: 2),

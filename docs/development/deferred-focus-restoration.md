@@ -209,3 +209,67 @@ Native acceptance is limited to the recorded owned headless desktops; it is not
 a claim about an untested physical desktop, strict Snap, minimize/restore, or
 window-chrome reactivation. The entire unrelated Flutter suite is not rerun by
 this focused follow-up.
+
+## Semantic-text cancellation follow-up (P2)
+
+Starting at `b139f51`, the remaining Writerside semantic-dialog caller was
+independently confirmed to bypass the async-toolbar completion preflight.
+After the production UI Control or File / Path dialog is canceled, hold its
+native-barrier release, focus a newer search-like control, then complete release
+while resumed. `_isDialogTargetCurrent()` still succeeds, and the semantic
+caller schedules `_restoreEditingFocusAfterFrame()` with that newer control as
+the captured owner. Its unchanged ownership at the deferred check is therefore
+mistaken for permission to return to editing.
+
+Only the null/empty-result branch of `_insertSemanticText()` changes: it now
+requires `_mayRestoreEditingFocus()` as well as the existing document validity
+guard before scheduling restoration, matching async toolbar completion. This
+does not change accepted semantic insertion, purposeful focus requests, the
+earlier Alt-Tab repair, or structural editing.
+
+Eight new regressions in `writerside_authoring_ui_test.dart` cover Markdown and
+XML topics, UI Control and File / Path, and ordinary versus newer-owner delayed
+cancellation. They use the production native-menu dispatch and semantic dialog,
+gating only the barrier service. They assert the document generation is still
+current, preserve the collapsed caret, source and undo history, check focus and
+actual reading geometry on every rendered frame (0.1 logical-pixel tolerance),
+and send text through the existing input connection without refocusing. Ordinary
+cancellation then edits the original target and exercises one-step undo/redo;
+newer-owner input affects only the newer control. Existing immediate semantic
+cancellation tests now also assert primary editor focus and an input client.
+
+```sh
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/writerside_authoring_ui_test.dart \
+  --name 'delayed semantic cancellation|collapsed.*enters text and cancels neutrally'
+```
+
+The unchanged production implementation fails the four newer-owner cases; the
+four ordinary delayed controls and eight existing controls pass
+(`build/semantic-dialog-focus-evidence/before-framed.log`: 12 passed, 4 failed).
+An initial harness did not schedule a render after barrier release, so its
+deferred callback did not run; that attempt is not regression evidence. The
+final tests explicitly schedule rendered frames, not merely fake-clock ticks.
+
+The final focused command passes all **16** tests in 48 seconds
+(`after-final-focused.log`). The complete five affected suites pass **556**
+tests in 3m53s (`affected-suites.log`):
+
+```sh
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/writerside_authoring_ui_test.dart \
+  test/src/wysiwyg_selection_lifecycle_test.dart \
+  test/src/busymark_dialogs_test.dart test/src/wysiwyg_session_test.dart \
+  test/src/source_editor_widget_test.dart
+```
+
+Follow-up logs are under `build/semantic-dialog-focus-evidence/`. Formatting
+checks both changed Dart files with zero changes (`format.log`); pinned
+`flutter analyze --no-pub` reports no issues (`analyze-final.log`, 43.7s).
+The normal pinned `flutter build linux --release --no-pub -t lib/main.dart`
+passes (`linux-release.log`), with the same official release-engine hash recorded
+above. Dependency pins and unrelated structural code remain unchanged.
+
+This follow-up does not repeat native semantic-dialog acceptance. The earlier
+native results above cover their recorded generic dialog/selection paths, not
+this additional semantic caller. No new native pass is claimed.

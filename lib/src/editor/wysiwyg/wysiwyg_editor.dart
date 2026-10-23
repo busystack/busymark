@@ -5886,7 +5886,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       ),
     );
     if (inserted == null || inserted.trim().isEmpty) {
-      if (_isDialogTargetCurrent(guard)) _restoreEditingFocusAfterFrame();
+      // Canceling the surface is not a new request to return to editing.
+      if (_isDialogTargetCurrent(guard) && _mayRestoreEditingFocus()) {
+        _restoreEditingFocusAfterFrame();
+      }
       return;
     }
     if (!mounted) return;
