@@ -345,6 +345,164 @@ void main() {
     },
   );
 
+  for (final restart in [false, true]) {
+    test('follow-up saved capture recovers through controller retry '
+        '(restart=$restart)', () async {
+      final path = p.join(root.path, 'saved-retry.md');
+      await File(path).writeAsString('baseline');
+      final historyRoot = Directory(p.join(root.path, 'history'));
+      var fail = false;
+      var ids = 0;
+      final store = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+        createId: () {
+          if (fail &&
+              Directory(
+                p.join(historyRoot.path, 'revisions'),
+              ).listSync(recursive: true).whereType<File>().any((file) {
+                final record = jsonDecode(file.readAsStringSync()) as Map;
+                return record['revision']['reason'] == 'saved' &&
+                    record['source'] == 'saved source';
+              })) {
+            fail = false;
+            throw const FileSystemException(
+              'Injected index publication failure',
+              '',
+              OSError('', 11),
+            );
+          }
+          return 'saved_retry_identity_${++ids}';
+        },
+      );
+      final h = await _harness(
+        store,
+        fileMonitor: _ControlledFileMonitor(),
+        sessionStore: MemoryDocumentSessionStore(),
+        recoveryStore: MemoryDocumentRecoveryStore(),
+      );
+      await h.controller.openPath(path);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      final documentId = history.documentIdForBuffer(h.state.activeBuffer!.id);
+      h.controller.updateActiveText('saved source');
+      fail = true;
+      expect(await h.controller.saveActive(), isTrue);
+      expect(fail, isFalse);
+      expect(await File(path).readAsString(), 'saved source');
+      final pending = history.pendingSnapshotForBuffer(
+        h.state.activeBuffer!.id,
+      )!;
+      final captureId = pending.captureId!;
+      expect(await store.readRevision(captureId), isNull);
+
+      if (restart) {
+        await history.handleBufferClosed(
+          h.state.activeBuffer!.id,
+          historySettled: false,
+        );
+        final retained = history.retainedDetachedCaptures
+            .map(
+              (capture) => LocalHistoryRetainedCapture.fromJson(
+                (jsonDecode(jsonEncode(capture.toJson())) as Map)
+                    .cast<String, Object?>(),
+              ),
+            )
+            .toList();
+        expect(retained, hasLength(1));
+        h.container.dispose();
+        final reopened = await _harness(
+          FileLocalHistoryStore(rootDirectory: () async => historyRoot),
+          fileMonitor: _ControlledFileMonitor(),
+          sessionStore: MemoryDocumentSessionStore(),
+          recoveryStore: MemoryDocumentRecoveryStore(),
+        );
+        final retry = reopened.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        retry.restoreRetainedDetachedCaptures(retained);
+        expect(await retry.flushAll(const []), isTrue);
+        expect(await retry.flushAll(const []), isTrue);
+        expect(retry.retainedDetachedCaptures, isEmpty);
+      } else {
+        expect(await history.flushBuffer(h.state.activeBuffer!), isTrue);
+        expect(await history.flushBuffer(h.state.activeBuffer!), isTrue);
+        expect(
+          history.pendingSnapshotForBuffer(h.state.activeBuffer!.id),
+          isNull,
+        );
+      }
+      final recovered = (await store.readRevision(captureId))!;
+      expect(recovered.source, 'saved source');
+      expect(recovered.summary.reason, LocalHistoryCaptureReason.saved);
+      expect(recovered.summary.documentId, documentId);
+      expect(
+        (await store.load()).revisions.where(
+          (revision) => revision.id == captureId,
+        ),
+        hasLength(1),
+      );
+    });
+  }
+
+  for (final changeDuringStaging in [false, true]) {
+    test('follow-up deletion validates initially undecodable files '
+        '(changeDuringStaging=$changeDuringStaging)', () async {
+      final anchor = File(p.join(root.path, 'anchor.md'));
+      await anchor.writeAsString('anchor');
+      final store = _MutatingProtectionStore();
+      final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+      await h.controller.openPath(root.path);
+      final path = p.join(root.path, 'invalid.md');
+      await File(path).writeAsBytes([0xff, 0xfe]);
+      if (changeDuringStaging) {
+        store.beforePathOperation = () async {
+          store.beforePathOperation = null;
+          await File(path).writeAsString('new valid source');
+        };
+      }
+      expect(
+        await h.controller.deleteWorkspaceEntity(path),
+        !changeDuringStaging,
+      );
+      if (changeDuringStaging) {
+        expect(await File(path).readAsString(), 'new valid source');
+        // A fresh operation can protect and delete the now-supported text.
+        expect(await h.controller.deleteWorkspaceEntity(path), isTrue);
+        final captured = (await store.load()).revisions.singleWhere(
+          (r) => r.historicalPath == path,
+        );
+        expect(
+          (await store.readRevision(captured.id))!.source,
+          'new valid source',
+        );
+      }
+      expect(await File(path).exists(), isFalse);
+    });
+  }
+
+  test(
+    'follow-up replacement protection detects reclassification during decoding',
+    () async {
+      final anchor = File(p.join(root.path, 'anchor.md'));
+      await anchor.writeAsString('anchor');
+      final path = p.join(root.path, 'invalid.md');
+      final service = _ReplaceUndecodableFileService(path);
+      final h = await _harness(
+        MemoryLocalHistoryStore(),
+        service: service,
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await h.controller.openPath(root.path);
+      await File(path).writeAsBytes([0xff, 0xfe]);
+      expect(
+        await h.controller.protectPathsBeforeExternalReplacement([path]),
+        isFalse,
+      );
+      expect(service.replaced, isTrue);
+      expect(await File(path).readAsString(), 'new valid source');
+    },
+  );
+
   for (final delayedFailure in [false, true]) {
     test(
       'retention eviction does not discharge a later traversal protection (delayedFailure=$delayedFailure)',
@@ -7584,6 +7742,26 @@ Future<_Harness> _harness(
   await Future<void>.delayed(Duration.zero);
   await settings.setAutoSave(false);
   return _Harness(container, controller);
+}
+
+class _ReplaceUndecodableFileService extends WorkspaceService {
+  _ReplaceUndecodableFileService(this.path);
+
+  final String path;
+  var replaced = false;
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    try {
+      return await super.loadTextWithSnapshot(path);
+    } on FormatException {
+      if (p.equals(path, this.path) && !replaced) {
+        replaced = true;
+        await File(path).writeAsString('new valid source');
+      }
+      rethrow;
+    }
+  }
 }
 
 class _MutatingProtectionStore extends MemoryLocalHistoryStore {

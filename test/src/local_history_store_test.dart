@@ -114,6 +114,232 @@ void main() {
     }
   }
 
+  test(
+    'follow-up orphan traversal validates renewal before retention',
+    () async {
+      final safe = await store.capture(
+        request('safe source', DateTime.utc(2026)),
+        policy,
+      );
+      const captureId = 'near_limit_traversal_0001';
+      final captured = await store.capture(
+        request(
+          '',
+          DateTime.utc(2026, 1, 2),
+          captureId: captureId,
+          reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+        ),
+        policy,
+      );
+      final file = File(
+        p.join(root.path, 'revisions', captured.document.id, '$captureId.json'),
+      );
+      final record = jsonDecode(await file.readAsString()) as Map;
+      final summary = record['revision'] as Map;
+      const encoder = JsonEncoder.withIndent(' ');
+      final targetBytes = policy.maximumBytes - 20;
+      var length = targetBytes - utf8.encode(encoder.convert(record)).length;
+      late String source;
+      late String encoded;
+      while (true) {
+        source = 'X' * length;
+        record['source'] = source;
+        summary['sourceLength'] = length;
+        summary['checksum'] = sourceChecksum(source);
+        encoded = encoder.convert(record);
+        final difference = targetBytes - utf8.encode(encoded).length;
+        if (difference == 0) break;
+        length += difference;
+      }
+      await file.writeAsString(encoded);
+      expect(await file.length(), 16777196);
+      final indexFile = File(p.join(root.path, 'index.json'));
+      final index = jsonDecode(await indexFile.readAsString()) as Map;
+      (index['revisions'] as List).removeWhere(
+        (dynamic revision) => revision['id'] == captureId,
+      );
+      await indexFile.writeAsString(jsonEncode(index));
+      final originalIndex = await indexFile.readAsString();
+      final journal = File(p.join(root.path, 'tombstones.json'));
+      final originalTombstones = await journal.readAsString();
+      final retry = request(
+        source,
+        DateTime.utc(2026, 1, 3),
+        captureId: captureId,
+        reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+      );
+      expect(
+        (await store.readRevision(safe.revision!.id))!.source,
+        'safe source',
+      );
+
+      await expectLater(
+        store.capture(retry, policy),
+        throwsA(isA<LocalHistoryStorageException>()),
+      );
+      expect(
+        (await store.readRevision(safe.revision!.id))?.source,
+        'safe source',
+      );
+      expect(await store.readRevision(captureId), isNull);
+      expect(await indexFile.readAsString(), originalIndex);
+      expect(await journal.readAsString(), originalTombstones);
+      expect(await file.readAsString() == encoded, isTrue);
+
+      final recovered = await store.capture(
+        retry,
+        LocalHistoryPolicy(maximumBytes: policy.maximumBytes + 8192),
+      );
+      expect(recovered.revision!.id, captureId);
+      expect(recovered.revision!.protectedAt, retry.capturedAt);
+      expect((await store.readRevision(captureId))!.source == source, isTrue);
+      expect(
+        (await store.readRevision(safe.revision!.id))!.source,
+        'safe source',
+      );
+      expect((await store.load()).revisions, hasLength(2));
+    },
+  );
+
+  for (final afterIndex in [false, true]) {
+    test('follow-up cancelled orphan renewal stays retired '
+        '(afterIndex=$afterIndex)', () async {
+      final safe = await store.capture(
+        request('safe', DateTime.utc(2026)),
+        policy,
+      );
+      const captureId = 'cancelled_orphan_renewal_0001';
+      final original = await store.capture(
+        request(
+          'protected',
+          DateTime.utc(2026, 1, 2),
+          captureId: captureId,
+          reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+        ),
+        policy,
+      );
+      final file = File(
+        p.join(root.path, 'revisions', original.document.id, '$captureId.json'),
+      );
+      final originalRecord = await file.readAsBytes();
+      final indexFile = File(p.join(root.path, 'index.json'));
+      final index = jsonDecode(await indexFile.readAsString()) as Map;
+      (index['revisions'] as List).removeWhere(
+        (dynamic revision) => revision['id'] == captureId,
+      );
+      await indexFile.writeAsString(jsonEncode(index));
+      bool accepted() {
+        if (afterIndex) {
+          return !((jsonDecode(indexFile.readAsStringSync())
+                      as Map)['revisions']
+                  as List)
+              .any((dynamic revision) => revision['id'] == captureId);
+        }
+        return (jsonDecode(file.readAsStringSync())
+                as Map)['revision']['protectedAt'] ==
+            null;
+      }
+
+      await expectLater(
+        store.capture(
+          request(
+            'protected',
+            DateTime.utc(2026, 1, 3),
+            captureId: captureId,
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+            commitGuard: accepted,
+          ),
+          policy,
+        ),
+        throwsA(isA<LocalHistoryCaptureCancelled>()),
+      );
+      expect(await file.exists(), isFalse);
+      expect((await store.readRevision(safe.revision!.id))!.source, 'safe');
+      await expectLater(
+        store.capture(
+          request(
+            'protected',
+            DateTime.utc(2026, 1, 3),
+            captureId: captureId,
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        ),
+        throwsA(isA<LocalHistoryClearConflict>()),
+      );
+      // An interrupted cleanup must not allow index repair to revive it.
+      await file.writeAsBytes(originalRecord);
+      await indexFile.writeAsString('{damaged');
+      expect((await store.load()).revisions.map((revision) => revision.id), [
+        safe.revision!.id,
+      ]);
+    });
+  }
+
+  test(
+    'follow-up orphan renewal retries after index publication failure',
+    () async {
+      final safe = await store.capture(
+        request('safe', DateTime.utc(2026)),
+        policy,
+      );
+      const captureId = 'orphan_renewal_retry_0001';
+      final original = await store.capture(
+        request(
+          'protected',
+          DateTime.utc(2026, 1, 2),
+          captureId: captureId,
+          reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+        ),
+        policy,
+      );
+      final file = File(
+        p.join(root.path, 'revisions', original.document.id, '$captureId.json'),
+      );
+      final indexFile = File(p.join(root.path, 'index.json'));
+      final index = jsonDecode(await indexFile.readAsString()) as Map;
+      (index['revisions'] as List).removeWhere(
+        (dynamic revision) => revision['id'] == captureId,
+      );
+      await indexFile.writeAsString(jsonEncode(index));
+      var fail = true;
+      final tested = FileLocalHistoryStore(
+        rootDirectory: () async => root,
+        createId: () {
+          if (fail &&
+              (jsonDecode(file.readAsStringSync())
+                      as Map)['revision']['protectedAt'] !=
+                  null) {
+            fail = false;
+            throw const FileSystemException(
+              'Injected index publication failure',
+            );
+          }
+          return 'renewal_retry_identity_${++ids}';
+        },
+      );
+      final retry = request(
+        'protected',
+        DateTime.utc(2026, 1, 3),
+        captureId: captureId,
+        reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+      );
+      await expectLater(
+        tested.capture(retry, policy),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(fail, isFalse);
+      expect(await tested.readRevision(captureId), isNull);
+      expect((await tested.readRevision(safe.revision!.id))!.source, 'safe');
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      final recovered = await reopened.capture(retry, policy);
+      expect(recovered.revision!.id, captureId);
+      expect(recovered.revision!.protectedAt, retry.capturedAt);
+      expect((await reopened.readRevision(captureId))!.source, 'protected');
+      expect((await reopened.load()).revisions, hasLength(2));
+    },
+  );
+
   for (final damage in ['source', 'format', 'document', 'version']) {
     test(
       'unindexed retry validates record $damage before publication',

@@ -250,8 +250,10 @@ class FileLocalHistoryStore
             if (orphan != null) {
               // Finish only the exact retained capture whose record committed
               // before its index. Preserve later authoritative identity changes.
+              // The controller may retry a saved capture as a checkpoint. Its
+              // stable identity, source and format still describe the accepted
+              // capture; retain the original reason stored in the record.
               if (orphan.document.remoteNote != request.remoteNote ||
-                  existing.reason != request.reason ||
                   (request.path != null &&
                       existing.historicalPath != request.path &&
                       !orphan.document.historicalPaths.any(
@@ -278,6 +280,21 @@ class FileLocalHistoryStore
               }
               _requireCaptureStillAccepted(request);
               index = index.withCapture(document, existing);
+            }
+            _requireCaptureStillAccepted(request);
+            if (request.reason ==
+                LocalHistoryCaptureReason.beforeHistoryTraversal) {
+              return _reuseTraversalProtection(
+                root,
+                index,
+                document,
+                existing,
+                request,
+                policy,
+                indexBeforeRecovery: orphan == null ? null : originalIndex,
+              );
+            }
+            if (orphan != null) {
               await _publishIndex(root, index);
               if (!_captureStillAccepted(request)) {
                 await _publishIndex(
@@ -298,18 +315,7 @@ class FileLocalHistoryStore
                 captureId,
                 request.capturedAt.toUtc(),
               );
-            }
-            _requireCaptureStillAccepted(request);
-            if (request.reason ==
-                LocalHistoryCaptureReason.beforeHistoryTraversal) {
-              return _reuseTraversalProtection(
-                root,
-                index,
-                document,
-                existing,
-                request,
-                policy,
-              );
+              _requireCaptureStillAccepted(request);
             }
             return LocalHistoryCaptureResult(
               document: document,
@@ -467,8 +473,9 @@ class FileLocalHistoryStore
     LocalHistoryDocument document,
     LocalHistoryRevisionSummary previous,
     LocalHistoryCaptureRequest request,
-    LocalHistoryPolicy policy,
-  ) async {
+    LocalHistoryPolicy policy, {
+    _Index? indexBeforeRecovery,
+  }) async {
     if (previous.storageBytes > policy.maximumBytes) {
       throw const LocalHistoryStorageException(
         'The revision is larger than the Local History storage limit.',
@@ -479,6 +486,23 @@ class FileLocalHistoryStore
     final previousRecord = identical(renewed, previous)
         ? null
         : await target.readAsString();
+    Future<void> cancelRenewal({required bool indexPublished}) async {
+      if (indexBeforeRecovery != null) {
+        await _publishIndex(
+          root,
+          indexBeforeRecovery.copyWith(
+            tombstones: {...indexBeforeRecovery.tombstones, previous.id},
+          ),
+        );
+        await _deleteFileBestEffort(target);
+      } else {
+        if (previousRecord != null) {
+          await _publishReplacingFile(target, previousRecord);
+        }
+        if (indexPublished) await _publishIndex(root, index);
+      }
+    }
+
     _requireCaptureStillAccepted(request);
     if (previousRecord != null) {
       // Publish the complete record first so an index rebuild retains the
@@ -495,9 +519,7 @@ class FileLocalHistoryStore
       renewed = renewed.copyWith(storageBytes: bytes);
     }
     if (!_captureStillAccepted(request)) {
-      if (previousRecord != null) {
-        await _publishReplacingFile(target, previousRecord);
-      }
+      await cancelRenewal(indexPublished: false);
       throw const LocalHistoryCaptureCancelled();
     }
     final updated = index
@@ -510,10 +532,7 @@ class FileLocalHistoryStore
         );
     await _publishIndex(root, updated);
     if (!_captureStillAccepted(request)) {
-      if (previousRecord != null) {
-        await _publishReplacingFile(target, previousRecord);
-      }
-      await _publishIndex(root, index);
+      await cancelRenewal(indexPublished: true);
       throw const LocalHistoryCaptureCancelled();
     }
     await _applyRetention(

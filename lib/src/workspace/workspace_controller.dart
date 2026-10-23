@@ -7801,7 +7801,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         current.id != targetId ||
         current.filePath != targetPath ||
         current.revision != targetRevision ||
-        current.text != targetText) {
+        current.text != targetText ||
+        (current.isRemote && current.readonly)) {
       return false;
     }
     final nextSelection = change == null
@@ -8208,8 +8209,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         // that must not be destroyed under a successful protection result.
         if (await _service.pathExists(path)) return null;
         protection.diskSnapshots[path] = null;
+      } on WorkspaceFileDecodingException catch (error) {
+        // Unsupported bytes need no history revision, but their classification
+        // must remain current. A fresh read here could already be valid text.
+        protection.diskSnapshots[path] = error.snapshot;
       } on FormatException {
-        // Binary or invalid text content is outside Local History's scope.
+        // Without the failed read's snapshot, protection cannot establish that
+        // the unsupported source stayed unchanged before replacement.
+        return null;
       }
     }
     return await _isLocalHistoryLossProtectionCurrent(protection)
