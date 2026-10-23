@@ -36,6 +36,352 @@ void main() {
     if (await root.exists()) await root.delete(recursive: true);
   });
 
+  for (final delayedFailure in [false, true]) {
+    test(
+      'retention eviction does not discharge a later traversal protection (delayedFailure=$delayedFailure)',
+      () async {
+        const source = 'recoverable pre-traversal X';
+        final path = p.join(root.path, 'retained.md');
+        await File(path).writeAsString('baseline');
+        final historyRoot = Directory(p.join(root.path, 'history'));
+        final disk = FileLocalHistoryStore(
+          rootDirectory: () async => historyRoot,
+        );
+        final store = _ObservedTraversalStore(disk);
+        addTearDown(() {
+          if (!store.release.isCompleted) store.release.complete();
+        });
+        var now = DateTime.utc(2026, 1, 1);
+        DateTime clock() => now = now.add(const Duration(seconds: 1));
+        final sessionPath = p.join(root.path, 'session.json');
+        final recoveryPath = p.join(root.path, 'recovery.json');
+        final h = await _harness(
+          store,
+          clock: clock,
+          sessionStore: JsonDocumentSessionStore(filePathOverride: sessionPath),
+          recoveryStore: JsonDocumentRecoveryStore(
+            filePathOverride: recoveryPath,
+          ),
+        );
+        await h.container
+            .read(appSettingsControllerProvider.notifier)
+            .setLocalHistoryMaximumStorageMiB(16);
+        await h.controller.openPath(path);
+        final history = h.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        h.controller.updateActiveText(source);
+        expect(h.controller.undoActiveBuffer(), isTrue);
+        expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        expect(history.retainedDetachedCaptures, isEmpty);
+        final protected = (await disk.load()).revisions.singleWhere(
+          (r) => r.checksum == sourceChecksum(source),
+        );
+        expect(
+          protected.reason,
+          LocalHistoryCaptureReason.beforeHistoryTraversal,
+        );
+        expect(store.requests.where((r) => r.source == source), hasLength(1));
+
+        // Ordinary captures exceed the valid 16 MiB budget. Retention deletes X
+        // while another revision keeps this document's history identity alive.
+        for (final unit in ['Y', 'Z']) {
+          await disk.capture(
+            LocalHistoryCaptureRequest(
+              documentId: protected.documentId,
+              path: path,
+              displayName: 'retained.md',
+              source: unit * (8 * 1024 * 1024),
+              format: TextFormatMetadata.utf8Lf,
+              capturedAt: clock(),
+              reason: LocalHistoryCaptureReason.saved,
+            ),
+            history.policy,
+          );
+        }
+        expect(await disk.readRevision(protected.id), isNull);
+        expect((await disk.load()).documents.single.id, protected.documentId);
+        expect(
+          h.state.activeBuffer!.editorState.undoState.redo.last.text,
+          source,
+        );
+        final afterEviction = store.requests.length;
+        if (delayedFailure) store.blockedSource = source;
+
+        // No await or checkpoint between returning to X and retiring it again.
+        for (var i = 0; i < (delayedFailure ? 12 : 1); i++) {
+          expect(h.controller.redoActiveBuffer(), isTrue);
+          expect(h.state.activeText, source);
+          expect(h.controller.undoActiveBuffer(), isTrue);
+        }
+        h.controller.updateActiveText('new branch');
+        expect(h.state.activeBuffer!.editorState.undoState.redo, isEmpty);
+        expect(
+          history.retainedDetachedCaptures.where(
+            (c) => c.protection?.snapshot.source == source,
+          ),
+          hasLength(1),
+        );
+        if (delayedFailure) {
+          await store.started.future;
+          await h.controller.flushPersistence();
+          final journal = await JsonDocumentSessionStore(
+            filePathOverride: sessionPath,
+          ).load();
+          expect(
+            journal!.retainedLocalHistoryCaptures.where(
+              (c) => c.protection?.snapshot.source == source,
+            ),
+            hasLength(1),
+          );
+          expect(
+            store.requests.skip(afterEviction).where((r) => r.source == source),
+            hasLength(1),
+          );
+          store.release.complete();
+        }
+        expect(
+          await history.flushAll(h.state.documentBuffers),
+          !delayedFailure,
+        );
+        final freshX = store.requests
+            .skip(afterEviction)
+            .where((r) => r.source == source)
+            .toList();
+        expect(
+          freshX.every(
+            (r) => r.reason == LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          isTrue,
+        );
+        if (!delayedFailure) {
+          expect(await h.controller.saveActive(), isTrue);
+          expect(
+            await h.controller.closeDocumentBuffer(h.state.activeBuffer!.id),
+            isTrue,
+          );
+        } else {
+          expect(
+            history.retainedDetachedCaptures.where(
+              (c) => c.protection?.snapshot.source == source,
+            ),
+            hasLength(1),
+          );
+        }
+        await h.controller.flushPersistence();
+        h.container.dispose();
+
+        final reopened = await _harness(
+          FileLocalHistoryStore(rootDirectory: () async => historyRoot),
+          clock: clock,
+          sessionStore: JsonDocumentSessionStore(filePathOverride: sessionPath),
+          recoveryStore: JsonDocumentRecoveryStore(
+            filePathOverride: recoveryPath,
+          ),
+        );
+        await reopened.container
+            .read(appSettingsControllerProvider.notifier)
+            .setLocalHistoryMaximumStorageMiB(16);
+        if (delayedFailure) {
+          expect(await reopened.controller.restorePreviousSession(), isTrue);
+          final resumed = reopened.container.read(
+            localHistoryControllerProvider.notifier,
+          );
+          expect(
+            await resumed.flushAll(reopened.state.documentBuffers),
+            isTrue,
+          );
+        } else {
+          await reopened.controller.openPath(path);
+        }
+        expect(reopened.state.activeText, 'new branch');
+        final freshDisk = FileLocalHistoryStore(
+          rootDirectory: () async => historyRoot,
+        );
+        final sources = await _revisionSources(
+          freshDisk,
+          (await freshDisk.load()).revisions,
+        );
+        expect(
+          sources.contains(source),
+          isTrue,
+          reason:
+              'X must remain recoverable after retention, branching and restart',
+        );
+        if (!delayedFailure) {
+          expect(
+            freshX,
+            hasLength(1),
+            reason: 'Only a protective capture may preserve X',
+          );
+        }
+        await reopened.controller.flushPersistence();
+      },
+    );
+  }
+
+  for (final memory in [false, true]) {
+    for (final scenario in [
+      (eviction: false, failedCompletion: false, settledFailure: false),
+      (eviction: true, failedCompletion: false, settledFailure: false),
+      (eviction: true, failedCompletion: true, settledFailure: false),
+      (eviction: true, failedCompletion: true, settledFailure: true),
+    ]) {
+      final (:eviction, :failedCompletion, :settledFailure) = scenario;
+      test(
+        'a later traversal renews an in-flight protection (memory=$memory, eviction=$eviction, failedCompletion=$failedCompletion, settledFailure=$settledFailure)',
+        () async {
+          final path = p.join(root.path, 'delayed-completion.md');
+          await File(path).writeAsString('baseline');
+          final LocalHistoryStore backing = memory
+              ? MemoryLocalHistoryStore()
+              : FileLocalHistoryStore(
+                  rootDirectory: () async =>
+                      Directory(p.join(root.path, 'history')),
+                );
+          final store = _ObservedTraversalStore(backing)
+            ..holdCompletedSource = 'delayed X'
+            ..failHeldCompletion = failedCompletion;
+          addTearDown(() {
+            if (!store.release.isCompleted) store.release.complete();
+          });
+          var now = DateTime.utc(2026);
+          final h = await _harness(store, clock: () => now);
+          await h.controller.openPath(path);
+          final history = h.container.read(
+            localHistoryControllerProvider.notifier,
+          );
+          expect(await history.flushAll(h.state.documentBuffers), isTrue);
+          h.controller.updateActiveText('delayed X');
+          expect(h.controller.undoActiveBuffer(), isTrue);
+          await store.started.future;
+          if (settledFailure) {
+            store.release.complete();
+            await _waitFor(
+              () =>
+                  h.container
+                      .read(localHistoryControllerProvider)
+                      .warning
+                      ?.kind ==
+                  LocalHistoryWarningKind.capture,
+              operation: 'first protective publication failure settles',
+            );
+            expect(
+              store.requests.where((request) => request.source == 'delayed X'),
+              hasLength(1),
+            );
+          }
+          now = now.add(const Duration(days: 31));
+          if (eviction) {
+            final original = (await backing.load()).revisions.singleWhere(
+              (revision) => revision.checksum == sourceChecksum('delayed X'),
+            );
+            await backing.capture(
+              LocalHistoryCaptureRequest(
+                documentId: original.documentId,
+                path: path,
+                displayName: 'delayed-completion.md',
+                source: 'retention keeper',
+                format: TextFormatMetadata.utf8Lf,
+                capturedAt: now,
+                reason: LocalHistoryCaptureReason.saved,
+              ),
+              history.policy,
+            );
+            expect(await backing.readRevision(original.id), isNull);
+            expect(
+              (await backing.load()).documents.single.id,
+              original.documentId,
+            );
+          }
+          expect(h.controller.redoActiveBuffer(), isTrue);
+          expect(h.controller.undoActiveBuffer(), isTrue);
+          h.controller.updateActiveText('new branch');
+          expect(
+            history.retainedDetachedCaptures.where(
+              (c) => c.protection?.snapshot.source == 'delayed X',
+            ),
+            hasLength(1),
+          );
+          if (!store.release.isCompleted) store.release.complete();
+          expect(await history.flushAll(h.state.documentBuffers), isTrue);
+          final sources = await _revisionSources(
+            backing,
+            (await backing.load()).revisions,
+          );
+          expect(sources, containsAll(['delayed X', 'new branch']));
+          expect(
+            sources.where((source) => source == 'delayed X'),
+            hasLength(1),
+          );
+          expect(
+            store.requests.where((request) => request.source == 'delayed X'),
+            hasLength(2),
+          );
+        },
+      );
+    }
+
+    test(
+      'completed traversal captures are revalidated without duplicate revisions (memory=$memory)',
+      () async {
+        final path = p.join(root.path, 'repeated.md');
+        await File(path).writeAsString('baseline');
+        final LocalHistoryStore backing = memory
+            ? MemoryLocalHistoryStore()
+            : FileLocalHistoryStore(
+                rootDirectory: () async =>
+                    Directory(p.join(root.path, 'history')),
+              );
+        final store = _ObservedTraversalStore(backing);
+        var now = DateTime.utc(2026);
+        final h = await _harness(
+          store,
+          clock: () => now = now.add(const Duration(seconds: 1)),
+        );
+        await h.controller.openPath(path);
+        final history = h.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        h.controller.updateActiveText('repeated X');
+        expect(h.controller.undoActiveBuffer(), isTrue);
+        await _waitFor(
+          () => history.retainedDetachedCaptures.isEmpty,
+          operation: 'first traversal protection settles',
+        );
+        for (var i = 0; i < 12; i++) {
+          expect(h.controller.redoActiveBuffer(), isTrue);
+          await _waitFor(
+            () => history.retainedDetachedCaptures.isEmpty,
+            operation: 'redo protection settles',
+          );
+          expect(h.controller.undoActiveBuffer(), isTrue);
+          await _waitFor(
+            () => history.retainedDetachedCaptures.isEmpty,
+            operation: 'undo protection settles',
+          );
+        }
+        expect(
+          store.requests.where(
+            (r) => r.reason == LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          hasLength(25),
+        );
+        expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        final snapshot = await backing.load();
+        expect(
+          snapshot.revisions.where(
+            (r) => r.checksum == sourceChecksum('repeated X'),
+          ),
+          hasLength(1),
+        );
+        expect(snapshot.revisions.length, lessThanOrEqualTo(3));
+      },
+    );
+  }
+
   test(
     'reload is an undoable replacement after an existing redo branch',
     () async {
@@ -6956,6 +7302,51 @@ class _MemorySettingsStore implements LocalSettingsStore {
 
   @override
   Future<void> save(Map<String, Object?> json) async => value = json;
+}
+
+class _ObservedTraversalStore extends _FailingProtectiveStore {
+  _ObservedTraversalStore(super.delegate);
+
+  final requests = <LocalHistoryCaptureRequest>[];
+  String? blockedSource;
+  String? holdCompletedSource;
+  var failHeldCompletion = false;
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    requests.add(request);
+    if (request.reason == LocalHistoryCaptureReason.beforeHistoryTraversal &&
+        request.source == blockedSource) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
+      throw FileSystemException(
+        'Injected re-protection publication failure',
+        request.path ?? '',
+        const OSError('temporarily unavailable', 11),
+      );
+    }
+    if (request.reason == LocalHistoryCaptureReason.beforeHistoryTraversal &&
+        request.source == holdCompletedSource &&
+        !started.isCompleted) {
+      final result = await delegate.capture(request, policy);
+      started.complete();
+      await release.future;
+      if (failHeldCompletion) {
+        throw const FileSystemException(
+          'Injected failure after protective publication',
+          '',
+          OSError('temporarily unavailable', 11),
+        );
+      }
+      return result;
+    }
+    return delegate.capture(request, policy);
+  }
 }
 
 class _FailingProtectiveStore implements LocalHistoryStore {

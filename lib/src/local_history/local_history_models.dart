@@ -149,6 +149,7 @@ class LocalHistoryRevisionSummary {
     required this.storageBytes,
     required this.sourceLength,
     this.historicalPath,
+    this.protectedAt,
   });
 
   final String id;
@@ -160,6 +161,30 @@ class LocalHistoryRevisionSummary {
   final int sourceLength;
   final String? historicalPath;
 
+  /// A later traversal can protect an existing record without moving its
+  /// original timeline event or creating another full-source revision.
+  final DateTime? protectedAt;
+
+  DateTime get retentionTime =>
+      protectedAt != null && protectedAt!.isAfter(capturedAt)
+      ? protectedAt!
+      : capturedAt;
+
+  LocalHistoryRevisionSummary copyWith({
+    DateTime? protectedAt,
+    int? storageBytes,
+  }) => LocalHistoryRevisionSummary(
+    id: id,
+    documentId: documentId,
+    capturedAt: capturedAt,
+    reason: reason,
+    checksum: checksum,
+    storageBytes: storageBytes ?? this.storageBytes,
+    sourceLength: sourceLength,
+    historicalPath: historicalPath,
+    protectedAt: protectedAt ?? this.protectedAt,
+  );
+
   Map<String, Object?> toJson() => {
     'id': id,
     'documentId': documentId,
@@ -169,6 +194,8 @@ class LocalHistoryRevisionSummary {
     'storageBytes': storageBytes,
     'sourceLength': sourceLength,
     'historicalPath': historicalPath,
+    if (protectedAt != null)
+      'protectedAt': protectedAt!.toUtc().toIso8601String(),
   };
 
   factory LocalHistoryRevisionSummary.fromJson(Map<String, Object?> json) {
@@ -183,6 +210,9 @@ class LocalHistoryRevisionSummary {
       storageBytes: (json['storageBytes'] as num?)?.toInt() ?? 0,
       sourceLength: (json['sourceLength'] as num?)?.toInt() ?? 0,
       historicalPath: json['historicalPath']?.toString(),
+      protectedAt: json['protectedAt'] == null
+          ? null
+          : DateTime.parse(json['protectedAt'].toString()).toUtc(),
     );
   }
 }

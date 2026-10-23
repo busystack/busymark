@@ -87,12 +87,30 @@ edit, or another protective operation cannot replace it. The ordinary pending
 checkpoint still follows the latest source on its fixed `putIfAbsent` timer.
 The checkpoint window is not a debounce.
 
-A bounded set deduplicates repeated source/format protections per document
-identity and recording epoch. That set contains metadata only: unresolved full
-sources remain independently owned even if a deduplication key ages out.
-Under its existing capture lock, the store also lets traversal protection reuse
-any exact source/format revision in the same lineage. Ordinary checkpoints keep
-their adjacent-only deduplication rule and timeline semantics.
+Deduplication shares an unresolved owner only while it still holds the exact
+source, format, document identity and recording epoch. Completed captures leave
+no fingerprint that could discharge a later obligation: retention may have
+removed their revision. A traversal joining a retained owner advances that
+owner's required revision and assigns a fresh capture identity. An older
+completion or failure cannot release or overwrite the new obligation; a
+retention tombstone for its earlier attempt cannot cancel the fresh traversal.
+Distinct unresolved sources remain independently owned.
+
+Under its existing serialization and file lock, the store verifies that a reused
+revision still exists and contains the exact source and format. Traversal reuse
+renews its optional `protectedAt` timestamp in the record and index before
+releasing the retained owner. Age and storage-budget pruning use the later of
+`capturedAt` and `protectedAt`; the original capture time, reason, identity and
+timeline position stay unchanged. This applies even when retrying a durable
+capture identity. Repeated traversal renews one record rather than appending
+duplicate full-source revisions. Ordinary checkpoints keep their adjacent-only
+deduplication rule and timeline semantics.
+
+Renewal publishes the complete record before the index so index reconstruction
+preserves the protection. Failed publication leaves independent retained work
+available for retry or restart; cancellation restores the prior record and
+index. Renewed records remain subject to the configured age and size limits,
+and expire normally after their last protection. No retention setting changes.
 If committed revisions share a timestamp, adjacency chooses the later appended
 revision; the clock tie must not select an older baseline and duplicate a
 checkpoint that protection already stored.
@@ -136,6 +154,9 @@ source with the visible controller and live rich serialization.
 | Reload, monitor, workspace or remote replacement with both stacks populated | Replacement is undoable, the inappropriate redo branch is gone, displaced content survives. |
 | Undo before checkpoint, then a new branch, with autosave on/off | The original pre-Undo work survives close/reopen. |
 | Delayed/failed captures and multiple protections | Each obligation survives independently; a fresh disk-backed restart can finish recovery. |
+| Successful protection, normal budget eviction, then another traversal and branch | The second protection preserves the source through close and a fresh disk-backed restart. |
+| Reuse of expired or older budget-priority content, in file and memory stores | Fresh protection survives branch capture and pruning; its original timeline event stays unchanged and it still expires normally. |
+| Repeated traversal, delayed completion, failed renewal or index reconstruction | One record per exact protected source; no old completion discharges a newer obligation, and retry/restart preserves the source. |
 | Same-content save/reload, composition and pending inspector draft | Existing editing, redo and ownership contracts remain intact. |
 
 The Source remount regression predates these repairs. WYSIWYG's exhausted

@@ -350,9 +350,6 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   final _documentIdsByBuffer = <String, String>{};
   final _clearingDocumentIdsByBuffer = <String, String>{};
   final _pending = <String, LocalHistoryBufferSnapshot>{};
-  // Only deduplication metadata. The actual obligations live in independently
-  // owned retained protections, including after this bounded set rolls over.
-  final _traversalCaptures = <(String, String, String, String, int, int)>{};
   // A baseline cannot coalesce with edited text: both snapshots are needed.
   final _baselines = <String, LocalHistoryBufferSnapshot>{};
   final _baselinesRequiringVacantPath = <String>{};
@@ -419,17 +416,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     _store = ref.read(localHistoryStoreProvider);
     _clock = ref.read(localHistoryClockProvider);
     _timerFactory = ref.read(localHistoryTimerFactoryProvider);
-    ref.listen<AppSettings>(appSettingsControllerProvider, (previous, next) {
-      if (previous?.localHistoryRecordingEnabled !=
-              next.localHistoryRecordingEnabled ||
-          !listEquals(
-            previous?.localHistoryExcludedPaths,
-            next.localHistoryExcludedPaths,
-          )) {
-        _traversalCaptures.clear();
-      }
-      unawaited(_applyRecordingPolicy(next));
-    });
+    ref.listen<AppSettings>(
+      appSettingsControllerProvider,
+      (previous, next) => unawaited(_applyRecordingPolicy(next)),
+    );
     ref.onDispose(() {
       _liveOperationOwners.remove(_operationOwnerToken);
       _historyGeneration++;
@@ -722,23 +712,50 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         policy.excludes(previous.filePath)) {
       return;
     }
-    final fingerprint = (
-      previous.id,
-      previous.identity,
-      sourceChecksum(previous.text),
-      jsonEncode(previous.format.toJson()),
-      _historyGeneration,
-      _bufferGeneration(previous.id),
+    final previousSnapshot = _acceptAtCurrentClearEpoch(
+      LocalHistoryBufferSnapshot.fromBuffer(previous),
     );
-    if (_traversalCaptures.add(fingerprint)) {
-      if (_traversalCaptures.length > DocumentUndoState.historyLimit * 2) {
-        _traversalCaptures.remove(_traversalCaptures.first);
+    // Only an unresolved owner still holding this source can discharge the
+    // obligation here. Completed captures must be revalidated by the store:
+    // normal retention may already have evicted their durable revision.
+    final existingOwner = _protections.entries.where((entry) {
+      final retained = entry.value.snapshot;
+      return entry.value.reason ==
+              LocalHistoryCaptureReason.beforeHistoryTraversal &&
+          _detachedClosedSourceId(entry.key) == previous.id &&
+          retained.acceptedClearEpoch == previousSnapshot.acceptedClearEpoch &&
+          _sameOptionalPath(retained.path, previousSnapshot.path) &&
+          retained.remoteNote == previousSnapshot.remoteNote &&
+          _sameHistoryFormat(retained.format, previousSnapshot.format) &&
+          retained.text == previousSnapshot.text;
+    }).firstOrNull;
+    if (existingOwner != null) {
+      // Keep one source owner, but advance its accepted obligation. An older
+      // in-flight completion must not release protection for this traversal.
+      final owner = existingOwner.key;
+      final protection = existingOwner.value;
+      // Its previous capture identity may already be retention-tombstoned.
+      // A fresh obligation must revalidate content without replaying that ID.
+      final snapshot = previousSnapshot
+          .forBuffer(owner)
+          .withCaptureId(_newPathOperationId());
+      _protections[owner] = (
+        snapshot: snapshot,
+        reason: protection.reason,
+        force: protection.force,
+        ignoreBinding: protection.ignoreBinding,
+        allowPathChange: protection.allowPathChange,
+        bindResult: protection.bindResult,
+        requireVacantPath: protection.requireVacantPath,
+        expectedTarget: protection.expectedTarget,
+        captureId: snapshot.captureId,
+      );
+      if (_inFlightSnapshots.containsKey(owner)) {
+        unawaited(_enqueue(owner, () => _settleBufferWork(owner)));
       }
+    } else {
       final owner = _newDetachedOwner(
         'history-capture:traversal:${previous.id}',
-      );
-      final previousSnapshot = _acceptAtCurrentClearEpoch(
-        LocalHistoryBufferSnapshot.fromBuffer(previous),
       );
       final snapshot = previousSnapshot
           .forBuffer(owner)
@@ -5088,16 +5105,21 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           if (stage == _LocalHistoryFailureStage.baseline) {
             _baselines.putIfAbsent(snapshot.bufferId, () => snapshot);
           } else if (stage == _LocalHistoryFailureStage.protection) {
-            _protections[snapshot.bufferId] = (
-              snapshot: snapshot,
-              reason: reason,
-              force: force,
-              ignoreBinding: ignoreBinding,
-              allowPathChange: allowPathChange,
-              bindResult: bindResult,
-              requireVacantPath: requireVacantPath,
-              expectedTarget: expectedTarget,
-              captureId: effectiveCaptureId,
+            // An older in-flight failure cannot replace accepted protection
+            // for a later traversal, including its fresh capture identity.
+            _protections.putIfAbsent(
+              snapshot.bufferId,
+              () => (
+                snapshot: snapshot,
+                reason: reason,
+                force: force,
+                ignoreBinding: ignoreBinding,
+                allowPathChange: allowPathChange,
+                bindResult: bindResult,
+                requireVacantPath: requireVacantPath,
+                expectedTarget: expectedTarget,
+                captureId: effectiveCaptureId,
+              ),
             );
           }
           _recordFailure(
