@@ -28,6 +28,173 @@ const _accountId = 'ba6d02cd-42fe-4e14-a577-3e2c13822459';
 
 void main() {
   test(
+    'follow-up remote restore rejects a read-only transition during protection',
+    () async {
+      var remote = serverNote(1, content: 'current source', etag: 'unchanged');
+      var writes = 0;
+      final store = _BlockingRestoreHistoryStore();
+      addTearDown(() {
+        if (!store.release.isCompleted) store.release.complete();
+      });
+      final h = await _Harness.create(
+        seedLocal: false,
+        historyStore: store,
+        client: MockClient((request) async {
+          if (request.method != 'GET') writes++;
+          return http.Response(
+            jsonEncode(request.url.path.endsWith('/1') ? remote : [remote]),
+            200,
+          );
+        }),
+      );
+      addTearDown(h.dispose);
+      await h.repository.synchronize(_accountId, allowWrites: false);
+      await h.controller.openNextcloudWorkspace(_accountId);
+      await h.controller.refreshNextcloudNotes();
+      final before = h.state.activeBuffer!;
+      final captured = await store.capture(
+        LocalHistoryCaptureRequest(
+          remoteNote: before.remoteNote,
+          displayName: before.displayName,
+          source: 'historical source',
+          format: before.format,
+          capturedAt: DateTime.now().toUtc(),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        const LocalHistoryPolicy(),
+      );
+      final revision = (await store.readRevision(captured.revision!.id))!;
+      final restoring = h.controller.restoreLocalHistoryRevision(
+        document: captured.document,
+        revision: revision,
+      );
+      await store.started.future;
+      remote = serverNote(
+        1,
+        content: 'current source',
+        etag: 'unchanged',
+        readonly: true,
+      );
+      await h.controller.refreshNextcloudNotes();
+      expect(h.state.activeBuffer!.readonly, isTrue);
+      expect(h.state.activeBuffer!.revision, before.revision);
+      expect(h.state.activeText, before.text);
+      store.release.complete();
+      expect(await restoring, isFalse);
+      expect(h.state.activeBuffer!.readonly, isTrue);
+      expect(h.state.activeBuffer!.revision, before.revision);
+      expect(h.state.activeText, before.text);
+      expect(
+        h.state.activeBuffer!.editorState.undoState,
+        same(before.editorState.undoState),
+      );
+      expect(
+        h.repository.noteById(before.remoteNote!.localId)!.content,
+        before.text,
+      );
+      expect(writes, 0);
+    },
+  );
+
+  for (final flushBetween in [false, true]) {
+    test('remote refresh retains displaced and incoming versions after close '
+        '(flushBetween=$flushBetween)', () async {
+      var remote = serverNote(1, content: 'R0', etag: 'v0');
+      final h = await _Harness.create(
+        seedLocal: false,
+        client: MockClient(
+          (request) async => http.Response(
+            jsonEncode(request.url.path.endsWith('/1') ? remote : [remote]),
+            200,
+          ),
+        ),
+      );
+      addTearDown(h.dispose);
+      await h.repository.synchronize(_accountId, allowWrites: false);
+      await h.controller.openNextcloudWorkspace(_accountId);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      for (var version = 1; version <= 2; version++) {
+        remote = serverNote(1, content: 'R$version', etag: 'v$version');
+        await h.controller.refreshNextcloudNotes();
+        expect(h.state.activeText, 'R$version');
+        if (flushBetween) {
+          expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        }
+      }
+      expect(
+        await h.controller.closeDocumentBuffer(h.state.activeBuffer!.id),
+        isTrue,
+      );
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      final store = h.container.read(localHistoryStoreProvider);
+      final snapshot = await store.load();
+      final sources = await Future.wait(
+        snapshot.revisions.map(
+          (r) async => (await store.readRevision(r.id))!.source,
+        ),
+      );
+      expect(sources, containsAll(['R0', 'R1', 'R2']));
+      expect(snapshot.documents, hasLength(1));
+    });
+  }
+
+  for (final dirty in [false, true]) {
+    test(
+      'remote history restore navigates accounts safely from local workspace '
+      '(dirty=$dirty)',
+      () async {
+        final h = await _Harness.create();
+        addTearDown(h.dispose);
+        await h.controller.openNextcloudWorkspace(_accountId);
+        final buffer = h.state.activeBuffer!;
+        final store = h.container.read(localHistoryStoreProvider);
+        final captured = await store.capture(
+          LocalHistoryCaptureRequest(
+            remoteNote: buffer.remoteNote,
+            displayName: buffer.displayName,
+            source: 'retained remote source\n',
+            format: buffer.format,
+            capturedAt: DateTime.now().toUtc(),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
+        );
+        final revision = (await store.readRevision(captured.revision!.id))!;
+        final localPath = p.join(h.root.path, 'local.md');
+        await File(localPath).writeAsString('local source');
+        await h.controller.openPath(localPath);
+        if (dirty) h.controller.updateActiveText('unsaved local source');
+        final current = await h.controller.localHistoryCurrentSource(
+          captured.document,
+          revision,
+        );
+        expect(current.canRestore, isTrue);
+        expect(
+          await h.controller.restoreLocalHistoryRevision(
+            document: captured.document,
+            revision: revision,
+          ),
+          !dirty,
+        );
+        if (dirty) {
+          expect(h.state.activeBuffer!.filePath, localPath);
+          expect(h.state.activeText, 'unsaved local source');
+        } else {
+          expect(h.state.workspace!.nextcloudAccountId, _accountId);
+          expect(h.state.activeBuffer!.remoteNote, buffer.remoteNote);
+          expect(h.state.activeText, revision.source);
+          expect(
+            h.repository.noteById(buffer.remoteNote!.localId)!.content,
+            revision.source,
+          );
+        }
+        expect(await File(localPath).readAsString(), 'local source');
+      },
+    );
+  }
+
+  test(
     'remote refresh is an undoable boundary with an existing redo branch',
     () async {
       var remote = serverNote(1, content: 'baseline', etag: 'base');
@@ -593,6 +760,7 @@ class _Harness {
     bool seedLocal = true,
     bool deferPersistence = false,
     Duration? persistenceDelay,
+    LocalHistoryStore? historyStore,
   }) async {
     final directory =
         root ??
@@ -640,7 +808,9 @@ class _Harness {
             const Duration(hours: 1),
           ),
         localSettingsStoreProvider.overrideWithValue(_Settings()),
-        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        localHistoryStoreProvider.overrideWithValue(
+          historyStore ?? MemoryLocalHistoryStore(),
+        ),
         nextcloudNotesRepositoryProvider.overrideWith(
           (ref) async => repository,
         ),
@@ -670,6 +840,23 @@ class _Harness {
     await repository.dispose();
     await monitor.dispose();
     if (ownsRoot) await root.delete(recursive: true);
+  }
+}
+
+class _BlockingRestoreHistoryStore extends MemoryLocalHistoryStore {
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.beforeRestore) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
+    }
+    return super.capture(request, policy);
   }
 }
 

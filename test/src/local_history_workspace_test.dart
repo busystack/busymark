@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -35,6 +36,472 @@ void main() {
   tearDown(() async {
     if (await root.exists()) await root.delete(recursive: true);
   });
+
+  test(
+    'renamed history restores its identity without claiming a replacement path',
+    () async {
+      final original = p.join(root.path, 'A.md');
+      final renamed = p.join(root.path, 'B.md');
+      await File(original).writeAsString('original');
+      final store = MemoryLocalHistoryStore();
+      final captured = await _capture(store, original, 'historical');
+      final revision = (await store.readRevision(captured.revision!.id))!;
+      final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+      await h.controller.openPath(root.path);
+      await h.controller.openActiveFile(original);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      expect(
+        await h.controller.renameWorkspaceEntity(original, 'B.md'),
+        isTrue,
+      );
+      expect(
+        await h.controller.closeDocumentBuffer(h.state.activeBuffer!.id),
+        isTrue,
+      );
+      await File(original).writeAsString('replacement A');
+      expect(await h.controller.openActiveFile(original), isTrue);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+
+      // Exercise a retained document object from before the rename as well.
+      final current = await h.controller.localHistoryCurrentSource(
+        captured.document,
+        revision,
+      );
+      expect(current.kind, LocalHistoryCurrentSourceKind.disk);
+      expect(current.source, 'original');
+      expect(
+        await h.controller.restoreLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+        ),
+        isTrue,
+      );
+      expect(h.state.activeBuffer!.filePath, renamed);
+      expect(h.state.bufferForPath(original)!.text, 'replacement A');
+      expect(await h.controller.saveActive(), isTrue);
+      expect(await File(renamed).readAsString(), 'historical');
+      expect(await File(original).readAsString(), 'replacement A');
+    },
+  );
+
+  for (final duringCapture in [false, true]) {
+    test(
+      'restore rejects a stale buffer after a peer changes its authoritative path '
+      '(duringCapture=$duringCapture)',
+      () async {
+        final original = p.join(root.path, 'A.md');
+        final moved = p.join(root.path, 'B.md');
+        await File(original).writeAsString('original source');
+        final store = _MutatingProtectionStore();
+        final captured = await _capture(store, original, 'historical source');
+        final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+        await h.controller.openPath(root.path);
+        await h.controller.openActiveFile(original);
+        final revision = (await store.readRevision(captured.revision!.id))!;
+        Future<void> move() async {
+          await File(original).rename(moved);
+          await File(original).writeAsString('replacement source');
+          await store.remapPath(original, moved);
+        }
+
+        if (duringCapture) {
+          store.afterCapture = (request) async {
+            if (request.reason == LocalHistoryCaptureReason.beforeRestore) {
+              store.afterCapture = null;
+              await move();
+            }
+          };
+        } else {
+          await move();
+        }
+        expect(
+          await h.controller.restoreLocalHistoryRevision(
+            document: captured.document,
+            revision: revision,
+          ),
+          isFalse,
+        );
+        expect(h.state.activeText, 'original source');
+        expect(await File(original).readAsString(), 'replacement source');
+        expect(await File(moved).readAsString(), 'original source');
+      },
+    );
+  }
+
+  for (final overwrite in [false, true]) {
+    for (final finalNewline in [false, true]) {
+      test('restore and Save agree with destination formatting '
+          '(overwrite=$overwrite, finalNewline=$finalNewline)', () async {
+        final path = p.join(root.path, 'destination.md');
+        final original = finalNewline ? 'current\n' : 'current';
+        await File(
+          path,
+        ).writeAsBytes([0xef, 0xbb, 0xbf, ...original.codeUnits]);
+        final source = finalNewline ? 'historical' : 'historical\n\n';
+        final store = MemoryLocalHistoryStore();
+        final captured = await _capture(
+          store,
+          overwrite ? p.join(root.path, 'missing.md') : path,
+          source,
+        );
+        final revision = (await store.readRevision(captured.revision!.id))!;
+        final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+        await h.controller.openPath(root.path);
+        await h.controller.openActiveFile(path);
+        expect(
+          overwrite
+              ? await h.controller.restoreMissingLocalHistoryRevision(
+                  document: captured.document,
+                  revision: revision,
+                  destinationPath: path,
+                  overwriteExisting: true,
+                )
+              : await h.controller.restoreLocalHistoryRevision(
+                  document: captured.document,
+                  revision: revision,
+                ),
+          isTrue,
+        );
+        final expected = finalNewline ? 'historical\n' : 'historical';
+        expect(h.state.activeText, expected);
+        expect(h.state.activeBuffer!.format.hasFinalNewline, finalNewline);
+        expect(await h.controller.saveActive(), isTrue);
+        final loaded = await const WorkspaceService().loadTextWithSnapshot(
+          path,
+        );
+        expect(loaded.text, expected);
+        expect(h.state.activeText, loaded.text);
+        expect(h.state.activeBuffer!.lastSavedText, loaded.text);
+        expect(h.state.activeBuffer!.isDirty, isFalse);
+        expect(loaded.format.hasUtf8Bom, isTrue);
+      });
+    }
+  }
+
+  for (final deletion in [false, true]) {
+    for (final dirty in [false, true]) {
+      test('protection retains fresh disk and editor versions '
+          '(deletion=$deletion, dirty=$dirty)', () async {
+        final path = p.join(root.path, 'protected.md');
+        await File(path).writeAsString('opened source');
+        final store = MemoryLocalHistoryStore();
+        final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+        await h.controller.openPath(root.path);
+        await h.controller.openActiveFile(path);
+        if (dirty) h.controller.updateActiveText('unsaved source');
+        await File(path).writeAsString('unreported external source');
+        expect(
+          deletion
+              ? await h.controller.deleteWorkspaceEntity(path)
+              : await h.controller.protectPathsBeforeExternalReplacement([
+                  path,
+                ]),
+          isTrue,
+        );
+        final snapshot = await store.load();
+        final sources = await Future.wait(
+          snapshot.revisions.map(
+            (r) async => (await store.readRevision(r.id))!.source,
+          ),
+        );
+        expect(
+          sources,
+          containsAll([
+            'unreported external source',
+            dirty ? 'unsaved source' : 'opened source',
+          ]),
+        );
+        expect(await File(path).exists(), !deletion);
+      });
+    }
+  }
+
+  test(
+    'recursive deletion protects files created since workspace discovery',
+    () async {
+      final folder = Directory(p.join(root.path, 'folder'));
+      await folder.create();
+      await File(p.join(folder.path, 'known.md')).writeAsString('known');
+      final store = MemoryLocalHistoryStore();
+      final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+      await h.controller.openPath(root.path);
+      final unseen = p.join(folder.path, 'unseen.md');
+      await File(unseen).writeAsString('newly created');
+      expect(await h.controller.deleteWorkspaceEntity(folder.path), isTrue);
+      final snapshot = await store.load();
+      final revision = snapshot.revisions.singleWhere(
+        (r) => r.historicalPath == unseen,
+      );
+      expect((await store.readRevision(revision.id))!.source, 'newly created');
+    },
+  );
+
+  for (final deletion in [false, true]) {
+    test(
+      'protection rejects disk changes during capture (deletion=$deletion)',
+      () async {
+        final path = p.join(root.path, 'racing.md');
+        await File(path).writeAsString('editor source');
+        final store = _MutatingProtectionStore();
+        final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+        await h.controller.openPath(root.path);
+        await h.controller.openActiveFile(path);
+        await File(path).writeAsString('protected disk source');
+        store.afterCapture = (request) async {
+          if (request.source == 'protected disk source') {
+            store.afterCapture = null;
+            await File(path).writeAsString('later external source');
+          }
+        };
+        expect(
+          deletion
+              ? await h.controller.deleteWorkspaceEntity(path)
+              : await h.controller.protectPathsBeforeExternalReplacement([
+                  path,
+                ]),
+          isFalse,
+        );
+        expect(await File(path).readAsString(), 'later external source');
+      },
+    );
+  }
+
+  test(
+    'deletion rechecks protected disk at the filesystem commit boundary',
+    () async {
+      final path = p.join(root.path, 'racing-delete.md');
+      await File(path).writeAsString('protected source');
+      final store = _MutatingProtectionStore();
+      final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+      await h.controller.openPath(root.path);
+      await h.controller.openActiveFile(path);
+      store.beforePathOperation = () =>
+          File(path).writeAsString('later source');
+      expect(await h.controller.deleteWorkspaceEntity(path), isFalse);
+      expect(await File(path).readAsString(), 'later source');
+    },
+  );
+
+  test(
+    'retained protective work recovers an unindexed record with a later retry time',
+    () async {
+      final path = p.join(root.path, 'retry.md');
+      await File(path).writeAsString('current source');
+      final historyRoot = Directory(p.join(root.path, 'history'));
+      var fail = false;
+      var ids = 0;
+      final store = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+        createId: () {
+          if (fail &&
+              Directory(p.join(historyRoot.path, 'revisions'))
+                  .listSync(recursive: true)
+                  .whereType<File>()
+                  .any(
+                    (file) =>
+                        (jsonDecode(file.readAsStringSync())
+                            as Map)['revision']['reason'] ==
+                        'beforeRestore',
+                  )) {
+            fail = false;
+            throw const FileSystemException(
+              'Injected publication failure',
+              '',
+              OSError('', 11),
+            );
+          }
+          return 'retry_identity_${++ids}';
+        },
+      );
+      final captured = await _capture(store, path, 'historical source');
+      var now = DateTime.utc(2026, 1, 1);
+      final h = await _harness(
+        store,
+        fileMonitor: _ControlledFileMonitor(),
+        clock: () => now = now.add(const Duration(seconds: 1)),
+      );
+      await h.controller.openPath(path);
+      final revision = (await store.readRevision(captured.revision!.id))!;
+      fail = true;
+      expect(
+        await h.controller.restoreLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+        ),
+        isFalse,
+      );
+      expect(fail, isFalse);
+      expect(h.state.activeText, 'current source');
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      final recovered = (await store.load()).revisions.singleWhere(
+        (r) => r.reason == LocalHistoryCaptureReason.beforeRestore,
+      );
+      expect(
+        (await store.readRevision(recovered.id))!.source,
+        'current source',
+      );
+    },
+  );
+
+  for (final restart in [false, true]) {
+    test('follow-up saved capture recovers through controller retry '
+        '(restart=$restart)', () async {
+      final path = p.join(root.path, 'saved-retry.md');
+      await File(path).writeAsString('baseline');
+      final historyRoot = Directory(p.join(root.path, 'history'));
+      var fail = false;
+      var ids = 0;
+      final store = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+        createId: () {
+          if (fail &&
+              Directory(
+                p.join(historyRoot.path, 'revisions'),
+              ).listSync(recursive: true).whereType<File>().any((file) {
+                final record = jsonDecode(file.readAsStringSync()) as Map;
+                return record['revision']['reason'] == 'saved' &&
+                    record['source'] == 'saved source';
+              })) {
+            fail = false;
+            throw const FileSystemException(
+              'Injected index publication failure',
+              '',
+              OSError('', 11),
+            );
+          }
+          return 'saved_retry_identity_${++ids}';
+        },
+      );
+      final h = await _harness(
+        store,
+        fileMonitor: _ControlledFileMonitor(),
+        sessionStore: MemoryDocumentSessionStore(),
+        recoveryStore: MemoryDocumentRecoveryStore(),
+      );
+      await h.controller.openPath(path);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      final documentId = history.documentIdForBuffer(h.state.activeBuffer!.id);
+      h.controller.updateActiveText('saved source');
+      fail = true;
+      expect(await h.controller.saveActive(), isTrue);
+      expect(fail, isFalse);
+      expect(await File(path).readAsString(), 'saved source');
+      final pending = history.pendingSnapshotForBuffer(
+        h.state.activeBuffer!.id,
+      )!;
+      final captureId = pending.captureId!;
+      expect(await store.readRevision(captureId), isNull);
+
+      if (restart) {
+        await history.handleBufferClosed(
+          h.state.activeBuffer!.id,
+          historySettled: false,
+        );
+        final retained = history.retainedDetachedCaptures
+            .map(
+              (capture) => LocalHistoryRetainedCapture.fromJson(
+                (jsonDecode(jsonEncode(capture.toJson())) as Map)
+                    .cast<String, Object?>(),
+              ),
+            )
+            .toList();
+        expect(retained, hasLength(1));
+        h.container.dispose();
+        final reopened = await _harness(
+          FileLocalHistoryStore(rootDirectory: () async => historyRoot),
+          fileMonitor: _ControlledFileMonitor(),
+          sessionStore: MemoryDocumentSessionStore(),
+          recoveryStore: MemoryDocumentRecoveryStore(),
+        );
+        final retry = reopened.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        retry.restoreRetainedDetachedCaptures(retained);
+        expect(await retry.flushAll(const []), isTrue);
+        expect(await retry.flushAll(const []), isTrue);
+        expect(retry.retainedDetachedCaptures, isEmpty);
+      } else {
+        expect(await history.flushBuffer(h.state.activeBuffer!), isTrue);
+        expect(await history.flushBuffer(h.state.activeBuffer!), isTrue);
+        expect(
+          history.pendingSnapshotForBuffer(h.state.activeBuffer!.id),
+          isNull,
+        );
+      }
+      final recovered = (await store.readRevision(captureId))!;
+      expect(recovered.source, 'saved source');
+      expect(recovered.summary.reason, LocalHistoryCaptureReason.saved);
+      expect(recovered.summary.documentId, documentId);
+      expect(
+        (await store.load()).revisions.where(
+          (revision) => revision.id == captureId,
+        ),
+        hasLength(1),
+      );
+    });
+  }
+
+  for (final changeDuringStaging in [false, true]) {
+    test('follow-up deletion validates initially undecodable files '
+        '(changeDuringStaging=$changeDuringStaging)', () async {
+      final anchor = File(p.join(root.path, 'anchor.md'));
+      await anchor.writeAsString('anchor');
+      final store = _MutatingProtectionStore();
+      final h = await _harness(store, fileMonitor: _ControlledFileMonitor());
+      await h.controller.openPath(root.path);
+      final path = p.join(root.path, 'invalid.md');
+      await File(path).writeAsBytes([0xff, 0xfe]);
+      if (changeDuringStaging) {
+        store.beforePathOperation = () async {
+          store.beforePathOperation = null;
+          await File(path).writeAsString('new valid source');
+        };
+      }
+      expect(
+        await h.controller.deleteWorkspaceEntity(path),
+        !changeDuringStaging,
+      );
+      if (changeDuringStaging) {
+        expect(await File(path).readAsString(), 'new valid source');
+        // A fresh operation can protect and delete the now-supported text.
+        expect(await h.controller.deleteWorkspaceEntity(path), isTrue);
+        final captured = (await store.load()).revisions.singleWhere(
+          (r) => r.historicalPath == path,
+        );
+        expect(
+          (await store.readRevision(captured.id))!.source,
+          'new valid source',
+        );
+      }
+      expect(await File(path).exists(), isFalse);
+    });
+  }
+
+  test(
+    'follow-up replacement protection detects reclassification during decoding',
+    () async {
+      final anchor = File(p.join(root.path, 'anchor.md'));
+      await anchor.writeAsString('anchor');
+      final path = p.join(root.path, 'invalid.md');
+      final service = _ReplaceUndecodableFileService(path);
+      final h = await _harness(
+        MemoryLocalHistoryStore(),
+        service: service,
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await h.controller.openPath(root.path);
+      await File(path).writeAsBytes([0xff, 0xfe]);
+      expect(
+        await h.controller.protectPathsBeforeExternalReplacement([path]),
+        isFalse,
+      );
+      expect(service.replaced, isTrue);
+      expect(await File(path).readAsString(), 'new valid source');
+    },
+  );
 
   for (final delayedFailure in [false, true]) {
     test(
@@ -1581,7 +2048,7 @@ void main() {
       );
       final restored = harness.state.activeBuffer!;
       expect(restored.filePath, destination);
-      expect(restored.text, revision.source);
+      expect(restored.text, revision.source.trimRight());
       expect(restored.isDirty, isTrue);
       expect(restored.format.hasUtf8Bom, isTrue);
       expect(restored.format.lineEnding, DocumentLineEnding.crlf);
@@ -1591,7 +2058,7 @@ void main() {
       expect(harness.controller.undoActiveBuffer(), isTrue);
       expect(harness.state.activeText, 'Original destination\nSecond line');
       expect(harness.controller.redoActiveBuffer(), isTrue);
-      expect(harness.state.activeText, revision.source);
+      expect(harness.state.activeText, revision.source.trimRight());
     },
   );
 
@@ -6800,6 +7267,174 @@ void main() {
   );
 
   testWidgets(
+    'comparison reports unsuccessful restoration and retains the editor',
+    (tester) async {
+      final path = p.join(root.path, 'failed-restore.md');
+      final h = (await tester.runAsync(() async {
+        await File(path).writeAsString('current source');
+        final store = MemoryLocalHistoryStore();
+        final captured = await _capture(store, path, 'historical source');
+        final h = await _harness(
+          _FailingProtectiveStore(store),
+          fileMonitor: _ControlledFileMonitor(),
+          sessionStore: MemoryDocumentSessionStore(),
+          recoveryStore: MemoryDocumentRecoveryStore(),
+        );
+        await h.controller.openPath(path);
+        final history = h.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await history.refresh();
+        history.selectDocument(captured.document.id);
+        await history.selectRevision(captured.revision!.id);
+        return h;
+      }))!;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: h.container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: Colors.blue,
+            ),
+            home: const Scaffold(body: LocalHistoryComparisonView()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(LocalHistoryComparisonView)),
+      );
+      final restore = find.byWidgetPredicate(
+        (widget) =>
+            widget is IconButton &&
+            widget.tooltip == l10n.localHistoryRestoreRevision,
+      );
+      expect(tester.widget<IconButton>(restore).onPressed, isNotNull);
+      await tester.runAsync(() async {
+        tester.widget<IconButton>(restore).onPressed!();
+        await _waitFor(
+          () =>
+              h.container.read(localHistoryControllerProvider).warning?.kind ==
+              LocalHistoryWarningKind.capture,
+        );
+        await h.controller.flushPersistence();
+      });
+      await tester.pumpAndSettle();
+      expect(h.state.activeText, 'current source');
+      expect(find.text(l10n.localHistoryRestoreUnavailable), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final notification in [false, true]) {
+    testWidgets('closed-file comparison reloads disk and missing-file actions '
+        '(notification=$notification)', (tester) async {
+      final path = p.join(root.path, 'closed.md');
+      final anchor = p.join(root.path, 'anchor.md');
+      final monitor = _ControlledFileMonitor();
+      final currentInputs = <SourceComparisonInput>[];
+      final h = (await tester.runAsync(() async {
+        await File(path).writeAsString('disk original');
+        await File(anchor).writeAsString('anchor');
+        final store = MemoryLocalHistoryStore();
+        final captured = await _capture(store, path, 'historical');
+        final h = await _harness(
+          store,
+          fileMonitor: monitor,
+          comparisonComputer: (old, current) async {
+            currentInputs.add(current);
+            return compareSource(old, current);
+          },
+        );
+        await h.controller.openPath(anchor);
+        final history = h.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await history.refresh();
+        history.inspectRetainedDocument(captured.document.id);
+        await history.selectRevision(captured.revision!.id);
+        return h;
+      }))!;
+      await tester.runAsync(() async {
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: h.container,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              theme: buildBusyMarkTheme(
+                brightness: Brightness.light,
+                accentColor: Colors.blue,
+              ),
+              home: const Scaffold(body: LocalHistoryComparisonView()),
+            ),
+          ),
+        );
+        await _waitFor(() => currentInputs.isNotEmpty);
+      });
+      await tester.pumpAndSettle();
+      expect(currentInputs.last.source, 'disk original');
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      await tester.runAsync(() async {
+        await File(path).writeAsString('disk replacement');
+        if (notification) {
+          final version = h.container
+              .read(localHistoryControllerProvider)
+              .comparisonRevision;
+          monitor.emitChange(path);
+          await _waitFor(
+            () =>
+                h.container
+                    .read(localHistoryControllerProvider)
+                    .comparisonRevision >
+                version,
+          );
+        } else {
+          await history.refresh();
+        }
+        await tester.pump();
+        await _waitFor(() => currentInputs.last.source == 'disk replacement');
+      });
+      await tester.pumpAndSettle();
+      expect(currentInputs.last.source, 'disk replacement');
+      await tester.runAsync(() async {
+        await File(path).delete();
+        if (notification) {
+          final version = h.container
+              .read(localHistoryControllerProvider)
+              .comparisonRevision;
+          monitor.emitDeletion(path);
+          await _waitFor(
+            () =>
+                h.container
+                    .read(localHistoryControllerProvider)
+                    .comparisonRevision >
+                version,
+          );
+        } else {
+          await history.refresh();
+        }
+        await tester.pump();
+        await _waitFor(() => currentInputs.last.source.isEmpty);
+      });
+      await tester.pumpAndSettle();
+      expect(currentInputs.last.source, isEmpty);
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(LocalHistoryComparisonView)),
+      );
+      expect(
+        find.text(l10n.localHistoryRestoreOriginalLocation),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.localHistoryRestoreNewLocation), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
     'comparison renders styled intraline spans without framework errors',
     (tester) async {
       tester.view.devicePixelRatio = 1;
@@ -7107,6 +7742,63 @@ Future<_Harness> _harness(
   await Future<void>.delayed(Duration.zero);
   await settings.setAutoSave(false);
   return _Harness(container, controller);
+}
+
+class _ReplaceUndecodableFileService extends WorkspaceService {
+  _ReplaceUndecodableFileService(this.path);
+
+  final String path;
+  var replaced = false;
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    try {
+      return await super.loadTextWithSnapshot(path);
+    } on FormatException {
+      if (p.equals(path, this.path) && !replaced) {
+        replaced = true;
+        await File(path).writeAsString('new valid source');
+      }
+      rethrow;
+    }
+  }
+}
+
+class _MutatingProtectionStore extends MemoryLocalHistoryStore {
+  Future<void> Function(LocalHistoryCaptureRequest request)? afterCapture;
+  Future<void> Function()? beforePathOperation;
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    final result = await super.capture(request, policy);
+    await afterCapture?.call(request);
+    return result;
+  }
+
+  @override
+  Future<T> runPathReconciliation<T>({
+    required LocalHistoryPathReconciliationKind kind,
+    required String sourcePath,
+    String? destinationPath,
+    required bool recursive,
+    Iterable<LocalHistoryPathTarget>? preparedTargets,
+    required Future<T> Function(List<LocalHistoryPathTarget> targets) operation,
+    required bool Function(T result) didCommit,
+  }) async {
+    await beforePathOperation?.call();
+    return super.runPathReconciliation(
+      kind: kind,
+      sourcePath: sourcePath,
+      destinationPath: destinationPath,
+      recursive: recursive,
+      preparedTargets: preparedTargets,
+      operation: operation,
+      didCommit: didCommit,
+    );
+  }
 }
 
 class _UnavailableCaptureStore extends MemoryLocalHistoryStore {

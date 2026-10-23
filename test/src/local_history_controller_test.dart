@@ -23,6 +23,75 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'production-store content search reads revisions in bounded batches',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-history-search-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      var locks = 0;
+      final store = FileLocalHistoryStore.testing(
+        rootDirectory: () async => root,
+        acquireLock: (file) async {
+          locks++;
+          await file.lock(FileLock.exclusive);
+        },
+      );
+      for (var i = 0; i < 96; i++) {
+        await store.capture(
+          LocalHistoryCaptureRequest(
+            path: '/workspace/guide.md',
+            displayName: 'guide.md',
+            source: 'version $i',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: DateTime.utc(2026, 1, 1).add(Duration(seconds: i)),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
+        );
+      }
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final history = container.read(localHistoryControllerProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+      await history.refresh();
+      locks = 0;
+      final missing = await history.findRetained(query: 'absent content');
+      expect(missing!.matches, isEmpty);
+      expect(locks, 3, reason: 'One authoritative index read per 32 revisions');
+      final matches = await history.findRetained(query: 'version 95');
+      expect(
+        matches!.matches.whereType<LocalHistoryRevisionMatch>(),
+        hasLength(1),
+      );
+      for (final day in [2, 3]) {
+        await store.capture(
+          LocalHistoryCaptureRequest(
+            path: '/workspace/guide.md',
+            displayName: 'guide.md',
+            source: '$day' * (5 * 1024 * 1024),
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: DateTime.utc(2026, 1, day),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
+        );
+      }
+      await history.refresh();
+      locks = 0;
+      expect(
+        (await history.findRetained(query: 'absent content'))!.matches,
+        isEmpty,
+      );
+      expect(
+        locks,
+        greaterThan(3),
+        reason: 'Large revisions must not accumulate in a single content batch',
+      );
+    },
+  );
+
+  test(
     'failed opened baseline retries its original source without an edit',
     () async {
       final store = _RepairStore()

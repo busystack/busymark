@@ -64,6 +64,7 @@ class LocalHistoryState {
   const LocalHistoryState({
     this.snapshot = const LocalHistorySnapshot(),
     this.searchRevision = 0,
+    this.comparisonRevision = 0,
     this.loading = false,
     this.selectedDocumentId,
     this.selectedRevisionId,
@@ -75,6 +76,7 @@ class LocalHistoryState {
 
   final LocalHistorySnapshot snapshot;
   final int searchRevision;
+  final int comparisonRevision;
   final bool loading;
   final String? selectedDocumentId;
   final String? selectedRevisionId;
@@ -95,6 +97,7 @@ class LocalHistoryState {
   LocalHistoryState copyWith({
     LocalHistorySnapshot? snapshot,
     int? searchRevision,
+    int? comparisonRevision,
     bool? loading,
     Object? selectedDocumentId = _unset,
     Object? selectedRevisionId = _unset,
@@ -105,6 +108,7 @@ class LocalHistoryState {
   }) => LocalHistoryState(
     snapshot: snapshot ?? this.snapshot,
     searchRevision: searchRevision ?? this.searchRevision,
+    comparisonRevision: comparisonRevision ?? this.comparisonRevision,
     loading: loading ?? this.loading,
     selectedDocumentId: identical(selectedDocumentId, _unset)
         ? this.selectedDocumentId
@@ -583,7 +587,12 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   Future<bool> refresh() async {
     final generation = ++_loadGeneration;
-    if (ref.mounted) state = state.copyWith(loading: true);
+    if (ref.mounted) {
+      state = state.copyWith(
+        loading: true,
+        comparisonRevision: state.comparisonRevision + 1,
+      );
+    }
     try {
       // Defaults are presentation state while settings hydrate. In particular,
       // the default retention age must not delete history before a longer saved
@@ -706,6 +715,27 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   void observeHistoryTraversal(
     DocumentBuffer previous,
     DocumentBuffer current,
+  ) => _observeSourceReplacement(
+    previous,
+    current,
+    LocalHistoryCaptureReason.beforeHistoryTraversal,
+  );
+
+  /// Retains each displaced remote version independently of the coalesced
+  /// checkpoint for the incoming source, including rapid successive refreshes.
+  void observeAuthoritativeReplacement(
+    DocumentBuffer previous,
+    DocumentBuffer current,
+  ) => _observeSourceReplacement(
+    previous,
+    current,
+    LocalHistoryCaptureReason.externalChange,
+  );
+
+  void _observeSourceReplacement(
+    DocumentBuffer previous,
+    DocumentBuffer current,
+    LocalHistoryCaptureReason reason,
   ) {
     if (previous.text == current.text ||
         !policy.recordingEnabled ||
@@ -720,8 +750,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     // normal retention may already have evicted their durable revision.
     final existingOwner = _protections.entries.where((entry) {
       final retained = entry.value.snapshot;
-      return entry.value.reason ==
-              LocalHistoryCaptureReason.beforeHistoryTraversal &&
+      return entry.value.reason == reason &&
           _detachedClosedSourceId(entry.key) == previous.id &&
           retained.acceptedClearEpoch == previousSnapshot.acceptedClearEpoch &&
           _sameOptionalPath(retained.path, previousSnapshot.path) &&
@@ -755,7 +784,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       }
     } else {
       final owner = _newDetachedOwner(
-        'history-capture:traversal:${previous.id}',
+        'history-capture:replacement:${previous.id}',
       );
       final snapshot = previousSnapshot
           .forBuffer(owner)
@@ -766,7 +795,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       if (documentId != null) _documentIdsByBuffer[owner] = documentId;
       _protections[owner] = (
         snapshot: snapshot,
-        reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+        reason: reason,
         force: false,
         ignoreBinding: false,
         allowPathChange: false,
@@ -4164,6 +4193,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   String? documentIdForBuffer(String bufferId) =>
       _documentIdsByBuffer[bufferId];
 
+  /// Invalidates closed-file comparisons after filesystem notifications.
+  void invalidateCurrentSourceComparisons() {
+    state = state.copyWith(comparisonRevision: state.comparisonRevision + 1);
+  }
+
   /// Restores the stable history identity recorded with an editor session.
   ///
   /// The store snapshot is authoritative: stale session metadata cannot bind
@@ -5998,6 +6032,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final prefix = [
       'history-capture:closed:',
       'history-capture:traversal:',
+      'history-capture:replacement:',
     ].where(owner.startsWith).firstOrNull;
     if (prefix == null) return null;
     var sourceAndSuffix = owner.substring(prefix.length);
@@ -6236,20 +6271,49 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
             .where((r) => documents.containsKey(r.documentId))
             .toList()
           ..sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
-    for (final summary in summaries) {
+    const batchSize = 32;
+    const maximumBatchBytes = 8 * 1024 * 1024;
+    for (var offset = 0; offset < summaries.length;) {
       if (!current()) return null;
-      // Empty scoped queries can use summaries without reading any bodies.
-      final revision = needle.isEmpty
-          ? null
-          : await _store.readRevision(summary.id);
+      var end = offset + 1;
+      var bytes = summaries[offset].storageBytes;
+      while (end < summaries.length && end - offset < batchSize) {
+        final nextBytes = summaries[end].storageBytes;
+        if (bytes + nextBytes > maximumBatchBytes) break;
+        bytes += nextBytes;
+        end++;
+      }
+      final batch = summaries.sublist(offset, end);
+      offset = end;
+      final store = _store;
+      final batchReader = store is LocalHistoryBatchReader
+          ? store as LocalHistoryBatchReader
+          : null;
+      final revisions = needle.isEmpty || batchReader == null
+          ? <String, LocalHistoryRevision>{}
+          : {
+              for (final revision in await batchReader.readRevisions(
+                batch.map((r) => r.id),
+              ))
+                revision.summary.id: revision,
+            };
       if (!current()) return null;
-      if (needle.isEmpty ||
-          revision?.source.toLowerCase().contains(needle) == true) {
-        matches.add(
-          LocalHistoryRevisionMatch(documents[summary.documentId]!, summary),
-        );
-        if (matches.length > maximumResults) return page(truncated: true);
-        onProgress?.call(page());
+      for (final summary in batch) {
+        // Empty scoped queries can use summaries without reading any bodies.
+        final revision = needle.isEmpty
+            ? null
+            : batchReader != null
+            ? revisions[summary.id]
+            : await store.readRevision(summary.id);
+        if (!current()) return null;
+        if (needle.isEmpty ||
+            revision?.source.toLowerCase().contains(needle) == true) {
+          matches.add(
+            LocalHistoryRevisionMatch(documents[summary.documentId]!, summary),
+          );
+          if (matches.length > maximumResults) return page(truncated: true);
+          onProgress?.call(page());
+        }
       }
     }
     return current() ? page() : null;
