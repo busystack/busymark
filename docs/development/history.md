@@ -3,6 +3,188 @@
 This document records the invariants behind the user-facing
 [Clipboard History and Local History](../history.md) features.
 
+## Document Undo/Redo
+
+`DocumentBuffer` owns application document history across Source, Editor and
+Split. Flutter field history remains available for auxiliary inputs. Document
+fields override Flutter's overridable `UndoTextIntent` and `RedoTextIntent`
+actions, including rich table cells and the hidden table-selection IME client.
+A configured shortcut or action is consumed even when its document stack is
+exhausted. Exhaustion changes no source, revision, dirty flag, stack or checkpoint.
+The field controllers are retained; removing an explicit Flutter undo controller
+would create another implicit one.
+
+Both editors use `DocumentUndoGrouping`: a monotonic `Stopwatch` in production
+and an injected `Duration` clock in deterministic tests. A group accepts edits
+less than two seconds apart, lasts strictly less than ten seconds from its
+first edit, and contains at most 64 inserted/deleted UTF-16 code units. The
+next edit at the age/idle boundary, beyond the size budget, or after a reversed
+test clock starts a new group. The ten-second/64-unit bounds retain short
+phrases while limiting continuous-work loss independently of the 100-entry
+history limit. Group IDs include a process-wide editor-session sequence.
+
+Typing, backspace and forward deletion have separate groups. A single-unit
+operation is validated at its actual old/new carets, including ambiguous runs
+of repeated characters. A selection replacement, caret relocation,
+line/paragraph change, explicit Source command,
+paste, cut, formatting, search replacement, spelling correction and inspector
+transaction close continuous typing. Structural rich operations already publish
+discrete transactions. Source observes caret moves as they happen, so leaving
+and returning to the same offset cannot reconnect a typing group. IME
+composition retains its existing input and command
+guards.
+
+Each editor tracks its last accepted source/revision independently of parent
+frames. Live shared-history identity distinguishes same-content save metadata
+from traversal. Closing a group at the same revision preserves the accepted
+content while starting a fresh transaction, including Source-to-Split input
+before a parent frame. Controller publications also carry expected source/revision
+preconditions. Consecutive edits advance that accepted base synchronously;
+Undo/Redo or a different authoritative source invalidates it. The rich editor
+reconciles after keyboard traversal immediately and on authoritative rebuilds,
+including an A → B → A cycle that never rendered B in the parent. Rejected
+publications reconcile the editor, and only accepted structured documents enter
+the workspace cache. Uncontrolled rich widgets can change navigation properties
+while retaining the same document object. Save As also updates the mounted rich
+editor's publication path.
+Source also applies the live readers' text and caret during reconciliation: an
+unrelated rebuild carrying older properties cannot roll back an accepted edit
+or restore a retired selection.
+Its document-keyed field owns a matching focus-node lifetime. Reusing the old
+focused node after field disposal leaves its keyboard token consumed and its
+native text-input client cleared; document changes create a fresh node while
+ordinary edits retain it.
+
+Rich edits publish their live pre-edit caret or document range before opening
+the transaction. Stable text inputs also publish their resulting position
+synchronously. Traversal restores selections immediately, including table-cell
+ownership; deferred mounting and scroll restoration may proceed only while that
+selection is still current. A later caret move or edit supersedes that callback.
+This keeps no-frame Undo/Redo bursts and formatting ranges independent of the
+normal post-frame session publication.
+
+Source clipboard and link operations retain an editing-epoch token as well as
+their origin value. Content, selection, composition and controller lifetime
+changes retire the token, even when Undo/Redo returns to the same value before
+a rebuild. A supplied live document reader also validates the accepted version
+after asynchronous work. Metadata-only acknowledgements do not retire an origin.
+
+`DocumentBuffer.replaced` makes an actual whole-source replacement one undoable
+boundary. It preserves displaced source, selection, rich session and text-format
+metadata, closes grouping and clears the displaced redo branch. Reload, clean
+file-monitor replacement, workspace refresh, remote replacement and discard use
+that boundary. Workspace refresh reconciles the replacement with the live editor
+state rather than reattaching its old history. Same-content refresh/save and
+derived rendering retain valid history. Traversal restores BOM, line endings and
+final-newline metadata together with source and caret.
+
+## Recovery before traversal
+
+Before observing a successful Undo or Redo, Local History stages a separate
+`beforeHistoryTraversal` protection for the source being left. Each unresolved
+source has a distinct retained-work owner; subsequent traversal, a branching
+edit, or another protective operation cannot replace it. The ordinary pending
+checkpoint still follows the latest source on its fixed `putIfAbsent` timer.
+The checkpoint window is not a debounce.
+
+Deduplication shares an unresolved owner only while it still holds the exact
+source, format, document identity and recording epoch. Completed captures leave
+no fingerprint that could discharge a later obligation: retention may have
+removed their revision. A traversal joining a retained owner advances that
+owner's required revision and assigns a fresh capture identity. An older
+completion or failure cannot release or overwrite the new obligation; a
+retention tombstone for its earlier attempt cannot cancel the fresh traversal.
+Distinct unresolved sources remain independently owned.
+
+Under its existing serialization and file lock, the store verifies that a reused
+revision still exists and contains the exact source and format. Traversal reuse
+renews its optional `protectedAt` timestamp in the record and index before
+releasing the retained owner. Age and storage-budget pruning use the later of
+`capturedAt` and `protectedAt`; the original capture time, reason, identity and
+timeline position stay unchanged. This applies even when retrying a durable
+capture identity. Repeated traversal renews one record rather than appending
+duplicate full-source revisions. Ordinary checkpoints keep their adjacent-only
+deduplication rule and timeline semantics.
+
+Renewal publishes the complete record before the index so index reconstruction
+preserves the protection. Failed publication leaves independent retained work
+available for retry or restart; cancellation restores the prior record and
+index. Renewed records remain subject to the configured age and size limits,
+and expire normally after their last protection. No retention setting changes.
+If committed revisions share a timestamp, adjacency chooses the later appended
+revision; the clock tie must not select an older baseline and duplicate a
+checkpoint that protection already stored.
+Recording-disabled and excluded documents create no traversal captures. Existing
+failure banners, checkpoint-cadence retries, retained-work journals and startup
+policy hydration remain in use.
+
+The first Undo after typing into an empty untitled buffer establishes its normal
+baseline before binding the independent protection. It retains the single
+history lineage that this case already had before the traversal repair.
+
+Undo/Redo is synchronous. Staging a protection in memory does **not** establish
+crash durability. A recoverable boundary is reached after a successful retained
+session-journal publication or Local History record publication. Required close
+and shutdown settlement still drain that work and retain failures. A process
+terminated before either publication completes can lose the newest in-memory
+protection. The restart regression reads a fresh on-disk session journal before
+retiring its original controller, then verifies both unresolved pre-traversal
+sources in Local History and the latest branch in dirty-document recovery.
+
+## Document-history regression cases
+
+The maintained suites exercise these state transitions through production
+editors/controllers and real keyboard or action dispatch:
+
+The fifteen-minute fixtures inject the clock read by each editor, send keyboard
+Undo/Redo through the production workspace controller, and compare the shared
+source with the visible controller and live rich serialization.
+
+| Trigger | Required result |
+| --- | --- |
+| Fifteen minutes of one-second typing, including Source line breaks | Multiple finite groups; one Undo removes only the latest group. The injected clock is actually read by grouping. |
+| Editor recreation, mode and tab return | A new typing transaction preserves earlier work. |
+| Focused Source switches documents and returns | Native text input remains registered; raw keys reach the shared source. |
+| Repeated exhausted shortcuts and platform actions | Source, revision, dirty status, stacks and pending checkpoint remain unchanged. |
+| Type then Undo before a frame; immediately type again | Visible controller, rich projection/cache and shared source agree; restored content is not overwritten. |
+| Source traversal invoked outside its keyboard handler | Historical caret is restored on the authoritative rebuild. |
+| Caret moves away and back between two characters | The second character belongs to a new transaction. |
+| Rich traversal before a frame, including table cells and formatting ranges | The live position, serialized model and shared session agree; a deferred restore cannot overwrite a newer caret. |
+| Delayed Source paste, cut or link choice across Undo then Redo | The retired completion makes no edit, even when text, selection and widget revision match again. |
+| Reload, monitor, workspace or remote replacement with both stacks populated | Replacement is undoable, the inappropriate redo branch is gone, displaced content survives. |
+| Undo before checkpoint, then a new branch, with autosave on/off | The original pre-Undo work survives close/reopen. |
+| Delayed/failed captures and multiple protections | Each obligation survives independently; a fresh disk-backed restart can finish recovery. |
+| Successful protection, normal budget eviction, then another traversal and branch | The second protection preserves the source through close and a fresh disk-backed restart. |
+| Reuse of expired or older budget-priority content, in file and memory stores | Fresh protection survives branch capture and pruning; its original timeline event stays unchanged and it still expires normally. |
+| Repeated traversal, delayed completion, failed renewal or index reconstruction | One record per exact protected source; no old completion discharges a newer obligation, and retry/restart preserves the source. |
+| Same-content save/reload, composition and pending inspector draft | Existing editing, redo and ownership contracts remain intact. |
+
+The Source remount regression predates these repairs. WYSIWYG's exhausted
+**keyboard** route already consumed no-ops; its Flutter action routes still
+needed ownership overrides. Clipboard origin/selection checks, AI
+proposal identity/revision checks, inspector draft guards, the fixed checkpoint
+window and settings-before-pruning startup protection remain authoritative.
+
+A native acceptance target boots the production application and injects XTest
+keys through GTK. It verifies content in the shared buffer, visible field, live
+rich serialization, saved files and actual Local History records. It also exercises
+mode/tab return, autosave, close/reopen, Local History restore and conflict-aware
+reload. Use a disposable X11 display and isolated XDG directories:
+
+```sh
+flutter build linux --release --no-pub -t tools/document_history_smoke.dart
+# Create OUTPUT/data, config, cache, state, run and tmp first; chmod 700 OUTPUT/run.
+# Set each XDG_*_HOME and XDG_RUNTIME_DIR beneath the absolute OUTPUT directory.
+BUSYMARK_HISTORY_DISPOSABLE=1 GDK_BACKEND=x11 WAYLAND_DISPLAY= \
+  dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' \
+  build/linux/x64/release/bundle/busymark /absolute/OUTPUT
+flutter build linux --release --no-pub -t lib/main.dart
+```
+
+Keep the resulting logs and `result.json` outside the repository. A widget pass,
+a generated report before all assertions finish, or a controller-only call is
+not native acceptance.
+
 ## Clipboard publication and ownership
 
 `RichClipboardService` serializes clipboard reads and writes and owns the
@@ -101,14 +283,15 @@ work.
 
 `LocalHistoryController` treats each `DocumentBuffer` as the source authority.
 Capture events are baseline, explicit save, automatic checkpoint, before reload,
-before discard, before restore, before delete, and observed external change.
+before discard, before restore, before delete, before Undo/Redo, and observed
+external change.
 Autosave writes do not create their own history reason.
 
 Observation is serialized per buffer. The first edit starts a fixed checkpoint
 window; later edits replace the one pending full-source snapshot without moving
-the deadline. A flush is a queue barrier. Retryable storage failures retain only
-the latest pending source for that buffer and retry on the configured checkpoint
-cadence. Unsupported or over-limit content fails visibly without a retry loop.
+the deadline. A flush is a queue barrier. Retryable ordinary checkpoint failures retain the latest pending source for
+that buffer. Independent protective sources also remain retained; retries use
+the configured checkpoint cadence. Unsupported or over-limit content fails visibly without a retry loop.
 
 History identity is independent of widgets and temporary buffer IDs. Known file
 and directory moves remap paths while preserving earlier paths. The first save

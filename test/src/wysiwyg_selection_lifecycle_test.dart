@@ -771,6 +771,105 @@ class _DelayedSelectionBarrier extends LinuxHeaderBarService {
 
 void main() {
   _deferredExtentFocusRegressions();
+  for (final externalHistory in [false, true]) {
+    for (final reverse in [false, true]) {
+      testWidgets(
+        'non-editable selection endpoint settles and accepts paste external=$externalHistory reverse=$reverse',
+        (tester) async {
+          const original = 'First\n\n---\n';
+          final document = WysiwygEditableHarnessState.parser
+              .parse(filePath: '/editable.md', source: original)
+              .busyDocument;
+          final saved = _documentSession(document, reverse: reverse);
+          final registry = BusyMarkClipboardInsertionRegistry();
+          addTearDown(registry.dispose);
+          final state = await _mount(
+            tester,
+            original,
+            MemoryRichClipboard(),
+            session: saved,
+            externalHistory: externalHistory,
+            registry: registry,
+          );
+          expect(state.session.anchorBlockId, saved.anchorBlockId);
+          expect(state.session.anchorOffset, saved.anchorOffset);
+          expect(state.session.extentBlockId, saved.extentBlockId);
+          expect(state.session.extentOffset, saved.extentOffset);
+          if (!reverse) {
+            expect(
+              FocusManager.instance.primaryFocus?.debugLabel,
+              'BusyMark WYSIWYG document selection',
+            );
+          }
+          final top = tester.getTopLeft(_field('First'));
+          for (var frame = 0; frame < 20; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+            expect(tester.getTopLeft(_field('First')), top);
+          }
+          expect(tester.binding.hasScheduledFrame, isFalse);
+          expect(state.source, original);
+          expect(state.changes, isEmpty);
+          expect(state.undoSources, isEmpty);
+          expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+          expect(
+            await registry.paste(
+              BusyMarkClipboardPayload(
+                id: 'non-editable-endpoint',
+                acquiredAt: DateTime.utc(2026),
+                kind: BusyMarkClipboardContentKind.text,
+                text: 'Replacement',
+              ),
+              mode: BusyMarkPasteMode.plainText,
+            ),
+            ClipboardPasteResult.inserted,
+          );
+          await tester.pumpAndSettle();
+          expect(state.source, 'Replacement\n');
+          expect(state.changes, hasLength(1));
+          expect(tester.testTextInput.hasAnyClients, isTrue);
+          tester.testTextInput.updateEditingValue(
+            const TextEditingValue(
+              text: 'ReplacementX',
+              selection: TextSelection.collapsed(offset: 12),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(state.source, 'ReplacementX\n');
+          await _command(tester, LogicalKeyboardKey.keyZ);
+          expect(state.source, 'Replacement\n');
+          await _command(tester, LogicalKeyboardKey.keyZ);
+          expect(state.source, original);
+          await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+          expect(state.source, 'Replacement\n');
+        },
+      );
+    }
+  }
+  testWidgets('Select All ending at a rule settles and accepts command paste', (
+    tester,
+  ) async {
+    const original = 'First\n\n---\n';
+    final clipboard = MemoryRichClipboard()
+      ..data = const RichClipboardData(text: 'Replacement');
+    final state = await _mount(tester, original, clipboard);
+    await _command(tester, LogicalKeyboardKey.keyA);
+    await _command(tester, LogicalKeyboardKey.keyA);
+    expect(state.source, original);
+    expect(state.changes, isEmpty);
+    expect(state.session.extentBlockId, state.document.blocks.last.id);
+    expect(
+      FocusManager.instance.primaryFocus?.debugLabel,
+      'BusyMark WYSIWYG document selection',
+    );
+    await _command(tester, LogicalKeyboardKey.keyV, shift: true);
+    expect(state.source, 'Replacement\n');
+    expect(state.changes, hasLength(1));
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    await _command(tester, LogicalKeyboardKey.keyZ);
+    expect(state.source, original);
+    await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+    expect(state.source, 'Replacement\n');
+  });
   testWidgets(
     'short table input after desktop return reveals the original cell',
     (tester) async {
@@ -1635,6 +1734,36 @@ void main() {
     state.recreate(saved);
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(_field(text)).dy, closeTo(top, 0.1));
+    expect(state.changes, isEmpty);
+  });
+
+  testWidgets('table selection IME input delegates platform history actions', (
+    tester,
+  ) async {
+    final state = await _mount(
+      tester,
+      _table,
+      MemoryRichClipboard(),
+      externalHistory: true,
+    );
+    state.recreate(_documentSession(state.document));
+    await tester.pumpAndSettle();
+    final input = find.byWidgetPredicate(
+      (w) => w is EditableText && w.focusNode.hasFocus,
+    );
+    expect(input, findsOneWidget);
+    final context = tester.state<EditableTextState>(input).context;
+    Actions.invoke(
+      context,
+      const UndoTextIntent(SelectionChangedCause.keyboard),
+    );
+    expect(state.undoCalls, 1);
+    Actions.invoke(
+      context,
+      const RedoTextIntent(SelectionChangedCause.keyboard),
+    );
+    expect(state.redoCalls, 1);
+    expect(state.source, _table);
     expect(state.changes, isEmpty);
   });
 

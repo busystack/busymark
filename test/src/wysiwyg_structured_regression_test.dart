@@ -1492,6 +1492,7 @@ Body.
           key: key,
           document: document,
           useExternalUndoHistory: true,
+          undoClock: () => Duration.zero,
           onSourceChanged: (_, _) {},
           onTransactionalSourceChanged: (_, value, group) {
             groups.add(group);
@@ -1501,6 +1502,12 @@ Body.
       ),
     );
     await tester.pump();
+    tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!
+        .selection = const TextSelection.collapsed(
+      offset: 1,
+    );
     await tester.enterText(find.byType(TextField).first, 'ab');
     await tester.pump();
     await tester.enterText(find.byType(TextField).first, 'abc');
@@ -2054,6 +2061,86 @@ void _structuralBoundaryRegressions(MarkdownParser parser) {
         );
       },
     );
+
+    for (final input in [true, false]) {
+      testWidgets(
+        'merged rejected structural ${input ? "input" : "backspace"} preserves an existing Redo',
+        (tester) async {
+          final document = parser
+              .parse(
+                filePath: 'topic.md',
+                mode: MarkdownMode.writersideMarkdown,
+                source: '- Parent\n\n{id="owner"}\n',
+              )
+              .busyDocument;
+          var source = document.source!;
+          var publications = 0;
+          final key = GlobalKey<BusyMarkWysiwygEditorState>();
+          await tester.pumpWidget(
+            _app(
+              BusyMarkWysiwygEditor(
+                key: key,
+                document: document,
+                onSourceChanged: (_, value) {
+                  source = value;
+                  publications++;
+                },
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final field = tester.widget<TextField>(
+            find.widgetWithText(TextField, 'Parent'),
+          );
+          field.focusNode!.requestFocus();
+          field.controller!.selection = const TextSelection.collapsed(
+            offset: 6,
+          );
+          await tester.pumpAndSettle();
+          tester.testTextInput.updateEditingValue(
+            const TextEditingValue(
+              text: 'ParentX',
+              selection: TextSelection.collapsed(offset: 7),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pumpAndSettle();
+          expect(field.controller!.text, 'Parent');
+          final before = source;
+          final count = publications;
+          final undoCount = key.currentState!.debugUndoSnapshotCount;
+          field.controller!.selection = input
+              ? const TextSelection(baseOffset: 0, extentOffset: 6)
+              : const TextSelection.collapsed(offset: 0);
+          await tester.pump();
+          if (input) {
+            tester.testTextInput.updateEditingValue(
+              const TextEditingValue(
+                text: '\n',
+                selection: TextSelection.collapsed(offset: 1),
+              ),
+            );
+          } else {
+            await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+          }
+          await tester.pumpAndSettle();
+          expect(source, before);
+          expect(publications, count);
+          expect(key.currentState!.debugUndoSnapshotCount, undoCount);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pumpAndSettle();
+          expect(source, contains('ParentX'));
+          expect(field.controller!.text, 'ParentX');
+        },
+      );
+    }
 
     for (final selectedEnd in [5, 15]) {
       testWidgets(

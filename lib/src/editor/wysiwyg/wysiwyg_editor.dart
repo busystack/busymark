@@ -1,3 +1,4 @@
+import '../document_edit_history.dart';
 import '../../app/command_shortcuts.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import '../../writerside/writerside_effective_properties.dart';
@@ -151,6 +152,9 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onCloseSearch,
     this.onUndo,
     this.onRedo,
+    this.readEditBase,
+    this.readSessionState,
+    this.undoClock,
     this.headerBarService,
     this.documentLayout,
     this.visualizationRevision = 0,
@@ -215,6 +219,9 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final VoidCallback? onCloseSearch;
   final VoidCallback? onUndo;
   final VoidCallback? onRedo;
+  final DocumentEditBaseReader? readEditBase;
+  final WysiwygEditorSessionState Function()? readSessionState;
+  final DocumentUndoClock? undoClock;
   final LinuxHeaderBarService? headerBarService;
   final BusyMarkDocumentLayoutSpec? documentLayout;
   final int visualizationRevision;
@@ -307,7 +314,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _topicPropertiesSelected = false;
   String? _activeCellId;
   final _collapsibleExpansion = <String, bool>{};
-  int _undoGroupSequence = 0;
+  late final DocumentUndoGrouping _undoGrouping;
+  late DocumentEditBase _editBase;
+  DocumentEditBase get publicationBase => _editBase;
+
+  /// Serialization of the live structured document, independent of parent frames.
+  String get serializedSource => _documentController.markdown;
+  final _inputSelections = <String, TextSelection>{};
   _ContinuousTextEdit? _continuousTextEdit;
   _DocumentTextSelection? _documentSelection;
   _DocumentTextSelection? _documentInputSelection;
@@ -325,7 +338,6 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   double? _preferredVerticalCaretX;
   final _pendingInlineKindsByBlockId = <String, Set<BusyInlineKind>>{};
   int _preserveSelectionFocusCallbacks = 0;
-  bool _internalChange = false;
   bool _initialFocusScheduled = false;
   var _toolbarVisible = true;
   var _documentGeneration = 0;
@@ -606,6 +618,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   @override
   void initState() {
     super.initState();
+    _editBase =
+        widget.readEditBase?.call() ??
+        DocumentEditBase(widget.document.source ?? '', widget.contentRevision);
+    _undoGrouping = DocumentUndoGrouping(clock: widget.undoClock);
     _selectionFocusNode = FocusNode(
       debugLabel: 'BusyMark WYSIWYG document selection',
       onKeyEvent: _handleDocumentSelectionKeyEvent,
@@ -643,10 +659,38 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final oldDocumentId = oldWidget.documentId ?? oldWidget.document.filePath;
     final fileChanged =
         oldDocumentId != _documentId ||
+        oldWidget.document.filePath != widget.document.filePath ||
         oldWidget.document.isXmlTopic != widget.document.isXmlTopic ||
         oldWidget.document.mode != widget.document.mode;
-    final sourceChanged = oldWidget.document.source != widget.document.source;
-    if (fileChanged || (sourceChanged && !_internalChange)) {
+    final incoming =
+        widget.readEditBase?.call() ??
+        DocumentEditBase(widget.document.source ?? '', widget.contentRevision);
+    final modelOnlyReplacement =
+        widget.readEditBase == null &&
+        widget.document.source == null &&
+        !identical(oldWidget.document, widget.document);
+    final acknowledged =
+        !modelOnlyReplacement && incoming.sameDocumentVersion(_editBase);
+    if (acknowledged) {
+      if (!identical(incoming.history, _editBase.history)) {
+        _continuousTextEdit = null;
+      }
+      _editBase = incoming;
+    }
+    final sourceChanged =
+        widget.document.source != null || widget.readEditBase != null
+        ? incoming.source != _editBase.source
+        : oldWidget.document != widget.document;
+    final revisionChanged =
+        incoming.revision != null && incoming.revision != _editBase.revision;
+    final incomingAuthority =
+        widget.readEditBase != null ||
+        widget.contentRevision != null ||
+        !identical(oldWidget.document, widget.document);
+    if (fileChanged ||
+        (incomingAuthority &&
+            !acknowledged &&
+            (sourceChanged || revisionChanged))) {
       // Pending property text belongs to the current authored element. An
       // external replacement can reuse a projection ID for a different node.
       // Recreate the panel entries rather than retargeting their drafts.
@@ -663,14 +707,21 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         );
         _undoStack.clear();
         _redoStack.clear();
-        _internalChange = false;
         _resetPerDocumentState();
       }
-      _documentSelection = null;
-      _documentController.replaceDocument(widget.document);
-      _initialFocusScheduled = false;
-      _scheduleSessionRestore(widget.initialSessionState);
-      _scheduleVisibleHeadingReport();
+      _continuousTextEdit = null;
+      if (widget.readEditBase != null) {
+        // The parent projection may lag an Undo, reload or replacement. Parse
+        // the actual authority rather than accepting its revision with old text.
+        synchronizeAuthoritativeState(force: true);
+      } else {
+        _editBase = incoming;
+        _documentSelection = null;
+        _documentController.replaceDocument(widget.document);
+        _initialFocusScheduled = false;
+        _scheduleSessionRestore(widget.initialSessionState);
+        _scheduleVisibleHeadingReport();
+      }
     } else if (oldWidget.onVisibleHeadingChanged !=
         widget.onVisibleHeadingChanged) {
       _hasReportedVisibleHeading = false;
@@ -718,6 +769,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _resetPerDocumentState() {
+    _inputSelections.clear();
     _lastInspectorSelection = null;
     _propertiesTargetId = null;
     _videoDraftTarget = null;
@@ -987,17 +1039,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               ),
           _UndoEditorIntent: CallbackAction<_UndoEditorIntent>(
             onInvoke: (intent) {
-              if (widget.useExternalUndoHistory || !_undoEditorChange()) {
-                widget.onUndo?.call();
-              }
+              _traverseDocumentHistory(redo: false);
               return null;
             },
           ),
           _RedoEditorIntent: CallbackAction<_RedoEditorIntent>(
             onInvoke: (intent) {
-              if (widget.useExternalUndoHistory || !_redoEditorChange()) {
-                widget.onRedo?.call();
-              }
+              _traverseDocumentHistory(redo: true);
               return null;
             },
           ),
@@ -1093,14 +1141,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       height: 1,
                       child: ExcludeSemantics(
                         child: IgnorePointer(
-                          child: _DocumentSelectionTextInput(
-                            key:
-                                GlobalObjectKey<
-                                  _DocumentSelectionTextInputState
-                                >(selection),
-                            onKeyEvent: _handleDocumentSelectionKeyEvent,
-                            onEditingValue: _documentSelectionInputHandler(
-                              selection,
+                          child: DocumentUndoActions(
+                            onUndo: () => _traverseDocumentHistory(redo: false),
+                            onRedo: () => _traverseDocumentHistory(redo: true),
+                            child: _DocumentSelectionTextInput(
+                              key:
+                                  GlobalObjectKey<
+                                    _DocumentSelectionTextInputState
+                                  >(selection),
+                              onKeyEvent: _handleDocumentSelectionKeyEvent,
+                              onEditingValue: _documentSelectionInputHandler(
+                                selection,
+                              ),
                             ),
                           ),
                         ),
@@ -1344,18 +1396,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       ),
       session: _propertySession,
       onUndo: () {
-        if (widget.useExternalUndoHistory) {
-          widget.onUndo?.call();
-        } else {
-          _undoEditorChange();
-        }
+        _traverseDocumentHistory(redo: false);
       },
       onRedo: () {
-        if (widget.useExternalUndoHistory) {
-          widget.onRedo?.call();
-        } else {
-          _redoEditorChange();
-        }
+        _traverseDocumentHistory(redo: true);
       },
       onChooseCodeSource: () async {
         final guard = _captureDialogTarget();
@@ -2198,112 +2242,116 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final documentFilePath = _documentController.document.filePath;
     return _propertyHoverRegion(
       block,
-      BusyMarkWysiwygBlockField(
-        key: _blockKeyFor(block.id),
-        block: block,
-        first: first,
-        listRunEnd: listRunEnd,
-        documentFilePath: documentFilePath,
-        workspaceRoot: widget.workspaceRoot,
-        writersideRoot: widget.writersideRoot,
-        imagesDir: widget.imagesDir,
-        allowRemoteImages: widget.allowRemoteImages,
-        onRemoteImageBlocked: widget.onRemoteImageBlocked,
-        onMathDiagnostic: widget.onMathDiagnostic,
-        controller: _textControllerFor(block),
-        undoController: _textUndoControllerFor(block),
-        focusNode: _focusNodeFor(block),
-        selected: selectedBlockIds.contains(block.id),
-        selectionRange: selectionRangesByBlockId[block.id],
-        documentSelectionActive: _hasBlockSelection,
-        // The originating field must stop its local drag once the document owns
-        // it; otherwise EditableText refocuses and scrolls that field's caret.
-        documentSelectionDragging:
-            _hasBlockSelection && _pointerSelectionAnchor != null,
-        onPointerDown: (event) => _handleBlockPointerDown(block.id, event),
-        onPointerMove: _handleBlockPointerMove,
-        onPointerUp: _handleBlockPointerUp,
-        onPointerCancel: _handleBlockPointerCancel,
-        onFocused: () => _handleBlockFocused(block.id),
-        onCut: _cutCurrentSelection,
-        onCopy: _copyCurrentSelection,
-        onPaste: () =>
-            unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.normal)),
-        onPastePlainText: () =>
-            unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.plainText)),
-        readPasteAvailability: _readContextMenuPasteAvailability,
-        onCopyPlainText: _copyCurrentSelectionAsPlainText,
-        onRefineWithAi: widget.onAiEdit == null
-            ? null
-            : () => unawaited(_runAiEdit(blockId: block.id)),
-        onChanged: (value) =>
-            _handleBlockTextChanged(documentFilePath, block.id, value),
-        onTableCellChanged: (cellId, value) => _handleTableCellTextChanged(
-          documentFilePath,
-          block.id,
-          cellId,
-          value,
-        ),
-        onTableCellSourceChanged: (cellId, value) =>
-            _handleTableCellSourceChanged(
-              documentFilePath,
-              block.id,
-              cellId,
-              value,
-            ),
-        tableCellController: _tableCellControllerFor,
-        tableCellUndoController: _textUndoControllerFor,
-        tableCellFocusNode: (cell) => _tableCellFocusNodeFor(block.id, cell),
-        tableCellKey: _tableCellKeyFor,
-        spellingRanges: _spellingRangesForBlock(block.id),
-        spellingEditableKey: _spellingEditableKeyFor(block.id),
-        tableCellSpellingRanges: _spellingRangesForCell,
-        tableCellSpellingEditableKey: _tableCellSpellingEditableKeyFor,
-        spellingMenuReader: widget.readSpellingMenuItems == null
-            ? null
-            : (offset) => widget.readSpellingMenuItems!(
-                SpellingRichBlockTarget(
-                  blockId: block.id,
-                  documentGeneration: _documentGeneration,
-                ),
-                offset,
+      DocumentUndoActions(
+        onUndo: () => _traverseDocumentHistory(redo: false),
+        onRedo: () => _traverseDocumentHistory(redo: true),
+        child: BusyMarkWysiwygBlockField(
+          key: _blockKeyFor(block.id),
+          block: block,
+          first: first,
+          listRunEnd: listRunEnd,
+          documentFilePath: documentFilePath,
+          workspaceRoot: widget.workspaceRoot,
+          writersideRoot: widget.writersideRoot,
+          imagesDir: widget.imagesDir,
+          allowRemoteImages: widget.allowRemoteImages,
+          onRemoteImageBlocked: widget.onRemoteImageBlocked,
+          onMathDiagnostic: widget.onMathDiagnostic,
+          controller: _textControllerFor(block),
+          undoController: _textUndoControllerFor(block),
+          focusNode: _focusNodeFor(block),
+          selected: selectedBlockIds.contains(block.id),
+          selectionRange: selectionRangesByBlockId[block.id],
+          documentSelectionActive: _hasBlockSelection,
+          // The originating field must stop its local drag once the document owns
+          // it; otherwise EditableText refocuses and scrolls that field's caret.
+          documentSelectionDragging:
+              _hasBlockSelection && _pointerSelectionAnchor != null,
+          onPointerDown: (event) => _handleBlockPointerDown(block.id, event),
+          onPointerMove: _handleBlockPointerMove,
+          onPointerUp: _handleBlockPointerUp,
+          onPointerCancel: _handleBlockPointerCancel,
+          onFocused: () => _handleBlockFocused(block.id),
+          onCut: _cutCurrentSelection,
+          onCopy: _copyCurrentSelection,
+          onPaste: () =>
+              unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.normal)),
+          onPastePlainText: () =>
+              unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.plainText)),
+          readPasteAvailability: _readContextMenuPasteAvailability,
+          onCopyPlainText: _copyCurrentSelectionAsPlainText,
+          onRefineWithAi: widget.onAiEdit == null
+              ? null
+              : () => unawaited(_runAiEdit(blockId: block.id)),
+          onChanged: (value) =>
+              _handleBlockTextChanged(documentFilePath, block.id, value),
+          onTableCellChanged: (cellId, value) => _handleTableCellTextChanged(
+            documentFilePath,
+            block.id,
+            cellId,
+            value,
+          ),
+          onTableCellSourceChanged: (cellId, value) =>
+              _handleTableCellSourceChanged(
+                documentFilePath,
+                block.id,
+                cellId,
+                value,
               ),
-        tableCellSpellingMenuReader: widget.readSpellingMenuItems == null
-            ? null
-            : (cellId) =>
-                  (offset) => widget.readSpellingMenuItems!(
-                    SpellingRichTableCellTarget(
-                      tableBlockId: block.id,
-                      cellId: cellId,
-                      documentGeneration: _documentGeneration,
-                    ),
-                    offset,
+          tableCellController: _tableCellControllerFor,
+          tableCellUndoController: _textUndoControllerFor,
+          tableCellFocusNode: (cell) => _tableCellFocusNodeFor(block.id, cell),
+          tableCellKey: _tableCellKeyFor,
+          spellingRanges: _spellingRangesForBlock(block.id),
+          spellingEditableKey: _spellingEditableKeyFor(block.id),
+          tableCellSpellingRanges: _spellingRangesForCell,
+          tableCellSpellingEditableKey: _tableCellSpellingEditableKeyFor,
+          spellingMenuReader: widget.readSpellingMenuItems == null
+              ? null
+              : (offset) => widget.readSpellingMenuItems!(
+                  SpellingRichBlockTarget(
+                    blockId: block.id,
+                    documentGeneration: _documentGeneration,
                   ),
-        onCheckSpelling: widget.onCheckSpelling,
-        onTableCellFocused: (cellId) =>
-            _handleTableCellFocused(block.id, cellId),
-        onTableRowInserted: (rowIndex, {required after}) =>
-            _handleTableRowInserted(block.id, rowIndex, after: after),
-        onTableRowDeleted: (rowIndex) =>
-            _handleTableRowDeleted(block.id, rowIndex),
-        onTableColumnInserted: (columnIndex, {required after}) =>
-            _handleTableColumnInserted(block.id, columnIndex, after: after),
-        onTableColumnDeleted: (columnIndex) =>
-            _handleTableColumnDeleted(block.id, columnIndex),
-        onTableColumnAlignmentChanged: (columnIndex, alignment) =>
-            _handleTableColumnAlignmentChanged(
-              block.id,
-              columnIndex,
-              alignment,
-            ),
-        onTableDeleted: () => _handleTableDeleted(block.id),
-        onImageEditRequested: () =>
-            unawaited(_handleImageBlockEditRequested(block.id)),
-        onHtmlEditRequested: () =>
-            unawaited(_handleHtmlBlockEditRequested(block.id)),
-        onTaskChanged: (checked) =>
-            _handleTaskCheckedChanged(block.id, checked),
-        editRevision: widget.visualizationRevision + _documentGeneration,
+                  offset,
+                ),
+          tableCellSpellingMenuReader: widget.readSpellingMenuItems == null
+              ? null
+              : (cellId) =>
+                    (offset) => widget.readSpellingMenuItems!(
+                      SpellingRichTableCellTarget(
+                        tableBlockId: block.id,
+                        cellId: cellId,
+                        documentGeneration: _documentGeneration,
+                      ),
+                      offset,
+                    ),
+          onCheckSpelling: widget.onCheckSpelling,
+          onTableCellFocused: (cellId) =>
+              _handleTableCellFocused(block.id, cellId),
+          onTableRowInserted: (rowIndex, {required after}) =>
+              _handleTableRowInserted(block.id, rowIndex, after: after),
+          onTableRowDeleted: (rowIndex) =>
+              _handleTableRowDeleted(block.id, rowIndex),
+          onTableColumnInserted: (columnIndex, {required after}) =>
+              _handleTableColumnInserted(block.id, columnIndex, after: after),
+          onTableColumnDeleted: (columnIndex) =>
+              _handleTableColumnDeleted(block.id, columnIndex),
+          onTableColumnAlignmentChanged: (columnIndex, alignment) =>
+              _handleTableColumnAlignmentChanged(
+                block.id,
+                columnIndex,
+                alignment,
+              ),
+          onTableDeleted: () => _handleTableDeleted(block.id),
+          onImageEditRequested: () =>
+              unawaited(_handleImageBlockEditRequested(block.id)),
+          onHtmlEditRequested: () =>
+              unawaited(_handleHtmlBlockEditRequested(block.id)),
+          onTaskChanged: (checked) =>
+              _handleTaskCheckedChanged(block.id, checked),
+          editRevision: widget.visualizationRevision + _documentGeneration,
+        ),
       ),
     );
   }
@@ -2334,6 +2382,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     for (final id in _textControllers.keys.toList()) {
       if (!ids.contains(id)) {
+        _inputSelections.remove(id);
         _textControllers.remove(id)?.dispose();
         _modelTextSelections.remove(id);
       }
@@ -2346,6 +2395,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     for (final id in _tableCellControllers.keys.toList()) {
       if (!cellIds.contains(id)) {
+        _inputSelections.remove(id);
         _tableCellControllers.remove(id)?.dispose();
       }
     }
@@ -2483,6 +2533,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if (_cellSelectAllTarget == targetId) _cellSelectAllTarget = null;
     _scheduleSessionReport();
+    final blockForSelection = _documentController.blockById(targetId);
+    if (blockForSelection != null &&
+        busyMarkWysiwygEditableText(blockForSelection) == controller.text &&
+        controller.selection.isValid) {
+      _inputSelections[targetId] = controller.selection;
+    }
     final continuous = _continuousTextEdit;
     if (continuous == null || continuous.targetId != targetId) {
       return;
@@ -2493,7 +2549,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         !controller.selection.isValid) {
       return;
     }
-    if (controller.selection.extentOffset != continuous.caret) {
+    if (controller.selection !=
+        TextSelection.collapsed(offset: continuous.caret)) {
       _continuousTextEdit = null;
     }
   }
@@ -2855,6 +2912,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   BusyDocument _historySnapshot() {
+    _reportLiveHistorySession();
     final markdown = _documentController.markdown;
     return _documentController.document.copyWith(
       blocks: [
@@ -2885,6 +2943,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _recordUndoSnapshot([BusyDocument? previousDocument]) {
     if (widget.useExternalUndoHistory) {
+      if (previousDocument == null) _reportLiveHistorySession();
       return;
     }
     final snapshot = previousDocument ?? _historySnapshot();
@@ -3003,24 +3062,31 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     final controller = _textControllers[blockId];
+    final undoSnapshot = widget.useExternalUndoHistory
+        ? null
+        : _historySnapshot();
+    _reportTextHistorySession(blockId, _inputSelections[blockId]);
     final undoGroup = origin == _WysiwygTextEditOrigin.paste
         ? null
         : _undoGroupForTextEdit(
             targetId: blockId,
+            previousSelection: _inputSelections[blockId],
             oldText: oldText,
             newText: value,
             selection: controller?.selection,
           );
     if (origin == _WysiwygTextEditOrigin.paste) {
       _continuousTextEdit = null;
+      if (controller?.selection.isValid == true) {
+        _inputSelections[blockId] = controller!.selection;
+      }
     }
-    final undoSnapshot = _historySnapshot();
     final currentBlock = _documentController.blockById(blockId);
     if (currentBlock != null &&
         busyMarkWysiwygBlockContainsMath(currentBlock)) {
       _documentController.updateMathSource(blockId, value);
-      _recordUndoSnapshot(undoSnapshot);
-      _emitMarkdown(undoGroup: undoGroup);
+      if (undoSnapshot != null) _recordUndoSnapshot(undoSnapshot);
+      _emitMarkdown(undoGroup: undoGroup, reportEditingSession: true);
       return;
     }
     final offset =
@@ -3047,7 +3113,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           previousSelection.end == oldText.length,
     );
     if (splitResult != null) {
-      _recordUndoSnapshot(undoSnapshot);
+      if (undoSnapshot != null) _recordUndoSnapshot(undoSnapshot);
       _emitMarkdown(undoGroup: undoGroup);
       _focusBlockAfterFrame(splitResult.blockId, offset: splitResult.offset);
       return;
@@ -3070,12 +3136,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       preserveTextWhitespace: origin == _WysiwygTextEditOrigin.paste,
       normalizePastedFormatting: origin == _WysiwygTextEditOrigin.paste,
     );
-    _recordUndoSnapshot(undoSnapshot);
+    if (undoSnapshot != null) _recordUndoSnapshot(undoSnapshot);
     if (controller != null) _rememberModelTextSelection(blockId, controller);
     if (value.isNotEmpty) {
       _pendingInlineKindsByBlockId.remove(blockId);
     }
-    _emitMarkdown(undoGroup: undoGroup);
+    _emitMarkdown(undoGroup: undoGroup, reportEditingSession: true);
   }
 
   String _replacementTextForFieldEdit(String oldText, String newText) {
@@ -3161,7 +3227,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (currentText == accepted) {
       return;
     }
-    _recordUndoSnapshot();
+    final previousSelection = _inputSelections[cellId];
+    final undoSnapshot = widget.useExternalUndoHistory
+        ? null
+        : _historySnapshot();
+    _reportTextHistorySession(cellId, previousSelection);
     if (markdownSource) {
       _documentController.updateTableCellMarkdownSource(
         tableBlockId,
@@ -3171,9 +3241,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     } else {
       _documentController.updateTableCellText(tableBlockId, cellId, accepted);
     }
+    if (undoSnapshot != null) _recordUndoSnapshot(undoSnapshot);
     _emitMarkdown(
+      reportEditingSession: true,
       undoGroup: _undoGroupForTextEdit(
         targetId: cellId,
+        previousSelection: previousSelection,
         oldText: currentText,
         newText: accepted,
         selection: controller?.selection,
@@ -3392,7 +3465,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             null;
   }
 
-  void _scheduleSessionRestore(WysiwygEditorSessionState session) {
+  void _scheduleSessionRestore(
+    WysiwygEditorSessionState session, {
+    bool restoreSelectionImmediately = false,
+  }) {
     final request = Object();
     _sessionRestoreRequest = request;
     _inspectorRestorePending = true;
@@ -3456,37 +3532,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         viewportLayoutSignature: session.viewportLayoutSignature,
       );
     }
-    _initialFocusScheduled = true;
-    _initialEditingBlockId = session.activeBlockId;
-    _initialEditingOffset = session.viewportEditingOffset;
-    final generation = _documentGeneration;
-    final documentId = _documentId;
-    final navigation = widget.scrollRequest;
-    final gesture = _selectionGestureGeneration;
-    final focusOwner = FocusManager.instance.primaryFocus;
-    final selectionAtRequest = _activeTextTarget()?.controller.selection;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted ||
-          !identical(request, _sessionRestoreRequest) ||
-          generation != _documentGeneration ||
-          documentId != _documentId ||
-          navigation != widget.scrollRequest ||
-          gesture != _selectionGestureGeneration ||
-          (selectionAtRequest != null &&
-              selectionAtRequest !=
-                  _activeTextTarget()?.controller.selection) ||
-          (FocusManager.instance.primaryFocus != focusOwner &&
-              FocusManager.instance.primaryFocus is! FocusScopeNode &&
-              FocusManager.instance.primaryFocus?.context?.mounted == true &&
-              FocusManager.instance.primaryFocus?.context
-                      ?.findAncestorStateOfType<BusyMarkWysiwygEditorState>() !=
-                  this)) {
-        if (mounted && identical(request, _sessionRestoreRequest)) {
-          _cancelSessionRestore();
-        }
-        return;
-      }
-      _sessionRestoreRequest = null;
+    bool applySelection() {
+      var applied = false;
       _documentSelection = null;
       final activeBlock = session.activeBlockId == null
           ? null
@@ -3518,6 +3565,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                     .clamp(0, controller.text.length)
                     .toInt(),
               );
+              applied = true;
             }
           } else {
             final start = _clampDocumentPosition(
@@ -3537,10 +3585,78 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                 anchor: start,
                 extent: end,
               );
+              applied = true;
             }
           }
         }
       }
+      return applied;
+    }
+
+    WysiwygEditorSessionState? immediatelyRestored;
+    Object selectionKey(WysiwygEditorSessionState value) => (
+      value.activeBlockId,
+      value.activeCellId,
+      value.anchorBlockId,
+      value.anchorOffset,
+      value.extentBlockId,
+      value.extentOffset,
+    );
+    if (restoreSelectionImmediately) {
+      final applied = applySelection();
+      final restoreFocus = _mayRestoreEditingFocus();
+      if (restoreFocus && _hasBlockSelection) {
+        _selectionFocusNode.requestFocus();
+      } else if (restoreFocus) {
+        final focus = _activeCellId == null
+            ? _focusNodes[_activeBlockId]
+            : _tableCellFocusNodes[_activeCellId];
+        focus?.requestFocus();
+      }
+      if (applied) immediatelyRestored = _captureSessionState();
+    }
+    _initialFocusScheduled = true;
+    _initialEditingBlockId = session.activeBlockId;
+    _initialEditingOffset = session.viewportEditingOffset;
+    final generation = _documentGeneration;
+    final documentId = _documentId;
+    final navigation = widget.scrollRequest;
+    final gesture = _selectionGestureGeneration;
+    final focusOwner = FocusManager.instance.primaryFocus;
+    final selectionAtRequest = _activeTextTarget()?.controller.selection;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          !identical(request, _sessionRestoreRequest) ||
+          generation != _documentGeneration ||
+          documentId != _documentId ||
+          navigation != widget.scrollRequest ||
+          (!restoreSelectionImmediately &&
+              gesture != _selectionGestureGeneration) ||
+          (!restoreSelectionImmediately &&
+              selectionAtRequest != null &&
+              selectionAtRequest !=
+                  _activeTextTarget()?.controller.selection) ||
+          (FocusManager.instance.primaryFocus != focusOwner &&
+              FocusManager.instance.primaryFocus is! FocusScopeNode &&
+              FocusManager.instance.primaryFocus?.context?.mounted == true &&
+              FocusManager.instance.primaryFocus?.context
+                      ?.findAncestorStateOfType<BusyMarkWysiwygEditorState>() !=
+                  this)) {
+        if (mounted && identical(request, _sessionRestoreRequest)) {
+          _cancelSessionRestore();
+        }
+        return;
+      }
+      _sessionRestoreRequest = null;
+      if (immediatelyRestored != null &&
+          selectionKey(immediatelyRestored) !=
+              selectionKey(_captureSessionState())) {
+        // A newer caret/focus move owns the view, even without a source edit.
+        _inspectorRestorePending = false;
+        _scheduleSessionReport();
+        return;
+      }
+      if (immediatelyRestored == null) applySelection();
       final viewportBlockId = session.viewportBlockId;
       final savedEditingOffset = session.viewportEditingOffset;
       final editingOffset = _editingBlockViewportOffset();
@@ -3691,12 +3807,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   void _reportSessionNow({
     BusyMarkWysiwygSessionChanged? callback,
     String? documentId,
+    WysiwygEditorSessionState? editingSession,
   }) {
     final report = callback ?? widget.onSessionChanged;
     if (report == null) {
       return;
     }
-    final session = _captureSessionState();
+    final session = editingSession ?? _captureSessionState();
     final targetDocumentId = documentId ?? _documentId;
     if (SchedulerBinding.instance.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
@@ -3708,6 +3825,56 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     report(targetDocumentId, session);
+  }
+
+  void _reportTextHistorySession(String targetId, TextSelection? selection) {
+    if (!widget.useExternalUndoHistory) {
+      return;
+    }
+    if (selection?.isValid != true ||
+        !mounted ||
+        DocumentReadOnlyScope.of(context)) {
+      return;
+    }
+    final live = widget.readEditBase?.call();
+    if (widget.readEditBase != null &&
+        live?.sameDocumentVersion(_editBase) != true) {
+      return;
+    }
+    final session = _captureSessionState();
+    _reportSessionNow(
+      editingSession: WysiwygEditorSessionState(
+        activeBlockId: session.activeBlockId,
+        activeCellId: session.activeCellId,
+        anchorBlockId: targetId,
+        anchorOffset: selection!.baseOffset,
+        extentBlockId: targetId,
+        extentOffset: selection.extentOffset,
+        viewportBlockId: session.viewportBlockId,
+        viewportAlignment: session.viewportAlignment,
+        viewportOffset: session.viewportOffset,
+        viewportEditingOffset: session.viewportEditingOffset,
+        viewportLayoutSignature: session.viewportLayoutSignature,
+        sourceSignature: session.sourceSignature,
+        sourceBindings: session.sourceBindings,
+      ),
+    );
+  }
+
+  void _reportLiveHistorySession() {
+    if (!widget.useExternalUndoHistory ||
+        _pendingTextFocus != null ||
+        !mounted ||
+        DocumentReadOnlyScope.of(context) ||
+        SchedulerBinding.instance.schedulerPhase ==
+            SchedulerPhase.persistentCallbacks) {
+      return;
+    }
+    final live = widget.readEditBase?.call();
+    if (widget.readEditBase == null ||
+        live?.sameDocumentVersion(_editBase) == true) {
+      _reportSessionNow();
+    }
   }
 
   String? _writersideSessionSourceSignature() {
@@ -4487,9 +4654,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       event,
       keyboard,
     )) {
-      if (widget.useExternalUndoHistory || !_redoEditorChange()) {
-        widget.onRedo?.call();
-      }
+      _traverseDocumentHistory(redo: true);
       return KeyEventResult.handled;
     }
     if (commands.shortcutAccepts(
@@ -4497,9 +4662,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       event,
       keyboard,
     )) {
-      if (widget.useExternalUndoHistory || !_undoEditorChange()) {
-        widget.onUndo?.call();
-      }
+      _traverseDocumentHistory(redo: false);
       return KeyEventResult.handled;
     }
     if (widget.onOpenSearch != null &&
@@ -4669,11 +4832,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.backspace && offset == 0) {
-      _recordUndoSnapshot();
+      final undoSnapshot = _historySnapshot();
       final result = _documentController.applyBackspaceAtStart(blockId);
       if (result == null) {
         return KeyEventResult.ignored;
       }
+      _recordUndoSnapshot(undoSnapshot);
       _emitMarkdown();
       _focusBlockAfterFrame(result.blockId, offset: result.offset);
       return KeyEventResult.handled;
@@ -4767,9 +4931,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       event,
       keyboard,
     )) {
-      if (widget.useExternalUndoHistory || !_undoEditorChange()) {
-        widget.onUndo?.call();
-      }
+      _traverseDocumentHistory(redo: false);
       return KeyEventResult.handled;
     }
     if (commands.shortcutAccepts(
@@ -4777,9 +4939,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       event,
       keyboard,
     )) {
-      if (widget.useExternalUndoHistory || !_redoEditorChange()) {
-        widget.onRedo?.call();
-      }
+      _traverseDocumentHistory(redo: true);
       return KeyEventResult.handled;
     }
     if (widget.onOpenSearch != null &&
@@ -6185,13 +6345,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       case BusyMarkCommandIds.textPastePlainText:
         unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.plainText));
       case 'text.undo':
-        if (widget.useExternalUndoHistory || !_undoEditorChange()) {
-          widget.onUndo?.call();
-        }
+        _traverseDocumentHistory(redo: false);
       case 'text.redo':
-        if (widget.useExternalUndoHistory || !_redoEditorChange()) {
-          widget.onRedo?.call();
-        }
+        _traverseDocumentHistory(redo: true);
     }
   }
 
@@ -7774,51 +7930,43 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     required String oldText,
     required String newText,
     required TextSelection? selection,
+    TextSelection? previousSelection,
   }) {
-    var prefix = 0;
-    final shortest = math.min(oldText.length, newText.length);
-    while (prefix < shortest &&
-        oldText.codeUnitAt(prefix) == newText.codeUnitAt(prefix)) {
-      prefix++;
+    final live = widget.readEditBase?.call();
+    if (live?.sameDocumentVersion(_editBase) == true &&
+        !identical(live!.history, _editBase.history)) {
+      _continuousTextEdit = null;
     }
-    var oldEnd = oldText.length;
-    var newEnd = newText.length;
-    while (oldEnd > prefix &&
-        newEnd > prefix &&
-        oldText.codeUnitAt(oldEnd - 1) == newText.codeUnitAt(newEnd - 1)) {
-      oldEnd--;
-      newEnd--;
-    }
-    final removedLength = oldEnd - prefix;
-    final insertedLength = newEnd - prefix;
-    final simpleTyping =
-        (removedLength == 0 && insertedLength == 1) ||
-        (removedLength == 1 && insertedLength == 0);
-    final caret = selection?.isValid == true
-        ? selection!.extentOffset.clamp(0, newText.length).toInt()
-        : newEnd;
-    if (!simpleTyping) {
+    if (selection?.isValid == true) _inputSelections[targetId] = selection!;
+    final kind = documentSimpleEditKind(
+      before: oldText,
+      after: newText,
+      previousSelection:
+          previousSelection ?? const TextSelection.collapsed(offset: -1),
+      selection: selection ?? const TextSelection.collapsed(offset: -1),
+    );
+    if (kind == null) {
       _continuousTextEdit = null;
       return null;
     }
-    final now = DateTime.now();
+    final caret = selection!.extentOffset;
     final previous = _continuousTextEdit;
     final continuous =
         previous != null &&
+        previous.kind == kind &&
         previous.targetId == targetId &&
         previous.newText == oldText &&
-        now.difference(previous.timestamp) < const Duration(seconds: 2) &&
-        (previous.caret == prefix ||
-            previous.caret == caret ||
-            (insertedLength == 0 && previous.caret == oldEnd));
-    final group = continuous
-        ? previous.group
-        : 'wysiwyg-$_documentId-${++_undoGroupSequence}';
+        previous.caret == previousSelection!.extentOffset;
+    final group = _undoGrouping.next(
+      owner: 'wysiwyg-$_documentId',
+      continues: continuous,
+      size: 1,
+    );
     _continuousTextEdit = _ContinuousTextEdit(
       targetId: targetId,
+      kind: kind,
       newText: newText,
       caret: caret,
-      timestamp: now,
       group: group,
     );
     return group;
@@ -7826,6 +7974,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _emitMarkdown({
     String? undoGroup,
+    bool reportEditingSession = false,
     WysiwygEditorSessionState? beforeSpellingSession,
     WysiwygEditorSessionState? afterSpellingSession,
   }) {
@@ -7837,7 +7986,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (undoGroup == null) {
       _continuousTextEdit = null;
     }
-    _internalChange = true;
+    final live = widget.readEditBase?.call();
+    if (live?.sameDocumentVersion(_editBase) == true) _editBase = live!;
+    if (widget.readEditBase != null && live != _editBase) {
+      synchronizeAuthoritativeState();
+      return;
+    }
     final markdown = _documentController.markdown;
     _documentController.rebaseCommittedSource(markdown);
     _lastInspectorSelection = null;
@@ -7866,9 +8020,84 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         widget.onSourceChanged(_documentController.document.filePath, markdown);
       }
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _internalChange = false;
-    });
+    final committed = widget.readEditBase?.call();
+    if (widget.readEditBase != null && committed != null) {
+      // The shared buffer retains its final-newline policy for rich edits.
+      final expected = !widget.useExternalUndoHistory
+          ? markdown
+          : _editBase.source.endsWith('\n')
+          ? (markdown.endsWith('\n') ? markdown : '$markdown\n')
+          : markdown.replaceFirst(RegExp(r'\n+$'), '');
+      if (committed.source != expected) {
+        synchronizeAuthoritativeState(force: true);
+        return;
+      }
+    }
+    _editBase = committed ?? DocumentEditBase(markdown, widget.contentRevision);
+    if (_editBase.source != markdown) {
+      _documentController.rebaseCommittedSource(_editBase.source);
+    }
+    // An accepted edit supersedes a deferred traversal restore. Keep its caret
+    // in the shared session now, before another edit/traversal can arrive.
+    _inspectorRestorePending = false;
+    if (reportEditingSession) _reportSessionNow();
+  }
+
+  /// Read the document authority synchronously after traversal. A parent frame
+  /// can be delayed, or its source can equal the previous widget's source.
+  void synchronizeAuthoritativeState({bool force = false}) {
+    final live = widget.readEditBase?.call();
+    if (live == null) return;
+    if (!force && live.sameDocumentVersion(_editBase)) {
+      if (!identical(live.history, _editBase.history)) {
+        _continuousTextEdit = null;
+      }
+      _editBase = live;
+      return;
+    }
+    final document = widget.document.isXmlTopic
+        ? const WritersideEditingAdapter().parseXml(
+            filePath: widget.document.filePath,
+            source: live.source,
+          )
+        : const MarkdownParser()
+              .parse(
+                filePath: widget.document.filePath,
+                source: live.source,
+                mode: widget.document.mode,
+                workspaceRoot: widget.workspaceRoot,
+                validateLocalReferences: false,
+              )
+              .busyDocument;
+    if (document == null) return;
+    _continuousTextEdit = null;
+    _editBase = live;
+    _releaseSelectionDrag(rebuild: false);
+    _pendingTextFocus = null;
+    _documentSelection = null;
+    _propertiesTargetId = null;
+    _videoDraftTarget = null;
+    _topicPropertiesSelected = false;
+    _documentController.replaceDocument(document);
+    _initialFocusScheduled = false;
+    _scheduleSessionRestore(
+      widget.readSessionState?.call() ?? widget.initialSessionState,
+      restoreSelectionImmediately: true,
+    );
+    _scheduleVisibleHeadingReport();
+    if (mounted) setState(() {});
+  }
+
+  void _traverseDocumentHistory({required bool redo}) {
+    if (_hasActiveClipboardComposition || DocumentReadOnlyScope.of(context)) {
+      return;
+    }
+    _reportLiveHistorySession();
+    if (widget.useExternalUndoHistory ||
+        !(redo ? _redoEditorChange() : _undoEditorChange())) {
+      (redo ? widget.onRedo : widget.onUndo)?.call();
+      synchronizeAuthoritativeState();
+    }
   }
 
   Future<void> _runAiEdit({String? blockId}) async {
@@ -9017,7 +9246,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         input._focusNode.requestFocus();
       } else {
         _selectionFocusNode.requestFocus();
-        _scheduleDocumentSelectionExtentFocus();
+        // Only a table mounts the auxiliary text input. Other non-editable
+        // endpoints retain command focus without waiting for a missing field.
+        if (block.kind == BusyBlockKind.table) {
+          _scheduleDocumentSelectionExtentFocus();
+        }
       }
       _scheduleSessionReport();
       return;
@@ -10085,16 +10318,16 @@ enum _DocumentSelectionMenuAction {
 class _ContinuousTextEdit {
   const _ContinuousTextEdit({
     required this.targetId,
+    required this.kind,
     required this.newText,
     required this.caret,
-    required this.timestamp,
     required this.group,
   });
 
   final String targetId;
+  final DocumentSimpleEditKind kind;
   final String newText;
   final int caret;
-  final DateTime timestamp;
   final String group;
 }
 

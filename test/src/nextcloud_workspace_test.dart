@@ -28,6 +28,53 @@ const _accountId = 'ba6d02cd-42fe-4e14-a577-3e2c13822459';
 
 void main() {
   test(
+    'remote refresh is an undoable boundary with an existing redo branch',
+    () async {
+      var remote = serverNote(1, content: 'baseline', etag: 'base');
+      final h = await _Harness.create(
+        seedLocal: false,
+        client: MockClient((request) async {
+          if (request.method == 'PUT') {
+            remote = serverNote(
+              1,
+              content: (jsonDecode(request.body) as Map)['content'] as String,
+              etag: 'saved',
+            );
+            return http.Response(jsonEncode(remote), 200);
+          }
+          return http.Response(
+            jsonEncode(request.url.path.endsWith('/1') ? remote : [remote]),
+            200,
+          );
+        }),
+      );
+      addTearDown(h.dispose);
+      await h.repository.synchronize(_accountId, allowWrites: false);
+      await h.controller.openNextcloudWorkspace(_accountId);
+      await h.controller.refreshNextcloudNotes();
+      h.controller.updateActiveText('first');
+      h.controller.updateActiveText('second');
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      expect(await h.controller.saveActive(), isTrue);
+      await h.repository.synchronize(_accountId);
+      expect(h.state.activeText, 'first');
+      expect(h.state.activeBuffer!.editorState.undoState.redo, isNotEmpty);
+      remote = serverNote(
+        1,
+        content: 'server replacement',
+        etag: 'replacement',
+      );
+      await h.controller.refreshNextcloudNotes();
+      expect(h.state.activeText, 'server replacement');
+      expect(h.controller.redoActiveBuffer(), isFalse);
+      expect(h.controller.undoActiveBuffer(), isTrue);
+      expect(h.state.activeText, 'first');
+      expect(h.controller.redoActiveBuffer(), isTrue);
+      expect(h.state.activeText, 'server replacement');
+    },
+  );
+
+  test(
     'no-op properties Save preserves revision/time and schedules no server pass',
     () async {
       var gets = 0;

@@ -21,9 +21,11 @@ class DocumentHistoryState {
     required this.text,
     required this.selection,
     this.wysiwygState = const WysiwygEditorSessionState(),
+    this.format,
   });
 
   final String text;
+  final TextFormatMetadata? format;
   final TextSelection selection;
   final WysiwygEditorSessionState wysiwygState;
 }
@@ -73,6 +75,10 @@ class DocumentUndoState {
     }
     return null;
   }
+
+  DocumentUndoState closeGroup() => activeGroup == null
+      ? this
+      : DocumentUndoState(undo: undo, redo: redo, restoredEntry: restoredEntry);
 
   DocumentUndoState push(DocumentHistoryState state, {String? group}) {
     if (group != null && group == activeGroup && undo.isNotEmpty) {
@@ -333,11 +339,36 @@ class DocumentBuffer {
         undoState: editorState.undoState.push(
           DocumentHistoryState(
             text: text,
+            format: format,
             selection: historicalSelection,
             wysiwygState: previousWysiwygState ?? editorState.wysiwygState,
           ),
           group: undoGroup,
         ),
+      ),
+    );
+  }
+
+  DocumentHistoryState get historyState => DocumentHistoryState(
+    text: text,
+    format: format,
+    selection: _selectionForText(editorState.selection, text),
+    wysiwygState: editorState.wysiwygState,
+  );
+
+  /// An authoritative content replacement is a discrete, undoable transaction.
+  /// Metadata-only refreshes leave the history and its redo branch intact.
+  /// Remote readonly content may still be replaced by its authority.
+  DocumentBuffer replaced(String source) {
+    if (source == text) return this;
+    return copyWith(
+      text: source,
+      dirty: source != lastSavedText || isUntitled,
+      format: format.copyWith(hasFinalNewline: source.endsWith('\n')),
+      revision: revision + 1,
+      editorState: editorState.copyWith(
+        selection: _selectionForText(editorState.selection, source),
+        undoState: editorState.undoState.push(historyState),
       ),
     );
   }

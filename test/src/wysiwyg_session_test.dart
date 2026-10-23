@@ -1,3 +1,5 @@
+import 'package:busymark/src/editor/document_edit_history.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
@@ -12,6 +14,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../support/document_history_harness.dart';
+
 final _sessionReportProvider = NotifierProvider<_SessionReportNotifier, int>(
   _SessionReportNotifier.new,
 );
@@ -24,7 +28,287 @@ class _SessionReportNotifier extends Notifier<int> {
 }
 
 void main() {
+  testWidgets(
+    'rich controlled model replacement works without source metadata',
+    (tester) async {
+      Widget host(String source) {
+        final parsed = const MarkdownParser()
+            .parse(filePath: 'one.md', source: source)
+            .busyDocument;
+        return _app(
+          BusyMarkWysiwygEditor(
+            document: BusyDocument(
+              filePath: parsed.filePath,
+              mode: parsed.mode,
+              blocks: parsed.blocks,
+            ),
+            onSourceChanged: (_, _) {},
+          ),
+        );
+      }
+
+      await tester.pumpWidget(host('abc'));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(host('replacement'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        'replacement',
+      );
+    },
+  );
+
+  for (final afterTyping in [false, true]) {
+    testWidgets(
+      'rich live authority survives a stale widget source afterTyping=$afterTyping',
+      (tester) async {
+        var base = const DocumentEditBase('abc', 0);
+        final key = GlobalKey<BusyMarkWysiwygEditorState>();
+        final original = const MarkdownParser()
+            .parse(filePath: 'one.md', source: 'abc')
+            .busyDocument;
+        Widget host() => _app(
+          BusyMarkWysiwygEditor(
+            key: key,
+            document: original,
+            contentRevision: 0,
+            readEditBase: () => base,
+            onSourceChanged: (_, source) =>
+                base = DocumentEditBase(source, base.revision! + 1),
+          ),
+        );
+        await tester.pumpWidget(host());
+        await tester.pumpAndSettle();
+        if (afterTyping) {
+          await tester.enterText(find.byType(TextField).first, 'abcd');
+          expect(base.source.trimRight(), 'abcd');
+        }
+        // The live authority advances before the parent's document projection.
+        // An unrelated rebuild still carries the original source and revision.
+        base = DocumentEditBase('restored', base.revision! + 1);
+        await tester.pumpWidget(host());
+        await tester.pumpAndSettle();
+        final field = find.byType(TextField).first;
+        expect(tester.widget<TextField>(field).controller!.text, 'restored');
+        expect(key.currentState!.serializedSource, 'restored');
+        await tester.enterText(field, 'restoredx');
+        expect(base.source.trimRight(), 'restoredx');
+      },
+    );
+  }
+
+  testWidgets('rejected rich publication reconciles before the next edit', (
+    tester,
+  ) async {
+    var base = const DocumentEditBase('abc', 0);
+    var accept = false;
+    await tester.pumpWidget(
+      _app(
+        BusyMarkWysiwygEditor(
+          document: const MarkdownParser()
+              .parse(filePath: 'one.md', source: 'abc')
+              .busyDocument,
+          readEditBase: () => base,
+          onSourceChanged: (_, text) {
+            if (accept) base = DocumentEditBase(text, base.revision! + 1);
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'abcd');
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+      'abc',
+    );
+    expect(base.source, 'abc');
+    expect(base.revision, 0);
+    accept = true;
+    await tester.enterText(find.byType(TextField).first, 'abcx');
+    await tester.pump();
+    expect(base.source.trimRight(), 'abcx');
+    expect(base.revision, 1);
+  });
+
+  testWidgets('fifteen minutes of continuous rich typing stays bounded', (
+    tester,
+  ) async {
+    var now = Duration.zero;
+    var clockReads = 0;
+    final history = await DocumentHistoryHarness.create();
+    addTearDown(history.dispose);
+    DocumentBuffer buffer() => history.buffer;
+    var document = const MarkdownParser()
+        .parse(filePath: 'typing.md', source: 'abc')
+        .busyDocument;
+    final key = GlobalKey<BusyMarkWysiwygEditorState>();
+    Duration clock() {
+      clockReads++;
+      return now;
+    }
+
+    await tester.pumpWidget(
+      _app(
+        BusyMarkWysiwygEditor(
+          key: key,
+          document: document,
+          documentId: buffer().id,
+          undoClock: clock,
+          useExternalUndoHistory: true,
+          readEditBase: history.readBase,
+          readSessionState: () => buffer().editorState.wysiwygState,
+          onUndo: history.controller.undoActiveBuffer,
+          onRedo: history.controller.redoActiveBuffer,
+          onSessionChanged: (id, session) =>
+              history.controller.updateDocumentEditorState(
+                id,
+                buffer().editorState.copyWith(wysiwygState: session),
+              ),
+          onDocumentChanged: (value) => document = value,
+          onSourceChanged: (_, _) {},
+          onTransactionalSourceChanged: (_, text, group) =>
+              history.controller.updateActiveWysiwygText(
+                text,
+                document: document,
+                undoGroup: group,
+              ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final field = find
+        .descendant(
+          of: find.byType(BusyMarkWysiwygEditor),
+          matching: find.byType(TextField),
+        )
+        .first;
+    await tester.showKeyboard(field);
+    tester.widget<TextField>(field).controller!.selection =
+        const TextSelection.collapsed(offset: 3);
+    var text = 'abc';
+    final sizes = <String, int>{};
+    for (var i = 0; i <= 900; i++) {
+      now = Duration(seconds: i);
+      text += 'x';
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        ),
+      );
+      final group = buffer().editorState.undoState.activeGroup;
+      if (group != null) sizes.update(group, (n) => n + 1, ifAbsent: () => 1);
+      if (i % 50 == 0) await tester.pump();
+    }
+    expect(now, const Duration(minutes: 15));
+    expect(
+      clockReads,
+      greaterThan(800),
+      reason: 'The injected clock is consulted by real edit grouping',
+    );
+    expect(sizes.length, greaterThanOrEqualTo(90));
+    expect(sizes.values, everyElement(lessThanOrEqualTo(10)));
+    final previous = buffer().editorState.undoState.undo.last;
+    expect(previous.text.length, greaterThan(880));
+    expect(buffer().text.length - previous.text.length, lessThanOrEqualTo(10));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(buffer().text, previous.text);
+    expect(tester.widget<TextField>(field).controller!.text, previous.text);
+    expect(key.currentState!.serializedSource, previous.text);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(buffer().text, text);
+    expect(tester.widget<TextField>(field).controller!.text, text);
+    expect(key.currentState!.serializedSource, text);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   const parser = MarkdownParser();
+
+  for (final table in [false, true]) {
+    testWidgets(
+      'merged text history preserves every clipped viewport anchor table=$table',
+      (tester) async {
+        final history = await DocumentHistoryHarness.create();
+        addTearDown(history.dispose);
+        final text = table
+            ? 'Focus cell'
+            : List.generate(180, (i) => 'line $i for reading').join('\n');
+        final source = table
+            ? '| Header | Other |\n| --- | --- |\n| Focus cell | Body |\n${List.generate(100, (i) => '| row $i | reading |').join('\n')}\n\nAfter.\n'
+            : '```text\n$text\n```\n\nAfter.\n';
+        history.controller.updateActiveText(source);
+        var document = parser
+            .parse(filePath: 'viewport.md', source: source)
+            .busyDocument;
+        final key = GlobalKey<BusyMarkWysiwygEditorState>();
+        await tester.pumpWidget(
+          _app(
+            BusyMarkWysiwygEditor(
+              key: key,
+              document: document,
+              documentId: history.buffer.id,
+              useExternalUndoHistory: true,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: history.controller.undoActiveBuffer,
+              onRedo: history.controller.redoActiveBuffer,
+              onSessionChanged: (id, session) =>
+                  history.controller.updateDocumentEditorState(
+                    id,
+                    history.buffer.editorState.copyWith(wysiwygState: session),
+                  ),
+              onDocumentChanged: (value) => document = value,
+              onSourceChanged: (_, _) {},
+              onTransactionalSourceChanged: (_, value, group) =>
+                  history.controller.updateActiveWysiwygText(
+                    value,
+                    document: document,
+                    undoGroup: group,
+                  ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.byWidgetPredicate(
+            (w) => w is TextField && w.controller?.text == text,
+          ),
+        );
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection.collapsed(offset: 4);
+        await tester.pumpAndSettle();
+        Scrollable.of(
+          field.focusNode!.context!,
+          axis: Axis.vertical,
+        ).position.jumpTo(2300);
+        await tester.pumpAndSettle();
+        final reading = history.buffer.editorState.wysiwygState;
+        expect(reading.viewportOffset, greaterThan(1000));
+        expect(reading.viewportEditingOffset, lessThan(-1000));
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: text.replaceRange(4, 4, 'Z'),
+            selection: const TextSelection.collapsed(offset: 5),
+          ),
+        );
+        // Inspect the authoritative pre-edit entry before any parent/frame restore.
+        final before =
+            history.buffer.editorState.undoState.undo.last.wysiwygState;
+        expect(before.anchorOffset, 4);
+        expect(before.viewportOffset, reading.viewportOffset);
+        expect(before.viewportEditingOffset, reading.viewportEditingOffset);
+        expect(before.viewportLayoutSignature, reading.viewportLayoutSignature);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
 
   test(
     'viewport pixel anchors round trip while older sessions remain readable',
@@ -53,6 +337,42 @@ void main() {
       expect(restored.sourceBindings, session.sourceBindings);
     },
   );
+
+  for (final replacement in ['abc', 'Restored']) {
+    testWidgets(
+      'authoritative $replacement wins during rich publication frame',
+      (tester) async {
+        BusyDocument parse(String source) =>
+            parser.parse(filePath: 'one.md', source: source).busyDocument;
+        var published = 'abc';
+        Widget editor(String source) => _app(
+          BusyMarkWysiwygEditor(
+            document: parse(source),
+            documentId: 'one',
+            useExternalUndoHistory: true,
+            onSourceChanged: (_, value) => published = value,
+          ),
+        );
+        await tester.pumpWidget(editor('abc'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).first, 'abcd');
+        expect(published, contains('abcd'));
+        // No settled frame between publication and authoritative replacement.
+        await tester.pumpWidget(editor(replacement));
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<TextField>(find.byType(TextField).first)
+              .controller!
+              .text,
+          replacement,
+        );
+        await tester.enterText(find.byType(TextField).first, '${replacement}x');
+        expect(published, contains('${replacement}x'));
+        expect(published, isNot(contains('abcd')));
+      },
+    );
+  }
 
   testWidgets(
     'pinned non-list Markdown owner refreshes direct edits with authored positions',

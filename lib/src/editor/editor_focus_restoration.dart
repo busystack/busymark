@@ -69,10 +69,13 @@ class _EditorFocusRestorationState extends State<BusyMarkEditorFocusRestoration>
   late BusyMarkCaretScrollController _scrollController;
   late TextEditingValue _lastValue;
   bool _pendingFocusReveal = false;
+  late final bool Function() _suppressFocusReveal = _shouldSuppressFocusReveal;
   bool _intentionalFocus = false;
   bool _retainEditingTarget = false;
   final _pendingTargetRetentions = <Object>{};
   InheritedElement? _scope;
+
+  bool _shouldSuppressFocusReveal() => _pendingFocusReveal;
 
   @override
   bool get wantKeepAlive =>
@@ -101,7 +104,7 @@ class _EditorFocusRestorationState extends State<BusyMarkEditorFocusRestoration>
     _lastValue = widget.controller.value;
     _scrollController =
         widget.scrollController ?? BusyMarkCaretScrollController();
-    _scrollController.suppressFocusReveal = () => _pendingFocusReveal;
+    _scrollController.suppressFocusReveal = _suppressFocusReveal;
     BusyMarkEditorFocusRestoration._fields[widget.focusNode] = this;
     widget.focusNode.addListener(_focusChanged);
     widget.controller.addListener(_valueChanged);
@@ -112,7 +115,14 @@ class _EditorFocusRestorationState extends State<BusyMarkEditorFocusRestoration>
     field.focusNode.removeListener(_focusChanged);
     field.controller.removeListener(_valueChanged);
     BusyMarkEditorFocusRestoration._fields[field.focusNode] = null;
-    _scrollController.suppressFocusReveal = null;
+    // A document-keyed replacement can attach its new field before this old
+    // state is disposed. Do not retire the new owner's shared-controller hook.
+    if (identical(
+      _scrollController.suppressFocusReveal,
+      _suppressFocusReveal,
+    )) {
+      _scrollController.suppressFocusReveal = null;
+    }
     if (field.scrollController == null) _scrollController.dispose();
     _pendingFocusReveal = false;
   }
