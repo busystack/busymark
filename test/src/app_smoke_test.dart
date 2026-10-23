@@ -9263,6 +9263,12 @@ code
         () =>
             !container.read(searchSessionProvider).searching &&
             container.read(searchSessionProvider).results.length == 2,
+        debugState: () {
+          final search = container.read(searchSessionProvider);
+          return 'query=${search.query}, searching=${search.searching}, '
+              'results=${search.results.map((r) => r.identity).toList()}, '
+              'sources=$finalSources';
+        },
       );
       expect(container.read(searchSessionProvider).query, 'needle');
       expect(
@@ -10468,6 +10474,1121 @@ code
     expect(service.savedPath, first.path);
     expect(service.savedText, '# Edited Introduction\n');
   });
+
+  Future<ProviderContainer> historyApp(
+    WidgetTester tester,
+    DocumentViewModePreference mode, {
+    WorkspaceService? service,
+    String startupPath = '/tmp/disposable-history.md',
+    String initialSource = 'abc',
+  }) async {
+    final settings = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: mode,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settings),
+        workspaceServiceProvider.overrideWithValue(
+          service ?? _SearchWorkspaceService(initialSource),
+        ),
+        localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
+        documentSessionStoreProvider.overrideWithValue(
+          MemoryDocumentSessionStore(),
+        ),
+        documentRecoveryStoreProvider.overrideWithValue(
+          MemoryDocumentRecoveryStore(),
+        ),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await _pumpUntilFound(
+      tester,
+      find.byType(
+        mode == DocumentViewModePreference.source
+            ? BusyMarkSourceEditor
+            : BusyMarkWysiwygEditor,
+      ),
+    );
+    return container;
+  }
+
+  Finder historyField(DocumentViewModePreference mode) => find
+      .descendant(
+        of: find.byType(
+          mode == DocumentViewModePreference.source
+              ? BusyMarkSourceEditor
+              : BusyMarkWysiwygEditor,
+        ),
+        matching: find.byType(TextField),
+      )
+      .first;
+
+  Future<void> historyKey(WidgetTester tester, {bool redo = false}) async {
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    if (redo) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    if (redo) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  }
+
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.editor,
+  ]) {
+    testWidgets('${mode.name} exhausted keyboard history is a consumed no-op', (
+      tester,
+    ) async {
+      final container = await historyApp(tester, mode);
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      final field = historyField(mode);
+      await tester.tap(field);
+      await tester.showKeyboard(field);
+      for (final text in ['abcd', 'abcde', 'abcdef']) {
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          ),
+        );
+        // Populate Flutter's throttled field history as well as shared history.
+        await tester.pump(const Duration(milliseconds: 600));
+      }
+      while (container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .isNotEmpty) {
+        await historyKey(tester);
+        await tester.pump(const Duration(milliseconds: 600));
+      }
+      for (final redo in [false, true]) {
+        if (redo) {
+          while (container
+              .read(workspaceControllerProvider)
+              .activeBuffer!
+              .editorState
+              .undoState
+              .redo
+              .isNotEmpty) {
+            await historyKey(tester, redo: true);
+            await tester.pump(const Duration(milliseconds: 600));
+          }
+        }
+        final before = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        final history = container.read(localHistoryControllerProvider.notifier);
+        final pending = history.pendingSnapshotForBuffer(before.id);
+        for (var i = 0; i < 4; i++) {
+          await historyKey(tester, redo: redo);
+          await tester.pump(const Duration(milliseconds: 600));
+        }
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        if (redo) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyRepeatEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyRepeatEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+        if (redo) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        final after = container.read(workspaceControllerProvider).activeBuffer!;
+        expect(after.text, before.text);
+        expect(after.revision, before.revision);
+        expect(after.dirty, before.dirty);
+        expect(after.editorState.undoState, same(before.editorState.undoState));
+        expect(history.pendingSnapshotForBuffer(before.id), same(pending));
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.text,
+          after.text,
+        );
+      }
+      expect(workspace.undoActiveBuffer(), isTrue);
+    });
+
+    testWidgets('${mode.name} remapped history preserves search field undo', (
+      tester,
+    ) async {
+      final container = await historyApp(tester, mode);
+      final keymap = container.read(keymapControllerProvider.notifier);
+      for (final entry in {
+        BusyMarkCommandIds.textUndo: LogicalKeyboardKey.f9,
+        BusyMarkCommandIds.textRedo: LogicalKeyboardKey.f10,
+      }.entries) {
+        expect(
+          (await keymap.update(
+            entry.key,
+            BusyMarkKeyBinding(entry.value, control: true, alt: true),
+            expected: container
+                .read(appSettingsControllerProvider)
+                .shortcutOverrides,
+          )).status,
+          KeymapUpdateStatus.saved,
+        );
+      }
+      await tester.pump();
+      await tester.showKeyboard(historyField(mode));
+      tester.widget<TextField>(historyField(mode)).controller!.selection =
+          const TextSelection.collapsed(offset: 3);
+      await tester.enterText(historyField(mode), 'abcd');
+      await tester.pump(const Duration(milliseconds: 600));
+      await historyKey(tester);
+      await tester.pump();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        'abcd',
+        reason: 'The remapped default is blocked in document inputs',
+      );
+
+      Future<void> remapped(LogicalKeyboardKey key) async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+      }
+
+      await remapped(LogicalKeyboardKey.f9);
+      expect(container.read(workspaceControllerProvider).activeText, 'abc');
+      final exhausted = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      await remapped(LogicalKeyboardKey.f9);
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.revision,
+        exhausted.revision,
+      );
+      await remapped(LogicalKeyboardKey.f10);
+      expect(container.read(workspaceControllerProvider).activeText, 'abcd');
+      final document = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      await remapped(LogicalKeyboardKey.f10);
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.revision,
+        document.revision,
+      );
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      final query = find.descendant(
+        of: find.byKey(const ValueKey('shared-search-query')),
+        matching: find.byType(TextField),
+      );
+      await tester.showKeyboard(query);
+      await tester.enterText(query, 'first query');
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.enterText(query, 'second query');
+      await tester.pump(const Duration(milliseconds: 600));
+      await historyKey(tester);
+      await tester.pump();
+      expect(tester.widget<TextField>(query).controller!.text, 'first query');
+      final after = container.read(workspaceControllerProvider).activeBuffer!;
+      expect(after.text, document.text);
+      expect(after.revision, document.revision);
+      expect(after.editorState.undoState, same(document.editorState.undoState));
+      container.read(searchSessionProvider.notifier).close(restoreFocus: false);
+      await tester.pump(const Duration(milliseconds: 200));
+    });
+
+    testWidgets(
+      '${mode.name} accepts typing after Local History restore traversal',
+      (tester) async {
+        final container = await historyApp(tester, mode);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        final store = container.read(localHistoryStoreProvider);
+        final buffer = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        final capture = await tabOperation(
+          tester,
+          () => store.capture(
+            LocalHistoryCaptureRequest(
+              path: buffer.filePath,
+              displayName: buffer.displayName,
+              source: 'recoverable',
+              format: buffer.format,
+              capturedAt: DateTime(2026),
+              reason: LocalHistoryCaptureReason.saved,
+              force: true,
+            ),
+            container.read(localHistoryControllerProvider.notifier).policy,
+          ),
+        );
+        final revision = await store.readRevision(capture.revision!.id);
+        workspace.updateActiveText('latest branch');
+        await tester.pump();
+        expect(
+          await tabOperation(
+            tester,
+            () => workspace.restoreLocalHistoryRevision(
+              document: capture.document,
+              revision: revision!,
+            ),
+          ),
+          isTrue,
+        );
+        await tester.pump();
+        await tester.showKeyboard(historyField(mode));
+        await historyKey(tester);
+        await tester.pump();
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          'latest branch',
+        );
+        await historyKey(tester, redo: true);
+        await tester.pump();
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          'recoverable',
+        );
+        await tester.showKeyboard(historyField(mode));
+        tester.widget<TextField>(historyField(mode)).controller!.selection =
+            const TextSelection.collapsed(offset: 11);
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'recoverabler',
+            selection: TextSelection.collapsed(offset: 12),
+          ),
+        );
+        await tester.pump();
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          'recoverabler',
+        );
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.text,
+          'recoverabler',
+        );
+      },
+    );
+
+    testWidgets('${mode.name} caret round trip closes typing transaction', (
+      tester,
+    ) async {
+      final container = await historyApp(tester, mode);
+      final field = historyField(mode);
+      await tester.showKeyboard(field);
+      final text = tester.widget<TextField>(field).controller!;
+      text.selection = const TextSelection.collapsed(offset: 3);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcd',
+          selection: TextSelection.collapsed(offset: 4),
+        ),
+      );
+      await tester.pump();
+      text.selection = const TextSelection.collapsed(offset: 3);
+      await tester.pump();
+      text.selection = const TextSelection.collapsed(offset: 4);
+      await tester.pump();
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcde',
+          selection: TextSelection.collapsed(offset: 5),
+        ),
+      );
+      await tester.pump();
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .editorState
+            .undoState
+            .undo,
+        hasLength(2),
+      );
+      await historyKey(tester);
+      await tester.pump();
+      expect(container.read(workspaceControllerProvider).activeText, 'abcd');
+      expect(text.text, 'abcd');
+    });
+  }
+
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.editor,
+  ]) {
+    testWidgets('${mode.name} sustained typing has finite undo size', (
+      tester,
+    ) async {
+      final container = await historyApp(tester, mode);
+      await tester.tap(historyField(mode));
+      await tester.showKeyboard(historyField(mode));
+      var text = 'abc';
+      for (var i = 0; i < 180; i++) {
+        text += mode == DocumentViewModePreference.source && i % 20 == 19
+            ? '\n'
+            : 'x';
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          ),
+        );
+      }
+      final undo = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState;
+      expect(undo.undo.length, greaterThan(1));
+      await historyKey(tester);
+      await tester.pump();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        isNot('abc'),
+      );
+    });
+  }
+
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.editor,
+  ]) {
+    testWidgets(
+      '${mode.name} typing and deletion direction are distinct transactions',
+      (tester) async {
+        final container = await historyApp(tester, mode);
+        final field = historyField(mode);
+        await tester.showKeyboard(field);
+        tester.widget<TextField>(field).controller!.selection =
+            const TextSelection.collapsed(offset: 2);
+        final groups = <String?>[];
+        for (final (text, caret) in [
+          ('abxc', 3),
+          ('abc', 2),
+          ('ac', 1),
+          ('a', 1),
+        ]) {
+          tester.testTextInput.updateEditingValue(
+            TextEditingValue(
+              text: text,
+              selection: TextSelection.collapsed(offset: caret),
+            ),
+          );
+          groups.add(
+            container
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .undoState
+                .activeGroup,
+          );
+        }
+        expect(groups, everyElement(isNotNull));
+        expect(groups[0], isNot(groups[1]));
+        expect(groups[1], groups[2]);
+        expect(groups[2], isNot(groups[3]));
+        final before = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        await historyKey(tester);
+        await tester.pump();
+        expect(container.read(workspaceControllerProvider).activeText, 'ac');
+        expect(before.editorState.undoState.undo.length, 3);
+      },
+    );
+
+    testWidgets('${mode.name} platform history actions remain document owned', (
+      tester,
+    ) async {
+      final container = await historyApp(tester, mode);
+      final field = historyField(mode);
+      await tester.enterText(field, 'abcd');
+      await tester.pump(const Duration(milliseconds: 600));
+      EditableTextState editable() => tester.state<EditableTextState>(
+        find.descendant(of: field, matching: find.byType(EditableText)),
+      );
+      Actions.invoke(
+        editable().context,
+        const UndoTextIntent(SelectionChangedCause.keyboard),
+      );
+      await tester.pump();
+      expect(container.read(workspaceControllerProvider).activeText, 'abc');
+      final exhausted = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      for (var i = 0; i < 4; i++) {
+        Actions.invoke(
+          editable().context,
+          const UndoTextIntent(SelectionChangedCause.keyboard),
+        );
+      }
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.revision,
+        exhausted.revision,
+      );
+      Actions.invoke(
+        editable().context,
+        const RedoTextIntent(SelectionChangedCause.keyboard),
+      );
+      await tester.pump();
+      expect(container.read(workspaceControllerProvider).activeText, 'abcd');
+      final redone = container.read(workspaceControllerProvider).activeBuffer!;
+      Actions.invoke(
+        editable().context,
+        const RedoTextIntent(SelectionChangedCause.keyboard),
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.revision,
+        redone.revision,
+      );
+    });
+
+    testWidgets(
+      '${mode.name} rejects a publication invalidated before parent rebuild',
+      (tester) async {
+        final container = await historyApp(tester, mode);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        await tester.enterText(historyField(mode), 'abcd');
+        workspace.updateActiveText('authoritative');
+        final revision = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .revision;
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'abcdx',
+            selection: TextSelection.collapsed(offset: 5),
+          ),
+        );
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          'authoritative',
+        );
+        expect(
+          container.read(workspaceControllerProvider).activeBuffer!.revision,
+          revision,
+        );
+        await tester.pump();
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.text,
+          'authoritative',
+        );
+        await tester.enterText(historyField(mode), 'authoritativex');
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          'authoritativex',
+        );
+      },
+    );
+  }
+
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.editor,
+  ]) {
+    testWidgets(
+      '${mode.name} authoritative traversal restores the historical caret',
+      (tester) async {
+        final container = await historyApp(tester, mode);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        await tester.showKeyboard(historyField(mode));
+        tester.widget<TextField>(historyField(mode)).controller!.selection =
+            const TextSelection.collapsed(offset: 1);
+        await tester.pump();
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'aXbc',
+            selection: TextSelection.collapsed(offset: 2),
+          ),
+        );
+        await tester.pump();
+        expect(workspace.undoActiveBuffer(), isTrue);
+        await tester.pump();
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.text,
+          'abc',
+        );
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.selection,
+          const TextSelection.collapsed(offset: 1),
+        );
+        expect(workspace.redoActiveBuffer(), isTrue);
+        await tester.pump();
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.text,
+          'aXbc',
+        );
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.selection,
+          const TextSelection.collapsed(offset: 2),
+        );
+      },
+    );
+  }
+
+  testWidgets('WYSIWYG Save As updates the mounted publication path', (
+    tester,
+  ) async {
+    final root = await tester.runAsync(
+      () => Directory.systemTemp.createTemp('busymark-history-save-as-'),
+    );
+    addTearDown(() async {
+      if (await root!.exists()) await root.delete(recursive: true);
+    });
+    final original = File('${root!.path}/original.md');
+    final destination = '${root.path}/renamed.md';
+    await tester.runAsync(() => original.writeAsString('abc'));
+    const mode = DocumentViewModePreference.editor;
+    final container = await historyApp(
+      tester,
+      mode,
+      service: const WorkspaceService(),
+      startupPath: original.path,
+    );
+    await tester.enterText(historyField(mode), 'abcd');
+    await tester.pump();
+    final workspace = container.read(workspaceControllerProvider.notifier);
+    expect(
+      await tabOperation(tester, () => workspace.saveActiveAs(destination)),
+      isTrue,
+    );
+    await tester.pump();
+    await tester.enterText(historyField(mode), 'abcdx');
+    await tester.pump();
+    expect(container.read(workspaceControllerProvider).activeText, 'abcdx');
+    expect(
+      tester
+          .widget<BusyMarkWysiwygEditor>(find.byType(BusyMarkWysiwygEditor))
+          .document
+          .filePath,
+      destination,
+    );
+    await historyKey(tester);
+    await tester.pump();
+    expect(container.read(workspaceControllerProvider).activeText, 'abcd');
+  });
+
+  for (final mode in [
+    DocumentViewModePreference.source,
+    DocumentViewModePreference.editor,
+  ]) {
+    for (final deletion in [false, true]) {
+      testWidgets(
+        '${mode.name} repeated-character ${deletion ? "deletion" : "typing"} groups at the actual caret',
+        (tester) async {
+          final initial = deletion ? 'aaaaaa' : 'aaaa';
+          final container = await historyApp(
+            tester,
+            mode,
+            initialSource: initial,
+          );
+          await tester.showKeyboard(historyField(mode));
+          tester.widget<TextField>(historyField(mode)).controller!.selection =
+              TextSelection.collapsed(offset: deletion ? 4 : 2);
+          for (final (text, caret)
+              in deletion
+                  ? [('aaaaa', 3), ('aaaa', 2)]
+                  : [('aaaaa', 3), ('aaaaaa', 4), ('aaaaaaa', 5)]) {
+            tester.testTextInput.updateEditingValue(
+              TextEditingValue(
+                text: text,
+                selection: TextSelection.collapsed(offset: caret),
+              ),
+            );
+          }
+          expect(
+            container
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .undoState
+                .undo,
+            hasLength(1),
+          );
+          await historyKey(tester);
+          await tester.pump();
+          expect(
+            container.read(workspaceControllerProvider).activeText,
+            initial,
+          );
+        },
+      );
+    }
+  }
+
+  testWidgets(
+    'Source to Split closes the group without dropping a no-frame edit',
+    (tester) async {
+      const mode = DocumentViewModePreference.source;
+      final container = await historyApp(tester, mode);
+      await tester.showKeyboard(historyField(mode));
+      tester.widget<TextField>(historyField(mode)).controller!.selection =
+          const TextSelection.collapsed(offset: 3);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcd',
+          selection: TextSelection.collapsed(offset: 4),
+        ),
+      );
+      await tester.pump();
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      workspace.updateActiveEditorMode(DocumentViewModePreference.split);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcdx',
+          selection: TextSelection.collapsed(offset: 5),
+        ),
+      );
+      expect(container.read(workspaceControllerProvider).activeText, 'abcdx');
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .editorState
+            .undoState
+            .undo,
+        hasLength(2),
+      );
+      expect(workspace.undoActiveBuffer(), isTrue);
+      await tester.pump();
+      expect(container.read(workspaceControllerProvider).activeText, 'abcd');
+      expect(
+        tester.widget<TextField>(historyField(mode)).controller!.text,
+        'abcd',
+      );
+    },
+  );
+
+  testWidgets('WYSIWYG remount starts a distinct undo group', (tester) async {
+    const mode = DocumentViewModePreference.editor;
+    final container = await historyApp(tester, mode);
+    final workspace = container.read(workspaceControllerProvider.notifier);
+    await tester.showKeyboard(historyField(mode));
+    tester.widget<TextField>(historyField(mode)).controller!.selection =
+        const TextSelection.collapsed(offset: 3);
+    await tester.enterText(historyField(mode), 'abcd');
+    await tester.pump();
+    final first = container.read(workspaceControllerProvider).activeBuffer!;
+    expect(first.editorState.undoState.activeGroup, isNotNull);
+    workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(BusyMarkWysiwygEditor), findsNothing);
+    workspace.updateActiveEditorMode(mode);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(mode);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.showKeyboard(historyField(mode));
+    tester.widget<TextField>(historyField(mode)).controller!.selection =
+        const TextSelection.collapsed(offset: 4);
+    await tester.enterText(historyField(mode), 'abcde');
+    await tester.pump();
+    final second = container.read(workspaceControllerProvider).activeBuffer!;
+    expect(
+      second.editorState.undoState.activeGroup,
+      isNot(first.editorState.undoState.activeGroup),
+    );
+    await historyKey(tester);
+    await tester.pump();
+    expect(container.read(workspaceControllerProvider).activeText, 'abcd');
+    expect(
+      tester.widget<TextField>(historyField(mode)).controller!.text,
+      'abcd',
+    );
+  });
+
+  for (final beforeFrame in [false, true]) {
+    testWidgets(
+      'WYSIWYG same-frame traversal and next edit (early=$beforeFrame)',
+      (tester) async {
+        const mode = DocumentViewModePreference.editor;
+        final container = await historyApp(tester, mode);
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        await tester.enterText(historyField(mode), 'abcd');
+        expect(container.read(workspaceControllerProvider).activeText, 'abcd');
+        await historyKey(tester);
+        expect(container.read(workspaceControllerProvider).activeText, 'abc');
+        expect(
+          tester
+              .state<BusyMarkWysiwygEditorState>(
+                find.byType(BusyMarkWysiwygEditor),
+              )
+              .serializedSource,
+          'abc',
+        );
+        if (!beforeFrame) await tester.pump();
+        final controller = tester
+            .widget<TextField>(historyField(mode))
+            .controller!;
+        if (!beforeFrame) expect(controller.text, 'abc');
+        // Native input may arrive before the parent has acknowledged Undo.
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: '${controller.text}x',
+            selection: TextSelection.collapsed(
+              offset: controller.text.length + 1,
+            ),
+          ),
+        );
+        await tester.pump();
+        final current = container.read(workspaceControllerProvider).activeText;
+        expect(current, 'abcx');
+        expect(
+          tester
+              .state<BusyMarkWysiwygEditorState>(
+                find.byType(BusyMarkWysiwygEditor),
+              )
+              .serializedSource,
+          current,
+        );
+        expect(
+          tester.widget<TextField>(historyField(mode)).controller!.text,
+          current,
+        );
+        expect(
+          tester
+              .widget<BusyMarkWysiwygEditor>(find.byType(BusyMarkWysiwygEditor))
+              .document
+              .source,
+          current,
+        );
+        expect(workspace.redoActiveBuffer(), isFalse);
+      },
+    );
+  }
+
+  testWidgets(
+    'rich traversal bursts reconcile live serialization without frames',
+    (tester) async {
+      const mode = DocumentViewModePreference.editor;
+      final container = await historyApp(tester, mode);
+      final field = historyField(mode);
+      await tester.showKeyboard(field);
+      final text = tester.widget<TextField>(field).controller!;
+      text.selection = const TextSelection.collapsed(offset: 3);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcd',
+          selection: TextSelection.collapsed(offset: 4),
+        ),
+      );
+      text.selection = const TextSelection.collapsed(offset: 0);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'Xabcd',
+          selection: TextSelection.collapsed(offset: 1),
+        ),
+      );
+      final rich = tester.state<BusyMarkWysiwygEditorState>(
+        find.byType(BusyMarkWysiwygEditor),
+      );
+      void agrees(String expected, int caret) {
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          expected,
+        );
+        expect(text.text, expected);
+        expect(rich.serializedSource, expected);
+        expect(text.selection, TextSelection.collapsed(offset: caret));
+      }
+
+      agrees('Xabcd', 1);
+      for (var i = 0; i < 5; i++) {
+        await historyKey(tester);
+        agrees('abcd', 0);
+        await historyKey(tester);
+        agrees('abc', 3);
+        await historyKey(tester, redo: true);
+        agrees('abcd', 0);
+        await historyKey(tester, redo: true);
+        agrees('Xabcd', 1);
+      }
+      await historyKey(tester);
+      agrees('abcd', 0);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'xabcd',
+          selection: TextSelection.collapsed(offset: 1),
+        ),
+      );
+      agrees('xabcd', 1);
+      await tester.pump();
+      agrees('xabcd', 1);
+      expect(
+        tester
+            .widget<BusyMarkWysiwygEditor>(find.byType(BusyMarkWysiwygEditor))
+            .document
+            .source,
+        'xabcd',
+      );
+      expect(
+        container.read(workspaceControllerProvider.notifier).redoActiveBuffer(),
+        isFalse,
+      );
+    },
+  );
+
+  testWidgets(
+    'rich group boundaries capture the live pre-edit caret without frames',
+    (tester) async {
+      const mode = DocumentViewModePreference.editor;
+      final container = await historyApp(tester, mode);
+      await tester.showKeyboard(historyField(mode));
+      final text = tester.widget<TextField>(historyField(mode)).controller!;
+      text.selection = const TextSelection.collapsed(offset: 3);
+      await tester.pump();
+      await tester.pump();
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcd',
+          selection: TextSelection.collapsed(offset: 4),
+        ),
+      );
+      text.selection = const TextSelection.collapsed(offset: 0);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'Xabcd',
+          selection: TextSelection.collapsed(offset: 1),
+        ),
+      );
+      final history = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState;
+      expect(history.undo, hasLength(2));
+      expect(history.undo.last.text, 'abcd');
+      expect(history.undo.last.wysiwygState.anchorOffset, 0);
+      expect(history.undo.first.wysiwygState.anchorOffset, 3);
+    },
+  );
+
+  testWidgets('rich no-frame Undo restores the caret before the next input', (
+    tester,
+  ) async {
+    const mode = DocumentViewModePreference.editor;
+    final container = await historyApp(tester, mode, initialSource: 'abcdef');
+    final field = historyField(mode);
+    await tester.showKeyboard(field);
+    final text = tester.widget<TextField>(field).controller!;
+    text.selection = const TextSelection.collapsed(offset: 3);
+    await tester.pump();
+    await tester.pump();
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .wysiwygState
+          .anchorOffset,
+      3,
+    );
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcXdef',
+        selection: TextSelection.collapsed(offset: 4),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await historyKey(tester);
+    expect(container.read(workspaceControllerProvider).activeText, 'abcdef');
+    expect(text.selection, const TextSelection.collapsed(offset: 3));
+    final caret = text.selection.extentOffset;
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: text.text.replaceRange(caret, caret, 'Y'),
+        selection: TextSelection.collapsed(offset: caret + 1),
+      ),
+    );
+    expect(container.read(workspaceControllerProvider).activeText, 'abcYdef');
+    await tester.pump();
+    expect(text.selection, const TextSelection.collapsed(offset: 4));
+  });
+
+  testWidgets(
+    'rich table traversal restores cell focus and caret without a frame',
+    (tester) async {
+      const mode = DocumentViewModePreference.editor;
+      const source = '| One | Two |\n| --- | --- |\n| abcdef | ghijkl |\n';
+      final container = await historyApp(tester, mode, initialSource: source);
+      Finder cell(String value) => find
+          .descendant(
+            of: find.byType(BusyMarkWysiwygEditor),
+            matching: find.byWidgetPredicate(
+              (w) => w is TextField && w.controller?.text == value,
+            ),
+          )
+          .first;
+      final first = cell('abcdef');
+      await tester.showKeyboard(first);
+      final a = tester.widget<TextField>(first);
+      a.controller!.selection = const TextSelection.collapsed(offset: 3);
+      await tester.pump();
+      await tester.pump();
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcXdef',
+          selection: TextSelection.collapsed(offset: 4),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.showKeyboard(cell('ghijkl'));
+      final b = tester.widget<TextField>(cell('ghijkl'));
+      b.controller!.selection = const TextSelection.collapsed(offset: 2);
+      await tester.pump();
+      await tester.pump();
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'ghYijkl',
+          selection: TextSelection.collapsed(offset: 3),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await historyKey(tester);
+      expect(b.controller!.text, 'ghijkl');
+      expect(b.controller!.selection, const TextSelection.collapsed(offset: 2));
+      await historyKey(tester);
+      expect(container.read(workspaceControllerProvider).activeText, source);
+      expect(a.controller!.text, 'abcdef');
+      expect(a.controller!.selection, const TextSelection.collapsed(offset: 3));
+      expect(a.focusNode!.hasPrimaryFocus, isTrue);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'abcYdef',
+          selection: TextSelection.collapsed(offset: 4),
+        ),
+      );
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains('abcYdef'),
+      );
+      final rich = tester.state<BusyMarkWysiwygEditorState>(
+        find.byType(BusyMarkWysiwygEditor),
+      );
+      expect(
+        rich.serializedSource,
+        container.read(workspaceControllerProvider).activeText,
+      );
+      await tester.pump();
+      expect(a.controller!.selection, const TextSelection.collapsed(offset: 4));
+    },
+  );
+
+  testWidgets(
+    'rich no-frame Undo restores document selection command ownership',
+    (tester) async {
+      const mode = DocumentViewModePreference.editor;
+      const source = 'abc\n\ndef';
+      final container = await historyApp(tester, mode, initialSource: source);
+      await tester.showKeyboard(historyField(mode));
+      for (var i = 0; i < 2; i++) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+      await tester.pump();
+      await tester.pump();
+      final selected = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .wysiwygState;
+      expect(selected.anchorBlockId, isNot(selected.extentBlockId));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      await tester.pump();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains('**abc**'),
+      );
+      await historyKey(tester);
+      expect(container.read(workspaceControllerProvider).activeText, source);
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      expect(container.read(workspaceControllerProvider).activeText, isEmpty);
+      await tester.pump();
+    },
+  );
+
+  testWidgets('rich caret movement supersedes a pending traversal restore', (
+    tester,
+  ) async {
+    const mode = DocumentViewModePreference.editor;
+    final container = await historyApp(tester, mode, initialSource: 'abcdef');
+    await tester.showKeyboard(historyField(mode));
+    final text = tester.widget<TextField>(historyField(mode)).controller!;
+    text.selection = const TextSelection.collapsed(offset: 3);
+    await tester.pump();
+    await tester.pump();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcXdef',
+        selection: TextSelection.collapsed(offset: 4),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await historyKey(tester);
+    expect(container.read(workspaceControllerProvider).activeText, 'abcdef');
+    text.selection = const TextSelection.collapsed(offset: 1);
+    await tester.pump();
+    expect(text.selection, const TextSelection.collapsed(offset: 1));
+  });
+
+  testWidgets(
+    'rich formatting captures a new document range before any frame',
+    (tester) async {
+      const mode = DocumentViewModePreference.editor;
+      const source = 'abc\n\ndef';
+      final container = await historyApp(tester, mode, initialSource: source);
+      await tester.showKeyboard(historyField(mode));
+      for (var i = 0; i < 2; i++) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains('**abc**'),
+      );
+      final before = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .last;
+      expect(before.text, source);
+      expect(
+        before.wysiwygState.anchorBlockId,
+        isNot(before.wysiwygState.extentBlockId),
+      );
+      expect(before.wysiwygState.anchorOffset, 0);
+      expect(before.wysiwygState.extentOffset, 3);
+    },
+  );
 
   testWidgets('Source groups typing and deletion undo with historical carets', (
     tester,
@@ -18744,6 +19865,7 @@ Future<void> _waitForSearchCondition(
   WidgetTester tester,
   bool Function() condition, {
   int attempts = 300,
+  String Function()? debugState,
 }) async {
   for (var attempt = 0; attempt < attempts; attempt++) {
     await tester.pump(const Duration(milliseconds: 20));
@@ -18752,7 +19874,7 @@ Future<void> _waitForSearchCondition(
       () => Future<void>.delayed(const Duration(milliseconds: 10)),
     );
   }
-  fail('Timed out waiting for workspace search.');
+  fail('Timed out waiting for workspace search. ${debugState?.call() ?? ''}');
 }
 
 BusyMarkSourceEditingController _searchSourceController(WidgetTester tester) =>

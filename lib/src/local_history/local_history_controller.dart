@@ -700,6 +700,122 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     });
   }
 
+  /// Traversal must not coalesce the source being left into the latest pending
+  /// checkpoint. Stage a separate retained obligation before observing the new
+  /// source. Every unresolved source has its own durable owner and retry state.
+  void observeHistoryTraversal(
+    DocumentBuffer previous,
+    DocumentBuffer current,
+  ) {
+    if (previous.text == current.text ||
+        !policy.recordingEnabled ||
+        policy.excludes(previous.filePath)) {
+      return;
+    }
+    final previousSnapshot = _acceptAtCurrentClearEpoch(
+      LocalHistoryBufferSnapshot.fromBuffer(previous),
+    );
+    // Only an unresolved owner still holding this source can discharge the
+    // obligation here. Completed captures must be revalidated by the store:
+    // normal retention may already have evicted their durable revision.
+    final existingOwner = _protections.entries.where((entry) {
+      final retained = entry.value.snapshot;
+      return entry.value.reason ==
+              LocalHistoryCaptureReason.beforeHistoryTraversal &&
+          _detachedClosedSourceId(entry.key) == previous.id &&
+          retained.acceptedClearEpoch == previousSnapshot.acceptedClearEpoch &&
+          _sameOptionalPath(retained.path, previousSnapshot.path) &&
+          retained.remoteNote == previousSnapshot.remoteNote &&
+          _sameHistoryFormat(retained.format, previousSnapshot.format) &&
+          retained.text == previousSnapshot.text;
+    }).firstOrNull;
+    if (existingOwner != null) {
+      // Keep one source owner, but advance its accepted obligation. An older
+      // in-flight completion must not release protection for this traversal.
+      final owner = existingOwner.key;
+      final protection = existingOwner.value;
+      // Its previous capture identity may already be retention-tombstoned.
+      // A fresh obligation must revalidate content without replaying that ID.
+      final snapshot = previousSnapshot
+          .forBuffer(owner)
+          .withCaptureId(_newPathOperationId());
+      _protections[owner] = (
+        snapshot: snapshot,
+        reason: protection.reason,
+        force: protection.force,
+        ignoreBinding: protection.ignoreBinding,
+        allowPathChange: protection.allowPathChange,
+        bindResult: protection.bindResult,
+        requireVacantPath: protection.requireVacantPath,
+        expectedTarget: protection.expectedTarget,
+        captureId: snapshot.captureId,
+      );
+      if (_inFlightSnapshots.containsKey(owner)) {
+        unawaited(_enqueue(owner, () => _settleBufferWork(owner)));
+      }
+    } else {
+      final owner = _newDetachedOwner(
+        'history-capture:traversal:${previous.id}',
+      );
+      final snapshot = previousSnapshot
+          .forBuffer(owner)
+          .withCaptureId(_newPathOperationId());
+      final historyGeneration = _historyGeneration;
+      final bufferGeneration = _bufferGeneration(previous.id);
+      final documentId = _documentIdsByBuffer[previous.id];
+      if (documentId != null) _documentIdsByBuffer[owner] = documentId;
+      _protections[owner] = (
+        snapshot: snapshot,
+        reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+        force: false,
+        ignoreBinding: false,
+        allowPathChange: false,
+        bindResult: false,
+        requireVacantPath: false,
+        expectedTarget: null,
+        captureId: snapshot.captureId,
+      );
+      _closedBuffers.add(owner);
+      // Synchronous Undo remains responsive. Durability is established when
+      // retained-work persistence or the revision write completes, not here.
+      final persistence = _persistDurableStateNow();
+      unawaited(
+        _enqueue(previous.id, () async {
+          await persistence;
+          if (!_protections.containsKey(owner) ||
+              !_operationIsCurrent(
+                previous.id,
+                historyGeneration,
+                bufferGeneration,
+              )) {
+            return;
+          }
+          // The first edit of an empty untitled document has no baseline yet.
+          // Establish its source lineage before the independent protection,
+          // just as observeEdit would have done for the traversal itself.
+          if (!_documentIdsByBuffer.containsKey(previous.id) &&
+              !_baselines.containsKey(previous.id) &&
+              !(previousSnapshot.untitled && previousSnapshot.text.isEmpty)) {
+            await _captureBaseline(
+              previousSnapshot,
+              LocalHistoryCaptureReason.baseline,
+              acceptedHistoryGeneration: historyGeneration,
+              acceptedBufferGeneration: bufferGeneration,
+            );
+          }
+          // Opening/baseline work may have established the lineage meanwhile.
+          final binding = _documentIdsByBuffer[previous.id];
+          if (binding != null && _protections.containsKey(owner)) {
+            _documentIdsByBuffer[owner] = binding;
+          }
+          await _enqueue(owner, () => _settleBufferWork(owner));
+        }),
+      );
+      _scheduleCheckpoint(owner);
+    }
+    observeEdit(previous, current);
+  }
+
   void observeEdit(DocumentBuffer previous, DocumentBuffer current) {
     if (!policy.recordingEnabled || policy.excludes(current.filePath)) return;
     final previousSnapshot = _acceptAtCurrentClearEpoch(
@@ -4989,16 +5105,21 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           if (stage == _LocalHistoryFailureStage.baseline) {
             _baselines.putIfAbsent(snapshot.bufferId, () => snapshot);
           } else if (stage == _LocalHistoryFailureStage.protection) {
-            _protections[snapshot.bufferId] = (
-              snapshot: snapshot,
-              reason: reason,
-              force: force,
-              ignoreBinding: ignoreBinding,
-              allowPathChange: allowPathChange,
-              bindResult: bindResult,
-              requireVacantPath: requireVacantPath,
-              expectedTarget: expectedTarget,
-              captureId: effectiveCaptureId,
+            // An older in-flight failure cannot replace accepted protection
+            // for a later traversal, including its fresh capture identity.
+            _protections.putIfAbsent(
+              snapshot.bufferId,
+              () => (
+                snapshot: snapshot,
+                reason: reason,
+                force: force,
+                ignoreBinding: ignoreBinding,
+                allowPathChange: allowPathChange,
+                bindResult: bindResult,
+                requireVacantPath: requireVacantPath,
+                expectedTarget: expectedTarget,
+                captureId: effectiveCaptureId,
+              ),
             );
           }
           _recordFailure(
@@ -5827,7 +5948,13 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   ) => _captureFailures[id]?[stage];
 
   _LocalHistoryCaptureFailure? _ownerFailure(String? id) {
-    final failures = _captureFailures[id];
+    if (id == null) return null;
+    final failures =
+        _captureFailures[id] ??
+        _captureFailures.entries
+            .where((entry) => _detachedClosedSourceId(entry.key) == id)
+            .map((entry) => entry.value)
+            .firstOrNull;
     // Prefer the operation preventing an explicit protective action, followed
     // by identity and original-source obligations, then coalesced checkpoints.
     return failures?[_LocalHistoryFailureStage.protection] ??
@@ -5868,8 +5995,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   );
 
   String? _detachedClosedSourceId(String owner) {
-    const prefix = 'history-capture:closed:';
-    if (!owner.startsWith(prefix)) return null;
+    final prefix = [
+      'history-capture:closed:',
+      'history-capture:traversal:',
+    ].where(owner.startsWith).firstOrNull;
+    if (prefix == null) return null;
     var sourceAndSuffix = owner.substring(prefix.length);
     // _newDetachedOwner appends one process token and one sequence field.
     // Strip exactly those fields so buffer IDs containing ':' remain intact.

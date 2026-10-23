@@ -1,3 +1,4 @@
+import 'package:busymark/src/editor/document_edit_history.dart';
 import 'package:busymark/src/editor/link_destination.dart';
 import 'package:busymark/src/assets/document_media_context.dart';
 import 'dart:async';
@@ -56,7 +57,269 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
+import '../support/document_history_harness.dart';
+
 void main() {
+  testWidgets(
+    'Source identity changes keep the focused input client registered',
+    (tester) async {
+      final key = GlobalKey<BusyMarkSourceEditorState>();
+      Widget host(String id) => MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            key: key,
+            text: id,
+            documentId: id,
+            filePath: '$id.md',
+            language: SourceSyntaxLanguage.markdown,
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            onCloseSearch: () {},
+            onChanged: (_, _) {},
+          ),
+        ),
+      );
+      await tester.pumpWidget(host('first'));
+      await tester.pumpAndSettle();
+      await tester.showKeyboard(find.byType(TextField).first);
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+      for (final id in ['second', 'first']) {
+        await tester.pumpWidget(host(id));
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(find.byType(TextField).first);
+        field.focusNode!.requestFocus();
+        await tester.pump();
+        expect(field.focusNode!.hasPrimaryFocus, isTrue);
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+        expect(field.controller!.text, id);
+      }
+    },
+  );
+
+  testWidgets(
+    'Source retains an accepted edit through a delayed widget acknowledgement',
+    (tester) async {
+      var base = const DocumentEditBase('abc', 0);
+      Widget host({required bool wrap}) => MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            text: 'abc',
+            filePath: 'one.md',
+            language: SourceSyntaxLanguage.markdown,
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: wrap,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            readEditBase: () => base,
+            onCloseSearch: () {},
+            onChanged: (text, _) =>
+                base = DocumentEditBase(text, base.revision! + 1),
+          ),
+        ),
+      );
+      await tester.pumpWidget(host(wrap: true));
+      final field = find.byType(TextField).first;
+      await tester.enterText(field, 'abcd');
+      final controller = tester.widget<TextField>(field).controller!;
+      expect(base.source, 'abcd');
+      await tester.pumpWidget(host(wrap: false));
+      expect(tester.widget<TextField>(field).controller, same(controller));
+      expect(controller.text, 'abcd');
+      expect(controller.selection.extentOffset, 4);
+      await tester.enterText(field, 'abcdx');
+      expect(base.source, 'abcdx');
+    },
+  );
+
+  testWidgets(
+    'Source reconciles live authority and caret through stale widget properties',
+    (tester) async {
+      var base = const DocumentEditBase('abc', 0);
+      var selection = const TextSelection.collapsed(offset: 0);
+      Widget host() => MaterialApp(
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            text: 'abc',
+            filePath: 'one.md',
+            language: SourceSyntaxLanguage.markdown,
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            initialSelection: const TextSelection.collapsed(offset: 0),
+            readEditBase: () => base,
+            readSelection: () => selection,
+            onChanged: (_, _) => fail('Reconciliation must not republish'),
+            onCloseSearch: () {},
+          ),
+        ),
+      );
+      await tester.pumpWidget(host());
+      base = const DocumentEditBase('restored', 1);
+      selection = const TextSelection.collapsed(offset: 5);
+      await tester.pumpWidget(host());
+      final controller = tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller!;
+      expect(controller.text, 'restored');
+      expect(controller.selection, selection);
+    },
+  );
+
+  testWidgets('rejected Source publication reconciles before the next edit', (
+    tester,
+  ) async {
+    var base = const DocumentEditBase('abc', 0);
+    var accept = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            text: 'abc',
+            filePath: 'one.md',
+            language: SourceSyntaxLanguage.markdown,
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            readEditBase: () => base,
+            onCloseSearch: () {},
+            onChanged: (text, _) {
+              if (accept) base = DocumentEditBase(text, base.revision! + 1);
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'abcd');
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+      'abc',
+    );
+    expect(base.source, 'abc');
+    expect(base.revision, 0);
+    accept = true;
+    await tester.enterText(find.byType(TextField).first, 'abcx');
+    await tester.pump();
+    expect(base.source.trimRight(), 'abcx');
+    expect(base.revision, 1);
+  });
+
+  testWidgets(
+    'fifteen minutes of continuous Source multiline typing stays bounded',
+    (tester) async {
+      var now = Duration.zero;
+      var clockReads = 0;
+      final history = await DocumentHistoryHarness.create(
+        mode: DocumentViewModePreference.source,
+      );
+      addTearDown(history.dispose);
+      DocumentBuffer buffer() => history.buffer;
+      Duration clock() {
+        clockReads++;
+        return now;
+      }
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: BusyMarkSourceEditor(
+              text: 'abc',
+              documentId: buffer().id,
+              filePath: null,
+              language: SourceSyntaxLanguage.markdown,
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              undoClock: clock,
+              readEditBase: history.readBase,
+              readSelection: () => buffer().editorState.selection,
+              onUndo: history.undoText,
+              onRedo: history.redoText,
+              onChanged: (_, _) {},
+              onCloseSearch: () {},
+              onTransactionalChanged: (text, _, before, after, group) =>
+                  history.controller.updateActiveSourceText(
+                    text,
+                    previousSelection: before,
+                    selection: after,
+                    undoGroup: group,
+                  ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final field = find
+          .descendant(
+            of: find.byType(BusyMarkSourceEditor),
+            matching: find.byType(TextField),
+          )
+          .first;
+      await tester.showKeyboard(field);
+      tester.widget<TextField>(field).controller!.selection =
+          const TextSelection.collapsed(offset: 3);
+      var text = 'abc';
+      final sizes = <String, int>{};
+      for (var i = 0; i <= 900; i++) {
+        now = Duration(seconds: i);
+        text += i % 37 == 36 ? '\n' : 'x';
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          ),
+        );
+        final group = buffer().editorState.undoState.activeGroup;
+        if (group != null) sizes.update(group, (n) => n + 1, ifAbsent: () => 1);
+        if (i % 50 == 0) await tester.pump();
+      }
+      expect(now, const Duration(minutes: 15));
+      expect(
+        clockReads,
+        greaterThan(800),
+        reason: 'The injected clock is consulted by real edit grouping',
+      );
+      expect(sizes.length, greaterThanOrEqualTo(90));
+      expect(sizes.values, everyElement(lessThanOrEqualTo(10)));
+      final previous = buffer().editorState.undoState.undo.last;
+      expect(previous.text.length, greaterThan(880));
+      expect(
+        buffer().text.length - previous.text.length,
+        lessThanOrEqualTo(10),
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      expect(buffer().text, previous.text);
+      expect(tester.widget<TextField>(field).controller!.text, previous.text);
+      expect(
+        tester.widget<TextField>(field).controller!.selection,
+        previous.selection,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+      expect(buffer().text, text);
+      expect(tester.widget<TextField>(field).controller!.text, text);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   testWidgets(
     'Source consumes shared pages and replaces in an unsaved buffer',
     (tester) async {
@@ -8711,6 +8974,93 @@ void main() {
 
     expect(controller.text, 'Before\n\n$procedure\n');
   });
+
+  for (final operation in ['paste', 'cut', 'link']) {
+    testWidgets('Source delayed $operation rejects an Undo Redo round trip', (
+      tester,
+    ) async {
+      const selection = TextSelection(baseOffset: 1, extentOffset: 3);
+      var buffer = DocumentBuffer.untitled(
+        id: 'source-document',
+        name: 'Async origin',
+        text: 'older',
+      ).edited('abcdef', nextSelection: selection);
+      TextEditingValue traverse(bool redo) {
+        final history = buffer.editorState.undoState;
+        final target = (redo ? history.redo : history.undo).last;
+        final nextHistory = redo
+            ? history.afterRedo(buffer.historyState)
+            : history.afterUndo(buffer.historyState);
+        buffer = buffer.copyWith(
+          text: target.text,
+          revision: buffer.revision + 1,
+          editorState: buffer.editorState.copyWith(
+            selection: target.selection,
+            undoState: nextHistory,
+          ),
+        );
+        return TextEditingValue(text: target.text, selection: target.selection);
+      }
+
+      final clipboard = _SourceTestClipboard(
+        readData: const RichClipboardData(text: 'paste', generation: 53),
+        delayRead: operation == 'paste',
+        delayWrite: operation == 'cut',
+      );
+      final link = Completer<LinkDestination?>();
+      final linkStarted = Completer<void>();
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: buffer.text,
+        clipboard: clipboard,
+        onTransactionalChanged: (source, _, previous, next, group) {
+          buffer = buffer.edited(
+            source,
+            previousSelection: previous,
+            nextSelection: next,
+            undoGroup: group,
+          );
+        },
+        onUndo: () => traverse(false),
+        onRedo: () => traverse(true),
+        onChooseLink: () {
+          linkStarted.complete();
+          return link.future;
+        },
+      );
+      controller.selection = selection;
+      await _pressControlKey(tester, switch (operation) {
+        'paste' => LogicalKeyboardKey.keyV,
+        'cut' => LogicalKeyboardKey.keyX,
+        _ => LogicalKeyboardKey.keyK,
+      });
+      await switch (operation) {
+        'paste' => clipboard.readStarted.future,
+        'cut' => clipboard.writeStarted.future,
+        _ => linkStarted.future,
+      };
+      // No parent rebuild: widget revision and the final editing value are
+      // identical, but the asynchronous operation belongs to a retired state.
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+      expect(
+        controller.value,
+        const TextEditingValue(text: 'abcdef', selection: selection),
+      );
+      final revision = buffer.revision;
+      final history = buffer.editorState.undoState;
+      if (operation == 'paste') clipboard.releaseRead();
+      if (operation == 'cut') clipboard.releaseWrite();
+      if (operation == 'link') {
+        link.complete(const LinkDestination('https://example.test'));
+      }
+      await tester.pumpAndSettle();
+      expect(controller.text, 'abcdef');
+      expect(buffer.text, 'abcdef');
+      expect(buffer.revision, revision);
+      expect(buffer.editorState.undoState, same(history));
+    });
+  }
 
   testWidgets('Source delayed paste rejects a changed selection', (
     tester,

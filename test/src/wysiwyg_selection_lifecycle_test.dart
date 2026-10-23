@@ -251,6 +251,36 @@ void _expectTableGeometry(WidgetTester tester) {
 }
 
 void main() {
+  testWidgets('table selection IME input delegates platform history actions', (
+    tester,
+  ) async {
+    final state = await _mount(
+      tester,
+      _table,
+      MemoryRichClipboard(),
+      externalHistory: true,
+    );
+    state.recreate(_documentSession(state.document));
+    await tester.pumpAndSettle();
+    final input = find.byWidgetPredicate(
+      (w) => w is EditableText && w.focusNode.hasFocus,
+    );
+    expect(input, findsOneWidget);
+    final context = tester.state<EditableTextState>(input).context;
+    Actions.invoke(
+      context,
+      const UndoTextIntent(SelectionChangedCause.keyboard),
+    );
+    expect(state.undoCalls, 1);
+    Actions.invoke(
+      context,
+      const RedoTextIntent(SelectionChangedCause.keyboard),
+    );
+    expect(state.redoCalls, 1);
+    expect(state.source, _table);
+    expect(state.changes, isEmpty);
+  });
+
   _registerLifecycleMatrix();
   _registerRestorationAndTerminalTests();
   setUp(

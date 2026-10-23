@@ -44,6 +44,7 @@ void main() {
     LocalHistoryCaptureReason reason = LocalHistoryCaptureReason.saved,
     bool force = false,
     bool Function()? commitGuard,
+    String? captureId,
   }) => LocalHistoryCaptureRequest(
     path: path,
     displayName: p.basename(path),
@@ -53,12 +54,335 @@ void main() {
     reason: reason,
     force: force,
     commitGuard: commitGuard,
+    captureId: captureId,
   );
 
   const policy = LocalHistoryPolicy(
     retentionAge: Duration(days: 30),
     maximumBytes: 16 * 1024 * 1024,
   );
+
+  for (final memory in [false, true]) {
+    test(
+      'retry of a traversal capture identity renews expired protection (memory=$memory)',
+      () async {
+        final LocalHistoryStore tested = memory
+            ? MemoryLocalHistoryStore()
+            : store;
+        var now = DateTime.utc(2026);
+        final original = await tested.capture(
+          request('recover X', now),
+          policy,
+        );
+        now = now.add(const Duration(days: 31));
+        final result = await tested.capture(
+          request(
+            'recover X',
+            now,
+            captureId: original.revision!.id,
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        );
+        expect(result.revision!.id, original.revision!.id);
+        await tested.capture(
+          request('branch', now.add(const Duration(seconds: 1))),
+          policy,
+        );
+        await tested.prune(policy, now.add(const Duration(seconds: 2)));
+        expect(await tested.readRevision(result.revision!.id), isNotNull);
+        await tested.prune(policy, now.add(const Duration(days: 31)));
+        expect(
+          await tested.readRevision(result.revision!.id),
+          isNull,
+          reason: 'Renewed protection still expires under the configured age',
+        );
+      },
+    );
+
+    test(
+      'fresh traversal protection survives budget pruning (memory=$memory)',
+      () async {
+        final LocalHistoryStore tested = memory
+            ? MemoryLocalHistoryStore()
+            : store;
+        var now = DateTime.utc(2026, 1, 1);
+        final source = 'X' * (6 * 1024 * 1024);
+        final first = await tested.capture(request(source, now), policy);
+        now = now.add(const Duration(days: 1));
+        await tested.capture(request('Y' * (6 * 1024 * 1024), now), policy);
+        now = now.add(const Duration(days: 1));
+        final protection = await tested.capture(
+          request(
+            source,
+            now,
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        );
+        now = now.add(const Duration(seconds: 1));
+        await tested.capture(request('Z' * (6 * 1024 * 1024), now), policy);
+        await tested.prune(policy, now);
+        final protected = await tested.readRevision(protection.revision!.id);
+        expect(
+          protected,
+          isNotNull,
+          reason: 'Fresh protection must participate as fresh retained work',
+        );
+        expect(protected!.source == source, isTrue);
+        expect(
+          protected.summary.capturedAt,
+          first.revision!.capturedAt,
+          reason: 'Reuse preserves the original timeline event',
+        );
+      },
+    );
+
+    test(
+      'fresh traversal protection survives expiry and pruning (memory=$memory)',
+      () async {
+        final LocalHistoryStore tested = memory
+            ? MemoryLocalHistoryStore()
+            : store;
+        var now = DateTime.utc(2026, 1, 1);
+        final original = await tested.capture(
+          request('recover X', now),
+          policy,
+        );
+        now = now.add(const Duration(days: 1));
+        await tested.capture(request('different source', now), policy);
+        now = now.add(const Duration(days: 30));
+        // The expired record is still available when reuse is considered.
+        expect(await tested.readRevision(original.revision!.id), isNotNull);
+        final protection = await tested.capture(
+          request(
+            'recover X',
+            now,
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        );
+        now = now.add(const Duration(seconds: 1));
+        await tested.capture(request('new branch', now), policy);
+        await tested.prune(policy, now);
+        final LocalHistoryStore reopened = memory
+            ? tested
+            : FileLocalHistoryStore(rootDirectory: () async => root);
+        final sources = await Future.wait(
+          (await reopened.load()).revisions.map(
+            (r) async => (await reopened.readRevision(r.id))!.source,
+          ),
+        );
+        expect(sources, containsAll(['recover X', 'new branch']));
+        expect(await reopened.readRevision(protection.revision!.id), isNotNull);
+        await reopened.prune(policy, now.add(const Duration(days: 31)));
+        expect(await reopened.readRevision(protection.revision!.id), isNull);
+      },
+    );
+
+    test(
+      'equal-time ordinary captures use the latest revision (memory=$memory)',
+      () async {
+        final LocalHistoryStore tested = memory
+            ? MemoryLocalHistoryStore()
+            : store;
+        final time = DateTime(2026);
+        await tested.capture(request('first', time), policy);
+        final latest = await tested.capture(request('second', time), policy);
+        final duplicate = await tested.capture(request('second', time), policy);
+        expect(duplicate.deduplicated, isTrue);
+        expect(duplicate.revision!.id, latest.revision!.id);
+        expect((await tested.load()).revisions, hasLength(2));
+        final returned = await tested.capture(request('first', time), policy);
+        expect(returned.deduplicated, isFalse);
+        expect((await tested.load()).revisions, hasLength(3));
+      },
+    );
+    test(
+      'traversal protection reuses exact durable content (memory=$memory)',
+      () async {
+        final LocalHistoryStore tested = memory
+            ? MemoryLocalHistoryStore()
+            : store;
+        final first = await tested.capture(
+          request('original', DateTime(2026)),
+          policy,
+        );
+        await tested.capture(request('later', DateTime(2026, 1, 2)), policy);
+        final protection = await tested.capture(
+          request(
+            'original',
+            DateTime(2026, 1, 3),
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        );
+        expect(protection.deduplicated, isTrue);
+        expect(protection.revision!.id, first.revision!.id);
+        expect((await tested.load()).revisions, hasLength(2));
+        final differentFormat = await tested.capture(
+          LocalHistoryCaptureRequest(
+            path: '/workspace/guide.md',
+            displayName: 'guide.md',
+            source: 'original',
+            format: TextFormatMetadata.utf8Lf.copyWith(hasUtf8Bom: true),
+            capturedAt: DateTime(2026, 1, 4),
+            reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+          ),
+          policy,
+        );
+        expect(differentFormat.deduplicated, isFalse);
+        expect((await tested.load()).revisions, hasLength(3));
+      },
+    );
+  }
+
+  test(
+    'renewed protection survives index reconstruction without moving its timeline event',
+    () async {
+      final originalTime = DateTime.utc(2026);
+      final first = await store.capture(
+        request('recover X', originalTime),
+        policy,
+      );
+      await store.capture(
+        request('other', originalTime.add(const Duration(days: 1))),
+        policy,
+      );
+      final now = originalTime.add(const Duration(days: 31));
+      final protection = await store.capture(
+        request(
+          'recover X',
+          now,
+          reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+        ),
+        policy,
+      );
+      await File(p.join(root.path, 'index.json')).delete();
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      await reopened.load();
+      await reopened.prune(policy, now.add(const Duration(seconds: 1)));
+      final restored = await reopened.readRevision(protection.revision!.id);
+      expect(restored, isNotNull);
+      expect(restored!.source, 'recover X');
+      expect(restored.summary.capturedAt, first.revision!.capturedAt);
+      expect(restored.summary.protectedAt, now);
+      await reopened.prune(policy, now.add(const Duration(days: 31)));
+      expect(await reopened.readRevision(protection.revision!.id), isNull);
+    },
+  );
+
+  test('failed index publication leaves a renewed record retryable', () async {
+    File? record;
+    var failAfterRecord = false;
+    final tested = FileLocalHistoryStore(
+      rootDirectory: () async => root,
+      createId: () {
+        if (failAfterRecord &&
+            record != null &&
+            (jsonDecode(record.readAsStringSync())
+                    as Map)['revision']['protectedAt'] !=
+                null) {
+          failAfterRecord = false;
+          throw const FileSystemException('Injected index publication failure');
+        }
+        return 'transaction_${(++ids).toString().padLeft(12, '0')}';
+      },
+    );
+    final original = await tested.capture(
+      request('recover X', DateTime.utc(2026)),
+      policy,
+    );
+    record = File(
+      p.join(
+        root.path,
+        'revisions',
+        original.document.id,
+        '${original.revision!.id}.json',
+      ),
+    );
+    final now = DateTime.utc(2026).add(const Duration(days: 31));
+    final protection = request(
+      'recover X',
+      now,
+      reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+    );
+    failAfterRecord = true;
+    await expectLater(
+      tested.capture(protection, policy),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(failAfterRecord, isFalse);
+    expect(
+      (jsonDecode(record.readAsStringSync()) as Map)['revision']['protectedAt'],
+      now.toIso8601String(),
+    );
+    expect(
+      (await tested.load()).revisions.single.protectedAt,
+      isNull,
+      reason: 'A record write alone did not publish the renewed index',
+    );
+    final retried = await tested.capture(protection, policy);
+    expect(retried.deduplicated, isTrue);
+    expect(retried.revision!.id, original.revision!.id);
+    await tested.capture(
+      request('new branch', now.add(const Duration(seconds: 1))),
+      policy,
+    );
+    final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+    await reopened.prune(policy, now.add(const Duration(seconds: 2)));
+    expect(
+      (await reopened.readRevision(retried.revision!.id))!.source,
+      'recover X',
+    );
+  });
+
+  for (final afterIndex in [false, true]) {
+    test(
+      'cancelled protection renewal restores published metadata (afterIndex=$afterIndex)',
+      () async {
+        final original = await store.capture(
+          request('recover X', DateTime.utc(2026)),
+          policy,
+        );
+        final record = File(
+          p.join(
+            root.path,
+            'revisions',
+            original.document.id,
+            '${original.revision!.id}.json',
+          ),
+        );
+        final index = File(p.join(root.path, 'index.json'));
+        final originalRecord = await record.readAsString();
+        final originalIndex = await index.readAsString();
+        bool accepted() {
+          final data =
+              jsonDecode((afterIndex ? index : record).readAsStringSync())
+                  as Map;
+          final Map summary = afterIndex
+              ? (data['revisions'] as List).single as Map
+              : data['revision'] as Map;
+          return summary['protectedAt'] == null;
+        }
+
+        await expectLater(
+          store.capture(
+            request(
+              'recover X',
+              DateTime.utc(2026, 2, 1),
+              reason: LocalHistoryCaptureReason.beforeHistoryTraversal,
+              commitGuard: accepted,
+            ),
+            policy,
+          ),
+          throwsA(isA<LocalHistoryCaptureCancelled>()),
+        );
+        expect(await record.readAsString(), originalRecord);
+        expect(await index.readAsString(), originalIndex);
+      },
+    );
+  }
 
   final sentinelTime = DateTime.utc(2000);
   LocalHistoryCaptureRequest journalRequest(String text, int minute) =>
