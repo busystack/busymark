@@ -20,6 +20,7 @@ import '../support/memory_rich_clipboard.dart';
 void main() {
   const parser = MarkdownParser();
   _structuralBoundaryRegressions(parser);
+  _hardBreakAnchorRegressions(parser);
 
   test(
     'formatting a URL suffix retains the complete live link and round trips',
@@ -1543,6 +1544,236 @@ Body.
     await tester.pump();
     expect(state.debugUndoControllerCount, 1);
   });
+}
+
+void _hardBreakAnchorRegressions(MarkdownParser parser) {
+  group('explicit line-break anchors', () {
+    const fixtures = [
+      (
+        name: 'existing hard break',
+        source: 'a  \n![](first.png)b\n',
+        text: 'a\nb',
+        objects: 1,
+      ),
+      (
+        name: 'consecutive hard breaks',
+        source: 'a\n<br>\n<br>\n![](first.png)b\n',
+        text: 'a\n\nb',
+        objects: 1,
+      ),
+      (
+        name: 'objects before at and after the caret',
+        source:
+            '![](first.png)a![](second.png)  \n![](third.png)![](fourth.png)b![](last.png)\n',
+        text: 'a\nb',
+        objects: 5,
+      ),
+      (
+        name: 'formatted objects after existing break',
+        source: '**a  \n![](first.png)![](second.png)b**![](third.png)c\n',
+        text: 'a\nbc',
+        objects: 3,
+      ),
+      (
+        name: 'formatted objects at shared offsets on either side',
+        source:
+            '**a![](first.png)![](second.png)**  \n*![](third.png)![](fourth.png)b*\n',
+        text: 'a\nb',
+        objects: 4,
+      ),
+    ];
+    for (final mode in [
+      MarkdownMode.commonMark,
+      MarkdownMode.gfm,
+      MarkdownMode.writersideMarkdown,
+    ]) {
+      for (final fixture in fixtures) {
+        for (final count in [1, 2]) {
+          for (var offset = 1; offset < fixture.text.length; offset++) {
+            test(
+              '${mode.name} ${fixture.name} count=$count offset=$offset',
+              () {
+                final document = parser
+                    .parse(
+                      filePath: 'breaks.md',
+                      source: fixture.source,
+                      mode: mode,
+                    )
+                    .busyDocument;
+                final block = document.blocks.single;
+                expect(block.plainText, fixture.text);
+                final anchors = _individualImageAnchors(block);
+                expect(anchors, hasLength(fixture.objects));
+                final safeOffset = offset.clamp(0, fixture.text.length);
+                final expected = [
+                  for (final anchor in anchors)
+                    [
+                      anchor.offset <= safeOffset
+                          ? anchor.offset
+                          : anchor.offset + count,
+                      _inlineSignatures([anchor.inline]),
+                    ],
+                ];
+                final controller = BusyMarkWysiwygDocumentController(
+                  document: document,
+                );
+                addTearDown(controller.dispose);
+                if (count == 1) {
+                  controller.insertHardBreak(block.id, offset);
+                } else {
+                  controller.insertBlankLine(block.id, offset);
+                }
+                final expectedText = fixture.text.replaceRange(
+                  safeOffset,
+                  safeOffset,
+                  '\n' * count,
+                );
+                void check(BusyBlock edited) {
+                  expect(edited.plainText, expectedText);
+                  expect(_anchoredInlineSignatures(edited), expected);
+                }
+
+                check(controller.document.blocks.single);
+                final saved = controller.markdown;
+                controller.rebaseCommittedSource(saved);
+                expect(controller.markdown, saved);
+                check(controller.document.blocks.single);
+                final reopened = parser
+                    .parse(filePath: 'breaks.md', source: saved, mode: mode)
+                    .busyDocument;
+                check(reopened.blocks.single);
+              },
+            );
+          }
+        }
+      }
+    }
+
+    for (final count in [1, 2]) {
+      testWidgets('toolbar count=$count publishes once and restores history', (
+        tester,
+      ) async {
+        const original = '**a  \n![](first.png)![](second.png)b**\n';
+        final document = parser
+            .parse(filePath: 'breaks.md', source: original)
+            .busyDocument;
+        final before = document.blocks.single;
+        final originalAnchors = _anchoredInlineSignatures(before);
+        final expected = [
+          for (final anchor in _individualImageAnchors(before))
+            [
+              anchor.offset + count,
+              _inlineSignatures([anchor.inline]),
+            ],
+        ];
+        BusyDocument live = document;
+        var source = original;
+        var publications = 0;
+        await tester.pumpWidget(
+          _app(
+            BusyMarkWysiwygEditor(
+              document: document,
+              onDocumentChanged: (value) => live = value,
+              onSourceChanged: (_, value) {
+                source = value;
+                publications++;
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'a\nb'),
+        );
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection.collapsed(offset: 1);
+        await tester.pump();
+        final button = find.byWidgetPredicate(
+          (w) =>
+              w is BusyMarkHeaderIconButton &&
+              w.icon ==
+                  (count == 1
+                      ? BusyMarkGlyphs.hardBreak
+                      : BusyMarkGlyphs.blankLine),
+        );
+        await tester.ensureVisible(button);
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        expect(publications, 1);
+        final editedSource = source;
+        expect(_anchoredInlineSignatures(live.blocks.single), expected);
+        expect(field.controller!.text, 'a${'\n' * (count + 1)}b');
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(
+          field.controller!.selection,
+          TextSelection.collapsed(offset: 1 + count),
+        );
+        expect(
+          (tester.state(find.byType(BusyMarkWysiwygEditor)) as dynamic)
+              .debugUndoSnapshotCount,
+          1,
+        );
+        expect(
+          _anchoredInlineSignatures(
+            parser
+                .parse(filePath: 'breaks.md', source: editedSource)
+                .busyDocument
+                .blocks
+                .single,
+          ),
+          expected,
+        );
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(source, original);
+        expect(_anchoredInlineSignatures(live.blocks.single), originalAnchors);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(source, editedSource);
+        expect(_anchoredInlineSignatures(live.blocks.single), expected);
+      });
+    }
+  });
+}
+
+List<Object?> _anchoredInlineSignatures(BusyBlock block) => [
+  for (final anchor in _individualImageAnchors(block))
+    [
+      anchor.offset,
+      _inlineSignatures([anchor.inline]),
+    ],
+];
+
+List<BusyInlineSemanticAnchor> _individualImageAnchors(BusyBlock block) {
+  final anchors = <BusyInlineSemanticAnchor>[];
+  var offset = 0;
+  void visit(BusyInline inline, List<BusyInline> ancestors) {
+    if (inline.kind == BusyInlineKind.image) {
+      var wrapped = inline;
+      for (final ancestor in ancestors.reversed) {
+        wrapped = ancestor.copyWith(text: '', children: [wrapped]);
+      }
+      anchors.add(BusyInlineSemanticAnchor(offset: offset, inline: wrapped));
+      offset += inline.plainText.length;
+    } else if (inline.children.isNotEmpty) {
+      for (final child in inline.children) {
+        visit(child, [...ancestors, inline]);
+      }
+    } else {
+      offset += inline.plainText.length;
+    }
+  }
+
+  for (final inline in block.inlines) {
+    visit(inline, const []);
+  }
+  return anchors;
 }
 
 void _structuralBoundaryRegressions(MarkdownParser parser) {

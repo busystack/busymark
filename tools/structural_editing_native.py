@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Structural-edit acceptance on an owned Xvfb desktop and private profile.
 
-Usage: /usr/bin/python3 tools/structural_editing_native.py BINARY NEW_OUTPUT
+Usage: /usr/bin/python3 tools/structural_editing_native.py BINARY NEW_OUTPUT [inline-breaks]
 The --key/--click modes are called only by that binary for its own native window.
 """
 import ctypes as C
@@ -59,7 +59,9 @@ def input_event(kind, target, arguments):
         desktop.dispose()
 
 
-def run(binary, output):
+def run(binary, output, scenario=None):
+    if scenario not in [None, "inline-breaks"]:
+        raise ValueError("Unsupported structural acceptance scenario")
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     env = dict(os.environ)
@@ -73,6 +75,9 @@ def run(binary, output):
                 "GNOME_KEYRING_CONTROL", "SSH_AUTH_SOCK", "GPG_AGENT_INFO", "SESSION_MANAGER"]:
         env.pop(key, None)
     env.update(GDK_BACKEND="x11", BUSYMARK_STRUCTURAL_ACCEPTANCE="1")
+    env.pop("BUSYMARK_STRUCTURAL_SCENARIO", None)
+    if scenario:
+        env["BUSYMARK_STRUCTURAL_SCENARIO"] = scenario
     fixtures = output / "fixtures"
     shutil.copytree("test/fixtures/structural_editing", fixtures / "markdown")
     for name in ["first.png", "second.png", "third.png"]:

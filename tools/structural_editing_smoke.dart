@@ -15,6 +15,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,11 @@ Future<void> main(List<String> arguments) async {
   }
   final binding = _Binding();
   final fixtures = Directory(arguments[0]);
-  await application.main(['${fixtures.path}/markdown/header_test_text.md']);
+  final fixture =
+      Platform.environment['BUSYMARK_STRUCTURAL_SCENARIO'] == 'inline-breaks'
+      ? 'inline-existing-break.md'
+      : 'header_test_text.md';
+  await application.main(['${fixtures.path}/markdown/$fixture']);
   unawaited(_Driver(binding, fixtures, Directory(arguments[1])).run());
 }
 
@@ -477,6 +482,128 @@ class _Driver {
     await capture('images');
   }
 
+  Future<void> inlineBreaks() async {
+    for (final writerside in [false, true]) {
+      final directory = writerside
+          ? '${fixtures.path}/writerside/topics'
+          : '${fixtures.path}/markdown';
+      await workspace.openPath(
+        writerside ? '${fixtures.path}/writerside' : directory,
+      );
+      for (final fixture in [
+        'inline-existing-break',
+        'inline-consecutive-breaks',
+      ]) {
+        for (final count in [1, 2]) {
+          final name =
+              '${writerside ? 'writerside' : 'markdown'}-$fixture-$count';
+          final original = await File(
+            '${fixtures.path}/markdown/$fixture.md',
+          ).readAsString();
+          final file = File('$directory/$name.md');
+          await file.writeAsString(original);
+          await open(file.path);
+          final mode = writerside
+              ? MarkdownMode.writersideMarkdown
+              : MarkdownMode.commonMark;
+          final before = const MarkdownParser()
+              .parse(filePath: file.path, source: original, mode: mode)
+              .busyDocument
+              .blocks
+              .single;
+          check(
+            (elements((w) => w is BusyMarkWysiwygEditor).single.widget
+                        as BusyMarkWysiwygEditor)
+                    .document
+                    .mode ==
+                mode,
+            '$name production document mode',
+          );
+          final expectedText = before.plainText.replaceRange(
+            1,
+            1,
+            '\n' * count,
+          );
+          final expected = jsonEncode([
+            for (final anchor in busyInlineSemanticAnchors(before.inlines))
+              [
+                anchor.offset <= 1 ? anchor.offset : anchor.offset + count,
+                _inline(anchor.inline),
+              ],
+          ]);
+          final target = await focus(before.plainText, offset: 1);
+          final undo = container
+              .read(workspaceControllerProvider)
+              .activeBuffer!
+              .editorState
+              .undoState
+              .undo
+              .length;
+          if (count == 1) {
+            await native(['Shift_L', 'Return']);
+          } else {
+            final button = elements(
+              (w) =>
+                  w is BusyMarkHeaderIconButton &&
+                  w.icon == BusyMarkGlyphs.blankLine,
+            ).single;
+            final render = button.findRenderObject()! as RenderBox;
+            final point = render.localToGlobal(render.size.center(Offset.zero));
+            final click = await Process.run('/usr/bin/python3', [
+              'tools/structural_editing_native.py',
+              '--click',
+              '$pid',
+              '${point.dx}',
+              '${point.dy}',
+            ]);
+            if (click.exitCode != 0) throw StateError('${click.stderr}');
+            await settle();
+          }
+          check(
+            _positionedObjects(namedBlock(expectedText)) == expected,
+            '$name exact live object positions, attributes and formatting',
+          );
+          check(
+            target.focusNode!.hasFocus &&
+                target.controller!.selection.extentOffset == 1 + count,
+            '$name caret and focus',
+          );
+          check(
+            container
+                    .read(workspaceControllerProvider)
+                    .activeBuffer!
+                    .editorState
+                    .undoState
+                    .undo
+                    .length ==
+                undo + 1,
+            '$name one undo operation',
+          );
+          final edited = source;
+          await native(['Control_L', 'z']);
+          check(source == original, '$name undo bytes');
+          check(
+            _positionedObjects(namedBlock(before.plainText)) ==
+                _positionedObjects(before),
+            '$name undo object positions and formatting',
+          );
+          await native(['Control_L', 'Shift_L', 'z']);
+          check(source == edited, '$name redo bytes');
+          check(
+            _positionedObjects(namedBlock(expectedText)) == expected,
+            '$name redo object positions and formatting',
+          );
+          await saveAndReopen(name);
+          check(
+            _positionedObjects(namedBlock(expectedText)) == expected,
+            '$name saved/reopened object positions and formatting',
+          );
+          await capture(name);
+        }
+      }
+    }
+  }
+
   Future<void> run() async {
     var passed = false;
     String? error;
@@ -492,20 +619,25 @@ class _Driver {
       await settings.setAutoSave(false);
       await settings.setAutomaticSpelling(false);
       await settings.setDocumentViewMode(DocumentViewModePreference.editor);
-      await heading(
-        '${fixtures.path}/markdown/header_test_text.md',
-        'markdown',
-      );
-      // openPath selects a workspace; openActiveFile opens a topic within it.
-      // Keep the project context that determines Writerside Markdown mode.
-      await workspace.openPath('${fixtures.path}/writerside');
-      await heading(
-        '${fixtures.path}/writerside/topics/structure.md',
-        'writerside',
-      );
-      await workspace.openPath('${fixtures.path}/markdown');
-      await lists();
-      await images();
+      if (Platform.environment['BUSYMARK_STRUCTURAL_SCENARIO'] ==
+          'inline-breaks') {
+        await inlineBreaks();
+      } else {
+        await heading(
+          '${fixtures.path}/markdown/header_test_text.md',
+          'markdown',
+        );
+        // openPath selects a workspace; openActiveFile opens a topic within it.
+        // Keep the project context that determines Writerside Markdown mode.
+        await workspace.openPath('${fixtures.path}/writerside');
+        await heading(
+          '${fixtures.path}/writerside/topics/structure.md',
+          'writerside',
+        );
+        await workspace.openPath('${fixtures.path}/markdown');
+        await lists();
+        await images();
+      }
       passed = true;
     } catch (exception, stack) {
       error = '$exception\n$stack';
@@ -535,6 +667,10 @@ Iterable<BusyBlock> _walk(Iterable<BusyBlock> blocks) sync* {
 }
 
 Iterable<BusyBlock> _descendants(BusyBlock block) => _walk(block.children);
+String _positionedObjects(BusyBlock block) => jsonEncode([
+  for (final anchor in busyInlineSemanticAnchors(block.inlines))
+    [anchor.offset, _inline(anchor.inline)],
+]);
 String _objects(BusyBlock block) => jsonEncode([
   for (final anchor in busyInlineSemanticAnchors(block.inlines))
     _inline(anchor.inline),

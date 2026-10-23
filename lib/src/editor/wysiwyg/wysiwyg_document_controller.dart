@@ -3036,6 +3036,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           originalInlines: block.inlines,
           oldText: text,
           newText: nextText,
+          insertion: (offset: safeOffset, length: count),
           rebuiltInlines: _inlinesFromStyleRangesWithHardBreaks(
             nextText,
             ranges,
@@ -6495,16 +6496,29 @@ List<BusyInline> _restoreSemanticInlineAnchors({
   required String newText,
   required List<BusyInline> rebuiltInlines,
   bool leadingAnchorsAfterEdit = false,
+  ({int offset, int length})? insertion,
 }) {
   final anchors = busyInlineSemanticAnchors(originalInlines);
   if (anchors.isEmpty) {
     return rebuiltInlines;
   }
-  final prefix = _commonPrefixLength(oldText, newText);
-  final suffix = _commonSuffixLength(oldText, newText, prefix);
-  final oldEditEnd = oldText.length - suffix;
-  final newEditEnd = newText.length - suffix;
-  final delta = newText.length - oldText.length;
+  final int prefix;
+  final int oldEditEnd;
+  final int newEditEnd;
+  final int delta;
+  if (insertion != null) {
+    // Repeated characters (especially existing hard breaks) make a text diff
+    // ambiguous. Commands with a known insertion must retain that position.
+    prefix = oldEditEnd = insertion.offset;
+    newEditEnd = insertion.offset + insertion.length;
+    delta = insertion.length;
+  } else {
+    prefix = _commonPrefixLength(oldText, newText);
+    final suffix = _commonSuffixLength(oldText, newText, prefix);
+    oldEditEnd = oldText.length - suffix;
+    newEditEnd = newText.length - suffix;
+    delta = newText.length - oldText.length;
+  }
   var result = rebuiltInlines;
   for (final anchor in anchors) {
     final offset = switch (anchor.offset) {
