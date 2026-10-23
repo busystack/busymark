@@ -27,6 +27,104 @@ import 'nextcloud_notes/notes_api_test.dart' show serverNote;
 const _accountId = 'ba6d02cd-42fe-4e14-a577-3e2c13822459';
 
 void main() {
+  for (final flushBetween in [false, true]) {
+    test('remote refresh retains displaced and incoming versions after close '
+        '(flushBetween=$flushBetween)', () async {
+      var remote = serverNote(1, content: 'R0', etag: 'v0');
+      final h = await _Harness.create(
+        seedLocal: false,
+        client: MockClient(
+          (request) async => http.Response(
+            jsonEncode(request.url.path.endsWith('/1') ? remote : [remote]),
+            200,
+          ),
+        ),
+      );
+      addTearDown(h.dispose);
+      await h.repository.synchronize(_accountId, allowWrites: false);
+      await h.controller.openNextcloudWorkspace(_accountId);
+      final history = h.container.read(localHistoryControllerProvider.notifier);
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      for (var version = 1; version <= 2; version++) {
+        remote = serverNote(1, content: 'R$version', etag: 'v$version');
+        await h.controller.refreshNextcloudNotes();
+        expect(h.state.activeText, 'R$version');
+        if (flushBetween) {
+          expect(await history.flushAll(h.state.documentBuffers), isTrue);
+        }
+      }
+      expect(
+        await h.controller.closeDocumentBuffer(h.state.activeBuffer!.id),
+        isTrue,
+      );
+      expect(await history.flushAll(h.state.documentBuffers), isTrue);
+      final store = h.container.read(localHistoryStoreProvider);
+      final snapshot = await store.load();
+      final sources = await Future.wait(
+        snapshot.revisions.map(
+          (r) async => (await store.readRevision(r.id))!.source,
+        ),
+      );
+      expect(sources, containsAll(['R0', 'R1', 'R2']));
+      expect(snapshot.documents, hasLength(1));
+    });
+  }
+
+  for (final dirty in [false, true]) {
+    test(
+      'remote history restore navigates accounts safely from local workspace '
+      '(dirty=$dirty)',
+      () async {
+        final h = await _Harness.create();
+        addTearDown(h.dispose);
+        await h.controller.openNextcloudWorkspace(_accountId);
+        final buffer = h.state.activeBuffer!;
+        final store = h.container.read(localHistoryStoreProvider);
+        final captured = await store.capture(
+          LocalHistoryCaptureRequest(
+            remoteNote: buffer.remoteNote,
+            displayName: buffer.displayName,
+            source: 'retained remote source\n',
+            format: buffer.format,
+            capturedAt: DateTime.now().toUtc(),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
+        );
+        final revision = (await store.readRevision(captured.revision!.id))!;
+        final localPath = p.join(h.root.path, 'local.md');
+        await File(localPath).writeAsString('local source');
+        await h.controller.openPath(localPath);
+        if (dirty) h.controller.updateActiveText('unsaved local source');
+        final current = await h.controller.localHistoryCurrentSource(
+          captured.document,
+          revision,
+        );
+        expect(current.canRestore, isTrue);
+        expect(
+          await h.controller.restoreLocalHistoryRevision(
+            document: captured.document,
+            revision: revision,
+          ),
+          !dirty,
+        );
+        if (dirty) {
+          expect(h.state.activeBuffer!.filePath, localPath);
+          expect(h.state.activeText, 'unsaved local source');
+        } else {
+          expect(h.state.workspace!.nextcloudAccountId, _accountId);
+          expect(h.state.activeBuffer!.remoteNote, buffer.remoteNote);
+          expect(h.state.activeText, revision.source);
+          expect(
+            h.repository.noteById(buffer.remoteNote!.localId)!.content,
+            revision.source,
+          );
+        }
+        expect(await File(localPath).readAsString(), 'local source');
+      },
+    );
+  }
+
   test(
     'remote refresh is an undoable boundary with an existing redo branch',
     () async {
