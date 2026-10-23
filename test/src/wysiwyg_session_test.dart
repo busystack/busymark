@@ -231,6 +231,113 @@ void main() {
 
   const parser = MarkdownParser();
 
+  for (final table in [false, true]) {
+    testWidgets(
+      'merged text history preserves every clipped viewport anchor table=$table',
+      (tester) async {
+        final history = await DocumentHistoryHarness.create();
+        addTearDown(history.dispose);
+        final text = table
+            ? 'Focus cell'
+            : List.generate(180, (i) => 'line $i for reading').join('\n');
+        final source = table
+            ? '| Header | Other |\n| --- | --- |\n| Focus cell | Body |\n${List.generate(100, (i) => '| row $i | reading |').join('\n')}\n\nAfter.\n'
+            : '```text\n$text\n```\n\nAfter.\n';
+        history.controller.updateActiveText(source);
+        var document = parser
+            .parse(filePath: 'viewport.md', source: source)
+            .busyDocument;
+        final key = GlobalKey<BusyMarkWysiwygEditorState>();
+        await tester.pumpWidget(
+          _app(
+            BusyMarkWysiwygEditor(
+              key: key,
+              document: document,
+              documentId: history.buffer.id,
+              useExternalUndoHistory: true,
+              readEditBase: history.readBase,
+              readSessionState: () => history.buffer.editorState.wysiwygState,
+              onUndo: history.controller.undoActiveBuffer,
+              onRedo: history.controller.redoActiveBuffer,
+              onSessionChanged: (id, session) =>
+                  history.controller.updateDocumentEditorState(
+                    id,
+                    history.buffer.editorState.copyWith(wysiwygState: session),
+                  ),
+              onDocumentChanged: (value) => document = value,
+              onSourceChanged: (_, _) {},
+              onTransactionalSourceChanged: (_, value, group) =>
+                  history.controller.updateActiveWysiwygText(
+                    value,
+                    document: document,
+                    undoGroup: group,
+                  ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.byWidgetPredicate(
+            (w) => w is TextField && w.controller?.text == text,
+          ),
+        );
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection.collapsed(offset: 4);
+        await tester.pumpAndSettle();
+        Scrollable.of(
+          field.focusNode!.context!,
+          axis: Axis.vertical,
+        ).position.jumpTo(2300);
+        await tester.pumpAndSettle();
+        final reading = history.buffer.editorState.wysiwygState;
+        expect(reading.viewportOffset, greaterThan(1000));
+        expect(reading.viewportEditingOffset, lessThan(-1000));
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: text.replaceRange(4, 4, 'Z'),
+            selection: const TextSelection.collapsed(offset: 5),
+          ),
+        );
+        // Inspect the authoritative pre-edit entry before any parent/frame restore.
+        final before =
+            history.buffer.editorState.undoState.undo.last.wysiwygState;
+        expect(before.anchorOffset, 4);
+        expect(before.viewportOffset, reading.viewportOffset);
+        expect(before.viewportEditingOffset, reading.viewportEditingOffset);
+        expect(before.viewportLayoutSignature, reading.viewportLayoutSignature);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
+  test(
+    'viewport pixel anchors round trip while older sessions remain readable',
+    () {
+      final old = WysiwygEditorSessionState.fromJson({
+        'viewportBlockId': 'old',
+        'viewportAlignment': 0.2,
+      });
+      expect(old.viewportOffset, 0);
+      expect(old.viewportEditingOffset, isNull);
+      const session = WysiwygEditorSessionState(
+        activeBlockId: 'edit',
+        viewportBlockId: 'reading',
+        viewportOffset: 2300.25,
+        viewportEditingOffset: -5000.5,
+        viewportLayoutSignature: 'layout',
+        sourceSignature: 'source',
+        sourceBindings: {
+          'reading': (start: 4, end: 9, kind: 'paragraph', tag: 'p'),
+        },
+      );
+      final restored = WysiwygEditorSessionState.fromJson(session.toJson());
+      expect(restored.toJson(), session.toJson());
+      expect(restored.viewportOffset, 2300.25);
+      expect(restored.viewportEditingOffset, -5000.5);
+      expect(restored.sourceBindings, session.sourceBindings);
+    },
+  );
+
   for (final replacement in ['abc', 'Restored']) {
     testWidgets(
       'authoritative $replacement wins during rich publication frame',

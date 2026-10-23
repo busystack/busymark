@@ -2,6 +2,7 @@ import '../document_edit_history.dart';
 import '../../app/command_shortcuts.dart';
 import '../../app/busymark_search_field.dart';
 import '../link_destination.dart';
+import '../editor_focus_restoration.dart';
 import '../wysiwyg/writerside_editing_adapter.dart';
 import '../../assets/document_media_context.dart';
 import 'dart:async';
@@ -186,7 +187,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   Object _editingEpoch = Object();
   late TextEditingValue _lastObservedEditingValue;
   late FocusNode _focusNode;
-  late final ScrollController _scrollController;
+  late final BusyMarkCaretScrollController _scrollController;
   late final ScrollController _horizontalScrollController;
   late UndoHistoryController _undoController;
   final _sourceEditorKey = GlobalKey();
@@ -208,12 +209,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   var _autocompleteSelection = 0;
   String _lastPath = '';
   bool _horizontalCaretScheduled = false;
+  TextEditingValue _lastControllerValue = TextEditingValue.empty;
   bool _contentShrinkCorrectionScheduled = false;
   Timer? _searchDebounce;
   Timer? _foldRefreshDebounce;
   _ContinuousSourceEdit? _continuousSourceEdit;
   _SourceSessionSnapshot? _lastPublishedSession;
   bool _sessionPublicationScheduled = false;
+  Object? _sessionRestoreRequest;
   late final DocumentUndoGrouping _undoGrouping;
   late DocumentEditBase _editBase;
   DocumentEditBase get publicationBase => _editBase;
@@ -358,7 +361,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _historyInsertionTarget = _SourceClipboardInsertionTarget(this);
     widget.clipboardInsertionRegistry?.register(_historyInsertionTarget);
     _focusNode = FocusNode(onKeyEvent: _handleKeyEvent);
-    _scrollController = ScrollController();
+    _scrollController = BusyMarkCaretScrollController();
     _horizontalScrollController = ScrollController();
     _undoController = UndoHistoryController();
     _lastPath = widget.documentId ?? widget.filePath ?? '';
@@ -366,6 +369,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _restoreSessionState();
     _lastPublishedSession = _sourceSessionSnapshot();
     _syncSearchOptions();
+    _lastControllerValue = _controller.value;
     _lastObservedEditingValue = _fullEditingValue();
     _controller.addListener(_handleControllerActivity);
     _scrollController.addListener(_scheduleSessionPublication);
@@ -482,6 +486,15 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _handleControllerActivity() {
+    final visibleValue = _controller.value;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    final passiveCompositionChange =
+        visibleValue.text == _lastControllerValue.text &&
+        visibleValue.selection == _lastControllerValue.selection &&
+        visibleValue.composing != _lastControllerValue.composing &&
+        (!_focusNode.hasFocus ||
+            (lifecycle != null && lifecycle != AppLifecycleState.resumed));
+    _lastControllerValue = visibleValue;
     final value = _fullEditingValue();
     if (value != _lastObservedEditingValue) {
       _lastObservedEditingValue = value;
@@ -502,7 +515,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _cancelSharedSearchNavigation();
     }
     _scheduleSessionPublication();
-    if (widget.wordWrap || _horizontalCaretScheduled) {
+    if (passiveCompositionChange ||
+        widget.wordWrap ||
+        _horizontalCaretScheduled) {
       return;
     }
     _horizontalCaretScheduled = true;
@@ -554,6 +569,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   /// Reveals a full-document offset, including a destination inside a fold.
   void scrollToOffset(int offset, {bool updateSelection = true}) {
+    BusyMarkEditorFocusRestoration.reveal(_focusNode);
     final textOffset = offset.clamp(0, _controller.fullText.length);
     final line =
         '\n'.allMatches(_controller.fullText.substring(0, textOffset)).length +
@@ -581,6 +597,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     required int startOffset,
     required int endOffset,
   }) {
+    BusyMarkEditorFocusRestoration.reveal(_focusNode);
     _cancelSharedSearchNavigation();
     _unfoldSourceRange(startOffset, endOffset);
     final start = startOffset.clamp(0, _controller.fullText.length).toInt();
@@ -1074,127 +1091,146 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                       },
                       child: DefaultTextHeightBehavior(
                         textHeightBehavior: sourceTextHeightBehavior,
-                        child: DocumentUndoActions(
-                          onUndo: widget.onUndo == null
-                              ? null
-                              : () => _performDocumentHistory(redo: false),
-                          onRedo: widget.onRedo == null
-                              ? null
-                              : () => _performDocumentHistory(redo: true),
-                          child: TextField(
+                        child: BusyMarkEditorFocusScope(
+                          documentId: _lastPath,
+                          child: BusyMarkEditorFocusRestoration(
                             readOnly: DocumentReadOnlyScope.of(context),
-                            controller: _controller,
-                            undoController: _undoController,
                             focusNode: _focusNode,
+                            controller: _controller,
                             scrollController: _scrollController,
-                            textDirection: TextDirection.ltr,
-                            keyboardType: TextInputType.multiline,
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            smartDashesType: SmartDashesType.disabled,
-                            smartQuotesType: SmartQuotesType.disabled,
-                            maxLines: null,
-                            expands: true,
-                            textAlignVertical: TextAlignVertical.top,
-                            style: _sourceTextStyle,
-                            strutStyle: sourceStrutStyle,
-                            selectionHeightStyle: BusyMarkDocumentTextGeometry
-                                .sourceSelectionHeightStyle,
-                            selectionWidthStyle: BusyMarkDocumentTextGeometry
-                                .selectionWidthStyle,
-                            cursorColor: colors.foreground.withValues(
-                              alpha: BusyMarkAlpha.sourceCursor,
-                            ),
-                            cursorHeight:
-                                widget.editorFontSize *
-                                BusyMarkTypography.sourceCursorHeightScale,
-                            cursorWidth: BusyMarkStroke.sourceCursor,
-                            decoration: const InputDecoration(
-                              isCollapsed: true,
-                              filled: false,
-                              fillColor: BusyMarkLinuxPalette.transparent,
-                              hoverColor: BusyMarkLinuxPalette.transparent,
-                              focusColor: BusyMarkLinuxPalette.transparent,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: BusyMarkInsets.sourceEditor,
-                            ),
-                            contextMenuBuilder: (context, editableTextState) =>
-                                buildBusyMarkEditorTextContextMenu(
-                                  context,
-                                  editableTextState,
-                                  refineWithAiLabel:
-                                      context.l10n.aiRefineWithAi,
-                                  readSpellingItems:
-                                      widget.readSpellingMenuItems == null
-                                      ? null
-                                      : (visibleOffset) =>
-                                            widget.readSpellingMenuItems!(
+                            builder: (context, caretScrollController) => DocumentUndoActions(
+                              onUndo: widget.onUndo == null
+                                  ? null
+                                  : () => _performDocumentHistory(redo: false),
+                              onRedo: widget.onRedo == null
+                                  ? null
+                                  : () => _performDocumentHistory(redo: true),
+                              child: TextField(
+                                readOnly: DocumentReadOnlyScope.of(context),
+                                controller: _controller,
+                                undoController: _undoController,
+                                focusNode: _focusNode,
+                                scrollController: caretScrollController,
+                                textDirection: TextDirection.ltr,
+                                keyboardType: TextInputType.multiline,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                smartDashesType: SmartDashesType.disabled,
+                                smartQuotesType: SmartQuotesType.disabled,
+                                maxLines: null,
+                                expands: true,
+                                textAlignVertical: TextAlignVertical.top,
+                                style: _sourceTextStyle,
+                                strutStyle: sourceStrutStyle,
+                                selectionHeightStyle:
+                                    BusyMarkDocumentTextGeometry
+                                        .sourceSelectionHeightStyle,
+                                selectionWidthStyle:
+                                    BusyMarkDocumentTextGeometry
+                                        .selectionWidthStyle,
+                                cursorColor: colors.foreground.withValues(
+                                  alpha: BusyMarkAlpha.sourceCursor,
+                                ),
+                                cursorHeight:
+                                    widget.editorFontSize *
+                                    BusyMarkTypography.sourceCursorHeightScale,
+                                cursorWidth: BusyMarkStroke.sourceCursor,
+                                decoration: const InputDecoration(
+                                  isCollapsed: true,
+                                  filled: false,
+                                  fillColor: BusyMarkLinuxPalette.transparent,
+                                  hoverColor: BusyMarkLinuxPalette.transparent,
+                                  focusColor: BusyMarkLinuxPalette.transparent,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  contentPadding: BusyMarkInsets.sourceEditor,
+                                ),
+                                contextMenuBuilder:
+                                    (
+                                      context,
+                                      editableTextState,
+                                    ) => buildBusyMarkEditorTextContextMenu(
+                                      context,
+                                      editableTextState,
+                                      refineWithAiLabel:
+                                          context.l10n.aiRefineWithAi,
+                                      readSpellingItems:
+                                          widget.readSpellingMenuItems == null
+                                          ? null
+                                          : (
+                                              visibleOffset,
+                                            ) => widget.readSpellingMenuItems!(
                                               _controller
                                                   .visibleOffsetToFullOffset(
                                                     visibleOffset,
                                                   ),
                                             ),
-                                  onCheckSpelling: widget.onCheckSpelling,
-                                  additionalItems: [
-                                    if (widget.onSymbolAction != null)
-                                      for (final action
-                                          in SourceSymbolAction.values)
-                                        BusyMarkPopupMenuItem<VoidCallback>(
-                                          value: () => widget.onSymbolAction!(
-                                            action,
-                                            _controller
-                                                .fullSelection
-                                                .extentOffset,
-                                          ),
-                                          label: switch (action) {
-                                            SourceSymbolAction.declaration =>
-                                              context.l10n.goToDeclaration,
-                                            SourceSymbolAction.usages =>
-                                              context.l10n.findUsages,
-                                            SourceSymbolAction.rename =>
-                                              context.l10n.rename,
-                                          },
-                                          shortcut:
-                                              (BusyMarkCommandRegistryScope.read(
-                                                        context,
-                                                      ) ??
-                                                      BusyMarkCommandCatalog
-                                                          .metadata)[sourceSymbolCommands[action]!]
-                                                  ?.shortcut
-                                                  ?.label,
-                                          gtkAccelerator:
-                                              (BusyMarkCommandRegistryScope.read(
-                                                        context,
-                                                      ) ??
-                                                      BusyMarkCommandCatalog
-                                                          .metadata)[sourceSymbolCommands[action]!]
-                                                  ?.shortcut
-                                                  ?.gtkAccelerator,
+                                      onCheckSpelling: widget.onCheckSpelling,
+                                      additionalItems: [
+                                        if (widget.onSymbolAction != null)
+                                          for (final action
+                                              in SourceSymbolAction.values)
+                                            BusyMarkPopupMenuItem<VoidCallback>(
+                                              value: () =>
+                                                  widget.onSymbolAction!(
+                                                    action,
+                                                    _controller
+                                                        .fullSelection
+                                                        .extentOffset,
+                                                  ),
+                                              label: switch (action) {
+                                                SourceSymbolAction
+                                                    .declaration =>
+                                                  context.l10n.goToDeclaration,
+                                                SourceSymbolAction.usages =>
+                                                  context.l10n.findUsages,
+                                                SourceSymbolAction.rename =>
+                                                  context.l10n.rename,
+                                              },
+                                              shortcut:
+                                                  (BusyMarkCommandRegistryScope.read(
+                                                            context,
+                                                          ) ??
+                                                          BusyMarkCommandCatalog
+                                                              .metadata)[sourceSymbolCommands[action]!]
+                                                      ?.shortcut
+                                                      ?.label,
+                                              gtkAccelerator:
+                                                  (BusyMarkCommandRegistryScope.read(
+                                                            context,
+                                                          ) ??
+                                                          BusyMarkCommandCatalog
+                                                              .metadata)[sourceSymbolCommands[action]!]
+                                                      ?.shortcut
+                                                      ?.gtkAccelerator,
+                                            ),
+                                      ],
+                                      onRefineWithAi: widget.onAiEdit == null
+                                          ? null
+                                          : () => unawaited(_runAiEdit()),
+                                      onCopy: () => unawaited(
+                                        _copyOrCutSource(cut: false),
+                                      ),
+                                      onCut: () => unawaited(
+                                        _copyOrCutSource(cut: true),
+                                      ),
+                                      onPaste: () => unawaited(
+                                        _pasteFromSystemClipboard(
+                                          BusyMarkPasteMode.normal,
                                         ),
-                                  ],
-                                  onRefineWithAi: widget.onAiEdit == null
-                                      ? null
-                                      : () => unawaited(_runAiEdit()),
-                                  onCopy: () =>
-                                      unawaited(_copyOrCutSource(cut: false)),
-                                  onCut: () =>
-                                      unawaited(_copyOrCutSource(cut: true)),
-                                  onPaste: () => unawaited(
-                                    _pasteFromSystemClipboard(
-                                      BusyMarkPasteMode.normal,
+                                      ),
+                                      onPastePlainText: () => unawaited(
+                                        _pasteFromSystemClipboard(
+                                          BusyMarkPasteMode.plainText,
+                                        ),
+                                      ),
+                                      readPasteAvailability:
+                                          _readContextMenuPasteAvailability,
                                     ),
-                                  ),
-                                  onPastePlainText: () => unawaited(
-                                    _pasteFromSystemClipboard(
-                                      BusyMarkPasteMode.plainText,
-                                    ),
-                                  ),
-                                  readPasteAvailability:
-                                      _readContextMenuPasteAvailability,
-                                ),
-                            onChanged: (_) => _handleSourceChanged(),
+                                onChanged: (_) => _handleSourceChanged(),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -1750,6 +1786,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       });
       return;
     }
+    BusyMarkEditorFocusRestoration.reveal(_focusNode);
     if (match.hidden) {
       _unfoldSourceRange(match.fullStart, match.fullEnd);
     }
@@ -2135,6 +2172,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _restoreSessionState() {
+    final request = Object();
+    _sessionRestoreRequest = request;
     final validKeys = {for (final region in _foldRegions) region.key};
     _foldedRegionKeys
       ..clear()
@@ -2151,14 +2190,24 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
             .toInt(),
       );
     }
+    final documentId = _lastPath;
+    final controller = _controller;
+    final value = controller.value;
+    final source = controller.fullText;
+    final offset = widget.initialScrollOffset;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_scrollController.hasClients) {
+      if (!mounted ||
+          !identical(request, _sessionRestoreRequest) ||
+          documentId != _lastPath ||
+          !identical(controller, _controller) ||
+          controller.fullText != source ||
+          controller.selection != value.selection ||
+          !_scrollController.hasClients) {
         return;
       }
+      _sessionRestoreRequest = null;
       _scrollController.jumpTo(
-        widget.initialScrollOffset
-            .clamp(0, _scrollController.position.maxScrollExtent)
-            .toDouble(),
+        offset.clamp(0, _scrollController.position.maxScrollExtent).toDouble(),
       );
     });
   }
@@ -2180,6 +2229,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _scheduleSessionPublication() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.userScrollDirection !=
+            ScrollDirection.idle) {
+      _sessionRestoreRequest = null;
+    }
     if (_suppressSessionPublication || _sessionPublicationScheduled) {
       return;
     }
@@ -2233,6 +2287,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     TextEditingValue value, {
     _SourceEditOrigin origin = _SourceEditOrigin.command,
   }) {
+    BusyMarkEditorFocusRestoration.reveal(_focusNode);
     _controller.setFullEditingValue(value);
     _focusNode.requestFocus();
     _handleSourceChanged(origin: origin);
@@ -3199,6 +3254,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _focusNode = FocusNode(onKeyEvent: _handleKeyEvent);
     _editingEpoch = Object();
     _lastObservedEditingValue = _fullEditingValue();
+    _lastControllerValue = _controller.value;
     _controller.addListener(_handleControllerActivity);
     _resetUndoHistory();
     WidgetsBinding.instance.addPostFrameCallback((_) {

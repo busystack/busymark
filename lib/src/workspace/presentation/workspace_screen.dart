@@ -14880,6 +14880,14 @@ bool _sameWysiwygSession(
       left.extentBlockId == right.extentBlockId &&
       left.extentOffset == right.extentOffset &&
       left.viewportBlockId == right.viewportBlockId &&
+      left.viewportLayoutSignature == right.viewportLayoutSignature &&
+      (left.viewportEditingOffset == right.viewportEditingOffset ||
+          (left.viewportEditingOffset != null &&
+              right.viewportEditingOffset != null &&
+              (left.viewportEditingOffset! - right.viewportEditingOffset!)
+                      .abs() <
+                  0.1)) &&
+      (left.viewportOffset - right.viewportOffset).abs() < 0.1 &&
       (left.viewportAlignment - right.viewportAlignment).abs() < 0.001;
 }
 

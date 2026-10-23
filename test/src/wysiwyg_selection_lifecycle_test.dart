@@ -4,17 +4,27 @@ import 'dart:convert';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:busymark/src/visualization/visualization_providers.dart';
+import 'package:busymark/src/visualization/visualization_renderer.dart';
+import 'package:busymark/src/visualization/web_render_host.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../support/memory_rich_clipboard.dart';
+import '../support/desktop_focus.dart';
 import '../support/wysiwyg_editable_harness.dart';
 
 const _table =
@@ -56,6 +66,28 @@ class _DelayedClipboard extends MemoryRichClipboard {
   }
 }
 
+class _LifecycleMathHost implements WebRenderHost {
+  @override
+  Future<Map<Object?, Object?>> renderMathBatch({
+    required List<Map<String, Object?>> expressions,
+    required VisualizationCancellationToken cancellationToken,
+  }) async => {
+    'results': [
+      for (final expression in expressions)
+        {
+          'id': expression['id'],
+          'svg':
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14"><path d="M0 0L10 10"/></svg>',
+          'width': 20,
+          'height': 14,
+          'depth': 2,
+        },
+    ],
+  };
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 Finder _field(String text) =>
     find.byWidgetPredicate((w) => w is TextField && w.controller?.text == text);
 
@@ -90,19 +122,29 @@ Future<WysiwygEditableHarnessState> _mount(
   MemoryRichClipboard clipboard, {
   WysiwygEditorSessionState session = const WysiwygEditorSessionState(),
   bool externalHistory = false,
+  bool renderMath = false,
   BusyMarkClipboardInsertionRegistry? registry,
+  LinuxHeaderBarService? headerBarService,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1000, 1100));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   final key = GlobalKey<WysiwygEditableHarnessState>();
   await tester.pumpWidget(
-    WysiwygEditableHarness(
-      key: key,
-      source: source,
-      clipboard: clipboard,
-      session: session,
-      externalHistory: externalHistory,
-      insertionRegistry: registry,
+    ProviderScope(
+      overrides: [
+        if (headerBarService != null)
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        if (renderMath)
+          webRenderHostProvider.overrideWithValue(_LifecycleMathHost()),
+      ],
+      child: WysiwygEditableHarness(
+        key: key,
+        source: source,
+        clipboard: clipboard,
+        session: session,
+        externalHistory: externalHistory,
+        insertionRegistry: registry,
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -250,7 +292,1451 @@ void _expectTableGeometry(WidgetTester tester) {
   }
 }
 
+void _deferredExtentFocusRegressions() {
+  for (final table in [false, true]) {
+    testWidgets(
+      'deferred extent preserves new reading geometry and input table=$table',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        addTearDown(
+          () => tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          ),
+        );
+        final source =
+            '${table ? _surrounded : '$_before\n\nMiddle selected.\n\n$_after\n'}\n${[for (var i = 0; i < 80; i++) 'Reading $i ${'words ' * 12}'.trimRight()].join('\n\n')}\n';
+        final state = await _mount(tester, source, MemoryRichClipboard());
+        final gesture = await tester.startGesture(
+          _caret(tester, _before, 2),
+          pointer: 1101,
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.moveTo(
+          _caret(tester, table ? 'End!' : _after, table ? 4 : 5),
+        );
+        await tester.pumpAndSettle();
+        final saved = state.session;
+        final position = tester
+            .state<ScrollableState>(
+              find
+                  .descendant(
+                    of: find.byType(ScrollablePositionedList),
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
+            )
+            .position;
+        await gesture.up();
+        position.jumpTo(2500);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        expect(
+          FocusManager.instance.primaryFocus,
+          same(FocusManager.instance.rootScope),
+        );
+        for (var frame = 0; frame < 90; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(FocusManager.instance.rootScope),
+          );
+          expect(position.pixels, closeTo(2500, 0.1));
+        }
+        final anchorText = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .where((w) => w.controller!.text.startsWith('Reading '))
+            .map((w) => w.controller!.text)
+            .firstWhere(
+              (text) =>
+                  tester.getTopLeft(_field(text)).dy > 100 &&
+                  tester.getTopLeft(_field(text)).dy < 900,
+            );
+        final anchorTop = tester.getTopLeft(_field(anchorText)).dy;
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        for (var frame = 0; frame < 30; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(position.pixels, closeTo(2500, 0.1));
+          expect(
+            tester.getTopLeft(_field(anchorText)).dy,
+            closeTo(anchorTop, 0.1),
+          );
+        }
+        expect(state.changes, isEmpty);
+        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        expect(
+          tester
+              .widgetList<BusyMarkWysiwygBlockField>(
+                find.byType(BusyMarkWysiwygBlockField),
+              )
+              .length,
+          lessThan(state.document.blocks.length),
+        );
+        expect(state.session.anchorBlockId, saved.anchorBlockId);
+        expect(state.session.anchorOffset, saved.anchorOffset);
+        expect(state.session.extentBlockId, saved.extentBlockId);
+        expect(state.session.extentOffset, saved.extentOffset);
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+        final value = TextEditingValue.fromJSON(
+          tester.testTextInput.editingState!,
+        );
+        final offset = value.selection.extentOffset;
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: value.text.replaceRange(offset, offset, 'Z'),
+            selection: TextSelection.collapsed(offset: offset + 1),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(state.changes, hasLength(1));
+        expect(state.source, startsWith('BeZ'));
+        final changedText = state.document.blocks.first.plainText;
+        expect(_caret(tester, changedText, 3).dy, inInclusiveRange(0, 1100));
+        await _command(tester, LogicalKeyboardKey.keyZ);
+        expect(state.source, source);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+  testWidgets(
+    'deferred toolbar restoration honors a pending newer focus request',
+    (tester) async {
+      final state = await _mount(
+        tester,
+        'Original target.\n',
+        MemoryRichClipboard(),
+      );
+      final newer = FocusNode(debugLabel: 'Pending search focus');
+      final entry = OverlayEntry(
+        builder: (_) => Positioned(
+          left: 750,
+          top: 0,
+          width: 200,
+          height: 40,
+          child: Material(child: TextField(focusNode: newer)),
+        ),
+      );
+      Overlay.of(
+        tester.element(find.byType(BusyMarkWysiwygEditor)),
+      ).insert(entry);
+      await tester.pumpAndSettle();
+      tester.binding.addPostFrameCallback((_) => newer.requestFocus());
+      state.editorKey.currentState!.restoreEditingFocus();
+      tester.binding.scheduleFrame();
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(newer));
+      expect(state.changes, isEmpty);
+      entry.remove();
+      await tester.pumpAndSettle();
+      entry.dispose();
+      newer.dispose();
+    },
+  );
+  for (final inactive in [false, true]) {
+    testWidgets(
+      'deferred toolbar dialog completion preserves newer owner inactive=$inactive',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        final barrier = _DelayedSelectionBarrier();
+        addTearDown(barrier.dispose);
+        addTearDown(() {
+          if (!barrier.release.isCompleted) barrier.release.complete();
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          );
+        });
+        final paragraphs = [
+          'Original editing target.',
+          for (var i = 0; i < 80; i++)
+            'Reading $i ${'words ' * 12}'.trimRight(),
+        ];
+        final state = await _mount(
+          tester,
+          '${paragraphs.join('\n\n')}\n',
+          MemoryRichClipboard(),
+          headerBarService: barrier,
+        );
+        final target = tester.widget<TextField>(_field(paragraphs.first));
+        target.controller!.selection = const TextSelection(
+          baseOffset: 8,
+          extentOffset: 2,
+        );
+        await tester.pumpAndSettle();
+        final position = tester
+            .state<ScrollableState>(
+              find
+                  .descendant(
+                    of: find.byType(ScrollablePositionedList),
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
+            )
+            .position;
+        position.jumpTo(3500);
+        await tester.pumpAndSettle();
+        final pixels = position.pixels;
+        final other = FocusNode(
+          debugLabel: 'Search selected during dialog release',
+        );
+        final entry = OverlayEntry(
+          builder: (_) => Positioned(
+            left: 750,
+            top: 0,
+            width: 200,
+            height: 40,
+            child: Material(child: TextField(focusNode: other)),
+          ),
+        );
+        Overlay.of(
+          tester.element(find.byType(BusyMarkWysiwygEditor)),
+        ).insert(entry);
+        await tester.pumpAndSettle();
+        final link = find.byWidgetPredicate(
+          (w) => w is BusyMarkHeaderIconButton && w.icon == BusyMarkGlyphs.link,
+        );
+        await tester.ensureVisible(link);
+        await tester.tap(link, pointer: 1102);
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('wysiwyg-link-destination-field')),
+          findsOneWidget,
+        );
+        Navigator.of(
+          tester.element(find.byType(BusyMarkWysiwygEditor)),
+          rootNavigator: true,
+        ).pop();
+        await tester.pumpAndSettle();
+        expect(barrier.releaseStarted, isTrue);
+        other.requestFocus();
+        await tester.pumpAndSettle();
+        expect(FocusManager.instance.primaryFocus, same(other));
+        if (inactive) {
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.inactive,
+          );
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(FocusManager.instance.rootScope),
+          );
+        }
+        barrier.release.complete();
+        for (var frame = 0; frame < 30; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(inactive ? FocusManager.instance.rootScope : other),
+          );
+          expect(position.pixels, closeTo(pixels, 0.1));
+        }
+        if (inactive) {
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          );
+          await tester.pumpAndSettle();
+        }
+        expect(FocusManager.instance.primaryFocus, same(other));
+        expect(
+          target.controller!.selection,
+          const TextSelection(baseOffset: 8, extentOffset: 2),
+        );
+        expect(state.changes, isEmpty);
+        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+        entry.remove();
+        await tester.pumpAndSettle();
+        entry.dispose();
+        other.dispose();
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+  for (final (table, reverse) in [
+    for (final table in [false, true])
+      for (final reverse in [false, true]) (table, reverse),
+  ]) {
+    for (final scenario in [
+      'newer owner',
+      'inactive',
+      'inactive cancel',
+      'inactive disposal',
+      'newer owner inactive',
+      'lifecycle round trip',
+      'newer owner then scope',
+      'document replacement',
+      'disposal',
+      'ordinary completion',
+      'new caret',
+    ]) {
+      testWidgets(
+        'deferred extent focus table=$table reverse=$reverse respects $scenario',
+        (tester) async {
+          enableDesktopFocusLifecycle(tester);
+          addTearDown(() {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.resumed,
+            );
+          });
+          final original = table
+              ? _surrounded
+              : '$_before\n\nMiddle selected.\n\n$_after\n';
+          final state = await _mount(tester, original, MemoryRichClipboard());
+          final other = FocusNode(debugLabel: 'Newer search owner');
+          final text = TextEditingController(text: 'search');
+          final overlay = Overlay.of(
+            tester.element(find.byType(BusyMarkWysiwygEditor)),
+          );
+          final entry = OverlayEntry(
+            builder: (_) => Positioned(
+              top: 0,
+              left: 0,
+              width: 200,
+              height: 40,
+              child: Material(
+                child: TextField(focusNode: other, controller: text),
+              ),
+            ),
+          );
+          overlay.insert(entry);
+          await tester.pumpAndSettle();
+          final gesture = await tester.startGesture(
+            _caret(
+              tester,
+              reverse ? (table ? 'End!' : _after) : _before,
+              reverse ? (table ? 4 : 5) : 2,
+            ),
+            pointer: 1103,
+            kind: PointerDeviceKind.mouse,
+          );
+          await gesture.moveTo(
+            _caret(
+              tester,
+              reverse ? _before : (table ? 'End!' : _after),
+              reverse ? 2 : (table ? 4 : 5),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final selection = state.session;
+          expect(
+            selection.anchorBlockId,
+            reverse
+                ? state.document.blocks[table ? 1 : 2].id
+                : state.document.blocks.first.id,
+          );
+          expect(selection.extentBlockId, isNot(selection.anchorBlockId));
+          if (scenario == 'inactive cancel') {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.inactive,
+            );
+            await gesture.cancel();
+          } else {
+            await gesture.up();
+          }
+          // Deliver a real focus change before the pending post-frame handoff.
+          if (scenario.contains('newer')) {
+            other.requestFocus();
+            FocusManager.instance.applyFocusChangesIfNeeded();
+            expect(FocusManager.instance.primaryFocus, same(other));
+          }
+          final inactive = scenario.contains('inactive');
+          if (inactive || scenario == 'lifecycle round trip') {
+            if (scenario != 'inactive cancel') {
+              tester.binding.handleAppLifecycleStateChanged(
+                AppLifecycleState.inactive,
+              );
+            }
+            expect(
+              FocusManager.instance.primaryFocus,
+              same(FocusManager.instance.rootScope),
+            );
+            if (!inactive) {
+              tester.binding.handleAppLifecycleStateChanged(
+                AppLifecycleState.resumed,
+              );
+            }
+          }
+          if (scenario == 'newer owner then scope') {
+            other.unfocus();
+            FocusManager.instance.applyFocusChangesIfNeeded();
+          }
+          if (scenario == 'document replacement') {
+            state.replaceSource('Replacement document.\n', id: 'replacement');
+          }
+          if (scenario == 'new caret') {
+            await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+          }
+          if (scenario.contains('disposal')) {
+            entry.remove();
+            await tester.pumpWidget(const SizedBox());
+          }
+          final expectedOwner = FocusManager.instance.primaryFocus;
+          for (
+            var frame = 0;
+            frame < (scenario == 'inactive cancel' ? 90 : 30);
+            frame++
+          ) {
+            await tester.pump(const Duration(milliseconds: 16));
+            if (inactive || scenario.contains('newer')) {
+              expect(FocusManager.instance.primaryFocus, same(expectedOwner));
+            }
+          }
+          if (inactive) {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.resumed,
+            );
+            await tester.pumpAndSettle();
+          }
+          if (scenario.contains('newer') &&
+              scenario != 'newer owner then scope') {
+            expect(FocusManager.instance.primaryFocus, same(other));
+            expect(tester.testTextInput.hasAnyClients, isTrue);
+            tester.testTextInput.updateEditingValue(
+              const TextEditingValue(
+                text: 'search!',
+                selection: TextSelection.collapsed(offset: 7),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(text.text, 'search!');
+          } else if (scenario == 'inactive' ||
+              scenario == 'inactive cancel' ||
+              scenario == 'lifecycle round trip' ||
+              scenario == 'ordinary completion') {
+            expect(state.session.anchorBlockId, selection.anchorBlockId);
+            expect(state.session.anchorOffset, selection.anchorOffset);
+            expect(state.session.extentBlockId, selection.extentBlockId);
+            expect(state.session.extentOffset, selection.extentOffset);
+            expect(tester.testTextInput.hasAnyClients, isTrue);
+            final value = TextEditingValue.fromJSON(
+              tester.testTextInput.editingState!,
+            );
+            final offset = value.selection.extentOffset;
+            tester.testTextInput.updateEditingValue(
+              TextEditingValue(
+                text: value.text.replaceRange(offset, offset, 'Z'),
+                selection: TextSelection.collapsed(offset: offset + 1),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(state.changes, hasLength(1));
+            expect(state.source, startsWith('${_before.substring(0, 2)}Z'));
+          } else if (scenario == 'new caret') {
+            expect(_selected(tester), isEmpty);
+            expect(state.changes, isEmpty);
+            expect(tester.testTextInput.hasAnyClients, isTrue);
+            final value = TextEditingValue.fromJSON(
+              tester.testTextInput.editingState!,
+            );
+            final offset = value.selection.extentOffset;
+            tester.testTextInput.updateEditingValue(
+              TextEditingValue(
+                text: value.text.replaceRange(offset, offset, 'Z'),
+                selection: TextSelection.collapsed(offset: offset + 1),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(state.changes, hasLength(1));
+            expect(state.document.blocks.first.plainText, _before);
+          }
+          if (!scenario.contains('disposal')) entry.remove();
+          await tester.pumpAndSettle();
+          entry.dispose();
+          other.dispose();
+          text.dispose();
+          expect(tester.takeException(), isNull);
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.linux),
+      );
+    }
+  }
+}
+
+class _DelayedSelectionBarrier extends LinuxHeaderBarService {
+  _DelayedSelectionBarrier()
+    : super(
+        channel: const MethodChannel(
+          'com.busymark.test/selection-modal-release',
+        ),
+      );
+  final release = Completer<void>();
+  bool releaseStarted = false;
+  @override
+  Future<void> setModalBarrierDepth(int depth) async {
+    if (depth == 0) {
+      releaseStarted = true;
+      await release.future;
+    }
+  }
+}
+
 void main() {
+  _deferredExtentFocusRegressions();
+  for (final externalHistory in [false, true]) {
+    for (final reverse in [false, true]) {
+      testWidgets(
+        'non-editable selection endpoint settles and accepts paste external=$externalHistory reverse=$reverse',
+        (tester) async {
+          const original = 'First\n\n---\n';
+          final document = WysiwygEditableHarnessState.parser
+              .parse(filePath: '/editable.md', source: original)
+              .busyDocument;
+          final saved = _documentSession(document, reverse: reverse);
+          final registry = BusyMarkClipboardInsertionRegistry();
+          addTearDown(registry.dispose);
+          final state = await _mount(
+            tester,
+            original,
+            MemoryRichClipboard(),
+            session: saved,
+            externalHistory: externalHistory,
+            registry: registry,
+          );
+          expect(state.session.anchorBlockId, saved.anchorBlockId);
+          expect(state.session.anchorOffset, saved.anchorOffset);
+          expect(state.session.extentBlockId, saved.extentBlockId);
+          expect(state.session.extentOffset, saved.extentOffset);
+          if (!reverse) {
+            expect(
+              FocusManager.instance.primaryFocus?.debugLabel,
+              'BusyMark WYSIWYG document selection',
+            );
+          }
+          final top = tester.getTopLeft(_field('First'));
+          for (var frame = 0; frame < 20; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+            expect(tester.getTopLeft(_field('First')), top);
+          }
+          expect(tester.binding.hasScheduledFrame, isFalse);
+          expect(state.source, original);
+          expect(state.changes, isEmpty);
+          expect(state.undoSources, isEmpty);
+          expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+          expect(
+            await registry.paste(
+              BusyMarkClipboardPayload(
+                id: 'non-editable-endpoint',
+                acquiredAt: DateTime.utc(2026),
+                kind: BusyMarkClipboardContentKind.text,
+                text: 'Replacement',
+              ),
+              mode: BusyMarkPasteMode.plainText,
+            ),
+            ClipboardPasteResult.inserted,
+          );
+          await tester.pumpAndSettle();
+          expect(state.source, 'Replacement\n');
+          expect(state.changes, hasLength(1));
+          expect(tester.testTextInput.hasAnyClients, isTrue);
+          tester.testTextInput.updateEditingValue(
+            const TextEditingValue(
+              text: 'ReplacementX',
+              selection: TextSelection.collapsed(offset: 12),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(state.source, 'ReplacementX\n');
+          await _command(tester, LogicalKeyboardKey.keyZ);
+          expect(state.source, 'Replacement\n');
+          await _command(tester, LogicalKeyboardKey.keyZ);
+          expect(state.source, original);
+          await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+          expect(state.source, 'Replacement\n');
+        },
+      );
+    }
+  }
+  testWidgets('Select All ending at a rule settles and accepts command paste', (
+    tester,
+  ) async {
+    const original = 'First\n\n---\n';
+    final clipboard = MemoryRichClipboard()
+      ..data = const RichClipboardData(text: 'Replacement');
+    final state = await _mount(tester, original, clipboard);
+    await _command(tester, LogicalKeyboardKey.keyA);
+    await _command(tester, LogicalKeyboardKey.keyA);
+    expect(state.source, original);
+    expect(state.changes, isEmpty);
+    expect(state.session.extentBlockId, state.document.blocks.last.id);
+    expect(
+      FocusManager.instance.primaryFocus?.debugLabel,
+      'BusyMark WYSIWYG document selection',
+    );
+    await _command(tester, LogicalKeyboardKey.keyV, shift: true);
+    expect(state.source, 'Replacement\n');
+    expect(state.changes, hasLength(1));
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    await _command(tester, LogicalKeyboardKey.keyZ);
+    expect(state.source, original);
+    await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+    expect(state.source, 'Replacement\n');
+  });
+  testWidgets(
+    'short table input after desktop return reveals the original cell',
+    (tester) async {
+      enableDesktopFocusLifecycle(tester);
+      final source =
+          'Before.\n\n| Header | Other |\n| --- | --- |\n| Focus cell | Body |\n\n${List.generate(100, (i) => 'Reading $i ${'words ' * 20}').join('\n\n')}\n';
+      final state = await _mount(tester, source, MemoryRichClipboard());
+      final field = tester.widget<TextField>(_field('Focus cell'));
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection.collapsed(offset: 5);
+      await tester.pumpAndSettle();
+      final scrollable = Scrollable.of(
+        tester.element(_field('Focus cell')),
+        axis: Axis.vertical,
+      );
+      // Beyond the package's two-viewport cache, not only outside the screen.
+      scrollable.position.jumpTo(5000);
+      await tester.pumpAndSettle();
+      final reading = scrollable.position.pixels;
+      for (var cycle = 0; cycle < 4; cycle++) {
+        await pumpDesktopFocusCycle(
+          tester,
+          target: field.focusNode!,
+          inactiveFrames: cycle == 2 ? 90 : 1,
+          verifyViewport: () =>
+              expect(scrollable.position.pixels, closeTo(reading, 0.1)),
+        );
+      }
+      expect(state.session.viewportEditingOffset, lessThan(-4000));
+      expect(() => jsonEncode(state.session.toJson()), returnsNormally);
+      final readingField = find
+          .byWidgetPredicate(
+            (w) =>
+                w is TextField &&
+                w.controller?.text.startsWith('Reading ') == true,
+          )
+          .evaluate()
+          .firstWhere((e) {
+            final top = tester.getTopLeft(find.byWidget(e.widget)).dy;
+            return top > 100 && top < 900;
+          });
+      final readingText = (readingField.widget as TextField).controller!.text;
+      final readingTop = tester.getTopLeft(_field(readingText)).dy;
+      state.recreate(
+        WysiwygEditorSessionState.fromJson(state.session.toJson()),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(_field(readingText)).dy,
+        closeTo(readingTop, 0.1),
+      );
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'Focusz cell',
+          selection: TextSelection.collapsed(offset: 6),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(state.source, contains('| Focusz cell |'));
+      expect(_caret(tester, 'Focusz cell', 6).dy, inInclusiveRange(0, 1100));
+      expect(
+        Scrollable.of(
+          tester.element(_field('Focusz cell')),
+          axis: Axis.vertical,
+        ).position.pixels,
+        lessThan(reading - 100),
+      );
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.linux),
+  );
+
+  testWidgets('queued toolbar restoration respects application suspension', (
+    tester,
+  ) async {
+    enableDesktopFocusLifecycle(tester);
+    final state = await _mount(
+      tester,
+      'Original target.\n',
+      MemoryRichClipboard(),
+    );
+    final field = tester.widget<TextField>(_field('Original target.'));
+    state.editorKey.currentState!.restoreEditingFocus();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pumpAndSettle();
+    expect(
+      FocusManager.instance.primaryFocus,
+      same(FocusManager.instance.rootScope),
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, same(field.focusNode));
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    expect(state.changes, isEmpty);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+  testWidgets(
+    'table Tab deliberately reveals the next cell after passive restoration',
+    (tester) async {
+      enableDesktopFocusLifecycle(tester);
+      final cells = List.generate(12, (i) => 'Cell $i ${'wide ' * 20}'.trim());
+      final table =
+          '|${List.generate(12, (i) => 'Head $i').join('|')}|\n'
+          '|${List.filled(12, '---').join('|')}|\n'
+          '|${cells.join('|')}|\n';
+      final source =
+          '$table\n${List.generate(100, (i) => 'Reading $i ${'words ' * 30}').join('\n\n')}\n';
+      final state = await _mount(tester, source, MemoryRichClipboard());
+      final first = tester.widget<TextField>(_field(cells.first));
+      final next = tester.widget<TextField>(_field(cells[1]));
+      final nextEditable = _editable(tester, _field(cells[1]));
+      first.focusNode!.requestFocus();
+      first.controller!.selection = const TextSelection.collapsed(offset: 0);
+      await tester.pumpAndSettle();
+      final vertical = Scrollable.of(
+        tester.element(_field(cells.first)),
+        axis: Axis.vertical,
+      ).position;
+      final horizontal = next.scrollController!.position;
+      expect(horizontal.maxScrollExtent, greaterThan(100));
+      // Compare the intentional reveal with a fresh Tab, rather than assuming
+      // that the framework's caret/pixel rounding necessarily chooses zero.
+      horizontal.jumpTo(horizontal.maxScrollExtent);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      final freshHorizontal = horizontal.pixels;
+      first.focusNode!.requestFocus();
+      await tester.pumpAndSettle();
+      horizontal.jumpTo(horizontal.maxScrollExtent);
+      vertical.jumpTo(2000);
+      await tester.pumpAndSettle();
+      final reading = vertical.pixels;
+      final cellReading = horizontal.pixels;
+      await pumpDesktopFocusCycle(
+        tester,
+        target: first.focusNode!,
+        verifyViewport: () {
+          expect(vertical.pixels, closeTo(reading, 0.1));
+          expect(horizontal.pixels, closeTo(cellReading, 0.1));
+        },
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(next.focusNode));
+      expect(nextEditable.mounted, isTrue);
+      final caret = nextEditable.renderEditable.localToGlobal(
+        nextEditable.renderEditable
+            .getLocalRectForCaret(const TextPosition(offset: 0))
+            .center,
+      );
+      expect(caret.dx, inInclusiveRange(0, 1000));
+      expect(caret.dy, inInclusiveRange(0, 1100));
+      expect(horizontal.pixels, closeTo(freshHorizontal, 0.1));
+      expect(state.changes, isEmpty);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.linux),
+  );
+
+  for (final inactive in [false, true]) {
+    testWidgets(
+      'document refresh preserves an existing competing focus owner inactive=$inactive',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        final state = await _mount(
+          tester,
+          'Original target.\n',
+          MemoryRichClipboard(),
+        );
+        final saved = state.session;
+        final other = FocusNode(
+          debugLabel: 'Existing search or inspector input',
+        );
+        final overlay = Overlay.of(
+          tester.element(find.byType(BusyMarkWysiwygEditor)),
+        );
+        final entry = OverlayEntry(
+          builder: (_) => Positioned(
+            left: 0,
+            top: 0,
+            width: 200,
+            height: 40,
+            child: Material(child: TextField(focusNode: other)),
+          ),
+        );
+        overlay.insert(entry);
+        await tester.pumpAndSettle();
+        other.requestFocus();
+        await tester.pumpAndSettle();
+        if (inactive) {
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.inactive,
+          );
+        }
+        state.replaceSource('Replacement target.\n', restoredSession: saved);
+        await tester.pumpAndSettle();
+        if (inactive) {
+          expect(
+            FocusManager.instance.primaryFocus,
+            same(FocusManager.instance.rootScope),
+          );
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          );
+          await tester.pumpAndSettle();
+        }
+        expect(FocusManager.instance.primaryFocus, same(other));
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'search continues',
+            selection: TextSelection.collapsed(offset: 16),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(state.changes, isEmpty);
+        expect(state.source, 'Replacement target.\n');
+        entry.remove();
+        await tester.pumpAndSettle();
+        entry.dispose();
+        other.dispose();
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+
+  for (final navigation in [false, true]) {
+    testWidgets(
+      'new input wins while passive reveal is pending navigation=$navigation',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        final paragraphs = List.generate(
+          100,
+          (i) => 'Paragraph $i ${'reading words ' * 12}'.trimRight(),
+        );
+        final state = await _mount(
+          tester,
+          '${paragraphs.join('\n\n')}\n',
+          MemoryRichClipboard(),
+        );
+        final field = tester.widget<TextField>(_field(paragraphs.first));
+        field.controller!.selection = const TextSelection.collapsed(offset: 3);
+        await tester.pumpAndSettle();
+        final scrollable = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(ScrollablePositionedList),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        scrollable.position.jumpTo(5000);
+        await tester.pumpAndSettle();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        await tester.pump();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.idle();
+        if (navigation) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+          await tester.pumpAndSettle();
+          expect(
+            field.controller!.selection,
+            const TextSelection.collapsed(offset: 4),
+          );
+          expect(
+            _caret(tester, paragraphs.first, 4).dy,
+            inInclusiveRange(0, 1100),
+          );
+        } else {
+          scrollable.position.pointerScroll(200);
+          final offset = scrollable.position.pixels;
+          for (var frame = 0; frame < 30; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+            expect(scrollable.position.pixels, closeTo(offset, 0.1));
+          }
+        }
+        expect(state.changes, isEmpty);
+        expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+
+  for (final nested in [false, true]) {
+    testWidgets(
+      'session retains partial tall paragraph geometry nested=$nested',
+      (tester) async {
+        final text = List.generate(
+          500,
+          (i) => 'paragraph words $i for reading',
+        ).join(' ');
+        final source = nested ? '> $text\n\nAfter.\n' : '$text\n\nAfter.\n';
+        final state = await _mount(tester, source, MemoryRichClipboard());
+        final scrollable = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(ScrollablePositionedList),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        scrollable.position.jumpTo(2300.25);
+        await tester.pumpAndSettle();
+        final top = tester.getTopLeft(_field(text)).dy;
+        expect(top, lessThan(-2000));
+        state.recreate(
+          WysiwygEditorSessionState.fromJson(state.session.toJson()),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.getTopLeft(_field(text)).dy, closeTo(top, 0.1));
+        expect(state.changes, isEmpty);
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+      },
+    );
+  }
+
+  for (final reverse in [false, true]) {
+    testWidgets(
+      'desktop cross-block selection retains endpoints reverse=$reverse and replaces with composition',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        final paragraphs = List.generate(
+          100,
+          (i) => 'Paragraph $i ${'reading words ' * 12}'.trimRight(),
+        );
+        final original = '${paragraphs.join('\n\n')}\n';
+        final state = await _mount(tester, original, MemoryRichClipboard());
+        final gesture = await tester.startGesture(
+          _caret(tester, paragraphs[reverse ? 2 : 0], reverse ? 9 : 5),
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.moveTo(
+          _caret(tester, paragraphs[reverse ? 0 : 2], reverse ? 5 : 9),
+        );
+        await gesture.up();
+        await tester.pumpAndSettle();
+        final session = state.session;
+        final targetText = paragraphs[reverse ? 0 : 2];
+        final field = tester.widget<TextField>(_field(targetText));
+        final scrollable = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(ScrollablePositionedList),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        scrollable.position.jumpTo(5000);
+        await tester.pumpAndSettle();
+        final offset = scrollable.position.pixels;
+        await pumpDesktopFocusCycle(
+          tester,
+          target: field.focusNode!,
+          inactiveFrames: 90,
+          verifyViewport: () {
+            expect(scrollable.position.pixels, closeTo(offset, 0.1));
+            expect(state.session.anchorBlockId, session.anchorBlockId);
+            expect(state.session.extentBlockId, session.extentBlockId);
+            expect(state.session.anchorOffset, session.anchorOffset);
+            expect(state.session.extentOffset, session.extentOffset);
+          },
+        );
+        expect(state.changes, isEmpty);
+        final caret = field.controller!.selection.extentOffset;
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: targetText.replaceRange(caret, caret, 'ni'),
+            selection: TextSelection.collapsed(offset: caret + 2),
+            composing: TextRange(start: caret, end: caret + 2),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final expected =
+            '${paragraphs.first.substring(0, 5)}你${paragraphs[2].substring(9)}';
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: expected,
+            selection: const TextSelection.collapsed(offset: 6),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          state.source,
+          '${[expected, ...paragraphs.skip(3)].join('\n\n')}\n',
+        );
+        expect(_caret(tester, expected, 6).dy, inInclusiveRange(0, 1100));
+        final changed = state.source;
+        await _command(tester, LogicalKeyboardKey.keyZ);
+        expect(state.source, isNot(changed));
+        await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+        expect(state.source, changed);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+
+  testWidgets('dismissed dialog preserves a table cell selection', (
+    tester,
+  ) async {
+    final state = await _mount(tester, _table, MemoryRichClipboard());
+    final field = tester.widget<TextField>(_field('Body text'));
+    field.focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+    field.controller!.selection = const TextSelection(
+      baseOffset: 7,
+      extentOffset: 2,
+    );
+    await tester.pumpAndSettle();
+    final dialog = showBusyMarkModalDialog<void>(
+      tester.element(find.byType(BusyMarkWysiwygEditor)),
+      builder: (_) => const AlertDialog(content: Text('Cancel cell dialog')),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await dialog;
+    expect(
+      field.controller!.selection,
+      const TextSelection(baseOffset: 7, extentOffset: 2),
+    );
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(state.changes, isEmpty);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+  testWidgets('desktop math source remains mounted across prolonged inactivity', (
+    tester,
+  ) async {
+    enableDesktopFocusLifecycle(tester);
+    const math = r'Focus $x^2$ target';
+    final state = await _mount(
+      tester,
+      '$math\n\n${List.generate(100, (i) => 'Reading $i ${'words ' * 20}'.trimRight()).join('\n\n')}\n',
+      MemoryRichClipboard(),
+      renderMath: true,
+    );
+    tester
+        .widget<ScrollablePositionedList>(find.byType(ScrollablePositionedList))
+        .itemScrollController!
+        .jumpTo(index: 0);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(
+        ValueKey('wysiwyg-rendered-math-${state.document.blocks.first.id}'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(_field(math));
+    field.controller!.selection = const TextSelection.collapsed(offset: 3);
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(ScrollablePositionedList),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    scrollable.position.jumpTo(5000);
+    await tester.pumpAndSettle();
+    final offset = scrollable.position.pixels;
+    await pumpDesktopFocusCycle(
+      tester,
+      target: field.focusNode!,
+      inactiveFrames: 90,
+      verifyViewport: () {
+        expect(scrollable.position.pixels, closeTo(offset, 0.1));
+        expect(field.focusNode!.context?.mounted, isTrue);
+        expect(
+          field.controller!.selection,
+          const TextSelection.collapsed(offset: 3),
+        );
+      },
+    );
+    expect(state.changes, isEmpty);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+  testWidgets('queued editor focus restoration respects a newer focus owner', (
+    tester,
+  ) async {
+    final state = await _mount(
+      tester,
+      'Original target.\n',
+      MemoryRichClipboard(),
+    );
+    final other = FocusNode(
+      debugLabel: 'Competing search or inspector control',
+    );
+    final overlay = Overlay.of(
+      tester.element(find.byType(BusyMarkWysiwygEditor)),
+    );
+    final entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: 0,
+        top: 0,
+        width: 200,
+        height: 40,
+        child: Material(child: TextField(focusNode: other)),
+      ),
+    );
+    overlay.insert(entry);
+    await tester.pumpAndSettle();
+    state.editorKey.currentState!.restoreEditingFocus();
+    other.requestFocus();
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, same(other));
+    entry.remove();
+    await tester.pumpAndSettle();
+    entry.dispose();
+    other.dispose();
+    expect(state.changes, isEmpty);
+  });
+
+  testWidgets(
+    'session recreation preserves reading with an offscreen caret and immediate input',
+    (tester) async {
+      final paragraphs = List.generate(
+        100,
+        (i) => 'Paragraph $i ${'reading words ' * 12}'.trimRight(),
+      );
+      final state = await _mount(
+        tester,
+        '${paragraphs.join('\n\n')}\n',
+        MemoryRichClipboard(),
+      );
+      final field = tester.widget<TextField>(_field(paragraphs.first));
+      field.controller!.selection = const TextSelection(
+        baseOffset: 10,
+        extentOffset: 5,
+      );
+      await tester.pumpAndSettle();
+      final list = tester.widget<ScrollablePositionedList>(
+        find.byType(ScrollablePositionedList),
+      );
+      final scrollable = tester.state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byType(ScrollablePositionedList),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      scrollable.position.jumpTo(5000);
+      await tester.pumpAndSettle();
+      final index = list.itemPositionsNotifier!.itemPositions.value
+          .firstWhere((p) => p.itemLeadingEdge > 0 && p.itemLeadingEdge < 0.8)
+          .index;
+      final top = tester.getTopLeft(_field(paragraphs[index])).dy;
+      final saved = WysiwygEditorSessionState.fromJson(state.session.toJson());
+      state.recreate(saved);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(_field(paragraphs[index])).dy,
+        closeTo(top, 0.1),
+      );
+      expect(state.session.anchorOffset, 10);
+      expect(state.session.extentOffset, 5);
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: paragraphs.first.replaceRange(5, 10, 'Z'),
+          selection: const TextSelection.collapsed(offset: 6),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        state.source,
+        startsWith(paragraphs.first.replaceRange(5, 10, 'Z')),
+      );
+      expect(state.changes, hasLength(1));
+    },
+  );
+
+  testWidgets(
+    'canceled nested menu preserves the offscreen caret and viewport',
+    (tester) async {
+      final paragraphs = List.generate(
+        100,
+        (i) => 'Paragraph $i ${'reading words ' * 12}'.trimRight(),
+      );
+      final state = await _mount(
+        tester,
+        '${paragraphs.join('\n\n')}\n',
+        MemoryRichClipboard(),
+      );
+      final field = tester.widget<TextField>(_field(paragraphs.first));
+      field.controller!.selection = const TextSelection.collapsed(offset: 3);
+      await tester.pumpAndSettle();
+      final scrollable = tester.state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byType(ScrollablePositionedList),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      scrollable.position.jumpTo(5000);
+      await tester.pumpAndSettle();
+      final offset = scrollable.position.pixels;
+      final menu = showBusyMarkMenu<String>(
+        context: tester.element(find.byType(BusyMarkWysiwygEditor)),
+        anchorRect: const Rect.fromLTWH(100, 100, 10, 10),
+        focusFirst: true,
+        items: const [
+          BusyMarkSubmenuItem(
+            label: 'Choices',
+            items: [PopupMenuItem(value: 'edit', child: Text('Edit'))],
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      for (var frame = 0; frame < 30; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(scrollable.position.pixels, closeTo(offset, 0.1));
+      }
+      expect(await menu, isNull);
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(
+        field.controller!.selection,
+        const TextSelection.collapsed(offset: 3),
+      );
+      expect(state.changes, isEmpty);
+    },
+  );
+
+  for (final kind in ['list', 'code', 'table']) {
+    testWidgets(
+      'desktop $kind preserves selection and inner and document scroll',
+      (tester) async {
+        enableDesktopFocusLifecycle(tester);
+        final text = 'Focus target ${'long text ' * 60}'.trimRight();
+        final first = switch (kind) {
+          'list' => '- $text\n',
+          'code' => '```text\n$text\n```\n',
+          _ => '| Header | Other |\n| --- | --- |\n| $text | Body |\n',
+        };
+        final source =
+            '$first\n${List.generate(100, (i) => 'Reading $i ${'words ' * 20}'.trimRight()).join('\n\n')}\n';
+        final state = await _mount(tester, source, MemoryRichClipboard());
+        final field = tester.widget<TextField>(_field(text));
+        field.focusNode!.requestFocus();
+        await tester.pumpAndSettle();
+        field.controller!.selection = const TextSelection(
+          baseOffset: 10,
+          extentOffset: 4,
+        );
+        await tester.pumpAndSettle();
+        if (kind == 'table') field.scrollController!.jumpTo(150);
+        final scrollable = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(ScrollablePositionedList),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        scrollable.position.jumpTo(5000);
+        await tester.pumpAndSettle();
+        final offset = scrollable.position.pixels;
+        final innerOffset = field.scrollController!.offset;
+        await pumpDesktopFocusCycle(
+          tester,
+          target: field.focusNode!,
+          inactiveFrames: 90,
+          verifyViewport: () {
+            expect(scrollable.position.pixels, closeTo(offset, 0.1));
+            expect(field.scrollController!.offset, closeTo(innerOffset, 0.1));
+            expect(
+              field.controller!.selection,
+              const TextSelection(baseOffset: 10, extentOffset: 4),
+            );
+          },
+        );
+        expect(state.changes, isEmpty);
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: text.replaceRange(4, 10, 'Z'),
+            selection: const TextSelection.collapsed(offset: 5),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(state.source, contains(text.replaceRange(4, 10, 'Z')));
+        expect(state.changes, hasLength(1));
+        expect(scrollable.position.pixels, lessThan(offset - 100));
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+  }
+
+  for (final below in [false, true]) {
+    for (final inactiveFrames in [1, 90]) {
+      testWidgets(
+        'desktop return preserves offscreen caret below=$below inactive=$inactiveFrames',
+        (tester) async {
+          enableDesktopFocusLifecycle(tester);
+          final paragraphs = List.generate(
+            100,
+            (i) => 'Paragraph $i ${'reading words ' * 12}'.trimRight(),
+          );
+          final state = await _mount(
+            tester,
+            '${paragraphs.join('\n\n')}\n',
+            MemoryRichClipboard(),
+          );
+          final list = tester.widget<ScrollablePositionedList>(
+            find.byType(ScrollablePositionedList),
+          );
+          final targetIndex = below ? 70 : 0;
+          list.itemScrollController!.jumpTo(index: targetIndex);
+          await tester.pumpAndSettle();
+          final field = tester.widget<TextField>(
+            _field(paragraphs[targetIndex]),
+          );
+          field.focusNode!.requestFocus();
+          field.controller!.selection = const TextSelection.collapsed(
+            offset: 5,
+          );
+          await tester.pumpAndSettle();
+          final scrollable = tester.state<ScrollableState>(
+            find
+                .descendant(
+                  of: find.byType(ScrollablePositionedList),
+                  matching: find.byType(Scrollable),
+                )
+                .first,
+          );
+          scrollable.position.jumpTo(
+            scrollable.position.pixels + (below ? -5000 : 5000),
+          );
+          await tester.pumpAndSettle();
+          final readingIndex = list.itemPositionsNotifier!.itemPositions.value
+              .firstWhere(
+                (p) => p.itemLeadingEdge > 0 && p.itemLeadingEdge < 0.8,
+              )
+              .index;
+          final top = tester.getTopLeft(_field(paragraphs[readingIndex])).dy;
+          final selection = field.controller!.selection;
+          final saved = state.session;
+          for (var cycle = 0; cycle < 3; cycle++) {
+            await pumpDesktopFocusCycle(
+              tester,
+              target: field.focusNode!,
+              inactiveFrames: inactiveFrames,
+              verifyViewport: () {
+                expect(_field(paragraphs[readingIndex]), findsOneWidget);
+                expect(
+                  tester.getTopLeft(_field(paragraphs[readingIndex])).dy,
+                  closeTo(top, 0.1),
+                );
+                expect(field.controller!.selection, selection);
+              },
+            );
+          }
+          expect(state.session.activeBlockId, saved.activeBlockId);
+          expect(state.changes, isEmpty);
+          expect(state.undoSources, isEmpty);
+          tester.testTextInput.updateEditingValue(
+            TextEditingValue(
+              text: paragraphs[targetIndex].replaceRange(5, 5, 'Z'),
+              selection: const TextSelection.collapsed(offset: 6),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(state.changes, hasLength(1));
+          expect(
+            state.source,
+            contains(paragraphs[targetIndex].replaceRange(5, 5, 'Z')),
+          );
+          final caret = _caret(
+            tester,
+            paragraphs[targetIndex].replaceRange(5, 5, 'Z'),
+            6,
+          );
+          expect(caret.dy, inInclusiveRange(0, 1100));
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.linux),
+      );
+    }
+  }
+
+  testWidgets(
+    'dismissed dialog preserves the offscreen editing target and viewport',
+    (tester) async {
+      final paragraphs = List.generate(
+        100,
+        (i) => 'Paragraph $i ${'words ' * 20}'.trimRight(),
+      );
+      final state = await _mount(
+        tester,
+        '${paragraphs.join('\n\n')}\n',
+        MemoryRichClipboard(),
+      );
+      final field = tester.widget<TextField>(_field(paragraphs.first));
+      field.controller!.selection = const TextSelection(
+        baseOffset: 10,
+        extentOffset: 4,
+      );
+      await tester.pumpAndSettle();
+      final scrollable = tester.state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byType(ScrollablePositionedList),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      scrollable.position.jumpTo(5000);
+      await tester.pumpAndSettle();
+      final pixels = scrollable.position.pixels;
+      final result = showBusyMarkModalDialog<void>(
+        tester.element(find.byType(BusyMarkWysiwygEditor)),
+        builder: (context) =>
+            const AlertDialog(content: Text('Cancel this dialog')),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(scrollable.position.pixels, closeTo(pixels, 0.1));
+      }
+      await result;
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(
+        field.controller!.selection,
+        const TextSelection(baseOffset: 10, extentOffset: 4),
+      );
+      expect(state.changes, isEmpty);
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+    },
+  );
+
+  testWidgets('session preserves position well inside an oversized block', (
+    tester,
+  ) async {
+    final text = List.generate(
+      180,
+      (i) => 'line $i has enough text for the viewport',
+    ).join('\n');
+    final state = await _mount(
+      tester,
+      '```text\n$text\n```\n\nAfter.\n',
+      MemoryRichClipboard(),
+    );
+    final field = tester.widget<TextField>(_field(text));
+    field.focusNode!.unfocus();
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(ScrollablePositionedList),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    scrollable.position.jumpTo(2300);
+    await tester.pumpAndSettle();
+    final top = tester.getTopLeft(_field(text)).dy;
+    expect(top, lessThan(-1000));
+    final saved = WysiwygEditorSessionState.fromJson(state.session.toJson());
+    state.recreate(saved);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(_field(text)).dy, closeTo(top, 0.1));
+    expect(state.changes, isEmpty);
+  });
+
   testWidgets('table selection IME input delegates platform history actions', (
     tester,
   ) async {
