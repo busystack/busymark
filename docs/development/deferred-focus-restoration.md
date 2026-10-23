@@ -273,3 +273,151 @@ above. Dependency pins and unrelated structural code remain unchanged.
 This follow-up does not repeat native semantic-dialog acceptance. The earlier
 native results above cover their recorded generic dialog/selection paths, not
 this additional semantic caller. No new native pass is claimed.
+
+## Toolbar-menu cancellation and passive-caller audit (P2)
+
+Starting at `8b9aa85` with a clean worktree, same-document cancellation of both
+Writerside and Text style menus was independently confirmed to bypass ownership
+checks. The production native-menu channel result was held while another text
+control acquired focus, then completed with null. Document identity and
+generation remained unchanged. `onMenuCanceled` passed its document guard and
+the deferred helper treated the newly captured owner as permission to return
+to the editor. A different toolbar menu's trigger could also be displaced.
+
+This asynchronous boundary is present in production, not just in the test
+double: `native_menu_deactivate_cb()` in `linux/runner/my_application.cc`
+schedules `native_menu_cleanup_idle_cb()` with `G_PRIORITY_DEFAULT_IDLE`;
+cleanup returns the result to Dart. GLib documents that idle work yields to
+ready higher-priority sources. This establishes the possible ordering, not a
+measurement of native race frequency. [GLib idle_add_full](https://docs.gtk.org/glib/func.idle_add_full.html)
+
+Passive completion is now an explicit policy on
+`_restoreEditingFocusAfterFrame(passive: true)`. It checks lifecycle and current
+ownership before capturing the request and again in the post-frame callback
+after pending FocusManager changes are applied. The originating menu context
+travels through `BusyMarkHeaderPopupMenuButton.onCanceled` and the toolbar.
+This allows return from **that menu's own trigger**, as well as the editor or
+its ordinary scopes, without permitting a different menu trigger or text field.
+It adds no widgets, focus nodes, timers, SDK changes, or native UI changes.
+
+The helper's callers were reviewed together:
+
+| Caller | Intent and policy |
+| --- | --- |
+| Writerside/Text style cancellation | Passive; document guard plus shared permission, with the exact closing menu's trigger context. |
+| Semantic-text dialog cancellation | Passive; existing document guard retained, previous ownership check moved into the shared policy. |
+| Async toolbar completion | Passive; previous preflight moved into the same shared policy, with execution-time revalidation too. |
+| Rich `restoreSpellingFocus()` after review | Passive; an additional real workspace-review dialog regression reproduced the same theft during delayed barrier release, and this entry point now uses the shared guard. |
+| Synchronous toolbar commands, accepted Writerside/semantic insertions, and explicit inspector-close focus return | Purposeful editing/navigation; retain the existing policy and request/document/selection checks. |
+
+The spelling finding was reproduced through the actual F7 review dialog and
+workspace `finally` path, not by directly calling a private helper. Source-mode
+spelling return does not use this helper and is not changed or claimed fixed.
+No spelling projection/worker algorithm or unrelated structural-editing code
+was changed.
+
+### Failing-before / passing-after evidence
+
+Artifacts are retained locally in `build/toolbar-menu-focus-evidence/`.
+
+- `before-menu-valid.log`: unchanged production fails **16** cases and passes
+  **16** ordinary controls. The 32 cases cover both menus, Writerside Markdown
+  and XML, collapsed/reversed local selections, ordinary editor return, return
+  from the exact trigger, a newer text control, and a different menu trigger.
+- `before-spelling-valid.log`: unchanged production fails the newer-owner
+  workspace-review case; ordinary review cancellation/input/undo passes.
+- `after-focused.log`: all **50** focused authoring cases pass, including the
+  menu matrix and previous semantic-dialog regressions/ordinary controls.
+- `after-spelling.log`: both focused workspace-review cases pass.
+
+The menu regressions explicitly render every deferred frame, measure the real
+visible anchor and scroll position within 0.1 logical pixel, and assert unchanged
+selection direction, source and undo history. They send two successive input
+updates over the newer control's existing connection without tapping/refocusing.
+Ordinary return types into the original target, reveals it, and preserves
+one-step undo/redo. Workspace-review cases also assert unchanged buffer revision,
+dirty state, undo and redo histories. No final-position-only workaround is used.
+
+An initial test tried to read `Focus.focusNode`, which is null when Flutter owns
+the internal node. That invalid trigger setup is not defect evidence. The final
+test uses the public `Focus.of()` lookup below the real trigger's Focus widget.
+
+### Verification
+
+```sh
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --concurrency=2 --reporter expanded \
+  test/src/writerside_authoring_ui_test.dart \
+  test/src/wysiwyg_selection_lifecycle_test.dart \
+  test/src/busymark_dialogs_test.dart test/src/wysiwyg_session_test.dart \
+  test/src/source_editor_widget_test.dart test/src/spelling_workspace_test.dart \
+  test/src/busymark_design_test.dart test/src/native_menu_service_test.dart \
+  test/src/writerside_toc_menu_test.dart
+TMPDIR=/tmp /home/albert/flutter-sdk/bin/flutter test --no-pub \
+  --reporter expanded test/src/app_smoke_test.dart \
+  --name 'Writerside|inspector|properties|focus|canceled|spelling|menu'
+```
+
+All **689** tests in the nine full suites pass in 3m51s (`affected-final.log`),
+and all **34** selected real-workspace controls pass (`workspace-controls.log`).
+The entire unrelated Flutter suite was not rerun.
+
+The initial loaded run had two failures (`affected-suites.log`): a new fixture's
+post-undo spelling debounce outliving its widget-test body, and an unchanged
+large Markdown spelling check timing out while analysis/build jobs competed.
+The new fixture now retires its session in the real async zone, before fake-clock
+timer invariants; native-worker shutdown itself has a real-I/O timeout and must
+not be moved onto that fake clock. No production spelling code or assertions
+were weakened. The unchanged large fixture and all **36** spelling workspace
+tests pass alone (`spelling-suite-verified.log`), and then the complete combined
+run also passes with controlled concurrency and no competing builds.
+
+Pinned `flutter analyze --no-pub` reports no issues (`analyze-final.log`, 35.7s).
+`dart format --output=none --set-exit-if-changed` checks all five changed Dart
+files with zero changes (`format.log`). The normal
+`flutter build linux --release --no-pub -t lib/main.dart` passes
+(`linux-release.log`), using the same Node PATH/TMPDIR and official toolchain
+commands recorded above. Dependency pins, SDK revision and the official engine
+hash remain unchanged.
+
+```sh
+/home/albert/flutter-sdk/bin/cache/dart-sdk/bin/dart format \
+  --output=none --set-exit-if-changed lib/src/app/busymark_design.dart \
+  lib/src/editor/wysiwyg/wysiwyg_toolbar.dart \
+  lib/src/editor/wysiwyg/wysiwyg_editor.dart \
+  test/src/writerside_authoring_ui_test.dart test/src/spelling_workspace_test.dart
+```
+
+The existing release-mode native Editor control passes on an owned GNOME
+headless XWayland desktop (`native-editor-control-retry.log`). It performs four
+real Alt-Tab cycles, including 15 seconds inactive, then types native `z` without
+refocusing. Per-frame passive viewport/reading geometry, focus/selection,
+bytes/dirty/revision and undo/redo checks pass; input edits the original target
+and intentionally reveals it. Retained measurements and ownership/actions are
+under `build/toolbar-menu-focus-evidence/native-control/`. The supervisor exits
+0 with no unresolved descendants. Like the earlier Editor control, it is retired
+after focus/input measurements, not claimed as a natural-shutdown acceptance.
+This control does **not** natively reproduce the gated GTK menu-result race or
+spelling-review race; those are production-widget/channel regressions above.
+Native Wayland and physical-desktop menu acceptance were not rerun.
+
+```sh
+# Build with the earlier pinned Node PATH and TMPDIR=/tmp, retain the probe
+# separately, then restore the normal lib/main.dart bundle.
+/home/albert/flutter-sdk/bin/flutter build linux --release --no-pub \
+  -t tools/focus_restoration_smoke.dart
+/usr/bin/python3 tools/deferred_focus_native.py \
+  /tmp/busymark-toolbar-focus-gKNPB3/release-probe/busymark \
+  /tmp/NEW_SHORT_FOCUS_OUTPUT x11 editor
+```
+
+The first native-control launch could not finish creating its isolated profile
+because staging duplicate bundles exhausted available workspace space; it did
+not reach supervisor launch. Three generated bundle copies were moved, without
+deletion, to `/tmp/busymark-toolbar-focus-gKNPB3/`. The successful retry kept its
+desktop/profile there too. The normal shipping bundle was restored to
+`build/linux/x64/release/bundle/` and compared byte-for-byte with the retained
+`/tmp/busymark-toolbar-focus-gKNPB3/shipping/` copy. No source or evidence logs
+were removed. The workspace volume remains nearly full (about 700 MiB available
+after relocation); the temporary copies can be regenerated from the pinned
+toolchain if `/tmp` is cleared.

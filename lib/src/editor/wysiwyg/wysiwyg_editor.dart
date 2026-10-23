@@ -410,7 +410,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
-  void restoreSpellingFocus() => _restoreEditingFocusAfterFrame();
+  void restoreSpellingFocus() => _restoreEditingFocusAfterFrame(passive: true);
 
   /// Applies one already-checked occurrence as a single structured edit.
   ///
@@ -1123,9 +1123,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                     onPlacementChanged: widget.onToolbarPlacementChanged,
                     onDirectionChanged: widget.onToolbarDirectionChanged,
                     child: BusyMarkWysiwygToolbar(
-                      onMenuCanceled: () {
+                      onMenuCanceled: (menuContext) {
                         if (_isDialogTargetCurrent(authoringGuard)) {
-                          _restoreEditingFocusAfterFrame();
+                          _restoreEditingFocusAfterFrame(
+                            passive: true,
+                            menuContext: menuContext,
+                          );
                         }
                       },
                       axis: widget.toolbarDirection._axis,
@@ -3352,7 +3355,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _inspectorRestorePending = false;
   }
 
-  bool _mayRestoreEditingFocus() {
+  bool _mayRestoreEditingFocus({BuildContext? menuContext}) {
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
       return false;
@@ -3365,6 +3368,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     // may initialize focus there. A dialog's route scope is a different owner.
     if (owner is FocusScopeNode && ownerRoute == null) return true;
     if (ownerRoute != ModalRoute.of(context)) return false;
+    if (menuContext?.mounted == true) {
+      // Returning from this menu's own trigger is ordinary cancellation, not
+      // permission for a different toolbar control to return focus as well.
+      var isTrigger = identical(ownerContext, menuContext);
+      if (!isTrigger) {
+        ownerContext.visitAncestorElements((element) {
+          isTrigger = identical(element, menuContext);
+          return !isTrigger;
+        });
+      }
+      if (isTrigger) return true;
+    }
     return owner is FocusScopeNode ||
         owner == _selectionFocusNode ||
         (owner != null &&
@@ -5620,14 +5635,21 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       command().whenComplete(() {
         // The surface may have finished releasing after a different control
         // acquired focus. Completion is not a new request to return to editing.
-        if (mounted && _mayRestoreEditingFocus()) {
-          _restoreEditingFocusAfterFrame();
-        }
+        _restoreEditingFocusAfterFrame(passive: true);
       }),
     );
   }
 
-  void _restoreEditingFocusAfterFrame() {
+  void _restoreEditingFocusAfterFrame({
+    bool passive = false,
+    BuildContext? menuContext,
+  }) {
+    // Passive completions must not capture a newer owner as authorization.
+    // Purposeful editing/navigation callers retain their existing behavior.
+    if (!mounted ||
+        (passive && !_mayRestoreEditingFocus(menuContext: menuContext))) {
+      return;
+    }
     final documentId = _documentId;
     final generation = _documentGeneration;
     final request = Object();
@@ -5653,6 +5675,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           !identical(selection, _documentSelection) ||
           navigation != widget.scrollRequest ||
           target?.controller.value != value ||
+          (passive && !_mayRestoreEditingFocus(menuContext: menuContext)) ||
           (currentOwner != owner &&
               currentOwner != target?.focusNode &&
               currentOwner != FocusManager.instance.rootScope)) {
@@ -5887,8 +5910,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
     if (inserted == null || inserted.trim().isEmpty) {
       // Canceling the surface is not a new request to return to editing.
-      if (_isDialogTargetCurrent(guard) && _mayRestoreEditingFocus()) {
-        _restoreEditingFocusAfterFrame();
+      if (_isDialogTargetCurrent(guard)) {
+        _restoreEditingFocusAfterFrame(passive: true);
       }
       return;
     }

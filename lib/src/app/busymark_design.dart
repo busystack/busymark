@@ -1227,7 +1227,9 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
   final FutureOr<List<PopupMenuEntry<T>>> Function(BuildContext context)
   itemBuilder;
   final ValueChanged<T> onSelected;
-  final VoidCallback? onCanceled;
+
+  /// Identifies this presentation's trigger subtree for focus-return policy.
+  final ValueChanged<BuildContext>? onCanceled;
   final bool transparent;
 
   /// Uses the theme's physical button elevation.
@@ -1325,7 +1327,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
         if (selection != null) {
           onSelected(selection);
         } else {
-          onCanceled?.call();
+          onCanceled?.call(context);
         }
       }
     } finally {

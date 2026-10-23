@@ -717,6 +717,220 @@ void main() {
   }
 
   for (final xml in [false, true]) {
+    for (final menuName in ['Writerside', 'Text style']) {
+      for (final range in [false, true]) {
+        for (final owner in ['editor', 'trigger', 'newer', 'other trigger']) {
+          testWidgets(
+            '${xml ? "XML" : "Markdown"} delayed toolbar menu $menuName range=$range owner=$owner',
+            (tester) async {
+              enableDesktopFocusLifecycle(tester);
+              final result = Completer<int?>();
+              final newer = FocusNode(debugLabel: 'Search during menu cleanup');
+              final search = TextEditingController(text: 'Search');
+              OverlayEntry? entry;
+              addTearDown(() {
+                if (!result.isCompleted) result.complete(null);
+                entry?.remove();
+                entry?.dispose();
+                newer.dispose();
+                search.dispose();
+              });
+              final paragraphs = [
+                'Text',
+                for (var i = 0; i < 80; i++)
+                  'Reading $i ${'words ' * 16}'.trimRight(),
+              ];
+              final original = xml
+                  ? '<topic id="a" title="Title">${paragraphs.map((p) => '<p>$p</p>').join()}</topic>'
+                  : '# Title\n\n${paragraphs.join('\n\n')}\n';
+              final document = _document(xml, source: original);
+              var saved = original;
+              final changes = <String>[];
+              final key = GlobalKey<BusyMarkWysiwygEditorState>();
+              await mount(
+                tester,
+                BusyMarkWysiwygEditor(
+                  key: key,
+                  document: document,
+                  onSourceChanged: (_, source) {
+                    saved = source;
+                    changes.add(source);
+                  },
+                ),
+                openProperties: false,
+              );
+              await tester.tap(_textField('Text'), pointer: 1301);
+              final body = tester.widget<TextField>(_textField('Text'));
+              final selection = range
+                  ? const TextSelection(baseOffset: 4, extentOffset: 1)
+                  : const TextSelection.collapsed(offset: 2);
+              body.controller!.selection = selection;
+              await tester.pumpAndSettle();
+              final position = Scrollable.of(
+                tester.element(_textField('Text')),
+                axis: Axis.vertical,
+              ).position;
+              position.jumpTo(2500);
+              await tester.pumpAndSettle();
+              final pixels = position.pixels;
+              final reading =
+                  _contentFields().evaluate().firstWhere((e) {
+                        final text = (e.widget as TextField).controller!.text;
+                        final y = tester.getTopLeft(find.byWidget(e.widget)).dy;
+                        return text.startsWith('Reading ') &&
+                            y > 100 &&
+                            y < 650;
+                      }).widget
+                      as TextField;
+              final readingText = reading.controller!.text;
+              final readingTop = tester.getTopLeft(_textField(readingText)).dy;
+              final generation = key.currentState!.spellingDocumentGeneration;
+              Finder menu(String name) => find.byWidgetPredicate(
+                (w) => w is BusyMarkHeaderPopupMenuButton && w.tooltip == name,
+              );
+              FocusNode trigger(String name) {
+                final focus = tester.widget<Focus>(
+                  find
+                      .descendant(
+                        of: menu(name),
+                        matching: find.byWidgetPredicate((w) => w is Focus),
+                      )
+                      .last,
+                );
+                return Focus.of(tester.element(find.byWidget(focus.child)));
+              }
+
+              var presented = false;
+              binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+                call,
+              ) async {
+                if (call.method != 'show') return true;
+                presented = true;
+                return result.future;
+              });
+              await tester.tap(menu(menuName), pointer: 1302);
+              await tester.pumpAndSettle();
+              expect(presented, isTrue);
+              FocusNode expected = body.focusNode!;
+              switch (owner) {
+                case 'editor':
+                  FocusManager.instance.primaryFocus?.unfocus();
+                case 'trigger':
+                  trigger(menuName).requestFocus();
+                case 'other trigger':
+                  expected = trigger(
+                    menuName == 'Writerside' ? 'Text style' : 'Writerside',
+                  );
+                  expected.requestFocus();
+                case 'newer':
+                  entry = OverlayEntry(
+                    builder: (_) => Positioned(
+                      left: 750,
+                      top: 0,
+                      width: 220,
+                      height: 40,
+                      child: Material(
+                        child: TextField(focusNode: newer, controller: search),
+                      ),
+                    ),
+                  );
+                  Overlay.of(
+                    tester.element(find.byType(BusyMarkWysiwygEditor)),
+                  ).insert(entry);
+                  await tester.pumpAndSettle();
+                  expected = newer;
+                  newer.requestFocus();
+              }
+              FocusManager.instance.applyFocusChangesIfNeeded();
+              if (owner == 'trigger') {
+                expect(
+                  FocusManager.instance.primaryFocus,
+                  same(trigger(menuName)),
+                );
+              } else if (owner == 'newer' || owner == 'other trigger') {
+                expect(FocusManager.instance.primaryFocus, same(expected));
+              }
+              // This is the same document, not the stale-document test above.
+              expect(key.currentState!.widget.document, same(document));
+              expect(key.currentState!.spellingDocumentGeneration, generation);
+              result.complete(null);
+              for (var frame = 0; frame < 30; frame++) {
+                tester.binding.scheduleFrame();
+                await tester.pump(const Duration(milliseconds: 16));
+                expect(FocusManager.instance.primaryFocus, same(expected));
+                expect(position.pixels, closeTo(pixels, 0.1));
+                expect(
+                  tester.getTopLeft(_textField(readingText)).dy,
+                  closeTo(readingTop, 0.1),
+                );
+              }
+              expect(body.controller!.selection, selection);
+              expect(saved, original);
+              expect(changes, isEmpty);
+              expect(key.currentState!.debugUndoSnapshotCount, 0);
+              if (owner == 'other trigger') return;
+              expect(tester.testTextInput.hasAnyClients, isTrue);
+              final text = owner == 'newer'
+                  ? 'Search!'
+                  : 'Text'.replaceRange(selection.start, selection.end, '!');
+              tester.testTextInput.updateEditingValue(
+                TextEditingValue(
+                  text: text,
+                  selection: TextSelection.collapsed(
+                    offset: owner == 'newer' ? 7 : selection.start + 1,
+                  ),
+                ),
+              );
+              await tester.pumpAndSettle();
+              expect(FocusManager.instance.primaryFocus, same(expected));
+              if (owner == 'newer') {
+                expect(search.text, 'Search!');
+                tester.testTextInput.updateEditingValue(
+                  const TextEditingValue(
+                    text: 'Search!!',
+                    selection: TextSelection.collapsed(offset: 8),
+                  ),
+                );
+                await tester.pumpAndSettle();
+                expect(search.text, 'Search!!');
+                expect(FocusManager.instance.primaryFocus, same(newer));
+                expect(body.controller!.selection, selection);
+                expect(saved, original);
+                expect(changes, isEmpty);
+                expect(key.currentState!.debugUndoSnapshotCount, 0);
+                expect(position.pixels, closeTo(pixels, 0.1));
+              } else {
+                expect(saved, original.replaceFirst('Text', text));
+                expect(changes, hasLength(1));
+                expect(key.currentState!.debugUndoSnapshotCount, 1);
+                expect(
+                  tester.getTopLeft(_textField(text)).dy,
+                  inInclusiveRange(0, 850),
+                );
+                final edited = saved;
+                await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+                await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+                await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+                await tester.pumpAndSettle();
+                expect(saved, original);
+                await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+                await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+                await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+                await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+                await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+                await tester.pumpAndSettle();
+                expect(saved, edited);
+              }
+              expect(tester.takeException(), isNull);
+            },
+            variant: TargetPlatformVariant.only(TargetPlatform.linux),
+          );
+        }
+      }
+    }
+  }
+
+  for (final xml in [false, true]) {
     testWidgets(
       '${xml ? 'XML' : 'Markdown'} canceled native menu restores editing focus and selection',
       (tester) async {
