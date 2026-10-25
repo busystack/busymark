@@ -186,6 +186,15 @@ parts:
         done
       done
 
+  git-runtime-configuration:
+    after: [busymark]
+    plugin: dump
+    source: snap/git-runtime-configuration
+    build-attributes: [no-patchelf]
+    organize:
+      gpgconf.ctl: usr/bin/gpgconf.ctl
+      pinentry: usr/bin/pinentry
+
   desktop-integration:
     after: [busymark]
     plugin: nil

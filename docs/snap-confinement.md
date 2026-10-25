@@ -52,6 +52,15 @@ credential helpers remain in control. SSH uses the packaged OpenSSH client;
 GPG and pinentry are packaged, and `gpg-keys` controls access to GPG key files.
 TLS and SSH host verification remain enabled.
 
+The packaged GnuPG uses its documented `gpgconf.ctl` configuration to locate
+the packaged helpers and keep its agent socket beneath the Snap's private
+`$XDG_RUNTIME_DIR`. The `pinentry` alias selects packaged `pinentry-gnome3`.
+The executables retain their upstream bytes. `GNUPGHOME` and Git's explicit
+signing-tool configuration remain effective; BusyMark does not import or copy
+private keys. This confined agent is separate from an existing desktop agent.
+Key access alone does not grant access to the desktop's GPG-agent socket.
+See the upstream [GnuPG configuration interface](https://www.gnupg.org/documentation/manuals/gnupg26/gpgconf.1.html).
+
 The `ssh-keys` connection grants key/configuration access; it does not grant
 access to the desktop SSH agent. In particular, snapd 2.77.1 on Ubuntu 26.04
 denies the GNOME GCR socket at `/run/user/<uid>/gcr/ssh` to the strict Snap.
