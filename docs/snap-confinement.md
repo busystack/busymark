@@ -52,6 +52,19 @@ credential helpers remain in control. SSH uses the packaged OpenSSH client;
 GPG and pinentry are packaged, and `gpg-keys` controls access to GPG key files.
 TLS and SSH host verification remain enabled.
 
+The `ssh-keys` connection grants key/configuration access; it does not grant
+access to the desktop SSH agent. In particular, snapd 2.77.1 on Ubuntu 26.04
+denies the GNOME GCR socket at `/run/user/<uid>/gcr/ssh` to the strict Snap.
+An already unlocked desktop key therefore does not establish that authentication
+will work inside BusyMark. The same isolated transport succeeds outside the
+Snap, while the confined client records an AppArmor socket-connect denial.
+Desktop-agent interoperability remains an installed acceptance blocker; do not
+disable confinement, copy private keys into repositories, or install a modified
+snapd policy to work around it. See Canonical's
+[SSH-agent interface discussion](https://forum.snapcraft.io/t/ssh-agent-plug-request/1250)
+and the current
+[`ssh-keys` interface](https://snapcraft.io/docs/reference/interfaces/ssh-keys-interface/).
+
 Shared source archives are verified against their pinned hashes. Snapcraft
 recreates their extracted siblings inside its managed part directory on each
 application build, so updating a pin cannot reuse an older extraction. The
