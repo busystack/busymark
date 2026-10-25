@@ -5947,6 +5947,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Retomar requisito offline';
+
+  @override
+  String get gitReturnToDocument => 'Voltar ao documento';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Instantâneo só de leitura · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Este nome de ficheiro contém bytes não UTF-8. A revisão e a preparação Git continuam disponíveis; o editor requer um nome de ficheiro UTF-8.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -11886,4 +11898,16 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notesResumeRequirement => 'Retomar requisito offline';
+
+  @override
+  String get gitReturnToDocument => 'Voltar ao documento';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Instantâneo somente leitura · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Este nome de arquivo contém bytes que não são UTF-8. A revisão e a preparação Git continuam disponíveis; o editor requer um nome de arquivo UTF-8.';
 }

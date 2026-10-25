@@ -5711,4 +5711,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => '오프라인 보관 요구 사항 재개';
+
+  @override
+  String get gitReturnToDocument => '문서로 돌아가기';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return '읽기 전용 스냅샷 · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      '이 파일 이름에는 UTF-8이 아닌 바이트가 있습니다. Git 검토와 스테이징은 사용할 수 있지만 문서 편집기에는 UTF-8 파일 이름이 필요합니다.';
 }

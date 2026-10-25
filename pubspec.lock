@@ -80,6 +80,20 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  busystack_git:
+    dependency: "direct main"
+    description:
+      path: "../busystack_git"
+      relative: true
+    source: path
+    version: "0.1.0"
+  busystack_git_flutter:
+    dependency: "direct main"
+    description:
+      path: "../busystack_git_flutter"
+      relative: true
+    source: path
+    version: "0.1.0"
   characters:
     dependency: "direct main"
     description:

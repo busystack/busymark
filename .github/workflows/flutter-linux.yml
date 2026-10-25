@@ -57,7 +57,7 @@ jobs:
             libglib2.0-dev \
             libpango1.0-dev \
             libhandy-1-dev \
-            libsecret-1-dev \
+            libsecret-1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
             libwebkit2gtk-4.1-dev \
             gir1.2-webkit2-4.1 \
             poppler-utils \
@@ -112,7 +112,32 @@ jobs:
       - name: Resolve locked dependencies
         id: flutter-packages
         if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
-        run: flutter pub get --enforce-lockfile
+        run: |
+          python3 tools/checkout_shared_dependencies.py
+          python3 ../busystack_git/tool/build_runtime.py --build-dir "$RUNNER_TEMP/git-native"
+          echo "BUSYSTACK_GIT_EXECUTABLE=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT_256=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_GIT_HELPER_PATH=$RUNNER_TEMP/git-native/busystack-git-helper" >> "$GITHUB_ENV"
+          flutter pub get --enforce-lockfile
+
+      - name: Verify shared Git runtime and engine
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
+        working-directory: ../busystack_git
+        run: |
+          dart pub get --enforce-lockfile
+          dart run tool/check_git.dart
+          dart test
+
+      - name: Verify shared Git desktop views
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
+        working-directory: ../busystack_git_flutter
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter test
+          cmake -S linux/native -B "$RUNNER_TEMP/git-accessibility" -G Ninja
+          cmake --build "$RUNNER_TEMP/git-accessibility"
+          dbus-run-session -- xvfb-run -a ctest --test-dir "$RUNNER_TEMP/git-accessibility" --output-on-failure
 
       - name: Test production GTK accent lookup and observer
         if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}

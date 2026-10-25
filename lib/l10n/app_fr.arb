@@ -3739,5 +3739,8 @@
   "notesTransferring": "Transfert des notes…",
   "notesTechnicalDetails": "Détails techniques",
   "notesPauseRequirement": "Suspendre l’exigence hors ligne",
-  "notesResumeRequirement": "Reprendre l’exigence hors ligne"
+  "notesResumeRequirement": "Reprendre l’exigence hors ligne",
+  "gitReturnToDocument": "Revenir au document",
+  "gitSnapshotLabel": "Instantané en lecture seule · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Ce nom de fichier contient des octets non UTF-8. La révision et l’indexation Git restent disponibles ; l’éditeur de documents exige un nom de fichier UTF-8."
 }

@@ -13,6 +13,8 @@ abstract final class BusyMarkGlyphs {
   static const IconData blankLine = YaruIcons.insert_text;
   static const IconData bold = YaruIcons.bold;
   static const IconData branch = Icons.fork_right;
+  static const IconData gitPrevious = YaruIcons.pan_start;
+  static const IconData gitNext = YaruIcons.pan_end;
   static const IconData category = YaruIcons.tag;
   static const IconData check = YaruIcons.checkmark;
   static const IconData checkedBox = YaruIcons.checkbox_checked;

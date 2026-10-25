@@ -5952,4 +5952,16 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get notesResumeRequirement =>
       'Відновити вимогу автономного зберігання';
+
+  @override
+  String get gitReturnToDocument => 'Повернутися до документа';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Знімок лише для читання · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Назва файлу містить байти не в UTF-8. Перегляд та індексування Git доступні; редактор документів потребує назву файлу в UTF-8.';
 }

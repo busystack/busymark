@@ -4199,5 +4199,8 @@
   "notesTransferring": "Märkmete teisaldamine…",
   "notesTechnicalDetails": "Tehnilised üksikasjad",
   "notesPauseRequirement": "Peata võrguühenduseta säilitamise nõue",
-  "notesResumeRequirement": "Jätka võrguühenduseta säilitamise nõuet"
+  "notesResumeRequirement": "Jätka võrguühenduseta säilitamise nõuet",
+  "gitReturnToDocument": "Tagasi dokumendi juurde",
+  "gitSnapshotLabel": "Kirjutuskaitstud hetktõmmis · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Failinimi sisaldab baite, mis pole UTF-8. Giti ülevaatus ja indekseerimine on endiselt saadaval; dokumendiredaktor vajab UTF-8-failinime."
 }

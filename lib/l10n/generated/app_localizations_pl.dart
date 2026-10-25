@@ -5938,4 +5938,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Wznów wymaganie offline';
+
+  @override
+  String get gitReturnToDocument => 'Wróć do dokumentu';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Migawka tylko do odczytu · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Nazwa pliku zawiera bajty spoza UTF-8. Przegląd i przygotowanie zmian Git są nadal dostępne; edytor dokumentów wymaga nazwy pliku UTF-8.';
 }

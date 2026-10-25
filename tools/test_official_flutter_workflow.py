@@ -79,8 +79,21 @@ raise SystemExit(77 if sys.argv[1:2] == ['build'] else 0)
 ''')
             spy.chmod(0o700)
             calls = root / 'calls.jsonl'
+            application = root / 'busymark'
+            application.mkdir()
+            for name in ['tools/checkout_shared_dependencies.py',
+                         'tools/shared_source_archives.py',
+                         'tool/shared_dependencies.json']:
+                destination = application / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, destination)
+            dependencies = json.loads((application / 'tool/shared_dependencies.json').read_text())
+            for dependency in dependencies['dependencies']:
+                destination = application / dependency['archive']
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / dependency['archive'], destination)
             result = subprocess.run(['bash', '-euc', self.recipe['parts']['busymark']['override-build']],
-                                    cwd=root, env={**os.environ, 'CRAFT_STAGE': str(stage),
+                                    cwd=application, env={**os.environ, 'CRAFT_STAGE': str(stage),
                                                    'CRAFT_PART_BUILD': str(root / 'build'),
                                                    'CRAFT_PART_INSTALL': str(root / 'install'),
                                                    'BUILD_CALLS': str(calls)}, capture_output=True, text=True)
@@ -449,8 +462,11 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
     def test_development_modes_prepare_locked_dependencies(self):
         steps = self.native['jobs']['development-modes']['steps']
         preparation = [step for step in steps
-                       if step.get('run', '').strip() == 'flutter pub get --enforce-lockfile']
+                       if 'flutter pub get --enforce-lockfile' in
+                       step.get('run', '').splitlines()]
         self.assertEqual(len(preparation), 1)
+        self.assertIn('python3 tools/checkout_shared_dependencies.py',
+                      preparation[0]['run'].splitlines())
         # Clean jobs need dependency resolution before either --no-pub build.
         self.assertIn("steps.flutter-sdk.outcome == 'success'", preparation[0]['if'])
         self.assertIn('!cancelled()', preparation[0]['if'])

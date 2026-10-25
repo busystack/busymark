@@ -5914,4 +5914,16 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'ادامهٔ نیازمندی آفلاین';
+
+  @override
+  String get gitReturnToDocument => 'بازگشت به سند';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'تصویر فقط‌خواندنی · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'نام این پرونده دارای بایت‌های غیر UTF-8 است. بازبینی و مرحله‌بندی Git همچنان در دسترس است؛ ویرایشگر سند به نام پروندهٔ UTF-8 نیاز دارد.';
 }

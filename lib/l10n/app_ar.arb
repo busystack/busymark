@@ -3739,5 +3739,8 @@
   "notesTransferring": "جارٍ نقل الملاحظات…",
   "notesTechnicalDetails": "تفاصيل تقنية",
   "notesPauseRequirement": "إيقاف متطلب الإتاحة دون اتصال مؤقتًا",
-  "notesResumeRequirement": "استئناف متطلب الإتاحة دون اتصال"
+  "notesResumeRequirement": "استئناف متطلب الإتاحة دون اتصال",
+  "gitReturnToDocument": "العودة إلى المستند",
+  "gitSnapshotLabel": "لقطة للقراءة فقط · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "يحتوي اسم الملف على بايتات ليست بترميز UTF-8. تظل مراجعة Git والإضافة إلى الفهرس متاحتين؛ يتطلب محرر المستندات اسم ملف بترميز UTF-8."
 }

@@ -3765,5 +3765,8 @@
   "notesTransferring": "Przenoszenie notatek…",
   "notesTechnicalDetails": "Szczegóły techniczne",
   "notesPauseRequirement": "Wstrzymaj wymaganie offline",
-  "notesResumeRequirement": "Wznów wymaganie offline"
+  "notesResumeRequirement": "Wznów wymaganie offline",
+  "gitReturnToDocument": "Wróć do dokumentu",
+  "gitSnapshotLabel": "Migawka tylko do odczytu · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Nazwa pliku zawiera bajty spoza UTF-8. Przegląd i przygotowanie zmian Git są nadal dostępne; edytor dokumentów wymaga nazwy pliku UTF-8."
 }

@@ -3739,5 +3739,8 @@
   "notesTransferring": "Overfører notater…",
   "notesTechnicalDetails": "Tekniske detaljer",
   "notesPauseRequirement": "Sett frakoblet krav på pause",
-  "notesResumeRequirement": "Fortsett frakoblet krav"
+  "notesResumeRequirement": "Fortsett frakoblet krav",
+  "gitReturnToDocument": "Tilbake til dokumentet",
+  "gitSnapshotLabel": "Skrivebeskyttet øyeblikksbilde · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Filnavnet inneholder byte som ikke er UTF-8. Git-gjennomgang og mellomlagring er fortsatt tilgjengelig; dokumentredigereren krever et UTF-8-filnavn."
 }

@@ -3321,5 +3321,25 @@
   "notesTransferring": "Transferring notes…",
   "notesTechnicalDetails": "Technical details",
   "notesPauseRequirement": "Pause Offline Requirement",
-  "notesResumeRequirement": "Resume Offline Requirement"
+  "notesResumeRequirement": "Resume Offline Requirement",
+  "gitReturnToDocument": "Return to document",
+  "gitSnapshotLabel": "Read-only snapshot · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "This filename contains non-UTF-8 bytes. Git review and staging remain available; the document editor requires a UTF-8 filename.",
+  "@gitReturnToDocument": {
+    "description": "Return from the shared Git review surface to the authoring document."
+  },
+  "@gitSnapshotLabel": {
+    "description": "Read-only historical document label.",
+    "placeholders": {
+      "revision": {
+        "type": "String"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "@gitNonUtf8FilenameMessage": {
+    "description": "Explain a byte-preserving Git filename that the authoring editor cannot open."
+  }
 }

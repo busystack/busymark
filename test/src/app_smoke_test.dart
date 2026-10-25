@@ -59,6 +59,8 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
+import 'package:busymark/src/git/application/shared_git_integration.dart';
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
@@ -103,6 +105,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../support/spelling_test_bundle.dart';
 import '../support/widget_async.dart';
+import '../support/shared_git_read_fixture.dart';
 
 void main() {
   late _FallbackHeaderBarService headerBarService;
@@ -8388,6 +8391,10 @@ code
   testWidgets('Git diff files are shown as separate editor tabs', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final temp = Directory.systemTemp.createTempSync('busymark_git_diff_tab_');
     addTearDown(() {
       temp.deleteSync(recursive: true);
@@ -8554,9 +8561,9 @@ code
     );
 
     await pressControlShortcut(LogicalKeyboardKey.digit4);
-    expect(find.text(l10n.gitUnstaged), findsOneWidget);
-    expect(find.byTooltip(l10n.gitBehindCount(3)), findsOneWidget);
-    expect(find.byTooltip(l10n.gitAheadCount(2)), findsOneWidget);
+    expect(find.text('${l10n.gitUnstaged} (1)'), findsOneWidget);
+    expect(find.textContaining('3 behind'), findsOneWidget);
+    expect(find.textContaining('2 ahead'), findsOneWidget);
 
     container
         .read(workspaceControllerProvider.notifier)
@@ -8777,7 +8784,7 @@ code
     expect(gitState.openDiffFilePaths, ['README.md']);
     expect(gitState.selectedCommitFilePath, isNull);
 
-    expect(find.byTooltip(temp.path), findsNothing);
+    expect(find.byTooltip(temp.path), findsOneWidget);
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     await tester.pumpAndSettle();
 
@@ -8866,9 +8873,11 @@ code
     await tester.pumpAndSettle();
 
     gitState = container.read(gitControllerProvider);
-    expect(gitController.loadedFileHistoryPath, readme.path);
-    expect(gitState.selectedView, GitView.fileHistory);
-    expect(gitState.historyFilePath, 'README.md');
+    final review = container.read(sharedGitReviewProvider)[workspace.id]!;
+    expect(review.historyPath?.utf8Path, 'README.md');
+    expect(review.repository.root, temp.path);
+    expect(gitController.loadedFileHistoryPath, isNull);
+    expect(find.byType(shared.GitFileHistoryView), findsOneWidget);
     expect(find.byTooltip(l10n.back), findsNothing);
     expect(find.text('File history test commit'), findsOneWidget);
 
@@ -8878,6 +8887,11 @@ code
     await tester.tap(find.text(l10n.files).last);
     await tester.pumpAndSettle();
 
+    expect(find.text('File history test commit'), findsOneWidget);
+    expect(find.text(l10n.gitReturnToDocument), findsOneWidget);
+    await tester.tap(find.text(l10n.gitReturnToDocument));
+    await tester.pumpAndSettle();
+    expect(find.byType(shared.GitFileHistoryView), findsNothing);
     expect(find.text('File history test commit'), findsNothing);
     expect(find.text('README.md'), findsWidgets);
   });
@@ -9287,88 +9301,100 @@ code
     await setDocumentViewMode(DocumentViewModePreference.preview);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
-    expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitActions), findsOneWidget);
+    expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(find.byType(shared.GitCommitView), findsOneWidget);
+    expect(find.text('Commit scope: entire repository'), findsOneWidget);
+    expect(find.byTooltip('Repository actions'), findsOneWidget);
+    final commitView = find.byType(shared.GitCommitView);
+    final commitWidget = tester.widget<shared.GitCommitView>(commitView);
+    expect(commitWidget.session.host.spacing, BusyMarkSpacing.sm);
+    expect(commitWidget.session.repository.root, temp.path);
+    expect(commitWidget.session.snapshot!.changes, isEmpty);
     expect(
-      tester
-          .widget<BusyMarkHeaderPopupMenuButton>(
-            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
-          )
-          .icon,
+      commitWidget.session.host.icons[shared.GitGlyph.branch],
       BusyMarkGlyphs.branch,
     );
-    final branchRow = find.byKey(
-      const ValueKey('workspace-sidebar-first-content'),
-    );
-    final branchGlyph = find.descendant(
-      of: branchRow,
-      matching: find.byIcon(BusyMarkGlyphs.branch),
-    );
-    expect(branchGlyph, findsOneWidget);
-    final branchGlyphContext = tester.element(branchGlyph);
-    final branchIcon = tester.widget<Icon>(branchGlyph);
-    expect(branchIcon.color, Theme.of(branchGlyphContext).colorScheme.primary);
     expect(
-      branchIcon.size,
-      MediaQuery.textScalerOf(branchGlyphContext).scale(
-        Theme.of(branchGlyphContext).textTheme.bodySmall?.fontSize ??
-            BusyMarkSizes.iconSm,
-      ),
+      commitWidget.session.host.icons[shared.GitGlyph.history],
+      BusyMarkGlyphs.history,
     );
-    final branchMenu = find.byKey(
-      const ValueKey('workspace-sidebar-branch-menu'),
+    expect(gitController.branchLoadCount, 0);
+    final messageField = find.descendant(
+      of: commitView,
+      matching: find.byType(TextField),
     );
-    expect(branchMenu, findsOneWidget);
+    expect(messageField, findsOneWidget);
+    expect(tester.widget<TextField>(messageField).maxLines, isNull);
+    expect(tester.widget<TextField>(messageField).expands, isTrue);
+    await tester.enterText(messageField, 'Preserved shell draft');
+    await tester.pump();
+    expect(commitWidget.session.draft, 'Preserved shell draft');
     expect(
-      find.descendant(
-        of: branchMenu,
-        matching: find.byIcon(BusyMarkGlyphs.menuVertical),
-      ),
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Commit staged (0)'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Commit and Push…'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(find.byType(Checkbox), findsOneWidget);
+    final logAction = find.descendant(
+      of: commitView,
+      matching: find.byTooltip('Log'),
+    );
+    expect(logAction, findsOneWidget);
+    await tester.ensureVisible(logAction);
+    await tester.pumpAndSettle();
+    await tester.tap(logAction);
+    await tester.pumpAndSettle();
+    expect(find.byType(shared.GitLogView), findsOneWidget);
+    expect(
+      find.textContaining('Sidebar history shortcut commit'),
       findsOneWidget,
     );
-    final branchMenuButton = find.descendant(
-      of: branchMenu,
-      matching: find.byType(IconButton),
-    );
-    expect(tester.widget<IconButton>(branchMenuButton).isSelected, isFalse);
-    expect(gitController.branchLoadCount, 0);
-    await tester.tap(branchMenu);
-    await tester.pumpAndSettle();
-    expect(tester.widget<IconButton>(branchMenuButton).isSelected, isFalse);
-    expect(gitController.branchLoadCount, 1);
-    expect(find.text(l10n.gitPull), findsOneWidget);
-    expect(find.text(l10n.gitPush), findsOneWidget);
-    expect(find.text(l10n.gitFetch), findsOneWidget);
-    expect(find.text(l10n.gitNewBranch), findsOneWidget);
-    expect(l10n.gitNewBranch, isNot(startsWith('+')));
-    expect(find.text(l10n.gitChanges), findsOneWidget);
-    expect(find.text(l10n.gitProjectHistory), findsOneWidget);
-    expect(find.text(l10n.gitFileHistory), findsOneWidget);
-    expect(find.byIcon(BusyMarkGlyphs.refresh), findsOneWidget);
-    expect(find.byIcon(BusyMarkGlyphs.add), findsOneWidget);
-    expect(find.byType(PopupMenuDivider), findsNWidgets(3));
-
-    await tester.tap(find.text(l10n.gitProjectHistory));
-    await tester.pumpAndSettle();
+    expect(find.text('Subject / references'), findsOneWidget);
+    expect(find.text('Go to commit/reference…'), findsOneWidget);
+    expect(find.text('Reset filters'), findsOneWidget);
     expect(
-      container.read(gitControllerProvider).selectedView,
-      GitView.projectHistory,
+      container
+          .read(sharedGitReviewProvider)[container
+              .read(workspaceControllerProvider)
+              .workspace!
+              .id]
+          ?.log,
+      isTrue,
     );
-    expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
-
     await setDocumentViewMode(DocumentViewModePreference.split);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
-    expect(find.text(l10n.gitNoChanges), findsOneWidget);
-    expect(find.text('Sidebar history shortcut commit'), findsNothing);
+    expect(find.byType(shared.GitLogView), findsOneWidget);
+    expect(find.text('Preserved shell draft'), findsOneWidget);
+    expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(find.text(l10n.gitReturnToDocument), findsOneWidget);
+    await tester.tap(find.text(l10n.gitReturnToDocument));
+    await tester.pumpAndSettle();
+    expect(find.byType(shared.GitLogView), findsNothing);
+    expect(
+      find.textContaining('Sidebar history shortcut commit'),
+      findsNothing,
+    );
+    expect(find.text('Preserved shell draft'), findsOneWidget);
     expect(container.read(gitControllerProvider).selectedView, GitView.changes);
-    expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitActions), findsOneWidget);
-    expect(branchMenu, findsOneWidget);
 
     await setDocumentViewMode(DocumentViewModePreference.editor);
     await pressControlShortcut(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitNoChanges), findsNothing);
-    expect(find.text('Sidebar history shortcut commit'), findsNothing);
+    expect(
+      find.textContaining('Sidebar history shortcut commit'),
+      findsNothing,
+    );
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
@@ -10032,6 +10058,27 @@ code
       await setDocumentViewMode(expectedDocumentView);
       await selectView(key);
       expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
+      if (key == LogicalKeyboardKey.digit4) {
+        final commit = find.byType(shared.GitCommitView);
+        expect(commit, findsOneWidget);
+        expect(
+          tester.widget<shared.GitCommitView>(commit).session.host.spacing,
+          BusyMarkSpacing.sm,
+        );
+        expect(
+          tester.getRect(commit).top,
+          greaterThanOrEqualTo(tester.getBottomLeft(primaryRow).dy),
+        );
+        expect(
+          tester.getRect(commit).bottom,
+          lessThanOrEqualTo(tester.view.physicalSize.height),
+        );
+        expect(find.byTooltip('Repository actions'), findsOneWidget);
+        expect(find.text('Commit scope: entire repository'), findsOneWidget);
+        expect(find.text('Commit staged (0)'), findsOneWidget);
+        expect(find.text(l10n.gitCommitMessage), findsOneWidget);
+        continue;
+      }
       final firstContent = find.byKey(firstContentKey);
       expect(firstContent, findsOneWidget, reason: label);
       final gap =
@@ -20607,6 +20654,18 @@ class _PresetGitController extends GitController {
   Future<void> refresh() async {}
 
   @override
+  Future<void> associateSharedRepository(
+    Workspace workspace,
+    shared.RepositoryId repository,
+  ) async {
+    // This controller owns a synthetic repository, alongside its mocked
+    // attach/refresh methods. Keep real filesystem discovery out of fake time;
+    // real association and metadata replacement have separate Git regressions.
+    expect(repository.root, initialState.repositoryInfo!.rootPath);
+    expect(repository.gitDir, initialState.repositoryInfo!.gitDirPath);
+  }
+
+  @override
   Future<List<GitBranch>> loadBranches() async {
     branchLoadCount += 1;
     return state.branches.isEmpty
@@ -21318,6 +21377,21 @@ class _FakeNativeWindowController implements NativeWindowController {
 // I/O. The production coordinator/provider still run; readiness, deadline and
 // GTK/portal event behavior are covered by the focused Linux accent tests.
 final _smokeAccentOverrides = [
+  sharedGitDraftStoreProvider.overrideWith((_) => shared.MemoryGitDraftStore()),
+  sharedGitClientFactoryProvider.overrideWith(
+    (ref) => ({required authorize, prompts}) {
+      final controller = ref.read(gitControllerProvider.notifier);
+      final state = controller is _PresetGitController
+          ? controller.initialState
+          : ref.read(gitControllerProvider);
+      return SharedGitReadFixture(
+        state,
+        fileHistoryState: state.repositoryInfo == null
+            ? null
+            : _gitFileHistoryDiffState(state.repositoryInfo!.rootPath),
+      );
+    },
+  ),
   linuxGtkAccentSourceProvider.overrideWithValue(
     const _UnavailableAccentSource(),
   ),

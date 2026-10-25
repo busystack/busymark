@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:busystack_git/busystack_git.dart' as shared;
 
 import '../../app/app_settings.dart';
 import '../../core/path_utils.dart';
@@ -321,6 +323,58 @@ class GitController extends Notifier<GitState> {
   var _projectHistoryEpoch = 0;
   var _diffEpoch = 0;
   var _isUpdatingWorkspaceTrust = false;
+  ({
+    String workspaceId,
+    String workspacePath,
+    String canonicalPath,
+    shared.RepositoryId repository,
+  })?
+  _sharedAssociation;
+
+  /// The shared surface discovers the repository independently of the opened
+  /// authoring subfolder. Preserve that explicit association for existing file
+  /// commands without granting trust to every nested workspace path.
+  Future<void> associateSharedRepository(
+    Workspace workspace,
+    shared.RepositoryId repository,
+  ) async {
+    if (!ref.mounted || workspace.isRemote) return;
+    String canonical;
+    try {
+      canonical = await Directory(workspace.rootPath).resolveSymbolicLinks();
+    } on FileSystemException {
+      if (!ref.mounted) return;
+      throw const shared.GitException(shared.GitErrorCode.unsafePath);
+    }
+    if (!ref.mounted ||
+        state.attachedWorkspace?.id != workspace.id ||
+        workspace.isRemote ||
+        !(p.equals(canonical, repository.root) ||
+            p.isWithin(repository.root, canonical))) {
+      return;
+    }
+    final previousKey =
+        _sharedAssociation?.repository.key ?? state.repositoryInfo?.identityKey;
+    if (previousKey != null && previousKey != repository.key) {
+      _workspaceEpoch++;
+      _refreshEpoch++;
+    }
+    _sharedAssociation = (
+      workspaceId: workspace.id,
+      workspacePath: workspace.rootPath,
+      canonicalPath: canonical,
+      repository: repository,
+    );
+    _scheduleRefresh(immediate: true);
+  }
+
+  bool _hasRepositoryGrant(Workspace workspace, AppSettings settings) {
+    final association = _sharedAssociation;
+    return association != null &&
+        association.workspaceId == workspace.id &&
+        association.workspacePath == workspace.rootPath &&
+        settings.trustsGitWorkspace(association.repository.root);
+  }
 
   @override
   GitState build() {
@@ -334,8 +388,12 @@ class GitController extends Notifier<GitState> {
         return;
       }
       final wasTrusted =
-          previous?.trustsGitWorkspace(workspace.rootPath) ?? false;
-      final isTrusted = next.trustsGitWorkspace(workspace.rootPath);
+          previous != null &&
+          (previous.trustsGitWorkspace(workspace.rootPath) ||
+              _hasRepositoryGrant(workspace, previous));
+      final isTrusted =
+          next.trustsGitWorkspace(workspace.rootPath) ||
+          _hasRepositoryGrant(workspace, next);
       if (wasTrusted != isTrusted) {
         if (!isTrusted) {
           _setWorkspaceTrustRequiredState();
@@ -350,6 +408,7 @@ class GitController extends Notifier<GitState> {
   void attachWorkspace(Workspace workspace) {
     if (state.attachedWorkspace?.id != workspace.id) {
       _workspaceEpoch++;
+      _sharedAssociation = null;
     }
     if (workspace.isRemote) {
       _debounce?.cancel();
@@ -454,6 +513,22 @@ class GitController extends Notifier<GitState> {
           lastOperationMessage: null,
           scopedFilePath: null,
         );
+        return;
+      }
+      final association = _sharedAssociation;
+      if (!ref
+              .read(appSettingsControllerProvider)
+              .trustsGitWorkspace(workspace.rootPath) &&
+          association != null &&
+          _hasRepositoryGrant(
+            workspace,
+            ref.read(appSettingsControllerProvider),
+          ) &&
+          (repository.rootPath != association.repository.root ||
+              repository.gitDirPath != association.repository.gitDir ||
+              repository.identityKey != null &&
+                  repository.identityKey != association.repository.key)) {
+        _setWorkspaceTrustRequiredState();
         return;
       }
       state = state.copyWith(repositoryInfo: repository);
@@ -1770,7 +1845,8 @@ class GitController extends Notifier<GitState> {
     final repository = _trustedRepositoryInfo;
     return repository != null &&
         repository.rootPath == operation.repository.rootPath &&
-        repository.gitDirPath == operation.repository.gitDirPath;
+        repository.gitDirPath == operation.repository.gitDirPath &&
+        repository.identityKey == operation.repository.identityKey;
   }
 
   bool _workspaceHasGitTrust(Workspace workspace) {
@@ -1782,14 +1858,28 @@ class GitController extends Notifier<GitState> {
     if (!_gateway.requiresWorkspaceTrust) {
       return workspace.rootPath;
     }
-    return ref
-        .read(appSettingsControllerProvider)
-        .trustedGitWorkspacePath(workspace.rootPath);
+    final settings = ref.read(appSettingsControllerProvider);
+    return settings.trustedGitWorkspacePath(workspace.rootPath) ??
+        (_hasRepositoryGrant(workspace, settings)
+            ? _sharedAssociation!.canonicalPath
+            : null);
   }
 
   GitRepositoryInfo? get _trustedRepositoryInfo {
     final workspace = state.attachedWorkspace;
     if (workspace == null || !_workspaceHasGitTrust(workspace)) {
+      return null;
+    }
+    final repository = state.repositoryInfo, association = _sharedAssociation;
+    if (!ref
+            .read(appSettingsControllerProvider)
+            .trustsGitWorkspace(workspace.rootPath) &&
+        association != null &&
+        repository != null &&
+        (repository.rootPath != association.repository.root ||
+            repository.gitDirPath != association.repository.gitDir ||
+            repository.identityKey != null &&
+                repository.identityKey != association.repository.key)) {
       return null;
     }
     return state.repositoryInfo;

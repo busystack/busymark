@@ -13,6 +13,9 @@ import 'package:busymark/src/workspace/workspace_safety.dart';
 import 'package:busymark/src/workspace/workspace_tab_actions.dart';
 import 'package:busymark/src/workspace/workspace_tabs.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
+import 'package:busymark/src/git/application/shared_git_integration.dart';
+import 'package:busystack_git/busystack_git.dart' as shared;
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' show GitHost;
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter/material.dart';
@@ -953,6 +956,158 @@ void main() {
     expect(service.documents[service.firstPath], '# External A\n');
     expect(service.documents[service.secondPath], '# Original B\n');
   });
+
+  testWidgets(
+    'a shared Git surface retains localized labels after its invoking workspace element retires',
+    (tester) async {
+      final service = _IdentityWorkspaceService();
+      final visible = ValueNotifier(true);
+      addTearDown(visible.dispose);
+      late WidgetRef widgetRef;
+      GitHost? host;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ValueListenableBuilder<bool>(
+                valueListenable: visible,
+                builder: (_, attached, _) => attached
+                    ? Consumer(
+                        builder: (context, ref, _) {
+                          widgetRef = ref;
+                          return TextButton(
+                            onPressed: () {
+                              host = busyMarkGitHost(
+                                context,
+                                ref,
+                                ref
+                                    .read(workspaceControllerProvider)
+                                    .workspace!,
+                                isMounted: () => context.mounted,
+                              );
+                            },
+                            child: const Text('Open Git surface'),
+                          );
+                        },
+                      )
+                    : const Text('New workspace'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await widgetRef
+          .read(workspaceControllerProvider.notifier)
+          .openPath(service.rootPath);
+      await tester.tap(find.text('Open Git surface'));
+      visible.value = false;
+      await tester.pumpAndSettle();
+      expect(find.text('New workspace'), findsOneWidget);
+      expect(host!.text('git.Cancel', 'Cancel'), l10n.cancel);
+      expect(
+        host!.text('git.Commit message', 'Commit message'),
+        l10n.gitCommitMessage,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'shared Git branch switching reviews every affected dirty document and cancellation preserves them',
+    (tester) async {
+      final service = _IdentityWorkspaceService();
+      late WidgetRef widgetRef;
+      bool? allowed;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(
+                      autoSave: false,
+                      trustedGitWorkspacePaths: [service.rootPath],
+                    )
+                    .toJson(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: Colors.green,
+            ),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, child) {
+                  widgetRef = ref;
+                  return TextButton(
+                    onPressed: () async {
+                      final workspace = ref
+                          .read(workspaceControllerProvider)
+                          .workspace!;
+                      final host = busyMarkGitHost(
+                        context,
+                        ref,
+                        workspace,
+                        isMounted: () => context.mounted,
+                      );
+                      allowed = await host.prepareMutation(
+                        shared.RepositoryId(
+                          root: service.rootPath,
+                          gitDir: '${service.rootPath}/.git',
+                          commonDir: '${service.rootPath}/.git',
+                          objectFormat: 'sha1',
+                        ),
+                        const shared.BranchMutation(
+                          shared.BranchAction.switchBranch,
+                          'incoming',
+                          expectedHead: null,
+                          expectedIndex: 'reviewed',
+                        ),
+                      );
+                    },
+                    child: const Text('Switch reviewed branch'),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await controller.openPath(service.rootPath);
+      controller.updateActiveText('# Unsaved A\n');
+      await controller.openActiveFile(service.secondPath);
+      controller.updateActiveText('# Unsaved B\n');
+      await tester.tap(find.text('Switch reviewed branch'));
+      await tester.pumpAndSettle();
+      expect(find.text('a.md'), findsOneWidget);
+      expect(find.text('b.md'), findsOneWidget);
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(allowed, isFalse);
+      final dirty = widgetRef.read(workspaceControllerProvider).dirtyBuffers;
+      expect(dirty.map((b) => b.filePath).toSet(), {
+        service.firstPath,
+        service.secondPath,
+      });
+      expect(dirty.map((b) => b.text).toSet(), {
+        '# Unsaved A\n',
+        '# Unsaved B\n',
+      });
+      expect(service.saves, isEmpty);
+    },
+  );
 
   for (final action in [
     (label: 'save', discard: false),

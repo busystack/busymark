@@ -5932,4 +5932,16 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Offlinevereiste hervatten';
+
+  @override
+  String get gitReturnToDocument => 'Terug naar document';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Alleen-lezen momentopname · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Deze bestandsnaam bevat niet-UTF-8-bytes. Git-controle en staging blijven beschikbaar; de documenteditor vereist een UTF-8-bestandsnaam.';
 }

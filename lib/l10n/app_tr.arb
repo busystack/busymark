@@ -5269,5 +5269,8 @@
   "notesTransferring": "Notlar aktarılıyor…",
   "notesTechnicalDetails": "Teknik ayrıntılar",
   "notesPauseRequirement": "Çevrimdışı Gereksinimini Duraklat",
-  "notesResumeRequirement": "Çevrimdışı Gereksinimini Sürdür"
+  "notesResumeRequirement": "Çevrimdışı Gereksinimini Sürdür",
+  "gitReturnToDocument": "Belgeye dön",
+  "gitSnapshotLabel": "Salt okunur anlık görüntü · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Bu dosya adı UTF-8 olmayan baytlar içeriyor. Git inceleme ve hazırlama kullanılabilir; belge düzenleyicisi UTF-8 dosya adı gerektirir."
 }

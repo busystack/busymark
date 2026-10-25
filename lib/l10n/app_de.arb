@@ -3739,5 +3739,8 @@
   "notesTransferring": "Notizen werden übertragen…",
   "notesTechnicalDetails": "Technische Details",
   "notesPauseRequirement": "Offline-Anforderung pausieren",
-  "notesResumeRequirement": "Offline-Anforderung fortsetzen"
+  "notesResumeRequirement": "Offline-Anforderung fortsetzen",
+  "gitReturnToDocument": "Zum Dokument zurückkehren",
+  "gitSnapshotLabel": "Schreibgeschützter Stand · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Dieser Dateiname enthält Bytes außerhalb von UTF-8. Git-Prüfung und Staging bleiben verfügbar; der Dokumenteditor benötigt einen UTF-8-Dateinamen."
 }

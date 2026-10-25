@@ -5881,4 +5881,16 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get notesResumeRequirement =>
       'Jätka võrguühenduseta säilitamise nõuet';
+
+  @override
+  String get gitReturnToDocument => 'Tagasi dokumendi juurde';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Kirjutuskaitstud hetktõmmis · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Failinimi sisaldab baite, mis pole UTF-8. Giti ülevaatus ja indekseerimine on endiselt saadaval; dokumendiredaktor vajab UTF-8-failinime.';
 }

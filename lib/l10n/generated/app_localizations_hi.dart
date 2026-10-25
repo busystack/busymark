@@ -5873,4 +5873,16 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'ऑफ़लाइन आवश्यकता जारी रखें';
+
+  @override
+  String get gitReturnToDocument => 'दस्तावेज़ पर लौटें';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'केवल पढ़ने योग्य स्नैपशॉट · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'इस फ़ाइल नाम में गैर-UTF-8 बाइट हैं। Git समीक्षा और स्टेजिंग उपलब्ध हैं; दस्तावेज़ संपादक को UTF-8 फ़ाइल नाम चाहिए।';
 }

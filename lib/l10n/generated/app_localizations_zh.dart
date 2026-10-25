@@ -5599,6 +5599,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => '继续离线保留要求';
+
+  @override
+  String get gitReturnToDocument => '返回文档';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return '只读快照 · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -11194,4 +11206,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get notesResumeRequirement => '继续离线保留要求';
+
+  @override
+  String get gitReturnToDocument => '返回文档';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return '只读快照 · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
 }

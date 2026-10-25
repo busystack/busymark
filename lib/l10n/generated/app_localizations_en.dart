@@ -5900,4 +5900,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Resume Offline Requirement';
+
+  @override
+  String get gitReturnToDocument => 'Return to document';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Read-only snapshot · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'This filename contains non-UTF-8 bytes. Git review and staging remain available; the document editor requires a UTF-8 filename.';
 }

@@ -207,6 +207,18 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# Configure upstream plugin builds through CMake's supported target properties.
+# No downstream binary patching is needed during package staging.
+foreach(plugin IN LISTS FLUTTER_PLUGIN_LIST)
+  if(TARGET ${plugin}_plugin)
+    set_target_properties(${plugin}_plugin PROPERTIES
+      INSTALL_RPATH "$ORIGIN"
+      BUILD_WITH_INSTALL_RPATH TRUE
+      INSTALL_RPATH_USE_LINK_PATH FALSE)
+  endif()
+endforeach()
+
+
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build
@@ -216,6 +228,8 @@ busymark_clean_default_bundle()
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(BUSYSTACK_GIT_HELPER_INSTALL_DIR libexec/busymark)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../busystack_git/native" "${CMAKE_BINARY_DIR}/busystack_git")
 
 install(PROGRAMS "${TYPST_EXECUTABLE}"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/libexec/busymark"

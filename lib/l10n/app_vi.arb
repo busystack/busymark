@@ -5269,5 +5269,8 @@
   "notesTransferring": "Đang chuyển ghi chú…",
   "notesTechnicalDetails": "Chi tiết kỹ thuật",
   "notesPauseRequirement": "Tạm dừng yêu cầu giữ ngoại tuyến",
-  "notesResumeRequirement": "Tiếp tục yêu cầu giữ ngoại tuyến"
+  "notesResumeRequirement": "Tiếp tục yêu cầu giữ ngoại tuyến",
+  "gitReturnToDocument": "Quay lại tài liệu",
+  "gitSnapshotLabel": "Ảnh chụp chỉ đọc · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Tên tệp này chứa byte không phải UTF-8. Vẫn có thể xem xét và đưa vào vùng đệm Git; trình soạn thảo tài liệu yêu cầu tên tệp UTF-8."
 }

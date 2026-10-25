@@ -10097,6 +10097,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resume Offline Requirement'**
   String get notesResumeRequirement;
+
+  /// Return from the shared Git review surface to the authoring document.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to document'**
+  String get gitReturnToDocument;
+
+  /// Read-only historical document label.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only snapshot · {revision} · {path}'**
+  String gitSnapshotLabel(String revision, String path);
+
+  /// Explain a byte-preserving Git filename that the authoring editor cannot open.
+  ///
+  /// In en, this message translates to:
+  /// **'This filename contains non-UTF-8 bytes. Git review and staging remain available; the document editor requires a UTF-8 filename.'**
+  String get gitNonUtf8FilenameMessage;
 }
 
 class _AppLocalizationsDelegate

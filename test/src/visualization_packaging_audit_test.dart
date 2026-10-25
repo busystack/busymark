@@ -47,7 +47,9 @@ void main() {
     expect(snapcraft, contains('- network'));
     expect(snapcraft, contains('- removable-media'));
     expect(snapcraft, contains('- ssh-keys'));
-    expect(snapcraft, contains('- enable-patchelf'));
+    expect(snapcraft, contains('- no-patchelf'));
+    expect(snapcraft, isNot(contains('enable-patchelf')));
+    expect(snapcraft, isNot(contains('patchelf --')));
     expect(
       snapcraft,
       contains(

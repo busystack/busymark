@@ -5870,4 +5870,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Tiếp tục yêu cầu giữ ngoại tuyến';
+
+  @override
+  String get gitReturnToDocument => 'Quay lại tài liệu';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Ảnh chụp chỉ đọc · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Tên tệp này chứa byte không phải UTF-8. Vẫn có thể xem xét và đưa vào vùng đệm Git; trình soạn thảo tài liệu yêu cầu tên tệp UTF-8.';
 }

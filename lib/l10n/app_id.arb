@@ -5269,5 +5269,8 @@
   "notesTransferring": "Mentransfer catatan…",
   "notesTechnicalDetails": "Detail teknis",
   "notesPauseRequirement": "Jeda persyaratan luring",
-  "notesResumeRequirement": "Lanjutkan persyaratan luring"
+  "notesResumeRequirement": "Lanjutkan persyaratan luring",
+  "gitReturnToDocument": "Kembali ke dokumen",
+  "gitSnapshotLabel": "Snapshot hanya baca · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Nama berkas ini berisi byte non-UTF-8. Peninjauan dan staging Git tetap tersedia; editor dokumen memerlukan nama berkas UTF-8."
 }

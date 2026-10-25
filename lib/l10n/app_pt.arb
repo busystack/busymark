@@ -3739,5 +3739,8 @@
   "notesTransferring": "A transferir notas…",
   "notesTechnicalDetails": "Detalhes técnicos",
   "notesPauseRequirement": "Pausar requisito offline",
-  "notesResumeRequirement": "Retomar requisito offline"
+  "notesResumeRequirement": "Retomar requisito offline",
+  "gitReturnToDocument": "Voltar ao documento",
+  "gitSnapshotLabel": "Instantâneo só de leitura · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Este nome de ficheiro contém bytes não UTF-8. A revisão e a preparação Git continuam disponíveis; o editor requer um nome de ficheiro UTF-8."
 }

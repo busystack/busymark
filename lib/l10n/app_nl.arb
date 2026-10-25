@@ -5269,5 +5269,8 @@
   "notesTransferring": "Notities overdragen…",
   "notesTechnicalDetails": "Technische details",
   "notesPauseRequirement": "Offlinevereiste pauzeren",
-  "notesResumeRequirement": "Offlinevereiste hervatten"
+  "notesResumeRequirement": "Offlinevereiste hervatten",
+  "gitReturnToDocument": "Terug naar document",
+  "gitSnapshotLabel": "Alleen-lezen momentopname · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Deze bestandsnaam bevat niet-UTF-8-bytes. Git-controle en staging blijven beschikbaar; de documenteditor vereist een UTF-8-bestandsnaam."
 }

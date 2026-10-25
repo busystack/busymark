@@ -5710,4 +5710,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'オフライン保持要件を再開';
+
+  @override
+  String get gitReturnToDocument => 'ドキュメントに戻る';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return '読み取り専用スナップショット · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'このファイル名には UTF-8 以外のバイトが含まれています。Git の確認とステージングは利用できますが、ドキュメントエディターには UTF-8 のファイル名が必要です。';
 }

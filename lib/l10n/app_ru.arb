@@ -3765,5 +3765,8 @@
   "notesTransferring": "Передача заметок…",
   "notesTechnicalDetails": "Технические сведения",
   "notesPauseRequirement": "Приостановить требование автономного хранения",
-  "notesResumeRequirement": "Возобновить требование автономного хранения"
+  "notesResumeRequirement": "Возобновить требование автономного хранения",
+  "gitReturnToDocument": "Вернуться к документу",
+  "gitSnapshotLabel": "Снимок только для чтения · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "Имя файла содержит байты не в UTF-8. Просмотр и индексирование Git доступны; редактор документов требует имя файла в UTF-8."
 }

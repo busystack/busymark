@@ -5269,5 +5269,8 @@
   "notesTransferring": "正在传输笔记…",
   "notesTechnicalDetails": "技术详情",
   "notesPauseRequirement": "暂停离线保留要求",
-  "notesResumeRequirement": "继续离线保留要求"
+  "notesResumeRequirement": "继续离线保留要求",
+  "gitReturnToDocument": "返回文档",
+  "gitSnapshotLabel": "只读快照 · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。"
 }

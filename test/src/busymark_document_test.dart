@@ -6624,7 +6624,10 @@ void main() {}
     final marker = find.byType(BusyMarkDocumentListMarker);
     expect(marker, findsOneWidget);
     expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isFalse);
-    final semanticCheckbox = find.bySemanticsLabel('Toggle task checked');
+    final semanticCheckbox = find.descendant(
+      of: marker,
+      matching: find.bySemanticsLabel('Toggle task checked'),
+    );
     expect(semanticCheckbox, findsOneWidget);
     expect(
       tester.getSemantics(semanticCheckbox).flagsCollection.isChecked,

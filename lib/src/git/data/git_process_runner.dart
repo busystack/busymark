@@ -1,16 +1,12 @@
-import 'dart:async';
+import 'package:busystack_git/busystack_git.dart' as shared;
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
-import 'dart:typed_data';
 
 import '../domain/git_models.dart';
 
 const gitCommandTimeout = Duration(minutes: 2);
 const gitExecutableProbeTimeout = Duration(seconds: 5);
 const gitCommandOutputLimitBytes = 32 * 1024 * 1024;
-const _terminationGracePeriod = Duration(milliseconds: 250);
-const _terminationCleanupTimeout = Duration(seconds: 1);
 
 abstract class GitCommandRunner {
   Future<GitProcessResult> run(
@@ -44,17 +40,15 @@ class GitProcessResult {
   bool get success => exitCode == 0;
 }
 
+/// Compatibility boundary for application probes and existing runner regressions.
+/// Process creation, binary capture and process-group cleanup are shared.
 class DartGitCommandRunner implements GitCommandRunner {
   const DartGitCommandRunner({
     this.processGroupLauncher = const GitProcessGroupLauncher(),
     this.maxOutputBytes = gitCommandOutputLimitBytes,
-  }) : assert(maxOutputBytes > 0);
-
+  });
   final GitProcessGroupLauncher processGroupLauncher;
   final int maxOutputBytes;
-
-  static final Object _outputLimitReached = Object();
-
   @override
   Future<GitProcessResult> run(
     String executable,
@@ -64,138 +58,40 @@ class DartGitCommandRunner implements GitCommandRunner {
     required String commandName,
     Map<String, String> environment = const {},
   }) async {
-    if (timeout <= Duration.zero) {
-      throw ArgumentError.value(timeout, 'timeout', 'must be positive');
-    }
-    final stopwatch = Stopwatch()..start();
-    final launch = processGroupLauncher.resolve(executable, arguments);
-    final snapGitEnvironment = gitEnvironmentForSnap(
-      processGroupLauncher.snapRootOverride,
-    );
-    final process = await Process.start(
-      launch.executable,
-      launch.arguments,
-      workingDirectory: workingDirectory,
-      environment: {
-        ...snapGitEnvironment,
-        ...environment,
-        'GIT_TERMINAL_PROMPT': '0',
-        'GIT_PAGER': 'cat',
-        'LC_ALL': 'C',
-      },
-      includeParentEnvironment: true,
-      runInShell: false,
-    );
-    final outputCapture = _BoundedOutputCapture(maxOutputBytes);
-    final stdoutFuture = outputCapture.collect(process.stdout);
-    final stderrFuture = outputCapture.collect(process.stderr);
-    final completion = _collectResult(
-      process,
-      executable,
-      arguments,
-      stdoutFuture,
-      stderrFuture,
-    );
-    final remainingMicros =
-        timeout.inMicroseconds - stopwatch.elapsedMicroseconds;
-    if (remainingMicros <= 0) {
-      await _terminate(process, processGroup: launch.processGroup);
-      await _awaitCleanup(completion);
-      throw _timeoutFailure(commandName);
-    }
+    if (timeout <= Duration.zero) throw ArgumentError.value(timeout, 'timeout');
     try {
-      final outcome = await Future.any<Object>([
-        completion,
-        outputCapture.limitReached.then<Object>((_) => _outputLimitReached),
-      ]).timeout(Duration(microseconds: remainingMicros));
-      if (identical(outcome, _outputLimitReached) || outputCapture.exceeded) {
-        await _terminate(process, processGroup: launch.processGroup);
-        await _awaitCleanup(completion);
-        throw _outputLimitFailure(commandName);
-      }
-      return outcome as GitProcessResult;
-    } on TimeoutException {
-      await _terminate(process, processGroup: launch.processGroup);
-      await _awaitCleanup(completion);
-      throw _timeoutFailure(commandName);
+      final result =
+          await shared.ProcessGitRunner(
+            executable: executable,
+            maximumOutputBytes: maxOutputBytes,
+          ).run(
+            arguments,
+            cwd: workingDirectory ?? Directory.current.path,
+            deadline: timeout,
+            environment: {
+              ...gitEnvironmentForSnap(processGroupLauncher.snapRootOverride),
+              ...environment,
+            },
+          );
+      return GitProcessResult(
+        executable: executable,
+        arguments: List.unmodifiable(arguments),
+        exitCode: result.exitCode,
+        stdoutBytes: result.stdout,
+        stderrBytes: result.stderr,
+      );
+    } on shared.GitException catch (error) {
+      throw GitFailure(
+        code: GitFailureCode.commandFailed,
+        userMessageKey: 'gitErrorCommandFailed',
+        commandName: commandName,
+        rawMessage: error.code == shared.GitErrorCode.outputLimit
+            ? 'Git command output exceeded the $maxOutputBytes-byte capture limit.'
+            : error.code == shared.GitErrorCode.deadline
+            ? 'Git command timed out.'
+            : error.diagnostic,
+      );
     }
-  }
-
-  Future<void> _awaitCleanup(Future<GitProcessResult> completion) async {
-    try {
-      await completion.timeout(_terminationCleanupTimeout);
-    } on Object {
-      // Cleanup is bounded. The process group has already received SIGKILL.
-    }
-  }
-
-  Future<GitProcessResult> _collectResult(
-    Process process,
-    String executable,
-    List<String> arguments,
-    Future<List<int>> stdoutFuture,
-    Future<List<int>> stderrFuture,
-  ) async {
-    try {
-      await process.stdin.close();
-    } on Object {
-      // The child may exit before its stdin pipe is closed.
-    }
-    final exitCode = await process.exitCode;
-    return GitProcessResult(
-      executable: executable,
-      arguments: List.unmodifiable(arguments),
-      exitCode: exitCode,
-      stdoutBytes: await stdoutFuture,
-      stderrBytes: await stderrFuture,
-    );
-  }
-
-  Future<void> _terminate(Process process, {required bool processGroup}) async {
-    _signal(process, ProcessSignal.sigterm, processGroup: processGroup);
-    await Future<void>.delayed(_terminationGracePeriod);
-    _signal(process, ProcessSignal.sigkill, processGroup: processGroup);
-    try {
-      await process.exitCode.timeout(_terminationCleanupTimeout);
-    } on Object {
-      // Do not let a failed reap make timeout handling unbounded.
-    }
-  }
-
-  void _signal(
-    Process process,
-    ProcessSignal signal, {
-    required bool processGroup,
-  }) {
-    if (processGroup) {
-      try {
-        if (_LinuxProcessSignals.instance.sendToGroup(process.pid, signal)) {
-          return;
-        }
-      } on Object {
-        // Fall through to terminating at least the direct child.
-      }
-    }
-    process.kill(signal);
-  }
-
-  GitFailure _timeoutFailure(String commandName) {
-    return GitFailure(
-      code: GitFailureCode.commandFailed,
-      userMessageKey: 'gitErrorCommandFailed',
-      rawMessage: 'Git command timed out.',
-      commandName: commandName,
-    );
-  }
-
-  GitFailure _outputLimitFailure(String commandName) {
-    return GitFailure(
-      code: GitFailureCode.commandFailed,
-      userMessageKey: 'gitErrorCommandFailed',
-      rawMessage:
-          'Git command output exceeded the $maxOutputBytes-byte capture limit.',
-      commandName: commandName,
-    );
   }
 }
 
@@ -209,38 +105,6 @@ Map<String, String> gitEnvironmentForSnap([String? snapRootOverride]) {
     'GIT_TEMPLATE_DIR': '$snapRoot/usr/share/git-core/templates',
     'GIT_SSH': '$snapRoot/usr/bin/ssh',
   };
-}
-
-class _BoundedOutputCapture {
-  _BoundedOutputCapture(this.maxBytes);
-
-  final int maxBytes;
-  final Completer<void> _limitReached = Completer<void>();
-  var _capturedBytes = 0;
-
-  Future<void> get limitReached => _limitReached.future;
-  bool get exceeded => _limitReached.isCompleted;
-
-  Future<List<int>> collect(Stream<List<int>> stream) async {
-    final output = BytesBuilder(copy: false);
-    await for (final chunk in stream) {
-      if (exceeded) {
-        continue;
-      }
-      final remaining = maxBytes - _capturedBytes;
-      if (chunk.length <= remaining) {
-        output.add(chunk);
-        _capturedBytes += chunk.length;
-        continue;
-      }
-      if (remaining > 0) {
-        output.add(chunk.sublist(0, remaining));
-        _capturedBytes += remaining;
-      }
-      _limitReached.complete();
-    }
-    return output.takeBytes();
-  }
 }
 
 class GitProcessGroupLauncher {
@@ -295,22 +159,4 @@ class GitProcessLaunch {
   final String executable;
   final List<String> arguments;
   final bool processGroup;
-}
-
-typedef _KillNative = Int32 Function(Int32 pid, Int32 signal);
-typedef _KillDart = int Function(int pid, int signal);
-
-final class _LinuxProcessSignals {
-  _LinuxProcessSignals()
-    : _kill = DynamicLibrary.process().lookupFunction<_KillNative, _KillDart>(
-        'kill',
-      );
-
-  static final instance = _LinuxProcessSignals();
-
-  final _KillDart _kill;
-
-  bool sendToGroup(int processGroupId, ProcessSignal signal) {
-    return _kill(-processGroupId, signal.signalNumber) == 0;
-  }
 }

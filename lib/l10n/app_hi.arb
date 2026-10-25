@@ -3739,5 +3739,8 @@
   "notesTransferring": "नोट स्थानांतरित हो रहे हैं…",
   "notesTechnicalDetails": "तकनीकी विवरण",
   "notesPauseRequirement": "ऑफ़लाइन आवश्यकता रोकें",
-  "notesResumeRequirement": "ऑफ़लाइन आवश्यकता जारी रखें"
+  "notesResumeRequirement": "ऑफ़लाइन आवश्यकता जारी रखें",
+  "gitReturnToDocument": "दस्तावेज़ पर लौटें",
+  "gitSnapshotLabel": "केवल पढ़ने योग्य स्नैपशॉट · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "इस फ़ाइल नाम में गैर-UTF-8 बाइट हैं। Git समीक्षा और स्टेजिंग उपलब्ध हैं; दस्तावेज़ संपादक को UTF-8 फ़ाइल नाम चाहिए।"
 }

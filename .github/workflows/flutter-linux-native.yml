@@ -50,7 +50,7 @@ jobs:
             libglib2.0-dev \
             libpango1.0-dev \
             libhandy-1-dev \
-            libsecret-1-dev \
+            libsecret-1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
             libwebkit2gtk-4.1-dev \
             python3-gi \
             rsync \
@@ -100,7 +100,14 @@ jobs:
       - name: Resolve locked dependencies
         id: flutter-packages
         if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
-        run: flutter pub get --enforce-lockfile
+        run: |
+          python3 tools/checkout_shared_dependencies.py
+          python3 ../busystack_git/tool/build_runtime.py --build-dir "$RUNNER_TEMP/git-native"
+          echo "BUSYSTACK_GIT_EXECUTABLE=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT_256=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_GIT_HELPER_PATH=$RUNNER_TEMP/git-native/busystack-git-helper" >> "$GITHUB_ENV"
+          flutter pub get --enforce-lockfile
 
       - name: Build Linux release
         id: release-build
@@ -551,7 +558,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y apparmor-profiles bubblewrap clang cmake ninja-build pkg-config curl xz-utils \
-            libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
+            libgtk-3-dev libhandy-1-dev libsecret-1-dev libwebkit2gtk-4.1-dev libcurl4-openssl-dev libssl-dev libexpat1-dev zlib1g-dev \
             fonts-noto-core fonts-noto-mono gsettings-desktop-schemas dconf-cli python3-gi gir1.2-webkit2-4.1 xvfb dbus-daemon
       - name: Enable Bubblewrap sandbox for WebKitGTK tests
         id: web-sandbox
@@ -584,7 +591,14 @@ jobs:
           channel: stable
           flutter-version: '3.47.5'
           cache: true
-      - run: flutter pub get --enforce-lockfile
+      - run: |
+          python3 tools/checkout_shared_dependencies.py
+          python3 ../busystack_git/tool/build_runtime.py --build-dir "$RUNNER_TEMP/git-native"
+          echo "BUSYSTACK_GIT_EXECUTABLE=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_TEST_GIT_256=$RUNNER_TEMP/git-native/git-runtime/bin/git" >> "$GITHUB_ENV"
+          echo "BUSYSTACK_GIT_HELPER_PATH=$RUNNER_TEMP/git-native/busystack-git-helper" >> "$GITHUB_ENV"
+          flutter pub get --enforce-lockfile
         id: flutter-packages
         if: ${{ !cancelled() && steps.flutter-sdk.outcome == 'success' }}
       - name: Build official development mode

@@ -3781,5 +3781,8 @@
   "notesTransferring": "در حال انتقال یادداشت‌ها…",
   "notesTechnicalDetails": "جزئیات فنی",
   "notesPauseRequirement": "مکث نیازمندی آفلاین",
-  "notesResumeRequirement": "ادامهٔ نیازمندی آفلاین"
+  "notesResumeRequirement": "ادامهٔ نیازمندی آفلاین",
+  "gitReturnToDocument": "بازگشت به سند",
+  "gitSnapshotLabel": "تصویر فقط‌خواندنی · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "نام این پرونده دارای بایت‌های غیر UTF-8 است. بازبینی و مرحله‌بندی Git همچنان در دسترس است؛ ویرایشگر سند به نام پروندهٔ UTF-8 نیاز دارد."
 }

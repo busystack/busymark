@@ -5901,4 +5901,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'استئناف متطلب الإتاحة دون اتصال';
+
+  @override
+  String get gitReturnToDocument => 'العودة إلى المستند';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'لقطة للقراءة فقط · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'يحتوي اسم الملف على بايتات ليست بترميز UTF-8. تظل مراجعة Git والإضافة إلى الفهرس متاحتين؛ يتطلب محرر المستندات اسم ملف بترميز UTF-8.';
 }

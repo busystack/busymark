@@ -1136,12 +1136,20 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
       style: style.merge(yaruDefaults),
       onPressed: onPressed,
     );
-    return YaruTheme.maybeOf(context)?.focusBorders == true
+    final content = YaruTheme.maybeOf(context)?.focusBorders == true
         ? YaruFocusBorder.primary(
             borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
             child: button,
           )
         : button;
+    // The Linux accessibility bridge exposes the semantic label as the
+    // control's name; IconButton's tooltip alone is not a native name.
+    return MergeSemantics(
+      child: Semantics(
+        label: shortcut == null ? tooltip : '$tooltip ($shortcut)',
+        child: content,
+      ),
+    );
   }
 }
 

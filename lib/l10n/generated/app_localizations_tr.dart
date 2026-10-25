@@ -5880,4 +5880,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Çevrimdışı Gereksinimini Sürdür';
+
+  @override
+  String get gitReturnToDocument => 'Belgeye dön';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Salt okunur anlık görüntü · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Bu dosya adı UTF-8 olmayan baytlar içeriyor. Git inceleme ve hazırlama kullanılabilir; belge düzenleyicisi UTF-8 dosya adı gerektirir.';
 }

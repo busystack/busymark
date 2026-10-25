@@ -42,6 +42,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../ai/ai_edit_ui.dart';
+import '../../git/application/shared_git_integration.dart';
 import '../../ai/ai_models.dart';
 import '../../assets/asset_ingestion_service.dart';
 import '../../clipboard/clipboard_history_controller.dart';
@@ -94,7 +95,6 @@ import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
 import '../../git/presentation/git_file_status_colors.dart';
-import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
 import '../outline_navigation.dart';
@@ -467,6 +467,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final documentViewMode =
         state.activeBuffer?.editorState.mode ?? settings.documentViewMode;
     final gitState = ref.watch(gitControllerProvider);
+    final sharedGitReview = ref.watch(sharedGitReviewProvider)[workspace.id];
     final localHistoryState = ref.watch(localHistoryControllerProvider);
 
     final colors = BusyMarkSurfaceColors.of(context);
@@ -501,7 +502,15 @@ class WorkspaceScreen extends ConsumerWidget {
                 _showTabMenu(context, ref, workspace, entry, position),
           ),
         Expanded(
-          child: localHistoryState.selectedRevision != null
+          child: sharedGitReview != null
+              ? BusyMarkSharedGitReview(
+                  key: ValueKey(
+                    '${workspace.id}:${sharedGitReview.repository.key}',
+                  ),
+                  workspace: workspace,
+                  review: sharedGitReview,
+                )
+              : localHistoryState.selectedRevision != null
               ? const LocalHistoryComparisonView()
               : gitState.selectedDiffForDisplay == null
               ? _EditorPreviewSplit(
@@ -1099,129 +1108,6 @@ void _clearGitDetailSelection(WidgetRef ref) {
   }
 }
 
-Future<bool> _confirmDiscardGitFiles(
-  BuildContext context,
-  WidgetRef ref,
-  List<GitFileStatus> files,
-) async {
-  if (files.isEmpty ||
-      !await confirmSafeToContinue(context, ref) ||
-      !context.mounted) {
-    return false;
-  }
-  final untracked = files.where((file) => file.untracked).toList();
-  final tracked = files.where((file) => !file.untracked).toList();
-  final title = context.l10n.gitConfirmDiscardTitle;
-  final message = tracked.isNotEmpty && untracked.isNotEmpty
-      ? context.l10n.gitConfirmDiscardMixed(files.length)
-      : untracked.isNotEmpty
-      ? context.l10n.gitConfirmDiscardUntracked(untracked.length)
-      : context.l10n.gitConfirmDiscardTracked(tracked.length);
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final confirmed = await showBusyMarkModalDialog<bool>(
-    context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
-      title: title,
-      maxWidth: BusyMarkSizes.dialogWide,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context, false),
-        ),
-        BusyMarkDialogButton(
-          label: tracked.isEmpty
-              ? context.l10n.delete
-              : context.l10n.gitDiscard,
-          destructive: true,
-          onPressed: () => Navigator.pop(context, true),
-        ),
-      ],
-      children: [
-        Text(message),
-        const SizedBox(height: BusyMarkSpacing.md),
-        _GitFileList(files: files),
-      ],
-    ),
-  );
-  if (confirmed != true || !context.mounted) return false;
-  return ref
-      .read(workspaceControllerProvider.notifier)
-      .protectPathsBeforeExternalReplacement(
-        files.map((file) => file.absolutePath),
-      );
-}
-
-Future<bool> _confirmSwitchGitBranch(
-  BuildContext context,
-  WidgetRef ref,
-  String branchName,
-) async {
-  if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
-    return false;
-  }
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final confirmed = await showBusyMarkModalDialog<bool>(
-    context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
-      title: context.l10n.gitConfirmSwitchBranchTitle(branchName),
-      maxWidth: BusyMarkSizes.dialog,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context, false),
-        ),
-        BusyMarkDialogButton(
-          label: context.l10n.gitSwitchBranch,
-          suggested: true,
-          onPressed: () => Navigator.pop(context, true),
-        ),
-      ],
-      children: [Text(context.l10n.gitConfirmSwitchBranchMessage)],
-    ),
-  );
-  return confirmed ?? false;
-}
-
-Future<bool> _confirmGitPushSetUpstream(
-  BuildContext context,
-  WidgetRef ref,
-) async {
-  final repo = ref.read(gitControllerProvider).repositoryInfo;
-  if (repo?.upstreamBranch != null) {
-    return false;
-  }
-  final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final confirmed = await showBusyMarkModalDialog<bool>(
-    context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => BusyMarkDialogShell(
-      title: context.l10n.gitConfirmPushSetUpstreamTitle,
-      maxWidth: BusyMarkSizes.dialog,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context, false),
-        ),
-        BusyMarkDialogButton(
-          label: context.l10n.gitPush,
-          suggested: true,
-          onPressed: () => Navigator.pop(context, true),
-        ),
-      ],
-      children: [
-        Text(
-          context.l10n.gitConfirmPushSetUpstreamMessage(
-            repo?.currentBranch ?? '',
-          ),
-        ),
-      ],
-    ),
-  );
-  return confirmed ?? false;
-}
-
 Future<List<PopupMenuEntry<_GitMenuAction>>> _loadWorkspaceGitMenuItems(
   BuildContext context,
   WidgetRef ref,
@@ -1234,11 +1120,17 @@ Future<List<PopupMenuEntry<_GitMenuAction>>> _loadWorkspaceGitMenuItems(
   }
   final latestState = ref.read(gitControllerProvider);
   final latestRepository = latestState.repositoryInfo ?? repository;
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  final sharedReview = ref.read(sharedGitReviewProvider)[workspace?.id];
   return _sidebarGitMenuItems(
     context,
     latestRepository,
     branches,
-    selectedView: latestState.selectedView,
+    selectedView: sharedReview == null
+        ? latestState.selectedView
+        : sharedReview.log
+        ? GitView.projectHistory
+        : GitView.fileHistory,
   );
 }
 
@@ -1247,43 +1139,37 @@ Future<void> _performWorkspaceGitAction(
   WidgetRef ref,
   _GitMenuAction action,
 ) async {
-  if (!context.mounted) {
-    return;
-  }
-  final controller = ref.read(gitControllerProvider.notifier);
+  if (!context.mounted) return;
   switch (action) {
     case _SelectGitViewMenuAction(:final view):
-      await controller.selectView(view);
-    case _SwitchBranchMenuAction(:final branchName):
-      if (branchName ==
-          ref.read(gitControllerProvider).repositoryInfo?.currentBranch) {
-        return;
+      if (view == GitView.changes) {
+        final workspace = ref.read(workspaceControllerProvider).workspace;
+        if (workspace != null) {
+          ref.read(sharedGitReviewProvider.notifier).close(workspace.id);
+        }
+        await ref
+            .read(gitControllerProvider.notifier)
+            .selectView(GitView.changes);
+      } else {
+        await showBusyMarkSharedGitAction(
+          context,
+          ref,
+          view == GitView.projectHistory ? 'log' : 'fileHistory',
+          absolutePath: ref
+              .read(workspaceControllerProvider)
+              .workspace
+              ?.activeFilePath,
+        );
       }
-      if (!await _confirmSwitchGitBranch(context, ref, branchName) ||
-          !context.mounted) {
-        return;
-      }
-      await controller.switchBranch(branchName);
-      if (ref.read(gitControllerProvider).lastError == null) {
-        await _refreshWorkspaceAfterGitFileChanges(ref);
-      }
+    case _SwitchBranchMenuAction():
     case _CreateBranchMenuAction():
-      final branchName = await _showCreateBranchDialog(context);
-      if (branchName == null) {
-        return;
-      }
-      await controller.createBranch(branchName);
+      await showBusyMarkSharedGitAction(context, ref, 'branches');
     case _FetchBranchMenuAction():
-      await controller.fetch();
+      await showBusyMarkSharedGitAction(context, ref, 'fetch');
     case _PullBranchMenuAction():
-      await controller.pullFastForwardOnly();
-      await _refreshWorkspaceAfterGitFileChanges(ref);
+      await showBusyMarkSharedGitAction(context, ref, 'pull');
     case _PushBranchMenuAction():
-      final repo = ref.read(gitControllerProvider).repositoryInfo;
-      final allowSetUpstream =
-          repo?.upstreamBranch == null &&
-          await _confirmGitPushSetUpstream(context, ref);
-      await controller.push(allowSetUpstream: allowSetUpstream);
+      await showBusyMarkSharedGitAction(context, ref, 'push');
   }
 }
 
@@ -1490,14 +1376,6 @@ Future<_PathMenuAction?> _showSidebarPathMenu(
   );
 }
 
-Future<String?> _showCreateBranchDialog(BuildContext context) {
-  return showBusyMarkModalEditorDialog<String>(
-    context,
-    maxWidth: BusyMarkSizes.dialogCompact,
-    builder: (context) => const _CreateBranchDialog(),
-  );
-}
-
 sealed class _GitMenuAction {
   const _GitMenuAction();
 }
@@ -1528,110 +1406,6 @@ final class _PullBranchMenuAction extends _GitMenuAction {
 
 final class _PushBranchMenuAction extends _GitMenuAction {
   const _PushBranchMenuAction();
-}
-
-class _CreateBranchDialog extends StatefulWidget {
-  const _CreateBranchDialog();
-
-  @override
-  State<_CreateBranchDialog> createState() => _CreateBranchDialogState();
-}
-
-class _CreateBranchDialogState extends State<_CreateBranchDialog> {
-  late final TextEditingController _controller;
-
-  bool get _canCreate => _controller.text.trim().isNotEmpty;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController()..addListener(_handleChanged);
-  }
-
-  @override
-  void dispose() {
-    _controller
-      ..removeListener(_handleChanged)
-      ..dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkModalEditorScaffold(
-      title: context.l10n.gitCreateBranch,
-      cancelLabel: context.l10n.cancel,
-      saveLabel: context.l10n.gitCreateBranch,
-      onCancel: () => Navigator.pop(context),
-      onSave: _canCreate ? _submit : null,
-      children: [
-        BusyMarkGroupedList(
-          filled: true,
-          children: [
-            BusyMarkGroupedTextEntry(
-              label: context.l10n.gitBranchName,
-              controller: _controller,
-              textDirection: TextDirection.ltr,
-              autofocus: true,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _submit(),
-            ),
-          ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.lg),
-      ],
-    );
-  }
-
-  void _submit() {
-    final value = _controller.text.trim();
-    if (value.isEmpty) {
-      return;
-    }
-    Navigator.pop(context, value);
-  }
-
-  void _handleChanged() {
-    setState(() {});
-  }
-}
-
-Future<void> _refreshWorkspaceAfterGitFileChanges(WidgetRef ref) async {
-  await ref
-      .read(workspaceControllerProvider.notifier)
-      .refreshWorkspaceFromDiskPreservingOpenTabs();
-  final workspace = ref.read(workspaceControllerProvider).workspace;
-  if (workspace != null) {
-    ref.read(gitControllerProvider.notifier).attachWorkspace(workspace);
-  }
-}
-
-class _GitFileList extends StatelessWidget {
-  const _GitFileList({required this.files});
-
-  final List<GitFileStatus> files;
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkGroupedSurface(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 180),
-        child: ListView.builder(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-          itemCount: files.length,
-          itemBuilder: (context, index) => Text(
-            files[index].repoRelativePath,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontFamily: BusyMarkTypography.monoFontFamily,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _Sidebar extends ConsumerStatefulWidget {
@@ -1746,7 +1520,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
               workspace: widget.workspace,
               tabs: tabs,
               selectedTab: selectedTab,
-              repositoryInfo: repositoryInfo,
+              repositoryInfo: selectedTab == _SidebarTab.git
+                  ? null
+                  : repositoryInfo,
               showTabMenu: tabs.length > 1,
               onSelectTab: (tab) => _selectTab(tab, tabs),
               loadGitMenuItems: (menuContext, repository) =>
@@ -1842,29 +1618,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                                     _runWritersideTopicRemoval(context, target),
                               ),
                               _SidebarTab.outline => const SizedBox.shrink(),
-                              _SidebarTab.git => GitSidebarTab(
+                              _SidebarTab.git => BusyMarkSharedGitSidebar(
                                 workspace: widget.workspace,
-                                onOpenFile: (relativePath) => _openGitDiffFile(
-                                  context,
-                                  ref,
-                                  relativePath,
-                                ),
-                                onConfirmDiscard: (files) =>
-                                    _confirmDiscardGitFiles(
-                                      context,
-                                      ref,
-                                      files,
-                                    ),
-                                onAfterWorkspaceFilesChanged: () =>
-                                    _refreshWorkspaceAfterGitFileChanges(ref),
-                                onConfirmSwitchBranch: (branchName) =>
-                                    _confirmSwitchGitBranch(
-                                      context,
-                                      ref,
-                                      branchName,
-                                    ),
-                                onConfirmPushSetUpstream: () =>
-                                    _confirmGitPushSetUpstream(context, ref),
                               ),
                               _SidebarTab.clipboard => ClipboardHistoryPanel(
                                 onEscape: () => ref
@@ -1957,9 +1712,12 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         return;
       }
     }
-    await ref
-        .read(gitControllerProvider.notifier)
-        .loadFileHistory(file.absolutePath);
+    await showBusyMarkSharedGitAction(
+      context,
+      ref,
+      'fileHistory',
+      absolutePath: file.absolutePath,
+    );
     if (!mounted) {
       return;
     }

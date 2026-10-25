@@ -337,7 +337,8 @@ void main() {
     expect(snapcraft, isNot(contains('tools/flutter_engine')));
     expect(snapcraft, isNot(contains('BUSYMARK_ENGINE_CACHE')));
     expect(snapcraft, contains('build-attributes: [no-patchelf]'));
-    expect(snapcraft, contains('*/libflutter_linux_gtk.so) continue'));
+    expect(snapcraft, isNot(contains('enable-patchelf')));
+    expect(snapcraft, isNot(contains('patchelf --')));
     expect(snapcraft, isNot(contains('--packaged')));
     expect(snapcraft, isNot(contains('plugin: flutter')));
     expect(snapcraft, isNot(contains('git clone --depth 1 -b stable')));
@@ -580,9 +581,7 @@ void main() {
       );
       expect(
         snapcraft,
-        contains(
-          r'"$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/libsphinxbase.so.3.0.0"',
-        ),
+        contains(r'LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu/lapack:$SNAP/usr/lib/x86_64-linux-gnu/blas:$LD_LIBRARY_PATH'),
       );
       expect(snapcraft, contains('caca/libgl_plugin.so.0.0.0'));
       expect(

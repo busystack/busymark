@@ -1505,7 +1505,12 @@ void main() {
     expect(workspace, isNot(contains('_fileHistoryFile')));
     expect(workspace, isNot(contains('onBack: _closeFileHistory')));
     expect(workspace, contains('label: context.l10n.fileHistory'));
-    expect(workspace, contains('loadFileHistory('));
+    expect(workspace, contains('showBusyMarkSharedGitAction('));
+    final gitIntegration = File(
+      'lib/src/git/application/shared_git_integration.dart',
+    ).readAsStringSync();
+    expect(gitIntegration, contains("case 'fileHistory':"));
+    expect(gitIntegration, contains('historyPath: shared.RepoPath.text'));
     expect(workspace, contains('file.absolutePath'));
     final tocHeader = RegExp(
       r'class _TocHeader[\s\S]*?class _CreateWritersideTopicDialog',

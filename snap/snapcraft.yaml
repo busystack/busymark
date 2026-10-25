@@ -11,7 +11,7 @@ description: |
 
   Connect Nextcloud Notes remote workspaces with offline-safe synchronization, categories, favorites, and attachments.
 
-license: Apache-2.0
+license: Apache-2.0 AND GPL-2.0-only
 base: core24
 grade: stable
 confinement: strict
@@ -50,6 +50,7 @@ apps:
       - network
       - removable-media
       - ssh-keys
+      - gpg-keys
       - password-manager-service
     environment:
       GDK_BACKEND: wayland,x11
@@ -57,6 +58,7 @@ apps:
       XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
       XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
       XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu/lapack:$SNAP/usr/lib/x86_64-linux-gnu/blas:$LD_LIBRARY_PATH
       BUSYMARK_SPELLING_INSTALL_ROOT: $SNAP_USER_COMMON/spelling/dictionaries
 
 parts:
@@ -84,7 +86,7 @@ parts:
     after: [flutter-runtime]
     plugin: nil
     build-attributes:
-      - enable-patchelf
+      - no-patchelf
     source: .
     override-pull: |
       # Pull source inputs only; generated build state is never a package input.
@@ -112,6 +114,10 @@ parts:
       - libglib2.0-dev
       - libpango1.0-dev
       - libsecret-1-dev
+      - libcurl4-openssl-dev
+      - libssl-dev
+      - libexpat1-dev
+      - zlib1g-dev
       - libwebkit2gtk-4.1-dev
       - xz-utils
     stage-packages:
@@ -123,21 +129,32 @@ parts:
       - fonts-noto-mono
       - openssh-client
       - util-linux
+      - gnupg
+      - pinentry-gnome3
       - yaru-theme-gtk
       - yaru-theme-icon
     override-build: |
       rm -rf "$CRAFT_PART_BUILD/build"
       rm -rf "$CRAFT_PART_BUILD/.dart_tool"
       rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
+      # Archive extractions belong to Snapcraft's managed part directory.
+      # Recreate them when source pins change between builds.
+      rm -rf "$CRAFT_PART_BUILD/../busystack_git" \
+        "$CRAFT_PART_BUILD/../busystack_git_flutter"
       export FLUTTER_ROOT="$CRAFT_STAGE/flutter-sdk"
       export PATH="$FLUTTER_ROOT/bin:$PATH"
       export CI=true
+      python3 tools/checkout_shared_dependencies.py
       flutter pub get --enforce-lockfile
       flutter build linux --release --no-pub --verbose \
         --target lib/main.dart
       cp -r build/linux/*/release/bundle/* "$CRAFT_PART_INSTALL/"
+      test -x "$CRAFT_PART_INSTALL/libexec/git-runtime/bin/git"
+      "$CRAFT_PART_INSTALL/libexec/git-runtime/bin/git" --version
+      test -x "$CRAFT_PART_INSTALL/libexec/git-runtime/libexec/git-core/git-credential-libsecret"
+      test -x "$CRAFT_PART_INSTALL/libexec/busymark/busystack-git-helper"
       # The unmodified official engine belongs to flutter-runtime so only
-      # the application/plugins receive Snapcraft's runtime path adjustments.
+      # its official bytes remain separate from application build output.
       rm "$CRAFT_PART_INSTALL/lib/libflutter_linux_gtk.so"
 
       # Normalize owned resources before staging so incremental clean/rebuild
@@ -172,22 +189,11 @@ parts:
   desktop-integration:
     after: [busymark]
     plugin: nil
-    build-packages:
-      - patchelf
+    build-attributes: [no-patchelf]
     override-prime: |
       craftctl default
-      # Snapcraft's ELF patcher uses RPATH, which takes precedence over the
-      # GNOME/Mesa launcher's library selection. Preserve the patched paths as
-      # RUNPATH so the connected platform supplies its matching shared runtime.
-      for bundled_elf in "$CRAFT_PRIME/busymark" "$CRAFT_PRIME/lib"/*.so; do
-        case "$bundled_elf" in
-          */libflutter_linux_gtk.so) continue ;;
-        esac
-        existing_rpath="$(patchelf --print-rpath "$bundled_elf")"
-        if [ -n "$existing_rpath" ]; then
-          patchelf --set-rpath "$existing_rpath" "$bundled_elf"
-        fi
-      done
+      # Third-party binaries retain their official bytes. Plugin RPATH is
+      # configured through CMake; the GNOME launcher supplies library paths.
       # The retained codec packages depend on GNOME/GStreamer packages already
       # supplied by the connected platform. Remove only the revision-validated
       # package-owned paths; a missing path signals that this audit is stale.
@@ -204,10 +210,6 @@ parts:
       done < \
         "$CRAFT_PROJECT_DIR/snap/gnome-46-2404-prime-exclusions.amd64"
 
-      # Keep the library's own directory alongside its two BLAS siblings.
-      patchelf --set-rpath \
-        '$ORIGIN/lapack:$ORIGIN/blas:$ORIGIN:/snap/core24/current/lib/x86_64-linux-gnu' \
-        "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/libsphinxbase.so.3.0.0"
       # libcaca's optional OpenGL backend is unused and pulls in GLUT/GLU.
       rm -f \
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so" \

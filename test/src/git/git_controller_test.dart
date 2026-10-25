@@ -13,8 +13,83 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:busystack_git/busystack_git.dart' as shared;
 
 void main() {
+  test(
+    'an enclosing repository grant serves subfolder commands without granting a nested repository',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-git-scope-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final docs = await Directory('${directory.path}/docs').create();
+      final root = await directory.resolveSymbolicLinks();
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+        filesystemToken: 'reviewed-parent',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: docs.path, rootPath: docs.path);
+      controller.attachWorkspace(workspace);
+      await controller.associateSharedRepository(workspace, repository);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      await controller.refresh();
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isFalse,
+      );
+      expect(
+        container.read(gitControllerProvider).repositoryInfo!.identityKey,
+        repository.key,
+      );
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .trustsGitWorkspace(docs.path),
+        isFalse,
+      );
+      await controller.stageFiles(['README.md']);
+      expect(gateway.stageCalls, 1);
+      final statusCalls = gateway.statusCalls;
+      gateway.repository = shared.RepositoryId(
+        root: docs.path,
+        gitDir: '${docs.path}/.git',
+        commonDir: '${docs.path}/.git',
+        objectFormat: 'sha1',
+        filesystemToken: 'nested',
+      );
+      await controller.refresh();
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isTrue,
+      );
+      expect(gateway.statusCalls, statusCalls);
+      await controller.stageFiles(['README.md']);
+      expect(gateway.stageCalls, 1);
+      gateway.repository = repository;
+      await controller.refresh();
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isFalse,
+      );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .revokeGitWorkspaceTrust(root);
+      await controller.refresh();
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isTrue,
+      );
+    },
+  );
   test('diff open target follows the current working-tree context', () {
     const repository = GitRepositoryInfo(
       rootPath: '/repo',
@@ -1586,6 +1661,37 @@ class _TrustRequiredFakeGitGateway extends _FakeGitGateway {
 
   @override
   bool get requiresWorkspaceTrust => true;
+}
+
+class _AssociatedGitGateway extends _TrustRequiredFakeGitGateway {
+  _AssociatedGitGateway(this.repository);
+  shared.RepositoryId repository;
+  var stageCalls = 0;
+  @override
+  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
+    detectCalls++;
+    return GitRepositoryInfo(
+      rootPath: repository.root,
+      gitDirPath: repository.gitDir,
+      identityKey: repository.key,
+      currentBranch: 'main',
+    );
+  }
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
+    final value = await super.status(repository);
+    return GitStatusSnapshot(repositoryInfo: repository, files: value.files);
+  }
+
+  @override
+  Future<GitOperationResult> stage(
+    GitRepositoryInfo repository,
+    List<String> paths,
+  ) async {
+    stageCalls++;
+    return super.stage(repository, paths);
+  }
 }
 
 class _RootedGitGateway extends _FakeGitGateway {

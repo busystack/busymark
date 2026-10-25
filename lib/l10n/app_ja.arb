@@ -5269,5 +5269,8 @@
   "notesTransferring": "ノートを転送中…",
   "notesTechnicalDetails": "技術情報",
   "notesPauseRequirement": "オフライン保持要件を一時停止",
-  "notesResumeRequirement": "オフライン保持要件を再開"
+  "notesResumeRequirement": "オフライン保持要件を再開",
+  "gitReturnToDocument": "ドキュメントに戻る",
+  "gitSnapshotLabel": "読み取り専用スナップショット · {revision} · {path}",
+  "gitNonUtf8FilenameMessage": "このファイル名には UTF-8 以外のバイトが含まれています。Git の確認とステージングは利用できますが、ドキュメントエディターには UTF-8 のファイル名が必要です。"
 }

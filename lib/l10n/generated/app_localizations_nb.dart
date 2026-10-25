@@ -5888,4 +5888,16 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Fortsett frakoblet krav';
+
+  @override
+  String get gitReturnToDocument => 'Tilbake til dokumentet';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Skrivebeskyttet øyeblikksbilde · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Filnavnet inneholder byte som ikke er UTF-8. Git-gjennomgang og mellomlagring er fortsatt tilgjengelig; dokumentredigereren krever et UTF-8-filnavn.';
 }

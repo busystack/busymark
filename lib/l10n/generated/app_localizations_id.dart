@@ -5882,4 +5882,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get notesResumeRequirement => 'Lanjutkan persyaratan luring';
+
+  @override
+  String get gitReturnToDocument => 'Kembali ke dokumen';
+
+  @override
+  String gitSnapshotLabel(String revision, String path) {
+    return 'Snapshot hanya baca · $revision · $path';
+  }
+
+  @override
+  String get gitNonUtf8FilenameMessage =>
+      'Nama berkas ini berisi byte non-UTF-8. Peninjauan dan staging Git tetap tersedia; editor dokumen memerlukan nama berkas UTF-8.';
 }

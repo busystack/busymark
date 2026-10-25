@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:busystack_git/busystack_git.dart' as shared;
 
 import 'package:busymark/src/git/data/git_cli_gateway.dart';
 import 'package:busymark/src/git/data/git_executable_locator.dart';
@@ -54,39 +55,50 @@ void main() {
   );
 
   test('normal gateway commands always receive a finite timeout', () async {
-    final runner = _RecordingGitRunner();
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-shared-timeouts-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final runner = _RecordingCoreRunner(directory.path);
+    await runner.run(
+      ['init', '-b', 'main'],
+      cwd: directory.path,
+      deadline: const Duration(seconds: 10),
+    );
     final gateway = GitCliGateway(
-      runner: runner,
-      locator: const _AvailableGitLocator(),
+      engine: shared.GitEngine(runner: runner, authorize: (_) => true),
     );
-
-    await gateway.status(
-      const GitRepositoryInfo(
-        rootPath: '/repo',
-        gitDirPath: '/repo/.git',
-        currentBranch: 'main',
-      ),
-    );
-
+    final repository = (await gateway.detectRepository(directory.path))!;
+    await gateway.status(repository);
     expect(runner.timeouts, isNotEmpty);
     expect(runner.timeouts, everyElement(greaterThan(Duration.zero)));
   });
 
   test('gateway classifies a missing commit author identity', () async {
-    final gateway = GitCliGateway(
-      runner: const _AuthorIdentityGitRunner(),
-      locator: const _AvailableGitLocator(),
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-shared-identity-',
     );
-
+    addTearDown(() => directory.delete(recursive: true));
+    final runner = _RecordingCoreRunner(directory.path);
+    await runner.run(
+      ['init', '-b', 'main'],
+      cwd: directory.path,
+      deadline: const Duration(seconds: 10),
+    );
+    await File(
+      '${directory.path}/draft.md',
+    ).writeAsString('Preserve this staged draft.');
+    await runner.run(
+      ['add', '.'],
+      cwd: directory.path,
+      deadline: const Duration(seconds: 10),
+    );
+    final gateway = GitCliGateway(
+      engine: shared.GitEngine(runner: runner, authorize: (_) => true),
+    );
+    final repository = (await gateway.detectRepository(directory.path))!;
     await expectLater(
-      gateway.commit(
-        const GitRepositoryInfo(
-          rootPath: '/repo',
-          gitDirPath: '/repo/.git',
-          currentBranch: 'main',
-        ),
-        'Document the release',
-      ),
+      gateway.commit(repository, 'Document the release'),
       throwsA(
         isA<GitFailure>()
             .having(
@@ -101,6 +113,12 @@ void main() {
             ),
       ),
     );
+    final index = await runner.run(
+      ['show', ':draft.md'],
+      cwd: directory.path,
+      deadline: const Duration(seconds: 10),
+    );
+    expect(index.text, 'Preserve this staged draft.');
   });
 
   test('snap packages the Linux process-group launcher', () {
@@ -279,43 +297,6 @@ void main() {
   );
 }
 
-class _AvailableGitLocator extends GitExecutableLocator {
-  const _AvailableGitLocator();
-
-  @override
-  Future<GitAvailability> locate() async => const GitAvailability(
-    available: true,
-    executablePath: 'git',
-    version: '2.43.0',
-  );
-}
-
-class _RecordingGitRunner implements GitCommandRunner {
-  final timeouts = <Duration>[];
-
-  @override
-  Future<GitProcessResult> run(
-    String executable,
-    List<String> arguments, {
-    String? workingDirectory,
-    required Duration timeout,
-    required String commandName,
-    Map<String, String> environment = const {},
-  }) async {
-    timeouts.add(timeout);
-    final stdout = arguments.contains('status')
-        ? '## main\n'.codeUnits
-        : <int>[];
-    return GitProcessResult(
-      executable: executable,
-      arguments: arguments,
-      exitCode: 0,
-      stdoutBytes: stdout,
-      stderrBytes: const [],
-    );
-  }
-}
-
 class _PermissionDeniedGitRunner implements GitCommandRunner {
   const _PermissionDeniedGitRunner();
 
@@ -329,32 +310,6 @@ class _PermissionDeniedGitRunner implements GitCommandRunner {
     Map<String, String> environment = const {},
   }) async {
     throw ProcessException('setsid', const [], 'Permission denied', 13);
-  }
-}
-
-class _AuthorIdentityGitRunner implements GitCommandRunner {
-  const _AuthorIdentityGitRunner();
-
-  @override
-  Future<GitProcessResult> run(
-    String executable,
-    List<String> arguments, {
-    String? workingDirectory,
-    required Duration timeout,
-    required String commandName,
-    Map<String, String> environment = const {},
-  }) async {
-    return GitProcessResult(
-      executable: executable,
-      arguments: arguments,
-      exitCode: 128,
-      stdoutBytes: const [],
-      stderrBytes:
-          ('Author identity unknown\n\n'
-                  'Please tell me who you are.\n'
-                  'fatal: unable to auto-detect email address')
-              .codeUnits,
-    );
   }
 }
 
@@ -393,5 +348,46 @@ class _MissingGitRunner implements GitCommandRunner {
     Map<String, String> environment = const {},
   }) async {
     throw ProcessException('git', const [], 'No such file or directory', 2);
+  }
+}
+
+class _RecordingCoreRunner implements shared.GitRunner {
+  _RecordingCoreRunner(this.home);
+  final String home;
+  final timeouts = <Duration>[];
+  final process = shared.ProcessGitRunner();
+  @override
+  Future<shared.GitRunResult> run(
+    List<String> arguments, {
+    required String cwd,
+    List<int>? input,
+    shared.GitCancellation? cancellation,
+    Duration? deadline,
+    void Function(List<int>)? onStdout,
+    void Function(String)? onProgress,
+    String Function(String)? redactDiagnostic,
+    Map<String, String> environment = const {},
+    Map<int, List<int>> byteArguments = const {},
+    int? maximumBytes,
+  }) {
+    if (deadline != null) timeouts.add(deadline);
+    return process.run(
+      arguments,
+      cwd: cwd,
+      input: input,
+      cancellation: cancellation,
+      deadline: deadline,
+      onStdout: onStdout,
+      onProgress: onProgress,
+      redactDiagnostic: redactDiagnostic,
+      byteArguments: byteArguments,
+      maximumBytes: maximumBytes,
+      environment: {
+        'HOME': home,
+        'GIT_CONFIG_GLOBAL': '/dev/null',
+        'GIT_CONFIG_NOSYSTEM': '1',
+        ...environment,
+      },
+    );
   }
 }

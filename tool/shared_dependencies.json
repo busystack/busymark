@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "layout": "sibling-working-trees",
+  "dependencies": [
+    {
+      "name": "busystack_git",
+      "path": "../busystack_git",
+      "archive": "tool/source-dependencies/busystack_git.tar.gz",
+      "sha256": "e6f5482e2ecae6f0b07df019457b34a4595756f23ba64b9e5327172930341623",
+      "tree_sha256": "b6344b789d928caea5982b4e49ceac14ef4fcdd8b20cbe5286e918a5c31e5a11",
+      "repository": "https://github.com/busystack/busystack_git.git",
+      "revision": "4bd9e607774821e841a7ba51a84fe0e59deba9bf"
+    },
+    {
+      "name": "busystack_git_flutter",
+      "path": "../busystack_git_flutter",
+      "archive": "tool/source-dependencies/busystack_git_flutter.tar.gz",
+      "sha256": "86b1555709f5e4a37dbc2cc9d5e886209c55779f0ee203e95e7d190bf35f0349",
+      "tree_sha256": "c468e01030f9e7162d1a0265cc0532b52bb8e620772ae6adc38225b9bb5546eb",
+      "repository": "https://github.com/busystack/busystack_git_flutter.git",
+      "revision": "01272260ef09771ab42dc470ad554749ed96b516"
+    }
+  ]
+}

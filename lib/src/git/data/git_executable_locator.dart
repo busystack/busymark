@@ -44,7 +44,7 @@ class GitExecutableLocator {
             available: false,
             executablePath: candidate,
             version: version.raw,
-            unavailableReason: 'Git 2.23 or newer is required.',
+            unavailableReason: 'Git 2.56 or newer is required.',
           );
         }
         return GitAvailability(
@@ -129,7 +129,7 @@ class GitExecutableLocator {
     if (version.major < 2) {
       return false;
     }
-    return version.minor >= 23;
+    return version.minor >= 56;
   }
 }
 

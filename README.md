@@ -55,11 +55,16 @@ sudo apt-get install -y \
   libgtk-3-dev \
   libhandy-1-dev \
   libsecret-1-dev \
+  libcurl4-openssl-dev \
+  libexpat1-dev \
+  libssl-dev \
   libwebkit2gtk-4.1-dev \
+  make \
   ninja-build \
   pkg-config \
   python3 \
   xz-utils
+sudo apt-get install -y zlib1g-dev
 ```
 
 Node.js 22 or newer with npm is also required to build the bundled web
@@ -68,6 +73,7 @@ components.
 Prepare and run the application:
 
 ```bash
+python3 tools/checkout_shared_dependencies.py
 flutter pub get --enforce-lockfile
 flutter run -d linux
 ```
@@ -88,8 +94,26 @@ flutter analyze
 flutter test
 ```
 
-The build assembles BusyMark's runtime components. Packaged users do not need
-separate Typst, Java, Node.js, or Chromium installations.
+The build assembles BusyMark's runtime components, including Git 2.56.0 and its
+native editor/credential helper. Packaged users do not need separate Git, Typst,
+Java, Node.js, Chromium, Dart or Flutter installations for those components.
+Configured SSH/signing/credential tools use the packaging permissions described
+in [Snap confinement](docs/snap-confinement.md).
+
+`busystack_git` and `busystack_git_flutter` are sibling source dependencies,
+materialized from the hash-pinned archives in `tool/shared_dependencies.json`.
+BusyMark owns workspace association, trust, all affected dirty-document checks,
+navigation, preferences and optional AI message drafting. The shared packages
+own Git semantics and specialized views; BusyMark has no BusyFiles daemon
+dependency. Repository-wide staged contents remain visible when a workspace is
+only a subfolder, and history snapshots open read-only.
+
+Choose **Git** from **Sidebar view** (Ctrl+4) to open Commit, then **Log** for
+the commit graph, file history and revision review. Stage files, hunks or changed
+lines explicitly; commits use the repository's real index. Repository actions
+and branch/commit menus provide network review, conflict resolution, rebase,
+stash, worktree, submodule and reflog tools. Trusting Git execution is separate
+from opening a folder, and operations that replace files protect open drafts.
 
 Linux development and packaging use the official Flutter SDK version pinned in
 `pubspec.yaml` (currently 3.47.5). No custom Flutter engine is built or selected.
