@@ -9361,7 +9361,29 @@ code
       findsOneWidget,
     );
     expect(find.text('Subject / references'), findsOneWidget);
-    expect(find.text('Go to commit/reference…'), findsOneWidget);
+    // A compact Log exposes navigation as a named icon; a wider Log uses its
+    // text button. Exercise the command instead of requiring one presentation.
+    final navigationLabel = find.text('Go to commit/reference…');
+    final navigationAction = navigationLabel.evaluate().isEmpty
+        ? find.byTooltip('Go to commit/reference…')
+        : navigationLabel;
+    expect(navigationAction, findsOneWidget);
+    await tester.ensureVisible(navigationAction);
+    await tester.tap(navigationAction);
+    await tester.pumpAndSettle();
+    final navigationField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.labelText == 'Go to commit/reference',
+    );
+    expect(navigationField, findsOneWidget);
+    expect(tester.widget<TextField>(navigationField).readOnly, isFalse);
+    await tester.enterText(navigationField, 'HEAD');
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+    expect(navigationField, findsNothing);
+    expect(find.byType(shared.GitLogView), findsOneWidget);
+    expect(commitWidget.session.draft, 'Preserved shell draft');
     expect(find.text('Reset filters'), findsOneWidget);
     expect(
       container
