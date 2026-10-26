@@ -13,6 +13,8 @@ import 'package:busymark/src/workspace/workspace_safety.dart';
 import 'package:busymark/src/workspace/workspace_tab_actions.dart';
 import 'package:busymark/src/workspace/workspace_tabs.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
+import 'package:busymark/src/git/application/git_gateway.dart';
+import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/application/shared_git_integration.dart';
 import 'package:busystack_git/busystack_git.dart' as shared;
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' show GitHost;
@@ -1023,6 +1025,8 @@ void main() {
     'shared Git fetch reconciliation leaves authoring buffers and workspace scans alone',
     (tester) async {
       final service = _IdentityWorkspaceService();
+      final metadata = _PendingGitGateway();
+      addTearDown(metadata.release);
       late WidgetRef widgetRef;
       late BuildContext hostContext;
       await tester.pumpWidget(
@@ -1038,6 +1042,7 @@ void main() {
                     .toJson(),
             ),
             workspaceServiceProvider.overrideWithValue(service),
+            gitRepositoryGatewayProvider.overrideWithValue(metadata),
           ],
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -1054,6 +1059,11 @@ void main() {
       );
       final controller = widgetRef.read(workspaceControllerProvider.notifier);
       await controller.openPath(service.rootPath);
+      widgetRef
+          .read(gitControllerProvider.notifier)
+          .attachWorkspace(
+            widgetRef.read(workspaceControllerProvider).workspace!,
+          );
       controller.updateActiveText('# Unsaved draft\n');
       final before = service.openPathCalls;
       final draft = widgetRef.read(workspaceControllerProvider).activeBuffer!;
@@ -1080,13 +1090,27 @@ void main() {
         ),
         isTrue,
       );
-      await host.afterMutation!(
-        repository,
-        const shared.GitOutcome(
-          phase: shared.GitOperationPhase.cancelled,
-          snapshot: null,
-        ),
+      var completed = false;
+      final reconciliation = host
+          .afterMutation!(
+            repository,
+            const shared.GitOutcome(
+              phase: shared.GitOperationPhase.cancelled,
+              snapshot: null,
+            ),
+          )
+          .then((_) => completed = true);
+      await tester.pump();
+      expect(metadata.started.isCompleted, isTrue);
+      expect(
+        completed,
+        isTrue,
+        reason:
+            'The engine already reconciled the cancelled operation; '
+            'a background compatibility status query must not hold it open.',
       );
+      metadata.release();
+      await reconciliation;
       expect(service.openPathCalls, before);
       final after = widgetRef.read(workspaceControllerProvider).activeBuffer!;
       expect(after.id, draft.id);
@@ -1825,6 +1849,28 @@ class _MemorySettingsStore implements LocalSettingsStore {
   Future<void> save(Map<String, Object?> json) async {
     value = json;
   }
+}
+
+class _PendingGitGateway implements GitRepositoryGateway {
+  final started = Completer<void>();
+  final _result = Completer<GitAvailability>();
+  void release() {
+    if (!_result.isCompleted) {
+      _result.complete(const GitAvailability.unavailable('Fixture metadata'));
+    }
+  }
+
+  @override
+  bool get requiresWorkspaceTrust => true;
+  @override
+  Future<GitAvailability> availability() {
+    if (!started.isCompleted) started.complete();
+    return _result.future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw StateError('Unexpected metadata request: ${invocation.memberName}');
 }
 
 class _IdentityWorkspaceService extends WorkspaceService {

@@ -537,7 +537,10 @@ shared.GitHost busyMarkGitHost(
               .read(workspaceControllerProvider.notifier)
               .refreshWorkspaceFromDiskPreservingOpenTabs();
         }
-        await ref.read(gitControllerProvider.notifier).refresh();
+        // The shared session already has the engine's reconciled outcome.
+        // Keep the compatibility status used by authoring commands current in
+        // the background, without extending the completed operation's lifetime.
+        unawaited(ref.read(gitControllerProvider.notifier).refresh());
       }
     },
     chooseDirectory: (_) => getDirectoryPath(),
