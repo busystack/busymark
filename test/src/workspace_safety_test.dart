@@ -1020,6 +1020,108 @@ void main() {
     },
   );
   testWidgets(
+    'shared Git fetch reconciliation leaves authoring buffers and workspace scans alone',
+    (tester) async {
+      final service = _IdentityWorkspaceService();
+      late WidgetRef widgetRef;
+      late BuildContext hostContext;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(
+                      autoSave: false,
+                      trustedGitWorkspacePaths: [service.rootPath],
+                    )
+                    .toJson(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Consumer(
+              builder: (context, ref, _) {
+                widgetRef = ref;
+                hostContext = context;
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+      final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await controller.openPath(service.rootPath);
+      controller.updateActiveText('# Unsaved draft\n');
+      final before = service.openPathCalls;
+      final draft = widgetRef.read(workspaceControllerProvider).activeBuffer!;
+      final repository = shared.RepositoryId(
+        root: service.rootPath,
+        gitDir: '${service.rootPath}/.git',
+        commonDir: '${service.rootPath}/.git',
+        objectFormat: 'sha1',
+      );
+      final host = busyMarkGitHost(
+        hostContext,
+        widgetRef,
+        widgetRef.read(workspaceControllerProvider).workspace!,
+        isMounted: () => hostContext.mounted,
+      );
+      expect(
+        await host.prepareMutation(
+          repository,
+          const shared.FetchRemote(
+            'origin',
+            expectedHead: null,
+            expectedIndex: 'reviewed',
+          ),
+        ),
+        isTrue,
+      );
+      await host.afterMutation!(
+        repository,
+        const shared.GitOutcome(
+          phase: shared.GitOperationPhase.cancelled,
+          snapshot: null,
+        ),
+      );
+      expect(service.openPathCalls, before);
+      final after = widgetRef.read(workspaceControllerProvider).activeBuffer!;
+      expect(after.id, draft.id);
+      expect(after.text, draft.text);
+      expect(after.isDirty, isTrue);
+      expect(service.saves, isEmpty);
+
+      // A failed operation that could have changed working files still needs
+      // disk reconciliation. Protect the draft before preparing that operation.
+      controller.updateActiveText(draft.lastSavedText);
+      expect(
+        await host.prepareMutation(
+          repository,
+          const shared.BranchMutation(
+            shared.BranchAction.switchBranch,
+            'incoming',
+            expectedHead: null,
+            expectedIndex: 'reviewed',
+          ),
+        ),
+        isTrue,
+      );
+      await host.afterMutation!(
+        repository,
+        const shared.GitOutcome(
+          phase: shared.GitOperationPhase.failed,
+          snapshot: null,
+        ),
+      );
+      expect(service.openPathCalls, before + 1);
+      expect(service.saves, isEmpty);
+    },
+  );
+
+  testWidgets(
     'shared Git branch switching reviews every affected dirty document and cancellation preserves them',
     (tester) async {
       final service = _IdentityWorkspaceService();
@@ -1743,6 +1845,7 @@ class _IdentityWorkspaceService extends WorkspaceService {
   final pathExistsCheckStarted = Completer<void>();
   final pathExistsChecks = <String>[];
   var failSave = false;
+  var openPathCalls = 0;
   var firstChangedOnDisk = false;
   var pauseFirstSave = false;
   Completer<bool>? pendingFileChangedResult;
@@ -1751,6 +1854,7 @@ class _IdentityWorkspaceService extends WorkspaceService {
 
   @override
   Future<Workspace> openPath(String path) async {
+    openPathCalls++;
     if (path == rootPath) {
       return Workspace(
         id: rootPath,

@@ -334,6 +334,7 @@ shared.GitHost busyMarkGitHost(
 }) {
   final drafts = ref.read(sharedGitDraftStoreProvider);
   final strings = context.l10n;
+  var reconcileWorkingFiles = true;
   return shared.GitHost(
     spacing: BusyMarkSpacing.sm,
     minimumRowHeight: 30,
@@ -503,6 +504,7 @@ shared.GitHost busyMarkGitHost(
         );
         mayReplaceFiles = options['hasConfiguredHooks'] == true;
       }
+      reconcileWorkingFiles = mayReplaceFiles;
       if (!context.mounted || !isMounted()) return false;
       if (mayReplaceFiles) {
         final paths = ref
@@ -526,9 +528,15 @@ shared.GitHost busyMarkGitHost(
     afterMutation: (repository, result) async {
       if (isMounted() &&
           ref.read(workspaceControllerProvider).workspace?.id == workspace.id) {
-        await ref
-            .read(workspaceControllerProvider.notifier)
-            .refreshWorkspaceFromDiskPreservingOpenTabs();
+        // Fetch, staging and other metadata-only operations do not change
+        // authoring buffers. A full folder rescan here keeps cancellation
+        // pending and needlessly cancels the editor's derived work/autosaves.
+        // Reconcile file-changing operations even after a nonzero Git result.
+        if (reconcileWorkingFiles) {
+          await ref
+              .read(workspaceControllerProvider.notifier)
+              .refreshWorkspaceFromDiskPreservingOpenTabs();
+        }
         await ref.read(gitControllerProvider.notifier).refresh();
       }
     },
