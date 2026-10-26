@@ -6,19 +6,19 @@
       "name": "busystack_git",
       "path": "../busystack_git",
       "archive": "tool/source-dependencies/busystack_git.tar.gz",
-      "sha256": "6b1230fb9a7c100e68327ba5165231daf6871805f826d5f52cf04efa3840793e",
-      "tree_sha256": "b283e8b6ba364ab3f299f165fb5e7eb39bd64fac8f3c3cff36888f3fecaf56c8",
+      "sha256": "43447d13c44de66609f9d5e8a69694b132657dd1a9b67f5957e0f4522e7fb7f6",
+      "tree_sha256": "63b95256d79511ca2cca02d7d2790f18402bee2584b1b3522bf326950db88f5d",
       "repository": "https://github.com/busystack/busystack_git.git",
-      "revision": "7ded8758888ffca3f15744d5eef282180e61bc18"
+      "revision": "bb70599e113f65320b62bb3236c388d5c2a386cf"
     },
     {
       "name": "busystack_git_flutter",
       "path": "../busystack_git_flutter",
       "archive": "tool/source-dependencies/busystack_git_flutter.tar.gz",
-      "sha256": "3f5aceb4e82f62d0f6db1d520789509ac1bbc5f9bc6059d02998874cf31fc39f",
-      "tree_sha256": "0a6471b602309be64a1bf575c7cb403d0cd592206e574f3943ddf67829ceb501",
+      "sha256": "8fe58d5a546531a79dcae3376bb152658c37840c0ee5c65d8823d3af5e2f6ea5",
+      "tree_sha256": "05257ad6af285d09ab084d85746a0992f8160afe3e025945bfd12094720d4379",
       "repository": "https://github.com/busystack/busystack_git_flutter.git",
-      "revision": "3010db4a76195ad2fe51a169f6443892aebb17ce"
+      "revision": "01875a63609d4fda7cd91b9251408a535b4d6546"
     }
   ]
 }
