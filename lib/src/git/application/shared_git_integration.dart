@@ -36,6 +36,161 @@ final sharedGitDraftStoreProvider = Provider<shared.GitDraftStore>(
   (_) => _drafts,
 );
 
+/// Owns repository attachments for one authoring workspace. Commit, review,
+/// and commands share their status, drafts and operation lifecycle. The host
+/// callbacks belong to this scope, so closing a sidebar cannot invalidate a
+/// review or retarget an outstanding operation.
+class BusyMarkGitWorkspaceScope extends ConsumerStatefulWidget {
+  const BusyMarkGitWorkspaceScope({
+    super.key,
+    required this.workspace,
+    required this.child,
+  });
+  final Workspace workspace;
+  final Widget child;
+
+  static _BusyMarkGitWorkspaceScopeState _of(BuildContext context) => context
+      .dependOnInheritedWidgetOfExactType<_BusyMarkGitAttachmentScope>()!
+      .owner;
+
+  @override
+  ConsumerState<BusyMarkGitWorkspaceScope> createState() =>
+      _BusyMarkGitWorkspaceScopeState();
+}
+
+class _BusyMarkGitWorkspaceScopeState
+    extends ConsumerState<BusyMarkGitWorkspaceScope> {
+  final _sessions = <String, Future<shared.GitSession>>{};
+  final _owned = <shared.GitSession>[];
+  var _discoveryCancellation = shared.GitCancellation();
+  var _generation = 0;
+  Future<shared.RepositoryId?>? _discovery;
+  shared.GitClient? _client;
+
+  shared.GitHost get _host {
+    final generation = _generation;
+    return busyMarkGitHost(
+      context,
+      ref,
+      widget.workspace,
+      isMounted: () => mounted && generation == _generation,
+    );
+  }
+
+  shared.GitClient get client => _client ??= _createClient();
+
+  shared.GitClient _createClient() {
+    final generation = _generation;
+    final host = _host;
+    return ref.read(sharedGitClientFactoryProvider)(
+      authorize: (repository) =>
+          mounted &&
+          generation == _generation &&
+          ref
+              .read(appSettingsControllerProvider)
+              .trustsGitWorkspace(repository.root),
+      prompts: (prompt, cancellation) => !mounted || generation != _generation
+          ? Future.value(null)
+          : shared.presentGitPrompt(
+              context,
+              host.present,
+              prompt,
+              cancellation,
+            ),
+    );
+  }
+
+  Future<shared.GitSession?> open({shared.RepositoryId? repository}) async {
+    if (!mounted) return null;
+    final generation = _generation, workspace = widget.workspace;
+    if (repository == null) {
+      final discovery = _discovery ??= client.discover(
+        workspace.rootPath,
+        cancellation: _discoveryCancellation,
+      );
+      try {
+        repository = await discovery;
+      } finally {
+        if (identical(_discovery, discovery)) _discovery = null;
+      }
+    }
+    if (!mounted || generation != _generation || repository == null) {
+      return null;
+    }
+    final target = repository;
+    final attachment = _sessions.putIfAbsent(target.key, () async {
+      await ref
+          .read(gitControllerProvider.notifier)
+          .associateSharedRepository(workspace, target);
+      if (!mounted || generation != _generation) {
+        throw const shared.GitException(shared.GitErrorCode.cancelled);
+      }
+      final session = shared.GitSession(
+        client: client,
+        repository: target,
+        host: _host,
+      );
+      _owned.add(session);
+      await session.start();
+      if (!mounted || generation != _generation) {
+        throw const shared.GitException(shared.GitErrorCode.cancelled);
+      }
+      return session;
+    });
+    try {
+      return await attachment;
+    } on Object {
+      if (identical(_sessions[target.key], attachment)) {
+        _sessions.remove(target.key);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant BusyMarkGitWorkspaceScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workspace.id != widget.workspace.id ||
+        oldWidget.workspace.rootPath != widget.workspace.rootPath) {
+      _releaseAttachments();
+      _discoveryCancellation = shared.GitCancellation();
+    }
+  }
+
+  void _releaseAttachments() {
+    _generation++;
+    _discoveryCancellation.cancel();
+    for (final session in _owned) {
+      session.dispose();
+    }
+    _owned.clear();
+    _sessions.clear();
+    _discovery = null;
+    _client = null;
+  }
+
+  @override
+  void dispose() {
+    _releaseAttachments();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _BusyMarkGitAttachmentScope(owner: this, child: widget.child);
+}
+
+class _BusyMarkGitAttachmentScope extends InheritedWidget {
+  const _BusyMarkGitAttachmentScope({
+    required this.owner,
+    required super.child,
+  });
+  final _BusyMarkGitWorkspaceScopeState owner;
+  @override
+  bool updateShouldNotify(_BusyMarkGitAttachmentScope oldWidget) =>
+      owner != oldWidget.owner;
+}
+
 final sharedGitReviewProvider =
     NotifierProvider<SharedGitReviews, Map<String, SharedGitReview>>(
       SharedGitReviews.new,
@@ -70,90 +225,60 @@ Future<void> showBusyMarkSharedGitAction(
 }) async {
   final workspace = ref.read(workspaceControllerProvider).workspace;
   if (workspace == null || !context.mounted) return;
-  final host = busyMarkGitHost(
-    context,
-    ref,
-    workspace,
-    isMounted: () => context.mounted,
-  );
-  final engine = ref.read(sharedGitClientFactoryProvider)(
-    authorize: (repository) =>
-        context.mounted &&
-        ref
-            .read(appSettingsControllerProvider)
-            .trustsGitWorkspace(repository.root),
-    prompts: (prompt, cancellation) =>
-        shared.presentGitPrompt(context, host.present, prompt, cancellation),
-  );
-  final repository = await engine.discover(workspace.rootPath);
-  if (!context.mounted || repository == null) return;
-  await ref
-      .read(gitControllerProvider.notifier)
-      .associateSharedRepository(workspace, repository);
-  if (!context.mounted) return;
-  final session = shared.GitSession(
-    client: engine,
-    repository: repository,
-    host: host,
-  );
-  try {
-    await session.start();
-    if (!context.mounted || session.snapshot == null) return;
-    final ui = shared.GitWorkflowUi(context, session);
-    switch (action) {
-      case 'log':
-        ref
-            .read(sharedGitReviewProvider.notifier)
-            .open(workspace.id, SharedGitReview(repository, log: true));
-      case 'fileHistory':
-        if (absolutePath == null ||
-            !p.isWithin(repository.root, absolutePath)) {
-          return;
-        }
-        ref
-            .read(sharedGitReviewProvider.notifier)
-            .open(
-              workspace.id,
-              SharedGitReview(
-                repository,
-                historyPath: shared.RepoPath.text(
+  final session = await BusyMarkGitWorkspaceScope._of(context).open();
+  if (!context.mounted || session == null) return;
+  final repository = session.repository;
+  if (!context.mounted || session.snapshot == null) return;
+  final ui = shared.GitWorkflowUi(context, session);
+  switch (action) {
+    case 'log':
+      ref
+          .read(sharedGitReviewProvider.notifier)
+          .open(workspace.id, SharedGitReview(repository, log: true));
+    case 'fileHistory':
+      if (absolutePath == null || !p.isWithin(repository.root, absolutePath)) {
+        return;
+      }
+      ref
+          .read(sharedGitReviewProvider.notifier)
+          .open(
+            workspace.id,
+            SharedGitReview(
+              repository,
+              historyPath: shared.RepoPath.text(
+                p.relative(absolutePath, from: repository.root),
+              ),
+            ),
+          );
+    case 'diff':
+      if (absolutePath == null || !p.isWithin(repository.root, absolutePath)) {
+        return;
+      }
+      ref
+          .read(sharedGitReviewProvider.notifier)
+          .open(
+            workspace.id,
+            SharedGitReview(
+              repository,
+              comparison: shared.GitComparison(
+                shared.RepoPath.text(
                   p.relative(absolutePath, from: repository.root),
                 ),
+                const shared.ContentVersion.index(),
+                const shared.ContentVersion.working(),
               ),
-            );
-      case 'diff':
-        if (absolutePath == null ||
-            !p.isWithin(repository.root, absolutePath)) {
-          return;
-        }
-        ref
-            .read(sharedGitReviewProvider.notifier)
-            .open(
-              workspace.id,
-              SharedGitReview(
-                repository,
-                comparison: shared.GitComparison(
-                  shared.RepoPath.text(
-                    p.relative(absolutePath, from: repository.root),
-                  ),
-                  const shared.ContentVersion.index(),
-                  const shared.ContentVersion.working(),
-                ),
-              ),
-            );
-      case 'branches':
-        await ui.branches();
-      case 'fetch':
-        await ui.present('Fetch', shared.GitFetchView(session: session));
-      case 'pull':
-        await ui.pull();
-      case 'push':
-        await ui.push();
-      case 'more':
-        await ui.more();
-    }
-  } finally {
-    session.dispose();
+            ),
+          );
+    case 'branches':
+      await ui.branches();
+    case 'fetch':
+      await ui.present('Fetch', shared.GitFetchView(session: session));
+    case 'pull':
+      await ui.pull();
+    case 'push':
+      await ui.push();
+    case 'more':
+      await ui.more();
   }
 }
 
@@ -641,15 +766,12 @@ class _BusyMarkSharedGitSidebarState
   shared.GitException? _failure;
   bool _loading = false, _noRepository = false;
   int _generation = 0;
-  shared.GitCancellation? _discovery;
   @override
   void didUpdateWidget(covariant BusyMarkSharedGitSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workspace.id != widget.workspace.id ||
         oldWidget.workspace.rootPath != widget.workspace.rootPath) {
       _generation++;
-      _discovery?.cancel();
-      _session?.dispose();
       _session = null;
       _loading = false;
       _noRepository = false;
@@ -660,63 +782,27 @@ class _BusyMarkSharedGitSidebarState
   @override
   void dispose() {
     _generation++;
-    _discovery?.cancel();
-    _session?.dispose();
     super.dispose();
   }
 
   Future<void> _attach() async {
     if (_loading || _session != null) return;
     setState(() => _loading = true);
-    final generation = ++_generation,
-        cancellation = _discovery = shared.GitCancellation();
+    final generation = ++_generation;
     try {
-      final workspace = widget.workspace;
-      final host = busyMarkGitHost(
-        context,
-        ref,
-        workspace,
-        isMounted: () => mounted,
-      );
-      final engine = ref.read(sharedGitClientFactoryProvider)(
-        authorize: (repository) =>
-            mounted &&
-            ref
-                .read(appSettingsControllerProvider)
-                .trustsGitWorkspace(repository.root),
-        prompts: (prompt, cancellation) => shared.presentGitPrompt(
-          context,
-          host.present,
-          prompt,
-          cancellation,
-        ),
-      );
-      final repository = await engine.discover(
-        workspace.rootPath,
-        cancellation: cancellation,
-      );
+      final session = await BusyMarkGitWorkspaceScope._of(context).open();
       if (!mounted || generation != _generation) return;
-      if (repository == null) {
+      if (session == null) {
         setState(() {
           _loading = false;
           _noRepository = true;
         });
         return;
       }
-      await ref
-          .read(gitControllerProvider.notifier)
-          .associateSharedRepository(workspace, repository);
-      if (!mounted || generation != _generation) return;
-      final session = shared.GitSession(
-        client: engine,
-        repository: repository,
-        host: host,
-      );
       setState(() {
         _session = session;
         _loading = false;
       });
-      unawaited(session.start());
     } on shared.GitException catch (error) {
       if (mounted && generation == _generation) {
         setState(() {
@@ -872,36 +958,32 @@ class BusyMarkSharedGitReview extends ConsumerStatefulWidget {
 class _BusyMarkSharedGitReviewState
     extends ConsumerState<BusyMarkSharedGitReview> {
   shared.GitSession? _session;
+  shared.GitException? _failure;
+  bool _attaching = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final host = busyMarkGitHost(
-      context,
-      ref,
-      widget.workspace,
-      isMounted: () => mounted,
-    );
-    if (_session != null) return;
-    _session =
-        shared.GitSession(
-            client: ref.read(sharedGitClientFactoryProvider)(
-              authorize: (repository) =>
-                  mounted &&
-                  ref
-                      .read(appSettingsControllerProvider)
-                      .trustsGitWorkspace(repository.root),
-              prompts: (prompt, cancellation) => shared.presentGitPrompt(
-                context,
-                host.present,
-                prompt,
-                cancellation,
-              ),
-            ),
-            repository: widget.review.repository,
-            host: host,
-          )
-          ..addListener(_changed)
-          ..start();
+    if (_session != null || _attaching) return;
+    unawaited(_attach());
+  }
+
+  Future<void> _attach() async {
+    _attaching = true;
+    try {
+      final session = await BusyMarkGitWorkspaceScope._of(
+        context,
+      ).open(repository: widget.review.repository);
+      if (!mounted) return;
+      setState(() {
+        _session = session;
+        _failure = null;
+      });
+      session?.addListener(_changed);
+    } on shared.GitException catch (error) {
+      if (mounted) setState(() => _failure = error);
+    } finally {
+      _attaching = false;
+    }
   }
 
   void _changed() {
@@ -911,7 +993,6 @@ class _BusyMarkSharedGitReviewState
   @override
   void dispose() {
     _session?.removeListener(_changed);
-    _session?.dispose();
     super.dispose();
   }
 
@@ -962,23 +1043,30 @@ class _BusyMarkSharedGitReviewState
         ],
       ),
       Expanded(
-        child: _gitCommands(
-          context,
-          _session!,
-          widget.review.log
-              ? shared.GitLogView(session: _session!)
-              : widget.review.historyPath != null
-              ? shared.GitFileHistoryView(
-                  session: _session!,
-                  path: widget.review.historyPath!,
-                )
-              : shared.GitDiffView(
-                  session: _session!,
-                  comparison: widget.review.comparison!,
-                  onPreviousFile: _navigate(-1),
-                  onNextFile: _navigate(1),
-                ),
-        ),
+        child: _failure != null
+            ? shared.GitFailurePanel(
+                error: _failure!,
+                onRefresh: () => unawaited(_attach()),
+              )
+            : _session == null
+            ? const Center(child: CircularProgressIndicator())
+            : _gitCommands(
+                context,
+                _session!,
+                widget.review.log
+                    ? shared.GitLogView(session: _session!)
+                    : widget.review.historyPath != null
+                    ? shared.GitFileHistoryView(
+                        session: _session!,
+                        path: widget.review.historyPath!,
+                      )
+                    : shared.GitDiffView(
+                        session: _session!,
+                        comparison: widget.review.comparison!,
+                        onPreviousFile: _navigate(-1),
+                        onNextFile: _navigate(1),
+                      ),
+              ),
       ),
     ],
   );

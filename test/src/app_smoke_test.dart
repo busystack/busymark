@@ -9351,11 +9351,21 @@ code
       matching: find.byTooltip('Log'),
     );
     expect(logAction, findsOneWidget);
+    final sharedClient = commitWidget.session.client as SharedGitReadFixture;
+    final statusReadsBeforeLog = sharedClient.statusReads;
+    expect(sharedClient.watchSubscriptions, 1);
     await tester.ensureVisible(logAction);
     await tester.pumpAndSettle();
     await tester.tap(logAction);
     await tester.pumpAndSettle();
     expect(find.byType(shared.GitLogView), findsOneWidget);
+    expect(
+      tester.widget<shared.GitLogView>(find.byType(shared.GitLogView)).session,
+      same(commitWidget.session),
+      reason: 'Commit and Log must retain one worktree attachment and draft.',
+    );
+    expect(sharedClient.statusReads, statusReadsBeforeLog);
+    expect(sharedClient.watchSubscriptions, 1);
     expect(
       find.textContaining('Sidebar history shortcut commit'),
       findsOneWidget,

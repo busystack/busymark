@@ -326,6 +326,22 @@ Future<void> _publishWritersideTitleDialog(
 class WorkspaceScreen extends ConsumerWidget {
   const WorkspaceScreen({super.key});
 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workspace = ref.watch(
+      workspaceControllerProvider.select((state) => state.workspace),
+    );
+    if (workspace == null) return const WelcomeScreen();
+    return BusyMarkGitWorkspaceScope(
+      workspace: workspace,
+      child: const _WorkspaceScreenContents(),
+    );
+  }
+}
+
+class _WorkspaceScreenContents extends ConsumerWidget {
+  const _WorkspaceScreenContents();
+
   Future<void> _showTabMenu(
     BuildContext context,
     WidgetRef ref,

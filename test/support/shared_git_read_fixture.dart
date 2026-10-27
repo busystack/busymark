@@ -10,6 +10,7 @@ class SharedGitReadFixture
   SharedGitReadFixture(this.state, {this.fileHistoryState});
   final GitState state;
   final GitState? fileHistoryState;
+  int statusReads = 0, watchSubscriptions = 0;
   shared.RepositoryId? get repository {
     final info = state.repositoryInfo;
     return info == null
@@ -58,29 +59,33 @@ class SharedGitReadFixture
     shared.RepositoryId repository, {
     shared.GitCancellation? cancellation,
     shared.GitReadPolicy policy = shared.GitReadPolicy.restricted,
-  }) async => shared.GitSnapshot(
-    repository: repository,
-    token: 'shell-fixture',
-    indexToken: 'shell-fixture-index',
-    head: commits.firstOrNull?.oid,
-    branch: state.repositoryInfo?.currentBranch,
-    upstream: state.repositoryInfo?.upstreamBranch,
-    ahead: state.repositoryInfo?.aheadCount ?? 0,
-    behind: state.repositoryInfo?.behindCount ?? 0,
-    changes: [
-      for (final file in state.statusSnapshot?.files ?? <GitFileStatus>[])
-        shared.GitChange(
-          path: shared.RepoPath.text(file.repoRelativePath),
-          originalPath: file.originalRepoRelativePath == null
-              ? null
-              : shared.RepoPath.text(file.originalRepoRelativePath!),
-          index: file.untracked ? '?' : statusCode(file.indexStatus),
-          worktree: statusCode(file.workTreeStatus),
-        ),
-    ],
-    operation: const shared.RepositoryOperation(shared.GitOperationKind.none),
-    observedAt: DateTime.utc(2026),
-  );
+  }) async {
+    statusReads++;
+    return shared.GitSnapshot(
+      repository: repository,
+      token: 'shell-fixture',
+      indexToken: 'shell-fixture-index',
+      head: commits.firstOrNull?.oid,
+      branch: state.repositoryInfo?.currentBranch,
+      upstream: state.repositoryInfo?.upstreamBranch,
+      ahead: state.repositoryInfo?.aheadCount ?? 0,
+      behind: state.repositoryInfo?.behindCount ?? 0,
+      changes: [
+        for (final file in state.statusSnapshot?.files ?? <GitFileStatus>[])
+          shared.GitChange(
+            path: shared.RepoPath.text(file.repoRelativePath),
+            originalPath: file.originalRepoRelativePath == null
+                ? null
+                : shared.RepoPath.text(file.originalRepoRelativePath!),
+            index: file.untracked ? '?' : statusCode(file.indexStatus),
+            worktree: statusCode(file.workTreeStatus),
+          ),
+      ],
+      operation: const shared.RepositoryOperation(shared.GitOperationKind.none),
+      observedAt: DateTime.utc(2026),
+    );
+  }
+
   @override
   Future<List<shared.GitReference>> references(
     shared.RepositoryId repository,
@@ -164,6 +169,7 @@ class SharedGitReadFixture
     void Function(shared.GitProgress)? onProgress,
   }) => throw StateError('Unexpected shell creation.');
   @override
-  Stream<void> watch(shared.RepositoryId repository) =>
-      Stream<void>.multi((_) {});
+  Stream<void> watch(shared.RepositoryId repository) => Stream<void>.multi((_) {
+    watchSubscriptions++;
+  });
 }
