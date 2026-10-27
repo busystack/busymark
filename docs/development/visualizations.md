@@ -5,6 +5,19 @@ User syntax, behavior, and limitations belong in that guide.
 
 ## Architecture
 
+The web build consumes the published Mermaid 11.16.1 package through its public
+entry point. Its parser, defaults and KaTeX dependency remain upstream code;
+BusyMark does not substitute modules or rebuild a modified Mermaid source tree.
+The fetch script checks the publisher archive hash and compares installed Mermaid
+files with that archive before bundling. `npm ci --ignore-scripts` uses the locked
+dependency graph. Mermaid math labels use upstream MathML through the supported HTML-label
+configuration and retain strict security mode. Ordinary document equations
+continue through MathJax.
+
+Run `python3 -m unittest tools/test_visualization_dependency_policy.py` for the
+package integrity controls, then the normal visualization smoke to verify the
+actual engines. The smoke includes Mermaid math labels as well as MathJax output.
+
 `lib/src/visualization/` owns renderer contracts, typed results, diagnostics,
 revision cancellation, scheduling, generated-SVG normalization, OpenAPI
 dependency resolution, and bounded memory and disk caches. Cache keys include

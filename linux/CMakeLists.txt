@@ -143,7 +143,7 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/plantuml_renderer.js"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/openapi_renderer.js"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/mathjax_renderer.js"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/mermaid_math_disabled.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/verify_published_package.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/build_render_engines.js"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/reference.js"
     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/bootstrap.js"

@@ -85,7 +85,7 @@ void main() {
       ).readAsStringSync();
       final cmake = File('linux/CMakeLists.txt').readAsStringSync();
 
-      expect(dependencies, isNot(contains('mermaid')));
+      expect(dependencies['mermaid'], '11.16.1');
       expect(dependencies['@mermaid-js/parser'], '1.2.0');
       expect(dependencies['@plantuml/core'], '1.2026.6');
       expect(dependencies['@scalar/openapi-parser'], '0.28.14');
@@ -95,10 +95,10 @@ void main() {
       expect(dependencies['@mathjax/src'], '4.1.3');
       expect(dependencies['@mathjax/mathjax-newcm-font'], '4.1.3');
       expect(dependencies, isNot(contains('katex')));
-      expect(lock, isNot(contains('node_modules/katex')));
+      expect(lock, contains('node_modules/katex'));
       expect((package['engines'] as Map<String, Object?>)['node'], '>=22');
       for (final checksum in [
-        '0ee99b3bb82766e5d6c34b8cc768b8530ce8f1aaa13790ae368aebeef3de9d11',
+        'ebd9885111092c78cefc79a76f6c1dc34ed5b834b02ae8f338227ce79c003de4',
         '798f99592eb03a6446519d2becf78e6f1008d0d25c75d60b37a0f46e39e3c413',
         '993bb7ebb3480cc574665b0eac52d9cd4a817fdf5b4444894bb70e174880513d',
         '68b6f22ca530ac50e3cd034c5189d89cc5457c3c2d325b44e90db05c9f08c573',
@@ -114,8 +114,9 @@ void main() {
       expect(fetch, contains('--ignore-scripts'));
       expect(fetch, contains('NODE_MAJOR < 22'));
       expect(fetch, contains('THIRD_PARTY_NOTICES.md'));
-      expect(fetch, contains(r'mermaid@${MERMAID_VERSION}.tar.gz'));
-      expect(fetch, contains('packages/mermaid'));
+      expect(fetch, contains(r'mermaid/-/mermaid-${MERMAID_VERSION}.tgz'));
+      expect(fetch, contains('verify_published_package.py'));
+      expect(fetch, contains('node_modules/mermaid'));
       expect(fetch, contains('build_render_engines.js'));
       for (final engine in ['mermaid', 'plantuml', 'openapi', 'math']) {
         expect(fetch, contains('$engine-engine.js'));
@@ -123,10 +124,12 @@ void main() {
         expect(webEngines, contains("import('./$engine-engine.js')"));
         expect(cmake, contains('$engine-engine.js'));
       }
-      expect(webBuild, contains('katex: disabledMathModule'));
+      expect(webBuild, isNot(contains('alias:')));
+      expect(webBuild, isNot(contains('plugins:')));
+      expect(webBuild, isNot(contains('onLoad')));
       expect(
-        webBuild,
-        contains("path.join(mermaidSource, 'src', 'mermaid.ts')"),
+        File('tools/visualization/mermaid_math_disabled.js').existsSync(),
+        isFalse,
       );
       expect(
         webEngines,
