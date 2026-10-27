@@ -91,9 +91,16 @@ void main() {
       );
       expect(gateway.detectCalls, 0);
       expect(gateway.statusCalls, 0);
+      final beforeTrustRefreshes = refreshes;
       await container
           .read(appSettingsControllerProvider.notifier)
           .trustGitWorkspace(root);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        refreshes,
+        beforeTrustRefreshes,
+        reason: 'Granting trust must not queue another working-tree scan.',
+      );
       await controller.refresh();
       expect(
         container.read(gitControllerProvider).requiresWorkspaceTrust,

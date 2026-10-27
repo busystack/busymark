@@ -482,7 +482,18 @@ class GitController extends Notifier<GitState> {
         if (!isTrusted) {
           _setWorkspaceTrustRequiredState();
         }
-        _scheduleRefresh(immediate: true);
+        final source = _sharedStatusSource;
+        if (source != null &&
+            source.workspaceId == workspace.id &&
+            !workspace.isRemote &&
+            source.workspacePath == workspace.rootPath &&
+            _sharedAssociation?.repository.key == source.repository.key) {
+          // Trust changes authorization, not Git contents. Reuse the passive
+          // snapshot without queuing a second scan over the active operation.
+          unawaited(refreshFromSharedSnapshot());
+        } else {
+          _scheduleRefresh(immediate: true);
+        }
       }
     });
     ref.onDispose(() => _debounce?.cancel());
