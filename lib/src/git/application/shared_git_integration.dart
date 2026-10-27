@@ -498,26 +498,43 @@ Future<bool> _ensureGitTrust(
       .trustsGitWorkspace(repository.root)) {
     return true;
   }
+  var decisionSubmitted = false;
   final approved = await showBusyMarkModalDialog<bool>(
     context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(context.l10n.gitTrustRequiredTitle),
-      content: Text(
-        '${repository.root}\n\n${context.l10n.gitTrustRequiredMessage}\n'
-        'Git operations apply to this entire repository and may execute its configured hooks, filters, credential and signing tools.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: Text(context.l10n.cancel),
+    builder: (dialogContext) {
+      final route = ModalRoute.of(dialogContext);
+      void decide(bool value) {
+        // A native activation can still be queued while this route exits.
+        // It must never dismiss the review underneath the trust dialog.
+        if (decisionSubmitted ||
+            !dialogContext.mounted ||
+            route?.isCurrent != true) {
+          return;
+        }
+        decisionSubmitted = true;
+        Navigator.of(dialogContext).pop(value);
+      }
+
+      return AlertDialog(
+        title: Text(context.l10n.gitTrustRequiredTitle),
+        content: Text(
+          '${repository.root}\n\n${context.l10n.gitTrustRequiredMessage}\n'
+          'Git operations apply to this entire repository and may execute its configured hooks, filters, credential and signing tools.',
         ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text(context.l10n.gitTrustWorkspace),
-        ),
-      ],
-    ),
+        actions: [
+          TextButton(
+            onPressed: () => decide(false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => decide(true),
+            child: Text(context.l10n.gitTrustWorkspace),
+          ),
+        ],
+      );
+    },
   );
+  decisionSubmitted = true;
   if (approved != true ||
       !context.mounted ||
       ref.read(workspaceControllerProvider).workspace?.id != workspace.id) {

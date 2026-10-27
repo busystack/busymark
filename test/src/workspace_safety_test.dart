@@ -1021,6 +1021,90 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('duplicate Git trust approval preserves its parent review', (
+    tester,
+  ) async {
+    final service = _IdentityWorkspaceService();
+    late WidgetRef widgetRef;
+    late BuildContext hostContext;
+    bool? approved;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Consumer(
+            builder: (context, ref, child) {
+              widgetRef = ref;
+              hostContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+    await widgetRef
+        .read(workspaceControllerProvider.notifier)
+        .openPath(service.rootPath);
+    final workspace = widgetRef.read(workspaceControllerProvider).workspace!;
+    final host = busyMarkGitHost(
+      hostContext,
+      widgetRef,
+      workspace,
+      isMounted: () => hostContext.mounted,
+    );
+    final repository = shared.RepositoryId(
+      root: service.rootPath,
+      gitDir: '${service.rootPath}/.git',
+      commonDir: '${service.rootPath}/.git',
+      objectFormat: 'sha1',
+    );
+    final review = host.present<void>(
+      hostContext,
+      'Preserved rebase plan',
+      TextButton(
+        onPressed: () async {
+          approved = await host.prepareInspection!(
+            repository,
+            const shared.GitInspection(shared.GitInspectionKind.rebasePlan),
+          );
+        },
+        child: const Text('Prepare reviewed plan'),
+      ),
+      expanded: true,
+    );
+    unawaited(review);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Prepare reviewed plan'));
+    await tester.pumpAndSettle();
+    final accept = tester
+        .widget<FilledButton>(
+          find.widgetWithText(FilledButton, l10n.gitTrustWorkspace),
+        )
+        .onPressed!;
+    // Two queued native activations can arrive before the first dismissal
+    // retires the old accessibility node. Only this trust surface may close.
+    accept();
+    accept();
+    await tester.pumpAndSettle();
+    expect(approved, isTrue);
+    expect(find.text('Preserved rebase plan'), findsOneWidget);
+    expect(
+      widgetRef
+          .read(appSettingsControllerProvider)
+          .trustsGitWorkspace(service.rootPath),
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+    Navigator.of(hostContext).popUntil((route) => route.isFirst);
+    await tester.pumpAndSettle();
+    await review;
+  });
+
   testWidgets(
     'shared Git fetch reconciliation leaves authoring buffers and workspace scans alone',
     (tester) async {
