@@ -101,7 +101,7 @@ class _BusyMarkGitWorkspaceScopeState
   }
 
   Future<shared.GitSession?> open({shared.RepositoryId? repository}) async {
-    if (!mounted) return null;
+    if (!mounted || widget.workspace.isRemote) return null;
     final generation = _generation, workspace = widget.workspace;
     if (repository == null) {
       final discovery = _discovery ??= client.discover(
@@ -151,7 +151,9 @@ class _BusyMarkGitWorkspaceScopeState
   void didUpdateWidget(covariant BusyMarkGitWorkspaceScope oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workspace.id != widget.workspace.id ||
-        oldWidget.workspace.rootPath != widget.workspace.rootPath) {
+        oldWidget.workspace.isRemote != widget.workspace.isRemote ||
+        !widget.workspace.isRemote &&
+            oldWidget.workspace.rootPath != widget.workspace.rootPath) {
       _releaseAttachments();
       _discoveryCancellation = shared.GitCancellation();
     }
