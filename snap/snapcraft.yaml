@@ -131,6 +131,7 @@ parts:
       - util-linux
       - gnupg
       - pinentry-gnome3
+      - pinentry-curses
       - yaru-theme-gtk
       - yaru-theme-icon
     override-build: |

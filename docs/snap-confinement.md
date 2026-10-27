@@ -55,6 +55,8 @@ TLS and SSH host verification remain enabled.
 The packaged GnuPG uses its documented `gpgconf.ctl` configuration to locate
 the packaged helpers and keep its agent socket beneath the Snap's private
 `$XDG_RUNTIME_DIR`. The `pinentry` alias selects packaged `pinentry-gnome3`.
+Both the graphical frontend and `pinentry-curses` are declared in the Snap recipe
+so clean builds contain the same signing helpers.
 The executables retain their upstream bytes. `GNUPGHOME` and Git's explicit
 signing-tool configuration remain effective; BusyMark does not import or copy
 private keys. This confined agent is separate from an existing desktop agent.

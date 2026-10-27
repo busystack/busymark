@@ -53,6 +53,10 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
             subprocess.run(['bash', '-euc', script], check=True, env={**os.environ, 'CRAFT_STAGE': str(stage), 'CRAFT_PART_INSTALL': str(output)})
             self.assertEqual((output / 'lib/libflutter_linux_gtk.so').read_bytes(), library.read_bytes())
 
+    def test_snap_declares_both_packaged_pinentry_frontends(self):
+        packages = set(self.recipe['parts']['busymark']['stage-packages'])
+        self.assertTrue({'gnupg', 'pinentry-gnome3', 'pinentry-curses'}.issubset(packages))
+
     def test_tooling_job_installs_its_python_test_dependencies(self):
         script = next(s for s in self.workflow['jobs']['verify']['steps'] if s.get('id') == 'linux-dependencies')['run']
         # Parse executed command tokens, not a comment mentioning the packages.
