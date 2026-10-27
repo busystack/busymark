@@ -331,6 +331,87 @@ class GitController extends Notifier<GitState> {
   })?
   _sharedAssociation;
 
+  ({
+    String workspaceId,
+    shared.RepositoryId repository,
+    String workspacePath,
+    Future<GitStatusSnapshot> Function() refresh,
+    Future<GitStatusSnapshot?> Function() current,
+  })?
+  _sharedStatusSource;
+
+  /// Bind the existing authoring commands to this worktree's shared session.
+  /// Callbacks retain their repository identity through asynchronous refreshes.
+  bool bindSharedStatusSource(
+    Workspace workspace,
+    shared.RepositoryId repository, {
+    required Future<GitStatusSnapshot> Function() refresh,
+    required Future<GitStatusSnapshot?> Function() current,
+  }) {
+    if (workspace.isRemote ||
+        state.attachedWorkspace?.id != workspace.id ||
+        _sharedAssociation?.repository.key != repository.key) {
+      return false;
+    }
+    _refreshEpoch++;
+    _debounce?.cancel();
+    _sharedStatusSource = (
+      workspaceId: workspace.id,
+      repository: repository,
+      workspacePath: workspace.rootPath,
+      refresh: refresh,
+      current: current,
+    );
+    return true;
+  }
+
+  Future<void> refreshFromSharedSnapshot({bool refresh = false}) async {
+    final source = _sharedStatusSource, workspace = state.attachedWorkspace;
+    if (source == null ||
+        workspace == null ||
+        source.workspaceId != workspace.id ||
+        workspace.isRemote ||
+        source.workspacePath != workspace.rootPath ||
+        _sharedAssociation?.repository.key != source.repository.key) {
+      return;
+    }
+    final epoch = ++_refreshEpoch;
+    _debounce?.cancel();
+    try {
+      final status = await (refresh ? source.refresh() : source.current());
+      if (status == null ||
+          !_isCurrentRefresh(workspace.id, epoch) ||
+          source != _sharedStatusSource) {
+        return;
+      }
+      final info = status.repositoryInfo;
+      if (info.rootPath != source.repository.root ||
+          info.gitDirPath != source.repository.gitDir ||
+          info.identityKey != source.repository.key) {
+        throw const shared.GitException(shared.GitErrorCode.staleReview);
+      }
+      final settings = ref.read(appSettingsControllerProvider);
+      final trusted =
+          settings.trustsGitWorkspace(workspace.rootPath) ||
+          _hasRepositoryGrant(workspace, settings);
+      if (identical(state.statusSnapshot, status) &&
+          state.requiresWorkspaceTrust == !trusted &&
+          !state.isRefreshing) {
+        return;
+      }
+      state = state.copyWith(
+        availability: const GitAvailability(available: true),
+      );
+      _applyStatus(status, workspace, requiresTrust: !trusted);
+    } on Object catch (error) {
+      if (_isCurrentRefresh(workspace.id, epoch) &&
+          source == _sharedStatusSource) {
+        _setFailure(error, commandName: 'status');
+        state = state.copyWith(isRefreshing: false);
+      }
+    }
+  }
+
   /// The shared surface discovers the repository independently of the opened
   /// authoring subfolder. Preserve that explicit association for existing file
   /// commands without granting trust to every nested workspace path.
@@ -365,7 +446,10 @@ class GitController extends Notifier<GitState> {
       canonicalPath: canonical,
       repository: repository,
     );
-    _scheduleRefresh(immediate: true);
+    // The shared session supplies the first status. A second legacy scan here
+    // would compete with opening Commit and continue after its operation ends.
+    _refreshEpoch++;
+    _debounce?.cancel();
   }
 
   bool _hasRepositoryGrant(Workspace workspace, AppSettings settings) {
@@ -409,6 +493,7 @@ class GitController extends Notifier<GitState> {
     if (state.attachedWorkspace?.id != workspace.id) {
       _workspaceEpoch++;
       _sharedAssociation = null;
+      _sharedStatusSource = null;
     }
     if (workspace.isRemote) {
       _debounce?.cancel();
@@ -448,6 +533,15 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> refresh() async {
+    final source = _sharedStatusSource;
+    if (source != null &&
+        source.workspaceId == state.attachedWorkspace?.id &&
+        state.attachedWorkspace?.isRemote == false &&
+        source.workspacePath == state.attachedWorkspace!.rootPath &&
+        _sharedAssociation?.repository.key == source.repository.key) {
+      await refreshFromSharedSnapshot(refresh: true);
+      return;
+    }
     final workspace = state.attachedWorkspace;
     if (workspace == null ||
         workspace.kind == WorkspaceKind.nextcloudNotes ||
@@ -536,29 +630,7 @@ class GitController extends Notifier<GitState> {
       if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
         return;
       }
-      final scoped = _workspaceScopedRepoPath(workspace, status.repositoryInfo);
-      final selectedChange = _reconcileChangeSelection(
-        state.selectedChange,
-        status,
-      );
-      final clearChangeTab =
-          state.selectedView == GitView.changes && selectedChange == null;
-      state = state.copyWith(
-        isRefreshing: false,
-        requiresWorkspaceTrust: false,
-        repositoryInfo: status.repositoryInfo,
-        statusSnapshot: status,
-        scopedFilePath: scoped,
-        selectedChange: selectedChange,
-        changeDiff: selectedChange == state.selectedChange
-            ? state.changeDiff
-            : null,
-        selectedCommitFilePath: clearChangeTab
-            ? null
-            : state.selectedCommitFilePath,
-        openDiffFilePaths: clearChangeTab ? const [] : state.openDiffFilePaths,
-        lastError: null,
-      );
+      _applyStatus(status, workspace);
     } on Object catch (error) {
       if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
         return;
@@ -566,6 +638,36 @@ class GitController extends Notifier<GitState> {
       _setFailure(error, commandName: 'status');
       state = state.copyWith(isRefreshing: false);
     }
+  }
+
+  void _applyStatus(
+    GitStatusSnapshot status,
+    Workspace workspace, {
+    bool requiresTrust = false,
+  }) {
+    final scoped = _workspaceScopedRepoPath(workspace, status.repositoryInfo);
+    final selectedChange = _reconcileChangeSelection(
+      state.selectedChange,
+      status,
+    );
+    final clearChangeTab =
+        state.selectedView == GitView.changes && selectedChange == null;
+    state = state.copyWith(
+      isRefreshing: false,
+      requiresWorkspaceTrust: requiresTrust,
+      repositoryInfo: status.repositoryInfo,
+      statusSnapshot: status,
+      scopedFilePath: scoped,
+      selectedChange: selectedChange,
+      changeDiff: selectedChange == state.selectedChange
+          ? state.changeDiff
+          : null,
+      selectedCommitFilePath: clearChangeTab
+          ? null
+          : state.selectedCommitFilePath,
+      openDiffFilePaths: clearChangeTab ? const [] : state.openDiffFilePaths,
+      lastError: null,
+    );
   }
 
   Future<void> trustWorkspace() async {

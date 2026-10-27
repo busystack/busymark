@@ -85,9 +85,9 @@ class GitCliGateway implements GitRepositoryGateway {
                   const shared.GitInspection(shared.GitInspectionKind.remotes),
                 ))['remotes']
                 as List;
-        return _status(state, hasRemote: remotes.isNotEmpty);
+        return projectSharedStatus(state, hasRemote: remotes.isNotEmpty);
       }, 'status');
-  GitRepositoryInfo _info(
+  static GitRepositoryInfo _info(
     shared.GitSnapshot state, {
     bool hasRemote = false,
   }) => GitRepositoryInfo(
@@ -106,7 +106,7 @@ class GitCliGateway implements GitRepositoryGateway {
     isCherryPicking: state.operation.kind == shared.GitOperationKind.cherryPick,
     hasConflicts: state.operation.unmerged,
   );
-  GitStatusSnapshot _status(
+  static GitStatusSnapshot projectSharedStatus(
     shared.GitSnapshot state, {
     bool hasRemote = false,
   }) => GitStatusSnapshot(
@@ -151,7 +151,7 @@ class GitCliGateway implements GitRepositoryGateway {
           ),
     ],
   );
-  GitFileChangeStatus _letter(String value) => switch (value) {
+  static GitFileChangeStatus _letter(String value) => switch (value) {
     'M' => GitFileChangeStatus.modified,
     'A' => GitFileChangeStatus.added,
     'D' => GitFileChangeStatus.deleted,
@@ -561,7 +561,7 @@ class GitCliGateway implements GitRepositoryGateway {
       message: result.diagnostic,
       stdout: result.diagnostic,
       stderr: '',
-      updatedStatus: result.snapshot == null ? null : _status(result.snapshot!),
+      updatedStatus: result.snapshot == null ? null : projectSharedStatus(result.snapshot!),
     );
   });
   @override

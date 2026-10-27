@@ -21,6 +21,8 @@ import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_model.dart';
 import '../../workspace/workspace_safety.dart';
 import 'git_controller.dart';
+import '../data/git_shared_gateway.dart';
+import '../domain/git_models.dart' show GitStatusSnapshot;
 
 typedef BusyMarkGitClientFactory =
     shared.GitClient Function({
@@ -62,6 +64,7 @@ class _BusyMarkGitWorkspaceScopeState
     extends ConsumerState<BusyMarkGitWorkspaceScope> {
   final _sessions = <String, Future<shared.GitSession>>{};
   final _owned = <shared.GitSession>[];
+  final _legacyListeners = <shared.GitSession, VoidCallback>{};
   var _discoveryCancellation = shared.GitCancellation();
   var _generation = 0;
   Future<shared.RepositoryId?>? _discovery;
@@ -131,6 +134,7 @@ class _BusyMarkGitWorkspaceScopeState
         host: _host,
       );
       _owned.add(session);
+      _bindLegacyStatus(workspace, target, session);
       await session.start();
       if (!mounted || generation != _generation) {
         throw const shared.GitException(shared.GitErrorCode.cancelled);
@@ -159,9 +163,79 @@ class _BusyMarkGitWorkspaceScopeState
     }
   }
 
+  void _bindLegacyStatus(
+    Workspace workspace,
+    shared.RepositoryId repository,
+    shared.GitSession session,
+  ) {
+    final engine = client;
+    if (engine is! shared.GitWorkflowClient) return;
+    final generation = _generation;
+    shared.GitSnapshot? projected;
+    Future<GitStatusSnapshot?>? projection;
+    Future<GitStatusSnapshot?> current() {
+      final snapshot = session.snapshot;
+      if (snapshot == null) return Future.value(null);
+      if (identical(projected, snapshot) && projection != null) {
+        return projection!;
+      }
+      projected = snapshot;
+      return projection = () async {
+        final metadata = await (engine as shared.GitWorkflowClient).inspect(
+          repository,
+          const shared.GitInspection(shared.GitInspectionKind.remotes),
+        );
+        if (!mounted || generation != _generation) {
+          throw const shared.GitException(shared.GitErrorCode.cancelled);
+        }
+        final remotes = metadata['remotes'] as List;
+        return GitCliGateway.projectSharedStatus(
+          snapshot,
+          hasRemote: remotes.isNotEmpty,
+        );
+      }();
+    }
+
+    final controller = ref.read(gitControllerProvider.notifier);
+    if (!controller.bindSharedStatusSource(
+      workspace,
+      repository,
+      current: current,
+      refresh: () async {
+        await session.refresh();
+        if (session.failure case final failure?) throw failure;
+        final status = await current();
+        if (status == null) {
+          throw const shared.GitException(shared.GitErrorCode.disconnected);
+        }
+        return status;
+      },
+    )) {
+      return;
+    }
+    shared.GitSnapshot? observed;
+    void changed() {
+      if (!mounted ||
+          generation != _generation ||
+          session.snapshot == null ||
+          identical(observed, session.snapshot)) {
+        return;
+      }
+      observed = session.snapshot;
+      unawaited(controller.refreshFromSharedSnapshot());
+    }
+
+    _legacyListeners[session] = changed;
+    session.addListener(changed);
+  }
+
   void _releaseAttachments() {
     _generation++;
     _discoveryCancellation.cancel();
+    for (final entry in _legacyListeners.entries) {
+      entry.key.removeListener(entry.value);
+    }
+    _legacyListeners.clear();
     for (final session in _owned) {
       session.dispose();
     }
@@ -664,10 +738,11 @@ shared.GitHost busyMarkGitHost(
               .read(workspaceControllerProvider.notifier)
               .refreshWorkspaceFromDiskPreservingOpenTabs();
         }
-        // The shared session already has the engine's reconciled outcome.
-        // Keep the compatibility status used by authoring commands current in
-        // the background, without extending the completed operation's lifetime.
-        unawaited(ref.read(gitControllerProvider.notifier).refresh());
+        // Project the reconciled result for authoring commands. A second full
+        // query would keep competing with typing and opening the next diff.
+        unawaited(
+          ref.read(gitControllerProvider.notifier).refreshFromSharedSnapshot(),
+        );
       }
     },
     chooseDirectory: (_) => getDirectoryPath(),
