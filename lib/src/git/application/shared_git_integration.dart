@@ -1,3 +1,4 @@
+import 'shared_git_localizations.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -350,7 +351,10 @@ Future<void> showBusyMarkSharedGitAction(
     case 'branches':
       await ui.branches();
     case 'fetch':
-      await ui.present('Fetch', shared.GitFetchView(session: session));
+      await ui.present(
+        context.l10n.gitHostFetch,
+        shared.GitFetchView(session: session),
+      );
     case 'pull':
       await ui.pull();
     case 'push':
@@ -418,13 +422,13 @@ Widget _gitCommands(
         in <(String, String, ShortcutActivator, Future<void> Function())>[
           (
             'refresh',
-            'Refresh Git status',
+            context.l10n.gitHostRefreshGitStatus,
             const SingleActivator(LogicalKeyboardKey.f5),
             session.refresh,
           ),
           (
             'commit',
-            'Commit staged',
+            context.l10n.gitHostCommitStaged,
             const SingleActivator(LogicalKeyboardKey.enter, control: true),
             () async {
               if (session.canCommit?.call() == true) {
@@ -434,7 +438,7 @@ Widget _gitCommands(
           ),
           (
             'branches',
-            'Git branches',
+            context.l10n.gitHostGitBranches,
             const SingleActivator(
               LogicalKeyboardKey.keyB,
               control: true,
@@ -444,7 +448,7 @@ Widget _gitCommands(
           ),
           (
             'push',
-            'Review push',
+            context.l10n.gitHostReviewPush,
             const SingleActivator(
               LogicalKeyboardKey.keyP,
               control: true,
@@ -456,7 +460,7 @@ Widget _gitCommands(
       BusyMarkCommand(
         id: 'git.${action.$1}',
         label: (_) => action.$2,
-        category: (_) => 'Git',
+        category: (_) => context.l10n.gitHostGit,
         scope: BusyMarkCommandScope.git,
         shortcut: BusyMarkShortcutDefinition(
           label: action.$2,
@@ -518,8 +522,7 @@ Future<bool> _ensureGitTrust(
       return AlertDialog(
         title: Text(context.l10n.gitTrustRequiredTitle),
         content: Text(
-          '${repository.root}\n\n${context.l10n.gitTrustRequiredMessage}\n'
-          'Git operations apply to this entire repository and may execute its configured hooks, filters, credential and signing tools.',
+          '${repository.root}\n\n${context.l10n.gitTrustRequiredMessage}\n${context.l10n.gitHostGitOperationsApplyToThisEntireRepositoryAndMay}',
         ),
         actions: [
           TextButton(
@@ -553,7 +556,6 @@ shared.GitHost busyMarkGitHost(
   required bool Function() isMounted,
 }) {
   final drafts = ref.read(sharedGitDraftStoreProvider);
-  final strings = context.l10n;
   var reconcileWorkingFiles = true;
   return shared.GitHost(
     spacing: BusyMarkSpacing.sm,
@@ -596,23 +598,8 @@ shared.GitHost busyMarkGitHost(
         ],
       ],
     ),
-    translate: (key, fallback) => switch (fallback) {
-      'Cancel' => strings.cancel,
-      'Close' => strings.close,
-      'Apply' => strings.apply,
-      'Open' => strings.open,
-      'Commit' => strings.gitCommit,
-      'Commit message' => strings.gitCommitMessage,
-      'Staged' => strings.gitStaged,
-      'Unstaged' => strings.gitUnstaged,
-      'Untracked' => strings.gitUntracked,
-      'No changes' => strings.gitNoChanges,
-      'Branches…' => '${strings.gitBranches}…',
-      'Fetch…' => '${strings.gitFetch}…',
-      'Pull…' => '${strings.gitPull}…',
-      'Push…' => '${strings.gitPush}…',
-      _ => fallback,
-    },
+    localize: (message, values) =>
+        context.l10n.translateSharedGitMessage(message, values),
     present: <T>(dialogContext, title, child, {bool expanded = false}) =>
         showBusyMarkModalDialog<T>(
           dialogContext,
@@ -672,10 +659,10 @@ shared.GitHost busyMarkGitHost(
               height: MediaQuery.sizeOf(context).height * .8,
               child: shared.GitTextPane(
                 label: context.l10n.gitSnapshotLabel(
-                  snapshot.version.label,
+                  shared.gitVersionLabel(context, snapshot.version),
                   path.display,
                 ),
-                text: snapshot.text ?? 'Content unavailable',
+                text: snapshot.text ?? context.l10n.gitHostContentUnavailable,
               ),
             ),
           ),
@@ -964,7 +951,9 @@ class _BusyMarkSharedGitSidebarState
                   );
                   final created = await host.present<shared.RepositoryId>(
                     context,
-                    initialize ? 'Initialize repository' : 'Clone repository',
+                    initialize
+                        ? context.l10n.gitHostInitializeRepository
+                        : context.l10n.gitHostCloneRepository,
                     shared.GitCreationView(
                       client: engine as shared.GitWorkflowClient,
                       chooseDirectory: host.chooseDirectory,
@@ -981,7 +970,9 @@ class _BusyMarkSharedGitSidebarState
                   }
                 },
                 child: Text(
-                  initialize ? 'Initialize here…' : 'Clone repository…',
+                  initialize
+                      ? context.l10n.gitHostInitializeHere
+                      : context.l10n.gitHostCloneRepository2,
                 ),
               ),
           ],
@@ -1128,7 +1119,7 @@ class _BusyMarkSharedGitReviewState
           Expanded(
             child: Text(
               widget.review.log
-                  ? 'Git Log'
+                  ? context.l10n.gitHostGitLog
                   : (widget.review.historyPath ??
                             widget.review.comparison!.path)
                         .display,

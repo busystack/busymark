@@ -3341,5 +3341,3822 @@
   },
   "@gitNonUtf8FilenameMessage": {
     "description": "Explain a byte-preserving Git filename that the authoring editor cannot open."
+  },
+  "gitUiMergeInProgress": "Merge in progress",
+  "@gitUiMergeInProgress": {
+    "description": "Shared Git interface: Merge in progress"
+  },
+  "gitUiRebaseInProgress": "Rebase in progress",
+  "@gitUiRebaseInProgress": {
+    "description": "Shared Git interface: Rebase in progress"
+  },
+  "gitUiCherryPickInProgress": "Cherry-pick in progress",
+  "@gitUiCherryPickInProgress": {
+    "description": "Shared Git interface: Cherry-pick in progress"
+  },
+  "gitUiRevertInProgress": "Revert in progress",
+  "@gitUiRevertInProgress": {
+    "description": "Shared Git interface: Revert in progress"
+  },
+  "gitUiPatchApplicationInProgress": "Patch application in progress",
+  "@gitUiPatchApplicationInProgress": {
+    "description": "Shared Git interface: Patch application in progress"
+  },
+  "gitUiSquashMergeResultAwaitingCommit": "Squash merge result awaiting commit",
+  "@gitUiSquashMergeResultAwaitingCommit": {
+    "description": "Shared Git interface: Squash merge result awaiting commit"
+  },
+  "gitUiUnresolvedIndexConflicts": "Unresolved index conflicts",
+  "@gitUiUnresolvedIndexConflicts": {
+    "description": "Shared Git interface: Unresolved index conflicts"
+  },
+  "gitUiUnresolvedConflicts": " · unresolved conflicts",
+  "@gitUiUnresolvedConflicts": {
+    "description": "Shared Git interface:  · unresolved conflicts"
+  },
+  "gitUiReviewOperation": "Review operation",
+  "@gitUiReviewOperation": {
+    "description": "Shared Git interface: Review operation"
+  },
+  "gitUiRefresh": "Refresh",
+  "@gitUiRefresh": {
+    "description": "Shared Git interface: Refresh"
+  },
+  "gitUiCreateNamedStash": "Create named stash",
+  "@gitUiCreateNamedStash": {
+    "description": "Shared Git interface: Create named stash"
+  },
+  "gitUiCreateStash": "Create stash…",
+  "@gitUiCreateStash": {
+    "description": "Shared Git interface: Create stash…"
+  },
+  "gitUiNoStashes": "No stashes",
+  "@gitUiNoStashes": {
+    "description": "Shared Git interface: No stashes"
+  },
+  "gitUiSelectAStashToInspectItsChanges": "Select a stash to inspect its changes",
+  "@gitUiSelectAStashToInspectItsChanges": {
+    "description": "Shared Git interface: Select a stash to inspect its changes"
+  },
+  "gitUiStashedUntrackedFiles": "Stashed untracked files",
+  "@gitUiStashedUntrackedFiles": {
+    "description": "Shared Git interface: Stashed untracked files"
+  },
+  "gitUiInspectStashedUntrackedFiles": "Inspect stashed untracked files…",
+  "@gitUiInspectStashedUntrackedFiles": {
+    "description": "Shared Git interface: Inspect stashed untracked files…"
+  },
+  "gitUiReinstateTheStashSStagedIndexStateWhenApplying": "Reinstate the stash’s staged/index state when applying",
+  "@gitUiReinstateTheStashSStagedIndexStateWhenApplying": {
+    "description": "Shared Git interface: Reinstate the stash’s staged/index state when applying"
+  },
+  "gitUiApplyAndRetain": "Apply and retain",
+  "@gitUiApplyAndRetain": {
+    "description": "Shared Git interface: Apply and retain"
+  },
+  "gitUiPop": "Pop…",
+  "@gitUiPop": {
+    "description": "Shared Git interface: Pop…"
+  },
+  "gitUiCreateBranch": "Create branch…",
+  "@gitUiCreateBranch": {
+    "description": "Shared Git interface: Create branch…"
+  },
+  "gitUiDropStash": "Drop stash…",
+  "@gitUiDropStash": {
+    "description": "Shared Git interface: Drop stash…"
+  },
+  "gitUiBranchFromStash": "Branch from stash",
+  "@gitUiBranchFromStash": {
+    "description": "Shared Git interface: Branch from stash"
+  },
+  "gitUiCreateSwitchToABranchAtTheStashSOriginal": "Create/switch to a branch at the stash’s original base, then apply it. The original stash is retained for explicit later deletion.",
+  "@gitUiCreateSwitchToABranchAtTheStashSOriginal": {
+    "description": "Shared Git interface: Create/switch to a branch at the stash’s original base, then apply it. The original stash is retained for explicit later deletion."
+  },
+  "gitUiArg0ThisStash": "{arg0} this stash?",
+  "@gitUiArg0ThisStash": {
+    "description": "Shared Git interface: {arg0} this stash?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTheOriginalStashIsRetainedIfApplyingConflicts": "The original stash is retained if applying conflicts.",
+  "@gitUiTheOriginalStashIsRetainedIfApplyingConflicts": {
+    "description": "Shared Git interface: The original stash is retained if applying conflicts."
+  },
+  "gitUiDeletesThisStashEntryItsChangesAreNotApplied": "Deletes this stash entry. Its changes are not applied.",
+  "@gitUiDeletesThisStashEntryItsChangesAreNotApplied": {
+    "description": "Shared Git interface: Deletes this stash entry. Its changes are not applied."
+  },
+  "gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr": "Resolve the unmerged files. Git has no stash continue or abort command; the original stash remains.",
+  "@gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr": {
+    "description": "Shared Git interface: Resolve the unmerged files. Git has no stash continue or abort command; the original stash remains."
+  },
+  "gitUiStashNameMessage": "Stash name/message",
+  "@gitUiStashNameMessage": {
+    "description": "Shared Git interface: Stash name/message"
+  },
+  "gitUiStashContentAndResultingIndex": "Stash content and resulting index",
+  "@gitUiStashContentAndResultingIndex": {
+    "description": "Shared Git interface: Stash content and resulting index"
+  },
+  "gitUiStashTrackedWorkingAndStagedChanges": "Stash tracked working and staged changes",
+  "@gitUiStashTrackedWorkingAndStagedChanges": {
+    "description": "Shared Git interface: Stash tracked working and staged changes"
+  },
+  "gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex": "Stash changes, leave staged changes in place (--keep-index)",
+  "@gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex": {
+    "description": "Shared Git interface: Stash changes, leave staged changes in place (--keep-index)"
+  },
+  "gitUiStashOnlyStagedChangesStaged": "Stash only staged changes (--staged)",
+  "@gitUiStashOnlyStagedChangesStaged": {
+    "description": "Shared Git interface: Stash only staged changes (--staged)"
+  },
+  "gitUiIncludeUntrackedFiles": "Include untracked files",
+  "@gitUiIncludeUntrackedFiles": {
+    "description": "Shared Git interface: Include untracked files"
+  },
+  "gitUiAllEligiblePathsInThisRepository": "All eligible paths in this repository",
+  "@gitUiAllEligiblePathsInThisRepository": {
+    "description": "Shared Git interface: All eligible paths in this repository"
+  },
+  "gitUiNoEligibleChangesForTheseStashOptions": "No eligible changes for these stash options.",
+  "@gitUiNoEligibleChangesForTheseStashOptions": {
+    "description": "Shared Git interface: No eligible changes for these stash options."
+  },
+  "gitUiSelectAtLeastOneEligiblePath": "Select at least one eligible path.",
+  "@gitUiSelectAtLeastOneEligiblePath": {
+    "description": "Shared Git interface: Select at least one eligible path."
+  },
+  "gitUiCreateStash2": "Create stash",
+  "@gitUiCreateStash2": {
+    "description": "Shared Git interface: Create stash"
+  },
+  "gitUiCreateWorktree": "Create worktree…",
+  "@gitUiCreateWorktree": {
+    "description": "Shared Git interface: Create worktree…"
+  },
+  "gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD": "Create a commit before creating a worktree at HEAD.",
+  "@gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD": {
+    "description": "Shared Git interface: Create a commit before creating a worktree at HEAD."
+  },
+  "gitUiDetachedHEAD": "detached HEAD",
+  "@gitUiDetachedHEAD": {
+    "description": "Shared Git interface: detached HEAD"
+  },
+  "gitUiCurrent": "Current · ",
+  "@gitUiCurrent": {
+    "description": "Shared Git interface: Current · "
+  },
+  "gitUiLocked": "Locked · ",
+  "@gitUiLocked": {
+    "description": "Shared Git interface: Locked · "
+  },
+  "gitUiOpenInBusyStack": "Open in BusyStack · ",
+  "@gitUiOpenInBusyStack": {
+    "description": "Shared Git interface: Open in BusyStack · "
+  },
+  "gitUiStatusNotInspected": "Status not inspected",
+  "@gitUiStatusNotInspected": {
+    "description": "Shared Git interface: Status not inspected"
+  },
+  "gitUiDirty": "Dirty",
+  "@gitUiDirty": {
+    "description": "Shared Git interface: Dirty"
+  },
+  "gitUiClean": "Clean",
+  "@gitUiClean": {
+    "description": "Shared Git interface: Clean"
+  },
+  "gitUiOpenWorkingFolder": "Open working folder",
+  "@gitUiOpenWorkingFolder": {
+    "description": "Shared Git interface: Open working folder"
+  },
+  "gitUiMoveWorktree": "Move worktree…",
+  "@gitUiMoveWorktree": {
+    "description": "Shared Git interface: Move worktree…"
+  },
+  "gitUiUnlock": "Unlock",
+  "@gitUiUnlock": {
+    "description": "Shared Git interface: Unlock"
+  },
+  "gitUiLock": "Lock",
+  "@gitUiLock": {
+    "description": "Shared Git interface: Lock"
+  },
+  "gitUiRemoveCleanWorktree": "Remove clean worktree…",
+  "@gitUiRemoveCleanWorktree": {
+    "description": "Shared Git interface: Remove clean worktree…"
+  },
+  "gitUiReviewRemovalIncludingLocalChanges": "Review removal including local changes…",
+  "@gitUiReviewRemovalIncludingLocalChanges": {
+    "description": "Shared Git interface: Review removal including local changes…"
+  },
+  "gitUiNewWorktreeFolderName": "New worktree folder name",
+  "@gitUiNewWorktreeFolderName": {
+    "description": "Shared Git interface: New worktree folder name"
+  },
+  "gitUiNewWorktreeBranch": "New worktree branch",
+  "@gitUiNewWorktreeBranch": {
+    "description": "Shared Git interface: New worktree branch"
+  },
+  "gitUiCreateArg0Arg1WithANewLocalBranchAtArg2": "Create {arg0}/{arg1} with a new local branch at {arg2} ({arg3}).",
+  "@gitUiCreateArg0Arg1WithANewLocalBranchAtArg2": {
+    "description": "Shared Git interface: Create {arg0}/{arg1} with a new local branch at {arg2} ({arg3}).",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      },
+      "arg3": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiDestinationFolderName": "Destination folder name",
+  "@gitUiDestinationFolderName": {
+    "description": "Shared Git interface: Destination folder name"
+  },
+  "gitUiRemoveWorktree": "Remove worktree?",
+  "@gitUiRemoveWorktree": {
+    "description": "Shared Git interface: Remove worktree?"
+  },
+  "gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree": "Explicitly discard all local tracked/untracked changes in this worktree. Locked/in-use worktrees remain protected.",
+  "@gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree": {
+    "description": "Shared Git interface: Explicitly discard all local tracked/untracked changes in this worktree. Locked/in-use worktrees remain protected."
+  },
+  "gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles": "Git refuses removal if there are local changes, untracked files, or a lock.",
+  "@gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles": {
+    "description": "Shared Git interface: Git refuses removal if there are local changes, untracked files, or a lock."
+  },
+  "gitUiDiscardLocalWorktreeContentsAndRemove": "Discard local worktree contents and remove",
+  "@gitUiDiscardLocalWorktreeContentsAndRemove": {
+    "description": "Shared Git interface: Discard local worktree contents and remove"
+  },
+  "gitUiRemoveCleanWorktree2": "Remove clean worktree",
+  "@gitUiRemoveCleanWorktree2": {
+    "description": "Shared Git interface: Remove clean worktree"
+  },
+  "gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization": "Explicitly recurse into nested submodules for updates/synchronization",
+  "@gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization": {
+    "description": "Shared Git interface: Explicitly recurse into nested submodules for updates/synchronization"
+  },
+  "gitUiNoRecordedSubmodules": "No recorded submodules",
+  "@gitUiNoRecordedSubmodules": {
+    "description": "Shared Git interface: No recorded submodules"
+  },
+  "gitUiNotInitialized": "not initialized",
+  "@gitUiNotInitialized": {
+    "description": "Shared Git interface: not initialized"
+  },
+  "gitUiParentGitlinkArg0CheckedOutArg1": "Parent gitlink: {arg0}\nChecked out: {arg1}\n",
+  "@gitUiParentGitlinkArg0CheckedOutArg1": {
+    "description": "Shared Git interface: Parent gitlink: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiDirtyNestedRepository": "Dirty nested repository",
+  "@gitUiDirtyNestedRepository": {
+    "description": "Shared Git interface: Dirty nested repository"
+  },
+  "gitUiCleanNestedRepository": "Clean nested repository",
+  "@gitUiCleanNestedRepository": {
+    "description": "Shared Git interface: Clean nested repository"
+  },
+  "gitUiNestedStatusUnavailable": "Nested status unavailable",
+  "@gitUiNestedStatusUnavailable": {
+    "description": "Shared Git interface: Nested status unavailable"
+  },
+  "gitUiEnterNestedRepository": "Enter nested repository",
+  "@gitUiEnterNestedRepository": {
+    "description": "Shared Git interface: Enter nested repository"
+  },
+  "gitUiInitializeConfiguration": "Initialize configuration",
+  "@gitUiInitializeConfiguration": {
+    "description": "Shared Git interface: Initialize configuration"
+  },
+  "gitUiUpdateToParentSRecordedCommit": "Update to parent’s recorded commit…",
+  "@gitUiUpdateToParentSRecordedCommit": {
+    "description": "Shared Git interface: Update to parent’s recorded commit…"
+  },
+  "gitUiFollowConfiguredRemoteBranch": "Follow configured remote branch…",
+  "@gitUiFollowConfiguredRemoteBranch": {
+    "description": "Shared Git interface: Follow configured remote branch…"
+  },
+  "gitUiSynchronizeConfiguredURLs": "Synchronize configured URLs…",
+  "@gitUiSynchronizeConfiguredURLs": {
+    "description": "Shared Git interface: Synchronize configured URLs…"
+  },
+  "gitUiStageCurrentSubmodulePointerInParent": "Stage current submodule pointer in parent",
+  "@gitUiStageCurrentSubmodulePointerInParent": {
+    "description": "Shared Git interface: Stage current submodule pointer in parent"
+  },
+  "gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate": "Parent and submodule commits, pushes, and dirty state remain separate. Browsing does not initialize or update them.",
+  "@gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate": {
+    "description": "Shared Git interface: Parent and submodule commits, pushes, and dirty state remain separate. Browsing does not initialize or update them."
+  },
+  "gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit": "Fetch and check out the configured remote branch’s commit. This differs from the parent’s recorded gitlink. Recursive: {arg0}.",
+  "@gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit": {
+    "description": "Shared Git interface: Fetch and check out the configured remote branch’s commit. This differs from the parent’s recorded gitlink. Recursive: {arg0}.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1": "Initialize as needed and check out exactly {arg0}. Recursive: {arg1}.",
+  "@gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1": {
+    "description": "Shared Git interface: Initialize as needed and check out exactly {arg0}. Recursive: {arg1}.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0": "Apply the reviewed submodule configuration operation. Recursive: {arg0}.",
+  "@gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0": {
+    "description": "Shared Git interface: Apply the reviewed submodule configuration operation. Recursive: {arg0}.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiApplySubmoduleOperation": "Apply submodule operation",
+  "@gitUiApplySubmoduleOperation": {
+    "description": "Shared Git interface: Apply submodule operation"
+  },
+  "gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog": "Inspect a recorded revision or create a recovery branch. Reflog does not recover arbitrary unsaved or untracked content.",
+  "@gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog": {
+    "description": "Shared Git interface: Inspect a recorded revision or create a recovery branch. Reflog does not recover arbitrary unsaved or untracked content."
+  },
+  "gitUiSelectAReflogEntry": "Select a reflog entry",
+  "@gitUiSelectAReflogEntry": {
+    "description": "Shared Git interface: Select a reflog entry"
+  },
+  "gitUiPreviousPage": "Previous page",
+  "@gitUiPreviousPage": {
+    "description": "Shared Git interface: Previous page"
+  },
+  "gitUiNextPage": "Next page",
+  "@gitUiNextPage": {
+    "description": "Shared Git interface: Next page"
+  },
+  "gitUiRecoveryBranchName": "Recovery branch name",
+  "@gitUiRecoveryBranchName": {
+    "description": "Shared Git interface: Recovery branch name"
+  },
+  "gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent": "Creates a branch at {arg0}; working files and the current branch are unchanged.",
+  "@gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent": {
+    "description": "Shared Git interface: Creates a branch at {arg0}; working files and the current branch are unchanged.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCreateRecoveryBranch": "Create recovery branch…",
+  "@gitUiCreateRecoveryBranch": {
+    "description": "Shared Git interface: Create recovery branch…"
+  },
+  "gitUiReadOnlyRecoverySnapshot": "Read-only recovery snapshot",
+  "@gitUiReadOnlyRecoverySnapshot": {
+    "description": "Shared Git interface: Read-only recovery snapshot"
+  },
+  "gitUiInspectSnapshot": "Inspect snapshot…",
+  "@gitUiInspectSnapshot": {
+    "description": "Shared Git interface: Inspect snapshot…"
+  },
+  "gitUiReviewReset": "Review reset…",
+  "@gitUiReviewReset": {
+    "description": "Shared Git interface: Review reset…"
+  },
+  "gitUiPageArg0": "Page {arg0}",
+  "@gitUiPageArg0": {
+    "description": "Shared Git interface: Page {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiAGitTextHistoryMustOwnItsEditableField": "A Git text history must own its editable field.",
+  "@gitUiAGitTextHistoryMustOwnItsEditableField": {
+    "description": "Shared Git interface: A Git text history must own its editable field."
+  },
+  "gitUiEditHEADIndexWorkingTree": "Edit HEAD | Index | Working Tree…",
+  "@gitUiEditHEADIndexWorkingTree": {
+    "description": "Shared Git interface: Edit HEAD | Index | Working Tree…"
+  },
+  "gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison": "The reviewed index or working content changed. Refresh this comparison before staging.",
+  "@gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison": {
+    "description": "Shared Git interface: The reviewed index or working content changed. Refresh this comparison before staging."
+  },
+  "gitUiRefreshComparison": "Refresh comparison",
+  "@gitUiRefreshComparison": {
+    "description": "Shared Git interface: Refresh comparison"
+  },
+  "gitUiPreviousChangedFile": "Previous changed file",
+  "@gitUiPreviousChangedFile": {
+    "description": "Shared Git interface: Previous changed file"
+  },
+  "gitUiNextChangedFile": "Next changed file",
+  "@gitUiNextChangedFile": {
+    "description": "Shared Git interface: Next changed file"
+  },
+  "gitUiPreviousDifference": "Previous difference",
+  "@gitUiPreviousDifference": {
+    "description": "Shared Git interface: Previous difference"
+  },
+  "gitUiNextDifference": "Next difference",
+  "@gitUiNextDifference": {
+    "description": "Shared Git interface: Next difference"
+  },
+  "gitUiComparisonMode": "Comparison mode",
+  "@gitUiComparisonMode": {
+    "description": "Shared Git interface: Comparison mode"
+  },
+  "gitUiSideBySide": "Side by side",
+  "@gitUiSideBySide": {
+    "description": "Shared Git interface: Side by side"
+  },
+  "gitUiUnified": "Unified",
+  "@gitUiUnified": {
+    "description": "Shared Git interface: Unified"
+  },
+  "gitUiDiffDisplayOptions": "Diff display options",
+  "@gitUiDiffDisplayOptions": {
+    "description": "Shared Git interface: Diff display options"
+  },
+  "gitUiWrap": "Wrap",
+  "@gitUiWrap": {
+    "description": "Shared Git interface: Wrap"
+  },
+  "gitUiWords": "Words",
+  "@gitUiWords": {
+    "description": "Shared Git interface: Words"
+  },
+  "gitUiCollapseContext": "Collapse context",
+  "@gitUiCollapseContext": {
+    "description": "Shared Git interface: Collapse context"
+  },
+  "gitUiIgnoreWhitespace": "Ignore whitespace",
+  "@gitUiIgnoreWhitespace": {
+    "description": "Shared Git interface: Ignore whitespace"
+  },
+  "gitUiSearchComparison": "Search comparison",
+  "@gitUiSearchComparison": {
+    "description": "Shared Git interface: Search comparison"
+  },
+  "gitUiSearch": "Search",
+  "@gitUiSearch": {
+    "description": "Shared Git interface: Search"
+  },
+  "gitUiCloseSearch": "Close search",
+  "@gitUiCloseSearch": {
+    "description": "Shared Git interface: Close search"
+  },
+  "gitUiStagingActions": "Staging actions",
+  "@gitUiStagingActions": {
+    "description": "Shared Git interface: Staging actions"
+  },
+  "gitUiStagingActions2": "Staging actions…",
+  "@gitUiStagingActions2": {
+    "description": "Shared Git interface: Staging actions…"
+  },
+  "gitUiUnstageSelectedChangedLines": "Unstage selected changed lines",
+  "@gitUiUnstageSelectedChangedLines": {
+    "description": "Shared Git interface: Unstage selected changed lines"
+  },
+  "gitUiStageSelectedChangedLines": "Stage selected changed lines",
+  "@gitUiStageSelectedChangedLines": {
+    "description": "Shared Git interface: Stage selected changed lines"
+  },
+  "gitUiUnstageWholeFile": "Unstage whole file",
+  "@gitUiUnstageWholeFile": {
+    "description": "Shared Git interface: Unstage whole file"
+  },
+  "gitUiStageWholeFile": "Stage whole file",
+  "@gitUiStageWholeFile": {
+    "description": "Shared Git interface: Stage whole file"
+  },
+  "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} whitespace-only changed lines hidden · Show exact changes",
+  "@gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": {
+    "description": "Shared Git interface: {arg0} whitespace-only changed lines hidden · Show exact changes",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} changed lines selected · Display settings never alter the staged bytes.",
+  "@gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": {
+    "description": "Shared Git interface: {arg0} changed lines selected · Display settings never alter the staged bytes.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Read-only comparison · Copy text or adjust display settings.",
+  "@gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": {
+    "description": "Shared Git interface: Read-only comparison · Copy text or adjust display settings."
+  },
+  "gitUiNoFinalNewline": " · no final newline",
+  "@gitUiNoFinalNewline": {
+    "description": "Shared Git interface:  · no final newline"
+  },
+  "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} bytes{arg3}",
+  "@gitUiArg0Arg1Arg2BytesArg3": {
+    "description": "Shared Git interface: {arg0} · {arg1} · {arg2} bytes{arg3}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      },
+      "arg3": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTextComparisonIsUnavailableForTheseContents": "Text comparison is unavailable for these contents.",
+  "@gitUiTextComparisonIsUnavailableForTheseContents": {
+    "description": "Shared Git interface: Text comparison is unavailable for these contents."
+  },
+  "gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents": "This comparison exceeds the bounded text review limit. The contents have not been declared identical.",
+  "@gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents": {
+    "description": "Shared Git interface: This comparison exceeds the bounded text review limit. The contents have not been declared identical."
+  },
+  "gitUiTheComparedContentsAreIdentical": "The compared contents are identical.",
+  "@gitUiTheComparedContentsAreIdentical": {
+    "description": "Shared Git interface: The compared contents are identical."
+  },
+  "gitUiUnstage": "Unstage",
+  "@gitUiUnstage": {
+    "description": "Shared Git interface: Unstage"
+  },
+  "gitUiStage": "Stage",
+  "@gitUiStage": {
+    "description": "Shared Git interface: Stage"
+  },
+  "gitUiArg0ChangedLine": "{arg0} changed line",
+  "@gitUiArg0ChangedLine": {
+    "description": "Shared Git interface: {arg0} changed line",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiContext": "Context",
+  "@gitUiContext": {
+    "description": "Shared Git interface: Context"
+  },
+  "gitUiExpandUnchangedContext": "Expand unchanged context",
+  "@gitUiExpandUnchangedContext": {
+    "description": "Shared Git interface: Expand unchanged context"
+  },
+  "gitUiUnstageThisHunk": "Unstage this hunk",
+  "@gitUiUnstageThisHunk": {
+    "description": "Shared Git interface: Unstage this hunk"
+  },
+  "gitUiStageThisHunk": "Stage this hunk",
+  "@gitUiStageThisHunk": {
+    "description": "Shared Git interface: Stage this hunk"
+  },
+  "gitUiEditStagedContentArg0": "Edit staged content · {arg0}",
+  "@gitUiEditStagedContentArg0": {
+    "description": "Shared Git interface: Edit staged content · {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiWritingReviewedIndexResult": "Writing reviewed index result",
+  "@gitUiWritingReviewedIndexResult": {
+    "description": "Shared Git interface: Writing reviewed index result"
+  },
+  "gitUiHead": "HEAD",
+  "@gitUiHead": {
+    "description": "Shared Git interface: HEAD"
+  },
+  "gitUiIndex": "Index",
+  "@gitUiIndex": {
+    "description": "Shared Git interface: Index"
+  },
+  "gitUiWorkingTree": "Working Tree",
+  "@gitUiWorkingTree": {
+    "description": "Shared Git interface: Working Tree"
+  },
+  "gitUiHeadArg0": "HEAD · {arg0}",
+  "@gitUiHeadArg0": {
+    "description": "Shared Git interface: HEAD · {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiIndexEditableUTF8Blob": "Index · editable UTF-8 blob",
+  "@gitUiIndexEditableUTF8Blob": {
+    "description": "Shared Git interface: Index · editable UTF-8 blob"
+  },
+  "gitUiUndo": "Undo",
+  "@gitUiUndo": {
+    "description": "Shared Git interface: Undo"
+  },
+  "gitUiRedo": "Redo",
+  "@gitUiRedo": {
+    "description": "Shared Git interface: Redo"
+  },
+  "gitUiReloadIndexReview": "Reload index review?",
+  "@gitUiReloadIndexReview": {
+    "description": "Shared Git interface: Reload index review?"
+  },
+  "gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces": "Reload the current HEAD, index and working versions. This replaces the unsaved index editor draft.",
+  "@gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces": {
+    "description": "Shared Git interface: Reload the current HEAD, index and working versions. This replaces the unsaved index editor draft."
+  },
+  "gitUiReplaceDraftAndReload": "Replace draft and reload",
+  "@gitUiReplaceDraftAndReload": {
+    "description": "Shared Git interface: Replace draft and reload"
+  },
+  "gitUiReloadVersions": "Reload versions…",
+  "@gitUiReloadVersions": {
+    "description": "Shared Git interface: Reload versions…"
+  },
+  "gitUiWriteEditedResultToThisIndexEntry": "Write edited result to this index entry",
+  "@gitUiWriteEditedResultToThisIndexEntry": {
+    "description": "Shared Git interface: Write edited result to this index entry"
+  },
+  "gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore": "Working files remain on disk. Review the edited index before applying.",
+  "@gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore": {
+    "description": "Shared Git interface: Working files remain on disk. Review the edited index before applying."
+  },
+  "gitUiReviewIndexTextFormatChanges": "Review index text format changes",
+  "@gitUiReviewIndexTextFormatChanges": {
+    "description": "Shared Git interface: Review index text format changes"
+  },
+  "gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1": "Update only the reviewed index entry for {arg0}.\n\n{arg1}",
+  "@gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1": {
+    "description": "Shared Git interface: Update only the reviewed index entry for {arg0}.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiWriteReviewedIndexResult": "Write reviewed index result",
+  "@gitUiWriteReviewedIndexResult": {
+    "description": "Shared Git interface: Write reviewed index result"
+  },
+  "gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain": "The edited result changed during format review. Review it again.",
+  "@gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain": {
+    "description": "Shared Git interface: The edited result changed during format review. Review it again."
+  },
+  "gitUiSynchronizeScrolling": "Synchronize scrolling",
+  "@gitUiSynchronizeScrolling": {
+    "description": "Shared Git interface: Synchronize scrolling"
+  },
+  "gitUiReadOnlyRevisionContent": "Read-only revision content",
+  "@gitUiReadOnlyRevisionContent": {
+    "description": "Shared Git interface: Read-only revision content"
+  },
+  "gitUiEditableIndexContent": "Editable index content",
+  "@gitUiEditableIndexContent": {
+    "description": "Shared Git interface: Editable index content"
+  },
+  "gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters": "The requested revision is outside the current filters. Reset filters to reveal it.",
+  "@gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters": {
+    "description": "Shared Git interface: The requested revision is outside the current filters. Reset filters to reveal it."
+  },
+  "gitUiFilterLog": "Filter Log",
+  "@gitUiFilterLog": {
+    "description": "Shared Git interface: Filter Log"
+  },
+  "gitUiFilters": "Filters…",
+  "@gitUiFilters": {
+    "description": "Shared Git interface: Filters…"
+  },
+  "gitUiFiltersCount": "Filters ({count})…",
+  "@gitUiFiltersCount": {
+    "description": "Shared Git interface: Filters ({count})…",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiMessage": "Message…",
+  "@gitUiMessage": {
+    "description": "Shared Git interface: Message…"
+  },
+  "gitUiAuthor": "Author…",
+  "@gitUiAuthor": {
+    "description": "Shared Git interface: Author…"
+  },
+  "gitUiPath": "Path…",
+  "@gitUiPath": {
+    "description": "Shared Git interface: Path…"
+  },
+  "gitUiDate": "Date…",
+  "@gitUiDate": {
+    "description": "Shared Git interface: Date…"
+  },
+  "gitUiMessageFilter": "Message filter",
+  "@gitUiMessageFilter": {
+    "description": "Shared Git interface: Message filter"
+  },
+  "gitUiAuthorFilter": "Author filter",
+  "@gitUiAuthorFilter": {
+    "description": "Shared Git interface: Author filter"
+  },
+  "gitUiPathFilter": "Path filter",
+  "@gitUiPathFilter": {
+    "description": "Shared Git interface: Path filter"
+  },
+  "gitUiMessage2": "Message",
+  "@gitUiMessage2": {
+    "description": "Shared Git interface: Message"
+  },
+  "gitUiAuthor2": "Author",
+  "@gitUiAuthor2": {
+    "description": "Shared Git interface: Author"
+  },
+  "gitUiPath2": "Path",
+  "@gitUiPath2": {
+    "description": "Shared Git interface: Path"
+  },
+  "gitUiDateFilter": "Date filter…",
+  "@gitUiDateFilter": {
+    "description": "Shared Git interface: Date filter…"
+  },
+  "gitUiResetFilters": "Reset filters",
+  "@gitUiResetFilters": {
+    "description": "Shared Git interface: Reset filters"
+  },
+  "gitUiRefreshLog": "Refresh Log",
+  "@gitUiRefreshLog": {
+    "description": "Shared Git interface: Refresh Log"
+  },
+  "gitUiGoToCommitReference": "Go to commit/reference…",
+  "@gitUiGoToCommitReference": {
+    "description": "Shared Git interface: Go to commit/reference…"
+  },
+  "gitUiBackToHEAD": "Back to HEAD",
+  "@gitUiBackToHEAD": {
+    "description": "Shared Git interface: Back to HEAD"
+  },
+  "gitUiOrderedCherryPick": "Ordered cherry-pick",
+  "@gitUiOrderedCherryPick": {
+    "description": "Shared Git interface: Ordered cherry-pick"
+  },
+  "gitUiReviewCherryPickArg0": "Review cherry-pick ({arg0})…",
+  "@gitUiReviewCherryPickArg0": {
+    "description": "Shared Git interface: Review cherry-pick ({arg0})…",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCompareTwoSelectedRevisions": "Compare two selected revisions…",
+  "@gitUiCompareTwoSelectedRevisions": {
+    "description": "Shared Git interface: Compare two selected revisions…"
+  },
+  "gitUiToggleBranchesPane": "Toggle branches pane",
+  "@gitUiToggleBranchesPane": {
+    "description": "Shared Git interface: Toggle branches pane"
+  },
+  "gitUiFilterBranchesAndTags": "Filter branches and tags",
+  "@gitUiFilterBranchesAndTags": {
+    "description": "Shared Git interface: Filter branches and tags"
+  },
+  "gitUiCommitArg0": "Commit {arg0}",
+  "@gitUiCommitArg0": {
+    "description": "Shared Git interface: Commit {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitDetails": "Commit details…",
+  "@gitUiCommitDetails": {
+    "description": "Shared Git interface: Commit details…"
+  },
+  "gitUiReferenceArg0": "Reference: {arg0}",
+  "@gitUiReferenceArg0": {
+    "description": "Shared Git interface: Reference: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiSelectThisCommit": "Select this commit",
+  "@gitUiSelectThisCommit": {
+    "description": "Shared Git interface: Select this commit"
+  },
+  "gitUiBranchOrTag": "Branch or tag",
+  "@gitUiBranchOrTag": {
+    "description": "Shared Git interface: Branch or tag"
+  },
+  "gitUiAllReferences": "All references",
+  "@gitUiAllReferences": {
+    "description": "Shared Git interface: All references"
+  },
+  "gitUiLocal": "Local",
+  "@gitUiLocal": {
+    "description": "Shared Git interface: Local"
+  },
+  "gitUiRemote": "Remote",
+  "@gitUiRemote": {
+    "description": "Shared Git interface: Remote"
+  },
+  "gitUiTags": "Tags",
+  "@gitUiTags": {
+    "description": "Shared Git interface: Tags"
+  },
+  "gitUiNoCommitsMatchTheCurrentFilters": "No commits match the current filters.",
+  "@gitUiNoCommitsMatchTheCurrentFilters": {
+    "description": "Shared Git interface: No commits match the current filters."
+  },
+  "gitUiObjectID": "Object ID",
+  "@gitUiObjectID": {
+    "description": "Shared Git interface: Object ID"
+  },
+  "gitUiSubjectReferences": "Subject / references",
+  "@gitUiSubjectReferences": {
+    "description": "Shared Git interface: Subject / references"
+  },
+  "gitUiDate2": "Date",
+  "@gitUiDate2": {
+    "description": "Shared Git interface: Date"
+  },
+  "gitUiGitCommits": "Git commits",
+  "@gitUiGitCommits": {
+    "description": "Shared Git interface: Git commits"
+  },
+  "gitUiParents": "Parents",
+  "@gitUiParents": {
+    "description": "Shared Git interface: Parents"
+  },
+  "gitUiArg0Parents": "{arg0} parents",
+  "@gitUiArg0Parents": {
+    "description": "Shared Git interface: {arg0} parents",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiLoadMoreCommits": "Load more commits",
+  "@gitUiLoadMoreCommits": {
+    "description": "Shared Git interface: Load more commits"
+  },
+  "gitUiLoadingChangedFiles": "Loading changed files",
+  "@gitUiLoadingChangedFiles": {
+    "description": "Shared Git interface: Loading changed files"
+  },
+  "gitUiNoChangedFiles": "No changed files",
+  "@gitUiNoChangedFiles": {
+    "description": "Shared Git interface: No changed files"
+  },
+  "gitUiSelectACommit": "Select a commit",
+  "@gitUiSelectACommit": {
+    "description": "Shared Git interface: Select a commit"
+  },
+  "gitUiCompareParentArg0Arg1": "Compare parent {arg0}: {arg1}",
+  "@gitUiCompareParentArg0Arg1": {
+    "description": "Shared Git interface: Compare parent {arg0}: {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiChangedFiles": "Changed files",
+  "@gitUiChangedFiles": {
+    "description": "Shared Git interface: Changed files"
+  },
+  "gitUiAuthorArg0Arg1Arg2": "Author: {arg0} <{arg1}>\n{arg2}",
+  "@gitUiAuthorArg0Arg1Arg2": {
+    "description": "Shared Git interface: Author: {arg0} <{arg1}>",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitterArg0Arg1Arg2": "Committer: {arg0} <{arg1}>\n{arg2}",
+  "@gitUiCommitterArg0Arg1Arg2": {
+    "description": "Shared Git interface: Committer: {arg0} <{arg1}>",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiShallowPartialBoundaryAParentObjectIsUnavailable": "Shallow/partial boundary: a parent object is unavailable.",
+  "@gitUiShallowPartialBoundaryAParentObjectIsUnavailable": {
+    "description": "Shared Git interface: Shallow/partial boundary: a parent object is unavailable."
+  },
+  "gitUiParentIsOutsideThisPageOrAShallowBoundary": "Parent is outside this page or a shallow boundary.",
+  "@gitUiParentIsOutsideThisPageOrAShallowBoundary": {
+    "description": "Shared Git interface: Parent is outside this page or a shallow boundary."
+  },
+  "gitUiParentArg0": "Parent {arg0}",
+  "@gitUiParentArg0": {
+    "description": "Shared Git interface: Parent {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitActions": "Commit actions…",
+  "@gitUiCommitActions": {
+    "description": "Shared Git interface: Commit actions…"
+  },
+  "gitUiEmptyTree": "empty tree",
+  "@gitUiEmptyTree": {
+    "description": "Shared Git interface: empty tree"
+  },
+  "gitUiCreateBranch2": "Create branch",
+  "@gitUiCreateBranch2": {
+    "description": "Shared Git interface: Create branch"
+  },
+  "gitUiCreateTag": "Create tag",
+  "@gitUiCreateTag": {
+    "description": "Shared Git interface: Create tag"
+  },
+  "gitUiCompareRevisions": "Compare revisions",
+  "@gitUiCompareRevisions": {
+    "description": "Shared Git interface: Compare revisions"
+  },
+  "gitUiOpenSnapshot": "Open snapshot",
+  "@gitUiOpenSnapshot": {
+    "description": "Shared Git interface: Open snapshot"
+  },
+  "gitUiRevertCommit": "Revert commit",
+  "@gitUiRevertCommit": {
+    "description": "Shared Git interface: Revert commit"
+  },
+  "gitUiInteractiveRebaseAfterThisBoundary": "Interactive rebase after this boundary",
+  "@gitUiInteractiveRebaseAfterThisBoundary": {
+    "description": "Shared Git interface: Interactive rebase after this boundary"
+  },
+  "gitUiResetCurrentBranch": "Reset current branch",
+  "@gitUiResetCurrentBranch": {
+    "description": "Shared Git interface: Reset current branch"
+  },
+  "gitUiCopyFullObjectID": "Copy full object ID",
+  "@gitUiCopyFullObjectID": {
+    "description": "Shared Git interface: Copy full object ID"
+  },
+  "gitUiGoToCommitReference2": "Go to commit/reference",
+  "@gitUiGoToCommitReference2": {
+    "description": "Shared Git interface: Go to commit/reference"
+  },
+  "gitUiEnterACommitIDOrReferenceToRevealInLog": "Enter a commit ID or reference to reveal in Log.",
+  "@gitUiEnterACommitIDOrReferenceToRevealInLog": {
+    "description": "Shared Git interface: Enter a commit ID or reference to reveal in Log."
+  },
+  "gitUiTheRequestedRevisionIsUnavailable": "The requested revision is unavailable.",
+  "@gitUiTheRequestedRevisionIsUnavailable": {
+    "description": "Shared Git interface: The requested revision is unavailable."
+  },
+  "gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain": "Repository metadata is read-only. Branch inspection and comparison remain available.",
+  "@gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain": {
+    "description": "Shared Git interface: Repository metadata is read-only. Branch inspection and comparison remain available."
+  },
+  "gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd": "Working files are unavailable or read-only. Branch switching and merging are unavailable.",
+  "@gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd": {
+    "description": "Shared Git interface: Working files are unavailable or read-only. Branch switching and merging are unavailable."
+  },
+  "gitUiSearchBranchesAndTags": "Search branches and tags",
+  "@gitUiSearchBranchesAndTags": {
+    "description": "Shared Git interface: Search branches and tags"
+  },
+  "gitUiNewBranch": "New branch…",
+  "@gitUiNewBranch": {
+    "description": "Shared Git interface: New branch…"
+  },
+  "gitUiLocalBranches": "Local branches",
+  "@gitUiLocalBranches": {
+    "description": "Shared Git interface: Local branches"
+  },
+  "gitUiRemoteBranches": "Remote branches",
+  "@gitUiRemoteBranches": {
+    "description": "Shared Git interface: Remote branches"
+  },
+  "gitUiTracksArg0": "Tracks {arg0}",
+  "@gitUiTracksArg0": {
+    "description": "Shared Git interface: Tracks {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCheckedOutAtArg0": "Checked out at {arg0}",
+  "@gitUiCheckedOutAtArg0": {
+    "description": "Shared Git interface: Checked out at {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRefreshingBranchMetadata": "Refreshing branch metadata",
+  "@gitUiRefreshingBranchMetadata": {
+    "description": "Shared Git interface: Refreshing branch metadata"
+  },
+  "gitUiSwitchToArg0": "Switch to {arg0}",
+  "@gitUiSwitchToArg0": {
+    "description": "Shared Git interface: Switch to {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiOpenOccupiedWorktree": "Open occupied worktree",
+  "@gitUiOpenOccupiedWorktree": {
+    "description": "Shared Git interface: Open occupied worktree"
+  },
+  "gitUiCreateLocalTrackingBranch": "Create local tracking branch…",
+  "@gitUiCreateLocalTrackingBranch": {
+    "description": "Shared Git interface: Create local tracking branch…"
+  },
+  "gitUiCompareToCurrentHEAD": "Compare to current HEAD",
+  "@gitUiCompareToCurrentHEAD": {
+    "description": "Shared Git interface: Compare to current HEAD"
+  },
+  "gitUiMergeIntoCurrentBranch": "Merge into current branch…",
+  "@gitUiMergeIntoCurrentBranch": {
+    "description": "Shared Git interface: Merge into current branch…"
+  },
+  "gitUiRename": "Rename…",
+  "@gitUiRename": {
+    "description": "Shared Git interface: Rename…"
+  },
+  "gitUiChangeUpstream": "Change upstream…",
+  "@gitUiChangeUpstream": {
+    "description": "Shared Git interface: Change upstream…"
+  },
+  "gitUiDelete": "Delete…",
+  "@gitUiDelete": {
+    "description": "Shared Git interface: Delete…"
+  },
+  "gitUiDeleteFromRemote": "Delete from remote…",
+  "@gitUiDeleteFromRemote": {
+    "description": "Shared Git interface: Delete from remote…"
+  },
+  "gitUiActionsForArg0": "Actions for {arg0}",
+  "@gitUiActionsForArg0": {
+    "description": "Shared Git interface: Actions for {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiLocalBranchName": "Local branch name",
+  "@gitUiLocalBranchName": {
+    "description": "Shared Git interface: Local branch name"
+  },
+  "gitUiCreateAtArg0TheNewBranchWillBeCheckedOut": "Create at {arg0}. The new branch will be checked out.",
+  "@gitUiCreateAtArg0TheNewBranchWillBeCheckedOut": {
+    "description": "Shared Git interface: Create at {arg0}. The new branch will be checked out.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut": "The local branch will track {arg0} and be checked out.",
+  "@gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut": {
+    "description": "Shared Git interface: The local branch will track {arg0} and be checked out.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiChooseRemoteForDeletion": "Choose remote for deletion",
+  "@gitUiChooseRemoteForDeletion": {
+    "description": "Shared Git interface: Choose remote for deletion"
+  },
+  "gitUiDeleteRemoteReference": "Delete remote reference",
+  "@gitUiDeleteRemoteReference": {
+    "description": "Shared Git interface: Delete remote reference"
+  },
+  "gitUiMergeArg0IntoArg1": "Merge {arg0} into {arg1}",
+  "@gitUiMergeArg0IntoArg1": {
+    "description": "Shared Git interface: Merge {arg0} into {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRenameArg0": "Rename {arg0}",
+  "@gitUiRenameArg0": {
+    "description": "Shared Git interface: Rename {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiUpstreamForArg0": "Upstream for {arg0}",
+  "@gitUiUpstreamForArg0": {
+    "description": "Shared Git interface: Upstream for {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiNoUpstream": "No upstream",
+  "@gitUiNoUpstream": {
+    "description": "Shared Git interface: No upstream"
+  },
+  "gitUiDeleteArg0": "Delete {arg0}?",
+  "@gitUiDeleteArg0": {
+    "description": "Shared Git interface: Delete {arg0}?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs": "{arg0}\nTarget {arg1}\nLocal deletion only. An unmerged branch is refused.",
+  "@gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs": {
+    "description": "Shared Git interface: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiDelete2": "Delete",
+  "@gitUiDelete2": {
+    "description": "Shared Git interface: Delete"
+  },
+  "gitUiDeleteUnmergedBranchArg0": "Delete unmerged branch {arg0}?",
+  "@gitUiDeleteUnmergedBranchArg0": {
+    "description": "Shared Git interface: Delete unmerged branch {arg0}?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly": "{arg0}\nGit reports this branch is not fully merged. Explicitly delete the local reference after reviewing its commits; remote copies are unchanged.",
+  "@gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly": {
+    "description": "Shared Git interface: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiDeleteUnmergedLocalBranch": "Delete unmerged local branch",
+  "@gitUiDeleteUnmergedLocalBranch": {
+    "description": "Shared Git interface: Delete unmerged local branch"
+  },
+  "gitUiDestinationArg0Arg1": "Destination: {arg0} · {arg1}",
+  "@gitUiDestinationArg0Arg1": {
+    "description": "Shared Git interface: Destination: {arg0} · {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiSourceBranchOrTag": "Source branch or tag",
+  "@gitUiSourceBranchOrTag": {
+    "description": "Shared Git interface: Source branch or tag"
+  },
+  "gitUiMergePolicy": "Merge policy",
+  "@gitUiMergePolicy": {
+    "description": "Shared Git interface: Merge policy"
+  },
+  "gitUiFastForwardWhenPossible": "Fast-forward when possible",
+  "@gitUiFastForwardWhenPossible": {
+    "description": "Shared Git interface: Fast-forward when possible"
+  },
+  "gitUiAlwaysCreateAMergeCommit": "Always create a merge commit",
+  "@gitUiAlwaysCreateAMergeCommit": {
+    "description": "Shared Git interface: Always create a merge commit"
+  },
+  "gitUiFastForwardOnly": "Fast-forward only",
+  "@gitUiFastForwardOnly": {
+    "description": "Shared Git interface: Fast-forward only"
+  },
+  "gitUiSquashIntoStagedChanges": "Squash into staged changes",
+  "@gitUiSquashIntoStagedChanges": {
+    "description": "Shared Git interface: Squash into staged changes"
+  },
+  "gitUiStopBeforeCreatingTheMergeCommit": "Stop before creating the merge commit",
+  "@gitUiStopBeforeCreatingTheMergeCommit": {
+    "description": "Shared Git interface: Stop before creating the merge commit"
+  },
+  "gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview": "Fast-forward is disabled so HEAD cannot move before review.",
+  "@gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview": {
+    "description": "Shared Git interface: Fast-forward is disabled so HEAD cannot move before review."
+  },
+  "gitUiLeavesStagedChangesForASeparateCommitThisIsNot": "Leaves staged changes for a separate commit; this is not a continuing merge.",
+  "@gitUiLeavesStagedChangesForASeparateCommitThisIsNot": {
+    "description": "Shared Git interface: Leaves staged changes for a separate commit; this is not a continuing merge."
+  },
+  "gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace": "Conflicts remain available in the shared resolution workspace.",
+  "@gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace": {
+    "description": "Shared Git interface: Conflicts remain available in the shared resolution workspace."
+  },
+  "gitUiAddRemote": "Add remote…",
+  "@gitUiAddRemote": {
+    "description": "Shared Git interface: Add remote…"
+  },
+  "gitUiFetchArg0PushArg1": "Fetch: {arg0}\nPush: {arg1}",
+  "@gitUiFetchArg0PushArg1": {
+    "description": "Shared Git interface: Fetch: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRemoveRemote": "Remove remote…",
+  "@gitUiRemoveRemote": {
+    "description": "Shared Git interface: Remove remote…"
+  },
+  "gitUiChangeFetchURL": "Change fetch URL…",
+  "@gitUiChangeFetchURL": {
+    "description": "Shared Git interface: Change fetch URL…"
+  },
+  "gitUiAddPushDestination": "Add push destination…",
+  "@gitUiAddPushDestination": {
+    "description": "Shared Git interface: Add push destination…"
+  },
+  "gitUiRemovePushDestination": "Remove push destination…",
+  "@gitUiRemovePushDestination": {
+    "description": "Shared Git interface: Remove push destination…"
+  },
+  "gitUiManageArg0": "Manage {arg0}",
+  "@gitUiManageArg0": {
+    "description": "Shared Git interface: Manage {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRemoteName": "Remote name",
+  "@gitUiRemoteName": {
+    "description": "Shared Git interface: Remote name"
+  },
+  "gitUiNewRemoteName": "New remote name",
+  "@gitUiNewRemoteName": {
+    "description": "Shared Git interface: New remote name"
+  },
+  "gitUiRepositoryURLOrLocalSource": "Repository URL or local source",
+  "@gitUiRepositoryURLOrLocalSource": {
+    "description": "Shared Git interface: Repository URL or local source"
+  },
+  "gitUiEnterTheExactReviewedDestinationToRemove": "Enter the exact reviewed destination to remove.",
+  "@gitUiEnterTheExactReviewedDestinationToRemove": {
+    "description": "Shared Git interface: Enter the exact reviewed destination to remove."
+  },
+  "gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt": "Credentials are supplied by configured helpers or a private prompt.",
+  "@gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt": {
+    "description": "Shared Git interface: Credentials are supplied by configured helpers or a private prompt."
+  },
+  "gitUiRemoveRemoteArg0": "Remove remote {arg0}?",
+  "@gitUiRemoveRemoteArg0": {
+    "description": "Shared Git interface: Remove remote {arg0}?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot": "Removes local remote configuration and tracking references. It does not delete the server repository.",
+  "@gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot": {
+    "description": "Shared Git interface: Removes local remote configuration and tracking references. It does not delete the server repository."
+  },
+  "gitUiRemoveRemote2": "Remove remote",
+  "@gitUiRemoveRemote2": {
+    "description": "Shared Git interface: Remove remote"
+  },
+  "gitUiCommitScopeEntireRepository": "Commit scope: entire repository",
+  "@gitUiCommitScopeEntireRepository": {
+    "description": "Shared Git interface: Commit scope: entire repository"
+  },
+  "gitUiCachedTracking": "Cached tracking",
+  "@gitUiCachedTracking": {
+    "description": "Shared Git interface: Cached tracking"
+  },
+  "gitUiAmendLastCommit": "Amend last commit",
+  "@gitUiAmendLastCommit": {
+    "description": "Shared Git interface: Amend last commit"
+  },
+  "gitUiConfiguredHooksAndSigningAreRespected": "Configured hooks and signing are respected.",
+  "@gitUiConfiguredHooksAndSigningAreRespected": {
+    "description": "Shared Git interface: Configured hooks and signing are respected."
+  },
+  "gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt": "Rewrites the selected HEAD commit. Remote tracking cannot prove it is unpublished.",
+  "@gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt": {
+    "description": "Shared Git interface: Rewrites the selected HEAD commit. Remote tracking cannot prove it is unpublished."
+  },
+  "gitUiRepository": "Repository",
+  "@gitUiRepository": {
+    "description": "Shared Git interface: Repository"
+  },
+  "gitUiDetachedArg0": "Detached {arg0}",
+  "@gitUiDetachedArg0": {
+    "description": "Shared Git interface: Detached {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiLog": "Log",
+  "@gitUiLog": {
+    "description": "Shared Git interface: Log"
+  },
+  "gitUiRepositoryActions": "Repository actions",
+  "@gitUiRepositoryActions": {
+    "description": "Shared Git interface: Repository actions"
+  },
+  "gitUiCachedTrackingUpstreamAheadAheadBehindBehind": "Cached tracking · {upstream} · {ahead} ahead · {behind} behind",
+  "@gitUiCachedTrackingUpstreamAheadAheadBehindBehind": {
+    "description": "Shared Git interface: Cached tracking · {upstream} · {ahead} ahead · {behind} behind",
+    "placeholders": {
+      "upstream": {
+        "type": "String"
+      },
+      "ahead": {
+        "type": "String"
+      },
+      "behind": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts": "Bare repository · no working tree. Open Log to inspect its history.",
+  "@gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts": {
+    "description": "Shared Git interface: Bare repository · no working tree. Open Log to inspect its history."
+  },
+  "gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable": "Read-only repository · staging and commits are unavailable.",
+  "@gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable": {
+    "description": "Shared Git interface: Read-only repository · staging and commits are unavailable."
+  },
+  "gitUiRepositoryStatusUnavailable": "Repository status unavailable",
+  "@gitUiRepositoryStatusUnavailable": {
+    "description": "Shared Git interface: Repository status unavailable"
+  },
+  "gitUiAmendRevision": "Amend {revision}",
+  "@gitUiAmendRevision": {
+    "description": "Shared Git interface: Amend {revision}",
+    "placeholders": {
+      "revision": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiAddSignOffTrailer": "Add sign-off trailer",
+  "@gitUiAddSignOffTrailer": {
+    "description": "Shared Git interface: Add sign-off trailer"
+  },
+  "gitUiUseConfiguredSigningPolicy": "Use configured signing policy",
+  "@gitUiUseConfiguredSigningPolicy": {
+    "description": "Shared Git interface: Use configured signing policy"
+  },
+  "gitUiCryptographicallySignThisCommit": "Cryptographically sign this commit",
+  "@gitUiCryptographicallySignThisCommit": {
+    "description": "Shared Git interface: Cryptographically sign this commit"
+  },
+  "gitUiDoNotSignThisCommit": "Do not sign this commit",
+  "@gitUiDoNotSignThisCommit": {
+    "description": "Shared Git interface: Do not sign this commit"
+  },
+  "gitUiRecentCommitMessages": "Recent commit messages…",
+  "@gitUiRecentCommitMessages": {
+    "description": "Shared Git interface: Recent commit messages…"
+  },
+  "gitUiUseConfiguredCommitTemplate": "Use configured commit template…",
+  "@gitUiUseConfiguredCommitTemplate": {
+    "description": "Shared Git interface: Use configured commit template…"
+  },
+  "gitUiAuthorIdentityAndConfiguredHooks": "Author identity and configured hooks…",
+  "@gitUiAuthorIdentityAndConfiguredHooks": {
+    "description": "Shared Git interface: Author identity and configured hooks…"
+  },
+  "gitUiDraftMessage": "Draft message…",
+  "@gitUiDraftMessage": {
+    "description": "Shared Git interface: Draft message…"
+  },
+  "gitUiCommitOptions": "Commit options",
+  "@gitUiCommitOptions": {
+    "description": "Shared Git interface: Commit options"
+  },
+  "gitUiDraftRetainedInMemorySavingItFailedArg0": "Draft retained in memory; saving it failed. {arg0}",
+  "@gitUiDraftRetainedInMemorySavingItFailedArg0": {
+    "description": "Shared Git interface: Draft retained in memory; saving it failed. {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitMessage": "Commit message",
+  "@gitUiCommitMessage": {
+    "description": "Shared Git interface: Commit message"
+  },
+  "gitUiGitOperationInProgress": "Git operation in progress",
+  "@gitUiGitOperationInProgress": {
+    "description": "Shared Git interface: Git operation in progress"
+  },
+  "gitUiCancel": "Cancel",
+  "@gitUiCancel": {
+    "description": "Shared Git interface: Cancel"
+  },
+  "gitUiAmendStaged": "Amend staged",
+  "@gitUiAmendStaged": {
+    "description": "Shared Git interface: Amend staged"
+  },
+  "gitUiCommitStagedCount": "Commit staged ({count})",
+  "@gitUiCommitStagedCount": {
+    "description": "Shared Git interface: Commit staged ({count})",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitAndPush": "Commit and Push…",
+  "@gitUiCommitAndPush": {
+    "description": "Shared Git interface: Commit and Push…"
+  },
+  "gitUiNoReadableCommitTemplateIsConfigured": "No readable commit template is configured.",
+  "@gitUiNoReadableCommitTemplateIsConfigured": {
+    "description": "Shared Git interface: No readable commit template is configured."
+  },
+  "gitUiCommitIdentityAndHooks": "Commit identity and hooks",
+  "@gitUiCommitIdentityAndHooks": {
+    "description": "Shared Git interface: Commit identity and hooks"
+  },
+  "gitUiRecentMessages": "Recent messages",
+  "@gitUiRecentMessages": {
+    "description": "Shared Git interface: Recent messages"
+  },
+  "gitUiReplaceMessageDraft": "Replace message draft?",
+  "@gitUiReplaceMessageDraft": {
+    "description": "Shared Git interface: Replace message draft?"
+  },
+  "gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage": "Replace the existing commit message with the selected message?",
+  "@gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage": {
+    "description": "Shared Git interface: Replace the existing commit message with the selected message?"
+  },
+  "gitUiReplaceDraft": "Replace draft",
+  "@gitUiReplaceDraft": {
+    "description": "Shared Git interface: Replace draft"
+  },
+  "gitUiLocalCommitArg0Exists": "Local commit {arg0} exists.",
+  "@gitUiLocalCommitArg0Exists": {
+    "description": "Shared Git interface: Local commit {arg0} exists.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit": "Local commit {arg0} exists. Review Log before attempting another commit. The message draft has been retained.",
+  "@gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit": {
+    "description": "Shared Git interface: Local commit {arg0} exists. Review Log before attempting another commit. The message draft has been retained.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitAuthorName": "Commit author name",
+  "@gitUiCommitAuthorName": {
+    "description": "Shared Git interface: Commit author name"
+  },
+  "gitUiCommitAuthorEmail": "Commit author email",
+  "@gitUiCommitAuthorEmail": {
+    "description": "Shared Git interface: Commit author email"
+  },
+  "gitUiConfiguredDefault": "configured default",
+  "@gitUiConfiguredDefault": {
+    "description": "Shared Git interface: configured default"
+  },
+  "gitUiOpenpgp": "OpenPGP",
+  "@gitUiOpenpgp": {
+    "description": "Shared Git interface: OpenPGP"
+  },
+  "gitUiSigningArg0Arg1": "Signing: {arg0} · {arg1}",
+  "@gitUiSigningArg0Arg1": {
+    "description": "Shared Git interface: Signing: {arg0} · {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiConfiguredHooksArg0": "Configured hooks: {arg0}",
+  "@gitUiConfiguredHooksArg0": {
+    "description": "Shared Git interface: Configured hooks: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiASignOffTrailerIsAStatementInTheMessage": "A sign-off trailer is a statement in the message. It is separate from a cryptographic signature. Saving identity changes repository-local configuration only; your draft is retained.",
+  "@gitUiASignOffTrailerIsAStatementInTheMessage": {
+    "description": "Shared Git interface: A sign-off trailer is a statement in the message. It is separate from a cryptographic signature. Saving identity changes repository-local configuration only; your draft is retained."
+  },
+  "gitUiSaveRepositoryIdentity": "Save repository identity",
+  "@gitUiSaveRepositoryIdentity": {
+    "description": "Shared Git interface: Save repository identity"
+  },
+  "gitUiStaged": "Staged",
+  "@gitUiStaged": {
+    "description": "Shared Git interface: Staged"
+  },
+  "gitUiUntracked": "Untracked",
+  "@gitUiUntracked": {
+    "description": "Shared Git interface: Untracked"
+  },
+  "gitUiUnstaged": "Unstaged",
+  "@gitUiUnstaged": {
+    "description": "Shared Git interface: Unstaged"
+  },
+  "gitUiConflicts": "Conflicts",
+  "@gitUiConflicts": {
+    "description": "Shared Git interface: Conflicts"
+  },
+  "gitUiNoChanges": "No changes",
+  "@gitUiNoChanges": {
+    "description": "Shared Git interface: No changes"
+  },
+  "gitUiRepositoryChangeTree": "Repository change tree",
+  "@gitUiRepositoryChangeTree": {
+    "description": "Shared Git interface: Repository change tree"
+  },
+  "gitUiChanges": "Changes",
+  "@gitUiChanges": {
+    "description": "Shared Git interface: Changes"
+  },
+  "gitUiGroupCount": "{group} ({count})",
+  "@gitUiGroupCount": {
+    "description": "Shared Git interface: {group} ({count})",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiExpand": "Expand",
+  "@gitUiExpand": {
+    "description": "Shared Git interface: Expand"
+  },
+  "gitUiCollapse": "Collapse",
+  "@gitUiCollapse": {
+    "description": "Shared Git interface: Collapse"
+  },
+  "gitUiUnstageFile": "Unstage file",
+  "@gitUiUnstageFile": {
+    "description": "Shared Git interface: Unstage file"
+  },
+  "gitUiStageFile": "Stage file",
+  "@gitUiStageFile": {
+    "description": "Shared Git interface: Stage file"
+  },
+  "gitUiExpandGroup": "Expand group",
+  "@gitUiExpandGroup": {
+    "description": "Shared Git interface: Expand group"
+  },
+  "gitUiCollapseGroup": "Collapse group",
+  "@gitUiCollapseGroup": {
+    "description": "Shared Git interface: Collapse group"
+  },
+  "gitUiReviewDifference": "Review difference",
+  "@gitUiReviewDifference": {
+    "description": "Shared Git interface: Review difference"
+  },
+  "gitUiUnstageSelectedFiles": "Unstage selected files",
+  "@gitUiUnstageSelectedFiles": {
+    "description": "Shared Git interface: Unstage selected files"
+  },
+  "gitUiStageSelectedFiles": "Stage selected files",
+  "@gitUiStageSelectedFiles": {
+    "description": "Shared Git interface: Stage selected files"
+  },
+  "gitUiFileHistoryAndBlame": "File history and blame…",
+  "@gitUiFileHistoryAndBlame": {
+    "description": "Shared Git interface: File history and blame…"
+  },
+  "gitUiDeleteUntrackedFile": "Delete untracked file…",
+  "@gitUiDeleteUntrackedFile": {
+    "description": "Shared Git interface: Delete untracked file…"
+  },
+  "gitUiDiscardUnstagedChange": "Discard unstaged change…",
+  "@gitUiDiscardUnstagedChange": {
+    "description": "Shared Git interface: Discard unstaged change…"
+  },
+  "gitUiFileHistory": "File history",
+  "@gitUiFileHistory": {
+    "description": "Shared Git interface: File history"
+  },
+  "gitUiDiscardUnstagedArg0": "Discard unstaged {arg0}?",
+  "@gitUiDiscardUnstagedArg0": {
+    "description": "Shared Git interface: Discard unstaged {arg0}?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr": "{arg0} bytes · {arg1}\nReplaces working content with the index, or deletes this untracked file. Staged content is retained. Unsaved host documents must be reviewed first.",
+  "@gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr": {
+    "description": "Shared Git interface: {arg0} bytes · {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiDeleteUntrackedFile2": "Delete untracked file",
+  "@gitUiDeleteUntrackedFile2": {
+    "description": "Shared Git interface: Delete untracked file"
+  },
+  "gitUiDiscardWorkingChange": "Discard working change",
+  "@gitUiDiscardWorkingChange": {
+    "description": "Shared Git interface: Discard working change"
+  },
+  "gitUiDeleteREMOTEReferenceArg0": "Delete REMOTE reference {arg0}",
+  "@gitUiDeleteREMOTEReferenceArg0": {
+    "description": "Shared Git interface: Delete REMOTE reference {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed": "This removes the reference on every actual push destination listed below. Local branches/tags are retained. The expected tips are fixed by this review.",
+  "@gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed": {
+    "description": "Shared Git interface: This removes the reference on every actual push destination listed below. Local branches/tags are retained. The expected tips are fixed by this review."
+  },
+  "gitUiReferenceDoesNotExist": "reference does not exist",
+  "@gitUiReferenceDoesNotExist": {
+    "description": "Shared Git interface: reference does not exist"
+  },
+  "gitUiArg0ExpectedTipArg1": "{arg0}\nExpected tip: {arg1}",
+  "@gitUiArg0ExpectedTipArg1": {
+    "description": "Shared Git interface: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRemoteDeletionCompleted": "Remote deletion completed.",
+  "@gitUiRemoteDeletionCompleted": {
+    "description": "Shared Git interface: Remote deletion completed."
+  },
+  "gitUiDeleteArg0FromTheRemote": "Delete {arg0} from the remote?",
+  "@gitUiDeleteArg0FromTheRemote": {
+    "description": "Shared Git interface: Delete {arg0} from the remote?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny": "The exact destination tips shown above will be removed. Any changed remote tip stops the operation for another review.",
+  "@gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny": {
+    "description": "Shared Git interface: The exact destination tips shown above will be removed. Any changed remote tip stops the operation for another review."
+  },
+  "gitUiReviewAndDeleteFromRemote": "Review and delete from remote…",
+  "@gitUiReviewAndDeleteFromRemote": {
+    "description": "Shared Git interface: Review and delete from remote…"
+  },
+  "gitUiDestinationReference": "Destination reference",
+  "@gitUiDestinationReference": {
+    "description": "Shared Git interface: Destination reference"
+  },
+  "gitUiReviewDestinations": "Review destinations",
+  "@gitUiReviewDestinations": {
+    "description": "Shared Git interface: Review destinations"
+  },
+  "gitUiNewRemoteBranch": "new remote branch",
+  "@gitUiNewRemoteBranch": {
+    "description": "Shared Git interface: new remote branch"
+  },
+  "gitUiArg0Arg1ExpectedArg2": "{arg0}\n{arg1} · expected {arg2}",
+  "@gitUiArg0Arg1ExpectedArg2": {
+    "description": "Shared Git interface: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat": "A destination has commits that are unavailable locally. Fetch that reviewed destination before reviewing outgoing history.",
+  "@gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat": {
+    "description": "Shared Git interface: A destination has commits that are unavailable locally. Fetch that reviewed destination before reviewing outgoing history."
+  },
+  "gitUiFetchReviewedDestination": "Fetch reviewed destination",
+  "@gitUiFetchReviewedDestination": {
+    "description": "Shared Git interface: Fetch reviewed destination"
+  },
+  "gitUiChooseADestinationAndReviewTheOutgoingCommits": "Choose a destination and review the outgoing commits.",
+  "@gitUiChooseADestinationAndReviewTheOutgoingCommits": {
+    "description": "Shared Git interface: Choose a destination and review the outgoing commits."
+  },
+  "gitUiNoOutgoingCommits": "No outgoing commits",
+  "@gitUiNoOutgoingCommits": {
+    "description": "Shared Git interface: No outgoing commits"
+  },
+  "gitUiSelectAnOutgoingCommit": "Select an outgoing commit",
+  "@gitUiSelectAnOutgoingCommit": {
+    "description": "Shared Git interface: Select an outgoing commit"
+  },
+  "gitUiLoadMoreOutgoingCommits": "Load more outgoing commits",
+  "@gitUiLoadMoreOutgoingCommits": {
+    "description": "Shared Git interface: Load more outgoing commits"
+  },
+  "gitUiSetThisDestinationAsUpstream": "Set this destination as upstream",
+  "@gitUiSetThisDestinationAsUpstream": {
+    "description": "Shared Git interface: Set this destination as upstream"
+  },
+  "gitUiChooseExactTagsToPublish": "Choose exact tags to publish",
+  "@gitUiChooseExactTagsToPublish": {
+    "description": "Shared Git interface: Choose exact tags to publish"
+  },
+  "gitUiTagsNone": "Tags: none",
+  "@gitUiTagsNone": {
+    "description": "Shared Git interface: Tags: none"
+  },
+  "gitUiTagsArg0Selected": "Tags: {arg0} selected",
+  "@gitUiTagsArg0Selected": {
+    "description": "Shared Git interface: Tags: {arg0} selected",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiPublishExactlyArg0": "Publish exactly: {arg0}",
+  "@gitUiPublishExactlyArg0": {
+    "description": "Shared Git interface: Publish exactly: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiPushCompletedTheLocalCommitRemainsAvailableInLog": "Push completed. The local commit remains available in Log.",
+  "@gitUiPushCompletedTheLocalCommitRemainsAvailableInLog": {
+    "description": "Shared Git interface: Push completed. The local commit remains available in Log."
+  },
+  "gitUiForceRequiresTheExactDestinationTipsShownInThisReview": "Force requires the exact destination tips shown in this review.",
+  "@gitUiForceRequiresTheExactDestinationTipsShownInThisReview": {
+    "description": "Shared Git interface: Force requires the exact destination tips shown in this review."
+  },
+  "gitUiForceWithReviewedLease": "Force with reviewed lease…",
+  "@gitUiForceWithReviewedLease": {
+    "description": "Shared Git interface: Force with reviewed lease…"
+  },
+  "gitUiPush": "Push",
+  "@gitUiPush": {
+    "description": "Shared Git interface: Push"
+  },
+  "gitUiForcePushWithReviewedLeases": "Force push with reviewed leases?",
+  "@gitUiForcePushWithReviewedLeases": {
+    "description": "Shared Git interface: Force push with reviewed leases?"
+  },
+  "gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe": "Rewrite {arg0} only if every remote destination still has the exact tip shown above.\n",
+  "@gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe": {
+    "description": "Shared Git interface: Rewrite {arg0} only if every remote destination still has the exact tip shown above.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch": "Other people may already use this history. A background fetch will not renew this lease.",
+  "@gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch": {
+    "description": "Shared Git interface: Other people may already use this history. A background fetch will not renew this lease."
+  },
+  "gitUiForceWithLease": "Force with lease",
+  "@gitUiForceWithLease": {
+    "description": "Shared Git interface: Force with lease"
+  },
+  "gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother": "The remote outcome is uncertain. Review destinations again before another push.",
+  "@gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother": {
+    "description": "Shared Git interface: The remote outcome is uncertain. Review destinations again before another push."
+  },
+  "gitUiParentArg0Arg1": "Parent {arg0} · {arg1}",
+  "@gitUiParentArg0Arg1": {
+    "description": "Shared Git interface: Parent {arg0} · {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRemoteToFetch": "Remote to fetch",
+  "@gitUiRemoteToFetch": {
+    "description": "Shared Git interface: Remote to fetch"
+  },
+  "gitUiPruneDeletedRemoteTrackingBranches": "Prune deleted remote-tracking branches",
+  "@gitUiPruneDeletedRemoteTrackingBranches": {
+    "description": "Shared Git interface: Prune deleted remote-tracking branches"
+  },
+  "gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles": "Fetch updates remote-tracking information without replacing working files.",
+  "@gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles": {
+    "description": "Shared Git interface: Fetch updates remote-tracking information without replacing working files."
+  },
+  "gitUiFetch": "Fetch",
+  "@gitUiFetch": {
+    "description": "Shared Git interface: Fetch"
+  },
+  "gitUiSourceRemote": "Source remote",
+  "@gitUiSourceRemote": {
+    "description": "Shared Git interface: Source remote"
+  },
+  "gitUiSourceBranch": "Source branch",
+  "@gitUiSourceBranch": {
+    "description": "Shared Git interface: Source branch"
+  },
+  "gitUiReviewedStrategy": "Reviewed strategy",
+  "@gitUiReviewedStrategy": {
+    "description": "Shared Git interface: Reviewed strategy"
+  },
+  "gitUiMerge": "Merge",
+  "@gitUiMerge": {
+    "description": "Shared Git interface: Merge"
+  },
+  "gitUiRebase": "Rebase",
+  "@gitUiRebase": {
+    "description": "Shared Git interface: Rebase"
+  },
+  "gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr": "Stop if the destination cannot fast-forward; never merge or rebase.",
+  "@gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr": {
+    "description": "Shared Git interface: Stop if the destination cannot fast-forward; never merge or rebase."
+  },
+  "gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs": "Merge with a merge commit, including when fast-forward is possible.",
+  "@gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs": {
+    "description": "Shared Git interface: Merge with a merge commit, including when fast-forward is possible."
+  },
+  "gitUiMergeAllowFastForwardWhenPossible": "Merge; allow fast-forward when possible.",
+  "@gitUiMergeAllowFastForwardWhenPossible": {
+    "description": "Shared Git interface: Merge; allow fast-forward when possible."
+  },
+  "gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits": "Rebase local history while preserving local merge commits.",
+  "@gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits": {
+    "description": "Shared Git interface: Rebase local history while preserving local merge commits."
+  },
+  "gitUiRebaseLocalCommitsAsALinearHistory": "Rebase local commits as a linear history.",
+  "@gitUiRebaseLocalCommitsAsALinearHistory": {
+    "description": "Shared Git interface: Rebase local commits as a linear history."
+  },
+  "gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy": "Git is configured for interactive rebase. Select a pull strategy explicitly here, or fetch and open Rebase… to review a plan.",
+  "@gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy": {
+    "description": "Shared Git interface: Git is configured for interactive rebase. Select a pull strategy explicitly here, or fetch and open Rebase… to review a plan."
+  },
+  "gitUiUseReviewedOrdinaryRebaseForThisPull": "Use reviewed ordinary rebase for this pull",
+  "@gitUiUseReviewedOrdinaryRebaseForThisPull": {
+    "description": "Shared Git interface: Use reviewed ordinary rebase for this pull"
+  },
+  "gitUiOptions": "Options",
+  "@gitUiOptions": {
+    "description": "Shared Git interface: Options"
+  },
+  "gitUiAlwaysCreateAMergeCommitNoFastForward": "Always create a merge commit (no fast-forward)",
+  "@gitUiAlwaysCreateAMergeCommitNoFastForward": {
+    "description": "Shared Git interface: Always create a merge commit (no fast-forward)"
+  },
+  "gitUiPreserveLocalMergeCommits": "Preserve local merge commits",
+  "@gitUiPreserveLocalMergeCommits": {
+    "description": "Shared Git interface: Preserve local merge commits"
+  },
+  "gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly": "Local changes may prevent pull. Review/commit them or explicitly create a stash.",
+  "@gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly": {
+    "description": "Shared Git interface: Local changes may prevent pull. Review/commit them or explicitly create a stash."
+  },
+  "gitUiStashes": "Stashes",
+  "@gitUiStashes": {
+    "description": "Shared Git interface: Stashes"
+  },
+  "gitUiCreateOrReviewStash": "Create or review stash…",
+  "@gitUiCreateOrReviewStash": {
+    "description": "Shared Git interface: Create or review stash…"
+  },
+  "gitUiPullWithSelectedStrategy": "Pull with selected strategy",
+  "@gitUiPullWithSelectedStrategy": {
+    "description": "Shared Git interface: Pull with selected strategy"
+  },
+  "gitUiRepositoryURLOrLocalGitSource": "Repository URL or local Git source",
+  "@gitUiRepositoryURLOrLocalGitSource": {
+    "description": "Shared Git interface: Repository URL or local Git source"
+  },
+  "gitUiHttpsSSHOrLocalPath": "HTTPS, SSH, or local path",
+  "@gitUiHttpsSSHOrLocalPath": {
+    "description": "Shared Git interface: HTTPS, SSH, or local path"
+  },
+  "gitUiFolderToInitialize": "Folder to initialize",
+  "@gitUiFolderToInitialize": {
+    "description": "Shared Git interface: Folder to initialize"
+  },
+  "gitUiFinalCloneDestination": "Final clone destination",
+  "@gitUiFinalCloneDestination": {
+    "description": "Shared Git interface: Final clone destination"
+  },
+  "gitUiChoose": "Choose…",
+  "@gitUiChoose": {
+    "description": "Shared Git interface: Choose…"
+  },
+  "gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr": "Creates Git metadata only. Existing files are not staged or committed.",
+  "@gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr": {
+    "description": "Shared Git interface: Creates Git metadata only. Existing files are not staged or committed."
+  },
+  "gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser": "The final destination must be absent or empty. Existing user data is never overwritten.",
+  "@gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser": {
+    "description": "Shared Git interface: The final destination must be absent or empty. Existing user data is never overwritten."
+  },
+  "gitUiInitialBranchBlankUsesEffectiveGitPolicy": "Initial branch · blank uses effective Git policy",
+  "@gitUiInitialBranchBlankUsesEffectiveGitPolicy": {
+    "description": "Shared Git interface: Initial branch · blank uses effective Git policy"
+  },
+  "gitUiSelectedBranchOptional": "Selected branch · optional",
+  "@gitUiSelectedBranchOptional": {
+    "description": "Shared Git interface: Selected branch · optional"
+  },
+  "gitUiExplicitlyInitializeUpdateSubmodulesRecursively": "Explicitly initialize/update submodules recursively",
+  "@gitUiExplicitlyInitializeUpdateSubmodulesRecursively": {
+    "description": "Shared Git interface: Explicitly initialize/update submodules recursively"
+  },
+  "gitUiPreparingGitOperation": "Preparing Git operation…",
+  "@gitUiPreparingGitOperation": {
+    "description": "Shared Git interface: Preparing Git operation…"
+  },
+  "gitUiThisAttemptCreated": "This attempt created",
+  "@gitUiThisAttemptCreated": {
+    "description": "Shared Git interface: This attempt created"
+  },
+  "gitUiTheDestinationExistedBeforeThisAttempt": "The destination existed before this attempt:",
+  "@gitUiTheDestinationExistedBeforeThisAttempt": {
+    "description": "Shared Git interface: The destination existed before this attempt:"
+  },
+  "gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone": "The directory remains for inspection. Review it before another clone attempt.",
+  "@gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone": {
+    "description": "Shared Git interface: The directory remains for inspection. Review it before another clone attempt."
+  },
+  "gitUiNoDestinationDirectoryRemains": "No destination directory remains.",
+  "@gitUiNoDestinationDirectoryRemains": {
+    "description": "Shared Git interface: No destination directory remains."
+  },
+  "gitUiCancelProcess": "Cancel process",
+  "@gitUiCancelProcess": {
+    "description": "Shared Git interface: Cancel process"
+  },
+  "gitUiInitialize": "Initialize",
+  "@gitUiInitialize": {
+    "description": "Shared Git interface: Initialize"
+  },
+  "gitUiClone": "Clone",
+  "@gitUiClone": {
+    "description": "Shared Git interface: Clone"
+  },
+  "gitUiChooseNewBase": "Choose new base",
+  "@gitUiChooseNewBase": {
+    "description": "Shared Git interface: Choose new base"
+  },
+  "gitUiChooseUpstreamBoundary": "Choose upstream boundary",
+  "@gitUiChooseUpstreamBoundary": {
+    "description": "Shared Git interface: Choose upstream boundary"
+  },
+  "gitUiNewBase": "New base",
+  "@gitUiNewBase": {
+    "description": "Shared Git interface: New base"
+  },
+  "gitUiUpstreamBoundaryExcluded": "Upstream boundary · excluded",
+  "@gitUiUpstreamBoundaryExcluded": {
+    "description": "Shared Git interface: Upstream boundary · excluded"
+  },
+  "gitUiSameAsUpstreamBoundary": "Same as upstream boundary",
+  "@gitUiSameAsUpstreamBoundary": {
+    "description": "Shared Git interface: Same as upstream boundary"
+  },
+  "gitUiChooseBranchTagOrCommit": "Choose branch, tag or commit…",
+  "@gitUiChooseBranchTagOrCommit": {
+    "description": "Shared Git interface: Choose branch, tag or commit…"
+  },
+  "gitUiUseUpstreamAsNewBase": "Use upstream as new base",
+  "@gitUiUseUpstreamAsNewBase": {
+    "description": "Shared Git interface: Use upstream as new base"
+  },
+  "gitUiChooseAValidBranchTagOrCommitFromLog": "Choose a valid branch, tag or commit from Log.",
+  "@gitUiChooseAValidBranchTagOrCommitFromLog": {
+    "description": "Shared Git interface: Choose a valid branch, tag or commit from Log."
+  },
+  "gitUiTheFirstRetainedCommitInABranchBlockCannotSquash": "The first retained commit in a branch block cannot squash or fixup: it has no preceding target.",
+  "@gitUiTheFirstRetainedCommitInABranchBlockCannotSquash": {
+    "description": "Shared Git interface: The first retained commit in a branch block cannot squash or fixup: it has no preceding target."
+  },
+  "gitUiBranchBlockArg0": "Branch block {arg0}\n",
+  "@gitUiBranchBlockArg0": {
+    "description": "Shared Git interface: Branch block {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRewordWillRequestANewMessage": "[Reword will request a new message]\n",
+  "@gitUiRewordWillRequestANewMessage": {
+    "description": "Shared Git interface: [Reword will request a new message]"
+  },
+  "gitUiPlannedCommitMessages": "Planned commit messages",
+  "@gitUiPlannedCommitMessages": {
+    "description": "Shared Git interface: Planned commit messages"
+  },
+  "gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash": "Original/combined message preview · Git requests the final reword/squash messages",
+  "@gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash": {
+    "description": "Shared Git interface: Original/combined message preview · Git requests the final reword/squash messages"
+  },
+  "gitUiResultArg0Arg1": "Result {arg0}\n{arg1}",
+  "@gitUiResultArg0Arg1": {
+    "description": "Shared Git interface: Result {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCurrentBranchBranch": "Current branch: {branch}",
+  "@gitUiCurrentBranchBranch": {
+    "description": "Shared Git interface: Current branch: {branch}",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiDetachedHEAD2": "Detached HEAD",
+  "@gitUiDetachedHEAD2": {
+    "description": "Shared Git interface: Detached HEAD"
+  },
+  "gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory": "Rebase rewrites commit identities. Remote-tracking information cannot prove history has never been published.",
+  "@gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory": {
+    "description": "Shared Git interface: Rebase rewrites commit identities. Remote-tracking information cannot prove history has never been published."
+  },
+  "gitUiIncludeRootCommits": "Include root commits",
+  "@gitUiIncludeRootCommits": {
+    "description": "Shared Git interface: Include root commits"
+  },
+  "gitUiMergeCommits": "Merge commits",
+  "@gitUiMergeCommits": {
+    "description": "Shared Git interface: Merge commits"
+  },
+  "gitUiFlattenHistory": "Flatten history",
+  "@gitUiFlattenHistory": {
+    "description": "Shared Git interface: Flatten history"
+  },
+  "gitUiPreserveBranchStructure": "Preserve branch structure",
+  "@gitUiPreserveBranchStructure": {
+    "description": "Shared Git interface: Preserve branch structure"
+  },
+  "gitUiAutosquash": "Autosquash",
+  "@gitUiAutosquash": {
+    "description": "Shared Git interface: Autosquash"
+  },
+  "gitUiPrepareGitPlan": "Prepare Git plan",
+  "@gitUiPrepareGitPlan": {
+    "description": "Shared Git interface: Prepare Git plan"
+  },
+  "gitUiCommitsToReplayCount": "Commits to replay: {count}",
+  "@gitUiCommitsToReplayCount": {
+    "description": "Shared Git interface: Commits to replay: {count}",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiIncludesAllRootCommitsReachableFromThisBranch": "Includes all root commits reachable from this branch.",
+  "@gitUiIncludesAllRootCommitsReachableFromThisBranch": {
+    "description": "Shared Git interface: Includes all root commits reachable from this branch."
+  },
+  "gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary": "Commits after {boundary} will be replayed onto {base}; the boundary itself is excluded.",
+  "@gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary": {
+    "description": "Shared Git interface: Commits after {boundary} will be replayed onto {base}; the boundary itself is excluded.",
+    "placeholders": {
+      "boundary": {
+        "type": "String"
+      },
+      "base": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRoot": "Root",
+  "@gitUiRoot": {
+    "description": "Shared Git interface: Root"
+  },
+  "gitUiGitBranchLabelResetMergeStructure": "Git branch/label/reset/merge structure",
+  "@gitUiGitBranchLabelResetMergeStructure": {
+    "description": "Shared Git interface: Git branch/label/reset/merge structure"
+  },
+  "gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare": "Choose an explicit old boundary or root mode, then prepare the plan.",
+  "@gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare": {
+    "description": "Shared Git interface: Choose an explicit old boundary or root mode, then prepare the plan."
+  },
+  "gitUiMoveUp": "Move up",
+  "@gitUiMoveUp": {
+    "description": "Shared Git interface: Move up"
+  },
+  "gitUiMoveDown": "Move down",
+  "@gitUiMoveDown": {
+    "description": "Shared Git interface: Move down"
+  },
+  "gitUiResetPlan": "Reset plan",
+  "@gitUiResetPlan": {
+    "description": "Shared Git interface: Reset plan"
+  },
+  "gitUiBranchBlockArg02": " · branch block {arg0}",
+  "@gitUiBranchBlockArg02": {
+    "description": "Shared Git interface:  · branch block {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiSelectACommitForDetailsAndChangedFiles": "Select a commit for details and changed files",
+  "@gitUiSelectACommitForDetailsAndChangedFiles": {
+    "description": "Shared Git interface: Select a commit for details and changed files"
+  },
+  "gitUiPreviewCombinedCommitMessages": "Preview combined commit messages…",
+  "@gitUiPreviewCombinedCommitMessages": {
+    "description": "Shared Git interface: Preview combined commit messages…"
+  },
+  "gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot": "Alt+↑/↓ moves the selected commit. Unrelated branch references will not be updated automatically.",
+  "@gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot": {
+    "description": "Shared Git interface: Alt+↑/↓ moves the selected commit. Unrelated branch references will not be updated automatically."
+  },
+  "gitUiCancelPlan": "Cancel plan",
+  "@gitUiCancelPlan": {
+    "description": "Shared Git interface: Cancel plan"
+  },
+  "gitUiStartReviewedRebase": "Start reviewed rebase?",
+  "@gitUiStartReviewedRebase": {
+    "description": "Shared Git interface: Start reviewed rebase?"
+  },
+  "gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly": "Rewrite {arg0} planned commits on {arg1}. Dropped commits remain visibly marked in this plan until you start.",
+  "@gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly": {
+    "description": "Shared Git interface: Rewrite {arg0} planned commits on {arg1}. Dropped commits remain visibly marked in this plan until you start.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiStartRebase": "Start rebase",
+  "@gitUiStartRebase": {
+    "description": "Shared Git interface: Start rebase"
+  },
+  "gitUiNoContinuingGitOperation": "No continuing Git operation",
+  "@gitUiNoContinuingGitOperation": {
+    "description": "Shared Git interface: No continuing Git operation"
+  },
+  "gitUiStoppedForEditingAmend": " · stopped for editing/amend",
+  "@gitUiStoppedForEditingAmend": {
+    "description": "Shared Git interface:  · stopped for editing/amend"
+  },
+  "gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication": "These are unmerged index entries, possibly from a stash application. Git has no stash continue or abort command.",
+  "@gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication": {
+    "description": "Shared Git interface: These are unmerged index entries, possibly from a stash application. Git has no stash continue or abort command."
+  },
+  "gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit": "Edit the working files, stage and amend the current commit, then continue this rebase.",
+  "@gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit": {
+    "description": "Shared Git interface: Edit the working files, stage and amend the current commit, then continue this rebase."
+  },
+  "gitUiArg0Arg1UnmergedStagesArg2": "{arg0}{arg1} · unmerged stages {arg2}",
+  "@gitUiArg0Arg1UnmergedStagesArg2": {
+    "description": "Shared Git interface: {arg0}{arg1} · unmerged stages {arg2}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTheIndexHasNoUnresolvedEntries": "The index has no unresolved entries.",
+  "@gitUiTheIndexHasNoUnresolvedEntries": {
+    "description": "Shared Git interface: The index has no unresolved entries."
+  },
+  "gitUiKeepTheCurrentCommitAsAnEmptyCommit": "Keep the current commit as an empty commit",
+  "@gitUiKeepTheCurrentCommitAsAnEmptyCommit": {
+    "description": "Shared Git interface: Keep the current commit as an empty commit"
+  },
+  "gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit": "The real index has no staged changes. Create an explicit empty commit, then continue the sequencer if it remains active.",
+  "@gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit": {
+    "description": "Shared Git interface: The real index has no staged changes. Create an explicit empty commit, then continue the sequencer if it remains active."
+  },
+  "gitUiKeepEmptyCommit": "Keep empty commit…",
+  "@gitUiKeepEmptyCommit": {
+    "description": "Shared Git interface: Keep empty commit…"
+  },
+  "gitUiGitWillTryToReturnToTheOperationSStarting": "Git will try to return to the operation’s starting point. Pre-existing unstaged, untracked and unsaved contents are not guaranteed to be recovered.",
+  "@gitUiGitWillTryToReturnToTheOperationSStarting": {
+    "description": "Shared Git interface: Git will try to return to the operation’s starting point. Pre-existing unstaged, untracked and unsaved contents are not guaranteed to be recovered."
+  },
+  "gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned": "Skip the current commit and continue with the next planned commit.",
+  "@gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned": {
+    "description": "Shared Git interface: Skip the current commit and continue with the next planned commit."
+  },
+  "gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles": "Forget this operation’s bookkeeping while retaining the current files and index.",
+  "@gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles": {
+    "description": "Shared Git interface: Forget this operation’s bookkeeping while retaining the current files and index."
+  },
+  "gitUiContinueArg0": "Continue {arg0}",
+  "@gitUiContinueArg0": {
+    "description": "Shared Git interface: Continue {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiReloadConflictVersions": "Reload conflict versions?",
+  "@gitUiReloadConflictVersions": {
+    "description": "Shared Git interface: Reload conflict versions?"
+  },
+  "gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile": "Replace the unsaved Result draft with the current working file. Saved working content is retained.",
+  "@gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile": {
+    "description": "Shared Git interface: Replace the unsaved Result draft with the current working file. Saved working content is retained."
+  },
+  "gitUiLoadingConflictVersions": "Loading conflict versions…",
+  "@gitUiLoadingConflictVersions": {
+    "description": "Shared Git interface: Loading conflict versions…"
+  },
+  "gitUiLoadingConflict": "Loading conflict",
+  "@gitUiLoadingConflict": {
+    "description": "Shared Git interface: Loading conflict"
+  },
+  "gitUiBaseLeft": "Base → left",
+  "@gitUiBaseLeft": {
+    "description": "Shared Git interface: Base → left"
+  },
+  "gitUiBaseRight": "Base → right",
+  "@gitUiBaseRight": {
+    "description": "Shared Git interface: Base → right"
+  },
+  "gitUiNoBaseEntryForThisConflict": "No base entry for this conflict",
+  "@gitUiNoBaseEntryForThisConflict": {
+    "description": "Shared Git interface: No base entry for this conflict"
+  },
+  "gitUiAcceptEntireLeftFile": "Accept entire left file…",
+  "@gitUiAcceptEntireLeftFile": {
+    "description": "Shared Git interface: Accept entire left file…"
+  },
+  "gitUiAcceptEntireRightFile": "Accept entire right file…",
+  "@gitUiAcceptEntireRightFile": {
+    "description": "Shared Git interface: Accept entire right file…"
+  },
+  "gitUiPreviousConflictRegion": "Previous conflict region",
+  "@gitUiPreviousConflictRegion": {
+    "description": "Shared Git interface: Previous conflict region"
+  },
+  "gitUiNextConflictRegion": "Next conflict region",
+  "@gitUiNextConflictRegion": {
+    "description": "Shared Git interface: Next conflict region"
+  },
+  "gitUiManualResolution": "Manual resolution",
+  "@gitUiManualResolution": {
+    "description": "Shared Git interface: Manual resolution"
+  },
+  "gitUiRegionArg0Arg1Arg2Reviewed": "Region {arg0}/{arg1} · {arg2} reviewed",
+  "@gitUiRegionArg0Arg1Arg2Reviewed": {
+    "description": "Shared Git interface: Region {arg0}/{arg1} · {arg2} reviewed",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain": "Source alignment exceeded the text comparison limit; source panes remain available for manual review.",
+  "@gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain": {
+    "description": "Shared Git interface: Source alignment exceeded the text comparison limit; source panes remain available for manual review."
+  },
+  "gitUiAcceptLeftRegion": "Accept left region",
+  "@gitUiAcceptLeftRegion": {
+    "description": "Shared Git interface: Accept left region"
+  },
+  "gitUiAcceptRightRegion": "Accept right region",
+  "@gitUiAcceptRightRegion": {
+    "description": "Shared Git interface: Accept right region"
+  },
+  "gitUiKeepManualResultForRegion": "Keep manual result for region",
+  "@gitUiKeepManualResultForRegion": {
+    "description": "Shared Git interface: Keep manual result for region"
+  },
+  "gitUiApplyGitSNonConflictingChanges": "Apply Git’s non-conflicting changes?",
+  "@gitUiApplyGitSNonConflictingChanges": {
+    "description": "Shared Git interface: Apply Git’s non-conflicting changes?"
+  },
+  "gitUiReplaceTheCurrentResultDraftWithGitSMergePreview": "Replace the current result draft with Git’s merge preview. This discards unsaved manual result edits; the working file is unchanged until Save.",
+  "@gitUiReplaceTheCurrentResultDraftWithGitSMergePreview": {
+    "description": "Shared Git interface: Replace the current result draft with Git’s merge preview. This discards unsaved manual result edits; the working file is unchanged until Save."
+  },
+  "gitUiUseMergePreview": "Use merge preview",
+  "@gitUiUseMergePreview": {
+    "description": "Shared Git interface: Use merge preview"
+  },
+  "gitUiApplyNonConflictingChanges": "Apply non-conflicting changes…",
+  "@gitUiApplyNonConflictingChanges": {
+    "description": "Shared Git interface: Apply non-conflicting changes…"
+  },
+  "gitUiLeftSource": "Left source",
+  "@gitUiLeftSource": {
+    "description": "Shared Git interface: Left source"
+  },
+  "gitUiResult": "Result",
+  "@gitUiResult": {
+    "description": "Shared Git interface: Result"
+  },
+  "gitUiRightSource": "Right source",
+  "@gitUiRightSource": {
+    "description": "Shared Git interface: Right source"
+  },
+  "gitUiStage2": "Stage 2",
+  "@gitUiStage2": {
+    "description": "Shared Git interface: Stage 2"
+  },
+  "gitUiStage3": "Stage 3",
+  "@gitUiStage3": {
+    "description": "Shared Git interface: Stage 3"
+  },
+  "gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState": "Conflict versions are unavailable. Refresh to review their current state.",
+  "@gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState": {
+    "description": "Shared Git interface: Conflict versions are unavailable. Refresh to review their current state."
+  },
+  "gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis": "Result saved to disk. The index still determines whether this file is resolved.",
+  "@gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis": {
+    "description": "Shared Git interface: Result saved to disk. The index still determines whether this file is resolved."
+  },
+  "gitUiSaveResultDraft": "Save result draft",
+  "@gitUiSaveResultDraft": {
+    "description": "Shared Git interface: Save result draft"
+  },
+  "gitUiApplyResultAndStageResolution": "Apply result and stage resolution",
+  "@gitUiApplyResultAndStageResolution": {
+    "description": "Shared Git interface: Apply result and stage resolution"
+  },
+  "gitUiResultEditableUTF8WorkingContent": "Result · editable UTF-8 working content",
+  "@gitUiResultEditableUTF8WorkingContent": {
+    "description": "Shared Git interface: Result · editable UTF-8 working content"
+  },
+  "gitUiEditableConflictResult": "Editable conflict result",
+  "@gitUiEditableConflictResult": {
+    "description": "Shared Git interface: Editable conflict result"
+  },
+  "gitUiLeftArg0Arg1RightArg2Arg3": "Left: {arg0} · {arg1}\nRight: {arg2} · {arg3}",
+  "@gitUiLeftArg0Arg1RightArg2Arg3": {
+    "description": "Shared Git interface: Left: {arg0} · {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      },
+      "arg3": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary": "Choose content, deletion, or a submodule commit explicitly. No binary data is decoded as editable text.",
+  "@gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary": {
+    "description": "Shared Git interface: Choose content, deletion, or a submodule commit explicitly. No binary data is decoded as editable text."
+  },
+  "gitUiUseEntireLeftContent": "Use entire left content…",
+  "@gitUiUseEntireLeftContent": {
+    "description": "Shared Git interface: Use entire left content…"
+  },
+  "gitUiUseEntireRightContent": "Use entire right content…",
+  "@gitUiUseEntireRightContent": {
+    "description": "Shared Git interface: Use entire right content…"
+  },
+  "gitUiDeleteThisPath": "Delete this path…",
+  "@gitUiDeleteThisPath": {
+    "description": "Shared Git interface: Delete this path…"
+  },
+  "gitUiResolvedSubmoduleCommit": "Resolved submodule commit",
+  "@gitUiResolvedSubmoduleCommit": {
+    "description": "Shared Git interface: Resolved submodule commit"
+  },
+  "gitUiStageThisExactGitlinkInTheParentThisDoesNot": "Stage this exact gitlink in the parent. This does not check out or commit the submodule.",
+  "@gitUiStageThisExactGitlinkInTheParentThisDoesNot": {
+    "description": "Shared Git interface: Stage this exact gitlink in the parent. This does not check out or commit the submodule."
+  },
+  "gitUiSetResolvedGitlink": "Set resolved gitlink…",
+  "@gitUiSetResolvedGitlink": {
+    "description": "Shared Git interface: Set resolved gitlink…"
+  },
+  "gitUiBaseStageArg0": "Base → stage {arg0}",
+  "@gitUiBaseStageArg0": {
+    "description": "Shared Git interface: Base → stage {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTheResultWasEditedKeepTheManualResultOrSelect": "The result was edited. Keep the manual result or select another unchanged region.",
+  "@gitUiTheResultWasEditedKeepTheManualResultOrSelect": {
+    "description": "Shared Git interface: The result was edited. Keep the manual result or select another unchanged region."
+  },
+  "gitUiApplyArg0Resolution": "Apply {arg0} resolution?",
+  "@gitUiApplyArg0Resolution": {
+    "description": "Shared Git interface: Apply {arg0} resolution?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule": "Stage the chosen gitlink commit in the parent. The submodule checkout and its files are not replaced.",
+  "@gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule": {
+    "description": "Shared Git interface: Stage the chosen gitlink commit in the parent. The submodule checkout and its files are not replaced."
+  },
+  "gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision": "Replaces the entire working path {arg0} and stages the decision. Current working content and any unsaved result draft will be discarded.",
+  "@gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision": {
+    "description": "Shared Git interface: Replaces the entire working path {arg0} and stages the decision. Current working content and any unsaved result draft will be discarded.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiApplyEntireFileDecision": "Apply entire file decision",
+  "@gitUiApplyEntireFileDecision": {
+    "description": "Shared Git interface: Apply entire file decision"
+  },
+  "gitUiStageThisConflictResolution": "Stage this conflict resolution?",
+  "@gitUiStageThisConflictResolution": {
+    "description": "Shared Git interface: Stage this conflict resolution?"
+  },
+  "gitUiUseTheEntireEditedResultAsArg0GitRecordsThe": "Use the entire edited Result as {arg0}. Git records the path resolved when it is staged. Review all intended content first.{arg1}",
+  "@gitUiUseTheEntireEditedResultAsArg0GitRecordsThe": {
+    "description": "Shared Git interface: Use the entire edited Result as {arg0}. Git records the path resolved when it is staged. Review all intended content first.{arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiApplyAndStage": "Apply and stage",
+  "@gitUiApplyAndStage": {
+    "description": "Shared Git interface: Apply and stage"
+  },
+  "gitUiReviewResultTextFormatChanges": "Review result text format changes",
+  "@gitUiReviewResultTextFormatChanges": {
+    "description": "Shared Git interface: Review result text format changes"
+  },
+  "gitUiSaveReviewedResult": "Save reviewed result",
+  "@gitUiSaveReviewedResult": {
+    "description": "Shared Git interface: Save reviewed result"
+  },
+  "gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe": "Native Git table accessibility is unavailable. Retry after reconnecting the application.",
+  "@gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe": {
+    "description": "Shared Git interface: Native Git table accessibility is unavailable. Retry after reconnecting the application."
+  },
+  "gitUiSans": "Sans",
+  "@gitUiSans": {
+    "description": "Shared Git interface: Sans"
+  },
+  "gitUiSelect": "Select",
+  "@gitUiSelect": {
+    "description": "Shared Git interface: Select"
+  },
+  "gitUiContextMenu": "Context menu",
+  "@gitUiContextMenu": {
+    "description": "Shared Git interface: Context menu"
+  },
+  "gitUiCopyText": "Copy text",
+  "@gitUiCopyText": {
+    "description": "Shared Git interface: Copy text"
+  },
+  "gitUiLoadingRow": "Loading row",
+  "@gitUiLoadingRow": {
+    "description": "Shared Git interface: Loading row"
+  },
+  "gitUiRetry": "Retry",
+  "@gitUiRetry": {
+    "description": "Shared Git interface: Retry"
+  },
+  "gitUiGitMessage": "Git message",
+  "@gitUiGitMessage": {
+    "description": "Shared Git interface: Git message"
+  },
+  "gitUiCancelPrompt": "Cancel prompt",
+  "@gitUiCancelPrompt": {
+    "description": "Shared Git interface: Cancel prompt"
+  },
+  "gitUiUseMessageAndContinue": "Use message and continue",
+  "@gitUiUseMessageAndContinue": {
+    "description": "Shared Git interface: Use message and continue"
+  },
+  "gitUiRespondPrivately": "Respond privately",
+  "@gitUiRespondPrivately": {
+    "description": "Shared Git interface: Respond privately"
+  },
+  "gitUiViewPreferencesCouldNotBeSavedArg0": "View preferences could not be saved: {arg0}",
+  "@gitUiViewPreferencesCouldNotBeSavedArg0": {
+    "description": "Shared Git interface: View preferences could not be saved: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitDraftStorageArg0": "Commit draft storage: {arg0}",
+  "@gitUiCommitDraftStorageArg0": {
+    "description": "Shared Git interface: Commit draft storage: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiViewPreferencesCouldNotBeReadArg0": "View preferences could not be read: {arg0}",
+  "@gitUiViewPreferencesCouldNotBeReadArg0": {
+    "description": "Shared Git interface: View preferences could not be read: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCommitDraftWasRetainedInMemoryButCouldNotBe": "Commit draft was retained in memory but could not be saved: {arg0}",
+  "@gitUiCommitDraftWasRetainedInMemoryButCouldNotBe": {
+    "description": "Shared Git interface: Commit draft was retained in memory but could not be saved: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory": "The reviewed repository is read-only for this operation. History and content inspection remain available.",
+  "@gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory": {
+    "description": "Shared Git interface: The reviewed repository is read-only for this operation. History and content inspection remain available."
+  },
+  "gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments": "Git returned {arg0}. The application could not refresh its documents: {arg1}",
+  "@gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments": {
+    "description": "Shared Git interface: Git returned {arg0}. The application could not refresh its documents: {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiSelectCommitInLog": "Select commit in Log…",
+  "@gitUiSelectCommitInLog": {
+    "description": "Shared Git interface: Select commit in Log…"
+  },
+  "gitUiCurrentBranch": "Current branch",
+  "@gitUiCurrentBranch": {
+    "description": "Shared Git interface: Current branch"
+  },
+  "gitUiNoMatchingBranchesOrTagsSelectACommitInLog": "No matching branches or tags. Select a commit in Log.",
+  "@gitUiNoMatchingBranchesOrTagsSelectACommitInLog": {
+    "description": "Shared Git interface: No matching branches or tags. Select a commit in Log."
+  },
+  "gitUiBranches": "Branches",
+  "@gitUiBranches": {
+    "description": "Shared Git interface: Branches"
+  },
+  "gitUiPushCommits": "Push commits",
+  "@gitUiPushCommits": {
+    "description": "Shared Git interface: Push commits"
+  },
+  "gitUiPullIntoArg0": "Pull into {arg0}",
+  "@gitUiPullIntoArg0": {
+    "description": "Shared Git interface: Pull into {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiResolveArg0": "Resolve {arg0}",
+  "@gitUiResolveArg0": {
+    "description": "Shared Git interface: Resolve {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCurrentOperation": "Current operation",
+  "@gitUiCurrentOperation": {
+    "description": "Shared Git interface: Current operation"
+  },
+  "gitUiRebaseCommits": "Rebase commits",
+  "@gitUiRebaseCommits": {
+    "description": "Shared Git interface: Rebase commits"
+  },
+  "gitUiFetch2": "Fetch…",
+  "@gitUiFetch2": {
+    "description": "Shared Git interface: Fetch…"
+  },
+  "gitUiPull": "Pull…",
+  "@gitUiPull": {
+    "description": "Shared Git interface: Pull…"
+  },
+  "gitUiPush2": "Push…",
+  "@gitUiPush2": {
+    "description": "Shared Git interface: Push…"
+  },
+  "gitUiBranches2": "Branches…",
+  "@gitUiBranches2": {
+    "description": "Shared Git interface: Branches…"
+  },
+  "gitUiManageRemotes": "Manage remotes…",
+  "@gitUiManageRemotes": {
+    "description": "Shared Git interface: Manage remotes…"
+  },
+  "gitUiMergeIntoArg0": "Merge into {arg0}…",
+  "@gitUiMergeIntoArg0": {
+    "description": "Shared Git interface: Merge into {arg0}…",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRebase2": "Rebase…",
+  "@gitUiRebase2": {
+    "description": "Shared Git interface: Rebase…"
+  },
+  "gitUiConflictsAndCurrentOperation": "Conflicts and current operation…",
+  "@gitUiConflictsAndCurrentOperation": {
+    "description": "Shared Git interface: Conflicts and current operation…"
+  },
+  "gitUiStashes2": "Stashes…",
+  "@gitUiStashes2": {
+    "description": "Shared Git interface: Stashes…"
+  },
+  "gitUiWorktrees": "Worktrees…",
+  "@gitUiWorktrees": {
+    "description": "Shared Git interface: Worktrees…"
+  },
+  "gitUiSubmodules": "Submodules…",
+  "@gitUiSubmodules": {
+    "description": "Shared Git interface: Submodules…"
+  },
+  "gitUiReflogAndRecovery": "Reflog and recovery…",
+  "@gitUiReflogAndRecovery": {
+    "description": "Shared Git interface: Reflog and recovery…"
+  },
+  "gitUiCloneRepository": "Clone repository…",
+  "@gitUiCloneRepository": {
+    "description": "Shared Git interface: Clone repository…"
+  },
+  "gitUiRevokeRepositoryTrust": "Revoke repository trust",
+  "@gitUiRevokeRepositoryTrust": {
+    "description": "Shared Git interface: Revoke repository trust"
+  },
+  "gitUiWaitingForRepositoryStatus": "Waiting for repository status",
+  "@gitUiWaitingForRepositoryStatus": {
+    "description": "Shared Git interface: Waiting for repository status"
+  },
+  "gitUiRepositoryStatusUnavailableRefresh": "Repository status unavailable; refresh",
+  "@gitUiRepositoryStatusUnavailableRefresh": {
+    "description": "Shared Git interface: Repository status unavailable; refresh"
+  },
+  "gitUiManageRemotes2": "Manage remotes",
+  "@gitUiManageRemotes2": {
+    "description": "Shared Git interface: Manage remotes"
+  },
+  "gitUiMergeIntoArg02": "Merge into {arg0}",
+  "@gitUiMergeIntoArg02": {
+    "description": "Shared Git interface: Merge into {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiWorktrees2": "Worktrees",
+  "@gitUiWorktrees2": {
+    "description": "Shared Git interface: Worktrees"
+  },
+  "gitUiSubmodules2": "Submodules",
+  "@gitUiSubmodules2": {
+    "description": "Shared Git interface: Submodules"
+  },
+  "gitUiReflogAndRecovery2": "Reflog and recovery",
+  "@gitUiReflogAndRecovery2": {
+    "description": "Shared Git interface: Reflog and recovery"
+  },
+  "gitUiCloneRepositoryArg0": "Clone repository · {arg0}",
+  "@gitUiCloneRepositoryArg0": {
+    "description": "Shared Git interface: Clone repository · {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiApply": "Apply",
+  "@gitUiApply": {
+    "description": "Shared Git interface: Apply"
+  },
+  "gitUiResizeGitPanes": "Resize Git panes",
+  "@gitUiResizeGitPanes": {
+    "description": "Shared Git interface: Resize Git panes"
+  },
+  "gitUiArg0Percent": "{arg0} percent",
+  "@gitUiArg0Percent": {
+    "description": "Shared Git interface: {arg0} percent",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiExitStatusStatus": "Exit status: {status}",
+  "@gitUiExitStatusStatus": {
+    "description": "Shared Git interface: Exit status: {status}",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain": "Repository changed. Refresh and review before trying again.",
+  "@gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain": {
+    "description": "Shared Git interface: Repository changed. Refresh and review before trying again."
+  },
+  "gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen": "Another operation holds the repository or index lock. Wait, then refresh.",
+  "@gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen": {
+    "description": "Shared Git interface: Another operation holds the repository or index lock. Wait, then refresh."
+  },
+  "gitUiRepositoryTrustIsRequiredForThisOperation": "Repository trust is required for this operation.",
+  "@gitUiRepositoryTrustIsRequiredForThisOperation": {
+    "description": "Shared Git interface: Repository trust is required for this operation."
+  },
+  "gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository": "The Git service disconnected. Reconnect and reconcile the repository.",
+  "@gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository": {
+    "description": "Shared Git interface: The Git service disconnected. Reconnect and reconcile the repository."
+  },
+  "gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts": "The installed Git executable cannot support this operation. Review its runtime requirements below.",
+  "@gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts": {
+    "description": "Shared Git interface: The installed Git executable cannot support this operation. Review its runtime requirements below."
+  },
+  "gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview": "This repository is read-only for the requested operation. Review and history remain available.",
+  "@gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview": {
+    "description": "Shared Git interface: This repository is read-only for the requested operation. Review and history remain available."
+  },
+  "gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote": "The operation needs reconciliation. Review the resulting repository or remote state before repeating it.",
+  "@gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote": {
+    "description": "Shared Git interface: The operation needs reconciliation. Review the resulting repository or remote state before repeating it."
+  },
+  "gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe": "Git authentication failed. Review the credential helper or unlock the configured keyring.",
+  "@gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe": {
+    "description": "Shared Git interface: Git authentication failed. Review the credential helper or unlock the configured keyring."
+  },
+  "gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour": "SSH host verification failed. Review the host identity through your configured SSH tools.",
+  "@gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour": {
+    "description": "Shared Git interface: SSH host verification failed. Review the host identity through your configured SSH tools."
+  },
+  "gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey": "Commit signing failed or was cancelled. Review the signing key, agent and configured signing tool.",
+  "@gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey": {
+    "description": "Shared Git interface: Commit signing failed or was cancelled. Review the signing key, agent and configured signing tool."
+  },
+  "gitUiSetARepositoryAuthorNameAndEmailThenReturnTo": "Set a repository author name and email, then return to the preserved message draft.",
+  "@gitUiSetARepositoryAuthorNameAndEmailThenReturnTo": {
+    "description": "Shared Git interface: Set a repository author name and email, then return to the preserved message draft."
+  },
+  "gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual": "Git rejected the reviewed update. Refresh and review the actual destination before trying again.",
+  "@gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual": {
+    "description": "Shared Git interface: Git rejected the reviewed update. Refresh and review the actual destination before trying again."
+  },
+  "gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr": "Working or staged changes prevent this operation. Review, commit or explicitly stash them.",
+  "@gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr": {
+    "description": "Shared Git interface: Working or staged changes prevent this operation. Review, commit or explicitly stash them."
+  },
+  "gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial": "A required Git object is unavailable. Review shallow or partial-repository boundaries and fetch explicitly if needed.",
+  "@gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial": {
+    "description": "Shared Git interface: A required Git object is unavailable. Review shallow or partial-repository boundaries and fetch explicitly if needed."
+  },
+  "gitUiGitOperationFailedArg0": "Git operation failed: {arg0}",
+  "@gitUiGitOperationFailedArg0": {
+    "description": "Shared Git interface: Git operation failed: {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiDiagnostics": "Diagnostics",
+  "@gitUiDiagnostics": {
+    "description": "Shared Git interface: Diagnostics"
+  },
+  "gitUiAuthorizeGitInspection": "Authorize Git inspection…",
+  "@gitUiAuthorizeGitInspection": {
+    "description": "Shared Git interface: Authorize Git inspection…"
+  },
+  "gitUiCopyDiagnostics": "Copy diagnostics",
+  "@gitUiCopyDiagnostics": {
+    "description": "Shared Git interface: Copy diagnostics"
+  },
+  "gitUiActions": "Actions",
+  "@gitUiActions": {
+    "description": "Shared Git interface: Actions"
+  },
+  "gitUiBranchAtArg0": "Branch at {arg0}",
+  "@gitUiBranchAtArg0": {
+    "description": "Shared Git interface: Branch at {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCreatesALocalBranchWithoutCheckingItOut": "Creates a local branch without checking it out.",
+  "@gitUiCreatesALocalBranchWithoutCheckingItOut": {
+    "description": "Shared Git interface: Creates a local branch without checking it out."
+  },
+  "gitUiTagArg0": "Tag {arg0}",
+  "@gitUiTagArg0": {
+    "description": "Shared Git interface: Tag {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiReadOnlySnapshotArg0": "Read-only snapshot · {arg0}",
+  "@gitUiReadOnlySnapshotArg0": {
+    "description": "Shared Git interface: Read-only snapshot · {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCherryPickCommits": "Cherry-pick commits",
+  "@gitUiCherryPickCommits": {
+    "description": "Shared Git interface: Cherry-pick commits"
+  },
+  "gitUiRevertCommits": "Revert commits",
+  "@gitUiRevertCommits": {
+    "description": "Shared Git interface: Revert commits"
+  },
+  "gitUiCompareToFullRevisionID": "Compare to full revision ID",
+  "@gitUiCompareToFullRevisionID": {
+    "description": "Shared Git interface: Compare to full revision ID"
+  },
+  "gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere": "Tree comparison direction: {arg0} → the revision entered here.",
+  "@gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere": {
+    "description": "Shared Git interface: Tree comparison direction: {arg0} → the revision entered here.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiEnterAFullValidObjectID": "Enter a full valid object ID.",
+  "@gitUiEnterAFullValidObjectID": {
+    "description": "Shared Git interface: Enter a full valid object ID."
+  },
+  "gitUiArg0Arg1TreeComparison": "{arg0} → {arg1} · tree comparison",
+  "@gitUiArg0Arg1TreeComparison": {
+    "description": "Shared Git interface: {arg0} → {arg1} · tree comparison",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiResetArg0ToArg1": "Reset {arg0} to {arg1}",
+  "@gitUiResetArg0ToArg1": {
+    "description": "Shared Git interface: Reset {arg0} to {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked": "Moves HEAD/current branch. Reflog does not recover arbitrary untracked or unsaved content.",
+  "@gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked": {
+    "description": "Shared Git interface: Moves HEAD/current branch. Reflog does not recover arbitrary untracked or unsaved content."
+  },
+  "gitUiMoveHEADKeepIndexAndWorkingFiles": "Move HEAD; keep index and working files.",
+  "@gitUiMoveHEADKeepIndexAndWorkingFiles": {
+    "description": "Shared Git interface: Move HEAD; keep index and working files."
+  },
+  "gitUiMoveHEADAndReplaceIndexKeepWorkingFiles": "Move HEAD and replace index; keep working files.",
+  "@gitUiMoveHEADAndReplaceIndexKeepWorkingFiles": {
+    "description": "Shared Git interface: Move HEAD and replace index; keep working files."
+  },
+  "gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing": "Replace HEAD, index and tracked working files; may overwrite obstructing untracked files.",
+  "@gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing": {
+    "description": "Shared Git interface: Replace HEAD, index and tracked working files; may overwrite obstructing untracked files."
+  },
+  "gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges": "Replace HEAD/index and eligible files; refuse if local changes would be lost.",
+  "@gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges": {
+    "description": "Shared Git interface: Replace HEAD/index and eligible files; refuse if local changes would be lost."
+  },
+  "gitUiResetWithArg0": "Reset with {arg0}?",
+  "@gitUiResetWithArg0": {
+    "description": "Shared Git interface: Reset with {arg0}?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying": "{arg0} → {arg1}\nReview the selected mode’s effects before applying.",
+  "@gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying": {
+    "description": "Shared Git interface: {arg0} → {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiResetArg0": "Reset {arg0}",
+  "@gitUiResetArg0": {
+    "description": "Shared Git interface: Reset {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTargetArg0": "Target {arg0}",
+  "@gitUiTargetArg0": {
+    "description": "Shared Git interface: Target {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiTagName": "Tag name",
+  "@gitUiTagName": {
+    "description": "Shared Git interface: Tag name"
+  },
+  "gitUiAnnotatedTag": "Annotated tag",
+  "@gitUiAnnotatedTag": {
+    "description": "Shared Git interface: Annotated tag"
+  },
+  "gitUiCryptographicSigning": "Cryptographic signing",
+  "@gitUiCryptographicSigning": {
+    "description": "Shared Git interface: Cryptographic signing"
+  },
+  "gitUiConfiguredPolicy": "Configured policy",
+  "@gitUiConfiguredPolicy": {
+    "description": "Shared Git interface: Configured policy"
+  },
+  "gitUiSignThisTag": "Sign this tag",
+  "@gitUiSignThisTag": {
+    "description": "Shared Git interface: Sign this tag"
+  },
+  "gitUiDoNotSign": "Do not sign",
+  "@gitUiDoNotSign": {
+    "description": "Shared Git interface: Do not sign"
+  },
+  "gitUiTagMessage": "Tag message",
+  "@gitUiTagMessage": {
+    "description": "Shared Git interface: Tag message"
+  },
+  "gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush": "Creates the tag locally. Publish selected tags explicitly in Push review.",
+  "@gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush": {
+    "description": "Shared Git interface: Creates the tag locally. Publish selected tags explicitly in Push review."
+  },
+  "gitUiCompleteTreesArg0Arg1": "Complete trees: {arg0} → {arg1}",
+  "@gitUiCompleteTreesArg0Arg1": {
+    "description": "Shared Git interface: Complete trees: {arg0} → {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiNextChangedFilePage": "Next changed-file page",
+  "@gitUiNextChangedFilePage": {
+    "description": "Shared Git interface: Next changed-file page"
+  },
+  "gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut": "Read-only repository snapshot. Opening a file never checks out this revision.",
+  "@gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut": {
+    "description": "Shared Git interface: Read-only repository snapshot. Opening a file never checks out this revision."
+  },
+  "gitUiOpenReadOnlyVersion": "Open read-only version",
+  "@gitUiOpenReadOnlyVersion": {
+    "description": "Shared Git interface: Open read-only version"
+  },
+  "gitUiRestoreThisPathWaitingForRepositoryStatus": "Restore this path… · Waiting for repository status",
+  "@gitUiRestoreThisPathWaitingForRepositoryStatus": {
+    "description": "Shared Git interface: Restore this path… · Waiting for repository status"
+  },
+  "gitUiRestoreThisPath": "Restore this path…",
+  "@gitUiRestoreThisPath": {
+    "description": "Shared Git interface: Restore this path…"
+  },
+  "gitUiHistoryArg0": "History · {arg0}",
+  "@gitUiHistoryArg0": {
+    "description": "Shared Git interface: History · {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRestoreArg0": "Restore {arg0}?",
+  "@gitUiRestoreArg0": {
+    "description": "Shared Git interface: Restore {arg0}?",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent": "Replace this working path with revision {arg0}. Existing staged content is retained.",
+  "@gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent": {
+    "description": "Shared Git interface: Replace this working path with revision {arg0}. Existing staged content is retained.",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRestoreWorkingFile": "Restore working file",
+  "@gitUiRestoreWorkingFile": {
+    "description": "Shared Git interface: Restore working file"
+  },
+  "gitUiFileHistoryFollowsRenamesArg0": "File history follows renames · {arg0}",
+  "@gitUiFileHistoryFollowsRenamesArg0": {
+    "description": "Shared Git interface: File history follows renames · {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiBlameCommittedContent": "Blame · committed content",
+  "@gitUiBlameCommittedContent": {
+    "description": "Shared Git interface: Blame · committed content"
+  },
+  "gitUiBlame": "Blame…",
+  "@gitUiBlame": {
+    "description": "Shared Git interface: Blame…"
+  },
+  "gitUiArg0WorkingTree": "{arg0} → Working Tree",
+  "@gitUiArg0WorkingTree": {
+    "description": "Shared Git interface: {arg0} → Working Tree",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiOpenReadOnlyHistoricalFile": "Open read-only historical file",
+  "@gitUiOpenReadOnlyHistoricalFile": {
+    "description": "Shared Git interface: Open read-only historical file"
+  },
+  "gitUiCompareToCurrentFile": "Compare to current file",
+  "@gitUiCompareToCurrentFile": {
+    "description": "Shared Git interface: Compare to current file"
+  },
+  "gitUiCompareToParent": "Compare to parent…",
+  "@gitUiCompareToParent": {
+    "description": "Shared Git interface: Compare to parent…"
+  },
+  "gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese": "Committed {arg0} · unsaved editor content is not part of these annotations",
+  "@gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese": {
+    "description": "Shared Git interface: Committed {arg0} · unsaved editor content is not part of these annotations",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiHistoryFromArg0": "History from {arg0}",
+  "@gitUiHistoryFromArg0": {
+    "description": "Shared Git interface: History from {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiBoundary": " · boundary",
+  "@gitUiBoundary": {
+    "description": "Shared Git interface:  · boundary"
+  },
+  "gitUiArg0Arg1OriginalLineArg2Arg3": "{arg0}  {arg1}\nOriginal line {arg2}{arg3}",
+  "@gitUiArg0Arg1OriginalLineArg2Arg3": {
+    "description": "Shared Git interface: {arg0}  {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      },
+      "arg2": {
+        "type": "String"
+      },
+      "arg3": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiPreviousLines": "Previous lines",
+  "@gitUiPreviousLines": {
+    "description": "Shared Git interface: Previous lines"
+  },
+  "gitUiNextLines": "Next lines",
+  "@gitUiNextLines": {
+    "description": "Shared Git interface: Next lines"
+  },
+  "gitUiExplicitApplicationOrderDestinationArg0": "Explicit application order · destination {arg0}",
+  "@gitUiExplicitApplicationOrderDestinationArg0": {
+    "description": "Shared Git interface: Explicit application order · destination {arg0}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiAddFullCommitObjectID": "Add full commit object ID",
+  "@gitUiAddFullCommitObjectID": {
+    "description": "Shared Git interface: Add full commit object ID"
+  },
+  "gitUiAddReviewedCommit": "Add reviewed commit…",
+  "@gitUiAddReviewedCommit": {
+    "description": "Shared Git interface: Add reviewed commit…"
+  },
+  "gitUiMoveEarlier": "Move earlier",
+  "@gitUiMoveEarlier": {
+    "description": "Shared Git interface: Move earlier"
+  },
+  "gitUiMoveLater": "Move later",
+  "@gitUiMoveLater": {
+    "description": "Shared Git interface: Move later"
+  },
+  "gitUiRemoveFromReviewedSequence": "Remove from reviewed sequence",
+  "@gitUiRemoveFromReviewedSequence": {
+    "description": "Shared Git interface: Remove from reviewed sequence"
+  },
+  "gitUiApplyChangesWithoutCreatingCommits": "Apply changes without creating commits",
+  "@gitUiApplyChangesWithoutCreatingCommits": {
+    "description": "Shared Git interface: Apply changes without creating commits"
+  },
+  "gitUiUseThisExplicitMainlineParentForMergeCommits": "Use this explicit mainline parent for merge commits",
+  "@gitUiUseThisExplicitMainlineParentForMergeCommits": {
+    "description": "Shared Git interface: Use this explicit mainline parent for merge commits"
+  },
+  "gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn": "Empty or already-applied commits may stop Git for an explicit skip or continuation decision.",
+  "@gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn": {
+    "description": "Shared Git interface: Empty or already-applied commits may stop Git for an explicit skip or continuation decision."
+  },
+  "gitUiRevertInReviewedOrder": "Revert in reviewed order",
+  "@gitUiRevertInReviewedOrder": {
+    "description": "Shared Git interface: Revert in reviewed order"
+  },
+  "gitUiCherryPickInReviewedOrder": "Cherry-pick in reviewed order",
+  "@gitUiCherryPickInReviewedOrder": {
+    "description": "Shared Git interface: Cherry-pick in reviewed order"
+  },
+  "gitUiReturnToFiles": "Return to Files",
+  "@gitUiReturnToFiles": {
+    "description": "Shared Git interface: Return to Files"
+  },
+  "gitUiGit": "Git",
+  "@gitUiGit": {
+    "description": "Shared Git interface: Git"
+  },
+  "gitUiCommit": "Commit",
+  "@gitUiCommit": {
+    "description": "Shared Git interface: Commit"
+  },
+  "gitUiBackToCommit": "Back to Commit",
+  "@gitUiBackToCommit": {
+    "description": "Shared Git interface: Back to Commit"
+  },
+  "gitUiSelectAChangeToReview": "Select a change to review",
+  "@gitUiSelectAChangeToReview": {
+    "description": "Shared Git interface: Select a change to review"
+  },
+  "gitUiLoadingBranch": "Loading branch…",
+  "@gitUiLoadingBranch": {
+    "description": "Shared Git interface: Loading branch…"
+  },
+  "gitUiBranchUnavailable": "Branch unavailable",
+  "@gitUiBranchUnavailable": {
+    "description": "Shared Git interface: Branch unavailable"
+  },
+  "gitUiUnbornHEAD": "Unborn HEAD",
+  "@gitUiUnbornHEAD": {
+    "description": "Shared Git interface: Unborn HEAD"
+  },
+  "gitUiDetachedHEADRevision": "Detached HEAD · {revision}",
+  "@gitUiDetachedHEADRevision": {
+    "description": "Shared Git interface: Detached HEAD · {revision}",
+    "placeholders": {
+      "revision": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiContinueAction": "Continue",
+  "@gitUiContinueAction": {
+    "description": "Shared Git interface: Continue"
+  },
+  "gitUiPick": "Pick",
+  "@gitUiPick": {
+    "description": "Shared Git interface: Pick"
+  },
+  "gitUiReword": "Reword",
+  "@gitUiReword": {
+    "description": "Shared Git interface: Reword"
+  },
+  "gitUiEdit": "Edit",
+  "@gitUiEdit": {
+    "description": "Shared Git interface: Edit"
+  },
+  "gitUiSquash": "Squash",
+  "@gitUiSquash": {
+    "description": "Shared Git interface: Squash"
+  },
+  "gitUiFixup": "Fixup",
+  "@gitUiFixup": {
+    "description": "Shared Git interface: Fixup"
+  },
+  "gitUiDrop": "Drop",
+  "@gitUiDrop": {
+    "description": "Shared Git interface: Drop"
+  },
+  "gitUiAbort": "Abort",
+  "@gitUiAbort": {
+    "description": "Shared Git interface: Abort"
+  },
+  "gitUiSkip": "Skip",
+  "@gitUiSkip": {
+    "description": "Shared Git interface: Skip"
+  },
+  "gitUiQuit": "Quit operation",
+  "@gitUiQuit": {
+    "description": "Shared Git interface: Quit operation"
+  },
+  "gitUiSoft": "Soft",
+  "@gitUiSoft": {
+    "description": "Shared Git interface: Soft"
+  },
+  "gitUiMixed": "Mixed",
+  "@gitUiMixed": {
+    "description": "Shared Git interface: Mixed"
+  },
+  "gitUiHard": "Hard",
+  "@gitUiHard": {
+    "description": "Shared Git interface: Hard"
+  },
+  "gitUiKeep": "Keep",
+  "@gitUiKeep": {
+    "description": "Shared Git interface: Keep"
+  },
+  "gitUiCreate": "Create",
+  "@gitUiCreate": {
+    "description": "Shared Git interface: Create"
+  },
+  "gitUiApplyStash": "Apply stash",
+  "@gitUiApplyStash": {
+    "description": "Shared Git interface: Apply stash"
+  },
+  "gitUiPopStash": "Pop stash",
+  "@gitUiPopStash": {
+    "description": "Shared Git interface: Pop stash"
+  },
+  "gitUiDropStashAction": "Drop stash",
+  "@gitUiDropStashAction": {
+    "description": "Shared Git interface: Drop stash"
+  },
+  "gitUiEditedResult": "Edited result",
+  "@gitUiEditedResult": {
+    "description": "Shared Git interface: Edited result"
+  },
+  "gitUiLeftContent": "Left content",
+  "@gitUiLeftContent": {
+    "description": "Shared Git interface: Left content"
+  },
+  "gitUiRightContent": "Right content",
+  "@gitUiRightContent": {
+    "description": "Shared Git interface: Right content"
+  },
+  "gitUiDeletePath": "Delete path",
+  "@gitUiDeletePath": {
+    "description": "Shared Git interface: Delete path"
+  },
+  "gitUiSubmoduleCommit": "Submodule commit",
+  "@gitUiSubmoduleCommit": {
+    "description": "Shared Git interface: Submodule commit"
+  },
+  "gitUiPresentContent": "Available content",
+  "@gitUiPresentContent": {
+    "description": "Shared Git interface: Available content"
+  },
+  "gitUiAbsentContent": "Absent",
+  "@gitUiAbsentContent": {
+    "description": "Shared Git interface: Absent"
+  },
+  "gitUiBinaryContent": "Binary content",
+  "@gitUiBinaryContent": {
+    "description": "Shared Git interface: Binary content"
+  },
+  "gitUiTooLargeContent": "Content exceeds the display limit",
+  "@gitUiTooLargeContent": {
+    "description": "Shared Git interface: Content exceeds the display limit"
+  },
+  "gitUiUnavailableContent": "Unavailable content",
+  "@gitUiUnavailableContent": {
+    "description": "Shared Git interface: Unavailable content"
+  },
+  "gitUiGitlinkContent": "Submodule pointer",
+  "@gitUiGitlinkContent": {
+    "description": "Shared Git interface: Submodule pointer"
+  },
+  "gitUiSymlinkContent": "Symbolic link",
+  "@gitUiSymlinkContent": {
+    "description": "Shared Git interface: Symbolic link"
+  },
+  "gitUiNoOperation": "No operation",
+  "@gitUiNoOperation": {
+    "description": "Shared Git interface: No operation"
+  },
+  "gitUiCherryPickOperation": "Cherry-pick",
+  "@gitUiCherryPickOperation": {
+    "description": "Shared Git interface: Cherry-pick"
+  },
+  "gitUiRevertOperation": "Revert",
+  "@gitUiRevertOperation": {
+    "description": "Shared Git interface: Revert"
+  },
+  "gitUiApplyMailboxOperation": "Apply patches",
+  "@gitUiApplyMailboxOperation": {
+    "description": "Shared Git interface: Apply patches"
+  },
+  "gitUiSquashOperation": "Squash merge",
+  "@gitUiSquashOperation": {
+    "description": "Shared Git interface: Squash merge"
+  },
+  "gitUiUnmergedOperation": "Unmerged index",
+  "@gitUiUnmergedOperation": {
+    "description": "Shared Git interface: Unmerged index"
+  },
+  "gitUiWaitingForPromptPhase": "Waiting for your response",
+  "@gitUiWaitingForPromptPhase": {
+    "description": "Shared Git interface: Waiting for your response"
+  },
+  "gitUiStoppedPhase": "Stopped for review",
+  "@gitUiStoppedPhase": {
+    "description": "Shared Git interface: Stopped for review"
+  },
+  "gitUiCompletedPhase": "Completed",
+  "@gitUiCompletedPhase": {
+    "description": "Shared Git interface: Completed"
+  },
+  "gitUiFailedPhase": "Failed",
+  "@gitUiFailedPhase": {
+    "description": "Shared Git interface: Failed"
+  },
+  "gitUiCancelledPhase": "Cancelled",
+  "@gitUiCancelledPhase": {
+    "description": "Shared Git interface: Cancelled"
+  },
+  "gitUiUncertainPhase": "Outcome requires reconciliation",
+  "@gitUiUncertainPhase": {
+    "description": "Shared Git interface: Outcome requires reconciliation"
+  },
+  "gitUiStageVersion": "Conflict stage {stage}",
+  "@gitUiStageVersion": {
+    "description": "Shared Git interface: Conflict stage {stage}",
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiGitMergePreview": "Git merge preview",
+  "@gitUiGitMergePreview": {
+    "description": "Shared Git interface: Git merge preview"
+  },
+  "gitUiNormalizedWorking": "Working Tree · Git normalized",
+  "@gitUiNormalizedWorking": {
+    "description": "Shared Git interface: Working Tree · Git normalized"
+  },
+  "gitUiPercentValue": "{value} percent",
+  "@gitUiPercentValue": {
+    "description": "Shared Git interface: {value} percent",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiOperationActionQuestion": "{action} {operation}?",
+  "@gitUiOperationActionQuestion": {
+    "description": "Shared Git interface: {action} {operation}?",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "operation": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiOperationActionEllipsis": "{action}…",
+  "@gitUiOperationActionEllipsis": {
+    "description": "Shared Git interface: {action}…",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRebaseStepSemantics": "{position}, {action}, {subject}",
+  "@gitUiRebaseStepSemantics": {
+    "description": "Shared Git interface: {position}, {action}, {subject}",
+    "placeholders": {
+      "position": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      },
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiUtf8Bom": "UTF-8 with byte-order mark (BOM)",
+  "@gitUiUtf8Bom": {
+    "description": "Shared Git interface: UTF-8 with byte-order mark (BOM)"
+  },
+  "gitUiUtf8NoBom": "UTF-8 without byte-order mark (BOM)",
+  "@gitUiUtf8NoBom": {
+    "description": "Shared Git interface: UTF-8 without byte-order mark (BOM)"
+  },
+  "gitUiAddsBom": "This edit adds a UTF-8 byte-order mark (BOM) at the start of the file.",
+  "@gitUiAddsBom": {
+    "description": "Shared Git interface: This edit adds a UTF-8 byte-order mark (BOM) at the start of the file."
+  },
+  "gitUiRemovesBom": "This edit removes the UTF-8 byte-order mark (BOM) from the start of the file.",
+  "@gitUiRemovesBom": {
+    "description": "Shared Git interface: This edit removes the UTF-8 byte-order mark (BOM) from the start of the file."
+  },
+  "gitUiNoLineTerminators": "No line terminators",
+  "@gitUiNoLineTerminators": {
+    "description": "Shared Git interface: No line terminators"
+  },
+  "gitUiLineEndings": "{format} line endings",
+  "@gitUiLineEndings": {
+    "description": "Shared Git interface: {format} line endings",
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiMixedLineEndings": "Mixed line endings ({formats})",
+  "@gitUiMixedLineEndings": {
+    "description": "Shared Git interface: Mixed line endings ({formats})",
+    "placeholders": {
+      "formats": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiNoFinalLf": "{format} · no final LF",
+  "@gitUiNoFinalLf": {
+    "description": "Shared Git interface: {format} · no final LF",
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiLineEndingChange": "Line ending format changes from {before} to {after}. Clipboard text can use different line endings from the original file.",
+  "@gitUiLineEndingChange": {
+    "description": "Shared Git interface: Line ending format changes from {before} to {after}. Clipboard text can use different line endings from the original file.",
+    "placeholders": {
+      "before": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiGitFailure": "Git operation failed. Review the diagnostics below.",
+  "@gitUiGitFailure": {
+    "description": "Shared Git interface: Git operation failed. Review the diagnostics below."
+  },
+  "gitUiAbortInline": "abort",
+  "@gitUiAbortInline": {
+    "description": "Shared Git interface: abort"
+  },
+  "gitUiSkipInline": "skip",
+  "@gitUiSkipInline": {
+    "description": "Shared Git interface: skip"
+  },
+  "gitUiQuitInline": "quit",
+  "@gitUiQuitInline": {
+    "description": "Shared Git interface: quit"
+  },
+  "gitUiMergeInline": "merge",
+  "@gitUiMergeInline": {
+    "description": "Shared Git interface: merge"
+  },
+  "gitUiRebaseInline": "rebase",
+  "@gitUiRebaseInline": {
+    "description": "Shared Git interface: rebase"
+  },
+  "gitUiCherryPickInline": "cherry-pick",
+  "@gitUiCherryPickInline": {
+    "description": "Shared Git interface: cherry-pick"
+  },
+  "gitUiRevertInline": "revert",
+  "@gitUiRevertInline": {
+    "description": "Shared Git interface: revert"
+  },
+  "gitUiApplyMailboxInline": "applyMailbox",
+  "@gitUiApplyMailboxInline": {
+    "description": "Shared Git interface: applyMailbox"
+  },
+  "gitUiSquashInline": "squash",
+  "@gitUiSquashInline": {
+    "description": "Shared Git interface: squash"
+  },
+  "gitUiUnmergedInline": "unmerged",
+  "@gitUiUnmergedInline": {
+    "description": "Shared Git interface: unmerged"
+  },
+  "gitHostFetch": "Fetch",
+  "@gitHostFetch": {
+    "description": "Application Git integration: Fetch"
+  },
+  "gitHostRefreshGitStatus": "Refresh Git status",
+  "@gitHostRefreshGitStatus": {
+    "description": "Application Git integration: Refresh Git status"
+  },
+  "gitHostCommitStaged": "Commit staged",
+  "@gitHostCommitStaged": {
+    "description": "Application Git integration: Commit staged"
+  },
+  "gitHostGitBranches": "Git branches",
+  "@gitHostGitBranches": {
+    "description": "Application Git integration: Git branches"
+  },
+  "gitHostReviewPush": "Review push",
+  "@gitHostReviewPush": {
+    "description": "Application Git integration: Review push"
+  },
+  "gitHostGit": "Git",
+  "@gitHostGit": {
+    "description": "Application Git integration: Git"
+  },
+  "gitHostGitOperationsApplyToThisEntireRepositoryAndMay": "Git operations apply to this entire repository and may execute its configured hooks, filters, credential and signing tools.",
+  "@gitHostGitOperationsApplyToThisEntireRepositoryAndMay": {
+    "description": "Application Git integration: Git operations apply to this entire repository and may execute its configured hooks, filters, credential and signing tools."
+  },
+  "gitHostContentUnavailable": "Content unavailable",
+  "@gitHostContentUnavailable": {
+    "description": "Application Git integration: Content unavailable"
+  },
+  "gitHostInitializeRepository": "Initialize repository",
+  "@gitHostInitializeRepository": {
+    "description": "Application Git integration: Initialize repository"
+  },
+  "gitHostCloneRepository": "Clone repository",
+  "@gitHostCloneRepository": {
+    "description": "Application Git integration: Clone repository"
+  },
+  "gitHostInitializeHere": "Initialize here…",
+  "@gitHostInitializeHere": {
+    "description": "Application Git integration: Initialize here…"
+  },
+  "gitHostCloneRepository2": "Clone repository…",
+  "@gitHostCloneRepository2": {
+    "description": "Application Git integration: Clone repository…"
+  },
+  "gitHostGitLog": "Git Log",
+  "@gitHostGitLog": {
+    "description": "Application Git integration: Git Log"
+  },
+  "gitUiAbsentPlaceholder": "(absent)",
+  "@gitUiAbsentPlaceholder": {
+    "description": "Shared Git interface: (absent)"
+  },
+  "gitUiUnborn": "unborn",
+  "@gitUiUnborn": {
+    "description": "Shared Git interface: unborn"
+  },
+  "gitUiRebasedHistoryRevision": "Rebased history · {revision}",
+  "@gitUiRebasedHistoryRevision": {
+    "description": "Shared Git interface: Rebased history · {revision}",
+    "placeholders": {
+      "revision": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiCurrentHistoryRevision": "Current history · {revision}",
+  "@gitUiCurrentHistoryRevision": {
+    "description": "Shared Git interface: Current history · {revision}",
+    "placeholders": {
+      "revision": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiReplayedCommitRevision": "Replayed commit · {revision}",
+  "@gitUiReplayedCommitRevision": {
+    "description": "Shared Git interface: Replayed commit · {revision}",
+    "placeholders": {
+      "revision": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiIncomingContentRevision": "Incoming content · {revision}",
+  "@gitUiIncomingContentRevision": {
+    "description": "Shared Git interface: Incoming content · {revision}",
+    "placeholders": {
+      "revision": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiContentConflict": "Content conflict",
+  "@gitUiContentConflict": {
+    "description": "Shared Git interface: Content conflict"
+  },
+  "gitUiSubmoduleConflict": "Submodule conflict",
+  "@gitUiSubmoduleConflict": {
+    "description": "Shared Git interface: Submodule conflict"
+  },
+  "gitUiSymlinkConflict": "Symbolic-link conflict",
+  "@gitUiSymlinkConflict": {
+    "description": "Shared Git interface: Symbolic-link conflict"
+  },
+  "gitUiAddAddConflict": "Added on both sides",
+  "@gitUiAddAddConflict": {
+    "description": "Shared Git interface: Added on both sides"
+  },
+  "gitUiModifyDeleteConflict": "Modified/deleted or renamed/deleted",
+  "@gitUiModifyDeleteConflict": {
+    "description": "Shared Git interface: Modified/deleted or renamed/deleted"
+  },
+  "gitUiConflictIdentity": "{path} · {kind}",
+  "@gitUiConflictIdentity": {
+    "description": "Shared Git interface: {path} · {kind}",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      }
+    }
   }
 }

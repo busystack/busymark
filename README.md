@@ -115,6 +115,14 @@ and branch/commit menus provide network review, conflict resolution, rebase,
 stash, worktree, submodule and reflog tools. Trusting Git execution is separate
 from opening a folder, and operations that replace files protect open drafts.
 
+Rebase targets come from searchable branches/tags or the Git Log; the configured
+upstream is shown explicitly and object IDs are handled internally. Replaced
+plans and stale reference tips require a fresh review. Git views use BusyMark's
+existing ARB catalogs in every supported locale. Update their generated adapter
+with `../busystack_git_flutter/tool/sync_host_localizations.py` and the existing
+`flutter gen-l10n` workflow; `test/src/git/shared_git_localization_test.dart`
+checks catalog coverage and named values without translating repository data.
+
 Linux development and packaging use the official Flutter SDK version pinned in
 `pubspec.yaml` (currently 3.47.5). No custom Flutter engine is built or selected.
 See [Linux development](docs/development/linux-engine.md) for build modes and

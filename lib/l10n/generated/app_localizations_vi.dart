@@ -5882,4 +5882,2809 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       'Tên tệp này chứa byte không phải UTF-8. Vẫn có thể xem xét và đưa vào vùng đệm Git; trình soạn thảo tài liệu yêu cầu tên tệp UTF-8.';
+
+  @override
+  String get gitUiMergeInProgress => 'Đang trộn';
+
+  @override
+  String get gitUiRebaseInProgress => 'Comment';
+
+  @override
+  String get gitUiCherryPickInProgress => 'Đang lựa chọn Cherry.';
+
+  @override
+  String get gitUiRevertInProgress => 'Hoàn nguyên trong tiến trình';
+
+  @override
+  String get gitUiPatchApplicationInProgress =>
+      'Đắp vá ứng dụng đang tiến hành';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Kết quả hợp nhất Squash đang chờ cam kết';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts =>
+      'Xung đột phụ lục chưa được giải quyết';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · xung đột chưa được giải quyết';
+
+  @override
+  String get gitUiReviewOperation => 'Thao tác ôn lại';
+
+  @override
+  String get gitUiRefresh => 'Làm mới';
+
+  @override
+  String get gitUiCreateNamedStash => 'Tạo nơi lưu tên';
+
+  @override
+  String get gitUiCreateStash => 'Tạo bản cất tạm…';
+
+  @override
+  String get gitUiNoStashes => 'Không giấu';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Chọn nơi lưu trữ cần kiểm tra các thay đổi của nó';
+
+  @override
+  String get gitUiStashedUntrackedFiles => 'Comment';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Đang kiểm tra các tập tin chưa được ghi rõ...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Tăng cường trạng thái của nơi ẩn náu khi nộp đơn';
+
+  @override
+  String get gitUiApplyAndRetain => 'Áp dụng và ghi lại';
+
+  @override
+  String get gitUiPop => 'Bố...';
+
+  @override
+  String get gitUiCreateBranch => 'Tạo nhánh…';
+
+  @override
+  String get gitUiDropStash => 'Xóa bản cất tạm…';
+
+  @override
+  String get gitUiBranchFromStash => 'Tạo nhánh từ bản cất tạm';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Tạo ra/sction to a chi nhánh tại căn cứ gốc của kho, sau đó áp dụng nó.';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0 nơi này?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Nếu áp dụng xung đột, người ta giữ lại chỗ cất giấu gốc.';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Xoá mục này. Thay đổi của nó không được áp dụng.';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Giải quyết các tệp chưa hợp nhất. Git không có lệnh tiếp tục hay hủy thao tác stash; bản cất tạm gốc vẫn được giữ.';
+
+  @override
+  String get gitUiStashNameMessage => 'Tên giả/ Thông báo';
+
+  @override
+  String get gitUiStashContentAndResultingIndex => 'Comment';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges => 'Name';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Cất tạm thay đổi, giữ nguyên thay đổi đã đưa vào chỉ mục (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Chỉ cất tạm các thay đổi đã đưa vào chỉ mục (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => 'Gồm tập tin chưa được đánh dấu';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Tất cả các đường dẫn thích hợp trong kho chứa này';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Không có thay đổi thích hợp cho các tùy chọn ẩn giấu này.';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath =>
+      'Chọn ít nhất một đường thích hợp.';
+
+  @override
+  String get gitUiCreateStash2 => 'Tạo bản cất tạm';
+
+  @override
+  String get gitUiCreateWorktree => 'Tạo cây làm việc...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'Tạo commit trước khi tạo cây làm việc tại HEAD.';
+
+  @override
+  String get gitUiDetachedHEAD => 'HEAD tách rời';
+
+  @override
+  String get gitUiCurrent => 'Hiện tại';
+
+  @override
+  String get gitUiLocked => 'Bị khóa e·';
+
+  @override
+  String get gitUiOpenInBusyStack => 'Mở trong stack · bận rộn';
+
+  @override
+  String get gitUiStatusNotInspected => 'Trạng thái chưa được kiểm tra';
+
+  @override
+  String get gitUiDirty => 'Đồ bẩn thỉu';
+
+  @override
+  String get gitUiClean => 'Không có thay đổi';
+
+  @override
+  String get gitUiOpenWorkingFolder => 'Mở thư mục làm việc';
+
+  @override
+  String get gitUiMoveWorktree => 'Di chuyển cây lao động...';
+
+  @override
+  String get gitUiUnlock => 'Bỏ khoá';
+
+  @override
+  String get gitUiLock => 'Khoá';
+
+  @override
+  String get gitUiRemoveCleanWorktree => 'Gỡ bỏ cây làm việc sạch...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Xem lại việc gỡ bỏ bao gồm các thay đổi cục bộ...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => 'Tên thư mục làm việc mới';
+
+  @override
+  String get gitUiNewWorktreeBranch => 'Chi nhánh cây làm việc mới';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Tạo $arg0/$arg1 với một chi nhánh cục bộ mới tại $arg2 ($arg3).';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => 'Tên thư mục đích';
+
+  @override
+  String get gitUiRemoveWorktree => 'Loại bỏ cây lao động?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Bỏ qua hoàn toàn tất cả các thay đổi theo dõi/không theo dõi cục bộ trong cây làm việc này. Các cây lao động khóa/ trong sử dụng vẫn còn được bảo vệ.';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git từ chối gỡ bỏ nếu có thay đổi cục bộ, tập tin chưa được đánh dấu, hoặc khóa.';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Bỏ qua nội dung của cây làm việc cục bộ và gỡ bỏ';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => 'Gỡ bỏ cây làm việc sạch';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Tự động lặp lại thành các tiểu trang được làm tổ để cập nhật/ phù hợp';
+
+  @override
+  String get gitUiNoRecordedSubmodules => 'Không ghi âm các tập tin phụ';
+
+  @override
+  String get gitUiNotInitialized => 'chưa khởi động';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return 'Phụ huynh gitlink: $arg0 đã kiểm tra: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => 'Kho chứa tổ nhơ bẩn';
+
+  @override
+  String get gitUiCleanNestedRepository => 'kho chứa đã làm sạch';
+
+  @override
+  String get gitUiNestedStatusUnavailable =>
+      'Trạng thái tổ chức không sẵn sàng';
+
+  @override
+  String get gitUiEnterNestedRepository => 'Nhập kho chứa tổ';
+
+  @override
+  String get gitUiInitializeConfiguration => 'Đang khởi tạo cấu hình';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Cập nhật cho cha mẹ ghi chép về bản cam kết...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Theo chi nhánh được cấu hình từ xa...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs => 'Đồng bộ hoá URL đã cấu hình...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Chuyển động con trỏ con dưới màn hình nền hiện tại trong cha mẹ';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Cha mẹ và tiểu học cam kết, thúc đẩy và trạng thái dơ bẩn vẫn còn tách biệt. Duyệt không khởi tạo hay cập nhật chúng.';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return 'Hãy lấy và kiểm tra lại sự kết hợp của chi nhánh được cấu hình từ xa, khác với lời ghi chép của cha mẹ, đệ trình lại: $arg0.';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Khởi tạo nếu cần và chuyển đến chính xác $arg0. Đệ quy: $arg1.';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return 'Áp dụng thao tác cấu hình phụ đã duyệt. Đệ quy: $arg0.';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => 'Áp dụng thao tác phụ';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Xem xét một bản sửa đổi được ghi lại hoặc tạo một chi nhánh phục hồi. Không lấy lại nội dung không được lưu trữ tùy ý hoặc không bị theo dõi.';
+
+  @override
+  String get gitUiSelectAReflogEntry => 'Chọn mục nhập thay đổi tên';
+
+  @override
+  String get gitUiPreviousPage => 'Trang trước';
+
+  @override
+  String get gitUiNextPage => 'Trang kế';
+
+  @override
+  String get gitUiRecoveryBranchName => 'Tên chi nhánh phục hồi';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return 'Tạo một chi nhánh ở $arg0; làm việc tập tin và chi nhánh hiện tại không thay đổi.';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => 'Tạo chi nhánh phục hồi...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot => 'Ảnh chụp phục hồi chỉ đọc';
+
+  @override
+  String get gitUiInspectSnapshot => 'Kiểm tra hình chụp...';
+
+  @override
+  String get gitUiReviewReset => 'Xem lại khởi động lại...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return 'Trang $arg0';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Một lịch sử văn bản Git phải sở hữu trường hiệu chỉnh của nó.';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Chỉnh sửa HEAD | Chỉ mục | Cây làm việc…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Chỉ mục ôn lại hoặc nội dung hoạt động đã thay đổi. Hãy làm tươi sáng so sánh này trước khi thiết lập lại.';
+
+  @override
+  String get gitUiRefreshComparison => 'So sánh cập nhật';
+
+  @override
+  String get gitUiPreviousChangedFile => 'Tập tin đã thay đổi trước';
+
+  @override
+  String get gitUiNextChangedFile => 'Tập tin thay đổi tiếp theo';
+
+  @override
+  String get gitUiPreviousDifference => 'Hiệu ứng trước';
+
+  @override
+  String get gitUiNextDifference => 'Hiệu ứng tiếp theo';
+
+  @override
+  String get gitUiComparisonMode => 'Chế độ so sánh';
+
+  @override
+  String get gitUiSideBySide => 'Bên cạnh';
+
+  @override
+  String get gitUiUnified => 'Hợp nhất';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Tùy chọn hiển thị khác nhau';
+
+  @override
+  String get gitUiWrap => 'Gói';
+
+  @override
+  String get gitUiWords => 'Các từ';
+
+  @override
+  String get gitUiCollapseContext => 'Văn cảnh co lại';
+
+  @override
+  String get gitUiIgnoreWhitespace => 'Bỏ qua khoảng trắng';
+
+  @override
+  String get gitUiSearchComparison => 'So sánh tìm kiếm';
+
+  @override
+  String get gitUiSearch => 'Tìm kiếm';
+
+  @override
+  String get gitUiCloseSearch => 'Đóng tìm kiếm';
+
+  @override
+  String get gitUiStagingActions => 'Hành động cấu hình';
+
+  @override
+  String get gitUiStagingActions2 => 'Hành động tạo hình...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines =>
+      'Bỏ dòng thay đổi đã chọn khỏi chỉ mục';
+
+  @override
+  String get gitUiStageSelectedChangedLines =>
+      'Đưa dòng thay đổi đã chọn vào chỉ mục';
+
+  @override
+  String get gitUiUnstageWholeFile => 'Bỏ toàn bộ tệp khỏi chỉ mục';
+
+  @override
+  String get gitUiStageWholeFile => 'Đưa toàn bộ tệp vào chỉ mục';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0-Chỉ thay đổi dòng ẩn · Hiển thị các thay đổi chính xác';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '$arg0 đã thay đổi dòng · Hiển thị không bao giờ thay đổi các byte được sắp xếp.';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'So sánh chỉ đọc · Sao chép văn bản hoặc chỉnh cách hiển thị.';
+
+  @override
+  String get gitUiNoFinalNewline => ' · Không có dòng mới cuối';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 · $arg1 · $arg2 byte$arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'So sánh văn bản không sẵn sàng cho nội dung này.';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Sự so sánh này vượt quá giới hạn xem xét văn bản bị giới hạn. Nội dung chưa được tuyên bố giống hệt nhau.';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Nội dung so sánh giống hệt nhau.';
+
+  @override
+  String get gitUiUnstage => 'Mở màn';
+
+  @override
+  String get gitUiStage => 'Giai đoạn';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 thay đổi dòng';
+  }
+
+  @override
+  String get gitUiContext => 'Văn cảnh';
+
+  @override
+  String get gitUiExpandUnchangedContext => 'Mở rộng văn cảnh không thay đổi';
+
+  @override
+  String get gitUiUnstageThisHunk => 'Bỏ khối này khỏi chỉ mục';
+
+  @override
+  String get gitUiStageThisHunk => 'Đưa khối này vào chỉ mục';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return 'Sửa đổi nội dung giai đoạn e. $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult =>
+      'Đang ghi kết quả xem xét chỉ mục';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => 'Chỉ mục';
+
+  @override
+  String get gitUiWorkingTree => 'Cây làm việc';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => 'Chỉ mục · sửa được UTF- 8 chấm';
+
+  @override
+  String get gitUiUndo => 'Hoàn tác';
+
+  @override
+  String get gitUiRedo => 'Làm lại';
+
+  @override
+  String get gitUiReloadIndexReview => 'Xem xét lại chỉ mục?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Tải lại phiên bản HEAD, chỉ mục và làm việc hiện tại. Thao tác này thay bản nháp chưa lưu trong trình sửa chỉ mục.';
+
+  @override
+  String get gitUiReplaceDraftAndReload => 'Thay thế bản nháp và nạp lại';
+
+  @override
+  String get gitUiReloadVersions => 'Tải lại phiên bản...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Ghi kết quả đã biên tập vào mục nhập chỉ mục này';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Làm việc tập tin còn lại trên đĩa. Xem lại chỉ mục đã sửa trước khi áp dụng.';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Xem lại định dạng văn bản phụ lục';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Cập nhật chỉ mục ghi chú $arg0. $arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult => 'Ghi kết quả đã ôn lại chỉ mục';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Kết quả đã thay đổi trong quá trình xem xét định dạng. Xem lại lần nữa.';
+
+  @override
+  String get gitUiSynchronizeScrolling => 'Đồng bộ hoá cuộn';
+
+  @override
+  String get gitUiReadOnlyRevisionContent => 'Chỉ đọc nội dung sửa đổi';
+
+  @override
+  String get gitUiEditableIndexContent => 'Nội dung chỉ mục có thể sửa';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Việc sửa đổi đã yêu cầu nằm ngoài bộ lọc hiện thời. Đặt lại bộ lọc để hiển thị nó.';
+
+  @override
+  String get gitUiFilterLog => 'Bản ghi bộ lọc';
+
+  @override
+  String get gitUiFilters => 'Bộ lọc...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return 'Bộ lọc ($count)...';
+  }
+
+  @override
+  String get gitUiMessage => 'Thông điệp…';
+
+  @override
+  String get gitUiAuthor => 'Tác giả…';
+
+  @override
+  String get gitUiPath => 'Đường dẫn...';
+
+  @override
+  String get gitUiDate => 'Ngày...';
+
+  @override
+  String get gitUiMessageFilter => 'Bộ lọc thông điệp';
+
+  @override
+  String get gitUiAuthorFilter => 'Bộ lọc Tác giả';
+
+  @override
+  String get gitUiPathFilter => 'Bộ lọc đường dẫn';
+
+  @override
+  String get gitUiMessage2 => 'Thông điệp';
+
+  @override
+  String get gitUiAuthor2 => 'Tác giả';
+
+  @override
+  String get gitUiPath2 => 'Đường dẫn';
+
+  @override
+  String get gitUiDateFilter => 'Lọc ngày...';
+
+  @override
+  String get gitUiResetFilters => 'Đặt lại bộ lọc';
+
+  @override
+  String get gitUiRefreshLog => 'Bản ghi cập nhật';
+
+  @override
+  String get gitUiGoToCommitReference => 'Tới để xác nhận/ tham chiếu...';
+
+  @override
+  String get gitUiBackToHEAD => 'Trở về HEAD';
+
+  @override
+  String get gitUiOrderedCherryPick => 'Chọn anh đào.';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return 'Xem xét lại việc hái anh đào ($arg0)...';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions =>
+      'So sánh hai hiệu chỉnh đã chọn...';
+
+  @override
+  String get gitUiToggleBranchesPane => 'Bật/ tắt ô ô chi nhánh';
+
+  @override
+  String get gitUiFilterBranchesAndTags => 'Chi nhánh và thẻ lọc';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return 'Nhấn $arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => 'Ghi rõ chi tiết...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return 'Tham khảo: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => 'Chọn commit này';
+
+  @override
+  String get gitUiBranchOrTag => 'Chi nhánh hay Thẻ';
+
+  @override
+  String get gitUiAllReferences => 'Mọi tham chiếu';
+
+  @override
+  String get gitUiLocal => 'Cục bộ';
+
+  @override
+  String get gitUiRemote => 'Từ xa';
+
+  @override
+  String get gitUiTags => 'Thẻ';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Không có cam kết phù hợp với bộ lọc hiện thời.';
+
+  @override
+  String get gitUiObjectID => 'ID đối tượng';
+
+  @override
+  String get gitUiSubjectReferences => 'Đối tượng / tham chiếu';
+
+  @override
+  String get gitUiDate2 => 'Ngày';
+
+  @override
+  String get gitUiGitCommits => 'Git cam kết';
+
+  @override
+  String get gitUiParents => 'Các commit cha';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '$arg0 bậc cha mẹ';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => 'Tải thêm cam kết';
+
+  @override
+  String get gitUiLoadingChangedFiles => 'Đang tải tập tin đã thay đổi';
+
+  @override
+  String get gitUiNoChangedFiles => 'Không có tập tin thay đổi';
+
+  @override
+  String get gitUiSelectACommit => 'Chọn một cam kết';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return 'So sánh phụ huynh $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => 'Tệp đã thay đổi';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Tác giả: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Bản cam kết: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Giới hạn dưới: không có đối tượng phụ huynh.';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Cha mẹ ở ngoài trang này hoặc là một giới hạn nông cạn.';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return 'Commit cha $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => 'Hành động & lặp lại';
+
+  @override
+  String get gitUiEmptyTree => 'Cây trống';
+
+  @override
+  String get gitUiCreateBranch2 => 'Tạo nhánh';
+
+  @override
+  String get gitUiCreateTag => 'Tạo thẻ';
+
+  @override
+  String get gitUiCompareRevisions => 'So sánh hiệu chỉnh';
+
+  @override
+  String get gitUiOpenSnapshot => 'Mở hình chụp';
+
+  @override
+  String get gitUiRevertCommit => 'Hoàn nguyên';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary => 'Comment';
+
+  @override
+  String get gitUiResetCurrentBranch => 'Đặt lại nhánh hiện tại';
+
+  @override
+  String get gitUiCopyFullObjectID => 'Chép toàn bộ ID đối tượng';
+
+  @override
+  String get gitUiGoToCommitReference2 => 'Tới để xác nhận/ truy cập';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Hãy nhập vào tên người dùng hoặc tham chiếu để tiết lộ trong bản ghi.';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Việc sửa đổi đã yêu cầu không sẵn sàng.';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Thư mục siêu dữ liệu cục bộ chỉ được đọc. Kiểm tra chi nhánh và so sánh sẵn sàng.';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Tập tin làm việc không sẵn sàng hay chỉ đọc. Không có khả năng chuyển đổi và trộn các nhánh.';
+
+  @override
+  String get gitUiSearchBranchesAndTags => 'Tìm nhánh và thẻ';
+
+  @override
+  String get gitUiNewBranch => 'Nhánh mới…';
+
+  @override
+  String get gitUiLocalBranches => 'Nhánh cục bộ';
+
+  @override
+  String get gitUiRemoteBranches => 'Nhánh từ xa';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return 'Theo dõi $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return 'Đã kiểm tra tại $arg0';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata =>
+      'Đang cập nhật siêu dữ liệu chi nhánh';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return 'Chuyển sang $arg0';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => 'Mở cây lao động bận';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch =>
+      'Tạo chi nhánh theo dõi cục bộ...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => 'So sánh với HEAD hiện tại';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch => 'Nhập vào nhánh hiện tại...';
+
+  @override
+  String get gitUiRename => 'Thay tên...';
+
+  @override
+  String get gitUiChangeUpstream => 'Thay đổi ngược dòng...';
+
+  @override
+  String get gitUiDelete => 'Xoá...';
+
+  @override
+  String get gitUiDeleteFromRemote => 'Xoá từ xa...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return 'Hành động cho $arg0';
+  }
+
+  @override
+  String get gitUiLocalBranchName => 'Tên chi nhánh cục bộ';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return 'Tạo tại $arg0. Chi nhánh mới sẽ được kiểm tra.';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return 'Chi nhánh địa phương sẽ theo dõi $arg0 và được kiểm tra.';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => 'Chọn từ xa để xoá';
+
+  @override
+  String get gitUiDeleteRemoteReference => 'Xoá tham chiếu từ xa';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return 'Nhập $arg0 vào $arg1';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return 'Thay tên $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return 'Lên ngược dòng cho $arg0';
+  }
+
+  @override
+  String get gitUiNoUpstream => 'Chưa có nhánh thượng nguồn';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return 'Xoá $arg0?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 Target $arg1 địa phương chỉ bị xóa bỏ.';
+  }
+
+  @override
+  String get gitUiDelete2 => 'Xóa';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return 'Xóa bỏ nhánh $arg0?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 Git báo cáo chi nhánh này chưa được hợp nhất hoàn toàn. Rõ ràng xóa mục tham khảo cục bộ sau khi xem lại những việc đã làm; các bản sao từ xa không thay đổi.';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch => 'Xoá( delete)';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return 'Đích: $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => 'Chi nhánh hay thẻ nguồn';
+
+  @override
+  String get gitUiMergePolicy => 'Chính sách trộn';
+
+  @override
+  String get gitUiFastForwardWhenPossible => 'tua nhanh khi có thể';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit =>
+      'Luôn luôn tạo ra một cam kết nhập';
+
+  @override
+  String get gitUiFastForwardOnly => 'Chỉ tua nhanh';
+
+  @override
+  String get gitUiSquashIntoStagedChanges =>
+      'Squash thành các thay đổi đã dàn dựng';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Dừng lại trước khi tạo ra sự hợp nhất';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'Tua nhanh bị tắt để HEAD không di chuyển trước khi xem xét.';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Để lại những thay đổi được sắp xếp cho một cam kết riêng biệt; đây không phải là một sự kết hợp liên tục.';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Các cuộc xung đột vẫn còn trong vùng làm việc giải quyết chung.';
+
+  @override
+  String get gitUiAddRemote => 'Thêm từ xa...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return 'Thu thập: $arg0 Push: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => 'Gỡ bỏ từ xa...';
+
+  @override
+  String get gitUiChangeFetchURL => 'Đổi URL...';
+
+  @override
+  String get gitUiAddPushDestination => 'Thêm mục tiêu đẩy...';
+
+  @override
+  String get gitUiRemovePushDestination => 'Gỡ bỏ đích đẩy...';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return 'Quản lý $arg0';
+  }
+
+  @override
+  String get gitUiRemoteName => 'Tên từ xa';
+
+  @override
+  String get gitUiNewRemoteName => 'Tên từ xa mới';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource => 'Thư điện tử hoặc nguồn cục bộ';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Hãy nhập đích xem lại chính xác cần gỡ bỏ.';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Tài liệu nhận diện được cung cấp bởi những người giúp việc đã cấu hình hoặc một dấu nhắc riêng.';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return 'Loại bỏ điều khiển $arg0?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Gỡ bỏ các cấu hình và tham chiếu theo từ xa cục bộ. Nó không xóa bỏ kho phần mềm của máy phục vụ.';
+
+  @override
+  String get gitUiRemoveRemote2 => 'Gỡ bỏ từ xa';
+
+  @override
+  String get gitUiCommitScopeEntireRepository => 'Phạm vị độ sâu:';
+
+  @override
+  String get gitUiCachedTracking => 'Theo dõi sự rối loạn';
+
+  @override
+  String get gitUiAmendLastCommit => 'Sửa commit cuối';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Những cái móc được cấu hình và ký được tôn trọng.';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Viết lại commit HEAD đã chọn. Theo dõi từ xa không chứng minh commit chưa được công bố.';
+
+  @override
+  String get gitUiRepository => 'Kho lưu trữ';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return '$arg0 đã tách rời';
+  }
+
+  @override
+  String get gitUiLog => 'Lịch sử';
+
+  @override
+  String get gitUiRepositoryActions => 'Thao tác kho lưu trữ';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return 'Thông tin theo dõi đã lưu · $upstream · đi trước $ahead · đi sau $behind';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Kho lưu trữ · không có cây lao động mở bản ghi để kiểm tra lịch sử của nó.';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Không có kho phần mềm đọc e· deciting và cam kết.';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable =>
+      'Không thể tạo thư mục home% 1. Lỗi:% 2';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return 'Amend $revision';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => 'Thêm dòng xác nhận';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Dùng chính sách ký tự đã cấu hình';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit => 'Mật mã ký cam kết này';
+
+  @override
+  String get gitUiDoNotSignThisCommit => 'Đừng ký cam kết này.';
+
+  @override
+  String get gitUiRecentCommitMessages => 'Đang gửi tin nhắn...';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate => 'Dùng mẫu đã cấu hình...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Tác giả và móc đã cấu hình...';
+
+  @override
+  String get gitUiDraftMessage => 'Đang cập nhật thông điệp...';
+
+  @override
+  String get gitUiCommitOptions => 'Tùy chọn commit';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return 'Nháp giữ lại trong bộ nhớ; lưu nó thất bại. $arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => 'Thông điệp commit';
+
+  @override
+  String get gitUiGitOperationInProgress => 'Thao tác Git đang tiến hành';
+
+  @override
+  String get gitUiCancel => 'Hủy';
+
+  @override
+  String get gitUiAmendStaged => 'Đã chỉnh sửa';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return 'Cam kết ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => 'Commit rồi đẩy lên…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Không có mẫu nhập có khả năng đọc.';
+
+  @override
+  String get gitUiCommitIdentityAndHooks => 'Tạo danh tính và móc';
+
+  @override
+  String get gitUiRecentMessages => 'Tin nhắn gần đây';
+
+  @override
+  String get gitUiReplaceMessageDraft => 'Bản nháp thông điệp thay thế?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Thay thế thông điệp cam kết tồn tại bằng thông điệp đã chọn?';
+
+  @override
+  String get gitUiReplaceDraft => 'Bản nháp thay thế';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return 'Địa phương cam kết $arg0 tồn tại.';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return 'Địa phương thông báo $arg0 tồn tại. Xem lại bản ghi trước khi cố thực hiện một nhiệm vụ khác. Bản nháp thông điệp đã được giữ lại.';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => 'Nhấn để thêm chú thích...';
+
+  @override
+  String get gitUiCommitAuthorEmail => 'Thư điện tử tác giả cam kết';
+
+  @override
+  String get gitUiConfiguredDefault => 'Đã cấu hình mặc định';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return 'Ký tên: $arg0 ·$arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return 'Các móc đã cấu hình: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'Dòng xác nhận là tuyên bố trong thông điệp, khác với chữ ký mật mã. Danh tính chỉ được lưu vào cấu hình cục bộ của kho này; bản nháp được giữ lại.';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => 'Lưu tên kho phần mềm';
+
+  @override
+  String get gitUiStaged => 'Đã đưa vào chỉ mục';
+
+  @override
+  String get gitUiUntracked => 'Chưa được theo dõi';
+
+  @override
+  String get gitUiUnstaged => 'Chưa đưa vào chỉ mục';
+
+  @override
+  String get gitUiConflicts => 'Xung đột';
+
+  @override
+  String get gitUiNoChanges => 'Không có thay đổi';
+
+  @override
+  String get gitUiRepositoryChangeTree => 'Thư mục homeName';
+
+  @override
+  String get gitUiChanges => 'Thay đổi';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => 'Mở rộng';
+
+  @override
+  String get gitUiCollapse => 'Co lại';
+
+  @override
+  String get gitUiUnstageFile => 'Bỏ tệp khỏi chỉ mục';
+
+  @override
+  String get gitUiStageFile => 'Đưa tệp vào chỉ mục';
+
+  @override
+  String get gitUiExpandGroup => 'Mở rộng nhóm';
+
+  @override
+  String get gitUiCollapseGroup => 'Nhóm co lại';
+
+  @override
+  String get gitUiReviewDifference => 'Sự khác biệt ôn lại';
+
+  @override
+  String get gitUiUnstageSelectedFiles => 'Bỏ tệp đã chọn khỏi chỉ mục';
+
+  @override
+  String get gitUiStageSelectedFiles => 'Đưa tệp đã chọn vào chỉ mục';
+
+  @override
+  String get gitUiFileHistoryAndBlame => 'Tập tin lịch sử và trách nhiệm...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => 'Xoá tập tin chưa được theo dõi...';
+
+  @override
+  String get gitUiDiscardUnstagedChange =>
+      'Bỏ qua những thay đổi chưa được chuẩn bị...';
+
+  @override
+  String get gitUiFileHistory => 'Lịch sử tệp';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return 'Bỏ lá bài $arg0?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 byte· $arg1 thay thế nội dung hoạt động bằng chỉ mục, hoặc xoá tập tin chưa được theo dõi này. Nội dung cơ bản đã được giữ lại. Cần phải xem lại tài liệu máy chủ chưa được lưu trước tiên.';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => 'Xoá tập tin chưa được theo dõi';
+
+  @override
+  String get gitUiDiscardWorkingChange => 'Bỏ qua các thay đổi làm việc';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return 'Xoá tham chiếu REMTE $arg0';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Việc này xóa bỏ tham chiếu về mỗi đích thực được liệt kê bên dưới. Các nhánh/g địa phương được giữ lại. Các mẹo được mong đợi sẽ được cố định bởi đánh giá này.';
+
+  @override
+  String get gitUiReferenceDoesNotExist => 'tham chiếu không tồn tại';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0 mong đợi tiền boa: $arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => 'Việc xóa từ xa hoàn tất.';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return 'Xoá $arg0 từ xa?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'Các lời mách đích đích chính xác được hiển thị ở trên sẽ bị gỡ bỏ. Bất kỳ mẹo nào thay đổi từ xa sẽ dừng thao tác này lại để xem xét lại một lần nữa.';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote => 'Xem lại và xoá từ xa...';
+
+  @override
+  String get gitUiDestinationReference => 'Tham chiếu đích';
+
+  @override
+  String get gitUiReviewDestinations => 'Điểm đến ôn lại';
+
+  @override
+  String get gitUiNewRemoteBranch => 'Chi nhánh mới từ xa';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · dự kiến: $arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Một điểm đến đã cam kết không sẵn sàng tại địa phương. Hãy tìm điểm đến đó trước khi xem lại lịch sử đi.';
+
+  @override
+  String get gitUiFetchReviewedDestination => 'Lấy điểm đến đã ôn lại';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Chọn một đích và xem lại các cam kết đi.';
+
+  @override
+  String get gitUiNoOutgoingCommits => 'Không ai được phép ra tay';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => 'Chọn một việc đi ra';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits => 'Tải thêm thông tin đi';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Đặt đích này là thượng nguồn';
+
+  @override
+  String get gitUiChooseExactTagsToPublish => 'Chọn thẻ chính xác cần xuất';
+
+  @override
+  String get gitUiTagsNone => 'Thẻ: không có';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return 'Thẻ: %s: $arg0 được chọn';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return 'Xuất bản chính xác: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Nhấn hoàn tất.';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Đẩy cưỡng bức yêu cầu đầu các tham chiếu đích trùng khớp chính xác với những gì được xem xét ở đây.';
+
+  @override
+  String get gitUiForceWithReviewedLease =>
+      'Lực lượng đã xem xét lại hợp đồng thuê...';
+
+  @override
+  String get gitUiPush => 'Đẩy lên';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases =>
+      'Bắt buộc phải tăng giá hợp đồng thuê?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return 'Viết lại $arg0 chỉ khi mọi điểm đến từ xa vẫn có điểm bùng phát chính xác ở trên.\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Người khác có thể đã dùng lịch sử này. Việc tải về trong nền không gia hạn điều kiện bảo vệ này.';
+
+  @override
+  String get gitUiForceWithLease => 'Buộc phải thuê nhà';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Kết quả từ xa không chắc chắn. Xem lại đích đến trước khi đẩy.';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return 'Phụ huynh $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => '♪ Từ xa để lấy ♪';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Prune xoá các nhánh theo dõi từ xa';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Lấy cập nhật cho các thông tin theo dõi từ xa mà không thay thế tập tin hoạt động.';
+
+  @override
+  String get gitUiFetch => 'Tải về';
+
+  @override
+  String get gitUiSourceRemote => 'Từ xa nguồn';
+
+  @override
+  String get gitUiSourceBranch => 'Chi nhánh Nguồn';
+
+  @override
+  String get gitUiReviewedStrategy => 'Phương pháp ôn lại';
+
+  @override
+  String get gitUiMerge => 'Hợp nhất';
+
+  @override
+  String get gitUiRebase => 'Đổi gốc';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Dừng lại nếu đích không thể tua lại nhanh; không bao giờ hợp nhất hoặc rease.';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Nhập với sự hợp nhất, bao gồm cả khi có thể.';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Nhập; cho phép tua nhanh khi có thể.';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Hãy xây dựng lại lịch sử địa phương trong khi bảo tồn việc hợp nhất địa phương.';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Căn cứ vào địa phương như một lịch sử tuyến tính.';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git được cấu hình cho cơ sở dữ liệu tương tác. Hãy chọn một chiến lược kéo rõ ràng ở đây, hoặc lấy và mở khung... để xem xét một kế hoạch.';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Dùng cơ số xem xét lại thường cho kéo này';
+
+  @override
+  String get gitUiOptions => 'Tùy chọn';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Luôn luôn tạo một thực hiện hợp nhất (không tua nhanh)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits => 'Bảo tồn hợp nhất cục bộ';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Thay đổi cục bộ có thể ngăn cản kéo. Xem lại/ hứa hẹn hoặc tạo ra một nơi cất giấu rõ ràng.';
+
+  @override
+  String get gitUiStashes => 'Các bản cất tạm';
+
+  @override
+  String get gitUiCreateOrReviewStash => 'Tạo hay duyệt lại ổ lưu trữ...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy => 'Kéo với chiến lược đã chọn';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource =>
+      'Thư điện tử hoặc nguồn Git cục bộ';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH, hoặc đường dẫn cục bộ';
+
+  @override
+  String get gitUiFolderToInitialize => 'Thư mục để khởi chạy';
+
+  @override
+  String get gitUiFinalCloneDestination => 'Điểm đến nhân bản cuối cùng';
+
+  @override
+  String get gitUiChoose => 'Chọn...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Tạo chỉ siêu dữ liệu Git. Không tạo hay thực hiện tập tin tồn tại.';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Đích cuối cùng phải chưa tồn tại hoặc phải trống. Dữ liệu sẵn có của người dùng không bao giờ bị ghi đè.';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Ban đầu, nhánh · trống sử dụng chính sách Git hiệu quả';
+
+  @override
+  String get gitUiSelectedBranchOptional => 'Chi nhánh đã chọn · tùy chọn';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Hoàn toàn khởi động/ cập nhật phụ thuộc vào đệ quy';
+
+  @override
+  String get gitUiPreparingGitOperation => 'Đang chuẩn bị hoạt động Git...';
+
+  @override
+  String get gitUiThisAttemptCreated => 'Thử ra';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Địa điểm đã tồn tại trước khi thử nghiệm này:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Thư mục còn lại để kiểm tra.';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains =>
+      'Không còn thư mục đích nào còn lại.';
+
+  @override
+  String get gitUiCancelProcess => 'Hủy tiến trình';
+
+  @override
+  String get gitUiInitialize => 'Khởi tạo';
+
+  @override
+  String get gitUiClone => 'Nhân bản';
+
+  @override
+  String get gitUiChooseNewBase => 'Chọn gốc mới';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => 'Chọn ranh giới thượng nguồn';
+
+  @override
+  String get gitUiNewBase => 'Gốc mới';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded =>
+      'Ranh giới thượng nguồn · không bao gồm';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => 'Giống ranh giới thượng nguồn';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => 'Chọn nhánh, thẻ hoặc commit…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase => 'Dùng dòng lên làm cơ sở mới';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Chọn một nhánh hợp lệ, thẻ hoặc tác vụ từ bản ghi.';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Commit đầu tiên được giữ trong khối nhánh không thể dùng squash hay fixup vì chưa có commit đích đứng trước.';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return 'Khu vực chi nhánh $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Từ ngữ sẽ yêu cầu một thông điệp mới]\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => 'Comment';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Xem thử thông điệp gốc/ tổ hợp · Git yêu cầu tin nhắn cuối cùng';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return 'Kết quả $arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return 'Nhánh hiện tại: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => 'HEAD tách rời';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Đổi gốc sẽ viết lại định danh commit. Thông tin theo dõi từ xa không chứng minh rằng lịch sử chưa từng được công bố.';
+
+  @override
+  String get gitUiIncludeRootCommits => 'Bao gồm commit gốc';
+
+  @override
+  String get gitUiMergeCommits => 'Hợp nhất';
+
+  @override
+  String get gitUiFlattenHistory => 'Làm phẳng lịch sử';
+
+  @override
+  String get gitUiPreserveBranchStructure => 'Giữ cấu trúc nhánh';
+
+  @override
+  String get gitUiAutosquash => 'Tự động gộp';
+
+  @override
+  String get gitUiPrepareGitPlan => 'Chuẩn bị kế hoạch Git';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return 'Cam kết để tua lại: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Bao gồm tất cả các gốc cây cam kết có thể đạt được từ chi nhánh này.';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return 'Các commit sau $boundary sẽ được áp dụng lại lên $base; bản thân commit ranh giới không được bao gồm.';
+  }
+
+  @override
+  String get gitUiRoot => 'Gốc';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Cấu trúc chi nhánh/ Nhãn/reset/merge';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Chọn một giới hạn cũ rõ ràng hoặc chế độ gốc, sau đó chuẩn bị kế hoạch.';
+
+  @override
+  String get gitUiMoveUp => 'Chuyển lên';
+
+  @override
+  String get gitUiMoveDown => 'Chuyển xuống';
+
+  @override
+  String get gitUiResetPlan => 'Đặt lại kế hoạch';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · 12 khu chi nhánh $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Chọn một cam kết để tìm chi tiết và thay đổi tập tin';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Xem thử tổng hợp gửi tin nhắn...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+At/ cấu hình di chuyển các cam kết đã chọn. Những tham khảo chi nhánh không liên quan sẽ không được cập nhật tự động.';
+
+  @override
+  String get gitUiCancelPlan => 'Hủy kế hoạch';
+
+  @override
+  String get gitUiStartReviewedRebase => 'Bắt đầu xem xét cơ sở dữ liệu?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Viết lại kế hoạch $arg0 thực hiện trên $arg1. rơi xuống các cam kết vẫn còn được đánh dấu trong kế hoạch này cho đến khi bạn bắt đầu.';
+  }
+
+  @override
+  String get gitUiStartRebase => 'Bắt đầu đổi gốc';
+
+  @override
+  String get gitUiNoContinuingGitOperation => 'Không tiếp tục thao tác Git';
+
+  @override
+  String get gitUiStoppedForEditingAmend => ' · dừng lại để biên tập/amend';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Đây là mục nhập chỉ mục chưa được sửa đổi, có thể từ ứng dụng ẩn. Git không có lệnh cất giữ hay hủy bỏ.';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Sửa chữa các tập tin hoạt động, sân khấu và sửa đổi các cam kết hiện thời, sau đó tiếp tục cơ sở hạ tầng này.';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · các giai đoạn chỉ mục chưa hợp nhất $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Chỉ mục này không có mục nhập chưa được giải quyết.';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Giữ tác vụ hiện thời là một nhiệm vụ trống';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Chỉ mục thật không có thay đổi sắp xếp. Tạo một cam kết trống rõ ràng, sau đó tiếp tục trình sắp xếp lại nếu nó còn hoạt động.';
+
+  @override
+  String get gitUiKeepEmptyCommit => 'Giữ nguyên sự cam kết rỗng...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git sẽ cố trở về điểm bắt đầu thao tác. Không bảo đảm khôi phục nội dung vốn có chưa đưa vào chỉ mục, chưa được theo dõi hoặc chưa được lưu.';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Bỏ qua cam kết hiện thời và tiếp tục với kế hoạch tiếp theo.';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Hãy quên việc ghi sổ trong khi lưu các tập tin và chỉ mục hiện thời.';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return 'Tiếp tục $arg0';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions => 'Nạp lại phiên bản xung đột?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Thay thế bản nháp kết quả chưa lưu bằng tập tin hoạt động hiện thời. Vẫn còn lưu nội dung hoạt động.';
+
+  @override
+  String get gitUiLoadingConflictVersions => 'Đang tải phiên bản xung đột...';
+
+  @override
+  String get gitUiLoadingConflict => 'Đang nạp xung đột';
+
+  @override
+  String get gitUiBaseLeft => 'Cơ sở dữ liệu';
+
+  @override
+  String get gitUiBaseRight => 'Cơ sở dữ liệu';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict =>
+      'Không có mục nhập cơ bản cho xung đột này';
+
+  @override
+  String get gitUiAcceptEntireLeftFile =>
+      'Chấp nhận toàn bộ tập tin bên trái...';
+
+  @override
+  String get gitUiAcceptEntireRightFile => 'Chấp nhận toàn bộ tập tin đúng...';
+
+  @override
+  String get gitUiPreviousConflictRegion => 'Vùng xung đột trước';
+
+  @override
+  String get gitUiNextConflictRegion => 'Vùng xung đột tiếp theo';
+
+  @override
+  String get gitUiManualResolution => 'Độ phân giải thủ công';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return 'Khu vực $arg0/$arg1 · $arg2 đã xem xét';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Việc sắp xếp các nguồn vượt quá giới hạn so sánh văn bản; vẫn còn sẵn sàng cho việc ôn lại bằng tay.';
+
+  @override
+  String get gitUiAcceptLeftRegion => 'Chấp nhận vùng bên trái';
+
+  @override
+  String get gitUiAcceptRightRegion => 'Chấp nhận vùng bên phải';
+
+  @override
+  String get gitUiKeepManualResultForRegion => 'Giữ kết quả thủ công cho vùng';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Áp dụng thay đổi không gây hấn của Giut?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Thay thế bản nháp kết quả hiện thời bằng ô xem thử hợp nhất của Git. Bỏ đi việc bỏ đi những hiệu quả sửa đổi bằng tay chưa lưu; tập tin làm việc không thay đổi cho đến khi lưu.';
+
+  @override
+  String get gitUiUseMergePreview => 'Dùng ô xem thử trộn';
+
+  @override
+  String get gitUiApplyNonConflictingChanges =>
+      'Áp dụng thay đổi không gây nhiễu...';
+
+  @override
+  String get gitUiLeftSource => 'Nguồn trái';
+
+  @override
+  String get gitUiResult => 'Kết quả';
+
+  @override
+  String get gitUiRightSource => 'Nguồn phải';
+
+  @override
+  String get gitUiStage2 => 'Giai đoạn 2';
+
+  @override
+  String get gitUiStage3 => 'Giai đoạn 3';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Không có phiên bản xung đột. Hãy ôn lại tình trạng hiện thời của chúng.';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Kết quả được lưu vào đĩa. Chỉ mục vẫn quyết định tập tin này có được giải quyết hay không.';
+
+  @override
+  String get gitUiSaveResultDraft => 'Lưu bản nháp kết quả';
+
+  @override
+  String get gitUiApplyResultAndStageResolution =>
+      'Áp dụng kết quả và đưa cách giải quyết vào chỉ mục';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Kết quả là UTF- 8 có khả năng sửa đổi nội dung hoạt động';
+
+  @override
+  String get gitUiEditableConflictResult => 'Kết quả xung đột có thể sửa';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Trái: $arg0 · $arg1\nPhải: $arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'Chọn nội dung, xoá, hoặc một tiểu cầu rõ ràng. Không có dữ liệu nhị phân được giải mã như văn bản có thể sửa đổi.';
+
+  @override
+  String get gitUiUseEntireLeftContent => 'Dùng toàn bộ nội dung bên trái...';
+
+  @override
+  String get gitUiUseEntireRightContent => 'Dùng toàn bộ nội dung bên phải...';
+
+  @override
+  String get gitUiDeleteThisPath => 'Xoá đường này...';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit =>
+      'Đã giải quyết tiểu cầu đã cam kết';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Giai đoạn này chính xác trong cha. Không kiểm tra hay thực hiện tiểu cầu.';
+
+  @override
+  String get gitUiSetResolvedGitlink => 'Đặt liên kết gitlink đã giải quyết...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return 'Cơ sở dữ liệu $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Kết quả đã được biên soạn. Giữ kết quả thủ công hoặc chọn vùng không thay đổi khác.';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return 'Áp dụng cách giải quyết “$arg0”?';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Giai đoạn mà gitlink đã chọn cam kết trong cha. Việc kiểm tra tiểu cầu và tập tin của nó chưa được thay thế.';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return 'Thay thế toàn bộ con đường làm việc $arg0 và đưa ra quyết định. nội dung làm việc hiện tại và kết quả chưa được lưu sẽ bị hủy bỏ.';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision =>
+      'Áp dụng toàn bộ quyết định tập tin';
+
+  @override
+  String get gitUiStageThisConflictResolution =>
+      'Giai đoạn giải quyết xung đột này?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Sử dụng toàn bộ kết quả biên tập là $arg0. Git ghi lại đường dẫn đã được giải quyết khi nó được thiết lập. ôn lại tất cả nội dung đã định trước đầu tiên.$arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => 'Áp dụng và đưa vào chỉ mục';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges =>
+      'Xem lại định dạng văn bản thay đổi';
+
+  @override
+  String get gitUiSaveReviewedResult => 'Lưu kết quả đã xem xét';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Không có khả năng truy cập bảng bản địa. Hãy thử lại sau khi kết nối lại ứng dụng.';
+
+  @override
+  String get gitUiSans => 'Sans';
+
+  @override
+  String get gitUiSelect => 'Chọn';
+
+  @override
+  String get gitUiContextMenu => 'Trình đơn ngữ cảnh';
+
+  @override
+  String get gitUiCopyText => 'Chép đoạn';
+
+  @override
+  String get gitUiLoadingRow => 'Đang nạp hàng';
+
+  @override
+  String get gitUiRetry => 'Thử lại';
+
+  @override
+  String get gitUiGitMessage => 'Thông điệp Git';
+
+  @override
+  String get gitUiCancelPrompt => 'Thôi nhắc';
+
+  @override
+  String get gitUiUseMessageAndContinue => 'Dùng thông điệp và tiếp tục';
+
+  @override
+  String get gitUiRespondPrivately => 'Trả lời riêng đi.';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return 'Không thể lưu sự ưu tiên xem: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return 'Ghi nhớ bản nháp: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return 'Không thể đọc được sự ưu tiên xem: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return 'Bản nháp cam kết đã được duy trì trong bộ nhớ nhưng không thể lưu: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Kho được duyệt chỉ được đọc trong thao tác này. Lịch sử và kiểm tra nội dung vẫn còn tồn tại.';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git trả lại $arg0. Ứng dụng này không thể phục hồi tài liệu: $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => 'Chọn commit trong lịch sử…';
+
+  @override
+  String get gitUiCurrentBranch => 'Nhánh hiện tại';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Không có chi nhánh hay thẻ tương ứng. Hãy chọn sự ghi lưu.';
+
+  @override
+  String get gitUiBranches => 'Nhánh';
+
+  @override
+  String get gitUiPushCommits => 'Đẩy các commit';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return 'Kéo vào $arg0';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return 'Giải quyết $arg0';
+  }
+
+  @override
+  String get gitUiCurrentOperation => 'Thao tác hiện thời';
+
+  @override
+  String get gitUiRebaseCommits => 'Đổi gốc các commit';
+
+  @override
+  String get gitUiFetch2 => 'Tải về…';
+
+  @override
+  String get gitUiPull => 'Kéo về…';
+
+  @override
+  String get gitUiPush2 => 'Đẩy lên…';
+
+  @override
+  String get gitUiBranches2 => 'Nhánh…';
+
+  @override
+  String get gitUiManageRemotes => 'Quản lý kho từ xa…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return 'Nhập vào $arg0...';
+  }
+
+  @override
+  String get gitUiRebase2 => 'Đổi gốc…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation =>
+      'Xung đột và thao tác hiện thời...';
+
+  @override
+  String get gitUiStashes2 => 'Các bản cất tạm…';
+
+  @override
+  String get gitUiWorktrees => 'Các cây làm việc…';
+
+  @override
+  String get gitUiSubmodules => 'Mô-đun con…';
+
+  @override
+  String get gitUiReflogAndRecovery => 'Reflog và khôi phục…';
+
+  @override
+  String get gitUiCloneRepository => 'Nhân bản kho lưu trữ…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => 'Thu hồi sự tin tưởng kho';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus =>
+      'Đang chờ trạng thái kho phần mềm';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Không thể lưu cục bộ; cập nhật';
+
+  @override
+  String get gitUiManageRemotes2 => 'Quản lý kho từ xa';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return 'Nhập vào $arg0';
+  }
+
+  @override
+  String get gitUiWorktrees2 => 'Các cây làm việc';
+
+  @override
+  String get gitUiSubmodules2 => 'Mô-đun con';
+
+  @override
+  String get gitUiReflogAndRecovery2 => 'Reflog và khôi phục';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return 'Kho lưu trữ 3$arg0';
+  }
+
+  @override
+  String get gitUiApply => 'Áp dụng';
+
+  @override
+  String get gitUiResizeGitPanes => 'Đổi cỡ ô Git';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0%';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return 'Trạng thái thoát: $status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Thư mục đã thay đổi. Cập nhật và xem lại trước khi thử lại.';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'Một thao tác khác giữ kho phần mềm hoặc khóa chỉ mục. Đợi, sau đó cập nhật lại.';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Cần thiết sự tin tưởng cục bộ cho chiến dịch này.';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Dịch vụ Git đã ngắt kết nối và dung hòa kho lưu.';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Tập tin thực hiện được Git không thể hỗ trợ thao tác này. Xem lại yêu cầu thời gian chạy bên dưới.';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Kho phần mềm này chỉ được đọc cho thao tác đã yêu cầu. Xem lại và lịch sử còn lại.';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Thao tác này cần phải hòa giải. Xem xét lại kết quả kho hoặc trạng thái từ xa trước khi lặp lại nó.';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Việc xác thực Git bị lỗi. Xem lại trình trợ giúp nhận diện hay bỏ khoá đã cấu hình.';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'Việc kiểm tra tên máy SSH bị lỗi. Hãy kiểm tra lại tên máy qua các công cụ của bạn đã cấu hình.';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Việc ký cam kết bị lỗi hoặc bị thôi. Xem lại phím ký, tác vụ và công cụ đã cấu hình.';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Đặt tên tác giả và thư điện tử kho phần mềm, rồi trở lại bản nháp thông điệp đã lưu.';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git từ chối cập nhật đã duyệt. Cập nhật và xem lại đích thật trước khi thử lại.';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Những thay đổi làm việc hoặc sắp xếp để ngăn chặn hoạt động này. Xem lại, cam kết hoặc giấu chúng đi.';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Một đối tượng Git cần thiết không sẵn sàng. Xem lại các ranh giới nông hoặc một phần của nó và lấy ra rõ ràng nếu cần thiết.';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Thao tác Git thất bại: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => 'Chẩn đoán';
+
+  @override
+  String get gitUiAuthorizeGitInspection => 'Cho phép kiểm tra Git...';
+
+  @override
+  String get gitUiCopyDiagnostics => 'Chép chẩn đoán';
+
+  @override
+  String get gitUiActions => 'Thao tác';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return 'Chi nhánh tại $arg0';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Tạo ra một chi nhánh địa phương mà không cần kiểm tra.';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return 'Thẻ $arg0';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return 'Chỉ đọc hình chụp e· $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => 'Chọn người';
+
+  @override
+  String get gitUiRevertCommits => 'Hoàn nguyên';
+
+  @override
+  String get gitUiCompareToFullRevisionID => 'So sánh với ID sửa đổi đầy đủ';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return 'Hướng so sánh cây: $arg0 _BAR_ mà bản hiệu đính đã nhập vào đây.';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID =>
+      'Nhập một ID đối tượng hợp lệ đầy đủ.';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 → $arg1 · so sánh cây';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return 'Đặt lại $arg0 để $arg1';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'Di chuyển HEAD/nhánh hiện tại. Reflog không phục hồi mọi nội dung chưa được theo dõi hoặc chưa lưu.';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'Di chuyển HEAD; giữ nguyên chỉ mục và tệp làm việc.';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'Di chuyển HEAD và thay chỉ mục; giữ nguyên tệp làm việc.';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'Thay HEAD, chỉ mục và tệp làm việc được theo dõi; có thể ghi đè các tệp chưa được theo dõi đang cản trở.';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'Thay HEAD, chỉ mục và tệp phù hợp; từ chối nếu sẽ làm mất thay đổi cục bộ.';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return 'Đặt lại với $arg0?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 _ $arg1 ôn lại các hiệu ứng của chế độ đã chọn trước khi áp dụng.';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return 'Đặt lại $arg0';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return 'Mục tiêu $arg0';
+  }
+
+  @override
+  String get gitUiTagName => 'Tên thẻ';
+
+  @override
+  String get gitUiAnnotatedTag => 'Thẻ có chú thích';
+
+  @override
+  String get gitUiCryptographicSigning => 'Ký mật mã';
+
+  @override
+  String get gitUiConfiguredPolicy => 'Chính sách đã cấu hình';
+
+  @override
+  String get gitUiSignThisTag => 'Ký vào thẻ này';
+
+  @override
+  String get gitUiDoNotSign => 'Đừng ký tên';
+
+  @override
+  String get gitUiTagMessage => 'Tin nhắn thẻ';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Tạo thẻ cục bộ. Xuất bản các thẻ đã chọn một cách rõ ràng trong việc duyệt.';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return 'Cây hoàn chỉnh: $arg0 $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => 'Trang đã thay đổi kế';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Ảnh chụp kho chứa chỉ đọc. Mở tập tin không bao giờ kiểm tra bản sửa đổi này.';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => 'Mở phiên bản chỉ đọc';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Phục hồi đường dẫn này... v. chờ trạng thái kho lưu';
+
+  @override
+  String get gitUiRestoreThisPath => 'Phục hồi đường này...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return 'Lịch sử · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return 'Phục hồi $arg0?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return 'Thay thế đường dẫn làm việc này bằng việc sửa đổi $arg0. Đang chạy lại nội dung đã cài đặt.';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => 'Phục hồi tập tin làm việc';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return 'Lịch sử tập tin theo sau thay đổi tên của e· $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent =>
+      'Tác giả từng dòng · nội dung đã commit';
+
+  @override
+  String get gitUiBlame => 'Tác giả từng dòng…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return 'Cây làm việc $arg0';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile => 'Mở tập tin lịch sử chỉ đọc';
+
+  @override
+  String get gitUiCompareToCurrentFile => 'So sánh với tập tin hiện thời';
+
+  @override
+  String get gitUiCompareToParent => 'So sánh với phụ huynh...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return 'Đã cam kết $arg0 e· chưa lưu nội dung trình soạn thảo không phải là một phần của những chú thích này';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return 'Lịch sử từ $arg0';
+  }
+
+  @override
+  String get gitUiBoundary => ' · giới hạn ·';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\nDòng gốc $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => 'Đường lùi';
+
+  @override
+  String get gitUiNextLines => 'Dòng kế';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return 'Thứ tự · đích $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => 'Thêm chứng minh đối tượng đầy đủ';
+
+  @override
+  String get gitUiAddReviewedCommit => 'Thêm mục nhập ôn lại...';
+
+  @override
+  String get gitUiMoveEarlier => 'Tránh ra';
+
+  @override
+  String get gitUiMoveLater => 'Di chuyển sau';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence => 'Gỡ bỏ khỏi chuỗi đã duyệt';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Áp dụng các thay đổi mà không tạo ra mật khẩu';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Sử dụng cha chính rõ ràng này để hợp nhất cam kết';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Những cam kết rỗng hoặc đã được áp dụng có thể ngăn cản Git để một quyết định nhảy qua hay tiếp tục tiếp tục.';
+
+  @override
+  String get gitUiRevertInReviewedOrder => 'Hoàn nguyên theo thứ tự ôn lại';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder => 'Chọn qua một bên';
+
+  @override
+  String get gitUiReturnToFiles => 'Trở về tập tin';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => 'Tạo commit';
+
+  @override
+  String get gitUiBackToCommit => 'Trở lại bản cam kết';
+
+  @override
+  String get gitUiSelectAChangeToReview => 'Chọn một thay đổi cần xem xét';
+
+  @override
+  String get gitUiLoadingBranch => 'Đang nạp chi nhánh...';
+
+  @override
+  String get gitUiBranchUnavailable => 'Chi nhánh không sẵn sàng';
+
+  @override
+  String get gitUiUnbornHEAD => 'HEAD chưa có commit';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return 'HEAD tách rời · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => 'Tiếp tục';
+
+  @override
+  String get gitUiPick => 'Giữ';
+
+  @override
+  String get gitUiReword => 'Sửa thông điệp';
+
+  @override
+  String get gitUiEdit => 'Chỉnh sửa';
+
+  @override
+  String get gitUiSquash => 'Gộp commit';
+
+  @override
+  String get gitUiFixup => 'Gộp bỏ thông điệp';
+
+  @override
+  String get gitUiDrop => 'Loại bỏ';
+
+  @override
+  String get gitUiAbort => 'Hủy thao tác';
+
+  @override
+  String get gitUiSkip => 'Bỏ qua';
+
+  @override
+  String get gitUiQuit => 'Thao tác Thoát';
+
+  @override
+  String get gitUiSoft => 'Mềm';
+
+  @override
+  String get gitUiMixed => 'Hỗn hợp';
+
+  @override
+  String get gitUiHard => 'Cứng';
+
+  @override
+  String get gitUiKeep => 'Giữ';
+
+  @override
+  String get gitUiCreate => 'Tạo';
+
+  @override
+  String get gitUiApplyStash => 'Áp dụng bản cất tạm';
+
+  @override
+  String get gitUiPopStash => 'Áp dụng và xóa bản cất tạm nếu thành công';
+
+  @override
+  String get gitUiDropStashAction => 'Xóa bản cất tạm';
+
+  @override
+  String get gitUiEditedResult => 'Đã sửa kết quả';
+
+  @override
+  String get gitUiLeftContent => 'Nội dung trái';
+
+  @override
+  String get gitUiRightContent => 'Nội dung phải';
+
+  @override
+  String get gitUiDeletePath => 'Xoá đường';
+
+  @override
+  String get gitUiSubmoduleCommit => 'Conmodule cam kết';
+
+  @override
+  String get gitUiPresentContent => 'Nội dung sẵn sàng';
+
+  @override
+  String get gitUiAbsentContent => 'Không có';
+
+  @override
+  String get gitUiBinaryContent => 'Nội dung nhị phân';
+
+  @override
+  String get gitUiTooLargeContent => 'Nội dung vượt quá giới hạn hiển thị';
+
+  @override
+  String get gitUiUnavailableContent => 'Nội dung không sẵn sàng';
+
+  @override
+  String get gitUiGitlinkContent => 'Con trỏ con';
+
+  @override
+  String get gitUiSymlinkContent => 'Liên kết tượng trưng';
+
+  @override
+  String get gitUiNoOperation => 'Không có thao tác';
+
+  @override
+  String get gitUiCherryPickOperation => 'Chọn áp dụng commit';
+
+  @override
+  String get gitUiRevertOperation => 'Hoàn tác bằng commit';
+
+  @override
+  String get gitUiApplyMailboxOperation => 'Áp dụng đắp vá';
+
+  @override
+  String get gitUiSquashOperation => 'Hợp nhất Squash';
+
+  @override
+  String get gitUiUnmergedOperation => 'Chỉ mục chưa được xác định';
+
+  @override
+  String get gitUiWaitingForPromptPhase => 'Đang chờ câu trả lời của bạn';
+
+  @override
+  String get gitUiStoppedPhase => 'Bị dừng lại để xem xét';
+
+  @override
+  String get gitUiCompletedPhase => 'Hoàn tất';
+
+  @override
+  String get gitUiFailedPhase => 'Thất bại';
+
+  @override
+  String get gitUiCancelledPhase => 'Đã hủy';
+
+  @override
+  String get gitUiUncertainPhase => 'Sinh ra đòi hỏi phải hòa giải.';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return 'Xung đột giai đoạn $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Xem thử hợp nhất Git';
+
+  @override
+  String get gitUiNormalizedWorking =>
+      'Làm việc với cây_ cập · Git bình thường';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value%';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF- 8 với dấu xếp theo thứ tự (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF- 8 mà không có dấu xếp theo thứ tự (BOM)';
+
+  @override
+  String get gitUiAddsBom =>
+      'Bộ sửa đổi thêm một dấu hiệu UTF- thứ tự (BOM) ở đầu tập tin.';
+
+  @override
+  String get gitUiRemovesBom =>
+      'Bộ sửa đổi này gỡ bỏ đánh dấu UTF- theo thứ tự (BOM) từ đầu tập tin.';
+
+  @override
+  String get gitUiNoLineTerminators => 'Không có tổ hợp phím tắt';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return 'Kết thúc dòng $format';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return 'Kết thúc dòng trộn ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format · không có LF cuối cùng';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return 'Định dạng kết thúc dòng đổi từ $before sang $after. Văn bản trong bảng nhớ tạm có thể có kiểu kết thúc dòng khác với tệp gốc.';
+  }
+
+  @override
+  String get gitUiGitFailure =>
+      'Thao tác Git thất bại. Xem lại các chẩn đoán bên dưới.';
+
+  @override
+  String get gitUiAbortInline => 'Hủy thao tác';
+
+  @override
+  String get gitUiSkipInline => 'Bỏ qua';
+
+  @override
+  String get gitUiQuitInline => 'Thoát';
+
+  @override
+  String get gitUiMergeInline => 'Hợp nhất';
+
+  @override
+  String get gitUiRebaseInline => 'Đổi gốc';
+
+  @override
+  String get gitUiCherryPickInline => 'Chọn áp dụng commit';
+
+  @override
+  String get gitUiRevertInline => 'Hoàn tác bằng commit';
+
+  @override
+  String get gitUiApplyMailboxInline => 'áp dụngMailbox';
+
+  @override
+  String get gitUiSquashInline => 'Gộp commit';
+
+  @override
+  String get gitUiUnmergedInline => 'chưa kết nối';
+
+  @override
+  String get gitHostFetch => 'Tải về';
+
+  @override
+  String get gitHostRefreshGitStatus => 'Cập nhật trạng thái Git';
+
+  @override
+  String get gitHostCommitStaged => 'Nhấn để thêm chú thích...';
+
+  @override
+  String get gitHostGitBranches => 'Các nhánh Git';
+
+  @override
+  String get gitHostReviewPush => 'Đẩy lại';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Các thao tác Git áp dụng cho toàn bộ kho này và có thể thực hiện các móc đã cấu hình, bộ lọc, văn bản và các công cụ ký hiệu.';
+
+  @override
+  String get gitHostContentUnavailable => 'Nội dung không sẵn sàng';
+
+  @override
+  String get gitHostInitializeRepository => 'Khởi tạo kho';
+
+  @override
+  String get gitHostCloneRepository => 'Nhân bản kho lưu trữ';
+
+  @override
+  String get gitHostInitializeHere => 'Bắt đầu từ đây...';
+
+  @override
+  String get gitHostCloneRepository2 => 'Nhân bản kho lưu trữ…';
+
+  @override
+  String get gitHostGitLog => 'Bản ghi Git';
+
+  @override
+  String get gitUiAbsentPlaceholder => '(Tiếng súng)';
+
+  @override
+  String get gitUiUnborn => 'Chưa sinh';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return 'Lịch sử đã đổi gốc · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return 'Lịch sử hiện tại · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return 'Commit được áp dụng lại · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return 'Nội dung đến · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => 'Xung đột nội dung';
+
+  @override
+  String get gitUiSubmoduleConflict => 'Xung đột tiểu cầu';
+
+  @override
+  String get gitUiSymlinkConflict => 'Xung đột liên kết tượng trưng';
+
+  @override
+  String get gitUiAddAddConflict => 'Đã thêm vào cả hai bên';
+
+  @override
+  String get gitUiModifyDeleteConflict =>
+      'Sửa đổi/ tắt đã thay đổi hoặc bị tắt';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path · $kind';
+  }
 }

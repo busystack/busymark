@@ -5892,4 +5892,2807 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       'Bu dosya adı UTF-8 olmayan baytlar içeriyor. Git inceleme ve hazırlama kullanılabilir; belge düzenleyicisi UTF-8 dosya adı gerektirir.';
+
+  @override
+  String get gitUiMergeInProgress => 'ilerlemeye katılmak';
+
+  @override
+  String get gitUiRebaseInProgress => 'Gelişmekte geri dönmek';
+
+  @override
+  String get gitUiCherryPickInProgress => 'Cherry-pick ilerliyor';
+
+  @override
+  String get gitUiRevertInProgress => 'Gelişmek için dönüş';
+
+  @override
+  String get gitUiPatchApplicationInProgress => 'Patch uygulaması ilerliyor';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Squash Mide Sonuçları Komiteyi Bekliyor';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts => 'Çözülmemiş Endeks Çatışmaları';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · • Çözülmemiş çatışmalar';
+
+  @override
+  String get gitUiReviewOperation => 'İnceleme Operasyonu';
+
+  @override
+  String get gitUiRefresh => 'Yenile';
+
+  @override
+  String get gitUiCreateNamedStash => 'Adı Soyadı Stash';
+
+  @override
+  String get gitUiCreateStash => 'Değişiklikleri sakla…';
+
+  @override
+  String get gitUiNoStashes => 'Stash yok';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Değişiklikleri kontrol etmek için bir stash seçin';
+
+  @override
+  String get gitUiStashedUntrackedFiles => 'Çekilmemiş dosyalar';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Soruşturma dosyalarını incelemeye başladı...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Stash\'in staged/index durumunu yeniden ayarlayın';
+
+  @override
+  String get gitUiApplyAndRetain => 'Uygulama ve tutma';
+
+  @override
+  String get gitUiPop => 'Pop...';
+
+  @override
+  String get gitUiCreateBranch => 'Dal oluştur…';
+
+  @override
+  String get gitUiDropStash => 'Saklanan değişiklikleri sil…';
+
+  @override
+  String get gitUiBranchFromStash => 'Saklanan değişikliklerden dal oluştur';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Orijinal basın üzerinde bir dal oluşturun / anahtarlayın, sonra uygulayın. Orijinal basın daha sonra açık bir şekilde silinmesi için saklanır.';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0 bu çarpışma?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Orijinal çubuk, çatışmaların uygulanması durumunda saklanır.';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Bu yazıyı kaldırın. değişiklikler uygulanmaz.';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Birleştirilmemiş dosyaları çözün. Git\'te stash için devam veya iptal komutu yoktur; özgün stash kaydı korunur.';
+
+  @override
+  String get gitUiStashNameMessage => 'İsim / Mesaj';
+
+  @override
+  String get gitUiStashContentAndResultingIndex =>
+      'Stash İçeriği ve Sonuç Endeksi';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Stash çalışmayı izledi ve aşamalı değişiklikler';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Değişiklikleri sakla, indeksteki değişiklikleri yerinde bırak (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Yalnızca indeksteki değişiklikleri sakla (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => 'izinsiz dosyaları içerir';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Bu depolama alanında tüm uygun yollar';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Bu stash seçenekleri için uygun değişiklikler yoktur.';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath => 'En az bir uygun yolu seçin.';
+
+  @override
+  String get gitUiCreateStash2 => 'Değişiklikleri sakla';
+
+  @override
+  String get gitUiCreateWorktree => 'Çalışma alanı oluşturmak...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'HEAD üzerinde çalışma ağacı oluşturmadan önce bir commit oluşturun.';
+
+  @override
+  String get gitUiDetachedHEAD => 'Ayrık HEAD';
+
+  @override
+  String get gitUiCurrent => 'Şimdiki ·';
+
+  @override
+  String get gitUiLocked => 'Kapalı ·';
+
+  @override
+  String get gitUiOpenInBusyStack => 'BusyStack\'te açılımı';
+
+  @override
+  String get gitUiStatusNotInspected => 'Kontrol Edilmemiş Durum';
+
+  @override
+  String get gitUiDirty => 'kirli';
+
+  @override
+  String get gitUiClean => 'Değişiklik yok';
+
+  @override
+  String get gitUiOpenWorkingFolder => 'Açık Çalışma Dosyası';
+
+  @override
+  String get gitUiMoveWorktree => 'Çalışma hareketleri...';
+
+  @override
+  String get gitUiUnlock => 'Unlock Çözümleri';
+
+  @override
+  String get gitUiLock => 'Lock için';
+
+  @override
+  String get gitUiRemoveCleanWorktree => 'Temiz çalışma alanını kaldırın...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Yerel değişiklikler de dahil olmak üzere inceleme kaldırma ...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => 'Yeni çalışma dosyası adı';
+
+  @override
+  String get gitUiNewWorktreeBranch => 'Yeni Çalışma Şubesi';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg2 ($arg3) yeni bir yerel şubesi ile $arg0/$arg1 oluşturun.';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => 'Destination Dosya Adı';
+
+  @override
+  String get gitUiRemoveWorktree => 'Çalışma ortadan kaldırılır mı?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Bu çalışma alanında yerel olarak izlenmemiş / izlenmemiş tüm değişiklikleri açıkça ortadan kaldırın.';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git, yerel değişiklikler, izlenmemiş dosyalar veya bir kilit varsa kaldırmayı reddeder.';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Yerel çalışma içeriğini ortadan kaldırın ve kaldırın';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => 'Temiz Çalışma Çerçevesi';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Güncelleştirmeler / senkronizasyon için net alt modüllere açıkça geri dönün';
+
+  @override
+  String get gitUiNoRecordedSubmodules => 'kayıtlı alt modüller yok';
+
+  @override
+  String get gitUiNotInitialized => 'Başlatılmamış';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return '$arg0 Çözüldü: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => 'kirli depolama alanı';
+
+  @override
+  String get gitUiCleanNestedRepository => 'Temiz Koyu Depolama';
+
+  @override
+  String get gitUiNestedStatusUnavailable => 'İhracatın mevcut olmadığı';
+
+  @override
+  String get gitUiEnterNestedRepository => 'Giriş Rezervasyon';
+
+  @override
+  String get gitUiInitializeConfiguration => 'Konfigürasyon başlangıç';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Anasayfa GÜNCELLEMELER İLGİLİ HABER Ebeveynlerin Kayıtlı...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Uzaktan yapılandırılmış şubeleri takip edin...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs => 'Sinkronize edilmiş URL’ler...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Mevcut alt modül göstergesi anne içinde';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Ebeveyn ve alt modül eylemleri, baskıları ve kirli durum ayrı kalır. tarama onları başlatmaz veya güncelleştirmez.';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return 'Fetch ve yapılandırılmış uzaktan şubenin komutunu kontrol edin. Bu, ebeveynin kaydedilen gitlink\'ten farklıdır. Recursive: $arg0.';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'İhtiyaç duyulduğunda başlatın ve tam olarak $arg0. Recursive: $arg1.';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return 'Yorumlanan alt modül yapılandırma işlemi uygulayın. Recursive: $arg0.';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => 'Submodüel İşlemleri';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Kayıtlı bir incelemeyi kontrol edin veya bir kurtarma şubesi oluşturun. Reflog, özgürce kaybolmamış veya izlenmemiş içeriği geri getirmez.';
+
+  @override
+  String get gitUiSelectAReflogEntry => 'Reflog girişini seçin';
+
+  @override
+  String get gitUiPreviousPage => 'Önceki Sayfa';
+
+  @override
+  String get gitUiNextPage => 'Sonraki Sayfa';
+
+  @override
+  String get gitUiRecoveryBranchName => 'Rehabilitasyon Şubesi Adı';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return '$arg0\'te bir şubesi oluşturur; çalışma dosyaları ve mevcut şubesi değişmez.';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => 'İyileşme şubesi oluşturmak...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot => 'Read-only kurtarma snapshot';
+
+  @override
+  String get gitUiInspectSnapshot => 'Snapshot kontrolü...';
+
+  @override
+  String get gitUiReviewReset => 'İnceleme Reset...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return 'Sayfa $arg0';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Bir Git metin geçmişi kendi düzenlenebilir alanına sahip olmalıdır.';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Düzenle HEAD | İndeks | Çalışma ağacı…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Değerlendirilmiş endeks veya çalışma içeriği değiştirildi. bu karşılaştırmayı sıralamadan önce yenileme.';
+
+  @override
+  String get gitUiRefreshComparison => 'Soğutma Karşılaştırması';
+
+  @override
+  String get gitUiPreviousChangedFile => 'Önceki Değiştirilmiş Dosya';
+
+  @override
+  String get gitUiNextChangedFile => 'Sonraki Değiştirilmiş Dosya';
+
+  @override
+  String get gitUiPreviousDifference => 'Önceki Farklılıklar';
+
+  @override
+  String get gitUiNextDifference => 'Sonraki Farklılıklar';
+
+  @override
+  String get gitUiComparisonMode => 'Karşılaştırma Modu';
+
+  @override
+  String get gitUiSideBySide => 'Yan tarafta';
+
+  @override
+  String get gitUiUnified => 'Birleşik';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Diff Display Seçenekleri';
+
+  @override
+  String get gitUiWrap => 'Wrap';
+
+  @override
+  String get gitUiWords => 'sözcükler';
+
+  @override
+  String get gitUiCollapseContext => 'çökmüş bağlam';
+
+  @override
+  String get gitUiIgnoreWhitespace => 'Beyaz alanı görmezden';
+
+  @override
+  String get gitUiSearchComparison => 'arama karşılaştırması';
+
+  @override
+  String get gitUiSearch => 'Ara';
+
+  @override
+  String get gitUiCloseSearch => 'yakın arama';
+
+  @override
+  String get gitUiStagingActions => 'Staging eylemleri';
+
+  @override
+  String get gitUiStagingActions2 => 'Staging eylemleri...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines =>
+      'Seçili değişen satırları indeksten çıkar';
+
+  @override
+  String get gitUiStageSelectedChangedLines =>
+      'Seçili değişen satırları indekse ekle';
+
+  @override
+  String get gitUiUnstageWholeFile => 'Tüm dosyayı indeksten çıkar';
+
+  @override
+  String get gitUiStageWholeFile => 'Tüm dosyayı indekse ekle';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0 whitespace-only changed lines hidden · Tam değişiklikleri göster';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '$arg0 seçilmiş hatları değiştirdi · Ekran ayarları asla adım atılan byteyi değiştirmez.';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Salt okunur karşılaştırma · Metni kopyalayın veya görünümü ayarlayın.';
+
+  @override
+  String get gitUiNoFinalNewline => ' · • Son haber yok';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 · $arg1 · $arg2 bytes$arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'Bu içerikler için metin karşılaştırması mevcut değildir.';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Bu karşılaştırma, sınırlı metin inceleme sınırını aşmaktadır. içerikler aynı olarak ilan edilmemiştir.';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Karşılaştırılmış içerikler aynıdır.';
+
+  @override
+  String get gitUiUnstage => 'Sınavı';
+
+  @override
+  String get gitUiStage => 'aşaması';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 değiştirilmiş çizgi';
+  }
+
+  @override
+  String get gitUiContext => 'Konteyner';
+
+  @override
+  String get gitUiExpandUnchangedContext =>
+      'Değişmemiş bir bağlamı genişletmek';
+
+  @override
+  String get gitUiUnstageThisHunk => 'Bu parçayı indeksten çıkar';
+
+  @override
+  String get gitUiStageThisHunk => 'Bu parçayı indekse ekle';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return 'Etiket Arşivi: $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult =>
+      'Değerlendirilmiş Endeks Sonuçları';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => 'İndeks';
+
+  @override
+  String get gitUiWorkingTree => 'Çalışma ağacı';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => 'Etiket Arşivi: UTF-8 Blob';
+
+  @override
+  String get gitUiUndo => 'Geri al';
+
+  @override
+  String get gitUiRedo => 'Yinele';
+
+  @override
+  String get gitUiReloadIndexReview => 'Reload Index İncelemesi?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Geçerli HEAD, indeks ve çalışma sürümlerini yeniden yükleyin. Bu, indeks düzenleyicisindeki kaydedilmemiş taslağı değiştirir.';
+
+  @override
+  String get gitUiReplaceDraftAndReload =>
+      'Tasarım değiştirmek ve yeniden yüklemek';
+
+  @override
+  String get gitUiReloadVersions => 'Reload versiyonu...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Bu indekslere düzenlenmiş sonuçları yazın';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Çalışma dosyaları diskte kalır. uygulama yapmadan önce düzenlenmiş endeksi inceleyin.';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Etiket Arşivi: index text format değişiklikleri';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Sadece $arg0 için incelenen endeks girişini güncelleme. $arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult =>
+      'Değerlendirilmiş Index Sonuçları';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Format incelemesi sırasında düzenlenmiş sonuç değişti. yeniden incelemek.';
+
+  @override
+  String get gitUiSynchronizeScrolling => 'Sinkronizasyon Scrolling';
+
+  @override
+  String get gitUiReadOnlyRevisionContent => 'Read-only revize içeriği';
+
+  @override
+  String get gitUiEditableIndexContent => 'Endeksi içeriği';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Gerekli inceleme mevcut filtrelerin dışındadır. filtreyi yeniden ayarlayın.';
+
+  @override
+  String get gitUiFilterLog => 'Filtreler Log';
+
+  @override
+  String get gitUiFilters => 'Filtreler...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return 'Filtreler ($count)';
+  }
+
+  @override
+  String get gitUiMessage => 'İleti…';
+
+  @override
+  String get gitUiAuthor => 'Yazar…';
+
+  @override
+  String get gitUiPath => 'Yol...';
+
+  @override
+  String get gitUiDate => 'Tarih...';
+
+  @override
+  String get gitUiMessageFilter => 'Mesaj Filtresi';
+
+  @override
+  String get gitUiAuthorFilter => 'Yazar Filtresi';
+
+  @override
+  String get gitUiPathFilter => 'Yol Filtresi';
+
+  @override
+  String get gitUiMessage2 => 'İleti';
+
+  @override
+  String get gitUiAuthor2 => 'Yazar';
+
+  @override
+  String get gitUiPath2 => 'Yolu';
+
+  @override
+  String get gitUiDateFilter => 'Tarih Filtresi...';
+
+  @override
+  String get gitUiResetFilters => 'Reset Filtreler';
+
+  @override
+  String get gitUiRefreshLog => 'Renkli Log';
+
+  @override
+  String get gitUiGoToCommitReference => 'Konuşma / referans için gidin...';
+
+  @override
+  String get gitUiBackToHEAD => 'HEAD\'e dön';
+
+  @override
+  String get gitUiOrderedCherryPick => 'sipariş edilen cherry-pick';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return 'Çerçeve Çerçeve ($arg0)';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions =>
+      'İki seçilmiş incelemeyi karşılaştırın...';
+
+  @override
+  String get gitUiToggleBranchesPane => 'Birlikte Şubeler Pan';
+
+  @override
+  String get gitUiFilterBranchesAndTags => 'Filtre Şubeleri ve Etiketleri';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return '$arg0 Yorumları';
+  }
+
+  @override
+  String get gitUiCommitDetails => 'Detaylı komite...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return 'Etiket: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => 'Bu commiti seç';
+
+  @override
+  String get gitUiBranchOrTag => 'Branch veya Tag';
+
+  @override
+  String get gitUiAllReferences => 'Tüm referanslar';
+
+  @override
+  String get gitUiLocal => 'Yerel';
+
+  @override
+  String get gitUiRemote => 'Uzak depo';
+
+  @override
+  String get gitUiTags => 'Etiketler';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Şimdiki filtre ile eşleşen hiçbir komite yoktur.';
+
+  @override
+  String get gitUiObjectID => 'Objektif ID';
+
+  @override
+  String get gitUiSubjectReferences => 'Konu / Referanslar';
+
+  @override
+  String get gitUiDate2 => 'Tarih';
+
+  @override
+  String get gitUiGitCommits => 'Git Sözleşmeleri';
+
+  @override
+  String get gitUiParents => 'Üst commitler';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '$arg0 ebeveynler';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => 'Daha Fazla Yükümlülük';
+
+  @override
+  String get gitUiLoadingChangedFiles => 'değiştirilmiş dosyaları yükleme';
+
+  @override
+  String get gitUiNoChangedFiles => 'Değiştirilmemiş dosyalar';
+
+  @override
+  String get gitUiSelectACommit => 'Bir komplo seçin';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return 'Karşılaştırma ana $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => 'Değişen dosyalar';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Yazar: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Komutan: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Shallow/partal limit: Bir ana nesne mevcut değildir.';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Bu sayfanın dışındadır ya da bir sınır sınırı.';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return 'Üst commit $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => 'eylemler için...';
+
+  @override
+  String get gitUiEmptyTree => 'Boş ağaç';
+
+  @override
+  String get gitUiCreateBranch2 => 'Dal oluştur';
+
+  @override
+  String get gitUiCreateTag => 'Etiket oluştur';
+
+  @override
+  String get gitUiCompareRevisions => 'Değerlendirmeleri Karşılaştırın';
+
+  @override
+  String get gitUiOpenSnapshot => 'Açılış Snapshot';
+
+  @override
+  String get gitUiRevertCommit => 'Geri Dönüş';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Bu sınırdan sonra etkileşimli düşüş';
+
+  @override
+  String get gitUiResetCurrentBranch => 'Geçerli dalı sıfırla';
+
+  @override
+  String get gitUiCopyFullObjectID => 'Tam Object ID kopyası';
+
+  @override
+  String get gitUiGoToCommitReference2 => 'Konuşma / Referans';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Log\'da ortaya çıkarmak için bir komite kimliği veya referans girin.';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Talep edilen inceleme mevcut değildir.';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Repository metadata sadece okunur. şubelerin incelenmesi ve karşılaştırması mevcuttur.';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Çalışma dosyaları mevcut değildir veya sadece okunabilir. şubeleri değiştirmek ve birleştirmek mevcut değildir.';
+
+  @override
+  String get gitUiSearchBranchesAndTags => 'Dal ve etiket ara';
+
+  @override
+  String get gitUiNewBranch => 'Yeni dal…';
+
+  @override
+  String get gitUiLocalBranches => 'Yerel dallar';
+
+  @override
+  String get gitUiRemoteBranches => 'Uzak dallar';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return 'Yorumlar $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return '$arg0 ile ilgili detaylar';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata => 'Temizleyici metadata';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return '$arg0 için geçiş yapın';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => 'Açık işgalci';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch =>
+      'Yerel izleme şubesi oluşturmak...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => 'Geçerli HEAD ile karşılaştır';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch => 'Şimdiki şubelere katılın...';
+
+  @override
+  String get gitUiRename => 'Rönesans...';
+
+  @override
+  String get gitUiChangeUpstream => 'Upstream değişimi...';
+
+  @override
+  String get gitUiDelete => 'Kaldır...';
+
+  @override
+  String get gitUiDeleteFromRemote => 'Uzaktan çıkarma...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return '$arg0 için eylem';
+  }
+
+  @override
+  String get gitUiLocalBranchName => 'Bölge Adı';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return '$arg0\'te oluşturun. yeni şubesi kontrol edilecektir.';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return 'Yerel şubesi $arg0\'i izleyecek ve kontrol edilecek.';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => 'Deletion için uzaktan seçin';
+
+  @override
+  String get gitUiDeleteRemoteReference => 'uzaktan referans kaldırma';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return '$arg0 ile $arg1 arasındaki ilişki';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return 'İsim: $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return '$arg0 için yükseltme';
+  }
+
+  @override
+  String get gitUiNoUpstream => 'Üst dal yok';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return '$arg0 Kaldır mı?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 Target $arg1 Yerel kaldırma sadece.';
+  }
+
+  @override
+  String get gitUiDelete2 => 'Sil';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return '$arg0\'i silinmeyen şubesi silin mi?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 Git raporları bu şubesi tam olarak birleştirilmemiştir. açıkça yerel referansı görevlerini inceledikten sonra silinir; uzaktan kopyalar değişmez.';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Kırılmamış yerel şubeleri silin';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return 'Konu: $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => 'Kaynak Şubesi veya Tag';
+
+  @override
+  String get gitUiMergePolicy => 'Birleşme Politikası';
+
+  @override
+  String get gitUiFastForwardWhenPossible => 'Mümkün olduğunda hızlı ilerleme';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit =>
+      'Her zaman bir ortaklık oluşturun';
+
+  @override
+  String get gitUiFastForwardOnly => 'Sadece hızlı ilerleme';
+
+  @override
+  String get gitUiSquashIntoStagedChanges => 'Gelişmiş Değişimlere Çıkış';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Birleşme komitesi oluşturmadan önce durun';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'İncelemeden önce HEAD\'in taşınmaması için hızlı ilerleme devre dışıdır.';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Ayrı bir taahhüt için aşamalı değişiklikler bırakın; bu sürekli bir birleşme değildir.';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Çatışmalar ortak çözüm çalışma alanında mevcut kalır.';
+
+  @override
+  String get gitUiAddRemote => 'Uzaktan...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return 'FETŞ: $arg0 PUSH: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => 'uzaktan kaldırma...';
+
+  @override
+  String get gitUiChangeFetchURL => 'URL’yi değiştirmek için...';
+
+  @override
+  String get gitUiAddPushDestination => 'Push Destiny’ye katılın...';
+
+  @override
+  String get gitUiRemovePushDestination => 'Push Destiny’yi kaldırın.';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return '$arg0 Yönetimi';
+  }
+
+  @override
+  String get gitUiRemoteName => 'uzaktan isim';
+
+  @override
+  String get gitUiNewRemoteName => 'Yeni uzaktan isim';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource => 'URL veya yerel kaynağı';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Tam olarak gözden geçirilen hedefe girin kaldırmak için.';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Sertifikalar konfigürasyonlu yardımcılar veya özel bir prompt tarafından sağlanır.';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return '$arg0 uzaktan kaldırma?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Yerel uzaktan yapılandırma ve izleme referansları kaldırır. sunucu depolama alanını kaldırmaz.';
+
+  @override
+  String get gitUiRemoveRemote2 => 'uzaktan kaldırma';
+
+  @override
+  String get gitUiCommitScopeEntireRepository =>
+      'Etiket Arşivi: tüm depolama alanı';
+
+  @override
+  String get gitUiCachedTracking => 'gizli izleme';
+
+  @override
+  String get gitUiAmendLastCommit => 'Son commiti değiştir';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Yapılandırılmış çubuklar ve imza saygılıdır.';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Seçili HEAD commit\'ini yeniden yazar. Uzak izleme, yayımlanmamış olduğunu kanıtlayamaz.';
+
+  @override
+  String get gitUiRepository => 'Depo';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return '$arg0 Çözünürlük';
+  }
+
+  @override
+  String get gitUiLog => 'Geçmiş';
+
+  @override
+  String get gitUiRepositoryActions => 'Depo işlemleri';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return 'Önbellekteki izleme · $upstream · $ahead ileride · $behind geride';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Sadece depolama alanı · iş ağaçları yok. tarihini kontrol etmek için Kayıt açın.';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Sadece okuma depolama alanı · staging ve komitler mevcut değildir.';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable =>
+      'Depolama Durumu Kullanılamıyor';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return '$revision değiştirme';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => 'Onay satırı ekle';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Konfigüratlı imza politikası kullanın';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit =>
+      'Bu komiteyi kripto olarak imzalamak';
+
+  @override
+  String get gitUiDoNotSignThisCommit => 'Bu sözleşmeyi imzalamayın';
+
+  @override
+  String get gitUiRecentCommitMessages => 'Son mesajlar...';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Şablonu kullanarak yapılandırılmış komite...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Yazarın kimliği ve konfigürat hooks...';
+
+  @override
+  String get gitUiDraftMessage => 'Mesaj Tasarımı...';
+
+  @override
+  String get gitUiCommitOptions => 'Commit seçenekleri';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return 'Tasarım hafızada tutuluyor; kurtarma başarısız oldu. $arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => 'Commit iletisi';
+
+  @override
+  String get gitUiGitOperationInProgress => 'Git Operasyon Gelişiyor';
+
+  @override
+  String get gitUiCancel => 'İptal';
+
+  @override
+  String get gitUiAmendStaged => 'Değişiklik Yapıldı';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return 'Komut aşaması ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => 'Commit oluştur ve gönder…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Okunabilir komut şablonu ayarlanmamıştır.';
+
+  @override
+  String get gitUiCommitIdentityAndHooks => 'Komite kimliği ve hooks';
+
+  @override
+  String get gitUiRecentMessages => 'Son mesajlar';
+
+  @override
+  String get gitUiReplaceMessageDraft => 'Mesaj Tasarımı Değiştirmek?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Mevcut komite mesajını seçilmiş mesajla değiştirmek mi?';
+
+  @override
+  String get gitUiReplaceDraft => 'Tasarım Değiştirme';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return 'Yerel komut $arg0 mevcuttur.';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return 'Yerel komite $arg0 mevcuttur. başka bir komite denemeden önce kaydolun. mesaj taslağı korunmuştur.';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => 'Yazar Adı';
+
+  @override
+  String get gitUiCommitAuthorEmail => 'E-posta Yazarın Sözleri';
+
+  @override
+  String get gitUiConfiguredDefault => 'default yapılandırma';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return 'Kayıt: $arg0 · $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return 'Şekil: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'Onay satırı iletideki bir beyandır; kriptografik imzadan ayrıdır. Kimlik yalnızca bu deponun yerel yapılandırmasına kaydedilir; taslak korunur.';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => 'Depolama kimliğini kaydetmek';
+
+  @override
+  String get gitUiStaged => 'İndekste';
+
+  @override
+  String get gitUiUntracked => 'İzlenmeyen';
+
+  @override
+  String get gitUiUnstaged => 'İndeks dışında';
+
+  @override
+  String get gitUiConflicts => 'Çakışmalar';
+
+  @override
+  String get gitUiNoChanges => 'Değişiklik yok';
+
+  @override
+  String get gitUiRepositoryChangeTree => 'Ağaç Değişimi';
+
+  @override
+  String get gitUiChanges => 'Değişiklikler';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => 'Genişletme';
+
+  @override
+  String get gitUiCollapse => 'çöküş';
+
+  @override
+  String get gitUiUnstageFile => 'Dosyayı indeksten çıkar';
+
+  @override
+  String get gitUiStageFile => 'Dosyayı indekse ekle';
+
+  @override
+  String get gitUiExpandGroup => 'Genişletme grubu';
+
+  @override
+  String get gitUiCollapseGroup => 'çöküş grubu';
+
+  @override
+  String get gitUiReviewDifference => 'Farklılıklar incelemesi';
+
+  @override
+  String get gitUiUnstageSelectedFiles => 'Seçili dosyaları indeksten çıkar';
+
+  @override
+  String get gitUiStageSelectedFiles => 'Seçili dosyaları indekse ekle';
+
+  @override
+  String get gitUiFileHistoryAndBlame => 'Dosya Tarihi ve Suç...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => 'Untracked dosyaları silin...';
+
+  @override
+  String get gitUiDiscardUnstagedChange => 'Sıkıntılı bir değişim...';
+
+  @override
+  String get gitUiFileHistory => 'Dosya geçmişi';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return '$arg0\'i kaybeder mi?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 bytes · $arg1 iş içeriğini endeksle değiştirir veya bu izinsiz dosyayı silir.';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => 'Untracked dosyaları silin';
+
+  @override
+  String get gitUiDiscardWorkingChange => 'Çalışma Değişikliği';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return '$arg0 referansını kaldırın';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Bu, aşağıda listelenen her gerçek push destinasyonu için referans kaldırır. yerel şubeler / etiketler korunur. beklenen ipuçları bu inceleme ile belirlenir.';
+
+  @override
+  String get gitUiReferenceDoesNotExist => 'Referans yok';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0 beklenen ipucu: $arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => 'Uzaktan kaldırma tamamlandı.';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return '$arg0 uzaktan silinir mi?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'Yukarıda belirtilen doğru hedef ipuçları kaldırılacaktır. herhangi bir değiştirilmiş uzaktan ipuçları başka bir inceleme için işlemi durdurur.';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote => 'Yorum ve uzaktan silin...';
+
+  @override
+  String get gitUiDestinationReference => 'Destinasyon Referansları';
+
+  @override
+  String get gitUiReviewDestinations => 'Değerlendirme Hedefleri';
+
+  @override
+  String get gitUiNewRemoteBranch => 'Yeni uzaktan şubeler';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · beklenen: $arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Bir varış noktası yerel olarak mevcut olmayan eylemler vardır. Fetch varış tarihi incelemeden önce varış noktası inceledi.';
+
+  @override
+  String get gitUiFetchReviewedDestination => 'FETCH YÖNETİM YÖNETİMİ';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Bir hedef seçin ve çıkış görevlerini inceleyin.';
+
+  @override
+  String get gitUiNoOutgoingCommits => 'Hiçbir çıkış sözleri';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => 'Bir çıkış komitesi seçin';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits => 'Daha Fazla Yükümlülükler';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Bu hedefi upstream olarak ayarlayın';
+
+  @override
+  String get gitUiChooseExactTagsToPublish =>
+      'Yayınlamak için doğru etiketleri seçin';
+
+  @override
+  String get gitUiTagsNone => 'Etiket: hiç';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return 'Etiketler: $arg0 seçilmiş';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return 'Etiket Arşivi: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Push tamamlandı. yerel komutlar Log\'da mevcut kalır.';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Zorlamalı gönderim için hedef referans uçları bu incelemede gösterilenlerle tam eşleşmelidir.';
+
+  @override
+  String get gitUiForceWithReviewedLease => 'Değerlendirilmiş kiralık...';
+
+  @override
+  String get gitUiPush => 'Gönder';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases =>
+      'Geri dönüştürülmüş kiralama ile güç basıncı?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return '$arg0\'i yalnızca her uzaktan varış noktası yukarıda gösterilen doğru noktaya sahipse yeniden yazın.\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Başkaları bu geçmişi kullanıyor olabilir. Arka planda veri getirmek bu güvenlik koşulunu yenilemez.';
+
+  @override
+  String get gitUiForceWithLease => 'Kiralık Güç';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Uzaktan sonuç belirsizdir. başka bir baskı öncesinde tekrar hedefleri inceleyin.';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return '$arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => 'FETCH için uzaktan';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Remote Tracking Şubeleri Kaldırıldı';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Fetch, çalışma dosyalarını değiştirmeden uzaktan izleme bilgileri güncelleştirir.';
+
+  @override
+  String get gitUiFetch => 'Getir';
+
+  @override
+  String get gitUiSourceRemote => 'Uzaktan Kaynak';
+
+  @override
+  String get gitUiSourceBranch => 'Kaynak Şubesi';
+
+  @override
+  String get gitUiReviewedStrategy => 'Strateji Değiştirme';
+
+  @override
+  String get gitUiMerge => 'Birleştir';
+
+  @override
+  String get gitUiRebase => 'Yeniden temellendir';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Hedef hızla ilerleyemezse durdurun; asla birleşme veya düşme.';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Birleşme komplo ile birleşin, hatta hızlı ilerleme mümkün olduğunda.';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Mümkün olduğunda hızlı ilerlemeye izin verin.';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Yerel birleşme eylemlerini korurken yerel tarihini yeniden canlandırın.';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Yerel eylemleri lineer bir tarih olarak ele alalım.';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Burada açıkça bir çekme stratejisi seçin veya bir planı incelemek için bir çekme stratejisi açın.';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Bu çekim için incelenen sıradan basın kullanın';
+
+  @override
+  String get gitUiOptions => 'Seçenekler';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Her zaman bir kombinasyon komitesi oluşturun (hızlı ilerleme yok)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits => 'Yerel Birleşme Sözleşmeleri';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Yerel değişiklikler çekmeyi engelleyebilir. inceleme / sipariş verin veya açıkça bir çubuk oluşturun.';
+
+  @override
+  String get gitUiStashes => 'Saklanan değişiklikler';
+
+  @override
+  String get gitUiCreateOrReviewStash => 'Stash oluşturmak veya incelemek...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy =>
+      'Seçilmiş strateji ile karıştırın';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource => 'URL veya yerel Git kaynağı';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH veya yerel yol';
+
+  @override
+  String get gitUiFolderToInitialize => 'Başlangıç için Folder';
+
+  @override
+  String get gitUiFinalCloneDestination => 'Son Klon Yeri';
+
+  @override
+  String get gitUiChoose => 'Seçin...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Yalnızca metadata oluşturur. mevcut dosyaları çizilmez veya yapıştırılmaz.';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Son hedef mevcut olmamalı veya boş olmalıdır. Kullanıcının mevcut verilerinin üzerine asla yazılmaz.';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Başlangıç şubesi · beyaz etkili Git politikası kullanır';
+
+  @override
+  String get gitUiSelectedBranchOptional => 'Seçilmiş Şubeler · Seçmeli';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Açıklama / güncelleştirme submodüllerini tekrar tekrar';
+
+  @override
+  String get gitUiPreparingGitOperation => 'Git operasyonu için hazırlık...';
+
+  @override
+  String get gitUiThisAttemptCreated => 'Bu girişim yaratılmış';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Bu denemeden önce var olan hedef:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Klavye muayene için kalır. başka bir klon denemesi öncesinde inceleme.';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains => 'Amaç adresi kalmadı.';
+
+  @override
+  String get gitUiCancelProcess => 'İptal Süreci';
+
+  @override
+  String get gitUiInitialize => 'Başlat';
+
+  @override
+  String get gitUiClone => 'Klonla';
+
+  @override
+  String get gitUiChooseNewBase => 'Yeni tabanı seç';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => 'Üst sınırı seç';
+
+  @override
+  String get gitUiNewBase => 'Yeni taban';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => 'Üst sınır · hariç';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => 'Üst sınırla aynı';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => 'Dal, etiket veya commit seç…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase =>
+      'Upstream\'i yeni bir temel olarak kullanın';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Geçerli bir şubesi seçin, etiketle veya Log\'dan bağlayın.';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Dal bloğunda tutulan ilk commit squash veya fixup olamaz; öncesinde hedef commit yoktur.';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return 'Çiftlik Bloku $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Reword yeni bir mesaj isteyecektir]\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => 'Planlanan Mesajlar';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Orijinal/kombin mesaj önizlemesi · Git son reword/squash mesajları isteyin';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return 'Sonuçlar $arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return 'Geçerli dal: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => 'Ayrık HEAD';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Yeniden temellendirme commit kimliklerini değiştirir. Uzak dal izleme bilgileri, geçmişin hiç yayımlanmadığını kanıtlamaz.';
+
+  @override
+  String get gitUiIncludeRootCommits => 'Kök commitleri dahil et';
+
+  @override
+  String get gitUiMergeCommits => 'Birleşme Sözleşmeleri';
+
+  @override
+  String get gitUiFlattenHistory => 'Geçmişi düzleştir';
+
+  @override
+  String get gitUiPreserveBranchStructure => 'Dal yapısını koru';
+
+  @override
+  String get gitUiAutosquash => 'Otomatik birleştirme';
+
+  @override
+  String get gitUiPrepareGitPlan => 'Git planını hazırla';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return 'Yine oynamak için taahhüt: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Bu şubeden elde edilebilecek tüm kök komiteleri içerir.';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return '$boundary sonrasındaki commitler $base üzerine yeniden uygulanır; sınır commiti dahil edilmez.';
+  }
+
+  @override
+  String get gitUiRoot => 'kökü';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Git şubesi / etiket / yeniden ayar / karıştırma yapısı';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Açıkça eski sınır veya kök modunu seçin, sonra planı hazırlayın.';
+
+  @override
+  String get gitUiMoveUp => 'Yukarı taşı';
+
+  @override
+  String get gitUiMoveDown => 'Aşağı taşı';
+
+  @override
+  String get gitUiResetPlan => 'Planı sıfırla';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · Şubesi blok $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Detaylar için bir komite seçin ve dosyaları değiştirin';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Önceki Önceki yazı: Combined Commit Messages...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+ ↑/↓ seçilen komutu hareket eder. Bağlantısız şubelerin referansları otomatik olarak güncellenmez.';
+
+  @override
+  String get gitUiCancelPlan => 'Planı iptal';
+
+  @override
+  String get gitUiStartReviewedRebase => 'İncelemeye başlar mısınız?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 üzerinde planlanan komutları yeniden yazın $arg1. Dökülen komutlar, başlangıç yapana kadar bu planta görünür bir şekilde işaretlenir.';
+  }
+
+  @override
+  String get gitUiStartRebase => 'Yeniden temellendirmeyi başlat';
+
+  @override
+  String get gitUiNoContinuingGitOperation => 'Git operasyonu devam etmiyor';
+
+  @override
+  String get gitUiStoppedForEditingAmend =>
+      ' · düzenleme / değişiklik için durduruldu';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Bunlar bir stash uygulamasından, muhtemelen bir indeksleme girişidir. Git\'in hiçbir stash devamı veya kürtaj komutu yoktur.';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Çalışma dosyalarını düzenleyin, aşamayı ve mevcut yükümlülüğünü değiştirin, sonra bu yükümlülüğü devam edin.';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · birleştirilmemiş indeks aşamaları $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Endeksi çözülmemiş girişlere sahip değildir.';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Mevcut taahhütü boş bir taahhüt olarak tutun';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Gerçek endeksin aşamalı değişiklikleri yoktur. açık bir boş komplo oluşturun, eğer aktif kalırsa sekencer\'ı devam edin.';
+
+  @override
+  String get gitUiKeepEmptyCommit => 'Boş tutun...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git işlemin başlangıcına dönmeyi dener. Önceden var olan indeks dışı değişikliklerin, izlenmeyen ve kaydedilmemiş içeriğin kurtarılması garanti edilmez.';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Mevcut komployu atlayın ve bir sonraki planlanan komplo ile devam edin.';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Mevcut dosyaları ve indeksleri korurken bu operasyonun kitap tutmayı unutun.';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return '$arg0 İndir';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions => 'Çatışma versiyonları?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Kurtarılmamış Sonuç taslağını mevcut çalışma dosyası ile değiştirin.';
+
+  @override
+  String get gitUiLoadingConflictVersions => 'Çatışma versiyonları...';
+
+  @override
+  String get gitUiLoadingConflict => 'Kargo çatışması';
+
+  @override
+  String get gitUiBaseLeft => 'bazı sol';
+
+  @override
+  String get gitUiBaseRight => 'Temel haklı';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict => 'Bu çatışmanın temeli yok';
+
+  @override
+  String get gitUiAcceptEntireLeftFile => 'Tüm sol dosyayı kabul edin...';
+
+  @override
+  String get gitUiAcceptEntireRightFile => 'Tüm doğru dosyayı kabul edin...';
+
+  @override
+  String get gitUiPreviousConflictRegion => 'Önceki İçerikSaldırı Bölgesi';
+
+  @override
+  String get gitUiNextConflictRegion => 'Sonraki çatışma bölgesi';
+
+  @override
+  String get gitUiManualResolution => 'Manual Çözüm';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return 'Bölge $arg0/$arg1 · $arg2 incelenmiş';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Kaynak uyumluluğu metin karşılaştırma sınırını aştı; kaynak panoları manuel inceleme için kullanılabilir kalır.';
+
+  @override
+  String get gitUiAcceptLeftRegion => 'Sol bölgeyi kabul et';
+
+  @override
+  String get gitUiAcceptRightRegion => 'Doğru bölgeyi kabul edin';
+
+  @override
+  String get gitUiKeepManualResultForRegion => 'Bölge için manuel sonuç tutun';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Git’in çatışmaz değişikliklerini uygulayacak mı?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Geçerli sonuç taslağını Git\'in birleşme önizlemesi ile değiştirin. bu kaydedilmemiş manuel sonuç düzenlemelerini ortadan kaldırır; çalışma dosyası kaydedene kadar değişmez.';
+
+  @override
+  String get gitUiUseMergePreview => 'Birleşme Önizlemesi';
+
+  @override
+  String get gitUiApplyNonConflictingChanges =>
+      'Karşıt olmayan değişiklikler...';
+
+  @override
+  String get gitUiLeftSource => 'sol kaynağı';
+
+  @override
+  String get gitUiResult => 'Sonuç';
+
+  @override
+  String get gitUiRightSource => 'Doğru kaynak';
+
+  @override
+  String get gitUiStage2 => 'Sezon 2';
+
+  @override
+  String get gitUiStage3 => '3 aşaması';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Çatışma versiyonları mevcut değildir. mevcut durumunu gözden geçirmek için yenileme.';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Sonuç diske kaydedildi. endeks hala bu dosyanın çözüldüğünü belirler.';
+
+  @override
+  String get gitUiSaveResultDraft => 'Sonuç taslağını kaydet';
+
+  @override
+  String get gitUiApplyResultAndStageResolution =>
+      'Sonucu uygula ve çözümü indekse ekle';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Sonuç · düzenlenebilir UTF-8 çalışma içeriği';
+
+  @override
+  String get gitUiEditableConflictResult => 'Saldırı sonuçları';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Sol: $arg0 · $arg1\nSağ: $arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'İçeriği seçin, silin, ya da bir alt modül açıkça taahhüt. hiçbir ikili veri düzenlenebilir metin olarak dekore edilmez.';
+
+  @override
+  String get gitUiUseEntireLeftContent => 'Tüm sol içeriği kullanın...';
+
+  @override
+  String get gitUiUseEntireRightContent => 'Tüm doğru içeriği kullanın...';
+
+  @override
+  String get gitUiDeleteThisPath => 'Bu yolun ortadan kaldırılması...';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit => 'Çözülen alt modül';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Bu doğru gitlink\'i ebeveynin içine koyun. bu, alt modülü kontrol etmez veya taahhüt etmez.';
+
+  @override
+  String get gitUiSetResolvedGitlink => 'Çözülen gitlink...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return 'Temel → aşama $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Sonuç düzenlenmiştir. manuel sonucu tutun veya değişmemiş bir bölge seçin.';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return '“$arg0” çözümü uygulansın mı?';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Seçilen gitlink\'i ana bölümde yerleştirin. alt modül kontrolü ve dosyaları değiştirilmez.';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return '$arg0 tüm çalışma yolu değiştirir ve kararın aşamasıdır. mevcut çalışma içeriği ve kayıp sonuç taslağı kaldırılacaktır.';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision => 'Tüm dosya kararını uygulayın';
+
+  @override
+  String get gitUiStageThisConflictResolution =>
+      'Bu anlaşmazlık çözümü için mi?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Tüm düzenlenmiş Sonuçları $arg0 olarak kullanın. $arg1 ilk olarak tüm amaçlı içeriği inceleyin.';
+  }
+
+  @override
+  String get gitUiApplyAndStage => 'Uygula ve indekse ekle';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges =>
+      'Sonuçları incelemek metin biçimi değişiklikleri';
+
+  @override
+  String get gitUiSaveReviewedResult => 'Değerlendirilmiş sonuçları kaydedin';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Native Git tablosu erişilebilirliği mevcut değildir. uygulama yeniden bağlandıktan sonra geri çekilme.';
+
+  @override
+  String get gitUiSans => 'olmadan';
+
+  @override
+  String get gitUiSelect => 'Seçim';
+
+  @override
+  String get gitUiContextMenu => 'Konteyner Menüsü';
+
+  @override
+  String get gitUiCopyText => 'kopyalanmış metin';
+
+  @override
+  String get gitUiLoadingRow => 'Yükleme Sırası';
+
+  @override
+  String get gitUiRetry => 'Yeniden dene';
+
+  @override
+  String get gitUiGitMessage => 'Git Mesajı';
+
+  @override
+  String get gitUiCancelPrompt => 'Hızlı İptal';
+
+  @override
+  String get gitUiUseMessageAndContinue => 'Mesajı kullanın ve devam edin';
+
+  @override
+  String get gitUiRespondPrivately => 'Özel cevaplar';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return 'Görüntüleme tercihleri kaydedilemez: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return 'Etiket Arşivi: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return 'Görüntüleme tercihleri okunamazdı: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return 'Komite taslağı hafızada tutuluyordu ama kurtarılamıyordu: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Değerlendirilmiş depolama alanı sadece bu işlem için okunabilir. tarih ve içerik denetimi mevcuttur.';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git $arg0\'i iade etti. uygulama belgelerini yenilemezdi: $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => 'Geçmişten commit seç…';
+
+  @override
+  String get gitUiCurrentBranch => 'Geçerli dal';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Hiçbir şubesi veya etiket eşleşmiyor.Log\'da bir komite seçin.';
+
+  @override
+  String get gitUiBranches => 'Dallar';
+
+  @override
+  String get gitUiPushCommits => 'Commitleri gönder';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return '$arg0 içine girin';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return 'Çözünür $arg0';
+  }
+
+  @override
+  String get gitUiCurrentOperation => 'Şimdiki operasyon';
+
+  @override
+  String get gitUiRebaseCommits => 'Commitleri yeniden temellendir';
+
+  @override
+  String get gitUiFetch2 => 'Getir…';
+
+  @override
+  String get gitUiPull => 'Çek…';
+
+  @override
+  String get gitUiPush2 => 'Gönder…';
+
+  @override
+  String get gitUiBranches2 => 'Dallar…';
+
+  @override
+  String get gitUiManageRemotes => 'Uzak depoları yönet…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return '$arg0’e katılın';
+  }
+
+  @override
+  String get gitUiRebase2 => 'Yeniden temellendir…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation =>
+      'Çatışmalar ve mevcut operasyonlar...';
+
+  @override
+  String get gitUiStashes2 => 'Saklanan değişiklikler…';
+
+  @override
+  String get gitUiWorktrees => 'Çalışma ağaçları…';
+
+  @override
+  String get gitUiSubmodules => 'Alt modüller…';
+
+  @override
+  String get gitUiReflogAndRecovery => 'Reflog ve kurtarma…';
+
+  @override
+  String get gitUiCloneRepository => 'Depoyu klonla…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => 'Depolama güvenini iptal';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus => 'Depozito Durumu için bekleyin';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Depolama durumu mevcut değildir; yenileme';
+
+  @override
+  String get gitUiManageRemotes2 => 'Uzak depoları yönet';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return '$arg0 ile bağlantı kurun';
+  }
+
+  @override
+  String get gitUiWorktrees2 => 'Çalışma ağaçları';
+
+  @override
+  String get gitUiSubmodules2 => 'Alt modüller';
+
+  @override
+  String get gitUiReflogAndRecovery2 => 'Reflog ve kurtarma';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return 'Klon depolama alanı · $arg0';
+  }
+
+  @override
+  String get gitUiApply => 'Uygula';
+
+  @override
+  String get gitUiResizeGitPanes => 'Git paneler';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0 Yüzde';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return 'çıkış durumu: $status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Repository değiştirildi. yeniden denemeden önce yenileme ve inceleme.';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'Bir başka işlem depolama alanı veya indeksleme kilidi tutar. bekle, sonra yenileme.';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Bu operasyon için depolama güveni gereklidir.';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git hizmetinin bağlantısı kesildi. depolama alanını yeniden bağlayın ve uyandırın.';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Yüklü Git executable bu işlemi desteklemez. çalışma süresi gereksinimlerini aşağıda inceleyin.';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Bu depolama alanı yalnızca istediğiniz işlem için okunur. inceleme ve geçmişi mevcuttur.';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Operasyonun uzlaşmaya ihtiyacı vardır. sonuçlanan depolama alanını veya uzaktan durumunu tekrarlamadan önce inceleyin.';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git kimlik doğrulama başarısız oldu. kimlik doğrulama yardımcısını inceleyin veya yapılandırılmış keyring\'i açın.';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH ev sahibi doğrulama başarısız oldu. yapılandırılmış SSH araçları aracılığıyla ev sahibi kimliğini inceleyin.';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Kayıt anahtarı, aracı ve yapılandırılmış imza aracını inceleyin.';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Bir depolama alanı yazar adı ve e-posta ayarlayın, sonra kaydedilen mesaj taslağına geri dönün.';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git, incelenen güncelleştirmeyi reddetti. yeniden denemeden önce gerçek hedefi yenileme ve inceleme.';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Bu işleyişi engelleyen çalışma veya aşamalı değişiklikler. inceleme, taahhüt veya açıkça bunları durdur.';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Gerekli bir Git nesne mevcut değildir. derin veya kısmi depolama sınırlarını inceleyin ve gerekirse açıkça yapıştırın.';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Git operasyonu başarısız oldu: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => 'Diagnostik';
+
+  @override
+  String get gitUiAuthorizeGitInspection => 'Yetkilendirilmiş denetim...';
+
+  @override
+  String get gitUiCopyDiagnostics => 'Diagnostik kopyaları';
+
+  @override
+  String get gitUiActions => 'Eylemler';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return '$arg0 ile ilgili';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Yerel bir şubesi oluşturur, onu kontrol etmeden.';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return '$arg0 İndir';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return 'Sadece Okunma · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => 'Cherry-Pick İlanları';
+
+  @override
+  String get gitUiRevertCommits => 'Yükümlülükler';
+
+  @override
+  String get gitUiCompareToFullRevisionID =>
+      'Tam Değerlendirme ID ile karşılaştırın';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return 'Ağaç karşılaştırma yönü: $arg0 → inceleme burada girdi.';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID =>
+      'Tam bir geçerli nesne kimliği girin.';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 → $arg1 · ağaç karşılaştırması';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return '$arg0\'i $arg1\'e dönüştürün';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'HEAD\'i/geçerli dalı taşır. Reflog, rastgele izlenmeyen veya kaydedilmemiş içeriği kurtarmaz.';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'HEAD\'i taşı; indeksi ve çalışma dosyalarını koru.';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'HEAD\'i taşı ve indeksi değiştir; çalışma dosyalarını koru.';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'HEAD\'i, indeksi ve izlenen çalışma dosyalarını değiştir; engel olan izlenmeyen dosyaların üzerine yazılabilir.';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'HEAD\'i, indeksi ve uygun dosyaları değiştir; yerel değişiklikler kaybolacaksa reddet.';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return '$arg0 ile yeniden yükleme?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 → $arg1 Uygulamadan önce seçilen modun etkilerini inceleyin.';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return '$arg0 Yükleme';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return 'Hedef $arg0';
+  }
+
+  @override
+  String get gitUiTagName => 'Etiket adı';
+
+  @override
+  String get gitUiAnnotatedTag => 'Açıklamalı etiket';
+
+  @override
+  String get gitUiCryptographicSigning => 'Kriptografik imza';
+
+  @override
+  String get gitUiConfiguredPolicy => 'Konfigürasyon Politikası';
+
+  @override
+  String get gitUiSignThisTag => 'Bu etiketle kaydolun';
+
+  @override
+  String get gitUiDoNotSign => 'imzalamayın';
+
+  @override
+  String get gitUiTagMessage => 'Tag Mesajı';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Etiketi yerel olarak oluşturun. seçilmiş etiketleri açıkça Push incelemesinde yayınlayın.';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return 'Tam ağaçlar: $arg0 → $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => 'Sonraki Değiştirilmiş Dosya Sayfası';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Bir dosyayı açmak bu revizyonu asla kontrol etmez.';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => 'Açık sadece okuma versiyonu';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Bu yolu geri getirin... · Depolama durumu için bekleyin';
+
+  @override
+  String get gitUiRestoreThisPath => 'Bu yolun geri dönüşü...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return 'Tarih · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return '$arg0\'i yeniden başlatır mısınız?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return 'Bu çalışma yolu $arg0 ile değiştirin. mevcut aşamalı içerik korunur.';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => 'Çalışma dosyası kurtarma';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return 'Dosya geçmişi yeniden adlandırılır · $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => 'Satır geçmişi · commit içeriği';
+
+  @override
+  String get gitUiBlame => 'Satır geçmişi…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0 → Çalışma Ağaçları';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile => 'Sadece tarihi dosyayı okuyun';
+
+  @override
+  String get gitUiCompareToCurrentFile => 'Mevcut dosyaya kıyasla';
+
+  @override
+  String get gitUiCompareToParent => 'Bir ebeveynle karşılaştırma...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return '$arg0 · kaydedilmemiş editör içeriği bu notların bir parçası değildir';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return '$arg0 ile ilgili';
+  }
+
+  @override
+  String get gitUiBoundary => ' · Sınır';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\nÖzgün satır $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => 'Önceki Hatalar';
+
+  @override
+  String get gitUiNextLines => 'Sonraki çizgiler';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return 'Açıklama Başvuru Siparişi · Hedef $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => 'Tam Commit Object ID ekleme';
+
+  @override
+  String get gitUiAddReviewedCommit => 'Değerlendirilmiş komite...';
+
+  @override
+  String get gitUiMoveEarlier => 'Daha önce hareket';
+
+  @override
+  String get gitUiMoveLater => 'Daha sonra hareket';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence =>
+      'Değerlendirilmiş Sürümden Kaldır';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Değişiklikler yapmadan uygulayın';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Bu açık ana sözcük ebeveynleri birleştirme sözleşmeleri için kullanın';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Boş veya zaten uygulanmış emirler açık bir geçiş veya devam karar için Git\'i durdurabilir.';
+
+  @override
+  String get gitUiRevertInReviewedOrder => 'Değerlendirilmiş sırada dönüş';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder => 'Cherry-pick incelenmiş sırada';
+
+  @override
+  String get gitUiReturnToFiles => 'Dosyaya Dönüş';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => 'Commit oluştur';
+
+  @override
+  String get gitUiBackToCommit => 'Komiteye Geri Dönüş';
+
+  @override
+  String get gitUiSelectAChangeToReview => 'Değişimi incelemek için seçin';
+
+  @override
+  String get gitUiLoadingBranch => 'Yükleme şubesi...';
+
+  @override
+  String get gitUiBranchUnavailable => 'Branch kullanılamıyor';
+
+  @override
+  String get gitUiUnbornHEAD => 'Commit içermeyen HEAD';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return 'Ayrık HEAD · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => 'Devam';
+
+  @override
+  String get gitUiPick => 'Al';
+
+  @override
+  String get gitUiReword => 'İletiyi değiştir';
+
+  @override
+  String get gitUiEdit => 'Düzenle';
+
+  @override
+  String get gitUiSquash => 'Birleştir ve iletileri koru';
+
+  @override
+  String get gitUiFixup => 'İleti olmadan birleştir';
+
+  @override
+  String get gitUiDrop => 'Atla';
+
+  @override
+  String get gitUiAbort => 'İşlemi iptal et';
+
+  @override
+  String get gitUiSkip => 'Atla';
+
+  @override
+  String get gitUiQuit => 'Operasyon Çıktı';
+
+  @override
+  String get gitUiSoft => 'Yumuşak';
+
+  @override
+  String get gitUiMixed => 'Karma';
+
+  @override
+  String get gitUiHard => 'Sert';
+
+  @override
+  String get gitUiKeep => 'Koru';
+
+  @override
+  String get gitUiCreate => 'Oluştur';
+
+  @override
+  String get gitUiApplyStash => 'Saklanan değişiklikleri uygula';
+
+  @override
+  String get gitUiPopStash => 'Uygula ve başarılıysa saklamayı kaldır';
+
+  @override
+  String get gitUiDropStashAction => 'Saklanan değişiklikleri sil';
+
+  @override
+  String get gitUiEditedResult => 'Edit Sonuçları';
+
+  @override
+  String get gitUiLeftContent => 'sol içeriği';
+
+  @override
+  String get gitUiRightContent => 'Doğru içerik';
+
+  @override
+  String get gitUiDeletePath => 'Yürüyüş Yolu';
+
+  @override
+  String get gitUiSubmoduleCommit => 'Submodüller';
+
+  @override
+  String get gitUiPresentContent => 'Mevcut içerik';
+
+  @override
+  String get gitUiAbsentContent => 'eksik';
+
+  @override
+  String get gitUiBinaryContent => 'İkili içerik';
+
+  @override
+  String get gitUiTooLargeContent => 'İçerik gösterim sınırını aştı';
+
+  @override
+  String get gitUiUnavailableContent => 'Mevcut olmayan içerik';
+
+  @override
+  String get gitUiGitlinkContent => 'Submodüel göstergesi';
+
+  @override
+  String get gitUiSymlinkContent => 'sembolik bağlantı';
+
+  @override
+  String get gitUiNoOperation => 'Hiçbir operasyon';
+
+  @override
+  String get gitUiCherryPickOperation => 'Commit seçerek uygula';
+
+  @override
+  String get gitUiRevertOperation => 'Geri alan commit';
+
+  @override
+  String get gitUiApplyMailboxOperation => 'Patch uygulama';
+
+  @override
+  String get gitUiSquashOperation => 'Squash Birleşme';
+
+  @override
+  String get gitUiUnmergedOperation => 'indeksleri yok';
+
+  @override
+  String get gitUiWaitingForPromptPhase => 'Cevabını bekliyorum';
+
+  @override
+  String get gitUiStoppedPhase => 'İnceleme için durduruldu';
+
+  @override
+  String get gitUiCompletedPhase => 'Tamamlandı';
+
+  @override
+  String get gitUiFailedPhase => 'Başarısız';
+
+  @override
+  String get gitUiCancelledPhase => 'İptal edildi';
+
+  @override
+  String get gitUiUncertainPhase => 'Sonuçlar bir uzlaşma gerektirir';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return 'Çatışma aşaması $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Git merge önizleme';
+
+  @override
+  String get gitUiNormalizedWorking => 'Çalışma Ağaçları · Normalleşme';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value Yüzde';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF-8 byte sipariş işareti (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF-8 byte sipariş işareti olmadan (BOM)';
+
+  @override
+  String get gitUiAddsBom =>
+      'Bu düzen dosyanın başlangıcında bir UTF-8 byte sipariş işareti (BOM) eklenir.';
+
+  @override
+  String get gitUiRemovesBom =>
+      'Bu düzenleme, dosyanın başlangıcından UTF-8 byte sipariş işareti (BOM) kaldırır.';
+
+  @override
+  String get gitUiNoLineTerminators => 'Terminatörler yok';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return '$format satır sonları';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return 'Karışık çizgi sonları ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format · hiçbir final LF';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return '$before\'den $after\'e çevrimiçi format değişiklikleri.';
+  }
+
+  @override
+  String get gitUiGitFailure =>
+      'Git ameliyatı başarısız oldu. aşağıdaki teşhisleri inceleyin.';
+
+  @override
+  String get gitUiAbortInline => 'İşlemi iptal et';
+
+  @override
+  String get gitUiSkipInline => 'Atla';
+
+  @override
+  String get gitUiQuitInline => 'Bırak';
+
+  @override
+  String get gitUiMergeInline => 'Birleştir';
+
+  @override
+  String get gitUiRebaseInline => 'Yeniden temellendir';
+
+  @override
+  String get gitUiCherryPickInline => 'Commit seçerek uygula';
+
+  @override
+  String get gitUiRevertInline => 'Geri alan commit';
+
+  @override
+  String get gitUiApplyMailboxInline => 'Uygulamalı';
+
+  @override
+  String get gitUiSquashInline => 'Birleştir ve iletileri koru';
+
+  @override
+  String get gitUiUnmergedInline => 'Sıkıntısız';
+
+  @override
+  String get gitHostFetch => 'Getir';
+
+  @override
+  String get gitHostRefreshGitStatus => 'Git statüsünü yenilemek';
+
+  @override
+  String get gitHostCommitStaged => 'Komite Sınavı';
+
+  @override
+  String get gitHostGitBranches => 'Git Şubeleri';
+
+  @override
+  String get gitHostReviewPush => 'Push İnceleme';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git işlemleri tüm bu depolama alanı için geçerlidir ve yapılandırılmış çubukları, filtreleri, kimlik doğrulama ve imza araçlarını çalıştırabilir.';
+
+  @override
+  String get gitHostContentUnavailable => 'Kullanılamayan içerik';
+
+  @override
+  String get gitHostInitializeRepository => 'Git deposunu başlat';
+
+  @override
+  String get gitHostCloneRepository => 'Depoyu klonla';
+
+  @override
+  String get gitHostInitializeHere => 'Başlangıç burada...';
+
+  @override
+  String get gitHostCloneRepository2 => 'Depoyu klonla…';
+
+  @override
+  String get gitHostGitLog => 'Git Log';
+
+  @override
+  String get gitUiAbsentPlaceholder => 'eksikliği )';
+
+  @override
+  String get gitUiUnborn => 'Doğmamış';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return 'Yeniden temellendirilmiş geçmiş · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return 'Geçerli geçmiş · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return 'Yeniden uygulanan commit · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return 'Gelen içerik · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => 'içerik çatışması';
+
+  @override
+  String get gitUiSubmoduleConflict => 'Submodüel çatışma';
+
+  @override
+  String get gitUiSymlinkConflict => 'Simbolik bağlantı çatışması';
+
+  @override
+  String get gitUiAddAddConflict => 'Her iki tarafta da eklendi';
+
+  @override
+  String get gitUiModifyDeleteConflict =>
+      'Değiştirilmiş / Kaldırılmış veya Değiştirilmiş / Kaldırılmış';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path · $kind';
+  }
 }

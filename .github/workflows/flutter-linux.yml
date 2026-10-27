@@ -153,7 +153,13 @@ jobs:
 
       - name: Generate localizations
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
-        run: flutter gen-l10n
+        run: |
+          python3 ../busystack_git_flutter/tool/sync_host_localizations.py \
+            --arb lib/l10n/app_en.arb \
+            --adapter lib/src/git/application/shared_git_localizations.dart \
+            --class-name AppLocalizations \
+            --import-uri package:busymark/l10n/generated/app_localizations.dart --check
+          flutter gen-l10n
 
       - name: Audit localization catalogs
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}

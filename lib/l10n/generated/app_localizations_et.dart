@@ -5893,4 +5893,2817 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       'Failinimi sisaldab baite, mis pole UTF-8. Giti ülevaatus ja indekseerimine on endiselt saadaval; dokumendiredaktor vajab UTF-8-failinime.';
+
+  @override
+  String get gitUiMergeInProgress => 'Käimasolev ühendamine';
+
+  @override
+  String get gitUiRebaseInProgress => 'Käimasolev baas';
+
+  @override
+  String get gitUiCherryPickInProgress => 'Kirsiork on käimas';
+
+  @override
+  String get gitUiRevertInProgress => 'Reverteerimine';
+
+  @override
+  String get gitUiPatchApplicationInProgress => 'Käimasolev taotlus';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Squash ühendamise tulemus ootab kohustuse';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts => 'Lahendamata indeksikonfliktid';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · lahendamata konfliktid';
+
+  @override
+  String get gitUiReviewOperation => 'Läbivaatamistoiming';
+
+  @override
+  String get gitUiRefresh => 'Värskenda';
+
+  @override
+  String get gitUiCreateNamedStash => 'Loo nimeline peidupaik';
+
+  @override
+  String get gitUiCreateStash => 'Peida muudatused…';
+
+  @override
+  String get gitUiNoStashes => 'Ei mingeid peidikuid.';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Valige varu, et kontrollida selle muudatusi';
+
+  @override
+  String get gitUiStashedUntrackedFiles => 'Jälitamata failid';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Kontrolli peidetud jälgimata faile...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Reinstate the stash\'s lavastatud/index state when application';
+
+  @override
+  String get gitUiApplyAndRetain => 'Rakendada ja säilitada';
+
+  @override
+  String get gitUiPop => 'Paps...';
+
+  @override
+  String get gitUiCreateBranch => 'Loo haru…';
+
+  @override
+  String get gitUiDropStash => 'Kustuta peidetud muudatused…';
+
+  @override
+  String get gitUiBranchFromStash => 'Loo haru peidetud muudatustest';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Loo / switch filiaali juures stash\'s esialgse baasi, seejärel rakendada seda. Originaal stash on säilitada selge hilisema kustutamise.';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0 see peidupaik?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Konfliktide rakendamisel säilitatakse algne peidupaik.';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Kustutab kirje. Selle muudatusi ei rakendata.';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Lahenda ühendamata failid. Gitil pole peidetud muudatuste jätkamis- ega katkestamiskäsku; algne peidetud muudatuste kirje säilib.';
+
+  @override
+  String get gitUiStashNameMessage => 'Varraste nimi/sõnum';
+
+  @override
+  String get gitUiStashContentAndResultingIndex =>
+      'Lihvisisaldus ja sellest tulenev indeks';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Stash jälgis tööd ja lavastatud muutusi';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Peida muudatused, säilita indeksi sisu paigal (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Peida ainult indeksi muudatused (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => 'Jälitamata failide kaasamine';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Kõik selles hoidlas asuvad sobivad teed';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Nende varude valikute puhul ei ole võimalik muudatusi teha.';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath =>
+      'Valige vähemalt üks sobiv tee.';
+
+  @override
+  String get gitUiCreateStash2 => 'Peida muudatused';
+
+  @override
+  String get gitUiCreateWorktree => 'Loo tööpuu...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'Loo sissekanne enne tööpuu loomist HEAD-i juurde.';
+
+  @override
+  String get gitUiDetachedHEAD => 'Lahutatud HEAD';
+
+  @override
+  String get gitUiCurrent => 'Aktiivne ·';
+
+  @override
+  String get gitUiLocked => 'Lukustatud ·';
+
+  @override
+  String get gitUiOpenInBusyStack => 'Avamine hõivatud olekus ·';
+
+  @override
+  String get gitUiStatusNotInspected => 'Kontrollimata olek';
+
+  @override
+  String get gitUiDirty => 'Räpane';
+
+  @override
+  String get gitUiClean => 'Muudatusi pole';
+
+  @override
+  String get gitUiOpenWorkingFolder => 'Töökataloogi avamine';
+
+  @override
+  String get gitUiMoveWorktree => 'Liiguta tööpuud...';
+
+  @override
+  String get gitUiUnlock => 'Ava lukk';
+
+  @override
+  String get gitUiLock => 'Lukusta';
+
+  @override
+  String get gitUiRemoveCleanWorktree => 'Eemalda puhas tööpuu...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Vaata väljajätmist, kaasa arvatud kohalikke muudatusi...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => 'Uus tööpuu kataloogi nimi';
+
+  @override
+  String get gitUiNewWorktreeBranch => 'Uus tööpuu oks';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Loo $arg0/$arg1 uue kohaliku haruga aadressil $arg2 ($arg3).';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => 'Sihtkataloogi nimi';
+
+  @override
+  String get gitUiRemoveWorktree => 'Kas eemaldada tööpuu?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Lukustatud/kasutuses olevad tööpuud jäävad kaitstuks.';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git keeldub eemaldamisest, kui on toimunud kohalikud muudatused, jälgimata failid või lukk.';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Kõrvalda kohalik tööpuu sisu ja eemalda';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => 'Eemalda puhas tööpuu';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Selgelt rekurseeruda pesastatud alammoodulid uuendused / sünkroniseerimine';
+
+  @override
+  String get gitUiNoRecordedSubmodules => 'Salvestatud alammoodulid puuduvad';
+
+  @override
+  String get gitUiNotInitialized => 'ei ole lähtestatud';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return 'Parent gitlink: $arg0 Tutvutud: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => 'Räpane pesahoidla';
+
+  @override
+  String get gitUiCleanNestedRepository => 'Pesahoidla puhastamine';
+
+  @override
+  String get gitUiNestedStatusUnavailable => 'Nested status puudub';
+
+  @override
+  String get gitUiEnterNestedRepository => 'Sisesta pesahoidla';
+
+  @override
+  String get gitUiInitializeConfiguration => 'Seadistamine';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Uuenda registreeritud lapsevanematele...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Järgi seadistatud võrguharu...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs =>
+      'Konfigureeritud URL- ide sünkroniseerimine...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Aktiivse alamooduli etapi osuti vanemas';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Vanem ja alamoodul kohustub, surub, ja määrdunud olekut jääda eraldi. Sirvimine ei initsialiseeri ega uuenda neid.';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return 'Tõmba ja kontrolli, kuidas määratud kaugharud toimivad. See erineb registreeritud gitlinkidest. Rekursiivne: $arg0.';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Initsialiseerida vastavalt vajadusele ja kontrollida täpselt $arg0. Rekursiivne: $arg1.';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return 'Rakendab muudetud alammooduli seadistuse toimingut. Rekursiivne: $arg0.';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => 'Alammooduli rakendamine';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Kontrollige salvestatud versiooni või luua taastamise filiaal. Reflog ei taasta suvalise salvestamata või kontrollimata sisu.';
+
+  @override
+  String get gitUiSelectAReflogEntry => 'Vali reflog kirje';
+
+  @override
+  String get gitUiPreviousPage => 'Eelmine lehekülg';
+
+  @override
+  String get gitUiNextPage => 'Järgmine lehekülg';
+
+  @override
+  String get gitUiRecoveryBranchName => 'Recovery Filiaali nimi';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return 'Loob haru $arg0; tööfailid ja praegune haru on muutumatud.';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => 'Loo taastav haru...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot => 'Loe ainult taastumispilt';
+
+  @override
+  String get gitUiInspectSnapshot => 'Kontrolli pilti...';
+
+  @override
+  String get gitUiReviewReset => 'Review lähtestamine...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return 'Lehekülg $arg0';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Git teksti ajalugu peab omama oma redigeeritav väli.';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree => 'Muuda HEAD | Indeks | Tööpuu…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Läbivaadatud indeks või töösisu muutus. Värskenda seda võrdlust enne lavastamist.';
+
+  @override
+  String get gitUiRefreshComparison => 'Värskenda võrdlust';
+
+  @override
+  String get gitUiPreviousChangedFile => 'Eelmine muudetud fail';
+
+  @override
+  String get gitUiNextChangedFile => 'Järgmine muudetud fail';
+
+  @override
+  String get gitUiPreviousDifference => 'Eelmine erinevus';
+
+  @override
+  String get gitUiNextDifference => 'Järgmine erinevus';
+
+  @override
+  String get gitUiComparisonMode => 'Võrdlusrežiim';
+
+  @override
+  String get gitUiSideBySide => 'Külg külje kõrval';
+
+  @override
+  String get gitUiUnified => 'Ühtlustunud';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Erinevuse näitamise valikud';
+
+  @override
+  String get gitUiWrap => 'Mälu';
+
+  @override
+  String get gitUiWords => 'Sõnad';
+
+  @override
+  String get gitUiCollapseContext => 'Tausta kollaps';
+
+  @override
+  String get gitUiIgnoreWhitespace => 'Tühikute eiramine';
+
+  @override
+  String get gitUiSearchComparison => 'Otsingu võrdlus';
+
+  @override
+  String get gitUiSearch => 'Otsi';
+
+  @override
+  String get gitUiCloseSearch => 'Sulge otsing';
+
+  @override
+  String get gitUiStagingActions => 'Sätimistoimingud';
+
+  @override
+  String get gitUiStagingActions2 => 'Sättimistoimingud...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines =>
+      'Eemalda valitud muudetud read indeksist';
+
+  @override
+  String get gitUiStageSelectedChangedLines =>
+      'Lisa valitud muudetud read indeksisse';
+
+  @override
+  String get gitUiUnstageWholeFile => 'Eemalda kogu fail indeksist';
+
+  @override
+  String get gitUiStageWholeFile => 'Lisa kogu fail indeksisse';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0 ainult tühimärkidega muudetud read peidetud · Täpsete muudatuste näitamine';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '$arg0 muudetud read valitud · Kuva seaded kunagi muuta lavastatud baite.';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Kirjutuskaitstud võrdlus · Kopeeri teksti või muuda kuvaseadeid.';
+
+  @override
+  String get gitUiNoFinalNewline => ' · lõplik uus rida puudub';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 · $arg1 · $arg2 baites$arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'Teksti võrdlus ei ole nende sisude puhul kättesaadav.';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'See võrdlus ületab teksti piiratud läbivaatamise piiri. Sisu ei ole tunnistatud identseks.';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Võrdluse sisu on identne.';
+
+  @override
+  String get gitUiUnstage => 'Lavastamata';
+
+  @override
+  String get gitUiStage => 'Etapp';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 muudetud rida';
+  }
+
+  @override
+  String get gitUiContext => 'Kontekst';
+
+  @override
+  String get gitUiExpandUnchangedContext => 'Laienda muutmata konteksti';
+
+  @override
+  String get gitUiUnstageThisHunk => 'Eemalda see plokk indeksist';
+
+  @override
+  String get gitUiStageThisHunk => 'Lisa see plokk indeksisse';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return 'Muuda etapi sisu · $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult =>
+      'Läbivaadatud indeksi tulemuse kirjutamine';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => 'Indeks';
+
+  @override
+  String get gitUiWorkingTree => 'Tööpuu';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => 'Indeks · redigeeritav UTF-8 blob';
+
+  @override
+  String get gitUiUndo => 'Võta tagasi';
+
+  @override
+  String get gitUiRedo => 'Tee uuesti';
+
+  @override
+  String get gitUiReloadIndexReview => 'Uuesti laadida indeksi ülevaade?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Laadi praegused HEAD-i, indeksi ja tööversioonid uuesti. See asendab indeksiredaktori salvestamata mustandi.';
+
+  @override
+  String get gitUiReplaceDraftAndReload => 'Asenda mustand ja laadi uuesti';
+
+  @override
+  String get gitUiReloadVersions => 'Laadi versioonid uuesti...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Redigeeritud tulemuse kirjutamine sellesse indeksikirjesse';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Tööfailid jäävad kettale. Enne rakendamist vaata redigeeritud indeks üle.';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Indeksi tekstivormingu muutmine';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Uuenda ainult $arg0 läbivaadatud indeksikirjet. $arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult =>
+      'Kirjuta läbi vaadatud indeksi tulemus';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Redigeeritud tulemus muutus vormingu läbivaatamise ajal. Vaata uuesti üle.';
+
+  @override
+  String get gitUiSynchronizeScrolling => 'Ürituse sünkroniseerimine';
+
+  @override
+  String get gitUiReadOnlyRevisionContent =>
+      'Ainult lugemiseks mõeldud versiooni sisu';
+
+  @override
+  String get gitUiEditableIndexContent => 'Redigeeritava indeksi sisu';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Soovitud versioon on väljaspool aktiivseid filtreid. Selle avamiseks lähtesta filtrid.';
+
+  @override
+  String get gitUiFilterLog => 'Filtri logi';
+
+  @override
+  String get gitUiFilters => 'Filtrid...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return 'Filtrid ($count)...';
+  }
+
+  @override
+  String get gitUiMessage => 'Sõnum…';
+
+  @override
+  String get gitUiAuthor => 'Autor…';
+
+  @override
+  String get gitUiPath => 'Asukoht...';
+
+  @override
+  String get gitUiDate => 'Kohting...';
+
+  @override
+  String get gitUiMessageFilter => 'Kirjafilter';
+
+  @override
+  String get gitUiAuthorFilter => 'Autorifilter';
+
+  @override
+  String get gitUiPathFilter => 'Teefilter';
+
+  @override
+  String get gitUiMessage2 => 'Sõnum';
+
+  @override
+  String get gitUiAuthor2 => 'Autor';
+
+  @override
+  String get gitUiPath2 => 'Asukoht';
+
+  @override
+  String get gitUiDateFilter => 'Kuupäev filter...';
+
+  @override
+  String get gitUiResetFilters => 'Lähtesta filtrid';
+
+  @override
+  String get gitUiRefreshLog => 'Värskenda logi';
+
+  @override
+  String get gitUiGoToCommitReference => 'Mine, et pühenduda/ viidata...';
+
+  @override
+  String get gitUiBackToHEAD => 'Tagasi HEAD-i juurde';
+
+  @override
+  String get gitUiOrderedCherryPick => 'Orienteerunud kirsiork';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return 'Review kirss-pick ($arg0)...';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions =>
+      'Võrdle kahte valitud parandust...';
+
+  @override
+  String get gitUiToggleBranchesPane => 'Lülitab harude paneeli sisse ja välja';
+
+  @override
+  String get gitUiFilterBranchesAndTags => 'Filter oksad ja sildid';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return 'Kommuteerimine $arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => 'Pane detaile kirja...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return 'Viide: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => 'Vali see sissekanne';
+
+  @override
+  String get gitUiBranchOrTag => 'Haru või silt';
+
+  @override
+  String get gitUiAllReferences => 'Kõik viited';
+
+  @override
+  String get gitUiLocal => 'Kohalik';
+
+  @override
+  String get gitUiRemote => 'Kaughoidla';
+
+  @override
+  String get gitUiTags => 'Sildid';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Praegused filtrid ei sobi kokku.';
+
+  @override
+  String get gitUiObjectID => 'Objekti ID';
+
+  @override
+  String get gitUiSubjectReferences => 'Teema/viited';
+
+  @override
+  String get gitUiDate2 => 'Kuupäev';
+
+  @override
+  String get gitUiGitCommits => 'Git võtab kohustuse';
+
+  @override
+  String get gitUiParents => 'Eellased';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '$arg0 vanemad';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => 'Laadi rohkem kohustusi';
+
+  @override
+  String get gitUiLoadingChangedFiles => 'Muudetud failide laadimine';
+
+  @override
+  String get gitUiNoChangedFiles => 'Muudetud faile pole';
+
+  @override
+  String get gitUiSelectACommit => 'Pühendumise valimine';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return 'Võrdle eelmist $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => 'Muudetud failid';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Autor: $arg0 < $arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Kombineer: $arg0 < $arg1> $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Madal/osaline piir: vanemobjekt ei ole kättesaadav.';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Vanem on väljaspool seda lehekülge või madala piiri.';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return 'Eellassissekanne $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => 'Pane toime...';
+
+  @override
+  String get gitUiEmptyTree => 'tühi puu';
+
+  @override
+  String get gitUiCreateBranch2 => 'Loo haru';
+
+  @override
+  String get gitUiCreateTag => 'Loo silt';
+
+  @override
+  String get gitUiCompareRevisions => 'Võrdle parandusi';
+
+  @override
+  String get gitUiOpenSnapshot => 'Ava pilt';
+
+  @override
+  String get gitUiRevertCommit => 'Taaskäivita sissekanne';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Interaktiivne rebane pärast seda piiri';
+
+  @override
+  String get gitUiResetCurrentBranch => 'Lähtesta praegune haru';
+
+  @override
+  String get gitUiCopyFullObjectID => 'Kopeeri objekti täis ID';
+
+  @override
+  String get gitUiGoToCommitReference2 => 'Mine pühendu/viida';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Sisesta sissekande ID või viide logis avaldamisele.';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Soovitud läbivaatamine ei ole kättesaadav.';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Hoidla metaandmed on ainult lugemiseks. Harustiku kontroll ja võrdlus on endiselt saadaval.';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Tööfailid ei ole kättesaadavad või on ainult lugemiseks. Haru vahetamine ja ühendamine ei ole võimalik.';
+
+  @override
+  String get gitUiSearchBranchesAndTags => 'Otsi harusid ja silte';
+
+  @override
+  String get gitUiNewBranch => 'Uus haru…';
+
+  @override
+  String get gitUiLocalBranches => 'Kohalikud harud';
+
+  @override
+  String get gitUiRemoteBranches => 'Kaugharud';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return 'Rajad $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return '$arg0';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata => 'Haru metaandmete värskendamine';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return 'Lülitumine $arg0- ile';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => 'Avatud okupeeritud tööpuu';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch => 'Loo kohalik jälitusharu...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => 'Võrdle praeguse HEAD-iga';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch => 'Ühenda praegusesse harusse...';
+
+  @override
+  String get gitUiRename => 'Nimeta ümber...';
+
+  @override
+  String get gitUiChangeUpstream => 'Muuda ülesvoolu...';
+
+  @override
+  String get gitUiDelete => 'Kustuta...';
+
+  @override
+  String get gitUiDeleteFromRemote => 'Kustuta võrgust...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return '$arg0 toimingud';
+  }
+
+  @override
+  String get gitUiLocalBranchName => 'Kohaliku haru nimi';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return 'Loo $arg0. Märgitakse uus haru.';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return 'Kohalik filiaal jälgib $arg0 ja kontrollitakse.';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => 'Kustutamiseks vali võrgus';
+
+  @override
+  String get gitUiDeleteRemoteReference => 'Kustuta kaugviide';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return '$arg0 ühendamine $arg1- ga';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return 'Nimeta ümber $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return '$arg0 ülesvoolu';
+  }
+
+  @override
+  String get gitUiNoUpstream => 'Ülesvoolu haru puudub';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return 'Kas kustutada $arg0?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 Target $arg1 Ainult kohalik kustutamine. Ühendamata filiaal on keeldutud.';
+  }
+
+  @override
+  String get gitUiDelete2 => 'Kustuta';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return 'Kas kustutada ühendamata haru $arg0?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 git teatab, et see haru ei ole täielikult ühendatud. Kustuta selgelt kohalik viide pärast selle ülevaatamist, kaugkoopiaid ei muudeta.';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Kustuta ühendamata kohalik haru';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return 'Sihtkoht: $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => 'Lähteharu või silt';
+
+  @override
+  String get gitUiMergePolicy => 'Liida reegel';
+
+  @override
+  String get gitUiFastForwardWhenPossible => 'Kui võimalik, siis kerige edasi';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit => 'Alati luuakse ühendamine';
+
+  @override
+  String get gitUiFastForwardOnly => 'Ainult edasi';
+
+  @override
+  String get gitUiSquashIntoStagedChanges => 'Squash astmelisteks muutusteks';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Peata enne ühendamise sooritamist';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'Edasikerimine on keelatud, et HEAD ei liiguks enne ülevaatust.';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Jätab etapiviisilised muudatused eraldi kohustuse jaoks, see ei ole jätkuv ühendamine.';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Konfliktid on endiselt kättesaadavad ühise kriisilahenduse tööpiirkonnas.';
+
+  @override
+  String get gitUiAddRemote => 'Lisa võrgus...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return 'Tõmbe: $arg0 Push: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => 'Eemalda võrgust...';
+
+  @override
+  String get gitUiChangeFetchURL => 'Muuda tõmbamise URL- i...';
+
+  @override
+  String get gitUiAddPushDestination => 'Lisa surutav sihtpunkt...';
+
+  @override
+  String get gitUiRemovePushDestination => 'Eemalda vajutamise sihtkoht...';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return '$arg0 haldamine';
+  }
+
+  @override
+  String get gitUiRemoteName => 'Kaugnimi';
+
+  @override
+  String get gitUiNewRemoteName => 'Uus võrgunimi';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource =>
+      'Hoidla URL või kohalik allikas';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Sisesta eemaldatav täpne läbivaadatav sihtkoht.';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Usaldusväärsusi pakuvad määratud abilised või privaatne kiirteave.';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return 'Kas eemaldada võrgust $arg0?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Eemaldab kohaliku võrguseadistuse ja jälitusviited. See ei kustuta serveri hoidlat.';
+
+  @override
+  String get gitUiRemoveRemote2 => 'Eemalda võrgust';
+
+  @override
+  String get gitUiCommitScopeEntireRepository =>
+      'Säilitage ulatus: kogu hoidla';
+
+  @override
+  String get gitUiCachedTracking => 'Lõksuga jälitamine';
+
+  @override
+  String get gitUiAmendLastCommit => 'Muuda viimast sissekannet';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Seadistatud konksud ja signeerimine on lubatud.';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Kirjutab valitud HEAD-i sissekande ümber. Kaugjälgimine ei tõesta, et see on avaldamata.';
+
+  @override
+  String get gitUiRepository => 'Hoidla';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return 'Eemaldatud $arg0';
+  }
+
+  @override
+  String get gitUiLog => 'Ajalugu';
+
+  @override
+  String get gitUiRepositoryActions => 'Hoidla toimingud';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return 'Vahemälus jälgimisandmed · $upstream · $ahead ees · $behind taga';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Avar hoidla · ei tööta puu. Ava logi ajaloo kontrollimiseks.';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Lugeda ainult hoidla · lavastamine ja toimetused on kättesaamatu.';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable =>
+      'Hoidla staatus ei ole kättesaadav';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return 'Muuta $revision';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => 'Lisa kinnituslõpp';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Seadistatud signeerimisreegli kasutamine';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit =>
+      'Krüptograafiliselt allkirjastage see kohustus';
+
+  @override
+  String get gitUiDoNotSignThisCommit => 'Ära kirjuta sellele kohustusele alla';
+
+  @override
+  String get gitUiRecentCommitMessages =>
+      'Hiljutised kirjad... @ info: whatsthis';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Kasutatakse seadistatud eraldamismall...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Autori identiteet ja konfigureeritud konksud...';
+
+  @override
+  String get gitUiDraftMessage => 'Sõnumi mustand...';
+
+  @override
+  String get gitUiCommitOptions => 'Sissekande valikud';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return 'Mälusse jäetud mustand; selle salvestamine nurjus. $arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => 'Sissekande sõnum';
+
+  @override
+  String get gitUiGitOperationInProgress => 'Käimasolev žitt';
+
+  @override
+  String get gitUiCancel => 'Loobu';
+
+  @override
+  String get gitUiAmendStaged => 'Muuta astmeliselt';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return 'Kombes lavastatud ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => 'Tee sissekanne ja lükka…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Lugematu sissekande mall ei ole seadistatud.';
+
+  @override
+  String get gitUiCommitIdentityAndHooks =>
+      'Sisselogimise identiteet ja konksud';
+
+  @override
+  String get gitUiRecentMessages => 'Viimased kirjad';
+
+  @override
+  String get gitUiReplaceMessageDraft => 'Kas asendada kirja kavand?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Kas asendada olemasolev teade valitud sõnumiga?';
+
+  @override
+  String get gitUiReplaceDraft => 'Asenda mustand';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return 'Kohalik pühendumine $arg0 on olemas.';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return 'Kohalik sissekanne $arg0 on olemas. Enne teise sissekande tegemist vaata logi üle. Sõnumi projekt on alles.';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => 'Kirjuta autori nimi';
+
+  @override
+  String get gitUiCommitAuthorEmail => 'Kirjuta kiri';
+
+  @override
+  String get gitUiConfiguredDefault => 'seadistatud vaikimisi';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return 'Allkirjastamine: $arg0 · $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return 'Konksude seadistamine: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'Kinnituslõpp on sõnumis olev avaldus, mitte krüptograafiline allkiri. Identiteet salvestatakse ainult selle hoidla kohalikku seadistusse; mustand säilib.';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => 'Hoidla identiteedi salvestamine';
+
+  @override
+  String get gitUiStaged => 'Indeksis';
+
+  @override
+  String get gitUiUntracked => 'Jälgimata';
+
+  @override
+  String get gitUiUnstaged => 'Indeksisse lisamata';
+
+  @override
+  String get gitUiConflicts => 'Konfliktid';
+
+  @override
+  String get gitUiNoChanges => 'Muudatusi pole';
+
+  @override
+  String get gitUiRepositoryChangeTree => 'Hoidla vahetuspuu';
+
+  @override
+  String get gitUiChanges => 'Muudatused';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => 'Laienda';
+
+  @override
+  String get gitUiCollapse => 'Varja';
+
+  @override
+  String get gitUiUnstageFile => 'Eemalda fail indeksist';
+
+  @override
+  String get gitUiStageFile => 'Lisa fail indeksisse';
+
+  @override
+  String get gitUiExpandGroup => 'Laienda grupp';
+
+  @override
+  String get gitUiCollapseGroup => 'Kollaps grupp';
+
+  @override
+  String get gitUiReviewDifference => 'Läbivaatamise erinevus';
+
+  @override
+  String get gitUiUnstageSelectedFiles => 'Eemalda valitud failid indeksist';
+
+  @override
+  String get gitUiStageSelectedFiles => 'Lisa valitud failid indeksisse';
+
+  @override
+  String get gitUiFileHistoryAndBlame => 'Failide ajalugu ja süü...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => 'Kustuta jälgimata fail...';
+
+  @override
+  String get gitUiDiscardUnstagedChange => 'Kustuta lavastamata muudatus...';
+
+  @override
+  String get gitUiFileHistory => 'Faili ajalugu';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return 'Hävitada lavastamata $arg0?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 baite · $arg1 Asendab töösisu indeksiga või kustutab selle jälgimata faili. Säilitatakse etapistatud sisu. Kõigepealt tuleb vaadata salvestamata masinadokumendid.';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => 'Kustuta jälgimata fail';
+
+  @override
+  String get gitUiDiscardWorkingChange => 'Kõrvalda töömuudatus';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return 'Kustuta REMOTE viide $arg0';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'See eemaldab viite igale allpool loetletud tegelikule tõukesihtkohale. Säilitatakse kohalikud harud/sildid. Oodatavad nõuanded määratakse kindlaks käesoleva ülevaatega.';
+
+  @override
+  String get gitUiReferenceDoesNotExist => 'Viidet ei ole olemas';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0 Oodatud vihje: $arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => 'Kaug- kustutamine lõpetatud.';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return 'Kas kustutada serverist $arg0?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'Täpsed ülal näidatud sihtotsikud eemaldatakse. Iga muudetud kaugnipp peatab operatsiooni uueks läbivaatamiseks.';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote => 'Vaata ja kustuta võrgust...';
+
+  @override
+  String get gitUiDestinationReference => 'Sihtkoha viide';
+
+  @override
+  String get gitUiReviewDestinations => 'Läbivaatamissihtkohad';
+
+  @override
+  String get gitUiNewRemoteBranch => 'uus kaugharu';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · oodatud: $arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Sihtmärk on kohustatud, mis ei ole kohapeal kättesaadav. Tõmba, et läbivaadatud sihtkoht enne ülevaatamist väljaminev ajalugu.';
+
+  @override
+  String get gitUiFetchReviewedDestination => 'Tõsta läbi vaadatud sihtkoht';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Valige sihtkoht ja kontrollige väljuvaid kohustusi.';
+
+  @override
+  String get gitUiNoOutgoingCommits => 'Väljaminevad kohustused puuduvad';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => 'Väljamineva kohustuse valimine';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits =>
+      'Laadi rohkem väljaminevaid kohustusi';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Määra see sihtkoht ülesvoolu';
+
+  @override
+  String get gitUiChooseExactTagsToPublish =>
+      'Täpsete siltide valimine avaldamiseks';
+
+  @override
+  String get gitUiTagsNone => 'Sildid: puuduvad';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return 'Sildid: $arg0 valitud';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return 'Avaldada täpselt: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Vajuta lõpetatud. Kohalik kohustus on saadaval logis.';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Sundlükkamine nõuab täpselt siin üle vaadatud sihtviidete tippe.';
+
+  @override
+  String get gitUiForceWithReviewedLease => 'Jõud läbivaadatud rendiga...';
+
+  @override
+  String get gitUiPush => 'Lükka';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases =>
+      'Jõud suruda läbi vaadatud liisingutega?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return 'Kirjuta $arg0 ümber ainult siis, kui igal kaugsihtkohal on veel ülal näidatud täpne ots.\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Teised võivad seda ajalugu juba kasutada. Taustal toomine ei uuenda seda turvatingimust.';
+
+  @override
+  String get gitUiForceWithLease => 'Renditud jõud';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Kaugtulemus on ebakindel. Vaata uuesti sihtkohtadesse enne teise tõuke.';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return 'Parent $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => 'Tõmbatav võrgus';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Pruunid kustutatud kaugseire oksad';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Uuenduste tõmbamine kaugjälgimise infosse ilma tööfaile asendamata.';
+
+  @override
+  String get gitUiFetch => 'Too';
+
+  @override
+  String get gitUiSourceRemote => 'Lähte kauglevi';
+
+  @override
+  String get gitUiSourceBranch => 'Allikas';
+
+  @override
+  String get gitUiReviewedStrategy => 'Läbivaadatud strateegia';
+
+  @override
+  String get gitUiMerge => 'Ühenda';
+
+  @override
+  String get gitUiRebase => 'Paiguta ümber';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Peata, kui sihtkoht ei saa edasi liikuda, mitte kunagi ei ühine ega taasalusta.';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Ühendamine ühendamisega, kaasa arvatud siis, kui on võimalik edasi kerida.';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Ühenda; võimaldab võimaluse korral kerida edasi.';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Kohaliku ajaloo taastamine kohaliku ühendamise säilitamise ajal kohustab.';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Kohalike kohustuste taastamine on lineaarne ajalugu.';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git on seadistatud interaktiivseks rebaseks. Siin saab valida tõmbamisstrateegia või tõmmata ja avada rebase... plaani läbivaatamiseks.';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Selle tõmmise korral kasutatakse läbivaadatud tavalist rebast';
+
+  @override
+  String get gitUiOptions => 'Valikud';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Alati luua ühendamise kohustuse (no kerida)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits =>
+      'Kohaliku ühendamise säilitamine';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Kohalikud muudatused võivad takistada tõmbamist. Vaata neid üle või pane need otseselt kokku.';
+
+  @override
+  String get gitUiStashes => 'Peidetud muudatused';
+
+  @override
+  String get gitUiCreateOrReviewStash => 'Loo või vaata kraami...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy => 'Valitud strateegia tõmbamine';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource =>
+      'Hoidla URL või kohalik Git allikas';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH või kohalik asukoht';
+
+  @override
+  String get gitUiFolderToInitialize => 'Initsialiseeritav kataloog';
+
+  @override
+  String get gitUiFinalCloneDestination => 'Kloonide lõppsihtkoht';
+
+  @override
+  String get gitUiChoose => 'Vali...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Loob ainult git metaandmed. Olemasolevaid faile ei ole lavastatud ega toimetatud.';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Lõppsiht peab puuduma või olema tühi. Olemasolevaid kasutajaandmeid ei kirjutata kunagi üle.';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Esialgne haru · tühi kasutab efektiivset Git\' i reeglit';
+
+  @override
+  String get gitUiSelectedBranchOptional => 'Valitud haru · vabatahtlik';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Submodules recursively initsialiseeri/update';
+
+  @override
+  String get gitUiPreparingGitOperation => 'Ettevalmistus Git operatsiooni...';
+
+  @override
+  String get gitUiThisAttemptCreated => 'See katse on loodud';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Sihtpunkt oli olemas enne seda katset:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Kataloog jääb ülevaatuseks, vaata see üle enne kloonimiskatset.';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains => 'Sihtkataloogi ei ole veel.';
+
+  @override
+  String get gitUiCancelProcess => 'Katkesta protsess';
+
+  @override
+  String get gitUiInitialize => 'Algväärtusta';
+
+  @override
+  String get gitUiClone => 'Klooni';
+
+  @override
+  String get gitUiChooseNewBase => 'Vali uus alus';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => 'Vali ülesvoolu piir';
+
+  @override
+  String get gitUiNewBase => 'Uus alus';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => 'Ülesvoolu piir · välja jäetud';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => 'Sama mis ülesvoolu piir';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => 'Vali haru, silt või sissekanne…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase => 'Kasutatakse uue alusena ülesvoolu';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Valib õige haru, sildi või sooritab toimingu logist.';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Haruploki esimene allesjäetav sissekanne ei saa olla squash ega fixup: sellele ei eelne sihtsissekannet.';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return 'Branch blokaad $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Märkus nõuab uut sõnumit]\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => 'Kavandatavad sõnumid';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Originaal/kombineeritud teate eelvaatlus · Git soovib viimast ümbersõnastamist/lükkamist';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return 'Tulemus $arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return 'Praegune haru: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => 'Lahutatud HEAD';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Ümberpaigutamine muudab sissekannete identiteeti. Kaugharude jälgimisandmed ei tõesta, et ajalugu pole kunagi avaldatud.';
+
+  @override
+  String get gitUiIncludeRootCommits => 'Kaasa juursissekanded';
+
+  @override
+  String get gitUiMergeCommits => 'Ühenda kohustused';
+
+  @override
+  String get gitUiFlattenHistory => 'Muuda ajalugu lineaarseks';
+
+  @override
+  String get gitUiPreserveBranchStructure => 'Säilita harude struktuur';
+
+  @override
+  String get gitUiAutosquash => 'Automaatne liitmine';
+
+  @override
+  String get gitUiPrepareGitPlan => 'Valmista Git-plaan';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return 'Kordamiseks: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Kaasa arvatud kõik juured, mis on sellelt harult kättesaadavad.';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return 'Sissekanded pärast $boundary rakendatakse uuesti alusele $base; piirsissekanne ise on välja jäetud.';
+  }
+
+  @override
+  String get gitUiRoot => 'Juur';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Tsirkooniumi haru/märgis/taastatud/ühendatud struktuur';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Valige selgesõnaline vana piir või juurrežiim, seejärel valmistage ette plaan.';
+
+  @override
+  String get gitUiMoveUp => 'Liiguta üles';
+
+  @override
+  String get gitUiMoveDown => 'Liiguta alla';
+
+  @override
+  String get gitUiResetPlan => 'Lähtesta plaan';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · harublokk $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Üksikasjade ja muudetud failide jaoks kohustuse valimine';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Eelvaatlus ühendatud kirjad...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+↑/↓ liigutab valitud toimingut. Seotud haruviiteid automaatselt ei uuendata.';
+
+  @override
+  String get gitUiCancelPlan => 'Tühista plaan';
+
+  @override
+  String get gitUiStartReviewedRebase => 'Alustame uuesti analüüsiga?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Kirjuta $arg0 planeeritud kohustub $arg1. Visatud kohustused jäävad nähtavalt märgitud selles plaanis kuni sa alustad.';
+  }
+
+  @override
+  String get gitUiStartRebase => 'Alusta ümberpaigutamist';
+
+  @override
+  String get gitUiNoContinuingGitOperation => 'Ei jätkata žit- toimingut';
+
+  @override
+  String get gitUiStoppedForEditingAmend =>
+      ' · peatatud redigeerimiseks/muutmiseks';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Need on ühendamata indeksikirjed, võimalik, et ka varurakendusest. Gitil pole enam midagi varuda või katkestada käsku.';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Redigeeri töötavaid faile, lava ja muuda aktiivseid kohustusi, seejärel jätka selle baasiga.';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · ühendamata indeksiastmed $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Indeksil pole lahendamata kirjeid.';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Praeguse kohustuse säilitamine tühja kohustusena';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Tegelikul indeksil ei ole astmelisi muudatusi. Loo selgesõnaline tühi kohustus, seejärel jätka järjestuse kasutamist, kui see jääb aktiivseks.';
+
+  @override
+  String get gitUiKeepEmptyCommit => 'Hoidke tühi pühendus...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git proovib naasta toimingu alguspunkti. Varasema indeksisse lisamata, jälgimata ja salvestamata sisu taastamine pole tagatud.';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Jäta praegune kohustus vahele ja jätka järgmise plaaniga.';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Unusta see operatsioon, mille käigus säilitatakse aktiivsed failid ja indeks.';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return 'Jätka $arg0';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions =>
+      'Kas laadida konflikti versioonid uuesti?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Asendab salvestamata tulemuse projekti aktiivse tööfailiga. Salvestatud töösisu säilitatakse.';
+
+  @override
+  String get gitUiLoadingConflictVersions =>
+      'Konfliktiversioonide laadimine...';
+
+  @override
+  String get gitUiLoadingConflict => 'Konflikti laadimine';
+
+  @override
+  String get gitUiBaseLeft => 'Baas → vasak';
+
+  @override
+  String get gitUiBaseRight => 'Baas → paremale';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict =>
+      'Konflikti baassissekanne puudub';
+
+  @override
+  String get gitUiAcceptEntireLeftFile =>
+      'Aktsepteeritakse kogu vasakut faili...';
+
+  @override
+  String get gitUiAcceptEntireRightFile =>
+      'Aktsepteeritakse tervet õiget faili...';
+
+  @override
+  String get gitUiPreviousConflictRegion => 'Eelmine konfliktipiirkond';
+
+  @override
+  String get gitUiNextConflictRegion => 'Järgmine konfliktipiirkond';
+
+  @override
+  String get gitUiManualResolution => 'Käsitsi eraldusvõime';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0/$arg1 · $arg2 review';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Allika joondamine ületas teksti võrdluspiiri; lähtepaneelid on saadaval käsitsi läbivaatamiseks.';
+
+  @override
+  String get gitUiAcceptLeftRegion => 'Vasakpoolne piirkond';
+
+  @override
+  String get gitUiAcceptRightRegion => 'Nõustu õige piirkonnaga';
+
+  @override
+  String get gitUiKeepManualResultForRegion =>
+      'Säilitada piirkonna käsitsi saadud tulemus';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Kas rakendada Git\'si mittekonflikte?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Asendab aktiivse tulemuse projekti Git\' s ühendamise eelvaatlusega. See jätab salvestamata käsitsi salvestamata tulemuse redigeerimise. Tööfaili ei muudeta kuni Salvesta.';
+
+  @override
+  String get gitUiUseMergePreview => 'Ühendamise eelvaatluse kasutamine';
+
+  @override
+  String get gitUiApplyNonConflictingChanges =>
+      'Rakenda mittekonfliktid muudatused...';
+
+  @override
+  String get gitUiLeftSource => 'Vasak allikas';
+
+  @override
+  String get gitUiResult => 'Tulemus';
+
+  @override
+  String get gitUiRightSource => 'Õige allikas';
+
+  @override
+  String get gitUiStage2 => 'etapp';
+
+  @override
+  String get gitUiStage3 => 'etapp';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Konfliktide versioonid ei ole kättesaadavad. Värskenda nende praeguse oleku läbivaatamiseks.';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Tulemus salvestatud kettale. Indeks määrab ikka veel, kas see fail on lahendatud.';
+
+  @override
+  String get gitUiSaveResultDraft => 'Salvesta tulemuse mustand';
+
+  @override
+  String get gitUiApplyResultAndStageResolution =>
+      'Rakenda tulemus ja lisa lahendus indeksisse';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Tulemus · redigeeritav UTF-8 töötav sisu';
+
+  @override
+  String get gitUiEditableConflictResult => 'Redigeeritava konflikti tulemus';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Vasakul: $arg0 · $arg1\nParemal: $arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'Sisu, kustutamise või alammooduli valimine kohustab selgesõnaliselt. Kahekomponentseid andmeid ei dekodeerita redigeeritava tekstina.';
+
+  @override
+  String get gitUiUseEntireLeftContent => 'Kasuta kogu vasakult sisu...';
+
+  @override
+  String get gitUiUseEntireRightContent => 'Kasuta tervet õiget sisu...';
+
+  @override
+  String get gitUiDeleteThisPath => 'Kustuta see asukoht...';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit => 'Lahendatud alammoodul';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'See gitlinki täpne etapp vanemas. See ei märgi allmoodulit ega soorita alammoodulit.';
+
+  @override
+  String get gitUiSetResolvedGitlink => 'Määra lahendatud gitlink...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return 'Baas → etapp $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Tulemus muudeti. Jäta käsitsi tulemus alles või vali mõni muu muutmata piirkond.';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return 'Kas rakendada lahendus „$arg0“?';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Valitud gitlinki saatmise etapp vanemas. Alammooduli väljavõtet ja selle faile ei asendata.';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return 'Asendab kogu töötee $arg0 ja lõpetab otsuse. Praegune töösisu ja salvestamata tulemuse eelnõu jäetakse kõrvale.';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision => 'Rakenda kogu faili otsus';
+
+  @override
+  String get gitUiStageThisConflictResolution =>
+      'Lavastada see konflikti lahendamine?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Kasuta kogu redigeeritud Tulemust $arg0. Git salvestab tee, mis on lahendatud, kui see on lavastatud. Vaata kõigepealt üle kogu soovitud sisu. $arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => 'Rakenda ja lisa indeksisse';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges =>
+      'Tulemusteksti vormingu muutmine';
+
+  @override
+  String get gitUiSaveReviewedResult => 'Salvesta läbi vaadatud tulemus';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Kohalik Git tabeli ligipääs ei ole kättesaadav. Proovi pärast rakenduse taasühendamist uuesti.';
+
+  @override
+  String get gitUiSans => 'SansCity in Newfoundland Canada';
+
+  @override
+  String get gitUiSelect => 'Vali';
+
+  @override
+  String get gitUiContextMenu => 'Kontekstimenüü';
+
+  @override
+  String get gitUiCopyText => 'Kopeeri tekst';
+
+  @override
+  String get gitUiLoadingRow => 'Laadimisrida';
+
+  @override
+  String get gitUiRetry => 'Proovi uuesti';
+
+  @override
+  String get gitUiGitMessage => 'Git sõnum';
+
+  @override
+  String get gitUiCancelPrompt => 'Tühista käsk';
+
+  @override
+  String get gitUiUseMessageAndContinue => 'Kasuta teadet ja jätka';
+
+  @override
+  String get gitUiRespondPrivately => 'Vasta privaatselt';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return 'Vaate eelistusi pole võimalik salvestada: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return 'Salvesta: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return 'Vaade Eelistused ei saa lugeda: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return 'Kombes mustand oli säilitada mälu, kuid ei saa salvestada: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Läbivaadatud hoidla on ainult lugemiseks selle operatsiooni jaoks. Ajalugu ja sisu kontroll on veel saadaval.';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git tagastatud $arg0. Rakendus ei suutnud oma dokumente värskendada: $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => 'Vali sissekanne ajaloost…';
+
+  @override
+  String get gitUiCurrentBranch => 'Praegune haru';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Ei sobi harusid ega silte. Vali sisselogimine.';
+
+  @override
+  String get gitUiBranches => 'Harud';
+
+  @override
+  String get gitUiPushCommits => 'Lükka sissekanded';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return 'Tõmba $arg0';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return '$arg0 lahustamine';
+  }
+
+  @override
+  String get gitUiCurrentOperation => 'Aktiivne toiming';
+
+  @override
+  String get gitUiRebaseCommits => 'Paiguta sissekanded ümber';
+
+  @override
+  String get gitUiFetch2 => 'Too…';
+
+  @override
+  String get gitUiPull => 'Tõmba…';
+
+  @override
+  String get gitUiPush2 => 'Lükka…';
+
+  @override
+  String get gitUiBranches2 => 'Harud…';
+
+  @override
+  String get gitUiManageRemotes => 'Halda kaughoidlaid…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return 'Ühenda $arg0...';
+  }
+
+  @override
+  String get gitUiRebase2 => 'Paiguta ümber…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation =>
+      'Konfliktid ja praegune operatsioon...';
+
+  @override
+  String get gitUiStashes2 => 'Peidetud muudatused…';
+
+  @override
+  String get gitUiWorktrees => 'Tööpuud…';
+
+  @override
+  String get gitUiSubmodules => 'Alammoodulid…';
+
+  @override
+  String get gitUiReflogAndRecovery => 'Reflog ja taastamine…';
+
+  @override
+  String get gitUiCloneRepository => 'Klooni hoidla…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => 'Loobuda hoidlate usaldusest';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus => 'Hoidla oleku ootamine';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Hoidla olek ei ole kättesaadav; värskenda';
+
+  @override
+  String get gitUiManageRemotes2 => 'Halda kaughoidlaid';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return 'Ühenda $arg0- i';
+  }
+
+  @override
+  String get gitUiWorktrees2 => 'Tööpuud';
+
+  @override
+  String get gitUiSubmodules2 => 'Alammoodulid';
+
+  @override
+  String get gitUiReflogAndRecovery2 => 'Reflog ja taastamine';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return 'Kloonihoidla · $arg0';
+  }
+
+  @override
+  String get gitUiApply => 'Rakenda';
+
+  @override
+  String get gitUiResizeGitPanes => 'Git- paneelide suuruse muutmine';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0 protsent';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return 'Väljumise staatus: $status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Hoidla muutus. Värskenda ja vaadata enne proovimist uuesti.';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'Veel üks toiming hoiab hoidlat või indeksilukku. Oota, siis uuenda.';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Selle operatsiooni jaoks on vajalik usaldus.';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git teenus lahti ühendatud. Ühendada ja lepitada hoidla.';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Paigaldatud git käivitatav ei saa seda toimingut toetada. Vaata selle tööaega puudutavaid nõudeid allpool.';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'See hoidla on ainult lugemiseks soovitud toimingu jaoks. Ülevaatamine ja ajalugu on endiselt saadaval.';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Operatsioon vajab leppimist. Enne selle kordamist vaata üle saadud hoidla või kaugolek.';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git autentimine nurjus. Kontrolli abilist või ava seadistatud võtmerõngas.';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH masina kontroll nurjus. Kontrolli masina identiteeti oma seadistatud SSH tööriistade kaudu.';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Kirjutamine nurjus või tühistati. Kontrolli signeerimisklahvi, agenti ja seadistatud signeerimisvahendit.';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Määrab hoidla autori nime ja e- posti, seejärel naaseb salvestatud sõnumi projekti.';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git tagasi uuendatud värskendus. Värskenda ja vaata tegelik sihtkoht enne proovimist uuesti.';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Töötamine või etapiline muudatused vältida seda operatsiooni. Review, kohustuse või selgesõnaliselt peidab neid.';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Nõutav git objekt ei ole saadaval. Vaadata üle madalad või osalise hoidla piirid ja tõmmata selgesõnaliselt, kui vaja.';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Git operatsioon nurjus: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => 'Diagnostika';
+
+  @override
+  String get gitUiAuthorizeGitInspection => 'Luba Git inspektsioon...';
+
+  @override
+  String get gitUiCopyDiagnostics => 'Koopiadiagnostika';
+
+  @override
+  String get gitUiActions => 'Toimingud';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return '$arg0 filiaal';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Loob kohaliku haru ilma seda kontrollimata.';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return 'Silt $arg0';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return 'Ainult lugemisega pilt · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => 'Kirsi-pick võtab kohustuse';
+
+  @override
+  String get gitUiRevertCommits => 'Tühista kohustused';
+
+  @override
+  String get gitUiCompareToFullRevisionID => 'Võrdle täieliku versiooni ID- ga';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return 'Puu võrdlussuund: $arg0 → siia sisestatud versioon.';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID =>
+      'Sisesta täielik kehtiv objekti ID.';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 → $arg1 · puu võrdlus';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return 'Lähtesta $arg0- iks $arg1';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'Liigutab HEAD-i/praegust haru. Reflog ei taasta suvalist jälgimata või salvestamata sisu.';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'Liiguta HEAD-i; säilita indeks ja tööfailid.';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'Liiguta HEAD-i ja asenda indeks; säilita tööfailid.';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'Asenda HEAD, indeks ja jälgitavad tööfailid; ette jäävad jälgimata failid võidakse üle kirjutada.';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'Asenda HEAD, indeks ja sobivad failid; keeldu, kui kohalikud muudatused läheksid kaotsi.';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return 'Lähtesta $arg0?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 → $arg1 Enne kasutamist vaadake üle valitud režiimi mõjud.';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return 'Lähtesta $arg0';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return 'Sihtmärk $arg0';
+  }
+
+  @override
+  String get gitUiTagName => 'Sildi nimi';
+
+  @override
+  String get gitUiAnnotatedTag => 'Märkusega silt';
+
+  @override
+  String get gitUiCryptographicSigning => 'Krüptograafiline allkirjastamine';
+
+  @override
+  String get gitUiConfiguredPolicy => 'Seadistatud reegel';
+
+  @override
+  String get gitUiSignThisTag => 'Kirjuta see silt alla';
+
+  @override
+  String get gitUiDoNotSign => 'Ärge kirjutage alla.';
+
+  @override
+  String get gitUiTagMessage => 'Sildisõnum';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Loob sildi kohalikult. Avaldab valitud sildid selgesõnaliselt Push review\' s.';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return 'Täielik puud: $arg0 → $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => 'Järgmine muudetud faili lehekülg';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Ainult lugemisega hoidla pilt. Faili avamine ei kontrolli kunagi seda versiooni.';
+
+  @override
+  String get gitUiOpenReadOnlyVersion =>
+      'Ava ainult lugemiseks mõeldud versioon';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Taasta see asukoht... · Hoidla oleku ootamine';
+
+  @override
+  String get gitUiRestoreThisPath => 'Taasta see tee...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return 'Ajalugu · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return 'Taasta $arg0?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return 'Asendab selle töötee versiooniga $arg0. Säilitatakse olemasolev astmeline sisu.';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => 'Taasta tööfail';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return 'Failide ajalugu järgneb ümbernimetamisele · $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => 'Ridade päritolu · salvestatud sisu';
+
+  @override
+  String get gitUiBlame => 'Ridade päritolu…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0 → Tööpuu';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile =>
+      'Ava ainult lugemisega seotud ajalooline fail';
+
+  @override
+  String get gitUiCompareToCurrentFile => 'Võrreldes aktiivse failiga';
+
+  @override
+  String get gitUiCompareToParent => 'Võrreldes vanemaga...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return 'Säästmata redaktori sisu $arg0 · ei ole nende annotatsioonide osa';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return 'Ajalugu $arg0-ist';
+  }
+
+  @override
+  String get gitUiBoundary => ' · Piir';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\nAlgne rida $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => 'Varasemad read';
+
+  @override
+  String get gitUiNextLines => 'Järgmised read';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return 'Selge rakenduse järjekord · sihtkoht $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => 'Lisa objekti ID';
+
+  @override
+  String get gitUiAddReviewedCommit => 'Lisa ülevaadatud kohustus...';
+
+  @override
+  String get gitUiMoveEarlier => 'Liigu varem';
+
+  @override
+  String get gitUiMoveLater => 'Liigu hiljem';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence => 'Eemalda läbivaadatud jadast';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Muudatuste rakendamine ilma kohustusteta';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Kasuta see selgesõnaline põhiliini vanem ühendamisel';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Tühi või juba rakendatud kohustused võivad peatada Git selgesõnaline vahelejätmine või jätkamise otsus.';
+
+  @override
+  String get gitUiRevertInReviewedOrder =>
+      'Taaskäivita uuesti läbi vaadatud järjekorras';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder =>
+      'Kirsiork läbi vaadatud järjekorras';
+
+  @override
+  String get gitUiReturnToFiles => 'Tagastamine failidesse';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => 'Tee sissekanne';
+
+  @override
+  String get gitUiBackToCommit => 'Tagasi algusse';
+
+  @override
+  String get gitUiSelectAChangeToReview => 'Vali ülevaatatav muudatus';
+
+  @override
+  String get gitUiLoadingBranch => 'Haru laadimine...';
+
+  @override
+  String get gitUiBranchUnavailable => 'Haru ei ole kättesaadav';
+
+  @override
+  String get gitUiUnbornHEAD => 'Sissekandeta HEAD';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return 'Lahutatud HEAD · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => 'Jätka';
+
+  @override
+  String get gitUiPick => 'Võta';
+
+  @override
+  String get gitUiReword => 'Muuda sõnumit';
+
+  @override
+  String get gitUiEdit => 'Muuda';
+
+  @override
+  String get gitUiSquash => 'Liida kokku';
+
+  @override
+  String get gitUiFixup => 'Liida sõnumita';
+
+  @override
+  String get gitUiDrop => 'Jäta välja';
+
+  @override
+  String get gitUiAbort => 'Katkesta';
+
+  @override
+  String get gitUiSkip => 'Jäta vahele';
+
+  @override
+  String get gitUiQuit => 'Välju operatsioonist';
+
+  @override
+  String get gitUiSoft => 'Pehme';
+
+  @override
+  String get gitUiMixed => 'Segatud';
+
+  @override
+  String get gitUiHard => 'Range';
+
+  @override
+  String get gitUiKeep => 'Säilita';
+
+  @override
+  String get gitUiCreate => 'Loo';
+
+  @override
+  String get gitUiApplyStash => 'Rakenda peidetud muudatused';
+
+  @override
+  String get gitUiPopStash => 'Rakenda ja edu korral eemalda';
+
+  @override
+  String get gitUiDropStashAction => 'Kustuta peidetud muudatused';
+
+  @override
+  String get gitUiEditedResult => 'Muudetud tulemus';
+
+  @override
+  String get gitUiLeftContent => 'Vasakpoolne sisu';
+
+  @override
+  String get gitUiRightContent => 'Õige sisu';
+
+  @override
+  String get gitUiDeletePath => 'Kustuta asukoht';
+
+  @override
+  String get gitUiSubmoduleCommit => 'Alammoodul seotakse';
+
+  @override
+  String get gitUiPresentContent => 'Saadaolev sisu';
+
+  @override
+  String get gitUiAbsentContent => 'Puudub';
+
+  @override
+  String get gitUiBinaryContent => 'Binaarsisaldus';
+
+  @override
+  String get gitUiTooLargeContent => 'Sisu ületab kuvamispiiri';
+
+  @override
+  String get gitUiUnavailableContent => 'Mittekättesaadav sisu';
+
+  @override
+  String get gitUiGitlinkContent => 'Alammooduli osuti';
+
+  @override
+  String get gitUiSymlinkContent => 'Sümbolviit';
+
+  @override
+  String get gitUiNoOperation => 'Operatsioon puudub';
+
+  @override
+  String get gitUiCherryPickOperation => 'Nopi sissekanne';
+
+  @override
+  String get gitUiRevertOperation => 'Pööra sissekanne tagasi';
+
+  @override
+  String get gitUiApplyMailboxOperation => 'Plaastri rakendamine';
+
+  @override
+  String get gitUiSquashOperation => 'Squash\'i ühendamine';
+
+  @override
+  String get gitUiUnmergedOperation => 'Ühendamata indeks';
+
+  @override
+  String get gitUiWaitingForPromptPhase => 'Ootab vastust';
+
+  @override
+  String get gitUiStoppedPhase => 'Peatatud läbivaatamiseks';
+
+  @override
+  String get gitUiCompletedPhase => 'Lõpetatud';
+
+  @override
+  String get gitUiFailedPhase => 'Ebaõnnestus';
+
+  @override
+  String get gitUiCancelledPhase => 'Tühistatud';
+
+  @override
+  String get gitUiUncertainPhase => 'Tulemus nõuab võrdlemist';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return 'Konfliktietapp $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Ühendamise eelvaatlus';
+
+  @override
+  String get gitUiNormalizedWorking => 'Tööpuu · Git normaliseeritud';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value protsent';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF-8 baidijärjekorra märgiga (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF-8 ilma baidimärgita (BOM)';
+
+  @override
+  String get gitUiAddsBom =>
+      'See muudatus lisab faili algusesse UTF-8 baidijärjekorra märgi (BOM).';
+
+  @override
+  String get gitUiRemovesBom =>
+      'Redigeerimine eemaldab faili algusest UTF- 8 baidijärjekorra märgi (BOM).';
+
+  @override
+  String get gitUiNoLineTerminators => 'Reaterminaatorid puuduvad';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return '$format realõpud';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return 'Segaliini lõpp ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format · ei ole lõplik LF';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return 'Realõpu vorming muutub $before- st $after- iks. Lõikepuhvri tekst võib kasutada originaalfailist erinevaid realõpmeid.';
+  }
+
+  @override
+  String get gitUiGitFailure =>
+      'Kihvt operatsioon nurjus. Vaata allpool esitatud diagnostikat.';
+
+  @override
+  String get gitUiAbortInline => 'Katkesta';
+
+  @override
+  String get gitUiSkipInline => 'Jäta vahele';
+
+  @override
+  String get gitUiQuitInline => 'quit';
+
+  @override
+  String get gitUiMergeInline => 'Ühenda';
+
+  @override
+  String get gitUiRebaseInline => 'Paiguta ümber';
+
+  @override
+  String get gitUiCherryPickInline => 'Nopi sissekanne';
+
+  @override
+  String get gitUiRevertInline => 'Pööra sissekanne tagasi';
+
+  @override
+  String get gitUiApplyMailboxInline => 'appliedMailbox';
+
+  @override
+  String get gitUiSquashInline => 'Liida kokku';
+
+  @override
+  String get gitUiUnmergedInline => 'ühendamata';
+
+  @override
+  String get gitHostFetch => 'Too';
+
+  @override
+  String get gitHostRefreshGitStatus => 'Värskenda žiti olekut';
+
+  @override
+  String get gitHostCommitStaged => 'Ennast sisse seatud';
+
+  @override
+  String get gitHostGitBranches => 'Git oksad';
+
+  @override
+  String get gitHostReviewPush => 'Ülevaatamispush';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git toimingud kehtivad kogu selle hoidla ja võib käivitada oma konksud, filtrid, voli- ja signeerimistööriistad.';
+
+  @override
+  String get gitHostContentUnavailable => 'Sisu ei ole kättesaadav';
+
+  @override
+  String get gitHostInitializeRepository => 'Loo Giti hoidla';
+
+  @override
+  String get gitHostCloneRepository => 'Klooni hoidla';
+
+  @override
+  String get gitHostInitializeHere => 'Siin initsialiseeritakse...';
+
+  @override
+  String get gitHostCloneRepository2 => 'Klooni hoidla…';
+
+  @override
+  String get gitHostGitLog => 'Git logi';
+
+  @override
+  String get gitUiAbsentPlaceholder => 'abv';
+
+  @override
+  String get gitUiUnborn => 'sündimata';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return 'Ümberpaigutatud ajalugu · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return 'Praegune ajalugu · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return 'Uuesti rakendatav sissekanne · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return 'Saabuv sisu · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => 'Sisukonflikt';
+
+  @override
+  String get gitUiSubmoduleConflict => 'Alammooduli konflikt';
+
+  @override
+  String get gitUiSymlinkConflict => 'Sümboli linkide konflikt';
+
+  @override
+  String get gitUiAddAddConflict => 'Lisatud mõlemale poolele';
+
+  @override
+  String get gitUiModifyDeleteConflict =>
+      'Muudetud/välja jäetud või ümber nimetatud/välja jäetud';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path · $kind';
+  }
 }

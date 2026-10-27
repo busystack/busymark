@@ -5952,4 +5952,2841 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       'Ce nom de fichier contient des octets non UTF-8. La révision et l’indexation Git restent disponibles ; l’éditeur de documents exige un nom de fichier UTF-8.';
+
+  @override
+  String get gitUiMergeInProgress => 'Fusion en cours';
+
+  @override
+  String get gitUiRebaseInProgress => 'Rebase en cours';
+
+  @override
+  String get gitUiCherryPickInProgress => 'Cerise-pick en cours';
+
+  @override
+  String get gitUiRevertInProgress => 'Réinitialiser en cours';
+
+  @override
+  String get gitUiPatchApplicationInProgress => 'Application par lots en cours';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Résultat de fusion Squash en attente de validation';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts => 'Conflits index non résolus';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · Conflits non résolus';
+
+  @override
+  String get gitUiReviewOperation => 'Examen des opérations';
+
+  @override
+  String get gitUiRefresh => 'Actualiser';
+
+  @override
+  String get gitUiCreateNamedStash => 'Créer une réserve nommée';
+
+  @override
+  String get gitUiCreateStash => 'Créer un remisage…';
+
+  @override
+  String get gitUiNoStashes => 'Pas d\'échafaudages';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Sélectionnez une cachette pour inspecter ses modifications';
+
+  @override
+  String get gitUiStashedUntrackedFiles => 'Fichiers détraqués';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Inspecter les fichiers non traqués...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Rétablir l\'état de la cachette par étape/index lors de l\'application';
+
+  @override
+  String get gitUiApplyAndRetain => 'Appliquer et conserver';
+
+  @override
+  String get gitUiPop => 'Papa...';
+
+  @override
+  String get gitUiCreateBranch => 'Créer une branche…';
+
+  @override
+  String get gitUiDropStash => 'Supprimer le remisage…';
+
+  @override
+  String get gitUiBranchFromStash => 'Créer une branche depuis le remisage';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Créer/switcher une branche à la base d\'origine de la cachette, puis l\'appliquer. La cache d\'origine est conservée pour une suppression ultérieure explicite.';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0 cette cachette ?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'La réserve originale est conservée en cas de conflit.';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Supprime cette entrée de cachette. Ses modifications ne sont pas appliquées.';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Résolvez les fichiers non fusionnés. Git ne propose ni continuation ni abandon pour un remisage ; le remisage d’origine est conservé.';
+
+  @override
+  String get gitUiStashNameMessage => 'Nom/message de l\'emplacement';
+
+  @override
+  String get gitUiStashContentAndResultingIndex =>
+      'Contenu de la réserve et index résultant';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Stash suivi du travail et des changements échelonnés';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Remiser les modifications en laissant l’index en place (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Remiser uniquement les modifications indexées (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => 'Inclure les fichiers non suivis';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Tous les chemins éligibles dans ce dépôt';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Aucun changement admissible pour ces options de réserve.';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath =>
+      'Sélectionnez au moins un chemin admissible.';
+
+  @override
+  String get gitUiCreateStash2 => 'Créer un remisage';
+
+  @override
+  String get gitUiCreateWorktree => 'Créer un worktree...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'Créez un commit avant de créer un arbre de travail sur HEAD.';
+
+  @override
+  String get gitUiDetachedHEAD => 'HEAD détachée';
+
+  @override
+  String get gitUiCurrent => 'Actuellement ·';
+
+  @override
+  String get gitUiLocked => 'Verrouillés';
+
+  @override
+  String get gitUiOpenInBusyStack => 'Ouvrir dans BusyStack ·';
+
+  @override
+  String get gitUiStatusNotInspected => 'Statut non inspecté';
+
+  @override
+  String get gitUiDirty => 'C\'est sale.';
+
+  @override
+  String get gitUiClean => 'Propre';
+
+  @override
+  String get gitUiOpenWorkingFolder => 'Ouvrir le dossier de travail';
+
+  @override
+  String get gitUiMoveWorktree => 'Déplacer l\'arbre de travail...';
+
+  @override
+  String get gitUiUnlock => 'Déverrouillage';
+
+  @override
+  String get gitUiLock => 'Verrouillage';
+
+  @override
+  String get gitUiRemoveCleanWorktree =>
+      'Enlever l\'arbre de travail propre...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Examiner l\'enlèvement, y compris les changements locaux...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => 'Nouveau nom de dossier Worktree';
+
+  @override
+  String get gitUiNewWorktreeBranch =>
+      'Nouvelle branche de l\'arbre de travail';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Créer $arg0/$arg1 avec une nouvelle branche locale à $arg2 ($arg3).';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => 'Nom du dossier de destination';
+
+  @override
+  String get gitUiRemoveWorktree => 'Enlever l\'arbre de travail ?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Éliminez explicitement tous les changements locaux suivis/non suivis dans cet arbre de travail. Les arbres de travail verrouillés/en usage restent protégés.';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git refuse la suppression s\'il y a des modifications locales, des fichiers non suivis ou un verrou.';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Jeter le contenu local de l\'arbre de travail et supprimer';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 =>
+      'Supprimer l\'arbre de travail propre';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Récurser explicitement dans les sous-modules imbriqués pour les mises à jour/synchronisation';
+
+  @override
+  String get gitUiNoRecordedSubmodules => 'Pas de sous-modules enregistrés';
+
+  @override
+  String get gitUiNotInitialized => 'non initialisée';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return 'Parent gitlink: $arg0 Checked out: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => 'Dépôt imbriqué sale';
+
+  @override
+  String get gitUiCleanNestedRepository => 'Nettoyer le dépôt imbriqué';
+
+  @override
+  String get gitUiNestedStatusUnavailable => 'Statut de nid non disponible';
+
+  @override
+  String get gitUiEnterNestedRepository => 'Entrez le dépôt imbriqué';
+
+  @override
+  String get gitUiInitializeConfiguration => 'Initialiser la configuration';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Mettre à jour le commit enregistré par parent...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Suivez la branche distante configurée...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs =>
+      'Synchroniser les URLs configurées...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Pointeur courant du sous-module dans le parent';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Parent et sous-module commit, pousse et état sale restent séparés. La navigation ne les initialise pas ou ne les met pas à jour.';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return 'Saisissez et vérifiez le commit de la branche distante configurée. Cela diffère du gitlink enregistré par parent. Recursive: $arg0.';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Initialiser au besoin et vérifier exactement $arg0. Recursive: $arg1.';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return 'Appliquer l\'opération de configuration des sous-modules examinés. Recursive: $arg0.';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation =>
+      'Appliquer l\'opération sous-module';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Inspecter une révision enregistrée ou créer une branche de récupération. Reflog ne récupère pas de contenu non enregistré ou non suivi arbitraire.';
+
+  @override
+  String get gitUiSelectAReflogEntry => 'Sélectionnez une entrée de reflog';
+
+  @override
+  String get gitUiPreviousPage => 'Page précédente';
+
+  @override
+  String get gitUiNextPage => 'Page suivante';
+
+  @override
+  String get gitUiRecoveryBranchName => 'Nom de la branche de récupération';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return 'Crée une branche à $arg0; les fichiers de travail et la branche actuelle sont inchangés.';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch =>
+      'Créer une branche de récupération...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot =>
+      'Snapshot de récupération en lecture seule';
+
+  @override
+  String get gitUiInspectSnapshot => 'Inspecter le instantané...';
+
+  @override
+  String get gitUiReviewReset => 'Réinitialisez l\'examen...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return 'Page $arg0';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Un historique de texte Git doit posséder son champ modifiable.';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Modifier HEAD | Index | Arbre de travail…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'L\'index révisé ou le contenu de travail ont changé. Rafraîchir cette comparaison avant la mise en scène.';
+
+  @override
+  String get gitUiRefreshComparison => 'Actualisation de la comparaison';
+
+  @override
+  String get gitUiPreviousChangedFile => 'Fichier précédent modifié';
+
+  @override
+  String get gitUiNextChangedFile => 'Prochain fichier modifié';
+
+  @override
+  String get gitUiPreviousDifference => 'Différence précédente';
+
+  @override
+  String get gitUiNextDifference => 'Différence suivante';
+
+  @override
+  String get gitUiComparisonMode => 'Mode de comparaison';
+
+  @override
+  String get gitUiSideBySide => 'Côte à côte';
+
+  @override
+  String get gitUiUnified => 'Unifié';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Options d\'affichage de la diff';
+
+  @override
+  String get gitUiWrap => 'Enveloppe';
+
+  @override
+  String get gitUiWords => 'Mots';
+
+  @override
+  String get gitUiCollapseContext => 'Contexte d \' effondrement';
+
+  @override
+  String get gitUiIgnoreWhitespace => 'Ignorer l\'espace blanc';
+
+  @override
+  String get gitUiSearchComparison => 'Comparaison de la recherche';
+
+  @override
+  String get gitUiSearch => 'Rechercher';
+
+  @override
+  String get gitUiCloseSearch => 'Fermer la recherche';
+
+  @override
+  String get gitUiStagingActions => 'Actions de stabilisation';
+
+  @override
+  String get gitUiStagingActions2 => 'Des actions de blocage...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines =>
+      'Désindexer les lignes modifiées sélectionnées';
+
+  @override
+  String get gitUiStageSelectedChangedLines =>
+      'Indexer les lignes modifiées sélectionnées';
+
+  @override
+  String get gitUiUnstageWholeFile => 'Désindexer tout le fichier';
+
+  @override
+  String get gitUiStageWholeFile => 'Indexer tout le fichier';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0 lignes changées uniquement dans l\'espace blanc cachées · Afficher les changements exacts';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '$arg0 a changé les lignes sélectionnées · Les paramètres d\'affichage ne modifient jamais les octets mis en scène.';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Comparaison en lecture seule · Copiez le texte ou ajustez l’affichage.';
+
+  @override
+  String get gitUiNoFinalNewline => ' · pas de nouvelle ligne finale';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 · $arg1 · $arg2 octets$arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'La comparaison de texte n\'est pas disponible pour ces contenus.';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Cette comparaison dépasse la limite limite de révision du texte. Le contenu n\'a pas été déclaré identique.';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Le contenu comparé est identique.';
+
+  @override
+  String get gitUiUnstage => 'Déballage';
+
+  @override
+  String get gitUiStage => 'Étape';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 a changé de ligne';
+  }
+
+  @override
+  String get gitUiContext => 'Contexte';
+
+  @override
+  String get gitUiExpandUnchangedContext => 'Élargir le contexte inchangé';
+
+  @override
+  String get gitUiUnstageThisHunk => 'Désindexer ce bloc';
+
+  @override
+  String get gitUiStageThisHunk => 'Indexer ce bloc';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return 'Modifier le contenu par étapes · $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult =>
+      'Rédiger le résultat de l\'index révisé';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => 'Index';
+
+  @override
+  String get gitUiWorkingTree => 'Arbre de travail';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => 'Index · édition UTF-8 blob';
+
+  @override
+  String get gitUiUndo => 'Annuler';
+
+  @override
+  String get gitUiRedo => 'Refaire';
+
+  @override
+  String get gitUiReloadIndexReview => 'Recharger l\'examen de l\'index?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Recharger les versions actuelles de HEAD, de l’index et de travail. Le brouillon non enregistré de l’éditeur d’index sera remplacé.';
+
+  @override
+  String get gitUiReplaceDraftAndReload =>
+      'Remplacer le projet et le recharger';
+
+  @override
+  String get gitUiReloadVersions => 'Recharger les versions...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Écrire le résultat édité à cette entrée d\'index';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Les fichiers de travail restent sur disque. Consultez l\'index édité avant de postuler.';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Révision des modifications de format de texte de l\'index';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Mettre à jour uniquement l\'entrée d\'index examinée pour $arg0. $arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult =>
+      'Rédiger le résultat de l\'index révisé';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Le résultat modifié a changé lors de l\'examen du format.';
+
+  @override
+  String get gitUiSynchronizeScrolling => 'Synchroniser le défilement';
+
+  @override
+  String get gitUiReadOnlyRevisionContent =>
+      'Contenu de révision en lecture seule';
+
+  @override
+  String get gitUiEditableIndexContent => 'Contenu de l\'index modifiable';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'La révision demandée est en dehors des filtres actuels. Réinitialiser les filtres pour la révéler.';
+
+  @override
+  String get gitUiFilterLog => 'Journal des filtres';
+
+  @override
+  String get gitUiFilters => 'Filtres...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return 'Filtres ($count)...';
+  }
+
+  @override
+  String get gitUiMessage => 'Message…';
+
+  @override
+  String get gitUiAuthor => 'Auteur…';
+
+  @override
+  String get gitUiPath => 'Chemin...';
+
+  @override
+  String get gitUiDate => 'Date...';
+
+  @override
+  String get gitUiMessageFilter => 'Filtre de message';
+
+  @override
+  String get gitUiAuthorFilter => 'Filtre d\'auteur';
+
+  @override
+  String get gitUiPathFilter => 'Filtre de trajectoire';
+
+  @override
+  String get gitUiMessage2 => 'Message';
+
+  @override
+  String get gitUiAuthor2 => 'Auteur';
+
+  @override
+  String get gitUiPath2 => 'Voie';
+
+  @override
+  String get gitUiDateFilter => 'Filtre de date...';
+
+  @override
+  String get gitUiResetFilters => 'Réinitialiser les filtres';
+
+  @override
+  String get gitUiRefreshLog => 'Rafraîchir le journal';
+
+  @override
+  String get gitUiGoToCommitReference => 'Aller à commit/référence...';
+
+  @override
+  String get gitUiBackToHEAD => 'Retour à HEAD';
+
+  @override
+  String get gitUiOrderedCherryPick => 'Pick cerise commandé';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return 'Revue de cerise-pick ($arg0)...';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions =>
+      'Comparer deux révisions sélectionnées...';
+
+  @override
+  String get gitUiToggleBranchesPane => 'Couper le panneau des branches';
+
+  @override
+  String get gitUiFilterBranchesAndTags => 'Filter les branches et les balises';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return 'Commit $arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => 'Communiquez les détails...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return 'Référence: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => 'Sélectionner ce commit';
+
+  @override
+  String get gitUiBranchOrTag => 'Branche ou étiquette';
+
+  @override
+  String get gitUiAllReferences => 'Toutes les références';
+
+  @override
+  String get gitUiLocal => 'Local';
+
+  @override
+  String get gitUiRemote => 'Distant';
+
+  @override
+  String get gitUiTags => 'Étiquettes';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Aucun commit ne correspond aux filtres actuels.';
+
+  @override
+  String get gitUiObjectID => 'ID de l\'objet';
+
+  @override
+  String get gitUiSubjectReferences => 'Objet / références';
+
+  @override
+  String get gitUiDate2 => 'Date';
+
+  @override
+  String get gitUiGitCommits => 'Git s\'engage';
+
+  @override
+  String get gitUiParents => 'Commits parents';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return 'Parents de $arg0';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => 'Charger plus de commits';
+
+  @override
+  String get gitUiLoadingChangedFiles => 'Chargement des fichiers modifiés';
+
+  @override
+  String get gitUiNoChangedFiles => 'Aucun fichier modifié';
+
+  @override
+  String get gitUiSelectACommit => 'Sélectionner un commit';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return 'Comparer parent $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => 'Fichiers modifiés';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Auteur: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Commutateur: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Limite faible/partielle : un objet parent n\'est pas disponible.';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Parent est à l\'extérieur de cette page ou une limite peu profonde.';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return 'Commit parent $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => 'Commettre des actions...';
+
+  @override
+  String get gitUiEmptyTree => 'arbre vide';
+
+  @override
+  String get gitUiCreateBranch2 => 'Créer une branche';
+
+  @override
+  String get gitUiCreateTag => 'Créer une étiquette';
+
+  @override
+  String get gitUiCompareRevisions => 'Comparer les révisions';
+
+  @override
+  String get gitUiOpenSnapshot => 'Ouvrir l\' instantané';
+
+  @override
+  String get gitUiRevertCommit => 'Réinitialiser le commit';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Rebase interactive après cette limite';
+
+  @override
+  String get gitUiResetCurrentBranch => 'Réinitialiser la branche actuelle';
+
+  @override
+  String get gitUiCopyFullObjectID => 'Copier l\'ID de l\'objet complet';
+
+  @override
+  String get gitUiGoToCommitReference2 => 'Aller à commit/référence';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Saisissez un identifiant de commit ou une référence pour révéler dans Log.';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'La révision demandée n\'est pas disponible.';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Les métadonnées du répertoire sont en lecture seule. L\'inspection et la comparaison de la Direction générale demeurent disponibles.';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Les fichiers de travail sont indisponibles ou en lecture seule. La commutation et la fusion de branches ne sont pas disponibles.';
+
+  @override
+  String get gitUiSearchBranchesAndTags => 'Rechercher branches et étiquettes';
+
+  @override
+  String get gitUiNewBranch => 'Nouvelle branche…';
+
+  @override
+  String get gitUiLocalBranches => 'Branches locales';
+
+  @override
+  String get gitUiRemoteBranches => 'Branches distantes';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return 'Voies $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return 'Vérifié à $arg0';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata =>
+      'Rafraîchir les métadonnées de la branche';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return 'Passez à $arg0';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => 'Ouvrir l\'arbre de travail occupé';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch =>
+      'Créer une branche de suivi locale...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => 'Comparer à HEAD actuel';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch =>
+      'Fusionner dans la branche actuelle...';
+
+  @override
+  String get gitUiRename => 'Renommer...';
+
+  @override
+  String get gitUiChangeUpstream => 'Changez en amont...';
+
+  @override
+  String get gitUiDelete => 'Supprimer...';
+
+  @override
+  String get gitUiDeleteFromRemote => 'Supprimer de la télécommande...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return 'Actions pour $arg0';
+  }
+
+  @override
+  String get gitUiLocalBranchName => 'Nom de la branche locale';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return 'Créer à $arg0. La nouvelle branche sera cochée.';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return 'La branche locale suivra $arg0 et sera vérifiée.';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion =>
+      'Choisissez distant pour la suppression';
+
+  @override
+  String get gitUiDeleteRemoteReference => 'Supprimer la référence distante';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return 'Fusionner $arg0 dans $arg1';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return 'Renommer $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return 'En amont pour $arg0';
+  }
+
+  @override
+  String get gitUiNoUpstream => 'Aucun amont';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return 'Supprimer $arg0?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 Target $arg1 Suppression locale seulement. Une branche non fusionnée est refusée.';
+  }
+
+  @override
+  String get gitUiDelete2 => 'Supprimer';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return 'Supprimer la branche non fusionnée $arg0?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 Git signale que cette branche n\'est pas complètement fusionnée. Supprimez explicitement la référence locale après avoir examiné ses commits; les copies distantes sont inchangées.';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Supprimer la branche locale non fusionnée';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return 'Destination: $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => 'Branche ou étiquette source';
+
+  @override
+  String get gitUiMergePolicy => 'Politique de fusion';
+
+  @override
+  String get gitUiFastForwardWhenPossible =>
+      'Avancer rapidement lorsque c\'est possible';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit =>
+      'Toujours créer un commit de fusion';
+
+  @override
+  String get gitUiFastForwardOnly => 'Avancer seulement';
+
+  @override
+  String get gitUiSquashIntoStagedChanges =>
+      'Squash dans les changements échelonnés';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Arrêter avant de créer le commit de fusion';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'L’avance rapide est désactivée afin que HEAD ne bouge pas avant la vérification.';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Quittant les modifications mises en scène pour un commit séparé; ce n\'est pas une fusion continue.';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Les conflits demeurent dans l\'espace de travail à résolution partagée.';
+
+  @override
+  String get gitUiAddRemote => 'Ajouter une télécommande...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return 'Récupération: $arg0 Poussée: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => 'Supprimer la télécommande...';
+
+  @override
+  String get gitUiChangeFetchURL => 'Modifier l\'URL de recherche...';
+
+  @override
+  String get gitUiAddPushDestination => 'Ajouter une destination push...';
+
+  @override
+  String get gitUiRemovePushDestination => 'Supprimer la destination push...';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return 'Gérer $arg0';
+  }
+
+  @override
+  String get gitUiRemoteName => 'Nom distant';
+
+  @override
+  String get gitUiNewRemoteName => 'Nouveau nom distant';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource => 'URL du dépôt ou source locale';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Entrez la destination exacte à supprimer.';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Les lettres de créances sont fournies par des aides configurées ou par un service privé.';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return 'Supprimer $arg0 à distance?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Supprime la configuration locale distante et les références de suivi. Il ne supprime pas le dépôt serveur.';
+
+  @override
+  String get gitUiRemoveRemote2 => 'Supprimer la télécommande';
+
+  @override
+  String get gitUiCommitScopeEntireRepository =>
+      'Portée de la commande : dépôt entier';
+
+  @override
+  String get gitUiCachedTracking => 'Suivi des caches';
+
+  @override
+  String get gitUiAmendLastCommit => 'Modifier le dernier commit';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Les crochets configurés et la signature sont respectés.';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Réécrit le commit HEAD sélectionné. Le suivi distant ne prouve pas qu’il n’a pas été publié.';
+
+  @override
+  String get gitUiRepository => 'Dépôt';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return '$arg0 détaché';
+  }
+
+  @override
+  String get gitUiLog => 'Historique';
+
+  @override
+  String get gitUiRepositoryActions => 'Actions du dépôt';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return 'Suivi en cache · $upstream · $ahead en avance · $behind en retard';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Bare dépôt · pas d\'arbre de travail. Ouvrez un journal pour inspecter son historique.';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Le dépôt en lecture seule · la mise en place et les commits ne sont pas disponibles.';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable => 'État du dépôt non disponible';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return 'Modifier $revision';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => 'Ajouter une mention de validation';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Utiliser la politique de signature configurée';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit =>
+      'Cryptographiquement signer ce commit';
+
+  @override
+  String get gitUiDoNotSignThisCommit => 'Ne signez pas ce commit';
+
+  @override
+  String get gitUiRecentCommitMessages => 'Messages de commit récents...';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Utiliser un modèle de commit configuré...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Identité de l\'auteur et crochets configurés...';
+
+  @override
+  String get gitUiDraftMessage => 'Ébauche du message...';
+
+  @override
+  String get gitUiCommitOptions => 'Options de commit';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return 'Projet conservé en mémoire ; sa sauvegarde a échoué. $arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => 'Message de commit';
+
+  @override
+  String get gitUiGitOperationInProgress => 'Opération Git en cours';
+
+  @override
+  String get gitUiCancel => 'Annuler';
+
+  @override
+  String get gitUiAmendStaged => 'Modifier par étape';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return 'S\'engager par étapes ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => 'Valider et pousser…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Aucun modèle de commit lisible n\'est configuré.';
+
+  @override
+  String get gitUiCommitIdentityAndHooks =>
+      'Commettre l\'identité et les crochets';
+
+  @override
+  String get gitUiRecentMessages => 'Messages récents';
+
+  @override
+  String get gitUiReplaceMessageDraft => 'Remplacer le texte du message ?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Remplacer le message de commit existant par le message sélectionné ?';
+
+  @override
+  String get gitUiReplaceDraft => 'Remplacer le projet';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return 'Local commit $arg0 existe.';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return 'Local commit $arg0 existe. Examiner le journal avant de tenter une autre commit. L\'ébauche du message a été conservée.';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => 'Commettre le nom de l\'auteur';
+
+  @override
+  String get gitUiCommitAuthorEmail => 'Commettre l\'email de l\'auteur';
+
+  @override
+  String get gitUiConfiguredDefault => 'configuré par défaut';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return 'Signature: $arg0 · $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return 'Crochets configurés : $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'La mention de validation est une déclaration dans le message, distincte d’une signature cryptographique. L’identité est enregistrée uniquement dans la configuration locale du dépôt ; le brouillon est conservé.';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => 'Enregistrer l\'identité du dépôt';
+
+  @override
+  String get gitUiStaged => 'Indexés';
+
+  @override
+  String get gitUiUntracked => 'Non suivis';
+
+  @override
+  String get gitUiUnstaged => 'Non indexés';
+
+  @override
+  String get gitUiConflicts => 'Conflits';
+
+  @override
+  String get gitUiNoChanges => 'Aucune modification';
+
+  @override
+  String get gitUiRepositoryChangeTree => 'Arbre de changement de dépôt';
+
+  @override
+  String get gitUiChanges => 'Modifications';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => 'Élargir';
+
+  @override
+  String get gitUiCollapse => 'Effondré';
+
+  @override
+  String get gitUiUnstageFile => 'Désindexer le fichier';
+
+  @override
+  String get gitUiStageFile => 'Indexer le fichier';
+
+  @override
+  String get gitUiExpandGroup => 'Élargir le groupe';
+
+  @override
+  String get gitUiCollapseGroup => 'Groupe d \' effondrement';
+
+  @override
+  String get gitUiReviewDifference => 'Différence de révision';
+
+  @override
+  String get gitUiUnstageSelectedFiles =>
+      'Désindexer les fichiers sélectionnés';
+
+  @override
+  String get gitUiStageSelectedFiles => 'Indexer les fichiers sélectionnés';
+
+  @override
+  String get gitUiFileHistoryAndBlame => 'Historique du dossier et blâme...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => 'Supprimer le fichier non suivi...';
+
+  @override
+  String get gitUiDiscardUnstagedChange =>
+      'Jeter le changement non mis en scène...';
+
+  @override
+  String get gitUiFileHistory => 'Historique du fichier';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return 'Jeter $arg0 non scénarisé?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 octets · $arg1 Remplace le contenu de travail par l\'index, ou supprime ce fichier non suivi. Le contenu échelonné est conservé. Les documents hôtes non enregistrés doivent d\'abord être examinés.';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => 'Supprimer le fichier non suivi';
+
+  @override
+  String get gitUiDiscardWorkingChange => 'Jeter le changement de travail';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return 'Supprimer la référence REMOTE $arg0';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Cela supprime la référence sur chaque destination push réelle listée ci-dessous. Les branches/étiquettes locales sont conservées. Les conseils attendus sont fixés par cet examen.';
+
+  @override
+  String get gitUiReferenceDoesNotExist => 'la référence n\'existe pas';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0 Conseil attendu: $arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => 'Suppression à distance terminée.';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return 'Supprimer $arg0 de la télécommande?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'Les conseils de destination exacts indiqués ci-dessus seront supprimés. Toute pointe à distance modifiée arrête l\'opération pour un autre examen.';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote =>
+      'Revoir et supprimer de la télécommande...';
+
+  @override
+  String get gitUiDestinationReference => 'Référence de destination';
+
+  @override
+  String get gitUiReviewDestinations => 'Revoir les destinations';
+
+  @override
+  String get gitUiNewRemoteBranch => 'nouvelle branche distante';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · attendu : $arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Une destination s\'est engagée à ne pas être disponible localement. Cherchez la destination examinée avant de passer en revue l\'historique sortant.';
+
+  @override
+  String get gitUiFetchReviewedDestination => 'Demande de destination examinée';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Choisissez une destination et revoyez les commits sortants.';
+
+  @override
+  String get gitUiNoOutgoingCommits => 'Pas de commits sortants';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => 'Sélectionnez un commit sortant';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits => 'Charger plus de commits sortants';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Définissez cette destination comme en amont';
+
+  @override
+  String get gitUiChooseExactTagsToPublish =>
+      'Choisissez les étiquettes exactes à publier';
+
+  @override
+  String get gitUiTagsNone => 'Étiquettes : aucune';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return 'Mots-clés : $arg0 sélectionné';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return 'Publier exactement : $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Push terminé. Le commit local reste disponible dans Log.';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Le forçage exige exactement les révisions de destination affichées dans cette revue.';
+
+  @override
+  String get gitUiForceWithReviewedLease => 'La force avec un bail révisé...';
+
+  @override
+  String get gitUiPush => 'Pousser';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases =>
+      'Pousser la force avec des baux révisés ?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return 'Réécrire $arg0 seulement si chaque destination distante a toujours l\'astuce exacte indiquée ci-dessus.\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'D’autres personnes utilisent peut-être déjà cet historique. Une récupération en arrière-plan ne renouvelle pas cette condition de sécurité.';
+
+  @override
+  String get gitUiForceWithLease => 'Force avec bail';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Le résultat à distance est incertain. Revoyez les destinations avant une autre poussée.';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return 'Parent $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => 'Remote à récupérer';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Prune a supprimé les branches de suivi à distance';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Recherchez les mises à jour de l\'information de suivi à distance sans remplacer les fichiers de travail.';
+
+  @override
+  String get gitUiFetch => 'Récupérer';
+
+  @override
+  String get gitUiSourceRemote => 'Source distante';
+
+  @override
+  String get gitUiSourceBranch => 'Branche source';
+
+  @override
+  String get gitUiReviewedStrategy => 'Stratégie révisée';
+
+  @override
+  String get gitUiMerge => 'Fusionner';
+
+  @override
+  String get gitUiRebase => 'Rebaser';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Arrêter si la destination ne peut pas accélérer; ne jamais fusionner ou rebaser.';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Fusionner avec un commit de fusion, y compris lorsque le transfert rapide est possible.';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Fusionner; permettre d\'avancer rapidement lorsque c\'est possible.';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Rebaser l\'historique local tout en préservant les commits de fusion locale.';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Rebase commits locaux comme une histoire linéaire.';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git est configuré pour une rebase interactive. Sélectionnez une stratégie de traction explicitement ici, ou récupérer et ouvrir Rebase... pour revoir un plan.';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Utilisation revue de la base ordinaire pour cette traction';
+
+  @override
+  String get gitUiOptions => 'Options';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Toujours créer un commit de fusion (pas d\'avancée rapide)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits =>
+      'Préserver les commits de fusion locale';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Les modifications locales peuvent empêcher le tirage. Examiner/commettre ou créer explicitement une cachette.';
+
+  @override
+  String get gitUiStashes => 'Remisages';
+
+  @override
+  String get gitUiCreateOrReviewStash => 'Créer ou revoir une cachette...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy =>
+      'Tirer avec la stratégie sélectionnée';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource =>
+      'URL du dépôt ou source Git locale';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH ou chemin local';
+
+  @override
+  String get gitUiFolderToInitialize => 'Dossier à initialiser';
+
+  @override
+  String get gitUiFinalCloneDestination => 'Destination finale du clone';
+
+  @override
+  String get gitUiChoose => 'Choisissez...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Création de métadonnées Git uniquement. Les fichiers existants ne sont ni mis en scène ni engagés.';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'La destination finale doit être absente ou vide. Les données existantes ne sont jamais écrasées.';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Branche initiale · blanc utilise une politique Git efficace';
+
+  @override
+  String get gitUiSelectedBranchOptional =>
+      'Branche sélectionnée · optionnelle';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Initialiser/mettre à jour explicitement les sous-modules de façon récursive';
+
+  @override
+  String get gitUiPreparingGitOperation => 'Préparation de l\'opération Git...';
+
+  @override
+  String get gitUiThisAttemptCreated => 'Cette tentative créée';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'La destination existait avant cette tentative:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'L\'annuaire reste à inspecter, et l\'examiner avant une autre tentative de clone.';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains =>
+      'Aucun répertoire de destination ne reste.';
+
+  @override
+  String get gitUiCancelProcess => 'Annuler le processus';
+
+  @override
+  String get gitUiInitialize => 'Initialiser';
+
+  @override
+  String get gitUiClone => 'Cloner';
+
+  @override
+  String get gitUiChooseNewBase => 'Choisir la nouvelle base';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => 'Choisir la limite amont';
+
+  @override
+  String get gitUiNewBase => 'Nouvelle base';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => 'Limite amont · exclue';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => 'Identique à la limite amont';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit =>
+      'Choisir une branche, une étiquette ou un commit…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase =>
+      'Utiliser en amont comme nouvelle base';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Choisissez une branche, une balise ou un commit valide dans Log.';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Le premier commit conservé d’un bloc de branche ne peut pas être regroupé par squash ou fixup : aucun commit cible ne le précède.';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return 'Bloc de branche $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Reword demandera un nouveau message]\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => 'Messages de validation prévus';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Prévisualisation du message original/combiné · Git demande le reword/squash final des messages';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return 'Résultat $arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return 'Branche actuelle: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => 'HEAD détachée';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Le rebase réécrit l’identité des commits. Le suivi distant ne prouve pas que l’historique n’a jamais été publié.';
+
+  @override
+  String get gitUiIncludeRootCommits => 'Inclure les commits racines';
+
+  @override
+  String get gitUiMergeCommits => 'Fusionner les commits';
+
+  @override
+  String get gitUiFlattenHistory => 'Linéariser l’historique';
+
+  @override
+  String get gitUiPreserveBranchStructure =>
+      'Conserver la structure des branches';
+
+  @override
+  String get gitUiAutosquash => 'Regroupement automatique';
+
+  @override
+  String get gitUiPrepareGitPlan => 'Préparer le plan Git';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return 'Commande de rejouer: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Comprend tous les commits root accessibles depuis cette branche.';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return 'Les commits après $boundary seront réappliqués sur $base ; le commit limite lui-même est exclu.';
+  }
+
+  @override
+  String get gitUiRoot => 'Racine';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Branche/étiquette/reset/structure de la fusion Git';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Choisissez une ancienne limite ou un mode racine explicite, puis préparez le plan.';
+
+  @override
+  String get gitUiMoveUp => 'Monter';
+
+  @override
+  String get gitUiMoveDown => 'Descendre';
+
+  @override
+  String get gitUiResetPlan => 'Réinitialiser le plan';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · bloc de branche $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Sélectionnez un commit pour les détails et les fichiers modifiés';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Prévisualiser les messages de commit combinés...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+↑/↓ déplace le commit sélectionné. Les références de branche non liées ne seront pas mises à jour automatiquement.';
+
+  @override
+  String get gitUiCancelPlan => 'Annuler le plan';
+
+  @override
+  String get gitUiStartReviewedRebase =>
+      'Début de la révision de la base de données?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Réécrire les commits prévus $arg0 sur $arg1. Les commits supprimés restent visiblement marqués dans ce plan jusqu\'à ce que vous commenciez.';
+  }
+
+  @override
+  String get gitUiStartRebase => 'Démarrer le rebase';
+
+  @override
+  String get gitUiNoContinuingGitOperation => 'Pas d\'opération continue Git';
+
+  @override
+  String get gitUiStoppedForEditingAmend =>
+      ' · Arrêt de l\'édition/modification';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Ce sont des entrées d\'index non fusionnées, peut-être à partir d\'une application de cachette. Git n\'a pas de commande de cachette continue ou d\'avorter.';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Modifiez les fichiers de travail, étapez et modifiez le commit courant, puis continuez cette rebase.';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · étapes d’index non fusionnées $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'L\'indice n\'a pas d\'entrées non résolues.';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Conserver le commit courant comme un commit vide';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'L\'index réel n\'a pas de changement par étape. Créez un commit explicite vide, puis continuez le séquenceur s\'il reste actif.';
+
+  @override
+  String get gitUiKeepEmptyCommit => 'Garder le commit vide...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git tentera de revenir au point de départ de l’opération. La récupération des contenus préexistants non indexés, non suivis ou non enregistrés n’est pas garantie.';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Sautez le commit actuel et continuez avec le prochain commit prévu.';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Oubliez cette opération de tenue de livres tout en conservant les fichiers et index actuels.';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return 'Continuer $arg0';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions =>
+      'Recharger les versions de conflits ?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Remplacer le brouillon de résultat non enregistré par le fichier de travail actuel. Le contenu de travail sauvegardé est conservé.';
+
+  @override
+  String get gitUiLoadingConflictVersions =>
+      'Chargement des versions de conflit...';
+
+  @override
+  String get gitUiLoadingConflict => 'Chargement du conflit';
+
+  @override
+  String get gitUiBaseLeft => 'Base → gauche';
+
+  @override
+  String get gitUiBaseRight => 'Base → droite';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict =>
+      'Pas d\'entrée de base pour ce conflit';
+
+  @override
+  String get gitUiAcceptEntireLeftFile =>
+      'Accepter le fichier de gauche entier...';
+
+  @override
+  String get gitUiAcceptEntireRightFile => 'Accepter tout le fichier droit...';
+
+  @override
+  String get gitUiPreviousConflictRegion => 'Ancienne région de conflit';
+
+  @override
+  String get gitUiNextConflictRegion => 'Prochaine région de conflit';
+
+  @override
+  String get gitUiManualResolution => 'Résolution manuelle';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return 'Région $arg0/$arg1 · $arg2 examiné';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'L\'alignement de la source a dépassé la limite de comparaison du texte; les panneaux de source restent disponibles pour examen manuel.';
+
+  @override
+  String get gitUiAcceptLeftRegion => 'Accepter la région de gauche';
+
+  @override
+  String get gitUiAcceptRightRegion => 'Accepter la bonne région';
+
+  @override
+  String get gitUiKeepManualResultForRegion =>
+      'Garder le résultat manuel pour la région';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Appliquez les changements non conflictuels de Git?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Remplacer le brouillon de résultat actuel par l\'aperçu de fusion de Git. Ceci rejette les modifications de résultat manuel non enregistrées; le fichier de travail est inchangé jusqu\'à Enregistrer.';
+
+  @override
+  String get gitUiUseMergePreview => 'Utiliser l\'aperçu de fusion';
+
+  @override
+  String get gitUiApplyNonConflictingChanges =>
+      'Appliquer des changements non conflictuels...';
+
+  @override
+  String get gitUiLeftSource => 'Source gauche';
+
+  @override
+  String get gitUiResult => 'Résultat';
+
+  @override
+  String get gitUiRightSource => 'Source droite';
+
+  @override
+  String get gitUiStage2 => 'Étape 2';
+
+  @override
+  String get gitUiStage3 => 'Étape 3';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Les versions de conflit ne sont pas disponibles. Rafraîchir pour revoir leur état actuel.';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Résultat enregistré sur disque. L\'index détermine toujours si ce fichier est résolu.';
+
+  @override
+  String get gitUiSaveResultDraft => 'Enregistrer le brouillon du résultat';
+
+  @override
+  String get gitUiApplyResultAndStageResolution =>
+      'Appliquer le résultat et indexer la résolution';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Résultat · contenu de travail modifiable UTF-8';
+
+  @override
+  String get gitUiEditableConflictResult => 'Résultat du conflit modifiable';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Gauche : $arg0 · $arg1\nDroite : $arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'Choisissez le contenu, la suppression ou un commit sous-module explicitement. Aucune donnée binaire n\'est décodée comme texte modifiable.';
+
+  @override
+  String get gitUiUseEntireLeftContent => 'Utiliser tout le contenu gauche...';
+
+  @override
+  String get gitUiUseEntireRightContent => 'Utiliser tout le contenu...';
+
+  @override
+  String get gitUiDeleteThisPath => 'Supprimer ce chemin...';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit =>
+      'Confirmation du sous-module résolu';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Étapez ce lien git exact dans le parent. Ceci ne vérifie pas ou ne commit pas le sous-module.';
+
+  @override
+  String get gitUiSetResolvedGitlink => 'Régler gitlink résolu...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return 'Base → stade $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Le résultat a été modifié. Gardez le résultat manuel ou sélectionnez une autre région inchangée.';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return 'Appliquer la résolution « $arg0 » ?';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Mettre en scène le commit gitlink choisi dans le parent. La commande sous-module et ses fichiers ne sont pas remplacés.';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return 'Remplace l\'ensemble du chemin de travail $arg0 et met en place la décision. Le contenu de travail actuel et tout projet de résultat non enregistré seront supprimés.';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision =>
+      'Appliquer la décision du dossier entier';
+
+  @override
+  String get gitUiStageThisConflictResolution =>
+      'Mettre en place cette résolution de conflit ?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Utilisez l\'intégralité du résultat édité sous la forme de $arg0. Git enregistre le chemin résolu lorsqu\'il est mis en scène. Examinez tout le contenu prévu d\'abord.$arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => 'Appliquer et indexer';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges =>
+      'Examiner les changements de format de texte des résultats';
+
+  @override
+  String get gitUiSaveReviewedResult => 'Enregistrer le résultat examiné';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'L\'accessibilité à la table Git native n\'est pas disponible. Réessayez après avoir reconnecté l\'application.';
+
+  @override
+  String get gitUiSans => 'Sans';
+
+  @override
+  String get gitUiSelect => 'Sélectionner';
+
+  @override
+  String get gitUiContextMenu => 'Menu contextuel';
+
+  @override
+  String get gitUiCopyText => 'Copier le texte';
+
+  @override
+  String get gitUiLoadingRow => 'Chargement de la ligne';
+
+  @override
+  String get gitUiRetry => 'Réessayer';
+
+  @override
+  String get gitUiGitMessage => 'Message Git';
+
+  @override
+  String get gitUiCancelPrompt => 'Annuler l\'invite';
+
+  @override
+  String get gitUiUseMessageAndContinue => 'Utiliser le message et continuer';
+
+  @override
+  String get gitUiRespondPrivately => 'Répondre en privé';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return 'Les préférences de la vue ne peuvent pas être sauvegardées : $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return 'Consigner le stockage provisoire: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return 'Les préférences de vue ne peuvent pas être lues: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return 'Le brouillon de commit a été conservé en mémoire mais n\'a pas pu être enregistré : $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Le dépôt examiné est en lecture seule pour cette opération. L\'historique et l\'inspection du contenu restent disponibles.';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git a renvoyé $arg0. L\'application n\'a pas pu rafraîchir ses documents : $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => 'Choisir un commit dans l’historique…';
+
+  @override
+  String get gitUiCurrentBranch => 'Branche actuelle';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Pas de branches ou de balises correspondantes. Sélectionnez un commit dans Log.';
+
+  @override
+  String get gitUiBranches => 'Branches';
+
+  @override
+  String get gitUiPushCommits => 'Pousser les commits';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return 'Tirer dans $arg0';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return 'Résoudre $arg0';
+  }
+
+  @override
+  String get gitUiCurrentOperation => 'Opération actuelle';
+
+  @override
+  String get gitUiRebaseCommits => 'Rebaser les commits';
+
+  @override
+  String get gitUiFetch2 => 'Récupérer…';
+
+  @override
+  String get gitUiPull => 'Tirer…';
+
+  @override
+  String get gitUiPush2 => 'Pousser…';
+
+  @override
+  String get gitUiBranches2 => 'Branches…';
+
+  @override
+  String get gitUiManageRemotes => 'Gérer les dépôts distants…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return 'Fusionner dans $arg0...';
+  }
+
+  @override
+  String get gitUiRebase2 => 'Rebaser…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation =>
+      'Conflits et fonctionnement actuel...';
+
+  @override
+  String get gitUiStashes2 => 'Remisages…';
+
+  @override
+  String get gitUiWorktrees => 'Arbres de travail…';
+
+  @override
+  String get gitUiSubmodules => 'Sous-modules…';
+
+  @override
+  String get gitUiReflogAndRecovery => 'Reflog et récupération…';
+
+  @override
+  String get gitUiCloneRepository => 'Cloner un dépôt…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => 'Renverser la confiance du dépôt';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus =>
+      'En attente de l\'état du dépôt';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'État du dépôt non disponible; mise à jour';
+
+  @override
+  String get gitUiManageRemotes2 => 'Gérer les dépôts distants';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return 'Fusionner dans $arg0';
+  }
+
+  @override
+  String get gitUiWorktrees2 => 'Arbres de travail';
+
+  @override
+  String get gitUiSubmodules2 => 'Sous-modules';
+
+  @override
+  String get gitUiReflogAndRecovery2 => 'Reflog et récupération';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return 'Dépôt de clone · $arg0';
+  }
+
+  @override
+  String get gitUiApply => 'Appliquer';
+
+  @override
+  String get gitUiResizeGitPanes => 'Redimensionner les vitres Git';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0 pour cent';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return 'État de sortie : $status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Le dépôt a changé. Rafraîchir et revoir avant d\'essayer à nouveau.';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'Une autre opération tient le dépôt ou le verrou d\'index. Attendez, puis rafraîchissez.';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Une fiducie de dépôt est requise pour cette opération.';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Le service Git déconnecté. Reconnectez et réconciliez le dépôt.';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'L\'exécutable Git installé ne peut pas supporter cette opération. Examinez ses exigences d\'exécution ci-dessous.';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Ce dépôt est en lecture seule pour l\'opération demandée. L\'examen et l\'historique restent disponibles.';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'L\'opération a besoin de rapprochement. Examiner le dépôt ou l\'état distant résultant avant de le répéter.';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'L\'authentification Git a échoué. Passez en revue l\'aide de la signature ou déverrouillez le keyring configuré.';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'La vérification de l\'hôte SSH a échoué. Passez en revue l\'identité de l\'hôte à travers vos outils SSH configurés.';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'La signature de l\'engagement a échoué ou a été annulée. Passez en revue la clé de signature, l\'agent et l\'outil de signature configuré.';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Définissez un nom d\'auteur du dépôt et un courriel, puis retournez à l\'ébauche du message conservé.';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git a rejeté la mise à jour révisée. Rafraîchir et examiner la destination réelle avant d\'essayer à nouveau.';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Les modifications en cours ou en cours d\'exécution empêchent cette opération.';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Un objet Git requis n\'est pas disponible. Examiner les limites peu profondes ou partielles des dépôts et récupérer explicitement si nécessaire.';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'L\'opération Git a échoué : $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => 'Diagnostics';
+
+  @override
+  String get gitUiAuthorizeGitInspection => 'Autoriser l\'inspection Git...';
+
+  @override
+  String get gitUiCopyDiagnostics => 'Copier les diagnostics';
+
+  @override
+  String get gitUiActions => 'Actions';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return 'Branche à $arg0';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Crée une branche locale sans la vérifier.';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return 'Étiquette $arg0';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return 'Snapshot en lecture seule · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => 'Erreurs de cliquet de cerise';
+
+  @override
+  String get gitUiRevertCommits => 'Réinitialiser les commits';
+
+  @override
+  String get gitUiCompareToFullRevisionID =>
+      'Comparer à l\'ID de révision complète';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return 'Direction de comparaison des arbres : $arg0 → la révision est entrée ici.';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID =>
+      'Saisissez un identifiant d\'objet valide complet.';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 → $arg1 · comparaison d\'arbres';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return 'Réinitialiser $arg0 à $arg1';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'Déplace HEAD/la branche actuelle. Le reflog ne restaure pas n’importe quel contenu non suivi ou non enregistré.';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'Déplacer HEAD ; conserver l’index et les fichiers de travail.';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'Déplacer HEAD et remplacer l’index ; conserver les fichiers de travail.';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'Remplacer HEAD, l’index et les fichiers suivis ; les fichiers non suivis qui gênent peuvent être écrasés.';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'Remplacer HEAD, l’index et les fichiers admissibles ; refuser si des modifications locales risquent d’être perdues.';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return 'Réinitialiser avec $arg0 ?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 → $arg1 Examinez les effets du mode sélectionné avant de les appliquer.';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return 'Réinitialiser $arg0';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return 'Objectif $arg0';
+  }
+
+  @override
+  String get gitUiTagName => 'Nom de l’étiquette';
+
+  @override
+  String get gitUiAnnotatedTag => 'Étiquette annotée';
+
+  @override
+  String get gitUiCryptographicSigning => 'Signature cryptographique';
+
+  @override
+  String get gitUiConfiguredPolicy => 'Politique configurée';
+
+  @override
+  String get gitUiSignThisTag => 'Signez cette balise';
+
+  @override
+  String get gitUiDoNotSign => 'Ne signez pas';
+
+  @override
+  String get gitUiTagMessage => 'Étiquette du message';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Crée localement la balise. Publie explicitement les balises sélectionnées dans la revue Push.';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return 'Arbres complets: $arg0 → $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => 'Page suivante du fichier modifié';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Aperçu du dépôt en lecture seule. L\'ouverture d\'un fichier ne vérifie jamais cette révision.';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => 'Ouvrir la version en lecture seule';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Restaurer ce chemin... · En attente du statut du dépôt';
+
+  @override
+  String get gitUiRestoreThisPath => 'Restaurer ce chemin...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return 'Historique · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return 'Restaurer $arg0?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return 'Remplacer ce chemin de travail par la révision $arg0. Le contenu par étapes existant est conservé.';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => 'Restaurer le fichier de travail';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return 'L\'historique des fichiers suit les renoms · $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => 'Annotations · contenu validé';
+
+  @override
+  String get gitUiBlame => 'Annotations…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0 → Arbre de travail';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile =>
+      'Ouvrir le fichier historique en lecture seule';
+
+  @override
+  String get gitUiCompareToCurrentFile => 'Comparer au fichier actuel';
+
+  @override
+  String get gitUiCompareToParent => 'Comparer avec les parents...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return '$arg0 · contenu de l\'éditeur non enregistré ne fait pas partie de ces annotations';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return 'Historique de $arg0';
+  }
+
+  @override
+  String get gitUiBoundary => ' · limite';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\nLigne d’origine $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => 'Lignes précédentes';
+
+  @override
+  String get gitUiNextLines => 'Lignes suivantes';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return 'Commande d\'application explicite · destination $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID =>
+      'Ajouter l\'ID de l\'objet de commit complet';
+
+  @override
+  String get gitUiAddReviewedCommit => 'Ajouter le commit révisé...';
+
+  @override
+  String get gitUiMoveEarlier => 'Déplacez-vous plus tôt';
+
+  @override
+  String get gitUiMoveLater => 'Déplacer plus tard';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence => 'Supprimer de l\'ordre examiné';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Appliquer les modifications sans créer de commits';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Utilisez ce parent de ligne principale explicite pour les commits de fusion';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Les commits vides ou déjà appliqués peuvent arrêter Git pour une décision explicite de saut ou de continuation.';
+
+  @override
+  String get gitUiRevertInReviewedOrder => 'Rétrospecter dans l\'ordre examiné';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder =>
+      'Cherry-pick dans l\'ordre examiné';
+
+  @override
+  String get gitUiReturnToFiles => 'Retourner aux fichiers';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => 'Valider';
+
+  @override
+  String get gitUiBackToCommit => 'Retour à Commit';
+
+  @override
+  String get gitUiSelectAChangeToReview =>
+      'Sélectionnez un changement à réviser';
+
+  @override
+  String get gitUiLoadingBranch => 'Chargement de la branche...';
+
+  @override
+  String get gitUiBranchUnavailable => 'Branche non disponible';
+
+  @override
+  String get gitUiUnbornHEAD => 'HEAD sans commit';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return 'HEAD détachée · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => 'Continuer';
+
+  @override
+  String get gitUiPick => 'Garder';
+
+  @override
+  String get gitUiReword => 'Reformuler';
+
+  @override
+  String get gitUiEdit => 'Modifier';
+
+  @override
+  String get gitUiSquash => 'Regrouper';
+
+  @override
+  String get gitUiFixup => 'Fusionner sans message';
+
+  @override
+  String get gitUiDrop => 'Exclure';
+
+  @override
+  String get gitUiAbort => 'Abandonner';
+
+  @override
+  String get gitUiSkip => 'Passer';
+
+  @override
+  String get gitUiQuit => 'Quitter l\'opération';
+
+  @override
+  String get gitUiSoft => 'Souple';
+
+  @override
+  String get gitUiMixed => 'Mixte';
+
+  @override
+  String get gitUiHard => 'Dur';
+
+  @override
+  String get gitUiKeep => 'Préserver';
+
+  @override
+  String get gitUiCreate => 'Créer';
+
+  @override
+  String get gitUiApplyStash => 'Appliquer le remisage';
+
+  @override
+  String get gitUiPopStash => 'Appliquer puis retirer le remisage si réussi';
+
+  @override
+  String get gitUiDropStashAction => 'Supprimer le remisage';
+
+  @override
+  String get gitUiEditedResult => 'Résultat modifié';
+
+  @override
+  String get gitUiLeftContent => 'Contenu gauche';
+
+  @override
+  String get gitUiRightContent => 'Contenu approprié';
+
+  @override
+  String get gitUiDeletePath => 'Supprimer le chemin';
+
+  @override
+  String get gitUiSubmoduleCommit => 'Engagement de sous-module';
+
+  @override
+  String get gitUiPresentContent => 'Contenu disponible';
+
+  @override
+  String get gitUiAbsentContent => 'Sans objet';
+
+  @override
+  String get gitUiBinaryContent => 'Contenu binaire';
+
+  @override
+  String get gitUiTooLargeContent =>
+      'Le contenu dépasse la limite d\'affichage';
+
+  @override
+  String get gitUiUnavailableContent => 'Contenu non disponible';
+
+  @override
+  String get gitUiGitlinkContent => 'Pointeur des sous-modules';
+
+  @override
+  String get gitUiSymlinkContent => 'Lien symbolique';
+
+  @override
+  String get gitUiNoOperation => 'Pas d\'opération';
+
+  @override
+  String get gitUiCherryPickOperation => 'Picorer';
+
+  @override
+  String get gitUiRevertOperation => 'Annuler par commit';
+
+  @override
+  String get gitUiApplyMailboxOperation => 'Appliquer les correctifs';
+
+  @override
+  String get gitUiSquashOperation => 'Fusion des courges';
+
+  @override
+  String get gitUiUnmergedOperation => 'Indice non fusionné';
+
+  @override
+  String get gitUiWaitingForPromptPhase => 'En attente de votre réponse';
+
+  @override
+  String get gitUiStoppedPhase => 'Arrêt de l \' examen';
+
+  @override
+  String get gitUiCompletedPhase => 'Terminé';
+
+  @override
+  String get gitUiFailedPhase => 'Échec';
+
+  @override
+  String get gitUiCancelledPhase => 'Annulé';
+
+  @override
+  String get gitUiUncertainPhase => 'Le résultat exige un rapprochement';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return 'Étape de conflit $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Aperçu de la fusion Git';
+
+  @override
+  String get gitUiNormalizedWorking => 'Arbre de travail · Git normalisé';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value pour cent';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF-8 avec marque d\'octet (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF-8 sans marque d\'octet (BOM)';
+
+  @override
+  String get gitUiAddsBom =>
+      'Cette modification ajoute une marque d\'octet UTF-8 (BOM) au début du fichier.';
+
+  @override
+  String get gitUiRemovesBom =>
+      'Cette modification supprime la marque d\'octet UTF-8 (BOM) depuis le début du fichier.';
+
+  @override
+  String get gitUiNoLineTerminators => 'Pas de terminateurs de ligne';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return 'Fins de ligne $format';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return 'Terminaisons de lignes mixtes ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format · pas de LF final';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return 'Le format de fin de ligne passe de $before à $after. Le texte du presse-papiers peut utiliser différentes terminaisons de ligne à partir du fichier original.';
+  }
+
+  @override
+  String get gitUiGitFailure => 'L\'opération Git a échoué.';
+
+  @override
+  String get gitUiAbortInline => 'Abandonner';
+
+  @override
+  String get gitUiSkipInline => 'Passer';
+
+  @override
+  String get gitUiQuitInline => 'arrêter';
+
+  @override
+  String get gitUiMergeInline => 'Fusionner';
+
+  @override
+  String get gitUiRebaseInline => 'Rebaser';
+
+  @override
+  String get gitUiCherryPickInline => 'Picorer';
+
+  @override
+  String get gitUiRevertInline => 'Annuler par commit';
+
+  @override
+  String get gitUiApplyMailboxInline => 'appliquerMailbox';
+
+  @override
+  String get gitUiSquashInline => 'Regrouper';
+
+  @override
+  String get gitUiUnmergedInline => 'non mergée';
+
+  @override
+  String get gitHostFetch => 'Récupérer';
+
+  @override
+  String get gitHostRefreshGitStatus => 'Rafraîchir l\'état Git';
+
+  @override
+  String get gitHostCommitStaged => 'S\'engager par étapes';
+
+  @override
+  String get gitHostGitBranches => 'Branches Git';
+
+  @override
+  String get gitHostReviewPush => 'Revoir la poussée';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Les opérations Git s\'appliquent à l\'ensemble de ce dépôt et peuvent exécuter ses crochets, filtres, justificatifs et outils de signature configurés.';
+
+  @override
+  String get gitHostContentUnavailable => 'Contenu non disponible';
+
+  @override
+  String get gitHostInitializeRepository => 'Initialiser le dépôt';
+
+  @override
+  String get gitHostCloneRepository => 'Cloner un dépôt';
+
+  @override
+  String get gitHostInitializeHere => 'Initialiser ici...';
+
+  @override
+  String get gitHostCloneRepository2 => 'Cloner un dépôt…';
+
+  @override
+  String get gitHostGitLog => 'Journal Git';
+
+  @override
+  String get gitUiAbsentPlaceholder => '(absent)';
+
+  @override
+  String get gitUiUnborn => 'à naître';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return 'Historique rebasé · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return 'Historique actuel · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return 'Commit réappliqué · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return 'Contenu entrant · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => 'Conflit de contenu';
+
+  @override
+  String get gitUiSubmoduleConflict => 'Conflit de sous-modules';
+
+  @override
+  String get gitUiSymlinkConflict => 'Conflit entre liens symboliques';
+
+  @override
+  String get gitUiAddAddConflict => 'Ajouté des deux côtés';
+
+  @override
+  String get gitUiModifyDeleteConflict =>
+      'Modifié/supprimé ou rebaptisé/supprimé';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path · $kind';
+  }
 }

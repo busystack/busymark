@@ -5611,6 +5611,2730 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
+
+  @override
+  String get gitUiMergeInProgress => '合并进行中';
+
+  @override
+  String get gitUiRebaseInProgress => '正在重定基准';
+
+  @override
+  String get gitUiCherryPickInProgress => '樱桃选集在进行中';
+
+  @override
+  String get gitUiRevertInProgress => '还原中';
+
+  @override
+  String get gitUiPatchApplicationInProgress => '补丁应用程序正在进行中';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit => 'Squash 合并结果等待执行';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts => '未解决的索引冲突';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · 未解决的冲突';
+
+  @override
+  String get gitUiReviewOperation => '审查业务';
+
+  @override
+  String get gitUiRefresh => '刷新';
+
+  @override
+  String get gitUiCreateNamedStash => '创建命名的收藏';
+
+  @override
+  String get gitUiCreateStash => '创建贮藏…';
+
+  @override
+  String get gitUiNoStashes => '没有藏东西';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges => '选择要检查更改的隐藏';
+
+  @override
+  String get gitUiStashedUntrackedFiles => '未跟踪的文件';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles => '检查隐藏的未跟踪文件...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      '在应用时恢复藏品的阶段状态/索引状态';
+
+  @override
+  String get gitUiApplyAndRetain => '应用和保留';
+
+  @override
+  String get gitUiPop => '爷爷...';
+
+  @override
+  String get gitUiCreateBranch => '创建分支…';
+
+  @override
+  String get gitUiDropStash => '删除贮藏…';
+
+  @override
+  String get gitUiBranchFromStash => '从贮藏创建分支';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      '创建/ 切换到藏匿处的分支, 然后应用它 。 原始隐藏部分留待日后明确删除 。';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0这个藏品?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      '如果适用冲突,则保留原始藏品。';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      '删除此隐藏条目。 其更改不应用 。';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      '请解决未合并文件的冲突。Git 没有 stash 的继续或中止命令；原始贮藏会被保留。';
+
+  @override
+  String get gitUiStashNameMessage => '堆放名称/信息';
+
+  @override
+  String get gitUiStashContentAndResultingIndex => '堆放内容和由此产生的索引';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges => '被跟踪的工作和分阶段的变更';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      '贮藏更改并保留已暂存的更改 (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged => '仅贮藏已暂存的更改 (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => '包含未跟踪的文件';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository => '此仓库中的所有合格路径';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions => '没有符合条件的这些隐藏选项的更改 。';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath => '选择至少一个合格路径 。';
+
+  @override
+  String get gitUiCreateStash2 => '创建贮藏';
+
+  @override
+  String get gitUiCreateWorktree => '创建工作树...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      '在 HEAD 处创建工作树之前，请先创建提交。';
+
+  @override
+  String get gitUiDetachedHEAD => '分离的 HEAD';
+
+  @override
+  String get gitUiCurrent => '当前 ·';
+
+  @override
+  String get gitUiLocked => '锁定 ·';
+
+  @override
+  String get gitUiOpenInBusyStack => '在繁忙的堆叠中打开 ?';
+
+  @override
+  String get gitUiStatusNotInspected => '未检查的状况';
+
+  @override
+  String get gitUiDirty => '脏';
+
+  @override
+  String get gitUiClean => '干净';
+
+  @override
+  String get gitUiOpenWorkingFolder => '打开工作文件夹';
+
+  @override
+  String get gitUiMoveWorktree => '移动工作树...';
+
+  @override
+  String get gitUiUnlock => '解锁';
+
+  @override
+  String get gitUiLock => '锁定';
+
+  @override
+  String get gitUiRemoveCleanWorktree => '删除干净的工作树...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges => '审查删除,包括本地更改...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => '新建工作树文件夹名称';
+
+  @override
+  String get gitUiNewWorktreeBranch => '新建工作树分支';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '在 $arg2（$arg3）创建本地分支，并创建 $arg0/$arg1。';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => '目标文件夹名称';
+
+  @override
+  String get gitUiRemoveWorktree => '移除工作树?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      '明确丢弃此工作树中所有本地跟踪/未跟踪的更改。 锁定/ 使用的工作树仍受到保护 。';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git拒绝删除本地更改、未跟踪的文件或锁定 。';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove => '丢弃本地工作树内容并删除';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => '删除清洁工作树';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      '明确循环到嵌入的子模块中进行更新/同步';
+
+  @override
+  String get gitUiNoRecordedSubmodules => '没有记录子模块';
+
+  @override
+  String get gitUiNotInitialized => '未初始化';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return '父母 gitlink: $arg0 检查完毕: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => '肮脏的嵌套仓库';
+
+  @override
+  String get gitUiCleanNestedRepository => '清洁嵌套仓库';
+
+  @override
+  String get gitUiNestedStatusUnavailable => '无嵌套状态';
+
+  @override
+  String get gitUiEnterNestedRepository => '输入嵌套仓库';
+
+  @override
+  String get gitUiInitializeConfiguration => '初始化配置';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit => '更新父权承诺...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch => '跟随已配置的远程分支...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs => '同步配置的 URL...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent => '父体中当前子模块指针的阶段';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      '父母和子模块承诺、 推动和肮脏状态保持分离 。 浏览不初始化或更新它们 。';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return '获取并检查已配置的远程分支的承诺。 这与父行所记录的 gitlink 不同 。 递归: $arg0 。';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return '根据需要初始化并检查准确的$arg0。递归:$arg1。';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return '应用已审查的子模块配置操作。 递归: $arg0 。';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => '应用子模块操作';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      '检查已记录的修订版或创建回收分支。 Reflog 并不恢复任意的未保存或未跟踪的内容 。';
+
+  @override
+  String get gitUiSelectAReflogEntry => '选择重写条目';
+
+  @override
+  String get gitUiPreviousPage => '上一页';
+
+  @override
+  String get gitUiNextPage => '下一页';
+
+  @override
+  String get gitUiRecoveryBranchName => '回收分支名称';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return '创建分支于$arg0;工作文件和当前分支保持不变。';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => '创建回收分支...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot => '只读恢复快照';
+
+  @override
+  String get gitUiInspectSnapshot => '检查快照...';
+
+  @override
+  String get gitUiReviewReset => '重现...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return '第 $arg0 页';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Git 文本历史必须拥有可编辑的字段 。';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree => '编辑 HEAD | 暂存区 | 工作区…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      '经审查的索引或工作内容已改变。 在开始之前刷新此比较 。';
+
+  @override
+  String get gitUiRefreshComparison => '刷新比较';
+
+  @override
+  String get gitUiPreviousChangedFile => '上一个已更改的文件';
+
+  @override
+  String get gitUiNextChangedFile => '下一个更改的文件';
+
+  @override
+  String get gitUiPreviousDifference => '上一个差数';
+
+  @override
+  String get gitUiNextDifference => '下一个差数';
+
+  @override
+  String get gitUiComparisonMode => '比较模式';
+
+  @override
+  String get gitUiSideBySide => '并肩作战';
+
+  @override
+  String get gitUiUnified => '统一';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Diff 显示选项';
+
+  @override
+  String get gitUiWrap => '环绕';
+
+  @override
+  String get gitUiWords => '单词';
+
+  @override
+  String get gitUiCollapseContext => '折叠上下文';
+
+  @override
+  String get gitUiIgnoreWhitespace => '忽略空白';
+
+  @override
+  String get gitUiSearchComparison => '搜索比较';
+
+  @override
+  String get gitUiSearch => '搜索';
+
+  @override
+  String get gitUiCloseSearch => '关闭搜索';
+
+  @override
+  String get gitUiStagingActions => '定点动作';
+
+  @override
+  String get gitUiStagingActions2 => '正在稳定动作...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines => '取消暂存所选更改行';
+
+  @override
+  String get gitUiStageSelectedChangedLines => '暂存所选更改行';
+
+  @override
+  String get gitUiUnstageWholeFile => '取消暂存整个文件';
+
+  @override
+  String get gitUiStageWholeFile => '暂存整个文件';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0 只用空格修改的行隐藏 □ 显示精确的更改';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '已选择 $arg0 个更改行 · 显示设置不会改变暂存内容的字节。';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      '只读比较 · 复制文本或调整显示设置。';
+
+  @override
+  String get gitUiNoFinalNewline => ' · 没有最终的新线';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 ° $arg1 ° $arg2 字节 $arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents => '这些内容没有文本比较 。';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      '此比较超过了约束文本审查的限制。 内容未被宣布为完全相同 。';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical => '比较的内容相同 。';
+
+  @override
+  String get gitUiUnstage => '卸载';
+
+  @override
+  String get gitUiStage => '阶段';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 更改了线条';
+  }
+
+  @override
+  String get gitUiContext => 'A. 背景情况';
+
+  @override
+  String get gitUiExpandUnchangedContext => '扩展无变化的上下文';
+
+  @override
+  String get gitUiUnstageThisHunk => '取消暂存此区块';
+
+  @override
+  String get gitUiStageThisHunk => '暂存此区块';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return '编辑阶段性内容 · $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult => '写入已审查的索引结果';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => '暂存区';
+
+  @override
+  String get gitUiWorkingTree => '工作区';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => '可编辑的索引 □ UTF-8 blob';
+
+  @override
+  String get gitUiUndo => '撤销';
+
+  @override
+  String get gitUiRedo => '重做';
+
+  @override
+  String get gitUiReloadIndexReview => '重新装入索引审查吗 ?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      '重新加载当前 HEAD、暂存区和工作版本。这会替换暂存区编辑器中未保存的草稿。';
+
+  @override
+  String get gitUiReplaceDraftAndReload => '替换草稿和重新装入';
+
+  @override
+  String get gitUiReloadVersions => '重新装入版本...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry => '将编辑的结果写入此索引条目';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      '工作文件仍保留在磁盘上。 在应用前先审查编辑后的索引 。';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges => '审查索引文本格式更改';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return '仅更新已审阅的 $arg0 索引条目。\n\n$arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult => '写入已审查的索引结果';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      '经编辑的结果在格式审查中更改。 重审一次 。';
+
+  @override
+  String get gitUiSynchronizeScrolling => '同步滚动';
+
+  @override
+  String get gitUiReadOnlyRevisionContent => '只读版本内容';
+
+  @override
+  String get gitUiEditableIndexContent => '可编辑索引内容';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      '请求的修订版在当前过滤器之外。 重置过滤器以显示它 。';
+
+  @override
+  String get gitUiFilterLog => '过滤日志';
+
+  @override
+  String get gitUiFilters => '过滤器...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return '过滤器 ($count)...';
+  }
+
+  @override
+  String get gitUiMessage => '说明…';
+
+  @override
+  String get gitUiAuthor => '作者…';
+
+  @override
+  String get gitUiPath => '路径...';
+
+  @override
+  String get gitUiDate => '约会...';
+
+  @override
+  String get gitUiMessageFilter => '信件过滤器';
+
+  @override
+  String get gitUiAuthorFilter => '作者过滤器';
+
+  @override
+  String get gitUiPathFilter => '路径过滤器';
+
+  @override
+  String get gitUiMessage2 => '说明';
+
+  @override
+  String get gitUiAuthor2 => '作者';
+
+  @override
+  String get gitUiPath2 => '路径';
+
+  @override
+  String get gitUiDateFilter => '日期过滤器...';
+
+  @override
+  String get gitUiResetFilters => '重置过滤器';
+
+  @override
+  String get gitUiRefreshLog => '刷新日志';
+
+  @override
+  String get gitUiGoToCommitReference => '转到承诺/ 引用...';
+
+  @override
+  String get gitUiBackToHEAD => '返回 HEAD';
+
+  @override
+  String get gitUiOrderedCherryPick => '点菜樱桃';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return '审视樱桃选择($arg0)...';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions => '比较两个选中的修改...';
+
+  @override
+  String get gitUiToggleBranchesPane => '切换树枝窗格';
+
+  @override
+  String get gitUiFilterBranchesAndTags => '过滤分支和标记';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return '提交$arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => '提交细节...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return '参考: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => '选择此提交';
+
+  @override
+  String get gitUiBranchOrTag => '分支或标签';
+
+  @override
+  String get gitUiAllReferences => '全部引用';
+
+  @override
+  String get gitUiLocal => '当地';
+
+  @override
+  String get gitUiRemote => '远程';
+
+  @override
+  String get gitUiTags => '标签';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters => '没有承诺匹配当前过滤器 。';
+
+  @override
+  String get gitUiObjectID => '对象编号';
+
+  @override
+  String get gitUiSubjectReferences => '主题/参考文献';
+
+  @override
+  String get gitUiDate2 => '日期';
+
+  @override
+  String get gitUiGitCommits => 'Git 承诺';
+
+  @override
+  String get gitUiParents => '父提交';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '$arg0父母';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => '装入更多承诺';
+
+  @override
+  String get gitUiLoadingChangedFiles => '正在装入已更改的文件';
+
+  @override
+  String get gitUiNoChangedFiles => '没有更改文件';
+
+  @override
+  String get gitUiSelectACommit => '选择一项承诺';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return '比较父母 $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => '更改的文件';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return '作者: $arg0 < $arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return '提交者:$arg0 < $arg1 > $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      '浅色/ 部分边界: 父对象不可用 。';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      '父权在此页面外, 或浅边界外 。';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return '父提交 $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => '提交动作...';
+
+  @override
+  String get gitUiEmptyTree => '空树';
+
+  @override
+  String get gitUiCreateBranch2 => '创建分支';
+
+  @override
+  String get gitUiCreateTag => '创建标签';
+
+  @override
+  String get gitUiCompareRevisions => '比较修改';
+
+  @override
+  String get gitUiOpenSnapshot => '打开快照';
+
+  @override
+  String get gitUiRevertCommit => '还原承诺';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary => '在此边界之后交互式重标';
+
+  @override
+  String get gitUiResetCurrentBranch => '重置当前分支';
+
+  @override
+  String get gitUiCopyFullObjectID => '复制完整的对象 ID';
+
+  @override
+  String get gitUiGoToCommitReference2 => '进行/ 引用';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      '输入要在日志中显示的承付 ID 或引用 。';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable => '请求的修订无法使用 。';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      '仓库元数据只读。 部门检查和比较仍然可用 。';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      '工作文件不可用或只读。 部门切换和合并不可用 。';
+
+  @override
+  String get gitUiSearchBranchesAndTags => '搜索分支和标签';
+
+  @override
+  String get gitUiNewBranch => '新建分支…';
+
+  @override
+  String get gitUiLocalBranches => '本地分支';
+
+  @override
+  String get gitUiRemoteBranches => '远程分支';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return '音轨  $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return '在$arg0检查过';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata => '正在刷新分支元数据';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return '切换到 $arg0';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => '开放已占用的工作树';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch => '创建本地跟踪分支...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => '与当前 HEAD 比较';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch => '合并为当前分支...';
+
+  @override
+  String get gitUiRename => '重命名...';
+
+  @override
+  String get gitUiChangeUpstream => '向上移动...';
+
+  @override
+  String get gitUiDelete => '删除...';
+
+  @override
+  String get gitUiDeleteFromRemote => '从远程删除...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return '$arg0的行动';
+  }
+
+  @override
+  String get gitUiLocalBranchName => '本地分支名称';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return '创建于 $arg0。 新分支将被检查 。';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return '当地分行将追踪$arg0号,并检查完毕。';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => '选择要删除的远程';
+
+  @override
+  String get gitUiDeleteRemoteReference => '删除远程引用';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return '合并号$arg0至$arg1';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return '重命名 $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return '上游$arg0';
+  }
+
+  @override
+  String get gitUiNoUpstream => '无上游分支';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return '删除$arg0?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0\n目标 $arg1\n仅删除本地分支。未合并的分支会被拒绝删除。';
+  }
+
+  @override
+  String get gitUiDelete2 => '删除';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return '删除未合并的分支 $arg0 ?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 Git 报告该分支没有完全合并。 在审查它的承诺后, 明确删除本地引用; 远程副本不变 。';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch => '删除未合并的本地分支';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return '目的地: $arg0 ° $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => '源分支或标记';
+
+  @override
+  String get gitUiMergePolicy => '合并政策';
+
+  @override
+  String get gitUiFastForwardWhenPossible => '可能时快速前进';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit => '总是创建合并承诺';
+
+  @override
+  String get gitUiFastForwardOnly => '仅快速前进';
+
+  @override
+  String get gitUiSquashIntoStagedChanges => '静态到分阶段的更改';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit => '创建合并前停止';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      '已禁用快进，以防 HEAD 在审阅之前移动。';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      '用于单项承诺的请假已逐步更改;这不是持续合并。';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      '在共同的解决方案工作空间中仍然存在冲突。';
+
+  @override
+  String get gitUiAddRemote => '添加远程...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return '获取: $arg0 推: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => '删除远程...';
+
+  @override
+  String get gitUiChangeFetchURL => '更改获取 URL...';
+
+  @override
+  String get gitUiAddPushDestination => '添加推进目标...';
+
+  @override
+  String get gitUiRemovePushDestination => '删除推进目标...';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return '管理 $arg0';
+  }
+
+  @override
+  String get gitUiRemoteName => '远程名称';
+
+  @override
+  String get gitUiNewRemoteName => '新建远程名称';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource => '仓库 URL 或本地来源';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove => '输入要删除的确切审查对象 。';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      '证书由配置的助手或私人提示提供 。';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return '移除远程 $arg0?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      '删除本地远程配置和跟踪引用。 它不删除服务器仓库 。';
+
+  @override
+  String get gitUiRemoveRemote2 => '删除远程';
+
+  @override
+  String get gitUiCommitScopeEntireRepository => '提交范围: 整个仓库';
+
+  @override
+  String get gitUiCachedTracking => '缓存跟踪';
+
+  @override
+  String get gitUiAmendLastCommit => '修改上次提交';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected => '配置钩和签名受到尊重。';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      '重写选中的 HEAD 提交。远程跟踪信息无法证明它尚未发布。';
+
+  @override
+  String get gitUiRepository => '仓库';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return '已破旧的 $arg0';
+  }
+
+  @override
+  String get gitUiLog => '日志';
+
+  @override
+  String get gitUiRepositoryActions => '仓库操作';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '缓存的跟踪信息 · $upstream · 领先 $ahead · 落后 $behind';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      '无工作树。打开日志检查其历史 。';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      '无法进行只读存储器 / 中继和承付 。';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable => '没有仓库状态';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return '修正 $revision';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => '添加签署确认尾注';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy => '使用已配置的签名策略';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit => '加密签名此项';
+
+  @override
+  String get gitUiDoNotSignThisCommit => '不签署此承诺';
+
+  @override
+  String get gitUiRecentCommitMessages => '最近发送的信件...';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate => '使用已配置的提交模板...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks => '作者身份和配置的钩子...';
+
+  @override
+  String get gitUiDraftMessage => '信件草稿...';
+
+  @override
+  String get gitUiCommitOptions => '提交选项';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return '草稿保留在内存中，但保存失败。$arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => '提交说明';
+
+  @override
+  String get gitUiGitOperationInProgress => '正在运行中';
+
+  @override
+  String get gitUiCancel => '取消';
+
+  @override
+  String get gitUiAmendStaged => '修订阶段';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return '提交阶段 ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => '提交并推送…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured => '没有配置可读化的承诺模板 。';
+
+  @override
+  String get gitUiCommitIdentityAndHooks => '提交身份和钩子';
+
+  @override
+  String get gitUiRecentMessages => '最近的消息';
+
+  @override
+  String get gitUiReplaceMessageDraft => '替换信件草稿吗 ?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      '用选中的信件替换现有承诺信件吗 ?';
+
+  @override
+  String get gitUiReplaceDraft => '替换草稿';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return '本地提交 $arg0 已存在。';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return '本地承诺 $arg0 存在。 在尝试再次承诺前先查看日志。 信件草稿已被保留 。';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => '提交作者名称';
+
+  @override
+  String get gitUiCommitAuthorEmail => '提交作者电子邮件';
+
+  @override
+  String get gitUiConfiguredDefault => '已配置默认';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return '签署日期:$arg0 和 $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return '配置钩: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      '签署确认尾注是提交说明中的声明，与密码学签名不同。身份信息仅保存到此仓库的本地配置中；草稿会被保留。';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => '保存仓库身份';
+
+  @override
+  String get gitUiStaged => '已暂存';
+
+  @override
+  String get gitUiUntracked => '未跟踪';
+
+  @override
+  String get gitUiUnstaged => '未暂存';
+
+  @override
+  String get gitUiConflicts => '冲突';
+
+  @override
+  String get gitUiNoChanges => '没有更改';
+
+  @override
+  String get gitUiRepositoryChangeTree => '仓库更改树';
+
+  @override
+  String get gitUiChanges => '更改';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => '展开';
+
+  @override
+  String get gitUiCollapse => '折叠';
+
+  @override
+  String get gitUiUnstageFile => '取消暂存文件';
+
+  @override
+  String get gitUiStageFile => '暂存文件';
+
+  @override
+  String get gitUiExpandGroup => '展开组';
+
+  @override
+  String get gitUiCollapseGroup => '折叠组';
+
+  @override
+  String get gitUiReviewDifference => '审查差异';
+
+  @override
+  String get gitUiUnstageSelectedFiles => '取消暂存所选文件';
+
+  @override
+  String get gitUiStageSelectedFiles => '暂存所选文件';
+
+  @override
+  String get gitUiFileHistoryAndBlame => '文件历史和责备...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => '删除未跟踪的文件...';
+
+  @override
+  String get gitUiDiscardUnstagedChange => '丢弃未显示的更改...';
+
+  @override
+  String get gitUiFileHistory => '文件历史';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return '丢弃未显示的 $arg0?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 字节 · $arg1\n使用索引内容替换工作文件，或删除此未跟踪文件。暂存内容保持不变。必须先检查应用中未保存的文档。';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => '删除未跟踪的文件';
+
+  @override
+  String get gitUiDiscardWorkingChange => '丢弃工作变更';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return '删除REMOTE参考文献 $arg0';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      '这将删除下面列出的每个实际推进目标的引用。 保留本地分支/ 标签。 本次审查将固定预期提示 。';
+
+  @override
+  String get gitUiReferenceDoesNotExist => '不存在引用';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0\n预期顶端：$arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => '远程删除完成 。';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return '从遥控器中删除$arg0?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      '上面显示的确切目标提示将被删除。 任何已更改的远程提示都会停止操作, 以便再次审查 。';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote => '从远程审查并删除...';
+
+  @override
+  String get gitUiDestinationReference => '目标参考';
+
+  @override
+  String get gitUiReviewDestinations => '审查目的地';
+
+  @override
+  String get gitUiNewRemoteBranch => '新建远程分支';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · 预期：$arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      '目的地已承诺本地无法使用 。 在检查即将离开的历史前先获取已审查的目的地 。';
+
+  @override
+  String get gitUiFetchReviewedDestination => '获取已审查的目标';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      '选择目的地并审查即将退出的承诺 。';
+
+  @override
+  String get gitUiNoOutgoingCommits => '没有退出承诺';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => '选择一个即将退出的承诺';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits => '装入更多已发送承诺';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream => '将此目的地设为上游';
+
+  @override
+  String get gitUiChooseExactTagsToPublish => '选择要发布的确切标签';
+
+  @override
+  String get gitUiTagsNone => '标记:无';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return '标记: 选中 $arg0';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return '准确发布: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      '推进完成。 本地承诺仍然在日志中 。';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      '强制推送要求目标引用的顶端与本次审查显示的值完全一致。';
+
+  @override
+  String get gitUiForceWithReviewedLease => '强制使用经审核的租赁...';
+
+  @override
+  String get gitUiPush => '推送';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases => '强制推进经过审查的租赁?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return '只有当每个遥远的目的地仍然拥有上面显示的确切提示时,才重写 $arg0 。\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      '其他人可能已经在使用这些历史。后台获取不会更新本次租约保护条件。';
+
+  @override
+  String get gitUiForceWithLease => '租赁';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      '远程结果不确定。 在再次推动之前再次审查目的地 。';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return '父 $arg0 $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => '远程获取';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches => 'Prune 删除远程跟踪分支';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      '在不替换工作文件的情况下获取远程跟踪信息更新 。';
+
+  @override
+  String get gitUiFetch => '获取';
+
+  @override
+  String get gitUiSourceRemote => '来源远程';
+
+  @override
+  String get gitUiSourceBranch => '源代码分支';
+
+  @override
+  String get gitUiReviewedStrategy => '审查的战略';
+
+  @override
+  String get gitUiMerge => '合并';
+
+  @override
+  String get gitUiRebase => '变基';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      '如果目的地不能快速前进, 则停止; 永远不要合并或重置 。';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      '与合并承诺合并,包括当有可能快速前进时。';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible => '合并; 允许在可能情况下快速前进 。';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      '重设本地历史, 保留本地合并承诺 。';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory => '重设本地承诺为线性历史 。';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git 被配置为交互式重置。 在此选择明确的拉动策略, 或者获取并打开 Rebase... 来审查一个计划 。';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull => '使用经过审查的普通重标进行此拉';
+
+  @override
+  String get gitUiOptions => '选项';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward => '总是创建合并承诺( 不快速前进)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits => '保存本地合并承诺';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      '本地更改可能阻止拉动。 检查/ 承诺它们或明确创建隐藏 。';
+
+  @override
+  String get gitUiStashes => '贮藏';
+
+  @override
+  String get gitUiCreateOrReviewStash => '创建或审查隐藏...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy => '以选定的策略拉动';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource => '仓库 URL 或本地 Git 源';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS、 SSH 或本地路径';
+
+  @override
+  String get gitUiFolderToInitialize => '初始化文件夹';
+
+  @override
+  String get gitUiFinalCloneDestination => '最终克隆目标';
+
+  @override
+  String get gitUiChoose => '选择...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      '仅创建 Git 元数据。 现有文件没有进行编程或承诺 。';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      '最终目标必须不存在或为空。绝不会覆盖已有的用户数据。';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      '· 空白使用有效的 Git 政策';
+
+  @override
+  String get gitUiSelectedBranchOptional => '选定分支 □ 可选';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      '循环明确初始化/更新子模块';
+
+  @override
+  String get gitUiPreparingGitOperation => '准备 Git 操作...';
+
+  @override
+  String get gitUiThisAttemptCreated => '这种尝试创造了';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt => '在这次尝试之前,目的地已经存在:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      '目录还在检查中,在再次复制之前再检查一下';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains => '没有目标目录 。';
+
+  @override
+  String get gitUiCancelProcess => '取消进程';
+
+  @override
+  String get gitUiInitialize => '初始化';
+
+  @override
+  String get gitUiClone => '克隆';
+
+  @override
+  String get gitUiChooseNewBase => '选择新基底';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => '选择上游边界';
+
+  @override
+  String get gitUiNewBase => '新基底';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => '上游边界 · 不包含';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => '与上游边界相同';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => '选择分支、标签或提交…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase => '将上游用作新的基地';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      '从日志中选择一个有效的分支、标记或承诺 。';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      '分支块中第一个保留的提交不能设为 squash 或 fixup，因为它前面没有可合并的目标提交。';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return '分队区块 $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage => '[改写后将要求发出新电\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => '计划承诺信息';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      '原始/ 合并信件预览';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return '结果$arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return '当前分支: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => '分离的 HEAD';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      '变基会重写提交的标识。远程跟踪信息无法证明这些历史从未被发布。';
+
+  @override
+  String get gitUiIncludeRootCommits => '包含根提交';
+
+  @override
+  String get gitUiMergeCommits => '合并承诺';
+
+  @override
+  String get gitUiFlattenHistory => '线性化历史';
+
+  @override
+  String get gitUiPreserveBranchStructure => '保留分支结构';
+
+  @override
+  String get gitUiAutosquash => '自动压缩合并';
+
+  @override
+  String get gitUiPrepareGitPlan => '准备 Git 计划';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return '承诺重播: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      '包括从此分支可以达到的所有 root 。';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return '将把 $boundary 之后的提交重放到 $base 上；不包含边界提交本身。';
+  }
+
+  @override
+  String get gitUiRoot => '根数';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure => 'Git 分支/ 标签/ 重置/ 合并结构';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      '选择明确的旧边界或根模式, 然后制定计划 。';
+
+  @override
+  String get gitUiMoveUp => '上移';
+
+  @override
+  String get gitUiMoveDown => '下移';
+
+  @override
+  String get gitUiResetPlan => '重置计划';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · 分支区块 $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles => '选择详细信息的承诺和已更改的文件';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages => '预览合并信件...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt/  移动选中的承诺。 无关的分支引用不会自动更新 。';
+
+  @override
+  String get gitUiCancelPlan => '取消计划';
+
+  @override
+  String get gitUiStartReviewedRebase => '开始重设基准?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return '计划于$arg1年重写$arg0,被放弃的承诺在开始之前仍明显可见。';
+  }
+
+  @override
+  String get gitUiStartRebase => '开始变基';
+
+  @override
+  String get gitUiNoContinuingGitOperation => '没有持续 Git 操作';
+
+  @override
+  String get gitUiStoppedForEditingAmend => ' · 停止编辑/修正';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      '这些是未合并的索引条目, 可能来自隐藏应用程序。 Git 没有隐藏继续或中止命令 。';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      '编辑工作文件, 阶段和修正当前承诺, 然后继续重标 。';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · 未合并的暂存阶段 $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries => '该索引没有未解决的条目 。';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => '将当前承诺保留为空承诺';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      '真实索引没有分阶段的更改。 创建一个明确的空承诺, 如果仍然活跃, 则继续排序 。';
+
+  @override
+  String get gitUiKeepEmptyCommit => '保持空承诺...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git 会尝试回到操作开始时的状态，但无法保证恢复操作前已有的未暂存、未跟踪或未保存内容。';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      '跳过当前承诺, 继续下一个计划的承诺 。';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      '忘记此操作的簿记, 同时保留当前文件和索引 。';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return '继续$arg0';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions => '重新装入冲突版本 ?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      '将未保存结果草稿替换为当前工作文件。 保存的工作内容将予保留 。';
+
+  @override
+  String get gitUiLoadingConflictVersions => '正在装入冲突版本...';
+
+  @override
+  String get gitUiLoadingConflict => '正在装入冲突';
+
+  @override
+  String get gitUiBaseLeft => '基地 左转';
+
+  @override
+  String get gitUiBaseRight => '基数  右';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict => '此冲突无基条目';
+
+  @override
+  String get gitUiAcceptEntireLeftFile => '接受整个左侧文件...';
+
+  @override
+  String get gitUiAcceptEntireRightFile => '接受整个右侧文件...';
+
+  @override
+  String get gitUiPreviousConflictRegion => '先前的冲突地区';
+
+  @override
+  String get gitUiNextConflictRegion => '下一个冲突地区';
+
+  @override
+  String get gitUiManualResolution => '人工解析';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '地区 $arg0/$arg1 X XX $arg2 检查';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      '源对齐超过了文本比较限制;源板仍然可供手工审查。';
+
+  @override
+  String get gitUiAcceptLeftRegion => '接受左区域';
+
+  @override
+  String get gitUiAcceptRightRegion => '接受正确的区域';
+
+  @override
+  String get gitUiKeepManualResultForRegion => '保持区域手工结果';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges => '应用 Git 的非冲突性变化吗 ?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      '将当前结果草稿替换为 Git 合并预览。 此丢弃未保存的手动结果编辑; 工作文件在保存前保持不变 。';
+
+  @override
+  String get gitUiUseMergePreview => '使用合并预览';
+
+  @override
+  String get gitUiApplyNonConflictingChanges => '应用非冲突更改...';
+
+  @override
+  String get gitUiLeftSource => '左侧来源';
+
+  @override
+  String get gitUiResult => '结果';
+
+  @override
+  String get gitUiRightSource => '正确来源';
+
+  @override
+  String get gitUiStage2 => '第2阶段';
+
+  @override
+  String get gitUiStage3 => '第3阶段';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      '没有冲突版本。 刷新以审查当前状态 。';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      '结果已保存到磁盘。 索引仍然决定此文件是否已经解决 。';
+
+  @override
+  String get gitUiSaveResultDraft => '保存结果草稿';
+
+  @override
+  String get gitUiApplyResultAndStageResolution => '应用结果并暂存解决方案';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent => '· 可编辑的 UTF-8 工作内容';
+
+  @override
+  String get gitUiEditableConflictResult => '可编辑的冲突结果';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '左侧：$arg0 · $arg1\n右侧：$arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      '选择内容、 删除或子模块明确承诺。 没有二进制数据被解码为可编辑文本 。';
+
+  @override
+  String get gitUiUseEntireLeftContent => '使用全部左侧内容...';
+
+  @override
+  String get gitUiUseEntireRightContent => '使用全部右侧内容...';
+
+  @override
+  String get gitUiDeleteThisPath => '删除此路径...';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit => '已解析子模块承诺';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      '在父体中弹出精确的 gitlink 。 这不会检查或执行子模块 。';
+
+  @override
+  String get gitUiSetResolvedGitlink => '设定解析 gitlink...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return '基底   $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      '结果是经过编辑的。 保留手动结果或选择其它未变区域 。';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return '应用“$arg0”解决方案？';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      '阶段 所选 gitlink 承诺在母体中。 子模块检查及其文件不被替换 。';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return '替换整个工作路径 $arg0, 并分阶段作出决定。 当前的工作内容和任何未保存的结果草稿将被丢弃 。';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision => '应用整个文件决定';
+
+  @override
+  String get gitUiStageThisConflictResolution => '分阶段解决冲突?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return '使用整个编辑结果为 $arg0。 Git 记录了预设时的解析路径。 首先审查所有预定内容 $arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => '应用并暂存';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges => '审查结果文本格式更改';
+
+  @override
+  String get gitUiSaveReviewedResult => '保存已审查的结果';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      '无法访问本地的 Git 表格。 在重新连接应用程序后重试 。';
+
+  @override
+  String get gitUiSans => '孙子';
+
+  @override
+  String get gitUiSelect => '选择';
+
+  @override
+  String get gitUiContextMenu => '上下文菜单';
+
+  @override
+  String get gitUiCopyText => '复制文本';
+
+  @override
+  String get gitUiLoadingRow => '正在装入行';
+
+  @override
+  String get gitUiRetry => '重试';
+
+  @override
+  String get gitUiGitMessage => 'Git 消息 :';
+
+  @override
+  String get gitUiCancelPrompt => '取消提示';
+
+  @override
+  String get gitUiUseMessageAndContinue => '使用信件并继续';
+
+  @override
+  String get gitUiRespondPrivately => '私人答复';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return '无法保存首选项: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return '提交存储草稿: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return '视图偏好无法读取: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return '提交草稿保留在记忆中,但无法保存: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      '经审查的仓库仅用于此操作,历史和内容检查仍然可用。';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git 返回 $arg0。 应用程序无法刷新其文档 :\\\\ $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => '在日志中选择提交…';
+
+  @override
+  String get gitUiCurrentBranch => '当前分支';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      '没有匹配的分支或标记。 在日志中选择一个承诺 。';
+
+  @override
+  String get gitUiBranches => '分支';
+
+  @override
+  String get gitUiPushCommits => '推送提交';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return '拉进 $arg0';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return '解决 $arg0';
+  }
+
+  @override
+  String get gitUiCurrentOperation => '当前业务';
+
+  @override
+  String get gitUiRebaseCommits => '变基提交';
+
+  @override
+  String get gitUiFetch2 => '获取…';
+
+  @override
+  String get gitUiPull => '拉取…';
+
+  @override
+  String get gitUiPush2 => '推送…';
+
+  @override
+  String get gitUiBranches2 => '分支…';
+
+  @override
+  String get gitUiManageRemotes => '管理远程仓库…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return '合并到$arg0...';
+  }
+
+  @override
+  String get gitUiRebase2 => '变基…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation => '冲突与当前操作...';
+
+  @override
+  String get gitUiStashes2 => '贮藏…';
+
+  @override
+  String get gitUiWorktrees => '工作树…';
+
+  @override
+  String get gitUiSubmodules => '子模块…';
+
+  @override
+  String get gitUiReflogAndRecovery => '引用日志与恢复…';
+
+  @override
+  String get gitUiCloneRepository => '克隆仓库…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => '撤销仓库信任';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus => '正在等待仓库状态';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh => '没有仓库状态; 刷新';
+
+  @override
+  String get gitUiManageRemotes2 => '管理远程仓库';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return '合并为$arg0';
+  }
+
+  @override
+  String get gitUiWorktrees2 => '工作树';
+
+  @override
+  String get gitUiSubmodules2 => '子模块';
+
+  @override
+  String get gitUiReflogAndRecovery2 => '引用日志与恢复';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return '克隆库 · $arg0';
+  }
+
+  @override
+  String get gitUiApply => '应用';
+
+  @override
+  String get gitUiResizeGitPanes => '调整 Git 窗帘大小';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0%';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return '退出状态:$status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      '仓库已更改。 重新刷新和审查后再尝试 。';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      '另一个操作持有仓库或索引锁定。 等等, 然后刷新 。';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation => '本次操作需要仓库信任 。';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git 服务断开。 重新连接并调节仓库 。';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      '已安装的 Git 可执行文件无法支持此操作。 请在下面审查运行时间要求 。';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      '此仓库仅用于请求的操作。 仍然可用 。';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      '操作需要调节。 在重复之前先审查生成的仓库或远程状态 。';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git 认证失败。 审查证书助手或解锁配置的密钥环 。';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH 主机验证失败。 通过您配置的 SSH 工具审查主机身份 。';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      '提交签名失败或已取消。 请审查签名密钥、 代理和配置的签名工具 。';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      '设置仓库作者名称和电子邮件, 然后返回到保存的信件草稿 。';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git 拒绝了已审查的更新。 刷新并审查实际目的地, 然后再尝试 。';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      '工作或分阶段的修改阻止了这一操作。 审查、 承诺或明确隐藏这些操作 。';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      '所需的 Git 对象不可用。 检查浅处或部分仓库的边界, 必要时可以明确获取 。';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Git 操作失败: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => '诊断';
+
+  @override
+  String get gitUiAuthorizeGitInspection => '授权 Git 检查...';
+
+  @override
+  String get gitUiCopyDiagnostics => '复制诊断';
+
+  @override
+  String get gitUiActions => '操作';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return '分公司,$arg0';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut => '创建本地分支而不检查 。';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return '标记  $arg0';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return '仅读快照 · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => '樱桃选手承诺';
+
+  @override
+  String get gitUiRevertCommits => '还原承诺';
+
+  @override
+  String get gitUiCompareToFullRevisionID => '与完整修订版ID比较';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return '树比较方向：$arg0 → 此处输入的修订版本。';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID => '输入完整有效的对象 ID 。';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 $arg1 树对比';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return '重置$arg0至$arg1';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      '移动 HEAD/当前分支。reflog 无法恢复任意未跟踪或未保存的内容。';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles => '移动 HEAD，保留暂存区和工作文件。';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      '移动 HEAD 并替换暂存区，保留工作文件。';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      '替换 HEAD、暂存区和已跟踪的工作文件；可能覆盖妨碍操作的未跟踪文件。';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      '替换 HEAD、暂存区及符合条件的文件；若会丢失本地更改则拒绝操作。';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return '重置为$arg0?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '+$arg0  $arg1 在应用前先审查选中模式的效果 。';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return '重置 $arg0';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return '目标 $arg0';
+  }
+
+  @override
+  String get gitUiTagName => '标签名称';
+
+  @override
+  String get gitUiAnnotatedTag => '附注标签';
+
+  @override
+  String get gitUiCryptographicSigning => '密码学签名';
+
+  @override
+  String get gitUiConfiguredPolicy => '配置策略';
+
+  @override
+  String get gitUiSignThisTag => '签名此标记';
+
+  @override
+  String get gitUiDoNotSign => '不要签名';
+
+  @override
+  String get gitUiTagMessage => '标记消息';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      '本地创建标记。 在 Push 审评中明确发布选中的标记 。';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return '整棵树: $arg0 $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => '下一个已更改的文件页';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      '只读仓库快照。 打开文件时从未检查此版本 。';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => '打开只读版本';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus => '正在等待仓库状态';
+
+  @override
+  String get gitUiRestoreThisPath => '恢复这条路径...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return '历史 · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return '恢复 $arg0吗?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return '将此工作路径替换为订正版 $arg0。 保留现有分阶段内容。';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => '恢复工作文件';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return '文件历史跟随重命名 □  $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => '逐行追溯 · 已提交内容';
+
+  @override
+  String get gitUiBlame => '逐行追溯…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0  工作树';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile => '打开只读历史文件';
+
+  @override
+  String get gitUiCompareToCurrentFile => '与当前文件比较';
+
+  @override
+  String get gitUiCompareToParent => '与父性比较...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return '已提交 $arg0 · 编辑器中未保存的内容不包含在这些注解中';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return '来源于 $arg0 的历史';
+  }
+
+  @override
+  String get gitUiBoundary => ' · 边界';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\n原始行 $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => '前一行';
+
+  @override
+  String get gitUiNextLines => '下一行';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return '明确应用命令 o 目的地 $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => '添加全部任务对象编号';
+
+  @override
+  String get gitUiAddReviewedCommit => '添加已审查的承诺...';
+
+  @override
+  String get gitUiMoveEarlier => '稍早移动';
+
+  @override
+  String get gitUiMoveLater => '稍后移动';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence => '从已审查的序列中删除';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits => '应用更改而不创建承诺';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      '使用此明确的主行父母来合并承诺';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      '空的或已经应用的承诺可以阻止Git作出明确的跳过或继续决定。';
+
+  @override
+  String get gitUiRevertInReviewedOrder => '按审查顺序还原';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder => '樱桃选手按顺序排列';
+
+  @override
+  String get gitUiReturnToFiles => '返回到文件';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => '提交';
+
+  @override
+  String get gitUiBackToCommit => '返回提交';
+
+  @override
+  String get gitUiSelectAChangeToReview => '选择要审查的修改';
+
+  @override
+  String get gitUiLoadingBranch => '正在装入分支...';
+
+  @override
+  String get gitUiBranchUnavailable => '分机无法使用';
+
+  @override
+  String get gitUiUnbornHEAD => '尚无提交的 HEAD';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return '分离的 HEAD · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => '继续';
+
+  @override
+  String get gitUiPick => '选取';
+
+  @override
+  String get gitUiReword => '修改说明';
+
+  @override
+  String get gitUiEdit => '编辑';
+
+  @override
+  String get gitUiSquash => '压缩合并';
+
+  @override
+  String get gitUiFixup => '丢弃说明并合并';
+
+  @override
+  String get gitUiDrop => '丢弃';
+
+  @override
+  String get gitUiAbort => '中止';
+
+  @override
+  String get gitUiSkip => '跳过';
+
+  @override
+  String get gitUiQuit => '退出操作';
+
+  @override
+  String get gitUiSoft => '软重置';
+
+  @override
+  String get gitUiMixed => '混合重置';
+
+  @override
+  String get gitUiHard => '硬重置';
+
+  @override
+  String get gitUiKeep => '保留更改';
+
+  @override
+  String get gitUiCreate => '创建';
+
+  @override
+  String get gitUiApplyStash => '应用贮藏';
+
+  @override
+  String get gitUiPopStash => '应用贮藏并在成功时删除';
+
+  @override
+  String get gitUiDropStashAction => '删除贮藏';
+
+  @override
+  String get gitUiEditedResult => '已编辑结果';
+
+  @override
+  String get gitUiLeftContent => '左侧内容';
+
+  @override
+  String get gitUiRightContent => '正确内容';
+
+  @override
+  String get gitUiDeletePath => '删除路径';
+
+  @override
+  String get gitUiSubmoduleCommit => '子模块承诺';
+
+  @override
+  String get gitUiPresentContent => '可用内容';
+
+  @override
+  String get gitUiAbsentContent => '缺席';
+
+  @override
+  String get gitUiBinaryContent => '二进制内容';
+
+  @override
+  String get gitUiTooLargeContent => '内容超过显示限制';
+
+  @override
+  String get gitUiUnavailableContent => '无内容';
+
+  @override
+  String get gitUiGitlinkContent => '子模块指针器';
+
+  @override
+  String get gitUiSymlinkContent => '符号链接';
+
+  @override
+  String get gitUiNoOperation => '无操作';
+
+  @override
+  String get gitUiCherryPickOperation => '拣选提交';
+
+  @override
+  String get gitUiRevertOperation => '还原提交';
+
+  @override
+  String get gitUiApplyMailboxOperation => '应用补丁';
+
+  @override
+  String get gitUiSquashOperation => 'Squash 合并';
+
+  @override
+  String get gitUiUnmergedOperation => '未合并索引';
+
+  @override
+  String get gitUiWaitingForPromptPhase => '等待你的回应';
+
+  @override
+  String get gitUiStoppedPhase => '停止审查';
+
+  @override
+  String get gitUiCompletedPhase => '已完成';
+
+  @override
+  String get gitUiFailedPhase => '失败';
+
+  @override
+  String get gitUiCancelledPhase => '已取消';
+
+  @override
+  String get gitUiUncertainPhase => '成果需要调节';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return '冲突阶段 $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Git 合并预览';
+
+  @override
+  String get gitUiNormalizedWorking => '工作树  正常';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value%';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF-8 带有字节顺序标记 (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF-8 无字节顺序标记 (BOM)';
+
+  @override
+  String get gitUiAddsBom => '此编辑在文件开头添加 UTF-8 字节顺序标记( BOM ) 。';
+
+  @override
+  String get gitUiRemovesBom => '此编辑从文件开头删除 UTF-8 字节顺序标记( BOM ) 。';
+
+  @override
+  String get gitUiNoLineTerminators => '没有线条终止器';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return '$format 换行符';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return '混合线端 ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format □ 无最终的LF';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return '行结束符格式将从 $before 改为 $after。剪贴板中的文本可能使用与原文件不同的行结束符。';
+  }
+
+  @override
+  String get gitUiGitFailure => 'Git 操作失败。 请检查下面的诊断 。';
+
+  @override
+  String get gitUiAbortInline => '中止';
+
+  @override
+  String get gitUiSkipInline => '跳过';
+
+  @override
+  String get gitUiQuitInline => '退出';
+
+  @override
+  String get gitUiMergeInline => '合并';
+
+  @override
+  String get gitUiRebaseInline => '变基';
+
+  @override
+  String get gitUiCherryPickInline => '拣选提交';
+
+  @override
+  String get gitUiRevertInline => '还原提交';
+
+  @override
+  String get gitUiApplyMailboxInline => '应用邮件框';
+
+  @override
+  String get gitUiSquashInline => '压缩合并';
+
+  @override
+  String get gitUiUnmergedInline => '未合并';
+
+  @override
+  String get gitHostFetch => '获取';
+
+  @override
+  String get gitHostRefreshGitStatus => '刷新 Git 状态';
+
+  @override
+  String get gitHostCommitStaged => '提交阶段';
+
+  @override
+  String get gitHostGitBranches => 'Git 分支';
+
+  @override
+  String get gitHostReviewPush => '审查推力';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git 操作适用于整个仓库, 并可以执行配置的钩子、 过滤器、 证书和签名工具 。';
+
+  @override
+  String get gitHostContentUnavailable => '无内容';
+
+  @override
+  String get gitHostInitializeRepository => '初始化存储库';
+
+  @override
+  String get gitHostCloneRepository => '克隆仓库';
+
+  @override
+  String get gitHostInitializeHere => '在此初始化...';
+
+  @override
+  String get gitHostCloneRepository2 => '克隆仓库…';
+
+  @override
+  String get gitHostGitLog => 'Git 日志';
+
+  @override
+  String get gitUiAbsentPlaceholder => '(缺席)';
+
+  @override
+  String get gitUiUnborn => '未出生婴儿';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return '已变基的历史 · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return '当前历史 · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return '正在重放的提交 · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return '传入的内容 · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => '内容冲突';
+
+  @override
+  String get gitUiSubmoduleConflict => '子模块冲突';
+
+  @override
+  String get gitUiSymlinkConflict => '符号链接冲突';
+
+  @override
+  String get gitUiAddAddConflict => '双方均加';
+
+  @override
+  String get gitUiModifyDeleteConflict => '修改/删除或重新命名/删除';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path $kind';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -11218,4 +13942,2728 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String get gitNonUtf8FilenameMessage =>
       '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
+
+  @override
+  String get gitUiMergeInProgress => '合并进行中';
+
+  @override
+  String get gitUiRebaseInProgress => '正在重定基准';
+
+  @override
+  String get gitUiCherryPickInProgress => '樱桃选集在进行中';
+
+  @override
+  String get gitUiRevertInProgress => '还原中';
+
+  @override
+  String get gitUiPatchApplicationInProgress => '补丁应用程序正在进行中';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit => 'Squash 合并结果等待执行';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts => '未解决的索引冲突';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · 未解决的冲突';
+
+  @override
+  String get gitUiReviewOperation => '审查业务';
+
+  @override
+  String get gitUiRefresh => '刷新';
+
+  @override
+  String get gitUiCreateNamedStash => '创建命名的收藏';
+
+  @override
+  String get gitUiCreateStash => '创建贮藏…';
+
+  @override
+  String get gitUiNoStashes => '没有藏东西';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges => '选择要检查更改的隐藏';
+
+  @override
+  String get gitUiStashedUntrackedFiles => '未跟踪的文件';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles => '检查隐藏的未跟踪文件...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      '在应用时恢复藏品的阶段状态/索引状态';
+
+  @override
+  String get gitUiApplyAndRetain => '应用和保留';
+
+  @override
+  String get gitUiPop => '爷爷...';
+
+  @override
+  String get gitUiCreateBranch => '创建分支…';
+
+  @override
+  String get gitUiDropStash => '删除贮藏…';
+
+  @override
+  String get gitUiBranchFromStash => '从贮藏创建分支';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      '创建/ 切换到藏匿处的分支, 然后应用它 。 原始隐藏部分留待日后明确删除 。';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0这个藏品?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      '如果适用冲突,则保留原始藏品。';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      '删除此隐藏条目。 其更改不应用 。';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      '请解决未合并文件的冲突。Git 没有 stash 的继续或中止命令；原始贮藏会被保留。';
+
+  @override
+  String get gitUiStashNameMessage => '堆放名称/信息';
+
+  @override
+  String get gitUiStashContentAndResultingIndex => '堆放内容和由此产生的索引';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges => '被跟踪的工作和分阶段的变更';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      '贮藏更改并保留已暂存的更改 (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged => '仅贮藏已暂存的更改 (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => '包含未跟踪的文件';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository => '此仓库中的所有合格路径';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions => '没有符合条件的这些隐藏选项的更改 。';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath => '选择至少一个合格路径 。';
+
+  @override
+  String get gitUiCreateStash2 => '创建贮藏';
+
+  @override
+  String get gitUiCreateWorktree => '创建工作树...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      '在 HEAD 处创建工作树之前，请先创建提交。';
+
+  @override
+  String get gitUiDetachedHEAD => '分离的 HEAD';
+
+  @override
+  String get gitUiCurrent => '当前 ·';
+
+  @override
+  String get gitUiLocked => '锁定 ·';
+
+  @override
+  String get gitUiOpenInBusyStack => '在繁忙的堆叠中打开 ?';
+
+  @override
+  String get gitUiStatusNotInspected => '未检查的状况';
+
+  @override
+  String get gitUiDirty => '脏';
+
+  @override
+  String get gitUiClean => '干净';
+
+  @override
+  String get gitUiOpenWorkingFolder => '打开工作文件夹';
+
+  @override
+  String get gitUiMoveWorktree => '移动工作树...';
+
+  @override
+  String get gitUiUnlock => '解锁';
+
+  @override
+  String get gitUiLock => '锁定';
+
+  @override
+  String get gitUiRemoveCleanWorktree => '删除干净的工作树...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges => '审查删除,包括本地更改...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => '新建工作树文件夹名称';
+
+  @override
+  String get gitUiNewWorktreeBranch => '新建工作树分支';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '在 $arg2（$arg3）创建本地分支，并创建 $arg0/$arg1。';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => '目标文件夹名称';
+
+  @override
+  String get gitUiRemoveWorktree => '移除工作树?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      '明确丢弃此工作树中所有本地跟踪/未跟踪的更改。 锁定/ 使用的工作树仍受到保护 。';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git拒绝删除本地更改、未跟踪的文件或锁定 。';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove => '丢弃本地工作树内容并删除';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => '删除清洁工作树';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      '明确循环到嵌入的子模块中进行更新/同步';
+
+  @override
+  String get gitUiNoRecordedSubmodules => '没有记录子模块';
+
+  @override
+  String get gitUiNotInitialized => '未初始化';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return '父母 gitlink: $arg0 检查完毕: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => '肮脏的嵌套仓库';
+
+  @override
+  String get gitUiCleanNestedRepository => '清洁嵌套仓库';
+
+  @override
+  String get gitUiNestedStatusUnavailable => '无嵌套状态';
+
+  @override
+  String get gitUiEnterNestedRepository => '输入嵌套仓库';
+
+  @override
+  String get gitUiInitializeConfiguration => '初始化配置';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit => '更新父权承诺...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch => '跟随已配置的远程分支...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs => '同步配置的 URL...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent => '父体中当前子模块指针的阶段';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      '父母和子模块承诺、 推动和肮脏状态保持分离 。 浏览不初始化或更新它们 。';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return '获取并检查已配置的远程分支的承诺。 这与父行所记录的 gitlink 不同 。 递归: $arg0 。';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return '根据需要初始化并检查准确的$arg0。递归:$arg1。';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return '应用已审查的子模块配置操作。 递归: $arg0 。';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => '应用子模块操作';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      '检查已记录的修订版或创建回收分支。 Reflog 并不恢复任意的未保存或未跟踪的内容 。';
+
+  @override
+  String get gitUiSelectAReflogEntry => '选择重写条目';
+
+  @override
+  String get gitUiPreviousPage => '上一页';
+
+  @override
+  String get gitUiNextPage => '下一页';
+
+  @override
+  String get gitUiRecoveryBranchName => '回收分支名称';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return '创建分支于$arg0;工作文件和当前分支保持不变。';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => '创建回收分支...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot => '只读恢复快照';
+
+  @override
+  String get gitUiInspectSnapshot => '检查快照...';
+
+  @override
+  String get gitUiReviewReset => '重现...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return '第 $arg0 页';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Git 文本历史必须拥有可编辑的字段 。';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree => '编辑 HEAD | 暂存区 | 工作区…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      '经审查的索引或工作内容已改变。 在开始之前刷新此比较 。';
+
+  @override
+  String get gitUiRefreshComparison => '刷新比较';
+
+  @override
+  String get gitUiPreviousChangedFile => '上一个已更改的文件';
+
+  @override
+  String get gitUiNextChangedFile => '下一个更改的文件';
+
+  @override
+  String get gitUiPreviousDifference => '上一个差数';
+
+  @override
+  String get gitUiNextDifference => '下一个差数';
+
+  @override
+  String get gitUiComparisonMode => '比较模式';
+
+  @override
+  String get gitUiSideBySide => '并肩作战';
+
+  @override
+  String get gitUiUnified => '统一';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Diff 显示选项';
+
+  @override
+  String get gitUiWrap => '环绕';
+
+  @override
+  String get gitUiWords => '单词';
+
+  @override
+  String get gitUiCollapseContext => '折叠上下文';
+
+  @override
+  String get gitUiIgnoreWhitespace => '忽略空白';
+
+  @override
+  String get gitUiSearchComparison => '搜索比较';
+
+  @override
+  String get gitUiSearch => '搜索';
+
+  @override
+  String get gitUiCloseSearch => '关闭搜索';
+
+  @override
+  String get gitUiStagingActions => '定点动作';
+
+  @override
+  String get gitUiStagingActions2 => '正在稳定动作...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines => '取消暂存所选更改行';
+
+  @override
+  String get gitUiStageSelectedChangedLines => '暂存所选更改行';
+
+  @override
+  String get gitUiUnstageWholeFile => '取消暂存整个文件';
+
+  @override
+  String get gitUiStageWholeFile => '暂存整个文件';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0 只用空格修改的行隐藏 □ 显示精确的更改';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '已选择 $arg0 个更改行 · 显示设置不会改变暂存内容的字节。';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      '只读比较 · 复制文本或调整显示设置。';
+
+  @override
+  String get gitUiNoFinalNewline => ' · 没有最终的新线';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 ° $arg1 ° $arg2 字节 $arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents => '这些内容没有文本比较 。';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      '此比较超过了约束文本审查的限制。 内容未被宣布为完全相同 。';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical => '比较的内容相同 。';
+
+  @override
+  String get gitUiUnstage => '卸载';
+
+  @override
+  String get gitUiStage => '阶段';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 更改了线条';
+  }
+
+  @override
+  String get gitUiContext => 'A. 背景情况';
+
+  @override
+  String get gitUiExpandUnchangedContext => '扩展无变化的上下文';
+
+  @override
+  String get gitUiUnstageThisHunk => '取消暂存此区块';
+
+  @override
+  String get gitUiStageThisHunk => '暂存此区块';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return '编辑阶段性内容 · $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult => '写入已审查的索引结果';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => '暂存区';
+
+  @override
+  String get gitUiWorkingTree => '工作区';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => '可编辑的索引 □ UTF-8 blob';
+
+  @override
+  String get gitUiUndo => '撤销';
+
+  @override
+  String get gitUiRedo => '重做';
+
+  @override
+  String get gitUiReloadIndexReview => '重新装入索引审查吗 ?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      '重新加载当前 HEAD、暂存区和工作版本。这会替换暂存区编辑器中未保存的草稿。';
+
+  @override
+  String get gitUiReplaceDraftAndReload => '替换草稿和重新装入';
+
+  @override
+  String get gitUiReloadVersions => '重新装入版本...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry => '将编辑的结果写入此索引条目';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      '工作文件仍保留在磁盘上。 在应用前先审查编辑后的索引 。';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges => '审查索引文本格式更改';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return '仅更新已审阅的 $arg0 索引条目。\n\n$arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult => '写入已审查的索引结果';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      '经编辑的结果在格式审查中更改。 重审一次 。';
+
+  @override
+  String get gitUiSynchronizeScrolling => '同步滚动';
+
+  @override
+  String get gitUiReadOnlyRevisionContent => '只读版本内容';
+
+  @override
+  String get gitUiEditableIndexContent => '可编辑索引内容';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      '请求的修订版在当前过滤器之外。 重置过滤器以显示它 。';
+
+  @override
+  String get gitUiFilterLog => '过滤日志';
+
+  @override
+  String get gitUiFilters => '过滤器...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return '过滤器 ($count)...';
+  }
+
+  @override
+  String get gitUiMessage => '说明…';
+
+  @override
+  String get gitUiAuthor => '作者…';
+
+  @override
+  String get gitUiPath => '路径...';
+
+  @override
+  String get gitUiDate => '约会...';
+
+  @override
+  String get gitUiMessageFilter => '信件过滤器';
+
+  @override
+  String get gitUiAuthorFilter => '作者过滤器';
+
+  @override
+  String get gitUiPathFilter => '路径过滤器';
+
+  @override
+  String get gitUiMessage2 => '说明';
+
+  @override
+  String get gitUiAuthor2 => '作者';
+
+  @override
+  String get gitUiPath2 => '路径';
+
+  @override
+  String get gitUiDateFilter => '日期过滤器...';
+
+  @override
+  String get gitUiResetFilters => '重置过滤器';
+
+  @override
+  String get gitUiRefreshLog => '刷新日志';
+
+  @override
+  String get gitUiGoToCommitReference => '转到承诺/ 引用...';
+
+  @override
+  String get gitUiBackToHEAD => '返回 HEAD';
+
+  @override
+  String get gitUiOrderedCherryPick => '点菜樱桃';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return '审视樱桃选择($arg0)...';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions => '比较两个选中的修改...';
+
+  @override
+  String get gitUiToggleBranchesPane => '切换树枝窗格';
+
+  @override
+  String get gitUiFilterBranchesAndTags => '过滤分支和标记';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return '提交$arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => '提交细节...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return '参考: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => '选择此提交';
+
+  @override
+  String get gitUiBranchOrTag => '分支或标签';
+
+  @override
+  String get gitUiAllReferences => '全部引用';
+
+  @override
+  String get gitUiLocal => '当地';
+
+  @override
+  String get gitUiRemote => '远程';
+
+  @override
+  String get gitUiTags => '标签';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters => '没有承诺匹配当前过滤器 。';
+
+  @override
+  String get gitUiObjectID => '对象编号';
+
+  @override
+  String get gitUiSubjectReferences => '主题/参考文献';
+
+  @override
+  String get gitUiDate2 => '日期';
+
+  @override
+  String get gitUiGitCommits => 'Git 承诺';
+
+  @override
+  String get gitUiParents => '父提交';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '$arg0父母';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => '装入更多承诺';
+
+  @override
+  String get gitUiLoadingChangedFiles => '正在装入已更改的文件';
+
+  @override
+  String get gitUiNoChangedFiles => '没有更改文件';
+
+  @override
+  String get gitUiSelectACommit => '选择一项承诺';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return '比较父母 $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => '更改的文件';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return '作者: $arg0 < $arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return '提交者:$arg0 < $arg1 > $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      '浅色/ 部分边界: 父对象不可用 。';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      '父权在此页面外, 或浅边界外 。';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return '父提交 $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => '提交动作...';
+
+  @override
+  String get gitUiEmptyTree => '空树';
+
+  @override
+  String get gitUiCreateBranch2 => '创建分支';
+
+  @override
+  String get gitUiCreateTag => '创建标签';
+
+  @override
+  String get gitUiCompareRevisions => '比较修改';
+
+  @override
+  String get gitUiOpenSnapshot => '打开快照';
+
+  @override
+  String get gitUiRevertCommit => '还原承诺';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary => '在此边界之后交互式重标';
+
+  @override
+  String get gitUiResetCurrentBranch => '重置当前分支';
+
+  @override
+  String get gitUiCopyFullObjectID => '复制完整的对象 ID';
+
+  @override
+  String get gitUiGoToCommitReference2 => '进行/ 引用';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      '输入要在日志中显示的承付 ID 或引用 。';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable => '请求的修订无法使用 。';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      '仓库元数据只读。 部门检查和比较仍然可用 。';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      '工作文件不可用或只读。 部门切换和合并不可用 。';
+
+  @override
+  String get gitUiSearchBranchesAndTags => '搜索分支和标签';
+
+  @override
+  String get gitUiNewBranch => '新建分支…';
+
+  @override
+  String get gitUiLocalBranches => '本地分支';
+
+  @override
+  String get gitUiRemoteBranches => '远程分支';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return '音轨  $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return '在$arg0检查过';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata => '正在刷新分支元数据';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return '切换到 $arg0';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => '开放已占用的工作树';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch => '创建本地跟踪分支...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => '与当前 HEAD 比较';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch => '合并为当前分支...';
+
+  @override
+  String get gitUiRename => '重命名...';
+
+  @override
+  String get gitUiChangeUpstream => '向上移动...';
+
+  @override
+  String get gitUiDelete => '删除...';
+
+  @override
+  String get gitUiDeleteFromRemote => '从远程删除...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return '$arg0的行动';
+  }
+
+  @override
+  String get gitUiLocalBranchName => '本地分支名称';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return '创建于 $arg0。 新分支将被检查 。';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return '当地分行将追踪$arg0号,并检查完毕。';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => '选择要删除的远程';
+
+  @override
+  String get gitUiDeleteRemoteReference => '删除远程引用';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return '合并号$arg0至$arg1';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return '重命名 $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return '上游$arg0';
+  }
+
+  @override
+  String get gitUiNoUpstream => '无上游分支';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return '删除$arg0?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0\n目标 $arg1\n仅删除本地分支。未合并的分支会被拒绝删除。';
+  }
+
+  @override
+  String get gitUiDelete2 => '删除';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return '删除未合并的分支 $arg0 ?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 Git 报告该分支没有完全合并。 在审查它的承诺后, 明确删除本地引用; 远程副本不变 。';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch => '删除未合并的本地分支';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return '目的地: $arg0 ° $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => '源分支或标记';
+
+  @override
+  String get gitUiMergePolicy => '合并政策';
+
+  @override
+  String get gitUiFastForwardWhenPossible => '可能时快速前进';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit => '总是创建合并承诺';
+
+  @override
+  String get gitUiFastForwardOnly => '仅快速前进';
+
+  @override
+  String get gitUiSquashIntoStagedChanges => '静态到分阶段的更改';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit => '创建合并前停止';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      '已禁用快进，以防 HEAD 在审阅之前移动。';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      '用于单项承诺的请假已逐步更改;这不是持续合并。';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      '在共同的解决方案工作空间中仍然存在冲突。';
+
+  @override
+  String get gitUiAddRemote => '添加远程...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return '获取: $arg0 推: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => '删除远程...';
+
+  @override
+  String get gitUiChangeFetchURL => '更改获取 URL...';
+
+  @override
+  String get gitUiAddPushDestination => '添加推进目标...';
+
+  @override
+  String get gitUiRemovePushDestination => '删除推进目标...';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return '管理 $arg0';
+  }
+
+  @override
+  String get gitUiRemoteName => '远程名称';
+
+  @override
+  String get gitUiNewRemoteName => '新建远程名称';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource => '仓库 URL 或本地来源';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove => '输入要删除的确切审查对象 。';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      '证书由配置的助手或私人提示提供 。';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return '移除远程 $arg0?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      '删除本地远程配置和跟踪引用。 它不删除服务器仓库 。';
+
+  @override
+  String get gitUiRemoveRemote2 => '删除远程';
+
+  @override
+  String get gitUiCommitScopeEntireRepository => '提交范围: 整个仓库';
+
+  @override
+  String get gitUiCachedTracking => '缓存跟踪';
+
+  @override
+  String get gitUiAmendLastCommit => '修改上次提交';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected => '配置钩和签名受到尊重。';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      '重写选中的 HEAD 提交。远程跟踪信息无法证明它尚未发布。';
+
+  @override
+  String get gitUiRepository => '仓库';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return '已破旧的 $arg0';
+  }
+
+  @override
+  String get gitUiLog => '日志';
+
+  @override
+  String get gitUiRepositoryActions => '仓库操作';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '缓存的跟踪信息 · $upstream · 领先 $ahead · 落后 $behind';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      '无工作树。打开日志检查其历史 。';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      '无法进行只读存储器 / 中继和承付 。';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable => '没有仓库状态';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return '修正 $revision';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => '添加签署确认尾注';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy => '使用已配置的签名策略';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit => '加密签名此项';
+
+  @override
+  String get gitUiDoNotSignThisCommit => '不签署此承诺';
+
+  @override
+  String get gitUiRecentCommitMessages => '最近发送的信件...';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate => '使用已配置的提交模板...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks => '作者身份和配置的钩子...';
+
+  @override
+  String get gitUiDraftMessage => '信件草稿...';
+
+  @override
+  String get gitUiCommitOptions => '提交选项';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return '草稿保留在内存中，但保存失败。$arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => '提交说明';
+
+  @override
+  String get gitUiGitOperationInProgress => '正在运行中';
+
+  @override
+  String get gitUiCancel => '取消';
+
+  @override
+  String get gitUiAmendStaged => '修订阶段';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return '提交阶段 ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => '提交并推送…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured => '没有配置可读化的承诺模板 。';
+
+  @override
+  String get gitUiCommitIdentityAndHooks => '提交身份和钩子';
+
+  @override
+  String get gitUiRecentMessages => '最近的消息';
+
+  @override
+  String get gitUiReplaceMessageDraft => '替换信件草稿吗 ?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      '用选中的信件替换现有承诺信件吗 ?';
+
+  @override
+  String get gitUiReplaceDraft => '替换草稿';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return '本地提交 $arg0 已存在。';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return '本地承诺 $arg0 存在。 在尝试再次承诺前先查看日志。 信件草稿已被保留 。';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => '提交作者名称';
+
+  @override
+  String get gitUiCommitAuthorEmail => '提交作者电子邮件';
+
+  @override
+  String get gitUiConfiguredDefault => '已配置默认';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return '签署日期:$arg0 和 $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return '配置钩: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      '签署确认尾注是提交说明中的声明，与密码学签名不同。身份信息仅保存到此仓库的本地配置中；草稿会被保留。';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => '保存仓库身份';
+
+  @override
+  String get gitUiStaged => '已暂存';
+
+  @override
+  String get gitUiUntracked => '未跟踪';
+
+  @override
+  String get gitUiUnstaged => '未暂存';
+
+  @override
+  String get gitUiConflicts => '冲突';
+
+  @override
+  String get gitUiNoChanges => '没有更改';
+
+  @override
+  String get gitUiRepositoryChangeTree => '仓库更改树';
+
+  @override
+  String get gitUiChanges => '更改';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => '展开';
+
+  @override
+  String get gitUiCollapse => '折叠';
+
+  @override
+  String get gitUiUnstageFile => '取消暂存文件';
+
+  @override
+  String get gitUiStageFile => '暂存文件';
+
+  @override
+  String get gitUiExpandGroup => '展开组';
+
+  @override
+  String get gitUiCollapseGroup => '折叠组';
+
+  @override
+  String get gitUiReviewDifference => '审查差异';
+
+  @override
+  String get gitUiUnstageSelectedFiles => '取消暂存所选文件';
+
+  @override
+  String get gitUiStageSelectedFiles => '暂存所选文件';
+
+  @override
+  String get gitUiFileHistoryAndBlame => '文件历史和责备...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => '删除未跟踪的文件...';
+
+  @override
+  String get gitUiDiscardUnstagedChange => '丢弃未显示的更改...';
+
+  @override
+  String get gitUiFileHistory => '文件历史';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return '丢弃未显示的 $arg0?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 字节 · $arg1\n使用索引内容替换工作文件，或删除此未跟踪文件。暂存内容保持不变。必须先检查应用中未保存的文档。';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => '删除未跟踪的文件';
+
+  @override
+  String get gitUiDiscardWorkingChange => '丢弃工作变更';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return '删除REMOTE参考文献 $arg0';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      '这将删除下面列出的每个实际推进目标的引用。 保留本地分支/ 标签。 本次审查将固定预期提示 。';
+
+  @override
+  String get gitUiReferenceDoesNotExist => '不存在引用';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0\n预期顶端：$arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => '远程删除完成 。';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return '从遥控器中删除$arg0?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      '上面显示的确切目标提示将被删除。 任何已更改的远程提示都会停止操作, 以便再次审查 。';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote => '从远程审查并删除...';
+
+  @override
+  String get gitUiDestinationReference => '目标参考';
+
+  @override
+  String get gitUiReviewDestinations => '审查目的地';
+
+  @override
+  String get gitUiNewRemoteBranch => '新建远程分支';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · 预期：$arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      '目的地已承诺本地无法使用 。 在检查即将离开的历史前先获取已审查的目的地 。';
+
+  @override
+  String get gitUiFetchReviewedDestination => '获取已审查的目标';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      '选择目的地并审查即将退出的承诺 。';
+
+  @override
+  String get gitUiNoOutgoingCommits => '没有退出承诺';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => '选择一个即将退出的承诺';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits => '装入更多已发送承诺';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream => '将此目的地设为上游';
+
+  @override
+  String get gitUiChooseExactTagsToPublish => '选择要发布的确切标签';
+
+  @override
+  String get gitUiTagsNone => '标记:无';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return '标记: 选中 $arg0';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return '准确发布: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      '推进完成。 本地承诺仍然在日志中 。';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      '强制推送要求目标引用的顶端与本次审查显示的值完全一致。';
+
+  @override
+  String get gitUiForceWithReviewedLease => '强制使用经审核的租赁...';
+
+  @override
+  String get gitUiPush => '推送';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases => '强制推进经过审查的租赁?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return '只有当每个遥远的目的地仍然拥有上面显示的确切提示时,才重写 $arg0 。\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      '其他人可能已经在使用这些历史。后台获取不会更新本次租约保护条件。';
+
+  @override
+  String get gitUiForceWithLease => '租赁';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      '远程结果不确定。 在再次推动之前再次审查目的地 。';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return '父 $arg0 $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => '远程获取';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches => 'Prune 删除远程跟踪分支';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      '在不替换工作文件的情况下获取远程跟踪信息更新 。';
+
+  @override
+  String get gitUiFetch => '获取';
+
+  @override
+  String get gitUiSourceRemote => '来源远程';
+
+  @override
+  String get gitUiSourceBranch => '源代码分支';
+
+  @override
+  String get gitUiReviewedStrategy => '审查的战略';
+
+  @override
+  String get gitUiMerge => '合并';
+
+  @override
+  String get gitUiRebase => '变基';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      '如果目的地不能快速前进, 则停止; 永远不要合并或重置 。';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      '与合并承诺合并,包括当有可能快速前进时。';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible => '合并; 允许在可能情况下快速前进 。';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      '重设本地历史, 保留本地合并承诺 。';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory => '重设本地承诺为线性历史 。';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git 被配置为交互式重置。 在此选择明确的拉动策略, 或者获取并打开 Rebase... 来审查一个计划 。';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull => '使用经过审查的普通重标进行此拉';
+
+  @override
+  String get gitUiOptions => '选项';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward => '总是创建合并承诺( 不快速前进)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits => '保存本地合并承诺';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      '本地更改可能阻止拉动。 检查/ 承诺它们或明确创建隐藏 。';
+
+  @override
+  String get gitUiStashes => '贮藏';
+
+  @override
+  String get gitUiCreateOrReviewStash => '创建或审查隐藏...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy => '以选定的策略拉动';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource => '仓库 URL 或本地 Git 源';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS、 SSH 或本地路径';
+
+  @override
+  String get gitUiFolderToInitialize => '初始化文件夹';
+
+  @override
+  String get gitUiFinalCloneDestination => '最终克隆目标';
+
+  @override
+  String get gitUiChoose => '选择...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      '仅创建 Git 元数据。 现有文件没有进行编程或承诺 。';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      '最终目标必须不存在或为空。绝不会覆盖已有的用户数据。';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      '· 空白使用有效的 Git 政策';
+
+  @override
+  String get gitUiSelectedBranchOptional => '选定分支 □ 可选';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      '循环明确初始化/更新子模块';
+
+  @override
+  String get gitUiPreparingGitOperation => '准备 Git 操作...';
+
+  @override
+  String get gitUiThisAttemptCreated => '这种尝试创造了';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt => '在这次尝试之前,目的地已经存在:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      '目录还在检查中,在再次复制之前再检查一下';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains => '没有目标目录 。';
+
+  @override
+  String get gitUiCancelProcess => '取消进程';
+
+  @override
+  String get gitUiInitialize => '初始化';
+
+  @override
+  String get gitUiClone => '克隆';
+
+  @override
+  String get gitUiChooseNewBase => '选择新基底';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => '选择上游边界';
+
+  @override
+  String get gitUiNewBase => '新基底';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => '上游边界 · 不包含';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => '与上游边界相同';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => '选择分支、标签或提交…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase => '将上游用作新的基地';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      '从日志中选择一个有效的分支、标记或承诺 。';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      '分支块中第一个保留的提交不能设为 squash 或 fixup，因为它前面没有可合并的目标提交。';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return '分队区块 $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage => '[改写后将要求发出新电\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => '计划承诺信息';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      '原始/ 合并信件预览';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return '结果$arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return '当前分支: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => '分离的 HEAD';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      '变基会重写提交的标识。远程跟踪信息无法证明这些历史从未被发布。';
+
+  @override
+  String get gitUiIncludeRootCommits => '包含根提交';
+
+  @override
+  String get gitUiMergeCommits => '合并承诺';
+
+  @override
+  String get gitUiFlattenHistory => '线性化历史';
+
+  @override
+  String get gitUiPreserveBranchStructure => '保留分支结构';
+
+  @override
+  String get gitUiAutosquash => '自动压缩合并';
+
+  @override
+  String get gitUiPrepareGitPlan => '准备 Git 计划';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return '承诺重播: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      '包括从此分支可以达到的所有 root 。';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return '将把 $boundary 之后的提交重放到 $base 上；不包含边界提交本身。';
+  }
+
+  @override
+  String get gitUiRoot => '根数';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure => 'Git 分支/ 标签/ 重置/ 合并结构';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      '选择明确的旧边界或根模式, 然后制定计划 。';
+
+  @override
+  String get gitUiMoveUp => '上移';
+
+  @override
+  String get gitUiMoveDown => '下移';
+
+  @override
+  String get gitUiResetPlan => '重置计划';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · 分支区块 $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles => '选择详细信息的承诺和已更改的文件';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages => '预览合并信件...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt/  移动选中的承诺。 无关的分支引用不会自动更新 。';
+
+  @override
+  String get gitUiCancelPlan => '取消计划';
+
+  @override
+  String get gitUiStartReviewedRebase => '开始重设基准?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return '计划于$arg1年重写$arg0,被放弃的承诺在开始之前仍明显可见。';
+  }
+
+  @override
+  String get gitUiStartRebase => '开始变基';
+
+  @override
+  String get gitUiNoContinuingGitOperation => '没有持续 Git 操作';
+
+  @override
+  String get gitUiStoppedForEditingAmend => ' · 停止编辑/修正';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      '这些是未合并的索引条目, 可能来自隐藏应用程序。 Git 没有隐藏继续或中止命令 。';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      '编辑工作文件, 阶段和修正当前承诺, 然后继续重标 。';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · 未合并的暂存阶段 $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries => '该索引没有未解决的条目 。';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => '将当前承诺保留为空承诺';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      '真实索引没有分阶段的更改。 创建一个明确的空承诺, 如果仍然活跃, 则继续排序 。';
+
+  @override
+  String get gitUiKeepEmptyCommit => '保持空承诺...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git 会尝试回到操作开始时的状态，但无法保证恢复操作前已有的未暂存、未跟踪或未保存内容。';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      '跳过当前承诺, 继续下一个计划的承诺 。';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      '忘记此操作的簿记, 同时保留当前文件和索引 。';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return '继续$arg0';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions => '重新装入冲突版本 ?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      '将未保存结果草稿替换为当前工作文件。 保存的工作内容将予保留 。';
+
+  @override
+  String get gitUiLoadingConflictVersions => '正在装入冲突版本...';
+
+  @override
+  String get gitUiLoadingConflict => '正在装入冲突';
+
+  @override
+  String get gitUiBaseLeft => '基地 左转';
+
+  @override
+  String get gitUiBaseRight => '基数  右';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict => '此冲突无基条目';
+
+  @override
+  String get gitUiAcceptEntireLeftFile => '接受整个左侧文件...';
+
+  @override
+  String get gitUiAcceptEntireRightFile => '接受整个右侧文件...';
+
+  @override
+  String get gitUiPreviousConflictRegion => '先前的冲突地区';
+
+  @override
+  String get gitUiNextConflictRegion => '下一个冲突地区';
+
+  @override
+  String get gitUiManualResolution => '人工解析';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '地区 $arg0/$arg1 X XX $arg2 检查';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      '源对齐超过了文本比较限制;源板仍然可供手工审查。';
+
+  @override
+  String get gitUiAcceptLeftRegion => '接受左区域';
+
+  @override
+  String get gitUiAcceptRightRegion => '接受正确的区域';
+
+  @override
+  String get gitUiKeepManualResultForRegion => '保持区域手工结果';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges => '应用 Git 的非冲突性变化吗 ?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      '将当前结果草稿替换为 Git 合并预览。 此丢弃未保存的手动结果编辑; 工作文件在保存前保持不变 。';
+
+  @override
+  String get gitUiUseMergePreview => '使用合并预览';
+
+  @override
+  String get gitUiApplyNonConflictingChanges => '应用非冲突更改...';
+
+  @override
+  String get gitUiLeftSource => '左侧来源';
+
+  @override
+  String get gitUiResult => '结果';
+
+  @override
+  String get gitUiRightSource => '正确来源';
+
+  @override
+  String get gitUiStage2 => '第2阶段';
+
+  @override
+  String get gitUiStage3 => '第3阶段';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      '没有冲突版本。 刷新以审查当前状态 。';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      '结果已保存到磁盘。 索引仍然决定此文件是否已经解决 。';
+
+  @override
+  String get gitUiSaveResultDraft => '保存结果草稿';
+
+  @override
+  String get gitUiApplyResultAndStageResolution => '应用结果并暂存解决方案';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent => '· 可编辑的 UTF-8 工作内容';
+
+  @override
+  String get gitUiEditableConflictResult => '可编辑的冲突结果';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '左侧：$arg0 · $arg1\n右侧：$arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      '选择内容、 删除或子模块明确承诺。 没有二进制数据被解码为可编辑文本 。';
+
+  @override
+  String get gitUiUseEntireLeftContent => '使用全部左侧内容...';
+
+  @override
+  String get gitUiUseEntireRightContent => '使用全部右侧内容...';
+
+  @override
+  String get gitUiDeleteThisPath => '删除此路径...';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit => '已解析子模块承诺';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      '在父体中弹出精确的 gitlink 。 这不会检查或执行子模块 。';
+
+  @override
+  String get gitUiSetResolvedGitlink => '设定解析 gitlink...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return '基底   $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      '结果是经过编辑的。 保留手动结果或选择其它未变区域 。';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return '应用“$arg0”解决方案？';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      '阶段 所选 gitlink 承诺在母体中。 子模块检查及其文件不被替换 。';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return '替换整个工作路径 $arg0, 并分阶段作出决定。 当前的工作内容和任何未保存的结果草稿将被丢弃 。';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision => '应用整个文件决定';
+
+  @override
+  String get gitUiStageThisConflictResolution => '分阶段解决冲突?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return '使用整个编辑结果为 $arg0。 Git 记录了预设时的解析路径。 首先审查所有预定内容 $arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => '应用并暂存';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges => '审查结果文本格式更改';
+
+  @override
+  String get gitUiSaveReviewedResult => '保存已审查的结果';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      '无法访问本地的 Git 表格。 在重新连接应用程序后重试 。';
+
+  @override
+  String get gitUiSans => '孙子';
+
+  @override
+  String get gitUiSelect => '选择';
+
+  @override
+  String get gitUiContextMenu => '上下文菜单';
+
+  @override
+  String get gitUiCopyText => '复制文本';
+
+  @override
+  String get gitUiLoadingRow => '正在装入行';
+
+  @override
+  String get gitUiRetry => '重试';
+
+  @override
+  String get gitUiGitMessage => 'Git 消息 :';
+
+  @override
+  String get gitUiCancelPrompt => '取消提示';
+
+  @override
+  String get gitUiUseMessageAndContinue => '使用信件并继续';
+
+  @override
+  String get gitUiRespondPrivately => '私人答复';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return '无法保存首选项: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return '提交存储草稿: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return '视图偏好无法读取: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return '提交草稿保留在记忆中,但无法保存: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      '经审查的仓库仅用于此操作,历史和内容检查仍然可用。';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git 返回 $arg0。 应用程序无法刷新其文档 :\\\\ $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => '在日志中选择提交…';
+
+  @override
+  String get gitUiCurrentBranch => '当前分支';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      '没有匹配的分支或标记。 在日志中选择一个承诺 。';
+
+  @override
+  String get gitUiBranches => '分支';
+
+  @override
+  String get gitUiPushCommits => '推送提交';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return '拉进 $arg0';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return '解决 $arg0';
+  }
+
+  @override
+  String get gitUiCurrentOperation => '当前业务';
+
+  @override
+  String get gitUiRebaseCommits => '变基提交';
+
+  @override
+  String get gitUiFetch2 => '获取…';
+
+  @override
+  String get gitUiPull => '拉取…';
+
+  @override
+  String get gitUiPush2 => '推送…';
+
+  @override
+  String get gitUiBranches2 => '分支…';
+
+  @override
+  String get gitUiManageRemotes => '管理远程仓库…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return '合并到$arg0...';
+  }
+
+  @override
+  String get gitUiRebase2 => '变基…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation => '冲突与当前操作...';
+
+  @override
+  String get gitUiStashes2 => '贮藏…';
+
+  @override
+  String get gitUiWorktrees => '工作树…';
+
+  @override
+  String get gitUiSubmodules => '子模块…';
+
+  @override
+  String get gitUiReflogAndRecovery => '引用日志与恢复…';
+
+  @override
+  String get gitUiCloneRepository => '克隆仓库…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => '撤销仓库信任';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus => '正在等待仓库状态';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh => '没有仓库状态; 刷新';
+
+  @override
+  String get gitUiManageRemotes2 => '管理远程仓库';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return '合并为$arg0';
+  }
+
+  @override
+  String get gitUiWorktrees2 => '工作树';
+
+  @override
+  String get gitUiSubmodules2 => '子模块';
+
+  @override
+  String get gitUiReflogAndRecovery2 => '引用日志与恢复';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return '克隆库 · $arg0';
+  }
+
+  @override
+  String get gitUiApply => '应用';
+
+  @override
+  String get gitUiResizeGitPanes => '调整 Git 窗帘大小';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0%';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return '退出状态:$status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      '仓库已更改。 重新刷新和审查后再尝试 。';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      '另一个操作持有仓库或索引锁定。 等等, 然后刷新 。';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation => '本次操作需要仓库信任 。';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git 服务断开。 重新连接并调节仓库 。';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      '已安装的 Git 可执行文件无法支持此操作。 请在下面审查运行时间要求 。';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      '此仓库仅用于请求的操作。 仍然可用 。';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      '操作需要调节。 在重复之前先审查生成的仓库或远程状态 。';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git 认证失败。 审查证书助手或解锁配置的密钥环 。';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH 主机验证失败。 通过您配置的 SSH 工具审查主机身份 。';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      '提交签名失败或已取消。 请审查签名密钥、 代理和配置的签名工具 。';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      '设置仓库作者名称和电子邮件, 然后返回到保存的信件草稿 。';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git 拒绝了已审查的更新。 刷新并审查实际目的地, 然后再尝试 。';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      '工作或分阶段的修改阻止了这一操作。 审查、 承诺或明确隐藏这些操作 。';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      '所需的 Git 对象不可用。 检查浅处或部分仓库的边界, 必要时可以明确获取 。';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Git 操作失败: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => '诊断';
+
+  @override
+  String get gitUiAuthorizeGitInspection => '授权 Git 检查...';
+
+  @override
+  String get gitUiCopyDiagnostics => '复制诊断';
+
+  @override
+  String get gitUiActions => '操作';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return '分公司,$arg0';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut => '创建本地分支而不检查 。';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return '标记  $arg0';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return '仅读快照 · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => '樱桃选手承诺';
+
+  @override
+  String get gitUiRevertCommits => '还原承诺';
+
+  @override
+  String get gitUiCompareToFullRevisionID => '与完整修订版ID比较';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return '树比较方向：$arg0 → 此处输入的修订版本。';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID => '输入完整有效的对象 ID 。';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 $arg1 树对比';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return '重置$arg0至$arg1';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      '移动 HEAD/当前分支。reflog 无法恢复任意未跟踪或未保存的内容。';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles => '移动 HEAD，保留暂存区和工作文件。';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      '移动 HEAD 并替换暂存区，保留工作文件。';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      '替换 HEAD、暂存区和已跟踪的工作文件；可能覆盖妨碍操作的未跟踪文件。';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      '替换 HEAD、暂存区及符合条件的文件；若会丢失本地更改则拒绝操作。';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return '重置为$arg0?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '+$arg0  $arg1 在应用前先审查选中模式的效果 。';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return '重置 $arg0';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return '目标 $arg0';
+  }
+
+  @override
+  String get gitUiTagName => '标签名称';
+
+  @override
+  String get gitUiAnnotatedTag => '附注标签';
+
+  @override
+  String get gitUiCryptographicSigning => '密码学签名';
+
+  @override
+  String get gitUiConfiguredPolicy => '配置策略';
+
+  @override
+  String get gitUiSignThisTag => '签名此标记';
+
+  @override
+  String get gitUiDoNotSign => '不要签名';
+
+  @override
+  String get gitUiTagMessage => '标记消息';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      '本地创建标记。 在 Push 审评中明确发布选中的标记 。';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return '整棵树: $arg0 $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => '下一个已更改的文件页';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      '只读仓库快照。 打开文件时从未检查此版本 。';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => '打开只读版本';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus => '正在等待仓库状态';
+
+  @override
+  String get gitUiRestoreThisPath => '恢复这条路径...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return '历史 · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return '恢复 $arg0吗?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return '将此工作路径替换为订正版 $arg0。 保留现有分阶段内容。';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => '恢复工作文件';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return '文件历史跟随重命名 □  $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => '逐行追溯 · 已提交内容';
+
+  @override
+  String get gitUiBlame => '逐行追溯…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0  工作树';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile => '打开只读历史文件';
+
+  @override
+  String get gitUiCompareToCurrentFile => '与当前文件比较';
+
+  @override
+  String get gitUiCompareToParent => '与父性比较...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return '已提交 $arg0 · 编辑器中未保存的内容不包含在这些注解中';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return '来源于 $arg0 的历史';
+  }
+
+  @override
+  String get gitUiBoundary => ' · 边界';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\n原始行 $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => '前一行';
+
+  @override
+  String get gitUiNextLines => '下一行';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return '明确应用命令 o 目的地 $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => '添加全部任务对象编号';
+
+  @override
+  String get gitUiAddReviewedCommit => '添加已审查的承诺...';
+
+  @override
+  String get gitUiMoveEarlier => '稍早移动';
+
+  @override
+  String get gitUiMoveLater => '稍后移动';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence => '从已审查的序列中删除';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits => '应用更改而不创建承诺';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      '使用此明确的主行父母来合并承诺';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      '空的或已经应用的承诺可以阻止Git作出明确的跳过或继续决定。';
+
+  @override
+  String get gitUiRevertInReviewedOrder => '按审查顺序还原';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder => '樱桃选手按顺序排列';
+
+  @override
+  String get gitUiReturnToFiles => '返回到文件';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => '提交';
+
+  @override
+  String get gitUiBackToCommit => '返回提交';
+
+  @override
+  String get gitUiSelectAChangeToReview => '选择要审查的修改';
+
+  @override
+  String get gitUiLoadingBranch => '正在装入分支...';
+
+  @override
+  String get gitUiBranchUnavailable => '分机无法使用';
+
+  @override
+  String get gitUiUnbornHEAD => '尚无提交的 HEAD';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return '分离的 HEAD · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => '继续';
+
+  @override
+  String get gitUiPick => '选取';
+
+  @override
+  String get gitUiReword => '修改说明';
+
+  @override
+  String get gitUiEdit => '编辑';
+
+  @override
+  String get gitUiSquash => '压缩合并';
+
+  @override
+  String get gitUiFixup => '丢弃说明并合并';
+
+  @override
+  String get gitUiDrop => '丢弃';
+
+  @override
+  String get gitUiAbort => '中止';
+
+  @override
+  String get gitUiSkip => '跳过';
+
+  @override
+  String get gitUiQuit => '退出操作';
+
+  @override
+  String get gitUiSoft => '软重置';
+
+  @override
+  String get gitUiMixed => '混合重置';
+
+  @override
+  String get gitUiHard => '硬重置';
+
+  @override
+  String get gitUiKeep => '保留更改';
+
+  @override
+  String get gitUiCreate => '创建';
+
+  @override
+  String get gitUiApplyStash => '应用贮藏';
+
+  @override
+  String get gitUiPopStash => '应用贮藏并在成功时删除';
+
+  @override
+  String get gitUiDropStashAction => '删除贮藏';
+
+  @override
+  String get gitUiEditedResult => '已编辑结果';
+
+  @override
+  String get gitUiLeftContent => '左侧内容';
+
+  @override
+  String get gitUiRightContent => '正确内容';
+
+  @override
+  String get gitUiDeletePath => '删除路径';
+
+  @override
+  String get gitUiSubmoduleCommit => '子模块承诺';
+
+  @override
+  String get gitUiPresentContent => '可用内容';
+
+  @override
+  String get gitUiAbsentContent => '缺席';
+
+  @override
+  String get gitUiBinaryContent => '二进制内容';
+
+  @override
+  String get gitUiTooLargeContent => '内容超过显示限制';
+
+  @override
+  String get gitUiUnavailableContent => '无内容';
+
+  @override
+  String get gitUiGitlinkContent => '子模块指针器';
+
+  @override
+  String get gitUiSymlinkContent => '符号链接';
+
+  @override
+  String get gitUiNoOperation => '无操作';
+
+  @override
+  String get gitUiCherryPickOperation => '拣选提交';
+
+  @override
+  String get gitUiRevertOperation => '还原提交';
+
+  @override
+  String get gitUiApplyMailboxOperation => '应用补丁';
+
+  @override
+  String get gitUiSquashOperation => 'Squash 合并';
+
+  @override
+  String get gitUiUnmergedOperation => '未合并索引';
+
+  @override
+  String get gitUiWaitingForPromptPhase => '等待你的回应';
+
+  @override
+  String get gitUiStoppedPhase => '停止审查';
+
+  @override
+  String get gitUiCompletedPhase => '已完成';
+
+  @override
+  String get gitUiFailedPhase => '失败';
+
+  @override
+  String get gitUiCancelledPhase => '已取消';
+
+  @override
+  String get gitUiUncertainPhase => '成果需要调节';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return '冲突阶段 $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Git 合并预览';
+
+  @override
+  String get gitUiNormalizedWorking => '工作树  正常';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value%';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF-8 带有字节顺序标记 (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF-8 无字节顺序标记 (BOM)';
+
+  @override
+  String get gitUiAddsBom => '此编辑在文件开头添加 UTF-8 字节顺序标记( BOM ) 。';
+
+  @override
+  String get gitUiRemovesBom => '此编辑从文件开头删除 UTF-8 字节顺序标记( BOM ) 。';
+
+  @override
+  String get gitUiNoLineTerminators => '没有线条终止器';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return '$format 换行符';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return '混合线端 ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format □ 无最终的LF';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return '行结束符格式将从 $before 改为 $after。剪贴板中的文本可能使用与原文件不同的行结束符。';
+  }
+
+  @override
+  String get gitUiGitFailure => 'Git 操作失败。 请检查下面的诊断 。';
+
+  @override
+  String get gitUiAbortInline => '中止';
+
+  @override
+  String get gitUiSkipInline => '跳过';
+
+  @override
+  String get gitUiQuitInline => '退出';
+
+  @override
+  String get gitUiMergeInline => '合并';
+
+  @override
+  String get gitUiRebaseInline => '变基';
+
+  @override
+  String get gitUiCherryPickInline => '拣选提交';
+
+  @override
+  String get gitUiRevertInline => '还原提交';
+
+  @override
+  String get gitUiApplyMailboxInline => '应用邮件框';
+
+  @override
+  String get gitUiSquashInline => '压缩合并';
+
+  @override
+  String get gitUiUnmergedInline => '未合并';
+
+  @override
+  String get gitHostFetch => '获取';
+
+  @override
+  String get gitHostRefreshGitStatus => '刷新 Git 状态';
+
+  @override
+  String get gitHostCommitStaged => '提交阶段';
+
+  @override
+  String get gitHostGitBranches => 'Git 分支';
+
+  @override
+  String get gitHostReviewPush => '审查推力';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git 操作适用于整个仓库, 并可以执行配置的钩子、 过滤器、 证书和签名工具 。';
+
+  @override
+  String get gitHostContentUnavailable => '无内容';
+
+  @override
+  String get gitHostInitializeRepository => '初始化存储库';
+
+  @override
+  String get gitHostCloneRepository => '克隆仓库';
+
+  @override
+  String get gitHostInitializeHere => '在此初始化...';
+
+  @override
+  String get gitHostCloneRepository2 => '克隆仓库…';
+
+  @override
+  String get gitHostGitLog => 'Git 日志';
+
+  @override
+  String get gitUiAbsentPlaceholder => '(缺席)';
+
+  @override
+  String get gitUiUnborn => '未出生婴儿';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return '已变基的历史 · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return '当前历史 · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return '正在重放的提交 · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return '传入的内容 · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => '内容冲突';
+
+  @override
+  String get gitUiSubmoduleConflict => '子模块冲突';
+
+  @override
+  String get gitUiSymlinkConflict => '符号链接冲突';
+
+  @override
+  String get gitUiAddAddConflict => '双方均加';
+
+  @override
+  String get gitUiModifyDeleteConflict => '修改/删除或重新命名/删除';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path $kind';
+  }
 }

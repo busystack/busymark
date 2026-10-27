@@ -5723,4 +5723,2745 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       '이 파일 이름에는 UTF-8이 아닌 바이트가 있습니다. Git 검토와 스테이징은 사용할 수 있지만 문서 편집기에는 UTF-8 파일 이름이 필요합니다.';
+
+  @override
+  String get gitUiMergeInProgress => '병합 진행 중';
+
+  @override
+  String get gitUiRebaseInProgress => '리베이스 진행 중';
+
+  @override
+  String get gitUiCherryPickInProgress => '체리픽 진행 중';
+
+  @override
+  String get gitUiRevertInProgress => '되돌리기 진행 중';
+
+  @override
+  String get gitUiPatchApplicationInProgress => '패치 적용 중';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit => '스쿼시 병합 결과가 커밋을 기다리고 있습니다';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts => '인덱스에 해결되지 않은 충돌이 있습니다';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · 해결되지 않은 충돌';
+
+  @override
+  String get gitUiReviewOperation => '작업 검토';
+
+  @override
+  String get gitUiRefresh => '새로 고침';
+
+  @override
+  String get gitUiCreateNamedStash => '이름 있는 스태시 만들기';
+
+  @override
+  String get gitUiCreateStash => '스태시 생성…';
+
+  @override
+  String get gitUiNoStashes => '스태시 없음';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges => '변경 내용을 확인할 스태시를 선택하세요';
+
+  @override
+  String get gitUiStashedUntrackedFiles => '스태시에 저장된 추적되지 않는 파일';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles => '스태시의 추적되지 않는 파일 검토…';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      '적용할 때 스태시의 스테이징 및 인덱스 상태도 복원';
+
+  @override
+  String get gitUiApplyAndRetain => '적용 후 유지';
+
+  @override
+  String get gitUiPop => '적용 후 삭제…';
+
+  @override
+  String get gitUiCreateBranch => '브랜치 생성…';
+
+  @override
+  String get gitUiDropStash => '스태시 삭제…';
+
+  @override
+  String get gitUiBranchFromStash => '스태시에서 브랜치 생성';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      '스태시의 원래 기준점에 브랜치를 만들고 전환한 다음 적용합니다. 원래 스태시는 나중에 명시적으로 삭제할 때까지 유지됩니다.';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '이 스태시를 $arg0하시겠습니까?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      '적용 중 충돌이 발생하면 원래 스태시가 유지됩니다.';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      '이 스태시 항목을 삭제합니다. 변경 내용은 적용되지 않습니다.';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      '병합되지 않은 파일을 해결하세요. Git에는 stash 계속 또는 중단 명령이 없으며 원래 스태시는 남아 있습니다.';
+
+  @override
+  String get gitUiStashNameMessage => '스태시 이름/메시지';
+
+  @override
+  String get gitUiStashContentAndResultingIndex => '스태시에 저장할 내용 및 결과 인덱스';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      '추적 중인 작업 변경 및 스테이징된 변경 저장';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      '변경을 스태시하고 스테이징된 변경은 그대로 유지 (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged => '스테이징된 변경만 스태시 (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => '추적되지 않는 파일 포함';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository => '이 저장소의 모든 대상 경로';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      '이 스태시 옵션에 해당하는 변경 내용이 없습니다.';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath => '대상 경로를 하나 이상 선택하세요.';
+
+  @override
+  String get gitUiCreateStash2 => '스태시 생성';
+
+  @override
+  String get gitUiCreateWorktree => '워크트리 만들기…';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'HEAD에 워크트리를 만들기 전에 커밋하세요.';
+
+  @override
+  String get gitUiDetachedHEAD => '분리된 HEAD';
+
+  @override
+  String get gitUiCurrent => '현재 · ';
+
+  @override
+  String get gitUiLocked => '잠김 · ';
+
+  @override
+  String get gitUiOpenInBusyStack => 'BusyStack에서 열림 · ';
+
+  @override
+  String get gitUiStatusNotInspected => '상태를 확인하지 않았습니다';
+
+  @override
+  String get gitUiDirty => '변경 있음';
+
+  @override
+  String get gitUiClean => '변경 없음';
+
+  @override
+  String get gitUiOpenWorkingFolder => '작업 폴더 열기';
+
+  @override
+  String get gitUiMoveWorktree => '워크트리 이동…';
+
+  @override
+  String get gitUiUnlock => '잠금 해제';
+
+  @override
+  String get gitUiLock => '잠금';
+
+  @override
+  String get gitUiRemoveCleanWorktree => '변경 없는 워크트리 제거…';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges => '로컬 변경을 포함한 제거 검토…';
+
+  @override
+  String get gitUiNewWorktreeFolderName => '새 워크트리 폴더 이름';
+
+  @override
+  String get gitUiNewWorktreeBranch => '새 워크트리 브랜치';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg2($arg3)에 새 로컬 브랜치를 만들고 $arg0/$arg1을 만듭니다.';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => '대상 폴더 이름';
+
+  @override
+  String get gitUiRemoveWorktree => '워크트리를 제거하시겠습니까?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      '이 워크트리의 추적 중이거나 추적되지 않는 모든 로컬 변경을 명시적으로 버립니다. 잠겼거나 사용 중인 워크트리는 계속 보호됩니다.';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      '로컬 변경, 추적되지 않는 파일 또는 잠금이 있으면 Git이 제거를 거부합니다.';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove => '로컬 워크트리 내용을 버리고 제거';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => '변경 없는 워크트리 제거';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      '업데이트/동기화할 때 중첩 서브모듈도 명시적으로 재귀 처리';
+
+  @override
+  String get gitUiNoRecordedSubmodules => '기록된 서브모듈 없음';
+
+  @override
+  String get gitUiNotInitialized => '초기화되지 않음';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return '상위 gitlink: $arg0\n체크아웃: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => '중첩 저장소에 변경 있음';
+
+  @override
+  String get gitUiCleanNestedRepository => '중첩 저장소에 변경 없음';
+
+  @override
+  String get gitUiNestedStatusUnavailable => '중첩 상태를 확인할 수 없습니다';
+
+  @override
+  String get gitUiEnterNestedRepository => '중첩 저장소 열기';
+
+  @override
+  String get gitUiInitializeConfiguration => '구성 초기화';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit => '상위에 기록된 커밋으로 업데이트…';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch => '구성된 원격 브랜치 따르기…';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs => '구성된 URL 동기화…';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      '현재 서브모듈 포인터를 상위에서 스테이징';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      '상위와 서브모듈의 커밋, 푸시 및 변경 상태는 각각 독립적입니다. 탐색만으로 초기화하거나 업데이트하지 않습니다.';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return '구성된 원격 브랜치의 커밋을 가져와 체크아웃합니다. 상위에 기록된 gitlink와 다릅니다. 재귀: $arg0.';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return '필요하면 초기화하고 정확히 $arg0을 체크아웃합니다. 재귀: $arg1.';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return '검토한 서브모듈 구성 작업을 적용합니다. 재귀: $arg0.';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => '서브모듈 작업 적용';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      '기록된 리비전을 확인하거나 복구 브랜치를 만듭니다. reflog는 임의의 저장되지 않았거나 추적되지 않는 내용을 복구하지 못합니다.';
+
+  @override
+  String get gitUiSelectAReflogEntry => 'reflog 항목 선택';
+
+  @override
+  String get gitUiPreviousPage => '이전 페이지';
+
+  @override
+  String get gitUiNextPage => '다음 페이지';
+
+  @override
+  String get gitUiRecoveryBranchName => '복구 브랜치 이름';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return '$arg0에 브랜치를 만듭니다. 작업 파일과 현재 브랜치는 변경되지 않습니다.';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => '복구 브랜치 만들기…';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot => '읽기 전용 복구 스냅샷';
+
+  @override
+  String get gitUiInspectSnapshot => '스냅샷 검토…';
+
+  @override
+  String get gitUiReviewReset => '재설정 검토…';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return '$arg0 페이지';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Git 텍스트 기록에는 자체 편집 필드가 필요합니다.';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree => '편집 HEAD | 인덱스 | 작업 트리…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      '검토한 인덱스 또는 작업 내용이 변경되었습니다. 스테이징하기 전에 비교를 새로 고치세요.';
+
+  @override
+  String get gitUiRefreshComparison => '비교 새로 고침';
+
+  @override
+  String get gitUiPreviousChangedFile => '이전 변경 파일';
+
+  @override
+  String get gitUiNextChangedFile => '다음 변경 파일';
+
+  @override
+  String get gitUiPreviousDifference => '이전 차이';
+
+  @override
+  String get gitUiNextDifference => '다음 차이';
+
+  @override
+  String get gitUiComparisonMode => '비교 모드';
+
+  @override
+  String get gitUiSideBySide => '나란히 보기';
+
+  @override
+  String get gitUiUnified => '통합 보기';
+
+  @override
+  String get gitUiDiffDisplayOptions => '차이 표시 옵션';
+
+  @override
+  String get gitUiWrap => '줄 바꿈';
+
+  @override
+  String get gitUiWords => '단어';
+
+  @override
+  String get gitUiCollapseContext => '변경 없는 문맥 접기';
+
+  @override
+  String get gitUiIgnoreWhitespace => '공백 무시';
+
+  @override
+  String get gitUiSearchComparison => '비교 내용 검색';
+
+  @override
+  String get gitUiSearch => '검색';
+
+  @override
+  String get gitUiCloseSearch => '검색 닫기';
+
+  @override
+  String get gitUiStagingActions => '스테이징 작업';
+
+  @override
+  String get gitUiStagingActions2 => '스테이징 작업…';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines => '선택한 변경 줄 스테이징 해제';
+
+  @override
+  String get gitUiStageSelectedChangedLines => '선택한 변경 줄 스테이징';
+
+  @override
+  String get gitUiUnstageWholeFile => '파일 전체 스테이징 해제';
+
+  @override
+  String get gitUiStageWholeFile => '파일 전체 스테이징';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '공백만 변경된 $arg0개 행 숨김 · 정확한 변경 표시';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '변경된 $arg0개 행 선택 · 표시 설정은 스테이징되는 바이트를 바꾸지 않습니다.';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      '읽기 전용 비교 · 텍스트를 복사하거나 표시 설정을 조정하세요.';
+
+  @override
+  String get gitUiNoFinalNewline => ' · 마지막 줄 바꿈 없음';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 · $arg1 · $arg2바이트$arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      '이 내용은 텍스트로 비교할 수 없습니다.';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      '이 비교는 제한된 텍스트 검토 한도를 초과합니다. 내용이 같다고 판단한 것은 아닙니다.';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical => '비교한 내용이 같습니다.';
+
+  @override
+  String get gitUiUnstage => '스테이징 해제';
+
+  @override
+  String get gitUiStage => '스테이징';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '변경된 행 $arg0';
+  }
+
+  @override
+  String get gitUiContext => '문맥';
+
+  @override
+  String get gitUiExpandUnchangedContext => '변경 없는 문맥 펼치기';
+
+  @override
+  String get gitUiUnstageThisHunk => '이 덩어리 스테이징 해제';
+
+  @override
+  String get gitUiStageThisHunk => '이 덩어리 스테이징';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return '스테이징된 내용 편집 · $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult => '검토한 인덱스 결과를 쓰는 중';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => '인덱스';
+
+  @override
+  String get gitUiWorkingTree => '작업 트리';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => '인덱스 · 편집 가능한 UTF-8 blob';
+
+  @override
+  String get gitUiUndo => '실행 취소';
+
+  @override
+  String get gitUiRedo => '다시 실행';
+
+  @override
+  String get gitUiReloadIndexReview => '인덱스 검토를 다시 불러오시겠습니까?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      '현재 HEAD, 인덱스 및 작업 버전을 다시 불러옵니다. 저장하지 않은 인덱스 편집 초안이 대체됩니다.';
+
+  @override
+  String get gitUiReplaceDraftAndReload => '초안을 대체하고 다시 불러오기';
+
+  @override
+  String get gitUiReloadVersions => '버전 다시 불러오기…';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry => '편집한 결과를 이 인덱스 항목에 쓰기';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      '작업 파일은 디스크에 유지됩니다. 적용하기 전에 편집한 인덱스를 검토하세요.';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges => '인덱스 텍스트 형식 변경 검토';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return '검토한 $arg0의 인덱스 항목만 업데이트합니다.\n\n$arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult => '검토한 인덱스 결과 쓰기';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      '형식 검토 중 편집 결과가 변경되었습니다. 다시 검토하세요.';
+
+  @override
+  String get gitUiSynchronizeScrolling => '스크롤 동기화';
+
+  @override
+  String get gitUiReadOnlyRevisionContent => '읽기 전용 리비전 내용';
+
+  @override
+  String get gitUiEditableIndexContent => '편집 가능한 인덱스 내용';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      '요청한 리비전이 현재 필터 범위 밖에 있습니다. 표시하려면 필터를 재설정하세요.';
+
+  @override
+  String get gitUiFilterLog => '로그 필터';
+
+  @override
+  String get gitUiFilters => '필터…';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return '필터($count)…';
+  }
+
+  @override
+  String get gitUiMessage => '메시지…';
+
+  @override
+  String get gitUiAuthor => '작성자…';
+
+  @override
+  String get gitUiPath => '경로…';
+
+  @override
+  String get gitUiDate => '날짜…';
+
+  @override
+  String get gitUiMessageFilter => '메시지 필터';
+
+  @override
+  String get gitUiAuthorFilter => '작성자 필터';
+
+  @override
+  String get gitUiPathFilter => '경로 필터';
+
+  @override
+  String get gitUiMessage2 => '메시지';
+
+  @override
+  String get gitUiAuthor2 => '작성자';
+
+  @override
+  String get gitUiPath2 => '경로';
+
+  @override
+  String get gitUiDateFilter => '날짜 필터…';
+
+  @override
+  String get gitUiResetFilters => '필터 재설정';
+
+  @override
+  String get gitUiRefreshLog => '로그 새로 고침';
+
+  @override
+  String get gitUiGoToCommitReference => '커밋/참조로 이동…';
+
+  @override
+  String get gitUiBackToHEAD => 'HEAD로 돌아가기';
+
+  @override
+  String get gitUiOrderedCherryPick => '순서 지정 체리픽';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return '체리픽 검토($arg0)…';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions => '선택한 두 리비전 비교…';
+
+  @override
+  String get gitUiToggleBranchesPane => '브랜치 창 표시 전환';
+
+  @override
+  String get gitUiFilterBranchesAndTags => '브랜치 및 태그 필터';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return '커밋 $arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => '커밋 세부 정보…';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return '참조: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => '이 커밋 선택';
+
+  @override
+  String get gitUiBranchOrTag => '브랜치 또는 태그';
+
+  @override
+  String get gitUiAllReferences => '모든 참조';
+
+  @override
+  String get gitUiLocal => '로컬';
+
+  @override
+  String get gitUiRemote => '원격';
+
+  @override
+  String get gitUiTags => '태그';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters => '현재 필터와 일치하는 커밋이 없습니다.';
+
+  @override
+  String get gitUiObjectID => '객체 ID';
+
+  @override
+  String get gitUiSubjectReferences => '제목 / 참조';
+
+  @override
+  String get gitUiDate2 => '날짜';
+
+  @override
+  String get gitUiGitCommits => 'Git 커밋';
+
+  @override
+  String get gitUiParents => '부모 커밋';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '부모 $arg0개';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => '커밋 더 불러오기';
+
+  @override
+  String get gitUiLoadingChangedFiles => '변경 파일을 불러오는 중';
+
+  @override
+  String get gitUiNoChangedFiles => '변경 파일 없음';
+
+  @override
+  String get gitUiSelectACommit => '커밋 선택';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return '부모 $arg0 비교: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => '변경된 파일';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return '작성자: $arg0 <$arg1>\n$arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return '커미터: $arg0 <$arg1>\n$arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      '얕은/부분 저장소 경계: 부모 객체를 사용할 수 없습니다.';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      '부모가 이 페이지 또는 얕은 저장소 경계 밖에 있습니다.';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return '부모 커밋 $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => '커밋 작업…';
+
+  @override
+  String get gitUiEmptyTree => '빈 트리';
+
+  @override
+  String get gitUiCreateBranch2 => '브랜치 생성';
+
+  @override
+  String get gitUiCreateTag => '태그 생성';
+
+  @override
+  String get gitUiCompareRevisions => '리비전 비교';
+
+  @override
+  String get gitUiOpenSnapshot => '스냅샷 열기';
+
+  @override
+  String get gitUiRevertCommit => '커밋 되돌리기';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary => '이 경계 이후 대화형 리베이스';
+
+  @override
+  String get gitUiResetCurrentBranch => '현재 브랜치 재설정';
+
+  @override
+  String get gitUiCopyFullObjectID => '전체 객체 ID 복사';
+
+  @override
+  String get gitUiGoToCommitReference2 => '커밋/참조로 이동';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      '로그에 표시할 커밋 ID 또는 참조를 입력하세요.';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable => '요청한 리비전을 사용할 수 없습니다.';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      '저장소 메타데이터가 읽기 전용입니다. 브랜치 확인과 비교는 사용할 수 있습니다.';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      '작업 파일을 사용할 수 없거나 읽기 전용입니다. 브랜치 전환과 병합을 사용할 수 없습니다.';
+
+  @override
+  String get gitUiSearchBranchesAndTags => '브랜치 및 태그 검색';
+
+  @override
+  String get gitUiNewBranch => '새 브랜치…';
+
+  @override
+  String get gitUiLocalBranches => '로컬 브랜치';
+
+  @override
+  String get gitUiRemoteBranches => '원격 브랜치';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return '추적 대상 $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return '체크아웃 위치 $arg0';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata => '브랜치 메타데이터 새로 고치는 중';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return '$arg0(으)로 전환';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => '사용 중인 워크트리 열기';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch => '로컬 추적 브랜치 만들기…';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => '현재 HEAD와 비교';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch => '현재 브랜치로 병합…';
+
+  @override
+  String get gitUiRename => '이름 바꾸기…';
+
+  @override
+  String get gitUiChangeUpstream => '업스트림 변경…';
+
+  @override
+  String get gitUiDelete => '삭제…';
+
+  @override
+  String get gitUiDeleteFromRemote => '원격에서 삭제…';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return '$arg0 작업';
+  }
+
+  @override
+  String get gitUiLocalBranchName => '로컬 브랜치 이름';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return '$arg0에 만듭니다. 새 브랜치를 체크아웃합니다.';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return '로컬 브랜치가 $arg0을(를) 추적하며 체크아웃됩니다.';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => '삭제할 원격 선택';
+
+  @override
+  String get gitUiDeleteRemoteReference => '원격 참조 삭제';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return '$arg0을(를) $arg1(으)로 병합';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return '$arg0 이름 바꾸기';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return '$arg0의 업스트림';
+  }
+
+  @override
+  String get gitUiNoUpstream => '업스트림 없음';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return '$arg0을(를) 삭제하시겠습니까?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0\n대상 $arg1\n로컬에서만 삭제합니다. 병합되지 않은 브랜치는 거부됩니다.';
+  }
+
+  @override
+  String get gitUiDelete2 => '삭제';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return '병합되지 않은 브랜치 $arg0을(를) 삭제하시겠습니까?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0\nGit에 따르면 이 브랜치는 완전히 병합되지 않았습니다. 커밋을 검토한 후 로컬 참조를 명시적으로 삭제하세요. 원격 복사본은 변경되지 않습니다.';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch => '병합되지 않은 로컬 브랜치 삭제';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return '대상: $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => '원본 브랜치 또는 태그';
+
+  @override
+  String get gitUiMergePolicy => '병합 정책';
+
+  @override
+  String get gitUiFastForwardWhenPossible => '가능하면 빨리 감기';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit => '항상 병합 커밋 만들기';
+
+  @override
+  String get gitUiFastForwardOnly => '빨리 감기만';
+
+  @override
+  String get gitUiSquashIntoStagedChanges => '스테이징된 변경으로 스쿼시';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit => '병합 커밋을 만들기 전에 중지';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      '검토 전에 HEAD가 이동하지 않도록 빨리 감기가 비활성화됩니다.';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      '별도로 커밋할 스테이징된 변경을 남깁니다. 계속해야 하는 병합 상태는 아닙니다.';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      '공유 충돌 해결 작업 공간에서 충돌을 확인할 수 있습니다.';
+
+  @override
+  String get gitUiAddRemote => '원격 추가…';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return '가져오기: $arg0\n푸시: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => '원격 제거…';
+
+  @override
+  String get gitUiChangeFetchURL => '가져오기 URL 변경…';
+
+  @override
+  String get gitUiAddPushDestination => '푸시 대상 추가…';
+
+  @override
+  String get gitUiRemovePushDestination => '푸시 대상 제거…';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return '$arg0 관리';
+  }
+
+  @override
+  String get gitUiRemoteName => '원격 이름';
+
+  @override
+  String get gitUiNewRemoteName => '새 원격 이름';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource => '저장소 URL 또는 로컬 원본';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      '제거할 검토된 대상을 정확히 입력하세요.';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      '자격 증명은 구성된 도우미 또는 비공개 프롬프트로 제공됩니다.';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return '원격 $arg0을(를) 제거하시겠습니까?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      '로컬 원격 구성과 추적 참조를 제거합니다. 서버 저장소는 삭제하지 않습니다.';
+
+  @override
+  String get gitUiRemoveRemote2 => '원격 제거';
+
+  @override
+  String get gitUiCommitScopeEntireRepository => '커밋 범위: 전체 저장소';
+
+  @override
+  String get gitUiCachedTracking => '캐시된 추적 정보';
+
+  @override
+  String get gitUiAmendLastCommit => '마지막 커밋 수정';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      '구성된 훅 및 서명 설정을 따릅니다.';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      '선택한 HEAD 커밋을 다시 씁니다. 원격 추적 정보로는 미공개임을 증명할 수 없습니다.';
+
+  @override
+  String get gitUiRepository => '저장소';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return '분리된 $arg0';
+  }
+
+  @override
+  String get gitUiLog => '로그';
+
+  @override
+  String get gitUiRepositoryActions => '저장소 작업';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '캐시된 추적 정보 · $upstream · $ahead개 앞섬 · $behind개 뒤처짐';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      '베어 저장소 · 작업 트리가 없습니다. 기록을 확인하려면 로그를 여세요.';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      '읽기 전용 저장소 · 스테이징과 커밋을 사용할 수 없습니다.';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable => '저장소 상태를 확인할 수 없습니다';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return '$revision 수정';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => '승인 꼬리말 추가';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy => '구성된 서명 정책 사용';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit => '이 커밋에 암호학적 서명 추가';
+
+  @override
+  String get gitUiDoNotSignThisCommit => '이 커밋에 서명하지 않음';
+
+  @override
+  String get gitUiRecentCommitMessages => '최근 커밋 메시지…';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate => '구성된 커밋 템플릿 사용…';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks => '작성자 신원 및 구성된 훅…';
+
+  @override
+  String get gitUiDraftMessage => '메시지 초안 작성…';
+
+  @override
+  String get gitUiCommitOptions => '커밋 옵션';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return '초안이 메모리에 유지됩니다. 저장하지 못했습니다. $arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => '커밋 메시지';
+
+  @override
+  String get gitUiGitOperationInProgress => 'Git 작업 진행 중';
+
+  @override
+  String get gitUiCancel => '취소';
+
+  @override
+  String get gitUiAmendStaged => '스테이징된 내용으로 수정';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return '스테이징된 내용 커밋($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => '커밋 후 푸시…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      '읽을 수 있는 커밋 템플릿이 구성되어 있지 않습니다.';
+
+  @override
+  String get gitUiCommitIdentityAndHooks => '커밋 신원 및 훅';
+
+  @override
+  String get gitUiRecentMessages => '최근 메시지';
+
+  @override
+  String get gitUiReplaceMessageDraft => '메시지 초안을 대체하시겠습니까?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      '현재 커밋 메시지를 선택한 메시지로 바꾸시겠습니까?';
+
+  @override
+  String get gitUiReplaceDraft => '초안 대체';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return '로컬 커밋 $arg0이(가) 있습니다.';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return '로컬 커밋 $arg0이(가) 있습니다. 다시 커밋하기 전에 로그를 검토하세요. 메시지 초안은 유지됩니다.';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => '커밋 작성자 이름';
+
+  @override
+  String get gitUiCommitAuthorEmail => '커밋 작성자 이메일';
+
+  @override
+  String get gitUiConfiguredDefault => '구성된 기본값';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return '서명: $arg0 · $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return '구성된 훅: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      '승인 꼬리말은 메시지에 포함하는 진술이며 암호학적 서명과는 다릅니다. 작성자 정보는 이 저장소의 로컬 설정에만 저장되고 초안은 유지됩니다.';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => '저장소 신원 저장';
+
+  @override
+  String get gitUiStaged => '스테이징됨';
+
+  @override
+  String get gitUiUntracked => '추적되지 않음';
+
+  @override
+  String get gitUiUnstaged => '스테이징되지 않음';
+
+  @override
+  String get gitUiConflicts => '충돌';
+
+  @override
+  String get gitUiNoChanges => '변경 내용 없음';
+
+  @override
+  String get gitUiRepositoryChangeTree => '저장소 변경 트리';
+
+  @override
+  String get gitUiChanges => '변경 사항';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group($count)';
+  }
+
+  @override
+  String get gitUiExpand => '펼치기';
+
+  @override
+  String get gitUiCollapse => '접기';
+
+  @override
+  String get gitUiUnstageFile => '파일 스테이징 해제';
+
+  @override
+  String get gitUiStageFile => '파일 스테이징';
+
+  @override
+  String get gitUiExpandGroup => '그룹 펼치기';
+
+  @override
+  String get gitUiCollapseGroup => '그룹 접기';
+
+  @override
+  String get gitUiReviewDifference => '차이 검토';
+
+  @override
+  String get gitUiUnstageSelectedFiles => '선택한 파일 스테이징 해제';
+
+  @override
+  String get gitUiStageSelectedFiles => '선택한 파일 스테이징';
+
+  @override
+  String get gitUiFileHistoryAndBlame => '파일 기록 및 블레임…';
+
+  @override
+  String get gitUiDeleteUntrackedFile => '추적되지 않는 파일 삭제…';
+
+  @override
+  String get gitUiDiscardUnstagedChange => '스테이징되지 않은 변경 버리기…';
+
+  @override
+  String get gitUiFileHistory => '파일 이력';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return '스테이징되지 않은 $arg0 변경을 버리시겠습니까?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0바이트 · $arg1\n작업 내용을 인덱스로 대체하거나 이 추적되지 않는 파일을 삭제합니다. 스테이징된 내용은 유지됩니다. 먼저 앱에서 저장하지 않은 문서를 검토해야 합니다.';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => '추적되지 않는 파일 삭제';
+
+  @override
+  String get gitUiDiscardWorkingChange => '작업 변경 버리기';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return '원격 참조 $arg0 삭제';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      '아래 나열된 모든 실제 푸시 대상에서 참조를 제거합니다. 로컬 브랜치/태그는 유지됩니다. 예상 끝점은 이 검토에 고정됩니다.';
+
+  @override
+  String get gitUiReferenceDoesNotExist => '참조가 없습니다';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0\n예상 끝점: $arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => '원격 삭제가 완료되었습니다.';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return '원격에서 $arg0을(를) 삭제하시겠습니까?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      '위에 표시된 정확한 대상 끝점을 제거합니다. 원격 끝점이 변경되면 작업을 중지하고 다시 검토합니다.';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote => '원격 삭제 검토…';
+
+  @override
+  String get gitUiDestinationReference => '대상 참조';
+
+  @override
+  String get gitUiReviewDestinations => '대상 검토';
+
+  @override
+  String get gitUiNewRemoteBranch => '새 원격 브랜치';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · 예상값: $arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      '대상에 로컬에서 사용할 수 없는 커밋이 있습니다. 보낼 기록을 검토하기 전에 검토한 대상에서 가져오세요.';
+
+  @override
+  String get gitUiFetchReviewedDestination => '검토한 대상에서 가져오기';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      '대상을 선택하고 보낼 커밋을 검토하세요.';
+
+  @override
+  String get gitUiNoOutgoingCommits => '보낼 커밋 없음';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => '보낼 커밋 선택';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits => '보낼 커밋 더 불러오기';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream => '이 대상을 업스트림으로 설정';
+
+  @override
+  String get gitUiChooseExactTagsToPublish => '게시할 정확한 태그 선택';
+
+  @override
+  String get gitUiTagsNone => '태그: 없음';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return '태그: $arg0개 선택';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return '게시 대상: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      '푸시가 완료되었습니다. 로컬 커밋은 로그에서 계속 확인할 수 있습니다.';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      '강제 푸시에는 이 검토에 표시된 대상 참조의 끝 리비전과 정확히 일치해야 합니다.';
+
+  @override
+  String get gitUiForceWithReviewedLease => '검토한 리스로 강제 푸시…';
+
+  @override
+  String get gitUiPush => '푸시';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases => '검토한 리스로 강제 푸시하시겠습니까?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return '모든 원격 대상에 위에 표시된 정확한 끝점이 남아 있을 때만 $arg0을(를) 다시 씁니다.\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      '다른 사람이 이미 이 이력을 사용하고 있을 수 있습니다. 백그라운드 가져오기는 이 보호 조건을 갱신하지 않습니다.';
+
+  @override
+  String get gitUiForceWithLease => '리스로 강제 푸시';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      '원격 결과가 불확실합니다. 다시 푸시하기 전에 대상을 다시 검토하세요.';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return '부모 $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => '가져올 원격';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches => '삭제된 원격 추적 브랜치 정리';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      '가져오기는 작업 파일을 대체하지 않고 원격 추적 정보를 업데이트합니다.';
+
+  @override
+  String get gitUiFetch => '가져오기';
+
+  @override
+  String get gitUiSourceRemote => '원본 원격';
+
+  @override
+  String get gitUiSourceBranch => '원본 브랜치';
+
+  @override
+  String get gitUiReviewedStrategy => '검토한 전략';
+
+  @override
+  String get gitUiMerge => '병합';
+
+  @override
+  String get gitUiRebase => '리베이스';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      '대상을 빨리 감기할 수 없으면 중지하며 병합하거나 리베이스하지 않습니다.';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      '빨리 감기가 가능해도 병합 커밋을 만들어 병합합니다.';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      '병합하며 가능하면 빨리 감기를 허용합니다.';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      '로컬 병합 커밋을 유지하며 로컬 기록을 리베이스합니다.';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      '로컬 커밋을 선형 기록으로 리베이스합니다.';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git이 대화형 리베이스로 구성되어 있습니다. 여기서 풀 전략을 명시적으로 선택하거나 가져온 후 리베이스를 열어 계획을 검토하세요.';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull => '이 풀에 검토한 일반 리베이스 사용';
+
+  @override
+  String get gitUiOptions => '옵션';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      '항상 병합 커밋 만들기(빨리 감기 안 함)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits => '로컬 병합 커밋 유지';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      '로컬 변경으로 풀이 차단될 수 있습니다. 검토/커밋하거나 명시적으로 스태시를 만드세요.';
+
+  @override
+  String get gitUiStashes => '스태시';
+
+  @override
+  String get gitUiCreateOrReviewStash => '스태시 만들기 또는 검토…';
+
+  @override
+  String get gitUiPullWithSelectedStrategy => '선택한 전략으로 풀';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource => '저장소 URL 또는 로컬 Git 원본';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH 또는 로컬 경로';
+
+  @override
+  String get gitUiFolderToInitialize => '초기화할 폴더';
+
+  @override
+  String get gitUiFinalCloneDestination => '최종 복제 대상';
+
+  @override
+  String get gitUiChoose => '선택…';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Git 메타데이터만 만듭니다. 기존 파일을 스테이징하거나 커밋하지 않습니다.';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      '최종 대상은 존재하지 않거나 비어 있어야 합니다. 기존 사용자 데이터는 절대 덮어쓰지 않습니다.';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      '초기 브랜치 · 비워 두면 유효한 Git 정책 사용';
+
+  @override
+  String get gitUiSelectedBranchOptional => '선택한 브랜치 · 선택 사항';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      '서브모듈을 명시적으로 재귀 초기화/업데이트';
+
+  @override
+  String get gitUiPreparingGitOperation => 'Git 작업 준비 중…';
+
+  @override
+  String get gitUiThisAttemptCreated => '이번 시도에서 생성됨';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      '대상이 이번 시도 이전부터 존재했습니다:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      '확인할 수 있도록 디렉터리를 유지합니다. 다시 복제하기 전에 검토하세요.';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains => '남아 있는 대상 디렉터리가 없습니다.';
+
+  @override
+  String get gitUiCancelProcess => '프로세스 취소';
+
+  @override
+  String get gitUiInitialize => '초기화';
+
+  @override
+  String get gitUiClone => '복제';
+
+  @override
+  String get gitUiChooseNewBase => '새 기준 선택';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => '업스트림 경계 선택';
+
+  @override
+  String get gitUiNewBase => '새 기준';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => '업스트림 경계 · 제외됨';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => '업스트림 경계와 같음';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => '브랜치, 태그 또는 커밋 선택…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase => '업스트림을 새 기준으로 사용';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      '유효한 브랜치, 태그 또는 로그의 커밋을 선택하세요.';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      '브랜치 블록에서 처음 유지하는 커밋에는 squash나 fixup을 사용할 수 없습니다. 앞에 대상 커밋이 없습니다.';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return '브랜치 블록 $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage => '[메시지 변경 시 새 메시지를 요청합니다]\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => '예정된 커밋 메시지';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      '원본/결합 메시지 미리 보기 · 최종 메시지 변경/스쿼시 메시지는 Git이 요청합니다';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return '결과 $arg0\n$arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return '현재 브랜치: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => '분리된 HEAD';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      '리베이스는 커밋 식별자를 다시 만듭니다. 원격 추적 정보만으로 이력이 한 번도 공개되지 않았음을 보장할 수 없습니다.';
+
+  @override
+  String get gitUiIncludeRootCommits => '루트 커밋 포함';
+
+  @override
+  String get gitUiMergeCommits => '병합 커밋';
+
+  @override
+  String get gitUiFlattenHistory => '이력 평탄화';
+
+  @override
+  String get gitUiPreserveBranchStructure => '브랜치 구조 유지';
+
+  @override
+  String get gitUiAutosquash => '자동 스쿼시';
+
+  @override
+  String get gitUiPrepareGitPlan => 'Git 계획 준비';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return '재적용할 커밋: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      '이 브랜치에서 도달할 수 있는 모든 루트 커밋을 포함합니다.';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return '$boundary 이후의 커밋을 $base 위에 재적용합니다. 경계 커밋 자체는 제외됩니다.';
+  }
+
+  @override
+  String get gitUiRoot => '루트';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure => 'Git 브랜치/레이블/재설정/병합 구조';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      '이전 경계 또는 루트 모드를 명시적으로 선택한 후 계획을 준비하세요.';
+
+  @override
+  String get gitUiMoveUp => '위로 이동';
+
+  @override
+  String get gitUiMoveDown => '아래로 이동';
+
+  @override
+  String get gitUiResetPlan => '계획 초기화';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · 브랜치 블록 $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      '세부 정보와 변경 파일을 볼 커밋 선택';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages => '결합할 커밋 메시지 미리 보기…';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+↑/↓로 선택한 커밋을 이동합니다. 관련 없는 브랜치 참조를 자동으로 업데이트하지 않습니다.';
+
+  @override
+  String get gitUiCancelPlan => '계획 취소';
+
+  @override
+  String get gitUiStartReviewedRebase => '검토한 리베이스를 시작하시겠습니까?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg1에서 계획한 $arg0개 커밋을 다시 씁니다. 제외할 커밋은 시작할 때까지 계획에 표시됩니다.';
+  }
+
+  @override
+  String get gitUiStartRebase => '리베이스 시작';
+
+  @override
+  String get gitUiNoContinuingGitOperation => '진행 중인 Git 작업 없음';
+
+  @override
+  String get gitUiStoppedForEditingAmend => ' · 편집/커밋 수정을 위해 중지됨';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      '인덱스의 병합되지 않은 항목이며 스태시 적용으로 생겼을 수 있습니다. Git에는 스태시 계속 또는 중단 명령이 없습니다.';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      '작업 파일을 편집하고 스테이징하여 현재 커밋을 수정한 후 이 리베이스를 계속하세요.';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · 병합되지 않은 인덱스 단계 $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries => '인덱스에 해결되지 않은 항목이 없습니다.';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => '현재 커밋을 빈 커밋으로 유지';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      '실제 인덱스에 스테이징된 변경이 없습니다. 명시적으로 빈 커밋을 만든 다음 시퀀서가 활성 상태이면 계속하세요.';
+
+  @override
+  String get gitUiKeepEmptyCommit => '빈 커밋 유지…';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git은 작업 시작 지점으로 돌아가려고 합니다. 작업 전부터 있던 스테이징되지 않은 변경, 추적되지 않는 파일, 저장하지 않은 내용의 복구는 보장되지 않습니다.';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      '현재 커밋을 건너뛰고 다음 예정된 커밋을 계속합니다.';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      '현재 파일과 인덱스를 유지하며 이 작업의 관리 정보를 지웁니다.';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return '$arg0 계속';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions => '충돌 버전을 다시 불러오시겠습니까?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      '저장하지 않은 결과 초안을 현재 작업 파일로 대체합니다. 저장된 작업 내용은 유지됩니다.';
+
+  @override
+  String get gitUiLoadingConflictVersions => '충돌 버전을 불러오는 중…';
+
+  @override
+  String get gitUiLoadingConflict => '충돌 불러오는 중';
+
+  @override
+  String get gitUiBaseLeft => '기준 → 왼쪽';
+
+  @override
+  String get gitUiBaseRight => '기준 → 오른쪽';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict => '이 충돌에는 기준 항목이 없습니다';
+
+  @override
+  String get gitUiAcceptEntireLeftFile => '왼쪽 파일 전체 수락…';
+
+  @override
+  String get gitUiAcceptEntireRightFile => '오른쪽 파일 전체 수락…';
+
+  @override
+  String get gitUiPreviousConflictRegion => '이전 충돌 영역';
+
+  @override
+  String get gitUiNextConflictRegion => '다음 충돌 영역';
+
+  @override
+  String get gitUiManualResolution => '수동 해결';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '영역 $arg0/$arg1 · $arg2개 검토됨';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      '원본 정렬이 텍스트 비교 한도를 초과했습니다. 원본 창에서 수동으로 검토할 수 있습니다.';
+
+  @override
+  String get gitUiAcceptLeftRegion => '왼쪽 영역 수락';
+
+  @override
+  String get gitUiAcceptRightRegion => '오른쪽 영역 수락';
+
+  @override
+  String get gitUiKeepManualResultForRegion => '영역의 수동 결과 유지';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges => 'Git의 충돌 없는 변경을 적용하시겠습니까?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      '현재 결과 초안을 Git 병합 미리 보기로 대체합니다. 저장하지 않은 수동 편집을 버립니다. 저장할 때까지 작업 파일은 변경되지 않습니다.';
+
+  @override
+  String get gitUiUseMergePreview => '병합 미리 보기 사용';
+
+  @override
+  String get gitUiApplyNonConflictingChanges => '충돌 없는 변경 적용…';
+
+  @override
+  String get gitUiLeftSource => '왼쪽 원본';
+
+  @override
+  String get gitUiResult => '결과';
+
+  @override
+  String get gitUiRightSource => '오른쪽 원본';
+
+  @override
+  String get gitUiStage2 => '스테이지 2';
+
+  @override
+  String get gitUiStage3 => '스테이지 3';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      '충돌 버전을 사용할 수 없습니다. 새로 고쳐 현재 상태를 검토하세요.';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      '결과를 디스크에 저장했습니다. 파일의 해결 여부는 여전히 인덱스로 판단합니다.';
+
+  @override
+  String get gitUiSaveResultDraft => '결과 초안 저장';
+
+  @override
+  String get gitUiApplyResultAndStageResolution => '결과 적용 및 해결 스테이징';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent => '결과 · 편집 가능한 UTF-8 작업 내용';
+
+  @override
+  String get gitUiEditableConflictResult => '편집 가능한 충돌 결과';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '왼쪽: $arg0 · $arg1\n오른쪽: $arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      '내용, 삭제 또는 서브모듈 커밋을 명시적으로 선택하세요. 바이너리 데이터를 편집 가능한 텍스트로 해석하지 않습니다.';
+
+  @override
+  String get gitUiUseEntireLeftContent => '왼쪽 내용 전체 사용…';
+
+  @override
+  String get gitUiUseEntireRightContent => '오른쪽 내용 전체 사용…';
+
+  @override
+  String get gitUiDeleteThisPath => '이 경로 삭제…';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit => '해결된 서브모듈 커밋';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      '이 정확한 gitlink를 상위에서 스테이징합니다. 서브모듈을 체크아웃하거나 커밋하지 않습니다.';
+
+  @override
+  String get gitUiSetResolvedGitlink => '해결된 gitlink 설정…';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return '기준 → 스테이지 $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      '결과가 편집되었습니다. 수동 결과를 유지하거나 다른 변경되지 않은 영역을 선택하세요.';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return '‘$arg0’ 해결을 적용할까요?';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      '선택한 gitlink 커밋을 상위에서 스테이징합니다. 서브모듈 체크아웃과 파일은 대체하지 않습니다.';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return '작업 경로 $arg0 전체를 대체하고 결정을 스테이징합니다. 현재 작업 내용과 저장하지 않은 결과 초안을 버립니다.';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision => '전체 파일 결정 적용';
+
+  @override
+  String get gitUiStageThisConflictResolution => '이 충돌 해결을 스테이징하시겠습니까?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return '편집한 결과 전체를 $arg0(으)로 사용합니다. Git은 스테이징할 때 경로가 해결되었다고 기록합니다. 먼저 의도한 모든 내용을 검토하세요.$arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => '적용 및 스테이징';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges => '결과 텍스트 형식 변경 검토';
+
+  @override
+  String get gitUiSaveReviewedResult => '검토한 결과 저장';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      '네이티브 Git 표 접근성을 사용할 수 없습니다. 앱을 다시 연결한 후 재시도하세요.';
+
+  @override
+  String get gitUiSans => '고딕체';
+
+  @override
+  String get gitUiSelect => '선택';
+
+  @override
+  String get gitUiContextMenu => '상황에 맞는 메뉴';
+
+  @override
+  String get gitUiCopyText => '텍스트 복사';
+
+  @override
+  String get gitUiLoadingRow => '행 불러오는 중';
+
+  @override
+  String get gitUiRetry => '다시 시도';
+
+  @override
+  String get gitUiGitMessage => 'Git 메시지';
+
+  @override
+  String get gitUiCancelPrompt => '프롬프트 취소';
+
+  @override
+  String get gitUiUseMessageAndContinue => '메시지 사용 후 계속';
+
+  @override
+  String get gitUiRespondPrivately => '비공개로 응답';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return '보기 환경설정을 저장하지 못했습니다: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return '커밋 초안 저장소: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return '보기 환경설정을 읽지 못했습니다: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return '커밋 초안이 메모리에 유지되지만 저장하지 못했습니다: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      '검토한 저장소는 이 작업에 대해 읽기 전용입니다. 기록과 내용 검토는 사용할 수 있습니다.';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git이 $arg0을(를) 반환했습니다. 앱이 문서를 새로 고치지 못했습니다: $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => '로그에서 커밋 선택…';
+
+  @override
+  String get gitUiCurrentBranch => '현재 브랜치';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      '일치하는 브랜치나 태그가 없습니다. 로그에서 커밋을 선택하세요.';
+
+  @override
+  String get gitUiBranches => '브랜치';
+
+  @override
+  String get gitUiPushCommits => '커밋 푸시';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return '$arg0(으)로 풀';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return '$arg0 해결';
+  }
+
+  @override
+  String get gitUiCurrentOperation => '현재 작업';
+
+  @override
+  String get gitUiRebaseCommits => '커밋 리베이스';
+
+  @override
+  String get gitUiFetch2 => '가져오기…';
+
+  @override
+  String get gitUiPull => '풀…';
+
+  @override
+  String get gitUiPush2 => '푸시…';
+
+  @override
+  String get gitUiBranches2 => '브랜치…';
+
+  @override
+  String get gitUiManageRemotes => '원격 저장소 관리…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return '$arg0(으)로 병합…';
+  }
+
+  @override
+  String get gitUiRebase2 => '리베이스…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation => '충돌 및 현재 작업…';
+
+  @override
+  String get gitUiStashes2 => '스태시…';
+
+  @override
+  String get gitUiWorktrees => '작업 트리…';
+
+  @override
+  String get gitUiSubmodules => '서브모듈…';
+
+  @override
+  String get gitUiReflogAndRecovery => 'Reflog 및 복구…';
+
+  @override
+  String get gitUiCloneRepository => '저장소 복제…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => '저장소 신뢰 취소';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus => '저장소 상태를 기다리는 중';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      '저장소 상태를 확인할 수 없습니다. 새로 고치세요';
+
+  @override
+  String get gitUiManageRemotes2 => '원격 저장소 관리';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return '$arg0(으)로 병합';
+  }
+
+  @override
+  String get gitUiWorktrees2 => '작업 트리';
+
+  @override
+  String get gitUiSubmodules2 => '서브모듈';
+
+  @override
+  String get gitUiReflogAndRecovery2 => 'Reflog 및 복구';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return '저장소 복제 · $arg0';
+  }
+
+  @override
+  String get gitUiApply => '적용';
+
+  @override
+  String get gitUiResizeGitPanes => 'Git 창 크기 조정';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0퍼센트';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return '종료 상태: $status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      '저장소가 변경되었습니다. 다시 시도하기 전에 새로 고치고 검토하세요.';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      '다른 작업이 저장소 또는 인덱스 잠금을 보유하고 있습니다. 기다린 후 새로 고치세요.';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      '이 작업에는 저장소 신뢰가 필요합니다.';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git 서비스 연결이 끊어졌습니다. 다시 연결하고 저장소 상태를 확인하세요.';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      '설치된 Git 실행 파일은 이 작업을 지원하지 않습니다. 아래 실행 환경 요구 사항을 검토하세요.';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      '이 저장소는 요청한 작업에 대해 읽기 전용입니다. 검토와 기록은 사용할 수 있습니다.';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      '작업 상태를 확인해야 합니다. 반복하기 전에 결과 저장소 또는 원격 상태를 검토하세요.';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git 인증에 실패했습니다. 자격 증명 도우미를 검토하거나 구성된 키 모음의 잠금을 해제하세요.';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH 호스트 확인에 실패했습니다. 구성된 SSH 도구로 호스트 신원을 검토하세요.';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      '커밋 서명에 실패했거나 취소되었습니다. 서명 키, 에이전트 및 구성된 서명 도구를 검토하세요.';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      '저장소 작성자 이름과 이메일을 설정한 후 보존된 메시지 초안으로 돌아가세요.';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git이 검토한 업데이트를 거부했습니다. 다시 시도하기 전에 새로 고치고 실제 대상을 검토하세요.';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      '작업 또는 스테이징된 변경으로 이 작업이 차단됩니다. 검토, 커밋하거나 명시적으로 스태시하세요.';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      '필요한 Git 객체를 사용할 수 없습니다. 얕은/부분 저장소 경계를 검토하고 필요하면 명시적으로 가져오세요.';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Git 작업 실패: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => '진단 정보';
+
+  @override
+  String get gitUiAuthorizeGitInspection => 'Git 검사 승인…';
+
+  @override
+  String get gitUiCopyDiagnostics => '진단 정보 복사';
+
+  @override
+  String get gitUiActions => '작업';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return '$arg0에서 브랜치 생성';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      '체크아웃하지 않고 로컬 브랜치를 만듭니다.';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return '$arg0에서 태그 생성';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return '읽기 전용 스냅샷 · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => '커밋 체리픽';
+
+  @override
+  String get gitUiRevertCommits => '커밋 되돌리기';
+
+  @override
+  String get gitUiCompareToFullRevisionID => '전체 리비전 ID와 비교';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return '트리 비교 방향: $arg0 → 여기에 입력한 리비전.';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID => '유효한 전체 객체 ID를 입력하세요.';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 → $arg1 · 트리 비교';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return '$arg0을(를) $arg1(으)로 재설정';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'HEAD/현재 브랜치를 이동합니다. reflog는 임의의 추적되지 않거나 저장되지 않은 내용을 복구하지 못합니다.';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'HEAD를 이동하고 인덱스와 작업 파일은 유지합니다.';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'HEAD를 이동하고 인덱스를 바꾸며 작업 파일은 유지합니다.';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'HEAD, 인덱스, 추적 중인 작업 파일을 바꿉니다. 방해가 되는 추적되지 않는 파일은 덮어쓸 수 있습니다.';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'HEAD, 인덱스, 해당 파일을 바꿉니다. 로컬 변경이 손실되면 작업을 거부합니다.';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return '$arg0(으)로 재설정하시겠습니까?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 → $arg1\n적용하기 전에 선택한 모드의 효과를 검토하세요.';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return '$arg0 재설정';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return '대상 $arg0';
+  }
+
+  @override
+  String get gitUiTagName => '태그 이름';
+
+  @override
+  String get gitUiAnnotatedTag => '주석 태그';
+
+  @override
+  String get gitUiCryptographicSigning => '암호학적 서명';
+
+  @override
+  String get gitUiConfiguredPolicy => '구성된 정책';
+
+  @override
+  String get gitUiSignThisTag => '이 태그에 서명';
+
+  @override
+  String get gitUiDoNotSign => '서명하지 않음';
+
+  @override
+  String get gitUiTagMessage => '태그 메시지';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      '태그를 로컬에 만듭니다. 선택한 태그는 푸시 검토에서 명시적으로 게시하세요.';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return '전체 트리: $arg0 → $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => '다음 변경 파일 페이지';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      '읽기 전용 저장소 스냅샷입니다. 파일을 열어도 이 리비전을 체크아웃하지 않습니다.';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => '읽기 전용 버전 열기';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      '이 경로 복원… · 저장소 상태를 기다리는 중';
+
+  @override
+  String get gitUiRestoreThisPath => '이 경로 복원…';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return '기록 · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return '$arg0을(를) 복원하시겠습니까?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return '이 작업 경로를 리비전 $arg0(으)로 대체합니다. 기존 스테이징된 내용은 유지됩니다.';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => '작업 파일 복원';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return '이름 변경을 따르는 파일 기록 · $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => '줄 이력 · 커밋된 내용';
+
+  @override
+  String get gitUiBlame => '줄 이력…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0 → 작업 트리';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile => '읽기 전용 과거 파일 열기';
+
+  @override
+  String get gitUiCompareToCurrentFile => '현재 파일과 비교';
+
+  @override
+  String get gitUiCompareToParent => '부모와 비교…';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return '커밋된 $arg0 · 저장되지 않은 편집기 내용은 이 주석에 포함되지 않습니다';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return '$arg0부터의 기록';
+  }
+
+  @override
+  String get gitUiBoundary => ' · 경계';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\n원래 줄 $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => '이전 행';
+
+  @override
+  String get gitUiNextLines => '다음 행';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return '명시적 적용 순서 · 대상 $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => '전체 커밋 객체 ID 추가';
+
+  @override
+  String get gitUiAddReviewedCommit => '검토한 커밋 추가…';
+
+  @override
+  String get gitUiMoveEarlier => '앞으로 이동';
+
+  @override
+  String get gitUiMoveLater => '뒤로 이동';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence => '검토한 순서에서 제거';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits => '커밋을 만들지 않고 변경 적용';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      '병합 커밋에 이 명시적 메인라인 부모 사용';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      '비어 있거나 이미 적용된 커밋으로 Git이 중지되어 명시적으로 건너뛰기 또는 계속을 결정해야 할 수 있습니다.';
+
+  @override
+  String get gitUiRevertInReviewedOrder => '검토한 순서로 되돌리기';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder => '검토한 순서로 체리픽';
+
+  @override
+  String get gitUiReturnToFiles => '파일로 돌아가기';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => '커밋';
+
+  @override
+  String get gitUiBackToCommit => '커밋으로 돌아가기';
+
+  @override
+  String get gitUiSelectAChangeToReview => '검토할 변경 선택';
+
+  @override
+  String get gitUiLoadingBranch => '브랜치 불러오는 중…';
+
+  @override
+  String get gitUiBranchUnavailable => '브랜치를 사용할 수 없습니다';
+
+  @override
+  String get gitUiUnbornHEAD => '커밋 없는 HEAD';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return '분리된 HEAD · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => '계속';
+
+  @override
+  String get gitUiPick => '선택 적용';
+
+  @override
+  String get gitUiReword => '메시지 변경';
+
+  @override
+  String get gitUiEdit => '편집';
+
+  @override
+  String get gitUiSquash => '스쿼시';
+
+  @override
+  String get gitUiFixup => '메시지 없이 합치기';
+
+  @override
+  String get gitUiDrop => '제외';
+
+  @override
+  String get gitUiAbort => '중단';
+
+  @override
+  String get gitUiSkip => '건너뛰기';
+
+  @override
+  String get gitUiQuit => '작업 관리 종료';
+
+  @override
+  String get gitUiSoft => '소프트';
+
+  @override
+  String get gitUiMixed => '혼합';
+
+  @override
+  String get gitUiHard => '하드';
+
+  @override
+  String get gitUiKeep => '유지';
+
+  @override
+  String get gitUiCreate => '만들기';
+
+  @override
+  String get gitUiApplyStash => '스태시 적용';
+
+  @override
+  String get gitUiPopStash => '적용 후 성공 시 스태시 삭제';
+
+  @override
+  String get gitUiDropStashAction => '스태시 삭제';
+
+  @override
+  String get gitUiEditedResult => '편집한 결과';
+
+  @override
+  String get gitUiLeftContent => '왼쪽 내용';
+
+  @override
+  String get gitUiRightContent => '오른쪽 내용';
+
+  @override
+  String get gitUiDeletePath => '경로 삭제';
+
+  @override
+  String get gitUiSubmoduleCommit => '서브모듈 커밋';
+
+  @override
+  String get gitUiPresentContent => '사용 가능한 내용';
+
+  @override
+  String get gitUiAbsentContent => '없음';
+
+  @override
+  String get gitUiBinaryContent => '바이너리 내용';
+
+  @override
+  String get gitUiTooLargeContent => '내용이 표시 한도를 초과합니다';
+
+  @override
+  String get gitUiUnavailableContent => '사용할 수 없는 내용';
+
+  @override
+  String get gitUiGitlinkContent => '서브모듈 포인터';
+
+  @override
+  String get gitUiSymlinkContent => '심볼릭 링크';
+
+  @override
+  String get gitUiNoOperation => '작업 없음';
+
+  @override
+  String get gitUiCherryPickOperation => '체리픽';
+
+  @override
+  String get gitUiRevertOperation => '되돌리기 커밋';
+
+  @override
+  String get gitUiApplyMailboxOperation => '패치 적용';
+
+  @override
+  String get gitUiSquashOperation => '스쿼시 병합';
+
+  @override
+  String get gitUiUnmergedOperation => '병합되지 않은 인덱스';
+
+  @override
+  String get gitUiWaitingForPromptPhase => '응답을 기다리는 중';
+
+  @override
+  String get gitUiStoppedPhase => '검토를 위해 중지됨';
+
+  @override
+  String get gitUiCompletedPhase => '완료';
+
+  @override
+  String get gitUiFailedPhase => '실패';
+
+  @override
+  String get gitUiCancelledPhase => '취소됨';
+
+  @override
+  String get gitUiUncertainPhase => '결과 확인 필요';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return '충돌 스테이지 $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Git 병합 미리 보기';
+
+  @override
+  String get gitUiNormalizedWorking => '작업 트리 · Git으로 정규화됨';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value퍼센트';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action하시겠습니까?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => '바이트 순서 표시(BOM)가 있는 UTF-8';
+
+  @override
+  String get gitUiUtf8NoBom => '바이트 순서 표시(BOM)가 없는 UTF-8';
+
+  @override
+  String get gitUiAddsBom => '이 편집은 파일 시작 부분에 UTF-8 바이트 순서 표시(BOM)를 추가합니다.';
+
+  @override
+  String get gitUiRemovesBom => '이 편집은 파일 시작 부분의 UTF-8 바이트 순서 표시(BOM)를 제거합니다.';
+
+  @override
+  String get gitUiNoLineTerminators => '줄 종료 문자 없음';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return '$format 줄바꿈';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return '혼합 줄 바꿈($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format · 마지막 LF 없음';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return '줄 바꿈 형식이 $before에서 $after(으)로 변경됩니다. 클립보드 텍스트는 원본 파일과 다른 줄 바꿈을 사용할 수 있습니다.';
+  }
+
+  @override
+  String get gitUiGitFailure => 'Git 작업에 실패했습니다. 아래 진단 정보를 검토하세요.';
+
+  @override
+  String get gitUiAbortInline => '중단';
+
+  @override
+  String get gitUiSkipInline => '건너뛰기';
+
+  @override
+  String get gitUiQuitInline => '관리 종료';
+
+  @override
+  String get gitUiMergeInline => '병합';
+
+  @override
+  String get gitUiRebaseInline => '리베이스';
+
+  @override
+  String get gitUiCherryPickInline => '체리픽';
+
+  @override
+  String get gitUiRevertInline => '되돌리기 커밋';
+
+  @override
+  String get gitUiApplyMailboxInline => '메일박스 패치 적용';
+
+  @override
+  String get gitUiSquashInline => '스쿼시';
+
+  @override
+  String get gitUiUnmergedInline => '병합되지 않음';
+
+  @override
+  String get gitHostFetch => '가져오기';
+
+  @override
+  String get gitHostRefreshGitStatus => 'Git 상태 새로 고침';
+
+  @override
+  String get gitHostCommitStaged => '스테이징된 내용 커밋';
+
+  @override
+  String get gitHostGitBranches => 'Git 브랜치';
+
+  @override
+  String get gitHostReviewPush => '푸시 검토';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git 작업은 전체 저장소에 적용되며 구성된 훅, 필터, 자격 증명 및 서명 도구를 실행할 수 있습니다.';
+
+  @override
+  String get gitHostContentUnavailable => '내용을 사용할 수 없습니다';
+
+  @override
+  String get gitHostInitializeRepository => '저장소 초기화';
+
+  @override
+  String get gitHostCloneRepository => '저장소 복제';
+
+  @override
+  String get gitHostInitializeHere => '여기에 초기화…';
+
+  @override
+  String get gitHostCloneRepository2 => '저장소 복제…';
+
+  @override
+  String get gitHostGitLog => 'Git 로그';
+
+  @override
+  String get gitUiAbsentPlaceholder => '(없음)';
+
+  @override
+  String get gitUiUnborn => '첫 커밋 이전';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return '리베이스된 이력 · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return '현재 이력 · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return '재적용되는 커밋 · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return '들어오는 내용 · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => '내용 충돌';
+
+  @override
+  String get gitUiSubmoduleConflict => '서브모듈 충돌';
+
+  @override
+  String get gitUiSymlinkConflict => '심볼릭 링크 충돌';
+
+  @override
+  String get gitUiAddAddConflict => '양쪽에서 추가됨';
+
+  @override
+  String get gitUiModifyDeleteConflict => '수정/삭제 또는 이름 변경/삭제';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path · $kind';
+  }
 }

@@ -5894,4 +5894,2818 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       'Nama berkas ini berisi byte non-UTF-8. Peninjauan dan staging Git tetap tersedia; editor dokumen memerlukan nama berkas UTF-8.';
+
+  @override
+  String get gitUiMergeInProgress => 'Gabung dalam proses';
+
+  @override
+  String get gitUiRebaseInProgress => 'Rebase dalam proses';
+
+  @override
+  String get gitUiCherryPickInProgress => 'Cherry-pick dalam proses';
+
+  @override
+  String get gitUiRevertInProgress => 'Revert sedang berlangsung';
+
+  @override
+  String get gitUiPatchApplicationInProgress =>
+      'Aplikasi patch sedang berlangsung';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Squash merge hasil menunggu commit';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts =>
+      'Index konflik yang belum terpecahkan';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · konflik yang belum terselesaikan';
+
+  @override
+  String get gitUiReviewOperation => 'Operasi peninjauan';
+
+  @override
+  String get gitUiRefresh => 'Segarkan';
+
+  @override
+  String get gitUiCreateNamedStash => 'Buat stash bernama';
+
+  @override
+  String get gitUiCreateStash => 'Buat stash…';
+
+  @override
+  String get gitUiNoStashes => 'Tak ada stash';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Pilih stash untuk memeriksa perubahannya';
+
+  @override
+  String get gitUiStashedUntrackedFiles =>
+      'Berkas yang tidak di-stash-kan tidak ditrack';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Periksa berkas yang tidak di-stack-kan...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Mengembalikan stash yang dipentaskan/index ketika menerapkan';
+
+  @override
+  String get gitUiApplyAndRetain => 'Terapkan dan pertahankan';
+
+  @override
+  String get gitUiPop => 'Pop...';
+
+  @override
+  String get gitUiCreateBranch => 'Buat cabang…';
+
+  @override
+  String get gitUiDropStash => 'Hapus stash…';
+
+  @override
+  String get gitUiBranchFromStash => 'Buat cabang dari stash';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Buat/switch ke percabangan di pangkalan penyimpanan asli, lalu terapkan. Simpanan asli disimpan untuk eksplisit setelah dihapus.';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0 ini simpanan?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Simpanan asli dipertahankan jika menerapkan konflik.';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Hapus entri stash ini. Perubahannya tidak diterapkan.';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Selesaikan berkas yang belum digabung. Git tidak memiliki perintah lanjut atau batal untuk stash; stash asli tetap ada.';
+
+  @override
+  String get gitUiStashNameMessage => 'Nama/pesan Stash';
+
+  @override
+  String get gitUiStashContentAndResultingIndex => 'Stash isi dan hasil indeks';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Stash melacak perubahan yang sedang bekerja dan dipentaskan';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Stash perubahan, biarkan perubahan dalam indeks tetap di tempat (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Stash hanya perubahan dalam indeks (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => 'Sertakan berkas yang tidak dilacak';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Semua path yang dapat dipilih dalam repositori ini';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Tidak ada perubahan yang dapat dipilih untuk opsi stash ini.';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath =>
+      'Pilih paling tidak satu path yang memenuhi syarat.';
+
+  @override
+  String get gitUiCreateStash2 => 'Buat stash';
+
+  @override
+  String get gitUiCreateWorktree => 'Buat tree kerja...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'Buat commit sebelum membuat worktree pada HEAD.';
+
+  @override
+  String get gitUiDetachedHEAD => 'HEAD terlepas';
+
+  @override
+  String get gitUiCurrent => 'Saat ini';
+
+  @override
+  String get gitUiLocked => 'Terkunci';
+
+  @override
+  String get gitUiOpenInBusyStack => 'Buka di Busy Stack';
+
+  @override
+  String get gitUiStatusNotInspected => 'Status tidak diperiksa';
+
+  @override
+  String get gitUiDirty => 'Kotor';
+
+  @override
+  String get gitUiClean => 'Tidak ada perubahan';
+
+  @override
+  String get gitUiOpenWorkingFolder => 'Buka folder kerja';
+
+  @override
+  String get gitUiMoveWorktree => 'Pindahkan worktree...';
+
+  @override
+  String get gitUiUnlock => 'Buka Kunci';
+
+  @override
+  String get gitUiLock => 'Kunci';
+
+  @override
+  String get gitUiRemoveCleanWorktree => 'Hapus worktree bersih...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Review penghapusan termasuk perubahan lokal...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => 'Nama folder worktree baru';
+
+  @override
+  String get gitUiNewWorktreeBranch => 'Cabang worktree baru';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Buat $arg0/$arg1 dengan sebuah cabang lokal baru di $arg2 ($arg3).';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => 'Tujuan nama folder';
+
+  @override
+  String get gitUiRemoveWorktree => 'Hapus worktree?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Secara eksplisit abaikan semua perubahan lokal yang dilacak/tak terlacak di tree kerja ini. Pohon kerja terkunci/di-gunakan tetap terlindungi.';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git menolak penghapusan bila ada perubahan lokal, berkas yang tidak dilacak, atau kunci.';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Buang isi pohon kerja lokal dan hapus';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => 'Hapus worktree bersih';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Eksplisit rekursi ke submodules nested untuk pemutakhiran/synchronisasi';
+
+  @override
+  String get gitUiNoRecordedSubmodules => 'Tidak ada submodules rekaman';
+
+  @override
+  String get gitUiNotInitialized => 'tidak terinisialisasi';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return 'Parent gitlink: $arg0 Checked out: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => 'Repositori nested kotor';
+
+  @override
+  String get gitUiCleanNestedRepository => 'Bersihkan repositori nested';
+
+  @override
+  String get gitUiNestedStatusUnavailable => 'Status nested tidak tersedia';
+
+  @override
+  String get gitUiEnterNestedRepository => 'Masukkan repositori nested';
+
+  @override
+  String get gitUiInitializeConfiguration => 'Inisialisasikan konfigurasi';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Update ke commit induk yang direkam...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Ikuti konfigurasi branch jauh...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs =>
+      'Selaraskan URL yang dikonfigurasi...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Penunjuk submodule tahap kini pada induk';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Orang tua dan submodule berkomitmen, mendorong, dan keadaan kotor tetap terpisah. Meramban tidak menginisialisasi atau memperbaruinya.';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return 'Ambil dan periksa komitmen branch jauh yang dikonfigurasi. Ini berbeda dari orang tua yang merekam gitlink. Rekursif: $arg0.';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Inisialisasi seperti yang diperlukan dan periksa persis $arg0. Rekursif: $arg1.';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return 'Terapkan operasi konfigurasi submodule yang ditinjau. Rekursif: $arg0.';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => 'Terapkan operasi submodule';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Inspeksi suatu revisi yang direkam atau buat suatu branch pemulihan. Reflog tidak memulihkan isi yang tidak disimpan atau tidak tertuntut secara sewenang-wenang.';
+
+  @override
+  String get gitUiSelectAReflogEntry => 'Pilih entri reflog';
+
+  @override
+  String get gitUiPreviousPage => 'Halaman sebelumnya';
+
+  @override
+  String get gitUiNextPage => 'Halaman berikutnya';
+
+  @override
+  String get gitUiRecoveryBranchName => 'Nama branch pemulihan';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return 'Membuat cabang di $arg0; berkas kerja dan cabang yang sekarang tidak berubah.';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => 'Buat branch pemulihan...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot => 'Foto pemulihan hanya-baca';
+
+  @override
+  String get gitUiInspectSnapshot => 'Inspeksi foto...';
+
+  @override
+  String get gitUiReviewReset => 'Review ulang...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return 'Halaman $arg0';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Riwayat teks Git harus memiliki ruas yang dapat disunting.';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Edit HEAD | Indeks | Pohon kerja…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Indeks atau isi kerja yang ditinjau berubah. Segarkan perbandingan ini sebelum pementasan.';
+
+  @override
+  String get gitUiRefreshComparison => 'Perbarui perbandingan';
+
+  @override
+  String get gitUiPreviousChangedFile => 'Berkas sebelumnya berubah';
+
+  @override
+  String get gitUiNextChangedFile => 'Berkas berikutnya berubah';
+
+  @override
+  String get gitUiPreviousDifference => 'Perbedaan sebelumnya';
+
+  @override
+  String get gitUiNextDifference => 'Perbedaan berikutnya';
+
+  @override
+  String get gitUiComparisonMode => 'Mode perbandingan';
+
+  @override
+  String get gitUiSideBySide => '# Berdampingan #';
+
+  @override
+  String get gitUiUnified => 'unified';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Diff opsi tampilan';
+
+  @override
+  String get gitUiWrap => 'Lipat';
+
+  @override
+  String get gitUiWords => 'Kata';
+
+  @override
+  String get gitUiCollapseContext => 'Kecilkan konteks';
+
+  @override
+  String get gitUiIgnoreWhitespace => 'Abaikan whitespace';
+
+  @override
+  String get gitUiSearchComparison => 'Perbandingan pencarian';
+
+  @override
+  String get gitUiSearch => 'Cari';
+
+  @override
+  String get gitUiCloseSearch => 'Tutup pencarian';
+
+  @override
+  String get gitUiStagingActions => 'Aksi staging';
+
+  @override
+  String get gitUiStagingActions2 => 'Tindakan Staging...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines =>
+      'Unstage baris perubahan terpilih';
+
+  @override
+  String get gitUiStageSelectedChangedLines => 'Stage baris perubahan terpilih';
+
+  @override
+  String get gitUiUnstageWholeFile => 'Unstage seluruh berkas';
+
+  @override
+  String get gitUiStageWholeFile => 'Stage seluruh berkas';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0 whitespace-only mengubah baris tersembunyi · Tampilkan perubahan yang tepat';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '$arg0 mengubah baris yang dipilih · Pengaturan Tampilan tidak pernah mengubah byte dipentaskan.';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Perbandingan hanya baca · Salin teks atau sesuaikan tampilan.';
+
+  @override
+  String get gitUiNoFinalNewline => ' · tidak ada baris baru terakhir';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 · $arg1 · $arg2 byte$arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'Perbandingan teks tidak tersedia bagi isi ini.';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Perbandingan ini melebihi batas tinjauan teks yang terbatas. Isi belum dinyatakan identik.';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Isi perbandingannya sama.';
+
+  @override
+  String get gitUiUnstage => 'Batalkan Men-stage';
+
+  @override
+  String get gitUiStage => 'Tahap';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 berubah baris';
+  }
+
+  @override
+  String get gitUiContext => 'Konteks';
+
+  @override
+  String get gitUiExpandUnchangedContext => 'Perluas konteks tidak berubah';
+
+  @override
+  String get gitUiUnstageThisHunk => 'Unstage hunk ini';
+
+  @override
+  String get gitUiStageThisHunk => 'Stage hunk ini';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return 'Sunting konten yang dipentaskan · $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult =>
+      'Menulis hasil indeks yang ditinjau';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => 'Indeks';
+
+  @override
+  String get gitUiWorkingTree => 'Pohon kerja';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => 'Indeks · disunting UTF-8 gumpalan';
+
+  @override
+  String get gitUiUndo => 'Urungkan';
+
+  @override
+  String get gitUiRedo => 'Ulangi';
+
+  @override
+  String get gitUiReloadIndexReview => 'Muat ulang indeks review?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Muat ulang versi HEAD, indeks, dan kerja saat ini. Ini mengganti draf editor indeks yang belum disimpan.';
+
+  @override
+  String get gitUiReplaceDraftAndReload => 'Gantikan draft dan muat ulang';
+
+  @override
+  String get gitUiReloadVersions => 'Muat ulang versi...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Tulis hasil yang disunting ke entri indeks ini';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Berkas kerja tetap pada disk. Tinjau indeks yang diedit sebelum diterapkan.';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Tinjau perubahan format indeks teks';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Perbarui hanya masukan indeks yang ditinjau untuk $arg0. $arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult =>
+      'Tulis hasil indeks yang ditinjau';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Hasil yang disunting berubah selama tinjauan format. Tinjau lagi.';
+
+  @override
+  String get gitUiSynchronizeScrolling => 'Sinkronisasi penggulungan';
+
+  @override
+  String get gitUiReadOnlyRevisionContent => 'Isi revisi hanya-baca';
+
+  @override
+  String get gitUiEditableIndexContent => 'Isi indeks dapat disunting';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Revisi yang diminta berada di luar penyaring saat ini. Reset penyaring untuk mengungkapkannya.';
+
+  @override
+  String get gitUiFilterLog => 'Filter Log';
+
+  @override
+  String get gitUiFilters => 'Filter...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return 'Filter ($count)...';
+  }
+
+  @override
+  String get gitUiMessage => 'Pesan…';
+
+  @override
+  String get gitUiAuthor => 'Penulis…';
+
+  @override
+  String get gitUiPath => 'Path...';
+
+  @override
+  String get gitUiDate => 'Tanggal...';
+
+  @override
+  String get gitUiMessageFilter => 'Filter pesan';
+
+  @override
+  String get gitUiAuthorFilter => 'Filter penulis';
+
+  @override
+  String get gitUiPathFilter => 'Filter tapak';
+
+  @override
+  String get gitUiMessage2 => 'Pesan';
+
+  @override
+  String get gitUiAuthor2 => 'Penulis';
+
+  @override
+  String get gitUiPath2 => 'Path';
+
+  @override
+  String get gitUiDateFilter => 'Penyaring tanggal...';
+
+  @override
+  String get gitUiResetFilters => 'Reset penyaring';
+
+  @override
+  String get gitUiRefreshLog => 'Log Segarkan';
+
+  @override
+  String get gitUiGoToCommitReference => 'Pergi ke commit/referensi...';
+
+  @override
+  String get gitUiBackToHEAD => 'Kembali ke HEAD';
+
+  @override
+  String get gitUiOrderedCherryPick => 'Dipesan cherry-pick';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return 'Tinjau cherry-pick ($arg0)...';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions =>
+      'Bandingkan dua revisi terpilih...';
+
+  @override
+  String get gitUiToggleBranchesPane => 'Jungkitkan panel percabangan';
+
+  @override
+  String get gitUiFilterBranchesAndTags => 'Filter branch dan tag';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return 'Commit $arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => 'Commit rincian...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return 'Referensi: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => 'Pilih commit ini';
+
+  @override
+  String get gitUiBranchOrTag => 'Branch atau tag';
+
+  @override
+  String get gitUiAllReferences => 'Semua referensi';
+
+  @override
+  String get gitUiLocal => 'Lokal';
+
+  @override
+  String get gitUiRemote => 'Remote';
+
+  @override
+  String get gitUiTags => 'Tag';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Tak ada commit yang cocok dengan penyaring saat ini.';
+
+  @override
+  String get gitUiObjectID => 'ID Obyek';
+
+  @override
+  String get gitUiSubjectReferences => 'Subjek / referensi';
+
+  @override
+  String get gitUiDate2 => 'Tanggal';
+
+  @override
+  String get gitUiGitCommits => 'Commit Git';
+
+  @override
+  String get gitUiParents => 'Commit induk';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '$arg0 orang tua';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => 'Muat lebih banyak commit';
+
+  @override
+  String get gitUiLoadingChangedFiles => 'Memuat berkas yang berubah';
+
+  @override
+  String get gitUiNoChangedFiles => 'Tidak ada berkas yang berubah';
+
+  @override
+  String get gitUiSelectACommit => 'Pilih suatu commit';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return 'Bandingkan induk $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => 'Berkas yang berubah';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Penulis: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Committer: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Batas shallow/partial: sebuah objek induk tidak tersedia.';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Orang tua berada di luar halaman ini atau batas yang dangkal.';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return 'Commit induk $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => 'Commit tindakan...';
+
+  @override
+  String get gitUiEmptyTree => 'pohon kosong';
+
+  @override
+  String get gitUiCreateBranch2 => 'Buat cabang';
+
+  @override
+  String get gitUiCreateTag => 'Buat tag';
+
+  @override
+  String get gitUiCompareRevisions => 'Bandingkan revisi';
+
+  @override
+  String get gitUiOpenSnapshot => 'Buka snapshot';
+
+  @override
+  String get gitUiRevertCommit => 'Putar balik suatu commit';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Rebase interaktif setelah batas ini';
+
+  @override
+  String get gitUiResetCurrentBranch => 'Reset cabang saat ini';
+
+  @override
+  String get gitUiCopyFullObjectID => 'Salin ID objek penuh';
+
+  @override
+  String get gitUiGoToCommitReference2 => 'Pergi ke commit/referensi';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Masukkan ID commit atau referensi untuk mengungkapkannya dalam Log.';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Revisi yang diminta tidak tersedia.';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Metadata repositori hanya dapat dibaca. Inspeksi dan perbandingan branch tetap tersedia.';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Berkas kerja tidak tersedia atau hanya-baca. Pengalihan branch dan penggabungan tidak tersedia.';
+
+  @override
+  String get gitUiSearchBranchesAndTags => 'Cari cabang dan tag';
+
+  @override
+  String get gitUiNewBranch => 'Cabang baru…';
+
+  @override
+  String get gitUiLocalBranches => 'Cabang lokal';
+
+  @override
+  String get gitUiRemoteBranches => 'Cabang remote';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return 'Trek $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return 'Checked out di $arg0';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata => 'Menyegarkan metadata branch';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return 'Ganti ke $arg0';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => 'Buka worktree yang ditempati';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch => 'Buat branch pelacakan lokal...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => 'Bandingkan dengan HEAD saat ini';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch => 'Gabung ke branch kini...';
+
+  @override
+  String get gitUiRename => 'Ganti Nama...';
+
+  @override
+  String get gitUiChangeUpstream => 'Ubah hulu...';
+
+  @override
+  String get gitUiDelete => 'Hapus...';
+
+  @override
+  String get gitUiDeleteFromRemote => 'Hapus dari remote...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return 'Aksi untuk $arg0';
+  }
+
+  @override
+  String get gitUiLocalBranchName => 'Nama branch lokal';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return 'Buat di $arg0. Cabang baru akan diperiksa.';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return 'Kantor cabang lokal akan melacak $arg0 dan diperiksa.';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => 'Pilih remote untuk penghapusan';
+
+  @override
+  String get gitUiDeleteRemoteReference => 'Hapus referensi remote';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return 'Gabungkan $arg0 ke $arg1';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return 'Ubah nama $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return 'Hulu untuk $arg0';
+  }
+
+  @override
+  String get gitUiNoUpstream => 'Tanpa upstream';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return 'Hapus $arg0?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 Target $arg1 Pemusnahan Lokal saja. Sebuah cabang yang tidak dipangkas ditolak.';
+  }
+
+  @override
+  String get gitUiDelete2 => 'Hapus';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return 'Hapus branch $arg0 yang tak tertanda?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 Git melaporkan bahwa cabang ini tidak digabung secara penuh. Dengan eksplisit hapus referensi lokal setelah meninjau kembali komitmennya; salinan remote tidak berubah.';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Hapus branch lokal yang belum di-mergasikan';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return 'Tujuan: $arg0 $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => 'Cabang sumber atau tag';
+
+  @override
+  String get gitUiMergePolicy => 'Gabung kebijakan';
+
+  @override
+  String get gitUiFastForwardWhenPossible => 'Percepat bila mungkin';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit => 'Selalu buat suatu commit merge';
+
+  @override
+  String get gitUiFastForwardOnly => 'Hanya maju-cepat saja';
+
+  @override
+  String get gitUiSquashIntoStagedChanges =>
+      'Squash ke perubahan yang dipentaskan';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Berhenti sebelum membuat komit merge';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'Fast-forward dinonaktifkan agar HEAD tidak berpindah sebelum peninjauan.';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Dedaunan dipentaskan perubahan bagi suatu commit terpisah; ini bukan gabungan yang berkelanjutan.';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Konflik tetap tersedia dalam ruang kerja resolusi bersama.';
+
+  @override
+  String get gitUiAddRemote => 'Tambah remote...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return 'Fetch: $arg0 Push: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => 'Hapus remote...';
+
+  @override
+  String get gitUiChangeFetchURL => 'Ubah URL pengambilan...';
+
+  @override
+  String get gitUiAddPushDestination => 'Tambah tujuan push...';
+
+  @override
+  String get gitUiRemovePushDestination => 'Hapus tujuan push...';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return 'Kelola $arg0';
+  }
+
+  @override
+  String get gitUiRemoteName => 'Nama remote';
+
+  @override
+  String get gitUiNewRemoteName => 'Nama remote baru';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource =>
+      'URL repositori atau sumber lokal';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Masukkan tujuan yang tepat untuk dihapus.';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Kredensial disediakan oleh pembantu yang dikonfigurasi atau prompt pribadi.';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return 'Hapus $arg0 jauh?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Hapus konfigurasi lokal dan referensi pelacakan. Ini tidak menghapus repositori server.';
+
+  @override
+  String get gitUiRemoveRemote2 => 'Hapus remote';
+
+  @override
+  String get gitUiCommitScopeEntireRepository =>
+      'Lingkup commit: seluruh repositori';
+
+  @override
+  String get gitUiCachedTracking => 'Pelacakan Cached';
+
+  @override
+  String get gitUiAmendLastCommit => 'Ubah commit terakhir';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Pengatur kait dan penandatanganan dihormati.';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Menulis ulang commit HEAD yang dipilih. Pelacakan remote tidak membuktikan bahwa commit belum dipublikasikan.';
+
+  @override
+  String get gitUiRepository => 'Repositori';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return 'Dilepas $arg0';
+  }
+
+  @override
+  String get gitUiLog => 'Riwayat';
+
+  @override
+  String get gitUiRepositoryActions => 'Tindakan repositori';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return 'Pelacakan tersimpan · $upstream · $ahead di depan · $behind di belakang';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Tak ada pohon yang berfungsi. Buka Log untuk memeriksa riwayatnya.';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Repositori hanya-baca · pementasan dan commit tidak tersedia.';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable =>
+      'Status repositori tidak tersedia';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return 'Amend $revision';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => 'Tambahkan baris persetujuan';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Gunakan kebijakan penandatanganan yang dikonfigurasi';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit =>
+      'Tanda tangani secara kriptografi commit ini';
+
+  @override
+  String get gitUiDoNotSignThisCommit => 'Jangan tanda tangani commit ini';
+
+  @override
+  String get gitUiRecentCommitMessages => 'Pesan commit baru-baru ini...';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Gunakan templat commit yang dikonfigurasi...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Identitas penulis dan kait yang dikonfigurasi...';
+
+  @override
+  String get gitUiDraftMessage => 'Pesan singkat...';
+
+  @override
+  String get gitUiCommitOptions => 'Opsi commit';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return 'Draft dipertahankan dalam memori; menyimpannya gagal. $arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => 'Pesan commit';
+
+  @override
+  String get gitUiGitOperationInProgress => 'Operasi git sedang berlangsung';
+
+  @override
+  String get gitUiCancel => 'Batal';
+
+  @override
+  String get gitUiAmendStaged => 'Amend dipentaskan';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return 'Commit dipentaskan ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => 'Commit dan push…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Tidak ada templat commit yang dapat dibaca yang dikonfigurasi.';
+
+  @override
+  String get gitUiCommitIdentityAndHooks => 'Commit identitas dan kait';
+
+  @override
+  String get gitUiRecentMessages => 'Pesan baru-baru Ini';
+
+  @override
+  String get gitUiReplaceMessageDraft => 'Ganti draf pesan?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Ganti pesan commit yang ada dengan pesan yang dipilih?';
+
+  @override
+  String get gitUiReplaceDraft => 'Ganti draft';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return 'Komit lokal $arg0 ada.';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return 'Komit lokal $arg0 ada. Tinjau Log sebelum mencoba commit lain. draft pesan telah disimpan.';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => 'Commit nama penulis';
+
+  @override
+  String get gitUiCommitAuthorEmail => 'Commit surel penulis';
+
+  @override
+  String get gitUiConfiguredDefault => 'konfigurasi baku';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return 'Signing: $arg0 $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return 'Kait yang dikonfigurasi: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'Baris persetujuan adalah pernyataan dalam pesan, terpisah dari tanda tangan kriptografis. Identitas hanya disimpan pada konfigurasi lokal repositori ini; draf tetap tersimpan.';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => 'Simpan identitas repositori';
+
+  @override
+  String get gitUiStaged => 'Sudah di-stage';
+
+  @override
+  String get gitUiUntracked => 'Tidak dilacak';
+
+  @override
+  String get gitUiUnstaged => 'Belum di-stage';
+
+  @override
+  String get gitUiConflicts => 'Konflik';
+
+  @override
+  String get gitUiNoChanges => 'Tidak ada perubahan';
+
+  @override
+  String get gitUiRepositoryChangeTree => 'tree perubahan repositori';
+
+  @override
+  String get gitUiChanges => 'Perubahan';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => 'Ekspansi';
+
+  @override
+  String get gitUiCollapse => 'Runtuh';
+
+  @override
+  String get gitUiUnstageFile => 'Unstage berkas';
+
+  @override
+  String get gitUiStageFile => 'Stage berkas';
+
+  @override
+  String get gitUiExpandGroup => 'Perluas grup';
+
+  @override
+  String get gitUiCollapseGroup => 'Runtuhkan kelompok';
+
+  @override
+  String get gitUiReviewDifference => 'Perbedaan ulasan';
+
+  @override
+  String get gitUiUnstageSelectedFiles => 'Unstage berkas terpilih';
+
+  @override
+  String get gitUiStageSelectedFiles => 'Stage berkas terpilih';
+
+  @override
+  String get gitUiFileHistoryAndBlame => 'Sejarah berkas dan menyalahkan...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => 'Hapus berkas yang tidak dilacak...';
+
+  @override
+  String get gitUiDiscardUnstagedChange =>
+      'Buang perubahan yang belum ter-stage...';
+
+  @override
+  String get gitUiFileHistory => 'Riwayat berkas';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return 'Buang $arg0 yang tak ter-stage?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 bytes · $arg1 Ganti konten kerja dengan indeks, atau hapus berkas yang tidak dilacak ini. Isi yang belum disimpan tetap. Dokumen host harus ditinjau terlebih dahulu.';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => 'Hapus berkas yang tidak dilacak';
+
+  @override
+  String get gitUiDiscardWorkingChange => 'Buang perubahan kerja';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return 'Hapus referensi REMOTE $arg0';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Ini menghapus referensi pada setiap tujuan push yang sebenarnya yang terdaftar di bawah ini. Branch/tag lokal dipertahankan. Tip yang diharapkan tetap oleh ulasan ini.';
+
+  @override
+  String get gitUiReferenceDoesNotExist => 'referensi tidak ada';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0 Diduga tip: $arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => 'Penghapusan jarak jauh selesai.';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return 'Hapus $arg0 dari remote?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'Tips tujuan yang ditunjukkan di atas akan dihapus. Ujung remote yang diubah menghentikan operasi untuk ulasan lain.';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote =>
+      'Tinjau dan hapus dari remote...';
+
+  @override
+  String get gitUiDestinationReference => 'Referensi tujuan';
+
+  @override
+  String get gitUiReviewDestinations => 'Meninjau tujuan';
+
+  @override
+  String get gitUiNewRemoteBranch => 'branch jauh baru';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · diharapkan: $arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Sebuah tujuan memiliki komitmen yang tidak tersedia secara lokal. Ambil tujuan yang ditinjau sebelum meninjau sejarah keluar.';
+
+  @override
+  String get gitUiFetchReviewedDestination => 'Ambil tujuan yang ditinjau';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Pilih suatu tujuan dan tinjau kembali komitmen keluar.';
+
+  @override
+  String get gitUiNoOutgoingCommits => 'Tidak ada komitmen keluar';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => 'Pilih suatu commit keluar';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits => 'Muat lebih banyak commit keluar';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Atur tujuan ini sebagai hulu';
+
+  @override
+  String get gitUiChooseExactTagsToPublish =>
+      'Pilih tag yang tepat untuk diterbitkan';
+
+  @override
+  String get gitUiTagsNone => 'Tag: kosong';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return 'Tag: $arg0 dipilih';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return 'Terbitkan persis: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Push selesai. Commit lokal tetap tersedia dalam Log.';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Push paksa mensyaratkan ujung referensi tujuan sama persis dengan yang ditinjau di sini.';
+
+  @override
+  String get gitUiForceWithReviewedLease => 'Paksa sewa yang diperiksa...';
+
+  @override
+  String get gitUiPush => 'Push';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases =>
+      'Dorongan paksa dengan harga sewa yang ditinjau?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return 'Tulis ulang $arg0 hanya jika setiap tujuan jauh masih memiliki tip tepat yang ditampilkan di atas.\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Orang lain mungkin sudah menggunakan riwayat ini. Fetch di latar belakang tidak memperbarui syarat keamanan ini.';
+
+  @override
+  String get gitUiForceWithLease => 'Paksa dengan sewa';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Hasil yang jauh tidak pasti.';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return 'Induk $arg0 $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => 'Jauh untuk mengambil';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Prune dihapus branch remote-tracking';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Ambil pemutakhiran informasi pelacakan jarak jauh tanpa mengganti berkas kerja.';
+
+  @override
+  String get gitUiFetch => 'Fetch';
+
+  @override
+  String get gitUiSourceRemote => 'Remote sumber';
+
+  @override
+  String get gitUiSourceBranch => 'Cabang sumber';
+
+  @override
+  String get gitUiReviewedStrategy => 'Strategi yang ditinjau';
+
+  @override
+  String get gitUiMerge => 'Gabung';
+
+  @override
+  String get gitUiRebase => 'Rebase';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Berhenti jika tujuan tidak dapat mempercepat; jangan menggabungkan atau rebase.';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Gabung dengan suatu commit gabungan, termasuk ketika maju-cepat mungkin.';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Gabung; ijinkan maju-cepat bila memungkinkan.';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Rebase sejarah lokal ketika melestarikan komit gabungan lokal.';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Rebase lokal commits sebagai sejarah linear.';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git ditata untuk rebase interaktif. Pilih strategi tarik secara eksplisit di sini, atau ambil dan buka Rebase... untuk meninjau rencana.';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Gunakan rebase biasa yang ditinjau untuk tarikan ini';
+
+  @override
+  String get gitUiOptions => 'Opsi';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Selalu buat suatu commit merge (tidak maju-cepat)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits =>
+      'Pertahankan commit gabungan lokal';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Perubahan lokal mungkin mencegah pull. Review/commit mereka atau secara eksplisit membuat suatu stash.';
+
+  @override
+  String get gitUiStashes => 'Stash';
+
+  @override
+  String get gitUiCreateOrReviewStash => 'Buat atau tinjau stash...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy =>
+      'Tarik dengan strategi yang dipilih';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource =>
+      'URL repositori atau sumber lokal Git';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH, atau path lokal';
+
+  @override
+  String get gitUiFolderToInitialize => 'Folder untuk diinisialisasi';
+
+  @override
+  String get gitUiFinalCloneDestination => 'Tujuan klon akhir';
+
+  @override
+  String get gitUiChoose => 'Pilih...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Membuat metadata Git saja. Berkas yang telah ada tidak di-stage atau dikomit.';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Tujuan akhir harus belum ada atau kosong. Data pengguna yang sudah ada tidak pernah ditimpa.';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Kebijakan Git menggunakan branch awal ·kosong';
+
+  @override
+  String get gitUiSelectedBranchOptional => 'Cabang terpilih · opsional';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Eksplisit inisialisasi/update submodules rekursif';
+
+  @override
+  String get gitUiPreparingGitOperation => 'Mempersiapkan operasi Git...';
+
+  @override
+  String get gitUiThisAttemptCreated => 'Upaya ini dibuat';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Tujuan ada sebelum upaya ini:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Direktori tetap untuk pemeriksaan. Tinjau sebelum percobaan kloning lain.';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains =>
+      'Tak ada direktori tujuan yang tersisa.';
+
+  @override
+  String get gitUiCancelProcess => 'Batalkan proses';
+
+  @override
+  String get gitUiInitialize => 'Inisialisasi';
+
+  @override
+  String get gitUiClone => 'Klon';
+
+  @override
+  String get gitUiChooseNewBase => 'Pilih basis baru';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => 'Pilih batas upstream';
+
+  @override
+  String get gitUiNewBase => 'Basis baru';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => 'Batas upstream · dikecualikan';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => 'Sama dengan batas upstream';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => 'Pilih cabang, tag, atau commit…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase => 'Gunakan upstream sebagai basis baru';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Pilih suatu branch, tag, atau commit yang valid dari Log.';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Commit pertama yang dipertahankan dalam blok cabang tidak dapat memakai squash atau fixup: tidak ada commit tujuan sebelumnya.';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return 'Branch block $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Kembalikan kata akan meminta pesan baru]\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => 'Merencanakan pesan commit';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Original/comberined preview pesan · Git meminta pesan akhir/squash';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return 'Hasil $arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return 'Cabang saat ini: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => 'HEAD terlepas';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Rebase menulis ulang identitas commit. Informasi pelacakan remote tidak membuktikan bahwa riwayat belum pernah dipublikasikan.';
+
+  @override
+  String get gitUiIncludeRootCommits => 'Sertakan commit akar';
+
+  @override
+  String get gitUiMergeCommits => 'Merge commits';
+
+  @override
+  String get gitUiFlattenHistory => 'Ratakan riwayat';
+
+  @override
+  String get gitUiPreserveBranchStructure => 'Pertahankan struktur cabang';
+
+  @override
+  String get gitUiAutosquash => 'Penggabungan otomatis';
+
+  @override
+  String get gitUiPrepareGitPlan => 'Siapkan rencana Git';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return 'Commit untuk replay: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Termasuk semua root commit yang dapat dicapai dari branch ini.';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return 'Commit setelah $boundary akan diterapkan ulang di atas $base; commit batas itu sendiri tidak disertakan.';
+  }
+
+  @override
+  String get gitUiRoot => 'Akar';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Struktur branch/label/reset/merge Git';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Pilih batas atau mode root lama yang eksplisit, lalu siapkan rencana.';
+
+  @override
+  String get gitUiMoveUp => 'Pindah ke atas';
+
+  @override
+  String get gitUiMoveDown => 'Pindah ke bawah';
+
+  @override
+  String get gitUiResetPlan => 'Atur ulang rencana';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · branch block $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Pilih suatu commit untuk rincian dan berkas yang berubah';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Pratilik gabungan surat commit...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+↑/↓ memindahkan commit yang dipilih. Referensi cabang yang tidak terkait tidak akan diperbarui secara otomatis.';
+
+  @override
+  String get gitUiCancelPlan => 'Batalkan rencana';
+
+  @override
+  String get gitUiStartReviewedRebase => 'Mulai periksa rebase?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Tulis ulang $arg0 yang direncanakan pada $arg1, menjatuhkan commit tetap terlihat dalam rencana ini sampai Anda mulai.';
+  }
+
+  @override
+  String get gitUiStartRebase => 'Mulai rebase';
+
+  @override
+  String get gitUiNoContinuingGitOperation =>
+      'Tak ada operasi git yang dilanjutkan';
+
+  @override
+  String get gitUiStoppedForEditingAmend =>
+      ' · dihentikan untuk penyuntingan/amen';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Ini adalah masukan indeks yang tak terukur, mungkin dari aplikasi stash. Git tidak memiliki stash melanjutkan atau membatalkan perintah.';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Sunting berkas kerja, panggung, dan ubah commit saat ini, lalu lanjutkan rebase ini.';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · tahap indeks belum digabung $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Indeks tak memiliki entri yang tak terselesaikan.';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Pertahankan commit ini sebagai commit kosong';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Indeks riil tidak memiliki perubahan yang distage. Buat suatu commit kosong eksplisit, lanjutkan urutan bila masih aktif.';
+
+  @override
+  String get gitUiKeepEmptyCommit => 'Simpan commit kosong...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git akan mencoba kembali ke awal operasi. Konten yang sudah ada sebelumnya di luar indeks, tidak dilacak, atau belum disimpan tidak dijamin dapat dipulihkan.';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Lewati commit saat ini dan lanjutkan dengan commit yang direncanakan berikutnya.';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Lupakan operasi ini pembukuan sambil menyimpan berkas dan indeks saat ini.';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return 'Lanjutkan $arg0';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions => 'Isi ulang versi konflik?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Ganti draft Hasil yang belum disimpan dengan berkas kerja saat ini. Isi kerja disimpan dipertahankan.';
+
+  @override
+  String get gitUiLoadingConflictVersions => 'Memuat versi konflik...';
+
+  @override
+  String get gitUiLoadingConflict => 'Memuat konflik';
+
+  @override
+  String get gitUiBaseLeft => 'Pangkalan → kiri';
+
+  @override
+  String get gitUiBaseRight => 'Markas → kanan';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict =>
+      'Tidak ada entri dasar untuk konflik ini';
+
+  @override
+  String get gitUiAcceptEntireLeftFile => 'Terima seluruh berkas kiri...';
+
+  @override
+  String get gitUiAcceptEntireRightFile =>
+      'Terima seluruh berkas yang benar...';
+
+  @override
+  String get gitUiPreviousConflictRegion => 'Daerah konflik sebelumnya';
+
+  @override
+  String get gitUiNextConflictRegion => 'Daerah konflik berikutnya';
+
+  @override
+  String get gitUiManualResolution => 'Resolusi manual';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return 'Wilayah $arg0/$arg1 · $arg2 telah ditinjau';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Perataan sumber melebihi batas perbandingan teks; panel sumber tetap tersedia untuk tinjauan manual.';
+
+  @override
+  String get gitUiAcceptLeftRegion => 'Terima wilayah kiri';
+
+  @override
+  String get gitUiAcceptRightRegion => 'Terima daerah kanan';
+
+  @override
+  String get gitUiKeepManualResultForRegion =>
+      'Pertahankan hasil manual bagi daerah';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Terapkan perubahan git tanpa konflik?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Ganti draf hasil saat ini dengan pratinjau merge Gitås. Ini mengabaikan suntingan hasil manual yang belum disimpan; berkas kerja tidak berubah sampai Simpan.';
+
+  @override
+  String get gitUiUseMergePreview => 'Gunakan pratinjau gabungan';
+
+  @override
+  String get gitUiApplyNonConflictingChanges =>
+      'Terapkan perubahan yang tidak menghubungkan...';
+
+  @override
+  String get gitUiLeftSource => 'Sumber kiri';
+
+  @override
+  String get gitUiResult => 'Hasil';
+
+  @override
+  String get gitUiRightSource => 'Sumber kanan';
+
+  @override
+  String get gitUiStage2 => 'Tahap 2';
+
+  @override
+  String get gitUiStage3 => 'Tahap 3';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Versi konflik tidak tersedia. Segarkan untuk meninjau keadaan mereka saat ini.';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Hasil disimpan ke disk. Indeks masih menentukan apakah berkas ini diselesaikan.';
+
+  @override
+  String get gitUiSaveResultDraft => 'Simpan draf hasil';
+
+  @override
+  String get gitUiApplyResultAndStageResolution =>
+      'Terapkan hasil dan stage penyelesaian';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Hasil dari isi kerja UTF-8 yang dapat disunting';
+
+  @override
+  String get gitUiEditableConflictResult =>
+      'Hasil konflik yang dapat disunting';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Kiri: $arg0 · $arg1\nKanan: $arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'Pilih isi, penghapusan, atau sebuah submodul commit secara eksplisit. Tidak ada data biner yang didekode sebagai teks yang dapat disunting.';
+
+  @override
+  String get gitUiUseEntireLeftContent => 'Gunakan seluruh isi kiri...';
+
+  @override
+  String get gitUiUseEntireRightContent => 'Gunakan seluruh isi kanan...';
+
+  @override
+  String get gitUiDeleteThisPath => 'vectors-action';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit => 'Commit submodule terpecah';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Tahap ini gitlink tepat dalam induk. Ini tidak memeriksa atau melakukan submodule tersebut.';
+
+  @override
+  String get gitUiSetResolvedGitlink => 'Atur gitlink yang terpecahkan...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return 'Basis → tahap $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Hasilnya diedit. Pertahankan hasil manual atau pilih daerah lain yang tidak berubah.';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return 'Terapkan penyelesaian “$arg0”?';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Stage commit gitlink yang dipilih dalam induk. Checkout submodule dan berkas-berkasnya tidak diganti.';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return 'Ganti seluruh jalur kerja $arg0 dan tahapkan keputusan. Isi kerja saat ini dan setiap rancangan hasil yang belum disimpan akan dibuang.';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision =>
+      'Terapkan seluruh keputusan berkas';
+
+  @override
+  String get gitUiStageThisConflictResolution =>
+      'Melakukan resolusi konflik ini?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Gunakan seluruh hasil yang diedit sebagai $arg0. Git mencatat path yang diselesaikan ketika dipentaskan. Review semua isi yang diinginkan pertama.$arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => 'Terapkan dan stage';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges =>
+      'Tinjau perubahan format teks hasil';
+
+  @override
+  String get gitUiSaveReviewedResult => 'Simpan hasil yang ditinjau';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Aksesibilitas tabel Git asli tidak tersedia. Coba lagi setelah menghubungkan kembali aplikasi.';
+
+  @override
+  String get gitUiSans => 'Sans';
+
+  @override
+  String get gitUiSelect => 'Pilih';
+
+  @override
+  String get gitUiContextMenu => 'Menu konteks';
+
+  @override
+  String get gitUiCopyText => 'Salin teks';
+
+  @override
+  String get gitUiLoadingRow => 'Memuat baris';
+
+  @override
+  String get gitUiRetry => 'Coba lagi';
+
+  @override
+  String get gitUiGitMessage => 'Pesan git';
+
+  @override
+  String get gitUiCancelPrompt => 'Batalkan prompt';
+
+  @override
+  String get gitUiUseMessageAndContinue => 'Gunakan pesan dan lanjutkan';
+
+  @override
+  String get gitUiRespondPrivately => 'Menanggapi secara pribadi';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return 'Tilik preferensi tidak dapat disimpan: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return 'Penyimpanan draft Commit: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return 'Tilik preferensi tidak dapat dibaca: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return 'draft Commit dipertahankan dalam memori tetapi tidak dapat disimpan: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Repositori yang ditinjau hanya dapat dibaca untuk operasi ini. Inspeksi riwayat dan isi tetap tersedia.';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git mengembalikan $arg0. Aplikasi tidak dapat menyegarkan dokumen-dokumennya: $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => 'Pilih commit dari riwayat…';
+
+  @override
+  String get gitUiCurrentBranch => 'Cabang saat ini';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Tak ada branch atau tag yang cocok. Pilih suatu commit dalam Log.';
+
+  @override
+  String get gitUiBranches => 'Cabang';
+
+  @override
+  String get gitUiPushCommits => 'Push commit';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return 'Tarik ke $arg0';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return 'Resolve $arg0';
+  }
+
+  @override
+  String get gitUiCurrentOperation => 'Operasi saat ini';
+
+  @override
+  String get gitUiRebaseCommits => 'Rebase commit';
+
+  @override
+  String get gitUiFetch2 => 'Fetch…';
+
+  @override
+  String get gitUiPull => 'Pull…';
+
+  @override
+  String get gitUiPush2 => 'Push…';
+
+  @override
+  String get gitUiBranches2 => 'Cabang…';
+
+  @override
+  String get gitUiManageRemotes => 'Kelola remote…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return 'Gabung ke $arg0...';
+  }
+
+  @override
+  String get gitUiRebase2 => 'Rebase…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation =>
+      'Konflik dan operasi saat ini...';
+
+  @override
+  String get gitUiStashes2 => 'Stash…';
+
+  @override
+  String get gitUiWorktrees => 'Worktree…';
+
+  @override
+  String get gitUiSubmodules => 'Submodul…';
+
+  @override
+  String get gitUiReflogAndRecovery => 'Reflog dan pemulihan…';
+
+  @override
+  String get gitUiCloneRepository => 'Klon repositori…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => 'Hapus kepercayaan repositori';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus => 'Menunggu status repositori';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Status repositori tidak tersedia; segarkan';
+
+  @override
+  String get gitUiManageRemotes2 => 'Kelola remote';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return 'Gabung ke $arg0';
+  }
+
+  @override
+  String get gitUiWorktrees2 => 'Worktree';
+
+  @override
+  String get gitUiSubmodules2 => 'Submodul';
+
+  @override
+  String get gitUiReflogAndRecovery2 => 'Reflog dan pemulihan';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return 'Repositori clone · $arg0';
+  }
+
+  @override
+  String get gitUiApply => 'Terapkan';
+
+  @override
+  String get gitUiResizeGitPanes => 'Ubah ukuran panel Git';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0 persen';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return 'Status keluaran: $status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Repositori berubah. Segarkan dan tinjau sebelum mencoba lagi.';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'Operasi lain memegang kunci repositori atau indeks. Tunggu, kemudian segarkan.';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Diperlukan kepercayaan repositori untuk operasi ini.';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Layanan Git terputus. Menyambung kembali dan mendamaikan repositori.';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Executable Git yang terpasang tidak dapat mendukung operasi ini. Tinjau ulang kebutuhan waktu berjalannya di bawah ini.';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Repositori ini hanya dapat dibaca bagi operasi yang diminta. Tinjau dan riwayat tetap tersedia.';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Operasi perlu dirukunkan. Tinjau ulang repositori yang dihasilkan atau keadaan jauh sebelum mengulanginya.';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Otentikasi git gagal. Review pembantu kredensial atau buka kunci ring kunci yang dikonfigurasi.';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'Verifikasi host SSH gagal. Review identitas host melalui perangkat SSH yang dikonfigurasi Anda.';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Penyalaan commit gagal atau dibatalkan. Review kunci penandatanganan, agen dan mengkonfigurasi alat penandatanganan.';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Tata nama penulis repositori dan surel, lalu kembali ke draft pesan yang diawetkan.';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git menolak pemutakhiran yang ditinjau. Segarkan dan tinjau tujuan sebenarnya sebelum mencoba lagi.';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Mengerjakan atau melakukan perubahan mencegah operasi ini. Review, lakukan atau secara eksplisit menyimpannya.';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Objek Git yang diperlukan tidak tersedia. Tinjau batas dangkal atau repositori parsial dan ambil secara eksplisit bila diperlukan.';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Operasi git gagal: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => 'Diagnosa';
+
+  @override
+  String get gitUiAuthorizeGitInspection => 'Otorisasikan pemeriksaan Git...';
+
+  @override
+  String get gitUiCopyDiagnostics => 'Salin diagnostik';
+
+  @override
+  String get gitUiActions => 'Tindakan';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return 'Branch di $arg0';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Membuat cabang lokal tanpa memeriksanya.';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return 'Tag $arg0';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return 'Foto-foto hanya-baca · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => 'Cherry-pick commit';
+
+  @override
+  String get gitUiRevertCommits => 'Putar balik suatu commit';
+
+  @override
+  String get gitUiCompareToFullRevisionID => 'Bandingkan ke ID revisi penuh';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return 'Arah perbandingan pohon: $arg0 → revisi masuk ke sini.';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID =>
+      'Masukkan sebuah ID objek yang valid penuh.';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 → $arg1 · perbandingan pohon';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return 'Reset $arg0 ke $arg1';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'Memindahkan HEAD/branch saat ini. Reflog tidak memulihkan sembarang konten yang tidak terlacak atau belum disimpan.';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'Pindahkan HEAD; pertahankan indeks dan berkas kerja.';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'Pindahkan HEAD dan ganti indeks; pertahankan berkas kerja.';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'Ganti HEAD, indeks, dan berkas kerja terlacak; berkas tidak terlacak yang menghalangi dapat ditimpa.';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'Ganti HEAD, indeks, dan berkas yang sesuai; tolak jika perubahan lokal akan hilang.';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return 'Reset dengan $arg0?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 → $arg1 Review efek mode yang dipilih sebelum diterapkan.';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return 'Reset $arg0';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return 'Target $arg0';
+  }
+
+  @override
+  String get gitUiTagName => 'Nama tag';
+
+  @override
+  String get gitUiAnnotatedTag => 'Tag beranotasi';
+
+  @override
+  String get gitUiCryptographicSigning => 'Penandatanganan kriptografis';
+
+  @override
+  String get gitUiConfiguredPolicy => 'Kebijakan konfigurasi';
+
+  @override
+  String get gitUiSignThisTag => 'Tanda tangani tag ini';
+
+  @override
+  String get gitUiDoNotSign => 'Jangan tanda tangani';
+
+  @override
+  String get gitUiTagMessage => 'Pesan tag';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Membuat tag lokal. Terbitkan tag yang dipilih secara eksplisit dalam review Push.';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return 'Pohon lengkap: $arg0 → $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => 'Halaman berkas-ubah berikutnya';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Snapshot repositori baca-saja. Membuka suatu berkas tak pernah memeriksa revisi ini.';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => 'Buka versi hanya-baca';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Kembalikan path ini...· Waiting for repositori status';
+
+  @override
+  String get gitUiRestoreThisPath => 'Pulihkan jalur ini...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return 'Sejarah · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return 'Mengembalikan $arg0?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return 'Ganti path kerja ini dengan revisi $arg0. Isi dipentaskan yang ada masih dipertahankan.';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => 'Mengembalikan berkas kerja';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return 'Sejarah berkas mengikuti mengubah nama · $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => 'Anotasi · konten commit';
+
+  @override
+  String get gitUiBlame => 'Anotasi…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0 → Pohon Kerja';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile =>
+      'Buka berkas sejarah hanya-baca';
+
+  @override
+  String get gitUiCompareToCurrentFile => 'Bandingkan dengan berkas kini';
+
+  @override
+  String get gitUiCompareToParent => 'Bandingkan dengan orang tua...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return 'Isi penyunting $arg0 yang belum disimpan bukan bagian dari anotasi ini';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return 'Sejarah dari $arg0';
+  }
+
+  @override
+  String get gitUiBoundary => ' · Batas';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\nBaris asli $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => 'Baris sebelumnya';
+
+  @override
+  String get gitUiNextLines => 'Baris berikutnya';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return 'Urutan aplikasi eksplisit · tujuan $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => 'Tambahkan ID objek commit penuh';
+
+  @override
+  String get gitUiAddReviewedCommit => 'Tambahkan commit yang ditinjau...';
+
+  @override
+  String get gitUiMoveEarlier => 'Pindah lebih awal';
+
+  @override
+  String get gitUiMoveLater => 'Bergerak kemudian';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence =>
+      'Hapus dari urutan yang ditinjau';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Terapkan perubahan tanpa membuat commit';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Gunakan induk mainline eksplisit ini untuk merge commits';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Commit yang telah terapan atau kosong dapat menghentikan Git untuk melewatkan eksplisit atau melanjutkan keputusan.';
+
+  @override
+  String get gitUiRevertInReviewedOrder => 'Revert sesuai urutan yang ditinjau';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder =>
+      'Cherry-pick dalam urutan yang ditinjau';
+
+  @override
+  String get gitUiReturnToFiles => 'Kembali ke Berkas';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => 'Commit';
+
+  @override
+  String get gitUiBackToCommit => 'Kembali ke Commit';
+
+  @override
+  String get gitUiSelectAChangeToReview => 'Pilih perubahan untuk ditinjau';
+
+  @override
+  String get gitUiLoadingBranch => 'Memuat branch...';
+
+  @override
+  String get gitUiBranchUnavailable => 'Branch tidak tersedia';
+
+  @override
+  String get gitUiUnbornHEAD => 'HEAD tanpa commit';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return 'HEAD terlepas · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => 'Lanjutkan';
+
+  @override
+  String get gitUiPick => 'Ambil';
+
+  @override
+  String get gitUiReword => 'Ubah pesan';
+
+  @override
+  String get gitUiEdit => 'Edit';
+
+  @override
+  String get gitUiSquash => 'Gabungkan commit';
+
+  @override
+  String get gitUiFixup => 'Gabungkan tanpa pesan';
+
+  @override
+  String get gitUiDrop => 'Buang';
+
+  @override
+  String get gitUiAbort => 'Batalkan operasi';
+
+  @override
+  String get gitUiSkip => 'Lewati';
+
+  @override
+  String get gitUiQuit => 'Keluar dari operasi';
+
+  @override
+  String get gitUiSoft => 'Lunak';
+
+  @override
+  String get gitUiMixed => 'Campuran';
+
+  @override
+  String get gitUiHard => 'Keras';
+
+  @override
+  String get gitUiKeep => 'Pertahankan';
+
+  @override
+  String get gitUiCreate => 'Buat';
+
+  @override
+  String get gitUiApplyStash => 'Terapkan stash';
+
+  @override
+  String get gitUiPopStash => 'Terapkan stash dan hapus jika berhasil';
+
+  @override
+  String get gitUiDropStashAction => 'Hapus stash';
+
+  @override
+  String get gitUiEditedResult => 'Hasil yang diedit';
+
+  @override
+  String get gitUiLeftContent => 'Isi kiri';
+
+  @override
+  String get gitUiRightContent => 'Isi kanan';
+
+  @override
+  String get gitUiDeletePath => 'Hapus path';
+
+  @override
+  String get gitUiSubmoduleCommit => 'Commit submodule';
+
+  @override
+  String get gitUiPresentContent => 'Isi tersedia';
+
+  @override
+  String get gitUiAbsentContent => 'Absen';
+
+  @override
+  String get gitUiBinaryContent => 'Isi binari';
+
+  @override
+  String get gitUiTooLargeContent => 'Isi melebihi batas tampilan';
+
+  @override
+  String get gitUiUnavailableContent => 'Isi tidak tersedia';
+
+  @override
+  String get gitUiGitlinkContent => 'Pointer submodule';
+
+  @override
+  String get gitUiSymlinkContent => 'Link simbolik';
+
+  @override
+  String get gitUiNoOperation => 'Tak ada operasi';
+
+  @override
+  String get gitUiCherryPickOperation => 'Cherry-pick';
+
+  @override
+  String get gitUiRevertOperation => 'Revert';
+
+  @override
+  String get gitUiApplyMailboxOperation => 'Terapkan patch';
+
+  @override
+  String get gitUiSquashOperation => 'Squash merge';
+
+  @override
+  String get gitUiUnmergedOperation => 'Indeks tak terukur';
+
+  @override
+  String get gitUiWaitingForPromptPhase => 'Menunggu tanggapan Anda';
+
+  @override
+  String get gitUiStoppedPhase => 'Dihentikan untuk ulasan';
+
+  @override
+  String get gitUiCompletedPhase => 'Selesai';
+
+  @override
+  String get gitUiFailedPhase => 'Gagal';
+
+  @override
+  String get gitUiCancelledPhase => 'Dibatalkan';
+
+  @override
+  String get gitUiUncertainPhase => 'Outcome membutuhkan rekonsiliasi';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return 'Tahap konflik $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Pratinjau merge Git';
+
+  @override
+  String get gitUiNormalizedWorking => 'Pohon Kerja · Git dinormalkan';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value persen';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF-8 dengan tanda byte-order (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF-8 tanpa tanda batas byte (BOM)';
+
+  @override
+  String get gitUiAddsBom =>
+      'Sunting ini menambahkan tanda UTF-8 byte-order (BOM) di awal berkas.';
+
+  @override
+  String get gitUiRemovesBom =>
+      'Sunting ini menghapus tanda UTF-8 byte-order (BOM) dari awal berkas.';
+
+  @override
+  String get gitUiNoLineTerminators => 'Tak ada pengakhir baris';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return 'Akhir baris $format';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return 'Akhir baris campuran ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format · tidak ada LF akhir';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return 'Format akhir baris berubah dari $before menjadi $after. Teks papan klip dapat menggunakan akhir baris yang berbeda dari berkas asli.';
+  }
+
+  @override
+  String get gitUiGitFailure =>
+      'Operasi git gagal. Meninjau diagnosa di bawah ini.';
+
+  @override
+  String get gitUiAbortInline => 'Batalkan operasi';
+
+  @override
+  String get gitUiSkipInline => 'Lewati';
+
+  @override
+  String get gitUiQuitInline => 'berhenti';
+
+  @override
+  String get gitUiMergeInline => 'Gabung';
+
+  @override
+  String get gitUiRebaseInline => 'Rebase';
+
+  @override
+  String get gitUiCherryPickInline => 'Cherry-pick';
+
+  @override
+  String get gitUiRevertInline => 'Revert';
+
+  @override
+  String get gitUiApplyMailboxInline => 'kotak-surat terapan';
+
+  @override
+  String get gitUiSquashInline => 'Gabungkan commit';
+
+  @override
+  String get gitUiUnmergedInline => 'tak terukur';
+
+  @override
+  String get gitHostFetch => 'Fetch';
+
+  @override
+  String get gitHostRefreshGitStatus => 'Segarkan status Git';
+
+  @override
+  String get gitHostCommitStaged => 'Commit dipentaskan';
+
+  @override
+  String get gitHostGitBranches => 'Cabang git';
+
+  @override
+  String get gitHostReviewPush => 'Push review';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Operasi git berlaku untuk seluruh repositori ini dan mungkin mengeksekusi kaitnya yang dikonfigurasi, penyaring, kredensial, dan alat penandatanganannya.';
+
+  @override
+  String get gitHostContentUnavailable => 'Isi tidak tersedia';
+
+  @override
+  String get gitHostInitializeRepository => 'Inisialisasi repositori';
+
+  @override
+  String get gitHostCloneRepository => 'Klon repositori';
+
+  @override
+  String get gitHostInitializeHere => 'Inisialisasi di sini...';
+
+  @override
+  String get gitHostCloneRepository2 => 'Klon repositori…';
+
+  @override
+  String get gitHostGitLog => 'Log Git';
+
+  @override
+  String get gitUiAbsentPlaceholder => '(Absent)';
+
+  @override
+  String get gitUiUnborn => 'belum lahir';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return 'Riwayat setelah rebase · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return 'Riwayat saat ini · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return 'Commit yang diterapkan ulang · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return 'Konten masuk · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => 'Konflik isi';
+
+  @override
+  String get gitUiSubmoduleConflict => 'Konflik submodule';
+
+  @override
+  String get gitUiSymlinkConflict => 'Konflik symbolic-link';
+
+  @override
+  String get gitUiAddAddConflict => 'Ditambahkan pada kedua sisi';
+
+  @override
+  String get gitUiModifyDeleteConflict => 'Diubah/hapus atau diubah nama/hapus';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path $kind';
+  }
 }

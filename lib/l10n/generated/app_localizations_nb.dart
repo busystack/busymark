@@ -5900,4 +5900,2812 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get gitNonUtf8FilenameMessage =>
       'Filnavnet inneholder byte som ikke er UTF-8. Git-gjennomgang og mellomlagring er fortsatt tilgjengelig; dokumentredigereren krever et UTF-8-filnavn.';
+
+  @override
+  String get gitUiMergeInProgress => 'Fletting pågår';
+
+  @override
+  String get gitUiRebaseInProgress => 'Gjentakelse pågår';
+
+  @override
+  String get gitUiCherryPickInProgress => 'Kirsebærplukking pågår';
+
+  @override
+  String get gitUiRevertInProgress => 'Tilbakestill pågår';
+
+  @override
+  String get gitUiPatchApplicationInProgress => 'Oppdateringsprogram pågår';
+
+  @override
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Resultat av sammenslåing av Krusj i påvente av innmelding';
+
+  @override
+  String get gitUiUnresolvedIndexConflicts => 'Uløste indekskonflikter';
+
+  @override
+  String get gitUiUnresolvedConflicts => ' · uløste konflikter';
+
+  @override
+  String get gitUiReviewOperation => 'Gjennomgåelsesoperasjon';
+
+  @override
+  String get gitUiRefresh => 'Oppdater';
+
+  @override
+  String get gitUiCreateNamedStash => 'Lag navngitte lagre';
+
+  @override
+  String get gitUiCreateStash => 'Opprett stash…';
+
+  @override
+  String get gitUiNoStashes => 'Ingen lagre';
+
+  @override
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Velg et lager som skal undersøkes for endringene';
+
+  @override
+  String get gitUiStashedUntrackedFiles => 'Stashed usporede filer';
+
+  @override
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Undersøk om filer som ikke er sporet ...';
+
+  @override
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Angi igjen lagerets trinnvise/indekstilstand ved anvendelse';
+
+  @override
+  String get gitUiApplyAndRetain => 'Bruk og behold';
+
+  @override
+  String get gitUiPop => 'Pop ...';
+
+  @override
+  String get gitUiCreateBranch => 'Opprett gren…';
+
+  @override
+  String get gitUiDropStash => 'Slett stash…';
+
+  @override
+  String get gitUiBranchFromStash => 'Opprett gren fra stash';
+
+  @override
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Opprett/ bytt til en gren ved den opprinnelige basen i lageret, og bruk den. Det opprinnelige lageret beholdes for eksplisitt senere sletting.';
+
+  @override
+  String gitUiArg0ThisStash(String arg0) {
+    return '$arg0 dette lageret?';
+  }
+
+  @override
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Det opprinnelige lageret beholdes hvis det tas i bruk konflikter.';
+
+  @override
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Sletter denne lageroppføringa. Endringene blir ikke tatt i bruk.';
+
+  @override
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Løs de uflettede filene. Git har ingen kommando for å fortsette eller avbryte en stash; den opprinnelige stashen beholdes.';
+
+  @override
+  String get gitUiStashNameMessage => 'Stash name/message';
+
+  @override
+  String get gitUiStashContentAndResultingIndex =>
+      'Stash-innhold og resultatindeks';
+
+  @override
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Stopp arbeidende og trinnvise endringer';
+
+  @override
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Stash endringer og la indeksinnholdet bli stående (--keep-index)';
+
+  @override
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Stash bare endringene i indeksen (--staged)';
+
+  @override
+  String get gitUiIncludeUntrackedFiles => 'Ta med usporede filer';
+
+  @override
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Alle relevante stier i dette arkivet';
+
+  @override
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Ingen relevante endringer for disse lagre- valgene.';
+
+  @override
+  String get gitUiSelectAtLeastOneEligiblePath =>
+      'Velg minst én sti som skal velges.';
+
+  @override
+  String get gitUiCreateStash2 => 'Opprett stash';
+
+  @override
+  String get gitUiCreateWorktree => 'Lag arbeidstre ...';
+
+  @override
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'Opprett en commit før du oppretter et arbeidstre ved HEAD.';
+
+  @override
+  String get gitUiDetachedHEAD => 'Frakoblet HEAD';
+
+  @override
+  String get gitUiCurrent => 'Nåværende ·';
+
+  @override
+  String get gitUiLocked => 'Låst ·';
+
+  @override
+  String get gitUiOpenInBusyStack => 'Åpne i opptattStack ·';
+
+  @override
+  String get gitUiStatusNotInspected => 'Status ikke inspisert';
+
+  @override
+  String get gitUiDirty => 'Uren';
+
+  @override
+  String get gitUiClean => 'Ren';
+
+  @override
+  String get gitUiOpenWorkingFolder => 'Åpne arbeidsmappe';
+
+  @override
+  String get gitUiMoveWorktree => 'Flytt arbeidstreet ...';
+
+  @override
+  String get gitUiUnlock => 'Lås opp';
+
+  @override
+  String get gitUiLock => 'Lås';
+
+  @override
+  String get gitUiRemoveCleanWorktree => 'Fjern rent arbeidstre ...';
+
+  @override
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Gjennomgå fjerning med lokale endringer ...';
+
+  @override
+  String get gitUiNewWorktreeFolderName => 'Nytt mappenavn i arbeidstreet';
+
+  @override
+  String get gitUiNewWorktreeBranch => 'Ny gren i arbeidstreet';
+
+  @override
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Opprett $arg0/$arg1 med en ny lokal gren ved $arg2 ($arg3).';
+  }
+
+  @override
+  String get gitUiDestinationFolderName => 'Målmappenavn';
+
+  @override
+  String get gitUiRemoveWorktree => 'Fjerne arbeidstre?';
+
+  @override
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Uttrykkelig forkast alle lokale endringer som er sporet/ ikke sporet i dette arbeidstreet. Låste/ i bruk vil fortsatt være beskyttet.';
+
+  @override
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git nekter å fjerne filer hvis det er lokale endringer, filer som ikke er sporet, eller en lås.';
+
+  @override
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Forkast lokalt innhold i arbeidstreet og fjern';
+
+  @override
+  String get gitUiRemoveCleanWorktree2 => 'Fjern rent arbeidstre';
+
+  @override
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Gjentas uttrykkelig i nestede undermoduler for oppdateringer/synkronisering';
+
+  @override
+  String get gitUiNoRecordedSubmodules => 'Ingen registrerte undermoduler';
+
+  @override
+  String get gitUiNotInitialized => 'ikke klargjort';
+
+  @override
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1) {
+    return 'Overliggende gitlink: $arg0 Sjekket ut: $arg1\n';
+  }
+
+  @override
+  String get gitUiDirtyNestedRepository => 'Smitt nestet arkiv';
+
+  @override
+  String get gitUiCleanNestedRepository => 'Reint nestet lager';
+
+  @override
+  String get gitUiNestedStatusUnavailable => 'Nøstet status ikke tilgjengelig';
+
+  @override
+  String get gitUiEnterNestedRepository => 'Skriv inn nestet lager';
+
+  @override
+  String get gitUiInitializeConfiguration => 'Klargjør oppsett';
+
+  @override
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Oppdater til foreldrens registrerte innlevering ...';
+
+  @override
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Følg oppsatte fjerngrener ...';
+
+  @override
+  String get gitUiSynchronizeConfiguredURLs =>
+      'Synkroniser oppsatte URL- er ...';
+
+  @override
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Den gjeldende undermodulpekeren i trinnet i forelderen';
+
+  @override
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Forelder - og undermodulen sender inn, skyver, og skitten tilstand forblir atskilt. Nettlesing klargjør eller oppdaterer dem ikke.';
+
+  @override
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
+    return 'Hent og sjekk innmelding fra den oppsatte fjerngrenen. Dette er forskjellig fra den oppsatte gitlinken. Rekursive: $arg0.';
+  }
+
+  @override
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Klargjør om nødvendig og sjekk nøyaktig $arg0. Rekursiv: $arg1.';
+  }
+
+  @override
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
+    return 'Bruk den gjennomgangsoperasjonen for oppsett av undermoduler. Rekursiv: $arg0.';
+  }
+
+  @override
+  String get gitUiApplySubmoduleOperation => 'Utfør undermodul- operasjon';
+
+  @override
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Undersøker en registrert revisjon eller oppretter en gjenvinningsgren. Reflog gjenvinner ikke vilkårlig ulagret innhold.';
+
+  @override
+  String get gitUiSelectAReflogEntry => 'Velg en reflog- oppføring';
+
+  @override
+  String get gitUiPreviousPage => 'Forrige side';
+
+  @override
+  String get gitUiNextPage => 'Neste side';
+
+  @override
+  String get gitUiRecoveryBranchName => 'Filialnavn for gjenvinning';
+
+  @override
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
+    return 'Oppretter en gren hos $arg0. Arbeidsfilene og den gjeldende grenen er uendret.';
+  }
+
+  @override
+  String get gitUiCreateRecoveryBranch => 'Opprett gjenopprettingsgren ...';
+
+  @override
+  String get gitUiReadOnlyRecoverySnapshot =>
+      'Skjermbilde med skrivebeskyttet gjenoppretting';
+
+  @override
+  String get gitUiInspectSnapshot => 'Inspiser skjermbildet ...';
+
+  @override
+  String get gitUiReviewReset => 'Gjennomgå nullstilling ...';
+
+  @override
+  String gitUiPageArg0(String arg0) {
+    return 'Side $arg0';
+  }
+
+  @override
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'En Git- teksthistorie må ha sitt redigerbare felt.';
+
+  @override
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Rediger HEAD | Indeks | Arbeidstre…';
+
+  @override
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Indeksen eller arbeidsinnholdet som ble gjennomgått ble endret. Oppdater denne sammenlikningen før mellomlagring.';
+
+  @override
+  String get gitUiRefreshComparison => 'Frisk opp sammenlikning';
+
+  @override
+  String get gitUiPreviousChangedFile => 'Forrige endrede fil';
+
+  @override
+  String get gitUiNextChangedFile => 'Neste endrede fil';
+
+  @override
+  String get gitUiPreviousDifference => 'Forrige forskjell';
+
+  @override
+  String get gitUiNextDifference => 'Neste forskjell';
+
+  @override
+  String get gitUiComparisonMode => 'Sammenligningsmåte';
+
+  @override
+  String get gitUiSideBySide => 'Side ved side';
+
+  @override
+  String get gitUiUnified => 'Forent';
+
+  @override
+  String get gitUiDiffDisplayOptions => 'Innstillinger for visning av diff';
+
+  @override
+  String get gitUiWrap => 'Bryt tekst';
+
+  @override
+  String get gitUiWords => 'Ord';
+
+  @override
+  String get gitUiCollapseContext => 'Fold sammen kontekst';
+
+  @override
+  String get gitUiIgnoreWhitespace => 'Ignorer tomrom';
+
+  @override
+  String get gitUiSearchComparison => 'Søk i sammenlikning';
+
+  @override
+  String get gitUiSearch => 'Søk';
+
+  @override
+  String get gitUiCloseSearch => 'Lukk søk';
+
+  @override
+  String get gitUiStagingActions => 'Igangsettingstiltak';
+
+  @override
+  String get gitUiStagingActions2 => 'Sporer handlinger ...';
+
+  @override
+  String get gitUiUnstageSelectedChangedLines =>
+      'Fjern valgte endrede linjer fra indeks';
+
+  @override
+  String get gitUiStageSelectedChangedLines => 'Klargjør valgte endrede linjer';
+
+  @override
+  String get gitUiUnstageWholeFile => 'Fjern hele filen fra indeks';
+
+  @override
+  String get gitUiStageWholeFile => 'Klargjør hele filen';
+
+  @override
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
+    return '$arg0- tomrom bare endrede linjer skjult · Vis nøyaktige endringer';
+  }
+
+  @override
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
+    return '$arg0 endret linjer · Visningsinnstillinger endrer aldri de trinnvise bytene.';
+  }
+
+  @override
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Skrivebeskyttet sammenligning · Kopier tekst eller juster visningen.';
+
+  @override
+  String get gitUiNoFinalNewline => ' · ingen endelig linjeskift';
+
+  @override
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0 · $arg1 · $arg2 bytes$arg3';
+  }
+
+  @override
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'Sammenlikning av tekst er ikke tilgjengelig for dette innholdet.';
+
+  @override
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Denne sammenlikningen overskrider grensen for tekstgjennomgåelse. Innholdet er ikke erklært identisk.';
+
+  @override
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Sammenlignet innhold er identisk.';
+
+  @override
+  String get gitUiUnstage => 'Ufaset';
+
+  @override
+  String get gitUiStage => 'Nivå';
+
+  @override
+  String gitUiArg0ChangedLine(String arg0) {
+    return '$arg0 endret linje';
+  }
+
+  @override
+  String get gitUiContext => 'Kontekst';
+
+  @override
+  String get gitUiExpandUnchangedContext => 'Utvid uendret kontekst';
+
+  @override
+  String get gitUiUnstageThisHunk => 'Fjern denne blokken fra indeks';
+
+  @override
+  String get gitUiStageThisHunk => 'Klargjør denne blokken';
+
+  @override
+  String gitUiEditStagedContentArg0(String arg0) {
+    return 'Rediger innholdet i trinnet · $arg0';
+  }
+
+  @override
+  String get gitUiWritingReviewedIndexResult =>
+      'Skriver gjennomgått indeksresultat';
+
+  @override
+  String get gitUiHead => 'HEAD';
+
+  @override
+  String get gitUiIndex => 'Indeks';
+
+  @override
+  String get gitUiWorkingTree => 'Arbeidstre';
+
+  @override
+  String gitUiHeadArg0(String arg0) {
+    return 'HEAD · $arg0';
+  }
+
+  @override
+  String get gitUiIndexEditableUTF8Blob => 'Indeks · redigerbar UTF-8- klatt';
+
+  @override
+  String get gitUiUndo => 'Angre';
+
+  @override
+  String get gitUiRedo => 'Gjør om';
+
+  @override
+  String get gitUiReloadIndexReview => 'Laste indeksen på nytt på nytt?';
+
+  @override
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Last inn gjeldende HEAD-, indeks- og arbeidsversjoner på nytt. Dette erstatter det ulagrede utkastet i indeksredigeringen.';
+
+  @override
+  String get gitUiReplaceDraftAndReload => 'Erstatt kladd og last på nytt';
+
+  @override
+  String get gitUiReloadVersions => 'Last inn på nytt versjoner ...';
+
+  @override
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Skriv redigert resultat til denne indeksoppføringa';
+
+  @override
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Arbeidsfiler blir værende på disken. Gjennomgå den redigerte indeksen før du søker.';
+
+  @override
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Gjennomgå endringer i tekstformat i indeksen';
+
+  @override
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Oppdater bare den reviderte indeksoppføringa for $arg0. $arg1';
+  }
+
+  @override
+  String get gitUiWriteReviewedIndexResult =>
+      'Skriv gjennomgått indeksresultat';
+
+  @override
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Resultatet er endret under gjennomgangen av formatet. Se over det igjen.';
+
+  @override
+  String get gitUiSynchronizeScrolling => 'Synkroniser rulling';
+
+  @override
+  String get gitUiReadOnlyRevisionContent => 'Skrivebeskyttet revisjonsinnhold';
+
+  @override
+  String get gitUiEditableIndexContent => 'Redigerbart innhold i indeksen';
+
+  @override
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Den etterspurte revisjonen er utenfor gjeldende filtre. Tilbakestill filtrene til å vise den.';
+
+  @override
+  String get gitUiFilterLog => 'Filterlogg';
+
+  @override
+  String get gitUiFilters => 'Filtre ...';
+
+  @override
+  String gitUiFiltersCount(String count) {
+    return 'Filtre ($count) ...';
+  }
+
+  @override
+  String get gitUiMessage => 'Melding…';
+
+  @override
+  String get gitUiAuthor => 'Forfatter…';
+
+  @override
+  String get gitUiPath => 'Sti ...';
+
+  @override
+  String get gitUiDate => 'Dato ...';
+
+  @override
+  String get gitUiMessageFilter => 'Meldingsfilter';
+
+  @override
+  String get gitUiAuthorFilter => 'Forfatterfilter';
+
+  @override
+  String get gitUiPathFilter => 'Stifilter';
+
+  @override
+  String get gitUiMessage2 => 'Melding';
+
+  @override
+  String get gitUiAuthor2 => 'Forfatter';
+
+  @override
+  String get gitUiPath2 => 'Sti';
+
+  @override
+  String get gitUiDateFilter => 'Datofilter ...';
+
+  @override
+  String get gitUiResetFilters => 'Tilbakestill filtre';
+
+  @override
+  String get gitUiRefreshLog => 'Frisk opp logg';
+
+  @override
+  String get gitUiGoToCommitReference => 'Gå til inn-/referanse ...';
+
+  @override
+  String get gitUiBackToHEAD => 'Tilbake til HEAD';
+
+  @override
+  String get gitUiOrderedCherryPick => 'Ordnet kirsebærplukk';
+
+  @override
+  String gitUiReviewCherryPickArg0(String arg0) {
+    return 'Gjennomse kirsebærplukk ($arg0) ...';
+  }
+
+  @override
+  String get gitUiCompareTwoSelectedRevisions =>
+      'Sammenlikne to markerte revisjoner ...';
+
+  @override
+  String get gitUiToggleBranchesPane => 'Slå grener av/ på';
+
+  @override
+  String get gitUiFilterBranchesAndTags => 'Filtrer forgreninger og etiketter';
+
+  @override
+  String gitUiCommitArg0(String arg0) {
+    return 'Meld inn $arg0';
+  }
+
+  @override
+  String get gitUiCommitDetails => 'Legg inn detaljer ...';
+
+  @override
+  String gitUiReferenceArg0(String arg0) {
+    return 'Referanse: $arg0';
+  }
+
+  @override
+  String get gitUiSelectThisCommit => 'Velg denne commiten';
+
+  @override
+  String get gitUiBranchOrTag => 'Gren eller tagg';
+
+  @override
+  String get gitUiAllReferences => 'Alle referanser';
+
+  @override
+  String get gitUiLocal => 'Lokal';
+
+  @override
+  String get gitUiRemote => 'Ekstern';
+
+  @override
+  String get gitUiTags => 'Tagger';
+
+  @override
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Ingen innsending stemmer med gjeldende filtre.';
+
+  @override
+  String get gitUiObjectID => 'Objekt- ID';
+
+  @override
+  String get gitUiSubjectReferences => 'Emne/ referanser';
+
+  @override
+  String get gitUiDate2 => 'Dato';
+
+  @override
+  String get gitUiGitCommits => 'Git- innsendinger';
+
+  @override
+  String get gitUiParents => 'Foreldrecommiter';
+
+  @override
+  String gitUiArg0Parents(String arg0) {
+    return '$arg0 foreldre';
+  }
+
+  @override
+  String get gitUiLoadMoreCommits => 'Last inn flere innmeldinger';
+
+  @override
+  String get gitUiLoadingChangedFiles => 'Laster inn endrede filer';
+
+  @override
+  String get gitUiNoChangedFiles => 'Ingen endrede filer';
+
+  @override
+  String get gitUiSelectACommit => 'Velg en innsending';
+
+  @override
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1) {
+    return 'Sammenlikne forelder- $arg0: $arg1';
+  }
+
+  @override
+  String get gitUiChangedFiles => 'Endrede filer';
+
+  @override
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Forfatter: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
+    return 'Sender: $arg0 <$arg1> $arg2';
+  }
+
+  @override
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Grense for hele/ deler: et overliggende objekt er ikke tilgjengelig.';
+
+  @override
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Forelderen er utenfor denne siden eller en grunn grense.';
+
+  @override
+  String gitUiParentArg0(String arg0) {
+    return 'Foreldrecommit $arg0';
+  }
+
+  @override
+  String get gitUiCommitActions => 'Send inn handlinger ...';
+
+  @override
+  String get gitUiEmptyTree => 'tomt tre';
+
+  @override
+  String get gitUiCreateBranch2 => 'Opprett gren';
+
+  @override
+  String get gitUiCreateTag => 'Opprett tagg';
+
+  @override
+  String get gitUiCompareRevisions => 'Sammenlikne revisjoner';
+
+  @override
+  String get gitUiOpenSnapshot => 'Åpne skjermbilde';
+
+  @override
+  String get gitUiRevertCommit => 'Tilbakestill innsending';
+
+  @override
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Interaktiv rebase etter denne grensen';
+
+  @override
+  String get gitUiResetCurrentBranch => 'Tilbakestill gjeldende gren';
+
+  @override
+  String get gitUiCopyFullObjectID => 'Kopier fullstendig objekt- ID';
+
+  @override
+  String get gitUiGoToCommitReference2 => 'Gå til inn-/referanse';
+
+  @override
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Oppgi en innsendings- ID eller referanse som viser i logg.';
+
+  @override
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Den etterspurte revisjonen er ikke tilgjengelig.';
+
+  @override
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Metadata fra arkivet er skrivebeskyttet. Det finnes fortsatt inspeksjon og sammenlikning av avdelinger.';
+
+  @override
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Arbeidsfiler er ikke tilgjengelig eller skrivebeskyttet. Det er ikke mulig å bytte gren og flette.';
+
+  @override
+  String get gitUiSearchBranchesAndTags => 'Søk i grener og tagger';
+
+  @override
+  String get gitUiNewBranch => 'Ny gren…';
+
+  @override
+  String get gitUiLocalBranches => 'Lokale grener';
+
+  @override
+  String get gitUiRemoteBranches => 'Eksterne grener';
+
+  @override
+  String gitUiTracksArg0(String arg0) {
+    return 'Spor $arg0';
+  }
+
+  @override
+  String gitUiCheckedOutAtArg0(String arg0) {
+    return 'Sjekket ut ved $arg0';
+  }
+
+  @override
+  String get gitUiRefreshingBranchMetadata => 'Oppfrisker grenmetadata';
+
+  @override
+  String gitUiSwitchToArg0(String arg0) {
+    return 'Bytt til $arg0';
+  }
+
+  @override
+  String get gitUiOpenOccupiedWorktree => 'Åpent arbeidstre';
+
+  @override
+  String get gitUiCreateLocalTrackingBranch => 'Opprett lokal sporingsgren ...';
+
+  @override
+  String get gitUiCompareToCurrentHEAD => 'Sammenlign med gjeldende HEAD';
+
+  @override
+  String get gitUiMergeIntoCurrentBranch =>
+      'Flett sammen til gjeldende gren ...';
+
+  @override
+  String get gitUiRename => 'Endre navn ...';
+
+  @override
+  String get gitUiChangeUpstream => 'Endre oppstrøms ...';
+
+  @override
+  String get gitUiDelete => 'Slett ...';
+
+  @override
+  String get gitUiDeleteFromRemote => 'Slett fra fjern ...';
+
+  @override
+  String gitUiActionsForArg0(String arg0) {
+    return 'Handlinger for $arg0';
+  }
+
+  @override
+  String get gitUiLocalBranchName => 'Lokalt grennavn';
+
+  @override
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0) {
+    return 'Opprett ved $arg0. Den nye grenen blir sjekket ut.';
+  }
+
+  @override
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0) {
+    return 'Den lokale grenen vil spore $arg0 og bli sjekket ut.';
+  }
+
+  @override
+  String get gitUiChooseRemoteForDeletion => 'Velg nettverk for sletting';
+
+  @override
+  String get gitUiDeleteRemoteReference => 'Slett fjernreferanse';
+
+  @override
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1) {
+    return 'Flett sammen $arg0 til $arg1';
+  }
+
+  @override
+  String gitUiRenameArg0(String arg0) {
+    return 'Endre navn på $arg0';
+  }
+
+  @override
+  String gitUiUpstreamForArg0(String arg0) {
+    return 'Oppstrøms for $arg0';
+  }
+
+  @override
+  String get gitUiNoUpstream => 'Ingen oppstrømsgren';
+
+  @override
+  String gitUiDeleteArg0(String arg0) {
+    return 'Slett $arg0?';
+  }
+
+  @override
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 Target $arg1 Lokal sletting bare. En gren som ikke er samlet blir nektet.';
+  }
+
+  @override
+  String get gitUiDelete2 => 'Slett';
+
+  @override
+  String gitUiDeleteUnmergedBranchArg0(String arg0) {
+    return 'Slette usammensatt gren $arg0?';
+  }
+
+  @override
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0) {
+    return '$arg0 Git rapporterer at denne grenen ikke er fullstendig flettet. Slett nøyaktig den lokale referansen etter å ha gjennomgått innsendingene. Fjernkopiene er uendret.';
+  }
+
+  @override
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Slett den lokale grenen som ikke er flettet sammen';
+
+  @override
+  String gitUiDestinationArg0Arg1(String arg0, String arg1) {
+    return 'Bestemmelsessted: $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiSourceBranchOrTag => 'Kildegren eller tagg';
+
+  @override
+  String get gitUiMergePolicy => 'Flettepraksis';
+
+  @override
+  String get gitUiFastForwardWhenPossible => 'Hurtig framover når det er mulig';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommit => 'Lag alltid en fletting';
+
+  @override
+  String get gitUiFastForwardOnly => 'Bare forover';
+
+  @override
+  String get gitUiSquashIntoStagedChanges => 'Squash inn i trinnvise endringer';
+
+  @override
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Stopp før det opprettes en flettingsinnsending';
+
+  @override
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'Spoling fremover er deaktivert slik at HEAD ikke flyttes før gjennomgangen.';
+
+  @override
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Legger igjen iscenesatte endringer for en egen innsending. Dette er ikke en fortsatt fletting.';
+
+  @override
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Konflikter er fortsatt tilgjengelige på det felles arbeidsområdet for oppløsning.';
+
+  @override
+  String get gitUiAddRemote => 'Legg til fjernstyring ...';
+
+  @override
+  String gitUiFetchArg0PushArg1(String arg0, String arg1) {
+    return 'Hent: $arg0 Push: $arg1';
+  }
+
+  @override
+  String get gitUiRemoveRemote => 'Fjern fjernstyring ...';
+
+  @override
+  String get gitUiChangeFetchURL => 'Endre hente- URL ...';
+
+  @override
+  String get gitUiAddPushDestination => 'Legg til skyvemål ...';
+
+  @override
+  String get gitUiRemovePushDestination => 'Fjern skyvemål ...';
+
+  @override
+  String gitUiManageArg0(String arg0) {
+    return 'Håndter $arg0';
+  }
+
+  @override
+  String get gitUiRemoteName => 'Nettverksnavn';
+
+  @override
+  String get gitUiNewRemoteName => 'Nytt fjernnavn';
+
+  @override
+  String get gitUiRepositoryURLOrLocalSource => 'Arkiv- URL eller lokal kilde';
+
+  @override
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Oppgi nøyaktig gjennomgått mål som skal fjernes. @ info: whatsthis';
+
+  @override
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Påloggingsinformasjon leveres av oppsatte hjelpeprogrammer eller en privat forespørsel.';
+
+  @override
+  String gitUiRemoveRemoteArg0(String arg0) {
+    return 'Fjerne fjern $arg0?';
+  }
+
+  @override
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Fjerner lokale nettverksoppsett og sporingsreferanser. Det sletter ikke tjenerlageret.';
+
+  @override
+  String get gitUiRemoveRemote2 => 'Fjern fjernstyring';
+
+  @override
+  String get gitUiCommitScopeEntireRepository =>
+      'Innlever inn område: hele arkivet';
+
+  @override
+  String get gitUiCachedTracking => 'Mellomlagret sporing';
+
+  @override
+  String get gitUiAmendLastCommit => 'Endre siste commit';
+
+  @override
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Konfigurerte kroker og signeringer respekteres.';
+
+  @override
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Skriver om den valgte HEAD-commiten. Ekstern sporing beviser ikke at den er upublisert.';
+
+  @override
+  String get gitUiRepository => 'Kodelager';
+
+  @override
+  String gitUiDetachedArg0(String arg0) {
+    return 'Frakoblet $arg0';
+  }
+
+  @override
+  String get gitUiLog => 'Historikk';
+
+  @override
+  String get gitUiRepositoryActions => 'Kodelagerhandlinger';
+
+  @override
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return 'Mellomlagret sporing · $upstream · $ahead foran · $behind bak';
+  }
+
+  @override
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Bare lager · ingen arbeidstre. Åpne logg for å undersøke historien.';
+
+  @override
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Arkiv med skrivebeskyttet fil · mellomlagring og innsendinger er ikke tilgjengelig.';
+
+  @override
+  String get gitUiRepositoryStatusUnavailable =>
+      'Lagerstatus ikke tilgjengelig';
+
+  @override
+  String gitUiAmendRevision(String revision) {
+    return 'Endre $revision';
+  }
+
+  @override
+  String get gitUiAddSignOffTrailer => 'Legg til godkjenningslinje';
+
+  @override
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Bruk oppsett signeringspraksis';
+
+  @override
+  String get gitUiCryptographicallySignThisCommit =>
+      'Kryptografisk signering av denne innmeldingen';
+
+  @override
+  String get gitUiDoNotSignThisCommit => 'Ikke signer denne innsendingen';
+
+  @override
+  String get gitUiRecentCommitMessages => 'Nylig innsendte meldinger ...';
+
+  @override
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Bruk den oppsatte innsendingsmalen ...';
+
+  @override
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Forfatteridentitet og oppsatte kroker ...';
+
+  @override
+  String get gitUiDraftMessage => 'Kladd melding ...';
+
+  @override
+  String get gitUiCommitOptions => 'Commit-valg';
+
+  @override
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0) {
+    return 'Kladd beholdt i minnet, lagring mislyktes. $arg0';
+  }
+
+  @override
+  String get gitUiCommitMessage => 'Commit-melding';
+
+  @override
+  String get gitUiGitOperationInProgress => 'Git- operasjon pågår';
+
+  @override
+  String get gitUiCancel => 'Avbryt';
+
+  @override
+  String get gitUiAmendStaged => 'Endret trinnvis';
+
+  @override
+  String gitUiCommitStagedCount(String count) {
+    return 'Meld inn i trinn ($count)';
+  }
+
+  @override
+  String get gitUiCommitAndPush => 'Commit og push…';
+
+  @override
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Det er ikke satt opp en lesbar innmeldingsmal.';
+
+  @override
+  String get gitUiCommitIdentityAndHooks => 'Meld inn identitet og kroker';
+
+  @override
+  String get gitUiRecentMessages => 'Nylige meldinger';
+
+  @override
+  String get gitUiReplaceMessageDraft => 'Erstatte kladd?';
+
+  @override
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Erstatte den eksisterende sende- meldinga med den valgte meldinga?';
+
+  @override
+  String get gitUiReplaceDraft => 'Erstatt kladd';
+
+  @override
+  String gitUiLocalCommitArg0Exists(String arg0) {
+    return 'Det finnes en lokal innmelding med $arg0.';
+  }
+
+  @override
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
+    return 'Lokalt innmeldingsmelding for $arg0 finnes. Gjennomgå logg før det forsøkes en annen innsending. Kladdet er blitt beholdt.';
+  }
+
+  @override
+  String get gitUiCommitAuthorName => 'Send inn forfatterens navn';
+
+  @override
+  String get gitUiCommitAuthorEmail => 'Meld inn e- post fra forfatteren';
+
+  @override
+  String get gitUiConfiguredDefault => 'satt opp standard';
+
+  @override
+  String get gitUiOpenpgp => 'OpenPGP';
+
+  @override
+  String gitUiSigningArg0Arg1(String arg0, String arg1) {
+    return 'Signering: $arg0 · $arg1';
+  }
+
+  @override
+  String gitUiConfiguredHooksArg0(String arg0) {
+    return 'Konfigurerte kroker: $arg0';
+  }
+
+  @override
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'En godkjenningslinje er en erklæring i meldingen, atskilt fra en kryptografisk signatur. Identiteten lagres bare i dette kodelagerets lokale innstillinger; utkastet beholdes.';
+
+  @override
+  String get gitUiSaveRepositoryIdentity => 'Lagre arkiv- identitet';
+
+  @override
+  String get gitUiStaged => 'Klargjort';
+
+  @override
+  String get gitUiUntracked => 'Usporet';
+
+  @override
+  String get gitUiUnstaged => 'Ikke klargjort';
+
+  @override
+  String get gitUiConflicts => 'Konflikter';
+
+  @override
+  String get gitUiNoChanges => 'Ingen endringer';
+
+  @override
+  String get gitUiRepositoryChangeTree => 'Lagerendringstre';
+
+  @override
+  String get gitUiChanges => 'Endringer';
+
+  @override
+  String gitUiGroupCount(String group, String count) {
+    return '$group ($count)';
+  }
+
+  @override
+  String get gitUiExpand => 'Utvid';
+
+  @override
+  String get gitUiCollapse => 'Fold sammen';
+
+  @override
+  String get gitUiUnstageFile => 'Fjern fil fra indeks';
+
+  @override
+  String get gitUiStageFile => 'Klargjør fil';
+
+  @override
+  String get gitUiExpandGroup => 'Fold ut gruppe';
+
+  @override
+  String get gitUiCollapseGroup => 'Fold sammen gruppe';
+
+  @override
+  String get gitUiReviewDifference => 'Revisjonsforskjell';
+
+  @override
+  String get gitUiUnstageSelectedFiles => 'Fjern valgte filer fra indeks';
+
+  @override
+  String get gitUiStageSelectedFiles => 'Klargjør valgte filer';
+
+  @override
+  String get gitUiFileHistoryAndBlame => 'Filhistorie og skyld ...';
+
+  @override
+  String get gitUiDeleteUntrackedFile => 'Slett usporet fil ...';
+
+  @override
+  String get gitUiDiscardUnstagedChange => 'Forkast ikke- trinnvis endring ...';
+
+  @override
+  String get gitUiFileHistory => 'Filhistorikk';
+
+  @override
+  String gitUiDiscardUnstagedArg0(String arg0) {
+    return 'Forkast $arg0 som ikke er trinn?';
+  }
+
+  @override
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 bytes · $arg1 Erstatter innhold som virker med indeksen, eller sletter denne usporede fila. Innholdet i et trinn blir beholdt. Ulagrede vertsdokumenter må gjennomgås først.';
+  }
+
+  @override
+  String get gitUiDeleteUntrackedFile2 => 'Slett usporet fil';
+
+  @override
+  String get gitUiDiscardWorkingChange => 'Forkast arbeidsendring';
+
+  @override
+  String gitUiDeleteREMOTEReferenceArg0(String arg0) {
+    return 'Slett REMOTE referanse $arg0';
+  }
+
+  @override
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Dette fjerner referansen for hvert faktiske skyvemål oppført nedenfor. Lokale grener/ merker beholdes. Forventede tips er fastsatt i denne gjennomgangen.';
+
+  @override
+  String get gitUiReferenceDoesNotExist => 'referansen finnes ikke';
+
+  @override
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1) {
+    return '$arg0 Forventet tips: $arg1';
+  }
+
+  @override
+  String get gitUiRemoteDeletionCompleted => 'Fjernsletting fullført.';
+
+  @override
+  String gitUiDeleteArg0FromTheRemote(String arg0) {
+    return 'Slett $arg0 fra fjernkontrollen?';
+  }
+
+  @override
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'De eksakte tipsene over blir fjernet. Alle endrede fjerntips stopper operasjonen for en ny gjennomgang.';
+
+  @override
+  String get gitUiReviewAndDeleteFromRemote =>
+      'Gjennomgå og slett fra fjernstyring ...';
+
+  @override
+  String get gitUiDestinationReference => 'Bestemmelsessted';
+
+  @override
+  String get gitUiReviewDestinations => 'Revurderingsbestemmelsessteder';
+
+  @override
+  String get gitUiNewRemoteBranch => 'ny fjern gren';
+
+  @override
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2) {
+    return '$arg0\n$arg1 · forventet: $arg2';
+  }
+
+  @override
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Et mål har sendt inn som ikke er tilgjengelig lokalt. Hent det reviderte målet før du gjennomgår utgående historie.';
+
+  @override
+  String get gitUiFetchReviewedDestination => 'Hent gjennomsøkt mål';
+
+  @override
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Velg et mål og gjennomgå utgående innmeldinger.';
+
+  @override
+  String get gitUiNoOutgoingCommits => 'Ingen utgående innmeldinger';
+
+  @override
+  String get gitUiSelectAnOutgoingCommit => 'Velg en utgående innmelding';
+
+  @override
+  String get gitUiLoadMoreOutgoingCommits =>
+      'Last inn flere utgående innmeldinger';
+
+  @override
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Sett dette målet som oppstrøms';
+
+  @override
+  String get gitUiChooseExactTagsToPublish =>
+      'Velg nøyaktige etiketter å publisere';
+
+  @override
+  String get gitUiTagsNone => 'Merker: ingen';
+
+  @override
+  String gitUiTagsArg0Selected(String arg0) {
+    return 'Merker: $arg0 valgt';
+  }
+
+  @override
+  String gitUiPublishExactlyArg0(String arg0) {
+    return 'Utgi nøyaktig: $arg0';
+  }
+
+  @override
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Push ferdig. Den lokale innmeldingen er fortsatt tilgjengelig i Logg.';
+
+  @override
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Tvungen push krever nøyaktig de målrevisjonene som er vist i denne gjennomgangen.';
+
+  @override
+  String get gitUiForceWithReviewedLease =>
+      'Kraft med gjennomgått leieavtale ...';
+
+  @override
+  String get gitUiPush => 'Push';
+
+  @override
+  String get gitUiForcePushWithReviewedLeases =>
+      'Tvinge på med reviderte leieavtaler?';
+
+  @override
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
+    return 'Skriv om $arg0 bare hvis alle destinationer ennå har nøyaktig det tipset som er vist over.\n';
+  }
+
+  @override
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Andre kan allerede bruke denne historikken. Henting i bakgrunnen fornyer ikke denne sikkerhetsbetingelsen.';
+
+  @override
+  String get gitUiForceWithLease => 'Kraft med leieavtale';
+
+  @override
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Resultatet er usikkert. Gjennomgå mål igjen før et annet trykk.';
+
+  @override
+  String gitUiParentArg0Arg1(String arg0, String arg1) {
+    return 'Overliggende $arg0 · $arg1';
+  }
+
+  @override
+  String get gitUiRemoteToFetch => 'Nettverkstjener som skal hentes';
+
+  @override
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Fjernsorterte, slettede fjernsporende grener';
+
+  @override
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Hent oppdateringsinformasjon fra nettverket uten å erstatte filer.';
+
+  @override
+  String get gitUiFetch => 'Hent';
+
+  @override
+  String get gitUiSourceRemote => 'Fjernkilde';
+
+  @override
+  String get gitUiSourceBranch => 'Kildegren';
+
+  @override
+  String get gitUiReviewedStrategy => 'Gjennomgået strategi';
+
+  @override
+  String get gitUiMerge => 'Flett';
+
+  @override
+  String get gitUiRebase => 'Rebase';
+
+  @override
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Stopp hvis målet ikke kan gå forover, aldri slå sammen eller gjenopprett.';
+
+  @override
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Flett sammen med en fletting, herunder når fort forover er mulig.';
+
+  @override
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Flett sammen, tillat forover dersom mulig.';
+
+  @override
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Start lokal historie på nytt samtidig som lokal fletting lagres.';
+
+  @override
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Lokalt innlegg på nytt som en lineær historie.';
+
+  @override
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git er satt opp for interaktiv rebase. Velg en dra- strategi her, eller åpne og åpne Rebase ... for å gjennomgå en plan.';
+
+  @override
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Bruk gjennomgått ordinær rebase for dette trekket';
+
+  @override
+  String get gitUiOptions => 'Valg';
+
+  @override
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Lag alltid en fletting (ingen forover)';
+
+  @override
+  String get gitUiPreserveLocalMergeCommits =>
+      'Bevar lokale fletteinnføyninger';
+
+  @override
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Lokale endringer kan hindre trekk. Gjennomgå/ta med dem, eller lag et lager uttrykkelig.';
+
+  @override
+  String get gitUiStashes => 'Stasher';
+
+  @override
+  String get gitUiCreateOrReviewStash => 'Opprett eller gjennomse lager ...';
+
+  @override
+  String get gitUiPullWithSelectedStrategy => 'Dra med valgt strategi';
+
+  @override
+  String get gitUiRepositoryURLOrLocalGitSource =>
+      'Arkiv- URL eller lokal Git- kilde';
+
+  @override
+  String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH eller lokal sti';
+
+  @override
+  String get gitUiFolderToInitialize => 'Mappe å klargjøre';
+
+  @override
+  String get gitUiFinalCloneDestination => 'Endelig klonemål';
+
+  @override
+  String get gitUiChoose => 'Velg ...';
+
+  @override
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Lager bare Git- metadata. Eksisterende filer er ikke i e- post eller er i e- post.';
+
+  @override
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Målmappen må ikke finnes eller må være tom. Eksisterende brukerdata overskrives aldri.';
+
+  @override
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Filialen som ble valgt først · blank bruker effektiv Git- praksis';
+
+  @override
+  String get gitUiSelectedBranchOptional => 'Valgt gren · valgfritt';
+
+  @override
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Rekursivt innledende/ajourførte undermoduler';
+
+  @override
+  String get gitUiPreparingGitOperation => 'Forbereder Git- operasjonen ...';
+
+  @override
+  String get gitUiThisAttemptCreated => 'Dette forsøket opprettet';
+
+  @override
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Målet eksisterte før dette forsøket:';
+
+  @override
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Mappa blir stående for inspeksjon. Se gjennom den før et annet kloneforsøk.';
+
+  @override
+  String get gitUiNoDestinationDirectoryRemains => 'Ingen målmappe gjenstår.';
+
+  @override
+  String get gitUiCancelProcess => 'Avbryt prosess';
+
+  @override
+  String get gitUiInitialize => 'Initialiser';
+
+  @override
+  String get gitUiClone => 'Klon';
+
+  @override
+  String get gitUiChooseNewBase => 'Velg ny base';
+
+  @override
+  String get gitUiChooseUpstreamBoundary => 'Velg oppstrømsgrense';
+
+  @override
+  String get gitUiNewBase => 'Ny base';
+
+  @override
+  String get gitUiUpstreamBoundaryExcluded => 'Oppstrømsgrense · utelatt';
+
+  @override
+  String get gitUiSameAsUpstreamBoundary => 'Samme som oppstrømsgrense';
+
+  @override
+  String get gitUiChooseBranchTagOrCommit => 'Velg gren, tagg eller commit…';
+
+  @override
+  String get gitUiUseUpstreamAsNewBase => 'Bruk oppstrøms som ny base';
+
+  @override
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Velg en gyldig gren, tagg eller send fra logg.';
+
+  @override
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Første beholdte commit i en grenblokk kan ikke være squash eller fixup: den har ingen foregående målcommit.';
+
+  @override
+  String gitUiBranchBlockArg0(String arg0) {
+    return 'Grenblokk $arg0\n';
+  }
+
+  @override
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Åpne ord vil be om en ny melding]\n';
+
+  @override
+  String get gitUiPlannedCommitMessages => 'Planlagte meldinger';
+
+  @override
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Forhåndsvisning av original/sammensatt melding · Git ber om de siste om ord/forhåndsmeldinger';
+
+  @override
+  String gitUiResultArg0Arg1(String arg0, String arg1) {
+    return 'Resultat $arg0 $arg1';
+  }
+
+  @override
+  String gitUiCurrentBranchBranch(String branch) {
+    return 'Gjeldende gren: $branch';
+  }
+
+  @override
+  String get gitUiDetachedHEAD2 => 'Frakoblet HEAD';
+
+  @override
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Rebase skriver om commit-identiteter. Sporingsdata for eksterne grener beviser ikke at historikken aldri er publisert.';
+
+  @override
+  String get gitUiIncludeRootCommits => 'Ta med rotcommiter';
+
+  @override
+  String get gitUiMergeCommits => 'Flett innsendinger';
+
+  @override
+  String get gitUiFlattenHistory => 'Gjør historikken lineær';
+
+  @override
+  String get gitUiPreserveBranchStructure => 'Behold grenstrukturen';
+
+  @override
+  String get gitUiAutosquash => 'Automatisk sammenslåing';
+
+  @override
+  String get gitUiPrepareGitPlan => 'Klargjør Git-plan';
+
+  @override
+  String gitUiCommitsToReplayCount(String count) {
+    return 'Legger inn i gjenspilling: $count';
+  }
+
+  @override
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Omfatter alle rot- innsendinger som kan nås fra denne grenen.';
+
+  @override
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
+    return 'Commiter etter $boundary brukes på nytt oppå $base; selve grensecommiten er utelatt.';
+  }
+
+  @override
+  String get gitUiRoot => 'Rot';
+
+  @override
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Git gren/etikett/gjenoppbygging/flettingsstruktur';
+
+  @override
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Velg en eksplisitt gammel grense eller rotmodus, og forbered planen.';
+
+  @override
+  String get gitUiMoveUp => 'Flytt opp';
+
+  @override
+  String get gitUiMoveDown => 'Flytt ned';
+
+  @override
+  String get gitUiResetPlan => 'Tilbakestill plan';
+
+  @override
+  String gitUiBranchBlockArg02(String arg0) {
+    return ' · grenblokk $arg0';
+  }
+
+  @override
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Velg en innsending for detaljer og endrede filer';
+
+  @override
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Forhåndsvis kombinerte meldinger ...';
+
+  @override
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+↑/↓ flytter den valgte innmeldinga. Ikke- relaterte grenreferanser blir ikke oppdatert automatisk.';
+
+  @override
+  String get gitUiCancelPlan => 'Avbryt plan';
+
+  @override
+  String get gitUiStartReviewedRebase => 'Begynn rebase?';
+
+  @override
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Omskriving av $arg0 planlagte innsendinger på $arg1. Nedfelte innsendinger er fortsatt synlig markert i denne planen til du starter.';
+  }
+
+  @override
+  String get gitUiStartRebase => 'Start rebase';
+
+  @override
+  String get gitUiNoContinuingGitOperation => 'Ingen fortsatte Git- operasjon';
+
+  @override
+  String get gitUiStoppedForEditingAmend => ' · stoppet for redigering/endring';
+
+  @override
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Dette er indeksoppføringer som ikke er flettet sammen, muligens fra et lagerprogram. Git har ingen lagerinnstillinger, eller avbryt kommandoen.';
+
+  @override
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Rediger arbeidsfilene, etappe og endre gjeldende e- post, og fortsett så med denne ny base.';
+
+  @override
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return '$arg0$arg1 · uflettede indekstrinn $arg2';
+  }
+
+  @override
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Indeksen har ingen uløste oppføringer.';
+
+  @override
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Behold denne innmeldinga som en tom innsending';
+
+  @override
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Den virkelige indeksen har ingen trinnvise endringer. Lag en eksplisitt tom inntasting, fortsett så sekvenseren hvis den fortsatt er aktiv.';
+
+  @override
+  String get gitUiKeepEmptyCommit => 'Behold tom innsending ...';
+
+  @override
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git prøver å gå tilbake til operasjonens start. Det garanteres ikke at tidligere innhold utenfor indeksen, usporede filer eller ulagrede endringer kan gjenopprettes.';
+
+  @override
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Hopp over den aktuelle forpliktelsen og fortsett med den neste planlagte forpliktelsen.';
+
+  @override
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Gløym denne operasjonens bokføring samtidig som gjeldende filer og innholdsfortegnelse beholdes.';
+
+  @override
+  String gitUiContinueArg0(String arg0) {
+    return 'Fortsett $arg0';
+  }
+
+  @override
+  String get gitUiReloadConflictVersions =>
+      'Laste inn konfliktversjoner på nytt?';
+
+  @override
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Erstatt kladden til det ulagrede resultatet med gjeldende arbeidsfil. Lagret arbeidsinnhold beholdes.';
+
+  @override
+  String get gitUiLoadingConflictVersions => 'Laster konfliktversjoner ...';
+
+  @override
+  String get gitUiLoadingConflict => 'Laster konflikt';
+
+  @override
+  String get gitUiBaseLeft => 'Base → til venstre';
+
+  @override
+  String get gitUiBaseRight => 'Basis → høyre';
+
+  @override
+  String get gitUiNoBaseEntryForThisConflict =>
+      'Ingen grunnoppføring for denne konflikten';
+
+  @override
+  String get gitUiAcceptEntireLeftFile => 'Godta hele fila til venstre ...';
+
+  @override
+  String get gitUiAcceptEntireRightFile => 'Godta hele fila til høyre ...';
+
+  @override
+  String get gitUiPreviousConflictRegion => 'Forrige konfliktområde';
+
+  @override
+  String get gitUiNextConflictRegion => 'Neste konfliktområde';
+
+  @override
+  String get gitUiManualResolution => 'Manuell oppløsning';
+
+  @override
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
+    return 'Regionen $arg0/$arg1 · $arg2 gjennomgått';
+  }
+
+  @override
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Kildejusteringen gikk over sammenligningsgrensen for tekst; kilderutene er fortsatt tilgjengelige for manuell gjennomgang.';
+
+  @override
+  String get gitUiAcceptLeftRegion => 'Godta venstre område';
+
+  @override
+  String get gitUiAcceptRightRegion => 'Godta høyre region';
+
+  @override
+  String get gitUiKeepManualResultForRegion =>
+      'Behold manuelt resultat for regionen';
+
+  @override
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Bruk Git sine ikke- konvekse endringer?';
+
+  @override
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Bytt ut kladden for gjeldende resultat med Git sin fletteforhåndsvisning. Dette forkaster manuelle endringer for ulagrede resultater, fila er uendret til Lagre.';
+
+  @override
+  String get gitUiUseMergePreview => 'Bruk forhåndsvisning av fletting';
+
+  @override
+  String get gitUiApplyNonConflictingChanges =>
+      'Bruk ikke- sammenflettende endringer ...';
+
+  @override
+  String get gitUiLeftSource => 'Venstre kilde';
+
+  @override
+  String get gitUiResult => 'Resultat';
+
+  @override
+  String get gitUiRightSource => 'Høyre kilde';
+
+  @override
+  String get gitUiStage2 => 'Trinn 2';
+
+  @override
+  String get gitUiStage3 => 'Fase 3';
+
+  @override
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Konfliktversjoner er ikke tilgjengelig. Oppdater for å gjennomgå deres nåværende tilstand.';
+
+  @override
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Resultatet lagret til disk. Indeksen avgjør fremdeles om denne fila er løst.';
+
+  @override
+  String get gitUiSaveResultDraft => 'Lagre resultatutkast';
+
+  @override
+  String get gitUiApplyResultAndStageResolution =>
+      'Bruk resultat og klargjør løsningen';
+
+  @override
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Resultat · innhold som kan redigeres i UTF-8';
+
+  @override
+  String get gitUiEditableConflictResult => 'Redigerbart konfliktresultat';
+
+  @override
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return 'Venstre: $arg0 · $arg1\nHøyre: $arg2 · $arg3';
+  }
+
+  @override
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'Velg innhold, sletting eller en undermodul som uttrykkelig sender inn. Ingen binærdata er dekodet som redigerbar tekst.';
+
+  @override
+  String get gitUiUseEntireLeftContent => 'Bruk hele innholdet til venstre ...';
+
+  @override
+  String get gitUiUseEntireRightContent => 'Bruk hele innholdet til høyre ...';
+
+  @override
+  String get gitUiDeleteThisPath => 'Slett denne stien ...';
+
+  @override
+  String get gitUiResolvedSubmoduleCommit => 'Løst inn- delmodul';
+
+  @override
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Stage denne eksakte gitlinken i forelderen. Dette sjekker ikke ut eller sender inn undermodulen.';
+
+  @override
+  String get gitUiSetResolvedGitlink => 'Sett oppløst gitlink ...';
+
+  @override
+  String gitUiBaseStageArg0(String arg0) {
+    return 'Basis- → stadiet $arg0';
+  }
+
+  @override
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Resultatet ble redigert. Behold det manuelle resultatet eller velg et annet uendret område.';
+
+  @override
+  String gitUiApplyArg0Resolution(String arg0) {
+    return 'Bruke løsningen «$arg0»?';
+  }
+
+  @override
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Iscenelegg den valgte gitlinken i forelderen. Sjekk ut undermodulen og dens filer blir ikke erstattet.';
+
+  @override
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
+    return 'Erstatter hele arbeidsstien $arg0 og iscenesetter beslutningen. Gjeldende arbeidsinnhold og eventuelt ulagret resultatutkast blir forkastet.';
+  }
+
+  @override
+  String get gitUiApplyEntireFileDecision => 'Bruk hele filavgjørelsen';
+
+  @override
+  String get gitUiStageThisConflictResolution =>
+      'Iscenesett denne konfliktløsningen?';
+
+  @override
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Bruk hele det redigerte resultatet som $arg0. Git registrerer stien løst når den er i etappe. Se gjennom alt planlagt innhold først. $arg1';
+  }
+
+  @override
+  String get gitUiApplyAndStage => 'Bruk og klargjør';
+
+  @override
+  String get gitUiReviewResultTextFormatChanges =>
+      'Se gjennom endringer i tekstformat på resultatet';
+
+  @override
+  String get gitUiSaveReviewedResult => 'Lagre gjennomgått resultat';
+
+  @override
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Tilgjengelighet for det innebygde Git- tabellen er ikke tilgjengelig. Prøv igjen etter at programmet er koblet til igjen.';
+
+  @override
+  String get gitUiSans => 'Sansfrance. kgm';
+
+  @override
+  String get gitUiSelect => 'Velg';
+
+  @override
+  String get gitUiContextMenu => 'Kontekstmeny';
+
+  @override
+  String get gitUiCopyText => 'Kopier tekst';
+
+  @override
+  String get gitUiLoadingRow => 'Laster rad';
+
+  @override
+  String get gitUiRetry => 'Prøv igjen';
+
+  @override
+  String get gitUiGitMessage => 'Git- melding';
+
+  @override
+  String get gitUiCancelPrompt => 'Avbryt spørring';
+
+  @override
+  String get gitUiUseMessageAndContinue => 'Bruk meldinga og fortsett';
+
+  @override
+  String get gitUiRespondPrivately => 'Svar privat';
+
+  @override
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
+    return 'Visningsinnstillinger kunne ikke lagres: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftStorageArg0(String arg0) {
+    return 'Meld inn utkast til lagring: $arg0';
+  }
+
+  @override
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0) {
+    return 'Visningsinnstillinger kunne ikke leses: $arg0';
+  }
+
+  @override
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0) {
+    return 'Send inn kladd ble lagret i minnet, men kunne ikke lagres: $arg0';
+  }
+
+  @override
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Det undersøkte arkivet er skrivebeskyttet for denne operasjonen. Historikk og innholdsinspeksjon er fortsatt tilgjengelig.';
+
+  @override
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
+    return 'Git returnerte $arg0. Programmet kunne ikke friske opp sine dokumenter: $arg1';
+  }
+
+  @override
+  String get gitUiSelectCommitInLog => 'Velg commit i historikken…';
+
+  @override
+  String get gitUiCurrentBranch => 'Gjeldende gren';
+
+  @override
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Ingen grener eller tagger som passer. Velg en innsending i logg.';
+
+  @override
+  String get gitUiBranches => 'Grener';
+
+  @override
+  String get gitUiPushCommits => 'Push commiter';
+
+  @override
+  String gitUiPullIntoArg0(String arg0) {
+    return 'Dra inn i $arg0';
+  }
+
+  @override
+  String gitUiResolveArg0(String arg0) {
+    return 'Løs opp $arg0';
+  }
+
+  @override
+  String get gitUiCurrentOperation => 'Gjeldende handling';
+
+  @override
+  String get gitUiRebaseCommits => 'Rebase commiter';
+
+  @override
+  String get gitUiFetch2 => 'Hent…';
+
+  @override
+  String get gitUiPull => 'Pull…';
+
+  @override
+  String get gitUiPush2 => 'Push…';
+
+  @override
+  String get gitUiBranches2 => 'Grener…';
+
+  @override
+  String get gitUiManageRemotes => 'Administrer eksterne lagre…';
+
+  @override
+  String gitUiMergeIntoArg0(String arg0) {
+    return 'Flett sammen til $arg0 ...';
+  }
+
+  @override
+  String get gitUiRebase2 => 'Rebase…';
+
+  @override
+  String get gitUiConflictsAndCurrentOperation =>
+      'Konflikter og gjeldende handling ...';
+
+  @override
+  String get gitUiStashes2 => 'Stasher…';
+
+  @override
+  String get gitUiWorktrees => 'Arbeidstrær…';
+
+  @override
+  String get gitUiSubmodules => 'Undermoduler…';
+
+  @override
+  String get gitUiReflogAndRecovery => 'Reflog og gjenoppretting…';
+
+  @override
+  String get gitUiCloneRepository => 'Klon kodelager…';
+
+  @override
+  String get gitUiRevokeRepositoryTrust => 'Trekk tilbake arkivtillit';
+
+  @override
+  String get gitUiWaitingForRepositoryStatus => 'Venter på lagerstatus';
+
+  @override
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Lagerstatus ikke tilgjengelig, oppfrisk';
+
+  @override
+  String get gitUiManageRemotes2 => 'Administrer eksterne lagre';
+
+  @override
+  String gitUiMergeIntoArg02(String arg0) {
+    return 'Flett sammen til $arg0';
+  }
+
+  @override
+  String get gitUiWorktrees2 => 'Arbeidstrær';
+
+  @override
+  String get gitUiSubmodules2 => 'Undermoduler';
+
+  @override
+  String get gitUiReflogAndRecovery2 => 'Reflog og gjenoppretting';
+
+  @override
+  String gitUiCloneRepositoryArg0(String arg0) {
+    return 'Klonelager · $arg0';
+  }
+
+  @override
+  String get gitUiApply => 'Bruk';
+
+  @override
+  String get gitUiResizeGitPanes => 'Endre størrelse på Git- rutene';
+
+  @override
+  String gitUiArg0Percent(String arg0) {
+    return '$arg0 prosent';
+  }
+
+  @override
+  String gitUiExitStatusStatus(String status) {
+    return 'Utgangsstatus: $status';
+  }
+
+  @override
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Lageret er endret. Frisk opp og se over før det forsøkes igjen.';
+
+  @override
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'En annen handling holder arkivet eller indeksen låst. Vent, og oppfrisk så.';
+
+  @override
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Denne handlinga må ha tillit til lageret.';
+
+  @override
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git- tjenesten ble frakoblet. Koble til og avstemme arkivet på nytt.';
+
+  @override
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Den installerte Git- programmet kan ikke støtte denne operasjonen. Se gjennom kjøretiden nedenfor.';
+
+  @override
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Dette arkivet er skrivebeskyttet for den etterspurte operasjonen. Gjennomgang og historie er fortsatt tilgjengelig.';
+
+  @override
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Operasjonen trenger avstemming. Se over arkivet eller fjernstatusen før du gjentar det.';
+
+  @override
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git- autentisering mislyktes. Sjekk referansehjelperen eller lås opp den oppsatte nøkkelringen.';
+
+  @override
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH- vertsverifisering mislyktes. Sjekk vertsidentiteten gjennom de SSH- verktøyene du har satt opp.';
+
+  @override
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Signering mislyktes eller ble avbrutt. Gjennomgå signeringsnøkkelen, agenten og det oppsette signeringsverktøyet.';
+
+  @override
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Oppgi navn og e- post for et fillager, og gå så tilbake til kladden for bevart melding.';
+
+  @override
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git avviste den reviderte oppdateringen. Frisk opp og se over det faktiske målet før du forsøker igjen.';
+
+  @override
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Arbeidende eller trinnvise endringer hindrer denne operasjonen. Gjennomgå, oppgi eller uttrykkelig lagre dem.';
+
+  @override
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Et nødvendig Git- objekt er ikke tilgjengelig. Se gjennom grunne eller delvise grenser og hent uttrykkelig om nødvendig.';
+
+  @override
+  String gitUiGitOperationFailedArg0(String arg0) {
+    return 'Git- operasjonen mislyktes: $arg0';
+  }
+
+  @override
+  String get gitUiDiagnostics => 'Diagnostikk';
+
+  @override
+  String get gitUiAuthorizeGitInspection => 'Godkjenn Git- inspeksjon ...';
+
+  @override
+  String get gitUiCopyDiagnostics => 'Kopier diagnose';
+
+  @override
+  String get gitUiActions => 'Handlinger';
+
+  @override
+  String gitUiBranchAtArg0(String arg0) {
+    return 'Filial i $arg0';
+  }
+
+  @override
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Lager en lokal gren uten å sjekke den ut.';
+
+  @override
+  String gitUiTagArg0(String arg0) {
+    return 'Tagg $arg0';
+  }
+
+  @override
+  String gitUiReadOnlySnapshotArg0(String arg0) {
+    return 'Skrivebeskyttet skjermbilde · $arg0';
+  }
+
+  @override
+  String get gitUiCherryPickCommits => 'Kryssingplukkerkommiter';
+
+  @override
+  String get gitUiRevertCommits => 'Tilbakestill innsendinger';
+
+  @override
+  String get gitUiCompareToFullRevisionID =>
+      'Sammenlikne med fullstendig revisjons- ID';
+
+  @override
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
+    return 'Tre- sammenlikningsretning: $arg0 → revisjonen som er oppgitt her.';
+  }
+
+  @override
+  String get gitUiEnterAFullValidObjectID =>
+      'Oppgi en fullstendig gyldig objekt- ID.';
+
+  @override
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
+    return '$arg0 → $arg1 · tresammenlikning';
+  }
+
+  @override
+  String gitUiResetArg0ToArg1(String arg0, String arg1) {
+    return 'Tilbakestill $arg0 til $arg1';
+  }
+
+  @override
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'Flytter HEAD/gjeldende gren. Reflog gjenoppretter ikke vilkårlig usporet eller ulagret innhold.';
+
+  @override
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'Flytt HEAD; behold indeks og arbeidsfiler.';
+
+  @override
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'Flytt HEAD og erstatt indeksen; behold arbeidsfilene.';
+
+  @override
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'Erstatt HEAD, indeks og sporede arbeidsfiler; usporede filer som er i veien, kan overskrives.';
+
+  @override
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'Erstatt HEAD, indeks og aktuelle filer; avvis hvis lokale endringer ville gå tapt.';
+
+  @override
+  String gitUiResetWithArg0(String arg0) {
+    return 'Tilbakestill med $arg0?';
+  }
+
+  @override
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
+    return '$arg0 → $arg1 Gjennomgå effektene av valgt modus før anvendelse.';
+  }
+
+  @override
+  String gitUiResetArg0(String arg0) {
+    return 'Tilbakestill $arg0';
+  }
+
+  @override
+  String gitUiTargetArg0(String arg0) {
+    return 'Mål $arg0';
+  }
+
+  @override
+  String get gitUiTagName => 'Taggnavn';
+
+  @override
+  String get gitUiAnnotatedTag => 'Annotert tagg';
+
+  @override
+  String get gitUiCryptographicSigning => 'Kryptografisk signering';
+
+  @override
+  String get gitUiConfiguredPolicy => 'Sett opp praksis';
+
+  @override
+  String get gitUiSignThisTag => 'Signer denne taggen';
+
+  @override
+  String get gitUiDoNotSign => 'Ikke signer';
+
+  @override
+  String get gitUiTagMessage => 'Tagg- melding';
+
+  @override
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Lager taggen lokalt. Publiser valgte tagger uttrykkelig i Push- gjennomgang.';
+
+  @override
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
+    return 'Fullstendige trær: $arg0 → $arg1';
+  }
+
+  @override
+  String get gitUiNextChangedFilePage => 'Neste endrede fil- side';
+
+  @override
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Skjermbilde av arkivet som bare kan leses. Å åpne en fil sjekker aldri denne revisjonen.';
+
+  @override
+  String get gitUiOpenReadOnlyVersion => 'Åpne skrivebeskyttet versjon';
+
+  @override
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Gjenopprett denne stien ... · Venter på lagerstatus';
+
+  @override
+  String get gitUiRestoreThisPath => 'Gjenopprett denne stien ...';
+
+  @override
+  String gitUiHistoryArg0(String arg0) {
+    return 'Historie · $arg0';
+  }
+
+  @override
+  String gitUiRestoreArg0(String arg0) {
+    return 'Gjenopprette $arg0?';
+  }
+
+  @override
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
+    return 'Erstatt denne arbeidsstien med revisjon $arg0. Innhold som finnes fra før beholdes.';
+  }
+
+  @override
+  String get gitUiRestoreWorkingFile => 'Gjenopprett arbeidsfila';
+
+  @override
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0) {
+    return 'Filhistorien følger navneendringene · $arg0';
+  }
+
+  @override
+  String get gitUiBlameCommittedContent => 'Linjehistorikk · committet innhold';
+
+  @override
+  String get gitUiBlame => 'Linjehistorikk…';
+
+  @override
+  String gitUiArg0WorkingTree(String arg0) {
+    return '$arg0 → Arbeidstre';
+  }
+
+  @override
+  String get gitUiOpenReadOnlyHistoricalFile => 'Åpne skrivebeskyttet loggfil';
+
+  @override
+  String get gitUiCompareToCurrentFile => 'Sammenlikne med gjeldende fil';
+
+  @override
+  String get gitUiCompareToParent => 'Sammenlikne med forelder ...';
+
+  @override
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
+    return 'Innsendt $arg0 · ulagret innhold i redigeringen er ikke en del av disse merknadene';
+  }
+
+  @override
+  String gitUiHistoryFromArg0(String arg0) {
+    return 'Historie fra $arg0';
+  }
+
+  @override
+  String get gitUiBoundary => ' · grense';
+
+  @override
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
+    return '$arg0  $arg1\nOpprinnelig linje $arg2$arg3';
+  }
+
+  @override
+  String get gitUiPreviousLines => 'Forrige linjer';
+
+  @override
+  String get gitUiNextLines => 'Neste linjer';
+
+  @override
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0) {
+    return 'Uttrykkelig programrekkefølge · mål $arg0';
+  }
+
+  @override
+  String get gitUiAddFullCommitObjectID => 'Legg til full objekt- ID';
+
+  @override
+  String get gitUiAddReviewedCommit => 'Legg til gjennomgått innmelding ...';
+
+  @override
+  String get gitUiMoveEarlier => 'Flytt tidligere';
+
+  @override
+  String get gitUiMoveLater => 'Flytt senere';
+
+  @override
+  String get gitUiRemoveFromReviewedSequence => 'Fjern fra gjennomgått sekvens';
+
+  @override
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Bruk endringene uten å lage innsendinger';
+
+  @override
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Bruk denne uttrykkelige forelderlinja for fletting av innsendinger';
+
+  @override
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Tomme eller allerede anvendte innsendinger kan stoppe Git for en uttrykkelig over- eller videreføringsbeslutning.';
+
+  @override
+  String get gitUiRevertInReviewedOrder => 'Tilbakestill i revidert rekkefølge';
+
+  @override
+  String get gitUiCherryPickInReviewedOrder =>
+      'Cherry-pick i revidert rekkefølge';
+
+  @override
+  String get gitUiReturnToFiles => 'Gå tilbake til filer';
+
+  @override
+  String get gitUiGit => 'Git';
+
+  @override
+  String get gitUiCommit => 'Commit';
+
+  @override
+  String get gitUiBackToCommit => 'Tilbake til innlevering';
+
+  @override
+  String get gitUiSelectAChangeToReview =>
+      'Velg en endring som skal gjennomgås';
+
+  @override
+  String get gitUiLoadingBranch => 'Laster gren ...';
+
+  @override
+  String get gitUiBranchUnavailable => 'Ikke tilgjengelig for gren';
+
+  @override
+  String get gitUiUnbornHEAD => 'HEAD uten commit';
+
+  @override
+  String gitUiDetachedHEADRevision(String revision) {
+    return 'Frakoblet HEAD · $revision';
+  }
+
+  @override
+  String get gitUiContinueAction => 'Fortsett';
+
+  @override
+  String get gitUiPick => 'Behold';
+
+  @override
+  String get gitUiReword => 'Endre melding';
+
+  @override
+  String get gitUiEdit => 'Rediger';
+
+  @override
+  String get gitUiSquash => 'Slå sammen';
+
+  @override
+  String get gitUiFixup => 'Slå sammen uten melding';
+
+  @override
+  String get gitUiDrop => 'Utelat';
+
+  @override
+  String get gitUiAbort => 'Avbryt operasjon';
+
+  @override
+  String get gitUiSkip => 'Hopp over';
+
+  @override
+  String get gitUiQuit => 'Avslutt operasjon';
+
+  @override
+  String get gitUiSoft => 'Myk';
+
+  @override
+  String get gitUiMixed => 'Blandet';
+
+  @override
+  String get gitUiHard => 'Hard';
+
+  @override
+  String get gitUiKeep => 'Behold';
+
+  @override
+  String get gitUiCreate => 'Opprett';
+
+  @override
+  String get gitUiApplyStash => 'Bruk stash';
+
+  @override
+  String get gitUiPopStash => 'Bruk stash og fjern ved suksess';
+
+  @override
+  String get gitUiDropStashAction => 'Slett stash';
+
+  @override
+  String get gitUiEditedResult => 'Redigert resultat';
+
+  @override
+  String get gitUiLeftContent => 'Venstre innhold';
+
+  @override
+  String get gitUiRightContent => 'Høyre innhold';
+
+  @override
+  String get gitUiDeletePath => 'Slett sti';
+
+  @override
+  String get gitUiSubmoduleCommit => 'Delmodulinngåelse';
+
+  @override
+  String get gitUiPresentContent => 'Tilgjengelig innhold';
+
+  @override
+  String get gitUiAbsentContent => 'Fraværende';
+
+  @override
+  String get gitUiBinaryContent => 'Binært innhold';
+
+  @override
+  String get gitUiTooLargeContent => 'Innholdet overskrider visningsgrensen';
+
+  @override
+  String get gitUiUnavailableContent => 'Ikke tilgjengelig innhold';
+
+  @override
+  String get gitUiGitlinkContent => 'Undermodulpeker';
+
+  @override
+  String get gitUiSymlinkContent => 'Symbolsk lenke';
+
+  @override
+  String get gitUiNoOperation => 'Ingen operasjon';
+
+  @override
+  String get gitUiCherryPickOperation => 'Cherry-pick';
+
+  @override
+  String get gitUiRevertOperation => 'Tilbakefør';
+
+  @override
+  String get gitUiApplyMailboxOperation => 'Bruk oppdateringer';
+
+  @override
+  String get gitUiSquashOperation => 'Squashfletting';
+
+  @override
+  String get gitUiUnmergedOperation => 'Indeks uten fletting';
+
+  @override
+  String get gitUiWaitingForPromptPhase => 'Venter på svar';
+
+  @override
+  String get gitUiStoppedPhase => 'Stoppet for gjennomgang';
+
+  @override
+  String get gitUiCompletedPhase => 'Fullført';
+
+  @override
+  String get gitUiFailedPhase => 'Mislyktes';
+
+  @override
+  String get gitUiCancelledPhase => 'Avbrutt';
+
+  @override
+  String get gitUiUncertainPhase => 'Resultat krever avstemming';
+
+  @override
+  String gitUiStageVersion(String stage) {
+    return 'Konflikttrinn $stage';
+  }
+
+  @override
+  String get gitUiGitMergePreview => 'Git forhåndsvisning av fletting';
+
+  @override
+  String get gitUiNormalizedWorking => 'Arbeidstreet · Git normalisert';
+
+  @override
+  String gitUiPercentValue(String value) {
+    return '$value prosent';
+  }
+
+  @override
+  String gitUiOperationActionQuestion(String action, String operation) {
+    return '$operation · $action?';
+  }
+
+  @override
+  String gitUiOperationActionEllipsis(String action) {
+    return '$action…';
+  }
+
+  @override
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
+    return '$position, $action, $subject';
+  }
+
+  @override
+  String get gitUiUtf8Bom => 'UTF- 8 med byterekkefølgemerke (BOM)';
+
+  @override
+  String get gitUiUtf8NoBom => 'UTF- 8 uten byterekkefølgemerke (BOM)';
+
+  @override
+  String get gitUiAddsBom =>
+      'Denne redigeringen legger til et UTF- 8 byte- rekkefølgemerke (BOM) ved begynnelsen av fila.';
+
+  @override
+  String get gitUiRemovesBom =>
+      'Dette redigeringa fjerner UTF- 8 byterekkefølge- merket (BOM) fra filas begynnelse.';
+
+  @override
+  String get gitUiNoLineTerminators => 'Ingen linjeterminatorer';
+
+  @override
+  String gitUiLineEndings(String format) {
+    return '$format-linjeskift';
+  }
+
+  @override
+  String gitUiMixedLineEndings(String formats) {
+    return 'Blandet linje slutter ($formats)';
+  }
+
+  @override
+  String gitUiNoFinalLf(String format) {
+    return '$format · ingen endelig LF';
+  }
+
+  @override
+  String gitUiLineEndingChange(String before, String after) {
+    return 'Endring av linjesluttformatet fra $before til $after. Tekst på utklippstavla kan bruke forskjellige linjeslutter fra den opprinnelige fila.';
+  }
+
+  @override
+  String get gitUiGitFailure =>
+      'Git- operasjonen mislyktes. Se gjennom diagnoseen nedenfor.';
+
+  @override
+  String get gitUiAbortInline => 'Avbryt operasjon';
+
+  @override
+  String get gitUiSkipInline => 'Hopp over';
+
+  @override
+  String get gitUiQuitInline => 'avslutt';
+
+  @override
+  String get gitUiMergeInline => 'Flett';
+
+  @override
+  String get gitUiRebaseInline => 'Rebase';
+
+  @override
+  String get gitUiCherryPickInline => 'Cherry-pick';
+
+  @override
+  String get gitUiRevertInline => 'Tilbakefør';
+
+  @override
+  String get gitUiApplyMailboxInline => 'appleMailbox';
+
+  @override
+  String get gitUiSquashInline => 'Slå sammen';
+
+  @override
+  String get gitUiUnmergedInline => 'usammenflettet';
+
+  @override
+  String get gitHostFetch => 'Hent';
+
+  @override
+  String get gitHostRefreshGitStatus => 'Oppdater Git- status';
+
+  @override
+  String get gitHostCommitStaged => 'Meld inn trinnvis';
+
+  @override
+  String get gitHostGitBranches => 'Git grene';
+
+  @override
+  String get gitHostReviewPush => 'Gjennomgangstrykk';
+
+  @override
+  String get gitHostGit => 'Git';
+
+  @override
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git- operasjoner gjelder hele dette arkivet og kan utføre dets oppsatte kroker, filtre, referanse- og signeringsverktøy.';
+
+  @override
+  String get gitHostContentUnavailable => 'Innhold ikke tilgjengelig';
+
+  @override
+  String get gitHostInitializeRepository => 'Initialiser repositorium';
+
+  @override
+  String get gitHostCloneRepository => 'Klon kodelager';
+
+  @override
+  String get gitHostInitializeHere => 'Klargjør her ...';
+
+  @override
+  String get gitHostCloneRepository2 => 'Klon kodelager…';
+
+  @override
+  String get gitHostGitLog => 'Git- logg';
+
+  @override
+  String get gitUiAbsentPlaceholder => '(ikke sendt)';
+
+  @override
+  String get gitUiUnborn => 'ufødt';
+
+  @override
+  String gitUiRebasedHistoryRevision(String revision) {
+    return 'Historikk etter rebase · $revision';
+  }
+
+  @override
+  String gitUiCurrentHistoryRevision(String revision) {
+    return 'Gjeldende historikk · $revision';
+  }
+
+  @override
+  String gitUiReplayedCommitRevision(String revision) {
+    return 'Commit som brukes på nytt · $revision';
+  }
+
+  @override
+  String gitUiIncomingContentRevision(String revision) {
+    return 'Innkommende innhold · $revision';
+  }
+
+  @override
+  String get gitUiContentConflict => 'Innholdskonflikt';
+
+  @override
+  String get gitUiSubmoduleConflict => 'Konflikt i delmodul';
+
+  @override
+  String get gitUiSymlinkConflict => 'Konflikt i symbolsk lenke';
+
+  @override
+  String get gitUiAddAddConflict => 'Tillagt på begge sider';
+
+  @override
+  String get gitUiModifyDeleteConflict =>
+      'Endret/slettet eller omnavngitt/slettet';
+
+  @override
+  String gitUiConflictIdentity(String path, String kind) {
+    return '$path · $kind';
+  }
 }

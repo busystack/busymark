@@ -10115,6 +10115,4645 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This filename contains non-UTF-8 bytes. Git review and staging remain available; the document editor requires a UTF-8 filename.'**
   String get gitNonUtf8FilenameMessage;
+
+  /// Shared Git interface: Merge in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Merge in progress'**
+  String get gitUiMergeInProgress;
+
+  /// Shared Git interface: Rebase in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase in progress'**
+  String get gitUiRebaseInProgress;
+
+  /// Shared Git interface: Cherry-pick in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry-pick in progress'**
+  String get gitUiCherryPickInProgress;
+
+  /// Shared Git interface: Revert in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Revert in progress'**
+  String get gitUiRevertInProgress;
+
+  /// Shared Git interface: Patch application in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Patch application in progress'**
+  String get gitUiPatchApplicationInProgress;
+
+  /// Shared Git interface: Squash merge result awaiting commit
+  ///
+  /// In en, this message translates to:
+  /// **'Squash merge result awaiting commit'**
+  String get gitUiSquashMergeResultAwaitingCommit;
+
+  /// Shared Git interface: Unresolved index conflicts
+  ///
+  /// In en, this message translates to:
+  /// **'Unresolved index conflicts'**
+  String get gitUiUnresolvedIndexConflicts;
+
+  /// Shared Git interface:  · unresolved conflicts
+  ///
+  /// In en, this message translates to:
+  /// **' · unresolved conflicts'**
+  String get gitUiUnresolvedConflicts;
+
+  /// Shared Git interface: Review operation
+  ///
+  /// In en, this message translates to:
+  /// **'Review operation'**
+  String get gitUiReviewOperation;
+
+  /// Shared Git interface: Refresh
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get gitUiRefresh;
+
+  /// Shared Git interface: Create named stash
+  ///
+  /// In en, this message translates to:
+  /// **'Create named stash'**
+  String get gitUiCreateNamedStash;
+
+  /// Shared Git interface: Create stash…
+  ///
+  /// In en, this message translates to:
+  /// **'Create stash…'**
+  String get gitUiCreateStash;
+
+  /// Shared Git interface: No stashes
+  ///
+  /// In en, this message translates to:
+  /// **'No stashes'**
+  String get gitUiNoStashes;
+
+  /// Shared Git interface: Select a stash to inspect its changes
+  ///
+  /// In en, this message translates to:
+  /// **'Select a stash to inspect its changes'**
+  String get gitUiSelectAStashToInspectItsChanges;
+
+  /// Shared Git interface: Stashed untracked files
+  ///
+  /// In en, this message translates to:
+  /// **'Stashed untracked files'**
+  String get gitUiStashedUntrackedFiles;
+
+  /// Shared Git interface: Inspect stashed untracked files…
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect stashed untracked files…'**
+  String get gitUiInspectStashedUntrackedFiles;
+
+  /// Shared Git interface: Reinstate the stash’s staged/index state when applying
+  ///
+  /// In en, this message translates to:
+  /// **'Reinstate the stash’s staged/index state when applying'**
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying;
+
+  /// Shared Git interface: Apply and retain
+  ///
+  /// In en, this message translates to:
+  /// **'Apply and retain'**
+  String get gitUiApplyAndRetain;
+
+  /// Shared Git interface: Pop…
+  ///
+  /// In en, this message translates to:
+  /// **'Pop…'**
+  String get gitUiPop;
+
+  /// Shared Git interface: Create branch…
+  ///
+  /// In en, this message translates to:
+  /// **'Create branch…'**
+  String get gitUiCreateBranch;
+
+  /// Shared Git interface: Drop stash…
+  ///
+  /// In en, this message translates to:
+  /// **'Drop stash…'**
+  String get gitUiDropStash;
+
+  /// Shared Git interface: Branch from stash
+  ///
+  /// In en, this message translates to:
+  /// **'Branch from stash'**
+  String get gitUiBranchFromStash;
+
+  /// Shared Git interface: Create/switch to a branch at the stash’s original base, then apply it. The original stash is retained for explicit later deletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Create/switch to a branch at the stash’s original base, then apply it. The original stash is retained for explicit later deletion.'**
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal;
+
+  /// Shared Git interface: {arg0} this stash?
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} this stash?'**
+  String gitUiArg0ThisStash(String arg0);
+
+  /// Shared Git interface: The original stash is retained if applying conflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'The original stash is retained if applying conflicts.'**
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts;
+
+  /// Shared Git interface: Deletes this stash entry. Its changes are not applied.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes this stash entry. Its changes are not applied.'**
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied;
+
+  /// Shared Git interface: Resolve the unmerged files. Git has no stash continue or abort command; the original stash remains.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve the unmerged files. Git has no stash continue or abort command; the original stash remains.'**
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr;
+
+  /// Shared Git interface: Stash name/message
+  ///
+  /// In en, this message translates to:
+  /// **'Stash name/message'**
+  String get gitUiStashNameMessage;
+
+  /// Shared Git interface: Stash content and resulting index
+  ///
+  /// In en, this message translates to:
+  /// **'Stash content and resulting index'**
+  String get gitUiStashContentAndResultingIndex;
+
+  /// Shared Git interface: Stash tracked working and staged changes
+  ///
+  /// In en, this message translates to:
+  /// **'Stash tracked working and staged changes'**
+  String get gitUiStashTrackedWorkingAndStagedChanges;
+
+  /// Shared Git interface: Stash changes, leave staged changes in place (--keep-index)
+  ///
+  /// In en, this message translates to:
+  /// **'Stash changes, leave staged changes in place (--keep-index)'**
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex;
+
+  /// Shared Git interface: Stash only staged changes (--staged)
+  ///
+  /// In en, this message translates to:
+  /// **'Stash only staged changes (--staged)'**
+  String get gitUiStashOnlyStagedChangesStaged;
+
+  /// Shared Git interface: Include untracked files
+  ///
+  /// In en, this message translates to:
+  /// **'Include untracked files'**
+  String get gitUiIncludeUntrackedFiles;
+
+  /// Shared Git interface: All eligible paths in this repository
+  ///
+  /// In en, this message translates to:
+  /// **'All eligible paths in this repository'**
+  String get gitUiAllEligiblePathsInThisRepository;
+
+  /// Shared Git interface: No eligible changes for these stash options.
+  ///
+  /// In en, this message translates to:
+  /// **'No eligible changes for these stash options.'**
+  String get gitUiNoEligibleChangesForTheseStashOptions;
+
+  /// Shared Git interface: Select at least one eligible path.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one eligible path.'**
+  String get gitUiSelectAtLeastOneEligiblePath;
+
+  /// Shared Git interface: Create stash
+  ///
+  /// In en, this message translates to:
+  /// **'Create stash'**
+  String get gitUiCreateStash2;
+
+  /// Shared Git interface: Create worktree…
+  ///
+  /// In en, this message translates to:
+  /// **'Create worktree…'**
+  String get gitUiCreateWorktree;
+
+  /// Shared Git interface: Create a commit before creating a worktree at HEAD.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a commit before creating a worktree at HEAD.'**
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD;
+
+  /// Shared Git interface: detached HEAD
+  ///
+  /// In en, this message translates to:
+  /// **'detached HEAD'**
+  String get gitUiDetachedHEAD;
+
+  /// Shared Git interface: Current ·
+  ///
+  /// In en, this message translates to:
+  /// **'Current · '**
+  String get gitUiCurrent;
+
+  /// Shared Git interface: Locked ·
+  ///
+  /// In en, this message translates to:
+  /// **'Locked · '**
+  String get gitUiLocked;
+
+  /// Shared Git interface: Open in BusyStack ·
+  ///
+  /// In en, this message translates to:
+  /// **'Open in BusyStack · '**
+  String get gitUiOpenInBusyStack;
+
+  /// Shared Git interface: Status not inspected
+  ///
+  /// In en, this message translates to:
+  /// **'Status not inspected'**
+  String get gitUiStatusNotInspected;
+
+  /// Shared Git interface: Dirty
+  ///
+  /// In en, this message translates to:
+  /// **'Dirty'**
+  String get gitUiDirty;
+
+  /// Shared Git interface: Clean
+  ///
+  /// In en, this message translates to:
+  /// **'Clean'**
+  String get gitUiClean;
+
+  /// Shared Git interface: Open working folder
+  ///
+  /// In en, this message translates to:
+  /// **'Open working folder'**
+  String get gitUiOpenWorkingFolder;
+
+  /// Shared Git interface: Move worktree…
+  ///
+  /// In en, this message translates to:
+  /// **'Move worktree…'**
+  String get gitUiMoveWorktree;
+
+  /// Shared Git interface: Unlock
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get gitUiUnlock;
+
+  /// Shared Git interface: Lock
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get gitUiLock;
+
+  /// Shared Git interface: Remove clean worktree…
+  ///
+  /// In en, this message translates to:
+  /// **'Remove clean worktree…'**
+  String get gitUiRemoveCleanWorktree;
+
+  /// Shared Git interface: Review removal including local changes…
+  ///
+  /// In en, this message translates to:
+  /// **'Review removal including local changes…'**
+  String get gitUiReviewRemovalIncludingLocalChanges;
+
+  /// Shared Git interface: New worktree folder name
+  ///
+  /// In en, this message translates to:
+  /// **'New worktree folder name'**
+  String get gitUiNewWorktreeFolderName;
+
+  /// Shared Git interface: New worktree branch
+  ///
+  /// In en, this message translates to:
+  /// **'New worktree branch'**
+  String get gitUiNewWorktreeBranch;
+
+  /// Shared Git interface: Create {arg0}/{arg1} with a new local branch at {arg2} ({arg3}).
+  ///
+  /// In en, this message translates to:
+  /// **'Create {arg0}/{arg1} with a new local branch at {arg2} ({arg3}).'**
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
+
+  /// Shared Git interface: Destination folder name
+  ///
+  /// In en, this message translates to:
+  /// **'Destination folder name'**
+  String get gitUiDestinationFolderName;
+
+  /// Shared Git interface: Remove worktree?
+  ///
+  /// In en, this message translates to:
+  /// **'Remove worktree?'**
+  String get gitUiRemoveWorktree;
+
+  /// Shared Git interface: Explicitly discard all local tracked/untracked changes in this worktree. Locked/in-use worktrees remain protected.
+  ///
+  /// In en, this message translates to:
+  /// **'Explicitly discard all local tracked/untracked changes in this worktree. Locked/in-use worktrees remain protected.'**
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree;
+
+  /// Shared Git interface: Git refuses removal if there are local changes, untracked files, or a lock.
+  ///
+  /// In en, this message translates to:
+  /// **'Git refuses removal if there are local changes, untracked files, or a lock.'**
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles;
+
+  /// Shared Git interface: Discard local worktree contents and remove
+  ///
+  /// In en, this message translates to:
+  /// **'Discard local worktree contents and remove'**
+  String get gitUiDiscardLocalWorktreeContentsAndRemove;
+
+  /// Shared Git interface: Remove clean worktree
+  ///
+  /// In en, this message translates to:
+  /// **'Remove clean worktree'**
+  String get gitUiRemoveCleanWorktree2;
+
+  /// Shared Git interface: Explicitly recurse into nested submodules for updates/synchronization
+  ///
+  /// In en, this message translates to:
+  /// **'Explicitly recurse into nested submodules for updates/synchronization'**
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization;
+
+  /// Shared Git interface: No recorded submodules
+  ///
+  /// In en, this message translates to:
+  /// **'No recorded submodules'**
+  String get gitUiNoRecordedSubmodules;
+
+  /// Shared Git interface: not initialized
+  ///
+  /// In en, this message translates to:
+  /// **'not initialized'**
+  String get gitUiNotInitialized;
+
+  /// Shared Git interface: Parent gitlink: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Parent gitlink: {arg0}\nChecked out: {arg1}\n'**
+  String gitUiParentGitlinkArg0CheckedOutArg1(String arg0, String arg1);
+
+  /// Shared Git interface: Dirty nested repository
+  ///
+  /// In en, this message translates to:
+  /// **'Dirty nested repository'**
+  String get gitUiDirtyNestedRepository;
+
+  /// Shared Git interface: Clean nested repository
+  ///
+  /// In en, this message translates to:
+  /// **'Clean nested repository'**
+  String get gitUiCleanNestedRepository;
+
+  /// Shared Git interface: Nested status unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Nested status unavailable'**
+  String get gitUiNestedStatusUnavailable;
+
+  /// Shared Git interface: Enter nested repository
+  ///
+  /// In en, this message translates to:
+  /// **'Enter nested repository'**
+  String get gitUiEnterNestedRepository;
+
+  /// Shared Git interface: Initialize configuration
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize configuration'**
+  String get gitUiInitializeConfiguration;
+
+  /// Shared Git interface: Update to parent’s recorded commit…
+  ///
+  /// In en, this message translates to:
+  /// **'Update to parent’s recorded commit…'**
+  String get gitUiUpdateToParentSRecordedCommit;
+
+  /// Shared Git interface: Follow configured remote branch…
+  ///
+  /// In en, this message translates to:
+  /// **'Follow configured remote branch…'**
+  String get gitUiFollowConfiguredRemoteBranch;
+
+  /// Shared Git interface: Synchronize configured URLs…
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize configured URLs…'**
+  String get gitUiSynchronizeConfiguredURLs;
+
+  /// Shared Git interface: Stage current submodule pointer in parent
+  ///
+  /// In en, this message translates to:
+  /// **'Stage current submodule pointer in parent'**
+  String get gitUiStageCurrentSubmodulePointerInParent;
+
+  /// Shared Git interface: Parent and submodule commits, pushes, and dirty state remain separate. Browsing does not initialize or update them.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent and submodule commits, pushes, and dirty state remain separate. Browsing does not initialize or update them.'**
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate;
+
+  /// Shared Git interface: Fetch and check out the configured remote branch’s commit. This differs from the parent’s recorded gitlink. Recursive: {arg0}.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch and check out the configured remote branch’s commit. This differs from the parent’s recorded gitlink. Recursive: {arg0}.'**
+  String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0);
+
+  /// Shared Git interface: Initialize as needed and check out exactly {arg0}. Recursive: {arg1}.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize as needed and check out exactly {arg0}. Recursive: {arg1}.'**
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Apply the reviewed submodule configuration operation. Recursive: {arg0}.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply the reviewed submodule configuration operation. Recursive: {arg0}.'**
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  );
+
+  /// Shared Git interface: Apply submodule operation
+  ///
+  /// In en, this message translates to:
+  /// **'Apply submodule operation'**
+  String get gitUiApplySubmoduleOperation;
+
+  /// Shared Git interface: Inspect a recorded revision or create a recovery branch. Reflog does not recover arbitrary unsaved or untracked content.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect a recorded revision or create a recovery branch. Reflog does not recover arbitrary unsaved or untracked content.'**
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog;
+
+  /// Shared Git interface: Select a reflog entry
+  ///
+  /// In en, this message translates to:
+  /// **'Select a reflog entry'**
+  String get gitUiSelectAReflogEntry;
+
+  /// Shared Git interface: Previous page
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get gitUiPreviousPage;
+
+  /// Shared Git interface: Next page
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get gitUiNextPage;
+
+  /// Shared Git interface: Recovery branch name
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery branch name'**
+  String get gitUiRecoveryBranchName;
+
+  /// Shared Git interface: Creates a branch at {arg0}; working files and the current branch are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Creates a branch at {arg0}; working files and the current branch are unchanged.'**
+  String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0);
+
+  /// Shared Git interface: Create recovery branch…
+  ///
+  /// In en, this message translates to:
+  /// **'Create recovery branch…'**
+  String get gitUiCreateRecoveryBranch;
+
+  /// Shared Git interface: Read-only recovery snapshot
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only recovery snapshot'**
+  String get gitUiReadOnlyRecoverySnapshot;
+
+  /// Shared Git interface: Inspect snapshot…
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect snapshot…'**
+  String get gitUiInspectSnapshot;
+
+  /// Shared Git interface: Review reset…
+  ///
+  /// In en, this message translates to:
+  /// **'Review reset…'**
+  String get gitUiReviewReset;
+
+  /// Shared Git interface: Page {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Page {arg0}'**
+  String gitUiPageArg0(String arg0);
+
+  /// Shared Git interface: A Git text history must own its editable field.
+  ///
+  /// In en, this message translates to:
+  /// **'A Git text history must own its editable field.'**
+  String get gitUiAGitTextHistoryMustOwnItsEditableField;
+
+  /// Shared Git interface: Edit HEAD | Index | Working Tree…
+  ///
+  /// In en, this message translates to:
+  /// **'Edit HEAD | Index | Working Tree…'**
+  String get gitUiEditHEADIndexWorkingTree;
+
+  /// Shared Git interface: The reviewed index or working content changed. Refresh this comparison before staging.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewed index or working content changed. Refresh this comparison before staging.'**
+  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison;
+
+  /// Shared Git interface: Refresh comparison
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh comparison'**
+  String get gitUiRefreshComparison;
+
+  /// Shared Git interface: Previous changed file
+  ///
+  /// In en, this message translates to:
+  /// **'Previous changed file'**
+  String get gitUiPreviousChangedFile;
+
+  /// Shared Git interface: Next changed file
+  ///
+  /// In en, this message translates to:
+  /// **'Next changed file'**
+  String get gitUiNextChangedFile;
+
+  /// Shared Git interface: Previous difference
+  ///
+  /// In en, this message translates to:
+  /// **'Previous difference'**
+  String get gitUiPreviousDifference;
+
+  /// Shared Git interface: Next difference
+  ///
+  /// In en, this message translates to:
+  /// **'Next difference'**
+  String get gitUiNextDifference;
+
+  /// Shared Git interface: Comparison mode
+  ///
+  /// In en, this message translates to:
+  /// **'Comparison mode'**
+  String get gitUiComparisonMode;
+
+  /// Shared Git interface: Side by side
+  ///
+  /// In en, this message translates to:
+  /// **'Side by side'**
+  String get gitUiSideBySide;
+
+  /// Shared Git interface: Unified
+  ///
+  /// In en, this message translates to:
+  /// **'Unified'**
+  String get gitUiUnified;
+
+  /// Shared Git interface: Diff display options
+  ///
+  /// In en, this message translates to:
+  /// **'Diff display options'**
+  String get gitUiDiffDisplayOptions;
+
+  /// Shared Git interface: Wrap
+  ///
+  /// In en, this message translates to:
+  /// **'Wrap'**
+  String get gitUiWrap;
+
+  /// Shared Git interface: Words
+  ///
+  /// In en, this message translates to:
+  /// **'Words'**
+  String get gitUiWords;
+
+  /// Shared Git interface: Collapse context
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse context'**
+  String get gitUiCollapseContext;
+
+  /// Shared Git interface: Ignore whitespace
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore whitespace'**
+  String get gitUiIgnoreWhitespace;
+
+  /// Shared Git interface: Search comparison
+  ///
+  /// In en, this message translates to:
+  /// **'Search comparison'**
+  String get gitUiSearchComparison;
+
+  /// Shared Git interface: Search
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get gitUiSearch;
+
+  /// Shared Git interface: Close search
+  ///
+  /// In en, this message translates to:
+  /// **'Close search'**
+  String get gitUiCloseSearch;
+
+  /// Shared Git interface: Staging actions
+  ///
+  /// In en, this message translates to:
+  /// **'Staging actions'**
+  String get gitUiStagingActions;
+
+  /// Shared Git interface: Staging actions…
+  ///
+  /// In en, this message translates to:
+  /// **'Staging actions…'**
+  String get gitUiStagingActions2;
+
+  /// Shared Git interface: Unstage selected changed lines
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage selected changed lines'**
+  String get gitUiUnstageSelectedChangedLines;
+
+  /// Shared Git interface: Stage selected changed lines
+  ///
+  /// In en, this message translates to:
+  /// **'Stage selected changed lines'**
+  String get gitUiStageSelectedChangedLines;
+
+  /// Shared Git interface: Unstage whole file
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage whole file'**
+  String get gitUiUnstageWholeFile;
+
+  /// Shared Git interface: Stage whole file
+  ///
+  /// In en, this message translates to:
+  /// **'Stage whole file'**
+  String get gitUiStageWholeFile;
+
+  /// Shared Git interface: {arg0} whitespace-only changed lines hidden · Show exact changes
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} whitespace-only changed lines hidden · Show exact changes'**
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0);
+
+  /// Shared Git interface: {arg0} changed lines selected · Display settings never alter the staged bytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} changed lines selected · Display settings never alter the staged bytes.'**
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  );
+
+  /// Shared Git interface: Read-only comparison · Copy text or adjust display settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only comparison · Copy text or adjust display settings.'**
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings;
+
+  /// Shared Git interface:  · no final newline
+  ///
+  /// In en, this message translates to:
+  /// **' · no final newline'**
+  String get gitUiNoFinalNewline;
+
+  /// Shared Git interface: {arg0} · {arg1} · {arg2} bytes{arg3}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} · {arg1} · {arg2} bytes{arg3}'**
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
+
+  /// Shared Git interface: Text comparison is unavailable for these contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Text comparison is unavailable for these contents.'**
+  String get gitUiTextComparisonIsUnavailableForTheseContents;
+
+  /// Shared Git interface: This comparison exceeds the bounded text review limit. The contents have not been declared identical.
+  ///
+  /// In en, this message translates to:
+  /// **'This comparison exceeds the bounded text review limit. The contents have not been declared identical.'**
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents;
+
+  /// Shared Git interface: The compared contents are identical.
+  ///
+  /// In en, this message translates to:
+  /// **'The compared contents are identical.'**
+  String get gitUiTheComparedContentsAreIdentical;
+
+  /// Shared Git interface: Unstage
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage'**
+  String get gitUiUnstage;
+
+  /// Shared Git interface: Stage
+  ///
+  /// In en, this message translates to:
+  /// **'Stage'**
+  String get gitUiStage;
+
+  /// Shared Git interface: {arg0} changed line
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} changed line'**
+  String gitUiArg0ChangedLine(String arg0);
+
+  /// Shared Git interface: Context
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get gitUiContext;
+
+  /// Shared Git interface: Expand unchanged context
+  ///
+  /// In en, this message translates to:
+  /// **'Expand unchanged context'**
+  String get gitUiExpandUnchangedContext;
+
+  /// Shared Git interface: Unstage this hunk
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage this hunk'**
+  String get gitUiUnstageThisHunk;
+
+  /// Shared Git interface: Stage this hunk
+  ///
+  /// In en, this message translates to:
+  /// **'Stage this hunk'**
+  String get gitUiStageThisHunk;
+
+  /// Shared Git interface: Edit staged content · {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Edit staged content · {arg0}'**
+  String gitUiEditStagedContentArg0(String arg0);
+
+  /// Shared Git interface: Writing reviewed index result
+  ///
+  /// In en, this message translates to:
+  /// **'Writing reviewed index result'**
+  String get gitUiWritingReviewedIndexResult;
+
+  /// Shared Git interface: HEAD
+  ///
+  /// In en, this message translates to:
+  /// **'HEAD'**
+  String get gitUiHead;
+
+  /// Shared Git interface: Index
+  ///
+  /// In en, this message translates to:
+  /// **'Index'**
+  String get gitUiIndex;
+
+  /// Shared Git interface: Working Tree
+  ///
+  /// In en, this message translates to:
+  /// **'Working Tree'**
+  String get gitUiWorkingTree;
+
+  /// Shared Git interface: HEAD · {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'HEAD · {arg0}'**
+  String gitUiHeadArg0(String arg0);
+
+  /// Shared Git interface: Index · editable UTF-8 blob
+  ///
+  /// In en, this message translates to:
+  /// **'Index · editable UTF-8 blob'**
+  String get gitUiIndexEditableUTF8Blob;
+
+  /// Shared Git interface: Undo
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get gitUiUndo;
+
+  /// Shared Git interface: Redo
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get gitUiRedo;
+
+  /// Shared Git interface: Reload index review?
+  ///
+  /// In en, this message translates to:
+  /// **'Reload index review?'**
+  String get gitUiReloadIndexReview;
+
+  /// Shared Git interface: Reload the current HEAD, index and working versions. This replaces the unsaved index editor draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload the current HEAD, index and working versions. This replaces the unsaved index editor draft.'**
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces;
+
+  /// Shared Git interface: Replace draft and reload
+  ///
+  /// In en, this message translates to:
+  /// **'Replace draft and reload'**
+  String get gitUiReplaceDraftAndReload;
+
+  /// Shared Git interface: Reload versions…
+  ///
+  /// In en, this message translates to:
+  /// **'Reload versions…'**
+  String get gitUiReloadVersions;
+
+  /// Shared Git interface: Write edited result to this index entry
+  ///
+  /// In en, this message translates to:
+  /// **'Write edited result to this index entry'**
+  String get gitUiWriteEditedResultToThisIndexEntry;
+
+  /// Shared Git interface: Working files remain on disk. Review the edited index before applying.
+  ///
+  /// In en, this message translates to:
+  /// **'Working files remain on disk. Review the edited index before applying.'**
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore;
+
+  /// Shared Git interface: Review index text format changes
+  ///
+  /// In en, this message translates to:
+  /// **'Review index text format changes'**
+  String get gitUiReviewIndexTextFormatChanges;
+
+  /// Shared Git interface: Update only the reviewed index entry for {arg0}.
+  ///
+  /// In en, this message translates to:
+  /// **'Update only the reviewed index entry for {arg0}.\n\n{arg1}'**
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Write reviewed index result
+  ///
+  /// In en, this message translates to:
+  /// **'Write reviewed index result'**
+  String get gitUiWriteReviewedIndexResult;
+
+  /// Shared Git interface: The edited result changed during format review. Review it again.
+  ///
+  /// In en, this message translates to:
+  /// **'The edited result changed during format review. Review it again.'**
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain;
+
+  /// Shared Git interface: Synchronize scrolling
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize scrolling'**
+  String get gitUiSynchronizeScrolling;
+
+  /// Shared Git interface: Read-only revision content
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only revision content'**
+  String get gitUiReadOnlyRevisionContent;
+
+  /// Shared Git interface: Editable index content
+  ///
+  /// In en, this message translates to:
+  /// **'Editable index content'**
+  String get gitUiEditableIndexContent;
+
+  /// Shared Git interface: The requested revision is outside the current filters. Reset filters to reveal it.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested revision is outside the current filters. Reset filters to reveal it.'**
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters;
+
+  /// Shared Git interface: Filter Log
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Log'**
+  String get gitUiFilterLog;
+
+  /// Shared Git interface: Filters…
+  ///
+  /// In en, this message translates to:
+  /// **'Filters…'**
+  String get gitUiFilters;
+
+  /// Shared Git interface: Filters ({count})…
+  ///
+  /// In en, this message translates to:
+  /// **'Filters ({count})…'**
+  String gitUiFiltersCount(String count);
+
+  /// Shared Git interface: Message…
+  ///
+  /// In en, this message translates to:
+  /// **'Message…'**
+  String get gitUiMessage;
+
+  /// Shared Git interface: Author…
+  ///
+  /// In en, this message translates to:
+  /// **'Author…'**
+  String get gitUiAuthor;
+
+  /// Shared Git interface: Path…
+  ///
+  /// In en, this message translates to:
+  /// **'Path…'**
+  String get gitUiPath;
+
+  /// Shared Git interface: Date…
+  ///
+  /// In en, this message translates to:
+  /// **'Date…'**
+  String get gitUiDate;
+
+  /// Shared Git interface: Message filter
+  ///
+  /// In en, this message translates to:
+  /// **'Message filter'**
+  String get gitUiMessageFilter;
+
+  /// Shared Git interface: Author filter
+  ///
+  /// In en, this message translates to:
+  /// **'Author filter'**
+  String get gitUiAuthorFilter;
+
+  /// Shared Git interface: Path filter
+  ///
+  /// In en, this message translates to:
+  /// **'Path filter'**
+  String get gitUiPathFilter;
+
+  /// Shared Git interface: Message
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get gitUiMessage2;
+
+  /// Shared Git interface: Author
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
+  String get gitUiAuthor2;
+
+  /// Shared Git interface: Path
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get gitUiPath2;
+
+  /// Shared Git interface: Date filter…
+  ///
+  /// In en, this message translates to:
+  /// **'Date filter…'**
+  String get gitUiDateFilter;
+
+  /// Shared Git interface: Reset filters
+  ///
+  /// In en, this message translates to:
+  /// **'Reset filters'**
+  String get gitUiResetFilters;
+
+  /// Shared Git interface: Refresh Log
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Log'**
+  String get gitUiRefreshLog;
+
+  /// Shared Git interface: Go to commit/reference…
+  ///
+  /// In en, this message translates to:
+  /// **'Go to commit/reference…'**
+  String get gitUiGoToCommitReference;
+
+  /// Shared Git interface: Back to HEAD
+  ///
+  /// In en, this message translates to:
+  /// **'Back to HEAD'**
+  String get gitUiBackToHEAD;
+
+  /// Shared Git interface: Ordered cherry-pick
+  ///
+  /// In en, this message translates to:
+  /// **'Ordered cherry-pick'**
+  String get gitUiOrderedCherryPick;
+
+  /// Shared Git interface: Review cherry-pick ({arg0})…
+  ///
+  /// In en, this message translates to:
+  /// **'Review cherry-pick ({arg0})…'**
+  String gitUiReviewCherryPickArg0(String arg0);
+
+  /// Shared Git interface: Compare two selected revisions…
+  ///
+  /// In en, this message translates to:
+  /// **'Compare two selected revisions…'**
+  String get gitUiCompareTwoSelectedRevisions;
+
+  /// Shared Git interface: Toggle branches pane
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle branches pane'**
+  String get gitUiToggleBranchesPane;
+
+  /// Shared Git interface: Filter branches and tags
+  ///
+  /// In en, this message translates to:
+  /// **'Filter branches and tags'**
+  String get gitUiFilterBranchesAndTags;
+
+  /// Shared Git interface: Commit {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Commit {arg0}'**
+  String gitUiCommitArg0(String arg0);
+
+  /// Shared Git interface: Commit details…
+  ///
+  /// In en, this message translates to:
+  /// **'Commit details…'**
+  String get gitUiCommitDetails;
+
+  /// Shared Git interface: Reference: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Reference: {arg0}'**
+  String gitUiReferenceArg0(String arg0);
+
+  /// Shared Git interface: Select this commit
+  ///
+  /// In en, this message translates to:
+  /// **'Select this commit'**
+  String get gitUiSelectThisCommit;
+
+  /// Shared Git interface: Branch or tag
+  ///
+  /// In en, this message translates to:
+  /// **'Branch or tag'**
+  String get gitUiBranchOrTag;
+
+  /// Shared Git interface: All references
+  ///
+  /// In en, this message translates to:
+  /// **'All references'**
+  String get gitUiAllReferences;
+
+  /// Shared Git interface: Local
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get gitUiLocal;
+
+  /// Shared Git interface: Remote
+  ///
+  /// In en, this message translates to:
+  /// **'Remote'**
+  String get gitUiRemote;
+
+  /// Shared Git interface: Tags
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get gitUiTags;
+
+  /// Shared Git interface: No commits match the current filters.
+  ///
+  /// In en, this message translates to:
+  /// **'No commits match the current filters.'**
+  String get gitUiNoCommitsMatchTheCurrentFilters;
+
+  /// Shared Git interface: Object ID
+  ///
+  /// In en, this message translates to:
+  /// **'Object ID'**
+  String get gitUiObjectID;
+
+  /// Shared Git interface: Subject / references
+  ///
+  /// In en, this message translates to:
+  /// **'Subject / references'**
+  String get gitUiSubjectReferences;
+
+  /// Shared Git interface: Date
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get gitUiDate2;
+
+  /// Shared Git interface: Git commits
+  ///
+  /// In en, this message translates to:
+  /// **'Git commits'**
+  String get gitUiGitCommits;
+
+  /// Shared Git interface: Parents
+  ///
+  /// In en, this message translates to:
+  /// **'Parents'**
+  String get gitUiParents;
+
+  /// Shared Git interface: {arg0} parents
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} parents'**
+  String gitUiArg0Parents(String arg0);
+
+  /// Shared Git interface: Load more commits
+  ///
+  /// In en, this message translates to:
+  /// **'Load more commits'**
+  String get gitUiLoadMoreCommits;
+
+  /// Shared Git interface: Loading changed files
+  ///
+  /// In en, this message translates to:
+  /// **'Loading changed files'**
+  String get gitUiLoadingChangedFiles;
+
+  /// Shared Git interface: No changed files
+  ///
+  /// In en, this message translates to:
+  /// **'No changed files'**
+  String get gitUiNoChangedFiles;
+
+  /// Shared Git interface: Select a commit
+  ///
+  /// In en, this message translates to:
+  /// **'Select a commit'**
+  String get gitUiSelectACommit;
+
+  /// Shared Git interface: Compare parent {arg0}: {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Compare parent {arg0}: {arg1}'**
+  String gitUiCompareParentArg0Arg1(String arg0, String arg1);
+
+  /// Shared Git interface: Changed files
+  ///
+  /// In en, this message translates to:
+  /// **'Changed files'**
+  String get gitUiChangedFiles;
+
+  /// Shared Git interface: Author: {arg0} <{arg1}>
+  ///
+  /// In en, this message translates to:
+  /// **'Author: {arg0} <{arg1}>\n{arg2}'**
+  String gitUiAuthorArg0Arg1Arg2(String arg0, String arg1, String arg2);
+
+  /// Shared Git interface: Committer: {arg0} <{arg1}>
+  ///
+  /// In en, this message translates to:
+  /// **'Committer: {arg0} <{arg1}>\n{arg2}'**
+  String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2);
+
+  /// Shared Git interface: Shallow/partial boundary: a parent object is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Shallow/partial boundary: a parent object is unavailable.'**
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable;
+
+  /// Shared Git interface: Parent is outside this page or a shallow boundary.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent is outside this page or a shallow boundary.'**
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary;
+
+  /// Shared Git interface: Parent {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Parent {arg0}'**
+  String gitUiParentArg0(String arg0);
+
+  /// Shared Git interface: Commit actions…
+  ///
+  /// In en, this message translates to:
+  /// **'Commit actions…'**
+  String get gitUiCommitActions;
+
+  /// Shared Git interface: empty tree
+  ///
+  /// In en, this message translates to:
+  /// **'empty tree'**
+  String get gitUiEmptyTree;
+
+  /// Shared Git interface: Create branch
+  ///
+  /// In en, this message translates to:
+  /// **'Create branch'**
+  String get gitUiCreateBranch2;
+
+  /// Shared Git interface: Create tag
+  ///
+  /// In en, this message translates to:
+  /// **'Create tag'**
+  String get gitUiCreateTag;
+
+  /// Shared Git interface: Compare revisions
+  ///
+  /// In en, this message translates to:
+  /// **'Compare revisions'**
+  String get gitUiCompareRevisions;
+
+  /// Shared Git interface: Open snapshot
+  ///
+  /// In en, this message translates to:
+  /// **'Open snapshot'**
+  String get gitUiOpenSnapshot;
+
+  /// Shared Git interface: Revert commit
+  ///
+  /// In en, this message translates to:
+  /// **'Revert commit'**
+  String get gitUiRevertCommit;
+
+  /// Shared Git interface: Interactive rebase after this boundary
+  ///
+  /// In en, this message translates to:
+  /// **'Interactive rebase after this boundary'**
+  String get gitUiInteractiveRebaseAfterThisBoundary;
+
+  /// Shared Git interface: Reset current branch
+  ///
+  /// In en, this message translates to:
+  /// **'Reset current branch'**
+  String get gitUiResetCurrentBranch;
+
+  /// Shared Git interface: Copy full object ID
+  ///
+  /// In en, this message translates to:
+  /// **'Copy full object ID'**
+  String get gitUiCopyFullObjectID;
+
+  /// Shared Git interface: Go to commit/reference
+  ///
+  /// In en, this message translates to:
+  /// **'Go to commit/reference'**
+  String get gitUiGoToCommitReference2;
+
+  /// Shared Git interface: Enter a commit ID or reference to reveal in Log.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a commit ID or reference to reveal in Log.'**
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog;
+
+  /// Shared Git interface: The requested revision is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested revision is unavailable.'**
+  String get gitUiTheRequestedRevisionIsUnavailable;
+
+  /// Shared Git interface: Repository metadata is read-only. Branch inspection and comparison remain available.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository metadata is read-only. Branch inspection and comparison remain available.'**
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain;
+
+  /// Shared Git interface: Working files are unavailable or read-only. Branch switching and merging are unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Working files are unavailable or read-only. Branch switching and merging are unavailable.'**
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd;
+
+  /// Shared Git interface: Search branches and tags
+  ///
+  /// In en, this message translates to:
+  /// **'Search branches and tags'**
+  String get gitUiSearchBranchesAndTags;
+
+  /// Shared Git interface: New branch…
+  ///
+  /// In en, this message translates to:
+  /// **'New branch…'**
+  String get gitUiNewBranch;
+
+  /// Shared Git interface: Local branches
+  ///
+  /// In en, this message translates to:
+  /// **'Local branches'**
+  String get gitUiLocalBranches;
+
+  /// Shared Git interface: Remote branches
+  ///
+  /// In en, this message translates to:
+  /// **'Remote branches'**
+  String get gitUiRemoteBranches;
+
+  /// Shared Git interface: Tracks {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Tracks {arg0}'**
+  String gitUiTracksArg0(String arg0);
+
+  /// Shared Git interface: Checked out at {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Checked out at {arg0}'**
+  String gitUiCheckedOutAtArg0(String arg0);
+
+  /// Shared Git interface: Refreshing branch metadata
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing branch metadata'**
+  String get gitUiRefreshingBranchMetadata;
+
+  /// Shared Git interface: Switch to {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {arg0}'**
+  String gitUiSwitchToArg0(String arg0);
+
+  /// Shared Git interface: Open occupied worktree
+  ///
+  /// In en, this message translates to:
+  /// **'Open occupied worktree'**
+  String get gitUiOpenOccupiedWorktree;
+
+  /// Shared Git interface: Create local tracking branch…
+  ///
+  /// In en, this message translates to:
+  /// **'Create local tracking branch…'**
+  String get gitUiCreateLocalTrackingBranch;
+
+  /// Shared Git interface: Compare to current HEAD
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to current HEAD'**
+  String get gitUiCompareToCurrentHEAD;
+
+  /// Shared Git interface: Merge into current branch…
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into current branch…'**
+  String get gitUiMergeIntoCurrentBranch;
+
+  /// Shared Git interface: Rename…
+  ///
+  /// In en, this message translates to:
+  /// **'Rename…'**
+  String get gitUiRename;
+
+  /// Shared Git interface: Change upstream…
+  ///
+  /// In en, this message translates to:
+  /// **'Change upstream…'**
+  String get gitUiChangeUpstream;
+
+  /// Shared Git interface: Delete…
+  ///
+  /// In en, this message translates to:
+  /// **'Delete…'**
+  String get gitUiDelete;
+
+  /// Shared Git interface: Delete from remote…
+  ///
+  /// In en, this message translates to:
+  /// **'Delete from remote…'**
+  String get gitUiDeleteFromRemote;
+
+  /// Shared Git interface: Actions for {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {arg0}'**
+  String gitUiActionsForArg0(String arg0);
+
+  /// Shared Git interface: Local branch name
+  ///
+  /// In en, this message translates to:
+  /// **'Local branch name'**
+  String get gitUiLocalBranchName;
+
+  /// Shared Git interface: Create at {arg0}. The new branch will be checked out.
+  ///
+  /// In en, this message translates to:
+  /// **'Create at {arg0}. The new branch will be checked out.'**
+  String gitUiCreateAtArg0TheNewBranchWillBeCheckedOut(String arg0);
+
+  /// Shared Git interface: The local branch will track {arg0} and be checked out.
+  ///
+  /// In en, this message translates to:
+  /// **'The local branch will track {arg0} and be checked out.'**
+  String gitUiTheLocalBranchWillTrackArg0AndBeCheckedOut(String arg0);
+
+  /// Shared Git interface: Choose remote for deletion
+  ///
+  /// In en, this message translates to:
+  /// **'Choose remote for deletion'**
+  String get gitUiChooseRemoteForDeletion;
+
+  /// Shared Git interface: Delete remote reference
+  ///
+  /// In en, this message translates to:
+  /// **'Delete remote reference'**
+  String get gitUiDeleteRemoteReference;
+
+  /// Shared Git interface: Merge {arg0} into {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Merge {arg0} into {arg1}'**
+  String gitUiMergeArg0IntoArg1(String arg0, String arg1);
+
+  /// Shared Git interface: Rename {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Rename {arg0}'**
+  String gitUiRenameArg0(String arg0);
+
+  /// Shared Git interface: Upstream for {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Upstream for {arg0}'**
+  String gitUiUpstreamForArg0(String arg0);
+
+  /// Shared Git interface: No upstream
+  ///
+  /// In en, this message translates to:
+  /// **'No upstream'**
+  String get gitUiNoUpstream;
+
+  /// Shared Git interface: Delete {arg0}?
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {arg0}?'**
+  String gitUiDeleteArg0(String arg0);
+
+  /// Shared Git interface: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0}\nTarget {arg1}\nLocal deletion only. An unmerged branch is refused.'**
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Delete
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get gitUiDelete2;
+
+  /// Shared Git interface: Delete unmerged branch {arg0}?
+  ///
+  /// In en, this message translates to:
+  /// **'Delete unmerged branch {arg0}?'**
+  String gitUiDeleteUnmergedBranchArg0(String arg0);
+
+  /// Shared Git interface: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0}\nGit reports this branch is not fully merged. Explicitly delete the local reference after reviewing its commits; remote copies are unchanged.'**
+  String gitUiArg0GitReportsThisBranchIsNotFullyMergedExplicitly(String arg0);
+
+  /// Shared Git interface: Delete unmerged local branch
+  ///
+  /// In en, this message translates to:
+  /// **'Delete unmerged local branch'**
+  String get gitUiDeleteUnmergedLocalBranch;
+
+  /// Shared Git interface: Destination: {arg0} · {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Destination: {arg0} · {arg1}'**
+  String gitUiDestinationArg0Arg1(String arg0, String arg1);
+
+  /// Shared Git interface: Source branch or tag
+  ///
+  /// In en, this message translates to:
+  /// **'Source branch or tag'**
+  String get gitUiSourceBranchOrTag;
+
+  /// Shared Git interface: Merge policy
+  ///
+  /// In en, this message translates to:
+  /// **'Merge policy'**
+  String get gitUiMergePolicy;
+
+  /// Shared Git interface: Fast-forward when possible
+  ///
+  /// In en, this message translates to:
+  /// **'Fast-forward when possible'**
+  String get gitUiFastForwardWhenPossible;
+
+  /// Shared Git interface: Always create a merge commit
+  ///
+  /// In en, this message translates to:
+  /// **'Always create a merge commit'**
+  String get gitUiAlwaysCreateAMergeCommit;
+
+  /// Shared Git interface: Fast-forward only
+  ///
+  /// In en, this message translates to:
+  /// **'Fast-forward only'**
+  String get gitUiFastForwardOnly;
+
+  /// Shared Git interface: Squash into staged changes
+  ///
+  /// In en, this message translates to:
+  /// **'Squash into staged changes'**
+  String get gitUiSquashIntoStagedChanges;
+
+  /// Shared Git interface: Stop before creating the merge commit
+  ///
+  /// In en, this message translates to:
+  /// **'Stop before creating the merge commit'**
+  String get gitUiStopBeforeCreatingTheMergeCommit;
+
+  /// Shared Git interface: Fast-forward is disabled so HEAD cannot move before review.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast-forward is disabled so HEAD cannot move before review.'**
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview;
+
+  /// Shared Git interface: Leaves staged changes for a separate commit; this is not a continuing merge.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaves staged changes for a separate commit; this is not a continuing merge.'**
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot;
+
+  /// Shared Git interface: Conflicts remain available in the shared resolution workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts remain available in the shared resolution workspace.'**
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace;
+
+  /// Shared Git interface: Add remote…
+  ///
+  /// In en, this message translates to:
+  /// **'Add remote…'**
+  String get gitUiAddRemote;
+
+  /// Shared Git interface: Fetch: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch: {arg0}\nPush: {arg1}'**
+  String gitUiFetchArg0PushArg1(String arg0, String arg1);
+
+  /// Shared Git interface: Remove remote…
+  ///
+  /// In en, this message translates to:
+  /// **'Remove remote…'**
+  String get gitUiRemoveRemote;
+
+  /// Shared Git interface: Change fetch URL…
+  ///
+  /// In en, this message translates to:
+  /// **'Change fetch URL…'**
+  String get gitUiChangeFetchURL;
+
+  /// Shared Git interface: Add push destination…
+  ///
+  /// In en, this message translates to:
+  /// **'Add push destination…'**
+  String get gitUiAddPushDestination;
+
+  /// Shared Git interface: Remove push destination…
+  ///
+  /// In en, this message translates to:
+  /// **'Remove push destination…'**
+  String get gitUiRemovePushDestination;
+
+  /// Shared Git interface: Manage {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Manage {arg0}'**
+  String gitUiManageArg0(String arg0);
+
+  /// Shared Git interface: Remote name
+  ///
+  /// In en, this message translates to:
+  /// **'Remote name'**
+  String get gitUiRemoteName;
+
+  /// Shared Git interface: New remote name
+  ///
+  /// In en, this message translates to:
+  /// **'New remote name'**
+  String get gitUiNewRemoteName;
+
+  /// Shared Git interface: Repository URL or local source
+  ///
+  /// In en, this message translates to:
+  /// **'Repository URL or local source'**
+  String get gitUiRepositoryURLOrLocalSource;
+
+  /// Shared Git interface: Enter the exact reviewed destination to remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the exact reviewed destination to remove.'**
+  String get gitUiEnterTheExactReviewedDestinationToRemove;
+
+  /// Shared Git interface: Credentials are supplied by configured helpers or a private prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials are supplied by configured helpers or a private prompt.'**
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt;
+
+  /// Shared Git interface: Remove remote {arg0}?
+  ///
+  /// In en, this message translates to:
+  /// **'Remove remote {arg0}?'**
+  String gitUiRemoveRemoteArg0(String arg0);
+
+  /// Shared Git interface: Removes local remote configuration and tracking references. It does not delete the server repository.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes local remote configuration and tracking references. It does not delete the server repository.'**
+  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot;
+
+  /// Shared Git interface: Remove remote
+  ///
+  /// In en, this message translates to:
+  /// **'Remove remote'**
+  String get gitUiRemoveRemote2;
+
+  /// Shared Git interface: Commit scope: entire repository
+  ///
+  /// In en, this message translates to:
+  /// **'Commit scope: entire repository'**
+  String get gitUiCommitScopeEntireRepository;
+
+  /// Shared Git interface: Cached tracking
+  ///
+  /// In en, this message translates to:
+  /// **'Cached tracking'**
+  String get gitUiCachedTracking;
+
+  /// Shared Git interface: Amend last commit
+  ///
+  /// In en, this message translates to:
+  /// **'Amend last commit'**
+  String get gitUiAmendLastCommit;
+
+  /// Shared Git interface: Configured hooks and signing are respected.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured hooks and signing are respected.'**
+  String get gitUiConfiguredHooksAndSigningAreRespected;
+
+  /// Shared Git interface: Rewrites the selected HEAD commit. Remote tracking cannot prove it is unpublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrites the selected HEAD commit. Remote tracking cannot prove it is unpublished.'**
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt;
+
+  /// Shared Git interface: Repository
+  ///
+  /// In en, this message translates to:
+  /// **'Repository'**
+  String get gitUiRepository;
+
+  /// Shared Git interface: Detached {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Detached {arg0}'**
+  String gitUiDetachedArg0(String arg0);
+
+  /// Shared Git interface: Log
+  ///
+  /// In en, this message translates to:
+  /// **'Log'**
+  String get gitUiLog;
+
+  /// Shared Git interface: Repository actions
+  ///
+  /// In en, this message translates to:
+  /// **'Repository actions'**
+  String get gitUiRepositoryActions;
+
+  /// Shared Git interface: Cached tracking · {upstream} · {ahead} ahead · {behind} behind
+  ///
+  /// In en, this message translates to:
+  /// **'Cached tracking · {upstream} · {ahead} ahead · {behind} behind'**
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  );
+
+  /// Shared Git interface: Bare repository · no working tree. Open Log to inspect its history.
+  ///
+  /// In en, this message translates to:
+  /// **'Bare repository · no working tree. Open Log to inspect its history.'**
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts;
+
+  /// Shared Git interface: Read-only repository · staging and commits are unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only repository · staging and commits are unavailable.'**
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable;
+
+  /// Shared Git interface: Repository status unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Repository status unavailable'**
+  String get gitUiRepositoryStatusUnavailable;
+
+  /// Shared Git interface: Amend {revision}
+  ///
+  /// In en, this message translates to:
+  /// **'Amend {revision}'**
+  String gitUiAmendRevision(String revision);
+
+  /// Shared Git interface: Add sign-off trailer
+  ///
+  /// In en, this message translates to:
+  /// **'Add sign-off trailer'**
+  String get gitUiAddSignOffTrailer;
+
+  /// Shared Git interface: Use configured signing policy
+  ///
+  /// In en, this message translates to:
+  /// **'Use configured signing policy'**
+  String get gitUiUseConfiguredSigningPolicy;
+
+  /// Shared Git interface: Cryptographically sign this commit
+  ///
+  /// In en, this message translates to:
+  /// **'Cryptographically sign this commit'**
+  String get gitUiCryptographicallySignThisCommit;
+
+  /// Shared Git interface: Do not sign this commit
+  ///
+  /// In en, this message translates to:
+  /// **'Do not sign this commit'**
+  String get gitUiDoNotSignThisCommit;
+
+  /// Shared Git interface: Recent commit messages…
+  ///
+  /// In en, this message translates to:
+  /// **'Recent commit messages…'**
+  String get gitUiRecentCommitMessages;
+
+  /// Shared Git interface: Use configured commit template…
+  ///
+  /// In en, this message translates to:
+  /// **'Use configured commit template…'**
+  String get gitUiUseConfiguredCommitTemplate;
+
+  /// Shared Git interface: Author identity and configured hooks…
+  ///
+  /// In en, this message translates to:
+  /// **'Author identity and configured hooks…'**
+  String get gitUiAuthorIdentityAndConfiguredHooks;
+
+  /// Shared Git interface: Draft message…
+  ///
+  /// In en, this message translates to:
+  /// **'Draft message…'**
+  String get gitUiDraftMessage;
+
+  /// Shared Git interface: Commit options
+  ///
+  /// In en, this message translates to:
+  /// **'Commit options'**
+  String get gitUiCommitOptions;
+
+  /// Shared Git interface: Draft retained in memory; saving it failed. {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Draft retained in memory; saving it failed. {arg0}'**
+  String gitUiDraftRetainedInMemorySavingItFailedArg0(String arg0);
+
+  /// Shared Git interface: Commit message
+  ///
+  /// In en, this message translates to:
+  /// **'Commit message'**
+  String get gitUiCommitMessage;
+
+  /// Shared Git interface: Git operation in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Git operation in progress'**
+  String get gitUiGitOperationInProgress;
+
+  /// Shared Git interface: Cancel
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get gitUiCancel;
+
+  /// Shared Git interface: Amend staged
+  ///
+  /// In en, this message translates to:
+  /// **'Amend staged'**
+  String get gitUiAmendStaged;
+
+  /// Shared Git interface: Commit staged ({count})
+  ///
+  /// In en, this message translates to:
+  /// **'Commit staged ({count})'**
+  String gitUiCommitStagedCount(String count);
+
+  /// Shared Git interface: Commit and Push…
+  ///
+  /// In en, this message translates to:
+  /// **'Commit and Push…'**
+  String get gitUiCommitAndPush;
+
+  /// Shared Git interface: No readable commit template is configured.
+  ///
+  /// In en, this message translates to:
+  /// **'No readable commit template is configured.'**
+  String get gitUiNoReadableCommitTemplateIsConfigured;
+
+  /// Shared Git interface: Commit identity and hooks
+  ///
+  /// In en, this message translates to:
+  /// **'Commit identity and hooks'**
+  String get gitUiCommitIdentityAndHooks;
+
+  /// Shared Git interface: Recent messages
+  ///
+  /// In en, this message translates to:
+  /// **'Recent messages'**
+  String get gitUiRecentMessages;
+
+  /// Shared Git interface: Replace message draft?
+  ///
+  /// In en, this message translates to:
+  /// **'Replace message draft?'**
+  String get gitUiReplaceMessageDraft;
+
+  /// Shared Git interface: Replace the existing commit message with the selected message?
+  ///
+  /// In en, this message translates to:
+  /// **'Replace the existing commit message with the selected message?'**
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage;
+
+  /// Shared Git interface: Replace draft
+  ///
+  /// In en, this message translates to:
+  /// **'Replace draft'**
+  String get gitUiReplaceDraft;
+
+  /// Shared Git interface: Local commit {arg0} exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Local commit {arg0} exists.'**
+  String gitUiLocalCommitArg0Exists(String arg0);
+
+  /// Shared Git interface: Local commit {arg0} exists. Review Log before attempting another commit. The message draft has been retained.
+  ///
+  /// In en, this message translates to:
+  /// **'Local commit {arg0} exists. Review Log before attempting another commit. The message draft has been retained.'**
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  );
+
+  /// Shared Git interface: Commit author name
+  ///
+  /// In en, this message translates to:
+  /// **'Commit author name'**
+  String get gitUiCommitAuthorName;
+
+  /// Shared Git interface: Commit author email
+  ///
+  /// In en, this message translates to:
+  /// **'Commit author email'**
+  String get gitUiCommitAuthorEmail;
+
+  /// Shared Git interface: configured default
+  ///
+  /// In en, this message translates to:
+  /// **'configured default'**
+  String get gitUiConfiguredDefault;
+
+  /// Shared Git interface: OpenPGP
+  ///
+  /// In en, this message translates to:
+  /// **'OpenPGP'**
+  String get gitUiOpenpgp;
+
+  /// Shared Git interface: Signing: {arg0} · {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Signing: {arg0} · {arg1}'**
+  String gitUiSigningArg0Arg1(String arg0, String arg1);
+
+  /// Shared Git interface: Configured hooks: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Configured hooks: {arg0}'**
+  String gitUiConfiguredHooksArg0(String arg0);
+
+  /// Shared Git interface: A sign-off trailer is a statement in the message. It is separate from a cryptographic signature. Saving identity changes repository-local configuration only; your draft is retained.
+  ///
+  /// In en, this message translates to:
+  /// **'A sign-off trailer is a statement in the message. It is separate from a cryptographic signature. Saving identity changes repository-local configuration only; your draft is retained.'**
+  String get gitUiASignOffTrailerIsAStatementInTheMessage;
+
+  /// Shared Git interface: Save repository identity
+  ///
+  /// In en, this message translates to:
+  /// **'Save repository identity'**
+  String get gitUiSaveRepositoryIdentity;
+
+  /// Shared Git interface: Staged
+  ///
+  /// In en, this message translates to:
+  /// **'Staged'**
+  String get gitUiStaged;
+
+  /// Shared Git interface: Untracked
+  ///
+  /// In en, this message translates to:
+  /// **'Untracked'**
+  String get gitUiUntracked;
+
+  /// Shared Git interface: Unstaged
+  ///
+  /// In en, this message translates to:
+  /// **'Unstaged'**
+  String get gitUiUnstaged;
+
+  /// Shared Git interface: Conflicts
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts'**
+  String get gitUiConflicts;
+
+  /// Shared Git interface: No changes
+  ///
+  /// In en, this message translates to:
+  /// **'No changes'**
+  String get gitUiNoChanges;
+
+  /// Shared Git interface: Repository change tree
+  ///
+  /// In en, this message translates to:
+  /// **'Repository change tree'**
+  String get gitUiRepositoryChangeTree;
+
+  /// Shared Git interface: Changes
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get gitUiChanges;
+
+  /// Shared Git interface: {group} ({count})
+  ///
+  /// In en, this message translates to:
+  /// **'{group} ({count})'**
+  String gitUiGroupCount(String group, String count);
+
+  /// Shared Git interface: Expand
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get gitUiExpand;
+
+  /// Shared Git interface: Collapse
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse'**
+  String get gitUiCollapse;
+
+  /// Shared Git interface: Unstage file
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage file'**
+  String get gitUiUnstageFile;
+
+  /// Shared Git interface: Stage file
+  ///
+  /// In en, this message translates to:
+  /// **'Stage file'**
+  String get gitUiStageFile;
+
+  /// Shared Git interface: Expand group
+  ///
+  /// In en, this message translates to:
+  /// **'Expand group'**
+  String get gitUiExpandGroup;
+
+  /// Shared Git interface: Collapse group
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse group'**
+  String get gitUiCollapseGroup;
+
+  /// Shared Git interface: Review difference
+  ///
+  /// In en, this message translates to:
+  /// **'Review difference'**
+  String get gitUiReviewDifference;
+
+  /// Shared Git interface: Unstage selected files
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage selected files'**
+  String get gitUiUnstageSelectedFiles;
+
+  /// Shared Git interface: Stage selected files
+  ///
+  /// In en, this message translates to:
+  /// **'Stage selected files'**
+  String get gitUiStageSelectedFiles;
+
+  /// Shared Git interface: File history and blame…
+  ///
+  /// In en, this message translates to:
+  /// **'File history and blame…'**
+  String get gitUiFileHistoryAndBlame;
+
+  /// Shared Git interface: Delete untracked file…
+  ///
+  /// In en, this message translates to:
+  /// **'Delete untracked file…'**
+  String get gitUiDeleteUntrackedFile;
+
+  /// Shared Git interface: Discard unstaged change…
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unstaged change…'**
+  String get gitUiDiscardUnstagedChange;
+
+  /// Shared Git interface: File history
+  ///
+  /// In en, this message translates to:
+  /// **'File history'**
+  String get gitUiFileHistory;
+
+  /// Shared Git interface: Discard unstaged {arg0}?
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unstaged {arg0}?'**
+  String gitUiDiscardUnstagedArg0(String arg0);
+
+  /// Shared Git interface: {arg0} bytes · {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} bytes · {arg1}\nReplaces working content with the index, or deletes this untracked file. Staged content is retained. Unsaved host documents must be reviewed first.'**
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Delete untracked file
+  ///
+  /// In en, this message translates to:
+  /// **'Delete untracked file'**
+  String get gitUiDeleteUntrackedFile2;
+
+  /// Shared Git interface: Discard working change
+  ///
+  /// In en, this message translates to:
+  /// **'Discard working change'**
+  String get gitUiDiscardWorkingChange;
+
+  /// Shared Git interface: Delete REMOTE reference {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Delete REMOTE reference {arg0}'**
+  String gitUiDeleteREMOTEReferenceArg0(String arg0);
+
+  /// Shared Git interface: This removes the reference on every actual push destination listed below. Local branches/tags are retained. The expected tips are fixed by this review.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the reference on every actual push destination listed below. Local branches/tags are retained. The expected tips are fixed by this review.'**
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed;
+
+  /// Shared Git interface: reference does not exist
+  ///
+  /// In en, this message translates to:
+  /// **'reference does not exist'**
+  String get gitUiReferenceDoesNotExist;
+
+  /// Shared Git interface: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0}\nExpected tip: {arg1}'**
+  String gitUiArg0ExpectedTipArg1(String arg0, String arg1);
+
+  /// Shared Git interface: Remote deletion completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote deletion completed.'**
+  String get gitUiRemoteDeletionCompleted;
+
+  /// Shared Git interface: Delete {arg0} from the remote?
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {arg0} from the remote?'**
+  String gitUiDeleteArg0FromTheRemote(String arg0);
+
+  /// Shared Git interface: The exact destination tips shown above will be removed. Any changed remote tip stops the operation for another review.
+  ///
+  /// In en, this message translates to:
+  /// **'The exact destination tips shown above will be removed. Any changed remote tip stops the operation for another review.'**
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny;
+
+  /// Shared Git interface: Review and delete from remote…
+  ///
+  /// In en, this message translates to:
+  /// **'Review and delete from remote…'**
+  String get gitUiReviewAndDeleteFromRemote;
+
+  /// Shared Git interface: Destination reference
+  ///
+  /// In en, this message translates to:
+  /// **'Destination reference'**
+  String get gitUiDestinationReference;
+
+  /// Shared Git interface: Review destinations
+  ///
+  /// In en, this message translates to:
+  /// **'Review destinations'**
+  String get gitUiReviewDestinations;
+
+  /// Shared Git interface: new remote branch
+  ///
+  /// In en, this message translates to:
+  /// **'new remote branch'**
+  String get gitUiNewRemoteBranch;
+
+  /// Shared Git interface: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0}\n{arg1} · expected {arg2}'**
+  String gitUiArg0Arg1ExpectedArg2(String arg0, String arg1, String arg2);
+
+  /// Shared Git interface: A destination has commits that are unavailable locally. Fetch that reviewed destination before reviewing outgoing history.
+  ///
+  /// In en, this message translates to:
+  /// **'A destination has commits that are unavailable locally. Fetch that reviewed destination before reviewing outgoing history.'**
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat;
+
+  /// Shared Git interface: Fetch reviewed destination
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch reviewed destination'**
+  String get gitUiFetchReviewedDestination;
+
+  /// Shared Git interface: Choose a destination and review the outgoing commits.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a destination and review the outgoing commits.'**
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits;
+
+  /// Shared Git interface: No outgoing commits
+  ///
+  /// In en, this message translates to:
+  /// **'No outgoing commits'**
+  String get gitUiNoOutgoingCommits;
+
+  /// Shared Git interface: Select an outgoing commit
+  ///
+  /// In en, this message translates to:
+  /// **'Select an outgoing commit'**
+  String get gitUiSelectAnOutgoingCommit;
+
+  /// Shared Git interface: Load more outgoing commits
+  ///
+  /// In en, this message translates to:
+  /// **'Load more outgoing commits'**
+  String get gitUiLoadMoreOutgoingCommits;
+
+  /// Shared Git interface: Set this destination as upstream
+  ///
+  /// In en, this message translates to:
+  /// **'Set this destination as upstream'**
+  String get gitUiSetThisDestinationAsUpstream;
+
+  /// Shared Git interface: Choose exact tags to publish
+  ///
+  /// In en, this message translates to:
+  /// **'Choose exact tags to publish'**
+  String get gitUiChooseExactTagsToPublish;
+
+  /// Shared Git interface: Tags: none
+  ///
+  /// In en, this message translates to:
+  /// **'Tags: none'**
+  String get gitUiTagsNone;
+
+  /// Shared Git interface: Tags: {arg0} selected
+  ///
+  /// In en, this message translates to:
+  /// **'Tags: {arg0} selected'**
+  String gitUiTagsArg0Selected(String arg0);
+
+  /// Shared Git interface: Publish exactly: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Publish exactly: {arg0}'**
+  String gitUiPublishExactlyArg0(String arg0);
+
+  /// Shared Git interface: Push completed. The local commit remains available in Log.
+  ///
+  /// In en, this message translates to:
+  /// **'Push completed. The local commit remains available in Log.'**
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog;
+
+  /// Shared Git interface: Force requires the exact destination tips shown in this review.
+  ///
+  /// In en, this message translates to:
+  /// **'Force requires the exact destination tips shown in this review.'**
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview;
+
+  /// Shared Git interface: Force with reviewed lease…
+  ///
+  /// In en, this message translates to:
+  /// **'Force with reviewed lease…'**
+  String get gitUiForceWithReviewedLease;
+
+  /// Shared Git interface: Push
+  ///
+  /// In en, this message translates to:
+  /// **'Push'**
+  String get gitUiPush;
+
+  /// Shared Git interface: Force push with reviewed leases?
+  ///
+  /// In en, this message translates to:
+  /// **'Force push with reviewed leases?'**
+  String get gitUiForcePushWithReviewedLeases;
+
+  /// Shared Git interface: Rewrite {arg0} only if every remote destination still has the exact tip shown above.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite {arg0} only if every remote destination still has the exact tip shown above.\n'**
+  String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0);
+
+  /// Shared Git interface: Other people may already use this history. A background fetch will not renew this lease.
+  ///
+  /// In en, this message translates to:
+  /// **'Other people may already use this history. A background fetch will not renew this lease.'**
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch;
+
+  /// Shared Git interface: Force with lease
+  ///
+  /// In en, this message translates to:
+  /// **'Force with lease'**
+  String get gitUiForceWithLease;
+
+  /// Shared Git interface: The remote outcome is uncertain. Review destinations again before another push.
+  ///
+  /// In en, this message translates to:
+  /// **'The remote outcome is uncertain. Review destinations again before another push.'**
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother;
+
+  /// Shared Git interface: Parent {arg0} · {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Parent {arg0} · {arg1}'**
+  String gitUiParentArg0Arg1(String arg0, String arg1);
+
+  /// Shared Git interface: Remote to fetch
+  ///
+  /// In en, this message translates to:
+  /// **'Remote to fetch'**
+  String get gitUiRemoteToFetch;
+
+  /// Shared Git interface: Prune deleted remote-tracking branches
+  ///
+  /// In en, this message translates to:
+  /// **'Prune deleted remote-tracking branches'**
+  String get gitUiPruneDeletedRemoteTrackingBranches;
+
+  /// Shared Git interface: Fetch updates remote-tracking information without replacing working files.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch updates remote-tracking information without replacing working files.'**
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles;
+
+  /// Shared Git interface: Fetch
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch'**
+  String get gitUiFetch;
+
+  /// Shared Git interface: Source remote
+  ///
+  /// In en, this message translates to:
+  /// **'Source remote'**
+  String get gitUiSourceRemote;
+
+  /// Shared Git interface: Source branch
+  ///
+  /// In en, this message translates to:
+  /// **'Source branch'**
+  String get gitUiSourceBranch;
+
+  /// Shared Git interface: Reviewed strategy
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed strategy'**
+  String get gitUiReviewedStrategy;
+
+  /// Shared Git interface: Merge
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get gitUiMerge;
+
+  /// Shared Git interface: Rebase
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase'**
+  String get gitUiRebase;
+
+  /// Shared Git interface: Stop if the destination cannot fast-forward; never merge or rebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop if the destination cannot fast-forward; never merge or rebase.'**
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr;
+
+  /// Shared Git interface: Merge with a merge commit, including when fast-forward is possible.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge with a merge commit, including when fast-forward is possible.'**
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs;
+
+  /// Shared Git interface: Merge; allow fast-forward when possible.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge; allow fast-forward when possible.'**
+  String get gitUiMergeAllowFastForwardWhenPossible;
+
+  /// Shared Git interface: Rebase local history while preserving local merge commits.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase local history while preserving local merge commits.'**
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits;
+
+  /// Shared Git interface: Rebase local commits as a linear history.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase local commits as a linear history.'**
+  String get gitUiRebaseLocalCommitsAsALinearHistory;
+
+  /// Shared Git interface: Git is configured for interactive rebase. Select a pull strategy explicitly here, or fetch and open Rebase… to review a plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Git is configured for interactive rebase. Select a pull strategy explicitly here, or fetch and open Rebase… to review a plan.'**
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy;
+
+  /// Shared Git interface: Use reviewed ordinary rebase for this pull
+  ///
+  /// In en, this message translates to:
+  /// **'Use reviewed ordinary rebase for this pull'**
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull;
+
+  /// Shared Git interface: Options
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get gitUiOptions;
+
+  /// Shared Git interface: Always create a merge commit (no fast-forward)
+  ///
+  /// In en, this message translates to:
+  /// **'Always create a merge commit (no fast-forward)'**
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward;
+
+  /// Shared Git interface: Preserve local merge commits
+  ///
+  /// In en, this message translates to:
+  /// **'Preserve local merge commits'**
+  String get gitUiPreserveLocalMergeCommits;
+
+  /// Shared Git interface: Local changes may prevent pull. Review/commit them or explicitly create a stash.
+  ///
+  /// In en, this message translates to:
+  /// **'Local changes may prevent pull. Review/commit them or explicitly create a stash.'**
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly;
+
+  /// Shared Git interface: Stashes
+  ///
+  /// In en, this message translates to:
+  /// **'Stashes'**
+  String get gitUiStashes;
+
+  /// Shared Git interface: Create or review stash…
+  ///
+  /// In en, this message translates to:
+  /// **'Create or review stash…'**
+  String get gitUiCreateOrReviewStash;
+
+  /// Shared Git interface: Pull with selected strategy
+  ///
+  /// In en, this message translates to:
+  /// **'Pull with selected strategy'**
+  String get gitUiPullWithSelectedStrategy;
+
+  /// Shared Git interface: Repository URL or local Git source
+  ///
+  /// In en, this message translates to:
+  /// **'Repository URL or local Git source'**
+  String get gitUiRepositoryURLOrLocalGitSource;
+
+  /// Shared Git interface: HTTPS, SSH, or local path
+  ///
+  /// In en, this message translates to:
+  /// **'HTTPS, SSH, or local path'**
+  String get gitUiHttpsSSHOrLocalPath;
+
+  /// Shared Git interface: Folder to initialize
+  ///
+  /// In en, this message translates to:
+  /// **'Folder to initialize'**
+  String get gitUiFolderToInitialize;
+
+  /// Shared Git interface: Final clone destination
+  ///
+  /// In en, this message translates to:
+  /// **'Final clone destination'**
+  String get gitUiFinalCloneDestination;
+
+  /// Shared Git interface: Choose…
+  ///
+  /// In en, this message translates to:
+  /// **'Choose…'**
+  String get gitUiChoose;
+
+  /// Shared Git interface: Creates Git metadata only. Existing files are not staged or committed.
+  ///
+  /// In en, this message translates to:
+  /// **'Creates Git metadata only. Existing files are not staged or committed.'**
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr;
+
+  /// Shared Git interface: The final destination must be absent or empty. Existing user data is never overwritten.
+  ///
+  /// In en, this message translates to:
+  /// **'The final destination must be absent or empty. Existing user data is never overwritten.'**
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser;
+
+  /// Shared Git interface: Initial branch · blank uses effective Git policy
+  ///
+  /// In en, this message translates to:
+  /// **'Initial branch · blank uses effective Git policy'**
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy;
+
+  /// Shared Git interface: Selected branch · optional
+  ///
+  /// In en, this message translates to:
+  /// **'Selected branch · optional'**
+  String get gitUiSelectedBranchOptional;
+
+  /// Shared Git interface: Explicitly initialize/update submodules recursively
+  ///
+  /// In en, this message translates to:
+  /// **'Explicitly initialize/update submodules recursively'**
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively;
+
+  /// Shared Git interface: Preparing Git operation…
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing Git operation…'**
+  String get gitUiPreparingGitOperation;
+
+  /// Shared Git interface: This attempt created
+  ///
+  /// In en, this message translates to:
+  /// **'This attempt created'**
+  String get gitUiThisAttemptCreated;
+
+  /// Shared Git interface: The destination existed before this attempt:
+  ///
+  /// In en, this message translates to:
+  /// **'The destination existed before this attempt:'**
+  String get gitUiTheDestinationExistedBeforeThisAttempt;
+
+  /// Shared Git interface: The directory remains for inspection. Review it before another clone attempt.
+  ///
+  /// In en, this message translates to:
+  /// **'The directory remains for inspection. Review it before another clone attempt.'**
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone;
+
+  /// Shared Git interface: No destination directory remains.
+  ///
+  /// In en, this message translates to:
+  /// **'No destination directory remains.'**
+  String get gitUiNoDestinationDirectoryRemains;
+
+  /// Shared Git interface: Cancel process
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel process'**
+  String get gitUiCancelProcess;
+
+  /// Shared Git interface: Initialize
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize'**
+  String get gitUiInitialize;
+
+  /// Shared Git interface: Clone
+  ///
+  /// In en, this message translates to:
+  /// **'Clone'**
+  String get gitUiClone;
+
+  /// Shared Git interface: Choose new base
+  ///
+  /// In en, this message translates to:
+  /// **'Choose new base'**
+  String get gitUiChooseNewBase;
+
+  /// Shared Git interface: Choose upstream boundary
+  ///
+  /// In en, this message translates to:
+  /// **'Choose upstream boundary'**
+  String get gitUiChooseUpstreamBoundary;
+
+  /// Shared Git interface: New base
+  ///
+  /// In en, this message translates to:
+  /// **'New base'**
+  String get gitUiNewBase;
+
+  /// Shared Git interface: Upstream boundary · excluded
+  ///
+  /// In en, this message translates to:
+  /// **'Upstream boundary · excluded'**
+  String get gitUiUpstreamBoundaryExcluded;
+
+  /// Shared Git interface: Same as upstream boundary
+  ///
+  /// In en, this message translates to:
+  /// **'Same as upstream boundary'**
+  String get gitUiSameAsUpstreamBoundary;
+
+  /// Shared Git interface: Choose branch, tag or commit…
+  ///
+  /// In en, this message translates to:
+  /// **'Choose branch, tag or commit…'**
+  String get gitUiChooseBranchTagOrCommit;
+
+  /// Shared Git interface: Use upstream as new base
+  ///
+  /// In en, this message translates to:
+  /// **'Use upstream as new base'**
+  String get gitUiUseUpstreamAsNewBase;
+
+  /// Shared Git interface: Choose a valid branch, tag or commit from Log.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a valid branch, tag or commit from Log.'**
+  String get gitUiChooseAValidBranchTagOrCommitFromLog;
+
+  /// Shared Git interface: The first retained commit in a branch block cannot squash or fixup: it has no preceding target.
+  ///
+  /// In en, this message translates to:
+  /// **'The first retained commit in a branch block cannot squash or fixup: it has no preceding target.'**
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash;
+
+  /// Shared Git interface: Branch block {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Branch block {arg0}\n'**
+  String gitUiBranchBlockArg0(String arg0);
+
+  /// Shared Git interface: [Reword will request a new message]
+  ///
+  /// In en, this message translates to:
+  /// **'[Reword will request a new message]\n'**
+  String get gitUiRewordWillRequestANewMessage;
+
+  /// Shared Git interface: Planned commit messages
+  ///
+  /// In en, this message translates to:
+  /// **'Planned commit messages'**
+  String get gitUiPlannedCommitMessages;
+
+  /// Shared Git interface: Original/combined message preview · Git requests the final reword/squash messages
+  ///
+  /// In en, this message translates to:
+  /// **'Original/combined message preview · Git requests the final reword/squash messages'**
+  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash;
+
+  /// Shared Git interface: Result {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Result {arg0}\n{arg1}'**
+  String gitUiResultArg0Arg1(String arg0, String arg1);
+
+  /// Shared Git interface: Current branch: {branch}
+  ///
+  /// In en, this message translates to:
+  /// **'Current branch: {branch}'**
+  String gitUiCurrentBranchBranch(String branch);
+
+  /// Shared Git interface: Detached HEAD
+  ///
+  /// In en, this message translates to:
+  /// **'Detached HEAD'**
+  String get gitUiDetachedHEAD2;
+
+  /// Shared Git interface: Rebase rewrites commit identities. Remote-tracking information cannot prove history has never been published.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase rewrites commit identities. Remote-tracking information cannot prove history has never been published.'**
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory;
+
+  /// Shared Git interface: Include root commits
+  ///
+  /// In en, this message translates to:
+  /// **'Include root commits'**
+  String get gitUiIncludeRootCommits;
+
+  /// Shared Git interface: Merge commits
+  ///
+  /// In en, this message translates to:
+  /// **'Merge commits'**
+  String get gitUiMergeCommits;
+
+  /// Shared Git interface: Flatten history
+  ///
+  /// In en, this message translates to:
+  /// **'Flatten history'**
+  String get gitUiFlattenHistory;
+
+  /// Shared Git interface: Preserve branch structure
+  ///
+  /// In en, this message translates to:
+  /// **'Preserve branch structure'**
+  String get gitUiPreserveBranchStructure;
+
+  /// Shared Git interface: Autosquash
+  ///
+  /// In en, this message translates to:
+  /// **'Autosquash'**
+  String get gitUiAutosquash;
+
+  /// Shared Git interface: Prepare Git plan
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare Git plan'**
+  String get gitUiPrepareGitPlan;
+
+  /// Shared Git interface: Commits to replay: {count}
+  ///
+  /// In en, this message translates to:
+  /// **'Commits to replay: {count}'**
+  String gitUiCommitsToReplayCount(String count);
+
+  /// Shared Git interface: Includes all root commits reachable from this branch.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes all root commits reachable from this branch.'**
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch;
+
+  /// Shared Git interface: Commits after {boundary} will be replayed onto {base}; the boundary itself is excluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Commits after {boundary} will be replayed onto {base}; the boundary itself is excluded.'**
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  );
+
+  /// Shared Git interface: Root
+  ///
+  /// In en, this message translates to:
+  /// **'Root'**
+  String get gitUiRoot;
+
+  /// Shared Git interface: Git branch/label/reset/merge structure
+  ///
+  /// In en, this message translates to:
+  /// **'Git branch/label/reset/merge structure'**
+  String get gitUiGitBranchLabelResetMergeStructure;
+
+  /// Shared Git interface: Choose an explicit old boundary or root mode, then prepare the plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an explicit old boundary or root mode, then prepare the plan.'**
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare;
+
+  /// Shared Git interface: Move up
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get gitUiMoveUp;
+
+  /// Shared Git interface: Move down
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get gitUiMoveDown;
+
+  /// Shared Git interface: Reset plan
+  ///
+  /// In en, this message translates to:
+  /// **'Reset plan'**
+  String get gitUiResetPlan;
+
+  /// Shared Git interface:  · branch block {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **' · branch block {arg0}'**
+  String gitUiBranchBlockArg02(String arg0);
+
+  /// Shared Git interface: Select a commit for details and changed files
+  ///
+  /// In en, this message translates to:
+  /// **'Select a commit for details and changed files'**
+  String get gitUiSelectACommitForDetailsAndChangedFiles;
+
+  /// Shared Git interface: Preview combined commit messages…
+  ///
+  /// In en, this message translates to:
+  /// **'Preview combined commit messages…'**
+  String get gitUiPreviewCombinedCommitMessages;
+
+  /// Shared Git interface: Alt+↑/↓ moves the selected commit. Unrelated branch references will not be updated automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Alt+↑/↓ moves the selected commit. Unrelated branch references will not be updated automatically.'**
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot;
+
+  /// Shared Git interface: Cancel plan
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel plan'**
+  String get gitUiCancelPlan;
+
+  /// Shared Git interface: Start reviewed rebase?
+  ///
+  /// In en, this message translates to:
+  /// **'Start reviewed rebase?'**
+  String get gitUiStartReviewedRebase;
+
+  /// Shared Git interface: Rewrite {arg0} planned commits on {arg1}. Dropped commits remain visibly marked in this plan until you start.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite {arg0} planned commits on {arg1}. Dropped commits remain visibly marked in this plan until you start.'**
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Start rebase
+  ///
+  /// In en, this message translates to:
+  /// **'Start rebase'**
+  String get gitUiStartRebase;
+
+  /// Shared Git interface: No continuing Git operation
+  ///
+  /// In en, this message translates to:
+  /// **'No continuing Git operation'**
+  String get gitUiNoContinuingGitOperation;
+
+  /// Shared Git interface:  · stopped for editing/amend
+  ///
+  /// In en, this message translates to:
+  /// **' · stopped for editing/amend'**
+  String get gitUiStoppedForEditingAmend;
+
+  /// Shared Git interface: These are unmerged index entries, possibly from a stash application. Git has no stash continue or abort command.
+  ///
+  /// In en, this message translates to:
+  /// **'These are unmerged index entries, possibly from a stash application. Git has no stash continue or abort command.'**
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication;
+
+  /// Shared Git interface: Edit the working files, stage and amend the current commit, then continue this rebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit the working files, stage and amend the current commit, then continue this rebase.'**
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit;
+
+  /// Shared Git interface: {arg0}{arg1} · unmerged stages {arg2}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0}{arg1} · unmerged stages {arg2}'**
+  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2);
+
+  /// Shared Git interface: The index has no unresolved entries.
+  ///
+  /// In en, this message translates to:
+  /// **'The index has no unresolved entries.'**
+  String get gitUiTheIndexHasNoUnresolvedEntries;
+
+  /// Shared Git interface: Keep the current commit as an empty commit
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the current commit as an empty commit'**
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit;
+
+  /// Shared Git interface: The real index has no staged changes. Create an explicit empty commit, then continue the sequencer if it remains active.
+  ///
+  /// In en, this message translates to:
+  /// **'The real index has no staged changes. Create an explicit empty commit, then continue the sequencer if it remains active.'**
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit;
+
+  /// Shared Git interface: Keep empty commit…
+  ///
+  /// In en, this message translates to:
+  /// **'Keep empty commit…'**
+  String get gitUiKeepEmptyCommit;
+
+  /// Shared Git interface: Git will try to return to the operation’s starting point. Pre-existing unstaged, untracked and unsaved contents are not guaranteed to be recovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Git will try to return to the operation’s starting point. Pre-existing unstaged, untracked and unsaved contents are not guaranteed to be recovered.'**
+  String get gitUiGitWillTryToReturnToTheOperationSStarting;
+
+  /// Shared Git interface: Skip the current commit and continue with the next planned commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip the current commit and continue with the next planned commit.'**
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned;
+
+  /// Shared Git interface: Forget this operation’s bookkeeping while retaining the current files and index.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget this operation’s bookkeeping while retaining the current files and index.'**
+  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles;
+
+  /// Shared Git interface: Continue {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Continue {arg0}'**
+  String gitUiContinueArg0(String arg0);
+
+  /// Shared Git interface: Reload conflict versions?
+  ///
+  /// In en, this message translates to:
+  /// **'Reload conflict versions?'**
+  String get gitUiReloadConflictVersions;
+
+  /// Shared Git interface: Replace the unsaved Result draft with the current working file. Saved working content is retained.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace the unsaved Result draft with the current working file. Saved working content is retained.'**
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile;
+
+  /// Shared Git interface: Loading conflict versions…
+  ///
+  /// In en, this message translates to:
+  /// **'Loading conflict versions…'**
+  String get gitUiLoadingConflictVersions;
+
+  /// Shared Git interface: Loading conflict
+  ///
+  /// In en, this message translates to:
+  /// **'Loading conflict'**
+  String get gitUiLoadingConflict;
+
+  /// Shared Git interface: Base → left
+  ///
+  /// In en, this message translates to:
+  /// **'Base → left'**
+  String get gitUiBaseLeft;
+
+  /// Shared Git interface: Base → right
+  ///
+  /// In en, this message translates to:
+  /// **'Base → right'**
+  String get gitUiBaseRight;
+
+  /// Shared Git interface: No base entry for this conflict
+  ///
+  /// In en, this message translates to:
+  /// **'No base entry for this conflict'**
+  String get gitUiNoBaseEntryForThisConflict;
+
+  /// Shared Git interface: Accept entire left file…
+  ///
+  /// In en, this message translates to:
+  /// **'Accept entire left file…'**
+  String get gitUiAcceptEntireLeftFile;
+
+  /// Shared Git interface: Accept entire right file…
+  ///
+  /// In en, this message translates to:
+  /// **'Accept entire right file…'**
+  String get gitUiAcceptEntireRightFile;
+
+  /// Shared Git interface: Previous conflict region
+  ///
+  /// In en, this message translates to:
+  /// **'Previous conflict region'**
+  String get gitUiPreviousConflictRegion;
+
+  /// Shared Git interface: Next conflict region
+  ///
+  /// In en, this message translates to:
+  /// **'Next conflict region'**
+  String get gitUiNextConflictRegion;
+
+  /// Shared Git interface: Manual resolution
+  ///
+  /// In en, this message translates to:
+  /// **'Manual resolution'**
+  String get gitUiManualResolution;
+
+  /// Shared Git interface: Region {arg0}/{arg1} · {arg2} reviewed
+  ///
+  /// In en, this message translates to:
+  /// **'Region {arg0}/{arg1} · {arg2} reviewed'**
+  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2);
+
+  /// Shared Git interface: Source alignment exceeded the text comparison limit; source panes remain available for manual review.
+  ///
+  /// In en, this message translates to:
+  /// **'Source alignment exceeded the text comparison limit; source panes remain available for manual review.'**
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain;
+
+  /// Shared Git interface: Accept left region
+  ///
+  /// In en, this message translates to:
+  /// **'Accept left region'**
+  String get gitUiAcceptLeftRegion;
+
+  /// Shared Git interface: Accept right region
+  ///
+  /// In en, this message translates to:
+  /// **'Accept right region'**
+  String get gitUiAcceptRightRegion;
+
+  /// Shared Git interface: Keep manual result for region
+  ///
+  /// In en, this message translates to:
+  /// **'Keep manual result for region'**
+  String get gitUiKeepManualResultForRegion;
+
+  /// Shared Git interface: Apply Git’s non-conflicting changes?
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Git’s non-conflicting changes?'**
+  String get gitUiApplyGitSNonConflictingChanges;
+
+  /// Shared Git interface: Replace the current result draft with Git’s merge preview. This discards unsaved manual result edits; the working file is unchanged until Save.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace the current result draft with Git’s merge preview. This discards unsaved manual result edits; the working file is unchanged until Save.'**
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview;
+
+  /// Shared Git interface: Use merge preview
+  ///
+  /// In en, this message translates to:
+  /// **'Use merge preview'**
+  String get gitUiUseMergePreview;
+
+  /// Shared Git interface: Apply non-conflicting changes…
+  ///
+  /// In en, this message translates to:
+  /// **'Apply non-conflicting changes…'**
+  String get gitUiApplyNonConflictingChanges;
+
+  /// Shared Git interface: Left source
+  ///
+  /// In en, this message translates to:
+  /// **'Left source'**
+  String get gitUiLeftSource;
+
+  /// Shared Git interface: Result
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get gitUiResult;
+
+  /// Shared Git interface: Right source
+  ///
+  /// In en, this message translates to:
+  /// **'Right source'**
+  String get gitUiRightSource;
+
+  /// Shared Git interface: Stage 2
+  ///
+  /// In en, this message translates to:
+  /// **'Stage 2'**
+  String get gitUiStage2;
+
+  /// Shared Git interface: Stage 3
+  ///
+  /// In en, this message translates to:
+  /// **'Stage 3'**
+  String get gitUiStage3;
+
+  /// Shared Git interface: Conflict versions are unavailable. Refresh to review their current state.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflict versions are unavailable. Refresh to review their current state.'**
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState;
+
+  /// Shared Git interface: Result saved to disk. The index still determines whether this file is resolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Result saved to disk. The index still determines whether this file is resolved.'**
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis;
+
+  /// Shared Git interface: Save result draft
+  ///
+  /// In en, this message translates to:
+  /// **'Save result draft'**
+  String get gitUiSaveResultDraft;
+
+  /// Shared Git interface: Apply result and stage resolution
+  ///
+  /// In en, this message translates to:
+  /// **'Apply result and stage resolution'**
+  String get gitUiApplyResultAndStageResolution;
+
+  /// Shared Git interface: Result · editable UTF-8 working content
+  ///
+  /// In en, this message translates to:
+  /// **'Result · editable UTF-8 working content'**
+  String get gitUiResultEditableUTF8WorkingContent;
+
+  /// Shared Git interface: Editable conflict result
+  ///
+  /// In en, this message translates to:
+  /// **'Editable conflict result'**
+  String get gitUiEditableConflictResult;
+
+  /// Shared Git interface: Left: {arg0} · {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Left: {arg0} · {arg1}\nRight: {arg2} · {arg3}'**
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
+
+  /// Shared Git interface: Choose content, deletion, or a submodule commit explicitly. No binary data is decoded as editable text.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose content, deletion, or a submodule commit explicitly. No binary data is decoded as editable text.'**
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary;
+
+  /// Shared Git interface: Use entire left content…
+  ///
+  /// In en, this message translates to:
+  /// **'Use entire left content…'**
+  String get gitUiUseEntireLeftContent;
+
+  /// Shared Git interface: Use entire right content…
+  ///
+  /// In en, this message translates to:
+  /// **'Use entire right content…'**
+  String get gitUiUseEntireRightContent;
+
+  /// Shared Git interface: Delete this path…
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this path…'**
+  String get gitUiDeleteThisPath;
+
+  /// Shared Git interface: Resolved submodule commit
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved submodule commit'**
+  String get gitUiResolvedSubmoduleCommit;
+
+  /// Shared Git interface: Stage this exact gitlink in the parent. This does not check out or commit the submodule.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage this exact gitlink in the parent. This does not check out or commit the submodule.'**
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot;
+
+  /// Shared Git interface: Set resolved gitlink…
+  ///
+  /// In en, this message translates to:
+  /// **'Set resolved gitlink…'**
+  String get gitUiSetResolvedGitlink;
+
+  /// Shared Git interface: Base → stage {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Base → stage {arg0}'**
+  String gitUiBaseStageArg0(String arg0);
+
+  /// Shared Git interface: The result was edited. Keep the manual result or select another unchanged region.
+  ///
+  /// In en, this message translates to:
+  /// **'The result was edited. Keep the manual result or select another unchanged region.'**
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect;
+
+  /// Shared Git interface: Apply {arg0} resolution?
+  ///
+  /// In en, this message translates to:
+  /// **'Apply {arg0} resolution?'**
+  String gitUiApplyArg0Resolution(String arg0);
+
+  /// Shared Git interface: Stage the chosen gitlink commit in the parent. The submodule checkout and its files are not replaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage the chosen gitlink commit in the parent. The submodule checkout and its files are not replaced.'**
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule;
+
+  /// Shared Git interface: Replaces the entire working path {arg0} and stages the decision. Current working content and any unsaved result draft will be discarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces the entire working path {arg0} and stages the decision. Current working content and any unsaved result draft will be discarded.'**
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0);
+
+  /// Shared Git interface: Apply entire file decision
+  ///
+  /// In en, this message translates to:
+  /// **'Apply entire file decision'**
+  String get gitUiApplyEntireFileDecision;
+
+  /// Shared Git interface: Stage this conflict resolution?
+  ///
+  /// In en, this message translates to:
+  /// **'Stage this conflict resolution?'**
+  String get gitUiStageThisConflictResolution;
+
+  /// Shared Git interface: Use the entire edited Result as {arg0}. Git records the path resolved when it is staged. Review all intended content first.{arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Use the entire edited Result as {arg0}. Git records the path resolved when it is staged. Review all intended content first.{arg1}'**
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Apply and stage
+  ///
+  /// In en, this message translates to:
+  /// **'Apply and stage'**
+  String get gitUiApplyAndStage;
+
+  /// Shared Git interface: Review result text format changes
+  ///
+  /// In en, this message translates to:
+  /// **'Review result text format changes'**
+  String get gitUiReviewResultTextFormatChanges;
+
+  /// Shared Git interface: Save reviewed result
+  ///
+  /// In en, this message translates to:
+  /// **'Save reviewed result'**
+  String get gitUiSaveReviewedResult;
+
+  /// Shared Git interface: Native Git table accessibility is unavailable. Retry after reconnecting the application.
+  ///
+  /// In en, this message translates to:
+  /// **'Native Git table accessibility is unavailable. Retry after reconnecting the application.'**
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe;
+
+  /// Shared Git interface: Sans
+  ///
+  /// In en, this message translates to:
+  /// **'Sans'**
+  String get gitUiSans;
+
+  /// Shared Git interface: Select
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get gitUiSelect;
+
+  /// Shared Git interface: Context menu
+  ///
+  /// In en, this message translates to:
+  /// **'Context menu'**
+  String get gitUiContextMenu;
+
+  /// Shared Git interface: Copy text
+  ///
+  /// In en, this message translates to:
+  /// **'Copy text'**
+  String get gitUiCopyText;
+
+  /// Shared Git interface: Loading row
+  ///
+  /// In en, this message translates to:
+  /// **'Loading row'**
+  String get gitUiLoadingRow;
+
+  /// Shared Git interface: Retry
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get gitUiRetry;
+
+  /// Shared Git interface: Git message
+  ///
+  /// In en, this message translates to:
+  /// **'Git message'**
+  String get gitUiGitMessage;
+
+  /// Shared Git interface: Cancel prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel prompt'**
+  String get gitUiCancelPrompt;
+
+  /// Shared Git interface: Use message and continue
+  ///
+  /// In en, this message translates to:
+  /// **'Use message and continue'**
+  String get gitUiUseMessageAndContinue;
+
+  /// Shared Git interface: Respond privately
+  ///
+  /// In en, this message translates to:
+  /// **'Respond privately'**
+  String get gitUiRespondPrivately;
+
+  /// Shared Git interface: View preferences could not be saved: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'View preferences could not be saved: {arg0}'**
+  String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0);
+
+  /// Shared Git interface: Commit draft storage: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Commit draft storage: {arg0}'**
+  String gitUiCommitDraftStorageArg0(String arg0);
+
+  /// Shared Git interface: View preferences could not be read: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'View preferences could not be read: {arg0}'**
+  String gitUiViewPreferencesCouldNotBeReadArg0(String arg0);
+
+  /// Shared Git interface: Commit draft was retained in memory but could not be saved: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Commit draft was retained in memory but could not be saved: {arg0}'**
+  String gitUiCommitDraftWasRetainedInMemoryButCouldNotBe(String arg0);
+
+  /// Shared Git interface: The reviewed repository is read-only for this operation. History and content inspection remain available.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewed repository is read-only for this operation. History and content inspection remain available.'**
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory;
+
+  /// Shared Git interface: Git returned {arg0}. The application could not refresh its documents: {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Git returned {arg0}. The application could not refresh its documents: {arg1}'**
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Select commit in Log…
+  ///
+  /// In en, this message translates to:
+  /// **'Select commit in Log…'**
+  String get gitUiSelectCommitInLog;
+
+  /// Shared Git interface: Current branch
+  ///
+  /// In en, this message translates to:
+  /// **'Current branch'**
+  String get gitUiCurrentBranch;
+
+  /// Shared Git interface: No matching branches or tags. Select a commit in Log.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching branches or tags. Select a commit in Log.'**
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog;
+
+  /// Shared Git interface: Branches
+  ///
+  /// In en, this message translates to:
+  /// **'Branches'**
+  String get gitUiBranches;
+
+  /// Shared Git interface: Push commits
+  ///
+  /// In en, this message translates to:
+  /// **'Push commits'**
+  String get gitUiPushCommits;
+
+  /// Shared Git interface: Pull into {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Pull into {arg0}'**
+  String gitUiPullIntoArg0(String arg0);
+
+  /// Shared Git interface: Resolve {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve {arg0}'**
+  String gitUiResolveArg0(String arg0);
+
+  /// Shared Git interface: Current operation
+  ///
+  /// In en, this message translates to:
+  /// **'Current operation'**
+  String get gitUiCurrentOperation;
+
+  /// Shared Git interface: Rebase commits
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase commits'**
+  String get gitUiRebaseCommits;
+
+  /// Shared Git interface: Fetch…
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch…'**
+  String get gitUiFetch2;
+
+  /// Shared Git interface: Pull…
+  ///
+  /// In en, this message translates to:
+  /// **'Pull…'**
+  String get gitUiPull;
+
+  /// Shared Git interface: Push…
+  ///
+  /// In en, this message translates to:
+  /// **'Push…'**
+  String get gitUiPush2;
+
+  /// Shared Git interface: Branches…
+  ///
+  /// In en, this message translates to:
+  /// **'Branches…'**
+  String get gitUiBranches2;
+
+  /// Shared Git interface: Manage remotes…
+  ///
+  /// In en, this message translates to:
+  /// **'Manage remotes…'**
+  String get gitUiManageRemotes;
+
+  /// Shared Git interface: Merge into {arg0}…
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into {arg0}…'**
+  String gitUiMergeIntoArg0(String arg0);
+
+  /// Shared Git interface: Rebase…
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase…'**
+  String get gitUiRebase2;
+
+  /// Shared Git interface: Conflicts and current operation…
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts and current operation…'**
+  String get gitUiConflictsAndCurrentOperation;
+
+  /// Shared Git interface: Stashes…
+  ///
+  /// In en, this message translates to:
+  /// **'Stashes…'**
+  String get gitUiStashes2;
+
+  /// Shared Git interface: Worktrees…
+  ///
+  /// In en, this message translates to:
+  /// **'Worktrees…'**
+  String get gitUiWorktrees;
+
+  /// Shared Git interface: Submodules…
+  ///
+  /// In en, this message translates to:
+  /// **'Submodules…'**
+  String get gitUiSubmodules;
+
+  /// Shared Git interface: Reflog and recovery…
+  ///
+  /// In en, this message translates to:
+  /// **'Reflog and recovery…'**
+  String get gitUiReflogAndRecovery;
+
+  /// Shared Git interface: Clone repository…
+  ///
+  /// In en, this message translates to:
+  /// **'Clone repository…'**
+  String get gitUiCloneRepository;
+
+  /// Shared Git interface: Revoke repository trust
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke repository trust'**
+  String get gitUiRevokeRepositoryTrust;
+
+  /// Shared Git interface: Waiting for repository status
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for repository status'**
+  String get gitUiWaitingForRepositoryStatus;
+
+  /// Shared Git interface: Repository status unavailable; refresh
+  ///
+  /// In en, this message translates to:
+  /// **'Repository status unavailable; refresh'**
+  String get gitUiRepositoryStatusUnavailableRefresh;
+
+  /// Shared Git interface: Manage remotes
+  ///
+  /// In en, this message translates to:
+  /// **'Manage remotes'**
+  String get gitUiManageRemotes2;
+
+  /// Shared Git interface: Merge into {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into {arg0}'**
+  String gitUiMergeIntoArg02(String arg0);
+
+  /// Shared Git interface: Worktrees
+  ///
+  /// In en, this message translates to:
+  /// **'Worktrees'**
+  String get gitUiWorktrees2;
+
+  /// Shared Git interface: Submodules
+  ///
+  /// In en, this message translates to:
+  /// **'Submodules'**
+  String get gitUiSubmodules2;
+
+  /// Shared Git interface: Reflog and recovery
+  ///
+  /// In en, this message translates to:
+  /// **'Reflog and recovery'**
+  String get gitUiReflogAndRecovery2;
+
+  /// Shared Git interface: Clone repository · {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Clone repository · {arg0}'**
+  String gitUiCloneRepositoryArg0(String arg0);
+
+  /// Shared Git interface: Apply
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get gitUiApply;
+
+  /// Shared Git interface: Resize Git panes
+  ///
+  /// In en, this message translates to:
+  /// **'Resize Git panes'**
+  String get gitUiResizeGitPanes;
+
+  /// Shared Git interface: {arg0} percent
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} percent'**
+  String gitUiArg0Percent(String arg0);
+
+  /// Shared Git interface: Exit status: {status}
+  ///
+  /// In en, this message translates to:
+  /// **'Exit status: {status}'**
+  String gitUiExitStatusStatus(String status);
+
+  /// Shared Git interface: Repository changed. Refresh and review before trying again.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository changed. Refresh and review before trying again.'**
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain;
+
+  /// Shared Git interface: Another operation holds the repository or index lock. Wait, then refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Another operation holds the repository or index lock. Wait, then refresh.'**
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen;
+
+  /// Shared Git interface: Repository trust is required for this operation.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository trust is required for this operation.'**
+  String get gitUiRepositoryTrustIsRequiredForThisOperation;
+
+  /// Shared Git interface: The Git service disconnected. Reconnect and reconcile the repository.
+  ///
+  /// In en, this message translates to:
+  /// **'The Git service disconnected. Reconnect and reconcile the repository.'**
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository;
+
+  /// Shared Git interface: The installed Git executable cannot support this operation. Review its runtime requirements below.
+  ///
+  /// In en, this message translates to:
+  /// **'The installed Git executable cannot support this operation. Review its runtime requirements below.'**
+  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts;
+
+  /// Shared Git interface: This repository is read-only for the requested operation. Review and history remain available.
+  ///
+  /// In en, this message translates to:
+  /// **'This repository is read-only for the requested operation. Review and history remain available.'**
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview;
+
+  /// Shared Git interface: The operation needs reconciliation. Review the resulting repository or remote state before repeating it.
+  ///
+  /// In en, this message translates to:
+  /// **'The operation needs reconciliation. Review the resulting repository or remote state before repeating it.'**
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote;
+
+  /// Shared Git interface: Git authentication failed. Review the credential helper or unlock the configured keyring.
+  ///
+  /// In en, this message translates to:
+  /// **'Git authentication failed. Review the credential helper or unlock the configured keyring.'**
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe;
+
+  /// Shared Git interface: SSH host verification failed. Review the host identity through your configured SSH tools.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH host verification failed. Review the host identity through your configured SSH tools.'**
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour;
+
+  /// Shared Git interface: Commit signing failed or was cancelled. Review the signing key, agent and configured signing tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit signing failed or was cancelled. Review the signing key, agent and configured signing tool.'**
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey;
+
+  /// Shared Git interface: Set a repository author name and email, then return to the preserved message draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a repository author name and email, then return to the preserved message draft.'**
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo;
+
+  /// Shared Git interface: Git rejected the reviewed update. Refresh and review the actual destination before trying again.
+  ///
+  /// In en, this message translates to:
+  /// **'Git rejected the reviewed update. Refresh and review the actual destination before trying again.'**
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual;
+
+  /// Shared Git interface: Working or staged changes prevent this operation. Review, commit or explicitly stash them.
+  ///
+  /// In en, this message translates to:
+  /// **'Working or staged changes prevent this operation. Review, commit or explicitly stash them.'**
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr;
+
+  /// Shared Git interface: A required Git object is unavailable. Review shallow or partial-repository boundaries and fetch explicitly if needed.
+  ///
+  /// In en, this message translates to:
+  /// **'A required Git object is unavailable. Review shallow or partial-repository boundaries and fetch explicitly if needed.'**
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial;
+
+  /// Shared Git interface: Git operation failed: {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Git operation failed: {arg0}'**
+  String gitUiGitOperationFailedArg0(String arg0);
+
+  /// Shared Git interface: Diagnostics
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get gitUiDiagnostics;
+
+  /// Shared Git interface: Authorize Git inspection…
+  ///
+  /// In en, this message translates to:
+  /// **'Authorize Git inspection…'**
+  String get gitUiAuthorizeGitInspection;
+
+  /// Shared Git interface: Copy diagnostics
+  ///
+  /// In en, this message translates to:
+  /// **'Copy diagnostics'**
+  String get gitUiCopyDiagnostics;
+
+  /// Shared Git interface: Actions
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get gitUiActions;
+
+  /// Shared Git interface: Branch at {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Branch at {arg0}'**
+  String gitUiBranchAtArg0(String arg0);
+
+  /// Shared Git interface: Creates a local branch without checking it out.
+  ///
+  /// In en, this message translates to:
+  /// **'Creates a local branch without checking it out.'**
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut;
+
+  /// Shared Git interface: Tag {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Tag {arg0}'**
+  String gitUiTagArg0(String arg0);
+
+  /// Shared Git interface: Read-only snapshot · {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only snapshot · {arg0}'**
+  String gitUiReadOnlySnapshotArg0(String arg0);
+
+  /// Shared Git interface: Cherry-pick commits
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry-pick commits'**
+  String get gitUiCherryPickCommits;
+
+  /// Shared Git interface: Revert commits
+  ///
+  /// In en, this message translates to:
+  /// **'Revert commits'**
+  String get gitUiRevertCommits;
+
+  /// Shared Git interface: Compare to full revision ID
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to full revision ID'**
+  String get gitUiCompareToFullRevisionID;
+
+  /// Shared Git interface: Tree comparison direction: {arg0} → the revision entered here.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree comparison direction: {arg0} → the revision entered here.'**
+  String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0);
+
+  /// Shared Git interface: Enter a full valid object ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a full valid object ID.'**
+  String get gitUiEnterAFullValidObjectID;
+
+  /// Shared Git interface: {arg0} → {arg1} · tree comparison
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} → {arg1} · tree comparison'**
+  String gitUiArg0Arg1TreeComparison(String arg0, String arg1);
+
+  /// Shared Git interface: Reset {arg0} to {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Reset {arg0} to {arg1}'**
+  String gitUiResetArg0ToArg1(String arg0, String arg1);
+
+  /// Shared Git interface: Moves HEAD/current branch. Reflog does not recover arbitrary untracked or unsaved content.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves HEAD/current branch. Reflog does not recover arbitrary untracked or unsaved content.'**
+  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked;
+
+  /// Shared Git interface: Move HEAD; keep index and working files.
+  ///
+  /// In en, this message translates to:
+  /// **'Move HEAD; keep index and working files.'**
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles;
+
+  /// Shared Git interface: Move HEAD and replace index; keep working files.
+  ///
+  /// In en, this message translates to:
+  /// **'Move HEAD and replace index; keep working files.'**
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles;
+
+  /// Shared Git interface: Replace HEAD, index and tracked working files; may overwrite obstructing untracked files.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace HEAD, index and tracked working files; may overwrite obstructing untracked files.'**
+  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing;
+
+  /// Shared Git interface: Replace HEAD/index and eligible files; refuse if local changes would be lost.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace HEAD/index and eligible files; refuse if local changes would be lost.'**
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges;
+
+  /// Shared Git interface: Reset with {arg0}?
+  ///
+  /// In en, this message translates to:
+  /// **'Reset with {arg0}?'**
+  String gitUiResetWithArg0(String arg0);
+
+  /// Shared Git interface: {arg0} → {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} → {arg1}\nReview the selected mode’s effects before applying.'**
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  );
+
+  /// Shared Git interface: Reset {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Reset {arg0}'**
+  String gitUiResetArg0(String arg0);
+
+  /// Shared Git interface: Target {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Target {arg0}'**
+  String gitUiTargetArg0(String arg0);
+
+  /// Shared Git interface: Tag name
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get gitUiTagName;
+
+  /// Shared Git interface: Annotated tag
+  ///
+  /// In en, this message translates to:
+  /// **'Annotated tag'**
+  String get gitUiAnnotatedTag;
+
+  /// Shared Git interface: Cryptographic signing
+  ///
+  /// In en, this message translates to:
+  /// **'Cryptographic signing'**
+  String get gitUiCryptographicSigning;
+
+  /// Shared Git interface: Configured policy
+  ///
+  /// In en, this message translates to:
+  /// **'Configured policy'**
+  String get gitUiConfiguredPolicy;
+
+  /// Shared Git interface: Sign this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Sign this tag'**
+  String get gitUiSignThisTag;
+
+  /// Shared Git interface: Do not sign
+  ///
+  /// In en, this message translates to:
+  /// **'Do not sign'**
+  String get gitUiDoNotSign;
+
+  /// Shared Git interface: Tag message
+  ///
+  /// In en, this message translates to:
+  /// **'Tag message'**
+  String get gitUiTagMessage;
+
+  /// Shared Git interface: Creates the tag locally. Publish selected tags explicitly in Push review.
+  ///
+  /// In en, this message translates to:
+  /// **'Creates the tag locally. Publish selected tags explicitly in Push review.'**
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush;
+
+  /// Shared Git interface: Complete trees: {arg0} → {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Complete trees: {arg0} → {arg1}'**
+  String gitUiCompleteTreesArg0Arg1(String arg0, String arg1);
+
+  /// Shared Git interface: Next changed-file page
+  ///
+  /// In en, this message translates to:
+  /// **'Next changed-file page'**
+  String get gitUiNextChangedFilePage;
+
+  /// Shared Git interface: Read-only repository snapshot. Opening a file never checks out this revision.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only repository snapshot. Opening a file never checks out this revision.'**
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut;
+
+  /// Shared Git interface: Open read-only version
+  ///
+  /// In en, this message translates to:
+  /// **'Open read-only version'**
+  String get gitUiOpenReadOnlyVersion;
+
+  /// Shared Git interface: Restore this path… · Waiting for repository status
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this path… · Waiting for repository status'**
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus;
+
+  /// Shared Git interface: Restore this path…
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this path…'**
+  String get gitUiRestoreThisPath;
+
+  /// Shared Git interface: History · {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'History · {arg0}'**
+  String gitUiHistoryArg0(String arg0);
+
+  /// Shared Git interface: Restore {arg0}?
+  ///
+  /// In en, this message translates to:
+  /// **'Restore {arg0}?'**
+  String gitUiRestoreArg0(String arg0);
+
+  /// Shared Git interface: Replace this working path with revision {arg0}. Existing staged content is retained.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace this working path with revision {arg0}. Existing staged content is retained.'**
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  );
+
+  /// Shared Git interface: Restore working file
+  ///
+  /// In en, this message translates to:
+  /// **'Restore working file'**
+  String get gitUiRestoreWorkingFile;
+
+  /// Shared Git interface: File history follows renames · {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'File history follows renames · {arg0}'**
+  String gitUiFileHistoryFollowsRenamesArg0(String arg0);
+
+  /// Shared Git interface: Blame · committed content
+  ///
+  /// In en, this message translates to:
+  /// **'Blame · committed content'**
+  String get gitUiBlameCommittedContent;
+
+  /// Shared Git interface: Blame…
+  ///
+  /// In en, this message translates to:
+  /// **'Blame…'**
+  String get gitUiBlame;
+
+  /// Shared Git interface: {arg0} → Working Tree
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0} → Working Tree'**
+  String gitUiArg0WorkingTree(String arg0);
+
+  /// Shared Git interface: Open read-only historical file
+  ///
+  /// In en, this message translates to:
+  /// **'Open read-only historical file'**
+  String get gitUiOpenReadOnlyHistoricalFile;
+
+  /// Shared Git interface: Compare to current file
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to current file'**
+  String get gitUiCompareToCurrentFile;
+
+  /// Shared Git interface: Compare to parent…
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to parent…'**
+  String get gitUiCompareToParent;
+
+  /// Shared Git interface: Committed {arg0} · unsaved editor content is not part of these annotations
+  ///
+  /// In en, this message translates to:
+  /// **'Committed {arg0} · unsaved editor content is not part of these annotations'**
+  String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0);
+
+  /// Shared Git interface: History from {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'History from {arg0}'**
+  String gitUiHistoryFromArg0(String arg0);
+
+  /// Shared Git interface:  · boundary
+  ///
+  /// In en, this message translates to:
+  /// **' · boundary'**
+  String get gitUiBoundary;
+
+  /// Shared Git interface: {arg0}  {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'{arg0}  {arg1}\nOriginal line {arg2}{arg3}'**
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
+
+  /// Shared Git interface: Previous lines
+  ///
+  /// In en, this message translates to:
+  /// **'Previous lines'**
+  String get gitUiPreviousLines;
+
+  /// Shared Git interface: Next lines
+  ///
+  /// In en, this message translates to:
+  /// **'Next lines'**
+  String get gitUiNextLines;
+
+  /// Shared Git interface: Explicit application order · destination {arg0}
+  ///
+  /// In en, this message translates to:
+  /// **'Explicit application order · destination {arg0}'**
+  String gitUiExplicitApplicationOrderDestinationArg0(String arg0);
+
+  /// Shared Git interface: Add full commit object ID
+  ///
+  /// In en, this message translates to:
+  /// **'Add full commit object ID'**
+  String get gitUiAddFullCommitObjectID;
+
+  /// Shared Git interface: Add reviewed commit…
+  ///
+  /// In en, this message translates to:
+  /// **'Add reviewed commit…'**
+  String get gitUiAddReviewedCommit;
+
+  /// Shared Git interface: Move earlier
+  ///
+  /// In en, this message translates to:
+  /// **'Move earlier'**
+  String get gitUiMoveEarlier;
+
+  /// Shared Git interface: Move later
+  ///
+  /// In en, this message translates to:
+  /// **'Move later'**
+  String get gitUiMoveLater;
+
+  /// Shared Git interface: Remove from reviewed sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from reviewed sequence'**
+  String get gitUiRemoveFromReviewedSequence;
+
+  /// Shared Git interface: Apply changes without creating commits
+  ///
+  /// In en, this message translates to:
+  /// **'Apply changes without creating commits'**
+  String get gitUiApplyChangesWithoutCreatingCommits;
+
+  /// Shared Git interface: Use this explicit mainline parent for merge commits
+  ///
+  /// In en, this message translates to:
+  /// **'Use this explicit mainline parent for merge commits'**
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits;
+
+  /// Shared Git interface: Empty or already-applied commits may stop Git for an explicit skip or continuation decision.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty or already-applied commits may stop Git for an explicit skip or continuation decision.'**
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn;
+
+  /// Shared Git interface: Revert in reviewed order
+  ///
+  /// In en, this message translates to:
+  /// **'Revert in reviewed order'**
+  String get gitUiRevertInReviewedOrder;
+
+  /// Shared Git interface: Cherry-pick in reviewed order
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry-pick in reviewed order'**
+  String get gitUiCherryPickInReviewedOrder;
+
+  /// Shared Git interface: Return to Files
+  ///
+  /// In en, this message translates to:
+  /// **'Return to Files'**
+  String get gitUiReturnToFiles;
+
+  /// Shared Git interface: Git
+  ///
+  /// In en, this message translates to:
+  /// **'Git'**
+  String get gitUiGit;
+
+  /// Shared Git interface: Commit
+  ///
+  /// In en, this message translates to:
+  /// **'Commit'**
+  String get gitUiCommit;
+
+  /// Shared Git interface: Back to Commit
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Commit'**
+  String get gitUiBackToCommit;
+
+  /// Shared Git interface: Select a change to review
+  ///
+  /// In en, this message translates to:
+  /// **'Select a change to review'**
+  String get gitUiSelectAChangeToReview;
+
+  /// Shared Git interface: Loading branch…
+  ///
+  /// In en, this message translates to:
+  /// **'Loading branch…'**
+  String get gitUiLoadingBranch;
+
+  /// Shared Git interface: Branch unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Branch unavailable'**
+  String get gitUiBranchUnavailable;
+
+  /// Shared Git interface: Unborn HEAD
+  ///
+  /// In en, this message translates to:
+  /// **'Unborn HEAD'**
+  String get gitUiUnbornHEAD;
+
+  /// Shared Git interface: Detached HEAD · {revision}
+  ///
+  /// In en, this message translates to:
+  /// **'Detached HEAD · {revision}'**
+  String gitUiDetachedHEADRevision(String revision);
+
+  /// Shared Git interface: Continue
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get gitUiContinueAction;
+
+  /// Shared Git interface: Pick
+  ///
+  /// In en, this message translates to:
+  /// **'Pick'**
+  String get gitUiPick;
+
+  /// Shared Git interface: Reword
+  ///
+  /// In en, this message translates to:
+  /// **'Reword'**
+  String get gitUiReword;
+
+  /// Shared Git interface: Edit
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get gitUiEdit;
+
+  /// Shared Git interface: Squash
+  ///
+  /// In en, this message translates to:
+  /// **'Squash'**
+  String get gitUiSquash;
+
+  /// Shared Git interface: Fixup
+  ///
+  /// In en, this message translates to:
+  /// **'Fixup'**
+  String get gitUiFixup;
+
+  /// Shared Git interface: Drop
+  ///
+  /// In en, this message translates to:
+  /// **'Drop'**
+  String get gitUiDrop;
+
+  /// Shared Git interface: Abort
+  ///
+  /// In en, this message translates to:
+  /// **'Abort'**
+  String get gitUiAbort;
+
+  /// Shared Git interface: Skip
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get gitUiSkip;
+
+  /// Shared Git interface: Quit operation
+  ///
+  /// In en, this message translates to:
+  /// **'Quit operation'**
+  String get gitUiQuit;
+
+  /// Shared Git interface: Soft
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get gitUiSoft;
+
+  /// Shared Git interface: Mixed
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed'**
+  String get gitUiMixed;
+
+  /// Shared Git interface: Hard
+  ///
+  /// In en, this message translates to:
+  /// **'Hard'**
+  String get gitUiHard;
+
+  /// Shared Git interface: Keep
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get gitUiKeep;
+
+  /// Shared Git interface: Create
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get gitUiCreate;
+
+  /// Shared Git interface: Apply stash
+  ///
+  /// In en, this message translates to:
+  /// **'Apply stash'**
+  String get gitUiApplyStash;
+
+  /// Shared Git interface: Pop stash
+  ///
+  /// In en, this message translates to:
+  /// **'Pop stash'**
+  String get gitUiPopStash;
+
+  /// Shared Git interface: Drop stash
+  ///
+  /// In en, this message translates to:
+  /// **'Drop stash'**
+  String get gitUiDropStashAction;
+
+  /// Shared Git interface: Edited result
+  ///
+  /// In en, this message translates to:
+  /// **'Edited result'**
+  String get gitUiEditedResult;
+
+  /// Shared Git interface: Left content
+  ///
+  /// In en, this message translates to:
+  /// **'Left content'**
+  String get gitUiLeftContent;
+
+  /// Shared Git interface: Right content
+  ///
+  /// In en, this message translates to:
+  /// **'Right content'**
+  String get gitUiRightContent;
+
+  /// Shared Git interface: Delete path
+  ///
+  /// In en, this message translates to:
+  /// **'Delete path'**
+  String get gitUiDeletePath;
+
+  /// Shared Git interface: Submodule commit
+  ///
+  /// In en, this message translates to:
+  /// **'Submodule commit'**
+  String get gitUiSubmoduleCommit;
+
+  /// Shared Git interface: Available content
+  ///
+  /// In en, this message translates to:
+  /// **'Available content'**
+  String get gitUiPresentContent;
+
+  /// Shared Git interface: Absent
+  ///
+  /// In en, this message translates to:
+  /// **'Absent'**
+  String get gitUiAbsentContent;
+
+  /// Shared Git interface: Binary content
+  ///
+  /// In en, this message translates to:
+  /// **'Binary content'**
+  String get gitUiBinaryContent;
+
+  /// Shared Git interface: Content exceeds the display limit
+  ///
+  /// In en, this message translates to:
+  /// **'Content exceeds the display limit'**
+  String get gitUiTooLargeContent;
+
+  /// Shared Git interface: Unavailable content
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable content'**
+  String get gitUiUnavailableContent;
+
+  /// Shared Git interface: Submodule pointer
+  ///
+  /// In en, this message translates to:
+  /// **'Submodule pointer'**
+  String get gitUiGitlinkContent;
+
+  /// Shared Git interface: Symbolic link
+  ///
+  /// In en, this message translates to:
+  /// **'Symbolic link'**
+  String get gitUiSymlinkContent;
+
+  /// Shared Git interface: No operation
+  ///
+  /// In en, this message translates to:
+  /// **'No operation'**
+  String get gitUiNoOperation;
+
+  /// Shared Git interface: Cherry-pick
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry-pick'**
+  String get gitUiCherryPickOperation;
+
+  /// Shared Git interface: Revert
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get gitUiRevertOperation;
+
+  /// Shared Git interface: Apply patches
+  ///
+  /// In en, this message translates to:
+  /// **'Apply patches'**
+  String get gitUiApplyMailboxOperation;
+
+  /// Shared Git interface: Squash merge
+  ///
+  /// In en, this message translates to:
+  /// **'Squash merge'**
+  String get gitUiSquashOperation;
+
+  /// Shared Git interface: Unmerged index
+  ///
+  /// In en, this message translates to:
+  /// **'Unmerged index'**
+  String get gitUiUnmergedOperation;
+
+  /// Shared Git interface: Waiting for your response
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your response'**
+  String get gitUiWaitingForPromptPhase;
+
+  /// Shared Git interface: Stopped for review
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped for review'**
+  String get gitUiStoppedPhase;
+
+  /// Shared Git interface: Completed
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get gitUiCompletedPhase;
+
+  /// Shared Git interface: Failed
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get gitUiFailedPhase;
+
+  /// Shared Git interface: Cancelled
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get gitUiCancelledPhase;
+
+  /// Shared Git interface: Outcome requires reconciliation
+  ///
+  /// In en, this message translates to:
+  /// **'Outcome requires reconciliation'**
+  String get gitUiUncertainPhase;
+
+  /// Shared Git interface: Conflict stage {stage}
+  ///
+  /// In en, this message translates to:
+  /// **'Conflict stage {stage}'**
+  String gitUiStageVersion(String stage);
+
+  /// Shared Git interface: Git merge preview
+  ///
+  /// In en, this message translates to:
+  /// **'Git merge preview'**
+  String get gitUiGitMergePreview;
+
+  /// Shared Git interface: Working Tree · Git normalized
+  ///
+  /// In en, this message translates to:
+  /// **'Working Tree · Git normalized'**
+  String get gitUiNormalizedWorking;
+
+  /// Shared Git interface: {value} percent
+  ///
+  /// In en, this message translates to:
+  /// **'{value} percent'**
+  String gitUiPercentValue(String value);
+
+  /// Shared Git interface: {action} {operation}?
+  ///
+  /// In en, this message translates to:
+  /// **'{action} {operation}?'**
+  String gitUiOperationActionQuestion(String action, String operation);
+
+  /// Shared Git interface: {action}…
+  ///
+  /// In en, this message translates to:
+  /// **'{action}…'**
+  String gitUiOperationActionEllipsis(String action);
+
+  /// Shared Git interface: {position}, {action}, {subject}
+  ///
+  /// In en, this message translates to:
+  /// **'{position}, {action}, {subject}'**
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  );
+
+  /// Shared Git interface: UTF-8 with byte-order mark (BOM)
+  ///
+  /// In en, this message translates to:
+  /// **'UTF-8 with byte-order mark (BOM)'**
+  String get gitUiUtf8Bom;
+
+  /// Shared Git interface: UTF-8 without byte-order mark (BOM)
+  ///
+  /// In en, this message translates to:
+  /// **'UTF-8 without byte-order mark (BOM)'**
+  String get gitUiUtf8NoBom;
+
+  /// Shared Git interface: This edit adds a UTF-8 byte-order mark (BOM) at the start of the file.
+  ///
+  /// In en, this message translates to:
+  /// **'This edit adds a UTF-8 byte-order mark (BOM) at the start of the file.'**
+  String get gitUiAddsBom;
+
+  /// Shared Git interface: This edit removes the UTF-8 byte-order mark (BOM) from the start of the file.
+  ///
+  /// In en, this message translates to:
+  /// **'This edit removes the UTF-8 byte-order mark (BOM) from the start of the file.'**
+  String get gitUiRemovesBom;
+
+  /// Shared Git interface: No line terminators
+  ///
+  /// In en, this message translates to:
+  /// **'No line terminators'**
+  String get gitUiNoLineTerminators;
+
+  /// Shared Git interface: {format} line endings
+  ///
+  /// In en, this message translates to:
+  /// **'{format} line endings'**
+  String gitUiLineEndings(String format);
+
+  /// Shared Git interface: Mixed line endings ({formats})
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed line endings ({formats})'**
+  String gitUiMixedLineEndings(String formats);
+
+  /// Shared Git interface: {format} · no final LF
+  ///
+  /// In en, this message translates to:
+  /// **'{format} · no final LF'**
+  String gitUiNoFinalLf(String format);
+
+  /// Shared Git interface: Line ending format changes from {before} to {after}. Clipboard text can use different line endings from the original file.
+  ///
+  /// In en, this message translates to:
+  /// **'Line ending format changes from {before} to {after}. Clipboard text can use different line endings from the original file.'**
+  String gitUiLineEndingChange(String before, String after);
+
+  /// Shared Git interface: Git operation failed. Review the diagnostics below.
+  ///
+  /// In en, this message translates to:
+  /// **'Git operation failed. Review the diagnostics below.'**
+  String get gitUiGitFailure;
+
+  /// Shared Git interface: abort
+  ///
+  /// In en, this message translates to:
+  /// **'abort'**
+  String get gitUiAbortInline;
+
+  /// Shared Git interface: skip
+  ///
+  /// In en, this message translates to:
+  /// **'skip'**
+  String get gitUiSkipInline;
+
+  /// Shared Git interface: quit
+  ///
+  /// In en, this message translates to:
+  /// **'quit'**
+  String get gitUiQuitInline;
+
+  /// Shared Git interface: merge
+  ///
+  /// In en, this message translates to:
+  /// **'merge'**
+  String get gitUiMergeInline;
+
+  /// Shared Git interface: rebase
+  ///
+  /// In en, this message translates to:
+  /// **'rebase'**
+  String get gitUiRebaseInline;
+
+  /// Shared Git interface: cherry-pick
+  ///
+  /// In en, this message translates to:
+  /// **'cherry-pick'**
+  String get gitUiCherryPickInline;
+
+  /// Shared Git interface: revert
+  ///
+  /// In en, this message translates to:
+  /// **'revert'**
+  String get gitUiRevertInline;
+
+  /// Shared Git interface: applyMailbox
+  ///
+  /// In en, this message translates to:
+  /// **'applyMailbox'**
+  String get gitUiApplyMailboxInline;
+
+  /// Shared Git interface: squash
+  ///
+  /// In en, this message translates to:
+  /// **'squash'**
+  String get gitUiSquashInline;
+
+  /// Shared Git interface: unmerged
+  ///
+  /// In en, this message translates to:
+  /// **'unmerged'**
+  String get gitUiUnmergedInline;
+
+  /// Application Git integration: Fetch
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch'**
+  String get gitHostFetch;
+
+  /// Application Git integration: Refresh Git status
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Git status'**
+  String get gitHostRefreshGitStatus;
+
+  /// Application Git integration: Commit staged
+  ///
+  /// In en, this message translates to:
+  /// **'Commit staged'**
+  String get gitHostCommitStaged;
+
+  /// Application Git integration: Git branches
+  ///
+  /// In en, this message translates to:
+  /// **'Git branches'**
+  String get gitHostGitBranches;
+
+  /// Application Git integration: Review push
+  ///
+  /// In en, this message translates to:
+  /// **'Review push'**
+  String get gitHostReviewPush;
+
+  /// Application Git integration: Git
+  ///
+  /// In en, this message translates to:
+  /// **'Git'**
+  String get gitHostGit;
+
+  /// Application Git integration: Git operations apply to this entire repository and may execute its configured hooks, filters, credential and signing tools.
+  ///
+  /// In en, this message translates to:
+  /// **'Git operations apply to this entire repository and may execute its configured hooks, filters, credential and signing tools.'**
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay;
+
+  /// Application Git integration: Content unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Content unavailable'**
+  String get gitHostContentUnavailable;
+
+  /// Application Git integration: Initialize repository
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize repository'**
+  String get gitHostInitializeRepository;
+
+  /// Application Git integration: Clone repository
+  ///
+  /// In en, this message translates to:
+  /// **'Clone repository'**
+  String get gitHostCloneRepository;
+
+  /// Application Git integration: Initialize here…
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize here…'**
+  String get gitHostInitializeHere;
+
+  /// Application Git integration: Clone repository…
+  ///
+  /// In en, this message translates to:
+  /// **'Clone repository…'**
+  String get gitHostCloneRepository2;
+
+  /// Application Git integration: Git Log
+  ///
+  /// In en, this message translates to:
+  /// **'Git Log'**
+  String get gitHostGitLog;
+
+  /// Shared Git interface: (absent)
+  ///
+  /// In en, this message translates to:
+  /// **'(absent)'**
+  String get gitUiAbsentPlaceholder;
+
+  /// Shared Git interface: unborn
+  ///
+  /// In en, this message translates to:
+  /// **'unborn'**
+  String get gitUiUnborn;
+
+  /// Shared Git interface: Rebased history · {revision}
+  ///
+  /// In en, this message translates to:
+  /// **'Rebased history · {revision}'**
+  String gitUiRebasedHistoryRevision(String revision);
+
+  /// Shared Git interface: Current history · {revision}
+  ///
+  /// In en, this message translates to:
+  /// **'Current history · {revision}'**
+  String gitUiCurrentHistoryRevision(String revision);
+
+  /// Shared Git interface: Replayed commit · {revision}
+  ///
+  /// In en, this message translates to:
+  /// **'Replayed commit · {revision}'**
+  String gitUiReplayedCommitRevision(String revision);
+
+  /// Shared Git interface: Incoming content · {revision}
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming content · {revision}'**
+  String gitUiIncomingContentRevision(String revision);
+
+  /// Shared Git interface: Content conflict
+  ///
+  /// In en, this message translates to:
+  /// **'Content conflict'**
+  String get gitUiContentConflict;
+
+  /// Shared Git interface: Submodule conflict
+  ///
+  /// In en, this message translates to:
+  /// **'Submodule conflict'**
+  String get gitUiSubmoduleConflict;
+
+  /// Shared Git interface: Symbolic-link conflict
+  ///
+  /// In en, this message translates to:
+  /// **'Symbolic-link conflict'**
+  String get gitUiSymlinkConflict;
+
+  /// Shared Git interface: Added on both sides
+  ///
+  /// In en, this message translates to:
+  /// **'Added on both sides'**
+  String get gitUiAddAddConflict;
+
+  /// Shared Git interface: Modified/deleted or renamed/deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Modified/deleted or renamed/deleted'**
+  String get gitUiModifyDeleteConflict;
+
+  /// Shared Git interface: {path} · {kind}
+  ///
+  /// In en, this message translates to:
+  /// **'{path} · {kind}'**
+  String gitUiConflictIdentity(String path, String kind);
 }
 
 class _AppLocalizationsDelegate
