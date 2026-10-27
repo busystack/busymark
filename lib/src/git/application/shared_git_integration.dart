@@ -32,7 +32,7 @@ typedef BusyMarkGitClientFactory =
 final sharedGitClientFactoryProvider = Provider<BusyMarkGitClientFactory>(
   (_) =>
       ({required authorize, prompts}) =>
-          shared.GitEngine(authorize: authorize, prompts: prompts),
+          shared.BackgroundGitClient(authorize: authorize, prompts: prompts),
 );
 final sharedGitDraftStoreProvider = Provider<shared.GitDraftStore>(
   (_) => _drafts,
@@ -242,7 +242,9 @@ class _BusyMarkGitWorkspaceScopeState
     _owned.clear();
     _sessions.clear();
     _discovery = null;
+    final retired = _client;
     _client = null;
+    if (retired is shared.BackgroundGitClient) unawaited(retired.close());
   }
 
   @override
