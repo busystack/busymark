@@ -8803,4 +8803,31 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'مراجعة الرسالة المحفوظة';
+
+  @override
+  String get gitUiSavedMessage => 'الرسالة المحفوظة';
+
+  @override
+  String get gitUiKeepThisMessage => 'الاحتفاظ بهذه الرسالة';
+
+  @override
+  String get gitUiUseSavedMessage => 'استخدام الرسالة المحفوظة';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'تغيرت هذه الرسالة في نافذة أخرى. راجع الرسالة المحفوظة قبل استبدالها.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'تجاهل رسائل الالتزام غير المحفوظة؟';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'الرسائل التي تعذر حفظها ما زالت في هذه النافذة. يترك تجاهلها النسخ المحفوظة دون تغيير.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'تجاهل الرسائل';
 }

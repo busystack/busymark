@@ -4531,5 +4531,13 @@
   "gitUiNewerConflictDraftRetained": "Det innsendte resultatet ble lagret. Det nyere resultatutkastet ditt er fortsatt ulagret.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Ingen filhistorikk er tilgjengelig for denne stien og revisjonen.",
 "gitUiReviewSavedIndexAndKeepDraft": "Se gjennom lagret indeks og behold utkastet",
-"gitUiIndexSourcesChangedSinceApply": "Den lagrede indeksen eller kildene har endret seg. Det nyere utkastet beholdes; se gjennom disse endringene separat før du bruker det."
+"gitUiIndexSourcesChangedSinceApply": "Den lagrede indeksen eller kildene har endret seg. Det nyere utkastet beholdes; se gjennom disse endringene separat før du bruker det.",
+  "gitUiReviewSavedMessage": "Se gjennom lagret melding",
+  "gitUiSavedMessage": "Lagret melding",
+  "gitUiKeepThisMessage": "Behold denne meldingen",
+  "gitUiUseSavedMessage": "Bruk lagret melding",
+  "gitUiCommitDraftChangedInAnotherWindow": "Denne meldingen ble endret i et annet vindu. Se gjennom den lagrede meldingen før du erstatter den.",
+  "gitUiDiscardUnsavedCommitMessages": "Forkaste ulagrede commit-meldinger?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Meldinger som ikke kunne lagres, er fortsatt i dette vinduet. Forkasting endrer ikke de lagrede versjonene.",
+  "gitUiDiscardCommitMessages": "Forkast meldinger"
 }

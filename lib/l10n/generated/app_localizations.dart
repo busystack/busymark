@@ -14922,6 +14922,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it.'**
   String get gitUiIndexSourcesChangedSinceApply;
+
+  /// Shared Git interface: Review saved message
+  ///
+  /// In en, this message translates to:
+  /// **'Review saved message'**
+  String get gitUiReviewSavedMessage;
+
+  /// Shared Git interface: Saved message
+  ///
+  /// In en, this message translates to:
+  /// **'Saved message'**
+  String get gitUiSavedMessage;
+
+  /// Shared Git interface: Keep this message
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this message'**
+  String get gitUiKeepThisMessage;
+
+  /// Shared Git interface: Use saved message
+  ///
+  /// In en, this message translates to:
+  /// **'Use saved message'**
+  String get gitUiUseSavedMessage;
+
+  /// Shared Git interface: This message changed in another window. Review the saved message before replacing it.
+  ///
+  /// In en, this message translates to:
+  /// **'This message changed in another window. Review the saved message before replacing it.'**
+  String get gitUiCommitDraftChangedInAnotherWindow;
+
+  /// Shared Git interface: Discard unsaved commit messages?
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved commit messages?'**
+  String get gitUiDiscardUnsavedCommitMessages;
+
+  /// Shared Git interface: Messages that could not be saved are still in this window. Discarding leaves the saved versions unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages that could not be saved are still in this window. Discarding leaves the saved versions unchanged.'**
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow;
+
+  /// Shared Git interface: Discard messages
+  ///
+  /// In en, this message translates to:
+  /// **'Discard messages'**
+  String get gitUiDiscardCommitMessages;
 }
 
 class _AppLocalizationsDelegate

@@ -8790,4 +8790,31 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Chỉ mục đã lưu hoặc các nguồn của nó đã thay đổi. Bản nháp mới hơn vẫn được giữ; hãy xem lại riêng các thay đổi này trước khi áp dụng.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Xem lại thông điệp đã lưu';
+
+  @override
+  String get gitUiSavedMessage => 'Thông điệp đã lưu';
+
+  @override
+  String get gitUiKeepThisMessage => 'Giữ thông điệp này';
+
+  @override
+  String get gitUiUseSavedMessage => 'Dùng thông điệp đã lưu';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Thông điệp này đã thay đổi trong cửa sổ khác. Hãy xem lại thông điệp đã lưu trước khi thay thế.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Bỏ các thông điệp commit chưa lưu?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Các thông điệp không lưu được vẫn còn trong cửa sổ này. Việc bỏ chúng không thay đổi các phiên bản đã lưu.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Bỏ các thông điệp';
 }

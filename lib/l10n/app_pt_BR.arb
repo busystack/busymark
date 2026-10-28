@@ -4531,5 +4531,13 @@
   "gitUiNewerConflictDraftRetained": "O resultado enviado foi salvo. Seu rascunho de resultado mais recente ainda não foi salvo.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Não há histórico de arquivos disponível para este caminho e revisão.",
 "gitUiReviewSavedIndexAndKeepDraft": "Revisar o índice salvo e manter o rascunho",
-"gitUiIndexSourcesChangedSinceApply": "O índice salvo ou suas origens foram alterados. O rascunho mais recente foi mantido; revise essas alterações separadamente antes de aplicá-lo."
+"gitUiIndexSourcesChangedSinceApply": "O índice salvo ou suas origens foram alterados. O rascunho mais recente foi mantido; revise essas alterações separadamente antes de aplicá-lo.",
+  "gitUiReviewSavedMessage": "Revisar mensagem salva",
+  "gitUiSavedMessage": "Mensagem salva",
+  "gitUiKeepThisMessage": "Manter esta mensagem",
+  "gitUiUseSavedMessage": "Usar mensagem salva",
+  "gitUiCommitDraftChangedInAnotherWindow": "Esta mensagem foi alterada em outra janela. Revise a mensagem salva antes de substituí-la.",
+  "gitUiDiscardUnsavedCommitMessages": "Descartar mensagens de commit não salvas?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "As mensagens que não puderam ser salvas continuam nesta janela. Descartá-las não altera as versões salvas.",
+  "gitUiDiscardCommitMessages": "Descartar mensagens"
 }

@@ -8884,4 +8884,31 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Сохранённый индекс или его источники изменились. Новый черновик сохранён; перед его применением проверьте эти изменения отдельно.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Просмотреть сохранённое сообщение';
+
+  @override
+  String get gitUiSavedMessage => 'Сохранённое сообщение';
+
+  @override
+  String get gitUiKeepThisMessage => 'Оставить это сообщение';
+
+  @override
+  String get gitUiUseSavedMessage => 'Использовать сохранённое сообщение';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Это сообщение изменено в другом окне. Просмотрите сохранённое сообщение перед заменой.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Отбросить несохранённые сообщения коммитов?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Сообщения, которые не удалось сохранить, остались в этом окне. Их удаление не изменит сохранённые версии.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Отбросить сообщения';
 }

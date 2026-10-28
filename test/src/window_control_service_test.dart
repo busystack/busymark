@@ -32,6 +32,60 @@ void main() {
       expect(native.closeCount, 0);
     },
   );
+  for (final action in <WindowCloseAction?>[
+    null,
+    WindowCloseAction.save,
+    WindowCloseAction.discard,
+  ]) {
+    for (final allowed in [true, false]) {
+      test(
+        'final guard follows $action metadata and permits close=$allowed',
+        () async {
+          final native = _FakeNativeWindowController();
+          final service = WindowControlService(nativeWindow: native);
+          addTearDown(service.dispose);
+          await service.initialize();
+          final entered = Completer<void>();
+          final release = Completer<bool>();
+          final order = <String>[];
+          Future<void> metadata() async {
+            await Future<void>.value();
+            order.add('metadata');
+          }
+
+          final closing = service.handleCloseRequest(
+            hasUnsavedChanges: action != null,
+            confirmCloseWithUnsavedChanges: true,
+            showCloseDialog: () async => action,
+            saveChanges: () async {
+              order.add('save');
+              return true;
+            },
+            beforeClose: metadata,
+            discardChanges: metadata,
+            finalCloseGuard: () {
+              order.add('guard');
+              entered.complete();
+              return release.future;
+            },
+          );
+          await entered.future.timeout(const Duration(seconds: 5));
+          expect(order, [
+            if (action == WindowCloseAction.save) 'save',
+            'metadata',
+            'guard',
+          ]);
+          expect(native.closeCount, 0);
+          expect(native.preventCloseValues, [true]);
+          release.complete(allowed);
+          await closing;
+          expect(native.closeCount, allowed ? 1 : 0);
+          expect(native.preventCloseValues.last, !allowed);
+        },
+      );
+    }
+  }
+
   test('initializes prevent-close interception', () async {
     final native = _FakeNativeWindowController();
     final service = WindowControlService(nativeWindow: native);

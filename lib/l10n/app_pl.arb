@@ -4557,5 +4557,13 @@
   "gitUiNewerConflictDraftRetained": "Przesłany wynik został zapisany. Nowsza wersja robocza wyniku nadal nie jest zapisana.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Brak historii pliku dla tej ścieżki i rewizji.",
 "gitUiReviewSavedIndexAndKeepDraft": "Przejrzyj zapisany indeks i zachowaj wersję roboczą",
-"gitUiIndexSourcesChangedSinceApply": "Zapisany indeks lub jego źródła uległy zmianie. Nowsza wersja robocza została zachowana; przed jej zastosowaniem przejrzyj te zmiany osobno."
+"gitUiIndexSourcesChangedSinceApply": "Zapisany indeks lub jego źródła uległy zmianie. Nowsza wersja robocza została zachowana; przed jej zastosowaniem przejrzyj te zmiany osobno.",
+  "gitUiReviewSavedMessage": "Przejrzyj zapisaną wiadomość",
+  "gitUiSavedMessage": "Zapisana wiadomość",
+  "gitUiKeepThisMessage": "Zachowaj tę wiadomość",
+  "gitUiUseSavedMessage": "Użyj zapisanej wiadomości",
+  "gitUiCommitDraftChangedInAnotherWindow": "Ta wiadomość została zmieniona w innym oknie. Przejrzyj zapisaną wiadomość przed jej zastąpieniem.",
+  "gitUiDiscardUnsavedCommitMessages": "Odrzucić niezapisane wiadomości commitów?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Wiadomości, których nie udało się zapisać, nadal są w tym oknie. Ich odrzucenie nie zmienia zapisanych wersji.",
+  "gitUiDiscardCommitMessages": "Odrzuć wiadomości"
 }

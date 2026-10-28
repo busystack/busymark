@@ -6061,5 +6061,13 @@
   "gitUiNewerConflictDraftRetained": "Het ingediende resultaat is opgeslagen. Uw nieuwere resultaatconcept is nog niet opgeslagen.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Er is geen bestandsgeschiedenis beschikbaar voor dit pad en deze revisie.",
 "gitUiReviewSavedIndexAndKeepDraft": "Opgeslagen index bekijken en concept behouden",
-"gitUiIndexSourcesChangedSinceApply": "De opgeslagen index of de bronnen zijn gewijzigd. Het nieuwere concept blijft behouden; bekijk deze wijzigingen afzonderlijk voordat u het toepast."
+"gitUiIndexSourcesChangedSinceApply": "De opgeslagen index of de bronnen zijn gewijzigd. Het nieuwere concept blijft behouden; bekijk deze wijzigingen afzonderlijk voordat u het toepast.",
+  "gitUiReviewSavedMessage": "Opgeslagen bericht bekijken",
+  "gitUiSavedMessage": "Opgeslagen bericht",
+  "gitUiKeepThisMessage": "Dit bericht behouden",
+  "gitUiUseSavedMessage": "Opgeslagen bericht gebruiken",
+  "gitUiCommitDraftChangedInAnotherWindow": "Dit bericht is in een ander venster gewijzigd. Bekijk het opgeslagen bericht voordat u het vervangt.",
+  "gitUiDiscardUnsavedCommitMessages": "Niet-opgeslagen commitberichten verwerpen?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Berichten die niet konden worden opgeslagen, staan nog in dit venster. Verwerpen verandert de opgeslagen versies niet.",
+  "gitUiDiscardCommitMessages": "Berichten verwerpen"
 }

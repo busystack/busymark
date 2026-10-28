@@ -4531,5 +4531,13 @@
   "gitUiNewerConflictDraftRetained": "Il risultato inviato è stato salvato. La bozza del risultato più recente non è ancora salvata.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Nessuna cronologia file disponibile per questo percorso e questa revisione.",
 "gitUiReviewSavedIndexAndKeepDraft": "Rivedi l’indice salvato e conserva la bozza",
-"gitUiIndexSourcesChangedSinceApply": "L’indice salvato o le sue origini sono cambiati. La bozza più recente è conservata; esamina queste modifiche separatamente prima di applicarla."
+"gitUiIndexSourcesChangedSinceApply": "L’indice salvato o le sue origini sono cambiati. La bozza più recente è conservata; esamina queste modifiche separatamente prima di applicarla.",
+  "gitUiReviewSavedMessage": "Esamina il messaggio salvato",
+  "gitUiSavedMessage": "Messaggio salvato",
+  "gitUiKeepThisMessage": "Mantieni questo messaggio",
+  "gitUiUseSavedMessage": "Usa il messaggio salvato",
+  "gitUiCommitDraftChangedInAnotherWindow": "Questo messaggio è stato modificato in un’altra finestra. Esamina il messaggio salvato prima di sostituirlo.",
+  "gitUiDiscardUnsavedCommitMessages": "Scartare i messaggi di commit non salvati?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "I messaggi che non è stato possibile salvare sono ancora in questa finestra. Scartarli non modifica le versioni salvate.",
+  "gitUiDiscardCommitMessages": "Scarta messaggi"
 }

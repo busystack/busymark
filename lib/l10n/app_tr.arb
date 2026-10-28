@@ -6061,5 +6061,13 @@
   "gitUiNewerConflictDraftRetained": "Gönderilen sonuç kaydedildi. Daha yeni sonuç taslağınız hâlâ kaydedilmedi.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Bu yol ve revizyon için dosya geçmişi bulunmuyor.",
 "gitUiReviewSavedIndexAndKeepDraft": "Kaydedilen indeksi incele ve taslağı koru",
-"gitUiIndexSourcesChangedSinceApply": "Kaydedilen indeks veya kaynakları değişti. Daha yeni taslak korunuyor; uygulamadan önce bu değişiklikleri ayrı olarak inceleyin."
+"gitUiIndexSourcesChangedSinceApply": "Kaydedilen indeks veya kaynakları değişti. Daha yeni taslak korunuyor; uygulamadan önce bu değişiklikleri ayrı olarak inceleyin.",
+  "gitUiReviewSavedMessage": "Kaydedilmiş iletiyi incele",
+  "gitUiSavedMessage": "Kaydedilmiş ileti",
+  "gitUiKeepThisMessage": "Bu iletiyi koru",
+  "gitUiUseSavedMessage": "Kaydedilmiş iletiyi kullan",
+  "gitUiCommitDraftChangedInAnotherWindow": "Bu ileti başka bir pencerede değiştirildi. Değiştirmeden önce kaydedilmiş iletiyi inceleyin.",
+  "gitUiDiscardUnsavedCommitMessages": "Kaydedilmemiş commit iletileri atılsın mı?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Kaydedilemeyen iletiler hâlâ bu pencerede. Bunları atmak kaydedilmiş sürümleri değiştirmez.",
+  "gitUiDiscardCommitMessages": "İletileri at"
 }

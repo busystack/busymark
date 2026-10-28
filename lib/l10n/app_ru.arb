@@ -4557,5 +4557,13 @@
   "gitUiNewerConflictDraftRetained": "Отправленный результат сохранён. Более новый черновик результата ещё не сохранён.",
   "gitUiNoFileHistoryForThisPathAndRevision": "История файла для этого пути и ревизии недоступна.",
 "gitUiReviewSavedIndexAndKeepDraft": "Проверить сохранённый индекс и сохранить черновик",
-"gitUiIndexSourcesChangedSinceApply": "Сохранённый индекс или его источники изменились. Новый черновик сохранён; перед его применением проверьте эти изменения отдельно."
+"gitUiIndexSourcesChangedSinceApply": "Сохранённый индекс или его источники изменились. Новый черновик сохранён; перед его применением проверьте эти изменения отдельно.",
+  "gitUiReviewSavedMessage": "Просмотреть сохранённое сообщение",
+  "gitUiSavedMessage": "Сохранённое сообщение",
+  "gitUiKeepThisMessage": "Оставить это сообщение",
+  "gitUiUseSavedMessage": "Использовать сохранённое сообщение",
+  "gitUiCommitDraftChangedInAnotherWindow": "Это сообщение изменено в другом окне. Просмотрите сохранённое сообщение перед заменой.",
+  "gitUiDiscardUnsavedCommitMessages": "Отбросить несохранённые сообщения коммитов?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Сообщения, которые не удалось сохранить, остались в этом окне. Их удаление не изменит сохранённые версии.",
+  "gitUiDiscardCommitMessages": "Отбросить сообщения"
 }

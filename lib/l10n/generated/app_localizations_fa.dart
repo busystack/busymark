@@ -8820,4 +8820,31 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'نمایهٔ ذخیره‌شده یا منابع آن تغییر کرده است. پیش‌نویس جدیدتر حفظ شده است؛ پیش از اعمال آن، این تغییرات را جداگانه بازبینی کنید.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'بررسی پیام ذخیره‌شده';
+
+  @override
+  String get gitUiSavedMessage => 'پیام ذخیره‌شده';
+
+  @override
+  String get gitUiKeepThisMessage => 'نگه داشتن این پیام';
+
+  @override
+  String get gitUiUseSavedMessage => 'استفاده از پیام ذخیره‌شده';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'این پیام در پنجرهٔ دیگری تغییر کرده است. پیش از جایگزینی، پیام ذخیره‌شده را بررسی کنید.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'پیام‌های ذخیره‌نشدهٔ ثبت کنار گذاشته شوند؟';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'پیام‌هایی که ذخیره نشدند هنوز در این پنجره هستند. کنار گذاشتن آن‌ها نسخه‌های ذخیره‌شده را تغییر نمی‌دهد.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'کنار گذاشتن پیام‌ها';
 }

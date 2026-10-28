@@ -6061,5 +6061,13 @@
   "gitUiNewerConflictDraftRetained": "提交的结果已保存。较新的结果草稿仍未保存。",
   "gitUiNoFileHistoryForThisPathAndRevision": "此路径和修订没有可用的文件历史记录。",
 "gitUiReviewSavedIndexAndKeepDraft": "检查已保存的索引并保留草稿",
-"gitUiIndexSourcesChangedSinceApply": "已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。"
+"gitUiIndexSourcesChangedSinceApply": "已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。",
+  "gitUiReviewSavedMessage": "查看已保存的消息",
+  "gitUiSavedMessage": "已保存的消息",
+  "gitUiKeepThisMessage": "保留此消息",
+  "gitUiUseSavedMessage": "使用已保存的消息",
+  "gitUiCommitDraftChangedInAnotherWindow": "此消息已在另一个窗口中更改。请先查看已保存的消息，再进行替换。",
+  "gitUiDiscardUnsavedCommitMessages": "丢弃未保存的提交消息？",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "无法保存的消息仍保留在此窗口中。丢弃这些消息不会更改已保存的版本。",
+  "gitUiDiscardCommitMessages": "丢弃消息"
 }

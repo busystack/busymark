@@ -6061,5 +6061,13 @@
   "gitUiNewerConflictDraftRetained": "Hasil yang dikirim telah disimpan. Draf hasil Anda yang lebih baru masih belum disimpan.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Riwayat berkas tidak tersedia untuk jalur dan revisi ini.",
 "gitUiReviewSavedIndexAndKeepDraft": "Tinjau indeks tersimpan dan pertahankan draf",
-"gitUiIndexSourcesChangedSinceApply": "Indeks tersimpan atau sumbernya telah berubah. Draf yang lebih baru dipertahankan; tinjau perubahan tersebut secara terpisah sebelum menerapkannya."
+"gitUiIndexSourcesChangedSinceApply": "Indeks tersimpan atau sumbernya telah berubah. Draf yang lebih baru dipertahankan; tinjau perubahan tersebut secara terpisah sebelum menerapkannya.",
+  "gitUiReviewSavedMessage": "Tinjau pesan tersimpan",
+  "gitUiSavedMessage": "Pesan tersimpan",
+  "gitUiKeepThisMessage": "Pertahankan pesan ini",
+  "gitUiUseSavedMessage": "Gunakan pesan tersimpan",
+  "gitUiCommitDraftChangedInAnotherWindow": "Pesan ini berubah di jendela lain. Tinjau pesan tersimpan sebelum menggantinya.",
+  "gitUiDiscardUnsavedCommitMessages": "Buang pesan commit yang belum tersimpan?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Pesan yang tidak dapat disimpan masih ada di jendela ini. Membuangnya tidak mengubah versi yang tersimpan.",
+  "gitUiDiscardCommitMessages": "Buang pesan"
 }

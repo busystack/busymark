@@ -2,7 +2,7 @@
 // Translations belong to this application’s existing Flutter ARB catalog.
 import 'package:busystack_git_flutter/busystack_git_flutter.dart'
     show GitMessages;
-import 'package:busymark/l10n/generated/app_localizations.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 extension SharedGitLocalizations on AppLocalizations {
   String translateSharedGitMessage(
@@ -1287,6 +1287,17 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.newerConflictDraftRetained => gitUiNewerConflictDraftRetained,
     GitMessages.noFileHistoryForThisPathAndRevision =>
       gitUiNoFileHistoryForThisPathAndRevision,
+    GitMessages.reviewSavedMessage => gitUiReviewSavedMessage,
+    GitMessages.savedMessage => gitUiSavedMessage,
+    GitMessages.keepThisMessage => gitUiKeepThisMessage,
+    GitMessages.useSavedMessage => gitUiUseSavedMessage,
+    GitMessages.commitDraftChangedInAnotherWindow =>
+      gitUiCommitDraftChangedInAnotherWindow,
+    GitMessages.discardUnsavedCommitMessages =>
+      gitUiDiscardUnsavedCommitMessages,
+    GitMessages.messagesCouldNotBeSavedStayInThisWindow =>
+      gitUiMessagesCouldNotBeSavedStayInThisWindow,
+    GitMessages.discardCommitMessages => gitUiDiscardCommitMessages,
     _ => message,
   };
 }

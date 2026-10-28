@@ -4991,5 +4991,13 @@
   "gitUiNewerConflictDraftRetained": "Esitatud tulemus salvestati. Uuem tulemuse mustand on endiselt salvestamata.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Selle tee ja revisjoni kohta pole failiajalugu.",
 "gitUiReviewSavedIndexAndKeepDraft": "Vaata salvestatud indeks üle ja säilita mustand",
-"gitUiIndexSourcesChangedSinceApply": "Salvestatud indeks või selle allikad on muutunud. Uuem mustand säilitatakse; vaata need muudatused enne rakendamist eraldi üle."
+"gitUiIndexSourcesChangedSinceApply": "Salvestatud indeks või selle allikad on muutunud. Uuem mustand säilitatakse; vaata need muudatused enne rakendamist eraldi üle.",
+  "gitUiReviewSavedMessage": "Vaata salvestatud sõnum üle",
+  "gitUiSavedMessage": "Salvestatud sõnum",
+  "gitUiKeepThisMessage": "Säilita see sõnum",
+  "gitUiUseSavedMessage": "Kasuta salvestatud sõnumit",
+  "gitUiCommitDraftChangedInAnotherWindow": "Seda sõnumit muudeti teises aknas. Enne asendamist vaata salvestatud sõnum üle.",
+  "gitUiDiscardUnsavedCommitMessages": "Kas loobuda salvestamata commit’i sõnumitest?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Sõnumid, mida ei saanud salvestada, on endiselt selles aknas. Nendest loobumine ei muuda salvestatud versioone.",
+  "gitUiDiscardCommitMessages": "Loobu sõnumitest"
 }

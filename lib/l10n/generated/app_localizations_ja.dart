@@ -8565,4 +8565,30 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       '保存したインデックスまたはその比較元が変更されています。新しい下書きは保持されています。適用する前に、これらの変更を個別に確認してください。';
+
+  @override
+  String get gitUiReviewSavedMessage => '保存済みメッセージを確認';
+
+  @override
+  String get gitUiSavedMessage => '保存済みメッセージ';
+
+  @override
+  String get gitUiKeepThisMessage => 'このメッセージを保持';
+
+  @override
+  String get gitUiUseSavedMessage => '保存済みメッセージを使用';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'このメッセージは別のウィンドウで変更されました。置き換える前に保存済みメッセージを確認してください。';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages => '未保存のコミットメッセージを破棄しますか？';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      '保存できなかったメッセージは、このウィンドウに残っています。破棄しても保存済みの内容は変更されません。';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'メッセージを破棄';
 }

@@ -8807,4 +8807,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Review saved message';
+
+  @override
+  String get gitUiSavedMessage => 'Saved message';
+
+  @override
+  String get gitUiKeepThisMessage => 'Keep this message';
+
+  @override
+  String get gitUiUseSavedMessage => 'Use saved message';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'This message changed in another window. Review the saved message before replacing it.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Discard unsaved commit messages?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Messages that could not be saved are still in this window. Discarding leaves the saved versions unchanged.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Discard messages';
 }

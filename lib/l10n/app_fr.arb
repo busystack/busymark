@@ -4531,5 +4531,13 @@
   "gitUiNewerConflictDraftRetained": "Le résultat soumis a été enregistré. Votre brouillon de résultat plus récent n’est toujours pas enregistré.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Aucun historique de fichier n’est disponible pour ce chemin et cette révision.",
 "gitUiReviewSavedIndexAndKeepDraft": "Examiner l’index enregistré et conserver le brouillon",
-"gitUiIndexSourcesChangedSinceApply": "L’index enregistré ou ses sources ont changé. Le brouillon le plus récent est conservé ; examinez ces changements séparément avant de l’appliquer."
+"gitUiIndexSourcesChangedSinceApply": "L’index enregistré ou ses sources ont changé. Le brouillon le plus récent est conservé ; examinez ces changements séparément avant de l’appliquer.",
+  "gitUiReviewSavedMessage": "Examiner le message enregistré",
+  "gitUiSavedMessage": "Message enregistré",
+  "gitUiKeepThisMessage": "Conserver ce message",
+  "gitUiUseSavedMessage": "Utiliser le message enregistré",
+  "gitUiCommitDraftChangedInAnotherWindow": "Ce message a été modifié dans une autre fenêtre. Examinez le message enregistré avant de le remplacer.",
+  "gitUiDiscardUnsavedCommitMessages": "Abandonner les messages de commit non enregistrés ?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Les messages qui n’ont pas pu être enregistrés sont toujours dans cette fenêtre. Les abandonner ne modifie pas les versions enregistrées.",
+  "gitUiDiscardCommitMessages": "Abandonner les messages"
 }

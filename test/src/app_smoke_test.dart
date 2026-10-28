@@ -33,6 +33,7 @@ import 'package:busymark/src/app/linux/linux_header_style.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/app/window_control_service.dart';
+import 'package:busymark/src/app/git_dismissal.dart';
 import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
@@ -9049,6 +9050,408 @@ code
     expect(gitController.stagedPaths, isEmpty);
     expect(find.text(l10n.fileHistory), findsOneWidget);
   });
+
+  for (final hiddenState in ['Log', 'collapsed']) {
+    testWidgets(
+      'actual window close protects failed message after $hiddenState',
+      (tester) async {
+        final temp = Directory.systemTemp.createTempSync(
+          'busymark_hidden_draft_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+        final document = File('${temp.path}/Intro.md')
+          ..writeAsStringSync('# Intro\n');
+        final service = _TabbedWorkspaceService(
+          rootPath: temp.path,
+          paths: [document.path],
+        );
+        final gitController = _PresetGitController(
+          _gitSidebarShortcutState(temp.path),
+        );
+        final directory = Directory('${temp.path}/drafts');
+        Completer<Directory>? finalWriteDirectory;
+        final store = BusyMarkGitDraftStore(
+          directory: () =>
+              finalWriteDirectory?.future ?? Future.value(directory),
+        );
+        final workspaceController = _DraftDuringShutdownController();
+        final other = BusyMarkGitDraftStore(directory: () async => directory);
+        final native = _FakeNativeWindowController();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides.skip(1),
+            sharedGitDraftStoreProvider.overrideWithValue(store),
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+            workspaceControllerProvider.overrideWith(() => workspaceController),
+            startupPathProvider.overrideWithValue(temp.path),
+            gitControllerProvider.overrideWith(() => gitController),
+            nativeWindowControllerProvider.overrideWithValue(native),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await pumpUntil(
+          tester,
+          () => container.read(workspaceControllerProvider).workspace != null,
+          operation: 'open authoring workspace',
+        );
+        await tester.pumpAndSettle();
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+          operation: 'open actual Commit tool area',
+        );
+        final commit = tester.widget<shared.GitCommitView>(
+          find.byType(shared.GitCommitView),
+        );
+        expect(commit.protectMessageDrafts, isFalse);
+        final session = commit.session;
+        var observed = false;
+        unawaited(
+          session
+              .readMessageDraft(session.repository.presentationKey)
+              .then((_) => observed = true),
+        );
+        await pumpUntil(
+          tester,
+          () => observed,
+          operation: 'observe initial durable message',
+        );
+        await tester.runAsync(
+          () => other.write(session.repository.presentationKey, 'saved C'),
+        );
+        final input = find.descendant(
+          of: find.byType(shared.GitCommitView),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(input, 'local unsaved B');
+        var saved = false;
+        unawaited(session.flushMessageDrafts().then((_) => saved = true));
+        await pumpUntil(
+          tester,
+          () => saved,
+          operation: 'observe explicit message persistence conflict',
+        );
+        await tester.pump();
+        expect(session.hasUnpersistedMessageDrafts, isTrue);
+        if (hiddenState == 'Log') {
+          final log = find.descendant(
+            of: find.byType(shared.GitCommitView),
+            matching: find.byTooltip('Log'),
+          );
+          await tester.ensureVisible(log);
+          await tester.tap(log);
+          await pumpUntil(
+            tester,
+            () => find.byType(shared.GitLogView).evaluate().isNotEmpty,
+            operation: 'enter Log with failed commit draft',
+          );
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+          await tester.pumpAndSettle();
+          expect(find.byType(shared.GitCommitView), findsNothing);
+        }
+        expect(
+          container.read(busyMarkGitDraftFlushProvider).liveSessions(),
+          contains(session),
+        );
+        final window = container.read(windowControlServiceProvider);
+        final closing = window.requestClose();
+        await pumpUntil(
+          tester,
+          () => find
+              .text(l10n.gitUiDiscardUnsavedCommitMessages)
+              .evaluate()
+              .isNotEmpty,
+          operation: 'actual app close message guard',
+        );
+        native.listeners.single.onWindowClose();
+        await tester.pump();
+        expect(
+          find.text(l10n.gitUiDiscardUnsavedCommitMessages),
+          findsOneWidget,
+        );
+        await tester.tap(find.text(l10n.gitUiCancel).last);
+        await tester.pumpAndSettle();
+        await closing;
+        expect(native.closeCount, 0);
+        expect(session.draft, 'local unsaved B');
+        await tester.runAsync(() async {
+          expect(
+            await other.read(session.repository.presentationKey),
+            'saved C',
+          );
+        });
+        Future<void>? finalWriting;
+        workspaceController.onCleanShutdown = () {
+          finalWriteDirectory = Completer<Directory>();
+          if (hiddenState == 'collapsed') {
+            session.setDraft('late unsaved D during document metadata');
+            finalWriting = session.flushMessageDrafts();
+          } else {
+            finalWriting = store.write(
+              'shutdown-checkpoint',
+              'draft queued after asynchronous document metadata',
+            );
+          }
+        };
+        addTearDown(() {
+          if (finalWriteDirectory?.isCompleted == false) {
+            finalWriteDirectory!.complete(directory);
+          }
+        });
+        final discard = window.requestClose();
+        await pumpUntil(
+          tester,
+          () => find
+              .text(l10n.gitUiDiscardUnsavedCommitMessages)
+              .evaluate()
+              .isNotEmpty,
+          operation: 'repeat actual app close message guard',
+        );
+        await tester.tap(find.text(l10n.gitUiDiscardCommitMessages));
+        await pumpUntil(
+          tester,
+          () => finalWriteDirectory != null,
+          operation: 'queue draft during final document metadata',
+        );
+        await tester.pump();
+        expect(
+          native.closeCount,
+          0,
+          reason: 'Final storage flush follows awaited document metadata.',
+        );
+        finalWriteDirectory!.complete(directory);
+        var completed = false;
+        unawaited(discard.then((_) => completed = true));
+        await pumpUntil(
+          tester,
+          () => completed,
+          operation: 'finish final persistence and exact-revision close check',
+        );
+        await discard;
+        await finalWriting;
+        if (hiddenState == 'collapsed') {
+          expect(
+            native.closeCount,
+            0,
+            reason: 'Consent for B cannot discard later failed D.',
+          );
+          expect(session.draft, 'late unsaved D during document metadata');
+          expect(session.hasUnpersistedMessageDrafts, isTrue);
+          workspaceController.onCleanShutdown = null;
+          final renewed = window.requestClose();
+          await pumpUntil(
+            tester,
+            () => find
+                .text(l10n.gitUiDiscardUnsavedCommitMessages)
+                .evaluate()
+                .isNotEmpty,
+            operation: 'review newly unsaved message after veto',
+          );
+          await tester.tap(find.text(l10n.gitUiDiscardCommitMessages));
+          await pumpUntil(
+            tester,
+            () => native.closeCount == 1,
+            operation: 'complete newly reviewed draft discard',
+          );
+          await renewed;
+        }
+        expect(native.closeCount, 1);
+        await tester.runAsync(() async {
+          expect(
+            await other.read(session.repository.presentationKey),
+            'saved C',
+          );
+        });
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
+  for (final fail in [false, true]) {
+    testWidgets(
+      'actual workspace retirement preserves pending draft failure=$fail',
+      (tester) async {
+        final temp = Directory.systemTemp.createTempSync(
+          'busymark_retired_draft_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+        final document = File('${temp.path}/Intro.md')
+          ..writeAsStringSync('# Intro\n');
+        final directory = Directory.systemTemp.createTempSync(
+          'busymark_retired_messages_',
+        );
+        addTearDown(() => directory.deleteSync(recursive: true));
+        Completer<Directory>? gate;
+        final entered = Completer<void>();
+        final store = BusyMarkGitDraftStore(
+          directory: () {
+            if (gate != null) {
+              if (!entered.isCompleted) entered.complete();
+              return gate.future;
+            }
+            return Future.value(directory);
+          },
+        );
+        final other = BusyMarkGitDraftStore(directory: () async => directory);
+        final native = _FakeNativeWindowController();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides.skip(1),
+            sharedGitDraftStoreProvider.overrideWithValue(store),
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(localeTag: fail ? 'de' : 'en')
+                    .toJson(),
+            ),
+            workspaceServiceProvider.overrideWithValue(
+              _TabbedWorkspaceService(
+                rootPath: temp.path,
+                paths: [document.path],
+              ),
+            ),
+            startupPathProvider.overrideWithValue(temp.path),
+            gitControllerProvider.overrideWith(
+              () => _PresetGitController(_gitSidebarShortcutState(temp.path)),
+            ),
+            nativeWindowControllerProvider.overrideWithValue(native),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await pumpUntil(
+          tester,
+          () => container.read(workspaceControllerProvider).workspace != null,
+          operation: 'open workspace for retirement',
+        );
+        await tester.pumpAndSettle();
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+          operation: 'attach actual workspace Git session',
+        );
+        final old = tester
+            .widget<shared.GitCommitView>(find.byType(shared.GitCommitView))
+            .session;
+        gate = Completer<Directory>();
+        addTearDown(() {
+          final pending = gate;
+          if (pending != null && !pending.isCompleted) {
+            pending.complete(directory);
+          }
+        });
+        await tester.enterText(
+          find.descendant(
+            of: find.byType(shared.GitCommitView),
+            matching: find.byType(TextField),
+          ),
+          'pending local B',
+        );
+        await pumpUntil(
+          tester,
+          () => entered.isCompleted,
+          operation: 'hold concrete draft before file resolution',
+        );
+        if (fail) {
+          await tester.runAsync(
+            () => other.write(
+              old.repository.presentationKey,
+              'other window saved C',
+            ),
+          );
+        }
+        final registry = container.read(busyMarkGitDraftFlushProvider);
+        await tester.pumpWidget(const SizedBox.shrink());
+        expect(registry.liveSessions(), contains(old));
+        var flushed = false;
+        unawaited(registry.flush().then((_) => flushed = true));
+        await tester.pump();
+        expect(flushed, isFalse);
+        gate.complete(directory);
+        await pumpUntil(
+          tester,
+          () => flushed,
+          operation: 'drain retired workspace message/store jobs',
+        );
+        expect(registry.liveSessions().contains(old), fail);
+        await tester.runAsync(() async {
+          expect(
+            await other.read(old.repository.presentationKey),
+            fail ? 'other window saved C' : 'pending local B',
+          );
+        });
+        if (fail) {
+          // The owner is retired, its original widget/localization context gone.
+          // A current application context must still show a localized guard.
+          container.read(appRouterProvider).go('/');
+          await tester.pumpWidget(
+            UncontrolledProviderScope(
+              container: container,
+              child: const BusyMarkApp(),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final close = container
+              .read(windowControlServiceProvider)
+              .requestClose();
+          final german = AppLocalizationsDe();
+          await pumpUntil(
+            tester,
+            () => find
+                .text(german.gitUiDiscardUnsavedCommitMessages)
+                .evaluate()
+                .isNotEmpty,
+            operation: 'localized retired-owner close confirmation',
+          );
+          await tester.tap(find.text(german.gitUiCancel).last);
+          await tester.pumpAndSettle();
+          await close;
+          expect(native.closeCount, 0);
+          container.read(appRouterProvider).go('/workspace');
+          await tester.pumpAndSettle();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await pumpUntil(
+            tester,
+            () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+            operation: 'reopen original worktree with retained local draft',
+          );
+          final reopened = tester
+              .widget<shared.GitCommitView>(find.byType(shared.GitCommitView))
+              .session;
+          expect(reopened, isNot(same(old)));
+          expect(reopened.draft, 'pending local B');
+          expect(reopened.hasUnpersistedMessageDrafts, isTrue);
+          expect(find.text('pending local B'), findsOneWidget);
+          await tester.pumpWidget(const SizedBox.shrink());
+        }
+      },
+    );
+  }
 
   testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
     tester,
@@ -21488,5 +21891,14 @@ class _GatedRecoveryAdoptionStore extends MemoryDocumentRecoveryStore {
     adopted.complete();
     await release.future;
     return result;
+  }
+}
+
+class _DraftDuringShutdownController extends WorkspaceController {
+  VoidCallback? onCleanShutdown;
+  @override
+  Future<void> markCleanShutdown() async {
+    await super.markCleanShutdown();
+    onCleanShutdown?.call();
   }
 }

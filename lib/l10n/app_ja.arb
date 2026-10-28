@@ -6061,5 +6061,13 @@
   "gitUiNewerConflictDraftRetained": "送信した結果は保存されました。新しい結果の下書きはまだ保存されていません。",
   "gitUiNoFileHistoryForThisPathAndRevision": "このパスとリビジョンのファイル履歴はありません。",
 "gitUiReviewSavedIndexAndKeepDraft": "保存したインデックスを確認して下書きを保持",
-"gitUiIndexSourcesChangedSinceApply": "保存したインデックスまたはその比較元が変更されています。新しい下書きは保持されています。適用する前に、これらの変更を個別に確認してください。"
+"gitUiIndexSourcesChangedSinceApply": "保存したインデックスまたはその比較元が変更されています。新しい下書きは保持されています。適用する前に、これらの変更を個別に確認してください。",
+  "gitUiReviewSavedMessage": "保存済みメッセージを確認",
+  "gitUiSavedMessage": "保存済みメッセージ",
+  "gitUiKeepThisMessage": "このメッセージを保持",
+  "gitUiUseSavedMessage": "保存済みメッセージを使用",
+  "gitUiCommitDraftChangedInAnotherWindow": "このメッセージは別のウィンドウで変更されました。置き換える前に保存済みメッセージを確認してください。",
+  "gitUiDiscardUnsavedCommitMessages": "未保存のコミットメッセージを破棄しますか？",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "保存できなかったメッセージは、このウィンドウに残っています。破棄しても保存済みの内容は変更されません。",
+  "gitUiDiscardCommitMessages": "メッセージを破棄"
 }

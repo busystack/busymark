@@ -8892,4 +8892,31 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Збережений індекс або його джерела змінилися. Новішу чернетку збережено; перед її застосуванням перегляньте ці зміни окремо.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Переглянути збережене повідомлення';
+
+  @override
+  String get gitUiSavedMessage => 'Збережене повідомлення';
+
+  @override
+  String get gitUiKeepThisMessage => 'Залишити це повідомлення';
+
+  @override
+  String get gitUiUseSavedMessage => 'Використати збережене повідомлення';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Це повідомлення змінено в іншому вікні. Перегляньте збережене повідомлення перед заміною.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Відкинути незбережені повідомлення комітів?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Повідомлення, які не вдалося зберегти, залишилися в цьому вікні. Їх відкидання не змінить збережені версії.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Відкинути повідомлення';
 }

@@ -8799,4 +8799,31 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Kaydedilen indeks veya kaynakları değişti. Daha yeni taslak korunuyor; uygulamadan önce bu değişiklikleri ayrı olarak inceleyin.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Kaydedilmiş iletiyi incele';
+
+  @override
+  String get gitUiSavedMessage => 'Kaydedilmiş ileti';
+
+  @override
+  String get gitUiKeepThisMessage => 'Bu iletiyi koru';
+
+  @override
+  String get gitUiUseSavedMessage => 'Kaydedilmiş iletiyi kullan';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Bu ileti başka bir pencerede değiştirildi. Değiştirmeden önce kaydedilmiş iletiyi inceleyin.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Kaydedilmemiş commit iletileri atılsın mı?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Kaydedilemeyen iletiler hâlâ bu pencerede. Bunları atmak kaydedilmiş sürümleri değiştirmez.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'İletileri at';
 }

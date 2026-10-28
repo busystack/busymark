@@ -8794,4 +8794,31 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'सहेजा गया इंडेक्स या उसके स्रोत बदल गए हैं। नया ड्राफ़्ट सुरक्षित है; उसे लागू करने से पहले इन बदलावों की अलग से समीक्षा करें।';
+
+  @override
+  String get gitUiReviewSavedMessage => 'सहेजा गया संदेश देखें';
+
+  @override
+  String get gitUiSavedMessage => 'सहेजा गया संदेश';
+
+  @override
+  String get gitUiKeepThisMessage => 'यह संदेश रखें';
+
+  @override
+  String get gitUiUseSavedMessage => 'सहेजा गया संदेश इस्तेमाल करें';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'यह संदेश किसी दूसरी विंडो में बदला गया है। बदलने से पहले सहेजा गया संदेश देखें।';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'बिना सहेजे कमिट संदेश हटाएँ?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'जो संदेश सहेजे नहीं जा सके, वे अभी भी इस विंडो में हैं। उन्हें हटाने से सहेजे गए संस्करण नहीं बदलेंगे।';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'संदेश हटाएँ';
 }

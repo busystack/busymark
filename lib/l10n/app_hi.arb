@@ -4531,5 +4531,13 @@
   "gitUiNewerConflictDraftRetained": "भेजा गया परिणाम सहेज दिया गया है। आपके नए परिणाम का मसौदा अभी भी सहेजा नहीं गया है।",
   "gitUiNoFileHistoryForThisPathAndRevision": "इस पथ और संशोधन के लिए फ़ाइल इतिहास उपलब्ध नहीं है।",
 "gitUiReviewSavedIndexAndKeepDraft": "सहेजे गए इंडेक्स की समीक्षा करें और ड्राफ़्ट रखें",
-"gitUiIndexSourcesChangedSinceApply": "सहेजा गया इंडेक्स या उसके स्रोत बदल गए हैं। नया ड्राफ़्ट सुरक्षित है; उसे लागू करने से पहले इन बदलावों की अलग से समीक्षा करें।"
+"gitUiIndexSourcesChangedSinceApply": "सहेजा गया इंडेक्स या उसके स्रोत बदल गए हैं। नया ड्राफ़्ट सुरक्षित है; उसे लागू करने से पहले इन बदलावों की अलग से समीक्षा करें।",
+  "gitUiReviewSavedMessage": "सहेजा गया संदेश देखें",
+  "gitUiSavedMessage": "सहेजा गया संदेश",
+  "gitUiKeepThisMessage": "यह संदेश रखें",
+  "gitUiUseSavedMessage": "सहेजा गया संदेश इस्तेमाल करें",
+  "gitUiCommitDraftChangedInAnotherWindow": "यह संदेश किसी दूसरी विंडो में बदला गया है। बदलने से पहले सहेजा गया संदेश देखें।",
+  "gitUiDiscardUnsavedCommitMessages": "बिना सहेजे कमिट संदेश हटाएँ?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "जो संदेश सहेजे नहीं जा सके, वे अभी भी इस विंडो में हैं। उन्हें हटाने से सहेजे गए संस्करण नहीं बदलेंगे।",
+  "gitUiDiscardCommitMessages": "संदेश हटाएँ"
 }

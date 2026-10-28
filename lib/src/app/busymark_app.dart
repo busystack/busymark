@@ -7,8 +7,10 @@ import '../nextcloud_notes/presentation/nextcloud_settings.dart';
 import '../references/reference_controller.dart';
 import 'dart:async';
 
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
@@ -1059,11 +1061,15 @@ class _BusyMarkWindowLifecycleState
   late final WindowControlService _windowControlService;
   late final AppLifecycleListener _notesLifecycle;
   late final GoRouter _notesRouter;
+  late final VoidCallback _unregisterMessageGuard;
 
   @override
   void initState() {
     super.initState();
     _windowControlService = ref.read(windowControlServiceProvider);
+    _unregisterMessageGuard = ref
+        .read(busyMarkGitDismissalProvider)
+        .register(_mayDismissMessageDrafts);
     _notesRouter = ref.read(appRouterProvider);
     _notesRouter.routeInformationProvider.addListener(_notesRouteChanged);
     _notesLifecycle = AppLifecycleListener(
@@ -1092,6 +1098,7 @@ class _BusyMarkWindowLifecycleState
     _notesRouter.routeInformationProvider.removeListener(_notesRouteChanged);
     _notesLifecycle.dispose();
     _windowControlService.unregisterCloseHandler();
+    _unregisterMessageGuard();
     super.dispose();
   }
 
@@ -1111,16 +1118,34 @@ class _BusyMarkWindowLifecycleState
         );
   }
 
+  Future<bool> _mayDismissMessageDrafts() async {
+    final context = rootNavigatorKey.currentContext ?? this.context;
+    if (!mounted || !context.mounted) return false;
+    return shared.gitMayDismissMessageDrafts(
+      context,
+      ref.read(busyMarkGitDraftFlushProvider).liveSessions,
+    );
+  }
+
   Future<void> _handleWindowClose() async {
     final context = rootNavigatorKey.currentContext ?? this.context;
     if (!context.mounted) {
       return;
     }
+    final drafts = ref.read(busyMarkGitDraftFlushProvider);
+    await drafts.flush();
+    if (!mounted || !context.mounted) return;
     if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
         !mounted ||
         !context.mounted) {
       return;
     }
+    final reviewedMessages = <(shared.GitDraftStore, String), Map<String, int>>{
+      for (final session in drafts.liveSessions())
+        (session.host.drafts, session.repository.presentationKey): Map.of(
+          session.messageDraftRevisions,
+        ),
+    };
     final controller = ref.read(workspaceControllerProvider.notifier);
     await controller.waitForWorkspaceOpening();
     if (!mounted || !context.mounted) return;
@@ -1142,6 +1167,24 @@ class _BusyMarkWindowLifecycleState
       saveChanges: () => _saveAllDirtyDocuments(context),
       beforeClose: controller.markCleanShutdown,
       discardChanges: controller.discardRecoveryForShutdown,
+      finalCloseGuard: () async {
+        // Document metadata can await I/O after the message discard consent.
+        // Drain later writes, then veto only newly unsaved message revisions.
+        await drafts.flush();
+        for (final session in drafts.liveSessions()) {
+          if (!session.hasUnpersistedMessageDrafts) continue;
+          final reviewed =
+              reviewedMessages[(
+                session.host.drafts,
+                session.repository.presentationKey,
+              )];
+          if (reviewed == null ||
+              !mapEquals(reviewed, session.messageDraftRevisions)) {
+            return false;
+          }
+        }
+        return true;
+      },
     );
   }
 

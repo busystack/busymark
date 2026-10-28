@@ -8811,4 +8811,31 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Den lagrede indeksen eller kildene har endret seg. Det nyere utkastet beholdes; se gjennom disse endringene separat før du bruker det.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Se gjennom lagret melding';
+
+  @override
+  String get gitUiSavedMessage => 'Lagret melding';
+
+  @override
+  String get gitUiKeepThisMessage => 'Behold denne meldingen';
+
+  @override
+  String get gitUiUseSavedMessage => 'Bruk lagret melding';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Denne meldingen ble endret i et annet vindu. Se gjennom den lagrede meldingen før du erstatter den.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Forkaste ulagrede commit-meldinger?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Meldinger som ikke kunne lagres, er fortsatt i dette vinduet. Forkasting endrer ikke de lagrede versjonene.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Forkast meldinger';
 }

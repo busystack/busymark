@@ -8809,4 +8809,31 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Salvestatud indeks või selle allikad on muutunud. Uuem mustand säilitatakse; vaata need muudatused enne rakendamist eraldi üle.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Vaata salvestatud sõnum üle';
+
+  @override
+  String get gitUiSavedMessage => 'Salvestatud sõnum';
+
+  @override
+  String get gitUiKeepThisMessage => 'Säilita see sõnum';
+
+  @override
+  String get gitUiUseSavedMessage => 'Kasuta salvestatud sõnumit';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Seda sõnumit muudeti teises aknas. Enne asendamist vaata salvestatud sõnum üle.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Kas loobuda salvestamata commit’i sõnumitest?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Sõnumid, mida ei saanud salvestada, on endiselt selles aknas. Nendest loobumine ei muuda salvestatud versioone.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Loobu sõnumitest';
 }

@@ -8898,4 +8898,31 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'L’index enregistré ou ses sources ont changé. Le brouillon le plus récent est conservé ; examinez ces changements séparément avant de l’appliquer.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Examiner le message enregistré';
+
+  @override
+  String get gitUiSavedMessage => 'Message enregistré';
+
+  @override
+  String get gitUiKeepThisMessage => 'Conserver ce message';
+
+  @override
+  String get gitUiUseSavedMessage => 'Utiliser le message enregistré';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Ce message a été modifié dans une autre fenêtre. Examinez le message enregistré avant de le remplacer.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Abandonner les messages de commit non enregistrés ?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Les messages qui n’ont pas pu être enregistrés sont toujours dans cette fenêtre. Les abandonner ne modifie pas les versions enregistrées.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Abandonner les messages';
 }

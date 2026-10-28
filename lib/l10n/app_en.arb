@@ -7296,5 +7296,37 @@
   "gitUiIndexSourcesChangedSinceApply": "The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it.",
   "@gitUiIndexSourcesChangedSinceApply": {
     "description": "Shared Git interface: The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it."
+  },
+  "gitUiReviewSavedMessage": "Review saved message",
+  "@gitUiReviewSavedMessage": {
+    "description": "Shared Git interface: Review saved message"
+  },
+  "gitUiSavedMessage": "Saved message",
+  "@gitUiSavedMessage": {
+    "description": "Shared Git interface: Saved message"
+  },
+  "gitUiKeepThisMessage": "Keep this message",
+  "@gitUiKeepThisMessage": {
+    "description": "Shared Git interface: Keep this message"
+  },
+  "gitUiUseSavedMessage": "Use saved message",
+  "@gitUiUseSavedMessage": {
+    "description": "Shared Git interface: Use saved message"
+  },
+  "gitUiCommitDraftChangedInAnotherWindow": "This message changed in another window. Review the saved message before replacing it.",
+  "@gitUiCommitDraftChangedInAnotherWindow": {
+    "description": "Shared Git interface: This message changed in another window. Review the saved message before replacing it."
+  },
+  "gitUiDiscardUnsavedCommitMessages": "Discard unsaved commit messages?",
+  "@gitUiDiscardUnsavedCommitMessages": {
+    "description": "Shared Git interface: Discard unsaved commit messages?"
+  },
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Messages that could not be saved are still in this window. Discarding leaves the saved versions unchanged.",
+  "@gitUiMessagesCouldNotBeSavedStayInThisWindow": {
+    "description": "Shared Git interface: Messages that could not be saved are still in this window. Discarding leaves the saved versions unchanged."
+  },
+  "gitUiDiscardCommitMessages": "Discard messages",
+  "@gitUiDiscardCommitMessages": {
+    "description": "Shared Git interface: Discard messages"
   }
 }

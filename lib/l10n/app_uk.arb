@@ -4557,5 +4557,13 @@
   "gitUiNewerConflictDraftRetained": "Надісланий результат збережено. Новішу чернетку результату ще не збережено.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Історія файлу для цього шляху та ревізії недоступна.",
 "gitUiReviewSavedIndexAndKeepDraft": "Переглянути збережений індекс і зберегти чернетку",
-"gitUiIndexSourcesChangedSinceApply": "Збережений індекс або його джерела змінилися. Новішу чернетку збережено; перед її застосуванням перегляньте ці зміни окремо."
+"gitUiIndexSourcesChangedSinceApply": "Збережений індекс або його джерела змінилися. Новішу чернетку збережено; перед її застосуванням перегляньте ці зміни окремо.",
+  "gitUiReviewSavedMessage": "Переглянути збережене повідомлення",
+  "gitUiSavedMessage": "Збережене повідомлення",
+  "gitUiKeepThisMessage": "Залишити це повідомлення",
+  "gitUiUseSavedMessage": "Використати збережене повідомлення",
+  "gitUiCommitDraftChangedInAnotherWindow": "Це повідомлення змінено в іншому вікні. Перегляньте збережене повідомлення перед заміною.",
+  "gitUiDiscardUnsavedCommitMessages": "Відкинути незбережені повідомлення комітів?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Повідомлення, які не вдалося зберегти, залишилися в цьому вікні. Їх відкидання не змінить збережені версії.",
+  "gitUiDiscardCommitMessages": "Відкинути повідомлення"
 }

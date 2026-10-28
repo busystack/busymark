@@ -6061,5 +6061,13 @@
   "gitUiNewerConflictDraftRetained": "Kết quả đã gửi được lưu. Bản nháp kết quả mới hơn của bạn vẫn chưa được lưu.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Không có lịch sử tệp cho đường dẫn và bản sửa đổi này.",
 "gitUiReviewSavedIndexAndKeepDraft": "Xem lại chỉ mục đã lưu và giữ bản nháp",
-"gitUiIndexSourcesChangedSinceApply": "Chỉ mục đã lưu hoặc các nguồn của nó đã thay đổi. Bản nháp mới hơn vẫn được giữ; hãy xem lại riêng các thay đổi này trước khi áp dụng."
+"gitUiIndexSourcesChangedSinceApply": "Chỉ mục đã lưu hoặc các nguồn của nó đã thay đổi. Bản nháp mới hơn vẫn được giữ; hãy xem lại riêng các thay đổi này trước khi áp dụng.",
+  "gitUiReviewSavedMessage": "Xem lại thông điệp đã lưu",
+  "gitUiSavedMessage": "Thông điệp đã lưu",
+  "gitUiKeepThisMessage": "Giữ thông điệp này",
+  "gitUiUseSavedMessage": "Dùng thông điệp đã lưu",
+  "gitUiCommitDraftChangedInAnotherWindow": "Thông điệp này đã thay đổi trong cửa sổ khác. Hãy xem lại thông điệp đã lưu trước khi thay thế.",
+  "gitUiDiscardUnsavedCommitMessages": "Bỏ các thông điệp commit chưa lưu?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Các thông điệp không lưu được vẫn còn trong cửa sổ này. Việc bỏ chúng không thay đổi các phiên bản đã lưu.",
+  "gitUiDiscardCommitMessages": "Bỏ các thông điệp"
 }

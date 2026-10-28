@@ -8888,4 +8888,31 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'El índice guardado o sus fuentes han cambiado. Se conserva el borrador más reciente; revisa esos cambios por separado antes de aplicarlo.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Revisar mensaje guardado';
+
+  @override
+  String get gitUiSavedMessage => 'Mensaje guardado';
+
+  @override
+  String get gitUiKeepThisMessage => 'Conservar este mensaje';
+
+  @override
+  String get gitUiUseSavedMessage => 'Usar mensaje guardado';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Este mensaje cambió en otra ventana. Revisa el mensaje guardado antes de reemplazarlo.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      '¿Descartar los mensajes de commit sin guardar?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Los mensajes que no se pudieron guardar siguen en esta ventana. Descartarlos no modifica las versiones guardadas.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Descartar mensajes';
 }

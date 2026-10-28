@@ -8892,4 +8892,31 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Der gespeicherte Index oder seine Quellen wurden geändert. Der neuere Entwurf bleibt erhalten; prüfen Sie diese Änderungen vor dem Anwenden gesondert.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Gespeicherte Nachricht prüfen';
+
+  @override
+  String get gitUiSavedMessage => 'Gespeicherte Nachricht';
+
+  @override
+  String get gitUiKeepThisMessage => 'Diese Nachricht behalten';
+
+  @override
+  String get gitUiUseSavedMessage => 'Gespeicherte Nachricht verwenden';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Diese Nachricht wurde in einem anderen Fenster geändert. Prüfen Sie die gespeicherte Nachricht, bevor Sie sie ersetzen.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Ungespeicherte Commit-Nachrichten verwerfen?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Nachrichten, die nicht gespeichert werden konnten, befinden sich noch in diesem Fenster. Beim Verwerfen bleiben die gespeicherten Versionen unverändert.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Nachrichten verwerfen';
 }

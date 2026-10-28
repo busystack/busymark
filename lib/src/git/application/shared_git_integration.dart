@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../ai/ai_edit_ui.dart';
 import '../../ai/ai_models.dart';
 import '../../app/app_settings.dart';
+import '../../app/app_router.dart';
 import '../../app/git_dismissal.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
@@ -71,6 +72,25 @@ class _BusyMarkGitWorkspaceScopeState
   var _generation = 0;
   Future<shared.RepositoryId?>? _discovery;
   shared.GitClient? _client;
+  late final VoidCallback _unregisterDraftFlush;
+
+  @override
+  void initState() {
+    super.initState();
+    _unregisterDraftFlush = ref
+        .read(busyMarkGitDraftFlushProvider)
+        .register(_flushDrafts, sessions: () => List.of(_owned));
+  }
+
+  Future<void> _flushDrafts() async {
+    final store = ref.read(sharedGitDraftStoreProvider);
+    for (final session in List.of(_owned)) {
+      await session.flushMessageDrafts();
+    }
+    if (store is shared.GitFlushableDraftStore) {
+      await (store as shared.GitFlushableDraftStore).flush();
+    }
+  }
 
   shared.GitHost get _host {
     final generation = _generation;
@@ -251,6 +271,7 @@ class _BusyMarkGitWorkspaceScopeState
 
   @override
   void dispose() {
+    _unregisterDraftFlush();
     _releaseAttachments();
     super.dispose();
   }
@@ -367,20 +388,34 @@ Future<void> showBusyMarkSharedGitAction(
   }
 }
 
-final class BusyMarkGitDraftStore implements shared.GitDraftStore {
+final class BusyMarkGitDraftStore
+    implements shared.GitVersionedDraftStore, shared.GitFlushableDraftStore {
+  BusyMarkGitDraftStore({Future<Directory> Function()? directory})
+    : _directory = directory;
+  final Future<Directory> Function()? _directory;
+  late final _store = shared.FileGitDraftStore(file: _file);
+
   Future<Map<String, Object>?> readViewState(String key) async {
-    final value = await read('$key-view');
-    return value == null
-        ? null
-        : Map<String, Object>.from(jsonDecode(value) as Map);
+    final value = await _store.read('$key-view');
+    final targets = await _store.recoverAmendTargets(key);
+    if (value == null && targets.isEmpty) return null;
+    return {
+      if (value != null) ...Map<String, Object>.from(jsonDecode(value) as Map),
+      // Preferences may be overwritten by another window. A retained amend
+      // belongs to its actual nonempty message slot and original reviewed HEAD.
+      'commitAmendDraftTargets': targets,
+    };
   }
 
   Future<void> writeViewState(String key, Map<String, Object> value) =>
-      write('$key-view', jsonEncode(value));
+      _store.writeUnconditionally('$key-view', jsonEncode(value));
+
   Future<File> _file(String key) async {
-    final directory = Directory(
-      p.join((await getApplicationSupportDirectory()).path, 'git-drafts'),
-    );
+    final directory = _directory == null
+        ? Directory(
+            p.join((await getApplicationSupportDirectory()).path, 'git-drafts'),
+          )
+        : await _directory();
     await directory.create(recursive: true);
     // Logical amend slots include ':'; keep existing Linux filenames while
     // encoding characters forbidden in Windows filenames with a reversible codec.
@@ -390,32 +425,26 @@ final class BusyMarkGitDraftStore implements shared.GitDraftStore {
     return File(p.join(directory.path, '$name.txt'));
   }
 
-  final _tails = <String, Future<void>>{};
-  final _memory = <String, String>{};
   @override
-  Future<String?> read(String worktreeKey) async {
-    if (_memory.containsKey(worktreeKey)) return _memory[worktreeKey];
-    await _tails[worktreeKey];
-    final file = await _file(worktreeKey);
-    return await file.exists() ? file.readAsString() : null;
-  }
+  Future<String?> read(String key) => _store.read(key);
 
   @override
-  Future<void> write(String worktreeKey, String message) {
-    _memory[worktreeKey] = message;
-    Future<void> save() async {
-      final file = await _file(worktreeKey),
-          temporary = File('${(await _file(worktreeKey)).path}.pending');
-      await temporary.writeAsString(message, flush: true);
-      await temporary.rename(file.path);
-    }
+  Future<void> write(String key, String message) => _store.write(key, message);
 
-    final next = (_tails[worktreeKey] ?? Future<void>.value()).then(
-      (_) => save(),
-      onError: (Object error, StackTrace stack) => save(),
-    );
-    return _tails[worktreeKey] = next;
-  }
+  @override
+  Future<shared.GitStoredDraft> readVersioned(String key) =>
+      _store.readVersioned(key);
+
+  @override
+  Future<shared.GitDraftWriteResult> compareAndWrite(
+    String key, {
+    required String expectedVersion,
+    required String? text,
+  }) =>
+      _store.compareAndWrite(key, expectedVersion: expectedVersion, text: text);
+
+  @override
+  Future<void> flush() => _store.flush();
 }
 
 final _drafts = BusyMarkGitDraftStore();
@@ -565,6 +594,7 @@ shared.GitHost busyMarkGitHost(
 }) {
   final drafts = ref.read(sharedGitDraftStoreProvider);
   var reconcileWorkingFiles = true;
+  final fallbackLocalizations = context.l10n;
   return shared.GitHost(
     registerDismissalGuard: ref.read(busyMarkGitDismissalProvider).register,
     spacing: BusyMarkSpacing.sm,
@@ -607,8 +637,13 @@ shared.GitHost busyMarkGitHost(
         ],
       ],
     ),
-    localize: (message, values) =>
-        context.l10n.translateSharedGitMessage(message, values),
+    localize: (message, values) {
+      final current = rootNavigatorKey.currentContext;
+      final localizations = current != null && current.mounted
+          ? current.l10n
+          : fallbackLocalizations;
+      return localizations.translateSharedGitMessage(message, values);
+    },
     present: <T>(dialogContext, title, child, {bool expanded = false}) =>
         showBusyMarkModalDialog<T>(
           dialogContext,
@@ -1009,6 +1044,7 @@ class _BusyMarkSharedGitSidebarState
       _session!,
       shared.GitCommitView(
         session: _session!,
+        protectMessageDrafts: false,
         reviewContext: () => (
           ref.read(sharedGitReviewProvider)[widget.workspace.id],
           ref.read(workspaceControllerProvider).activeBufferId,

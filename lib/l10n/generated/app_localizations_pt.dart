@@ -8886,6 +8886,33 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'O índice guardado ou as suas origens foram alterados. O rascunho mais recente é mantido; reveja estas alterações separadamente antes de o aplicar.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Rever mensagem guardada';
+
+  @override
+  String get gitUiSavedMessage => 'Mensagem guardada';
+
+  @override
+  String get gitUiKeepThisMessage => 'Manter esta mensagem';
+
+  @override
+  String get gitUiUseSavedMessage => 'Usar mensagem guardada';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Esta mensagem foi alterada noutra janela. Reveja a mensagem guardada antes de a substituir.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Descartar mensagens de commit não guardadas?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'As mensagens que não foi possível guardar continuam nesta janela. Descartá-las não altera as versões guardadas.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Descartar mensagens';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17763,4 +17790,31 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'O índice salvo ou suas origens foram alterados. O rascunho mais recente foi mantido; revise essas alterações separadamente antes de aplicá-lo.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Revisar mensagem salva';
+
+  @override
+  String get gitUiSavedMessage => 'Mensagem salva';
+
+  @override
+  String get gitUiKeepThisMessage => 'Manter esta mensagem';
+
+  @override
+  String get gitUiUseSavedMessage => 'Usar mensagem salva';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Esta mensagem foi alterada em outra janela. Revise a mensagem salva antes de substituí-la.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Descartar mensagens de commit não salvas?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'As mensagens que não puderam ser salvas continuam nesta janela. Descartá-las não altera as versões salvas.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Descartar mensagens';
 }

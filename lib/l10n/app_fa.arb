@@ -4573,5 +4573,13 @@
   "gitUiNewerConflictDraftRetained": "نتیجهٔ ارسال‌شده ذخیره شد. پیش‌نویس جدیدتر نتیجه هنوز ذخیره نشده است.",
   "gitUiNoFileHistoryForThisPathAndRevision": "برای این مسیر و بازبینی تاریخچهٔ فایل در دسترس نیست.",
 "gitUiReviewSavedIndexAndKeepDraft": "بازبینی نمایهٔ ذخیره‌شده و نگه‌داشتن پیش‌نویس",
-"gitUiIndexSourcesChangedSinceApply": "نمایهٔ ذخیره‌شده یا منابع آن تغییر کرده است. پیش‌نویس جدیدتر حفظ شده است؛ پیش از اعمال آن، این تغییرات را جداگانه بازبینی کنید."
+"gitUiIndexSourcesChangedSinceApply": "نمایهٔ ذخیره‌شده یا منابع آن تغییر کرده است. پیش‌نویس جدیدتر حفظ شده است؛ پیش از اعمال آن، این تغییرات را جداگانه بازبینی کنید.",
+  "gitUiReviewSavedMessage": "بررسی پیام ذخیره‌شده",
+  "gitUiSavedMessage": "پیام ذخیره‌شده",
+  "gitUiKeepThisMessage": "نگه داشتن این پیام",
+  "gitUiUseSavedMessage": "استفاده از پیام ذخیره‌شده",
+  "gitUiCommitDraftChangedInAnotherWindow": "این پیام در پنجرهٔ دیگری تغییر کرده است. پیش از جایگزینی، پیام ذخیره‌شده را بررسی کنید.",
+  "gitUiDiscardUnsavedCommitMessages": "پیام‌های ذخیره‌نشدهٔ ثبت کنار گذاشته شوند؟",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "پیام‌هایی که ذخیره نشدند هنوز در این پنجره هستند. کنار گذاشتن آن‌ها نسخه‌های ذخیره‌شده را تغییر نمی‌دهد.",
+  "gitUiDiscardCommitMessages": "کنار گذاشتن پیام‌ها"
 }

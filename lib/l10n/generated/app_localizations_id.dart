@@ -8812,4 +8812,31 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Indeks tersimpan atau sumbernya telah berubah. Draf yang lebih baru dipertahankan; tinjau perubahan tersebut secara terpisah sebelum menerapkannya.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Tinjau pesan tersimpan';
+
+  @override
+  String get gitUiSavedMessage => 'Pesan tersimpan';
+
+  @override
+  String get gitUiKeepThisMessage => 'Pertahankan pesan ini';
+
+  @override
+  String get gitUiUseSavedMessage => 'Gunakan pesan tersimpan';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Pesan ini berubah di jendela lain. Tinjau pesan tersimpan sebelum menggantinya.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Buang pesan commit yang belum tersimpan?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Pesan yang tidak dapat disimpan masih ada di jendela ini. Membuangnya tidak mengubah versi yang tersimpan.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Buang pesan';
 }

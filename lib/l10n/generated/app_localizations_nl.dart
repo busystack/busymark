@@ -8873,4 +8873,31 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'De opgeslagen index of de bronnen zijn gewijzigd. Het nieuwere concept blijft behouden; bekijk deze wijzigingen afzonderlijk voordat u het toepast.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Opgeslagen bericht bekijken';
+
+  @override
+  String get gitUiSavedMessage => 'Opgeslagen bericht';
+
+  @override
+  String get gitUiKeepThisMessage => 'Dit bericht behouden';
+
+  @override
+  String get gitUiUseSavedMessage => 'Opgeslagen bericht gebruiken';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Dit bericht is in een ander venster gewijzigd. Bekijk het opgeslagen bericht voordat u het vervangt.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Niet-opgeslagen commitberichten verwerpen?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Berichten die niet konden worden opgeslagen, staan nog in dit venster. Verwerpen verandert de opgeslagen versies niet.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Berichten verwerpen';
 }

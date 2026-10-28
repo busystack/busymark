@@ -4531,5 +4531,13 @@
   "gitUiNewerConflictDraftRetained": "تم حفظ النتيجة المُرسلة. ما زالت مسودة النتيجة الأحدث غير محفوظة.",
   "gitUiNoFileHistoryForThisPathAndRevision": "لا يتوفر سجل ملفات لهذا المسار وهذه المراجعة.",
 "gitUiReviewSavedIndexAndKeepDraft": "راجع الفهرس المحفوظ واحتفظ بالمسودة",
-"gitUiIndexSourcesChangedSinceApply": "تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها."
+"gitUiIndexSourcesChangedSinceApply": "تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها.",
+  "gitUiReviewSavedMessage": "مراجعة الرسالة المحفوظة",
+  "gitUiSavedMessage": "الرسالة المحفوظة",
+  "gitUiKeepThisMessage": "الاحتفاظ بهذه الرسالة",
+  "gitUiUseSavedMessage": "استخدام الرسالة المحفوظة",
+  "gitUiCommitDraftChangedInAnotherWindow": "تغيرت هذه الرسالة في نافذة أخرى. راجع الرسالة المحفوظة قبل استبدالها.",
+  "gitUiDiscardUnsavedCommitMessages": "تجاهل رسائل الالتزام غير المحفوظة؟",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "الرسائل التي تعذر حفظها ما زالت في هذه النافذة. يترك تجاهلها النسخ المحفوظة دون تغيير.",
+  "gitUiDiscardCommitMessages": "تجاهل الرسائل"
 }

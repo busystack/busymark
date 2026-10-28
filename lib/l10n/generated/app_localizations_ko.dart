@@ -8562,4 +8562,30 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       '저장된 인덱스 또는 원본이 변경되었습니다. 최신 초안은 유지됩니다. 적용하기 전에 해당 변경 사항을 별도로 검토하세요.';
+
+  @override
+  String get gitUiReviewSavedMessage => '저장된 메시지 검토';
+
+  @override
+  String get gitUiSavedMessage => '저장된 메시지';
+
+  @override
+  String get gitUiKeepThisMessage => '이 메시지 유지';
+
+  @override
+  String get gitUiUseSavedMessage => '저장된 메시지 사용';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      '이 메시지는 다른 창에서 변경되었습니다. 바꾸기 전에 저장된 메시지를 검토하세요.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages => '저장하지 않은 커밋 메시지를 버릴까요?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      '저장하지 못한 메시지가 이 창에 남아 있습니다. 버려도 저장된 버전은 변경되지 않습니다.';
+
+  @override
+  String get gitUiDiscardCommitMessages => '메시지 버리기';
 }

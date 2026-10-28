@@ -8875,4 +8875,31 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get gitUiIndexSourcesChangedSinceApply =>
       'Zapisany indeks lub jego źródła uległy zmianie. Nowsza wersja robocza została zachowana; przed jej zastosowaniem przejrzyj te zmiany osobno.';
+
+  @override
+  String get gitUiReviewSavedMessage => 'Przejrzyj zapisaną wiadomość';
+
+  @override
+  String get gitUiSavedMessage => 'Zapisana wiadomość';
+
+  @override
+  String get gitUiKeepThisMessage => 'Zachowaj tę wiadomość';
+
+  @override
+  String get gitUiUseSavedMessage => 'Użyj zapisanej wiadomości';
+
+  @override
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Ta wiadomość została zmieniona w innym oknie. Przejrzyj zapisaną wiadomość przed jej zastąpieniem.';
+
+  @override
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Odrzucić niezapisane wiadomości commitów?';
+
+  @override
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Wiadomości, których nie udało się zapisać, nadal są w tym oknie. Ich odrzucenie nie zmienia zapisanych wersji.';
+
+  @override
+  String get gitUiDiscardCommitMessages => 'Odrzuć wiadomości';
 }

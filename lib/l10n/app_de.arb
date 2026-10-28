@@ -4531,5 +4531,13 @@
   "gitUiNewerConflictDraftRetained": "Das eingereichte Ergebnis wurde gespeichert. Ihr neuerer Ergebnisentwurf ist weiterhin ungespeichert.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Für diesen Pfad und diese Revision ist kein Dateiverlauf verfügbar.",
 "gitUiReviewSavedIndexAndKeepDraft": "Gespeicherten Index prüfen und Entwurf behalten",
-"gitUiIndexSourcesChangedSinceApply": "Der gespeicherte Index oder seine Quellen wurden geändert. Der neuere Entwurf bleibt erhalten; prüfen Sie diese Änderungen vor dem Anwenden gesondert."
+"gitUiIndexSourcesChangedSinceApply": "Der gespeicherte Index oder seine Quellen wurden geändert. Der neuere Entwurf bleibt erhalten; prüfen Sie diese Änderungen vor dem Anwenden gesondert.",
+  "gitUiReviewSavedMessage": "Gespeicherte Nachricht prüfen",
+  "gitUiSavedMessage": "Gespeicherte Nachricht",
+  "gitUiKeepThisMessage": "Diese Nachricht behalten",
+  "gitUiUseSavedMessage": "Gespeicherte Nachricht verwenden",
+  "gitUiCommitDraftChangedInAnotherWindow": "Diese Nachricht wurde in einem anderen Fenster geändert. Prüfen Sie die gespeicherte Nachricht, bevor Sie sie ersetzen.",
+  "gitUiDiscardUnsavedCommitMessages": "Ungespeicherte Commit-Nachrichten verwerfen?",
+  "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Nachrichten, die nicht gespeichert werden konnten, befinden sich noch in diesem Fenster. Beim Verwerfen bleiben die gespeicherten Versionen unverändert.",
+  "gitUiDiscardCommitMessages": "Nachrichten verwerfen"
 }
