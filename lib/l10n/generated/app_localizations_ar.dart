@@ -6228,7 +6228,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiInspectSnapshot => 'افحص اللقطة...';
 
   @override
-  String get gitUiReviewReset => 'إعادة تعيين المراجعة...';
+  String get gitUiReviewReset => 'مراجعة إعادة الضبط…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6282,7 +6282,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiWords => 'الكلمات';
 
   @override
-  String get gitUiCollapseContext => 'اطوِ السياق';
+  String get gitUiCollapseContext => 'طي السياق';
 
   @override
   String get gitUiIgnoreWhitespace => 'تجاهل المساحة البيضاء';
@@ -6297,10 +6297,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiCloseSearch => 'أغلق البحث';
 
   @override
-  String get gitUiStagingActions => 'إجراءات التدريج';
+  String get gitUiStagingActions => 'إجراءات الفهرس';
 
   @override
-  String get gitUiStagingActions2 => '...تدريج الإجراءات';
+  String get gitUiStagingActions2 => 'إجراءات الفهرس…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6523,7 +6523,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiBackToHEAD => 'العودة إلى HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'طلب الكرز اختيار';
+  String get gitUiOrderedCherryPick => 'انتقاء الإيداعات بالترتيب المحدد';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6585,7 +6585,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiDate2 => 'التاريخ';
 
   @override
-  String get gitUiGitCommits => 'Git يلتزم';
+  String get gitUiGitCommits => 'إيداعات Git';
 
   @override
   String get gitUiParents => 'الإيداعات الأصلية';
@@ -7014,7 +7014,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'الالتزام المنظم ($count)';
+    return 'إيداع محتوى الفهرس ($count)';
   }
 
   @override
@@ -7517,7 +7517,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'يتعهد بإعادة التشغيل: $count';
+    return 'الإيداعات التي ستُعاد تطبيقها: $count';
   }
 
   @override
@@ -7573,7 +7573,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiCancelPlan => 'ألغِ الخطة';
 
   @override
-  String get gitUiStartReviewedRebase => 'بدء إعادة النظر في قاعدة؟';
+  String get gitUiStartReviewedRebase => 'بدء إعادة التأسيس التي تمت مراجعتها؟';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7669,7 +7669,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'اقبل الملف الأيسر بالكامل...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'اقبل الملف الصحيح بالكامل...';
+  String get gitUiAcceptEntireRightFile => 'اعتماد الملف الأيمن بالكامل…';
 
   @override
   String get gitUiPreviousConflictRegion => 'منطقة النزاع السابقة';
@@ -7774,7 +7774,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'استخدم المحتوى الأيسر بالكامل...';
 
   @override
-  String get gitUiUseEntireRightContent => 'استخدم المحتوى الصحيح بالكامل...';
+  String get gitUiUseEntireRightContent => 'استخدام المحتوى الأيمن بالكامل…';
 
   @override
   String get gitUiDeleteThisPath => 'احذف هذا المسار...';
@@ -7981,7 +7981,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiCloneRepository => 'استنساخ المستودع…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'عكس الثقة مستودع';
+  String get gitUiRevokeRepositoryTrust => 'إلغاء الثقة في المستودع';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'في انتظار حالة المستودع';
@@ -8123,7 +8123,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'الكرز بيك يرتكب';
+  String get gitUiCherryPickCommits => 'انتقاء الإيداعات وتطبيقها';
 
   @override
   String get gitUiRevertCommits => 'الإلتزامات';

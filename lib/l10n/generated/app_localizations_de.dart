@@ -5949,16 +5949,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieser Dateiname enthält Bytes außerhalb von UTF-8. Git-Prüfung und Staging bleiben verfügbar; der Dokumenteditor benötigt einen UTF-8-Dateinamen.';
 
   @override
-  String get gitUiMergeInProgress => 'Zusammenführung';
+  String get gitUiMergeInProgress => 'Merge läuft';
 
   @override
-  String get gitUiRebaseInProgress => 'In Arbeit befindliche Basis';
+  String get gitUiRebaseInProgress => 'Rebase läuft';
 
   @override
   String get gitUiCherryPickInProgress => 'Cherry-pick im Gange';
 
   @override
-  String get gitUiRevertInProgress => 'In Bearbeitung umkehren';
+  String get gitUiRevertInProgress => 'Revert läuft';
 
   @override
   String get gitUiPatchApplicationInProgress =>
@@ -5975,13 +5975,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiUnresolvedConflicts => ' · ungelöste Konflikte';
 
   @override
-  String get gitUiReviewOperation => 'Überprüfungsvorgang';
+  String get gitUiReviewOperation => 'Vorgang prüfen';
 
   @override
   String get gitUiRefresh => 'Aktualisieren';
 
   @override
-  String get gitUiCreateNamedStash => 'Name des Speichers erstellen';
+  String get gitUiCreateNamedStash => 'Benannten Stash erstellen';
 
   @override
   String get gitUiCreateStash => 'Stash erstellen…';
@@ -5991,14 +5991,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiSelectAStashToInspectItsChanges =>
-      'Wählen Sie einen Vorrat, um seine Änderungen zu überprüfen';
+      'Stash auswählen, um seine Änderungen zu prüfen';
 
   @override
-  String get gitUiStashedUntrackedFiles => 'Gespeicherte untracked Dateien';
+  String get gitUiStashedUntrackedFiles => 'Nicht verfolgte Dateien im Stash';
 
   @override
   String get gitUiInspectStashedUntrackedFiles =>
-      'Inspizieren Sie untracked Dateien...';
+      'Nicht verfolgte Dateien im Stash prüfen…';
 
   @override
   String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
@@ -6041,11 +6041,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Lösen Sie die nicht zusammengeführten Dateien auf. Für Stashes gibt es in Git weder Continue noch Abort; der ursprüngliche Stash bleibt erhalten.';
 
   @override
-  String get gitUiStashNameMessage => 'Name/Nachricht des Lagers';
+  String get gitUiStashNameMessage => 'Stash-Name/Nachricht';
 
   @override
   String get gitUiStashContentAndResultingIndex =>
-      'Bestand und resultierender Index';
+      'Stash-Inhalt und resultierender Index';
 
   @override
   String get gitUiStashTrackedWorkingAndStagedChanges =>
@@ -6064,7 +6064,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiAllEligiblePathsInThisRepository =>
-      'Alle in diesem Projektarchiv zugelassenen Pfade';
+      'Alle geeigneten Pfade in diesem Repository';
 
   @override
   String get gitUiNoEligibleChangesForTheseStashOptions =>
@@ -6072,7 +6072,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiSelectAtLeastOneEligiblePath =>
-      'Wählen Sie mindestens einen förderfähigen Pfad aus.';
+      'Wählen Sie mindestens einen geeigneten Pfad aus.';
 
   @override
   String get gitUiCreateStash2 => 'Stash erstellen';
@@ -6088,13 +6088,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiDetachedHEAD => 'Losgelöster HEAD';
 
   @override
-  String get gitUiCurrent => 'Laufend ·';
+  String get gitUiCurrent => 'Aktuell · ';
 
   @override
-  String get gitUiLocked => 'Verriegelt ·';
+  String get gitUiLocked => 'Gesperrt · ';
 
   @override
-  String get gitUiOpenInBusyStack => 'Geöffnet im BusyStack ·';
+  String get gitUiOpenInBusyStack => 'In BusyStack öffnen · ';
 
   @override
   String get gitUiStatusNotInspected => 'Status nicht geprüft';
@@ -6118,17 +6118,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiLock => 'Sperren';
 
   @override
-  String get gitUiRemoveCleanWorktree => 'Entfernen Sie sauberen Worktree...';
+  String get gitUiRemoveCleanWorktree => 'Sauberen Worktree entfernen…';
 
   @override
   String get gitUiReviewRemovalIncludingLocalChanges =>
-      'Entfernen von Überprüfungen einschließlich lokaler Änderungen...';
+      'Entfernen einschließlich lokaler Änderungen prüfen…';
 
   @override
-  String get gitUiNewWorktreeFolderName => 'Neuer Name des Ordners worktree';
+  String get gitUiNewWorktreeFolderName => 'Ordnername des neuen Worktrees';
 
   @override
-  String get gitUiNewWorktreeBranch => 'Neuer Zweig des Werkbaums';
+  String get gitUiNewWorktreeBranch => 'Branch des neuen Worktrees';
 
   @override
   String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
@@ -6160,7 +6160,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Lokale Worktree-Inhalte verwerfen und entfernen';
 
   @override
-  String get gitUiRemoveCleanWorktree2 => 'Entfernen sauberer Arbeitsbaum';
+  String get gitUiRemoveCleanWorktree2 => 'Sauberen Worktree entfernen';
 
   @override
   String
@@ -6180,7 +6180,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiDirtyNestedRepository =>
-      'Schmutziges verschachteltes Repository';
+      'Verschachteltes Repository mit lokalen Änderungen';
 
   @override
   String get gitUiCleanNestedRepository =>
@@ -6191,19 +6191,18 @@ class AppLocalizationsDe extends AppLocalizations {
       'Verschachtelter Status nicht verfügbar';
 
   @override
-  String get gitUiEnterNestedRepository =>
-      'Verschachteltes Repository eingeben';
+  String get gitUiEnterNestedRepository => 'Verschachteltes Repository öffnen';
 
   @override
   String get gitUiInitializeConfiguration => 'Konfiguration initialisieren';
 
   @override
   String get gitUiUpdateToParentSRecordedCommit =>
-      'Update auf parent .s aufgezeichnete Commit...';
+      'Auf den im übergeordneten Repository erfassten Commit aktualisieren…';
 
   @override
   String get gitUiFollowConfiguredRemoteBranch =>
-      'Befolgen Sie konfigurierten Remote-Zweig...';
+      'Konfiguriertem Remote-Branch folgen…';
 
   @override
   String get gitUiSynchronizeConfiguredURLs =>
@@ -6238,7 +6237,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiApplySubmoduleOperation => 'Submodul-Betrieb anwenden';
+  String get gitUiApplySubmoduleOperation => 'Submodul-Vorgang ausführen';
 
   @override
   String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
@@ -6254,7 +6253,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiNextPage => 'Nächste Seite';
 
   @override
-  String get gitUiRecoveryBranchName => 'Name des Wiedereinziehungszweigs';
+  String get gitUiRecoveryBranchName => 'Name des Wiederherstellungs-Branches';
 
   @override
   String gitUiCreatesABranchAtArg0WorkingFilesAndTheCurrent(String arg0) {
@@ -6267,13 +6266,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiReadOnlyRecoverySnapshot =>
-      'Nur-Lese-Wiederherstellung-Snapshot';
+      'Schreibgeschützter Wiederherstellungs-Snapshot';
 
   @override
   String get gitUiInspectSnapshot => 'Momentaufnahme prüfen...';
 
   @override
-  String get gitUiReviewReset => 'Bewertung zurücksetzen...';
+  String get gitUiReviewReset => 'Reset prüfen…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6321,19 +6320,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiDiffDisplayOptions => 'Diff-Anzeigenoptionen';
 
   @override
-  String get gitUiWrap => 'Wrap';
+  String get gitUiWrap => 'Zeilenumbruch';
 
   @override
   String get gitUiWords => 'Wörter';
 
   @override
-  String get gitUiCollapseContext => 'Kontext des Zusammenbruchs';
+  String get gitUiCollapseContext => 'Kontext einklappen';
 
   @override
   String get gitUiIgnoreWhitespace => 'Leerzeichen ignorieren';
 
   @override
-  String get gitUiSearchComparison => 'Suchvergleich';
+  String get gitUiSearchComparison => 'Im Vergleich suchen';
 
   @override
   String get gitUiSearch => 'Suchen';
@@ -6342,10 +6341,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiCloseSearch => 'Suche schließen';
 
   @override
-  String get gitUiStagingActions => 'Staging-Maßnahmen';
+  String get gitUiStagingActions => 'Index-Aktionen';
 
   @override
-  String get gitUiStagingActions2 => '- Ich versuch\'s.';
+  String get gitUiStagingActions2 => 'Index-Aktionen…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6380,7 +6379,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Schreibgeschützter Vergleich · Text kopieren oder Anzeige anpassen.';
 
   @override
-  String get gitUiNoFinalNewline => ' · keine endgültige Neulinie';
+  String get gitUiNoFinalNewline => ' · kein abschließender Zeilenumbruch';
 
   @override
   String gitUiArg0Arg1Arg2BytesArg3(
@@ -6434,7 +6433,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiWritingReviewedIndexResult =>
-      'Schreiben überprüft Index-Ergebnis';
+      'Geprüftes Ergebnis wird in den Index geschrieben';
 
   @override
   String get gitUiHead => 'HEAD';
@@ -6460,7 +6459,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiRedo => 'Wiederholen';
 
   @override
-  String get gitUiReloadIndexReview => 'Index-Rezension neu laden?';
+  String get gitUiReloadIndexReview => 'Index-Vergleich neu laden?';
 
   @override
   String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
@@ -6474,7 +6473,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiWriteEditedResultToThisIndexEntry =>
-      'Schreiben Sie bearbeitetes Ergebnis auf diesen Indexeintrag';
+      'Bearbeitetes Ergebnis in diesen Indexeintrag schreiben';
 
   @override
   String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
@@ -6493,7 +6492,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiWriteReviewedIndexResult => 'Bewertung des Index-Ergebniss';
+  String get gitUiWriteReviewedIndexResult =>
+      'Geprüftes Index-Ergebnis schreiben';
 
   @override
   String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
@@ -6513,7 +6513,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die angeforderte Revision befindet sich außerhalb der aktuellen Filter. Alle Filter zurücksetzen, um sie anzuzeigen.';
 
   @override
-  String get gitUiFilterLog => 'Filterprotokoll';
+  String get gitUiFilterLog => 'Log filtern';
 
   @override
   String get gitUiFilters => 'Filter...';
@@ -6539,7 +6539,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiMessageFilter => 'Nachrichtenfilter';
 
   @override
-  String get gitUiAuthorFilter => 'Autor Filter';
+  String get gitUiAuthorFilter => 'Autorenfilter';
 
   @override
   String get gitUiPathFilter => 'Pfadfilter';
@@ -6563,13 +6563,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiRefreshLog => 'Protokoll aktualisieren';
 
   @override
-  String get gitUiGoToCommitReference => 'Gehen Sie zu Commit/Reference...';
+  String get gitUiGoToCommitReference => 'Zu Commit/Referenz wechseln…';
 
   @override
   String get gitUiBackToHEAD => 'Zurück zu HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Bestellte Kirsche-Pick';
+  String get gitUiOrderedCherryPick =>
+      'Cherry-pick in festgelegter Reihenfolge';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6592,7 +6593,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Details einreichen...';
+  String get gitUiCommitDetails => 'Commit-Details…';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6631,7 +6632,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiDate2 => 'Datum';
 
   @override
-  String get gitUiGitCommits => 'Git verpflichtet sich';
+  String get gitUiGitCommits => 'Git-Commits';
 
   @override
   String get gitUiParents => 'Eltern-Commits';
@@ -6685,7 +6686,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitActions => 'Einführen von Aktionen...';
+  String get gitUiCommitActions => 'Commit-Aktionen…';
 
   @override
   String get gitUiEmptyTree => 'leerer Baum';
@@ -6716,7 +6717,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiCopyFullObjectID => 'Vollständige Objekt-ID kopieren';
 
   @override
-  String get gitUiGoToCommitReference2 => 'Gehe zu Commit/Reference';
+  String get gitUiGoToCommitReference2 => 'Zu Commit/Referenz wechseln';
 
   @override
   String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
@@ -6767,7 +6768,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiOpenOccupiedWorktree => 'Offene besetzte Arbeitsfläche';
+  String get gitUiOpenOccupiedWorktree => 'Belegten Worktree öffnen';
 
   @override
   String get gitUiCreateLocalTrackingBranch =>
@@ -6784,13 +6785,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiRename => 'Umbenennen...';
 
   @override
-  String get gitUiChangeUpstream => 'Weiter oben ändern...';
+  String get gitUiChangeUpstream => 'Upstream ändern…';
 
   @override
   String get gitUiDelete => 'Löschen...';
 
   @override
-  String get gitUiDeleteFromRemote => 'Löschen aus der Ferne...';
+  String get gitUiDeleteFromRemote => 'Auf Remote löschen…';
 
   @override
   String gitUiActionsForArg0(String arg0) {
@@ -6861,7 +6862,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiDeleteUnmergedLocalBranch => 'Lokaler Zweig löschen';
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Nicht zusammengeführten lokalen Branch löschen';
 
   @override
   String gitUiDestinationArg0Arg1(String arg0, String arg1) {
@@ -6872,18 +6874,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiSourceBranchOrTag => 'Quellzweig oder -tag';
 
   @override
-  String get gitUiMergePolicy => 'Politik zusammenführen';
+  String get gitUiMergePolicy => 'Merge-Verfahren';
 
   @override
-  String get gitUiFastForwardWhenPossible =>
-      'Wenn möglich, schnell vorankommen';
+  String get gitUiFastForwardWhenPossible => 'Fast-Forward, wenn möglich';
 
   @override
   String get gitUiAlwaysCreateAMergeCommit =>
-      'Erstellen Sie immer eine Zusammenführungs-Commit';
+      'Immer einen Merge-Commit erstellen';
 
   @override
-  String get gitUiFastForwardOnly => 'Nur schnell voran';
+  String get gitUiFastForwardOnly => 'Nur Fast-Forward';
 
   @override
   String get gitUiSquashIntoStagedChanges =>
@@ -7070,7 +7071,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Geplantes Commit ($count)';
+    return 'Gestagtes committen ($count)';
   }
 
   @override
@@ -7479,7 +7480,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiPreparingGitOperation => 'Git-Operation vorbereiten...';
 
   @override
-  String get gitUiThisAttemptCreated => 'Dieser Versuch';
+  String get gitUiThisAttemptCreated => 'Durch diesen Versuch erstellt';
 
   @override
   String get gitUiTheDestinationExistedBeforeThisAttempt =>
@@ -7539,7 +7540,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiRewordWillRequestANewMessage =>
-      '[Das Wort verlangt eine neue Nachricht]\n';
+      '[Nachricht ändern fordert eine neue Commit-Nachricht an]\n';
 
   @override
   String get gitUiPlannedCommitMessages => 'Geplante Commit-Nachrichten';
@@ -7571,7 +7572,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiIncludeRootCommits => 'Root-Commits einbeziehen';
 
   @override
-  String get gitUiMergeCommits => 'Zusammenführen von Commits';
+  String get gitUiMergeCommits => 'Merge-Commits';
 
   @override
   String get gitUiFlattenHistory => 'Historie linearisieren';
@@ -7587,7 +7588,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Zu spielende Komponenten: $count';
+    return 'Erneut anzuwendende Commits: $count';
   }
 
   @override
@@ -7607,7 +7608,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiGitBranchLabelResetMergeStructure =>
-      'Git-Zweig/Etikett/Reset/Merge-Struktur';
+      'Git-Struktur mit branch/label/reset/merge';
 
   @override
   String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
@@ -7633,7 +7634,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiPreviewCombinedCommitMessages =>
-      'Vorschau kombinierte Commit-Nachrichten...';
+      'Kombinierte Commit-Nachrichten ansehen…';
 
   @override
   String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
@@ -7643,7 +7644,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiCancelPlan => 'Plan abbrechen';
 
   @override
-  String get gitUiStartReviewedRebase => 'Begutachtete Datenbank starten?';
+  String get gitUiStartReviewedRebase => 'Geprüftes Rebase starten?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7658,7 +7659,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiNoContinuingGitOperation =>
-      'Keine Fortsetzung des Git-Betriebs';
+      'Kein fortzusetzender Git-Vorgang';
 
   @override
   String get gitUiStoppedForEditingAmend => ' · zum Bearbeiten/Ändern gestoppt';
@@ -7693,7 +7694,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der reale Index hat keine inszenierten Änderungen. Erstellen Sie einen expliziten leeren Commit, dann setzen Sie den Sequenzer fort, wenn er aktiv bleibt.';
 
   @override
-  String get gitUiKeepEmptyCommit => 'Leere Übertragung beibehalten...';
+  String get gitUiKeepEmptyCommit => 'Leeren Commit beibehalten…';
 
   @override
   String get gitUiGitWillTryToReturnToTheOperationSStarting =>
@@ -7742,11 +7743,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die gesamte linke Datei akzeptieren...';
 
   @override
-  String get gitUiAcceptEntireRightFile =>
-      'Akzeptieren Sie die gesamte richtige Datei...';
+  String get gitUiAcceptEntireRightFile => 'Gesamte rechte Datei übernehmen…';
 
   @override
-  String get gitUiPreviousConflictRegion => 'Frühere Konfliktregion';
+  String get gitUiPreviousConflictRegion => 'Vorheriger Konfliktbereich';
 
   @override
   String get gitUiNextConflictRegion => 'Nächste Konfliktregion';
@@ -7850,14 +7850,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Den gesamten linken Inhalt verwenden...';
 
   @override
-  String get gitUiUseEntireRightContent =>
-      'Den gesamten richtigen Inhalt verwenden...';
+  String get gitUiUseEntireRightContent => 'Gesamten rechten Inhalt verwenden…';
 
   @override
   String get gitUiDeleteThisPath => 'Diesen Pfad löschen...';
 
   @override
-  String get gitUiResolvedSubmoduleCommit => 'Resolved submodule commit';
+  String get gitUiResolvedSubmoduleCommit =>
+      'Commit zur Auflösung des Submodul-Konflikts';
 
   @override
   String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
@@ -7897,7 +7897,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiStageThisConflictResolution =>
-      'Diese Konfliktlösung inszenieren?';
+      'Diese Konfliktlösung zum Index hinzufügen?';
 
   @override
   String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
@@ -7923,7 +7923,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Native Git Tisch Zugänglichkeit ist nicht verfügbar. Versuchen Sie nach dem erneuten Verbinden der Anwendung.';
 
   @override
-  String get gitUiSans => 'Sans';
+  String get gitUiSans => 'Serifenlos';
 
   @override
   String get gitUiSelect => 'Wählen';
@@ -7950,7 +7950,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiUseMessageAndContinue => 'Nachricht verwenden und fortfahren';
 
   @override
-  String get gitUiRespondPrivately => 'Private Antworten';
+  String get gitUiRespondPrivately => 'Vertraulich antworten';
 
   @override
   String gitUiViewPreferencesCouldNotBeSavedArg0(String arg0) {
@@ -8059,8 +8059,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiCloneRepository => 'Repository klonen…';
 
   @override
-  String get gitUiRevokeRepositoryTrust =>
-      'Vertrauen in die Repository-Repositorys';
+  String get gitUiRevokeRepositoryTrust => 'Repository-Vertrauen widerrufen';
 
   @override
   String get gitUiWaitingForRepositoryStatus =>
@@ -8089,14 +8088,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String gitUiCloneRepositoryArg0(String arg0) {
-    return 'Clone repository · $arg0';
+    return 'Repository klonen · $arg0';
   }
 
   @override
   String get gitUiApply => 'Anwenden';
 
   @override
-  String get gitUiResizeGitPanes => 'Größe der Git-Scheiben ändern';
+  String get gitUiResizeGitPanes => 'Git-Bereiche vergrößern/verkleinern';
 
   @override
   String gitUiArg0Percent(String arg0) {
@@ -8204,10 +8203,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Kirschenpflücker-Verpflichtungen';
+  String get gitUiCherryPickCommits => 'Commits per Cherry-pick übernehmen';
 
   @override
-  String get gitUiRevertCommits => 'Übertragungen rückgängig machen';
+  String get gitUiRevertCommits => 'Commits durch Revert rückgängig machen';
 
   @override
   String get gitUiCompareToFullRevisionID =>
@@ -8368,7 +8367,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiCompareToCurrentFile => 'Mit der aktuellen Datei vergleichen';
 
   @override
-  String get gitUiCompareToParent => 'Vergleichen Sie mit Eltern...';
+  String get gitUiCompareToParent => 'Mit Vorgänger vergleichen…';
 
   @override
   String gitUiCommittedArg0UnsavedEditorContentIsNotPartOfThese(String arg0) {
@@ -8408,10 +8407,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiAddFullCommitObjectID => 'Vollständige Objekt-ID hinzufügen';
 
   @override
-  String get gitUiAddReviewedCommit => 'Reviewed Commit hinzufügen...';
+  String get gitUiAddReviewedCommit => 'Geprüften Commit hinzufügen…';
 
   @override
-  String get gitUiMoveEarlier => 'Frühere Bewegung';
+  String get gitUiMoveEarlier => 'Nach vorne verschieben';
 
   @override
   String get gitUiMoveLater => 'Später verschieben';
@@ -8498,7 +8497,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiSkip => 'Überspringen';
 
   @override
-  String get gitUiQuit => 'Betrieb einstellen';
+  String get gitUiQuit => 'Vorgang ohne Zurücksetzen beenden';
 
   @override
   String get gitUiSoft => 'Soft';
@@ -8531,7 +8530,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiLeftContent => 'Linker Inhalt';
 
   @override
-  String get gitUiRightContent => 'Rechte Inhalte';
+  String get gitUiRightContent => 'Rechter Inhalt';
 
   @override
   String get gitUiDeletePath => 'Pfad löschen';
@@ -8561,7 +8560,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiSymlinkContent => 'Symbolische Verbindung';
 
   @override
-  String get gitUiNoOperation => 'Kein Betrieb';
+  String get gitUiNoOperation => 'Kein Vorgang';
 
   @override
   String get gitUiCherryPickOperation => 'Cherry-Pick';
@@ -8573,16 +8572,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiApplyMailboxOperation => 'Patches anwenden';
 
   @override
-  String get gitUiSquashOperation => 'Zusammenführung von Squash';
+  String get gitUiSquashOperation => 'Squash-Merge';
 
   @override
-  String get gitUiUnmergedOperation => 'Nicht zusammengetragener Index';
+  String get gitUiUnmergedOperation => 'Index mit ungelösten Konflikten';
 
   @override
   String get gitUiWaitingForPromptPhase => 'Warten auf Ihre Antwort';
 
   @override
-  String get gitUiStoppedPhase => 'Zur Überprüfung eingestellt';
+  String get gitUiStoppedPhase => 'Zur Prüfung angehalten';
 
   @override
   String get gitUiCompletedPhase => 'Abgeschlossen';
@@ -8594,7 +8593,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitUiCancelledPhase => 'Abgebrochen';
 
   @override
-  String get gitUiUncertainPhase => 'Ergebnis erfordert Aussöhnung';
+  String get gitUiUncertainPhase => 'Ergebnis muss abgeglichen werden';
 
   @override
   String gitUiStageVersion(String stage) {

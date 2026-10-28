@@ -5993,7 +5993,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Løs de uflettede filene. Git har ingen kommando for å fortsette eller avbryte en stash; den opprinnelige stashen beholdes.';
 
   @override
-  String get gitUiStashNameMessage => 'Stash name/message';
+  String get gitUiStashNameMessage => 'Stash-navn/melding';
 
   @override
   String get gitUiStashContentAndResultingIndex =>
@@ -6220,7 +6220,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Inspiser skjermbildet ...';
 
   @override
-  String get gitUiReviewReset => 'Gjennomgå nullstilling ...';
+  String get gitUiReviewReset => 'Se gjennom tilbakestilling…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6274,7 +6274,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiWords => 'Ord';
 
   @override
-  String get gitUiCollapseContext => 'Fold sammen kontekst';
+  String get gitUiCollapseContext => 'Skjul kontekst';
 
   @override
   String get gitUiIgnoreWhitespace => 'Ignorer tomrom';
@@ -6289,10 +6289,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCloseSearch => 'Lukk søk';
 
   @override
-  String get gitUiStagingActions => 'Igangsettingstiltak';
+  String get gitUiStagingActions => 'Indekshandlinger';
 
   @override
-  String get gitUiStagingActions2 => 'Sporer handlinger ...';
+  String get gitUiStagingActions2 => 'Indekshandlinger…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6335,7 +6335,7 @@ class AppLocalizationsNb extends AppLocalizations {
     String arg2,
     String arg3,
   ) {
-    return '$arg0 · $arg1 · $arg2 bytes$arg3';
+    return '$arg0 · $arg1 · $arg2 byte$arg3';
   }
 
   @override
@@ -6516,7 +6516,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiBackToHEAD => 'Tilbake til HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Ordnet kirsebærplukk';
+  String get gitUiOrderedCherryPick => 'Cherry-pick i valgt rekkefølge';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6578,7 +6578,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiDate2 => 'Dato';
 
   @override
-  String get gitUiGitCommits => 'Git- innsendinger';
+  String get gitUiGitCommits => 'Git-commiter';
 
   @override
   String get gitUiParents => 'Foreldrecommiter';
@@ -7011,7 +7011,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Meld inn i trinn ($count)';
+    return 'Commit endringer i indeksen ($count)';
   }
 
   @override
@@ -7519,7 +7519,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Legger inn i gjenspilling: $count';
+    return 'Commiter som skal brukes på nytt: $count';
   }
 
   @override
@@ -7575,7 +7575,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCancelPlan => 'Avbryt plan';
 
   @override
-  String get gitUiStartReviewedRebase => 'Begynn rebase?';
+  String get gitUiStartReviewedRebase => 'Starte gjennomgått rebase?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7672,7 +7672,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Godta hele fila til venstre ...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Godta hele fila til høyre ...';
+  String get gitUiAcceptEntireRightFile => 'Godta hele høyre fil…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Forrige konfliktområde';
@@ -7778,7 +7778,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Bruk hele innholdet til venstre ...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Bruk hele innholdet til høyre ...';
+  String get gitUiUseEntireRightContent => 'Bruk alt innhold til høyre…';
 
   @override
   String get gitUiDeleteThisPath => 'Slett denne stien ...';
@@ -7985,7 +7985,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCloneRepository => 'Klon kodelager…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Trekk tilbake arkivtillit';
+  String get gitUiRevokeRepositoryTrust =>
+      'Trekk tilbake tillit til kodelageret';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'Venter på lagerstatus';
@@ -8127,7 +8128,7 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Kryssingplukkerkommiter';
+  String get gitUiCherryPickCommits => 'Bruk commiter med cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Tilbakestill innsendinger';

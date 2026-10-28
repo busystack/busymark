@@ -6243,7 +6243,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiInspectSnapshot => 'بررسی snapshot...';
 
   @override
-  String get gitUiReviewReset => 'بررسی مجدد...';
+  String get gitUiReviewReset => 'بازبینی بازنشانی…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6291,13 +6291,13 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiDiffDisplayOptions => 'گزینه های نمایش دیف';
 
   @override
-  String get gitUiWrap => 'Wrap';
+  String get gitUiWrap => 'شکستن سطر';
 
   @override
   String get gitUiWords => 'کلمات';
 
   @override
-  String get gitUiCollapseContext => 'فشرده سازی زمینه';
+  String get gitUiCollapseContext => 'جمع کردن زمینه';
 
   @override
   String get gitUiIgnoreWhitespace => 'نادیده گرفتن فضای سفید';
@@ -6312,10 +6312,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiCloseSearch => 'جستجو نزدیک';
 
   @override
-  String get gitUiStagingActions => 'فعالیت های استیشن';
+  String get gitUiStagingActions => 'عملیات نمایه';
 
   @override
-  String get gitUiStagingActions2 => 'فعالیت های استیضاح...';
+  String get gitUiStagingActions2 => 'عملیات نمایه…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6359,7 +6359,7 @@ class AppLocalizationsFa extends AppLocalizations {
     String arg2,
     String arg3,
   ) {
-    return '$arg0 · $arg1 · $arg2 bytes$arg3';
+    return '$arg0 · $arg1 · $arg2 بایت$arg3';
   }
 
   @override
@@ -6539,7 +6539,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiBackToHEAD => 'بازگشت به HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'سفارش کیک';
+  String get gitUiOrderedCherryPick => 'گزینش ثبت‌ها به ترتیب مشخص';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6600,7 +6600,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiDate2 => 'تاریخ';
 
   @override
-  String get gitUiGitCommits => 'گیت تعهدات';
+  String get gitUiGitCommits => 'ثبت‌های Git';
 
   @override
   String get gitUiParents => 'ثبت‌های والد';
@@ -7030,7 +7030,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'تگ های متعهد ($count)';
+    return 'ثبت تغییرات آماده‌شده ($count)';
   }
 
   @override
@@ -7537,7 +7537,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'بایگانی برچسب ها: $count';
+    return 'ثبت‌های قابل اعمال مجدد: $count';
   }
 
   @override
@@ -7592,7 +7592,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiCancelPlan => 'برنامه لغو';
 
   @override
-  String get gitUiStartReviewedRebase => 'بازنگری بازنگری بازنگری بازنگری';
+  String get gitUiStartReviewedRebase => 'بازپایه‌گذاری بازبینی‌شده شروع شود؟';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7688,8 +7688,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'تمام فایل های چپ را می پذیریم.';
 
   @override
-  String get gitUiAcceptEntireRightFile =>
-      'تمام فایل های مناسب را دریافت کنید ...';
+  String get gitUiAcceptEntireRightFile => 'پذیرش تمام پروندهٔ سمت راست…';
 
   @override
   String get gitUiPreviousConflictRegion => 'منطقه پیشین درگیری';
@@ -7795,7 +7794,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'استفاده از محتوای کامل...';
 
   @override
-  String get gitUiUseEntireRightContent => 'از محتوای مناسب استفاده کنید...';
+  String get gitUiUseEntireRightContent => 'استفاده از تمام محتوای سمت راست…';
 
   @override
   String get gitUiDeleteThisPath => 'این مسیر را حذف کنید...';
@@ -7999,7 +7998,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiCloneRepository => 'همتاسازی مخزن…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'بازگرداندن اعتماد ذخیره سازی';
+  String get gitUiRevokeRepositoryTrust => 'لغو اعتماد به مخزن';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'منتظر وضعیت ذخیره سازی';
@@ -8141,7 +8140,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Cherry-Pick قراردادی';
+  String get gitUiCherryPickCommits => 'اعمال ثبت‌ها با cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'تعهدات بازگشت';
@@ -8670,7 +8669,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitHostCloneRepository2 => 'همتاسازی مخزن…';
 
   @override
-  String get gitHostGitLog => 'Git Log';
+  String get gitHostGitLog => 'تاریخچهٔ Git';
 
   @override
   String get gitUiAbsentPlaceholder => '( عدم حضور )';

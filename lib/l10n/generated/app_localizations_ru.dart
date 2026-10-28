@@ -6278,7 +6278,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Инспектируемый снимок...';
 
   @override
-  String get gitUiReviewReset => 'Перезагрузить...';
+  String get gitUiReviewReset => 'Проверить сброс…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6332,7 +6332,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiWords => 'Слова';
 
   @override
-  String get gitUiCollapseContext => 'Контекст сворачивания';
+  String get gitUiCollapseContext => 'Свернуть контекст';
 
   @override
   String get gitUiIgnoreWhitespace => 'Игнорировать белое пространство';
@@ -6347,10 +6347,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiCloseSearch => 'Закрыть поиск';
 
   @override
-  String get gitUiStagingActions => 'Меры по выравниванию';
+  String get gitUiStagingActions => 'Действия с индексом';
 
   @override
-  String get gitUiStagingActions2 => 'Потрясающие действия...';
+  String get gitUiStagingActions2 => 'Действия с индексом…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6394,7 +6394,7 @@ class AppLocalizationsRu extends AppLocalizations {
     String arg2,
     String arg3,
   ) {
-    return '$arg0 · $arg1 · $arg2 bytes$arg3';
+    return '$arg0 · $arg1 · $arg2 байт$arg3';
   }
 
   @override
@@ -6575,7 +6575,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiBackToHEAD => 'К HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Заказ вишневого пика';
+  String get gitUiOrderedCherryPick => 'Cherry-pick в выбранном порядке';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6637,7 +6637,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiDate2 => 'Дата';
 
   @override
-  String get gitUiGitCommits => 'Гит берет на себя обязательства';
+  String get gitUiGitCommits => 'Коммиты Git';
 
   @override
   String get gitUiParents => 'Родительские коммиты';
@@ -7073,7 +7073,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Установлена ($count)';
+    return 'Создать коммит из индекса ($count)';
   }
 
   @override
@@ -7584,7 +7584,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Назначает повторное воспроизведение: $count';
+    return 'Коммиты для повторного применения: $count';
   }
 
   @override
@@ -7640,7 +7640,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiCancelPlan => 'План отмены';
 
   @override
-  String get gitUiStartReviewedRebase => 'Начать пересмотр базы?';
+  String get gitUiStartReviewedRebase => 'Начать проверенное перебазирование?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7736,7 +7736,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Принимать все левое дело...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Прими все правые файлы...';
+  String get gitUiAcceptEntireRightFile => 'Принять весь правый файл…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Регион предыдущего конфликта';
@@ -7844,7 +7844,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitUiUseEntireRightContent =>
-      'Использовать полное правильное содержание...';
+      'Использовать всё правое содержимое…';
 
   @override
   String get gitUiDeleteThisPath => 'Удалить этот путь...';
@@ -8053,7 +8053,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiCloneRepository => 'Клонировать репозиторий…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Доверие ретроспективного хранилища';
+  String get gitUiRevokeRepositoryTrust => 'Отозвать доверие к репозиторию';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'Ожидание статуса хранилища';
@@ -8195,7 +8195,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Вишнёвый хит';
+  String get gitUiCherryPickCommits => 'Перенести коммиты через cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Отменить';

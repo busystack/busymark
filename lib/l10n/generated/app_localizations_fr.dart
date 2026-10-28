@@ -6277,7 +6277,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Inspecter le instantané...';
 
   @override
-  String get gitUiReviewReset => 'Réinitialisez l\'examen...';
+  String get gitUiReviewReset => 'Examiner la réinitialisation…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6331,7 +6331,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiWords => 'Mots';
 
   @override
-  String get gitUiCollapseContext => 'Contexte d \' effondrement';
+  String get gitUiCollapseContext => 'Réduire le contexte';
 
   @override
   String get gitUiIgnoreWhitespace => 'Ignorer l\'espace blanc';
@@ -6346,10 +6346,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiCloseSearch => 'Fermer la recherche';
 
   @override
-  String get gitUiStagingActions => 'Actions de stabilisation';
+  String get gitUiStagingActions => 'Actions d’indexation';
 
   @override
-  String get gitUiStagingActions2 => 'Des actions de blocage...';
+  String get gitUiStagingActions2 => 'Actions d’indexation…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6576,7 +6576,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiBackToHEAD => 'Retour à HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Pick cerise commandé';
+  String get gitUiOrderedCherryPick => 'Cherry-pick dans l’ordre choisi';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6638,7 +6638,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiDate2 => 'Date';
 
   @override
-  String get gitUiGitCommits => 'Git s\'engage';
+  String get gitUiGitCommits => 'Commits Git';
 
   @override
   String get gitUiParents => 'Commits parents';
@@ -7076,7 +7076,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'S\'engager par étapes ($count)';
+    return 'Commiter l’index ($count)';
   }
 
   @override
@@ -7591,7 +7591,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Commande de rejouer: $count';
+    return 'Commits à réappliquer : $count';
   }
 
   @override
@@ -7647,8 +7647,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiCancelPlan => 'Annuler le plan';
 
   @override
-  String get gitUiStartReviewedRebase =>
-      'Début de la révision de la base de données?';
+  String get gitUiStartReviewedRebase => 'Démarrer le rebase vérifié ?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7748,7 +7747,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Accepter le fichier de gauche entier...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Accepter tout le fichier droit...';
+  String get gitUiAcceptEntireRightFile =>
+      'Accepter tout le fichier de droite…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Ancienne région de conflit';
@@ -7854,7 +7854,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Utiliser tout le contenu gauche...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Utiliser tout le contenu...';
+  String get gitUiUseEntireRightContent =>
+      'Utiliser tout le contenu de droite…';
 
   @override
   String get gitUiDeleteThisPath => 'Supprimer ce chemin...';
@@ -8063,7 +8064,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitUiCloneRepository => 'Cloner un dépôt…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Renverser la confiance du dépôt';
+  String get gitUiRevokeRepositoryTrust =>
+      'Révoquer la confiance dans le dépôt';
 
   @override
   String get gitUiWaitingForRepositoryStatus =>
@@ -8206,7 +8208,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Erreurs de cliquet de cerise';
+  String get gitUiCherryPickCommits => 'Appliquer les commits par cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Réinitialiser les commits';

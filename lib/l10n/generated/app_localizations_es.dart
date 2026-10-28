@@ -6273,7 +6273,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Inspeccione la instantánea...';
 
   @override
-  String get gitUiReviewReset => 'Revisar el restablecimiento...';
+  String get gitUiReviewReset => 'Revisar el restablecimiento…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6342,10 +6342,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitUiCloseSearch => 'Cerrar búsqueda';
 
   @override
-  String get gitUiStagingActions => 'Acciones de escalonamiento';
+  String get gitUiStagingActions => 'Acciones de preparación';
 
   @override
-  String get gitUiStagingActions2 => 'Acciones de estadificación...';
+  String get gitUiStagingActions2 => 'Acciones de preparación…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6571,7 +6571,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitUiBackToHEAD => 'Volver a HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Piquete de cereza pedido';
+  String get gitUiOrderedCherryPick => 'Cherry-pick en el orden indicado';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6633,7 +6633,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitUiDate2 => 'Fecha';
 
   @override
-  String get gitUiGitCommits => 'Git confirma';
+  String get gitUiGitCommits => 'Commits de Git';
 
   @override
   String get gitUiParents => 'Commits padre';
@@ -7071,7 +7071,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Entrega escalonada ($count)';
+    return 'Confirmar lo preparado ($count)';
   }
 
   @override
@@ -7584,7 +7584,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Se compromete a reproducir: $count';
+    return 'Commits que se volverán a aplicar: $count';
   }
 
   @override
@@ -7640,7 +7640,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitUiCancelPlan => 'Cancelar el plan';
 
   @override
-  String get gitUiStartReviewedRebase => '¿Empezar a rebase revisado?';
+  String get gitUiStartReviewedRebase => '¿Iniciar el rebase revisado?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7738,7 +7738,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Aceptar todo el archivo izquierdo...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Aceptar todo el archivo derecho...';
+  String get gitUiAcceptEntireRightFile =>
+      'Aceptar todo el archivo de la derecha…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Región de conflicto anterior';
@@ -7844,7 +7845,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Usar todo el contenido izquierdo...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Usar todo el contenido correcto...';
+  String get gitUiUseEntireRightContent =>
+      'Usar todo el contenido de la derecha…';
 
   @override
   String get gitUiDeleteThisPath => 'Borrar esta ruta...';
@@ -8196,7 +8198,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Compromisos de selección de cerezas';
+  String get gitUiCherryPickCommits => 'Aplicar commits con cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Revertir confirmaciones';
@@ -8652,7 +8654,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String gitUiNoFinalLf(String format) {
-    return '$format · no final LF';
+    return '$format · sin LF final';
   }
 
   @override
@@ -8686,7 +8688,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitUiRevertInline => 'Revertir';
 
   @override
-  String get gitUiApplyMailboxInline => 'applyMailbox';
+  String get gitUiApplyMailboxInline => 'aplicar parches';
 
   @override
   String get gitUiSquashInline => 'Combinar';

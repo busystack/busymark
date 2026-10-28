@@ -6215,7 +6215,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Inspeksi foto...';
 
   @override
-  String get gitUiReviewReset => 'Review ulang...';
+  String get gitUiReviewReset => 'Tinjau reset…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6269,7 +6269,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiWords => 'Kata';
 
   @override
-  String get gitUiCollapseContext => 'Kecilkan konteks';
+  String get gitUiCollapseContext => 'Ciutkan konteks';
 
   @override
   String get gitUiIgnoreWhitespace => 'Abaikan whitespace';
@@ -6284,10 +6284,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiCloseSearch => 'Tutup pencarian';
 
   @override
-  String get gitUiStagingActions => 'Aksi staging';
+  String get gitUiStagingActions => 'Tindakan indeks';
 
   @override
-  String get gitUiStagingActions2 => 'Tindakan Staging...';
+  String get gitUiStagingActions2 => 'Tindakan indeks…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6455,7 +6455,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Revisi yang diminta berada di luar penyaring saat ini. Reset penyaring untuk mengungkapkannya.';
 
   @override
-  String get gitUiFilterLog => 'Filter Log';
+  String get gitUiFilterLog => 'Filter riwayat';
 
   @override
   String get gitUiFilters => 'Filter...';
@@ -6493,7 +6493,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiAuthor2 => 'Penulis';
 
   @override
-  String get gitUiPath2 => 'Path';
+  String get gitUiPath2 => 'Jalur';
 
   @override
   String get gitUiDateFilter => 'Penyaring tanggal...';
@@ -6511,7 +6511,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiBackToHEAD => 'Kembali ke HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Dipesan cherry-pick';
+  String get gitUiOrderedCherryPick => 'Cherry-pick sesuai urutan yang dipilih';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6954,7 +6954,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitUiAmendRevision(String revision) {
-    return 'Amend $revision';
+    return 'Ubah $revision';
   }
 
   @override
@@ -7007,7 +7007,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Commit dipentaskan ($count)';
+    return 'Commit perubahan di indeks ($count)';
   }
 
   @override
@@ -7463,7 +7463,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
-    return 'Branch block $arg0\n';
+    return 'Blok cabang $arg0\n';
   }
 
   @override
@@ -7500,7 +7500,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiIncludeRootCommits => 'Sertakan commit akar';
 
   @override
-  String get gitUiMergeCommits => 'Merge commits';
+  String get gitUiMergeCommits => 'Commit gabungan';
 
   @override
   String get gitUiFlattenHistory => 'Ratakan riwayat';
@@ -7516,7 +7516,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Commit untuk replay: $count';
+    return 'Commit yang akan diterapkan ulang: $count';
   }
 
   @override
@@ -7553,7 +7553,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitUiBranchBlockArg02(String arg0) {
-    return ' · branch block $arg0';
+    return ' · blok cabang $arg0';
   }
 
   @override
@@ -7572,7 +7572,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiCancelPlan => 'Batalkan rencana';
 
   @override
-  String get gitUiStartReviewedRebase => 'Mulai periksa rebase?';
+  String get gitUiStartReviewedRebase => 'Mulai rebase yang telah ditinjau?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7670,8 +7670,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Terima seluruh berkas kiri...';
 
   @override
-  String get gitUiAcceptEntireRightFile =>
-      'Terima seluruh berkas yang benar...';
+  String get gitUiAcceptEntireRightFile => 'Terima seluruh berkas kanan…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Daerah konflik sebelumnya';
@@ -7778,7 +7777,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Gunakan seluruh isi kiri...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Gunakan seluruh isi kanan...';
+  String get gitUiUseEntireRightContent => 'Gunakan seluruh konten kanan…';
 
   @override
   String get gitUiDeleteThisPath => 'vectors-action';
@@ -7934,7 +7933,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitUiResolveArg0(String arg0) {
-    return 'Resolve $arg0';
+    return 'Selesaikan $arg0';
   }
 
   @override
@@ -7986,7 +7985,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiCloneRepository => 'Klon repositori…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Hapus kepercayaan repositori';
+  String get gitUiRevokeRepositoryTrust => 'Cabut kepercayaan repositori';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'Menunggu status repositori';
@@ -8128,7 +8127,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Cherry-pick commit';
+  String get gitUiCherryPickCommits => 'Terapkan commit dengan cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Putar balik suatu commit';
@@ -8197,7 +8196,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitUiTargetArg0(String arg0) {
-    return 'Target $arg0';
+    return 'Tujuan $arg0';
   }
 
   @override
@@ -8494,7 +8493,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiApplyMailboxOperation => 'Terapkan patch';
 
   @override
-  String get gitUiSquashOperation => 'Squash merge';
+  String get gitUiSquashOperation => 'Gabung squash';
 
   @override
   String get gitUiUnmergedOperation => 'Indeks tak terukur';

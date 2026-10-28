@@ -6205,7 +6205,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiInspectSnapshot => 'स्नेपशॉट का निरीक्षण करें...';
 
   @override
-  String get gitUiReviewReset => 'रीसेट रीसेट करें...';
+  String get gitUiReviewReset => 'रीसेट की समीक्षा करें…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6259,7 +6259,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiWords => 'शब्द';
 
   @override
-  String get gitUiCollapseContext => 'बंद करें';
+  String get gitUiCollapseContext => 'संदर्भ समेटें';
 
   @override
   String get gitUiIgnoreWhitespace => 'श्वेतस्थान नज़र अंदाज़ करें';
@@ -6274,10 +6274,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiCloseSearch => 'खोज बन्द करें';
 
   @override
-  String get gitUiStagingActions => 'क्रियाएँ';
+  String get gitUiStagingActions => 'इंडेक्स की कार्रवाइयाँ';
 
   @override
-  String get gitUiStagingActions2 => 'क्रियाएँ बनाई जा रही हैं...';
+  String get gitUiStagingActions2 => 'इंडेक्स की कार्रवाइयाँ…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6502,7 +6502,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiBackToHEAD => 'HEAD पर वापस';
 
   @override
-  String get gitUiOrderedCherryPick => 'आर्डर्डाइज-चयन';
+  String get gitUiOrderedCherryPick => 'चुने गए क्रम में cherry-pick';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6565,7 +6565,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiDate2 => 'तारीख';
 
   @override
-  String get gitUiGitCommits => 'Git पहले से ही चला आता है';
+  String get gitUiGitCommits => 'Git कमिट';
 
   @override
   String get gitUiParents => 'पैरेंट कमिट';
@@ -6994,7 +6994,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'कमिट चरण ($count)';
+    return 'स्टेज की गई सामग्री कमिट करें ($count)';
   }
 
   @override
@@ -7500,7 +7500,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'कमिट को फिर सेप्ले करने के लिए: $count';
+    return 'फिर से लागू किए जाने वाले कमिट: $count';
   }
 
   @override
@@ -7556,7 +7556,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiCancelPlan => 'योजना रद्द करें';
 
   @override
-  String get gitUiStartReviewedRebase => 'समीक्षा फिर से करें?';
+  String get gitUiStartReviewedRebase => 'समीक्षित रीबेस शुरू करें?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7654,7 +7654,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'पूरी बाएं फ़ाइलों को स्वीकारें...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'संपूर्ण दायाँ फ़ाइल स्वीकारें...';
+  String get gitUiAcceptEntireRightFile => 'दाईं ओर की पूरी फ़ाइल स्वीकारें…';
 
   @override
   String get gitUiPreviousConflictRegion => 'पिछला विरोधाभास क्षेत्र';
@@ -7760,7 +7760,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitUiUseEntireRightContent =>
-      'सम्पूर्ण दायाँ सामग्री इस्तेमाल करें...';
+      'दाईं ओर की पूरी सामग्री इस्तेमाल करें…';
 
   @override
   String get gitUiDeleteThisPath => 'इस पथ को मिटाएँ...';
@@ -7967,7 +7967,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiCloneRepository => 'रिपॉज़िटरी क्लोन करें…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'रेवॉक भंडार भरोसे';
+  String get gitUiRevokeRepositoryTrust => 'रिपॉज़िटरी पर भरोसा वापस लें';
 
   @override
   String get gitUiWaitingForRepositoryStatus =>
@@ -8111,7 +8111,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'चेरारी- निरीक्षक';
+  String get gitUiCherryPickCommits => 'चुने हुए कमिट लागू करें';
 
   @override
   String get gitUiRevertCommits => 'उलटें';

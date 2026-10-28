@@ -6271,7 +6271,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Powtórz migawki...';
 
   @override
-  String get gitUiReviewReset => 'Przegląd resetuj...';
+  String get gitUiReviewReset => 'Sprawdź resetowanie…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6319,7 +6319,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiDiffDisplayOptions => 'Zróżnicuj opcje wyświetlania';
 
   @override
-  String get gitUiWrap => 'Wrap';
+  String get gitUiWrap => 'Zawijanie wierszy';
 
   @override
   String get gitUiWords => 'Słowa';
@@ -6340,10 +6340,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiCloseSearch => 'Zamknij wyszukiwanie';
 
   @override
-  String get gitUiStagingActions => 'Działania w zakresie hamowania';
+  String get gitUiStagingActions => 'Operacje na indeksie';
 
   @override
-  String get gitUiStagingActions2 => 'Powstrzymywanie działań...';
+  String get gitUiStagingActions2 => 'Operacje na indeksie…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6569,7 +6569,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiBackToHEAD => 'Wróć do HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Zamówiony wybór wiśni';
+  String get gitUiOrderedCherryPick => 'Cherry-pick w wybranej kolejności';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6631,7 +6631,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiDate2 => 'Data';
 
   @override
-  String get gitUiGitCommits => 'Git popełnia zobowiązania';
+  String get gitUiGitCommits => 'Commity Git';
 
   @override
   String get gitUiParents => 'Commity nadrzędne';
@@ -7068,7 +7068,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Zaangażowanie w życie ($count)';
+    return 'Zatwierdź zmiany z indeksu ($count)';
   }
 
   @override
@@ -7580,7 +7580,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Zobowiązania do powtórki: $count';
+    return 'Commity do ponownego zastosowania: $count';
   }
 
   @override
@@ -7636,7 +7636,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiCancelPlan => 'Anuluj plan';
 
   @override
-  String get gitUiStartReviewedRebase => 'Zacząć przeglądać nową bazę?';
+  String get gitUiStartReviewedRebase => 'Rozpocząć sprawdzone przebazowanie?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7732,7 +7732,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Zaakceptuj cały lewy plik...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Zaakceptuj cały odpowiedni plik...';
+  String get gitUiAcceptEntireRightFile => 'Przyjmij cały plik z prawej…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Poprzedni region konfliktu';
@@ -7838,7 +7838,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Użyj całej lewej zawartości...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Użyj całej właściwej zawartości...';
+  String get gitUiUseEntireRightContent => 'Użyj całej zawartości z prawej…';
 
   @override
   String get gitUiDeleteThisPath => 'Usuń tę ścieżkę...';
@@ -8046,7 +8046,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitUiCloneRepository => 'Klonuj repozytorium…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Odzyskanie zaufania repozytorium';
+  String get gitUiRevokeRepositoryTrust => 'Cofnij zaufanie do repozytorium';
 
   @override
   String get gitUiWaitingForRepositoryStatus =>
@@ -8189,7 +8189,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Wybór wiśni';
+  String get gitUiCherryPickCommits => 'Zastosuj commity przez cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Cofnij zobowiązania';

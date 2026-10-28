@@ -6212,7 +6212,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Kontrolli pilti...';
 
   @override
-  String get gitUiReviewReset => 'Review lähtestamine...';
+  String get gitUiReviewReset => 'Vaata lähtestamine üle…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6265,7 +6265,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiWords => 'Sõnad';
 
   @override
-  String get gitUiCollapseContext => 'Tausta kollaps';
+  String get gitUiCollapseContext => 'Ahenda kontekst';
 
   @override
   String get gitUiIgnoreWhitespace => 'Tühikute eiramine';
@@ -6280,10 +6280,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCloseSearch => 'Sulge otsing';
 
   @override
-  String get gitUiStagingActions => 'Sätimistoimingud';
+  String get gitUiStagingActions => 'Indeksi toimingud';
 
   @override
-  String get gitUiStagingActions2 => 'Sättimistoimingud...';
+  String get gitUiStagingActions2 => 'Indeksi toimingud…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6509,7 +6509,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiBackToHEAD => 'Tagasi HEAD-i juurde';
 
   @override
-  String get gitUiOrderedCherryPick => 'Orienteerunud kirsiork';
+  String get gitUiOrderedCherryPick => 'Cherry-pick valitud järjekorras';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6571,7 +6571,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiDate2 => 'Kuupäev';
 
   @override
-  String get gitUiGitCommits => 'Git võtab kohustuse';
+  String get gitUiGitCommits => 'Giti kommitid';
 
   @override
   String get gitUiParents => 'Eellased';
@@ -7005,7 +7005,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Kombes lavastatud ($count)';
+    return 'Kommiti indeksis olev ($count)';
   }
 
   @override
@@ -7282,7 +7282,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
-    return 'Parent $arg0 · $arg1';
+    return 'Vanem $arg0 · $arg1';
   }
 
   @override
@@ -7512,7 +7512,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Kordamiseks: $count';
+    return 'Uuesti rakendatavad kommitid: $count';
   }
 
   @override
@@ -7568,7 +7568,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCancelPlan => 'Tühista plaan';
 
   @override
-  String get gitUiStartReviewedRebase => 'Alustame uuesti analüüsiga?';
+  String get gitUiStartReviewedRebase => 'Kas alustada ülevaadatud rebase’i?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7668,8 +7668,7 @@ class AppLocalizationsEt extends AppLocalizations {
       'Aktsepteeritakse kogu vasakut faili...';
 
   @override
-  String get gitUiAcceptEntireRightFile =>
-      'Aktsepteeritakse tervet õiget faili...';
+  String get gitUiAcceptEntireRightFile => 'Võta vastu kogu parempoolne fail…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Eelmine konfliktipiirkond';
@@ -7775,7 +7774,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Kasuta kogu vasakult sisu...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Kasuta tervet õiget sisu...';
+  String get gitUiUseEntireRightContent => 'Kasuta kogu parempoolset sisu…';
 
   @override
   String get gitUiDeleteThisPath => 'Kustuta see asukoht...';
@@ -7982,7 +7981,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCloneRepository => 'Klooni hoidla…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Loobuda hoidlate usaldusest';
+  String get gitUiRevokeRepositoryTrust => 'Tühista hoidla usaldamine';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'Hoidla oleku ootamine';
@@ -8124,7 +8123,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Kirsi-pick võtab kohustuse';
+  String get gitUiCherryPickCommits => 'Rakenda kommitid cherry-pick abil';
 
   @override
   String get gitUiRevertCommits => 'Tühista kohustused';
@@ -8597,7 +8596,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiSkipInline => 'Jäta vahele';
 
   @override
-  String get gitUiQuitInline => 'quit';
+  String get gitUiQuitInline => 'lõpeta';
 
   @override
   String get gitUiMergeInline => 'Ühenda';

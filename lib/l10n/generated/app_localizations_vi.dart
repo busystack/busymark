@@ -6201,7 +6201,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Kiểm tra hình chụp...';
 
   @override
-  String get gitUiReviewReset => 'Xem lại khởi động lại...';
+  String get gitUiReviewReset => 'Xem lại việc đặt lại…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6255,7 +6255,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiWords => 'Các từ';
 
   @override
-  String get gitUiCollapseContext => 'Văn cảnh co lại';
+  String get gitUiCollapseContext => 'Thu gọn ngữ cảnh';
 
   @override
   String get gitUiIgnoreWhitespace => 'Bỏ qua khoảng trắng';
@@ -6270,10 +6270,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCloseSearch => 'Đóng tìm kiếm';
 
   @override
-  String get gitUiStagingActions => 'Hành động cấu hình';
+  String get gitUiStagingActions => 'Thao tác với chỉ mục';
 
   @override
-  String get gitUiStagingActions2 => 'Hành động tạo hình...';
+  String get gitUiStagingActions2 => 'Thao tác với chỉ mục…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6497,7 +6497,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiBackToHEAD => 'Trở về HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Chọn anh đào.';
+  String get gitUiOrderedCherryPick => 'Cherry-pick theo thứ tự đã chọn';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6559,7 +6559,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiDate2 => 'Ngày';
 
   @override
-  String get gitUiGitCommits => 'Git cam kết';
+  String get gitUiGitCommits => 'Các commit Git';
 
   @override
   String get gitUiParents => 'Các commit cha';
@@ -6939,7 +6939,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String gitUiAmendRevision(String revision) {
-    return 'Amend $revision';
+    return 'Sửa $revision';
   }
 
   @override
@@ -6990,7 +6990,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Cam kết ($count)';
+    return 'Commit nội dung trong chỉ mục ($count)';
   }
 
   @override
@@ -7497,7 +7497,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Cam kết để tua lại: $count';
+    return 'Các commit sẽ áp dụng lại: $count';
   }
 
   @override
@@ -7553,7 +7553,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCancelPlan => 'Hủy kế hoạch';
 
   @override
-  String get gitUiStartReviewedRebase => 'Bắt đầu xem xét cơ sở dữ liệu?';
+  String get gitUiStartReviewedRebase => 'Bắt đầu đổi gốc đã xem lại?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7650,7 +7650,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Chấp nhận toàn bộ tập tin bên trái...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Chấp nhận toàn bộ tập tin đúng...';
+  String get gitUiAcceptEntireRightFile => 'Chấp nhận toàn bộ tệp bên phải…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Vùng xung đột trước';
@@ -7755,7 +7755,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Dùng toàn bộ nội dung bên trái...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Dùng toàn bộ nội dung bên phải...';
+  String get gitUiUseEntireRightContent => 'Dùng toàn bộ nội dung bên phải…';
 
   @override
   String get gitUiDeleteThisPath => 'Xoá đường này...';
@@ -7964,7 +7964,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCloneRepository => 'Nhân bản kho lưu trữ…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Thu hồi sự tin tưởng kho';
+  String get gitUiRevokeRepositoryTrust => 'Thu hồi sự tin cậy đối với kho';
 
   @override
   String get gitUiWaitingForRepositoryStatus =>
@@ -8107,7 +8107,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Chọn người';
+  String get gitUiCherryPickCommits => 'Áp dụng các commit bằng cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Hoàn nguyên';

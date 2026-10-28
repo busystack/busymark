@@ -6282,7 +6282,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Перевірка знімка...';
 
   @override
-  String get gitUiReviewReset => 'Рецензування відновлення...';
+  String get gitUiReviewReset => 'Переглянути скидання…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6351,10 +6351,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCloseSearch => 'Закрити пошук';
 
   @override
-  String get gitUiStagingActions => 'Приборкання дій';
+  String get gitUiStagingActions => 'Дії з індексом';
 
   @override
-  String get gitUiStagingActions2 => 'Приборкування дій...';
+  String get gitUiStagingActions2 => 'Дії з індексом…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6582,7 +6582,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiBackToHEAD => 'До HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Впорядкована вишня- вибірка';
+  String get gitUiOrderedCherryPick => 'Cherry-pick у вибраному порядку';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6644,7 +6644,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiDate2 => 'Дата';
 
   @override
-  String get gitUiGitCommits => 'Внески Git';
+  String get gitUiGitCommits => 'Коміти Git';
 
   @override
   String get gitUiParents => 'Батьківські коміти';
@@ -6996,7 +6996,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String gitUiDetachedArg0(String arg0) {
-    return 'Detached $arg0';
+    return 'Відокремлений $arg0';
   }
 
   @override
@@ -7081,7 +7081,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Передача на сцені ($count)';
+    return 'Створити коміт з індексу ($count)';
   }
 
   @override
@@ -7591,7 +7591,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Внески для повтору: $count';
+    return 'Коміти для повторного застосування: $count';
   }
 
   @override
@@ -7647,7 +7647,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCancelPlan => 'Скасувати план';
 
   @override
-  String get gitUiStartReviewedRebase => 'Розпочати реабілітацію?';
+  String get gitUiStartReviewedRebase => 'Почати перевірене перебазування?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7733,10 +7733,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiLoadingConflict => 'Завантаження конфлікту';
 
   @override
-  String get gitUiBaseLeft => 'Base → left';
+  String get gitUiBaseLeft => 'База → ліворуч';
 
   @override
-  String get gitUiBaseRight => 'Base → right';
+  String get gitUiBaseRight => 'База → праворуч';
 
   @override
   String get gitUiNoBaseEntryForThisConflict =>
@@ -7746,7 +7746,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Прийняти весь лівий файл...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Прийняти весь правий файл...';
+  String get gitUiAcceptEntireRightFile => 'Прийняти весь правий файл…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Попередній конфлікт';
@@ -7853,8 +7853,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Використовувати весь вміст ліворуч...';
 
   @override
-  String get gitUiUseEntireRightContent =>
-      'Використовувати весь правий вміст...';
+  String get gitUiUseEntireRightContent => 'Використати весь правий вміст…';
 
   @override
   String get gitUiDeleteThisPath => 'Вилучити цей шлях...';
@@ -8062,7 +8061,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCloneRepository => 'Клонувати репозиторій…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Довіра до сховища відкликати';
+  String get gitUiRevokeRepositoryTrust => 'Відкликати довіру до репозиторію';
 
   @override
   String get gitUiWaitingForRepositoryStatus =>
@@ -8205,7 +8204,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Внески під час збирання Cherry';
+  String get gitUiCherryPickCommits => 'Перенести коміти через cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Повернути внески';
@@ -8680,7 +8679,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiSkipInline => 'Пропустити';
 
   @override
-  String get gitUiQuitInline => 'quit';
+  String get gitUiQuitInline => 'завершити';
 
   @override
   String get gitUiMergeInline => 'Злити';

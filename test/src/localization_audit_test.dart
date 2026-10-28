@@ -314,6 +314,16 @@ void main() {
     expect(russian.closeUnsavedChangesTitle, 'Несохранённые изменения');
   });
 
+  test(
+    'reviewed shared Git identity labels retain their exact technical meaning',
+    () {
+      final english = _arbMessageStrings(File('lib/l10n/app_en.arb'));
+      for (final entry in _reviewedGitIdentityText.entries) {
+        expect(english[entry.key], entry.value, reason: entry.key);
+      }
+    },
+  );
+
   test('English-identical target messages are explicitly reviewed', () {
     final english = _arbMessageStrings(File('lib/l10n/app_en.arb'));
     final failures = <String>[];
@@ -1307,6 +1317,16 @@ const _sharedEnglishMatches = <String>{
   'gitResetModeHard',
   'gitResetModeKeep',
   'ai',
+  // Git identifiers and punctuation-only wrappers preserve repository data.
+  'gitUiHead',
+  'gitUiHeadArg0',
+  'gitUiOpenpgp',
+  'gitUiGroupCount',
+  'gitUiGit',
+  'gitUiOperationActionEllipsis',
+  'gitUiRebaseStepSemantics',
+  'gitHostGit',
+  'gitUiConflictIdentity',
 };
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
@@ -1327,6 +1347,27 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'instanceColorOrange',
     'instanceVersion',
     'instanceStatus',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiIndex',
+    'gitUiRemote',
+    'gitUiTags',
+    'gitUiRepository',
+    'gitUiLog',
+    'gitUiRebase',
+    'gitUiStashes',
+    'gitUiAutosquash',
+    'gitUiBranches',
+    'gitUiBranches2',
+    'gitUiRebase2',
+    'gitUiStashes2',
+    'gitUiWorktrees',
+    'gitUiWorktrees2',
+    'gitUiCommit',
+    'gitUiSoft',
+    'gitUiMixed',
+    'gitUiHard',
+    'gitUiKeep',
   },
   'et': {'link', 'gitCommit', 'wsElementSelector'}, // Estonian: element.
   'es': {
@@ -1335,6 +1376,10 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'horizontal',
     'vertical',
     'shortcutGroupGeneral',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiArg0Arg1Arg2BytesArg3',
+    'gitUiSans',
   },
   'fr': {
     'searchDocumentsCategory', // Documents is also the French plural.
@@ -1357,6 +1402,24 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'instances',
     'instanceVersion',
     'writersidePdfPage',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiPageArg0',
+    'gitUiIndex',
+    'gitUiMessage',
+    'gitUiMessage2',
+    'gitUiCommitArg0',
+    'gitUiLocal',
+    'gitUiDate2',
+    'gitUiDestinationArg0Arg1',
+    'gitUiParentArg0Arg1',
+    'gitUiOptions',
+    'gitUiSans',
+    'gitUiBranches',
+    'gitUiBranches2',
+    'gitUiDiagnostics',
+    'gitUiActions',
+    'gitUiAbsentPlaceholder',
   },
   'it': {
     'editor',
@@ -1366,6 +1429,21 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'toc',
     'foldKindTag',
     'gitCommit',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiCommitArg0',
+    'gitUiRepository',
+    'gitUiPush',
+    'gitUiRebase',
+    'gitUiPull',
+    'gitUiPush2',
+    'gitUiRebase2',
+    'gitUiCommit',
+    'gitUiSoft',
+    'gitUiMixed',
+    'gitUiHard',
+    'gitUiKeep',
+    'gitUiCherryPickOperation',
   },
   'nb': {
     'wsElementSelector', // Norwegian Bokmål: element.
@@ -1374,6 +1452,17 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitCommit',
     'instanceStatus',
     'tocTemplateFormat',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiPush',
+    'gitUiRebase',
+    'gitUiStartRebase',
+    'gitUiPull',
+    'gitUiPush2',
+    'gitUiRebase2',
+    'gitUiCommit',
+    'gitUiHard',
+    'gitUiCherryPickOperation',
   },
   'pl': {
     'folder',
@@ -1381,6 +1470,9 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'aiModel',
     'tocTemplateFormat',
     'wsElementSelector', // Element is also the Polish noun.
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiTagArg0',
+    'gitUiResetArg0',
   },
   'pt_BR': {
     'exportLayout',
@@ -1392,8 +1484,35 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitCommit',
     'horizontal',
     'vertical',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiArg0Arg1Arg2BytesArg3',
+    'gitUiLocal',
+    'gitUiTags',
+    'gitUiRebase',
+    'gitUiStashes',
+    'gitUiBranches',
+    'gitUiBranches2',
+    'gitUiRebase2',
+    'gitUiStashes2',
+    'gitUiTagArg0',
+    'gitUiCherryPickOperation',
   },
-  'pt': {'editor', 'horizontal', 'vertical', 'toc', 'foldKindTag', 'gitCommit'},
+  'pt': {
+    'editor', 'horizontal', 'vertical', 'toc', 'foldKindTag', 'gitCommit',
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiArg0Arg1Arg2BytesArg3',
+    'gitUiLocal',
+    'gitUiTags',
+    'gitUiRebase',
+    'gitUiStashes',
+    'gitUiBranches',
+    'gitUiBranches2',
+    'gitUiRebase2',
+    'gitUiStashes2',
+    'gitUiTagArg0',
+    'gitUiCherryPickOperation',
+  },
   'hi': {'toc'},
   'ja': {'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'ko': {'gitDiff', 'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
@@ -1424,6 +1543,25 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitFetch',
     'gitCommit',
     'pdfPageSizeLetter',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiCommitArg0',
+    'gitUiRemote',
+    'gitUiPush',
+    'gitUiFetch',
+    'gitUiRebase',
+    'gitUiSans',
+    'gitUiFetch2',
+    'gitUiPull',
+    'gitUiPush2',
+    'gitUiRebase2',
+    'gitUiTagArg0',
+    'gitUiResetArg0',
+    'gitUiCommit',
+    'gitUiEdit',
+    'gitUiCherryPickOperation',
+    'gitUiRevertOperation',
+    'gitHostFetch',
   },
   'nl': {
     'wsElementSelector', // Element and module are also Dutch nouns.
@@ -1448,8 +1586,90 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'instanceStatus',
     'instanceStatusRelease',
     'aiModel',
+
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiArg0Arg1Arg2BytesArg3',
+    'gitUiContext',
+    'gitUiIndex',
+    'gitUiTags',
+    'gitUiRepository',
+    'gitUiStashes',
+    'gitUiSans',
+    'gitUiBranches',
+    'gitUiBranches2',
+    'gitUiStashes2',
+    'gitUiSubmodules',
+    'gitUiSubmodules2',
+    'gitUiTagArg0',
+    'gitUiHard',
   },
-  'vi': {'tab', 'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
+  'vi': {
+    'tab', 'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter',
+    // Reviewed Git command names, units, and locale-native technical words.
+    'gitUiSans',
+  },
   'zh_CN': {'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
   'zh': {'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
+};
+
+// Pin the reviewed source text: changing a technical label into English prose
+// requires a new translation review rather than inheriting an old exception.
+const _reviewedGitIdentityText = <String, String>{
+  "gitHostFetch": "Fetch",
+  "gitHostGit": "Git",
+  "gitUiAbsentPlaceholder": "(absent)",
+  "gitUiActions": "Actions",
+  "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} bytes{arg3}",
+  "gitUiAutosquash": "Autosquash",
+  "gitUiBranches": "Branches",
+  "gitUiBranches2": "Branches…",
+  "gitUiCherryPickOperation": "Cherry-pick",
+  "gitUiCommit": "Commit",
+  "gitUiCommitArg0": "Commit {arg0}",
+  "gitUiConflictIdentity": "{path} · {kind}",
+  "gitUiContext": "Context",
+  "gitUiDate2": "Date",
+  "gitUiDestinationArg0Arg1": "Destination: {arg0} · {arg1}",
+  "gitUiDiagnostics": "Diagnostics",
+  "gitUiEdit": "Edit",
+  "gitUiFetch": "Fetch",
+  "gitUiFetch2": "Fetch…",
+  "gitUiGit": "Git",
+  "gitUiGroupCount": "{group} ({count})",
+  "gitUiHard": "Hard",
+  "gitUiHead": "HEAD",
+  "gitUiHeadArg0": "HEAD · {arg0}",
+  "gitUiIndex": "Index",
+  "gitUiKeep": "Keep",
+  "gitUiLocal": "Local",
+  "gitUiLog": "Log",
+  "gitUiMessage": "Message…",
+  "gitUiMessage2": "Message",
+  "gitUiMixed": "Mixed",
+  "gitUiOpenpgp": "OpenPGP",
+  "gitUiOperationActionEllipsis": "{action}…",
+  "gitUiOptions": "Options",
+  "gitUiPageArg0": "Page {arg0}",
+  "gitUiParentArg0Arg1": "Parent {arg0} · {arg1}",
+  "gitUiPull": "Pull…",
+  "gitUiPush": "Push",
+  "gitUiPush2": "Push…",
+  "gitUiRebase": "Rebase",
+  "gitUiRebase2": "Rebase…",
+  "gitUiRebaseStepSemantics": "{position}, {action}, {subject}",
+  "gitUiRemote": "Remote",
+  "gitUiRepository": "Repository",
+  "gitUiResetArg0": "Reset {arg0}",
+  "gitUiRevertOperation": "Revert",
+  "gitUiSans": "Sans",
+  "gitUiSoft": "Soft",
+  "gitUiStartRebase": "Start rebase",
+  "gitUiStashes": "Stashes",
+  "gitUiStashes2": "Stashes…",
+  "gitUiSubmodules": "Submodules…",
+  "gitUiSubmodules2": "Submodules",
+  "gitUiTagArg0": "Tag {arg0}",
+  "gitUiTags": "Tags",
+  "gitUiWorktrees": "Worktrees…",
+  "gitUiWorktrees2": "Worktrees",
 };

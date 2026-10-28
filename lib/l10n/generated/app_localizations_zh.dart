@@ -5915,7 +5915,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiInspectSnapshot => '检查快照...';
 
   @override
-  String get gitUiReviewReset => '重现...';
+  String get gitUiReviewReset => '审阅重置…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -5983,10 +5983,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiCloseSearch => '关闭搜索';
 
   @override
-  String get gitUiStagingActions => '定点动作';
+  String get gitUiStagingActions => '暂存操作';
 
   @override
-  String get gitUiStagingActions2 => '正在稳定动作...';
+  String get gitUiStagingActions2 => '暂存操作…';
 
   @override
   String get gitUiUnstageSelectedChangedLines => '取消暂存所选更改行';
@@ -6203,7 +6203,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiBackToHEAD => '返回 HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => '点菜樱桃';
+  String get gitUiOrderedCherryPick => '按指定顺序拣选';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6263,7 +6263,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiDate2 => '日期';
 
   @override
-  String get gitUiGitCommits => 'Git 承诺';
+  String get gitUiGitCommits => 'Git 提交';
 
   @override
   String get gitUiParents => '父提交';
@@ -6683,7 +6683,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return '提交阶段 ($count)';
+    return '提交已暂存的更改（$count）';
   }
 
   @override
@@ -7175,7 +7175,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return '承诺重播: $count';
+    return '将重新应用的提交：$count';
   }
 
   @override
@@ -7228,7 +7228,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiCancelPlan => '取消计划';
 
   @override
-  String get gitUiStartReviewedRebase => '开始重设基准?';
+  String get gitUiStartReviewedRebase => '开始已审阅的变基？';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7321,7 +7321,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => '接受整个左侧文件...';
 
   @override
-  String get gitUiAcceptEntireRightFile => '接受整个右侧文件...';
+  String get gitUiAcceptEntireRightFile => '接受右侧整个文件…';
 
   @override
   String get gitUiPreviousConflictRegion => '先前的冲突地区';
@@ -7422,7 +7422,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiUseEntireLeftContent => '使用全部左侧内容...';
 
   @override
-  String get gitUiUseEntireRightContent => '使用全部右侧内容...';
+  String get gitUiUseEntireRightContent => '使用右侧全部内容…';
 
   @override
   String get gitUiDeleteThisPath => '删除此路径...';
@@ -7626,7 +7626,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiCloneRepository => '克隆仓库…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => '撤销仓库信任';
+  String get gitUiRevokeRepositoryTrust => '撤销对此仓库的信任';
 
   @override
   String get gitUiWaitingForRepositoryStatus => '正在等待仓库状态';
@@ -7765,7 +7765,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => '樱桃选手承诺';
+  String get gitUiCherryPickCommits => '拣选提交';
 
   @override
   String get gitUiRevertCommits => '还原承诺';
@@ -14246,7 +14246,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiInspectSnapshot => '检查快照...';
 
   @override
-  String get gitUiReviewReset => '重现...';
+  String get gitUiReviewReset => '审阅重置…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -14314,10 +14314,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiCloseSearch => '关闭搜索';
 
   @override
-  String get gitUiStagingActions => '定点动作';
+  String get gitUiStagingActions => '暂存操作';
 
   @override
-  String get gitUiStagingActions2 => '正在稳定动作...';
+  String get gitUiStagingActions2 => '暂存操作…';
 
   @override
   String get gitUiUnstageSelectedChangedLines => '取消暂存所选更改行';
@@ -14534,7 +14534,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiBackToHEAD => '返回 HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => '点菜樱桃';
+  String get gitUiOrderedCherryPick => '按指定顺序拣选';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -14594,7 +14594,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiDate2 => '日期';
 
   @override
-  String get gitUiGitCommits => 'Git 承诺';
+  String get gitUiGitCommits => 'Git 提交';
 
   @override
   String get gitUiParents => '父提交';
@@ -15014,7 +15014,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return '提交阶段 ($count)';
+    return '提交已暂存的更改（$count）';
   }
 
   @override
@@ -15506,7 +15506,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return '承诺重播: $count';
+    return '将重新应用的提交：$count';
   }
 
   @override
@@ -15559,7 +15559,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiCancelPlan => '取消计划';
 
   @override
-  String get gitUiStartReviewedRebase => '开始重设基准?';
+  String get gitUiStartReviewedRebase => '开始已审阅的变基？';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -15652,7 +15652,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiAcceptEntireLeftFile => '接受整个左侧文件...';
 
   @override
-  String get gitUiAcceptEntireRightFile => '接受整个右侧文件...';
+  String get gitUiAcceptEntireRightFile => '接受右侧整个文件…';
 
   @override
   String get gitUiPreviousConflictRegion => '先前的冲突地区';
@@ -15753,7 +15753,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiUseEntireLeftContent => '使用全部左侧内容...';
 
   @override
-  String get gitUiUseEntireRightContent => '使用全部右侧内容...';
+  String get gitUiUseEntireRightContent => '使用右侧全部内容…';
 
   @override
   String get gitUiDeleteThisPath => '删除此路径...';
@@ -15957,7 +15957,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiCloneRepository => '克隆仓库…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => '撤销仓库信任';
+  String get gitUiRevokeRepositoryTrust => '撤销对此仓库的信任';
 
   @override
   String get gitUiWaitingForRepositoryStatus => '正在等待仓库状态';
@@ -16096,7 +16096,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiCherryPickCommits => '樱桃选手承诺';
+  String get gitUiCherryPickCommits => '拣选提交';
 
   @override
   String get gitUiRevertCommits => '还原承诺';

@@ -6209,7 +6209,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Snapshot kontrolü...';
 
   @override
-  String get gitUiReviewReset => 'İnceleme Reset...';
+  String get gitUiReviewReset => 'Sıfırlamayı incele…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6257,13 +6257,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiDiffDisplayOptions => 'Diff Display Seçenekleri';
 
   @override
-  String get gitUiWrap => 'Wrap';
+  String get gitUiWrap => 'Satır kaydırma';
 
   @override
   String get gitUiWords => 'sözcükler';
 
   @override
-  String get gitUiCollapseContext => 'çökmüş bağlam';
+  String get gitUiCollapseContext => 'Bağlamı daralt';
 
   @override
   String get gitUiIgnoreWhitespace => 'Beyaz alanı görmezden';
@@ -6278,10 +6278,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCloseSearch => 'yakın arama';
 
   @override
-  String get gitUiStagingActions => 'Staging eylemleri';
+  String get gitUiStagingActions => 'İndeks işlemleri';
 
   @override
-  String get gitUiStagingActions2 => 'Staging eylemleri...';
+  String get gitUiStagingActions2 => 'İndeks işlemleri…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6325,7 +6325,7 @@ class AppLocalizationsTr extends AppLocalizations {
     String arg2,
     String arg3,
   ) {
-    return '$arg0 · $arg1 · $arg2 bytes$arg3';
+    return '$arg0 · $arg1 · $arg2 bayt$arg3';
   }
 
   @override
@@ -6508,7 +6508,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiBackToHEAD => 'HEAD\'e dön';
 
   @override
-  String get gitUiOrderedCherryPick => 'sipariş edilen cherry-pick';
+  String get gitUiOrderedCherryPick => 'Seçilen sırayla cherry-pick';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -6570,7 +6570,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiDate2 => 'Tarih';
 
   @override
-  String get gitUiGitCommits => 'Git Sözleşmeleri';
+  String get gitUiGitCommits => 'Git commit’leri';
 
   @override
   String get gitUiParents => 'Üst commitler';
@@ -7004,7 +7004,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Komut aşaması ($count)';
+    return 'İndeksteki değişiklikleri commitle ($count)';
   }
 
   @override
@@ -7509,7 +7509,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Yine oynamak için taahhüt: $count';
+    return 'Yeniden uygulanacak commit’ler: $count';
   }
 
   @override
@@ -7565,7 +7565,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCancelPlan => 'Planı iptal';
 
   @override
-  String get gitUiStartReviewedRebase => 'İncelemeye başlar mısınız?';
+  String get gitUiStartReviewedRebase => 'İncelenen rebase başlatılsın mı?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7661,7 +7661,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Tüm sol dosyayı kabul edin...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Tüm doğru dosyayı kabul edin...';
+  String get gitUiAcceptEntireRightFile =>
+      'Sağdaki dosyanın tamamını kabul et…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Önceki İçerikSaldırı Bölgesi';
@@ -7766,7 +7767,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Tüm sol içeriği kullanın...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Tüm doğru içeriği kullanın...';
+  String get gitUiUseEntireRightContent => 'Sağdaki içeriğin tamamını kullan…';
 
   @override
   String get gitUiDeleteThisPath => 'Bu yolun ortadan kaldırılması...';
@@ -7973,7 +7974,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCloneRepository => 'Depoyu klonla…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Depolama güvenini iptal';
+  String get gitUiRevokeRepositoryTrust => 'Depoya duyulan güveni geri al';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'Depozito Durumu için bekleyin';
@@ -8115,7 +8116,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Cherry-Pick İlanları';
+  String get gitUiCherryPickCommits => 'Commit’leri cherry-pick ile uygula';
 
   @override
   String get gitUiRevertCommits => 'Yükümlülükler';
@@ -8647,7 +8648,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitHostCloneRepository2 => 'Depoyu klonla…';
 
   @override
-  String get gitHostGitLog => 'Git Log';
+  String get gitHostGitLog => 'Git geçmişi';
 
   @override
   String get gitUiAbsentPlaceholder => 'eksikliği )';

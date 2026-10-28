@@ -6262,7 +6262,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiInspectSnapshot => 'Ispeziona istantanea...';
 
   @override
-  String get gitUiReviewReset => 'Recensione reset...';
+  String get gitUiReviewReset => 'Esamina il ripristino…';
 
   @override
   String gitUiPageArg0(String arg0) {
@@ -6316,7 +6316,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiWords => 'Parole';
 
   @override
-  String get gitUiCollapseContext => 'Contesto del collasso';
+  String get gitUiCollapseContext => 'Comprimi contesto';
 
   @override
   String get gitUiIgnoreWhitespace => 'Ignora spazio bianco';
@@ -6331,10 +6331,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiCloseSearch => 'Chiudi ricerca';
 
   @override
-  String get gitUiStagingActions => 'Azioni di standage';
+  String get gitUiStagingActions => 'Azioni sull’indice';
 
   @override
-  String get gitUiStagingActions2 => 'Stiamo mettendo in scena azioni...';
+  String get gitUiStagingActions2 => 'Azioni sull’indice…';
 
   @override
   String get gitUiUnstageSelectedChangedLines =>
@@ -6378,7 +6378,7 @@ class AppLocalizationsIt extends AppLocalizations {
     String arg2,
     String arg3,
   ) {
-    return '$arg0 · $arg1 · $arg2 bytes$arg3';
+    return '$arg0 · $arg1 · $arg2 byte$arg3';
   }
 
   @override
@@ -6561,7 +6561,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiBackToHEAD => 'Torna a HEAD';
 
   @override
-  String get gitUiOrderedCherryPick => 'Ordinato ciliegia-pick';
+  String get gitUiOrderedCherryPick => 'Cherry-pick nell’ordine scelto';
 
   @override
   String gitUiReviewCherryPickArg0(String arg0) {
@@ -7059,7 +7059,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String gitUiCommitStagedCount(String count) {
-    return 'Commit staged ($count)';
+    return 'Commit dell’indice ($count)';
   }
 
   @override
@@ -7570,7 +7570,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String gitUiCommitsToReplayCount(String count) {
-    return 'Commits to replay: $count';
+    return 'Commit da riapplicare: $count';
   }
 
   @override
@@ -7626,7 +7626,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiCancelPlan => 'Annulla piano';
 
   @override
-  String get gitUiStartReviewedRebase => 'Iniziare a rivedere la base?';
+  String get gitUiStartReviewedRebase => 'Avviare il rebase verificato?';
 
   @override
   String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
@@ -7725,7 +7725,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Accetta tutto il file sinistro...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Accetta tutto il file giusto...';
+  String get gitUiAcceptEntireRightFile => 'Accetta l’intero file a destra…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Regione di conflitto precedente';
@@ -7831,7 +7831,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiUseEntireLeftContent => 'Usa tutto il contenuto sinistro...';
 
   @override
-  String get gitUiUseEntireRightContent => 'Usa tutto il contenuto giusto...';
+  String get gitUiUseEntireRightContent => 'Usa tutto il contenuto a destra…';
 
   @override
   String get gitUiDeleteThisPath => 'Elimina questo percorso...';
@@ -7940,7 +7940,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String gitUiCommitDraftStorageArg0(String arg0) {
-    return 'Commit draft storage: $arg0';
+    return 'Archiviazione della bozza di commit: $arg0';
   }
 
   @override
@@ -8040,7 +8040,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiCloneRepository => 'Clona repository…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Fiducia del repository di Revoke';
+  String get gitUiRevokeRepositoryTrust => 'Revoca la fiducia nel repository';
 
   @override
   String get gitUiWaitingForRepositoryStatus =>
@@ -8183,7 +8183,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCherryPickCommits => 'Commit di pesca delle ciliege';
+  String get gitUiCherryPickCommits => 'Applica commit con cherry-pick';
 
   @override
   String get gitUiRevertCommits => 'Inverti commit';
