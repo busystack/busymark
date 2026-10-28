@@ -85,6 +85,13 @@ void main() {
       cwd: directory.path,
       deadline: const Duration(seconds: 10),
     );
+    // Git can infer a usable identity from the OS account on some machines.
+    // This fixture specifically exercises missing configured author identity.
+    await runner.run(
+      ['config', '--local', 'user.useConfigOnly', 'true'],
+      cwd: directory.path,
+      deadline: const Duration(seconds: 10),
+    );
     await File(
       '${directory.path}/draft.md',
     ).writeAsString('Preserve this staged draft.');
