@@ -8704,4 +8704,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft => 'Discard unsaved index draft?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Closing the index editor discards only its draft. The index and working file remain unchanged.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Discard index draft';
 }

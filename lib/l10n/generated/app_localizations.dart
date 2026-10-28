@@ -14754,6 +14754,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{path} · {kind}'**
   String gitUiConflictIdentity(String path, String kind);
+
+  /// Shared Git interface: Discard unsaved index draft?
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved index draft?'**
+  String get gitUiDiscardUnsavedIndexDraft;
+
+  /// Shared Git interface: Closing the index editor discards only its draft. The index and working file remain unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing the index editor discards only its draft. The index and working file remain unchanged.'**
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft;
+
+  /// Shared Git interface: Discard index draft
+  ///
+  /// In en, this message translates to:
+  /// **'Discard index draft'**
+  String get gitUiDiscardIndexDraft;
 }
 
 class _AppLocalizationsDelegate

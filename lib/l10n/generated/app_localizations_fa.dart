@@ -8716,4 +8716,15 @@ class AppLocalizationsFa extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'پیش‌نویس ذخیره‌نشدهٔ نمایه کنار گذاشته شود؟';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'با بستن ویرایشگر نمایه فقط پیش‌نویس آن کنار گذاشته می‌شود. نمایه و پروندهٔ کاری تغییر نمی‌کنند.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'کنار گذاشتن پیش‌نویس نمایه';
 }

@@ -8707,4 +8707,15 @@ class AppLocalizationsId extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Buang draf indeks yang belum disimpan?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Menutup editor indeks hanya membuang drafnya. Indeks dan berkas kerja tetap tidak berubah.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Buang draf indeks';
 }

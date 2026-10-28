@@ -8783,6 +8783,17 @@ class AppLocalizationsPt extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Descartar o rascunho do índice não guardado?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Fechar o editor do índice descarta apenas o rascunho. O índice e o ficheiro de trabalho permanecem inalterados.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Descartar rascunho do índice';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17557,4 +17568,15 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Descartar o rascunho do índice não salvo?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Fechar o editor do índice descarta apenas o rascunho. O índice e o arquivo de trabalho permanecem inalterados.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Descartar rascunho do índice';
 }

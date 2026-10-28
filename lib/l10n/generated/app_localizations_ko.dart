@@ -8464,4 +8464,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft => '저장하지 않은 인덱스 초안을 버리시겠습니까?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      '인덱스 편집기를 닫으면 초안만 버려집니다. 인덱스와 작업 파일은 변경되지 않습니다.';
+
+  @override
+  String get gitUiDiscardIndexDraft => '인덱스 초안 버리기';
 }

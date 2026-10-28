@@ -8689,4 +8689,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'बिना सहेजा इंडेक्स ड्राफ़्ट छोड़ें?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'इंडेक्स एडिटर बंद करने पर केवल उसका ड्राफ़्ट हटेगा। इंडेक्स और कार्यशील फ़ाइल अपरिवर्तित रहेंगे।';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'इंडेक्स ड्राफ़्ट छोड़ें';
 }

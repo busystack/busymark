@@ -7158,5 +7158,17 @@
         "type": "String"
       }
     }
+  },
+  "gitUiDiscardUnsavedIndexDraft": "Discard unsaved index draft?",
+  "@gitUiDiscardUnsavedIndexDraft": {
+    "description": "Shared Git interface: Discard unsaved index draft?"
+  },
+  "gitUiClosingTheIndexEditorDiscardsOnlyItsDraft": "Closing the index editor discards only its draft. The index and working file remain unchanged.",
+  "@gitUiClosingTheIndexEditorDiscardsOnlyItsDraft": {
+    "description": "Shared Git interface: Closing the index editor discards only its draft. The index and working file remain unchanged."
+  },
+  "gitUiDiscardIndexDraft": "Discard index draft",
+  "@gitUiDiscardIndexDraft": {
+    "description": "Shared Git interface: Discard index draft"
   }
 }

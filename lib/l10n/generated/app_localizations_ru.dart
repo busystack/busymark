@@ -8780,4 +8780,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Отбросить несохранённый черновик индекса?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'При закрытии редактора индекса будет отброшен только его черновик. Индекс и рабочий файл останутся без изменений.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Отбросить черновик индекса';
 }

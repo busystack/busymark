@@ -8467,4 +8467,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft => '未保存のインデックスの下書きを破棄しますか？';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'インデックスエディターを閉じると、下書きだけが破棄されます。インデックスと作業ファイルは変更されません。';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'インデックスの下書きを破棄';
 }

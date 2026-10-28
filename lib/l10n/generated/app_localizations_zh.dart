@@ -8335,6 +8335,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft => '丢弃未保存的索引草稿？';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      '关闭索引编辑器只会丢弃草稿。索引和工作文件不会更改。';
+
+  @override
+  String get gitUiDiscardIndexDraft => '丢弃索引草稿';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -16666,4 +16676,14 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft => '丢弃未保存的索引草稿？';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      '关闭索引编辑器只会丢弃草稿。索引和工作文件不会更改。';
+
+  @override
+  String get gitUiDiscardIndexDraft => '丢弃索引草稿';
 }

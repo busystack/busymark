@@ -8768,4 +8768,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Scartare la bozza dell’indice non salvata?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'La chiusura dell’editor dell’indice scarta solo la bozza. L’indice e il file di lavoro restano invariati.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Scarta la bozza dell’indice';
 }

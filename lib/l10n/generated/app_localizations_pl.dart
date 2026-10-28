@@ -8771,4 +8771,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Odrzucić niezapisany szkic indeksu?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Zamknięcie edytora indeksu odrzuca tylko jego szkic. Indeks i plik roboczy pozostają bez zmian.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Odrzuć szkic indeksu';
 }

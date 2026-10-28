@@ -8782,4 +8782,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      '¿Descartar el borrador del índice sin guardar?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Al cerrar el editor del índice solo se descarta su borrador. El índice y el archivo de trabajo no cambian.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Descartar borrador del índice';
 }

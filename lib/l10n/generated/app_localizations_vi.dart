@@ -8687,4 +8687,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft => 'Bỏ bản nháp chỉ mục chưa lưu?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Đóng trình sửa chỉ mục chỉ bỏ bản nháp. Chỉ mục và tệp làm việc không thay đổi.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Bỏ bản nháp chỉ mục';
 }

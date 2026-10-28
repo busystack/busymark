@@ -8699,4 +8699,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path  $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'هل تريد تجاهل مسودة الفهرس غير المحفوظة؟';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'إغلاق محرر الفهرس يتجاهل مسودته فقط. يبقى الفهرس وملف العمل دون تغيير.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'تجاهل مسودة الفهرس';
 }

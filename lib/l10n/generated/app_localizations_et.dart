@@ -8705,4 +8705,15 @@ class AppLocalizationsEt extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Kas hüljata salvestamata indeksi mustand?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Indeksiredaktori sulgemine hülgab ainult selle mustandi. Indeks ja tööfail jäävad muutmata.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Hülga indeksi mustand';
 }

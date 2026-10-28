@@ -8709,4 +8709,14 @@ class AppLocalizationsNb extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft => 'Forkaste ulagret indeksutkast?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Når indeksredigereren lukkes, forkastes bare utkastet. Indeksen og arbeidsfilen endres ikke.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Forkast indeksutkast';
 }

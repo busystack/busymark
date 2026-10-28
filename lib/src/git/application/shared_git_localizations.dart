@@ -223,6 +223,10 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.undo => gitUiUndo,
     GitMessages.redo => gitUiRedo,
     GitMessages.reloadIndexReview => gitUiReloadIndexReview,
+    GitMessages.discardUnsavedIndexDraft => gitUiDiscardUnsavedIndexDraft,
+    GitMessages.closingTheIndexEditorDiscardsOnlyItsDraft =>
+      gitUiClosingTheIndexEditorDiscardsOnlyItsDraft,
+    GitMessages.discardIndexDraft => gitUiDiscardIndexDraft,
     GitMessages.reloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
       gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces,
     GitMessages.replaceDraftAndReload => gitUiReplaceDraftAndReload,

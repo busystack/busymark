@@ -8696,4 +8696,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Kaydedilmemiş dizin taslağı atılsın mı?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Dizin düzenleyicisini kapatmak yalnızca taslağı atar. Dizin ve çalışma dosyası değişmez.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Dizin taslağını at';
 }

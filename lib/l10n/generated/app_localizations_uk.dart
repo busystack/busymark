@@ -8788,4 +8788,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path / $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Відкинути незбережену чернетку індексу?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Закриття редактора індексу відкине лише чернетку. Індекс і робочий файл залишаться без змін.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Відкинути чернетку індексу';
 }

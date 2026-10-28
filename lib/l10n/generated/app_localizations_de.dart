@@ -8787,4 +8787,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Ungespeicherten Indexentwurf verwerfen?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Beim Schließen des Indexeditors wird nur sein Entwurf verworfen. Index und Arbeitsdatei bleiben unverändert.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Indexentwurf verwerfen';
 }

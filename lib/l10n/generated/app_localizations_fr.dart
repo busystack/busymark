@@ -8791,4 +8791,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String gitUiConflictIdentity(String path, String kind) {
     return '$path · $kind';
   }
+
+  @override
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Ignorer le brouillon d’index non enregistré ?';
+
+  @override
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'La fermeture de l’éditeur d’index ignore uniquement son brouillon. L’index et le fichier de travail restent inchangés.';
+
+  @override
+  String get gitUiDiscardIndexDraft => 'Ignorer le brouillon d’index';
 }
