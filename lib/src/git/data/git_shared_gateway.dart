@@ -385,8 +385,9 @@ class GitCliGateway implements GitRepositoryGateway {
     int limit = 200,
     int skip = 0,
   }) => _map(() async {
+    final id = await _repo(repository);
     final page = await core.inspect(
-      await _repo(repository),
+      id,
       shared.GitInspection(
         shared.GitInspectionKind.fileHistory,
         path: shared.RepoPath.text(repoRelativePath),
@@ -394,25 +395,53 @@ class GitCliGateway implements GitRepositoryGateway {
         limit: limit,
       ),
     );
-    return [
-      for (final row in (page['entries'] as List).cast<shared.Json>())
+    final entries = <GitFileHistoryEntry>[];
+    for (final row in (page['entries'] as List).cast<shared.Json>()) {
+      final commit = shared.GitCommit.fromJson(row['commit'] as shared.Json);
+      final path = shared.RepoPath.fromJson(row['pathAtCommit']);
+      var previous = shared.RepoPath.fromJson(row['pathInParent']);
+      var status = _fileStatus(row['status'] as String);
+      if (commit.parents.length > 1) {
+        // Follow history can supply a sparse/combined merge boundary. Its
+        // status columns do not describe this adapter's first-parent review.
+        final changes = await core.changedFiles(
+          id,
+          commit.oid,
+          parent: commit.parents.first,
+        );
+        final change = changes
+            .where((change) => change.path == path)
+            .firstOrNull;
+        previous = change?.originalPath ?? path;
+        status = change == null
+            ? row['deleted'] == true
+                  ? GitDiffFileStatus.deleted
+                  : GitDiffFileStatus.unknown
+            : _fileStatus(change.index);
+      }
+      if (path.utf8Path == null || previous.utf8Path == null) {
+        throw const shared.GitException(shared.GitErrorCode.unsupportedContent);
+      }
+      entries.add(
         GitFileHistoryEntry(
-          commit: _summary(
-            shared.GitCommit.fromJson(row['commit'] as shared.Json),
-          ),
-          pathAtCommit: shared.RepoPath.fromJson(row['pathAtCommit']).utf8Path!,
-          pathInParent: shared.RepoPath.fromJson(row['pathInParent']).utf8Path,
-          status: _fileStatus(row['status'] as String),
+          commit: _summary(commit),
+          pathAtCommit: path.utf8Path!,
+          pathInParent: previous.utf8Path,
+          status: status,
         ),
-    ];
+      );
+    }
+    return entries;
   }, 'log');
-  GitDiffFileStatus _fileStatus(String value) => switch (value[0]) {
-    'A' => GitDiffFileStatus.added,
-    'D' => GitDiffFileStatus.deleted,
-    'R' => GitDiffFileStatus.renamed,
-    'C' => GitDiffFileStatus.copied,
-    _ => GitDiffFileStatus.modified,
-  };
+  GitDiffFileStatus _fileStatus(String value) =>
+      switch (value.isEmpty ? null : value[0]) {
+        'A' => GitDiffFileStatus.added,
+        'D' => GitDiffFileStatus.deleted,
+        'R' => GitDiffFileStatus.renamed,
+        'C' => GitDiffFileStatus.copied,
+        'M' || 'T' => GitDiffFileStatus.modified,
+        _ => GitDiffFileStatus.unknown,
+      };
   Future<shared.GitCommit> _commit(shared.RepositoryId id, String hash) async =>
       (await core.history(
         id,
@@ -561,7 +590,9 @@ class GitCliGateway implements GitRepositoryGateway {
       message: result.diagnostic,
       stdout: result.diagnostic,
       stderr: '',
-      updatedStatus: result.snapshot == null ? null : projectSharedStatus(result.snapshot!),
+      updatedStatus: result.snapshot == null
+          ? null
+          : projectSharedStatus(result.snapshot!),
     );
   });
   @override

@@ -6,6 +6,54 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test(
+    'merged rename history keeps actual revision and first-parent paths',
+    () async {
+      final root = await _createRepository('busymark-git-merged-history-');
+      final original = await File(p.join(root.path, 'README.md')).readAsBytes();
+      final initialBranch = await _gitOutput(root.path, [
+        'branch',
+        '--show-current',
+      ]);
+      await _git(root.path, ['branch', 'feature']);
+      await File(
+        p.join(root.path, 'chapter.md'),
+      ).writeAsString('Main chapter\r\n');
+      await _git(root.path, ['add', 'chapter.md']);
+      await _git(root.path, ['commit', '-m', 'Main chapter']);
+      await _git(root.path, ['switch', 'feature']);
+      await Directory(p.join(root.path, 'docs')).create();
+      const renamed = 'docs/日本語-review.md';
+      await _git(root.path, ['mv', 'README.md', renamed]);
+      await _git(root.path, ['commit', '-m', 'Rename chapter']);
+      final renameOid = await _gitOutput(root.path, ['rev-parse', 'HEAD']);
+      await _git(root.path, ['switch', initialBranch]);
+      await _git(root.path, [
+        'merge',
+        '--no-ff',
+        '-m',
+        'Merge renamed chapter',
+        'feature',
+      ]);
+      const gateway = GitCliGateway();
+      final repository = (await gateway.detectRepository(root.path))!;
+      final history = await gateway.fileHistory(repository, renamed);
+      expect(history.first.commit.parentHashes, hasLength(2));
+      expect(history.first.status, GitDiffFileStatus.renamed);
+      expect(history.first.pathAtCommit, renamed);
+      expect(history.first.oldPath, 'README.md');
+      expect(history.first.newPath, renamed);
+      final rename = history.singleWhere(
+        (entry) => entry.commit.fullHash == renameOid,
+      );
+      expect(rename.status, GitDiffFileStatus.renamed);
+      expect(rename.pathAtCommit, renamed);
+      expect(rename.oldPath, 'README.md');
+      expect(await File(p.join(root.path, renamed)).readAsBytes(), original);
+      expect(await _gitOutput(root.path, ['status', '--porcelain']), isEmpty);
+    },
+  );
+
   test('process-backed Git gateway requires workspace trust', () {
     expect(const GitCliGateway().requiresWorkspaceTrust, isTrue);
   });
