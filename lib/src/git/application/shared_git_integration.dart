@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../ai/ai_edit_ui.dart';
 import '../../ai/ai_models.dart';
 import '../../app/app_settings.dart';
+import '../../app/git_dismissal.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
@@ -289,11 +290,13 @@ class SharedGitReview {
     this.comparison,
     this.log = false,
     this.historyPath,
+    this.reviewedFiles = const [],
   });
   final shared.RepositoryId repository;
   final shared.GitComparison? comparison;
   final bool log;
   final shared.RepoPath? historyPath;
+  final List<shared.GitComparison> reviewedFiles;
 }
 
 Future<void> showBusyMarkSharedGitAction(
@@ -379,7 +382,12 @@ final class BusyMarkGitDraftStore implements shared.GitDraftStore {
       p.join((await getApplicationSupportDirectory()).path, 'git-drafts'),
     );
     await directory.create(recursive: true);
-    return File(p.join(directory.path, '$key.txt'));
+    // Logical amend slots include ':'; keep existing Linux filenames while
+    // encoding characters forbidden in Windows filenames with a reversible codec.
+    final name = Platform.isWindows
+        ? Uri.encodeComponent(key).replaceAll('*', '%2A')
+        : key;
+    return File(p.join(directory.path, '$name.txt'));
   }
 
   final _tails = <String, Future<void>>{};
@@ -558,6 +566,7 @@ shared.GitHost busyMarkGitHost(
   final drafts = ref.read(sharedGitDraftStoreProvider);
   var reconcileWorkingFiles = true;
   return shared.GitHost(
+    registerDismissalGuard: ref.read(busyMarkGitDismissalProvider).register,
     spacing: BusyMarkSpacing.sm,
     minimumRowHeight: 30,
     icons: const {
@@ -623,7 +632,12 @@ shared.GitHost busyMarkGitHost(
                         ),
                         IconButton(
                           tooltip: context.l10n.close,
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () {
+                            final route = ModalRoute.of(context);
+                            if (route?.isCurrent == true) {
+                              unawaited(Navigator.of(context).maybePop());
+                            }
+                          },
                           icon: const Icon(BusyMarkGlyphs.windowClose),
                         ),
                       ],
@@ -904,6 +918,9 @@ class _BusyMarkSharedGitSidebarState
           SharedGitReview(
             _session!.repository,
             comparison: comparison,
+            reviewedFiles: List.unmodifiable(
+              shared.gitStatusComparisons(_session!.snapshot),
+            ),
             log: log,
           ),
         );
@@ -1084,7 +1101,7 @@ class _BusyMarkSharedGitReviewState
   }
 
   VoidCallback? _navigate(int direction) {
-    final comparisons = shared.gitStatusComparisons(_session?.snapshot);
+    final comparisons = widget.review.reviewedFiles;
     final index = shared.gitComparisonIndex(
           comparisons,
           widget.review.comparison,
@@ -1093,15 +1110,26 @@ class _BusyMarkSharedGitReviewState
             shared.gitComparisonIndex(comparisons, widget.review.comparison) +
             direction;
     if (index < 0 || next < 0 || next >= comparisons.length) return null;
-    return () => ref
-        .read(sharedGitReviewProvider.notifier)
-        .open(
-          widget.workspace.id,
-          SharedGitReview(
-            widget.review.repository,
-            comparison: comparisons[next],
-          ),
-        );
+    final reviewed = widget.review;
+    return () {
+      if (!mounted ||
+          !identical(
+            ref.read(sharedGitReviewProvider)[widget.workspace.id],
+            reviewed,
+          )) {
+        return;
+      }
+      ref
+          .read(sharedGitReviewProvider.notifier)
+          .open(
+            widget.workspace.id,
+            SharedGitReview(
+              reviewed.repository,
+              comparison: comparisons[next],
+              reviewedFiles: comparisons,
+            ),
+          );
+    };
   }
 
   @override

@@ -50,6 +50,7 @@ import 'busymark_toast.dart';
 import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
+import 'git_dismissal.dart';
 import 'linux/linux_window_host.dart';
 
 final _busyMarkDefaultCommandRegistryProvider =
@@ -1113,6 +1114,11 @@ class _BusyMarkWindowLifecycleState
   Future<void> _handleWindowClose() async {
     final context = rootNavigatorKey.currentContext ?? this.context;
     if (!context.mounted) {
+      return;
+    }
+    if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
+        !mounted ||
+        !context.mounted) {
       return;
     }
     final controller = ref.read(workspaceControllerProvider.notifier);

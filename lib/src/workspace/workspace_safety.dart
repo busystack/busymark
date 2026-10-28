@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/app_settings.dart';
+import '../app/git_dismissal.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
@@ -25,6 +26,10 @@ XTypeGroup _markdownSaveType(BuildContext context) => XTypeGroup(
 );
 
 Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
+  if (!await ref.read(busyMarkGitDismissalProvider).mayDismiss() ||
+      !context.mounted) {
+    return false;
+  }
   if (!ref.read(workspaceControllerProvider.notifier).propertyEdits.flush()) {
     return false;
   }
