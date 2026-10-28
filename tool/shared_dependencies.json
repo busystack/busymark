@@ -15,10 +15,10 @@
       "name": "busystack_git_flutter",
       "path": "../busystack_git_flutter",
       "archive": "tool/source-dependencies/busystack_git_flutter.tar.gz",
-      "sha256": "2c797cf6d6b9f38b6bdd00a006a46611707a240ff514667250eb51e5510d6abf",
-      "tree_sha256": "d605ca94a4c00c070f532c0d5efd2c4db3276969249e33c2ca96a166e320af0d",
+      "sha256": "59f813574d56b665f08dbe033d22243c3745631a774983c38206df0153775df1",
+      "tree_sha256": "a2ad851799fc9264e962c488cf5a5594469578f7e7f8cfbb20d070dafe4401c6",
       "repository": "https://github.com/busystack/busystack_git_flutter.git",
-      "revision": "bb535ffff6e970ceb01b4a1cec44bacfd3016c97"
+      "revision": "d6020fc453411bf30d8c36f68d52b652798d9d0e"
     }
   ]
 }

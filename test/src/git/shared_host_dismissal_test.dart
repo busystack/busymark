@@ -34,12 +34,16 @@ class _IndexClient extends fixture.FixtureClient {
 
 void main() {
   for (final conflict in [false, true]) {
-    for (final closeKind
-        in (conflict
-            ? ['Close', 'window']
-            : ['Close', 'Escape', 'Back', 'window'])) {
+    for (final (closeKind, beforeFrame) in [
+      for (final kind
+          in (conflict
+              ? ['Close', 'window']
+              : ['Close', 'Escape', 'Back', 'window']))
+        (kind, false),
+      ('Close', true),
+    ]) {
       testWidgets(
-        'actual BusyMark $closeKind protects dirty ${conflict ? 'conflict' : 'index'} draft',
+        'actual BusyMark $closeKind${beforeFrame ? ' before frame' : ''} protects dirty ${conflict ? 'conflict' : 'index'} draft',
         (tester) async {
           tester.view.physicalSize = const Size(1440, 1000);
           tester.view.devicePixelRatio = 1;
@@ -143,7 +147,7 @@ void main() {
           final editorFinder = find.byWidget(editor.single);
           final initialText = editor.single.controller!.text;
           await tester.enterText(editorFinder, 'one\nmanual draft\nend\n');
-          await tester.pump();
+          if (!beforeFrame) await tester.pump();
           final controller = editor.single.controller!;
           controller.selection = const TextSelection(
             baseOffset: 4,
