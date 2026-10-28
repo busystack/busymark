@@ -8700,4 +8700,98 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'इंडेक्स ड्राफ़्ट छोड़ें';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'टकराव का बिना सहेजा परिणाम छोड़ें?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'टकराव संपादक बंद करने पर केवल परिणाम का बिना सहेजा मसौदा छोड़ा जाता है। सहेजी गई कार्य सामग्री और इंडेक्स अपरिवर्तित रहते हैं।';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'टकराव का मसौदा छोड़ें';
+
+  @override
+  String get gitUiOpenCurrentFile => 'वर्तमान फ़ाइल खोलें';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'पिछला खोज परिणाम';
+
+  @override
+  String get gitUiNextSearchMatch => 'अगला खोज परिणाम';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return '$count में से परिणाम $current';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'पहले $count परिणाम दिखाए जा रहे हैं। अधिक की समीक्षा करने के लिए खोज सीमित करें।';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'फ़िल्टर के बिना संशोधन दिखाएँ';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'इतिहास फ़िल्टर पुनर्स्थापित करें';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'सभी प्रभावित फ़ाइलें दिखाएँ';
+
+  @override
+  String get gitUiGraphLanes => 'ग्राफ़ की लेन';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '$arg0 को $arg1 पर रीबेस करें';
+  }
+
+  @override
+  String get gitUiChangedLine => 'बदली हुई पंक्ति';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'HEAD का क्षेत्र इंडेक्स मसौदे में कॉपी करें';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'कार्य क्षेत्र इंडेक्स मसौदे में कॉपी करें';
+
+  @override
+  String get gitUiUpdatingConflictRegions =>
+      'टकराव के क्षेत्र अपडेट किए जा रहे हैं';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'टकराव चिह्न वाले परिणाम क्षेत्र: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'बाएँ सुझाव को अनदेखा करें';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'दाएँ सुझाव को अनदेखा करें';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'भेजा गया मसौदा इंडेक्स में लिखा गया है। नया पाठ अभी भी इस संपादक में है। इसे लागू करने से पहले वर्तमान संस्करण फिर से लोड करके समीक्षा करें।';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'भेजा गया परिणाम सहेज दिया गया है। आपके नए परिणाम का मसौदा अभी भी सहेजा नहीं गया है।';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'इस पथ और संशोधन के लिए फ़ाइल इतिहास उपलब्ध नहीं है।';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'सहेजे गए इंडेक्स की समीक्षा करें और ड्राफ़्ट रखें';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'सहेजा गया इंडेक्स या उसके स्रोत बदल गए हैं। नया ड्राफ़्ट सुरक्षित है; उसे लागू करने से पहले इन बदलावों की अलग से समीक्षा करें।';
 }

@@ -8474,4 +8474,92 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => '인덱스 초안 버리기';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft => '저장하지 않은 충돌 결과를 버리시겠습니까?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      '충돌 편집기를 닫으면 저장하지 않은 결과 초안만 버려집니다. 저장된 작업 내용과 인덱스는 변경되지 않습니다.';
+
+  @override
+  String get gitUiDiscardConflictDraft => '충돌 초안 버리기';
+
+  @override
+  String get gitUiOpenCurrentFile => '현재 파일 열기';
+
+  @override
+  String get gitUiPreviousSearchMatch => '이전 검색 결과';
+
+  @override
+  String get gitUiNextSearchMatch => '다음 검색 결과';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return '$count개 중 $current번째 결과';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return '처음 $count개 결과를 표시합니다. 더 검토하려면 검색 범위를 좁히세요.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => '필터 없이 리비전 표시';
+
+  @override
+  String get gitUiRestoreHistoryFilters => '기록 필터 복원';
+
+  @override
+  String get gitUiShowAllAffectedFiles => '영향을 받는 모든 파일 표시';
+
+  @override
+  String get gitUiGraphLanes => '그래프 레인';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '$arg0을(를) $arg1 위로 리베이스';
+  }
+
+  @override
+  String get gitUiChangedLine => '변경된 줄';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft => 'HEAD 영역을 인덱스 초안에 복사';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft => '작업 영역을 인덱스 초안에 복사';
+
+  @override
+  String get gitUiUpdatingConflictRegions => '충돌 영역 업데이트 중';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return '충돌 마커가 있는 결과 영역: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => '왼쪽 제안 무시';
+
+  @override
+  String get gitUiIgnoreRightRegion => '오른쪽 제안 무시';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      '제출한 초안을 인덱스에 썼습니다. 더 새로운 텍스트는 이 편집기에 남아 있습니다. 적용하기 전에 현재 버전을 다시 불러와 검토하세요.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      '제출한 결과를 저장했습니다. 더 새로운 결과 초안은 아직 저장되지 않았습니다.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      '이 경로와 리비전에 대한 파일 기록이 없습니다.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft => '저장된 인덱스를 검토하고 초안 유지';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      '저장된 인덱스 또는 원본이 변경되었습니다. 최신 초안은 유지됩니다. 적용하기 전에 해당 변경 사항을 별도로 검토하세요.';
 }

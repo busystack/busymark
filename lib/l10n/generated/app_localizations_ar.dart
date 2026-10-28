@@ -8710,4 +8710,97 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'تجاهل مسودة الفهرس';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'هل تريد تجاهل نتيجة حل التعارض غير المحفوظة؟';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'يؤدي إغلاق محرر التعارض إلى تجاهل مسودة النتيجة غير المحفوظة فقط. يظل محتوى العمل المحفوظ والفهرس دون تغيير.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'تجاهل مسودة التعارض';
+
+  @override
+  String get gitUiOpenCurrentFile => 'فتح الملف الحالي';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'نتيجة البحث السابقة';
+
+  @override
+  String get gitUiNextSearchMatch => 'نتيجة البحث التالية';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'النتيجة $current من $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'تُعرض أول $count نتيجة. حدّد البحث لمراجعة المزيد.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'عرض المراجعة دون عوامل تصفية';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'استعادة عوامل تصفية السجل';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'عرض جميع الملفات المتأثرة';
+
+  @override
+  String get gitUiGraphLanes => 'مسارات الرسم البياني';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'إعادة تأسيس $arg0 على $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'سطر متغير';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'نسخ منطقة HEAD إلى مسودة الفهرس';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'نسخ منطقة العمل إلى مسودة الفهرس';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'جارٍ تحديث مناطق التعارض';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'مناطق النتيجة التي تحتوي على علامات تعارض: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'تجاهل الاقتراح الأيسر';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'تجاهل الاقتراح الأيمن';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'تمت كتابة المسودة المُرسلة إلى الفهرس. ما زال النص الأحدث في هذا المحرر. أعد تحميل الإصدارات الحالية ومراجعتها قبل تطبيقه.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'تم حفظ النتيجة المُرسلة. ما زالت مسودة النتيجة الأحدث غير محفوظة.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'لا يتوفر سجل ملفات لهذا المسار وهذه المراجعة.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'راجع الفهرس المحفوظ واحتفظ بالمسودة';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها.';
 }

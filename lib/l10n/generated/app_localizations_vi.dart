@@ -8697,4 +8697,97 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Bỏ bản nháp chỉ mục';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Bỏ kết quả xung đột chưa lưu?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Đóng trình sửa xung đột chỉ bỏ bản nháp kết quả chưa lưu. Nội dung làm việc đã lưu và chỉ mục vẫn giữ nguyên.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Bỏ bản nháp xung đột';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Mở tệp hiện tại';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Kết quả tìm kiếm trước';
+
+  @override
+  String get gitUiNextSearchMatch => 'Kết quả tìm kiếm tiếp';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Kết quả $current trên $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Đang hiển thị $count kết quả đầu tiên. Thu hẹp tìm kiếm để xem thêm.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Hiển thị bản sửa đổi không có bộ lọc';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Khôi phục bộ lọc lịch sử';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Hiển thị tất cả tệp bị ảnh hưởng';
+
+  @override
+  String get gitUiGraphLanes => 'Làn của đồ thị';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Đặt lại cơ sở $arg0 lên $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Dòng đã thay đổi';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Sao chép vùng HEAD vào bản nháp chỉ mục';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Sao chép vùng làm việc vào bản nháp chỉ mục';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Đang cập nhật các vùng xung đột';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Vùng kết quả có dấu xung đột: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Bỏ qua đề xuất bên trái';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Bỏ qua đề xuất bên phải';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Bản nháp đã gửi được ghi vào chỉ mục. Văn bản mới hơn vẫn ở trong trình sửa này. Hãy tải lại và xem xét các phiên bản hiện tại trước khi áp dụng.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Kết quả đã gửi được lưu. Bản nháp kết quả mới hơn của bạn vẫn chưa được lưu.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Không có lịch sử tệp cho đường dẫn và bản sửa đổi này.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Xem lại chỉ mục đã lưu và giữ bản nháp';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Chỉ mục đã lưu hoặc các nguồn của nó đã thay đổi. Bản nháp mới hơn vẫn được giữ; hãy xem lại riêng các thay đổi này trước khi áp dụng.';
 }

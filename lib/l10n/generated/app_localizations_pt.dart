@@ -8794,6 +8794,98 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Descartar rascunho do índice';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Descartar o resultado do conflito não guardado?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Fechar o editor de conflitos descarta apenas o rascunho do resultado não guardado. O conteúdo de trabalho guardado e o índice permanecem inalterados.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Descartar rascunho do conflito';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Abrir ficheiro atual';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Resultado anterior';
+
+  @override
+  String get gitUiNextSearchMatch => 'Resultado seguinte';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Resultado $current de $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'São apresentados os primeiros $count resultados. Refine a pesquisa para rever mais.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => 'Mostrar revisão sem filtros';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Restaurar filtros do histórico';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Mostrar todos os ficheiros afetados';
+
+  @override
+  String get gitUiGraphLanes => 'Faixas do grafo';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Rebasear $arg0 sobre $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Linha alterada';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Copiar região de HEAD para o rascunho do índice';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Copiar região de trabalho para o rascunho do índice';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'A atualizar regiões de conflito';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Regiões do resultado com marcadores de conflito: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Ignorar sugestão da esquerda';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Ignorar sugestão da direita';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'O rascunho submetido foi escrito no índice. O texto mais recente continua neste editor. Recarregue e reveja as versões atuais antes de o aplicar.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'O resultado submetido foi guardado. O seu rascunho de resultado mais recente continua por guardar.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Não há histórico de ficheiros disponível para este caminho e revisão.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Rever o índice guardado e manter o rascunho';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'O índice guardado ou as suas origens foram alterados. O rascunho mais recente é mantido; reveja estas alterações separadamente antes de o aplicar.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17579,4 +17671,96 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitUiDiscardIndexDraft => 'Descartar rascunho do índice';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Descartar o resultado do conflito não salvo?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Fechar o editor de conflitos descarta apenas o rascunho do resultado não salvo. O conteúdo de trabalho salvo e o índice permanecem inalterados.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Descartar rascunho do conflito';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Abrir arquivo atual';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Resultado anterior';
+
+  @override
+  String get gitUiNextSearchMatch => 'Próximo resultado';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Resultado $current de $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'São exibidos os primeiros $count resultados. Refine a pesquisa para revisar mais.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => 'Mostrar revisão sem filtros';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Restaurar filtros do histórico';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Mostrar todos os arquivos afetados';
+
+  @override
+  String get gitUiGraphLanes => 'Faixas do grafo';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Rebasear $arg0 sobre $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Linha alterada';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Copiar região de HEAD para o rascunho do índice';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Copiar região de trabalho para o rascunho do índice';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Atualizando regiões de conflito';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Regiões do resultado com marcadores de conflito: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Ignorar sugestão da esquerda';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Ignorar sugestão da direita';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'O rascunho enviado foi gravado no índice. O texto mais recente continua neste editor. Recarregue e revise as versões atuais antes de aplicá-lo.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'O resultado enviado foi salvo. Seu rascunho de resultado mais recente ainda não foi salvo.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Não há histórico de arquivos disponível para este caminho e revisão.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Revisar o índice salvo e manter o rascunho';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'O índice salvo ou suas origens foram alterados. O rascunho mais recente foi mantido; revise essas alterações separadamente antes de aplicá-lo.';
 }

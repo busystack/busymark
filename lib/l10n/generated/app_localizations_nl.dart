@@ -8779,4 +8779,98 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Indexconcept weggooien';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Niet-opgeslagen conflictresultaat verwerpen?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Als u de conflicteditor sluit, wordt alleen het niet-opgeslagen resultaatconcept verworpen. De opgeslagen werkinhoud en de index blijven ongewijzigd.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Conflictconcept verwerpen';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Huidig bestand openen';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Vorig zoekresultaat';
+
+  @override
+  String get gitUiNextSearchMatch => 'Volgend zoekresultaat';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Resultaat $current van $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'De eerste $count resultaten worden getoond. Verfijn de zoekopdracht om meer te bekijken.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Revisie zonder filters tonen';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Geschiedenisfilters herstellen';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Alle betrokken bestanden tonen';
+
+  @override
+  String get gitUiGraphLanes => 'Graafbanen';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '$arg0 rebasen op $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Gewijzigde regel';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'HEAD-gebied naar indexconcept kopiëren';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Werkgebied naar indexconcept kopiëren';
+
+  @override
+  String get gitUiUpdatingConflictRegions =>
+      'Conflictgebieden worden bijgewerkt';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Resultaatgebieden met conflictmarkeringen: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Linkervoorstel negeren';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Rechtervoorstel negeren';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Het ingediende concept is naar de index geschreven. Nieuwere tekst staat nog in deze editor. Laad de huidige versies opnieuw en bekijk ze voordat u die tekst toepast.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Het ingediende resultaat is opgeslagen. Uw nieuwere resultaatconcept is nog niet opgeslagen.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Er is geen bestandsgeschiedenis beschikbaar voor dit pad en deze revisie.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Opgeslagen index bekijken en concept behouden';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'De opgeslagen index of de bronnen zijn gewijzigd. Het nieuwere concept blijft behouden; bekijk deze wijzigingen afzonderlijk voordat u het toepast.';
 }

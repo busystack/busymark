@@ -171,6 +171,16 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.collapseContext => gitUiCollapseContext,
     GitMessages.ignoreWhitespace => gitUiIgnoreWhitespace,
     GitMessages.searchComparison => gitUiSearchComparison,
+    GitMessages.openCurrentFile => gitUiOpenCurrentFile,
+    GitMessages.previousSearchMatch => gitUiPreviousSearchMatch,
+    GitMessages.nextSearchMatch => gitUiNextSearchMatch,
+    GitMessages.searchMatchPosition => gitUiSearchMatchPosition(
+      (values['current'] ?? '').toString(),
+      (values['count'] ?? '').toString(),
+    ),
+    GitMessages.searchResultsLimited => gitUiSearchResultsLimited(
+      (values['count'] ?? '').toString(),
+    ),
     GitMessages.search => gitUiSearch,
     GitMessages.closeSearch => gitUiCloseSearch,
     GitMessages.stagingActions => gitUiStagingActions,
@@ -246,6 +256,17 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.theEditedResultChangedDuringFormatReviewReviewItAgain =>
       gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain,
     GitMessages.synchronizeScrolling => gitUiSynchronizeScrolling,
+    GitMessages.changedLine => gitUiChangedLine,
+    GitMessages.copyHeadRegionIntoIndexDraft =>
+      gitUiCopyHeadRegionIntoIndexDraft,
+    GitMessages.copyWorkingRegionIntoIndexDraft =>
+      gitUiCopyWorkingRegionIntoIndexDraft,
+    GitMessages.indexAppliedNewerDraftPreserved =>
+      gitUiIndexAppliedNewerDraftPreserved,
+    GitMessages.reviewSavedIndexAndKeepDraft =>
+      gitUiReviewSavedIndexAndKeepDraft,
+    GitMessages.indexSourcesChangedSinceApply =>
+      gitUiIndexSourcesChangedSinceApply,
     GitMessages.readOnlyRevisionContent => gitUiReadOnlyRevisionContent,
     GitMessages.editableIndexContent => gitUiEditableIndexContent,
     GitMessages.theRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
@@ -1244,6 +1265,28 @@ extension SharedGitLocalizations on AppLocalizations {
       (values['path'] ?? '').toString(),
       (values['kind'] ?? '').toString(),
     ),
+    GitMessages.discardUnsavedConflictDraft => gitUiDiscardUnsavedConflictDraft,
+    GitMessages.closingTheConflictEditorDiscardsOnlyItsDraft =>
+      gitUiClosingTheConflictEditorDiscardsOnlyItsDraft,
+    GitMessages.discardConflictDraft => gitUiDiscardConflictDraft,
+    GitMessages.revealRevisionWithoutFilters =>
+      gitUiRevealRevisionWithoutFilters,
+    GitMessages.restoreHistoryFilters => gitUiRestoreHistoryFilters,
+    GitMessages.showAllAffectedFiles => gitUiShowAllAffectedFiles,
+    GitMessages.graphLanes => gitUiGraphLanes,
+    GitMessages.rebaseArg0OntoArg1 => gitUiRebaseArg0OntoArg1(
+      (values['arg0'] ?? '').toString(),
+      (values['arg1'] ?? '').toString(),
+    ),
+    GitMessages.updatingConflictRegions => gitUiUpdatingConflictRegions,
+    GitMessages.remainingConflictMarkers => gitUiRemainingConflictMarkers(
+      (values['count'] ?? '').toString(),
+    ),
+    GitMessages.ignoreLeftRegion => gitUiIgnoreLeftRegion,
+    GitMessages.ignoreRightRegion => gitUiIgnoreRightRegion,
+    GitMessages.newerConflictDraftRetained => gitUiNewerConflictDraftRetained,
+    GitMessages.noFileHistoryForThisPathAndRevision =>
+      gitUiNoFileHistoryForThisPathAndRevision,
     _ => message,
   };
 }

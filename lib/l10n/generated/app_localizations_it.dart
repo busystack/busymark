@@ -8779,4 +8779,98 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Scarta la bozza dell’indice';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Scartare il risultato del conflitto non salvato?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'La chiusura dell’editor dei conflitti scarta solo la bozza del risultato non salvata. Il contenuto di lavoro salvato e l’indice restano invariati.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Scarta bozza del conflitto';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Apri file attuale';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Risultato precedente';
+
+  @override
+  String get gitUiNextSearchMatch => 'Risultato successivo';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Risultato $current di $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Sono mostrati i primi $count risultati. Restringi la ricerca per esaminarne altri.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Mostra revisione senza filtri';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Ripristina filtri della cronologia';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Mostra tutti i file interessati';
+
+  @override
+  String get gitUiGraphLanes => 'Corsie del grafo';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Esegui il rebase di $arg0 su $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Riga modificata';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Copia la regione di HEAD nella bozza dell’indice';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Copia la regione di lavoro nella bozza dell’indice';
+
+  @override
+  String get gitUiUpdatingConflictRegions =>
+      'Aggiornamento delle regioni di conflitto';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Regioni del risultato con marcatori di conflitto: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Ignora suggerimento a sinistra';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Ignora suggerimento a destra';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'La bozza inviata è stata scritta nell’indice. Il testo più recente è ancora in questo editor. Ricarica e controlla le versioni attuali prima di applicarlo.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Il risultato inviato è stato salvato. La bozza del risultato più recente non è ancora salvata.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Nessuna cronologia file disponibile per questo percorso e questa revisione.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Rivedi l’indice salvato e conserva la bozza';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'L’indice salvato o le sue origini sono cambiati. La bozza più recente è conservata; esamina queste modifiche separatamente prima di applicarla.';
 }

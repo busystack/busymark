@@ -14772,6 +14772,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard index draft'**
   String get gitUiDiscardIndexDraft;
+
+  /// Shared Git interface: Discard unsaved conflict result?
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved conflict result?'**
+  String get gitUiDiscardUnsavedConflictDraft;
+
+  /// Shared Git interface: Closing the conflict editor discards only its unsaved result draft. Saved working content and the index remain unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing the conflict editor discards only its unsaved result draft. Saved working content and the index remain unchanged.'**
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft;
+
+  /// Shared Git interface: Discard conflict draft
+  ///
+  /// In en, this message translates to:
+  /// **'Discard conflict draft'**
+  String get gitUiDiscardConflictDraft;
+
+  /// Shared Git interface: Open current file
+  ///
+  /// In en, this message translates to:
+  /// **'Open current file'**
+  String get gitUiOpenCurrentFile;
+
+  /// Shared Git interface: Previous search match
+  ///
+  /// In en, this message translates to:
+  /// **'Previous search match'**
+  String get gitUiPreviousSearchMatch;
+
+  /// Shared Git interface: Next search match
+  ///
+  /// In en, this message translates to:
+  /// **'Next search match'**
+  String get gitUiNextSearchMatch;
+
+  /// Shared Git interface: {current} of {count} matches
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {count} matches'**
+  String gitUiSearchMatchPosition(String current, String count);
+
+  /// Shared Git interface: Showing the first {count} matches. Refine the search to review more.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first {count} matches. Refine the search to review more.'**
+  String gitUiSearchResultsLimited(String count);
+
+  /// Shared Git interface: Reveal revision without filters
+  ///
+  /// In en, this message translates to:
+  /// **'Reveal revision without filters'**
+  String get gitUiRevealRevisionWithoutFilters;
+
+  /// Shared Git interface: Restore history filters
+  ///
+  /// In en, this message translates to:
+  /// **'Restore history filters'**
+  String get gitUiRestoreHistoryFilters;
+
+  /// Shared Git interface: Show All Affected Files
+  ///
+  /// In en, this message translates to:
+  /// **'Show All Affected Files'**
+  String get gitUiShowAllAffectedFiles;
+
+  /// Shared Git interface: Graph lanes
+  ///
+  /// In en, this message translates to:
+  /// **'Graph lanes'**
+  String get gitUiGraphLanes;
+
+  /// Shared Git interface: Rebase {arg0} onto {arg1}
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase {arg0} onto {arg1}'**
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1);
+
+  /// Shared Git interface: Changed line
+  ///
+  /// In en, this message translates to:
+  /// **'Changed line'**
+  String get gitUiChangedLine;
+
+  /// Shared Git interface: Copy HEAD region into index draft
+  ///
+  /// In en, this message translates to:
+  /// **'Copy HEAD region into index draft'**
+  String get gitUiCopyHeadRegionIntoIndexDraft;
+
+  /// Shared Git interface: Copy working region into index draft
+  ///
+  /// In en, this message translates to:
+  /// **'Copy working region into index draft'**
+  String get gitUiCopyWorkingRegionIntoIndexDraft;
+
+  /// Shared Git interface: Updating conflict regions
+  ///
+  /// In en, this message translates to:
+  /// **'Updating conflict regions'**
+  String get gitUiUpdatingConflictRegions;
+
+  /// Shared Git interface: Result regions with conflict markers: {count}
+  ///
+  /// In en, this message translates to:
+  /// **'Result regions with conflict markers: {count}'**
+  String gitUiRemainingConflictMarkers(String count);
+
+  /// Shared Git interface: Ignore left suggestion
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore left suggestion'**
+  String get gitUiIgnoreLeftRegion;
+
+  /// Shared Git interface: Ignore right suggestion
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore right suggestion'**
+  String get gitUiIgnoreRightRegion;
+
+  /// Shared Git interface: The submitted draft was written to the index. Newer text is still in this editor. Reload and review the current versions before applying it.
+  ///
+  /// In en, this message translates to:
+  /// **'The submitted draft was written to the index. Newer text is still in this editor. Reload and review the current versions before applying it.'**
+  String get gitUiIndexAppliedNewerDraftPreserved;
+
+  /// Shared Git interface: The submitted result was saved. Your newer result draft is still unsaved.
+  ///
+  /// In en, this message translates to:
+  /// **'The submitted result was saved. Your newer result draft is still unsaved.'**
+  String get gitUiNewerConflictDraftRetained;
+
+  /// Shared Git interface: No file history is available for this path and revision.
+  ///
+  /// In en, this message translates to:
+  /// **'No file history is available for this path and revision.'**
+  String get gitUiNoFileHistoryForThisPathAndRevision;
+
+  /// Shared Git interface: Review saved index and keep draft
+  ///
+  /// In en, this message translates to:
+  /// **'Review saved index and keep draft'**
+  String get gitUiReviewSavedIndexAndKeepDraft;
+
+  /// Shared Git interface: The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it.'**
+  String get gitUiIndexSourcesChangedSinceApply;
 }
 
 class _AppLocalizationsDelegate

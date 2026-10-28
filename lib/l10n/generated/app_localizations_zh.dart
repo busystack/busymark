@@ -8345,6 +8345,92 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => '丢弃索引草稿';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft => '放弃未保存的冲突解决结果？';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      '关闭冲突编辑器只会放弃未保存的结果草稿。已保存的工作内容和索引保持不变。';
+
+  @override
+  String get gitUiDiscardConflictDraft => '放弃冲突草稿';
+
+  @override
+  String get gitUiOpenCurrentFile => '打开当前文件';
+
+  @override
+  String get gitUiPreviousSearchMatch => '上一个搜索结果';
+
+  @override
+  String get gitUiNextSearchMatch => '下一个搜索结果';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return '第 $current 个，共 $count 个结果';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return '正在显示前 $count 个结果。请缩小搜索范围以查看更多结果。';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => '不使用筛选器显示修订';
+
+  @override
+  String get gitUiRestoreHistoryFilters => '恢复历史筛选器';
+
+  @override
+  String get gitUiShowAllAffectedFiles => '显示所有受影响的文件';
+
+  @override
+  String get gitUiGraphLanes => '图形轨道';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '将 $arg0 变基到 $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => '已更改的行';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft => '将 HEAD 区域复制到索引草稿';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft => '将工作区区域复制到索引草稿';
+
+  @override
+  String get gitUiUpdatingConflictRegions => '正在更新冲突区域';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return '含有冲突标记的结果区域：$count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => '忽略左侧建议';
+
+  @override
+  String get gitUiIgnoreRightRegion => '忽略右侧建议';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      '已将提交的草稿写入索引。较新的文本仍保留在此编辑器中。应用前请重新加载并检查当前版本。';
+
+  @override
+  String get gitUiNewerConflictDraftRetained => '提交的结果已保存。较新的结果草稿仍未保存。';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision => '此路径和修订没有可用的文件历史记录。';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft => '检查已保存的索引并保留草稿';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      '已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -16686,4 +16772,90 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiDiscardIndexDraft => '丢弃索引草稿';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft => '放弃未保存的冲突解决结果？';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      '关闭冲突编辑器只会放弃未保存的结果草稿。已保存的工作内容和索引保持不变。';
+
+  @override
+  String get gitUiDiscardConflictDraft => '放弃冲突草稿';
+
+  @override
+  String get gitUiOpenCurrentFile => '打开当前文件';
+
+  @override
+  String get gitUiPreviousSearchMatch => '上一个搜索结果';
+
+  @override
+  String get gitUiNextSearchMatch => '下一个搜索结果';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return '第 $current 个，共 $count 个结果';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return '正在显示前 $count 个结果。请缩小搜索范围以查看更多结果。';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => '不使用筛选器显示修订';
+
+  @override
+  String get gitUiRestoreHistoryFilters => '恢复历史筛选器';
+
+  @override
+  String get gitUiShowAllAffectedFiles => '显示所有受影响的文件';
+
+  @override
+  String get gitUiGraphLanes => '图形轨道';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '将 $arg0 变基到 $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => '已更改的行';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft => '将 HEAD 区域复制到索引草稿';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft => '将工作区区域复制到索引草稿';
+
+  @override
+  String get gitUiUpdatingConflictRegions => '正在更新冲突区域';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return '含有冲突标记的结果区域：$count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => '忽略左侧建议';
+
+  @override
+  String get gitUiIgnoreRightRegion => '忽略右侧建议';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      '已将提交的草稿写入索引。较新的文本仍保留在此编辑器中。应用前请重新加载并检查当前版本。';
+
+  @override
+  String get gitUiNewerConflictDraftRetained => '提交的结果已保存。较新的结果草稿仍未保存。';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision => '此路径和修订没有可用的文件历史记录。';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft => '检查已保存的索引并保留草稿';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      '已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。';
 }

@@ -8714,4 +8714,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Discard index draft';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Discard unsaved conflict result?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Closing the conflict editor discards only its unsaved result draft. Saved working content and the index remain unchanged.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Discard conflict draft';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Open current file';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Previous search match';
+
+  @override
+  String get gitUiNextSearchMatch => 'Next search match';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return '$current of $count matches';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Showing the first $count matches. Refine the search to review more.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Reveal revision without filters';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Restore history filters';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Show All Affected Files';
+
+  @override
+  String get gitUiGraphLanes => 'Graph lanes';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Rebase $arg0 onto $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Changed line';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Copy HEAD region into index draft';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Copy working region into index draft';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Updating conflict regions';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Result regions with conflict markers: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Ignore left suggestion';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Ignore right suggestion';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'The submitted draft was written to the index. Newer text is still in this editor. Reload and review the current versions before applying it.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'The submitted result was saved. Your newer result draft is still unsaved.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'No file history is available for this path and revision.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Review saved index and keep draft';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it.';
 }

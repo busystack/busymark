@@ -8477,4 +8477,92 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'インデックスの下書きを破棄';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft => '未保存の競合解決結果を破棄しますか？';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      '競合エディターを閉じると、未保存の結果の下書きのみが破棄されます。保存済みの作業内容とインデックスは変更されません。';
+
+  @override
+  String get gitUiDiscardConflictDraft => '競合の下書きを破棄';
+
+  @override
+  String get gitUiOpenCurrentFile => '現在のファイルを開く';
+
+  @override
+  String get gitUiPreviousSearchMatch => '前の検索結果';
+
+  @override
+  String get gitUiNextSearchMatch => '次の検索結果';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return '$count 件中 $current 件目';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return '最初の $count 件を表示しています。さらに確認するには検索を絞り込んでください。';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => 'フィルターなしでリビジョンを表示';
+
+  @override
+  String get gitUiRestoreHistoryFilters => '履歴フィルターを復元';
+
+  @override
+  String get gitUiShowAllAffectedFiles => '影響を受けるすべてのファイルを表示';
+
+  @override
+  String get gitUiGraphLanes => 'グラフのレーン';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '$arg0 を $arg1 にリベース';
+  }
+
+  @override
+  String get gitUiChangedLine => '変更された行';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft => 'HEAD の領域をインデックスの下書きにコピー';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft => '作業領域をインデックスの下書きにコピー';
+
+  @override
+  String get gitUiUpdatingConflictRegions => '競合領域を更新中';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return '競合マーカーが残る結果の領域: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => '左側の提案を無視';
+
+  @override
+  String get gitUiIgnoreRightRegion => '右側の提案を無視';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      '送信した下書きをインデックスに書き込みました。新しいテキストはこのエディターに残っています。適用する前に現在のバージョンを再読み込みして確認してください。';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      '送信した結果は保存されました。新しい結果の下書きはまだ保存されていません。';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'このパスとリビジョンのファイル履歴はありません。';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft => '保存したインデックスを確認して下書きを保持';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      '保存したインデックスまたはその比較元が変更されています。新しい下書きは保持されています。適用する前に、これらの変更を個別に確認してください。';
 }

@@ -8707,4 +8707,96 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Dizin taslağını at';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Kaydedilmemiş çakışma sonucu atılsın mı?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Çakışma düzenleyicisini kapatmak yalnızca kaydedilmemiş sonuç taslağını atar. Kaydedilmiş çalışma içeriği ve indeks değişmez.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Çakışma taslağını at';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Geçerli dosyayı aç';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Önceki arama sonucu';
+
+  @override
+  String get gitUiNextSearchMatch => 'Sonraki arama sonucu';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return '$count sonuçtan $current. sonuç';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'İlk $count sonuç gösteriliyor. Daha fazlasını incelemek için aramayı daraltın.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => 'Revizyonu filtresiz göster';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Geçmiş filtrelerini geri yükle';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Etkilenen tüm dosyaları göster';
+
+  @override
+  String get gitUiGraphLanes => 'Grafik şeritleri';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '$arg0 dalını $arg1 üzerine yeniden temellendir';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Değişen satır';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'HEAD bölgesini indeks taslağına kopyala';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Çalışma bölgesini indeks taslağına kopyala';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Çakışma bölgeleri güncelleniyor';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Çakışma işaretçileri içeren sonuç bölgeleri: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Soldaki öneriyi yok say';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Sağdaki öneriyi yok say';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Gönderilen taslak indekse yazıldı. Daha yeni metin hâlâ bu düzenleyicide. Uygulamadan önce geçerli sürümleri yeniden yükleyip inceleyin.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Gönderilen sonuç kaydedildi. Daha yeni sonuç taslağınız hâlâ kaydedilmedi.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Bu yol ve revizyon için dosya geçmişi bulunmuyor.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Kaydedilen indeksi incele ve taslağı koru';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Kaydedilen indeks veya kaynakları değişti. Daha yeni taslak korunuyor; uygulamadan önce bu değişiklikleri ayrı olarak inceleyin.';
 }

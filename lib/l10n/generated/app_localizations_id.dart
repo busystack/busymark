@@ -8718,4 +8718,98 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Buang draf indeks';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Buang hasil konflik yang belum disimpan?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Menutup editor konflik hanya membuang draf hasil yang belum disimpan. Isi kerja yang telah disimpan dan indeks tetap sama.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Buang draf konflik';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Buka berkas saat ini';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Hasil pencarian sebelumnya';
+
+  @override
+  String get gitUiNextSearchMatch => 'Hasil pencarian berikutnya';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Hasil $current dari $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Menampilkan $count hasil pertama. Persempit pencarian untuk meninjau lebih banyak.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Tampilkan revisi tanpa filter';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Pulihkan filter riwayat';
+
+  @override
+  String get gitUiShowAllAffectedFiles =>
+      'Tampilkan semua berkas yang terpengaruh';
+
+  @override
+  String get gitUiGraphLanes => 'Jalur grafik';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Rebase $arg0 ke atas $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Baris berubah';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Salin bagian HEAD ke draf indeks';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Salin bagian kerja ke draf indeks';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Memperbarui bagian konflik';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Bagian hasil dengan penanda konflik: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Abaikan saran kiri';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Abaikan saran kanan';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Draf yang dikirim telah ditulis ke indeks. Teks yang lebih baru masih ada di editor ini. Muat ulang dan tinjau versi saat ini sebelum menerapkannya.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Hasil yang dikirim telah disimpan. Draf hasil Anda yang lebih baru masih belum disimpan.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Riwayat berkas tidak tersedia untuk jalur dan revisi ini.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Tinjau indeks tersimpan dan pertahankan draf';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Indeks tersimpan atau sumbernya telah berubah. Draf yang lebih baru dipertahankan; tinjau perubahan tersebut secara terpisah sebelum menerapkannya.';
 }

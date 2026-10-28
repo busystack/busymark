@@ -8798,4 +8798,98 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Indexentwurf verwerfen';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Ungespeichertes Konfliktergebnis verwerfen?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Beim Schließen des Konflikteditors wird nur der ungespeicherte Ergebnisentwurf verworfen. Gespeicherter Arbeitsinhalt und Index bleiben unverändert.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Konfliktentwurf verwerfen';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Aktuelle Datei öffnen';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Vorheriger Suchtreffer';
+
+  @override
+  String get gitUiNextSearchMatch => 'Nächster Suchtreffer';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Treffer $current von $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Die ersten $count Treffer werden angezeigt. Verfeinern Sie die Suche, um weitere zu prüfen.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Revision ohne Filter anzeigen';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Verlaufsfilter wiederherstellen';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Alle betroffenen Dateien anzeigen';
+
+  @override
+  String get gitUiGraphLanes => 'Graphspuren';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return '$arg0 auf $arg1 rebasen';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Geänderte Zeile';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'HEAD-Bereich in den Indexentwurf kopieren';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Arbeitsbereich in den Indexentwurf kopieren';
+
+  @override
+  String get gitUiUpdatingConflictRegions =>
+      'Konfliktbereiche werden aktualisiert';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Ergebnisbereiche mit Konfliktmarkierungen: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Linken Vorschlag ignorieren';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Rechten Vorschlag ignorieren';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Der eingereichte Entwurf wurde in den Index geschrieben. Neuerer Text befindet sich weiterhin in diesem Editor. Laden Sie die aktuellen Versionen neu und prüfen Sie sie vor dem Anwenden.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Das eingereichte Ergebnis wurde gespeichert. Ihr neuerer Ergebnisentwurf ist weiterhin ungespeichert.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Für diesen Pfad und diese Revision ist kein Dateiverlauf verfügbar.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Gespeicherten Index prüfen und Entwurf behalten';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Der gespeicherte Index oder seine Quellen wurden geändert. Der neuere Entwurf bleibt erhalten; prüfen Sie diese Änderungen vor dem Anwenden gesondert.';
 }

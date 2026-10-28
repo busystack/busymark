@@ -8727,4 +8727,97 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'کنار گذاشتن پیش‌نویس نمایه';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'نتیجهٔ ذخیره‌نشدهٔ تعارض کنار گذاشته شود؟';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'با بستن ویرایشگر تعارض فقط پیش‌نویس ذخیره‌نشدهٔ نتیجه کنار گذاشته می‌شود. محتوای کاری ذخیره‌شده و نمایه تغییری نمی‌کنند.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'کنار گذاشتن پیش‌نویس تعارض';
+
+  @override
+  String get gitUiOpenCurrentFile => 'باز کردن فایل کنونی';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'نتیجهٔ جستجوی قبلی';
+
+  @override
+  String get gitUiNextSearchMatch => 'نتیجهٔ جستجوی بعدی';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'نتیجهٔ $current از $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'نخستین $count نتیجه نمایش داده می‌شود. برای بررسی بیشتر، جستجو را محدود کنید.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => 'نمایش بازبینی بدون فیلتر';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'بازیابی فیلترهای تاریخچه';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'نمایش همهٔ فایل‌های تحت تأثیر';
+
+  @override
+  String get gitUiGraphLanes => 'مسیرهای نمودار';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'بازپایه‌گذاری $arg0 روی $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'خط تغییرکرده';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'کپی ناحیهٔ HEAD به پیش‌نویس نمایه';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'کپی ناحیهٔ کاری به پیش‌نویس نمایه';
+
+  @override
+  String get gitUiUpdatingConflictRegions =>
+      'در حال به‌روزرسانی ناحیه‌های تعارض';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'ناحیه‌های نتیجه با نشانگر تعارض: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'نادیده گرفتن پیشنهاد چپ';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'نادیده گرفتن پیشنهاد راست';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'پیش‌نویس ارسال‌شده در نمایه نوشته شد. متن جدیدتر هنوز در این ویرایشگر است. پیش از اعمال آن، نسخه‌های کنونی را دوباره بارگذاری و بررسی کنید.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'نتیجهٔ ارسال‌شده ذخیره شد. پیش‌نویس جدیدتر نتیجه هنوز ذخیره نشده است.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'برای این مسیر و بازبینی تاریخچهٔ فایل در دسترس نیست.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'بازبینی نمایهٔ ذخیره‌شده و نگه‌داشتن پیش‌نویس';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'نمایهٔ ذخیره‌شده یا منابع آن تغییر کرده است. پیش‌نویس جدیدتر حفظ شده است؛ پیش از اعمال آن، این تغییرات را جداگانه بازبینی کنید.';
 }

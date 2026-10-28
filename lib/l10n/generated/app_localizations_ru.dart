@@ -8791,4 +8791,97 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Отбросить черновик индекса';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Отбросить несохранённый результат разрешения конфликта?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'При закрытии редактора конфликтов отбрасывается только несохранённый черновик результата. Сохранённое рабочее содержимое и индекс остаются без изменений.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Отбросить черновик конфликта';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Открыть текущий файл';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Предыдущее совпадение';
+
+  @override
+  String get gitUiNextSearchMatch => 'Следующее совпадение';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Совпадение $current из $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Показаны первые $count совпадений. Уточните поиск, чтобы просмотреть остальные.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Показать ревизию без фильтров';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Восстановить фильтры истории';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Показать все затронутые файлы';
+
+  @override
+  String get gitUiGraphLanes => 'Дорожки графа';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Перебазировать $arg0 на $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Изменённая строка';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Копировать область HEAD в черновик индекса';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Копировать рабочую область в черновик индекса';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Обновление конфликтных областей';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Областей результата с маркерами конфликта: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Игнорировать левое предложение';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Игнорировать правое предложение';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Отправленный черновик записан в индекс. Более новый текст остаётся в этом редакторе. Перед его применением перезагрузите и проверьте текущие версии.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Отправленный результат сохранён. Более новый черновик результата ещё не сохранён.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'История файла для этого пути и ревизии недоступна.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Проверить сохранённый индекс и сохранить черновик';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Сохранённый индекс или его источники изменились. Новый черновик сохранён; перед его применением проверьте эти изменения отдельно.';
 }

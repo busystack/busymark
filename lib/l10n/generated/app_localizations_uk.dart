@@ -8799,4 +8799,97 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Відкинути чернетку індексу';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Відкинути незбережений результат розв’язання конфлікту?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Закриття редактора конфліктів відкидає лише незбережену чернетку результату. Збережений робочий вміст та індекс залишаються без змін.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Відкинути чернетку конфлікту';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Відкрити поточний файл';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Попередній збіг';
+
+  @override
+  String get gitUiNextSearchMatch => 'Наступний збіг';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Збіг $current із $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Показано перші $count збігів. Уточніть пошук, щоб переглянути більше.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Показати ревізію без фільтрів';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Відновити фільтри історії';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Показати всі зачеплені файли';
+
+  @override
+  String get gitUiGraphLanes => 'Доріжки графа';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Перебазувати $arg0 на $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Змінений рядок';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Копіювати область HEAD до чернетки індексу';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Копіювати робочу область до чернетки індексу';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Оновлення областей конфлікту';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Областей результату з маркерами конфлікту: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Ігнорувати ліву пропозицію';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Ігнорувати праву пропозицію';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Надіслану чернетку записано до індексу. Новіший текст залишається в цьому редакторі. Перш ніж застосувати його, перезавантажте й перевірте поточні версії.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Надісланий результат збережено. Новішу чернетку результату ще не збережено.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Історія файлу для цього шляху та ревізії недоступна.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Переглянути збережений індекс і зберегти чернетку';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Збережений індекс або його джерела змінилися. Новішу чернетку збережено; перед її застосуванням перегляньте ці зміни окремо.';
 }

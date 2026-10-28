@@ -8719,4 +8719,96 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Forkast indeksutkast';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Forkaste ulagret konfliktresultat?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Når konfliktredigeringen lukkes, forkastes bare det ulagrede resultatutkastet. Lagret arbeidsinnhold og indeksen forblir uendret.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Forkast konfliktutkast';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Åpne gjeldende fil';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Forrige søketreff';
+
+  @override
+  String get gitUiNextSearchMatch => 'Neste søketreff';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Treff $current av $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Viser de første $count treffene. Avgrens søket for å gjennomgå flere.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters => 'Vis revisjon uten filtre';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Gjenopprett historikkfiltre';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Vis alle berørte filer';
+
+  @override
+  String get gitUiGraphLanes => 'Grafbaner';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Rebaser $arg0 på $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Endret linje';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Kopier HEAD-området til indeksutkastet';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Kopier arbeidsområdet til indeksutkastet';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Oppdaterer konfliktområder';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Resultatområder med konfliktmarkører: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Ignorer venstre forslag';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Ignorer høyre forslag';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Det innsendte utkastet ble skrevet til indeksen. Nyere tekst er fortsatt i denne redigeringen. Last inn og gjennomgå gjeldende versjoner før du bruker den.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Det innsendte resultatet ble lagret. Det nyere resultatutkastet ditt er fortsatt ulagret.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Ingen filhistorikk er tilgjengelig for denne stien og revisjonen.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Se gjennom lagret indeks og behold utkastet';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Den lagrede indeksen eller kildene har endret seg. Det nyere utkastet beholdes; se gjennom disse endringene separat før du bruker det.';
 }

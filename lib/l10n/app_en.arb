@@ -7170,5 +7170,131 @@
   "gitUiDiscardIndexDraft": "Discard index draft",
   "@gitUiDiscardIndexDraft": {
     "description": "Shared Git interface: Discard index draft"
+  },
+  "gitUiDiscardUnsavedConflictDraft": "Discard unsaved conflict result?",
+  "@gitUiDiscardUnsavedConflictDraft": {
+    "description": "Shared Git interface: Discard unsaved conflict result?"
+  },
+  "gitUiClosingTheConflictEditorDiscardsOnlyItsDraft": "Closing the conflict editor discards only its unsaved result draft. Saved working content and the index remain unchanged.",
+  "@gitUiClosingTheConflictEditorDiscardsOnlyItsDraft": {
+    "description": "Shared Git interface: Closing the conflict editor discards only its unsaved result draft. Saved working content and the index remain unchanged."
+  },
+  "gitUiDiscardConflictDraft": "Discard conflict draft",
+  "@gitUiDiscardConflictDraft": {
+    "description": "Shared Git interface: Discard conflict draft"
+  },
+  "gitUiOpenCurrentFile": "Open current file",
+  "@gitUiOpenCurrentFile": {
+    "description": "Shared Git interface: Open current file"
+  },
+  "gitUiPreviousSearchMatch": "Previous search match",
+  "@gitUiPreviousSearchMatch": {
+    "description": "Shared Git interface: Previous search match"
+  },
+  "gitUiNextSearchMatch": "Next search match",
+  "@gitUiNextSearchMatch": {
+    "description": "Shared Git interface: Next search match"
+  },
+  "gitUiSearchMatchPosition": "{current} of {count} matches",
+  "@gitUiSearchMatchPosition": {
+    "description": "Shared Git interface: {current} of {count} matches",
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiSearchResultsLimited": "Showing the first {count} matches. Refine the search to review more.",
+  "@gitUiSearchResultsLimited": {
+    "description": "Shared Git interface: Showing the first {count} matches. Refine the search to review more.",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiRevealRevisionWithoutFilters": "Reveal revision without filters",
+  "@gitUiRevealRevisionWithoutFilters": {
+    "description": "Shared Git interface: Reveal revision without filters"
+  },
+  "gitUiRestoreHistoryFilters": "Restore history filters",
+  "@gitUiRestoreHistoryFilters": {
+    "description": "Shared Git interface: Restore history filters"
+  },
+  "gitUiShowAllAffectedFiles": "Show All Affected Files",
+  "@gitUiShowAllAffectedFiles": {
+    "description": "Shared Git interface: Show All Affected Files"
+  },
+  "gitUiGraphLanes": "Graph lanes",
+  "@gitUiGraphLanes": {
+    "description": "Shared Git interface: Graph lanes"
+  },
+  "gitUiRebaseArg0OntoArg1": "Rebase {arg0} onto {arg1}",
+  "@gitUiRebaseArg0OntoArg1": {
+    "description": "Shared Git interface: Rebase {arg0} onto {arg1}",
+    "placeholders": {
+      "arg0": {
+        "type": "String"
+      },
+      "arg1": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiChangedLine": "Changed line",
+  "@gitUiChangedLine": {
+    "description": "Shared Git interface: Changed line"
+  },
+  "gitUiCopyHeadRegionIntoIndexDraft": "Copy HEAD region into index draft",
+  "@gitUiCopyHeadRegionIntoIndexDraft": {
+    "description": "Shared Git interface: Copy HEAD region into index draft"
+  },
+  "gitUiCopyWorkingRegionIntoIndexDraft": "Copy working region into index draft",
+  "@gitUiCopyWorkingRegionIntoIndexDraft": {
+    "description": "Shared Git interface: Copy working region into index draft"
+  },
+  "gitUiUpdatingConflictRegions": "Updating conflict regions",
+  "@gitUiUpdatingConflictRegions": {
+    "description": "Shared Git interface: Updating conflict regions"
+  },
+  "gitUiRemainingConflictMarkers": "Result regions with conflict markers: {count}",
+  "@gitUiRemainingConflictMarkers": {
+    "description": "Shared Git interface: Result regions with conflict markers: {count}",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiIgnoreLeftRegion": "Ignore left suggestion",
+  "@gitUiIgnoreLeftRegion": {
+    "description": "Shared Git interface: Ignore left suggestion"
+  },
+  "gitUiIgnoreRightRegion": "Ignore right suggestion",
+  "@gitUiIgnoreRightRegion": {
+    "description": "Shared Git interface: Ignore right suggestion"
+  },
+  "gitUiIndexAppliedNewerDraftPreserved": "The submitted draft was written to the index. Newer text is still in this editor. Reload and review the current versions before applying it.",
+  "@gitUiIndexAppliedNewerDraftPreserved": {
+    "description": "Shared Git interface: The submitted draft was written to the index. Newer text is still in this editor. Reload and review the current versions before applying it."
+  },
+  "gitUiNewerConflictDraftRetained": "The submitted result was saved. Your newer result draft is still unsaved.",
+  "@gitUiNewerConflictDraftRetained": {
+    "description": "Shared Git interface: The submitted result was saved. Your newer result draft is still unsaved."
+  },
+  "gitUiNoFileHistoryForThisPathAndRevision": "No file history is available for this path and revision.",
+  "@gitUiNoFileHistoryForThisPathAndRevision": {
+    "description": "Shared Git interface: No file history is available for this path and revision."
+  },
+  "gitUiReviewSavedIndexAndKeepDraft": "Review saved index and keep draft",
+  "@gitUiReviewSavedIndexAndKeepDraft": {
+    "description": "Shared Git interface: Review saved index and keep draft"
+  },
+  "gitUiIndexSourcesChangedSinceApply": "The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it.",
+  "@gitUiIndexSourcesChangedSinceApply": {
+    "description": "Shared Git interface: The saved index or its sources changed. The newer draft is retained; review those changes separately before applying it."
   }
 }

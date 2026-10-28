@@ -8802,4 +8802,100 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Ignorer le brouillon d’index';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Abandonner le résultat de conflit non enregistré ?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Fermer l’éditeur de conflits abandonne uniquement le brouillon du résultat non enregistré. Le contenu de travail enregistré et l’index restent inchangés.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Abandonner le brouillon de conflit';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Ouvrir le fichier actuel';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Résultat précédent';
+
+  @override
+  String get gitUiNextSearchMatch => 'Résultat suivant';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Résultat $current sur $count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Les $count premiers résultats sont affichés. Affinez la recherche pour en examiner davantage.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Afficher la révision sans filtres';
+
+  @override
+  String get gitUiRestoreHistoryFilters =>
+      'Restaurer les filtres de l’historique';
+
+  @override
+  String get gitUiShowAllAffectedFiles =>
+      'Afficher tous les fichiers concernés';
+
+  @override
+  String get gitUiGraphLanes => 'Couloirs du graphe';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Rebaser $arg0 sur $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Ligne modifiée';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Copier la région de HEAD dans le brouillon de l’index';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Copier la région de travail dans le brouillon de l’index';
+
+  @override
+  String get gitUiUpdatingConflictRegions =>
+      'Mise à jour des régions de conflit';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Régions du résultat avec marqueurs de conflit : $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Ignorer la suggestion de gauche';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Ignorer la suggestion de droite';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Le brouillon soumis a été écrit dans l’index. Le texte plus récent reste dans cet éditeur. Rechargez et examinez les versions actuelles avant de l’appliquer.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Le résultat soumis a été enregistré. Votre brouillon de résultat plus récent n’est toujours pas enregistré.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Aucun historique de fichier n’est disponible pour ce chemin et cette révision.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Examiner l’index enregistré et conserver le brouillon';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'L’index enregistré ou ses sources ont changé. Le brouillon le plus récent est conservé ; examinez ces changements séparément avant de l’appliquer.';
 }

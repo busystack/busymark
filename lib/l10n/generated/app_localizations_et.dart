@@ -8716,4 +8716,97 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitUiDiscardIndexDraft => 'Hülga indeksi mustand';
+
+  @override
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Kas loobuda salvestamata konflikti tulemusest?';
+
+  @override
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Konfliktiredaktori sulgemisel hüljatakse ainult salvestamata tulemuse mustand. Salvestatud tööfaili sisu ja indeks ei muutu.';
+
+  @override
+  String get gitUiDiscardConflictDraft => 'Hülga konflikti mustand';
+
+  @override
+  String get gitUiOpenCurrentFile => 'Ava praegune fail';
+
+  @override
+  String get gitUiPreviousSearchMatch => 'Eelmine otsingutulemus';
+
+  @override
+  String get gitUiNextSearchMatch => 'Järgmine otsingutulemus';
+
+  @override
+  String gitUiSearchMatchPosition(String current, String count) {
+    return 'Tulemus $current/$count';
+  }
+
+  @override
+  String gitUiSearchResultsLimited(String count) {
+    return 'Kuvatakse esimesed $count tulemust. Rohkemate ülevaatamiseks täpsusta otsingut.';
+  }
+
+  @override
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Näita revisjoni ilma filtriteta';
+
+  @override
+  String get gitUiRestoreHistoryFilters => 'Taasta ajaloo filtrid';
+
+  @override
+  String get gitUiShowAllAffectedFiles => 'Näita kõiki mõjutatud faile';
+
+  @override
+  String get gitUiGraphLanes => 'Graafi rajad';
+
+  @override
+  String gitUiRebaseArg0OntoArg1(String arg0, String arg1) {
+    return 'Paiguta $arg0 ümber alusele $arg1';
+  }
+
+  @override
+  String get gitUiChangedLine => 'Muudetud rida';
+
+  @override
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Kopeeri HEAD-i piirkond indeksi mustandisse';
+
+  @override
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Kopeeri tööfaili piirkond indeksi mustandisse';
+
+  @override
+  String get gitUiUpdatingConflictRegions => 'Konfliktipiirkondade uuendamine';
+
+  @override
+  String gitUiRemainingConflictMarkers(String count) {
+    return 'Konfliktimarkeritega tulemuspiirkondi: $count';
+  }
+
+  @override
+  String get gitUiIgnoreLeftRegion => 'Eira vasakpoolset soovitust';
+
+  @override
+  String get gitUiIgnoreRightRegion => 'Eira parempoolset soovitust';
+
+  @override
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Esitatud mustand kirjutati indeksisse. Uuem tekst on endiselt selles redaktoris. Enne selle rakendamist laadi praegused versioonid uuesti ja vaata üle.';
+
+  @override
+  String get gitUiNewerConflictDraftRetained =>
+      'Esitatud tulemus salvestati. Uuem tulemuse mustand on endiselt salvestamata.';
+
+  @override
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Selle tee ja revisjoni kohta pole failiajalugu.';
+
+  @override
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Vaata salvestatud indeks üle ja säilita mustand';
+
+  @override
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Salvestatud indeks või selle allikad on muutunud. Uuem mustand säilitatakse; vaata need muudatused enne rakendamist eraldi üle.';
 }
