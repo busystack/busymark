@@ -125,6 +125,8 @@ parts:
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-ugly
       - git
+      - fonts-dejavu-core
+      - fonts-dejavu-mono
       - fonts-noto-core
       - fonts-noto-mono
       - openssh-client

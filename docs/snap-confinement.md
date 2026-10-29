@@ -81,6 +81,11 @@ recreates their extracted siblings inside its managed part directory on each
 application build, so updating a pin cannot reuse an older extraction. The
 ordinary checkout helper preserves existing sibling working trees.
 
+The recipe explicitly stages the existing DejaVu core and monospace fonts
+alongside Noto. Depending on another package's alternative font dependency can
+omit DejaVu on a clean rebuild. Packaged verification must retain the approved
+font package versions and compare their actual payloads.
+
 Strict confinement cannot promise compatibility with arbitrary host-side Git
 hooks, signing programs, credential helpers, custom transports, or external
 diff tools. BusyMark must report those failures rather than weakening the Snap
