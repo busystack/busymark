@@ -8433,30 +8433,30 @@ class AppLocalizationsZh extends AppLocalizations {
       '已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。';
 
   @override
-  String get gitUiReviewSavedMessage => '檢視已儲存的訊息';
+  String get gitUiReviewSavedMessage => '查看已保存的消息';
 
   @override
-  String get gitUiSavedMessage => '已儲存的訊息';
+  String get gitUiSavedMessage => '已保存的消息';
 
   @override
-  String get gitUiKeepThisMessage => '保留此訊息';
+  String get gitUiKeepThisMessage => '保留此消息';
 
   @override
-  String get gitUiUseSavedMessage => '使用已儲存的訊息';
+  String get gitUiUseSavedMessage => '使用已保存的消息';
 
   @override
   String get gitUiCommitDraftChangedInAnotherWindow =>
-      '此訊息已在另一個視窗中變更。請先檢視已儲存的訊息，再進行取代。';
+      '此消息已在另一个窗口中更改。请先查看已保存的消息，再进行替换。';
 
   @override
-  String get gitUiDiscardUnsavedCommitMessages => '捨棄未儲存的提交訊息？';
+  String get gitUiDiscardUnsavedCommitMessages => '丢弃未保存的提交消息？';
 
   @override
   String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
-      '無法儲存的訊息仍保留在此視窗中。捨棄這些訊息不會變更已儲存的版本。';
+      '无法保存的消息仍保留在此窗口中。丢弃这些消息不会更改已保存的版本。';
 
   @override
-  String get gitUiDiscardCommitMessages => '捨棄訊息';
+  String get gitUiDiscardCommitMessages => '丢弃消息';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
