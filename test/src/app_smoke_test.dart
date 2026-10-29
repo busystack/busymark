@@ -9283,6 +9283,243 @@ code
 
   for (final fail in [false, true]) {
     testWidgets(
+      'actual same-State workspace replacement retains draft failure=$fail',
+      (tester) async {
+        final temp = Directory.systemTemp.createTempSync(
+          'busymark_replaced_draft_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+        final first = Directory('${temp.path}/first')..createSync();
+        final second = Directory('${temp.path}/second')..createSync();
+        for (final root in [first, second]) {
+          File('${root.path}/Intro.md').writeAsStringSync('# Intro\n');
+        }
+        final directory = Directory.systemTemp.createTempSync(
+          'busymark_replaced_messages_',
+        );
+        addTearDown(() => directory.deleteSync(recursive: true));
+        Completer<Directory>? gate;
+        final entered = Completer<void>();
+        final store = BusyMarkGitDraftStore(
+          directory: () {
+            if (gate != null) {
+              if (!entered.isCompleted) entered.complete();
+              return gate.future;
+            }
+            return Future.value(directory);
+          },
+        );
+        final other = BusyMarkGitDraftStore(directory: () async => directory);
+        final native = _FakeNativeWindowController();
+        final container = ProviderContainer(
+          overrides: [
+            ..._smokeAccentOverrides.skip(2),
+            sharedGitClientFactoryProvider.overrideWithValue(
+              ({required authorize, prompts}) =>
+                  _SwitchingSharedGitReadFixture(first.path),
+            ),
+            sharedGitDraftStoreProvider.overrideWithValue(store),
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            workspaceServiceProvider.overrideWithValue(
+              _SwitchingTabbedWorkspaceService(first.path),
+            ),
+            startupPathProvider.overrideWithValue(first.path),
+            gitControllerProvider.overrideWith(
+              () => _SwitchingGitController(first.path),
+            ),
+            nativeWindowControllerProvider.overrideWithValue(native),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await pumpUntil(
+          tester,
+          () => container.read(workspaceControllerProvider).workspace != null,
+          operation:
+              'open first actual workspace before same-State replacement',
+        );
+        await tester.pumpAndSettle();
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+          operation: 'attach first actual scope and host',
+        );
+        final scope = tester.state(find.byType(BusyMarkGitWorkspaceScope));
+        final old = tester
+            .widget<shared.GitCommitView>(find.byType(shared.GitCommitView))
+            .session;
+        expect(old.repository.root, first.path);
+        gate = Completer<Directory>();
+        addTearDown(() {
+          final pending = gate;
+          if (pending != null && !pending.isCompleted) {
+            pending.complete(directory);
+          }
+        });
+        await tester.enterText(
+          find.descendant(
+            of: find.byType(shared.GitCommitView),
+            matching: find.byType(TextField),
+          ),
+          'pending local B',
+        );
+        await pumpUntil(
+          tester,
+          () => entered.isCompleted,
+          operation: 'hold actual old-owner draft write before file resolution',
+        );
+        if (fail) {
+          await tester.runAsync(
+            () => other.write(
+              old.repository.presentationKey,
+              'other window saved C',
+            ),
+          );
+        }
+        final registry = container.read(busyMarkGitDraftFlushProvider);
+        // Complete normal workspace navigation without rendering its transient
+        // null workspace. The unkeyed production scope must receive an update,
+        // rather than relying on disposal happening on an intermediate frame.
+        await _replaceWorkspaceWithoutFrame(tester, container, second.path);
+        expect(
+          container.read(workspaceControllerProvider).workspace?.rootPath,
+          second.path,
+        );
+        expect(
+          tester
+              .widget<BusyMarkGitWorkspaceScope>(
+                find.byType(BusyMarkGitWorkspaceScope),
+              )
+              .workspace
+              .rootPath,
+          first.path,
+        );
+        await tester.pump();
+        expect(
+          tester.state(find.byType(BusyMarkGitWorkspaceScope)),
+          same(scope),
+        );
+        expect(
+          tester
+              .widget<BusyMarkGitWorkspaceScope>(
+                find.byType(BusyMarkGitWorkspaceScope),
+              )
+              .workspace
+              .rootPath,
+          second.path,
+        );
+        if (!fail) {
+          expect(
+            registry.liveSessions(),
+            contains(old),
+            reason: 'same-State A to B must retain the pending old owner',
+          );
+        }
+        var flushed = false;
+        unawaited(registry.flush().then((_) => flushed = true));
+        await tester.pump();
+        expect(flushed, isFalse);
+        gate.complete(directory);
+        await pumpUntil(
+          tester,
+          () => flushed,
+          operation: 'drain writes after same-State workspace replacement',
+        );
+        expect(old.hasUnpersistedMessageDrafts, fail);
+        expect(
+          registry.liveSessions().contains(old),
+          fail,
+          reason: 'same-State replacement must retain a failed old owner',
+        );
+        await tester.runAsync(() async {
+          expect(
+            await other.read(old.repository.presentationKey),
+            fail ? 'other window saved C' : 'pending local B',
+          );
+        });
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+          operation:
+              'attach replacement repository without retargeting old draft',
+        );
+        final replacement = tester
+            .widget<shared.GitCommitView>(find.byType(shared.GitCommitView))
+            .session;
+        expect(replacement.repository.root, second.path);
+        expect(replacement.draft, isEmpty);
+        if (fail) {
+          final close = container
+              .read(windowControlServiceProvider)
+              .requestClose();
+          await pumpUntil(
+            tester,
+            () => find
+                .text(l10n.gitUiDiscardUnsavedCommitMessages)
+                .evaluate()
+                .isNotEmpty,
+            operation:
+                'actual close protects failed owner from prior workspace',
+          );
+          await tester.tap(find.text(l10n.gitUiCancel).last);
+          await tester.pumpAndSettle();
+          await close;
+          expect(native.closeCount, 0);
+        }
+        await _replaceWorkspaceWithoutFrame(tester, container, first.path);
+        await tester.pump();
+        expect(
+          tester.state(find.byType(BusyMarkGitWorkspaceScope)),
+          same(scope),
+        );
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+          operation:
+              'recover old-owner text after actual A to B to A navigation',
+        );
+        final reopened = tester
+            .widget<shared.GitCommitView>(find.byType(shared.GitCommitView))
+            .session;
+        expect(reopened.repository.root, first.path);
+        expect(reopened, isNot(same(old)));
+        expect(reopened.draft, 'pending local B');
+        expect(reopened.hasUnpersistedMessageDrafts, fail);
+        expect(find.text('pending local B'), findsOneWidget);
+        await tester.runAsync(() async {
+          expect(
+            await other.read(old.repository.presentationKey),
+            fail ? 'other window saved C' : 'pending local B',
+          );
+          expect(
+            await other.read(replacement.repository.presentationKey),
+            isNull,
+          );
+        });
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
+  for (final fail in [false, true]) {
+    testWidgets(
       'actual workspace retirement preserves pending draft failure=$fail',
       (tester) async {
         final temp = Directory.systemTemp.createTempSync(
@@ -20645,6 +20882,83 @@ class _StartupWorkspaceService extends WorkspaceService {
     await onPublished?.call();
     return result;
   }
+}
+
+Future<void> _replaceWorkspaceWithoutFrame(
+  WidgetTester tester,
+  ProviderContainer container,
+  String path,
+) async {
+  var complete = false;
+  Object? failure;
+  StackTrace? failureStack;
+  final pending = container
+      .read(workspaceControllerProvider.notifier)
+      .openPath(path)
+      .then<void>(
+        (_) => complete = true,
+        onError: (Object error, StackTrace stack) {
+          failure = error;
+          failureStack = stack;
+          complete = true;
+        },
+      );
+  final elapsed = Stopwatch()..start();
+  while (!complete) {
+    if (elapsed.elapsed >= const Duration(seconds: 10)) {
+      throw TimeoutException('Workspace replacement before a frame');
+    }
+    // Unlike pump, idle drains existing fake-zone microtasks and zero-time
+    // timers without rendering the transient null workspace.
+    await tester.idle();
+    if (!complete) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 1)),
+      );
+    }
+  }
+  await pending;
+  if (failure != null) Error.throwWithStackTrace(failure!, failureStack!);
+}
+
+class _SwitchingGitController extends _PresetGitController {
+  _SwitchingGitController(String firstRoot)
+    : super(_gitSidebarShortcutState(firstRoot));
+
+  @override
+  Future<void> associateSharedRepository(
+    Workspace workspace,
+    shared.RepositoryId repository,
+  ) async {
+    expect(repository.root, workspace.rootPath);
+    expect(repository.gitDir, '${workspace.rootPath}/.git');
+    state = _gitSidebarShortcutState(
+      workspace.rootPath,
+    ).copyWith(attachedWorkspace: workspace);
+  }
+}
+
+class _SwitchingSharedGitReadFixture extends SharedGitReadFixture {
+  _SwitchingSharedGitReadFixture(String firstRoot)
+    : super(_gitSidebarShortcutState(firstRoot));
+
+  @override
+  Future<shared.RepositoryId?> discover(
+    String localPath, {
+    shared.GitCancellation? cancellation,
+  }) async =>
+      SharedGitReadFixture(_gitSidebarShortcutState(localPath)).repository;
+}
+
+class _SwitchingTabbedWorkspaceService extends _TabbedWorkspaceService {
+  _SwitchingTabbedWorkspaceService(String firstRoot)
+    : super(rootPath: firstRoot, paths: ['$firstRoot/Intro.md']);
+
+  @override
+  Future<Workspace> openPath(String path) => _TabbedWorkspaceService(
+    rootPath: path,
+    paths: ['$path/Intro.md'],
+  ).openPath(path);
 }
 
 class _TabbedWorkspaceService extends WorkspaceService {

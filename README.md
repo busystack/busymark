@@ -114,6 +114,8 @@ lines explicitly; commits use the repository's real index. Repository actions
 and branch/commit menus provide network review, conflict resolution, rebase,
 stash, worktree, submodule and reflog tools. Trusting Git execution is separate
 from opening a folder, and operations that replace files protect open drafts.
+Commit message drafts keep their original repository when switching workspaces;
+failed saves remain available for review during normal window close.
 
 Rebase targets come from searchable branches/tags or the Git Log; the configured
 upstream is shown explicitly and object IDs are handled internally. Replaced

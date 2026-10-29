@@ -72,11 +72,15 @@ class _BusyMarkGitWorkspaceScopeState
   var _generation = 0;
   Future<shared.RepositoryId?>? _discovery;
   shared.GitClient? _client;
-  late final VoidCallback _unregisterDraftFlush;
+  late VoidCallback _unregisterDraftFlush;
 
   @override
   void initState() {
     super.initState();
+    _registerDraftFlush();
+  }
+
+  void _registerDraftFlush() {
     _unregisterDraftFlush = ref
         .read(busyMarkGitDraftFlushProvider)
         .register(_flushDrafts, sessions: () => List.of(_owned));
@@ -180,7 +184,11 @@ class _BusyMarkGitWorkspaceScopeState
         oldWidget.workspace.isRemote != widget.workspace.isRemote ||
         !widget.workspace.isRemote &&
             oldWidget.workspace.rootPath != widget.workspace.rootPath) {
+      // Navigation can complete before the next frame and reuse this State.
+      // Retire old message owners before clearing them, as disposal does.
+      _unregisterDraftFlush();
       _releaseAttachments();
+      _registerDraftFlush();
       _discoveryCancellation = shared.GitCancellation();
     }
   }
