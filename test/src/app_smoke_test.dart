@@ -7626,6 +7626,49 @@ code
         hasLength(3),
       );
       expect(document.value, originalValue);
+      final nativeTabMenus = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('busymark/native_menus'),
+        (call) async {
+          nativeTabMenus.add(call);
+          return call.method == 'show' ? 0 : true;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('busymark/native_menus'),
+          null,
+        ),
+      );
+      final historical = _comparisonTabs(container).active!;
+      await tester.tap(
+        find.byKey(ValueKey('gitDiff:${historical.id}')),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        nativeTabMenus.where((call) => call.method == 'show'),
+        hasLength(1),
+      );
+      final nativeItems =
+          (nativeTabMenus.first.arguments as Map)['entries'] as List;
+      expect(nativeItems.map((item) => (item as Map)['label']), [
+        l10n.close,
+        l10n.closeOtherTabs,
+        l10n.shortcutCloseAllTabs,
+      ]);
+      expect(_comparisonTabs(container).entries, hasLength(2));
+      expect(
+        _comparisonTabs(
+          container,
+        ).entries.any((entry) => entry.id == historical.id),
+        isFalse,
+      );
+      expect(document.value, originalValue);
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.isDirty,
+        isTrue,
+      );
       expect(tester.takeException(), isNull);
     },
   );

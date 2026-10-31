@@ -1501,7 +1501,10 @@ Future<T?> showBusyMarkMenu<T>({
       return _busyMarkMenuValueAt(itemSnapshot, nativeResult.selectedIndex);
     }
   }
-  if (requireNative) throw const _BusyMarkNativeMenuUnavailable();
+  if (requireNative ||
+      itemSnapshot.any((item) => item is BusyMarkNativeMenuSeparator<T>)) {
+    throw const _BusyMarkNativeMenuUnavailable();
+  }
   if (!context.mounted) {
     return null;
   }
@@ -1589,7 +1592,8 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           children: children,
         ),
       );
-    } else if (item is PopupMenuDivider) {
+    } else if (item is PopupMenuDivider ||
+        item is BusyMarkNativeMenuSeparator<T>) {
       entries.add(const NativeMenuEntry.separator());
     } else {
       return null;
@@ -1891,6 +1895,27 @@ class _BusyMarkNestedMenuState<T> extends State<_BusyMarkNestedMenu<T>> {
       ),
     ],
   );
+}
+
+/// Semantic separator for menus that must be rendered by the native toolkit.
+/// It has no Flutter/Material rendering path.
+class BusyMarkNativeMenuSeparator<T> extends PopupMenuEntry<T> {
+  const BusyMarkNativeMenuSeparator({super.key});
+
+  @override
+  double get height => 0;
+  @override
+  bool represents(T? value) => false;
+  @override
+  State<BusyMarkNativeMenuSeparator<T>> createState() =>
+      _BusyMarkNativeMenuSeparatorState<T>();
+}
+
+class _BusyMarkNativeMenuSeparatorState<T>
+    extends State<BusyMarkNativeMenuSeparator<T>> {
+  @override
+  Widget build(BuildContext context) =>
+      throw StateError('Native menu separators require the host menu service');
 }
 
 class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {

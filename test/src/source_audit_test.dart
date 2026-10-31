@@ -1343,7 +1343,14 @@ void main() {
       r'class BusyMarkGroupedTextEntry[\s\S]*?class BusyMarkClamp',
     ).firstMatch(design)!.group(0)!;
     expect(entries, contains('return YaruListTile.square('));
-    expect(entries, contains('title: TextFormField('));
+    expect(entries, contains('final field = TextFormField('));
+    expect(
+      entries,
+      contains('YaruListTile.square(title: field, trailing: widget.trailing)'),
+    );
+    expect(entries, contains('controller: widget.controller'));
+    expect(entries, contains('undoController: widget.undoController'));
+    expect(entries, contains('scrollController: widget.scrollController'));
     expect(entries, contains('busyMarkGroupedTextFieldDecoration('));
     expect(entries, contains('trailing: widget.trailing'));
     expect(entries, isNot(contains('EditableText(')));
@@ -1510,7 +1517,12 @@ void main() {
       'lib/src/git/application/shared_git_integration.dart',
     ).readAsStringSync();
     expect(gitIntegration, contains("case 'fileHistory':"));
-    expect(gitIntegration, contains('historyPath: shared.RepoPath.text'));
+    expect(gitIntegration, contains('shared.GitFileHistoryView('));
+    expect(gitIntegration, contains('path: shared.RepoPath.text'));
+    expect(
+      gitIntegration,
+      contains('p.relative(absolutePath, from: repository.root)'),
+    );
     expect(workspace, contains('file.absolutePath'));
     final tocHeader = RegExp(
       r'class _TocHeader[\s\S]*?class _CreateWritersideTopicDialog',

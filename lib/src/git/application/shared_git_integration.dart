@@ -1177,6 +1177,32 @@ class _BusyMarkSharedGitReviewState
 
 /// Native service failure is an operational error; Git never invokes the
 /// generic application's fallback menu path.
+Future<String?> busyMarkPresentGitTabMenu(
+  BuildContext context, {
+  required Offset position,
+  required bool hasOtherTabs,
+}) async {
+  try {
+    return await busyMarkPresentGitMenu(context, [
+      shared.GitMenuEntry('close', context.l10n.close),
+      shared.GitMenuEntry(
+        'closeOthers',
+        context.l10n.closeOtherTabs,
+        enabled: hasOtherTabs,
+      ),
+      shared.GitMenuEntry('closeAll', context.l10n.shortcutCloseAllTabs),
+    ], position: position);
+  } on shared.GitException {
+    if (context.mounted) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.gitUiNativeMenuUnavailable,
+      );
+    }
+    return null;
+  }
+}
+
 Future<String?> busyMarkPresentGitMenu(
   BuildContext context,
   List<shared.GitMenuEntry> entries, {

@@ -24,3 +24,10 @@ immutable endpoints/parent and mutable review context identify that tab; sidebar
 navigation never retargets it. Preserve actual tab/editor dismissal guards and
 all transaction, draft, native input, history and comparison regressions.
 BusyFiles retains its existing navigation and authenticated daemon boundary.
+
+The mixed workspace screen is additionally covered by
+`tools/git_ui_audit`: resolved Git enum branches and Git declarations must
+use the native path, including comparison-tab context menus. Run its self-test
+and check through `tools/check_git_presentation.sh`. Its analyzer version is
+the existing shared audit pin; it does not change application dependencies.
+Native menu separators are semantic GTK entries with no Flutter rendering path.

@@ -136,6 +136,7 @@ jobs:
           flutter pub get --enforce-lockfile
           dart run tool/test_native_presentation_audit.dart
           dart run tool/check_native_presentation.dart lib/src ../busymark/lib/src/git
+          (cd ../busymark/tools/git_ui_audit && dart pub get --offline --enforce-lockfile && dart run bin/check.dart --self-test && dart run bin/check.dart)
           flutter test
           cmake -S linux/native -B "$RUNNER_TEMP/git-accessibility" -G Ninja
           cmake --build "$RUNNER_TEMP/git-accessibility"

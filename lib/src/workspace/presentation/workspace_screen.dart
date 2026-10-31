@@ -365,47 +365,58 @@ class _WorkspaceScreenContents extends ConsumerWidget {
       localHistoryRevisionId: history.selectedRevisionId,
       localHistoryDocumentName: history.selectedDocument?.displayName,
     );
-    final action = await showBusyMarkContextMenu<_WorkspaceTabAction>(
-      context,
-      position,
-      items: [
-        BusyMarkPopupMenuItem(
-          value: _WorkspaceTabAction.close,
-          label: context.l10n.close,
-          icon: BusyMarkGlyphs.clear,
-        ),
-        BusyMarkPopupMenuItem(
-          value: _WorkspaceTabAction.closeOthers,
-          label: context.l10n.closeOtherTabs,
-          icon: BusyMarkGlyphs.clear,
-          enabled: entries.any((tab) => tab.key != entry.key),
-        ),
-        BusyMarkPopupMenuItem(
-          value: _WorkspaceTabAction.closeAll,
-          label: context.l10n.shortcutCloseAllTabs,
-          icon: BusyMarkGlyphs.clear,
-        ),
-        if (entry.kind == WorkspaceTabKind.file) ...[
-          const PopupMenuDivider(height: BusyMarkSpacing.sm),
-          BusyMarkPopupMenuItem(
-            value: _WorkspaceTabAction.copyPath,
-            label: context.l10n.copyPath,
-            icon: BusyMarkGlyphs.copy,
-            enabled:
-                buffer != null &&
-                !buffer.isRemote &&
-                buffer.filePath != null &&
-                buffer.filePath!.isNotEmpty,
-          ),
-          const PopupMenuDivider(height: BusyMarkSpacing.sm),
-          BusyMarkPopupMenuItem(
-            value: _WorkspaceTabAction.localHistory,
-            label: context.l10n.localHistoryEllipsis,
-            icon: BusyMarkGlyphs.documentHistory,
-          ),
-        ],
-      ],
-    );
+    final action = entry.kind == WorkspaceTabKind.gitDiff
+        ? switch (await busyMarkPresentGitTabMenu(
+            context,
+            position: position,
+            hasOtherTabs: entries.any((tab) => tab.key != entry.key),
+          )) {
+            'close' => _WorkspaceTabAction.close,
+            'closeOthers' => _WorkspaceTabAction.closeOthers,
+            'closeAll' => _WorkspaceTabAction.closeAll,
+            _ => null,
+          }
+        : await showBusyMarkContextMenu<_WorkspaceTabAction>(
+            context,
+            position,
+            items: [
+              BusyMarkPopupMenuItem(
+                value: _WorkspaceTabAction.close,
+                label: context.l10n.close,
+                icon: BusyMarkGlyphs.clear,
+              ),
+              BusyMarkPopupMenuItem(
+                value: _WorkspaceTabAction.closeOthers,
+                label: context.l10n.closeOtherTabs,
+                icon: BusyMarkGlyphs.clear,
+                enabled: entries.any((tab) => tab.key != entry.key),
+              ),
+              BusyMarkPopupMenuItem(
+                value: _WorkspaceTabAction.closeAll,
+                label: context.l10n.shortcutCloseAllTabs,
+                icon: BusyMarkGlyphs.clear,
+              ),
+              if (entry.kind == WorkspaceTabKind.file) ...[
+                const PopupMenuDivider(height: BusyMarkSpacing.sm),
+                BusyMarkPopupMenuItem(
+                  value: _WorkspaceTabAction.copyPath,
+                  label: context.l10n.copyPath,
+                  icon: BusyMarkGlyphs.copy,
+                  enabled:
+                      buffer != null &&
+                      !buffer.isRemote &&
+                      buffer.filePath != null &&
+                      buffer.filePath!.isNotEmpty,
+                ),
+                const PopupMenuDivider(height: BusyMarkSpacing.sm),
+                BusyMarkPopupMenuItem(
+                  value: _WorkspaceTabAction.localHistory,
+                  label: context.l10n.localHistoryEllipsis,
+                  icon: BusyMarkGlyphs.documentHistory,
+                ),
+              ],
+            ],
+          );
     if (action == null ||
         !context.mounted ||
         !isWorkspaceTabCurrent(ref, workspace, entry)) {
@@ -1178,7 +1189,7 @@ List<PopupMenuEntry<_GitMenuAction>> _sidebarGitMenuItems(
       checked: selectedView == GitView.fileHistory,
       trailingCheck: true,
     ),
-    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    const BusyMarkNativeMenuSeparator<_GitMenuAction>(),
     BusyMarkPopupMenuItem(
       value: const _FetchBranchMenuAction(),
       label: context.l10n.gitFetch,
@@ -1197,13 +1208,13 @@ List<PopupMenuEntry<_GitMenuAction>> _sidebarGitMenuItems(
       icon: BusyMarkGlyphs.push,
       enabled: repository.hasRemote,
     ),
-    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    const BusyMarkNativeMenuSeparator<_GitMenuAction>(),
     BusyMarkPopupMenuItem(
       value: const _CreateBranchMenuAction(),
       label: context.l10n.gitNewBranch,
       icon: BusyMarkGlyphs.add,
     ),
-    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    const BusyMarkNativeMenuSeparator<_GitMenuAction>(),
     for (final branch in branches)
       BusyMarkPopupMenuItem(
         value: _SwitchBranchMenuAction(branch.name),

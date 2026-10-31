@@ -210,6 +210,7 @@ void main() {
                 icon: BusyMarkGlyphs.branch,
                 itemBuilder: (_) => [
                   BusyMarkPopupMenuItem(value: 1, label: 'Git action'),
+                  const BusyMarkNativeMenuSeparator<int>(),
                 ],
                 onSelected: (_) => invoked = true,
               ),
@@ -229,6 +230,123 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  for (final available in [true, false]) {
+    testWidgets('comparison tab menu requires the native service: $available', (
+      tester,
+    ) async {
+      final calls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('busymark/native_menus'),
+        (call) async {
+          calls.add(call);
+          if (!available) throw MissingPluginException();
+          return call.method == 'show' ? 1 : true;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('busymark/native_menus'),
+          null,
+        ),
+      );
+      String? action;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: BusyMarkToastOverlay(
+            child: Scaffold(
+              body: Builder(
+                builder: (context) => BusyMarkPushButton.standard(
+                  onPressed: () async {
+                    action = await busyMarkPresentGitTabMenu(
+                      context,
+                      position: const Offset(10, 10),
+                      hasOtherTabs: true,
+                    );
+                  },
+                  child: const Text('Tab actions'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Tab actions'));
+      await tester.pumpAndSettle();
+      expect(action, available ? 'closeOthers' : isNull);
+      final entries =
+          (calls.singleWhere((c) => c.method == 'show').arguments
+                  as Map)['entries']
+              as List;
+      expect(entries.map((e) => (e as Map)['label']), [
+        'Close',
+        'Close other tabs',
+        'Close all tabs',
+      ]);
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+      expect(find.byType(PopupMenuItem<String>), findsNothing);
+      if (!available) {
+        expect(
+          find.text(
+            AppLocalizations.of(
+              tester.element(find.byType(Scaffold)),
+            ).gitUiNativeMenuUnavailable,
+          ),
+          findsOneWidget,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
+    'native Git separators become toolkit entries without widget construction',
+    (tester) async {
+      List<dynamic>? entries;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('busymark/native_menus'),
+        (call) async {
+          if (call.method == 'show') {
+            entries = (call.arguments as Map)['entries'] as List;
+            return 2;
+          }
+          return true;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('busymark/native_menus'),
+          null,
+        ),
+      );
+      int? action;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BusyMarkHeaderPopupMenuButton<int>.native(
+              tooltip: 'Native separated actions',
+              icon: BusyMarkGlyphs.branch,
+              itemBuilder: (_) => [
+                BusyMarkPopupMenuItem(value: 1, label: 'First'),
+                const BusyMarkNativeMenuSeparator<int>(),
+                BusyMarkPopupMenuItem(value: 2, label: 'Second'),
+              ],
+              onSelected: (value) => action = value,
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byTooltip('Native separated actions'));
+      await tester.pumpAndSettle();
+      expect(entries, hasLength(3));
+      expect((entries![1] as Map)['separator'], isTrue);
+      expect(action, 2);
+      expect(find.byType(PopupMenuDivider), findsNothing);
+      expect(find.byType(BusyMarkNativeMenuSeparator<int>), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
