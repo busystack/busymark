@@ -135,6 +135,14 @@ class SharedGitReadFixture
   }) async => switch (request.kind) {
     shared.GitInspectionKind.commitOptions => {'hasConfiguredHooks': false},
     shared.GitInspectionKind.fileHistory => {
+      'revision':
+          request.revision?.value ??
+          (fileHistoryState ?? state)
+              .fileHistory
+              .entries
+              .firstOrNull
+              ?.commit
+              .fullHash,
       'entries': [
         for (final entry in (fileHistoryState ?? state).fileHistory.entries)
           {
