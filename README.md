@@ -108,9 +108,13 @@ own Git semantics and specialized views; BusyMark has no BusyFiles daemon
 dependency. Repository-wide staged contents remain visible when a workspace is
 only a subfolder, and history snapshots open read-only.
 
-Choose **Git** from **Sidebar view** (Ctrl+4) to open Commit, then **Log** for
-the commit graph, file history and revision review. Stage files, hunks or changed
-lines explicitly; commits use the repository's real index. Repository actions
+Choose **Commit** from **Sidebar view** (Ctrl+4) for working changes and commit
+messages. **Git Log** is a separate sidebar: its selected-commit button opens
+the graph/history selector, with commit information above Changed files.
+Click a staged, unstaged or historical file to open an ordinary comparison tab;
+documents and other comparisons retain their own content and state.
+Stage files, hunks or changed lines explicitly; commits use the repository's
+real index. Repository actions
 and branch/commit menus provide network review, conflict resolution, rebase,
 stash, worktree, submodule and reflog tools. Trusting Git execution is separate
 from opening a folder, and operations that replace files protect open drafts.
