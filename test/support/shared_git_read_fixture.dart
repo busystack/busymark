@@ -65,7 +65,18 @@ class SharedGitReadFixture
       repository: repository,
       token: 'shell-fixture',
       indexToken: 'shell-fixture-index',
-      head: commits.firstOrNull?.oid,
+      head:
+          commits.firstOrNull?.oid ??
+          ((fileHistoryState ?? state).fileHistory.entries.isEmpty
+              ? null
+              : shared.GitOid(
+                  (fileHistoryState ?? state)
+                      .fileHistory
+                      .entries
+                      .first
+                      .commit
+                      .fullHash,
+                )),
       branch: state.repositoryInfo?.currentBranch,
       upstream: state.repositoryInfo?.upstreamBranch,
       ahead: state.repositoryInfo?.aheadCount ?? 0,
@@ -157,6 +168,9 @@ class SharedGitReadFixture
               date: entry.commit.authorDate,
             ).toJson(),
             'pathAtCommit': shared.RepoPath.text(entry.pathAtCommit).toJson(),
+            'pathInParent': shared.RepoPath.text(
+              entry.pathInParent ?? entry.pathAtCommit,
+            ).toJson(),
           },
       ],
       'hasMore': false,

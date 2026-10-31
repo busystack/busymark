@@ -134,6 +134,8 @@ jobs:
         working-directory: ../busystack_git_flutter
         run: |
           flutter pub get --enforce-lockfile
+          dart run tool/test_native_presentation_audit.dart
+          dart run tool/check_native_presentation.dart lib/src ../busymark/lib/src/git
           flutter test
           cmake -S linux/native -B "$RUNNER_TEMP/git-accessibility" -G Ninja
           cmake --build "$RUNNER_TEMP/git-accessibility"

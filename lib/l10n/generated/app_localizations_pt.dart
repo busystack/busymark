@@ -6381,7 +6381,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 alteraram as linhas selecionadas · Configurações de exibição nunca alteram os bytes.';
+    return '$arg0 linhas alteradas selecionadas.';
   }
 
   @override
@@ -8913,6 +8913,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Descartar mensagens';
+
+  @override
+  String get gitUiRemoveFilter => 'Remover filtro';
+
+  @override
+  String get gitUiNoCommitsYet => 'Ainda não há commits';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'O serviço de menus nativos não está disponível. Tente novamente.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -15286,7 +15296,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 alteraram as linhas selecionadas · Configurações de exibição nunca alteram os bytes.';
+    return '$arg0 linhas alteradas selecionadas.';
   }
 
   @override
@@ -17817,4 +17827,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitUiDiscardCommitMessages => 'Descartar mensagens';
+
+  @override
+  String get gitUiRemoveFilter => 'Remover filtro';
+
+  @override
+  String get gitUiNoCommitsYet => 'Ainda não há commits';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'O serviço de menus nativos não está disponível. Tente novamente.';
 }

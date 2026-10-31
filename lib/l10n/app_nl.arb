@@ -5389,7 +5389,7 @@
   "gitUiUnstageWholeFile": "Heel bestand uit index halen",
   "gitUiStageWholeFile": "Heel bestand klaarzetten",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} witruimte-alleen veranderde regels verborgen · Toon exacte wijzigingen",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} veranderde de geselecteerde regels · Weergave-instellingen veranderen nooit de geënsceneerde bytes.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} gewijzigde regels geselecteerd.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Alleen-lezenvergelijking · Kopieer tekst of pas de weergave aan.",
   "gitUiNoFinalNewline": " · geen definitieve nieuwe regel",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} bytes{arg3}",
@@ -6069,5 +6069,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Dit bericht is in een ander venster gewijzigd. Bekijk het opgeslagen bericht voordat u het vervangt.",
   "gitUiDiscardUnsavedCommitMessages": "Niet-opgeslagen commitberichten verwerpen?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Berichten die niet konden worden opgeslagen, staan nog in dit venster. Verwerpen verandert de opgeslagen versies niet.",
-  "gitUiDiscardCommitMessages": "Berichten verwerpen"
+  "gitUiDiscardCommitMessages": "Berichten verwerpen",
+  "gitUiRemoveFilter": "Filter verwijderen",
+  "gitUiNoCommitsYet": "Nog geen commits",
+  "gitUiNativeMenuUnavailable": "De native menuservice is niet beschikbaar. Probeer het opnieuw."
 }

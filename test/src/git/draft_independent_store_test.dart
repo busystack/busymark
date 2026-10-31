@@ -17,6 +17,9 @@ GitSession _session(GitDraftStore store) {
     client: fixture.FixtureClient(),
     repository: fixture.repo,
     host: GitHost(
+      presentation: const fixture.TestGitPresentation(),
+      icons: fixture.testGitIcons,
+      presentMenu: fixture.testGitMenu,
       present: base.present,
       openDocument: base.openDocument,
       prepareMutation: base.prepareMutation,

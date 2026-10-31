@@ -6318,7 +6318,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 endret linjer · Visningsinnstillinger endrer aldri de trinnvise bytene.';
+    return '$arg0 endrede linjer valgt.';
   }
 
   @override
@@ -8838,4 +8838,14 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Forkast meldinger';
+
+  @override
+  String get gitUiRemoveFilter => 'Fjern filter';
+
+  @override
+  String get gitUiNoCommitsYet => 'Ingen innsendelser ennå';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'Den innebygde menytjenesten er utilgjengelig. Prøv igjen.';
 }

@@ -6342,7 +6342,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 خطوط انتخاب شده را تغییر داد · تنظیمات نمایش هرگز بایت های مرحله ای را تغییر نمی دهد.';
+    return '$arg0 خط تغییریافته انتخاب شده است.';
   }
 
   @override
@@ -8847,4 +8847,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'کنار گذاشتن پیام‌ها';
+
+  @override
+  String get gitUiRemoveFilter => 'حذف فیلتر';
+
+  @override
+  String get gitUiNoCommitsYet => 'هنوز کامیتی وجود ندارد';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'سرویس منوی بومی در دسترس نیست. دوباره تلاش کنید.';
 }

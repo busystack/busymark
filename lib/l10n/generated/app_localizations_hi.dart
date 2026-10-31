@@ -6304,7 +6304,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 चयनित पंक्तियों को बदल दिया गया है तथा चरण्ड बाइट्स को कभी नहीं बदलता.';
+    return '$arg0 बदली हुई पंक्तियाँ चुनी गईं।';
   }
 
   @override
@@ -8821,4 +8821,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'संदेश हटाएँ';
+
+  @override
+  String get gitUiRemoveFilter => 'फ़िल्टर हटाएँ';
+
+  @override
+  String get gitUiNoCommitsYet => 'अभी कोई कमिट नहीं है';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'मूल मेनू सेवा उपलब्ध नहीं है। फिर से कोशिश करें।';
 }

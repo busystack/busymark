@@ -6372,7 +6372,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 cambió las líneas seleccionadas · La configuración de visualización nunca altera los bytes escenificados.';
+    return '$arg0 líneas modificadas seleccionadas.';
   }
 
   @override
@@ -8915,4 +8915,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Descartar mensajes';
+
+  @override
+  String get gitUiRemoveFilter => 'Quitar filtro';
+
+  @override
+  String get gitUiNoCommitsYet => 'Aún no hay commits';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'El servicio de menús nativos no está disponible. Inténtelo de nuevo.';
 }

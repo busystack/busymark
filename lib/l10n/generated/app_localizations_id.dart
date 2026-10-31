@@ -6313,7 +6313,7 @@ class AppLocalizationsId extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 mengubah baris yang dipilih · Pengaturan Tampilan tidak pernah mengubah byte dipentaskan.';
+    return '$arg0 baris yang diubah dipilih.';
   }
 
   @override
@@ -8839,4 +8839,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Buang pesan';
+
+  @override
+  String get gitUiRemoveFilter => 'Hapus filter';
+
+  @override
+  String get gitUiNoCommitsYet => 'Belum ada commit';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'Layanan menu native tidak tersedia. Coba lagi.';
 }

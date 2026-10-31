@@ -4319,7 +4319,7 @@
   "gitUiUnstageWholeFile": "Eemalda kogu fail indeksist",
   "gitUiStageWholeFile": "Lisa kogu fail indeksisse",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} ainult tühimärkidega muudetud read peidetud · Täpsete muudatuste näitamine",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} muudetud read valitud · Kuva seaded kunagi muuta lavastatud baite.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "Valitud on {arg0} muudetud rida.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Kirjutuskaitstud võrdlus · Kopeeri teksti või muuda kuvaseadeid.",
   "gitUiNoFinalNewline": " · lõplik uus rida puudub",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} baites{arg3}",
@@ -4999,5 +4999,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Seda sõnumit muudeti teises aknas. Enne asendamist vaata salvestatud sõnum üle.",
   "gitUiDiscardUnsavedCommitMessages": "Kas loobuda salvestamata commit’i sõnumitest?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Sõnumid, mida ei saanud salvestada, on endiselt selles aknas. Nendest loobumine ei muuda salvestatud versioone.",
-  "gitUiDiscardCommitMessages": "Loobu sõnumitest"
+  "gitUiDiscardCommitMessages": "Loobu sõnumitest",
+  "gitUiRemoveFilter": "Eemalda filter",
+  "gitUiNoCommitsYet": "Kinnitusi veel pole",
+  "gitUiNativeMenuUnavailable": "Süsteemne menüüteenus pole saadaval. Proovi uuesti."
 }

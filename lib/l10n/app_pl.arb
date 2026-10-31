@@ -3885,7 +3885,7 @@
   "gitUiUnstageWholeFile": "Usuń cały plik z indeksu",
   "gitUiStageWholeFile": "Dodaj cały plik do indeksu",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0}Space-tylko zmienione linie ukryte · Pokaż dokładne zmiany",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} zmieniła wybrane wiersze · Ustawienia wyświetlania nigdy nie zmieniały scedowanych bajtów.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "Wybrano {arg0} zmienionych wierszy.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Porównanie tylko do odczytu · Skopiuj tekst lub dostosuj widok.",
   "gitUiNoFinalNewline": " · brak ostatecznej nowej linii",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} bajty{arg3}",
@@ -4565,5 +4565,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Ta wiadomość została zmieniona w innym oknie. Przejrzyj zapisaną wiadomość przed jej zastąpieniem.",
   "gitUiDiscardUnsavedCommitMessages": "Odrzucić niezapisane wiadomości commitów?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Wiadomości, których nie udało się zapisać, nadal są w tym oknie. Ich odrzucenie nie zmienia zapisanych wersji.",
-  "gitUiDiscardCommitMessages": "Odrzuć wiadomości"
+  "gitUiDiscardCommitMessages": "Odrzuć wiadomości",
+  "gitUiRemoveFilter": "Usuń filtr",
+  "gitUiNoCommitsYet": "Brak commitów",
+  "gitUiNativeMenuUnavailable": "Natywna usługa menu jest niedostępna. Spróbuj ponownie."
 }

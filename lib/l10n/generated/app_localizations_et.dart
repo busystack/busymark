@@ -6310,7 +6310,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 muudetud read valitud · Kuva seaded kunagi muuta lavastatud baite.';
+    return 'Valitud on $arg0 muudetud rida.';
   }
 
   @override
@@ -8836,4 +8836,14 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Loobu sõnumitest';
+
+  @override
+  String get gitUiRemoveFilter => 'Eemalda filter';
+
+  @override
+  String get gitUiNoCommitsYet => 'Kinnitusi veel pole';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'Süsteemne menüüteenus pole saadaval. Proovi uuesti.';
 }

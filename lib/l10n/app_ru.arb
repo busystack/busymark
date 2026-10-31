@@ -3885,7 +3885,7 @@
   "gitUiUnstageWholeFile": "Убрать весь файл из индекса",
   "gitUiStageWholeFile": "Добавить весь файл в индекс",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} скрытые только изменённые линии · Показать точные изменения",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} изменила выбранные линии: настройки отображения никогда не изменяют сценированные байты.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "Выбрано изменённых строк: {arg0}.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Сравнение только для чтения · Копируйте текст или меняйте отображение.",
   "gitUiNoFinalNewline": " · нет окончательной новой линии",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} байт{arg3}",
@@ -4565,5 +4565,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Это сообщение изменено в другом окне. Просмотрите сохранённое сообщение перед заменой.",
   "gitUiDiscardUnsavedCommitMessages": "Отбросить несохранённые сообщения коммитов?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Сообщения, которые не удалось сохранить, остались в этом окне. Их удаление не изменит сохранённые версии.",
-  "gitUiDiscardCommitMessages": "Отбросить сообщения"
+  "gitUiDiscardCommitMessages": "Отбросить сообщения",
+  "gitUiRemoveFilter": "Удалить фильтр",
+  "gitUiNoCommitsYet": "Коммитов пока нет",
+  "gitUiNativeMenuUnavailable": "Служба системных меню недоступна. Повторите попытку."
 }

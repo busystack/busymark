@@ -3859,7 +3859,7 @@
   "gitUiUnstageWholeFile": "Rimuovi intero file dall'indice",
   "gitUiStageWholeFile": "Prepara intero file",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} linee modificate solo in spazi bianchi nascoste · Mostrare le modifiche esatte",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} ha cambiato le linee selezionate · Le impostazioni di visualizzazione non alterano mai i byte messi in scena.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} righe modificate selezionate.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Confronto in sola lettura · Copia testo o modifica la visualizzazione.",
   "gitUiNoFinalNewline": " · nessuna nuova linea finale",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} byte{arg3}",
@@ -4539,5 +4539,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Questo messaggio è stato modificato in un’altra finestra. Esamina il messaggio salvato prima di sostituirlo.",
   "gitUiDiscardUnsavedCommitMessages": "Scartare i messaggi di commit non salvati?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "I messaggi che non è stato possibile salvare sono ancora in questa finestra. Scartarli non modifica le versioni salvate.",
-  "gitUiDiscardCommitMessages": "Scarta messaggi"
+  "gitUiDiscardCommitMessages": "Scarta messaggi",
+  "gitUiRemoveFilter": "Rimuovi filtro",
+  "gitUiNoCommitsYet": "Nessun commit ancora",
+  "gitUiNativeMenuUnavailable": "Il servizio dei menu nativi non è disponibile. Riprova."
 }

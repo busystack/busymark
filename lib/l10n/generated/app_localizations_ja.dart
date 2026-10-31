@@ -6126,7 +6126,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '変更行 $arg0 行を選択 · 表示設定はステージするバイト列を変更しません。';
+    return '変更行 $arg0 行を選択';
   }
 
   @override
@@ -8591,4 +8591,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'メッセージを破棄';
+
+  @override
+  String get gitUiRemoveFilter => 'フィルターを削除';
+
+  @override
+  String get gitUiNoCommitsYet => 'コミットはまだありません';
+
+  @override
+  String get gitUiNativeMenuUnavailable => 'ネイティブメニューサービスを利用できません。もう一度お試しください。';
 }

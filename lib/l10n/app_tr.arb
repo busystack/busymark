@@ -5389,7 +5389,7 @@
   "gitUiUnstageWholeFile": "Tüm dosyayı indeksten çıkar",
   "gitUiStageWholeFile": "Tüm dosyayı indekse ekle",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} whitespace-only changed lines hidden · Tam değişiklikleri göster",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} seçilmiş hatları değiştirdi · Ekran ayarları asla adım atılan byteyi değiştirmez.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} değiştirilmiş satır seçildi.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Salt okunur karşılaştırma · Metni kopyalayın veya görünümü ayarlayın.",
   "gitUiNoFinalNewline": " · • Son haber yok",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} bayt{arg3}",
@@ -6069,5 +6069,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Bu ileti başka bir pencerede değiştirildi. Değiştirmeden önce kaydedilmiş iletiyi inceleyin.",
   "gitUiDiscardUnsavedCommitMessages": "Kaydedilmemiş commit iletileri atılsın mı?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Kaydedilemeyen iletiler hâlâ bu pencerede. Bunları atmak kaydedilmiş sürümleri değiştirmez.",
-  "gitUiDiscardCommitMessages": "İletileri at"
+  "gitUiDiscardCommitMessages": "İletileri at",
+  "gitUiRemoveFilter": "Filtreyi kaldır",
+  "gitUiNoCommitsYet": "Henüz commit yok",
+  "gitUiNativeMenuUnavailable": "Yerel menü hizmeti kullanılamıyor. Yeniden deneyin."
 }

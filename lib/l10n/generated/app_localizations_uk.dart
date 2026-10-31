@@ -6381,7 +6381,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 змінили рядки вибраного · Показ ніколи не змінювати зміни на шаблонних байтах.';
+    return 'Вибрано змінених рядків: $arg0.';
   }
 
   @override
@@ -8919,4 +8919,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Відкинути повідомлення';
+
+  @override
+  String get gitUiRemoveFilter => 'Вилучити фільтр';
+
+  @override
+  String get gitUiNoCommitsYet => 'Комітів ще немає';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'Служба системних меню недоступна. Спробуйте ще раз.';
 }

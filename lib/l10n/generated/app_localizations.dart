@@ -10824,10 +10824,10 @@ abstract class AppLocalizations {
   /// **'{arg0} whitespace-only changed lines hidden · Show exact changes'**
   String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0);
 
-  /// Shared Git interface: {arg0} changed lines selected · Display settings never alter the staged bytes.
+  /// Shared Git interface: {arg0} changed lines selected.
   ///
   /// In en, this message translates to:
-  /// **'{arg0} changed lines selected · Display settings never alter the staged bytes.'**
+  /// **'{arg0} changed lines selected.'**
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   );
@@ -14970,6 +14970,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard messages'**
   String get gitUiDiscardCommitMessages;
+
+  /// Shared Git interface: Remove filter
+  ///
+  /// In en, this message translates to:
+  /// **'Remove filter'**
+  String get gitUiRemoveFilter;
+
+  /// Shared Git interface: No commits yet
+  ///
+  /// In en, this message translates to:
+  /// **'No commits yet'**
+  String get gitUiNoCommitsYet;
+
+  /// Shared Git interface: The native menu service is unavailable. Try again.
+  ///
+  /// In en, this message translates to:
+  /// **'The native menu service is unavailable. Try again.'**
+  String get gitUiNativeMenuUnavailable;
 }
 
 class _AppLocalizationsDelegate

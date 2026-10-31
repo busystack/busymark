@@ -6377,7 +6377,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 изменила выбранные линии: настройки отображения никогда не изменяют сценированные байты.';
+    return 'Выбрано изменённых строк: $arg0.';
   }
 
   @override
@@ -8911,4 +8911,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Отбросить сообщения';
+
+  @override
+  String get gitUiRemoveFilter => 'Удалить фильтр';
+
+  @override
+  String get gitUiNoCommitsYet => 'Коммитов пока нет';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'Служба системных меню недоступна. Повторите попытку.';
 }

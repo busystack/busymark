@@ -6300,7 +6300,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 đã thay đổi dòng · Hiển thị không bao giờ thay đổi các byte được sắp xếp.';
+    return 'Đã chọn $arg0 dòng thay đổi.';
   }
 
   @override
@@ -8817,4 +8817,14 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'Bỏ các thông điệp';
+
+  @override
+  String get gitUiRemoveFilter => 'Xóa bộ lọc';
+
+  @override
+  String get gitUiNoCommitsYet => 'Chưa có commit';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'Dịch vụ menu gốc không khả dụng. Hãy thử lại.';
 }

@@ -538,120 +538,117 @@ class _ChangedFileRow extends StatelessWidget {
     final canDelete = kind == _ChangeGroupKind.untracked;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-      child: Material(
+      child: BusyMarkSidebarRowSurface(
         key: ValueKey('git-change-${kind.name}-${file.repoRelativePath}'),
-        color: selected
-            ? busyMarkSelectedBackground(context)
-            : BusyMarkLinuxPalette.transparent,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          hoverColor: busyMarkRowHoverColor(context),
-          onTap: kind != _ChangeGroupKind.conflicts || canOpen
-              ? onSelect
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: BusyMarkSpacing.sm,
-              vertical: BusyMarkSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                if (kind == _ChangeGroupKind.conflicts)
-                  Icon(
-                    BusyMarkGlyphs.warning,
-                    size: BusyMarkSizes.iconSm,
-                    color: statusColor,
-                  )
-                else
-                  BusyMarkCheckbox(
-                    value: kind == _ChangeGroupKind.staged,
-                    tooltip: kind == _ChangeGroupKind.staged
-                        ? context.l10n.gitRemoveFromCommit
-                        : context.l10n.gitSelectForCommit,
-                    onChanged: (value) {
-                      if (kind == _ChangeGroupKind.staged && value == false) {
-                        onSelectionChanged(false);
-                      } else if (kind != _ChangeGroupKind.staged &&
-                          value == true) {
-                        onSelectionChanged(true);
-                      }
-                    },
-                  ),
-                const SizedBox(width: BusyMarkSpacing.xs),
-                _StatusBadge(status: status, color: statusColor),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+        enabled: true,
+        clickable:
+            (kind != _ChangeGroupKind.conflicts || canOpen ? onSelect : null) !=
+            null,
+        selected: selected,
+        onTap: kind != _ChangeGroupKind.conflicts || canOpen ? onSelect : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.sm,
+            vertical: BusyMarkSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              if (kind == _ChangeGroupKind.conflicts)
+                Icon(
+                  BusyMarkGlyphs.warning,
+                  size: BusyMarkSizes.iconSm,
+                  color: statusColor,
+                )
+              else
+                BusyMarkCheckbox(
+                  value: kind == _ChangeGroupKind.staged,
+                  tooltip: kind == _ChangeGroupKind.staged
+                      ? context.l10n.gitRemoveFromCommit
+                      : context.l10n.gitSelectForCommit,
+                  onChanged: (value) {
+                    if (kind == _ChangeGroupKind.staged && value == false) {
+                      onSelectionChanged(false);
+                    } else if (kind != _ChangeGroupKind.staged &&
+                        value == true) {
+                      onSelectionChanged(true);
+                    }
+                  },
+                ),
+              const SizedBox(width: BusyMarkSpacing.xs),
+              _StatusBadge(status: status, color: statusColor),
+              const SizedBox(width: BusyMarkSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isGroupRename ? displayPath : _fileName(displayPath),
+                      textDirection: TextDirection.ltr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: statusColor),
+                    ),
+                    if (directory.isNotEmpty)
                       Text(
-                        isGroupRename ? displayPath : _fileName(displayPath),
+                        directory,
                         textDirection: TextDirection.ltr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: statusColor),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       ),
-                      if (directory.isNotEmpty)
-                        Text(
-                          directory,
-                          textDirection: TextDirection.ltr,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(color: colors.mutedForeground),
+                    if (outsideWorkspace)
+                      Text(
+                        context.l10n.gitOutsideWorkspace,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.mutedForeground,
                         ),
-                      if (outsideWorkspace)
-                        Text(
-                          context.l10n.gitOutsideWorkspace,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(color: colors.mutedForeground),
-                        ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
-                if (canOpen || canRollback || canDelete)
-                  BusyMarkHeaderPopupMenuButton<_FileAction>(
-                    tooltip: context.l10n.fileActions,
-                    icon: BusyMarkGlyphs.menuHorizontal,
-                    transparent: true,
-                    itemBuilder: (context) => [
-                      if (canOpen)
-                        BusyMarkPopupMenuItem(
-                          value: _FileAction.open,
-                          label: context.l10n.gitOpenFile,
-                          icon: BusyMarkGlyphs.externalLink,
-                        ),
-                      if (canRollback)
-                        BusyMarkPopupMenuItem(
-                          value: _FileAction.rollback,
-                          label: context.l10n.gitDiscard,
-                          icon: BusyMarkGlyphs.undo,
-                        ),
-                      if (canDelete)
-                        BusyMarkPopupMenuItem(
-                          value: _FileAction.delete,
-                          label: context.l10n.delete,
-                          icon: BusyMarkGlyphs.delete,
-                        ),
-                    ],
-                    onSelected: (action) {
-                      switch (action) {
-                        case _FileAction.open:
-                          onOpen();
-                        case _FileAction.rollback:
-                          onRollback();
-                        case _FileAction.delete:
-                          onDelete();
-                      }
-                    },
-                  ),
-              ],
-            ),
+              ),
+              if (canOpen || canRollback || canDelete)
+                BusyMarkHeaderPopupMenuButton<_FileAction>.native(
+                  tooltip: context.l10n.fileActions,
+                  icon: BusyMarkGlyphs.menuHorizontal,
+                  transparent: true,
+                  itemBuilder: (context) => [
+                    if (canOpen)
+                      BusyMarkPopupMenuItem(
+                        value: _FileAction.open,
+                        label: context.l10n.gitOpenFile,
+                        icon: BusyMarkGlyphs.externalLink,
+                      ),
+                    if (canRollback)
+                      BusyMarkPopupMenuItem(
+                        value: _FileAction.rollback,
+                        label: context.l10n.gitDiscard,
+                        icon: BusyMarkGlyphs.undo,
+                      ),
+                    if (canDelete)
+                      BusyMarkPopupMenuItem(
+                        value: _FileAction.delete,
+                        label: context.l10n.delete,
+                        icon: BusyMarkGlyphs.delete,
+                      ),
+                  ],
+                  onSelected: (action) {
+                    switch (action) {
+                      case _FileAction.open:
+                        onOpen();
+                      case _FileAction.rollback:
+                        onRollback();
+                      case _FileAction.delete:
+                        onDelete();
+                    }
+                  },
+                ),
+            ],
           ),
         ),
       ),
@@ -682,7 +679,8 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
+    return BusyMarkTooltipStyle.wrap(
+      context,
       message: _statusLabel(context),
       child: DecoratedBox(
         decoration: BoxDecoration(

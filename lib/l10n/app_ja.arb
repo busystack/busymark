@@ -5389,7 +5389,7 @@
   "gitUiUnstageWholeFile": "ファイル全体のステージを解除",
   "gitUiStageWholeFile": "ファイル全体をステージ",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "空白のみの変更行 {arg0} 行を非表示 · 正確な変更を表示",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "変更行 {arg0} 行を選択 · 表示設定はステージするバイト列を変更しません。",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "変更行 {arg0} 行を選択",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "読み取り専用の比較 · テキストのコピーや表示設定の変更ができます。",
   "gitUiNoFinalNewline": " · 末尾に改行なし",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} バイト{arg3}",
@@ -6069,5 +6069,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "このメッセージは別のウィンドウで変更されました。置き換える前に保存済みメッセージを確認してください。",
   "gitUiDiscardUnsavedCommitMessages": "未保存のコミットメッセージを破棄しますか？",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "保存できなかったメッセージは、このウィンドウに残っています。破棄しても保存済みの内容は変更されません。",
-  "gitUiDiscardCommitMessages": "メッセージを破棄"
+  "gitUiDiscardCommitMessages": "メッセージを破棄",
+  "gitUiRemoveFilter": "フィルターを削除",
+  "gitUiNoCommitsYet": "コミットはまだありません",
+  "gitUiNativeMenuUnavailable": "ネイティブメニューサービスを利用できません。もう一度お試しください。"
 }

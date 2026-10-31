@@ -3859,7 +3859,7 @@
   "gitUiUnstageWholeFile": "Fjern hele filen fra indeks",
   "gitUiStageWholeFile": "Klargjør hele filen",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0}- tomrom bare endrede linjer skjult · Vis nøyaktige endringer",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} endret linjer · Visningsinnstillinger endrer aldri de trinnvise bytene.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} endrede linjer valgt.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Skrivebeskyttet sammenligning · Kopier tekst eller juster visningen.",
   "gitUiNoFinalNewline": " · ingen endelig linjeskift",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} byte{arg3}",
@@ -4539,5 +4539,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Denne meldingen ble endret i et annet vindu. Se gjennom den lagrede meldingen før du erstatter den.",
   "gitUiDiscardUnsavedCommitMessages": "Forkaste ulagrede commit-meldinger?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Meldinger som ikke kunne lagres, er fortsatt i dette vinduet. Forkasting endrer ikke de lagrede versjonene.",
-  "gitUiDiscardCommitMessages": "Forkast meldinger"
+  "gitUiDiscardCommitMessages": "Forkast meldinger",
+  "gitUiRemoveFilter": "Fjern filter",
+  "gitUiNoCommitsYet": "Ingen innsendelser ennå",
+  "gitUiNativeMenuUnavailable": "Den innebygde menytjenesten er utilgjengelig. Prøv igjen."
 }

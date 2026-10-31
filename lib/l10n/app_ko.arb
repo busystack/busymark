@@ -5389,7 +5389,7 @@
   "gitUiUnstageWholeFile": "파일 전체 스테이징 해제",
   "gitUiStageWholeFile": "파일 전체 스테이징",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "공백만 변경된 {arg0}개 행 숨김 · 정확한 변경 표시",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "변경된 {arg0}개 행 선택 · 표시 설정은 스테이징되는 바이트를 바꾸지 않습니다.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "변경된 줄 {arg0}개 선택됨.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "읽기 전용 비교 · 텍스트를 복사하거나 표시 설정을 조정하세요.",
   "gitUiNoFinalNewline": " · 마지막 줄 바꿈 없음",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2}바이트{arg3}",
@@ -6069,5 +6069,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "이 메시지는 다른 창에서 변경되었습니다. 바꾸기 전에 저장된 메시지를 검토하세요.",
   "gitUiDiscardUnsavedCommitMessages": "저장하지 않은 커밋 메시지를 버릴까요?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "저장하지 못한 메시지가 이 창에 남아 있습니다. 버려도 저장된 버전은 변경되지 않습니다.",
-  "gitUiDiscardCommitMessages": "메시지 버리기"
+  "gitUiDiscardCommitMessages": "메시지 버리기",
+  "gitUiRemoveFilter": "필터 제거",
+  "gitUiNoCommitsYet": "아직 커밋이 없습니다",
+  "gitUiNativeMenuUnavailable": "네이티브 메뉴 서비스를 사용할 수 없습니다. 다시 시도하세요."
 }

@@ -1,3 +1,4 @@
+import '../git/application/shared_git_tabs.dart';
 import '../workspace/recent_presentation.dart';
 import '../search/welcome_notes_action.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
@@ -831,13 +832,14 @@ class BusyMarkApp extends ConsumerWidget {
   }) async {
     final workspaceState = ref.read(workspaceControllerProvider);
     final workspace = workspaceState.workspace;
-    final gitState = ref.read(gitControllerProvider);
     if (workspace == null) {
       return;
     }
     final tabs = workspaceTabEntries(
       workspace: workspace,
-      gitState: gitState,
+      gitTabs:
+          ref.read(sharedGitReviewProvider)[workspace.id] ??
+          const SharedGitTabs(),
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
       localHistoryRevisionId: ref
@@ -865,13 +867,14 @@ class BusyMarkApp extends ConsumerWidget {
   ) async {
     final workspaceState = ref.read(workspaceControllerProvider);
     final workspace = workspaceState.workspace;
-    final gitState = ref.read(gitControllerProvider);
     if (workspace == null) {
       return;
     }
     final tabs = workspaceTabEntries(
       workspace: workspace,
-      gitState: gitState,
+      gitTabs:
+          ref.read(sharedGitReviewProvider)[workspace.id] ??
+          const SharedGitTabs(),
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
       localHistoryRevisionId: ref
@@ -906,17 +909,21 @@ class BusyMarkApp extends ConsumerWidget {
     final gitController = ref.read(gitControllerProvider.notifier);
     switch (tab.kind) {
       case WorkspaceTabKind.file:
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
         ref.read(localHistoryControllerProvider.notifier).clearComparison();
         await ref
             .read(workspaceControllerProvider.notifier)
             .activateDocumentBuffer(tab.bufferId!);
         gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
-        ref.read(localHistoryControllerProvider.notifier).clearComparison();
-        if (tab.path.isEmpty) {
-          return;
-        }
-        await gitController.activateDiffFile(tab.path);
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .activate(
+              ref.read(workspaceControllerProvider).workspace!.id,
+              tab.comparisonId!,
+            );
       case WorkspaceTabKind.localHistory:
         return;
     }

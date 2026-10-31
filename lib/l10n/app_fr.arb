@@ -3859,7 +3859,7 @@
   "gitUiUnstageWholeFile": "Désindexer tout le fichier",
   "gitUiStageWholeFile": "Indexer tout le fichier",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} lignes changées uniquement dans l'espace blanc cachées · Afficher les changements exacts",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} a changé les lignes sélectionnées · Les paramètres d'affichage ne modifient jamais les octets mis en scène.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} lignes modifiées sélectionnées.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Comparaison en lecture seule · Copiez le texte ou ajustez l’affichage.",
   "gitUiNoFinalNewline": " · pas de nouvelle ligne finale",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} octets{arg3}",
@@ -4539,5 +4539,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Ce message a été modifié dans une autre fenêtre. Examinez le message enregistré avant de le remplacer.",
   "gitUiDiscardUnsavedCommitMessages": "Abandonner les messages de commit non enregistrés ?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Les messages qui n’ont pas pu être enregistrés sont toujours dans cette fenêtre. Les abandonner ne modifie pas les versions enregistrées.",
-  "gitUiDiscardCommitMessages": "Abandonner les messages"
+  "gitUiDiscardCommitMessages": "Abandonner les messages",
+  "gitUiRemoveFilter": "Supprimer le filtre",
+  "gitUiNoCommitsYet": "Aucun commit pour le moment",
+  "gitUiNativeMenuUnavailable": "Le service de menus natifs est indisponible. Réessayez."
 }

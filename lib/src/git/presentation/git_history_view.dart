@@ -151,7 +151,7 @@ class _ProjectHistoryCommitMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkHeaderPopupMenuButton<_ProjectHistoryCommitAction>(
+    return BusyMarkHeaderPopupMenuButton<_ProjectHistoryCommitAction>.native(
       tooltip: context.l10n.gitCommitActions,
       icon: BusyMarkGlyphs.menuHorizontal,
       transparent: true,
@@ -186,7 +186,7 @@ class _FileHistoryCommitMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkHeaderPopupMenuButton<_FileHistoryCommitAction>(
+    return BusyMarkHeaderPopupMenuButton<_FileHistoryCommitAction>.native(
       tooltip: context.l10n.fileActions,
       icon: BusyMarkGlyphs.menuHorizontal,
       transparent: true,
@@ -318,64 +318,59 @@ class _CommitFileRow extends StatelessWidget {
         : path;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-      child: Material(
-        color: selected
-            ? busyMarkSelectedBackground(context)
-            : BusyMarkLinuxPalette.transparent,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          hoverColor: busyMarkRowHoverColor(context),
-          onTap: path.isEmpty ? null : onShowDiff,
-          onSecondaryTapUp: path.isEmpty
-              ? null
-              : (details) async {
-                  final action = await _showCommitFileMenu(
-                    context,
-                    details.globalPosition,
-                  );
-                  if (action == _CommitFileAction.showDiff) {
-                    onShowDiff();
-                  }
-                },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: BusyMarkSpacing.sm,
-              vertical: BusyMarkSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  BusyMarkGlyphs.document,
-                  size: BusyMarkSizes.iconSm,
-                  color: colors.mutedForeground,
-                ),
-                const SizedBox(width: BusyMarkSpacing.xs),
-                Expanded(
-                  child: Text(
-                    pathLabel,
-                    textDirection: TextDirection.ltr,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontFamily: BusyMarkTypography.monoFontFamily,
-                      fontFamilyFallback:
-                          BusyMarkTypography.monoFontFamilyFallback,
-                    ),
+      child: BusyMarkSidebarRowSurface(
+        enabled: true,
+        clickable: (path.isEmpty ? null : onShowDiff) != null,
+        selected: selected,
+        onTap: path.isEmpty ? null : onShowDiff,
+        onSecondaryTapUp: path.isEmpty
+            ? null
+            : (details) async {
+                final action = await _showCommitFileMenu(
+                  context,
+                  details.globalPosition,
+                );
+                if (action == _CommitFileAction.showDiff) {
+                  onShowDiff();
+                }
+              },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.sm,
+            vertical: BusyMarkSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                BusyMarkGlyphs.document,
+                size: BusyMarkSizes.iconSm,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: BusyMarkSpacing.xs),
+              Expanded(
+                child: Text(
+                  pathLabel,
+                  textDirection: TextDirection.ltr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: BusyMarkTypography.monoFontFamily,
+                    fontFamilyFallback:
+                        BusyMarkTypography.monoFontFamilyFallback,
                   ),
                 ),
-                const SizedBox(width: BusyMarkSpacing.xs),
-                Text(
-                  context.l10n.gitAdditionsDeletions(
-                    file.additions,
-                    file.deletions,
-                  ),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+              ),
+              const SizedBox(width: BusyMarkSpacing.xs),
+              Text(
+                context.l10n.gitAdditionsDeletions(
+                  file.additions,
+                  file.deletions,
                 ),
-              ],
-            ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
+              ),
+            ],
           ),
         ),
       ),
@@ -407,53 +402,48 @@ class _CommitRow extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-      child: Material(
-        color: selected
-            ? busyMarkSelectedBackground(context)
-            : BusyMarkLinuxPalette.transparent,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          hoverColor: busyMarkRowHoverColor(context),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        subject,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium,
+      child: BusyMarkSidebarRowSurface(
+        enabled: true,
+        clickable: true,
+        selected: selected,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subject,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: BusyMarkSpacing.xs),
+                    Text(
+                      '${busyMarkLtrIsolateFor(context, shortHash)} - '
+                      '${busyMarkBidiIsolateFor(context, authorName)} - '
+                      '${busyMarkBidiIsolateFor(context, MaterialLocalizations.of(context).formatShortDate(date.toLocal()))}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.mutedForeground,
+                        fontFamily: BusyMarkTypography.monoFontFamily,
+                        fontFamilyFallback:
+                            BusyMarkTypography.monoFontFamilyFallback,
                       ),
-                      const SizedBox(height: BusyMarkSpacing.xs),
-                      Text(
-                        '${busyMarkLtrIsolateFor(context, shortHash)} - '
-                        '${busyMarkBidiIsolateFor(context, authorName)} - '
-                        '${busyMarkBidiIsolateFor(context, MaterialLocalizations.of(context).formatShortDate(date.toLocal()))}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colors.mutedForeground,
-                          fontFamily: BusyMarkTypography.monoFontFamily,
-                          fontFamilyFallback:
-                              BusyMarkTypography.monoFontFamilyFallback,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                if (trailing != null) ...[
-                  const SizedBox(width: BusyMarkSpacing.xs),
-                  trailing!,
-                ],
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: BusyMarkSpacing.xs),
+                trailing!,
               ],
-            ),
+            ],
           ),
         ),
       ),

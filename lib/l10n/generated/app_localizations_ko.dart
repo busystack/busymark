@@ -6126,7 +6126,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '변경된 $arg0개 행 선택 · 표시 설정은 스테이징되는 바이트를 바꾸지 않습니다.';
+    return '변경된 줄 $arg0개 선택됨.';
   }
 
   @override
@@ -8588,4 +8588,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => '메시지 버리기';
+
+  @override
+  String get gitUiRemoveFilter => '필터 제거';
+
+  @override
+  String get gitUiNoCommitsYet => '아직 커밋이 없습니다';
+
+  @override
+  String get gitUiNativeMenuUnavailable => '네이티브 메뉴 서비스를 사용할 수 없습니다. 다시 시도하세요.';
 }

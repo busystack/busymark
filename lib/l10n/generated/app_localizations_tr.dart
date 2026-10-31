@@ -6308,7 +6308,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 seçilmiş hatları değiştirdi · Ekran ayarları asla adım atılan byteyi değiştirmez.';
+    return '$arg0 değiştirilmiş satır seçildi.';
   }
 
   @override
@@ -8826,4 +8826,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'İletileri at';
+
+  @override
+  String get gitUiRemoveFilter => 'Filtreyi kaldır';
+
+  @override
+  String get gitUiNoCommitsYet => 'Henüz commit yok';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'Yerel menü hizmeti kullanılamıyor. Yeniden deneyin.';
 }

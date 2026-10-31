@@ -1,3 +1,5 @@
+import 'busymark_toast.dart';
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -416,6 +418,25 @@ abstract final class BusyMarkLinuxPalette {
 /// Keeping the palette and shape here lets each toolkit retain its native
 /// layout, positioning, focus, and motion while presenting the same surface.
 abstract final class BusyMarkTooltipStyle {
+  static Widget wrap(
+    BuildContext context, {
+    required String message,
+    required Widget child,
+  }) => Tooltip(
+    message: message,
+    padding: padding,
+    constraints: constraints,
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: borderRadius,
+      border: Border.all(color: border),
+    ),
+    textStyle: Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: foreground),
+    child: child,
+  );
+
   static final Color background = BusyMarkLinuxPalette.black.withValues(
     alpha: BusyMarkAlpha.tooltipBackground,
   );
@@ -1228,7 +1249,24 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
     this.borderRadius = BusyMarkRadius.headerButton,
     this.highlightWhenOpen = true,
     this.nativeMenuService = const NativeMenuService(),
-  });
+  }) : _requiresNative = false;
+
+  const BusyMarkHeaderPopupMenuButton.native({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.itemBuilder,
+    required this.onSelected,
+    this.onCanceled,
+    this.transparent = true,
+    this.elevated = false,
+    this.shortcut,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.borderRadius = BusyMarkRadius.headerButton,
+    this.highlightWhenOpen = true,
+    this.nativeMenuService = const NativeMenuService(),
+  }) : _requiresNative = true;
 
   final String tooltip;
   final IconData icon;
@@ -1248,6 +1286,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
   final double borderRadius;
   final bool highlightWhenOpen;
   final NativeMenuService nativeMenuService;
+  final bool _requiresNative;
 
   @override
   State<BusyMarkHeaderPopupMenuButton<T>> createState() =>
@@ -1322,6 +1361,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           items: List.unmodifiable(items),
           nativeMenuService: widget.nativeMenuService,
           session: session,
+          requireNative: widget._requiresNative,
         );
       } finally {
         if (mounted && identical(_activeMenuSession, session)) {
@@ -1338,12 +1378,23 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           onCanceled?.call(context);
         }
       }
+    } on _BusyMarkNativeMenuUnavailable {
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: context.l10n.gitUiNativeMenuUnavailable,
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _loading = false);
       }
     }
   }
+}
+
+final class _BusyMarkNativeMenuUnavailable implements Exception {
+  const _BusyMarkNativeMenuUnavailable();
 }
 
 /// Owns one native or Flutter fallback menu presentation.
@@ -1415,6 +1466,7 @@ Future<T?> showBusyMarkMenu<T>({
   bool focusFirst = false,
   bool preferAbove = false,
   double? width,
+  bool requireNative = false,
 }) async {
   assert(
     anchorRect == null || (anchorContext == null && anchorPoint == null),
@@ -1449,6 +1501,7 @@ Future<T?> showBusyMarkMenu<T>({
       return _busyMarkMenuValueAt(itemSnapshot, nativeResult.selectedIndex);
     }
   }
+  if (requireNative) throw const _BusyMarkNativeMenuUnavailable();
   if (!context.mounted) {
     return null;
   }
@@ -2366,6 +2419,12 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
     this.readOnly = false,
     this.autofocus = false,
     this.focusNode,
+    this.contextMenuBuilder,
+    this.expands = false,
+    this.scrollController,
+    this.undoController,
+    this.textAlign = TextAlign.start,
+    this.textAlignVertical,
     this.keyboardType,
     this.inputFormatters,
     this.minLines = 1,
@@ -2381,8 +2440,8 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
   }) : assert(controller == null || initialValue == null),
-       assert(minLines > 0),
-       assert(maxLines >= minLines);
+       assert(minLines == null || minLines > 0),
+       assert(maxLines == null || minLines == null || maxLines >= minLines);
 
   final String label;
   final TextEditingController? controller;
@@ -2393,10 +2452,16 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
   final bool readOnly;
   final bool autofocus;
   final FocusNode? focusNode;
+  final EditableTextContextMenuBuilder? contextMenuBuilder;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
-  final int minLines;
-  final int maxLines;
+  final int? minLines;
+  final int? maxLines;
+  final bool expands;
+  final ScrollController? scrollController;
+  final UndoHistoryController? undoController;
+  final TextAlign textAlign;
+  final TextAlignVertical? textAlignVertical;
   final TextInputAction? textInputAction;
   final TextDirection? textDirection;
   final TextStyle? textStyle;
@@ -2435,40 +2500,57 @@ class _BusyMarkGroupedTextEntryState extends State<BusyMarkGroupedTextEntry> {
   }
 
   Widget _buildRow(BuildContext context) {
-    return YaruListTile.square(
-      title: TextFormField(
-        key: _fieldKey,
-        controller: widget.controller,
-        initialValue: widget.initialValue,
-        enabled: widget.enabled,
-        readOnly: widget.readOnly,
-        autofocus: widget.autofocus,
-        focusNode: widget.focusNode,
-        keyboardType: widget.keyboardType,
-        inputFormatters: widget.inputFormatters,
-        minLines: widget.minLines,
-        maxLines: widget.maxLines,
-        textInputAction: widget.textInputAction,
-        textDirection: widget.textDirection,
-        obscureText: widget.obscureText,
-        enableSuggestions: widget.enableSuggestions,
-        autocorrect: widget.autocorrect,
-        style: widget.textStyle,
-        onChanged: widget.enabled ? widget.onChanged : null,
-        onFieldSubmitted: widget.enabled ? widget.onSubmitted : null,
-        decoration: busyMarkGroupedTextFieldDecoration(
-          context,
-          labelText: widget.label,
-          hintText: widget.hintText,
-          errorText: widget.errorText,
-          alignLabelWithHint: widget.alignLabelWithHint,
-        ),
+    final field = TextFormField(
+      key: _fieldKey,
+      controller: widget.controller,
+      initialValue: widget.initialValue,
+      enabled: widget.enabled,
+      readOnly: widget.readOnly,
+      autofocus: widget.autofocus,
+      focusNode: widget.focusNode,
+      contextMenuBuilder:
+          widget.contextMenuBuilder ?? _busyMarkExistingTextMenu,
+      keyboardType: widget.keyboardType,
+      inputFormatters: widget.inputFormatters,
+      minLines: widget.expands ? null : widget.minLines,
+      expands: widget.expands,
+      scrollController: widget.scrollController,
+      undoController: widget.undoController,
+      textAlign: widget.textAlign,
+      textAlignVertical: widget.textAlignVertical,
+      maxLines: widget.maxLines,
+      textInputAction: widget.textInputAction,
+      textDirection: widget.textDirection,
+      obscureText: widget.obscureText,
+      enableSuggestions: widget.enableSuggestions,
+      autocorrect: widget.autocorrect,
+      style: widget.textStyle,
+      onChanged: widget.enabled ? widget.onChanged : null,
+      onFieldSubmitted: widget.enabled ? widget.onSubmitted : null,
+      decoration: busyMarkGroupedTextFieldDecoration(
+        context,
+        labelText: widget.label,
+        hintText: widget.hintText,
+        errorText: widget.errorText,
+        alignLabelWithHint: widget.alignLabelWithHint,
       ),
-      trailing: widget.trailing,
     );
+    if (widget.expands) {
+      return BusyMarkGroupedSurface(
+        child: Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          child: field,
+        ),
+      );
+    }
+    return YaruListTile.square(title: field, trailing: widget.trailing);
   }
 
   void _submit() {
+    if (widget.controller?.value.composing.isValid == true &&
+        !widget.controller!.value.composing.isCollapsed) {
+      return;
+    }
     final value =
         widget.controller?.text ??
         _fieldKey.currentState?.value ??
@@ -4210,7 +4292,14 @@ class BusyMarkDialogTitleBar extends StatelessWidget {
         border: showDividerInHighContrast && theme.colorScheme.isHighContrast
             ? BorderSide(color: colors.divider)
             : BorderSide.none,
-        closeSemanticLabel: closeSemanticLabel,
+        closeSemanticLabel:
+            closeSemanticLabel ??
+            MaterialLocalizations.of(context).closeButtonTooltip,
+        onClose: (routeContext) async {
+          if (ModalRoute.of(routeContext)?.isCurrent == true) {
+            await Navigator.of(routeContext).maybePop();
+          }
+        },
         heroTag: null,
       ),
     );
@@ -4221,7 +4310,9 @@ class BusyMarkDialogShell extends StatelessWidget {
   const BusyMarkDialogShell({
     super.key,
     required this.title,
-    required this.children,
+    this.children = const [],
+    this.body,
+    this.expanded = false,
     this.maxWidth = BusyMarkSizes.dialog,
     this.header,
     this.actions = const [],
@@ -4230,6 +4321,8 @@ class BusyMarkDialogShell extends StatelessWidget {
 
   final String title;
   final List<Widget> children;
+  final Widget? body;
+  final bool expanded;
   final double maxWidth;
   final Widget? header;
   final List<Widget> actions;
@@ -4249,39 +4342,49 @@ class BusyMarkDialogShell extends StatelessWidget {
           backgroundColor: dialogSurface,
           surfaceTintColor: dialogSurface,
           clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                header ??
-                    BusyMarkDialogTitleBar(
-                      title: Text(title),
-                      closable: closable,
+          child: SizedBox(
+            width: maxWidth,
+            height: expanded
+                ? MediaQuery.sizeOf(context).height *
+                      BusyMarkSizes.modalMaxHeightFraction
+                : null,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  header ??
+                      BusyMarkDialogTitleBar(
+                        title: Text(title),
+                        closable: closable,
+                      ),
+                  if (expanded && body != null)
+                    Expanded(child: body!)
+                  else
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [if (body != null) body!, ...children],
+                        ),
+                      ),
                     ),
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: children,
+                  if (actions.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                      child: OverflowBar(
+                        alignment: MainAxisAlignment.end,
+                        overflowAlignment: OverflowBarAlignment.end,
+                        spacing: BusyMarkSpacing.sm,
+                        overflowSpacing: BusyMarkSpacing.sm,
+                        children: actions,
+                      ),
                     ),
-                  ),
-                ),
-                if (actions.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-                    child: OverflowBar(
-                      alignment: MainAxisAlignment.end,
-                      overflowAlignment: OverflowBarAlignment.end,
-                      spacing: BusyMarkSpacing.sm,
-                      overflowSpacing: BusyMarkSpacing.sm,
-                      children: actions,
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -4873,3 +4976,421 @@ Offset _busyMarkSidebarTreeMenuAnchor(BuildContext context) {
     ),
   );
 }
+
+/// Git's required native adapter. Every construction here maps to this host's
+/// existing approved design controls; feature code cannot select a fallback.
+final class BusyMarkGitPresentation implements git.GitPresentation {
+  const BusyMarkGitPresentation();
+  @override
+  ThemeData theme(BuildContext context) => Theme.of(context);
+  @override
+  TextStyle? codeStyle(BuildContext context) =>
+      Theme.of(context).textTheme.bodyMedium?.copyWith(
+        fontFamily: BusyMarkTypography.monoFontFamily,
+        fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+      );
+  @override
+  git.GitColors colors(BuildContext context) {
+    final native = YaruColors.of(context);
+    return git.GitColors(
+      accent: Theme.of(context).colorScheme.primary,
+      selection: busyMarkSelectedBackground(context),
+      border: BusyMarkSurfaceColors.of(context).divider,
+      subtleBorder: BusyMarkSurfaceColors.of(context).divider,
+      surface: BusyMarkSurfaceColors.of(context).panel,
+      mutedText: Theme.of(context).colorScheme.onSurfaceVariant,
+      added: native.success,
+      removed: native.error,
+      staged: native.success,
+      unstaged: native.warning,
+      conflict: native.error,
+      addedBackground: native.success,
+      removedBackground: native.error,
+      stagedBackground: native.success,
+      unstagedBackground: native.warning,
+      conflictBackground: native.error,
+      searchBackground: native.warning.withValues(alpha: .3),
+    );
+  }
+
+  @override
+  Future<(DateTime, DateTime)?> dateRange(
+    BuildContext context, {
+    DateTime? start,
+    DateTime? end,
+  }) => git.GitHostScope.of(context)!.present<(DateTime, DateTime)>(
+    context,
+    git.GitMessages.dateFilter,
+    _BusyMarkGitDateRange(start: start, end: end),
+  );
+  @override
+  Widget button(BuildContext context, git.GitButton control) =>
+      control.variant == git.GitActionStyle.suggested
+      ? BusyMarkPushButton.suggested(
+          onPressed: control.onPressed,
+          child: control.child,
+        )
+      : BusyMarkPushButton.standard(
+          onPressed: control.onPressed,
+          child: control.child,
+        );
+  @override
+  Widget iconAction(BuildContext context, git.GitIconButton control) {
+    final glyph = switch (control.icon) {
+      git.GitIcon(:final glyph) => git.GitHostScope.of(context)!.icons[glyph]!,
+      Icon(:final icon) when icon != null => icon,
+      _ => throw StateError('Git icon actions require a native host glyph.'),
+    };
+    return BusyMarkCompactIconButton(
+      tooltip: git.gitString(context, control.tooltip),
+      icon: glyph,
+      onPressed: control.onPressed,
+    );
+  }
+
+  @override
+  Widget field(BuildContext context, git.GitTextField control) {
+    final decoration = control.decoration;
+    return BusyMarkGroupedTextEntry(
+      label: decoration?.labelText ?? '',
+      hintText: decoration?.hintText,
+      contextMenuBuilder: (menuContext, editable) => git.GitTextContextMenu(
+        host: git.GitHostScope.of(context)!,
+        items: editable.contextMenuButtonItems,
+        position: editable.contextMenuAnchors.primaryAnchor,
+        close: editable.hideToolbar,
+      ),
+      controller: control.controller,
+      focusNode: control.focusNode,
+      enabled: control.enabled ?? true,
+      readOnly: control.readOnly,
+      autofocus: control.autofocus,
+      obscureText: control.obscureText,
+      autocorrect: control.autocorrect,
+      enableSuggestions: control.enableSuggestions,
+      expands: control.expands,
+      minLines: control.minLines,
+      maxLines: control.maxLines,
+      scrollController: control.scrollController,
+      undoController: control.undoController,
+      textStyle: control.style,
+      textDirection: control.textDirection,
+      textAlign: control.textAlign,
+      textAlignVertical: control.textAlignVertical,
+      trailing: decoration?.suffixIcon,
+      onChanged: control.onChanged,
+      onSubmitted: control.onSubmitted,
+    );
+  }
+
+  @override
+  Widget checkbox(BuildContext context, git.GitCheckbox control) =>
+      BusyMarkCheckbox(
+        value: control.value,
+        tristate: control.value == null,
+        onChanged: control.onChanged,
+      );
+  @override
+  Widget choice<T>(BuildContext context, git.GitChoice<T> control) {
+    final selected = control.value ?? control.initialValue;
+    final label = control.items
+        .where((item) => item.value == selected)
+        .map((item) => item.child)
+        .firstOrNull;
+    return BusyMarkPushButton.standard(
+      onPressed: control.onChanged == null
+          ? null
+          : () async {
+              final result = await git.GitHostScope.of(context)!
+                  .menu(context, control.decoration?.labelText ?? '', [
+                    for (var i = 0; i < control.items.length; i++)
+                      git.GitMenuEntry(
+                        '$i',
+                        git.gitControlLabel(context, control.items[i].child),
+                        radio: true,
+                        checked: control.items[i].value == selected,
+                        localize: false,
+                      ),
+                  ]);
+              if (context.mounted && result != null) {
+                control.onChanged?.call(control.items[int.parse(result)].value);
+              }
+            },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: label ?? Text(control.decoration?.labelText ?? '')),
+          const git.GitIcon(git.GitGlyph.down),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget choiceBar<T>(BuildContext context, git.GitChoiceBar<T> control) =>
+      Wrap(
+        spacing: BusyMarkSpacing.sm,
+        children: [
+          for (final segment in control.segments)
+            MergeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  YaruRadio<T>(
+                    value: segment.value,
+                    groupValue: control.selected.firstOrNull,
+                    onChanged: control.onSelectionChanged == null
+                        ? null
+                        : (value) => control.onSelectionChanged!({value as T}),
+                  ),
+                  GestureDetector(
+                    onTap: control.onSelectionChanged == null
+                        ? null
+                        : () => control.onSelectionChanged!({segment.value}),
+                    child: segment.label,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      );
+  @override
+  Widget row(BuildContext context, git.GitActionRow control) {
+    return BusyMarkSidebarRowSurface(
+      enabled: control.enabled,
+      clickable: control.onTap != null,
+      selected: control.selected,
+      onTap: control.onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(BusyMarkSpacing.xs),
+        child: Row(
+          children: [
+            if (control.leading != null) ...[
+              control.leading!,
+              const SizedBox(width: BusyMarkSpacing.sm),
+            ],
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (control.title != null) control.title!,
+                  if (control.subtitle != null)
+                    DefaultTextStyle.merge(
+                      style: Theme.of(context).textTheme.bodySmall,
+                      child: control.subtitle!,
+                    ),
+                ],
+              ),
+            ),
+            if (control.trailing != null) control.trailing!,
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget expander(BuildContext context, git.GitExpander control) {
+    return _BusyMarkGitExpander(control: control);
+  }
+
+  @override
+  Widget progress(BuildContext context, git.GitLoading control) => Semantics(
+    label: control.semanticsLabel,
+    liveRegion: true,
+    child: control.circular
+        ? const YaruCircularProgressIndicator()
+        : const YaruLinearProgressIndicator(),
+  );
+  @override
+  Widget tooltip(BuildContext context, git.GitTooltip control) =>
+      BusyMarkTooltipStyle.wrap(
+        context,
+        message: control.message,
+        child: control.child,
+      );
+  @override
+  Widget scrollbar(BuildContext context, git.GitScrollbar control) => Scrollbar(
+    controller: control.controller,
+    thumbVisibility: control.thumbVisibility,
+    child: control.child,
+  );
+  @override
+  Widget separator(BuildContext context, git.GitSeparator control) =>
+      control.vertical
+      ? VerticalDivider(width: control.width)
+      : Divider(height: control.height);
+  @override
+  Widget activation(BuildContext context, git.GitActivation control) {
+    return BusyMarkSidebarRowSurface(
+      enabled: control.onTap != null,
+      clickable: control.onTap != null,
+      focusNode: control.focusNode,
+      onTap: control.onTap,
+      onDoubleTap: control.onDoubleTap,
+      onSecondaryTapUp: control.onSecondaryTapUp,
+      child: control.child,
+    );
+  }
+
+  @override
+  Widget notice(BuildContext context, git.GitNotice control) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.panel,
+          border: Border(bottom: BorderSide(color: colors.divider)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (control.leading != null) ...[
+                    control.leading!,
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                  ],
+                  Expanded(child: control.content),
+                ],
+              ),
+              Wrap(spacing: BusyMarkSpacing.sm, children: control.actions),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget selectable(BuildContext context, git.GitSelectableText control) =>
+      SelectableText(
+        control.data,
+        semanticsLabel: control.data,
+        style: control.style,
+        contextMenuBuilder: (menuContext, editable) => git.GitTextContextMenu(
+          host: git.GitHostScope.of(context)!,
+          items: editable.contextMenuButtonItems,
+          position: editable.contextMenuAnchors.primaryAnchor,
+          close: editable.hideToolbar,
+        ),
+      );
+  @override
+  Widget selectionArea(BuildContext context, Widget child) => SelectionArea(
+    contextMenuBuilder: (menuContext, region) => git.GitTextContextMenu(
+      host: git.GitHostScope.of(context)!,
+      items: region.contextMenuButtonItems,
+      position: region.contextMenuAnchors.primaryAnchor,
+      close: region.hideToolbar,
+    ),
+    child: child,
+  );
+  @override
+  String editingActionLabel(BuildContext context, ContextMenuButtonType type) {
+    final labels = MaterialLocalizations.of(context);
+    return switch (type) {
+      ContextMenuButtonType.cut => labels.cutButtonLabel,
+      ContextMenuButtonType.copy => labels.copyButtonLabel,
+      ContextMenuButtonType.paste => labels.pasteButtonLabel,
+      ContextMenuButtonType.selectAll => labels.selectAllButtonLabel,
+      _ => labels.moreButtonTooltip,
+    };
+  }
+}
+
+class _BusyMarkGitExpander extends StatefulWidget {
+  const _BusyMarkGitExpander({required this.control});
+  final git.GitExpander control;
+  @override
+  State<_BusyMarkGitExpander> createState() => _BusyMarkGitExpanderState();
+}
+
+class _BusyMarkGitExpanderState extends State<_BusyMarkGitExpander> {
+  late bool _expanded = widget.control.initiallyExpanded;
+  @override
+  Widget build(BuildContext context) => YaruExpandable(
+    isExpanded: _expanded,
+    onChange: (value) => setState(() => _expanded = value),
+    expandButtonPosition: YaruExpandableButtonPosition.start,
+    header: widget.control.title,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: widget.control.children,
+    ),
+  );
+}
+
+class _BusyMarkGitDateRange extends StatefulWidget {
+  const _BusyMarkGitDateRange({this.start, this.end});
+  final DateTime? start, end;
+  @override
+  State<_BusyMarkGitDateRange> createState() => _BusyMarkGitDateRangeState();
+}
+
+class _BusyMarkGitDateRangeState extends State<_BusyMarkGitDateRange> {
+  late DateTime? _start = widget.start, _end = widget.end;
+  late final _startEntry = YaruDateTimeEntryController(dateTime: widget.start);
+  late final _endEntry = YaruDateTimeEntryController(dateTime: widget.end);
+  @override
+  void dispose() {
+    _startEntry.dispose();
+    _endEntry.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final labels = MaterialLocalizations.of(context);
+    final valid = _start != null && _end != null && !_end!.isBefore(_start!);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(labels.dateRangeStartLabel),
+        YaruDateTimeEntry(
+          includeTime: false,
+          controller: _startEntry,
+          firstDateTime: DateTime(1970),
+          lastDateTime: DateTime.now().add(const Duration(days: 1)),
+          onChanged: (value) => setState(() => _start = value),
+        ),
+        Text(labels.dateRangeEndLabel),
+        YaruDateTimeEntry(
+          includeTime: false,
+          controller: _endEntry,
+          firstDateTime: DateTime(1970),
+          lastDateTime: DateTime.now().add(const Duration(days: 1)),
+          onChanged: (value) => setState(() => _end = value),
+        ),
+        Wrap(
+          alignment: WrapAlignment.end,
+          children: [
+            BusyMarkPushButton.standard(
+              onPressed: () => git.gitCompleteSurface(context),
+              child: Text(labels.cancelButtonLabel),
+            ),
+            BusyMarkPushButton.suggested(
+              onPressed: valid
+                  ? () => git.gitCompleteSurface(context, (_start!, _end!))
+                  : null,
+              child: Text(labels.saveButtonLabel),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+Widget _busyMarkExistingTextMenu(
+  BuildContext context,
+  EditableTextState editable,
+) => AdaptiveTextSelectionToolbar.editableText(editableTextState: editable);

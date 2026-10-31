@@ -1,3 +1,7 @@
+import '../../app/busymark_toast.dart';
+import '../../platform/native_menu_service.dart';
+export 'shared_git_tabs.dart';
+import 'shared_git_tabs.dart';
 import 'shared_git_localizations.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -285,8 +289,10 @@ class _BusyMarkGitWorkspaceScopeState
   }
 
   @override
-  Widget build(BuildContext context) =>
-      _BusyMarkGitAttachmentScope(owner: this, child: widget.child);
+  Widget build(BuildContext context) => shared.GitHostScope(
+    host: _host,
+    child: _BusyMarkGitAttachmentScope(owner: this, child: widget.child),
+  );
 }
 
 class _BusyMarkGitAttachmentScope extends InheritedWidget {
@@ -298,34 +304,6 @@ class _BusyMarkGitAttachmentScope extends InheritedWidget {
   @override
   bool updateShouldNotify(_BusyMarkGitAttachmentScope oldWidget) =>
       owner != oldWidget.owner;
-}
-
-final sharedGitReviewProvider =
-    NotifierProvider<SharedGitReviews, Map<String, SharedGitReview>>(
-      SharedGitReviews.new,
-    );
-
-class SharedGitReviews extends Notifier<Map<String, SharedGitReview>> {
-  @override
-  Map<String, SharedGitReview> build() => {};
-  void open(String workspace, SharedGitReview review) =>
-      state = {...state, workspace: review};
-  void close(String workspace) => state = {...state}..remove(workspace);
-}
-
-class SharedGitReview {
-  const SharedGitReview(
-    this.repository, {
-    this.comparison,
-    this.log = false,
-    this.historyPath,
-    this.reviewedFiles = const [],
-  });
-  final shared.RepositoryId repository;
-  final shared.GitComparison? comparison;
-  final bool log;
-  final shared.RepoPath? historyPath;
-  final List<shared.GitComparison> reviewedFiles;
 }
 
 Future<void> showBusyMarkSharedGitAction(
@@ -342,25 +320,21 @@ Future<void> showBusyMarkSharedGitAction(
   if (!context.mounted || session.snapshot == null) return;
   final ui = shared.GitWorkflowUi(context, session);
   switch (action) {
-    case 'log':
-      ref
-          .read(sharedGitReviewProvider.notifier)
-          .open(workspace.id, SharedGitReview(repository, log: true));
     case 'fileHistory':
       if (absolutePath == null || !p.isWithin(repository.root, absolutePath)) {
         return;
       }
-      ref
-          .read(sharedGitReviewProvider.notifier)
-          .open(
-            workspace.id,
-            SharedGitReview(
-              repository,
-              historyPath: shared.RepoPath.text(
-                p.relative(absolutePath, from: repository.root),
-              ),
-            ),
-          );
+      await session.host.present<void>(
+        context,
+        context.l10n.gitHostGitLog,
+        shared.GitFileHistoryView(
+          session: session,
+          path: shared.RepoPath.text(
+            p.relative(absolutePath, from: repository.root),
+          ),
+        ),
+        expanded: true,
+      );
     case 'diff':
       if (absolutePath == null || !p.isWithin(repository.root, absolutePath)) {
         return;
@@ -371,6 +345,7 @@ Future<void> showBusyMarkSharedGitAction(
             workspace.id,
             SharedGitReview(
               repository,
+              reviewToken: session.snapshot!.token,
               comparison: shared.GitComparison(
                 shared.RepoPath.text(
                   p.relative(absolutePath, from: repository.root),
@@ -564,19 +539,21 @@ Future<bool> _ensureGitTrust(
         Navigator.of(dialogContext).pop(value);
       }
 
-      return AlertDialog(
-        title: Text(context.l10n.gitTrustRequiredTitle),
-        content: Text(
-          '${repository.root}\n\n${context.l10n.gitTrustRequiredMessage}\n${context.l10n.gitHostGitOperationsApplyToThisEntireRepositoryAndMay}',
-        ),
+      return BusyMarkDialogShell(
+        title: context.l10n.gitTrustRequiredTitle,
         actions: [
-          TextButton(
+          BusyMarkPushButton.standard(
             onPressed: () => decide(false),
             child: Text(context.l10n.cancel),
           ),
-          FilledButton(
+          BusyMarkPushButton.suggested(
             onPressed: () => decide(true),
             child: Text(context.l10n.gitTrustWorkspace),
+          ),
+        ],
+        children: [
+          Text(
+            '${repository.root}\n\n${context.l10n.gitTrustRequiredMessage}\n${context.l10n.gitHostGitOperationsApplyToThisEntireRepositoryAndMay}',
           ),
         ],
       );
@@ -604,6 +581,7 @@ shared.GitHost busyMarkGitHost(
   var reconcileWorkingFiles = true;
   final fallbackLocalizations = context.l10n;
   return shared.GitHost(
+    presentation: const BusyMarkGitPresentation(),
     registerDismissalGuard: ref.read(busyMarkGitDismissalProvider).register,
     spacing: BusyMarkSpacing.sm,
     minimumRowHeight: 30,
@@ -627,24 +605,7 @@ shared.GitHost busyMarkGitHost(
       shared.GitGlyph.warning: BusyMarkGlyphs.warning,
       shared.GitGlyph.close: BusyMarkGlyphs.windowClose,
     },
-    presentMenu: (menuContext, entries, {position}) => showBusyMarkMenu<String>(
-      context: menuContext,
-      anchorPoint: position,
-      focusFirst: true,
-      items: [
-        for (final entry in entries) ...[
-          if (entry.sectionStart) const PopupMenuDivider(),
-          BusyMarkPopupMenuItem(
-            value: entry.id,
-            label: entry.label,
-            enabled: entry.enabled,
-            checked: entry.checked ?? false,
-            trailingCheck: entry.checked != null,
-            mutuallyExclusive: entry.radio,
-          ),
-        ],
-      ],
-    ),
+    presentMenu: busyMarkPresentGitMenu,
     localize: (message, values) {
       final current = rootNavigatorKey.currentContext;
       final localizations = current != null && current.mounted
@@ -655,54 +616,13 @@ shared.GitHost busyMarkGitHost(
     present: <T>(dialogContext, title, child, {bool expanded = false}) =>
         showBusyMarkModalDialog<T>(
           dialogContext,
-          builder: (context) => Dialog(
-            insetPadding: const EdgeInsets.all(BusyMarkSpacing.lg),
-            child: SizedBox(
-              width: expanded ? MediaQuery.sizeOf(context).width * .94 : 560,
-              height: expanded ? MediaQuery.sizeOf(context).height * .86 : null,
-              child: Column(
-                mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: context.l10n.close,
-                          onPressed: () {
-                            final route = ModalRoute.of(context);
-                            if (route?.isCurrent == true) {
-                              unawaited(Navigator.of(context).maybePop());
-                            }
-                          },
-                          icon: const Icon(BusyMarkGlyphs.windowClose),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (expanded)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                        child: child,
-                      ),
-                    )
-                  else
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(BusyMarkSpacing.md),
-                        child: child,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+          builder: (context) => BusyMarkDialogShell(
+            title: title,
+            maxWidth: expanded
+                ? MediaQuery.sizeOf(context).width * .94
+                : BusyMarkSizes.dialogWide,
+            expanded: expanded,
+            body: child,
           ),
         ),
     openDocument: (repository, path, {snapshot}) async {
@@ -710,10 +630,17 @@ shared.GitHost busyMarkGitHost(
       if (snapshot != null) {
         await showBusyMarkModalDialog<void>(
           context,
-          builder: (context) => Dialog(
-            child: SizedBox(
-              width: MediaQuery.sizeOf(context).width * .85,
-              height: MediaQuery.sizeOf(context).height * .8,
+          builder: (context) => BusyMarkDialogShell(
+            title: context.l10n.gitHostGit,
+            maxWidth: MediaQuery.sizeOf(context).width * .85,
+            expanded: true,
+            body: shared.GitHostScope(
+              host: busyMarkGitHost(
+                context,
+                ref,
+                workspace,
+                isMounted: isMounted,
+              ),
               child: shared.GitTextPane(
                 label: context.l10n.gitSnapshotLabel(
                   shared.gitVersionLabel(context, snapshot.version),
@@ -728,8 +655,9 @@ shared.GitHost busyMarkGitHost(
       }
       final relative = path.utf8Path;
       if (relative == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.gitNonUtf8FilenameMessage)),
+        BusyMarkToastOverlay.show(
+          context,
+          message: context.l10n.gitNonUtf8FilenameMessage,
         );
         return;
       }
@@ -850,9 +778,7 @@ shared.GitHost busyMarkGitHost(
     },
     notify: (message) {
       if (isMounted()) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        BusyMarkToastOverlay.show(context, message: message);
       }
     },
     drafts: drafts,
@@ -893,7 +819,15 @@ shared.GitHost busyMarkGitHost(
 }
 
 class BusyMarkSharedGitSidebar extends ConsumerStatefulWidget {
-  const BusyMarkSharedGitSidebar({super.key, required this.workspace});
+  const BusyMarkSharedGitSidebar({
+    super.key,
+    required this.workspace,
+    required this.onShowLog,
+    this.log = false,
+    this.active = true,
+  });
+  final bool log, active;
+  final VoidCallback onShowLog;
   final Workspace workspace;
   @override
   ConsumerState<BusyMarkSharedGitSidebar> createState() =>
@@ -906,6 +840,7 @@ class _BusyMarkSharedGitSidebarState
   shared.GitException? _failure;
   bool _loading = false, _noRepository = false;
   int _generation = 0;
+  bool _logVisited = false;
   @override
   void didUpdateWidget(covariant BusyMarkSharedGitSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -953,18 +888,19 @@ class _BusyMarkSharedGitSidebarState
     }
   }
 
-  void _review({shared.GitComparison? comparison, bool log = false}) {
+  void _review(shared.GitComparison comparison) {
+    final session = _session!;
     ref
         .read(sharedGitReviewProvider.notifier)
         .open(
           widget.workspace.id,
           SharedGitReview(
-            _session!.repository,
+            session.repository,
             comparison: comparison,
+            reviewToken: session.snapshot!.token,
             reviewedFiles: List.unmodifiable(
-              shared.gitStatusComparisons(_session!.snapshot),
+              shared.gitStatusComparisons(session.snapshot),
             ),
-            log: log,
           ),
         );
   }
@@ -978,6 +914,7 @@ class _BusyMarkSharedGitSidebarState
             .trustsGitWorkspace(_session!.repository.root);
     final selection = ref
         .watch(sharedGitReviewProvider)[widget.workspace.id]
+        ?.active
         ?.comparison;
     if (_failure != null) {
       return shared.GitFailurePanel(
@@ -992,7 +929,7 @@ class _BusyMarkSharedGitSidebarState
           children: [
             Text(context.l10n.gitNotRepositoryMessage),
             for (final initialize in [false, true])
-              TextButton(
+              BusyMarkPushButton.standard(
                 onPressed: () async {
                   final host = busyMarkGitHost(
                     context,
@@ -1040,51 +977,85 @@ class _BusyMarkSharedGitSidebarState
       );
     }
     if (_session == null) {
+      if (!widget.active) return const SizedBox.shrink();
       if (!_loading) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) unawaited(_attach());
         });
       }
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: shared.GitLoading.spinner());
     }
+    _logVisited = _logVisited || widget.log;
     return _gitCommands(
       context,
       _session!,
-      shared.GitCommitView(
-        session: _session!,
-        protectMessageDrafts: false,
-        reviewContext: () => (
-          ref.read(sharedGitReviewProvider)[widget.workspace.id],
-          ref.read(workspaceControllerProvider).activeBufferId,
-        ),
-        selectedComparison: selection,
-        notice: trusted
-            ? null
-            : Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(context.l10n.gitTrustRequiredTitle),
-                  TextButton(
-                    onPressed: () async {
-                      if (await _ensureGitTrust(
-                            context,
-                            ref,
-                            widget.workspace,
-                            _session!.repository,
-                          ) &&
-                          mounted) {
-                        await _session!.refresh();
-                      }
-                    },
-                    child: Text(context.l10n.gitTrustWorkspace),
-                  ),
-                ],
+      IndexedStack(
+        index: widget.log ? 1 : 0,
+        children: [
+          ExcludeFocus(
+            excluding: !widget.active || widget.log,
+            child: shared.GitCommitView(
+              session: _session!,
+              active: widget.active && !widget.log,
+              protectMessageDrafts: false,
+              reviewContext: () => (
+                ref
+                    .read(sharedGitReviewProvider)[widget.workspace.id]
+                    ?.activeId,
+                ref.read(workspaceControllerProvider).activeBufferId,
               ),
-        onReview: (comparison) => _review(comparison: comparison),
-        onLog: () => _review(log: true),
-        onBranches: () => shared.GitWorkflowUi(context, _session!).branches(),
-        onPush: () => shared.GitWorkflowUi(context, _session!).push(),
-        onMore: (anchor) => shared.GitWorkflowUi(anchor, _session!).more(),
+              selectedComparison: selection,
+              notice: trusted
+                  ? null
+                  : Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(context.l10n.gitTrustRequiredTitle),
+                        BusyMarkPushButton.standard(
+                          onPressed: () async {
+                            if (await _ensureGitTrust(
+                                  context,
+                                  ref,
+                                  widget.workspace,
+                                  _session!.repository,
+                                ) &&
+                                mounted) {
+                              await _session!.refresh();
+                            }
+                          },
+                          child: Text(context.l10n.gitTrustWorkspace),
+                        ),
+                      ],
+                    ),
+              onReview: _review,
+              onLog: widget.onShowLog,
+              onBranches: () =>
+                  shared.GitWorkflowUi(context, _session!).branches(),
+              onPush: () => shared.GitWorkflowUi(context, _session!).push(),
+              onMore: (anchor) =>
+                  shared.GitWorkflowUi(anchor, _session!).more(),
+            ),
+          ),
+          if (_logVisited)
+            ExcludeFocus(
+              excluding: !widget.active || !widget.log,
+              child: shared.GitLogView(
+                session: _session!,
+                inspector: true,
+                active: widget.active && widget.log,
+                onReview: (comparison, files) => ref
+                    .read(sharedGitReviewProvider.notifier)
+                    .open(
+                      widget.workspace.id,
+                      SharedGitReview(
+                        _session!.repository,
+                        comparison: comparison,
+                        reviewedFiles: List.unmodifiable(files),
+                      ),
+                    ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1157,8 +1128,14 @@ class _BusyMarkSharedGitReviewState
     final reviewed = widget.review;
     return () {
       if (!mounted ||
+          ref.read(sharedGitReviewProvider)[widget.workspace.id]?.activeId !=
+              reviewed.id ||
           !identical(
-            ref.read(sharedGitReviewProvider)[widget.workspace.id],
+            ref
+                .read(sharedGitReviewProvider)[widget.workspace.id]
+                ?.entries
+                .where((entry) => entry.id == reviewed.id)
+                .firstOrNull,
             reviewed,
           )) {
         return;
@@ -1170,6 +1147,7 @@ class _BusyMarkSharedGitReviewState
             SharedGitReview(
               reviewed.repository,
               comparison: comparisons[next],
+              reviewToken: reviewed.reviewToken,
               reviewedFiles: comparisons,
             ),
           );
@@ -1177,56 +1155,68 @@ class _BusyMarkSharedGitReviewState
   }
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Row(
-        children: [
-          TextButton.icon(
-            onPressed: () => ref
-                .read(sharedGitReviewProvider.notifier)
-                .close(widget.workspace.id),
-            icon: const Icon(BusyMarkGlyphs.undo),
-            label: Text(context.l10n.gitReturnToDocument),
+  Widget build(BuildContext context) => _failure != null
+      ? shared.GitFailurePanel(
+          error: _failure!,
+          onRefresh: () => unawaited(_attach()),
+        )
+      : _session == null
+      ? const Center(child: shared.GitLoading.spinner())
+      : _gitCommands(
+          context,
+          _session!,
+          shared.GitDiffView(
+            session: _session!,
+            comparison: widget.review.comparison,
+            initialSideBySide: true,
+            onPreviousFile: _navigate(-1),
+            onNextFile: _navigate(1),
           ),
-          Expanded(
-            child: Text(
-              widget.review.log
-                  ? context.l10n.gitHostGitLog
-                  : (widget.review.historyPath ??
-                            widget.review.comparison!.path)
-                        .display,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-      Expanded(
-        child: _failure != null
-            ? shared.GitFailurePanel(
-                error: _failure!,
-                onRefresh: () => unawaited(_attach()),
-              )
-            : _session == null
-            ? const Center(child: CircularProgressIndicator())
-            : _gitCommands(
-                context,
-                _session!,
-                widget.review.log
-                    ? shared.GitLogView(session: _session!)
-                    : widget.review.historyPath != null
-                    ? shared.GitFileHistoryView(
-                        session: _session!,
-                        path: widget.review.historyPath!,
-                      )
-                    : shared.GitDiffView(
-                        session: _session!,
-                        comparison: widget.review.comparison!,
-                        onPreviousFile: _navigate(-1),
-                        onNextFile: _navigate(1),
-                      ),
-              ),
-      ),
+        );
+}
+
+/// Native service failure is an operational error; Git never invokes the
+/// generic application's fallback menu path.
+Future<String?> busyMarkPresentGitMenu(
+  BuildContext context,
+  List<shared.GitMenuEntry> entries, {
+  Offset? position,
+}) async {
+  final box = context.findRenderObject();
+  if (box is! RenderBox || !box.hasSize) return null;
+  final result = await const NativeMenuService().show(
+    session: NativeMenuSession(),
+    anchor: position == null
+        ? box.localToGlobal(Offset.zero) & box.size
+        : position & const Size(1, 1),
+    textDirection: Directionality.of(context),
+    focusFirst: true,
+    entries: [
+      for (final entry in entries) ...[
+        if (entry.sectionStart) const NativeMenuEntry.separator(),
+        NativeMenuEntry.command(
+          label: entry.label,
+          enabled: entry.enabled,
+          checkable: entry.checked != null,
+          selected: entry.checked ?? false,
+          mutuallyExclusive: entry.radio,
+        ),
+      ],
     ],
   );
+  if (!result.available) {
+    throw const shared.GitException(shared.GitErrorCode.unavailable);
+  }
+  final index = result.selectedIndex;
+  // Native separators occupy entries too.
+  final indexed = <shared.GitMenuEntry?>[
+    for (final entry in entries) ...[if (entry.sectionStart) null, entry],
+  ];
+  return context.mounted &&
+          index != null &&
+          index >= 0 &&
+          index < indexed.length &&
+          indexed[index]?.enabled == true
+      ? indexed[index]!.id
+      : null;
 }

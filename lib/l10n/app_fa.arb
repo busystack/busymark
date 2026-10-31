@@ -3901,7 +3901,7 @@
   "gitUiUnstageWholeFile": "برداشتن کل پرونده از نمایه",
   "gitUiStageWholeFile": "افزودن کل پرونده به نمایه",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} whitespace-only changed lines hidden · نمایش تغییرات دقیق",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} خطوط انتخاب شده را تغییر داد · تنظیمات نمایش هرگز بایت های مرحله ای را تغییر نمی دهد.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} خط تغییریافته انتخاب شده است.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "مقایسهٔ فقط‌خواندنی · متن را کپی کنید یا نمایش را تنظیم کنید.",
   "gitUiNoFinalNewline": " · هیچ خبر نهایی",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} بایت{arg3}",
@@ -4581,5 +4581,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "این پیام در پنجرهٔ دیگری تغییر کرده است. پیش از جایگزینی، پیام ذخیره‌شده را بررسی کنید.",
   "gitUiDiscardUnsavedCommitMessages": "پیام‌های ذخیره‌نشدهٔ ثبت کنار گذاشته شوند؟",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "پیام‌هایی که ذخیره نشدند هنوز در این پنجره هستند. کنار گذاشتن آن‌ها نسخه‌های ذخیره‌شده را تغییر نمی‌دهد.",
-  "gitUiDiscardCommitMessages": "کنار گذاشتن پیام‌ها"
+  "gitUiDiscardCommitMessages": "کنار گذاشتن پیام‌ها",
+  "gitUiRemoveFilter": "حذف فیلتر",
+  "gitUiNoCommitsYet": "هنوز کامیتی وجود ندارد",
+  "gitUiNativeMenuUnavailable": "سرویس منوی بومی در دسترس نیست. دوباره تلاش کنید."
 }

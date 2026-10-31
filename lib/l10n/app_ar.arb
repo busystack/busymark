@@ -3859,7 +3859,7 @@
   "gitUiUnstageWholeFile": "إزالة الملف كاملًا من الفهرس",
   "gitUiStageWholeFile": "إضافة الملف كاملًا إلى الفهرس",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} الخطوط التي تم تغييرها فقط مخفية  إظهار التغييرات الدقيقة",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} تغيير الخطوط المحددة  إعدادات العرض أبدا تغيير بايت نظمت.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "تم تحديد {arg0} من الأسطر المعدّلة.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "مقارنة للقراءة فقط · انسخ النص أو عدّل إعدادات العرض.",
   "gitUiNoFinalNewline": " · لا يوجد سطر جديد نهائي",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0}  {arg1}  {arg2} بايت {arg3}",
@@ -4539,5 +4539,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "تغيرت هذه الرسالة في نافذة أخرى. راجع الرسالة المحفوظة قبل استبدالها.",
   "gitUiDiscardUnsavedCommitMessages": "تجاهل رسائل الالتزام غير المحفوظة؟",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "الرسائل التي تعذر حفظها ما زالت في هذه النافذة. يترك تجاهلها النسخ المحفوظة دون تغيير.",
-  "gitUiDiscardCommitMessages": "تجاهل الرسائل"
+  "gitUiDiscardCommitMessages": "تجاهل الرسائل",
+  "gitUiRemoveFilter": "إزالة عامل التصفية",
+  "gitUiNoCommitsYet": "لا توجد إيداعات بعد",
+  "gitUiNativeMenuUnavailable": "خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى."
 }

@@ -6327,7 +6327,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '$arg0 تغيير الخطوط المحددة  إعدادات العرض أبدا تغيير بايت نظمت.';
+    return 'تم تحديد $arg0 من الأسطر المعدّلة.';
   }
 
   @override
@@ -8830,4 +8830,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => 'تجاهل الرسائل';
+
+  @override
+  String get gitUiRemoveFilter => 'إزالة عامل التصفية';
+
+  @override
+  String get gitUiNoCommitsYet => 'لا توجد إيداعات بعد';
+
+  @override
+  String get gitUiNativeMenuUnavailable =>
+      'خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى.';
 }

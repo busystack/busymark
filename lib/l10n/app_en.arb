@@ -3866,9 +3866,9 @@
       }
     }
   },
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} changed lines selected · Display settings never alter the staged bytes.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} changed lines selected.",
   "@gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": {
-    "description": "Shared Git interface: {arg0} changed lines selected · Display settings never alter the staged bytes.",
+    "description": "Shared Git interface: {arg0} changed lines selected.",
     "placeholders": {
       "arg0": {
         "type": "String"
@@ -7328,5 +7328,17 @@
   "gitUiDiscardCommitMessages": "Discard messages",
   "@gitUiDiscardCommitMessages": {
     "description": "Shared Git interface: Discard messages"
+  },
+  "gitUiRemoveFilter": "Remove filter",
+  "@gitUiRemoveFilter": {
+    "description": "Shared Git interface: Remove filter"
+  },
+  "gitUiNoCommitsYet": "No commits yet",
+  "@gitUiNoCommitsYet": {
+    "description": "Shared Git interface: No commits yet"
+  },
+  "gitUiNativeMenuUnavailable": "The native menu service is unavailable. Try again.",
+  "@gitUiNativeMenuUnavailable": {
+    "description": "Shared Git interface: The native menu service is unavailable. Try again."
   }
 }

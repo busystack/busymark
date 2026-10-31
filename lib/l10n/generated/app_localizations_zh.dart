@@ -6011,7 +6011,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '已选择 $arg0 个更改行 · 显示设置不会改变暂存内容的字节。';
+    return '已选择 $arg0 个更改行。';
   }
 
   @override
@@ -8457,6 +8457,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiDiscardCommitMessages => '丢弃消息';
+
+  @override
+  String get gitUiRemoveFilter => '移除筛选条件';
+
+  @override
+  String get gitUiNoCommitsYet => '尚无提交';
+
+  @override
+  String get gitUiNativeMenuUnavailable => '原生菜单服务不可用。请重试。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -14464,7 +14473,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
     String arg0,
   ) {
-    return '已选择 $arg0 个更改行 · 显示设置不会改变暂存内容的字节。';
+    return '已选择 $arg0 个更改行。';
   }
 
   @override
@@ -16910,4 +16919,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiDiscardCommitMessages => '丢弃消息';
+
+  @override
+  String get gitUiRemoveFilter => '移除筛选条件';
+
+  @override
+  String get gitUiNoCommitsYet => '尚无提交';
+
+  @override
+  String get gitUiNativeMenuUnavailable => '原生菜单服务不可用。请重试。';
 }

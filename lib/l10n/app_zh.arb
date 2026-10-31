@@ -5401,7 +5401,7 @@
   "gitUiUnstageWholeFile": "取消暂存整个文件",
   "gitUiStageWholeFile": "暂存整个文件",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} 只用空格修改的行隐藏 □ 显示精确的更改",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "已选择 {arg0} 个更改行 · 显示设置不会改变暂存内容的字节。",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "已选择 {arg0} 个更改行。",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "只读比较 · 复制文本或调整显示设置。",
   "gitUiNoFinalNewline": " · 没有最终的新线",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} ° {arg1} ° {arg2} 字节 {arg3}",
@@ -6081,5 +6081,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "此消息已在另一个窗口中更改。请先查看已保存的消息，再进行替换。",
   "gitUiDiscardUnsavedCommitMessages": "丢弃未保存的提交消息？",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "无法保存的消息仍保留在此窗口中。丢弃这些消息不会更改已保存的版本。",
-  "gitUiDiscardCommitMessages": "丢弃消息"
+  "gitUiDiscardCommitMessages": "丢弃消息",
+  "gitUiRemoveFilter": "移除筛选条件",
+  "gitUiNoCommitsYet": "尚无提交",
+  "gitUiNativeMenuUnavailable": "原生菜单服务不可用。请重试。"
 }

@@ -3859,7 +3859,7 @@
   "gitUiUnstageWholeFile": "पूरी फ़ाइल इंडेक्स से हटाएँ",
   "gitUiStageWholeFile": "पूरी फ़ाइल इंडेक्स में जोड़ें",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} श्वेत रेखाओं को छुपाएँ",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} चयनित पंक्तियों को बदल दिया गया है तथा चरण्ड बाइट्स को कभी नहीं बदलता.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} बदली हुई पंक्तियाँ चुनी गईं।",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "केवल पढ़ने की तुलना · पाठ कॉपी करें या प्रदर्शन सेटिंग बदलें।",
   "gitUiNoFinalNewline": " · कोई अंतिम नई पंक्ति नहीं",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} बाइट{arg3}",
@@ -4539,5 +4539,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "यह संदेश किसी दूसरी विंडो में बदला गया है। बदलने से पहले सहेजा गया संदेश देखें।",
   "gitUiDiscardUnsavedCommitMessages": "बिना सहेजे कमिट संदेश हटाएँ?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "जो संदेश सहेजे नहीं जा सके, वे अभी भी इस विंडो में हैं। उन्हें हटाने से सहेजे गए संस्करण नहीं बदलेंगे।",
-  "gitUiDiscardCommitMessages": "संदेश हटाएँ"
+  "gitUiDiscardCommitMessages": "संदेश हटाएँ",
+  "gitUiRemoveFilter": "फ़िल्टर हटाएँ",
+  "gitUiNoCommitsYet": "अभी कोई कमिट नहीं है",
+  "gitUiNativeMenuUnavailable": "मूल मेनू सेवा उपलब्ध नहीं है। फिर से कोशिश करें।"
 }

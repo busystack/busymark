@@ -5389,7 +5389,7 @@
   "gitUiUnstageWholeFile": "Unstage seluruh berkas",
   "gitUiStageWholeFile": "Stage seluruh berkas",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} whitespace-only mengubah baris tersembunyi · Tampilkan perubahan yang tepat",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} mengubah baris yang dipilih · Pengaturan Tampilan tidak pernah mengubah byte dipentaskan.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} baris yang diubah dipilih.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Perbandingan hanya baca · Salin teks atau sesuaikan tampilan.",
   "gitUiNoFinalNewline": " · tidak ada baris baru terakhir",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} byte{arg3}",
@@ -6069,5 +6069,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Pesan ini berubah di jendela lain. Tinjau pesan tersimpan sebelum menggantinya.",
   "gitUiDiscardUnsavedCommitMessages": "Buang pesan commit yang belum tersimpan?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Pesan yang tidak dapat disimpan masih ada di jendela ini. Membuangnya tidak mengubah versi yang tersimpan.",
-  "gitUiDiscardCommitMessages": "Buang pesan"
+  "gitUiDiscardCommitMessages": "Buang pesan",
+  "gitUiRemoveFilter": "Hapus filter",
+  "gitUiNoCommitsYet": "Belum ada commit",
+  "gitUiNativeMenuUnavailable": "Layanan menu native tidak tersedia. Coba lagi."
 }

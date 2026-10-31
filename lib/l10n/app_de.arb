@@ -3859,7 +3859,7 @@
   "gitUiUnstageWholeFile": "Ganze Datei aus Index entfernen",
   "gitUiStageWholeFile": "Ganze Datei zum Index hinzufügen",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0} nur geänderte Zeilen versteckt · Genaue Änderungen anzeigen",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} änderte Linien ausgewählt · Display-Einstellungen verändern nie die inszenierten Bytes.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} geänderte Zeilen ausgewählt.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "Schreibgeschützter Vergleich · Text kopieren oder Anzeige anpassen.",
   "gitUiNoFinalNewline": " · kein abschließender Zeilenumbruch",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} Bytes{arg3}",
@@ -4539,5 +4539,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Diese Nachricht wurde in einem anderen Fenster geändert. Prüfen Sie die gespeicherte Nachricht, bevor Sie sie ersetzen.",
   "gitUiDiscardUnsavedCommitMessages": "Ungespeicherte Commit-Nachrichten verwerfen?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Nachrichten, die nicht gespeichert werden konnten, befinden sich noch in diesem Fenster. Beim Verwerfen bleiben die gespeicherten Versionen unverändert.",
-  "gitUiDiscardCommitMessages": "Nachrichten verwerfen"
+  "gitUiDiscardCommitMessages": "Nachrichten verwerfen",
+  "gitUiRemoveFilter": "Filter entfernen",
+  "gitUiNoCommitsYet": "Noch keine Commits",
+  "gitUiNativeMenuUnavailable": "Der native Menüdienst ist nicht verfügbar. Versuchen Sie es erneut."
 }

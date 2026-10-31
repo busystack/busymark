@@ -5389,7 +5389,7 @@
   "gitUiUnstageWholeFile": "Bỏ toàn bộ tệp khỏi chỉ mục",
   "gitUiStageWholeFile": "Đưa toàn bộ tệp vào chỉ mục",
   "gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges": "{arg0}-Chỉ thay đổi dòng ẩn · Hiển thị các thay đổi chính xác",
-  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "{arg0} đã thay đổi dòng · Hiển thị không bao giờ thay đổi các byte được sắp xếp.",
+  "gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged": "Đã chọn {arg0} dòng thay đổi.",
   "gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings": "So sánh chỉ đọc · Sao chép văn bản hoặc chỉnh cách hiển thị.",
   "gitUiNoFinalNewline": " · Không có dòng mới cuối",
   "gitUiArg0Arg1Arg2BytesArg3": "{arg0} · {arg1} · {arg2} byte{arg3}",
@@ -6069,5 +6069,8 @@
   "gitUiCommitDraftChangedInAnotherWindow": "Thông điệp này đã thay đổi trong cửa sổ khác. Hãy xem lại thông điệp đã lưu trước khi thay thế.",
   "gitUiDiscardUnsavedCommitMessages": "Bỏ các thông điệp commit chưa lưu?",
   "gitUiMessagesCouldNotBeSavedStayInThisWindow": "Các thông điệp không lưu được vẫn còn trong cửa sổ này. Việc bỏ chúng không thay đổi các phiên bản đã lưu.",
-  "gitUiDiscardCommitMessages": "Bỏ các thông điệp"
+  "gitUiDiscardCommitMessages": "Bỏ các thông điệp",
+  "gitUiRemoveFilter": "Xóa bộ lọc",
+  "gitUiNoCommitsYet": "Chưa có commit",
+  "gitUiNativeMenuUnavailable": "Dịch vụ menu gốc không khả dụng. Hãy thử lại."
 }

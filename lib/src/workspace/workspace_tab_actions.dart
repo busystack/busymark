@@ -1,3 +1,5 @@
+import '../app/git_dismissal.dart';
+import '../git/application/shared_git_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +20,9 @@ List<WorkspaceTabEntry> _tabs(WidgetRef ref, WorkspaceState state) {
   final history = ref.read(localHistoryControllerProvider);
   return workspaceTabEntries(
     workspace: workspace,
-    gitState: ref.read(gitControllerProvider),
+    gitTabs:
+        ref.read(sharedGitReviewProvider)[workspace.id] ??
+        const SharedGitTabs(),
     documentBuffers: state.documentBuffers,
     activeBufferId: state.activeBufferId,
     localHistoryRevisionId: history.selectedRevisionId,
@@ -73,15 +77,13 @@ Future<bool> closeOtherWorkspaceTabs(
   WidgetRef ref, {
   required Workspace workspace,
   required WorkspaceTabEntry retainedTab,
-}) => retainedTab.kind != WorkspaceTabKind.file
-    ? Future.value(false)
-    : _closeTabs(
-        context,
-        ref,
-        workspace: workspace,
-        clicked: retainedTab,
-        retain: true,
-      );
+}) => _closeTabs(
+  context,
+  ref,
+  workspace: workspace,
+  clicked: retainedTab,
+  retain: true,
+);
 
 /// Closes captured views while preserving the controller's workspace lifecycle.
 Future<bool> closeAllWorkspaceTabs(
@@ -130,9 +132,9 @@ Future<bool> _closeTabs(
   bool currentWorkspace() {
     if (!context.mounted || !ref.context.mounted) return false;
     final live = ref.read(workspaceControllerProvider);
-    if (retain) {
+    if (retain && clicked!.kind == WorkspaceTabKind.file) {
       if (!live.documentBuffers.any(
-        (buffer) => buffer.id == clicked!.bufferId,
+        (buffer) => buffer.id == clicked.bufferId,
       )) {
         return false;
       }
@@ -178,6 +180,11 @@ Future<bool> _closeTabs(
 
   _closing[controller] = true;
   try {
+    if (targets.any((tab) => tab.kind == WorkspaceTabKind.gitDiff) &&
+        !await ref.read(busyMarkGitDismissalProvider).mayDismiss()) {
+      return false;
+    }
+    if (!context.mounted || !currentWorkspace()) return false;
     if (!await confirmSafeToCloseDocumentBuffers(context, ref, bufferIds) ||
         !currentWorkspace()) {
       return false;
@@ -235,17 +242,10 @@ Future<bool> _closeTabs(
     final gitTargets = targets
         .where((tab) => tab.kind == WorkspaceTabKind.gitDiff)
         .toList();
-    final liveGit = ref.read(gitControllerProvider);
-    if (gitTargets.isNotEmpty) {
-      final paths = gitTargets.map((tab) => tab.path).toSet();
-      if (liveGit.openDiffFilePaths.every(paths.contains) &&
-          (liveGit.openDiffFilePaths.isNotEmpty || paths.contains(''))) {
-        git.clearSelection();
-      } else {
-        for (final path in paths) {
-          if (path.isNotEmpty) git.closeDiffFile(path);
-        }
-      }
+    for (final tab in gitTargets) {
+      ref
+          .read(sharedGitReviewProvider.notifier)
+          .close(workspace.id, tab.comparisonId!);
     }
     final revisionId = ref
         .read(localHistoryControllerProvider)
@@ -257,8 +257,14 @@ Future<bool> _closeTabs(
     )) {
       history.clearComparison();
     }
-    if (retain) {
-      if (!await controller.activateDocumentBuffer(clicked!.bufferId!) ||
+    if (retain && clicked!.kind == WorkspaceTabKind.gitDiff) {
+      ref
+          .read(sharedGitReviewProvider.notifier)
+          .activate(workspace.id, clicked.comparisonId!);
+    }
+    if (retain && clicked!.kind == WorkspaceTabKind.file) {
+      ref.read(sharedGitReviewProvider.notifier).deactivate(workspace.id);
+      if (!await controller.activateDocumentBuffer(clicked.bufferId!) ||
           !currentWorkspace()) {
         return false;
       }

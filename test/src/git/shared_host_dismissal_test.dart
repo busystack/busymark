@@ -1,3 +1,4 @@
+import 'package:yaru/yaru.dart';
 import '../../support/widget_async.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -155,13 +156,15 @@ void main() {
           );
           final value = controller.value;
           final originalClose = tester
-              .widgetList<IconButton>(find.byType(IconButton))
-              .firstWhere((b) => b.tooltip == 'Close')
-              .onPressed!;
+              .widgetList<YaruWindowControl>(find.byType(YaruWindowControl))
+              .firstWhere(
+                (button) => button.type == YaruWindowControlType.close,
+              )
+              .onTap!;
           Future<void> close() async {
             switch (closeKind) {
               case 'Close':
-                await tester.tap(find.byTooltip('Close').first);
+                await tester.tap(find.bySemanticsLabel('Close').first);
               case 'Escape':
                 await tester.sendKeyEvent(LogicalKeyboardKey.escape);
               case 'Back':
