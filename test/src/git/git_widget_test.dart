@@ -17,6 +17,7 @@ import 'package:busymark/src/git/presentation/git_sidebar_tab.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
@@ -162,6 +163,7 @@ void main() {
   testWidgets(
     'AD path shows staged addition and unstaged deletion without open action',
     (tester) async {
+      final menu = _NativeMenuFixture(tester);
       final openedPaths = <String>[];
       final rollbackPathSets = <List<String>>[];
       await tester.pumpWidget(
@@ -227,9 +229,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(l10n.gitOpenFile), findsNothing);
-      expect(find.text(l10n.gitDiscard), findsOneWidget);
-      await tester.tap(find.text(l10n.gitDiscard));
+      expect(menu.labels, isNot(contains(l10n.gitOpenFile)));
+      expect(menu.labels, contains(l10n.gitDiscard));
+      menu.choose(l10n.gitDiscard);
       await tester.pumpAndSettle();
 
       expect(rollbackPathSets, const [
@@ -242,6 +244,7 @@ void main() {
   testWidgets('staged rename preserves both paths and workspace scope', (
     tester,
   ) async {
+    final menu = _NativeMenuFixture(tester);
     final selections = <GitChangeSelection>[];
     final unstagedPaths = <String>[];
     final rollbackPathSets = <List<String>>[];
@@ -289,7 +292,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.gitDiscard));
+    menu.choose(l10n.gitDiscard);
     await tester.pumpAndSettle();
 
     expect(rollbackPathSets, const [
@@ -646,6 +649,7 @@ void main() {
   testWidgets('file action menu does not contain commit selection actions', (
     tester,
   ) async {
+    final menu = _NativeMenuFixture(tester);
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
@@ -669,15 +673,18 @@ void main() {
     await tester.tap(find.byTooltip(l10n.fileActions));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.gitOpenFile), findsOneWidget);
-    expect(find.text(l10n.gitDiscard), findsOneWidget);
-    expect(find.text(l10n.gitSelectForCommit), findsNothing);
-    expect(find.text(l10n.gitRemoveFromCommit), findsNothing);
+    expect(menu.labels, contains(l10n.gitOpenFile));
+    expect(menu.labels, contains(l10n.gitDiscard));
+    expect(menu.labels, isNot(contains(l10n.gitSelectForCommit)));
+    expect(menu.labels, isNot(contains(l10n.gitRemoveFromCommit)));
+    menu.cancel();
+    await tester.pumpAndSettle();
   });
 
   testWidgets('untracked file menu uses an explicit delete action', (
     tester,
   ) async {
+    final menu = _NativeMenuFixture(tester);
     final deletedPathSets = <List<String>>[];
     await tester.pumpWidget(
       _localized(
@@ -702,10 +709,10 @@ void main() {
     await tester.tap(find.byTooltip(l10n.fileActions));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.delete), findsOneWidget);
-    expect(find.text(l10n.gitDiscard), findsNothing);
+    expect(menu.labels, contains(l10n.delete));
+    expect(menu.labels, isNot(contains(l10n.gitDiscard)));
 
-    await tester.tap(find.text(l10n.delete));
+    menu.choose(l10n.delete);
     await tester.pumpAndSettle();
 
     expect(deletedPathSets, const [
@@ -1251,6 +1258,7 @@ void main() {
   testWidgets('file history keeps comparison controls out of the sidebar', (
     tester,
   ) async {
+    final menu = _NativeMenuFixture(tester);
     final commit = GitCommitSummary(
       fullHash: '1234567890abcdef',
       shortHash: '1234567',
@@ -1297,9 +1305,9 @@ void main() {
     await tester.tap(find.byTooltip(l10n.fileActions));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.gitCompareWithCurrent), findsNothing);
-    expect(find.text(l10n.gitRestoreVersion), findsOneWidget);
-    await tester.tap(find.text(l10n.gitRestoreVersion));
+    expect(menu.labels, isNot(contains(l10n.gitCompareWithCurrent)));
+    expect(menu.labels, contains(l10n.gitRestoreVersion));
+    menu.choose(l10n.gitRestoreVersion);
     await tester.pumpAndSettle();
 
     expect(restoreCalls, 1);
@@ -1430,6 +1438,7 @@ void main() {
   testWidgets('project history reset requires an explicit reset mode', (
     tester,
   ) async {
+    final menu = _NativeMenuFixture(tester);
     const repo = GitRepositoryInfo(
       rootPath: '/repo',
       gitDirPath: '/repo/.git',
@@ -1476,7 +1485,7 @@ void main() {
 
     await tester.tap(find.byTooltip(l10n.gitCommitActions));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.gitResetCurrentBranchToHere));
+    menu.choose(l10n.gitResetCurrentBranchToHere);
     await tester.pumpAndSettle();
 
     final resetButton = find.widgetWithText(
@@ -2292,5 +2301,51 @@ class _PresetGitController extends GitController {
   Future<bool> resetCurrentBranchToSelectedCommit(GitResetMode mode) async {
     resetModes.add(mode);
     return true;
+  }
+}
+
+/// A native menu is rendered by GTK, outside Flutter's widget tree. Keep its
+/// action assertions and dispatch through the real production method channel.
+final class _NativeMenuFixture {
+  _NativeMenuFixture(WidgetTester tester) {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(_channel, (
+      call,
+    ) async {
+      if (call.method == 'dismiss') {
+        cancel();
+        return true;
+      }
+      expect(call.method, 'show');
+      entries = [
+        for (final entry in (call.arguments as Map)['entries'] as List)
+          Map<String, Object?>.from(entry as Map),
+      ];
+      _pending = Completer<int?>();
+      return _pending!.future;
+    });
+    addTearDown(() {
+      cancel();
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        _channel,
+        null,
+      );
+    });
+  }
+  static const _channel = MethodChannel('busymark/native_menus');
+  List<Map<String, Object?>> entries = [];
+  Completer<int?>? _pending;
+  List<String> get labels => [
+    for (final entry in entries) entry['label']! as String,
+  ];
+  void choose(String label) {
+    final index = labels.indexOf(label);
+    expect(index, greaterThanOrEqualTo(0));
+    expect(entries[index]['enabled'], isTrue);
+    expect(_pending, isNotNull);
+    _pending!.complete(index);
+  }
+
+  void cancel() {
+    if (_pending != null && !_pending!.isCompleted) _pending!.complete(null);
   }
 }
