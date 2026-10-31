@@ -1331,6 +1331,16 @@ class _BusyMarkSearchShortcutHandlerState
       unawaited(commands.execute(BusyMarkCommandIds.sidebarOutline));
       return true;
     }
+    // HardwareKeyboard calls every registered handler, even when the focused
+    // Git view handles the same key. Let its local shortcuts own search and
+    // operation combinations instead of also opening authoring search.
+    if (focused != null &&
+        BusyMarkCommandRegistryScope.read(focused)?.commands.any(
+              (command) => command.scope == BusyMarkCommandScope.git,
+            ) ==
+            true) {
+      return false;
+    }
     for (final entry in searchCommandDestinations.entries) {
       if (commands.shortcutAccepts(entry.key, event, keyboard)) {
         unawaited(commands.execute(entry.key));

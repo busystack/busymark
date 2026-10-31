@@ -7370,6 +7370,128 @@ code
     );
   }
 
+  testWidgets(
+    'Git comparison search keeps authoring search inactive and returns focus',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final temp = Directory.systemTemp.createTempSync('busymark_git_find_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      final file = File('${temp.path}/Intro.md')
+        ..writeAsStringSync('# Intro.md\n');
+      final gitState = _gitSidebarShortcutState(temp.path);
+      final client = _SearchableGitReadFixture(gitState);
+      final container = ProviderContainer(
+        overrides: [
+          sharedGitDraftStoreProvider.overrideWithValue(
+            shared.MemoryGitDraftStore(),
+          ),
+          sharedGitClientFactoryProvider.overrideWithValue(
+            ({required authorize, prompts}) => client,
+          ),
+          ..._smokeAccentOverrides.skip(2),
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(
+            _MemorySettingsStore()
+              ..value = AppSettings.defaults()
+                  .copyWith(
+                    autoSave: false,
+                    validateOnEdit: false,
+                    documentViewMode: DocumentViewModePreference.source,
+                  )
+                  .toJson(),
+          ),
+          workspaceServiceProvider.overrideWithValue(
+            _TabbedWorkspaceService(rootPath: temp.path, paths: [file.path]),
+          ),
+          startupPathProvider.overrideWithValue(temp.path),
+          gitControllerProvider.overrideWith(
+            () => _PresetGitController(gitState),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await pumpUntil(
+        tester,
+        () => container.read(workspaceControllerProvider).workspace != null,
+        operation: 'open authoring workspace',
+      );
+      final workspace = container.read(workspaceControllerProvider).workspace!;
+      container
+          .read(sharedGitReviewProvider.notifier)
+          .open(
+            workspace.id,
+            SharedGitReview(
+              client.repository!,
+              comparison: shared.GitComparison(
+                shared.RepoPath.text('README.md'),
+                const shared.ContentVersion.index(),
+                const shared.ContentVersion.working(),
+              ),
+            ),
+          );
+      final review = find.byType(shared.GitDiffView);
+      final comparisonText = find.descendant(
+        of: review,
+        matching: find.byType(SelectionArea),
+      );
+      await pumpUntil(
+        tester,
+        () => comparisonText.evaluate().isNotEmpty,
+        operation: 'load shared comparison',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(comparisonText.first);
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isFalse);
+      expect(find.byKey(const ValueKey('shared-search-query')), findsNothing);
+      final query = find.descendant(
+        of: review,
+        matching: find.byType(TextField),
+      );
+      expect(query, findsOneWidget);
+      expect(tester.widget<TextField>(query).focusNode!.hasFocus, isTrue);
+      await tester.enterText(query, 'needle');
+      await pumpUntil(
+        tester,
+        () => find.text('1 of 1 matches').evaluate().isNotEmpty,
+        operation: 'finish background Git comparison search',
+      );
+      expect(tester.widget<TextField>(query).controller!.text, 'needle');
+      expect(container.read(searchSessionProvider).query, isEmpty);
+      expect(
+        container.read(workspaceControllerProvider).activeBuffer!.text,
+        '# Intro.md\n',
+      );
+      await tester.tap(find.text(l10n.gitReturnToDocument));
+      await tester.pumpAndSettle();
+      final document = find.byWidgetPredicate(
+        (w) => w is TextField && w.controller?.text == '# Intro.md\n',
+      );
+      await tester.tap(document);
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(container.read(searchSessionProvider).active, isTrue);
+      expect(review, findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   Finder documentTab(DocumentBuffer buffer) =>
       find.byKey(ValueKey('file:${buffer.id}'));
   Finder tabLabel(DocumentBuffer buffer) => find
@@ -22148,6 +22270,29 @@ final _smokeAccentOverrides = [
     const _UnavailableAccentSource(),
   ),
 ];
+
+class _SearchableGitReadFixture extends SharedGitReadFixture {
+  _SearchableGitReadFixture(super.state);
+
+  @override
+  Future<shared.GitContent> content(
+    shared.RepositoryId repository,
+    shared.RepoPath path,
+    shared.ContentVersion version, {
+    shared.GitCancellation? cancellation,
+  }) async => shared.GitContent(
+    path: path,
+    version: version,
+    availability: shared.ContentAvailability.present,
+    token: version.kind.name,
+    mode: '100644',
+    bytes: utf8.encode(
+      version.kind == shared.ContentKind.indexVersion
+          ? '# Before\nold text\n'
+          : '# After\nneedle comparison\n',
+    ),
+  );
+}
 
 class _UnavailableAccentSource implements LinuxAccentSource {
   const _UnavailableAccentSource();
