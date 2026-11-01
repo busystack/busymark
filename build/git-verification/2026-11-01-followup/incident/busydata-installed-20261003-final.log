@@ -1,0 +1,21 @@
+Command: /snap/bin/lxc exec busydata-installed-20261003 -- sh -ec 'date -u; systemctl is-system-running; systemctl --failed --no-pager; findmnt -no SOURCE,FSTYPE,OPTIONS /; df -h /; cat /run/initramfs/fsck.log; dpkg --audit'
+Exit: 0
+
+Sun Nov  1 10:53:29 UTC 2026
+running
+  UNIT LOAD ACTIVE SUB DESCRIPTION
+
+0 loaded units listed.
+/dev/sda1 ext4   rw,relatime,discard,errors=remount-ro,commit=30
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        30G   27G  3.1G  90% /
+Log of fsck -C -a -V -t ext4 /dev/sda1 
+Sun Nov  1 09:38:45 2026
+
+fsck from util-linux 2.39.3
+[/usr/sbin/fsck.ext4 (1) -- /dev/sda1] fsck.ext4 -a -C0 /dev/sda1 
+cloudimg-rootfs: clean, 210020/4063232 files, 7317998/8126203 blocks
+
+Sun Nov  1 09:38:45 2026
+----------------
+

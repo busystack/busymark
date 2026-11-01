@@ -1,0 +1,28 @@
+Command: /snap/bin/lxc exec busynode-continuation-20261015 -- sh -c 'date -u; systemctl is-system-running; systemctl --failed --no-pager; findmnt -no SOURCE,FSTYPE,OPTIONS /; df -h /; cat /run/initramfs/fsck.log; journalctl -b -p err --no-pager; dpkg --audit; lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINTS'
+Exit: 0
+
+Sun Nov  1 09:41:58 UTC 2026
+running
+  UNIT LOAD ACTIVE SUB DESCRIPTION
+
+0 loaded units listed.
+/dev/sda1 ext4   rw,relatime,discard,errors=remount-ro,commit=30
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        15G  8.3G  6.3G  58% /
+Log of fsck -C -a -V -t ext4 /dev/sda1 
+Sun Nov  1 09:40:48 2026
+
+fsck from util-linux 2.39.3
+[/usr/sbin/fsck.ext4 (1) -- /dev/sda1] fsck.ext4 -a -C0 /dev/sda1 
+cloudimg-rootfs: clean, 154766/1179648 files, 2251588/2359035 blocks
+
+Sun Nov  1 09:40:48 2026
+----------------
+-- No entries --
+NAME     SIZE FSTYPE MOUNTPOINTS
+sda       16G        
+├─sda1    15G ext4   /
+├─sda14    4M        
+├─sda15  106M vfat   /boot/efi
+└─sda16  913M ext4   /boot
+

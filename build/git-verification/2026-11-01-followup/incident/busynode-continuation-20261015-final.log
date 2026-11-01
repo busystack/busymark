@@ -1,0 +1,21 @@
+Command: /snap/bin/lxc exec busynode-continuation-20261015 -- sh -ec 'date -u; systemctl is-system-running; systemctl --failed --no-pager; findmnt -no SOURCE,FSTYPE,OPTIONS /; df -h /; cat /run/initramfs/fsck.log; dpkg --audit'
+Exit: 0
+
+Sun Nov  1 10:53:29 UTC 2026
+running
+  UNIT LOAD ACTIVE SUB DESCRIPTION
+
+0 loaded units listed.
+/dev/sda1 ext4   rw,relatime,discard,errors=remount-ro,commit=30
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        15G  8.4G  6.1G  58% /
+Log of fsck -C -a -V -t ext4 /dev/sda1 
+Sun Nov  1 09:40:48 2026
+
+fsck from util-linux 2.39.3
+[/usr/sbin/fsck.ext4 (1) -- /dev/sda1] fsck.ext4 -a -C0 /dev/sda1 
+cloudimg-rootfs: clean, 154766/1179648 files, 2251588/2359035 blocks
+
+Sun Nov  1 09:40:48 2026
+----------------
+
