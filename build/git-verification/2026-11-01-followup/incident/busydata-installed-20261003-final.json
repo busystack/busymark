@@ -1,0 +1,5 @@
+{
+  "rawFile": "busydata-installed-20261003-final.log",
+  "sha256": "d8625e9c307327e53188fc49fa38e532d4b14f2c0c482650c2af7881db48d3e5",
+  "transcript": "Command: /snap/bin/lxc exec busydata-installed-20261003 -- sh -ec 'date -u; systemctl is-system-running; systemctl --failed --no-pager; findmnt -no SOURCE,FSTYPE,OPTIONS /; df -h /; cat /run/initramfs/fsck.log; dpkg --audit'\nExit: 0\n\nSun Nov  1 10:53:29 UTC 2026\nrunning\n  UNIT LOAD ACTIVE SUB DESCRIPTION\n\n0 loaded units listed.\n/dev/sda1 ext4   rw,relatime,discard,errors=remount-ro,commit=30\nFilesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        30G   27G  3.1G  90% /\nLog of fsck -C -a -V -t ext4 /dev/sda1 \nSun Nov  1 09:38:45 2026\n\nfsck from util-linux 2.39.3\n[/usr/sbin/fsck.ext4 (1) -- /dev/sda1] fsck.ext4 -a -C0 /dev/sda1 \ncloudimg-rootfs: clean, 210020/4063232 files, 7317998/8126203 blocks\n\nSun Nov  1 09:38:45 2026\n----------------\n\n"
+}

@@ -37,6 +37,10 @@ The final independent audit at 10:53 UTC again reports both guests running,
 read/write root mounts, clean boot filesystem results, no failed units and no
 pending package repairs.
 
+Committed JSON transcripts preserve the exact raw command output and its SHA-256,
+including the filesystem tools' trailing spaces. The original `.log` files remain
+beside them in the local evidence directory.
+
 Follow-up application verification uses the existing BusyFiles verification VM
 and its retained official SDK/dependencies. It checks at least 3 GiB guest free
 space before each recorded verification phase, monitors host/guest free space,

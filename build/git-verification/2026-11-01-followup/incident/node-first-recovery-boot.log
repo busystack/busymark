@@ -1,5 +1,0 @@
-Command: /snap/bin/lxc exec busynode-continuation-20261015 -- journalctl -b -1 --no-pager --grep=corrupted
-Exit: 0
-
-Nov 01 09:36:54 busynode-continuation-20261015 systemd-journald[329]: File /var/log/journal/162464f287d34b0eb995f4e5bb4319d1/system.journal corrupted or uncleanly shut down, renaming and replacing.
-

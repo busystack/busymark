@@ -1,0 +1,5 @@
+{
+  "rawFile": "rejected-console-query.log",
+  "sha256": "4ade5b9c7af2ac0a1ebd1c54b72109a2ba2aedf0aed6eb803821cecb2e954432",
+  "transcript": "Command: /snap/bin/lxc exec busynode-continuation-20261015 -- journalctl -b -1 --no-pager --grep=corrupted\\|unclean\\|EXT4-fs\\|recovering\nExit: 1 (no guest command executed; retry used a simple supported query)\n\nsnap-confine has elevated permissions and is not confined but should be. Refusing to continue to avoid permission escalation attacks\nPlease make sure that the snapd.apparmor service is enabled and started.\n\n"
+}
