@@ -2,7 +2,7 @@
 // Translations belong to this application’s existing Flutter ARB catalog.
 import 'package:busystack_git_flutter/busystack_git_flutter.dart'
     show GitMessages;
-import '../../../l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations.dart';
 
 extension SharedGitLocalizations on AppLocalizations {
   String translateSharedGitMessage(

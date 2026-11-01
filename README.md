@@ -124,9 +124,20 @@ failed saves remain available for review during normal window close.
 Rebase targets come from searchable branches/tags or the Git Log; the configured
 upstream is shown explicitly and object IDs are handled internally. Replaced
 plans and stale reference tips require a fresh review. Git views use BusyMark's
-existing ARB catalogs in every supported locale. Update their generated adapter
-with `../busystack_git_flutter/tool/sync_host_localizations.py` and the existing
-`flutter gen-l10n` workflow; `test/src/git/shared_git_localization_test.dart`
+existing ARB catalogs in every supported locale. Regenerate the adapter with the
+same configuration used by `.github/workflows/flutter-linux.yml`:
+
+```sh
+python3 ../busystack_git_flutter/tool/sync_host_localizations.py \
+  --arb lib/l10n/app_en.arb \
+  --adapter lib/src/git/application/shared_git_localizations.dart \
+  --class-name AppLocalizations \
+  --import-uri package:busymark/l10n/generated/app_localizations.dart
+flutter gen-l10n
+```
+
+CI adds `--check` to the generator command and requires the generated package
+import to match exactly. `test/src/git/shared_git_localization_test.dart`
 checks catalog coverage and named values without translating repository data.
 
 Linux development and packaging use the official Flutter SDK version pinned in
