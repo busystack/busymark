@@ -8831,4 +8831,17 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'मूल मेनू सेवा उपलब्ध नहीं है। फिर से कोशिश करें।';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'इस कार्यक्षेत्र में Git का उपयोग करने के लिए रिपॉज़िटरी के कार्य ट्री का मूल खोलें।';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead आगे, $behind पीछे। स्थानीय रूप से ज्ञात रिमोट ट्रैकिंग जानकारी; यह सर्वर की लाइव जाँच नहीं है।';
+  }
 }

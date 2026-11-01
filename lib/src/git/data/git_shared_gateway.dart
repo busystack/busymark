@@ -3,13 +3,14 @@ import 'package:busystack_git/busystack_git.dart' as shared;
 import 'package:path/path.dart' as p;
 import '../../core/anchored_path_guard.dart';
 import '../application/git_gateway.dart';
+import '../application/git_workspace_eligibility.dart';
 import '../domain/git_diff_parser.dart';
 import '../domain/git_models.dart';
 
 /// Application compatibility adapter for authoring commands and the optional
 /// message drafter. All Git execution and mutations belong to busystack_git.
 /// Workspace trust, dirty buffers, localization and navigation remain here.
-class GitCliGateway implements GitRepositoryGateway {
+class GitCliGateway implements GitRepositoryGateway, GitWorkspaceRootInspector {
   const GitCliGateway({this.engine, this.diffParser = const GitDiffParser()});
   final shared.GitEngine? engine;
   final GitDiffParser diffParser;
@@ -62,10 +63,19 @@ class GitCliGateway implements GitRepositoryGateway {
   }
 
   @override
+  Future<void> requireWorkspaceRoot(String workspacePath) async {
+    final repository = await core.discover(workspacePath);
+    if (repository != null) {
+      await requireGitWorkspaceRoot(workspacePath, repository.root);
+    }
+  }
+
+  @override
   Future<GitRepositoryInfo?> detectRepository(String workspacePath) =>
       _map(() async {
         final id = await core.discover(workspacePath);
         if (id == null) return null;
+        await requireGitWorkspaceRoot(workspacePath, id.root);
         final state = await core.status(id);
         final remotes =
             (await core.inspect(

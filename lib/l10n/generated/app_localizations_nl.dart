@@ -8910,4 +8910,17 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'De native menuservice is niet beschikbaar. Probeer het opnieuw.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Open de hoofdmap van de werkboom van de repository om Git in deze werkruimte te gebruiken.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead voor, $behind achter. Lokaal bekende informatie over externe tracking; geen livecontrole van de server.';
+  }
 }

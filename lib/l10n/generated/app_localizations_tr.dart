@@ -8836,4 +8836,17 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'Yerel menü hizmeti kullanılamıyor. Yeniden deneyin.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Bu çalışma alanında Git kullanmak için deponun çalışma ağacı kökünü açın.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead ileride, $behind geride. Yerel olarak bilinen uzak izleme bilgisi; canlı sunucu denetimi değildir.';
+  }
 }

@@ -4542,5 +4542,7 @@
   "gitUiDiscardCommitMessages": "Forkast meldinger",
   "gitUiRemoveFilter": "Fjern filter",
   "gitUiNoCommitsYet": "Ingen innsendelser ennå",
-  "gitUiNativeMenuUnavailable": "Den innebygde menytjenesten er utilgjengelig. Prøv igjen."
+  "gitUiNativeMenuUnavailable": "Den innebygde menytjenesten er utilgjengelig. Prøv igjen.",
+  "gitWorkspaceRootRequired": "Åpne roten til arbeidsområdet i depotet for å bruke Git i dette arbeidsområdet.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} foran, {behind} bak. Lokalt kjent informasjon om fjernsporing; ingen direktesjekk av serveren."
 }

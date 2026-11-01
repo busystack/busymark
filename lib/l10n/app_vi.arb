@@ -6072,5 +6072,7 @@
   "gitUiDiscardCommitMessages": "Bỏ các thông điệp",
   "gitUiRemoveFilter": "Xóa bộ lọc",
   "gitUiNoCommitsYet": "Chưa có commit",
-  "gitUiNativeMenuUnavailable": "Dịch vụ menu gốc không khả dụng. Hãy thử lại."
+  "gitUiNativeMenuUnavailable": "Dịch vụ menu gốc không khả dụng. Hãy thử lại.",
+  "gitWorkspaceRootRequired": "Mở thư mục gốc cây làm việc của kho để dùng Git trong không gian làm việc này.",
+  "gitLocalTrackingDescription": "{upstream} · đi trước {ahead}, đi sau {behind}. Thông tin theo dõi từ xa đã biết cục bộ; không phải kiểm tra máy chủ trực tiếp."
 }

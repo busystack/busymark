@@ -7340,5 +7340,24 @@
   "gitUiNativeMenuUnavailable": "The native menu service is unavailable. Try again.",
   "@gitUiNativeMenuUnavailable": {
     "description": "Shared Git interface: The native menu service is unavailable. Try again."
+  },
+  "gitWorkspaceRootRequired": "Open the repository’s working-tree root to use Git in this workspace.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} ahead, {behind} behind. Locally known remote-tracking information; not a live server check.",
+  "@gitWorkspaceRootRequired": {
+    "description": "BusyMark only attaches Git at the opened working-tree root."
+  },
+  "@gitLocalTrackingDescription": {
+    "description": "Accessible explanation of locally cached tracking; never implies an automatic fetch.",
+    "placeholders": {
+      "upstream": {
+        "type": "String"
+      },
+      "ahead": {
+        "type": "String"
+      },
+      "behind": {
+        "type": "String"
+      }
+    }
   }
 }

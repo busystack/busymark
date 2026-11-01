@@ -4542,5 +4542,7 @@
   "gitUiDiscardCommitMessages": "تجاهل الرسائل",
   "gitUiRemoveFilter": "إزالة عامل التصفية",
   "gitUiNoCommitsYet": "لا توجد إيداعات بعد",
-  "gitUiNativeMenuUnavailable": "خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى."
+  "gitUiNativeMenuUnavailable": "خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى.",
+  "gitWorkspaceRootRequired": "افتح جذر شجرة عمل المستودع لاستخدام Git في مساحة العمل هذه.",
+  "gitLocalTrackingDescription": "{upstream} · متقدم بـ {ahead}، ومتأخر بـ {behind}. معلومات تتبع بعيدة معروفة محليًا؛ ليست فحصًا مباشرًا للخادم."
 }

@@ -105,7 +105,11 @@ class _NativeReferences extends RecursiveAstVisitor<void> {
     final name = owner.name;
     final host = library.endsWith('/src/app/busymark_design.dart');
     if (host &&
-        (const {'showBusyMarkMenu', 'showBusyMarkContextMenu'}.contains(name) ||
+        (const {
+              'showBusyMarkMenu',
+              'showBusyMarkContextMenu',
+              'BusyMarkCompactIconButton',
+            }.contains(name) ||
             element is ConstructorElement &&
                 (name == 'BusyMarkMenuButton' ||
                     name == 'BusyMarkHeaderPopupMenuButton' &&
@@ -207,8 +211,13 @@ class BusyMarkHeaderPopupMenuButton {
   const BusyMarkHeaderPopupMenuButton.native();
 }
 void showBusyMarkContextMenu() {}
+class BusyMarkCompactIconButton { const BusyMarkCompactIconButton(); }
 ''');
     final examples = <(String, bool)>[
+      (
+        "import 'lib/src/app/busymark_design.dart' as native; typedef Hidden = native.BusyMarkCompactIconButton; Object makeGit() => Hidden.new;",
+        false,
+      ),
       (
         "import 'package:flutter/material.dart' as m; Object makeGit() => m.showDialog;",
         false,
@@ -278,6 +287,36 @@ void showBusyMarkContextMenu() {}
   }
 }
 
+Future<Map<int, String>> auditIconAdapter(File file) async {
+  final path = file.resolveSymbolicLinksSync();
+  final collection = AnalysisContextCollection(includedPaths: [path]);
+  try {
+    final result = await collection
+        .contextFor(path)
+        .currentSession
+        .getResolvedUnit(path);
+    if (result is! ResolvedUnitResult ||
+        result.diagnostics.any(
+          (d) => d.diagnosticCode.severity == DiagnosticSeverity.ERROR,
+        )) {
+      throw StateError('Cannot resolve the native Git adapter');
+    }
+    final adapter = result.unit.declarations
+        .whereType<ClassDeclaration>()
+        .where((c) => c.namePart.typeName.lexeme == 'BusyMarkGitPresentation')
+        .single;
+    final method = adapter.body.members
+        .whereType<MethodDeclaration>()
+        .where((m) => m.name.lexeme == 'iconAction')
+        .single;
+    final visitor = _NativeReferences();
+    method.accept(visitor);
+    return visitor.violations;
+  } finally {
+    await collection.dispose();
+  }
+}
+
 Future<void> main(List<String> args) async {
   final mark = Directory.fromUri(Platform.script.resolve('../../../'));
   if (args.contains('--self-test')) return selfTest(mark);
@@ -285,10 +324,15 @@ Future<void> main(List<String> args) async {
     '${mark.path}/lib/src/workspace/presentation/workspace_screen.dart',
   );
   final violations = await audit(file, production: true);
+  final adapter = File('${mark.path}/lib/src/app/busymark_design.dart');
+  final adapterViolations = await auditIconAdapter(adapter);
+  for (final entry in adapterViolations.entries) {
+    stderr.writeln('${adapter.path}:${entry.key}: ${entry.value}');
+  }
   for (final entry in violations.entries) {
     stderr.writeln('${file.path}:${entry.key}: ${entry.value}');
   }
-  if (violations.isNotEmpty) {
+  if (violations.isNotEmpty || adapterViolations.isNotEmpty) {
     exitCode = 1;
   } else {
     stdout.writeln('Resolved workspace Git presentation boundary passed.');

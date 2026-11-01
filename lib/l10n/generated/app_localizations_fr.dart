@@ -8935,4 +8935,17 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'Le service de menus natifs est indisponible. Réessayez.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Ouvrez la racine de l’arbre de travail du dépôt pour utiliser Git dans cet espace de travail.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead en avance, $behind en retard. Informations de suivi distant connues localement ; aucune vérification du serveur en direct.';
+  }
 }

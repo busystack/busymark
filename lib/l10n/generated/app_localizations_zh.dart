@@ -8466,6 +8466,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiNativeMenuUnavailable => '原生菜单服务不可用。请重试。';
+
+  @override
+  String get gitWorkspaceRootRequired => '请打开仓库工作树的根目录，以在此工作区使用 Git。';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · 领先 $ahead，落后 $behind。本地已知的远程跟踪信息；并非实时服务器检查。';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -16928,4 +16940,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiNativeMenuUnavailable => '原生菜单服务不可用。请重试。';
+
+  @override
+  String get gitWorkspaceRootRequired => '请打开仓库工作树的根目录，以在此工作区使用 Git。';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · 领先 $ahead，落后 $behind。本地已知的远程跟踪信息；并非实时服务器检查。';
+  }
 }

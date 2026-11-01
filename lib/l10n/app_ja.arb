@@ -6072,5 +6072,7 @@
   "gitUiDiscardCommitMessages": "メッセージを破棄",
   "gitUiRemoveFilter": "フィルターを削除",
   "gitUiNoCommitsYet": "コミットはまだありません",
-  "gitUiNativeMenuUnavailable": "ネイティブメニューサービスを利用できません。もう一度お試しください。"
+  "gitUiNativeMenuUnavailable": "ネイティブメニューサービスを利用できません。もう一度お試しください。",
+  "gitWorkspaceRootRequired": "このワークスペースで Git を使うには、リポジトリの作業ツリーのルートを開いてください。",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} 件先行、{behind} 件遅延。ローカルで把握しているリモート追跡情報であり、サーバーへのリアルタイム照会ではありません。"
 }

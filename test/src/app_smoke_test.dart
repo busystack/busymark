@@ -7303,23 +7303,32 @@ code
     int count = 3,
     bool git = false,
     bool openGitComparisons = true,
+    bool trustGit = true,
+    bool descendantWorkspace = false,
+    bool switchingWorkspace = false,
+    bool delayDiscovery = false,
     WorkspaceKind kind = WorkspaceKind.markdownFolder,
   }) async {
     final temp = Directory.systemTemp.createTempSync('busymark_tab_actions_');
     addTearDown(() => temp.deleteSync(recursive: true));
+    final workspaceRoot = descendantWorkspace ? '${temp.path}/docs' : temp.path;
+    Directory(workspaceRoot).createSync(recursive: true);
     final paths = [
       for (var i = 0; i < count; i++)
-        '${temp.path}/${['a space 文.md', 'b.md', 'c.md'][i]}',
+        '$workspaceRoot/${['a space 文.md', 'b.md', 'c.md'][i]}',
     ];
     for (final path in paths) {
       File(path).writeAsStringSync('# Original\n');
     }
-    final service = _TabbedWorkspaceService(
-      rootPath: temp.path,
-      paths: paths,
-      kind: kind,
-    );
+    final service = switchingWorkspace
+        ? _SwitchingTabbedWorkspaceService(temp.path)
+        : _TabbedWorkspaceService(
+            rootPath: workspaceRoot,
+            paths: paths,
+            kind: kind,
+          );
     final sharedClient = _SearchableGitReadFixture(_gitDiffState(temp.path));
+    if (delayDiscovery) sharedClient.discoveryGate = Completer<void>();
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides.skip(git ? 2 : 0),
@@ -7343,13 +7352,18 @@ code
                 .toJson(),
         ),
         workspaceServiceProvider.overrideWithValue(service),
-        startupPathProvider.overrideWithValue(temp.path),
+        startupPathProvider.overrideWithValue(workspaceRoot),
         if (git)
           gitControllerProvider.overrideWith(
             () => _PresetGitController(_gitDiffState(temp.path)),
           ),
       ],
     );
+    if (git && trustGit) {
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(temp.path);
+    }
     addTearDown(container.dispose);
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -7415,6 +7429,216 @@ code
       paths: paths,
     );
   }
+
+  testWidgets(
+    'descendant workspace rejects ancestor Git at the actual host boundary',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final fixture = await tabWorkspace(
+        tester,
+        git: true,
+        openGitComparisons: false,
+        descendantWorkspace: true,
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await pumpUntil(
+        tester,
+        () => find.text(l10n.gitWorkspaceRootRequired).evaluate().isNotEmpty,
+        operation: 'explain root-only workspace eligibility',
+      );
+      expect(find.byType(shared.GitCommitView), findsNothing);
+      expect(find.text(l10n.gitHostInitializeHere), findsNothing);
+      expect(find.text(l10n.gitTrustWorkspace), findsNothing);
+      expect(fixture.sharedClient.statusReads, 0);
+      expect(_comparisonTabs(fixture.container).entries, isEmpty);
+      expect(fixture.service.saveCount, 0);
+      expect(File('${fixture.service.rootPath}/.git').existsSync(), isFalse);
+    },
+  );
+
+  for (final pendingTrust in [false, true]) {
+    testWidgets(
+      'workspace switch rejects late ${pendingTrust ? 'trust authorization' : 'root discovery'}',
+      (tester) async {
+        tester.view.physicalSize = const Size(1440, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final fixture = await tabWorkspace(
+          tester,
+          git: true,
+          openGitComparisons: false,
+          trustGit: false,
+          switchingWorkspace: true,
+          delayDiscovery: !pendingTrust,
+        );
+        final container = fixture.container;
+        final oldRoot = container
+            .read(workspaceControllerProvider)
+            .workspace!
+            .rootPath;
+        final next = Directory.systemTemp.createTempSync(
+          'busymark_root_switch_',
+        );
+        addTearDown(() => next.deleteSync(recursive: true));
+        File('${next.path}/Intro.md').writeAsStringSync('# Next\n');
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await pumpUntil(
+          tester,
+          () => fixture.sharedClient.discoveryEntered.isCompleted,
+          operation: 'hold discovered root before attachment',
+        );
+        if (pendingTrust) {
+          await pumpUntil(
+            tester,
+            () => find.text(l10n.gitTrustWorkspace).evaluate().isNotEmpty,
+            operation: 'first workspace trust screen',
+          );
+          await tester.tap(find.text(l10n.gitTrustWorkspace));
+          await pumpUntil(
+            tester,
+            () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+            operation: 'hold explicit trust confirmation',
+          );
+          await tester.pumpAndSettle();
+        }
+        await _replaceWorkspaceWithoutFrame(tester, container, next.path);
+        await tester.pump();
+        if (pendingTrust) {
+          await tester.tap(find.text(l10n.gitTrustWorkspace).last);
+        } else {
+          fixture.sharedClient.discoveryGate!.complete();
+        }
+        await tester.pumpAndSettle();
+        await tester.runAsync(() async => Future<void>.delayed(Duration.zero));
+        await tester.pumpAndSettle();
+        expect(
+          container.read(workspaceControllerProvider).workspace!.rootPath,
+          next.path,
+        );
+        expect(
+          container
+              .read(appSettingsControllerProvider)
+              .trustsGitWorkspace(oldRoot),
+          isFalse,
+        );
+        expect(
+          container
+              .read(appSettingsControllerProvider)
+              .trustsGitWorkspace(next.path),
+          isFalse,
+        );
+        expect(find.byType(shared.GitCommitView), findsNothing);
+        expect(_comparisonTabs(container).entries, isEmpty);
+        if (!pendingTrust) expect(fixture.sharedClient.statusReads, 0);
+        expect(fixture.service.saveCount, 0);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'Commit trust is exclusive, cancel is safe, and revocation retains its draft',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final fixture = await tabWorkspace(
+        tester,
+        git: true,
+        openGitComparisons: false,
+        trustGit: false,
+      );
+      final container = fixture.container;
+      final root = container
+          .read(workspaceControllerProvider)
+          .workspace!
+          .rootPath;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await pumpUntil(
+        tester,
+        () => find.text(l10n.gitTrustRequiredTitle).evaluate().isNotEmpty,
+        operation: 'exclusive Commit trust screen',
+      );
+      expect(find.byType(shared.GitCommitView), findsNothing);
+      expect(find.byTooltip('Repository actions'), findsNothing);
+      expect(find.text('Commit and Push…'), findsNothing);
+      await tester.tap(find.text(l10n.gitTrustWorkspace));
+      await pumpUntil(
+        tester,
+        () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+        operation: 'native trust confirmation',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.cancel).last);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(appSettingsControllerProvider).trustsGitWorkspace(root),
+        isFalse,
+      );
+      expect(find.byType(shared.GitCommitView), findsNothing);
+      await tester.tap(find.text(l10n.gitTrustWorkspace));
+      await pumpUntil(
+        tester,
+        () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+        operation: 'native trust confirmation',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.gitTrustWorkspace).last);
+      await pumpUntil(
+        tester,
+        () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+        operation: 'authorized Commit form',
+      );
+      final commit = find.byType(shared.GitCommitView);
+      final session = tester.widget<shared.GitCommitView>(commit).session;
+      await tester.enterText(
+        find.descendant(of: commit, matching: find.byType(TextField)),
+        'Retained trust draft',
+      );
+      await tester.pump();
+      final settings = container.read(appSettingsControllerProvider);
+      expect(
+        AppSettings.fromJson(settings.toJson()).trustsGitWorkspace(root),
+        isTrue,
+      );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .revokeGitWorkspaceTrust(root);
+      await tester.pumpAndSettle();
+      expect(find.byType(shared.GitCommitView), findsNothing);
+      expect(find.text('Commit and Push…'), findsNothing);
+      final mutations = fixture.sharedClient.statusReads;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(fixture.sharedClient.statusReads, mutations);
+      expect(session.draft, 'Retained trust draft');
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<shared.GitCommitView>(find.byType(shared.GitCommitView))
+            .session,
+        same(session),
+      );
+      expect(find.text('Retained trust draft'), findsOneWidget);
+      expect(_comparisonTabs(container).entries, isEmpty);
+    },
+  );
 
   testWidgets(
     'Git sidebar files open ordinary independent tabs and preserve unsaved authoring state',
@@ -7503,6 +7727,11 @@ code
       document.selection = const TextSelection.collapsed(offset: 7);
       await tester.pump();
       final originalValue = document.value;
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(
+            container.read(workspaceControllerProvider).workspace!.rootPath,
+          );
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -9125,6 +9354,11 @@ code
         () => container.read(workspaceControllerProvider).workspace != null,
         operation: 'open history workspace',
       );
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(
+            container.read(workspaceControllerProvider).workspace!.rootPath,
+          );
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -9360,6 +9594,11 @@ code
           operation: 'open authoring workspace',
         );
         await tester.pumpAndSettle();
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(
+              container.read(workspaceControllerProvider).workspace!.rootPath,
+            );
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -9602,6 +9841,11 @@ code
               'open first actual workspace before same-State replacement',
         );
         await tester.pumpAndSettle();
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(
+              container.read(workspaceControllerProvider).workspace!.rootPath,
+            );
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -9646,6 +9890,9 @@ code
         // Complete normal workspace navigation without rendering its transient
         // null workspace. The unkeyed production scope must receive an update,
         // rather than relying on disposal happening on an intermediate frame.
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(second.path);
         await _replaceWorkspaceWithoutFrame(tester, container, second.path);
         expect(
           container.read(workspaceControllerProvider).workspace?.rootPath,
@@ -9703,6 +9950,11 @@ code
             fail ? 'other window saved C' : 'pending local B',
           );
         });
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(
+              container.read(workspaceControllerProvider).workspace!.rootPath,
+            );
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -9741,6 +9993,11 @@ code
           tester.state(find.byType(BusyMarkGitWorkspaceScope)),
           same(scope),
         );
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(
+              container.read(workspaceControllerProvider).workspace!.rootPath,
+            );
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -9837,6 +10094,11 @@ code
           operation: 'open workspace for retirement',
         );
         await tester.pumpAndSettle();
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(
+              container.read(workspaceControllerProvider).workspace!.rootPath,
+            );
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -9924,6 +10186,11 @@ code
           expect(native.closeCount, 0);
           container.read(appRouterProvider).go('/workspace');
           await tester.pumpAndSettle();
+          await container
+              .read(appSettingsControllerProvider.notifier)
+              .trustGitWorkspace(
+                container.read(workspaceControllerProvider).workspace!.rootPath,
+              );
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
           await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -10193,12 +10460,15 @@ code
       BusyMarkGlyphs.copy,
     );
 
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .trustGitWorkspace(temp.path);
     await setDocumentViewMode(DocumentViewModePreference.preview);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byType(shared.GitCommitView), findsOneWidget);
-    expect(find.text('Commit scope: entire repository'), findsOneWidget);
+    expect(find.text('Commit scope: entire repository'), findsNothing);
     expect(find.byTooltip('Repository actions'), findsOneWidget);
     final commitView = find.byType(shared.GitCommitView);
     final commitWidget = tester.widget<shared.GitCommitView>(commitView);
@@ -10224,7 +10494,7 @@ code
     await tester.enterText(messageField, 'Preserved shell draft');
     await tester.pump();
     expect(commitWidget.session.draft, 'Preserved shell draft');
-    for (final label in ['Commit staged (0)', 'Commit and Push…']) {
+    for (final label in ['Commit', 'Commit and Push…']) {
       expect(
         tester
             .widget<shared.GitButton>(
@@ -10239,13 +10509,11 @@ code
       of: commitView,
       matching: find.byTooltip('Log'),
     );
-    expect(logAction, findsOneWidget);
+    expect(logAction, findsNothing);
     final sharedClient = commitWidget.session.client as SharedGitReadFixture;
     final statusReadsBeforeLog = sharedClient.statusReads;
     expect(sharedClient.watchSubscriptions, 1);
-    await tester.ensureVisible(logAction);
-    await tester.pumpAndSettle();
-    await tester.tap(logAction);
+    await _chooseNativeSidebar(tester, l10n.gitHostGitLog);
     await tester.pumpAndSettle();
     expect(find.byType(shared.GitLogView), findsOneWidget);
     expect(
@@ -11002,8 +11270,8 @@ code
           lessThanOrEqualTo(tester.view.physicalSize.height),
         );
         expect(find.byTooltip('Repository actions'), findsOneWidget);
-        expect(find.text('Commit scope: entire repository'), findsOneWidget);
-        expect(find.text('Commit staged (0)'), findsOneWidget);
+        expect(find.text('Commit scope: entire repository'), findsNothing);
+        expect(find.text('Commit'), findsOneWidget);
         expect(find.text(l10n.gitCommitMessage), findsOneWidget);
         continue;
       }
@@ -22397,6 +22665,17 @@ final _smokeAccentOverrides = [
 
 class _SearchableGitReadFixture extends SharedGitReadFixture {
   _SearchableGitReadFixture(super.state);
+  Completer<void>? discoveryGate;
+  final discoveryEntered = Completer<void>();
+  @override
+  Future<shared.RepositoryId?> discover(
+    String localPath, {
+    shared.GitCancellation? cancellation,
+  }) async {
+    if (!discoveryEntered.isCompleted) discoveryEntered.complete();
+    await discoveryGate?.future;
+    return repository;
+  }
 
   @override
   Future<shared.GitContent> content(

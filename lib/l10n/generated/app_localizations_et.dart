@@ -8846,4 +8846,17 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'Süsteemne menüüteenus pole saadaval. Proovi uuesti.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Git’i kasutamiseks selles tööruumis ava hoidla tööpuu juurkataloog.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead ees, $behind taga. Kohalikult teadaolev kaugharu jälgimisteave; mitte serveri reaalajas kontroll.';
+  }
 }

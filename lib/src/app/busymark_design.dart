@@ -1079,6 +1079,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     this.backgroundColor,
     this.overlayColor,
     this.borderRadius = BusyMarkRadius.headerButton,
+    this.focusBorderRadius = BusyMarkRadius.pill,
   });
 
   final String tooltip;
@@ -1098,6 +1099,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final WidgetStateProperty<Color?>? backgroundColor;
   final WidgetStateProperty<Color?>? overlayColor;
   final double borderRadius;
+  final double focusBorderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -1159,7 +1161,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     );
     final content = YaruTheme.maybeOf(context)?.focusBorders == true
         ? YaruFocusBorder.primary(
-            borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
+            borderRadius: BorderRadius.circular(focusBorderRadius),
             child: button,
           )
         : button;
@@ -4760,10 +4762,12 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
     this.muted = false,
     this.compactHierarchyIndent = false,
     this.vcsColor,
+    this.titleStyle,
     this.onToggle,
     this.onTap,
     this.onDoubleTap,
     this.onMenuRequested,
+    this.onSecondaryTapUp,
   });
 
   final String title;
@@ -4785,10 +4789,12 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
   final bool muted;
   final bool compactHierarchyIndent;
   final BusyMarkVcsFileColor? vcsColor;
+  final TextStyle? titleStyle;
   final VoidCallback? onToggle;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
   final BusyMarkSidebarTreeMenuRequest? onMenuRequested;
+  final GestureTapUpCallback? onSecondaryTapUp;
 
   @override
   State<BusyMarkSidebarTreeRow> createState() => BusyMarkSidebarTreeRowState();
@@ -4888,10 +4894,12 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
       onKeyEvent: _handleKeyEvent,
       onTap: widget.onTap,
       onDoubleTap: widget.onDoubleTap,
-      onSecondaryTapUp: widget.onMenuRequested == null
-          ? null
-          : (details) =>
-                widget.onMenuRequested!(context, details.globalPosition),
+      onSecondaryTapUp:
+          widget.onSecondaryTapUp ??
+          (widget.onMenuRequested == null
+              ? null
+              : (details) =>
+                    widget.onMenuRequested!(context, details.globalPosition)),
       onHoverChanged: (hovered) => setState(() => _hovered = hovered),
       onFocusChange: (focused) {
         setState(() => _focused = focused);
@@ -4950,7 +4958,7 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
               widget.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: titleStyle,
+              style: widget.titleStyle ?? titleStyle,
             ),
           ),
           if (widget.trailing != null) widget.trailing!,
@@ -4999,6 +5007,43 @@ Offset _busyMarkSidebarTreeMenuAnchor(BuildContext context) {
       direction == TextDirection.rtl ? 0 : renderObject.size.width,
       renderObject.size.height,
     ),
+  );
+}
+
+/// The retained Commit sidebar needs two unabridged native actions. Resolve
+/// the existing button themes and actual localized text rather than shrinking
+/// labels or changing fonts. English at normal scale keeps the usual 300px.
+double busyMarkGitSidebarMinimumWidth(BuildContext context) {
+  final theme = Theme.of(context);
+  double measure(String label, ButtonStyle? style) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: style?.textStyle?.resolve({}) ?? theme.textTheme.labelLarge,
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final padding =
+        (style?.padding?.resolve({}) ??
+                const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.lg))
+            .resolve(Directionality.of(context));
+    final width = painter.width + padding.horizontal;
+    painter.dispose();
+    return width.clamp(
+      style?.minimumSize?.resolve({})?.width ?? 0,
+      double.infinity,
+    );
+  }
+
+  final width =
+      measure(context.l10n.gitUiCommit, theme.elevatedButtonTheme.style) +
+      measure(context.l10n.gitUiCommitAndPush, theme.filledButtonTheme.style) +
+      BusyMarkSpacing.sm * 3;
+  return width.ceilToDouble().clamp(
+    BusyMarkSizes.sidebarWidth,
+    double.infinity,
   );
 }
 
@@ -5066,10 +5111,18 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       Icon(:final icon) when icon != null => icon,
       _ => throw StateError('Git icon actions require a native host glyph.'),
     };
-    return BusyMarkCompactIconButton(
-      tooltip: git.gitString(context, control.tooltip),
-      icon: glyph,
-      onPressed: control.onPressed,
+    return GestureDetector(
+      // Disabled trailing actions still own their pointer target. Letting the
+      // row behind them win would open a comparison instead of doing nothing.
+      behavior: HitTestBehavior.opaque,
+      excludeFromSemantics: true,
+      onTap: control.onPressed == null ? () {} : null,
+      child: BusyMarkHeaderIconButton(
+        focusBorderRadius: BusyMarkRadius.headerButton,
+        tooltip: git.gitString(context, control.tooltip),
+        icon: glyph,
+        onPressed: control.onPressed,
+      ),
     );
   }
 
@@ -5214,6 +5267,38 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       ),
     );
   }
+
+  @override
+  double changeRowTextInset(BuildContext context, int depth) =>
+      BusyMarkSizes.sidebarTreeDepthBase +
+      depth * BusyMarkSizes.sidebarTreeDepthIndent +
+      BusyMarkSizes.sidebarTreeControl * 2 +
+      BusyMarkSpacing.xs +
+      BusyMarkSpacing.sm;
+  @override
+  Widget changeRow(BuildContext context, git.GitChangeRow control) =>
+      BusyMarkSidebarTreeRow(
+        title: control.title,
+        titleStyle: control.group ? busyMarkSectionHeaderStyle(context) : null,
+        depth: control.depth,
+        selected: control.selected,
+        hasChildren: control.expanded != null,
+        expanded: control.expanded ?? false,
+        onToggle: control.onToggle,
+        onTap: control.onTap,
+        onDoubleTap: control.onDoubleTap,
+        onSecondaryTapUp: control.onSecondaryTapUp,
+        tooltip: control.tooltip,
+        leading: control.status == null
+            ? const SizedBox.shrink()
+            : Text(
+                control.status!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+        trailing:
+            control.trailing ?? const SizedBox(width: BusyMarkSizes.iconButton),
+      );
 
   @override
   Widget expander(BuildContext context, git.GitExpander control) {

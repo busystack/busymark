@@ -8827,4 +8827,17 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'Dịch vụ menu gốc không khả dụng. Hãy thử lại.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Mở thư mục gốc cây làm việc của kho để dùng Git trong không gian làm việc này.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · đi trước $ahead, đi sau $behind. Thông tin theo dõi từ xa đã biết cục bộ; không phải kiểm tra máy chủ trực tiếp.';
+  }
 }

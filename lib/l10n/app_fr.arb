@@ -4542,5 +4542,7 @@
   "gitUiDiscardCommitMessages": "Abandonner les messages",
   "gitUiRemoveFilter": "Supprimer le filtre",
   "gitUiNoCommitsYet": "Aucun commit pour le moment",
-  "gitUiNativeMenuUnavailable": "Le service de menus natifs est indisponible. Réessayez."
+  "gitUiNativeMenuUnavailable": "Le service de menus natifs est indisponible. Réessayez.",
+  "gitWorkspaceRootRequired": "Ouvrez la racine de l’arbre de travail du dépôt pour utiliser Git dans cet espace de travail.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} en avance, {behind} en retard. Informations de suivi distant connues localement ; aucune vérification du serveur en direct."
 }

@@ -8848,4 +8848,17 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'Den innebygde menytjenesten er utilgjengelig. Prøv igjen.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Åpne roten til arbeidsområdet i depotet for å bruke Git i dette arbeidsområdet.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead foran, $behind bak. Lokalt kjent informasjon om fjernsporing; ingen direktesjekk av serveren.';
+  }
 }

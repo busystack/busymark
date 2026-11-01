@@ -6072,5 +6072,7 @@
   "gitUiDiscardCommitMessages": "Berichten verwerpen",
   "gitUiRemoveFilter": "Filter verwijderen",
   "gitUiNoCommitsYet": "Nog geen commits",
-  "gitUiNativeMenuUnavailable": "De native menuservice is niet beschikbaar. Probeer het opnieuw."
+  "gitUiNativeMenuUnavailable": "De native menuservice is niet beschikbaar. Probeer het opnieuw.",
+  "gitWorkspaceRootRequired": "Open de hoofdmap van de werkboom van de repository om Git in deze werkruimte te gebruiken.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} voor, {behind} achter. Lokaal bekende informatie over externe tracking; geen livecontrole van de server."
 }

@@ -8849,4 +8849,17 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'Layanan menu native tidak tersedia. Coba lagi.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Buka akar pohon kerja repositori untuk menggunakan Git di ruang kerja ini.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead lebih maju, $behind tertinggal. Informasi pelacakan jarak jauh yang diketahui secara lokal; bukan pemeriksaan server langsung.';
+  }
 }

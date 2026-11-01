@@ -13,6 +13,7 @@ import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_model.dart';
 import '../domain/git_models.dart';
 import 'git_gateway.dart';
+import 'git_workspace_eligibility.dart';
 import 'git_use_cases.dart';
 
 final gitRepositoryGatewayProvider = Provider<GitRepositoryGateway>(
@@ -412,9 +413,8 @@ class GitController extends Notifier<GitState> {
     }
   }
 
-  /// The shared surface discovers the repository independently of the opened
-  /// authoring subfolder. Preserve that explicit association for existing file
-  /// commands without granting trust to every nested workspace path.
+  /// Bind authoring commands only to the opened working-tree root. Shared
+  /// discovery may find an ancestor, which is ineligible in BusyMark.
   Future<void> associateSharedRepository(
     Workspace workspace,
     shared.RepositoryId repository,
@@ -422,7 +422,10 @@ class GitController extends Notifier<GitState> {
     if (!ref.mounted || workspace.isRemote) return;
     String canonical;
     try {
-      canonical = await Directory(workspace.rootPath).resolveSymbolicLinks();
+      canonical = await requireGitWorkspaceRoot(
+        workspace.rootPath,
+        repository.root,
+      );
     } on FileSystemException {
       if (!ref.mounted) return;
       throw const shared.GitException(shared.GitErrorCode.unsafePath);
@@ -430,8 +433,7 @@ class GitController extends Notifier<GitState> {
     if (!ref.mounted ||
         state.attachedWorkspace?.id != workspace.id ||
         workspace.isRemote ||
-        !(p.equals(canonical, repository.root) ||
-            p.isWithin(repository.root, canonical))) {
+        !p.equals(canonical, repository.root)) {
       return;
     }
     final previousKey =
@@ -501,7 +503,11 @@ class GitController extends Notifier<GitState> {
   }
 
   void attachWorkspace(Workspace workspace) {
-    if (state.attachedWorkspace?.id != workspace.id) {
+    final changedOwner =
+        state.attachedWorkspace?.id != workspace.id ||
+        state.attachedWorkspace?.rootPath != workspace.rootPath ||
+        state.attachedWorkspace?.isRemote != workspace.isRemote;
+    if (changedOwner) {
       _workspaceEpoch++;
       _sharedAssociation = null;
       _sharedStatusSource = null;
@@ -531,8 +537,7 @@ class GitController extends Notifier<GitState> {
       state = const GitState();
       return;
     }
-    final current = state.attachedWorkspace;
-    if (current?.id != workspace.id) {
+    if (changedOwner) {
       _debounce?.cancel();
       _knownHashes = {};
       state = _workspaceResetState(workspace);
@@ -586,6 +591,17 @@ class GitController extends Notifier<GitState> {
         scopedFilePath: null,
       );
       return;
+    }
+    if (_gateway case final GitWorkspaceRootInspector inspector) {
+      try {
+        await inspector.requireWorkspaceRoot(workspace.rootPath);
+      } on Object catch (error) {
+        if (!_isCurrentRefresh(workspaceId, refreshEpoch)) return;
+        state = _workspaceResetState(workspace);
+        _setFailure(error, commandName: 'discover');
+        return;
+      }
+      if (!_isCurrentRefresh(workspaceId, refreshEpoch)) return;
     }
     final trustedWorkspacePath = _trustedWorkspaceGitPath(workspace);
     if (trustedWorkspacePath == null) {
@@ -646,6 +662,11 @@ class GitController extends Notifier<GitState> {
       if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
         return;
       }
+      if (error is GitWorkspaceRootRequired) {
+        _sharedAssociation = null;
+        _sharedStatusSource = null;
+        state = _workspaceResetState(workspace);
+      }
       _setFailure(error, commandName: 'status');
       state = state.copyWith(isRefreshing: false);
     }
@@ -689,6 +710,10 @@ class GitController extends Notifier<GitState> {
       return;
     }
     final workspaceId = workspace.id;
+    if (_gateway case final GitWorkspaceRootInspector inspector) {
+      await inspector.requireWorkspaceRoot(workspace.rootPath);
+      if (!_isCurrentWorkspace(workspaceId)) return;
+    }
     _isUpdatingWorkspaceTrust = true;
     try {
       await ref
@@ -1465,6 +1490,11 @@ class GitController extends Notifier<GitState> {
         workspace.kind == WorkspaceKind.untitledMarkdown ||
         workspace.kind == WorkspaceKind.singleMarkdown) {
       return;
+    }
+    if (state.lastError is GitWorkspaceRootRequired) return;
+    if (_gateway case final GitWorkspaceRootInspector inspector) {
+      await inspector.requireWorkspaceRoot(workspace.rootPath);
+      if (!_isCurrentWorkspaceOperation(context)) return;
     }
     await _runRootOperation(
       trustedWorkspacePath,

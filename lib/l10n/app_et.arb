@@ -5002,5 +5002,7 @@
   "gitUiDiscardCommitMessages": "Loobu sõnumitest",
   "gitUiRemoveFilter": "Eemalda filter",
   "gitUiNoCommitsYet": "Kinnitusi veel pole",
-  "gitUiNativeMenuUnavailable": "Süsteemne menüüteenus pole saadaval. Proovi uuesti."
+  "gitUiNativeMenuUnavailable": "Süsteemne menüüteenus pole saadaval. Proovi uuesti.",
+  "gitWorkspaceRootRequired": "Git’i kasutamiseks selles tööruumis ava hoidla tööpuu juurkataloog.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} ees, {behind} taga. Kohalikult teadaolev kaugharu jälgimisteave; mitte serveri reaalajas kontroll."
 }

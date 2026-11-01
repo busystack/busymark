@@ -177,6 +177,19 @@ final _searchNavigationTargetProvider =
       _SearchNavigationTargetController,
       _SearchNavigationTarget?
     >(_SearchNavigationTargetController.new);
+// Only Commit grows the existing sidebar allocation for its full native labels.
+final _sidebarAllocationProvider =
+    NotifierProvider<_SidebarAllocation, (String, DateTime, _SidebarTab)?>(
+      _SidebarAllocation.new,
+    );
+
+class _SidebarAllocation extends Notifier<(String, DateTime, _SidebarTab)?> {
+  @override
+  (String, DateTime, _SidebarTab)? build() => null;
+  void select(Workspace workspace, _SidebarTab tab) =>
+      state = (workspace.id, workspace.openedAt, tab);
+}
+
 final _sidebarShortcutRequestProvider =
     NotifierProvider<_SidebarShortcutRequestController, _SidebarTab?>(
       _SidebarShortcutRequestController.new,
@@ -528,8 +541,16 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     final documentOutline = activeDocumentOutline(state);
     final canExportPdf = canExportWorkspacePdf(state);
     final canExportHtml = canExportWorkspaceHtml(state);
+    final allocation = ref.watch(_sidebarAllocationProvider);
+    final request = ref.watch(_sidebarShortcutRequestProvider);
+    final commitVisible =
+        request == _SidebarTab.git ||
+        allocation == (workspace.id, workspace.openedAt, _SidebarTab.git);
+    final sidebarWidth = commitVisible && !searchState.active
+        ? busyMarkGitSidebarMinimumWidth(context)
+        : BusyMarkSizes.sidebarWidth;
     final sidebar = SizedBox(
-      width: BusyMarkSizes.sidebarWidth,
+      width: sidebarWidth,
       child: _Sidebar(
         key: ValueKey(workspace.id),
         workspace: workspace,
@@ -705,6 +726,7 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                       BusyMarkSizes.workspaceSidebarBreakpoint;
                   return LinuxPageFrame(
                     key: const ValueKey('workspace-page-frame'),
+                    sidebarWidth: sidebarWidth,
                     sidebarHeader: const BusyMarkLinuxBrandHeader(),
                     sidebarBody: sidebar,
                     sidebarAvailable: sidebarAvailable || searchState.active,
@@ -1668,6 +1690,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     setState(() {
       _tab = index;
     });
+    ref.read(_sidebarAllocationProvider.notifier).select(widget.workspace, tab);
     if (tab == _SidebarTab.outline || tab == _SidebarTab.notes) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !ref.read(searchSessionProvider).active) {

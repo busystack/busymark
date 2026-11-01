@@ -6072,5 +6072,7 @@
   "gitUiDiscardCommitMessages": "İletileri at",
   "gitUiRemoveFilter": "Filtreyi kaldır",
   "gitUiNoCommitsYet": "Henüz commit yok",
-  "gitUiNativeMenuUnavailable": "Yerel menü hizmeti kullanılamıyor. Yeniden deneyin."
+  "gitUiNativeMenuUnavailable": "Yerel menü hizmeti kullanılamıyor. Yeniden deneyin.",
+  "gitWorkspaceRootRequired": "Bu çalışma alanında Git kullanmak için deponun çalışma ağacı kökünü açın.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} ileride, {behind} geride. Yerel olarak bilinen uzak izleme bilgisi; canlı sunucu denetimi değildir."
 }

@@ -8857,4 +8857,17 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'سرویس منوی بومی در دسترس نیست. دوباره تلاش کنید.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'برای استفاده از Git در این فضای کاری، ریشهٔ درخت کاری مخزن را باز کنید.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead جلوتر، $behind عقب‌تر. اطلاعات پیگیری راه دور شناخته‌شدهٔ محلی؛ بررسی زندهٔ سرور نیست.';
+  }
 }

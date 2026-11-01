@@ -4568,5 +4568,7 @@
   "gitUiDiscardCommitMessages": "Odrzuć wiadomości",
   "gitUiRemoveFilter": "Usuń filtr",
   "gitUiNoCommitsYet": "Brak commitów",
-  "gitUiNativeMenuUnavailable": "Natywna usługa menu jest niedostępna. Spróbuj ponownie."
+  "gitUiNativeMenuUnavailable": "Natywna usługa menu jest niedostępna. Spróbuj ponownie.",
+  "gitWorkspaceRootRequired": "Otwórz katalog główny drzewa roboczego repozytorium, aby używać Git w tym obszarze roboczym.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} do przodu, {behind} do tyłu. Lokalnie znane informacje o śledzeniu zdalnym; bez sprawdzania serwera na żywo."
 }

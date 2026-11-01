@@ -8921,4 +8921,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'Служба системных меню недоступна. Повторите попытку.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Откройте корень рабочего дерева репозитория, чтобы использовать Git в этой рабочей области.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · впереди на $ahead, позади на $behind. Локально известные данные удалённого отслеживания; без проверки сервера в реальном времени.';
+  }
 }

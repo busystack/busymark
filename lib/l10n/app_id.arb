@@ -6072,5 +6072,7 @@
   "gitUiDiscardCommitMessages": "Buang pesan",
   "gitUiRemoveFilter": "Hapus filter",
   "gitUiNoCommitsYet": "Belum ada commit",
-  "gitUiNativeMenuUnavailable": "Layanan menu native tidak tersedia. Coba lagi."
+  "gitUiNativeMenuUnavailable": "Layanan menu native tidak tersedia. Coba lagi.",
+  "gitWorkspaceRootRequired": "Buka akar pohon kerja repositori untuk menggunakan Git di ruang kerja ini.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} lebih maju, {behind} tertinggal. Informasi pelacakan jarak jauh yang diketahui secara lokal; bukan pemeriksaan server langsung."
 }

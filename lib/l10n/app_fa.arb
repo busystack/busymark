@@ -4584,5 +4584,7 @@
   "gitUiDiscardCommitMessages": "کنار گذاشتن پیام‌ها",
   "gitUiRemoveFilter": "حذف فیلتر",
   "gitUiNoCommitsYet": "هنوز کامیتی وجود ندارد",
-  "gitUiNativeMenuUnavailable": "سرویس منوی بومی در دسترس نیست. دوباره تلاش کنید."
+  "gitUiNativeMenuUnavailable": "سرویس منوی بومی در دسترس نیست. دوباره تلاش کنید.",
+  "gitWorkspaceRootRequired": "برای استفاده از Git در این فضای کاری، ریشهٔ درخت کاری مخزن را باز کنید.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} جلوتر، {behind} عقب‌تر. اطلاعات پیگیری راه دور شناخته‌شدهٔ محلی؛ بررسی زندهٔ سرور نیست."
 }

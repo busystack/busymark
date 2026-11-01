@@ -9,6 +9,9 @@ import 'package:busymark/src/git/application/shared_git_integration.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import '../../../../busystack_git_flutter/test/support/presentation_fixture.dart'
+    show FixtureClient, repo;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -145,7 +148,32 @@ void main() {
         expect(find.byType(YaruCheckbox), findsOneWidget);
         expect(find.byType(YaruCircularProgressIndicator), findsOneWidget);
         expect(find.byType(YaruLinearProgressIndicator), findsOneWidget);
-        expect(find.byType(BusyMarkCompactIconButton), findsOneWidget);
+        expect(find.byType(BusyMarkCompactIconButton), findsNothing);
+        expect(find.byType(BusyMarkHeaderIconButton), findsOneWidget);
+        final iconFinder = find.descendant(
+          of: find.byType(BusyMarkHeaderIconButton),
+          matching: find.byType(IconButton),
+        );
+        final icon = tester.widget<IconButton>(iconFinder);
+        for (final state in <Set<WidgetState>>[
+          {},
+          {WidgetState.hovered},
+          {WidgetState.pressed},
+          {WidgetState.focused},
+          {WidgetState.disabled},
+        ]) {
+          final shape = icon.style!.shape!.resolve(state)!;
+          expect(shape, isA<RoundedRectangleBorder>());
+          expect(
+            (shape as RoundedRectangleBorder).borderRadius.resolve(
+              TextDirection.ltr,
+            ),
+            BorderRadius.circular(BusyMarkRadius.headerButton),
+          );
+        }
+        final hit = tester.getRect(iconFinder);
+        expect(hit.width, greaterThanOrEqualTo(BusyMarkSizes.iconButton));
+        expect(hit.height, greaterThanOrEqualTo(BusyMarkSizes.iconButton));
         expect(find.byType(AlertDialog), findsNothing);
         expect(find.byType(DropdownButton<int>), findsNothing);
         focus.requestFocus();
@@ -181,6 +209,198 @@ void main() {
       },
     );
   }
+  for (final locale in ['en', 'de', 'ja', 'ar']) {
+    for (final scale in [1.0, 1.5, 2.0]) {
+      testWidgets(
+        'compact Commit actions retain full labels and token gap $locale $scale',
+        (tester) async {
+          tester.view.physicalSize = const Size(1500, 1400);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          git.GitSession? session;
+          late double width;
+          late AppLocalizations l10n;
+          await tester.pumpWidget(
+            _nativeGitHarness(
+              locale: Locale(locale),
+              scale: scale,
+              builder: (context, host) {
+                l10n = AppLocalizations.of(context);
+                width = busyMarkGitSidebarMinimumWidth(context);
+                session ??= git.GitSession(
+                  client: FixtureClient(),
+                  repository: repo,
+                  host: host,
+                );
+                return Align(
+                  alignment: AlignmentDirectional.topStart,
+                  child: SizedBox(
+                    width: width,
+                    height: 1200,
+                    child: git.GitCommitView(
+                      session: session!,
+                      layout: git.GitCommitLayout.sidebar,
+                      onReview: (_) {},
+                      onLog: () {},
+                      onBranches: () {},
+                      onPush: () {},
+                      onMore: (_) {},
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+          await tester.runAsync(session!.start);
+          await tester.pumpAndSettle();
+          final commit = find.widgetWithText(git.GitButton, l10n.gitUiCommit);
+          final push = find.widgetWithText(
+            git.GitButton,
+            l10n.gitUiCommitAndPush,
+          );
+          expect(commit, findsOneWidget);
+          expect(push, findsOneWidget);
+          final a = tester.getRect(commit), b = tester.getRect(push);
+          expect(a.top, closeTo(b.top, .01));
+          expect(a.height, closeTo(b.height, .01));
+          final rtl = locale == 'ar';
+          expect(
+            rtl ? a.left - b.right : b.left - a.right,
+            closeTo(BusyMarkSpacing.sm, .01),
+          );
+          final bounds = tester.getRect(find.byType(git.GitCommitView));
+          expect(
+            bounds.contains(a.topLeft) && bounds.contains(a.bottomRight),
+            isTrue,
+          );
+          expect(
+            bounds.contains(b.topLeft) && bounds.contains(b.bottomRight),
+            isTrue,
+          );
+          for (final label in [l10n.gitUiCommit, l10n.gitUiCommitAndPush]) {
+            final text = tester.widget<Text>(find.text(label));
+            expect(text.overflow, isNull);
+            expect(tester.getSize(find.text(label)).height, lessThan(a.height));
+          }
+          expect(find.byTooltip(l10n.gitUiLog), findsNothing);
+          expect(
+            find.text(l10n.gitUiCommitScopeEntireRepository),
+            findsNothing,
+          );
+          expect(find.byTooltip(repo.root), findsOneWidget);
+          expect(find.byType(BusyMarkCompactIconButton), findsNothing);
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox.shrink());
+          session!.dispose();
+        },
+      );
+    }
+  }
+  testWidgets(
+    'native Git tree shares row metrics; disclosure and flat action isolate activation',
+    (tester) async {
+      var opened = 0, toggled = 0, staged = 0;
+      final enabled = ValueNotifier(true);
+      addTearDown(enabled.dispose);
+      await tester.pumpWidget(
+        _nativeGitHarness(
+          builder: (context, host) => ValueListenableBuilder<bool>(
+            valueListenable: enabled,
+            builder: (context, available, _) => SizedBox(
+              width: 400,
+              child: Column(
+                children: [
+                  for (final depth in [0, 1, 2])
+                    SizedBox(
+                      height: host.rowHeight(context),
+                      child: git.GitChangeRow(
+                        title: 'Tree $depth',
+                        depth: depth,
+                        group: depth == 0,
+                        expanded: depth < 2 ? true : null,
+                        status: depth == 2 ? 'M' : null,
+                        onPointerDown: (_) {},
+                        onTap: () => opened++,
+                        onToggle: () => toggled++,
+                        trailing: git.GitIconButton(
+                          tooltip: 'Stage $depth',
+                          icon: const git.GitIcon(git.GitGlyph.add),
+                          onPressed: available ? () => staged++ : null,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final rows = find.byType(BusyMarkSidebarTreeRow);
+      expect(rows, findsNWidgets(3));
+      for (var i = 1; i < 3; i++) {
+        expect(
+          tester.getRect(rows.at(i)).height,
+          tester.getRect(rows.first).height,
+        );
+        expect(
+          tester.getTopLeft(find.text('Tree $i')).dx -
+              tester.getTopLeft(find.text('Tree ${i - 1}')).dx,
+          closeTo(BusyMarkSizes.sidebarTreeDepthIndent, .01),
+        );
+      }
+      await tester.tap(find.byTooltip('Stage 2'));
+      await tester.pumpAndSettle();
+      expect(staged, 1);
+      expect(opened, 0);
+      final disclosure = find.descendant(
+        of: rows.at(1),
+        matching: find.byType(AnimatedRotation),
+      );
+      await tester.tap(disclosure);
+      await tester.pumpAndSettle();
+      expect(toggled, 1);
+      expect(opened, 0);
+      await tester.tap(find.text('Tree 2'));
+      await tester.pumpAndSettle();
+      expect(opened, 1);
+      final action = find.widgetWithIcon(IconButton, BusyMarkGlyphs.add).last;
+      final rect = tester.getRect(action);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: rect.center);
+      await mouse.moveTo(rect.center);
+      await tester.pump();
+      await mouse.down(rect.center);
+      await tester.pump();
+      await mouse.up();
+      await tester.pumpAndSettle();
+      expect(staged, 2);
+      expect(opened, 1);
+      final iconContext = tester.element(
+        find.descendant(of: action, matching: find.byType(Icon)).first,
+      );
+      final focus = Focus.of(iconContext);
+      focus.requestFocus();
+      await tester.pump();
+      expect(focus.hasFocus, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(staged, 3);
+      expect(opened, 1);
+      enabled.value = false;
+      await tester.pumpAndSettle();
+      expect(tester.getRect(action), rect);
+      expect(tester.widget<IconButton>(action).onPressed, isNull);
+      await tester.tap(find.byTooltip('Stage 2'));
+      await tester.pump();
+      expect(staged, 3);
+      expect(opened, 1);
+      await mouse.removePointer();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'native-required Git header menu reports unavailable without a Flutter fallback',
     (tester) async {
@@ -351,3 +571,48 @@ void main() {
     },
   );
 }
+
+Widget _nativeGitHarness({
+  required Widget Function(BuildContext, git.GitHost) builder,
+  Locale locale = const Locale('en'),
+  double scale = 1,
+}) => ProviderScope(
+  overrides: [
+    sharedGitDraftStoreProvider.overrideWithValue(git.MemoryGitDraftStore()),
+  ],
+  child: MaterialApp(
+    locale: locale,
+    theme: buildBusyMarkTheme(
+      brightness: Brightness.light,
+      accentColor: busyMarkDefaultAccentColor,
+    ),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      body: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+        child: Consumer(
+          builder: (context, ref, _) {
+            final host = busyMarkGitHost(
+              context,
+              ref,
+              Workspace(
+                id: 'native-contract',
+                rootPath: repo.root,
+                kind: WorkspaceKind.markdownFolder,
+                openedAt: DateTime.utc(2026),
+                files: const [],
+                diagnostics: const [],
+              ),
+              isMounted: () => context.mounted,
+            );
+            return git.GitHostScope(
+              host: host,
+              child: Builder(builder: (context) => builder(context, host)),
+            );
+          },
+        ),
+      ),
+    ),
+  ),
+);

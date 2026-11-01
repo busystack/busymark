@@ -8923,6 +8923,19 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'O serviço de menus nativos não está disponível. Tente novamente.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Abra a raiz da árvore de trabalho do repositório para usar o Git neste espaço de trabalho.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead à frente, $behind atrás. Informações de seguimento remoto conhecidas localmente; não é uma verificação do servidor em direto.';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17837,4 +17850,17 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get gitUiNativeMenuUnavailable =>
       'O serviço de menus nativos não está disponível. Tente novamente.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'Abra a raiz da árvore de trabalho do repositório para usar o Git neste espaço de trabalho.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead à frente, $behind atrás. Informações de rastreamento remoto conhecidas localmente; não é uma verificação do servidor ao vivo.';
+  }
 }

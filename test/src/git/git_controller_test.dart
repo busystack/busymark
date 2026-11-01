@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/application/git_gateway.dart';
+import 'package:busymark/src/git/application/git_workspace_eligibility.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
@@ -217,7 +218,7 @@ void main() {
   });
 
   test(
-    'an enclosing repository grant serves subfolder commands without granting a nested repository',
+    'an ancestor grant cannot attach or authorize descendant workspace commands',
     () async {
       final directory = await Directory.systemTemp.createTemp(
         'busymark-git-scope-',
@@ -230,63 +231,30 @@ void main() {
         gitDir: '$root/.git',
         commonDir: '$root/.git',
         objectFormat: 'sha1',
-        filesystemToken: 'reviewed-parent',
+        filesystemToken: 'parent',
       );
       final gateway = _AssociatedGitGateway(repository);
       final container = _container(gateway);
       final controller = container.read(gitControllerProvider.notifier);
       final workspace = _workspace(id: docs.path, rootPath: docs.path);
       controller.attachWorkspace(workspace);
-      await controller.associateSharedRepository(workspace, repository);
+      await expectLater(
+        controller.associateSharedRepository(workspace, repository),
+        throwsA(isA<GitWorkspaceRootRequired>()),
+      );
       await container
           .read(appSettingsControllerProvider.notifier)
           .trustGitWorkspace(root);
       await controller.refresh();
-      expect(
-        container.read(gitControllerProvider).requiresWorkspaceTrust,
-        isFalse,
-      );
-      expect(
-        container.read(gitControllerProvider).repositoryInfo!.identityKey,
-        repository.key,
-      );
+      await controller.stageFiles(['README.md']);
+      expect(gateway.stageCalls, 0);
+      expect(gateway.statusCalls, 0);
+      expect(container.read(gitControllerProvider).repositoryInfo, isNull);
       expect(
         container
             .read(appSettingsControllerProvider)
             .trustsGitWorkspace(docs.path),
         isFalse,
-      );
-      await controller.stageFiles(['README.md']);
-      expect(gateway.stageCalls, 1);
-      final statusCalls = gateway.statusCalls;
-      gateway.repository = shared.RepositoryId(
-        root: docs.path,
-        gitDir: '${docs.path}/.git',
-        commonDir: '${docs.path}/.git',
-        objectFormat: 'sha1',
-        filesystemToken: 'nested',
-      );
-      await controller.refresh();
-      expect(
-        container.read(gitControllerProvider).requiresWorkspaceTrust,
-        isTrue,
-      );
-      expect(gateway.statusCalls, statusCalls);
-      await controller.stageFiles(['README.md']);
-      expect(gateway.stageCalls, 1);
-      gateway.repository = repository;
-      await controller.refresh();
-      expect(
-        container.read(gitControllerProvider).requiresWorkspaceTrust,
-        isFalse,
-      );
-      await container
-          .read(appSettingsControllerProvider.notifier)
-          .revokeGitWorkspaceTrust(root);
-      await controller.refresh();
-      expect(
-        container.read(gitControllerProvider).requiresWorkspaceTrust,
-        isTrue,
       );
     },
   );

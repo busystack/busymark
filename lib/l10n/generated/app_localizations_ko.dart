@@ -8597,4 +8597,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiNativeMenuUnavailable => '네이티브 메뉴 서비스를 사용할 수 없습니다. 다시 시도하세요.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      '이 작업 공간에서 Git을 사용하려면 저장소 작업 트리의 루트를 여세요.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead개 앞섬, $behind개 뒤처짐. 로컬에 알려진 원격 추적 정보이며 실시간 서버 확인이 아닙니다.';
+  }
 }

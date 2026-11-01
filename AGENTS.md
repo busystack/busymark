@@ -31,3 +31,13 @@ use the native path, including comparison-tab context menus. Run its self-test
 and check through `tools/check_git_presentation.sh`. Its analyzer version is
 the existing shared audit pin; it does not change application dependencies.
 Native menu separators are semantic GTK entries with no Flutter rendering path.
+
+BusyMark Git icon actions must use the flat `BusyMarkHeaderIconButton` native
+shape with its rectangular focus border. `BusyMarkCompactIconButton` is not
+approved for Git, including Commit stage controls and Branches menus. The
+resolved host audit checks the adapter as well as feature call sites. Actual
+host tests must check shape, hit geometry and interactive states; wrapper names
+or changed goldens cannot bless circular controls. Git change rows reuse
+`BusyMarkSidebarTreeRow`. Keep the canonical working-tree-root eligibility at
+both session and authoring-command boundaries, and the exclusive Commit trust
+screen. BusyFiles keeps descendant browsing and its existing trust placement.

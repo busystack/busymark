@@ -8840,4 +8840,17 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get gitUiNativeMenuUnavailable =>
       'خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى.';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'افتح جذر شجرة عمل المستودع لاستخدام Git في مساحة العمل هذه.';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · متقدم بـ $ahead، ومتأخر بـ $behind. معلومات تتبع بعيدة معروفة محليًا؛ ليست فحصًا مباشرًا للخادم.';
+  }
 }

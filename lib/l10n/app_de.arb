@@ -4542,5 +4542,7 @@
   "gitUiDiscardCommitMessages": "Nachrichten verwerfen",
   "gitUiRemoveFilter": "Filter entfernen",
   "gitUiNoCommitsYet": "Noch keine Commits",
-  "gitUiNativeMenuUnavailable": "Der native Menüdienst ist nicht verfügbar. Versuchen Sie es erneut."
+  "gitUiNativeMenuUnavailable": "Der native Menüdienst ist nicht verfügbar. Versuchen Sie es erneut.",
+  "gitWorkspaceRootRequired": "Öffne das Arbeitsverzeichnis-Stammverzeichnis des Repositorys, um Git in diesem Arbeitsbereich zu verwenden.",
+  "gitLocalTrackingDescription": "{upstream} · {ahead} voraus, {behind} zurück. Lokal bekannte Remote-Tracking-Informationen; keine Live-Serverabfrage."
 }

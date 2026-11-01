@@ -14988,6 +14988,22 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The native menu service is unavailable. Try again.'**
   String get gitUiNativeMenuUnavailable;
+
+  /// BusyMark only attaches Git at the opened working-tree root.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the repository’s working-tree root to use Git in this workspace.'**
+  String get gitWorkspaceRootRequired;
+
+  /// Accessible explanation of locally cached tracking; never implies an automatic fetch.
+  ///
+  /// In en, this message translates to:
+  /// **'{upstream} · {ahead} ahead, {behind} behind. Locally known remote-tracking information; not a live server check.'**
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  );
 }
 
 class _AppLocalizationsDelegate

@@ -6072,5 +6072,7 @@
   "gitUiDiscardCommitMessages": "丢弃消息",
   "gitUiRemoveFilter": "移除筛选条件",
   "gitUiNoCommitsYet": "尚无提交",
-  "gitUiNativeMenuUnavailable": "原生菜单服务不可用。请重试。"
+  "gitUiNativeMenuUnavailable": "原生菜单服务不可用。请重试。",
+  "gitWorkspaceRootRequired": "请打开仓库工作树的根目录，以在此工作区使用 Git。",
+  "gitLocalTrackingDescription": "{upstream} · 领先 {ahead}，落后 {behind}。本地已知的远程跟踪信息；并非实时服务器检查。"
 }

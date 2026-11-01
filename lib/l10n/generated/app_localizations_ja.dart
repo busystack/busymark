@@ -8600,4 +8600,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiNativeMenuUnavailable => 'ネイティブメニューサービスを利用できません。もう一度お試しください。';
+
+  @override
+  String get gitWorkspaceRootRequired =>
+      'このワークスペースで Git を使うには、リポジトリの作業ツリーのルートを開いてください。';
+
+  @override
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
+    return '$upstream · $ahead 件先行、$behind 件遅延。ローカルで把握しているリモート追跡情報であり、サーバーへのリアルタイム照会ではありません。';
+  }
 }
