@@ -432,6 +432,13 @@ final class BusyMarkGitDraftStore
 
 final _drafts = BusyMarkGitDraftStore();
 
+// Git's local dispatcher must not intercept application commands such as
+// tab activation when their shortcuts bubble out of a focused Git control.
+class _GitCommandIntent extends Intent {
+  const _GitCommandIntent(this.commandId);
+  final String commandId;
+}
+
 Widget _gitCommands(
   BuildContext context,
   shared.GitSession session,
@@ -494,11 +501,11 @@ Widget _gitCommands(
     child: Shortcuts(
       shortcuts: commands.shortcutIntents(
         scopes: {BusyMarkCommandScope.git},
-        intentFor: BusyMarkCommandIntent.new,
+        intentFor: _GitCommandIntent.new,
       ),
       child: Actions(
         actions: {
-          BusyMarkCommandIntent: CallbackAction<BusyMarkCommandIntent>(
+          _GitCommandIntent: CallbackAction<_GitCommandIntent>(
             onInvoke: (intent) {
               unawaited(commands.execute(intent.commandId));
               return null;

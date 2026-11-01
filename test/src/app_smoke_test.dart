@@ -7924,6 +7924,35 @@ code
               find.descendant(of: tab, matching: find.byType(Text)).first,
             );
           } else {
+            if (toHistory) {
+              final content = find.descendant(
+                of: find.byType(shared.GitDiffView),
+                matching: find.byType(SelectableRegion),
+              );
+              final focus = find.descendant(
+                of: content.first,
+                matching: find.byWidgetPredicate(
+                  (widget) => widget is Focus && widget.focusNode != null,
+                ),
+              );
+              tester.widget<Focus>(focus.first).focusNode!.requestFocus();
+              await tester.pump();
+              expect(
+                BusyMarkCommandRegistryScope.read(
+                  FocusManager.instance.primaryFocus!.context!,
+                )!.commands.any(
+                  (command) => command.scope == BusyMarkCommandScope.git,
+                ),
+                isTrue,
+              );
+              final statusReads = h.sharedClient.statusReads;
+              await tester.sendKeyEvent(LogicalKeyboardKey.f5);
+              await pumpUntil(
+                tester,
+                () => h.sharedClient.statusReads > statusReads,
+                operation: 'refresh through the focused Git command dispatcher',
+              );
+            }
             // Tab order is document, Git comparison, Local History.
             await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
             if (!toHistory) {
