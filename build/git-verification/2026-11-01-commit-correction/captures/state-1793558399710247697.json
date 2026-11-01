@@ -1,0 +1,36 @@
+[
+  {
+    "name": "main",
+    "role": "desktop frame",
+    "depth": 0,
+    "rect": [
+      0,
+      0,
+      1024,
+      768
+    ]
+  },
+  {
+    "name": "xdg-desktop-portal-gtk",
+    "role": "application",
+    "depth": 1,
+    "geometryError": "AttributeError"
+  },
+  {
+    "name": "io.busystack.busymark",
+    "role": "application",
+    "depth": 1,
+    "geometryError": "AttributeError"
+  },
+  {
+    "name": "BusyMark",
+    "role": "frame",
+    "depth": 2,
+    "rect": [
+      75,
+      135,
+      1290,
+      730
+    ]
+  }
+]

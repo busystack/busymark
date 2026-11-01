@@ -1,0 +1,5 @@
+{
+  "rawFile": "runtime/mark-final-analyze-attempt2.log",
+  "sha256": "22d0bd00608547b1a5ab2af4e741d2b7cf0b85f149f94df6c5dd762b80db486f",
+  "transcript": "Analyzing busymark...                                           \nNo issues found! (ran in 10.8s)\n"
+}

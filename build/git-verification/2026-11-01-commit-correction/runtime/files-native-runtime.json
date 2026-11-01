@@ -1,0 +1,20 @@
+{
+  "source": "fc462114014efb478bde0c2cc1eaf3848b108eee",
+  "status": {
+    "files-correction-daemon": {
+      "pid": 18994,
+      "exit": 0
+    },
+    "files-correction-ui": {
+      "pid": 19012,
+      "exit": 0
+    }
+  },
+  "files": {
+    "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busyfiles/apps/busyfiles_ui/build/linux/x64/release/bundle/busyfiles": "60a4e80b1563a67111b84df738c5ac8d247f819cb87a944396e760882a6fb124",
+    "/home/ubuntu/busystack-native-git-verification-20261031/commit-correction-20261101/files-developer-daemon/bundle/bin/busyfilesd": "40a828f62f3545a797317112cdf23fe4e4840fba5955334bc2e24336d1497186",
+    "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busyfiles/native/build/libbusyfiles_gio/libbusyfiles_gio.so": "9e00b9fa830cd24e56a048d334dbb37556398b4df757755c712d0220eb57460c"
+  },
+  "kind": "Final source developer build on Ubuntu 24.04, official release engine; not a production-qualified package",
+  "ipc": "Separate same-user authenticated typed daemon, explicit private runtime socket; no direct UI Git execution"
+}

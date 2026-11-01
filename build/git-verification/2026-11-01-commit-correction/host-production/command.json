@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "bash",
+    "scripts/build-release-artifacts.sh",
+    "/home/albert/busystack/.native-git-verification/commit-correction-files-production/artifacts"
+  ],
+  "start": 1793559065.1100695,
+  "end": 1793559118.8598282,
+  "exit": 1,
+  "sdk": "/home/albert/busystack/busystack_git_flutter/build/git-verification/2026-10-28/host-sdk-mirror-relocation/flutter-3.47.5"
+}
