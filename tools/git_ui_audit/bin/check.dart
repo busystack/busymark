@@ -200,9 +200,8 @@ Future<void> selfTest(Directory mark) async {
   final temp = Directory.systemTemp.createTempSync('git-workspace-audit-');
   try {
     Directory('${temp.path}/.dart_tool').createSync();
-    File(
-      '${temp.path}/.dart_tool/package_config.json',
-    ).writeAsStringSync(jsonEncode(config));
+    File('${temp.path}/.dart_tool/package_config.json')
+        .writeAsStringSync(jsonEncode(config));
     final design = File('${temp.path}/lib/src/app/busymark_design.dart');
     design.parent.createSync(recursive: true);
     design.writeAsStringSync('''
