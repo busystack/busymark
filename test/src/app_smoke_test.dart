@@ -7431,6 +7431,47 @@ code
   }
 
   testWidgets(
+    'a discovery retry leaves its failure state and reaches exclusive trust',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final fixture = await tabWorkspace(
+        tester,
+        git: true,
+        openGitComparisons: false,
+        trustGit: false,
+      );
+      fixture.sharedClient.discoveryError = const shared.GitException(
+        shared.GitErrorCode.disconnected,
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await pumpUntil(
+        tester,
+        () => find.byType(shared.GitFailurePanel).evaluate().isNotEmpty,
+        operation: 'show discovery failure',
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(shared.GitFailurePanel),
+          matching: find.text(l10n.gitUiRefresh),
+        ),
+      );
+      await pumpUntil(
+        tester,
+        () => find.text(l10n.gitTrustWorkspace).evaluate().isNotEmpty,
+        operation: 'retry eligible root discovery',
+      );
+      expect(find.byType(shared.GitFailurePanel), findsNothing);
+      expect(find.byType(shared.GitCommitView), findsNothing);
+      expect(fixture.service.saveCount, 0);
+    },
+  );
+
+  testWidgets(
     'descendant workspace rejects ancestor Git at the actual host boundary',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 1000);
@@ -22689,6 +22730,7 @@ final _smokeAccentOverrides = [
 class _SearchableGitReadFixture extends SharedGitReadFixture {
   _SearchableGitReadFixture(super.state);
   Completer<void>? discoveryGate;
+  shared.GitException? discoveryError;
   final discoveryEntered = Completer<void>();
   @override
   Future<shared.RepositoryId?> discover(
@@ -22697,6 +22739,9 @@ class _SearchableGitReadFixture extends SharedGitReadFixture {
   }) async {
     if (!discoveryEntered.isCompleted) discoveryEntered.complete();
     await discoveryGate?.future;
+    final error = discoveryError;
+    discoveryError = null;
+    if (error != null) throw error;
     return repository;
   }
 

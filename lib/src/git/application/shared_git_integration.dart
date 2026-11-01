@@ -927,7 +927,10 @@ class _BusyMarkSharedGitSidebarState
 
   Future<void> _attach() async {
     if (_loading || _session != null) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _failure = null;
+    });
     final generation = ++_generation;
     try {
       final session = await BusyMarkGitWorkspaceScope._of(context).open();
