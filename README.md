@@ -132,12 +132,13 @@ python3 ../busystack_git_flutter/tool/sync_host_localizations.py \
   --arb lib/l10n/app_en.arb \
   --adapter lib/src/git/application/shared_git_localizations.dart \
   --class-name AppLocalizations \
-  --import-uri package:busymark/l10n/generated/app_localizations.dart
+  --import-uri ../../../l10n/generated/app_localizations.dart
 flutter gen-l10n
 ```
 
-CI adds `--check` to the generator command and requires the generated package
-import to match exactly. `test/src/git/shared_git_localization_test.dart`
+CI adds `--check` to the generator command and requires the generated relative
+import to match exactly, including file-based application entry points.
+`test/src/git/shared_git_localization_test.dart`
 checks catalog coverage and named values without translating repository data.
 
 Linux development and packaging use the official Flutter SDK version pinned in
