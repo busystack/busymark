@@ -9705,12 +9705,10 @@ code
         await tester.pump();
         expect(session.hasUnpersistedMessageDrafts, isTrue);
         if (hiddenState == 'Log') {
-          final log = find.descendant(
-            of: find.byType(shared.GitCommitView),
-            matching: find.byTooltip('Log'),
+          final labels = AppLocalizations.of(
+            tester.element(find.byType(shared.GitCommitView)),
           );
-          await tester.ensureVisible(log);
-          await tester.tap(log);
+          await _chooseNativeSidebar(tester, labels.gitHostGitLog);
           await pumpUntil(
             tester,
             () => find.byType(shared.GitLogView).evaluate().isNotEmpty,
@@ -10330,7 +10328,13 @@ code
       await tester.sendKeyDownEvent(key);
       await tester.sendKeyUpEvent(key);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pumpAndSettle();
+      if (key == LogicalKeyboardKey.digit4) {
+        await pumpUntil(
+          tester,
+          () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+          operation: 'attach Commit after controlled root discovery',
+        );
+      }
       await tester.pumpAndSettle();
     }
 
@@ -10662,6 +10666,11 @@ code
     expect(outlineFileActions, findsOneWidget);
 
     await tester.tap(outlineFileActions);
+    await pumpUntil(
+      tester,
+      () => find.text(l10n.copyFileName).evaluate().isNotEmpty,
+      operation: 'open outline document actions after the native menu response',
+    );
     await tester.pumpAndSettle();
     expect(find.text(l10n.copyFileName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
@@ -10675,6 +10684,11 @@ code
     expect(clipboardText, 'Intro.md');
 
     await tester.tap(outlineFileActions);
+    await pumpUntil(
+      tester,
+      () => find.text(l10n.copyFileName).evaluate().isNotEmpty,
+      operation: 'open outline document actions after the native menu response',
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.copyPath));
     await tester.pumpAndSettle();
@@ -10683,6 +10697,11 @@ code
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await pumpUntil(
+      tester,
+      () => find.text(l10n.gitCommit).evaluate().isNotEmpty,
+      operation: 'open sidebar view choices after the native menu response',
+    );
     await tester.pumpAndSettle();
 
     for (final (label, shortcut) in <(String, String)>[
@@ -11219,10 +11238,24 @@ code
     );
 
     Future<void> selectView(LogicalKeyboardKey key) async {
+      if (key == LogicalKeyboardKey.digit4) {
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .trustGitWorkspace(
+              container.read(workspaceControllerProvider).workspace!.rootPath,
+            );
+      }
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(key);
       await tester.sendKeyUpEvent(key);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      if (key == LogicalKeyboardKey.digit4) {
+        await pumpUntil(
+          tester,
+          () => find.byType(shared.GitCommitView).evaluate().isNotEmpty,
+          operation: 'attach Commit after controlled root discovery',
+        );
+      }
       await tester.pumpAndSettle();
     }
 
