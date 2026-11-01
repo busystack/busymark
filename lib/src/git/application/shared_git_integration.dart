@@ -554,6 +554,7 @@ Future<bool> _ensureGitTrust(
     return context.mounted &&
         active?.id == workspace.id &&
         active?.rootPath == workspace.rootPath &&
+        active?.openedAt == workspace.openedAt &&
         active?.isRemote == false;
   }
 

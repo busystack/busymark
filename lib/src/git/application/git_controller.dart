@@ -318,6 +318,7 @@ class GitController extends Notifier<GitState> {
   var _knownHashes = <String>{};
   var _refreshEpoch = 0;
   var _workspaceEpoch = 0;
+  var _attachmentEpoch = 0;
   var _commitDetailsEpoch = 0;
   var _branchesEpoch = 0;
   var _fileHistoryEpoch = 0;
@@ -420,6 +421,7 @@ class GitController extends Notifier<GitState> {
     shared.RepositoryId repository,
   ) async {
     if (!ref.mounted || workspace.isRemote) return;
+    final ownerEpoch = _attachmentEpoch;
     String canonical;
     try {
       canonical = await requireGitWorkspaceRoot(
@@ -432,6 +434,7 @@ class GitController extends Notifier<GitState> {
       throw const shared.GitException(shared.GitErrorCode.unsafePath);
     }
     if (!ref.mounted ||
+        ownerEpoch != _attachmentEpoch ||
         state.attachedWorkspace?.id != workspace.id ||
         workspace.isRemote ||
         !p.equals(canonical, repository.root)) {
@@ -509,6 +512,7 @@ class GitController extends Notifier<GitState> {
         state.attachedWorkspace?.rootPath != workspace.rootPath ||
         state.attachedWorkspace?.isRemote != workspace.isRemote;
     if (changedOwner) {
+      _attachmentEpoch++;
       _workspaceEpoch++;
       _sharedAssociation = null;
       _sharedStatusSource = null;
