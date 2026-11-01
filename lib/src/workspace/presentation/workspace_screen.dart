@@ -9651,7 +9651,8 @@ class _EditorTabStrip extends ConsumerWidget {
             .read(sharedGitReviewProvider.notifier)
             .activate(workspace.id, entry.comparisonId!);
       case WorkspaceTabKind.localHistory:
-        return;
+        ref.read(sharedGitReviewProvider.notifier).deactivate(workspace.id);
+        gitController.deactivateDiffFile();
     }
   }
 }

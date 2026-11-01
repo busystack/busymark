@@ -7294,6 +7294,7 @@ code
       ProviderContainer container,
       WorkspaceController controller,
       _TabbedWorkspaceService service,
+      _SearchableGitReadFixture sharedClient,
       List<String> paths,
     })
   >
@@ -7301,6 +7302,7 @@ code
     WidgetTester tester, {
     int count = 3,
     bool git = false,
+    bool openGitComparisons = true,
     WorkspaceKind kind = WorkspaceKind.markdownFolder,
   }) async {
     final temp = Directory.systemTemp.createTempSync('busymark_tab_actions_');
@@ -7369,7 +7371,7 @@ code
       }
     });
     await tester.pumpAndSettle();
-    if (git) {
+    if (git && openGitComparisons) {
       container.read(gitControllerProvider.notifier).clearSelection();
       final workspace = container.read(workspaceControllerProvider).workspace!;
       final comparisons = [
@@ -7409,6 +7411,7 @@ code
       container: container,
       controller: controller,
       service: service,
+      sharedClient: sharedClient,
       paths: paths,
     );
   }
@@ -7838,6 +7841,136 @@ code
     expect(
       container.read(localHistoryControllerProvider).selectedRevision,
       isNotNull,
+    );
+  }
+
+  for (final activation in ['mouse', 'keyboard']) {
+    testWidgets(
+      'Local History reactivates from Git by $activation without closing comparisons',
+      (tester) async {
+        tester.view.physicalSize = const Size(1440, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final h = await tabWorkspace(
+          tester,
+          count: 1,
+          git: true,
+          openGitComparisons: false,
+        );
+        h.container.read(gitControllerProvider.notifier).clearSelection();
+        final editor = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.controller?.text == '# a space 文.md\n',
+        );
+        final textController = tester.widget<TextField>(editor).controller!;
+        await tester.enterText(editor, '# Unsaved document\n');
+        textController.selection = const TextSelection.collapsed(offset: 7);
+        await tester.pumpAndSettle();
+        final document = h.container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        final editingValue = textController.value;
+        final editorState = document.editorState;
+        await openTabComparison(tester, h.container);
+        final history = h.container.read(localHistoryControllerProvider);
+        expect(find.byType(LocalHistoryComparisonView), findsOneWidget);
+
+        final workspace = h.container
+            .read(workspaceControllerProvider)
+            .workspace!;
+        final repository = h.sharedClient.repository!;
+        final comparison = shared.GitComparison(
+          shared.RepoPath.text('README.md'),
+          const shared.ContentVersion.index(),
+          const shared.ContentVersion.working(),
+        );
+        h.container
+            .read(sharedGitReviewProvider.notifier)
+            .open(
+              workspace.id,
+              SharedGitReview(
+                repository,
+                comparison: comparison,
+                reviewToken: 'history-tab-activation',
+              ),
+            );
+        await pumpUntil(
+          tester,
+          () => find
+              .descendant(
+                of: find.byType(shared.GitDiffView),
+                matching: find.byType(SelectionArea),
+              )
+              .evaluate()
+              .isNotEmpty,
+          operation: 'load Git comparison alongside Local History',
+        );
+        await tester.pumpAndSettle();
+        final gitTab = _comparisonTabs(h.container).entries.single;
+        expect(_comparisonTabs(h.container).active, same(gitTab));
+        expect(find.byType(LocalHistoryComparisonView), findsNothing);
+        expect(find.byType(shared.GitDiffView), findsOneWidget);
+
+        Future<void> switchComparison({required bool toHistory}) async {
+          if (activation == 'mouse') {
+            final key = toHistory
+                ? 'localHistory:${history.selectedRevisionId}'
+                : 'gitDiff:${gitTab.id}';
+            final tab = find.byKey(ValueKey(key));
+            await tester.ensureVisible(tab);
+            await tester.tap(
+              find.descendant(of: tab, matching: find.byType(Text)).first,
+            );
+          } else {
+            // Tab order is document, Git comparison, Local History.
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+            if (!toHistory) {
+              await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+            }
+            await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+            if (!toHistory) {
+              await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+            }
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          }
+          await tester.pumpAndSettle();
+        }
+
+        for (var round = 0; round < 2; round++) {
+          await switchComparison(toHistory: true);
+          expect(_comparisonTabs(h.container).active, isNull);
+          expect(find.byType(LocalHistoryComparisonView), findsOneWidget);
+          await switchComparison(toHistory: false);
+          expect(_comparisonTabs(h.container).active, same(gitTab));
+          expect(find.byType(LocalHistoryComparisonView), findsNothing);
+        }
+        expect(_comparisonTabs(h.container).entries.single, same(gitTab));
+        final retainedHistory = h.container.read(
+          localHistoryControllerProvider,
+        );
+        expect(retainedHistory.selectedRevisionId, history.selectedRevisionId);
+        expect(
+          retainedHistory.selectedRevision,
+          same(history.selectedRevision),
+        );
+        final retainedDocument = h.container
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .single;
+        expect(retainedDocument.id, document.id);
+        expect(retainedDocument.text, editingValue.text);
+        expect(retainedDocument.isDirty, isTrue);
+        expect(textController.value, editingValue);
+        expect(retainedDocument.editorState.selection, editorState.selection);
+        expect(
+          retainedDocument.editorState.undoState,
+          same(editorState.undoState),
+        );
+        expect(h.service.saveCount, 0);
+        expect(tester.takeException(), isNull);
+      },
     );
   }
 

@@ -925,7 +925,10 @@ class BusyMarkApp extends ConsumerWidget {
               tab.comparisonId!,
             );
       case WorkspaceTabKind.localHistory:
-        return;
+        ref
+            .read(sharedGitReviewProvider.notifier)
+            .deactivate(ref.read(workspaceControllerProvider).workspace!.id);
+        gitController.deactivateDiffFile();
     }
   }
 
