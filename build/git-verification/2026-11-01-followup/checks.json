@@ -1,0 +1,114 @@
+{
+  "runtimeSource": "cf29cd125d650d831284f96439f8662bd69abc52",
+  "activationFixCommit": "00c601f",
+  "generatorFixCommit": "fae6697",
+  "gitCommandDispatchFixCommit": "cf29cd1",
+  "beforeFix": {
+    "localHistoryMouse": "failed: expected no active Git review; actual SharedGitReview",
+    "localHistoryKeyboard": "failed: expected no active Git review; actual SharedGitReview",
+    "ciLocalizationCommand": "failed: Git localization API is stale"
+  },
+  "afterFix": {
+    "focusedActivationTests": {
+      "passed": 2,
+      "exit": 0
+    },
+    "workspaceHistoryLocalizationTests": {
+      "passed": 601,
+      "exit": 0,
+      "source": "b87f8b9"
+    },
+    "finalFocusedHostRegressions": {
+      "passed": 4,
+      "exit": 0,
+      "source": "cf29cd1"
+    },
+    "finalGitNativeDismissalTabsTests": {
+      "passed": 60,
+      "exit": 0,
+      "source": "cf29cd1"
+    },
+    "changedFileAnalysisFatalInfos": {
+      "exit": 0,
+      "result": "No issues found!"
+    },
+    "formatFourChangedDartFiles": {
+      "exit": 0,
+      "changed": 0
+    },
+    "nativePresentationAuditSelfTest": {
+      "exit": 0
+    },
+    "sharedAndBusyMarkNativePresentationAudit": {
+      "exit": 0
+    },
+    "mixedWorkspaceAuditSelfTest": {
+      "exit": 0
+    },
+    "mixedWorkspaceAudit": {
+      "exit": 0
+    },
+    "ciLocalizationCommand": {
+      "exit": 0
+    },
+    "flutterGenL10nThenGitDiffExitCode": {
+      "exit": 0
+    },
+    "sharedDependencySourceCheck": {
+      "exit": 0
+    },
+    "initialB87f8b9ReleaseBuild": {
+      "exit": 0
+    },
+    "finalLocalizationTests": {
+      "passed": 24,
+      "exit": 0
+    },
+    "officialFlutterWorkflowTests": {
+      "passed": 28,
+      "exit": 0
+    },
+    "committedCiCommandAndDeliberateImportDrift": {
+      "exit": 0
+    },
+    "finalReleaseBuild": {
+      "exit": 0,
+      "source": "cf29cd1"
+    },
+    "finalNativeMouseAndKeyboardTabSwitching": {
+      "passed": true,
+      "source": "cf29cd1"
+    },
+    "finalNativeCloseCancelThenDiscard": {
+      "exit": 0,
+      "retainedTabsOnCancel": true
+    },
+    "ordinaryDeveloperDebugLaunch": {
+      "exit": 0,
+      "entryPoint": "lib/main.dart",
+      "source": "cf29cd1"
+    },
+    "finalRepositoryBytesAndHead": {
+      "unchanged": true,
+      "head": "5e2a71de28929e91d795cbf2677de579e712428d",
+      "files": 8
+    }
+  },
+  "unchangedInputs": {
+    "engine": "07cf4a11ae3f0fd3bb97cafc38ea344826c684ef",
+    "presentation": "df529b9e35e56a29de1f4addd1223552ad934255",
+    "flutter": "3.47.5",
+    "dart": "3.13.4",
+    "releaseEngineSha256": "d57449a5c2ee39e77b9e3488f0703b165c67e0b3c554089f388db96484ae62f1"
+  },
+  "environmentNotes": [
+    "The host shared audit initially failed closed because its generated package config referenced a removed task SDK. Offline enforce-lockfile resolution with the retained official 3.47.5 mirror restored generated tooling state; the unchanged audits then passed.",
+    "Shell redirection around the approved host Flutter test command hit SDK cache write restrictions. Running the ordinary permitted flutter test command succeeded; no SDK file was patched.",
+    "The original user findings were source/check findings. Native follow-up evidence is scoped separately.",
+    "The initial package-import regeneration exposed a file/package library identity mismatch in the diagnostic entry point. The final configuration preserves the original host-relative adapter import, documents it, and changes CI to the identical import URI without weakening the generator check.",
+    "The first diagnostic entry point imported the app by file URI and duplicated its package startup provider. It was corrected to the existing smoke tools' package import convention before keyboard tracing. That intermediate harness is not ordinary developer-startup evidence.",
+    "The existing verification VM's scheduled Ubuntu unattended upgrade restarted its LXD agent and later transient services. Interrupted builds and diagnostic sessions remain unqualified, separate from the earlier disk-space incident. Security updates were not disabled.",
+    "Native release verification revealed the Git dispatcher intercepting application tab intents while focus was inside Git. A stronger regression explicitly focuses the real selectable region, proves that the active command scope is Git, and fails before the scoped-intent correction. It passes afterwards and also proves Git F5 refresh remains reachable.",
+    "A Flutter-only release built with the same official SDK and an untouched generated Linux runner handled Ctrl+Tab twice and exited 0. The shortcut fault was in the host integration, not attributed to an upstream defect."
+  ]
+}

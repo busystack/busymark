@@ -137,7 +137,7 @@ flutter gen-l10n
 ```
 
 CI adds `--check` to the generator command and requires the generated relative
-import to match exactly, including file-based application entry points.
+import to match exactly.
 `test/src/git/shared_git_localization_test.dart`
 checks catalog coverage and named values without translating repository data.
 

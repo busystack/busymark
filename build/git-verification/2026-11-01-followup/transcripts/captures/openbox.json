@@ -1,0 +1,5 @@
+{
+  "rawFile": "captures/openbox.log",
+  "sha256": "6f748c3cd02a858c087697c3afac639205c62b7b206558bd40d1bcbd98165a5c",
+  "transcript": "Openbox-Message: Unable to find a valid menu file \"/var/lib/openbox/debian-menu.xml\"\n"
+}
