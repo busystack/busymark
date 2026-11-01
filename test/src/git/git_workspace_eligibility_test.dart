@@ -74,6 +74,16 @@ void main() {
     },
   );
 
+  test('bare metadata directory has no eligible working-tree root', () async {
+    final path = '${fixture.directory.path}/bare.git';
+    await fixture.git(['init', '--bare', path]);
+    final discovered = (await fixture.engine.discover(path))!;
+    expect(discovered.bare, isTrue);
+    await expectLater(
+      GitCliGateway(engine: fixture.engine).detectRepository(path),
+      throwsA(isA<GitWorkspaceRootRequired>()),
+    );
+  });
   test('unborn root accepted; ordinary folder remains uninitialized', () async {
     final gateway = GitCliGateway(engine: fixture.engine);
     expect(

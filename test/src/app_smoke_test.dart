@@ -7456,6 +7456,29 @@ code
       expect(find.text(l10n.gitTrustWorkspace), findsNothing);
       expect(fixture.sharedClient.statusReads, 0);
       expect(_comparisonTabs(fixture.container).entries, isEmpty);
+      final workspace = fixture.container
+          .read(workspaceControllerProvider)
+          .workspace!;
+      final retained = SharedGitReview(
+        fixture.sharedClient.repository!,
+        reviewToken: 'retained-parent-review',
+        comparison: shared.GitComparison(
+          shared.RepoPath.text('README.md'),
+          const shared.ContentVersion.index(),
+          const shared.ContentVersion.working(),
+        ),
+      );
+      fixture.container
+          .read(sharedGitReviewProvider.notifier)
+          .open(workspace.id, retained);
+      await pumpUntil(
+        tester,
+        () => find.text(l10n.gitWorkspaceRootRequired).evaluate().length == 2,
+        operation: 'retained ineligible comparison reports its original owner',
+      );
+      expect(_comparisonTabs(fixture.container).entries.single, same(retained));
+      expect(fixture.sharedClient.statusReads, 0);
+      expect(tester.takeException(), isNull);
       expect(fixture.service.saveCount, 0);
       expect(File('${fixture.service.rootPath}/.git').existsSync(), isFalse);
     },

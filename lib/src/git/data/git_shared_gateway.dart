@@ -66,7 +66,11 @@ class GitCliGateway implements GitRepositoryGateway, GitWorkspaceRootInspector {
   Future<void> requireWorkspaceRoot(String workspacePath) async {
     final repository = await core.discover(workspacePath);
     if (repository != null) {
-      await requireGitWorkspaceRoot(workspacePath, repository.root);
+      await requireGitWorkspaceRoot(
+        workspacePath,
+        repository.root,
+        bare: repository.bare,
+      );
     }
   }
 
@@ -75,7 +79,7 @@ class GitCliGateway implements GitRepositoryGateway, GitWorkspaceRootInspector {
       _map(() async {
         final id = await core.discover(workspacePath);
         if (id == null) return null;
-        await requireGitWorkspaceRoot(workspacePath, id.root);
+        await requireGitWorkspaceRoot(workspacePath, id.root, bare: id.bare);
         final state = await core.status(id);
         final remotes =
             (await core.inspect(

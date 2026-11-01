@@ -425,6 +425,7 @@ class GitController extends Notifier<GitState> {
       canonical = await requireGitWorkspaceRoot(
         workspace.rootPath,
         repository.root,
+        bare: repository.bare,
       );
     } on FileSystemException {
       if (!ref.mounted) return;

@@ -153,7 +153,11 @@ class _BusyMarkGitWorkspaceScopeState
     if (!mounted || generation != _generation || repository == null) {
       return null;
     }
-    await requireGitWorkspaceRoot(workspace.rootPath, repository.root);
+    await requireGitWorkspaceRoot(
+      workspace.rootPath,
+      repository.root,
+      bare: repository.bare,
+    );
     if (!mounted || generation != _generation) return null;
     final target = repository;
     _eligibleRepositories.add(target.key);
@@ -554,7 +558,11 @@ Future<bool> _ensureGitTrust(
   }
 
   if (!current()) return false;
-  await requireGitWorkspaceRoot(workspace.rootPath, repository.root);
+  await requireGitWorkspaceRoot(
+    workspace.rootPath,
+    repository.root,
+    bare: repository.bare,
+  );
   if (!current()) return false;
   if (ref
       .read(appSettingsControllerProvider)
@@ -604,7 +612,11 @@ Future<bool> _ensureGitTrust(
   if (approved != true || !context.mounted || !current()) {
     return false;
   }
-  await requireGitWorkspaceRoot(workspace.rootPath, repository.root);
+  await requireGitWorkspaceRoot(
+    workspace.rootPath,
+    repository.root,
+    bare: repository.bare,
+  );
   if (!current()) return false;
   await ref
       .read(appSettingsControllerProvider.notifier)
@@ -724,7 +736,11 @@ shared.GitHost busyMarkGitHost(
       }
       // Authorization is explicit in the trust screen. A queued mutation may
       // never resume merely because another action grants trust.
-      await requireGitWorkspaceRoot(workspace.rootPath, repository.root);
+      await requireGitWorkspaceRoot(
+        workspace.rootPath,
+        repository.root,
+        bare: repository.bare,
+      );
       if (!isMounted() ||
           !context.mounted ||
           !ref
@@ -1175,11 +1191,11 @@ class _BusyMarkSharedGitReviewState
     extends ConsumerState<BusyMarkSharedGitReview> {
   shared.GitSession? _session;
   shared.GitException? _failure;
-  bool _attaching = false;
+  bool _attaching = false, _rootRequired = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_session != null || _attaching) return;
+    if (_session != null || _attaching || _rootRequired) return;
     unawaited(_attach());
   }
 
@@ -1195,6 +1211,8 @@ class _BusyMarkSharedGitReviewState
         _failure = null;
       });
       session?.addListener(_changed);
+    } on GitWorkspaceRootRequired {
+      if (mounted) setState(() => _rootRequired = true);
     } on shared.GitException catch (error) {
       if (mounted) setState(() => _failure = error);
     } finally {
@@ -1252,7 +1270,12 @@ class _BusyMarkSharedGitReviewState
   }
 
   @override
-  Widget build(BuildContext context) => _failure != null
+  Widget build(BuildContext context) => _rootRequired
+      ? Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+          child: Text(context.l10n.gitWorkspaceRootRequired),
+        )
+      : _failure != null
       ? shared.GitFailurePanel(
           error: _failure!,
           onRefresh: () => unawaited(_attach()),

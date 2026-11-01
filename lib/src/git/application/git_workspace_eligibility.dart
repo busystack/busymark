@@ -11,8 +11,10 @@ import '../domain/git_models.dart';
 /// workspace service; neither file navigation nor the active document is input.
 Future<String> requireGitWorkspaceRoot(
   String workspacePath,
-  String root,
-) async {
+  String root, {
+  bool bare = false,
+}) async {
+  if (bare) throw GitWorkspaceRootRequired(root);
   late CanonicalPathAnchor anchor;
   try {
     anchor = await captureCanonicalDirectoryAnchor(workspacePath);
