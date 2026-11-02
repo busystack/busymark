@@ -4546,5 +4546,9 @@
   "gitUiNoCommitsYet": "Noch keine Commits",
   "gitUiNativeMenuUnavailable": "Der native Menüdienst ist nicht verfügbar. Versuchen Sie es erneut.",
   "gitWorkspaceRootRequired": "Öffne das Arbeitsverzeichnis-Stammverzeichnis des Repositorys, um Git in diesem Arbeitsbereich zu verwenden.",
-  "gitLocalTrackingDescription": "{upstream} · {ahead} voraus, {behind} zurück. Lokal bekannte Remote-Tracking-Informationen; keine Live-Serverabfrage."
+  "gitLocalTrackingDescription": "{upstream} · {ahead} voraus, {behind} zurück. Lokal bekannte Remote-Tracking-Informationen; keine Live-Serverabfrage.",
+  "gitUiCommitter": "Committer",
+  "gitUiStageSelectedLines": "Ausgewählte Zeilen zum Index hinzufügen",
+  "gitUiUnstageSelectedLines": "Ausgewählte Zeilen aus Index entfernen",
+  "gitUiEditIndexInThreeWayView": "Index in Drei-Wege-Ansicht bearbeiten…"
 }

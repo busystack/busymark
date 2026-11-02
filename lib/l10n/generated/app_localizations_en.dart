@@ -8864,4 +8864,16 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$upstream · $ahead ahead, $behind behind. Locally known remote-tracking information; not a live server check.';
   }
+
+  @override
+  String get gitUiCommitter => 'Committer';
+
+  @override
+  String get gitUiStageSelectedLines => 'Stage selected lines';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Unstage selected lines';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => 'Edit Index in Three-Way View…';
 }

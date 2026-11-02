@@ -6076,5 +6076,9 @@
   "gitUiNoCommitsYet": "Chưa có commit",
   "gitUiNativeMenuUnavailable": "Dịch vụ menu gốc không khả dụng. Hãy thử lại.",
   "gitWorkspaceRootRequired": "Mở thư mục gốc cây làm việc của kho để dùng Git trong không gian làm việc này.",
-  "gitLocalTrackingDescription": "{upstream} · đi trước {ahead}, đi sau {behind}. Thông tin theo dõi từ xa đã biết cục bộ; không phải kiểm tra máy chủ trực tiếp."
+  "gitLocalTrackingDescription": "{upstream} · đi trước {ahead}, đi sau {behind}. Thông tin theo dõi từ xa đã biết cục bộ; không phải kiểm tra máy chủ trực tiếp.",
+  "gitUiCommitter": "Người tạo commit",
+  "gitUiStageSelectedLines": "Đưa dòng đã chọn vào chỉ mục",
+  "gitUiUnstageSelectedLines": "Bỏ dòng đã chọn khỏi chỉ mục",
+  "gitUiEditIndexInThreeWayView": "Chỉnh sửa chỉ mục trong chế độ xem ba phía…"
 }

@@ -8869,4 +8869,17 @@ class AppLocalizationsId extends AppLocalizations {
   ) {
     return '$upstream · $ahead lebih maju, $behind tertinggal. Informasi pelacakan jarak jauh yang diketahui secara lokal; bukan pemeriksaan server langsung.';
   }
+
+  @override
+  String get gitUiCommitter => 'Pembuat commit';
+
+  @override
+  String get gitUiStageSelectedLines => 'Stage baris terpilih';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Unstage baris terpilih';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Edit Indeks dalam Tampilan Tiga Arah…';
 }

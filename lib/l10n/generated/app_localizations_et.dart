@@ -8866,4 +8866,17 @@ class AppLocalizationsEt extends AppLocalizations {
   ) {
     return '$upstream · $ahead ees, $behind taga. Kohalikult teadaolev kaugharu jälgimisteave; mitte serveri reaalajas kontroll.';
   }
+
+  @override
+  String get gitUiCommitter => 'Kinnitaja';
+
+  @override
+  String get gitUiStageSelectedLines => 'Lisa valitud read indeksisse';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Eemalda valitud read indeksist';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Muuda indeksit kolme poole vaates…';
 }

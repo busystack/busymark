@@ -70,10 +70,11 @@ void main() {
                   onBranches: () =>
                       git.GitWorkflowUi(context, session!).branches(),
                   onPush: () {},
-                  onMore: (anchor) => git.GitWorkflowUi(
-                    anchor,
-                    session!,
-                  ).more(showBranches: false, includeRefresh: true),
+                  onMore: (anchor) => git.GitWorkflowUi(anchor, session!).more(
+                    showBranches: false,
+                    includeRefresh: true,
+                    showBranchOperations: false,
+                  ),
                 ),
               );
             },

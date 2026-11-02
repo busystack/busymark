@@ -4572,5 +4572,9 @@
   "gitUiNoCommitsYet": "Комітів ще немає",
   "gitUiNativeMenuUnavailable": "Служба системних меню недоступна. Спробуйте ще раз.",
   "gitWorkspaceRootRequired": "Відкрийте корінь робочого дерева репозиторію, щоб використовувати Git у цьому робочому просторі.",
-  "gitLocalTrackingDescription": "{upstream} · попереду на {ahead}, позаду на {behind}. Локально відомі дані віддаленого відстеження; без перевірки сервера наживо."
+  "gitLocalTrackingDescription": "{upstream} · попереду на {ahead}, позаду на {behind}. Локально відомі дані віддаленого відстеження; без перевірки сервера наживо.",
+  "gitUiCommitter": "Комітер",
+  "gitUiStageSelectedLines": "Додати вибрані рядки до індексу",
+  "gitUiUnstageSelectedLines": "Вилучити вибрані рядки з індексу",
+  "gitUiEditIndexInThreeWayView": "Редагувати індекс у тристоронньому вигляді…"
 }

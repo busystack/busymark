@@ -8955,4 +8955,17 @@ class AppLocalizationsFr extends AppLocalizations {
   ) {
     return '$upstream · $ahead en avance, $behind en retard. Informations de suivi distant connues localement ; aucune vérification du serveur en direct.';
   }
+
+  @override
+  String get gitUiCommitter => 'Validateur';
+
+  @override
+  String get gitUiStageSelectedLines => 'Indexer les lignes sélectionnées';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Désindexer les lignes sélectionnées';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Modifier l’index en vue à trois volets…';
 }

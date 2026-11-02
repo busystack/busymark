@@ -8484,6 +8484,18 @@ class AppLocalizationsZh extends AppLocalizations {
   ) {
     return '$upstream · 领先 $ahead，落后 $behind。本地已知的远程跟踪信息；并非实时服务器检查。';
   }
+
+  @override
+  String get gitUiCommitter => '提交者';
+
+  @override
+  String get gitUiStageSelectedLines => '暂存所选行';
+
+  @override
+  String get gitUiUnstageSelectedLines => '取消暂存所选行';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => '在三方视图中编辑暂存区…';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -16964,4 +16976,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   ) {
     return '$upstream · 领先 $ahead，落后 $behind。本地已知的远程跟踪信息；并非实时服务器检查。';
   }
+
+  @override
+  String get gitUiCommitter => '提交者';
+
+  @override
+  String get gitUiStageSelectedLines => '暂存所选行';
+
+  @override
+  String get gitUiUnstageSelectedLines => '取消暂存所选行';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => '在三方视图中编辑暂存区…';
 }

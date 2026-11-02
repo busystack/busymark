@@ -4546,5 +4546,9 @@
   "gitUiNoCommitsYet": "Nessun commit ancora",
   "gitUiNativeMenuUnavailable": "Il servizio dei menu nativi non è disponibile. Riprova.",
   "gitWorkspaceRootRequired": "Apri la radice dell’albero di lavoro del repository per usare Git in questo spazio di lavoro.",
-  "gitLocalTrackingDescription": "{upstream} · {ahead} avanti, {behind} indietro. Informazioni di tracciamento remoto note localmente; nessun controllo del server in tempo reale."
+  "gitLocalTrackingDescription": "{upstream} · {ahead} avanti, {behind} indietro. Informazioni di tracciamento remoto note localmente; nessun controllo del server in tempo reale.",
+  "gitUiCommitter": "Autore del commit",
+  "gitUiStageSelectedLines": "Prepara righe selezionate",
+  "gitUiUnstageSelectedLines": "Rimuovi righe selezionate dall’indice",
+  "gitUiEditIndexInThreeWayView": "Modifica l’indice nella vista a tre vie…"
 }

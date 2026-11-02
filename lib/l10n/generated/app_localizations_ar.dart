@@ -8860,4 +8860,16 @@ class AppLocalizationsAr extends AppLocalizations {
   ) {
     return '$upstream · متقدم بـ $ahead، ومتأخر بـ $behind. معلومات تتبع بعيدة معروفة محليًا؛ ليست فحصًا مباشرًا للخادم.';
   }
+
+  @override
+  String get gitUiCommitter => 'مُنشئ الإيداع';
+
+  @override
+  String get gitUiStageSelectedLines => 'إضافة الأسطر المحددة إلى الفهرس';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'إزالة الأسطر المحددة من الفهرس';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => 'تحرير الفهرس في عرض ثلاثي…';
 }

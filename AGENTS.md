@@ -51,3 +51,12 @@ Amend uses the labelled native desktop checkbox and preserves its state/drafts.
 Run tools/check_git_presentation.sh, including the rendered native contract tests.
 Git status text columns scale from the native tree-control extent; preserve
 legible markers and the matching text inset at enlarged scales in LTR and RTL.
+
+Git Log's compact inspector has no information/file splitter or permanent upper
+scrollbar. Full messages/exact identities remain accessible in native details.
+Historical Changed Files use the required native change-row tree and a separate
+file-menu target; they have no staging callbacks. Two-way comparisons use one
+measured toolbar and the native checked mode menu at every width. Circular
+choice bars are forbidden there, including aliases; three-way editor pane
+choices remain separate. Preserve explicit file/selected-line/hunk staging,
+version-bound callbacks, editor guards, and both consumers' native adapters.

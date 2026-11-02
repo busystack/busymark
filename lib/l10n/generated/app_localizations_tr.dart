@@ -8856,4 +8856,17 @@ class AppLocalizationsTr extends AppLocalizations {
   ) {
     return '$upstream · $ahead ileride, $behind geride. Yerel olarak bilinen uzak izleme bilgisi; canlı sunucu denetimi değildir.';
   }
+
+  @override
+  String get gitUiCommitter => 'İşleyen';
+
+  @override
+  String get gitUiStageSelectedLines => 'Seçili satırları indekse ekle';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Seçili satırları indeksten çıkar';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'İndeksi Üç Yönlü Görünümde Düzenle…';
 }

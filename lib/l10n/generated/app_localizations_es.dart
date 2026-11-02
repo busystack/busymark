@@ -8945,4 +8945,18 @@ class AppLocalizationsEs extends AppLocalizations {
   ) {
     return '$upstream · $ahead por delante, $behind por detrás. Información de seguimiento remoto conocida localmente; no es una consulta en vivo al servidor.';
   }
+
+  @override
+  String get gitUiCommitter => 'Confirmador';
+
+  @override
+  String get gitUiStageSelectedLines => 'Preparar líneas seleccionadas';
+
+  @override
+  String get gitUiUnstageSelectedLines =>
+      'Quitar líneas seleccionadas de preparación';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Editar el índice en vista de tres vías…';
 }

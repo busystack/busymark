@@ -8877,4 +8877,16 @@ class AppLocalizationsFa extends AppLocalizations {
   ) {
     return '$upstream · $ahead جلوتر، $behind عقب‌تر. اطلاعات پیگیری راه دور شناخته‌شدهٔ محلی؛ بررسی زندهٔ سرور نیست.';
   }
+
+  @override
+  String get gitUiCommitter => 'ثبت‌کننده';
+
+  @override
+  String get gitUiStageSelectedLines => 'افزودن خط‌های انتخابی به نمایه';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'برداشتن خط‌های انتخابی از نمایه';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => 'ویرایش نمایه در نمای سه‌طرفه…';
 }

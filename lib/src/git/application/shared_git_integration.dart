@@ -389,7 +389,11 @@ Future<void> showBusyMarkSharedGitAction(
     case 'push':
       await ui.push();
     case 'more':
-      await ui.more();
+      await ui.more(
+        showBranches: false,
+        includeRefresh: true,
+        showBranchOperations: false,
+      );
   }
 }
 
@@ -643,6 +647,9 @@ shared.GitHost busyMarkGitHost(
       shared.GitGlyph.branch: BusyMarkGlyphs.branch,
       shared.GitGlyph.history: BusyMarkGlyphs.history,
       shared.GitGlyph.refresh: BusyMarkGlyphs.refresh,
+      shared.GitGlyph.copy: BusyMarkGlyphs.copy,
+      shared.GitGlyph.options: BusyMarkGlyphs.settings,
+      shared.GitGlyph.moreHorizontal: BusyMarkGlyphs.menuHorizontal,
       shared.GitGlyph.more: BusyMarkGlyphs.menuVertical,
       shared.GitGlyph.expand: BusyMarkGlyphs.downArrow,
       shared.GitGlyph.previous: BusyMarkGlyphs.gitPrevious,
@@ -1110,10 +1117,12 @@ class _BusyMarkSharedGitSidebarState
                         shared.GitWorkflowUi(context, _session!).branches(),
                     onPush: () =>
                         shared.GitWorkflowUi(context, _session!).push(),
-                    onMore: (anchor) => shared.GitWorkflowUi(
-                      anchor,
-                      _session!,
-                    ).more(showBranches: false, includeRefresh: true),
+                    onMore: (anchor) =>
+                        shared.GitWorkflowUi(anchor, _session!).more(
+                          showBranches: false,
+                          includeRefresh: true,
+                          showBranchOperations: false,
+                        ),
                   ),
                 ),
                 if (!trusted)
@@ -1292,6 +1301,7 @@ class _BusyMarkSharedGitReviewState
             session: _session!,
             comparison: widget.review.comparison,
             initialSideBySide: true,
+            showFileHeader: false,
             onPreviousFile: _navigate(-1),
             onNextFile: _navigate(1),
           ),

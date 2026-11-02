@@ -8619,4 +8619,16 @@ class AppLocalizationsJa extends AppLocalizations {
   ) {
     return '$upstream · $ahead 件先行、$behind 件遅延。ローカルで把握しているリモート追跡情報であり、サーバーへのリアルタイム照会ではありません。';
   }
+
+  @override
+  String get gitUiCommitter => 'コミッター';
+
+  @override
+  String get gitUiStageSelectedLines => '選択した行をステージ';
+
+  @override
+  String get gitUiUnstageSelectedLines => '選択した行のステージを解除';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => '3方向ビューでインデックスを編集…';
 }

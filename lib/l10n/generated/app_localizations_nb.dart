@@ -8868,4 +8868,16 @@ class AppLocalizationsNb extends AppLocalizations {
   ) {
     return '$upstream · $ahead foran, $behind bak. Lokalt kjent informasjon om fjernsporing; ingen direktesjekk av serveren.';
   }
+
+  @override
+  String get gitUiCommitter => 'Innsender';
+
+  @override
+  String get gitUiStageSelectedLines => 'Klargjør valgte linjer';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Fjern valgte linjer fra indeks';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => 'Rediger indeks i treveisvisning…';
 }

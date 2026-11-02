@@ -8930,4 +8930,18 @@ class AppLocalizationsIt extends AppLocalizations {
   ) {
     return '$upstream · $ahead avanti, $behind indietro. Informazioni di tracciamento remoto note localmente; nessun controllo del server in tempo reale.';
   }
+
+  @override
+  String get gitUiCommitter => 'Autore del commit';
+
+  @override
+  String get gitUiStageSelectedLines => 'Prepara righe selezionate';
+
+  @override
+  String get gitUiUnstageSelectedLines =>
+      'Rimuovi righe selezionate dall’indice';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Modifica l’indice nella vista a tre vie…';
 }

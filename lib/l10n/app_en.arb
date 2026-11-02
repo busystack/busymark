@@ -7363,5 +7363,21 @@
         "type": "String"
       }
     }
+  },
+  "gitUiCommitter": "Committer",
+  "gitUiStageSelectedLines": "Stage selected lines",
+  "gitUiUnstageSelectedLines": "Unstage selected lines",
+  "gitUiEditIndexInThreeWayView": "Edit Index in Three-Way View…",
+  "@gitUiCommitter": {
+    "description": "Shared Git interface: Committer"
+  },
+  "@gitUiStageSelectedLines": {
+    "description": "Shared Git interface: Stage selected lines"
+  },
+  "@gitUiUnstageSelectedLines": {
+    "description": "Shared Git interface: Unstage selected lines"
+  },
+  "@gitUiEditIndexInThreeWayView": {
+    "description": "Shared Git interface: Edit Index in Three-Way View…"
   }
 }

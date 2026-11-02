@@ -6076,5 +6076,9 @@
   "gitUiNoCommitsYet": "コミットはまだありません",
   "gitUiNativeMenuUnavailable": "ネイティブメニューサービスを利用できません。もう一度お試しください。",
   "gitWorkspaceRootRequired": "このワークスペースで Git を使うには、リポジトリの作業ツリーのルートを開いてください。",
-  "gitLocalTrackingDescription": "{upstream} · {ahead} 件先行、{behind} 件遅延。ローカルで把握しているリモート追跡情報であり、サーバーへのリアルタイム照会ではありません。"
+  "gitLocalTrackingDescription": "{upstream} · {ahead} 件先行、{behind} 件遅延。ローカルで把握しているリモート追跡情報であり、サーバーへのリアルタイム照会ではありません。",
+  "gitUiCommitter": "コミッター",
+  "gitUiStageSelectedLines": "選択した行をステージ",
+  "gitUiUnstageSelectedLines": "選択した行のステージを解除",
+  "gitUiEditIndexInThreeWayView": "3方向ビューでインデックスを編集…"
 }

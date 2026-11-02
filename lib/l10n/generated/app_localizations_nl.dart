@@ -8930,4 +8930,18 @@ class AppLocalizationsNl extends AppLocalizations {
   ) {
     return '$upstream · $ahead voor, $behind achter. Lokaal bekende informatie over externe tracking; geen livecontrole van de server.';
   }
+
+  @override
+  String get gitUiCommitter => 'Committer';
+
+  @override
+  String get gitUiStageSelectedLines => 'Geselecteerde regels klaarzetten';
+
+  @override
+  String get gitUiUnstageSelectedLines =>
+      'Geselecteerde regels uit index halen';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Index in driewegweergave bewerken…';
 }

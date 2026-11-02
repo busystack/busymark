@@ -15016,6 +15016,30 @@ abstract class AppLocalizations {
     String ahead,
     String behind,
   );
+
+  /// Shared Git interface: Committer
+  ///
+  /// In en, this message translates to:
+  /// **'Committer'**
+  String get gitUiCommitter;
+
+  /// Shared Git interface: Stage selected lines
+  ///
+  /// In en, this message translates to:
+  /// **'Stage selected lines'**
+  String get gitUiStageSelectedLines;
+
+  /// Shared Git interface: Unstage selected lines
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage selected lines'**
+  String get gitUiUnstageSelectedLines;
+
+  /// Shared Git interface: Edit Index in Three-Way View…
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Index in Three-Way View…'**
+  String get gitUiEditIndexInThreeWayView;
 }
 
 class _AppLocalizationsDelegate

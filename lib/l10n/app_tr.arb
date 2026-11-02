@@ -6076,5 +6076,9 @@
   "gitUiNoCommitsYet": "Henüz commit yok",
   "gitUiNativeMenuUnavailable": "Yerel menü hizmeti kullanılamıyor. Yeniden deneyin.",
   "gitWorkspaceRootRequired": "Bu çalışma alanında Git kullanmak için deponun çalışma ağacı kökünü açın.",
-  "gitLocalTrackingDescription": "{upstream} · {ahead} ileride, {behind} geride. Yerel olarak bilinen uzak izleme bilgisi; canlı sunucu denetimi değildir."
+  "gitLocalTrackingDescription": "{upstream} · {ahead} ileride, {behind} geride. Yerel olarak bilinen uzak izleme bilgisi; canlı sunucu denetimi değildir.",
+  "gitUiCommitter": "İşleyen",
+  "gitUiStageSelectedLines": "Seçili satırları indekse ekle",
+  "gitUiUnstageSelectedLines": "Seçili satırları indeksten çıkar",
+  "gitUiEditIndexInThreeWayView": "İndeksi Üç Yönlü Görünümde Düzenle…"
 }

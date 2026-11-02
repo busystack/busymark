@@ -4546,5 +4546,9 @@
   "gitUiNoCommitsYet": "Aucun commit pour le moment",
   "gitUiNativeMenuUnavailable": "Le service de menus natifs est indisponible. Réessayez.",
   "gitWorkspaceRootRequired": "Ouvrez la racine de l’arbre de travail du dépôt pour utiliser Git dans cet espace de travail.",
-  "gitLocalTrackingDescription": "{upstream} · {ahead} en avance, {behind} en retard. Informations de suivi distant connues localement ; aucune vérification du serveur en direct."
+  "gitLocalTrackingDescription": "{upstream} · {ahead} en avance, {behind} en retard. Informations de suivi distant connues localement ; aucune vérification du serveur en direct.",
+  "gitUiCommitter": "Validateur",
+  "gitUiStageSelectedLines": "Indexer les lignes sélectionnées",
+  "gitUiUnstageSelectedLines": "Désindexer les lignes sélectionnées",
+  "gitUiEditIndexInThreeWayView": "Modifier l’index en vue à trois volets…"
 }

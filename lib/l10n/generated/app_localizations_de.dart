@@ -8949,4 +8949,19 @@ class AppLocalizationsDe extends AppLocalizations {
   ) {
     return '$upstream · $ahead voraus, $behind zurück. Lokal bekannte Remote-Tracking-Informationen; keine Live-Serverabfrage.';
   }
+
+  @override
+  String get gitUiCommitter => 'Committer';
+
+  @override
+  String get gitUiStageSelectedLines =>
+      'Ausgewählte Zeilen zum Index hinzufügen';
+
+  @override
+  String get gitUiUnstageSelectedLines =>
+      'Ausgewählte Zeilen aus Index entfernen';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Index in Drei-Wege-Ansicht bearbeiten…';
 }

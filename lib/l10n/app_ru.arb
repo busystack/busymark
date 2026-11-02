@@ -4572,5 +4572,9 @@
   "gitUiNoCommitsYet": "Коммитов пока нет",
   "gitUiNativeMenuUnavailable": "Служба системных меню недоступна. Повторите попытку.",
   "gitWorkspaceRootRequired": "Откройте корень рабочего дерева репозитория, чтобы использовать Git в этой рабочей области.",
-  "gitLocalTrackingDescription": "{upstream} · впереди на {ahead}, позади на {behind}. Локально известные данные удалённого отслеживания; без проверки сервера в реальном времени."
+  "gitLocalTrackingDescription": "{upstream} · впереди на {ahead}, позади на {behind}. Локально известные данные удалённого отслеживания; без проверки сервера в реальном времени.",
+  "gitUiCommitter": "Коммитер",
+  "gitUiStageSelectedLines": "Добавить выбранные строки в индекс",
+  "gitUiUnstageSelectedLines": "Убрать выбранные строки из индекса",
+  "gitUiEditIndexInThreeWayView": "Редактировать индекс в трёхстороннем виде…"
 }

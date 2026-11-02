@@ -1301,6 +1301,10 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.removeFilter => gitUiRemoveFilter,
     GitMessages.noCommitsYet => gitUiNoCommitsYet,
     GitMessages.nativeMenuUnavailable => gitUiNativeMenuUnavailable,
+    GitMessages.committer => gitUiCommitter,
+    GitMessages.stageSelectedLines => gitUiStageSelectedLines,
+    GitMessages.unstageSelectedLines => gitUiUnstageSelectedLines,
+    GitMessages.editIndexInThreeWayView => gitUiEditIndexInThreeWayView,
     _ => message,
   };
 }

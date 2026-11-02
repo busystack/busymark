@@ -8847,4 +8847,17 @@ class AppLocalizationsVi extends AppLocalizations {
   ) {
     return '$upstream · đi trước $ahead, đi sau $behind. Thông tin theo dõi từ xa đã biết cục bộ; không phải kiểm tra máy chủ trực tiếp.';
   }
+
+  @override
+  String get gitUiCommitter => 'Người tạo commit';
+
+  @override
+  String get gitUiStageSelectedLines => 'Đưa dòng đã chọn vào chỉ mục';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Bỏ dòng đã chọn khỏi chỉ mục';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Chỉnh sửa chỉ mục trong chế độ xem ba phía…';
 }

@@ -8851,4 +8851,17 @@ class AppLocalizationsHi extends AppLocalizations {
   ) {
     return '$upstream · $ahead आगे, $behind पीछे। स्थानीय रूप से ज्ञात रिमोट ट्रैकिंग जानकारी; यह सर्वर की लाइव जाँच नहीं है।';
   }
+
+  @override
+  String get gitUiCommitter => 'कमिटकर्ता';
+
+  @override
+  String get gitUiStageSelectedLines => 'चुनी पंक्तियाँ इंडेक्स में जोड़ें';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'चुनी पंक्तियाँ इंडेक्स से हटाएँ';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'तीन-पक्षीय दृश्य में इंडेक्स संपादित करें…';
 }

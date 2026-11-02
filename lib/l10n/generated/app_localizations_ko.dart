@@ -8616,4 +8616,16 @@ class AppLocalizationsKo extends AppLocalizations {
   ) {
     return '$upstream · $ahead개 앞섬, $behind개 뒤처짐. 로컬에 알려진 원격 추적 정보이며 실시간 서버 확인이 아닙니다.';
   }
+
+  @override
+  String get gitUiCommitter => '커미터';
+
+  @override
+  String get gitUiStageSelectedLines => '선택한 줄 스테이징';
+
+  @override
+  String get gitUiUnstageSelectedLines => '선택한 줄 스테이징 해제';
+
+  @override
+  String get gitUiEditIndexInThreeWayView => '3방향 보기에서 인덱스 편집…';
 }

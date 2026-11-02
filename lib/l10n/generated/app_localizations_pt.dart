@@ -8943,6 +8943,20 @@ class AppLocalizationsPt extends AppLocalizations {
   ) {
     return '$upstream · $ahead à frente, $behind atrás. Informações de seguimento remoto conhecidas localmente; não é uma verificação do servidor em direto.';
   }
+
+  @override
+  String get gitUiCommitter => 'Responsável pelo commit';
+
+  @override
+  String get gitUiStageSelectedLines => 'Preparar linhas selecionadas';
+
+  @override
+  String get gitUiUnstageSelectedLines =>
+      'Retirar linhas selecionadas do índice';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Editar o índice na vista de três vias…';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17877,4 +17891,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   ) {
     return '$upstream · $ahead à frente, $behind atrás. Informações de rastreamento remoto conhecidas localmente; não é uma verificação do servidor ao vivo.';
   }
+
+  @override
+  String get gitUiCommitter => 'Responsável pelo commit';
+
+  @override
+  String get gitUiStageSelectedLines => 'Preparar linhas selecionadas';
+
+  @override
+  String get gitUiUnstageSelectedLines =>
+      'Retirar linhas selecionadas do índice';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Editar o índice na visualização de três vias…';
 }

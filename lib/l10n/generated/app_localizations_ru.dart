@@ -8941,4 +8941,17 @@ class AppLocalizationsRu extends AppLocalizations {
   ) {
     return '$upstream · впереди на $ahead, позади на $behind. Локально известные данные удалённого отслеживания; без проверки сервера в реальном времени.';
   }
+
+  @override
+  String get gitUiCommitter => 'Коммитер';
+
+  @override
+  String get gitUiStageSelectedLines => 'Добавить выбранные строки в индекс';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Убрать выбранные строки из индекса';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Редактировать индекс в трёхстороннем виде…';
 }

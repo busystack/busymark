@@ -4546,5 +4546,9 @@
   "gitUiNoCommitsYet": "अभी कोई कमिट नहीं है",
   "gitUiNativeMenuUnavailable": "मूल मेनू सेवा उपलब्ध नहीं है। फिर से कोशिश करें।",
   "gitWorkspaceRootRequired": "इस कार्यक्षेत्र में Git का उपयोग करने के लिए रिपॉज़िटरी के कार्य ट्री का मूल खोलें।",
-  "gitLocalTrackingDescription": "{upstream} · {ahead} आगे, {behind} पीछे। स्थानीय रूप से ज्ञात रिमोट ट्रैकिंग जानकारी; यह सर्वर की लाइव जाँच नहीं है।"
+  "gitLocalTrackingDescription": "{upstream} · {ahead} आगे, {behind} पीछे। स्थानीय रूप से ज्ञात रिमोट ट्रैकिंग जानकारी; यह सर्वर की लाइव जाँच नहीं है।",
+  "gitUiCommitter": "कमिटकर्ता",
+  "gitUiStageSelectedLines": "चुनी पंक्तियाँ इंडेक्स में जोड़ें",
+  "gitUiUnstageSelectedLines": "चुनी पंक्तियाँ इंडेक्स से हटाएँ",
+  "gitUiEditIndexInThreeWayView": "तीन-पक्षीय दृश्य में इंडेक्स संपादित करें…"
 }

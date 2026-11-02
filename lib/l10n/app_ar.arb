@@ -4546,5 +4546,9 @@
   "gitUiNoCommitsYet": "لا توجد إيداعات بعد",
   "gitUiNativeMenuUnavailable": "خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى.",
   "gitWorkspaceRootRequired": "افتح جذر شجرة عمل المستودع لاستخدام Git في مساحة العمل هذه.",
-  "gitLocalTrackingDescription": "{upstream} · متقدم بـ {ahead}، ومتأخر بـ {behind}. معلومات تتبع بعيدة معروفة محليًا؛ ليست فحصًا مباشرًا للخادم."
+  "gitLocalTrackingDescription": "{upstream} · متقدم بـ {ahead}، ومتأخر بـ {behind}. معلومات تتبع بعيدة معروفة محليًا؛ ليست فحصًا مباشرًا للخادم.",
+  "gitUiCommitter": "مُنشئ الإيداع",
+  "gitUiStageSelectedLines": "إضافة الأسطر المحددة إلى الفهرس",
+  "gitUiUnstageSelectedLines": "إزالة الأسطر المحددة من الفهرس",
+  "gitUiEditIndexInThreeWayView": "تحرير الفهرس في عرض ثلاثي…"
 }

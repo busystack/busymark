@@ -9359,6 +9359,21 @@ code
     expect(_comparisonTabs(h.container).active, same(second));
     expect(find.byType(shared.GitDiffView), findsOneWidget);
     expect(
+      tester
+          .widget<shared.GitDiffView>(find.byType(shared.GitDiffView))
+          .showFileHeader,
+      isFalse,
+    );
+    expect(find.byKey(const ValueKey('git-diff-file-header')), findsNothing);
+    expect(find.byKey(const ValueKey('git-diff-toolbar')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(shared.GitDiffView),
+        matching: find.byType(shared.GitChoiceBar<bool>),
+      ),
+      findsNothing,
+    );
+    expect(
       h.container.read(workspaceControllerProvider).activeBuffer!.text,
       document.text,
     );

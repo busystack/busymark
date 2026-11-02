@@ -8949,4 +8949,17 @@ class AppLocalizationsUk extends AppLocalizations {
   ) {
     return '$upstream · попереду на $ahead, позаду на $behind. Локально відомі дані віддаленого відстеження; без перевірки сервера наживо.';
   }
+
+  @override
+  String get gitUiCommitter => 'Комітер';
+
+  @override
+  String get gitUiStageSelectedLines => 'Додати вибрані рядки до індексу';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Вилучити вибрані рядки з індексу';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Редагувати індекс у тристоронньому вигляді…';
 }

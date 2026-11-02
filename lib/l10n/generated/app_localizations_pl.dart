@@ -8932,4 +8932,17 @@ class AppLocalizationsPl extends AppLocalizations {
   ) {
     return '$upstream · $ahead do przodu, $behind do tyłu. Lokalnie znane informacje o śledzeniu zdalnym; bez sprawdzania serwera na żywo.';
   }
+
+  @override
+  String get gitUiCommitter => 'Zatwierdzający';
+
+  @override
+  String get gitUiStageSelectedLines => 'Dodaj wybrane wiersze do indeksu';
+
+  @override
+  String get gitUiUnstageSelectedLines => 'Usuń wybrane wiersze z indeksu';
+
+  @override
+  String get gitUiEditIndexInThreeWayView =>
+      'Edytuj indeks w widoku trójstronnym…';
 }

@@ -6076,5 +6076,9 @@
   "gitUiNoCommitsYet": "尚无提交",
   "gitUiNativeMenuUnavailable": "原生菜单服务不可用。请重试。",
   "gitWorkspaceRootRequired": "请打开仓库工作树的根目录，以在此工作区使用 Git。",
-  "gitLocalTrackingDescription": "{upstream} · 领先 {ahead}，落后 {behind}。本地已知的远程跟踪信息；并非实时服务器检查。"
+  "gitLocalTrackingDescription": "{upstream} · 领先 {ahead}，落后 {behind}。本地已知的远程跟踪信息；并非实时服务器检查。",
+  "gitUiCommitter": "提交者",
+  "gitUiStageSelectedLines": "暂存所选行",
+  "gitUiUnstageSelectedLines": "取消暂存所选行",
+  "gitUiEditIndexInThreeWayView": "在三方视图中编辑暂存区…"
 }
