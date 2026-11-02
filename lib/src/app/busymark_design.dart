@@ -4783,6 +4783,7 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
     this.muted = false,
     this.compactHierarchyIndent = false,
     this.separateTrailingAction = false,
+    this.leadingExtent = BusyMarkSizes.sidebarTreeControl,
     this.vcsColor,
     this.titleStyle,
     this.onToggle,
@@ -4813,6 +4814,7 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
 
   /// A sibling action column outside the native selection/activation surface.
   final bool separateTrailingAction;
+  final double leadingExtent;
   final BusyMarkVcsFileColor? vcsColor;
   final TextStyle? titleStyle;
   final VoidCallback? onToggle;
@@ -4965,7 +4967,7 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
           SizedBox(width: expanderGap),
           if (widget.leading != null || widget.icon != null) ...[
             SizedBox.square(
-              dimension: BusyMarkSizes.sidebarTreeControl,
+              dimension: widget.leadingExtent,
               child: Center(
                 child:
                     widget.leading ??
@@ -5082,6 +5084,11 @@ double busyMarkGitSidebarMinimumWidth(BuildContext context) {
     double.infinity,
   );
 }
+
+double _busyMarkGitStatusExtent(BuildContext context) => math.max(
+  BusyMarkSizes.sidebarTreeControl,
+  MediaQuery.textScalerOf(context).scale(BusyMarkSizes.sidebarTreeControl),
+);
 
 /// Git's required native adapter. Every construction here maps to this host's
 /// existing approved design controls; feature code cannot select a fallback.
@@ -5315,7 +5322,8 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
   double changeRowTextInset(BuildContext context, int depth) =>
       BusyMarkSizes.sidebarTreeDepthBase +
       depth * BusyMarkSizes.sidebarTreeDepthIndent +
-      BusyMarkSizes.sidebarTreeControl * 2 +
+      BusyMarkSizes.sidebarTreeControl +
+      _busyMarkGitStatusExtent(context) +
       BusyMarkSpacing.xs +
       BusyMarkSpacing.sm;
   @override
@@ -5323,6 +5331,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       BusyMarkSidebarTreeRow(
         title: control.title,
         separateTrailingAction: true,
+        leadingExtent: _busyMarkGitStatusExtent(context),
         titleStyle: control.group ? busyMarkSectionHeaderStyle(context) : null,
         depth: control.depth,
         selected: control.selected,

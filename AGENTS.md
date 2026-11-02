@@ -49,3 +49,5 @@ that menu excludes the duplicate Branches action only in BusyMark. Native
 change rows reserve a sibling trailing-action region outside selection surfaces.
 Amend uses the labelled native desktop checkbox and preserves its state/drafts.
 Run tools/check_git_presentation.sh, including the rendered native contract tests.
+Git status text columns scale from the native tree-control extent; preserve
+legible markers and the matching text inset at enlarged scales in LTR and RTL.

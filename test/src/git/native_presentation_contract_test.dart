@@ -596,6 +596,24 @@ void main() {
             tester.getSize(find.text('Tree 2')).height,
             lessThanOrEqualTo(tester.getRect(rows.last).height),
           );
+          final marker = find.descendant(
+            of: rows.last,
+            matching: find.text('M'),
+          );
+          final markerContext = tester.element(marker);
+          final markerWidth = TextPainter(
+            text: TextSpan(
+              text: 'M',
+              style: Theme.of(markerContext).textTheme.bodySmall,
+            ),
+            textDirection: Directionality.of(markerContext),
+            textScaler: MediaQuery.textScalerOf(markerContext),
+          )..layout();
+          expect(
+            markerWidth.width,
+            lessThanOrEqualTo(tester.getSize(marker).width),
+          );
+          markerWidth.dispose();
           await tester.tap(
             find.descendant(
               of: rows.last,
