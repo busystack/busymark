@@ -321,6 +321,59 @@ void main() {
       for (final entry in _reviewedGitIdentityText.entries) {
         expect(english[entry.key], entry.value, reason: entry.key);
       }
+      // These are nouns describing a Git commit record, not an instruction to
+      // submit/send details. Completeness/parameter checks alone missed this.
+      const details = <String, (String, String, String)>{
+        'en': ('Commit details', 'View commit details…', 'Copy commit hash'),
+        'de': (
+          'Commit-Details',
+          'Commit-Details anzeigen…',
+          'Commit-Hash kopieren',
+        ),
+        'ja': ('コミットの詳細', 'コミットの詳細を表示…', 'コミットハッシュをコピー'),
+        'ar': ('تفاصيل الإيداع', 'عرض تفاصيل الإيداع…', 'نسخ تجزئة الإيداع'),
+        'fr': (
+          'Détails du commit',
+          'Afficher les détails du commit…',
+          'Copier le hash du commit',
+        ),
+        'pt': (
+          'Detalhes do commit',
+          'Ver detalhes do commit…',
+          'Copiar hash do commit',
+        ),
+        'pt_BR': (
+          'Detalhes do commit',
+          'Ver detalhes do commit…',
+          'Copiar hash do commit',
+        ),
+        'ru': (
+          'Сведения о коммите',
+          'Просмотреть сведения о коммите…',
+          'Копировать хеш коммита',
+        ),
+        'uk': (
+          'Відомості про коміт',
+          'Переглянути відомості про коміт…',
+          'Копіювати хеш коміту',
+        ),
+      };
+      for (final entry in details.entries) {
+        final catalog = _arbMessageStrings(
+          File('lib/l10n/app_${entry.key}.arb'),
+        );
+        final (title, view, copy) = entry.value;
+        expect(catalog['gitUiCommitDetails'], title, reason: entry.key);
+        expect(catalog['gitUiViewCommitDetails'], view, reason: entry.key);
+        expect(catalog['gitUiCopyCommitHash'], copy, reason: entry.key);
+        final locale = entry.key == 'pt_BR'
+            ? const Locale('pt', 'BR')
+            : Locale(entry.key);
+        final generated = lookupAppLocalizations(locale);
+        expect(generated.gitUiCommitDetails, title);
+        expect(generated.gitUiViewCommitDetails, view);
+        expect(generated.gitUiCopyCommitHash, copy);
+      }
     },
   );
 
