@@ -1,0 +1,5 @@
+{
+  "sha256": "8ebb8476ec5be6fd4d22ccde88dc37205d3020d14c0142729205d821585f7c46",
+  "encoding": "utf-8",
+  "text": "Resolving dependencies...\nDownloading packages...\n  _fe_analyzer_shared 99.0.0 (108.0.0 available)\n  analyzer 12.1.0 (14.4.0 available)\n  package_config 2.2.0 (3.0.0 available)\nGot dependencies!\n3 packages have newer versions incompatible with dependency constraints.\nTry `dart pub outdated` for more information.\n"
+}

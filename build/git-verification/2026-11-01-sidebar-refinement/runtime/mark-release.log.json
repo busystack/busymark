@@ -1,0 +1,5 @@
+{
+  "sha256": "47f46b78db410ab65d7588ca64ed304c5413aa46c8f17c004a6a7fa03a259a0f",
+  "encoding": "utf-8",
+  "text": "Building Linux application...                                   \n✓ Built build/linux/x64/release/bundle/busymark\n"
+}
