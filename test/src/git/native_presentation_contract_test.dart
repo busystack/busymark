@@ -506,131 +506,162 @@ void main() {
       );
     }
   }
-  testWidgets(
-    'native Git tree shares row metrics; disclosure and flat action isolate activation',
-    (tester) async {
-      var opened = 0, toggled = 0, staged = 0;
-      final enabled = ValueNotifier(true);
-      addTearDown(enabled.dispose);
-      await tester.pumpWidget(
-        _nativeGitHarness(
-          builder: (context, host) => ValueListenableBuilder<bool>(
-            valueListenable: enabled,
-            builder: (context, available, _) => SizedBox(
-              width: 400,
-              child: Column(
-                children: [
-                  for (final depth in [0, 1, 2])
-                    SizedBox(
-                      height: host.rowHeight(context),
-                      child: git.GitChangeRow(
-                        title: 'Tree $depth',
-                        depth: depth,
-                        group: depth == 0,
-                        expanded: depth < 2 ? true : null,
-                        status: depth == 2 ? 'M' : null,
-                        onPointerDown: (_) {},
-                        onTap: () => opened++,
-                        onToggle: () => toggled++,
-                        trailing: git.GitIconButton(
-                          tooltip: 'Stage $depth',
-                          icon: const git.GitIcon(git.GitGlyph.add),
-                          onPressed: available ? () => staged++ : null,
+  for (final locale in ['en', 'ar']) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets(
+        'native Git tree shares row metrics; isolated actions $locale $scale',
+        (tester) async {
+          var opened = 0, toggled = 0, staged = 0;
+          final enabled = ValueNotifier(true);
+          addTearDown(enabled.dispose);
+          await tester.pumpWidget(
+            _nativeGitHarness(
+              locale: Locale(locale),
+              scale: scale,
+              builder: (context, host) => ValueListenableBuilder<bool>(
+                valueListenable: enabled,
+                builder: (context, available, _) => SizedBox(
+                  width: 400,
+                  child: Column(
+                    children: [
+                      for (final depth in [0, 1, 2])
+                        SizedBox(
+                          height: host.rowHeight(context),
+                          child: git.GitChangeRow(
+                            title: 'Tree $depth',
+                            depth: depth,
+                            group: depth == 0,
+                            expanded: depth < 2 ? true : null,
+                            status: depth == 2 ? 'M' : null,
+                            onPointerDown: (_) {},
+                            onTap: () => opened++,
+                            onToggle: () => toggled++,
+                            trailing: git.GitIconButton(
+                              tooltip: git.GitMessages.stageFile,
+                              icon: const git.GitIcon(git.GitGlyph.add),
+                              onPressed: available ? () => staged++ : null,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+          await tester.pumpAndSettle();
+          final rows = find.byType(BusyMarkSidebarTreeRow);
+          expect(rows, findsNWidgets(3));
+          for (var i = 0; i < 3; i++) {
+            final surface = find.descendant(
+              of: rows.at(i),
+              matching: find.byType(BusyMarkSidebarRowSurface),
+            );
+            final action = find.descendant(
+              of: rows.at(i),
+              matching: find.byType(BusyMarkHeaderIconButton),
+            );
+            final surfaceRect = tester.getRect(surface),
+                actionRect = tester.getRect(action);
+            expect(
+              locale == 'ar'
+                  ? surfaceRect.left - actionRect.right
+                  : actionRect.left - surfaceRect.right,
+              greaterThanOrEqualTo(BusyMarkSpacing.xs),
+            );
+            expect(
+              actionRect.right,
+              lessThanOrEqualTo(tester.getRect(rows.at(i)).right),
+            );
+            expect(
+              actionRect.height,
+              greaterThanOrEqualTo(BusyMarkSizes.iconButton),
+            );
+          }
+          for (var i = 1; i < 3; i++) {
+            expect(
+              tester.getRect(rows.at(i)).height,
+              tester.getRect(rows.first).height,
+            );
+            expect(
+              locale == 'ar'
+                  ? tester.getTopRight(find.text('Tree ${i - 1}')).dx -
+                        tester.getTopRight(find.text('Tree $i')).dx
+                  : tester.getTopLeft(find.text('Tree $i')).dx -
+                        tester.getTopLeft(find.text('Tree ${i - 1}')).dx,
+              closeTo(BusyMarkSizes.sidebarTreeDepthIndent, .01),
+            );
+          }
+          expect(
+            tester.getSize(find.text('Tree 2')).height,
+            lessThanOrEqualTo(tester.getRect(rows.last).height),
+          );
+          await tester.tap(
+            find.descendant(
+              of: rows.last,
+              matching: find.byType(BusyMarkHeaderIconButton),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(staged, 1);
+          expect(opened, 0);
+          final disclosure = find.descendant(
+            of: rows.at(1),
+            matching: find.byType(AnimatedRotation),
+          );
+          await tester.tap(disclosure);
+          await tester.pumpAndSettle();
+          expect(toggled, 1);
+          expect(opened, 0);
+          await tester.tap(find.text('Tree 2'));
+          await tester.pumpAndSettle();
+          expect(opened, 1);
+          final action = find
+              .widgetWithIcon(IconButton, BusyMarkGlyphs.add)
+              .last;
+          final rect = tester.getRect(action);
+          final mouse = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          await mouse.addPointer(location: rect.center);
+          await mouse.moveTo(rect.center);
+          await tester.pump();
+          await mouse.down(rect.center);
+          await tester.pump();
+          await mouse.up();
+          await tester.pumpAndSettle();
+          expect(staged, 2);
+          expect(opened, 1);
+          final iconContext = tester.element(
+            find.descendant(of: action, matching: find.byType(Icon)).first,
+          );
+          final focus = Focus.of(iconContext);
+          focus.requestFocus();
+          await tester.pump();
+          expect(focus.hasFocus, isTrue);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          expect(staged, 3);
+          expect(opened, 1);
+          enabled.value = false;
+          await tester.pumpAndSettle();
+          expect(tester.getRect(action), rect);
+          expect(tester.widget<IconButton>(action).onPressed, isNull);
+          await tester.tap(
+            find.descendant(
+              of: rows.last,
+              matching: find.byType(BusyMarkHeaderIconButton),
+            ),
+          );
+          await tester.pump();
+          expect(staged, 3);
+          expect(opened, 1);
+          await mouse.removePointer();
+          expect(tester.takeException(), isNull);
+        },
       );
-      await tester.pumpAndSettle();
-      final rows = find.byType(BusyMarkSidebarTreeRow);
-      expect(rows, findsNWidgets(3));
-      for (var i = 0; i < 3; i++) {
-        final surface = find.descendant(
-          of: rows.at(i),
-          matching: find.byType(BusyMarkSidebarRowSurface),
-        );
-        final action = find.byTooltip('Stage $i');
-        final surfaceRect = tester.getRect(surface),
-            actionRect = tester.getRect(action);
-        expect(
-          actionRect.left - surfaceRect.right,
-          greaterThanOrEqualTo(BusyMarkSpacing.xs),
-        );
-        expect(
-          actionRect.right,
-          lessThanOrEqualTo(tester.getRect(rows.at(i)).right),
-        );
-        expect(
-          actionRect.height,
-          greaterThanOrEqualTo(BusyMarkSizes.iconButton),
-        );
-      }
-      for (var i = 1; i < 3; i++) {
-        expect(
-          tester.getRect(rows.at(i)).height,
-          tester.getRect(rows.first).height,
-        );
-        expect(
-          tester.getTopLeft(find.text('Tree $i')).dx -
-              tester.getTopLeft(find.text('Tree ${i - 1}')).dx,
-          closeTo(BusyMarkSizes.sidebarTreeDepthIndent, .01),
-        );
-      }
-      await tester.tap(find.byTooltip('Stage 2'));
-      await tester.pumpAndSettle();
-      expect(staged, 1);
-      expect(opened, 0);
-      final disclosure = find.descendant(
-        of: rows.at(1),
-        matching: find.byType(AnimatedRotation),
-      );
-      await tester.tap(disclosure);
-      await tester.pumpAndSettle();
-      expect(toggled, 1);
-      expect(opened, 0);
-      await tester.tap(find.text('Tree 2'));
-      await tester.pumpAndSettle();
-      expect(opened, 1);
-      final action = find.widgetWithIcon(IconButton, BusyMarkGlyphs.add).last;
-      final rect = tester.getRect(action);
-      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await mouse.addPointer(location: rect.center);
-      await mouse.moveTo(rect.center);
-      await tester.pump();
-      await mouse.down(rect.center);
-      await tester.pump();
-      await mouse.up();
-      await tester.pumpAndSettle();
-      expect(staged, 2);
-      expect(opened, 1);
-      final iconContext = tester.element(
-        find.descendant(of: action, matching: find.byType(Icon)).first,
-      );
-      final focus = Focus.of(iconContext);
-      focus.requestFocus();
-      await tester.pump();
-      expect(focus.hasFocus, isTrue);
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pumpAndSettle();
-      expect(staged, 3);
-      expect(opened, 1);
-      enabled.value = false;
-      await tester.pumpAndSettle();
-      expect(tester.getRect(action), rect);
-      expect(tester.widget<IconButton>(action).onPressed, isNull);
-      await tester.tap(find.byTooltip('Stage 2'));
-      await tester.pump();
-      expect(staged, 3);
-      expect(opened, 1);
-      await mouse.removePointer();
-      expect(tester.takeException(), isNull);
-    },
-  );
-
+    }
+  }
   testWidgets(
     'native-required Git header menu reports unavailable without a Flutter fallback',
     (tester) async {
