@@ -6669,7 +6669,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
-    return 'Committer: $arg0 <$arg1> $arg2';
+    return 'Vastgelegd door: $arg0 <$arg1> $arg2';
   }
 
   @override
@@ -8932,7 +8932,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitter => 'Committer';
+  String get gitUiCommitter => 'Vastgelegd door';
 
   @override
   String get gitUiStageSelectedLines => 'Geselecteerde regels klaarzetten';

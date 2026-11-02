@@ -5477,7 +5477,7 @@
   "gitUiCompareParentArg0Arg1": "Vergelijk ouder {arg0}: {arg1}",
   "gitUiChangedFiles": "Gewijzigde bestanden",
   "gitUiAuthorArg0Arg1Arg2": "Auteur: {arg0} <{arg1}> {arg2}",
-  "gitUiCommitterArg0Arg1Arg2": "Committer: {arg0} <{arg1}> {arg2}",
+  "gitUiCommitterArg0Arg1Arg2": "Vastgelegd door: {arg0} <{arg1}> {arg2}",
   "gitUiShallowPartialBoundaryAParentObjectIsUnavailable": "Ondiepe/gedeeltelijke grens: een ouderobject is niet beschikbaar.",
   "gitUiParentIsOutsideThisPageOrAShallowBoundary": "De ouder is buiten deze pagina of een ondiepe grens.",
   "gitUiParentArg0": "Bovenliggende commit {arg0}",
@@ -6077,7 +6077,7 @@
   "gitUiNativeMenuUnavailable": "De native menuservice is niet beschikbaar. Probeer het opnieuw.",
   "gitWorkspaceRootRequired": "Open de hoofdmap van de werkboom van de repository om Git in deze werkruimte te gebruiken.",
   "gitLocalTrackingDescription": "{upstream} · {ahead} voor, {behind} achter. Lokaal bekende informatie over externe tracking; geen livecontrole van de server.",
-  "gitUiCommitter": "Committer",
+  "gitUiCommitter": "Vastgelegd door",
   "gitUiStageSelectedLines": "Geselecteerde regels klaarzetten",
   "gitUiUnstageSelectedLines": "Geselecteerde regels uit index halen",
   "gitUiEditIndexInThreeWayView": "Index in driewegweergave bewerken…"

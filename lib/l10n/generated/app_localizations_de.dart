@@ -6676,7 +6676,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String gitUiCommitterArg0Arg1Arg2(String arg0, String arg1, String arg2) {
-    return 'Ausschuss: $arg0 <$arg1> $arg2';
+    return 'Commit-Ersteller: $arg0 <$arg1> $arg2';
   }
 
   @override
@@ -8951,7 +8951,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitter => 'Committer';
+  String get gitUiCommitter => 'Commit-Ersteller';
 
   @override
   String get gitUiStageSelectedLines =>

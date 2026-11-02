@@ -3947,7 +3947,7 @@
   "gitUiCompareParentArg0Arg1": "Vergleich Eltern {arg0}: {arg1}",
   "gitUiChangedFiles": "Geänderte Dateien",
   "gitUiAuthorArg0Arg1Arg2": "Autor: {arg0} <{arg1}> {arg2}",
-  "gitUiCommitterArg0Arg1Arg2": "Ausschuss: {arg0} <{arg1}> {arg2}",
+  "gitUiCommitterArg0Arg1Arg2": "Commit-Ersteller: {arg0} <{arg1}> {arg2}",
   "gitUiShallowPartialBoundaryAParentObjectIsUnavailable": "Flache/teilweise Grenze: ein übergeordnetes Objekt ist nicht verfügbar.",
   "gitUiParentIsOutsideThisPageOrAShallowBoundary": "Eltern sind außerhalb dieser Seite oder einer flachen Grenze.",
   "gitUiParentArg0": "Eltern-Commit {arg0}",
@@ -4547,7 +4547,7 @@
   "gitUiNativeMenuUnavailable": "Der native Menüdienst ist nicht verfügbar. Versuchen Sie es erneut.",
   "gitWorkspaceRootRequired": "Öffne das Arbeitsverzeichnis-Stammverzeichnis des Repositorys, um Git in diesem Arbeitsbereich zu verwenden.",
   "gitLocalTrackingDescription": "{upstream} · {ahead} voraus, {behind} zurück. Lokal bekannte Remote-Tracking-Informationen; keine Live-Serverabfrage.",
-  "gitUiCommitter": "Committer",
+  "gitUiCommitter": "Commit-Ersteller",
   "gitUiStageSelectedLines": "Ausgewählte Zeilen zum Index hinzufügen",
   "gitUiUnstageSelectedLines": "Ausgewählte Zeilen aus Index entfernen",
   "gitUiEditIndexInThreeWayView": "Index in Drei-Wege-Ansicht bearbeiten…"
