@@ -6600,7 +6600,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Commit-Details…';
+  String get gitUiCommitDetails => 'Commit-Details';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6719,9 +6719,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Aktuellen Branch zurücksetzen';
-
-  @override
-  String get gitUiCopyFullObjectID => 'Vollständige Objekt-ID kopieren';
 
   @override
   String get gitUiGoToCommitReference2 => 'Zu Commit/Referenz wechseln';
@@ -8964,4 +8961,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Index in Drei-Wege-Ansicht bearbeiten…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Commit-Details anzeigen…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Commit-Hash kopieren';
+
+  @override
+  String get gitUiCommitHash => 'Commit-Hash';
+
+  @override
+  String get gitUiCommitReferences => 'Referenzen';
 }

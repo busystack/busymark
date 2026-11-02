@@ -10681,11 +10681,13 @@ code
         .widget<TextField>(find.byType(TextField))
         .controller!
         .value;
-    final copyIcon = find.descendant(
-      of: find.byKey(const ValueKey('git-copy-commit-id')),
+    final actionsIcon = find.descendant(
+      of: find.byKey(const ValueKey('git-commit-actions')),
       matching: find.byType(Icon),
     );
-    Focus.of(tester.element(copyIcon)).requestFocus();
+    expect(find.byKey(const ValueKey('git-copy-commit-id')), findsNothing);
+    expect(find.byKey(const ValueKey('git-commit-details')), findsNothing);
+    Focus.of(tester.element(actionsIcon)).requestFocus();
     await tester.pumpAndSettle();
     var selectedCommitFocused = false;
     for (var step = 0; step < 4 && !selectedCommitFocused; step++) {

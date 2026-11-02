@@ -6347,7 +6347,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => '커밋 세부 정보…';
+  String get gitUiCommitDetails => '커밋 세부 정보';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6464,9 +6464,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => '현재 브랜치 재설정';
-
-  @override
-  String get gitUiCopyFullObjectID => '전체 객체 ID 복사';
 
   @override
   String get gitUiGoToCommitReference2 => '커밋/참조로 이동';
@@ -8628,4 +8625,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiEditIndexInThreeWayView => '3방향 보기에서 인덱스 편집…';
+
+  @override
+  String get gitUiViewCommitDetails => '커밋 세부 정보 보기…';
+
+  @override
+  String get gitUiCopyCommitHash => '커밋 해시 복사';
+
+  @override
+  String get gitUiCommitHash => '커밋 해시';
+
+  @override
+  String get gitUiCommitReferences => '참조';
 }

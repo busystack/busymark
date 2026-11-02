@@ -3925,7 +3925,7 @@
   "gitUiToggleBranchesPane": "Bereich der Zweige umschalten",
   "gitUiFilterBranchesAndTags": "Zweige und Tags filtern",
   "gitUiCommitArg0": "{arg0} einbinden",
-  "gitUiCommitDetails": "Commit-Details…",
+  "gitUiCommitDetails": "Commit-Details",
   "gitUiReferenceArg0": "Bezug: {arg0}",
   "gitUiSelectThisCommit": "Diesen Commit wählen",
   "gitUiBranchOrTag": "Zweig oder Tag",
@@ -3960,7 +3960,6 @@
   "gitUiRevertCommit": "Commit rückgängig machen",
   "gitUiInteractiveRebaseAfterThisBoundary": "Interaktives Rebase nach dieser Grenze",
   "gitUiResetCurrentBranch": "Aktuellen Branch zurücksetzen",
-  "gitUiCopyFullObjectID": "Vollständige Objekt-ID kopieren",
   "gitUiGoToCommitReference2": "Zu Commit/Referenz wechseln",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Geben Sie eine Commit-ID oder Referenz ein, um sie in Log zu offenbaren.",
   "gitUiTheRequestedRevisionIsUnavailable": "Die angeforderte Revision ist nicht verfügbar.",
@@ -4550,5 +4549,9 @@
   "gitUiCommitter": "Commit-Ersteller",
   "gitUiStageSelectedLines": "Ausgewählte Zeilen zum Index hinzufügen",
   "gitUiUnstageSelectedLines": "Ausgewählte Zeilen aus Index entfernen",
-  "gitUiEditIndexInThreeWayView": "Index in Drei-Wege-Ansicht bearbeiten…"
+  "gitUiEditIndexInThreeWayView": "Index in Drei-Wege-Ansicht bearbeiten…",
+  "gitUiViewCommitDetails": "Commit-Details anzeigen…",
+  "gitUiCopyCommitHash": "Commit-Hash kopieren",
+  "gitUiCommitHash": "Commit-Hash",
+  "gitUiCommitReferences": "Referenzen"
 }

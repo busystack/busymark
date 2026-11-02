@@ -6612,7 +6612,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Надіслати подробиці...';
+  String get gitUiCommitDetails => 'Відомості про коміт';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6731,10 +6731,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Скинути поточну гілку';
-
-  @override
-  String get gitUiCopyFullObjectID =>
-      'Копіювати повний ідентифікатор об\' єкта';
 
   @override
   String get gitUiGoToCommitReference2 => 'Перейти до внеску/ пріоритету';
@@ -8962,4 +8958,16 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Редагувати індекс у тристоронньому вигляді…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Переглянути відомості про коміт…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Копіювати хеш коміту';
+
+  @override
+  String get gitUiCommitHash => 'Хеш коміту';
+
+  @override
+  String get gitUiCommitReferences => 'Посилання';
 }

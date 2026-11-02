@@ -3967,7 +3967,7 @@
   "gitUiToggleBranchesPane": "برچسب های ارشیو: پان",
   "gitUiFilterBranchesAndTags": "فیلتر شاخه ها و برچسب ها",
   "gitUiCommitArg0": "دانلود نرم افزار {arg0}",
-  "gitUiCommitDetails": "به جزئیات...",
+  "gitUiCommitDetails": "جزئیات کامیت",
   "gitUiReferenceArg0": "بایگانی برچسب ها: {arg0}",
   "gitUiSelectThisCommit": "انتخاب این ثبت",
   "gitUiBranchOrTag": "شاخه یا برچسب",
@@ -4002,7 +4002,6 @@
   "gitUiRevertCommit": "بازگشت به تعهد",
   "gitUiInteractiveRebaseAfterThisBoundary": "تبادل نظر پس از این مرز",
   "gitUiResetCurrentBranch": "بازنشانی شاخهٔ فعلی",
-  "gitUiCopyFullObjectID": "کپی کامل ID اشیاء",
   "gitUiGoToCommitReference2": "به تعهد / ارجاع",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "وارد کردن یک ID یا مرجع برای افشای در سوابق.",
   "gitUiTheRequestedRevisionIsUnavailable": "بازنگری درخواست شده در دسترس نیست.",
@@ -4592,5 +4591,9 @@
   "gitUiCommitter": "ثبت‌کننده",
   "gitUiStageSelectedLines": "افزودن خط‌های انتخابی به نمایه",
   "gitUiUnstageSelectedLines": "برداشتن خط‌های انتخابی از نمایه",
-  "gitUiEditIndexInThreeWayView": "ویرایش نمایه در نمای سه‌طرفه…"
+  "gitUiEditIndexInThreeWayView": "ویرایش نمایه در نمای سه‌طرفه…",
+  "gitUiViewCommitDetails": "نمایش جزئیات کامیت…",
+  "gitUiCopyCommitHash": "کپی هش کامیت",
+  "gitUiCommitHash": "هش کامیت",
+  "gitUiCommitReferences": "ارجاع‌ها"
 }

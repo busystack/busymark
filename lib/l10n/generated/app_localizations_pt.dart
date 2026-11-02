@@ -6610,7 +6610,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Compromete os detalhes...';
+  String get gitUiCommitDetails => 'Detalhes do commit';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6729,9 +6729,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Repor branch atual';
-
-  @override
-  String get gitUiCopyFullObjectID => 'Copie o ID completo do objeto';
 
   @override
   String get gitUiGoToCommitReference2 => 'Ir para commit/referência';
@@ -8957,6 +8954,18 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Editar o índice na vista de três vias…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Ver detalhes do commit…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Copiar hash do commit';
+
+  @override
+  String get gitUiCommitHash => 'Hash do commit';
+
+  @override
+  String get gitUiCommitReferences => 'Referências';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -15559,7 +15568,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
-  String get gitUiCommitDetails => 'Compromete os detalhes...';
+  String get gitUiCommitDetails => 'Detalhes do commit';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -15678,9 +15687,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitUiResetCurrentBranch => 'Repor branch atual';
-
-  @override
-  String get gitUiCopyFullObjectID => 'Copie o ID completo do objeto';
 
   @override
   String get gitUiGoToCommitReference2 => 'Ir para commit/referência';
@@ -17905,4 +17911,16 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Editar o índice na visualização de três vias…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Ver detalhes do commit…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Copiar hash do commit';
+
+  @override
+  String get gitUiCommitHash => 'Hash do commit';
+
+  @override
+  String get gitUiCommitReferences => 'Referências';
 }

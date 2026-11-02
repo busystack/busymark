@@ -3951,7 +3951,7 @@
   "gitUiToggleBranchesPane": "Włącz okienko gałęzi",
   "gitUiFilterBranchesAndTags": "Oddziały i znaczniki filtracyjne",
   "gitUiCommitArg0": "Zobowiązanie {arg0}",
-  "gitUiCommitDetails": "Szczegóły zobowiązań...",
+  "gitUiCommitDetails": "Szczegóły commita",
   "gitUiReferenceArg0": "Numer referencyjny: {arg0}",
   "gitUiSelectThisCommit": "Wybierz ten commit",
   "gitUiBranchOrTag": "Oddział lub znacznik",
@@ -3986,7 +3986,6 @@
   "gitUiRevertCommit": "Cofnij zobowiązanie",
   "gitUiInteractiveRebaseAfterThisBoundary": "Interaktywna rebase po tej granicy",
   "gitUiResetCurrentBranch": "Zresetuj bieżącą gałąź",
-  "gitUiCopyFullObjectID": "Kopiuj ID obiektu",
   "gitUiGoToCommitReference2": "Przejdź do popełnienia/odsyłania",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Wpisz identyfikator lub odniesienie do ujawnienia w Log.",
   "gitUiTheRequestedRevisionIsUnavailable": "Wymagana zmiana jest niedostępna.",
@@ -4576,5 +4575,9 @@
   "gitUiCommitter": "Zatwierdzający",
   "gitUiStageSelectedLines": "Dodaj wybrane wiersze do indeksu",
   "gitUiUnstageSelectedLines": "Usuń wybrane wiersze z indeksu",
-  "gitUiEditIndexInThreeWayView": "Edytuj indeks w widoku trójstronnym…"
+  "gitUiEditIndexInThreeWayView": "Edytuj indeks w widoku trójstronnym…",
+  "gitUiViewCommitDetails": "Pokaż szczegóły commita…",
+  "gitUiCopyCommitHash": "Kopiuj hash commita",
+  "gitUiCommitHash": "Hash commita",
+  "gitUiCommitReferences": "Referencje"
 }

@@ -6347,7 +6347,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'コミット詳細…';
+  String get gitUiCommitDetails => 'コミットの詳細';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6464,9 +6464,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => '現在のブランチをリセット';
-
-  @override
-  String get gitUiCopyFullObjectID => '完全なオブジェクトIDをコピー';
 
   @override
   String get gitUiGoToCommitReference2 => 'コミット・参照へ移動';
@@ -8631,4 +8628,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiEditIndexInThreeWayView => '3方向ビューでインデックスを編集…';
+
+  @override
+  String get gitUiViewCommitDetails => 'コミットの詳細を表示…';
+
+  @override
+  String get gitUiCopyCommitHash => 'コミットハッシュをコピー';
+
+  @override
+  String get gitUiCommitHash => 'コミットハッシュ';
+
+  @override
+  String get gitUiCommitReferences => '参照';
 }

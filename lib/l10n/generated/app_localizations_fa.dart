@@ -6568,7 +6568,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'به جزئیات...';
+  String get gitUiCommitDetails => 'جزئیات کامیت';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6687,9 +6687,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'بازنشانی شاخهٔ فعلی';
-
-  @override
-  String get gitUiCopyFullObjectID => 'کپی کامل ID اشیاء';
 
   @override
   String get gitUiGoToCommitReference2 => 'به تعهد / ارجاع';
@@ -8889,4 +8886,16 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitUiEditIndexInThreeWayView => 'ویرایش نمایه در نمای سه‌طرفه…';
+
+  @override
+  String get gitUiViewCommitDetails => 'نمایش جزئیات کامیت…';
+
+  @override
+  String get gitUiCopyCommitHash => 'کپی هش کامیت';
+
+  @override
+  String get gitUiCommitHash => 'هش کامیت';
+
+  @override
+  String get gitUiCommitReferences => 'ارجاع‌ها';
 }

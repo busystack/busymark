@@ -5467,7 +5467,7 @@
   "gitUiToggleBranchesPane": "切换树枝窗格",
   "gitUiFilterBranchesAndTags": "过滤分支和标记",
   "gitUiCommitArg0": "提交{arg0}",
-  "gitUiCommitDetails": "提交细节...",
+  "gitUiCommitDetails": "提交详情",
   "gitUiReferenceArg0": "参考: {arg0}",
   "gitUiSelectThisCommit": "选择此提交",
   "gitUiBranchOrTag": "分支或标签",
@@ -5502,7 +5502,6 @@
   "gitUiRevertCommit": "还原承诺",
   "gitUiInteractiveRebaseAfterThisBoundary": "在此边界之后交互式重标",
   "gitUiResetCurrentBranch": "重置当前分支",
-  "gitUiCopyFullObjectID": "复制完整的对象 ID",
   "gitUiGoToCommitReference2": "进行/ 引用",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "输入要在日志中显示的承付 ID 或引用 。",
   "gitUiTheRequestedRevisionIsUnavailable": "请求的修订无法使用 。",
@@ -6092,5 +6091,9 @@
   "gitUiCommitter": "提交者",
   "gitUiStageSelectedLines": "暂存所选行",
   "gitUiUnstageSelectedLines": "取消暂存所选行",
-  "gitUiEditIndexInThreeWayView": "在三方视图中编辑暂存区…"
+  "gitUiEditIndexInThreeWayView": "在三方视图中编辑暂存区…",
+  "gitUiViewCommitDetails": "查看提交详情…",
+  "gitUiCopyCommitHash": "复制提交哈希",
+  "gitUiCommitHash": "提交哈希",
+  "gitUiCommitReferences": "引用"
 }

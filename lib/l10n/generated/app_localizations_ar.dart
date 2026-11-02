@@ -6553,7 +6553,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'إلتزم بالتفاصيل...';
+  String get gitUiCommitDetails => 'تفاصيل الإيداع';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6672,9 +6672,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'إعادة ضبط الفرع الحالي';
-
-  @override
-  String get gitUiCopyFullObjectID => 'انسخ معرف الكائن الكامل';
 
   @override
   String get gitUiGoToCommitReference2 => 'انتقل إلى الالتزام / المرجع';
@@ -8872,4 +8869,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitUiEditIndexInThreeWayView => 'تحرير الفهرس في عرض ثلاثي…';
+
+  @override
+  String get gitUiViewCommitDetails => 'عرض تفاصيل الإيداع…';
+
+  @override
+  String get gitUiCopyCommitHash => 'نسخ تجزئة الإيداع';
+
+  @override
+  String get gitUiCommitHash => 'تجزئة الإيداع';
+
+  @override
+  String get gitUiCommitReferences => 'المراجع';
 }

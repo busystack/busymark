@@ -5455,7 +5455,7 @@
   "gitUiToggleBranchesPane": "Bật/ tắt ô ô chi nhánh",
   "gitUiFilterBranchesAndTags": "Chi nhánh và thẻ lọc",
   "gitUiCommitArg0": "Nhấn {arg0}",
-  "gitUiCommitDetails": "Ghi rõ chi tiết...",
+  "gitUiCommitDetails": "Chi tiết commit",
   "gitUiReferenceArg0": "Tham khảo: {arg0}",
   "gitUiSelectThisCommit": "Chọn commit này",
   "gitUiBranchOrTag": "Chi nhánh hay Thẻ",
@@ -5490,7 +5490,6 @@
   "gitUiRevertCommit": "Hoàn nguyên",
   "gitUiInteractiveRebaseAfterThisBoundary": "Comment",
   "gitUiResetCurrentBranch": "Đặt lại nhánh hiện tại",
-  "gitUiCopyFullObjectID": "Chép toàn bộ ID đối tượng",
   "gitUiGoToCommitReference2": "Tới để xác nhận/ truy cập",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Hãy nhập vào tên người dùng hoặc tham chiếu để tiết lộ trong bản ghi.",
   "gitUiTheRequestedRevisionIsUnavailable": "Việc sửa đổi đã yêu cầu không sẵn sàng.",
@@ -6080,5 +6079,9 @@
   "gitUiCommitter": "Người tạo commit",
   "gitUiStageSelectedLines": "Đưa dòng đã chọn vào chỉ mục",
   "gitUiUnstageSelectedLines": "Bỏ dòng đã chọn khỏi chỉ mục",
-  "gitUiEditIndexInThreeWayView": "Chỉnh sửa chỉ mục trong chế độ xem ba phía…"
+  "gitUiEditIndexInThreeWayView": "Chỉnh sửa chỉ mục trong chế độ xem ba phía…",
+  "gitUiViewCommitDetails": "Xem chi tiết commit…",
+  "gitUiCopyCommitHash": "Sao chép mã băm commit",
+  "gitUiCommitHash": "Mã băm commit",
+  "gitUiCommitReferences": "Tham chiếu"
 }

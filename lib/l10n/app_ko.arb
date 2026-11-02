@@ -5455,7 +5455,7 @@
   "gitUiToggleBranchesPane": "브랜치 창 표시 전환",
   "gitUiFilterBranchesAndTags": "브랜치 및 태그 필터",
   "gitUiCommitArg0": "커밋 {arg0}",
-  "gitUiCommitDetails": "커밋 세부 정보…",
+  "gitUiCommitDetails": "커밋 세부 정보",
   "gitUiReferenceArg0": "참조: {arg0}",
   "gitUiSelectThisCommit": "이 커밋 선택",
   "gitUiBranchOrTag": "브랜치 또는 태그",
@@ -5490,7 +5490,6 @@
   "gitUiRevertCommit": "커밋 되돌리기",
   "gitUiInteractiveRebaseAfterThisBoundary": "이 경계 이후 대화형 리베이스",
   "gitUiResetCurrentBranch": "현재 브랜치 재설정",
-  "gitUiCopyFullObjectID": "전체 객체 ID 복사",
   "gitUiGoToCommitReference2": "커밋/참조로 이동",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "로그에 표시할 커밋 ID 또는 참조를 입력하세요.",
   "gitUiTheRequestedRevisionIsUnavailable": "요청한 리비전을 사용할 수 없습니다.",
@@ -6080,5 +6079,9 @@
   "gitUiCommitter": "커미터",
   "gitUiStageSelectedLines": "선택한 줄 스테이징",
   "gitUiUnstageSelectedLines": "선택한 줄 스테이징 해제",
-  "gitUiEditIndexInThreeWayView": "3방향 보기에서 인덱스 편집…"
+  "gitUiEditIndexInThreeWayView": "3방향 보기에서 인덱스 편집…",
+  "gitUiViewCommitDetails": "커밋 세부 정보 보기…",
+  "gitUiCopyCommitHash": "커밋 해시 복사",
+  "gitUiCommitHash": "커밋 해시",
+  "gitUiCommitReferences": "참조"
 }

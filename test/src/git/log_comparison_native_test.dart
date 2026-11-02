@@ -7,6 +7,7 @@ import 'package:busymark/src/git/application/shared_git_integration.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart' show kSecondaryMouseButton;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,17 +25,28 @@ class _ReviewClient extends FixtureClient implements git.GitWorkflowClient {
   bool absent = false,
       sameCommitter = false,
       lateCommitter = false,
-      merge = true;
+      merge = true,
+      short = false,
+      unicode = false;
   git.GitCommit get commit => git.GitCommit(
     oid: head,
     parents: merge ? [first, second] : [first],
-    subject: 'Long immutable subject ${'readable commit ' * 12}',
-    message:
-        'Long immutable subject ${'readable commit ' * 12}\n\n${'Body with exact content and a long preview.\n' * 70}',
-    author: 'Original Author',
-    email: 'author@example.invalid',
+    subject: short
+        ? 'Short commit'
+        : 'Long immutable subject ${'readable commit ' * 12}',
+    message: short
+        ? 'Short commit'
+        : 'Long immutable subject ${'readable commit ' * 12}\n\n${'Body with exact content and a long preview.\n' * 70}',
+    author: unicode ? 'Zoë 宮崎 العلي' : 'Original Author',
+    email: unicode
+        ? '${'long-address.' * 8}author@example.invalid'
+        : 'author@example.invalid',
     date: DateTime.utc(2026, 4, 5, 10, 11, 12, 345),
-    committer: sameCommitter ? 'Original Author' : 'Different Committer',
+    committer: unicode
+        ? 'Élodie コミッター'
+        : sameCommitter
+        ? 'Original Author'
+        : 'Different Committer',
     committerEmail: sameCommitter
         ? 'author@example.invalid'
         : 'committer@example.invalid',
@@ -184,6 +196,12 @@ Widget _host({
     ),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(scale)),
+      child: child!,
+    ),
     home: Scaffold(
       body: MediaQuery(
         data: MediaQueryData(
@@ -231,6 +249,151 @@ Future<void> _ready(WidgetTester tester) async {
 }
 
 void main() {
+  for (final locale in ['en', 'de', 'ja', 'ar']) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets(
+        'short native commit details size and complete Unicode metadata $locale $scale',
+        (tester) async {
+          final viewport = scale == 1
+              ? const Size(1200, 1000)
+              : const Size(480, 720);
+          tester.view.physicalSize = viewport;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final client = _ReviewClient()
+            ..short = true
+            ..unicode = true
+            ..merge = false;
+          git.GitSession? session;
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            const MethodChannel('busymark/native_menus'),
+            (call) async {
+              if (call.method != 'show') return true;
+              final entries = (call.arguments as Map)['entries'] as List;
+              return entries.indexWhere(
+                (e) =>
+                    (e as Map)['label'] ==
+                    session!.host.message(git.GitMessages.viewCommitDetails),
+              );
+            },
+          );
+          addTearDown(
+            () =>
+                tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+                  const MethodChannel('busymark/native_menus'),
+                  null,
+                ),
+          );
+          await tester.pumpWidget(
+            _host(
+              locale: Locale(locale),
+              scale: scale,
+              brightness: locale == 'ja' ? Brightness.dark : Brightness.light,
+              builder: (context, host) {
+                session ??= git.GitSession(
+                  client: client,
+                  repository: repo,
+                  host: host,
+                );
+                return SizedBox(
+                  width: 320,
+                  height: 900,
+                  child: git.GitLogView(session: session!, inspector: true),
+                );
+              },
+            ),
+          );
+          addTearDown(() => session?.dispose());
+          await session!.start();
+          for (
+            var i = 0;
+            i < 20 &&
+                find
+                    .byKey(const ValueKey('git-commit-actions'))
+                    .evaluate()
+                    .isEmpty;
+            i++
+          ) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
+          await tester.pumpAndSettle();
+          final dialog = find.byType(Dialog);
+          final rect = tester.getRect(
+            find.descendant(of: dialog, matching: find.byType(Material)).first,
+          );
+          expect(
+            tester
+                .widget<BusyMarkDialogShell>(find.byType(BusyMarkDialogShell))
+                .expanded,
+            isFalse,
+          );
+          expect(rect.width, lessThanOrEqualTo(BusyMarkSizes.dialogWide));
+          expect(rect.left, greaterThanOrEqualTo(0));
+          expect(rect.right, lessThanOrEqualTo(viewport.width));
+          expect(
+            rect.height,
+            lessThanOrEqualTo(
+              viewport.height - BusyMarkSizes.modalVerticalInset * 2,
+            ),
+          );
+          if (scale == 1) {
+            expect(rect.width, lessThan(viewport.width * .6));
+            expect(rect.height, lessThan(viewport.height * .75));
+            final content = tester.getRect(
+              find.byKey(const ValueKey('git-complete-commit-information')),
+            );
+            expect(
+              rect.height - content.height,
+              lessThan(BusyMarkSizes.iconButton + BusyMarkSpacing.lg * 4),
+            );
+          }
+          for (final value in [
+            client.commit.message,
+            client.commit.author,
+            client.commit.email,
+            client.commit.committer,
+            client.first.value,
+            'refs/heads/main',
+            'refs/tags/v1',
+          ]) {
+            final text = find.text(value);
+            expect(text, findsOneWidget);
+            await tester.ensureVisible(text);
+            await tester.pumpAndSettle();
+            expect(text.hitTestable(), findsOneWidget);
+          }
+          expect(
+            find.descendant(of: dialog, matching: find.byType(git.GitButton)),
+            findsNothing,
+          );
+          expect(
+            find
+                .byType(git.GitIconButton)
+                .evaluate()
+                .where(
+                  (e) =>
+                      (e.widget as git.GitIconButton).tooltip ==
+                      git.GitMessages.copyText,
+                ),
+            isEmpty,
+          );
+          expect(client.mutations, isEmpty);
+          expect(tester.takeException(), isNull);
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+          expect(find.byType(Dialog), findsNothing);
+          expect(
+            find.byKey(const ValueKey('git-selected-commit')),
+            findsOneWidget,
+          );
+          await tester.pumpWidget(const SizedBox());
+        },
+      );
+    }
+  }
   for (final late in [false, true]) {
     testWidgets(
       'ordinary inspector avoids duplicate identical identities; changed date=$late',
@@ -429,10 +592,19 @@ void main() {
             expect(style.shape!.resolve(state), isA<RoundedRectangleBorder>());
           }
           expect(style.backgroundColor!.resolve({})!.a, 0);
-          final copy = find.byKey(const ValueKey('git-copy-commit-id'));
-          await tester.tap(copy);
-          await tester.pump();
-          expect(copied, client.head.value);
+          expect(
+            find.byKey(const ValueKey('git-copy-commit-id')),
+            findsNothing,
+          );
+          expect(
+            find.byKey(const ValueKey('git-commit-details')),
+            findsNothing,
+          );
+          expect(find.text(client.head.abbreviated), findsOneWidget);
+          for (final icon in session!.host.icons.values) {
+            expect(icon.fontFamily, 'YaruIcons');
+            expect(icon.fontPackage, 'yaru');
+          }
           await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
           await tester.pumpAndSettle();
           final labels = menus.last
@@ -447,13 +619,61 @@ void main() {
             git.GitMessages.revertCommit,
             git.GitMessages.interactiveRebaseAfterThisBoundary,
             git.GitMessages.resetCurrentBranch,
-            git.GitMessages.copyFullObjectID,
+            git.GitMessages.copyCommitHash,
+            git.GitMessages.viewCommitDetails,
           ]) {
-            expect(labels, contains(session!.host.message(message)));
+            expect(
+              labels.where((l) => l == session!.host.message(message)),
+              hasLength(1),
+            );
           }
+          choose = session!.host.message(git.GitMessages.copyCommitHash);
+          await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
+          await tester.pumpAndSettle();
+          expect(copied, client.head.value);
+          choose = null;
           final file = git.RepoPath.text('docs/a.md');
           final fileMenu = find.byKey(
             ValueKey('git-historical-menu:${file.key}'),
+          );
+          expect(
+            tester.widget<git.GitMenuButton>(fileMenu).glyph,
+            git.GitGlyph.moreHorizontal,
+          );
+          final nativeMenu = find.descendant(
+            of: fileMenu,
+            matching: find.byType(BusyMarkHeaderIconButton),
+          );
+          expect(
+            tester.widget<BusyMarkHeaderIconButton>(nativeMenu).icon,
+            YaruIcons.view_more_horizontal,
+          );
+          final paintedAction = find.descendant(
+            of: fileMenu,
+            matching: find.byType(IconButton),
+          );
+          final action = tester.widget<IconButton>(paintedAction);
+          final actionStyle =
+              Theme.of(
+                tester.element(paintedAction),
+              ).iconButtonTheme.style?.merge(action.style) ??
+              action.style!;
+          for (final states in <Set<WidgetState>>[
+            {},
+            {WidgetState.hovered},
+            {WidgetState.pressed},
+            {WidgetState.focused},
+            {WidgetState.disabled},
+          ]) {
+            expect(
+              actionStyle.shape!.resolve(states),
+              isA<RoundedRectangleBorder>(),
+            );
+          }
+          expect(actionStyle.backgroundColor?.resolve({})?.a ?? 0, 0);
+          expect(
+            tester.getRect(nativeMenu).height,
+            greaterThanOrEqualTo(BusyMarkSizes.iconButton),
           );
           final filename = find.text('a.md').first;
           final surface = find
@@ -484,6 +704,11 @@ void main() {
           await tester.pump();
           expect(opened, hasLength(1));
           final captured = opened.single;
+          final beforeContext = menus.length;
+          await tester.tap(filename, buttons: kSecondaryMouseButton);
+          await tester.pumpAndSettle();
+          expect(menus.length, beforeContext + 1);
+          expect(opened, hasLength(1));
           final menuCount = menus.length;
           await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
           await tester.sendKeyEvent(LogicalKeyboardKey.f10);
@@ -522,24 +747,91 @@ void main() {
           await tester.pump();
           expect(opened.last.leftPath, git.RepoPath.text('old/name.md'));
           expect(opened.last.left.revision, client.second);
-          await tester.tap(find.byKey(const ValueKey('git-commit-details')));
+          choose = session!.host.message(git.GitMessages.viewCommitDetails);
+          await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
           await tester.pumpAndSettle();
-          expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-          expect(find.text(client.commit.message), findsOneWidget);
-          await tester.tap(
-            find.text(session!.host.message(git.GitMessages.copyText)),
+          final shell = tester.widget<BusyMarkDialogShell>(
+            find.byType(BusyMarkDialogShell),
           );
-          await tester.pump();
-          expect(copied, client.commit.message);
+          expect(shell.expanded, isFalse);
+          expect(shell.maxWidth, BusyMarkSizes.dialogWide);
           expect(
-            find.textContaining('2026-04-05T10:11:12.345Z'),
+            tester
+                .getRect(
+                  find
+                      .descendant(
+                        of: find.byType(Dialog),
+                        matching: find.byType(Material),
+                      )
+                      .first,
+                )
+                .width,
+            lessThanOrEqualTo(BusyMarkSizes.dialogWide),
+          );
+          expect(find.text(client.commit.message), findsOneWidget);
+          expect(
+            find.widgetWithText(
+              git.GitButton,
+              session!.host.message(git.GitMessages.copyText),
+            ),
+            findsNothing,
+          );
+          final details = find.byKey(
+            const ValueKey('git-complete-commit-information'),
+          );
+          expect(
+            find.ancestor(
+              of: details,
+              matching: find.byType(SingleChildScrollView),
+            ),
             findsOneWidget,
           );
           expect(
-            find.text(client.first.value),
+            find.descendant(
+              of: details,
+              matching: find.byType(SingleChildScrollView),
+            ),
             findsNothing,
-          ); // Full parent identity has its localized role.
-          expect(find.textContaining(client.first.value), findsOneWidget);
+          );
+          expect(
+            find.descendant(
+              of: find.byType(Dialog),
+              matching: find.byTooltip('2026-04-05T10:11:12.345Z'),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.descendant(
+              of: find.byType(Dialog),
+              matching: find.byTooltip('2026-04-06T12:13:14.456Z'),
+            ),
+            findsOneWidget,
+          );
+          final message = find.byKey(const ValueKey('git-commit-message'));
+          await tester.tapAt(tester.getTopLeft(message) + const Offset(20, 10));
+          await tester.pumpAndSettle();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pumpAndSettle();
+          expect(copied, client.commit.message);
+          for (final value in [
+            client.first.value,
+            client.second.value,
+            'refs/heads/main',
+            'refs/tags/v1',
+            client.commit.email,
+            client.commit.committerEmail,
+          ]) {
+            final text = find.text(value);
+            expect(text, findsOneWidget);
+            await tester.ensureVisible(text);
+            await tester.pumpAndSettle();
+            expect(text.hitTestable(), findsOneWidget);
+          }
           expect(client.mutations, isEmpty);
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox());

@@ -3925,7 +3925,7 @@
   "gitUiToggleBranchesPane": "Conmutar el panel de ramas",
   "gitUiFilterBranchesAndTags": "Filtrar ramas y etiquetas",
   "gitUiCommitArg0": "Comprometer {arg0}",
-  "gitUiCommitDetails": "Entregar detalles...",
+  "gitUiCommitDetails": "Detalles del commit",
   "gitUiReferenceArg0": "Referencia: {arg0}",
   "gitUiSelectThisCommit": "Seleccionar este commit",
   "gitUiBranchOrTag": "Rama o etiqueta",
@@ -3960,7 +3960,6 @@
   "gitUiRevertCommit": "Revertir la confirmación",
   "gitUiInteractiveRebaseAfterThisBoundary": "Rebase interactiva después de este límite",
   "gitUiResetCurrentBranch": "Restablecer rama actual",
-  "gitUiCopyFullObjectID": "Copiar el ID completo del objeto",
   "gitUiGoToCommitReference2": "Ir a commit/reference",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Introduzca un ID de confirmación o referencia para revelar en Registro.",
   "gitUiTheRequestedRevisionIsUnavailable": "La revisión solicitada no está disponible.",
@@ -4550,5 +4549,9 @@
   "gitUiCommitter": "Confirmador",
   "gitUiStageSelectedLines": "Preparar líneas seleccionadas",
   "gitUiUnstageSelectedLines": "Quitar líneas seleccionadas de preparación",
-  "gitUiEditIndexInThreeWayView": "Editar el índice en vista de tres vías…"
+  "gitUiEditIndexInThreeWayView": "Editar el índice en vista de tres vías…",
+  "gitUiViewCommitDetails": "Ver detalles del commit…",
+  "gitUiCopyCommitHash": "Copiar hash del commit",
+  "gitUiCommitHash": "Hash del commit",
+  "gitUiCommitReferences": "Referencias"
 }

@@ -5455,7 +5455,7 @@
   "gitUiToggleBranchesPane": "Birlikte Şubeler Pan",
   "gitUiFilterBranchesAndTags": "Filtre Şubeleri ve Etiketleri",
   "gitUiCommitArg0": "{arg0} Yorumları",
-  "gitUiCommitDetails": "Detaylı komite...",
+  "gitUiCommitDetails": "Commit ayrıntıları",
   "gitUiReferenceArg0": "Etiket: {arg0}",
   "gitUiSelectThisCommit": "Bu commiti seç",
   "gitUiBranchOrTag": "Branch veya Tag",
@@ -5490,7 +5490,6 @@
   "gitUiRevertCommit": "Geri Dönüş",
   "gitUiInteractiveRebaseAfterThisBoundary": "Bu sınırdan sonra etkileşimli düşüş",
   "gitUiResetCurrentBranch": "Geçerli dalı sıfırla",
-  "gitUiCopyFullObjectID": "Tam Object ID kopyası",
   "gitUiGoToCommitReference2": "Konuşma / Referans",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Log'da ortaya çıkarmak için bir komite kimliği veya referans girin.",
   "gitUiTheRequestedRevisionIsUnavailable": "Talep edilen inceleme mevcut değildir.",
@@ -6080,5 +6079,9 @@
   "gitUiCommitter": "İşleyen",
   "gitUiStageSelectedLines": "Seçili satırları indekse ekle",
   "gitUiUnstageSelectedLines": "Seçili satırları indeksten çıkar",
-  "gitUiEditIndexInThreeWayView": "İndeksi Üç Yönlü Görünümde Düzenle…"
+  "gitUiEditIndexInThreeWayView": "İndeksi Üç Yönlü Görünümde Düzenle…",
+  "gitUiViewCommitDetails": "Commit ayrıntılarını görüntüle…",
+  "gitUiCopyCommitHash": "Commit karmasını kopyala",
+  "gitUiCommitHash": "Commit karması",
+  "gitUiCommitReferences": "Başvurular"
 }

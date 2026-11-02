@@ -6527,7 +6527,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Ghi rõ chi tiết...';
+  String get gitUiCommitDetails => 'Chi tiết commit';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6645,9 +6645,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Đặt lại nhánh hiện tại';
-
-  @override
-  String get gitUiCopyFullObjectID => 'Chép toàn bộ ID đối tượng';
 
   @override
   String get gitUiGoToCommitReference2 => 'Tới để xác nhận/ truy cập';
@@ -8860,4 +8857,16 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Chỉnh sửa chỉ mục trong chế độ xem ba phía…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Xem chi tiết commit…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Sao chép mã băm commit';
+
+  @override
+  String get gitUiCommitHash => 'Mã băm commit';
+
+  @override
+  String get gitUiCommitReferences => 'Tham chiếu';
 }

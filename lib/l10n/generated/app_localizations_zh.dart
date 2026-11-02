@@ -6231,7 +6231,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => '提交细节...';
+  String get gitUiCommitDetails => '提交详情';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6348,9 +6348,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => '重置当前分支';
-
-  @override
-  String get gitUiCopyFullObjectID => '复制完整的对象 ID';
 
   @override
   String get gitUiGoToCommitReference2 => '进行/ 引用';
@@ -8496,6 +8493,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiEditIndexInThreeWayView => '在三方视图中编辑暂存区…';
+
+  @override
+  String get gitUiViewCommitDetails => '查看提交详情…';
+
+  @override
+  String get gitUiCopyCommitHash => '复制提交哈希';
+
+  @override
+  String get gitUiCommitHash => '提交哈希';
+
+  @override
+  String get gitUiCommitReferences => '引用';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -14723,7 +14732,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiCommitDetails => '提交细节...';
+  String get gitUiCommitDetails => '提交详情';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -14840,9 +14849,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiResetCurrentBranch => '重置当前分支';
-
-  @override
-  String get gitUiCopyFullObjectID => '复制完整的对象 ID';
 
   @override
   String get gitUiGoToCommitReference2 => '进行/ 引用';
@@ -16988,4 +16994,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiEditIndexInThreeWayView => '在三方视图中编辑暂存区…';
+
+  @override
+  String get gitUiViewCommitDetails => '查看提交详情…';
+
+  @override
+  String get gitUiCopyCommitHash => '复制提交哈希';
+
+  @override
+  String get gitUiCommitHash => '提交哈希';
+
+  @override
+  String get gitUiCommitReferences => '引用';
 }

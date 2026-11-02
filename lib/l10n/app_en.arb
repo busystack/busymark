@@ -4171,9 +4171,9 @@
       }
     }
   },
-  "gitUiCommitDetails": "Commit details…",
+  "gitUiCommitDetails": "Commit details",
   "@gitUiCommitDetails": {
-    "description": "Shared Git interface: Commit details…"
+    "description": "Shared Git interface: Commit details"
   },
   "gitUiReferenceArg0": "Reference: {arg0}",
   "@gitUiReferenceArg0": {
@@ -4355,10 +4355,6 @@
   "gitUiResetCurrentBranch": "Reset current branch",
   "@gitUiResetCurrentBranch": {
     "description": "Shared Git interface: Reset current branch"
-  },
-  "gitUiCopyFullObjectID": "Copy full object ID",
-  "@gitUiCopyFullObjectID": {
-    "description": "Shared Git interface: Copy full object ID"
   },
   "gitUiGoToCommitReference2": "Go to commit/reference",
   "@gitUiGoToCommitReference2": {
@@ -7379,5 +7375,21 @@
   },
   "@gitUiEditIndexInThreeWayView": {
     "description": "Shared Git interface: Edit Index in Three-Way View…"
+  },
+  "gitUiViewCommitDetails": "View commit details…",
+  "gitUiCopyCommitHash": "Copy commit hash",
+  "gitUiCommitHash": "Commit hash",
+  "gitUiCommitReferences": "References",
+  "@gitUiCopyCommitHash": {
+    "description": "Shared Git interface: Copy commit hash"
+  },
+  "@gitUiViewCommitDetails": {
+    "description": "Shared Git interface: View commit details…"
+  },
+  "@gitUiCommitHash": {
+    "description": "Shared Git interface: Commit hash"
+  },
+  "@gitUiCommitReferences": {
+    "description": "Shared Git interface: References"
   }
 }

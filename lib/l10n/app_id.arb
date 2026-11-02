@@ -5455,7 +5455,7 @@
   "gitUiToggleBranchesPane": "Jungkitkan panel percabangan",
   "gitUiFilterBranchesAndTags": "Filter branch dan tag",
   "gitUiCommitArg0": "Commit {arg0}",
-  "gitUiCommitDetails": "Commit rincian...",
+  "gitUiCommitDetails": "Detail commit",
   "gitUiReferenceArg0": "Referensi: {arg0}",
   "gitUiSelectThisCommit": "Pilih commit ini",
   "gitUiBranchOrTag": "Branch atau tag",
@@ -5490,7 +5490,6 @@
   "gitUiRevertCommit": "Putar balik suatu commit",
   "gitUiInteractiveRebaseAfterThisBoundary": "Rebase interaktif setelah batas ini",
   "gitUiResetCurrentBranch": "Reset cabang saat ini",
-  "gitUiCopyFullObjectID": "Salin ID objek penuh",
   "gitUiGoToCommitReference2": "Pergi ke commit/referensi",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Masukkan ID commit atau referensi untuk mengungkapkannya dalam Log.",
   "gitUiTheRequestedRevisionIsUnavailable": "Revisi yang diminta tidak tersedia.",
@@ -6080,5 +6079,9 @@
   "gitUiCommitter": "Pembuat commit",
   "gitUiStageSelectedLines": "Stage baris terpilih",
   "gitUiUnstageSelectedLines": "Unstage baris terpilih",
-  "gitUiEditIndexInThreeWayView": "Edit Indeks dalam Tampilan Tiga Arah…"
+  "gitUiEditIndexInThreeWayView": "Edit Indeks dalam Tampilan Tiga Arah…",
+  "gitUiViewCommitDetails": "Lihat detail commit…",
+  "gitUiCopyCommitHash": "Salin hash commit",
+  "gitUiCommitHash": "Hash commit",
+  "gitUiCommitReferences": "Referensi"
 }

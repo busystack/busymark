@@ -3951,7 +3951,7 @@
   "gitUiToggleBranchesPane": "Перемикач панелі гілок",
   "gitUiFilterBranchesAndTags": "Фільтрувати гілки і мітки",
   "gitUiCommitArg0": "Передати {arg0}",
-  "gitUiCommitDetails": "Надіслати подробиці...",
+  "gitUiCommitDetails": "Відомості про коміт",
   "gitUiReferenceArg0": "Посилання: {arg0}",
   "gitUiSelectThisCommit": "Вибрати цей коміт",
   "gitUiBranchOrTag": "Гілка або мітка",
@@ -3986,7 +3986,6 @@
   "gitUiRevertCommit": "Повернути внеску",
   "gitUiInteractiveRebaseAfterThisBoundary": "Інтерактивне переосновування після цієї межі",
   "gitUiResetCurrentBranch": "Скинути поточну гілку",
-  "gitUiCopyFullObjectID": "Копіювати повний ідентифікатор об' єкта",
   "gitUiGoToCommitReference2": "Перейти до внеску/ пріоритету",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Введіть ідентифікатор або посилання на відкриття у журналі.",
   "gitUiTheRequestedRevisionIsUnavailable": "Запитана модифікація недоступна.",
@@ -4576,5 +4575,9 @@
   "gitUiCommitter": "Комітер",
   "gitUiStageSelectedLines": "Додати вибрані рядки до індексу",
   "gitUiUnstageSelectedLines": "Вилучити вибрані рядки з індексу",
-  "gitUiEditIndexInThreeWayView": "Редагувати індекс у тристоронньому вигляді…"
+  "gitUiEditIndexInThreeWayView": "Редагувати індекс у тристоронньому вигляді…",
+  "gitUiViewCommitDetails": "Переглянути відомості про коміт…",
+  "gitUiCopyCommitHash": "Копіювати хеш коміту",
+  "gitUiCommitHash": "Хеш коміту",
+  "gitUiCommitReferences": "Посилання"
 }

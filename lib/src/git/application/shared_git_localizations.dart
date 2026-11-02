@@ -357,7 +357,7 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.interactiveRebaseAfterThisBoundary =>
       gitUiInteractiveRebaseAfterThisBoundary,
     GitMessages.resetCurrentBranch => gitUiResetCurrentBranch,
-    GitMessages.copyFullObjectID => gitUiCopyFullObjectID,
+    GitMessages.copyCommitHash => gitUiCopyCommitHash,
     GitMessages.goToCommitReference2 => gitUiGoToCommitReference2,
     GitMessages.enterACommitIDOrReferenceToRevealInLog =>
       gitUiEnterACommitIDOrReferenceToRevealInLog,
@@ -1305,6 +1305,9 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.stageSelectedLines => gitUiStageSelectedLines,
     GitMessages.unstageSelectedLines => gitUiUnstageSelectedLines,
     GitMessages.editIndexInThreeWayView => gitUiEditIndexInThreeWayView,
+    GitMessages.viewCommitDetails => gitUiViewCommitDetails,
+    GitMessages.commitHash => gitUiCommitHash,
+    GitMessages.commitReferences => gitUiCommitReferences,
     _ => message,
   };
 }

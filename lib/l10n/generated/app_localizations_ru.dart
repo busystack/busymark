@@ -6605,7 +6605,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Зафиксировать детали...';
+  String get gitUiCommitDetails => 'Сведения о коммите';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6724,10 +6724,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Сбросить текущую ветку';
-
-  @override
-  String get gitUiCopyFullObjectID =>
-      'Скопировать полный идентификатор объекта';
 
   @override
   String get gitUiGoToCommitReference2 => 'Перейти к обязательству/отсылке';
@@ -8954,4 +8950,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Редактировать индекс в трёхстороннем виде…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Просмотреть сведения о коммите…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Копировать хеш коммита';
+
+  @override
+  String get gitUiCommitHash => 'Хеш коммита';
+
+  @override
+  String get gitUiCommitReferences => 'Ссылки';
 }

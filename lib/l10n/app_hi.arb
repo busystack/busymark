@@ -3925,7 +3925,7 @@
   "gitUiToggleBranchesPane": "यदि आप छवि के चमकीलेपन को वैसा ही रहने देना चाहते हैं तो इस बटन पर क्लिक करें.",
   "gitUiFilterBranchesAndTags": "फ़िल्टर शाखा तथा टैग",
   "gitUiCommitArg0": "कमिट {arg0}",
-  "gitUiCommitDetails": "कमिट विवरण...",
+  "gitUiCommitDetails": "कमिट विवरण",
   "gitUiReferenceArg0": "संदर्भ: {arg0}",
   "gitUiSelectThisCommit": "यह कमिट चुनें",
   "gitUiBranchOrTag": "शाखा या टैग",
@@ -3960,7 +3960,6 @@
   "gitUiRevertCommit": "उलटें",
   "gitUiInteractiveRebaseAfterThisBoundary": "इस किनारा के बाद अंतर्क्रियात्मक रीफ्रेम",
   "gitUiResetCurrentBranch": "वर्तमान शाखा रीसेट करें",
-  "gitUiCopyFullObjectID": "पूर्ण वस्तु आईडी नक़ल करें",
   "gitUiGoToCommitReference2": "जाएँ को",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "लॉग में प्रकट करने के लिए कोई कमिट आईडी या संदर्भ भरें.",
   "gitUiTheRequestedRevisionIsUnavailable": "निवेदित संशोधन अनुपलब्ध है.",
@@ -4550,5 +4549,9 @@
   "gitUiCommitter": "कमिटकर्ता",
   "gitUiStageSelectedLines": "चुनी पंक्तियाँ इंडेक्स में जोड़ें",
   "gitUiUnstageSelectedLines": "चुनी पंक्तियाँ इंडेक्स से हटाएँ",
-  "gitUiEditIndexInThreeWayView": "तीन-पक्षीय दृश्य में इंडेक्स संपादित करें…"
+  "gitUiEditIndexInThreeWayView": "तीन-पक्षीय दृश्य में इंडेक्स संपादित करें…",
+  "gitUiViewCommitDetails": "कमिट विवरण देखें…",
+  "gitUiCopyCommitHash": "कमिट हैश कॉपी करें",
+  "gitUiCommitHash": "कमिट हैश",
+  "gitUiCommitReferences": "संदर्भ"
 }

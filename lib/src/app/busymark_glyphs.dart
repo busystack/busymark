@@ -12,7 +12,8 @@ abstract final class BusyMarkGlyphs {
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData blankLine = YaruIcons.insert_text;
   static const IconData bold = YaruIcons.bold;
-  static const IconData branch = Icons.fork_right;
+  // The native Yaru three-node graph; no Material Git iconography.
+  static const IconData branch = YaruIcons.share;
   static const IconData gitPrevious = YaruIcons.pan_start;
   static const IconData gitNext = YaruIcons.pan_end;
   static const IconData category = YaruIcons.tag;

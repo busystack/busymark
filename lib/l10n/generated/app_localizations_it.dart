@@ -6591,7 +6591,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Commit dettagli...';
+  String get gitUiCommitDetails => 'Dettagli del commit';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6710,9 +6710,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Reimposta ramo corrente';
-
-  @override
-  String get gitUiCopyFullObjectID => 'Copia l\'ID dell\'oggetto completo';
 
   @override
   String get gitUiGoToCommitReference2 => 'Vai al commit/reference';
@@ -8944,4 +8941,16 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Modifica l’indice nella vista a tre vie…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Visualizza dettagli del commit…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Copia hash del commit';
+
+  @override
+  String get gitUiCommitHash => 'Hash del commit';
+
+  @override
+  String get gitUiCommitReferences => 'Riferimenti';
 }

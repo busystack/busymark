@@ -5455,7 +5455,7 @@
   "gitUiToggleBranchesPane": "Vertakkingenpaneel aan/uit",
   "gitUiFilterBranchesAndTags": "Filter branches en tags",
   "gitUiCommitArg0": "{arg0} committen",
-  "gitUiCommitDetails": "Commit details...",
+  "gitUiCommitDetails": "Commitdetails",
   "gitUiReferenceArg0": "Referentie: {arg0}",
   "gitUiSelectThisCommit": "Deze commit kiezen",
   "gitUiBranchOrTag": "Tak of tag",
@@ -5490,7 +5490,6 @@
   "gitUiRevertCommit": "Verbinden terugdraaien",
   "gitUiInteractiveRebaseAfterThisBoundary": "Interactieve rebase na deze grens",
   "gitUiResetCurrentBranch": "Huidige branch terugzetten",
-  "gitUiCopyFullObjectID": "Volledig object-ID kopiëren",
   "gitUiGoToCommitReference2": "Ga naar commit/reference",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Voer een commit ID of verwijzing naar onthullen in Log.",
   "gitUiTheRequestedRevisionIsUnavailable": "De gevraagde herziening is niet beschikbaar.",
@@ -6080,5 +6079,9 @@
   "gitUiCommitter": "Vastgelegd door",
   "gitUiStageSelectedLines": "Geselecteerde regels klaarzetten",
   "gitUiUnstageSelectedLines": "Geselecteerde regels uit index halen",
-  "gitUiEditIndexInThreeWayView": "Index in driewegweergave bewerken…"
+  "gitUiEditIndexInThreeWayView": "Index in driewegweergave bewerken…",
+  "gitUiViewCommitDetails": "Commitdetails bekijken…",
+  "gitUiCopyCommitHash": "Commit-hash kopiëren",
+  "gitUiCommitHash": "Commit-hash",
+  "gitUiCommitReferences": "Verwijzingen"
 }

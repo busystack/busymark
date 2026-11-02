@@ -6546,7 +6546,7 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Legg inn detaljer ...';
+  String get gitUiCommitDetails => 'Commit-detaljer';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6665,9 +6665,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Tilbakestill gjeldende gren';
-
-  @override
-  String get gitUiCopyFullObjectID => 'Kopier fullstendig objekt- ID';
 
   @override
   String get gitUiGoToCommitReference2 => 'Gå til inn-/referanse';
@@ -8880,4 +8877,16 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitUiEditIndexInThreeWayView => 'Rediger indeks i treveisvisning…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Vis commit-detaljer…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Kopier commit-hash';
+
+  @override
+  String get gitUiCommitHash => 'Commit-hash';
+
+  @override
+  String get gitUiCommitReferences => 'Referanser';
 }

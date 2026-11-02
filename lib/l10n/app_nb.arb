@@ -3925,7 +3925,7 @@
   "gitUiToggleBranchesPane": "Slå grener av/ på",
   "gitUiFilterBranchesAndTags": "Filtrer forgreninger og etiketter",
   "gitUiCommitArg0": "Meld inn {arg0}",
-  "gitUiCommitDetails": "Legg inn detaljer ...",
+  "gitUiCommitDetails": "Commit-detaljer",
   "gitUiReferenceArg0": "Referanse: {arg0}",
   "gitUiSelectThisCommit": "Velg denne commiten",
   "gitUiBranchOrTag": "Gren eller tagg",
@@ -3960,7 +3960,6 @@
   "gitUiRevertCommit": "Tilbakestill innsending",
   "gitUiInteractiveRebaseAfterThisBoundary": "Interaktiv rebase etter denne grensen",
   "gitUiResetCurrentBranch": "Tilbakestill gjeldende gren",
-  "gitUiCopyFullObjectID": "Kopier fullstendig objekt- ID",
   "gitUiGoToCommitReference2": "Gå til inn-/referanse",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Oppgi en innsendings- ID eller referanse som viser i logg.",
   "gitUiTheRequestedRevisionIsUnavailable": "Den etterspurte revisjonen er ikke tilgjengelig.",
@@ -4550,5 +4549,9 @@
   "gitUiCommitter": "Innsender",
   "gitUiStageSelectedLines": "Klargjør valgte linjer",
   "gitUiUnstageSelectedLines": "Fjern valgte linjer fra indeks",
-  "gitUiEditIndexInThreeWayView": "Rediger indeks i treveisvisning…"
+  "gitUiEditIndexInThreeWayView": "Rediger indeks i treveisvisning…",
+  "gitUiViewCommitDetails": "Vis commit-detaljer…",
+  "gitUiCopyCommitHash": "Kopier commit-hash",
+  "gitUiCommitHash": "Commit-hash",
+  "gitUiCommitReferences": "Referanser"
 }

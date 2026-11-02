@@ -65,3 +65,12 @@ Keep Git Log inspector traversal grouped in displayed widget order within its
 existing sidebar. Global reading-order geometry must not interleave the source
 editor with the selected-commit button or metadata actions. Preserve editor Tab
 authoring and the actual host keyboard/modal regression.
+
+Git Commit Details use the existing compact BusyMarkDialogShell, natural height,
+dialogWide maximum width and one host-owned overflow scroll view. View Commit
+Details and Copy Commit Hash live in Commit Actions; no permanent copy/details
+icons or generic Copy Text button. Metadata remains selectable with native
+context/keyboard copying. Historical file menus use menuHorizontal. Git glyphs
+must resolve to approved native artwork, including through catalog aliases;
+MaterialIcons in the design boundary are not an exception. Keep actual painted
+dialog geometry, Unicode/long metadata, scaled RTL and native action-state tests.

@@ -5127,10 +5127,14 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
   }
 
   @override
-  String formatCommitDate(BuildContext context, DateTime date) {
+  String formatCommitDate(
+    BuildContext context,
+    DateTime date, {
+    bool full = false,
+  }) {
     final local = date.toLocal();
     final labels = MaterialLocalizations.of(context);
-    return '${labels.formatMediumDate(local)} · ${labels.formatTimeOfDay(TimeOfDay.fromDateTime(local), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}';
+    return '${full ? labels.formatFullDate(local) : labels.formatMediumDate(local)} · ${labels.formatTimeOfDay(TimeOfDay.fromDateTime(local), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}';
   }
 
   @override

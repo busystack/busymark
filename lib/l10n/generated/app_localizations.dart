@@ -11212,10 +11212,10 @@ abstract class AppLocalizations {
   /// **'Commit {arg0}'**
   String gitUiCommitArg0(String arg0);
 
-  /// Shared Git interface: Commit details…
+  /// Shared Git interface: Commit details
   ///
   /// In en, this message translates to:
-  /// **'Commit details…'**
+  /// **'Commit details'**
   String get gitUiCommitDetails;
 
   /// Shared Git interface: Reference: {arg0}
@@ -11421,12 +11421,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset current branch'**
   String get gitUiResetCurrentBranch;
-
-  /// Shared Git interface: Copy full object ID
-  ///
-  /// In en, this message translates to:
-  /// **'Copy full object ID'**
-  String get gitUiCopyFullObjectID;
 
   /// Shared Git interface: Go to commit/reference
   ///
@@ -15040,6 +15034,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit Index in Three-Way View…'**
   String get gitUiEditIndexInThreeWayView;
+
+  /// Shared Git interface: View commit details…
+  ///
+  /// In en, this message translates to:
+  /// **'View commit details…'**
+  String get gitUiViewCommitDetails;
+
+  /// Shared Git interface: Copy commit hash
+  ///
+  /// In en, this message translates to:
+  /// **'Copy commit hash'**
+  String get gitUiCopyCommitHash;
+
+  /// Shared Git interface: Commit hash
+  ///
+  /// In en, this message translates to:
+  /// **'Commit hash'**
+  String get gitUiCommitHash;
+
+  /// Shared Git interface: References
+  ///
+  /// In en, this message translates to:
+  /// **'References'**
+  String get gitUiCommitReferences;
 }
 
 class _AppLocalizationsDelegate

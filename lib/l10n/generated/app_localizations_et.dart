@@ -6539,7 +6539,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'Pane detaile kirja...';
+  String get gitUiCommitDetails => 'Kinnituse üksikasjad';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6658,9 +6658,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'Lähtesta praegune haru';
-
-  @override
-  String get gitUiCopyFullObjectID => 'Kopeeri objekti täis ID';
 
   @override
   String get gitUiGoToCommitReference2 => 'Mine pühendu/viida';
@@ -8879,4 +8876,16 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'Muuda indeksit kolme poole vaates…';
+
+  @override
+  String get gitUiViewCommitDetails => 'Vaata kinnituse üksikasju…';
+
+  @override
+  String get gitUiCopyCommitHash => 'Kopeeri kinnituse räsi';
+
+  @override
+  String get gitUiCommitHash => 'Kinnituse räsi';
+
+  @override
+  String get gitUiCommitReferences => 'Viited';
 }

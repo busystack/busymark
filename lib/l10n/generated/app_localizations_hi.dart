@@ -6533,7 +6533,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitDetails => 'कमिट विवरण...';
+  String get gitUiCommitDetails => 'कमिट विवरण';
 
   @override
   String gitUiReferenceArg0(String arg0) {
@@ -6652,9 +6652,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitUiResetCurrentBranch => 'वर्तमान शाखा रीसेट करें';
-
-  @override
-  String get gitUiCopyFullObjectID => 'पूर्ण वस्तु आईडी नक़ल करें';
 
   @override
   String get gitUiGoToCommitReference2 => 'जाएँ को';
@@ -8864,4 +8861,16 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get gitUiEditIndexInThreeWayView =>
       'तीन-पक्षीय दृश्य में इंडेक्स संपादित करें…';
+
+  @override
+  String get gitUiViewCommitDetails => 'कमिट विवरण देखें…';
+
+  @override
+  String get gitUiCopyCommitHash => 'कमिट हैश कॉपी करें';
+
+  @override
+  String get gitUiCommitHash => 'कमिट हैश';
+
+  @override
+  String get gitUiCommitReferences => 'संदर्भ';
 }

@@ -4385,7 +4385,7 @@
   "gitUiToggleBranchesPane": "Lülitab harude paneeli sisse ja välja",
   "gitUiFilterBranchesAndTags": "Filter oksad ja sildid",
   "gitUiCommitArg0": "Kommuteerimine {arg0}",
-  "gitUiCommitDetails": "Pane detaile kirja...",
+  "gitUiCommitDetails": "Kinnituse üksikasjad",
   "gitUiReferenceArg0": "Viide: {arg0}",
   "gitUiSelectThisCommit": "Vali see sissekanne",
   "gitUiBranchOrTag": "Haru või silt",
@@ -4420,7 +4420,6 @@
   "gitUiRevertCommit": "Taaskäivita sissekanne",
   "gitUiInteractiveRebaseAfterThisBoundary": "Interaktiivne rebane pärast seda piiri",
   "gitUiResetCurrentBranch": "Lähtesta praegune haru",
-  "gitUiCopyFullObjectID": "Kopeeri objekti täis ID",
   "gitUiGoToCommitReference2": "Mine pühendu/viida",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Sisesta sissekande ID või viide logis avaldamisele.",
   "gitUiTheRequestedRevisionIsUnavailable": "Soovitud läbivaatamine ei ole kättesaadav.",
@@ -5010,5 +5009,9 @@
   "gitUiCommitter": "Kinnitaja",
   "gitUiStageSelectedLines": "Lisa valitud read indeksisse",
   "gitUiUnstageSelectedLines": "Eemalda valitud read indeksist",
-  "gitUiEditIndexInThreeWayView": "Muuda indeksit kolme poole vaates…"
+  "gitUiEditIndexInThreeWayView": "Muuda indeksit kolme poole vaates…",
+  "gitUiViewCommitDetails": "Vaata kinnituse üksikasju…",
+  "gitUiCopyCommitHash": "Kopeeri kinnituse räsi",
+  "gitUiCommitHash": "Kinnituse räsi",
+  "gitUiCommitReferences": "Viited"
 }

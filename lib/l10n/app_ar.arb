@@ -3925,7 +3925,7 @@
   "gitUiToggleBranchesPane": "بدّل جزء الفروع",
   "gitUiFilterBranchesAndTags": "تصفية الفروع والعلامات",
   "gitUiCommitArg0": "الالتزام {arg0}",
-  "gitUiCommitDetails": "إلتزم بالتفاصيل...",
+  "gitUiCommitDetails": "تفاصيل الإيداع",
   "gitUiReferenceArg0": "مرجع: {arg0}",
   "gitUiSelectThisCommit": "اختيار هذا الإيداع",
   "gitUiBranchOrTag": "الفرع أو العلامة",
@@ -3960,7 +3960,6 @@
   "gitUiRevertCommit": "تراجع الالتزام",
   "gitUiInteractiveRebaseAfterThisBoundary": "قاعدة تفاعلية بعد هذه الحدود",
   "gitUiResetCurrentBranch": "إعادة ضبط الفرع الحالي",
-  "gitUiCopyFullObjectID": "انسخ معرف الكائن الكامل",
   "gitUiGoToCommitReference2": "انتقل إلى الالتزام / المرجع",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "أدخل معرف التزام أو مرجع للكشف في السجل.",
   "gitUiTheRequestedRevisionIsUnavailable": "والتنقيح المطلوب غير متاح.",
@@ -4550,5 +4549,9 @@
   "gitUiCommitter": "مُنشئ الإيداع",
   "gitUiStageSelectedLines": "إضافة الأسطر المحددة إلى الفهرس",
   "gitUiUnstageSelectedLines": "إزالة الأسطر المحددة من الفهرس",
-  "gitUiEditIndexInThreeWayView": "تحرير الفهرس في عرض ثلاثي…"
+  "gitUiEditIndexInThreeWayView": "تحرير الفهرس في عرض ثلاثي…",
+  "gitUiViewCommitDetails": "عرض تفاصيل الإيداع…",
+  "gitUiCopyCommitHash": "نسخ تجزئة الإيداع",
+  "gitUiCommitHash": "تجزئة الإيداع",
+  "gitUiCommitReferences": "المراجع"
 }

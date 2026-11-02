@@ -3951,7 +3951,7 @@
   "gitUiToggleBranchesPane": "Панель ветвей",
   "gitUiFilterBranchesAndTags": "Ветки и метки фильтра",
   "gitUiCommitArg0": "Выполнить {arg0}",
-  "gitUiCommitDetails": "Зафиксировать детали...",
+  "gitUiCommitDetails": "Сведения о коммите",
   "gitUiReferenceArg0": "Ссылка: {arg0}",
   "gitUiSelectThisCommit": "Выбрать этот коммит",
   "gitUiBranchOrTag": "Ветвь или ярлык",
@@ -3986,7 +3986,6 @@
   "gitUiRevertCommit": "Отменить обязательство",
   "gitUiInteractiveRebaseAfterThisBoundary": "Интерактивная повторная база после этой границы",
   "gitUiResetCurrentBranch": "Сбросить текущую ветку",
-  "gitUiCopyFullObjectID": "Скопировать полный идентификатор объекта",
   "gitUiGoToCommitReference2": "Перейти к обязательству/отсылке",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "Введите идентификатор обязательства или ссылку для разглашения в журнале.",
   "gitUiTheRequestedRevisionIsUnavailable": "Испрашиваемый пересмотр отсутствует.",
@@ -4576,5 +4575,9 @@
   "gitUiCommitter": "Коммитер",
   "gitUiStageSelectedLines": "Добавить выбранные строки в индекс",
   "gitUiUnstageSelectedLines": "Убрать выбранные строки из индекса",
-  "gitUiEditIndexInThreeWayView": "Редактировать индекс в трёхстороннем виде…"
+  "gitUiEditIndexInThreeWayView": "Редактировать индекс в трёхстороннем виде…",
+  "gitUiViewCommitDetails": "Просмотреть сведения о коммите…",
+  "gitUiCopyCommitHash": "Копировать хеш коммита",
+  "gitUiCommitHash": "Хеш коммита",
+  "gitUiCommitReferences": "Ссылки"
 }

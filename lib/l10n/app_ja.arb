@@ -5455,7 +5455,7 @@
   "gitUiToggleBranchesPane": "ブランチペインの表示切り替え",
   "gitUiFilterBranchesAndTags": "ブランチとタグを絞り込む",
   "gitUiCommitArg0": "コミット {arg0}",
-  "gitUiCommitDetails": "コミット詳細…",
+  "gitUiCommitDetails": "コミットの詳細",
   "gitUiReferenceArg0": "参照: {arg0}",
   "gitUiSelectThisCommit": "このコミットを選択",
   "gitUiBranchOrTag": "ブランチまたはタグ",
@@ -5490,7 +5490,6 @@
   "gitUiRevertCommit": "コミットをリバート",
   "gitUiInteractiveRebaseAfterThisBoundary": "この境界より後を対話的にリベース",
   "gitUiResetCurrentBranch": "現在のブランチをリセット",
-  "gitUiCopyFullObjectID": "完全なオブジェクトIDをコピー",
   "gitUiGoToCommitReference2": "コミット・参照へ移動",
   "gitUiEnterACommitIDOrReferenceToRevealInLog": "ログに表示するコミットIDまたは参照を入力してください。",
   "gitUiTheRequestedRevisionIsUnavailable": "指定したリビジョンを取得できません。",
@@ -6080,5 +6079,9 @@
   "gitUiCommitter": "コミッター",
   "gitUiStageSelectedLines": "選択した行をステージ",
   "gitUiUnstageSelectedLines": "選択した行のステージを解除",
-  "gitUiEditIndexInThreeWayView": "3方向ビューでインデックスを編集…"
+  "gitUiEditIndexInThreeWayView": "3方向ビューでインデックスを編集…",
+  "gitUiViewCommitDetails": "コミットの詳細を表示…",
+  "gitUiCopyCommitHash": "コミットハッシュをコピー",
+  "gitUiCommitHash": "コミットハッシュ",
+  "gitUiCommitReferences": "参照"
 }
