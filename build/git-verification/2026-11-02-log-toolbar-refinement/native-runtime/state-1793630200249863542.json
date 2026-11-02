@@ -1,0 +1,278 @@
+[
+  {
+    "name": "main",
+    "role": "desktop frame",
+    "depth": 0,
+    "rect": [
+      0,
+      0,
+      1024,
+      768
+    ]
+  },
+  {
+    "name": "xdg-desktop-portal-gtk",
+    "role": "application",
+    "depth": 1,
+    "geometryError": "AttributeError"
+  },
+  {
+    "name": "io.busystack.busyfiles",
+    "role": "application",
+    "depth": 1,
+    "geometryError": "AttributeError"
+  },
+  {
+    "name": "docs \u2014 BusyFiles",
+    "role": "frame",
+    "depth": 2,
+    "rect": [
+      75,
+      115,
+      1290,
+      770
+    ]
+  },
+  {
+    "name": "BusyFiles",
+    "role": "label",
+    "depth": 9,
+    "rect": [
+      155,
+      120,
+      57,
+      46
+    ]
+  },
+  {
+    "name": "Main Menu",
+    "role": "toggle button",
+    "depth": 9,
+    "rect": [
+      293,
+      126,
+      36,
+      34
+    ]
+  },
+  {
+    "name": "Minimize",
+    "role": "push button",
+    "depth": 10,
+    "rect": [
+      1241,
+      127,
+      34,
+      30
+    ]
+  },
+  {
+    "name": "Maximize",
+    "role": "push button",
+    "depth": 10,
+    "rect": [
+      1281,
+      127,
+      34,
+      30
+    ]
+  },
+  {
+    "name": "Close",
+    "role": "push button",
+    "depth": 10,
+    "rect": [
+      1321,
+      127,
+      34,
+      30
+    ]
+  },
+  {
+    "name": "Switch to Grid View",
+    "role": "push button",
+    "depth": 11,
+    "rect": [
+      1157,
+      119,
+      35,
+      46
+    ]
+  },
+  {
+    "name": "View Options",
+    "role": "toggle button",
+    "depth": 11,
+    "rect": [
+      1192,
+      119,
+      36,
+      46
+    ]
+  },
+  {
+    "name": "Transfers",
+    "role": "push button",
+    "depth": 10,
+    "rect": [
+      -2147483648,
+      -2147483648,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "Home",
+    "role": "push button",
+    "depth": 15,
+    "rect": [
+      447,
+      119,
+      79,
+      46
+    ]
+  },
+  {
+    "name": "Forward",
+    "role": "redundant object",
+    "depth": 15,
+    "rect": [
+      526,
+      119,
+      16,
+      46
+    ]
+  },
+  {
+    "name": "busystack-native-git-verification-20261031",
+    "role": "push button",
+    "depth": 15,
+    "rect": [
+      542,
+      119,
+      177,
+      46
+    ]
+  },
+  {
+    "name": "Forward",
+    "role": "redundant object",
+    "depth": 15,
+    "rect": [
+      719,
+      119,
+      16,
+      46
+    ]
+  },
+  {
+    "name": "log-toolbar-refinement-20261102",
+    "role": "push button",
+    "depth": 15,
+    "rect": [
+      735,
+      119,
+      177,
+      46
+    ]
+  },
+  {
+    "name": "Forward",
+    "role": "redundant object",
+    "depth": 15,
+    "rect": [
+      912,
+      119,
+      16,
+      46
+    ]
+  },
+  {
+    "name": "fixture",
+    "role": "push button",
+    "depth": 15,
+    "rect": [
+      928,
+      119,
+      61,
+      46
+    ]
+  },
+  {
+    "name": "Forward",
+    "role": "redundant object",
+    "depth": 15,
+    "rect": [
+      989,
+      119,
+      16,
+      46
+    ]
+  },
+  {
+    "name": "docs",
+    "role": "push button",
+    "depth": 15,
+    "rect": [
+      1005,
+      119,
+      48,
+      46
+    ]
+  },
+  {
+    "name": "Current Folder Menu",
+    "role": "toggle button",
+    "depth": 12,
+    "rect": [
+      1073,
+      119,
+      36,
+      46
+    ]
+  },
+  {
+    "name": "Search",
+    "role": "toggle button",
+    "depth": 10,
+    "rect": [
+      1115,
+      119,
+      36,
+      46
+    ]
+  },
+  {
+    "name": "Hide Sidebar",
+    "role": "toggle button",
+    "depth": 10,
+    "rect": [
+      335,
+      119,
+      35,
+      46
+    ]
+  },
+  {
+    "name": "Back",
+    "role": "push button",
+    "depth": 10,
+    "rect": [
+      370,
+      119,
+      35,
+      46
+    ]
+  },
+  {
+    "name": "Forward",
+    "role": "push button",
+    "depth": 10,
+    "rect": [
+      405,
+      119,
+      36,
+      46
+    ]
+  }
+]

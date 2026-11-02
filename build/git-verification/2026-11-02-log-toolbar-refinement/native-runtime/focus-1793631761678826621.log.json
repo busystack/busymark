@@ -1,0 +1,5 @@
+{
+  "sha256": "b91d613b142ba7331b84dc99393841878e7b8bffabf31c24ed1a919604459b13",
+  "encoding": "utf-8",
+  "transcript": "X Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  15 (X_QueryTree)\n  Resource id in failed request:  0x8000a3\n  Serial number of failed request:  346\n  Current serial number in output stream:  346\n"
+}

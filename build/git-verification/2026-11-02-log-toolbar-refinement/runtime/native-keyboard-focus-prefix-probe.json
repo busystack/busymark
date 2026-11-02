@@ -1,0 +1,101 @@
+{
+  "selectedCommitReached": false,
+  "states": [
+    {
+      "index": 0,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#7ab59([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 1,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#1f5aa([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 2,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#a4ff1([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 3,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#94a8f([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 4,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#e55a7([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 5,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#0e1c0([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 6,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#de899([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 7,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#b1013([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 Listener \u2190 _GestureSemantics \u2190 RawGestureDetector \u2190\n \u2502   GestureDetector \u2190 DefaultTextStyle \u2190 AnimatedDefaultTextStyle \u2190\n \u2502   _InkFeatures-[GlobalKey#fcb30 ink renderer] \u2190\n \u2502   NotificationListener<LayoutChangedNotification> \u2190 CustomPaint \u2190\n \u2502   _ShapeBorderPaint \u2190 PhysicalShape \u2190 _MaterialInterior \u2190\n \u2502   Material \u2190\n \u2502   _WorkspaceTabButton-[<'file:file:/home/ubuntu/busystack-native-git-verification-20261031/log-toolbar-refinement-20261102/fixture/README.md'>]\n \u2502   \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 8,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#f2d78([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 MouseRegion \u2190 Semantics \u2190 Listener \u2190\n \u2502   _ExclusiveMouseRegion \u2190 Semantics \u2190 _OverlayPortal \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 9,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#fbb5d([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _ParentInkResponseProvider \u2190 _InkResponseStateWidget \u2190 InkWell\n \u2502   \u2190 DefaultSelectionStyle \u2190 IconTheme \u2190 IconTheme \u2190\n \u2502   InheritedCupertinoTheme \u2190 CupertinoTheme \u2190 _InheritedTheme \u2190\n \u2502   Theme \u2190 AnimatedTheme \u2190 DefaultTextStyle \u2190\n \u2502   AnimatedDefaultTextStyle \u2190 _InkFeatures-[GlobalKey#eefcc ink\n \u2502   renderer] \u2190 NotificationListener<LayoutChangedNotification> \u2190\n \u2502   CustomPaint \u2190 _ShapeBorderPaint \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 10,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#ca0f6(SelectableRegion [PRIMARY FOCUS])\n \u2502 primaryFocusCreator: _FocusWithExternalFocusNode \u2190 _ActionsScope\n \u2502   \u2190 Actions \u2190 Listener \u2190 RawGestureDetector \u2190\n \u2502   CompositedTransformTarget \u2190 TapRegion \u2190\n \u2502   SelectableRegion-[LabeledGlobalKey<SelectableRegionState>#425a8]\n \u2502   \u2190 SelectionArea \u2190 GitSelectionArea \u2190 Padding-[String\n \u2502   <'git-commit-information:9017b07057713437ac465407e2a1555cf2f6dcb0844304023a8b6f237d32daf1:03f33c877d90ca3f32dc7c39ba00e9634160b771'>]\n \u2502   \u2190 Column \u2190 LayoutBuilder \u2190 Expanded \u2190 Column \u2190 Builder \u2190\n \u2502   GitHostScope \u2190 GitLogView \u2190 _FocusInheritedScope \u2190 Focus \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 11,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 12,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 13,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 14,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 15,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 16,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 17,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 18,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 19,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 20,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 21,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 22,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    },
+    {
+      "index": 23,
+      "primary": "FocusManager#c6bbf\n \u2502 primaryFocus: FocusNode#641b5([PRIMARY FOCUS])\n \u2502 primaryFocusCreator: Focus \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   UndoHistory<TextEditingValue> \u2190 MouseRegion \u2190\n \u2502   TextFieldTapRegion \u2190 Builder \u2190 _ActionsScope \u2190 Actions \u2190\n \u2502   _CompositionCallback \u2190\n \u2502   EditableText-[LabeledGlobalKey<EditableTextState>#6f14a] \u2190\n \u2502   UnmanagedRestorationScope \u2190 RepaintBoundary \u2190 _Decorator \u2190\n \u2502   Semantics \u2190 InputDecorator \u2190 AnimatedBuilder \u2190 Listener \u2190\n \u2502   RawGestureDetector \u2190 TextSelectionGestureDetector \u2190 \u22ef\n \u2502\n "
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "recordedAt": "2026-11-02T12:44:46.494078+00:00",
+  "baselines": {
+    "busymark": "fefb7406e0c85c5a79d6eace4bd2b015cf0c5e98",
+    "busystack_git_flutter": "5745a3951cf01c07aa9ceb5bceb7d0332ba54cef",
+    "busystack_git": "7d8e55d8034aeb85cddac1c0f498b0f3cc33105b",
+    "busyfiles": "827a44b4bc8713f01b95dc89121fd7afd2a2bf45"
+  },
+  "current": {
+    "busymark": {
+      "branch": "feature/git-package",
+      "head": "fefb7406e0c85c5a79d6eace4bd2b015cf0c5e98",
+      "status": " M AGENTS.md\n M lib/l10n/app_ar.arb\n M lib/l10n/app_de.arb\n M lib/l10n/app_en.arb\n M lib/l10n/app_es.arb\n M lib/l10n/app_et.arb\n M lib/l10n/app_fa.arb\n M lib/l10n/app_fr.arb\n M lib/l10n/app_hi.arb\n M lib/l10n/app_id.arb\n M lib/l10n/app_it.arb\n M lib/l10n/app_ja.arb\n M lib/l10n/app_ko.arb\n M lib/l10n/app_nb.arb\n M lib/l10n/app_nl.arb\n M lib/l10n/app_pl.arb\n M lib/l10n/app_pt.arb\n M lib/l10n/app_pt_BR.arb\n M lib/l10n/app_ru.arb\n M lib/l10n/app_tr.arb\n M lib/l10n/app_uk.arb\n M lib/l10n/app_vi.arb\n M lib/l10n/app_zh.arb\n M lib/l10n/app_zh_CN.arb\n M lib/l10n/generated/app_localizations.dart\n M lib/l10n/generated/app_localizations_ar.dart\n M lib/l10n/generated/app_localizations_de.dart\n M lib/l10n/generated/app_localizations_en.dart\n M lib/l10n/generated/app_localizations_es.dart\n M lib/l10n/generated/app_localizations_et.dart\n M lib/l10n/generated/app_localizations_fa.dart\n M lib/l10n/generated/app_localizations_fr.dart\n M lib/l10n/generated/app_localizations_hi.dart\n M lib/l10n/generated/app_localizations_id.dart\n M lib/l10n/generated/app_localizations_it.dart\n M lib/l10n/generated/app_localizations_ja.dart\n M lib/l10n/generated/app_localizations_ko.dart\n M lib/l10n/generated/app_localizations_nb.dart\n M lib/l10n/generated/app_localizations_nl.dart\n M lib/l10n/generated/app_localizations_pl.dart\n M lib/l10n/generated/app_localizations_pt.dart\n M lib/l10n/generated/app_localizations_ru.dart\n M lib/l10n/generated/app_localizations_tr.dart\n M lib/l10n/generated/app_localizations_uk.dart\n M lib/l10n/generated/app_localizations_vi.dart\n M lib/l10n/generated/app_localizations_zh.dart\n M lib/src/app/busymark_design.dart\n M lib/src/git/application/shared_git_integration.dart\n M lib/src/git/application/shared_git_localizations.dart\n M test/src/app_smoke_test.dart\n M test/src/git/native_presentation_contract_test.dart\n M tools/check_git_presentation.sh\n?? test/src/git/log_comparison_native_test.dart\n"
+    },
+    "busystack_git_flutter": {
+      "branch": "main",
+      "head": "5745a3951cf01c07aa9ceb5bceb7d0332ba54cef",
+      "status": " M AGENTS.md\n M lib/src/branch_views.dart\n M lib/src/diff_view.dart\n M lib/src/host.dart\n M lib/src/log_view.dart\n M lib/src/messages.dart\n M lib/src/presentation.dart\n M lib/src/workflow_ui.dart\n M test/diff_host_localization_test.dart\n M test/diff_search_selection_test.dart\n M test/log_inspector_test.dart\n M test/scaled_workspace_test.dart\n M test/session_and_editor_test.dart\n M test/support/native_presentation_fixture.dart\n M tool/check_native_presentation.dart\n M tool/git_messages.json\n M tool/test_native_presentation_audit.dart\n?? docs/log-comparison-refinement.md\n?? lib/src/historical_change_tree.dart\n?? test/action_destinations_test.dart\n?? test/comparison_toolbar_test.dart\n"
+    },
+    "busystack_git": {
+      "branch": "main",
+      "head": "7d8e55d8034aeb85cddac1c0f498b0f3cc33105b",
+      "status": ""
+    },
+    "busyfiles": {
+      "branch": "Release/v0.0.1",
+      "head": "827a44b4bc8713f01b95dc89121fd7afd2a2bf45",
+      "status": " M apps/busyfiles_ui/lib/src/app/busyfiles_design.dart\n M apps/busyfiles_ui/lib/src/app/busyfiles_glyphs.dart\n M apps/busyfiles_ui/lib/src/features/browser/git_workspace.dart\n M apps/busyfiles_ui/lib/src/features/browser/shared_git_localizations.dart\n M apps/busyfiles_ui/lib/src/l10n/arb/busyfiles_en.arb\n M apps/busyfiles_ui/lib/src/l10n/generated/busyfiles_localizations.dart\n M apps/busyfiles_ui/lib/src/l10n/generated/busyfiles_localizations_en.dart\n"
+    },
+    "busystack_dav": {
+      "branch": "main",
+      "head": "75bdc14ff793a2cf41c0632500dbdfd32d1910a2",
+      "status": " M .idea/caches/deviceStreaming.xml\n"
+    }
+  },
+  "hostDisk": {
+    "total": 1003736440832,
+    "used": 912434348032,
+    "free": 40239587328
+  }
+}

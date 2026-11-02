@@ -1,0 +1,5 @@
+{
+  "sha256": "134c1c2074f519894297f52fb3cbed6836fe1c851415b00940d16c4470f99eea",
+  "encoding": "utf-8",
+  "transcript": "Building Linux application...                                   \n\u2713 Built build/linux/x64/debug/bundle/busyfiles\n"
+}

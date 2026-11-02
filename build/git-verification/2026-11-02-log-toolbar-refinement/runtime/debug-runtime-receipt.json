@@ -1,0 +1,14 @@
+{
+  "source": "23781d8c7a46ddd4a2ba63d1981b3f69888ef6e6",
+  "launch": "flutter run -d linux --debug --no-pub --dart-entrypoint-args=<fixture>",
+  "target": "lib/main.dart (ordinary application entry point)",
+  "processes": [
+    {
+      "pid": 46047,
+      "executable": "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busymark/build/linux/x64/debug/bundle/busymark",
+      "engine": "/home/ubuntu/busystack-native-git-verification-20261031/inputs/busymark/build/linux/x64/debug/bundle/lib/libflutter_linux_gtk.so",
+      "engineSha256": "7a5698608a3c79ad3f123a74bce8074339ffa1a83c896d73ae853c9f92a43cc3"
+    }
+  ],
+  "backend": "X11/Xvfb, Openbox, 1440x1000, 96 dpi, DPR 1.0, en_US.UTF-8, text scale 1.0"
+}
