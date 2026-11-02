@@ -10673,6 +10673,49 @@ code
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(shared.GitLogView), findsOneWidget);
+    // The inspector is a logical keyboard group beside a live source editor.
+    // Global reading-order geometry must not interleave the editor with metadata.
+    await setDocumentViewMode(DocumentViewModePreference.source);
+    await tester.pumpAndSettle();
+    final sourceValue = tester
+        .widget<TextField>(find.byType(TextField))
+        .controller!
+        .value;
+    final copyIcon = find.descendant(
+      of: find.byKey(const ValueKey('git-copy-commit-id')),
+      matching: find.byType(Icon),
+    );
+    Focus.of(tester.element(copyIcon)).requestFocus();
+    await tester.pumpAndSettle();
+    var selectedCommitFocused = false;
+    for (var step = 0; step < 4 && !selectedCommitFocused; step++) {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+      selectedCommitFocused =
+          FocusManager.instance.primaryFocus?.context
+              ?.findAncestorWidgetOfExactType<shared.GitButton>()
+              ?.key ==
+          const ValueKey('git-selected-commit');
+    }
+    expect(selectedCommitFocused, isTrue);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.value,
+      sourceValue,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.byType(shared.GitLogView), findsNWidgets(2));
+    expect(find.text('Subject / references'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(shared.GitLogView), findsOneWidget);
+    expect(commitWidget.session.draft, 'Preserved shell draft');
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.value,
+      sourceValue,
+    );
     await setDocumentViewMode(DocumentViewModePreference.split);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.byType(shared.GitCommitView), findsOneWidget);

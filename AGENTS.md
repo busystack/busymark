@@ -60,3 +60,8 @@ measured toolbar and the native checked mode menu at every width. Circular
 choice bars are forbidden there, including aliases; three-way editor pane
 choices remain separate. Preserve explicit file/selected-line/hunk staging,
 version-bound callbacks, editor guards, and both consumers' native adapters.
+
+Keep Git Log inspector traversal grouped in displayed widget order within its
+existing sidebar. Global reading-order geometry must not interleave the source
+editor with the selected-commit button or metadata actions. Preserve editor Tab
+authoring and the actual host keyboard/modal regression.

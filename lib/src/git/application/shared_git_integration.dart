@@ -1163,20 +1163,24 @@ class _BusyMarkSharedGitSidebarState
           if (_logVisited)
             ExcludeFocus(
               excluding: !widget.active || !widget.log,
-              child: shared.GitLogView(
-                session: _session!,
-                inspector: true,
-                active: widget.active && widget.log,
-                onReview: (comparison, files) => ref
-                    .read(sharedGitReviewProvider.notifier)
-                    .open(
-                      widget.workspace.id,
-                      SharedGitReview(
-                        _session!.repository,
-                        comparison: comparison,
-                        reviewedFiles: List.unmodifiable(files),
+              child: FocusTraversalGroup(
+                key: const ValueKey('busymark-git-log-traversal'),
+                policy: WidgetOrderTraversalPolicy(),
+                child: shared.GitLogView(
+                  session: _session!,
+                  inspector: true,
+                  active: widget.active && widget.log,
+                  onReview: (comparison, files) => ref
+                      .read(sharedGitReviewProvider.notifier)
+                      .open(
+                        widget.workspace.id,
+                        SharedGitReview(
+                          _session!.repository,
+                          comparison: comparison,
+                          reviewedFiles: List.unmodifiable(files),
+                        ),
                       ),
-                    ),
+                ),
               ),
             ),
         ],
