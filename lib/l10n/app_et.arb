@@ -5013,5 +5013,6 @@
   "gitUiViewCommitDetails": "Vaata kinnituse üksikasju…",
   "gitUiCopyCommitHash": "Kopeeri kinnituse räsi",
   "gitUiCommitHash": "Kinnituse räsi",
-  "gitUiCommitReferences": "Viited"
+  "gitUiCommitReferences": "Viited",
+  "gitUiCopyCommitMessage": "Kopeeri kinnituse sõnum"
 }

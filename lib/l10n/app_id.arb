@@ -6083,5 +6083,6 @@
   "gitUiViewCommitDetails": "Lihat detail commit…",
   "gitUiCopyCommitHash": "Salin hash commit",
   "gitUiCommitHash": "Hash commit",
-  "gitUiCommitReferences": "Referensi"
+  "gitUiCommitReferences": "Referensi",
+  "gitUiCopyCommitMessage": "Salin pesan commit"
 }

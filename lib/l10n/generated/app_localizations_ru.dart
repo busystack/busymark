@@ -8962,4 +8962,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'Ссылки';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Копировать сообщение коммита';
 }

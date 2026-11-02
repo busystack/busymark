@@ -6083,5 +6083,6 @@
   "gitUiViewCommitDetails": "Xem chi tiết commit…",
   "gitUiCopyCommitHash": "Sao chép mã băm commit",
   "gitUiCommitHash": "Mã băm commit",
-  "gitUiCommitReferences": "Tham chiếu"
+  "gitUiCommitReferences": "Tham chiếu",
+  "gitUiCopyCommitMessage": "Sao chép thông điệp commit"
 }

@@ -4595,5 +4595,6 @@
   "gitUiViewCommitDetails": "نمایش جزئیات کامیت…",
   "gitUiCopyCommitHash": "کپی هش کامیت",
   "gitUiCommitHash": "هش کامیت",
-  "gitUiCommitReferences": "ارجاع‌ها"
+  "gitUiCommitReferences": "ارجاع‌ها",
+  "gitUiCopyCommitMessage": "کپی پیام کامیت"
 }

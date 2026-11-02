@@ -621,6 +621,7 @@ void main() {
             git.GitMessages.resetCurrentBranch,
             git.GitMessages.copyCommitHash,
             git.GitMessages.viewCommitDetails,
+            git.GitMessages.copyCommitMessage,
           ]) {
             expect(
               labels.where((l) => l == session!.host.message(message)),
@@ -631,6 +632,10 @@ void main() {
           await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
           await tester.pumpAndSettle();
           expect(copied, client.head.value);
+          choose = session!.host.message(git.GitMessages.copyCommitMessage);
+          await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
+          await tester.pumpAndSettle();
+          expect(copied, client.commit.message);
           choose = null;
           final file = git.RepoPath.text('docs/a.md');
           final fileMenu = find.byKey(

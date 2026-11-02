@@ -6083,5 +6083,6 @@
   "gitUiViewCommitDetails": "커밋 세부 정보 보기…",
   "gitUiCopyCommitHash": "커밋 해시 복사",
   "gitUiCommitHash": "커밋 해시",
-  "gitUiCommitReferences": "참조"
+  "gitUiCommitReferences": "참조",
+  "gitUiCopyCommitMessage": "커밋 메시지 복사"
 }

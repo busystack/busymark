@@ -8888,4 +8888,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'Viited';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Kopeeri kinnituse sõnum';
 }

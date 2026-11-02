@@ -6083,5 +6083,6 @@
   "gitUiViewCommitDetails": "查看提交详情…",
   "gitUiCopyCommitHash": "复制提交哈希",
   "gitUiCommitHash": "提交哈希",
-  "gitUiCommitReferences": "引用"
+  "gitUiCommitReferences": "引用",
+  "gitUiCopyCommitMessage": "复制提交说明"
 }

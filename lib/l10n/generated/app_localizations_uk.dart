@@ -8970,4 +8970,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'Посилання';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Копіювати повідомлення коміту';
 }

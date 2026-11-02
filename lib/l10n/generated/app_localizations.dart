@@ -15058,6 +15058,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'References'**
   String get gitUiCommitReferences;
+
+  /// Shared Git interface: Copy commit message
+  ///
+  /// In en, this message translates to:
+  /// **'Copy commit message'**
+  String get gitUiCopyCommitMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -6083,5 +6083,6 @@
   "gitUiViewCommitDetails": "コミットの詳細を表示…",
   "gitUiCopyCommitHash": "コミットハッシュをコピー",
   "gitUiCommitHash": "コミットハッシュ",
-  "gitUiCommitReferences": "参照"
+  "gitUiCommitReferences": "参照",
+  "gitUiCopyCommitMessage": "コミットメッセージをコピー"
 }

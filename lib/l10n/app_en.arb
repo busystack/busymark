@@ -7391,5 +7391,9 @@
   },
   "@gitUiCommitReferences": {
     "description": "Shared Git interface: References"
+  },
+  "gitUiCopyCommitMessage": "Copy commit message",
+  "@gitUiCopyCommitMessage": {
+    "description": "Shared Git interface: Copy commit message"
   }
 }

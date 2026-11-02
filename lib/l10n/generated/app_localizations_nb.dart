@@ -8889,4 +8889,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'Referanser';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Kopier commit-melding';
 }

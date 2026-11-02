@@ -8898,4 +8898,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'ارجاع‌ها';
+
+  @override
+  String get gitUiCopyCommitMessage => 'کپی پیام کامیت';
 }

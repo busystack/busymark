@@ -8869,4 +8869,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'Tham chiếu';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Sao chép thông điệp commit';
 }

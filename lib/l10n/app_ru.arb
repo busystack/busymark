@@ -4579,5 +4579,6 @@
   "gitUiViewCommitDetails": "Просмотреть сведения о коммите…",
   "gitUiCopyCommitHash": "Копировать хеш коммита",
   "gitUiCommitHash": "Хеш коммита",
-  "gitUiCommitReferences": "Ссылки"
+  "gitUiCommitReferences": "Ссылки",
+  "gitUiCopyCommitMessage": "Копировать сообщение коммита"
 }

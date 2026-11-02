@@ -6083,5 +6083,6 @@
   "gitUiViewCommitDetails": "Commit ayrıntılarını görüntüle…",
   "gitUiCopyCommitHash": "Commit karmasını kopyala",
   "gitUiCommitHash": "Commit karması",
-  "gitUiCommitReferences": "Başvurular"
+  "gitUiCommitReferences": "Başvurular",
+  "gitUiCopyCommitMessage": "Commit mesajını kopyala"
 }

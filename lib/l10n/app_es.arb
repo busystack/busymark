@@ -4553,5 +4553,6 @@
   "gitUiViewCommitDetails": "Ver detalles del commit…",
   "gitUiCopyCommitHash": "Copiar hash del commit",
   "gitUiCommitHash": "Hash del commit",
-  "gitUiCommitReferences": "Referencias"
+  "gitUiCommitReferences": "Referencias",
+  "gitUiCopyCommitMessage": "Copiar mensaje del commit"
 }

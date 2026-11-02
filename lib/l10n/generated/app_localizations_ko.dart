@@ -8637,4 +8637,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => '참조';
+
+  @override
+  String get gitUiCopyCommitMessage => '커밋 메시지 복사';
 }

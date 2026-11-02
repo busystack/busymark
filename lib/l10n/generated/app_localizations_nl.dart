@@ -8953,4 +8953,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'Verwijzingen';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Commitbericht kopiëren';
 }

@@ -8966,6 +8966,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => 'Referências';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Copiar mensagem do commit';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17923,4 +17926,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitUiCommitReferences => 'Referências';
+
+  @override
+  String get gitUiCopyCommitMessage => 'Copiar mensagem do commit';
 }

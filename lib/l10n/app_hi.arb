@@ -4553,5 +4553,6 @@
   "gitUiViewCommitDetails": "कमिट विवरण देखें…",
   "gitUiCopyCommitHash": "कमिट हैश कॉपी करें",
   "gitUiCommitHash": "कमिट हैश",
-  "gitUiCommitReferences": "संदर्भ"
+  "gitUiCommitReferences": "संदर्भ",
+  "gitUiCopyCommitMessage": "कमिट संदेश कॉपी करें"
 }

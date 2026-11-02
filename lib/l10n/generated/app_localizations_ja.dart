@@ -8640,4 +8640,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiCommitReferences => '参照';
+
+  @override
+  String get gitUiCopyCommitMessage => 'コミットメッセージをコピー';
 }
