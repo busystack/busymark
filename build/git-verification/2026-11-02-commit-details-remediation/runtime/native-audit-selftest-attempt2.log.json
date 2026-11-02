@@ -1,0 +1,5 @@
+{
+  "source": "native-audit-selftest-attempt2.log",
+  "sha256": "b470f3ed47b809555dcb6ffaa83db05d2e493dddabdd7c5cc32587fdffd8151e",
+  "text": "Native Git architecture tests passed: constructors, aliases, tear-offs, helpers, palette/icons, approved controls, fail-closed resolution.\n"
+}

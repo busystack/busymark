@@ -1,0 +1,31 @@
+{
+  "time": "2026-11-02T17:37:19.468602+00:00",
+  "sources": {
+    "busymark": {
+      "head": "0b92f501330478e44ffb22db31779c45f10efdf3",
+      "branch": "feature/git-package",
+      "status": ""
+    },
+    "busystack_git_flutter": {
+      "head": "eefe2b1c54f7c92f5de00f4df4effa8e435357c3",
+      "branch": "main",
+      "status": ""
+    },
+    "busystack_git": {
+      "head": "7d8e55d8034aeb85cddac1c0f498b0f3cc33105b",
+      "branch": "main",
+      "status": ""
+    },
+    "busyfiles": {
+      "head": "1d414dc44495428bbe21eb664db924d433042821",
+      "branch": "Release/v0.0.1",
+      "status": ""
+    },
+    "busystack_dav": {
+      "head": "75bdc14ff793a2cf41c0632500dbdfd32d1910a2",
+      "branch": "main",
+      "status": "M .idea/caches/deviceStreaming.xml"
+    }
+  },
+  "hostDiskFree": 37038878720
+}

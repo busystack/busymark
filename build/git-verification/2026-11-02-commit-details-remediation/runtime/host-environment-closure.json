@@ -1,0 +1,10 @@
+{
+  "time": "2026-11-02T17:41:36.583Z",
+  "vmStates": {
+    "busydata-installed-20261003": "RUNNING",
+    "busyfiles-release24-20261005": "STOPPED",
+    "busymax-acceptance-v031-20261011": "STOPPED",
+    "busynode-continuation-20261015": "RUNNING"
+  },
+  "note": "QA VM restored to its original STOPPED state; protected workloads unchanged. No VM configuration changed. The confined LXC CLI was invoked directly; no confinement settings were changed."
+}
