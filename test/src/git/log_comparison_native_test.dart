@@ -574,6 +574,11 @@ void main() {
             findsNothing,
           ); // Visible compact row includes its localized role.
           expect(find.textContaining('Different Committer'), findsOneWidget);
+          // Renaming a redundant icon's key must not evade the contract.
+          expect(
+            find.descendant(of: info, matching: find.byType(git.GitIconButton)),
+            findsOneWidget,
+          );
           final nativeSelected = find.descendant(
             of: selected,
             matching: find.byType(TextButton),
@@ -774,6 +779,20 @@ void main() {
             lessThanOrEqualTo(BusyMarkSizes.dialogWide),
           );
           expect(find.text(client.commit.message), findsOneWidget);
+          expect(
+            find.descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(git.GitButton),
+            ),
+            findsNothing,
+          );
+          expect(
+            find.descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(git.GitIconButton),
+            ),
+            findsNothing,
+          );
           expect(
             find.widgetWithText(
               git.GitButton,
