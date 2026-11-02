@@ -2724,11 +2724,17 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust => 'Git 操作にはワークスペースの信頼が必要です。';
+
+  @override
+  String get gitManageBranches => 'ブランチを管理';
+
+  @override
   String get gitTrustRequiredTitle => 'このワークスペースを信頼して Git を使用しますか？';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git リポジトリでは、フック、フィルター、その他の設定を通じてプログラムを実行できます。BusyMark がリポジトリデータを読み取ったり Git 操作を有効にしたりする前に、このワークスペースを信頼してください。';
+      '信頼していなくても、BusyMark はリポジトリの限定的なメタデータを確認できます。信頼を許可すると、このリポジトリで Git 操作が有効になり、設定されたフック、フィルター、認証情報ヘルパー、署名ツールが実行される場合があります。';
 
   @override
   String get gitTrustWorkspace => 'ワークスペースを信頼';

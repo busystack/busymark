@@ -2812,11 +2812,18 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Giti toimingud nõuavad tööruumi usaldamist.';
+
+  @override
+  String get gitManageBranches => 'Halda harusid';
+
+  @override
   String get gitTrustRequiredTitle => 'Kas usaldada seda tööruumi Giti jaoks?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Giti hoidlad võivad haakide, filtrite ja muude seadistuste kaudu programme käivitada. Usalda seda tööruumi enne, kui BusyMark loeb hoidla andmeid või lubab Giti toimingud.';
+      'BusyMark saab usalduseta uurida piiratud hoidla metaandmeid. Usaldamine lubab selle hoidla Giti toimingud, mis võivad käivitada seadistatud haake, filtreid, mandaadiabilisi ja allkirjastamistööriistu.';
 
   @override
   String get gitTrustWorkspace => 'Usalda tööruumi';

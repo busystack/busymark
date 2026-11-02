@@ -3142,11 +3142,13 @@
       }
     }
   },
+  "gitOperationsRequireTrust": "Git işlemleri çalışma alanına güvenilmesini gerektirir.",
+  "gitManageBranches": "Dalları yönet",
   "gitTrustRequiredTitle": "Git için bu çalışma alanına güveniyor musunuz?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Git depoları programları kancalar, filtreler ve diğer yapılandırmalar aracılığıyla çalıştırabilir. BusyMark depo verilerini okumadan veya Git eylemlerini etkinleştirmeden önce bu çalışma alanına güvenin.",
+  "gitTrustRequiredMessage": "BusyMark, güven verilmeden de sınırlı depo meta verilerini inceleyebilir. Güven vermek, bu depo için yapılandırılmış kancaları, filtreleri, kimlik bilgisi yardımcılarını ve imzalama araçlarını çalıştırabilecek Git işlemlerini etkinleştirir.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

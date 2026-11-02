@@ -4042,8 +4042,10 @@ class BusyMarkCheckbox extends StatelessWidget {
     required this.onChanged,
     this.tooltip,
     this.tristate = false,
+    this.label,
   });
 
+  final String? label;
   final bool? value;
   final bool tristate;
   final String? tooltip;
@@ -4051,11 +4053,15 @@ class BusyMarkCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final checkbox = YaruCheckbox(
-      value: value,
-      tristate: tristate,
-      onChanged: onChanged,
-    );
+    final Widget checkbox = label == null
+        ? YaruCheckbox(value: value, tristate: tristate, onChanged: onChanged)
+        : YaruCheckButton(
+            title: Text(label!),
+            value: value,
+            tristate: tristate,
+            onChanged: onChanged,
+            contentPadding: EdgeInsets.zero,
+          );
     final message = tooltip;
     if (message == null || message.isEmpty) {
       return checkbox;
@@ -4422,6 +4428,21 @@ class BusyMarkDialogShell extends StatelessWidget {
 
 /// Semantic desktop push-button roles backed by real Yaru-themed controls.
 abstract final class BusyMarkPushButton {
+  static TextButton flat({
+    required BuildContext context,
+    required Widget child,
+    required VoidCallback? onPressed,
+  }) => TextButton(
+    onPressed: onPressed,
+    style: ButtonStyle(
+      foregroundColor: Theme.of(
+        context,
+      ).outlinedButtonTheme.style?.foregroundColor,
+      iconColor: Theme.of(context).outlinedButtonTheme.style?.iconColor,
+    ),
+    child: child,
+  );
+
   static FilledButton standard({
     required Widget child,
     required VoidCallback? onPressed,
@@ -4761,6 +4782,7 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
     this.enabled = true,
     this.muted = false,
     this.compactHierarchyIndent = false,
+    this.separateTrailingAction = false,
     this.vcsColor,
     this.titleStyle,
     this.onToggle,
@@ -4788,6 +4810,9 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
   final bool enabled;
   final bool muted;
   final bool compactHierarchyIndent;
+
+  /// A sibling action column outside the native selection/activation surface.
+  final bool separateTrailingAction;
   final BusyMarkVcsFileColor? vcsColor;
   final TextStyle? titleStyle;
   final VoidCallback? onToggle;
@@ -4961,7 +4986,8 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
               style: widget.titleStyle ?? titleStyle,
             ),
           ),
-          if (widget.trailing != null) widget.trailing!,
+          if (widget.trailing != null && !widget.separateTrailingAction)
+            widget.trailing!,
           if (widget.onMenuRequested != null)
             SizedBox(
               width: BusyMarkSizes.iconButton,
@@ -4985,13 +5011,23 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
         ],
       ),
     );
+    final row = widget.separateTrailingAction
+        ? Row(
+            children: [
+              Expanded(child: surface),
+              const SizedBox(width: BusyMarkSpacing.xs),
+              SizedBox(width: BusyMarkSizes.iconButton, child: widget.trailing),
+              const SizedBox(width: BusyMarkSpacing.xs),
+            ],
+          )
+        : surface;
     return Semantics(
       selected: widget.selected,
       expanded: widget.hasChildren ? widget.expanded : null,
       enabled: widget.enabled,
       child: widget.tooltip == null || widget.tooltip!.isEmpty
-          ? surface
-          : Tooltip(message: widget.tooltip!, child: surface),
+          ? row
+          : Tooltip(message: widget.tooltip!, child: row),
     );
   }
 }
@@ -5100,6 +5136,12 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
           onPressed: control.onPressed,
           child: control.child,
         )
+      : control.variant == git.GitActionStyle.inline
+      ? BusyMarkPushButton.flat(
+          context: context,
+          onPressed: control.onPressed,
+          child: control.child,
+        )
       : BusyMarkPushButton.standard(
           onPressed: control.onPressed,
           child: control.child,
@@ -5164,6 +5206,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
   @override
   Widget checkbox(BuildContext context, git.GitCheckbox control) =>
       BusyMarkCheckbox(
+        label: control.label,
         value: control.value,
         tristate: control.value == null,
         onChanged: control.onChanged,
@@ -5279,6 +5322,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
   Widget changeRow(BuildContext context, git.GitChangeRow control) =>
       BusyMarkSidebarTreeRow(
         title: control.title,
+        separateTrailingAction: true,
         titleStyle: control.group ? busyMarkSectionHeaderStyle(context) : null,
         depth: control.depth,
         selected: control.selected,

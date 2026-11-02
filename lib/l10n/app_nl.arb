@@ -3142,11 +3142,13 @@
       }
     }
   },
+  "gitOperationsRequireTrust": "Git-bewerkingen vereisen vertrouwen in de werkruimte.",
+  "gitManageBranches": "Branches beheren",
   "gitTrustRequiredTitle": "Deze werkruimte vertrouwen voor Git?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Git-repository's kunnen programma's uitvoeren via hooks, filters en andere configuraties. Vertrouw deze werkruimte voordat BusyMark repositorygegevens leest of Git-acties inschakelt.",
+  "gitTrustRequiredMessage": "BusyMark kan beperkte repositorymetagegevens bekijken zonder vertrouwen. Vertrouwen verlenen schakelt Git-bewerkingen voor deze repository in die ingestelde hooks, filters, aanmeldingshulpprogramma’s en ondertekeningshulpmiddelen kunnen uitvoeren.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

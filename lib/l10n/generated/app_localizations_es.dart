@@ -2839,12 +2839,19 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Las operaciones de Git requieren confiar en el espacio de trabajo.';
+
+  @override
+  String get gitManageBranches => 'Gestionar ramas';
+
+  @override
   String get gitTrustRequiredTitle =>
       '¿Confiar en este espacio de trabajo para Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Los repositorios Git pueden ejecutar programas mediante hooks, filtros y otras opciones de configuración. Confíe en este espacio de trabajo antes de que BusyMark lea datos del repositorio o active acciones de Git.';
+      'BusyMark puede inspeccionar metadatos limitados del repositorio sin confianza. Al conceder confianza, se habilitan operaciones de Git para este repositorio que pueden ejecutar hooks, filtros, asistentes de credenciales y herramientas de firma configurados.';
 
   @override
   String get gitTrustWorkspace => 'Confiar en el espacio de trabajo';

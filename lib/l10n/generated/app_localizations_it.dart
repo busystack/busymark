@@ -2836,12 +2836,19 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Le operazioni Git richiedono di considerare attendibile lo spazio di lavoro.';
+
+  @override
+  String get gitManageBranches => 'Gestisci rami';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Considerare attendibile quest’area di lavoro per Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'I repository Git possono eseguire programmi tramite hook, filtri e altre configurazioni. Considera attendibile quest’area di lavoro prima che BusyMark legga i dati del repository o attivi le azioni Git.';
+      'BusyMark può esaminare metadati limitati del repository senza considerarlo attendibile. Concedere l’attendibilità abilita le operazioni Git per questo repository, che possono eseguire hook, filtri, assistenti per le credenziali e strumenti di firma configurati.';
 
   @override
   String get gitTrustWorkspace => 'Considera attendibile l’area di lavoro';

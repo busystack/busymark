@@ -2474,11 +2474,13 @@
   },
   "gitUnavailableTitle": "Git jest niedostępny",
   "gitUnavailableMessage": "{reason, select, other{Zainstaluj Git lub skonfiguruj BusyMark tak, aby używał dostępnego pliku wykonywalnego Git. {reason}}}",
+  "gitOperationsRequireTrust": "Operacje Git wymagają zaufania do obszaru roboczego.",
+  "gitManageBranches": "Zarządzaj gałęziami",
   "gitTrustRequiredTitle": "Zaufać temu obszarowi roboczemu na potrzeby Git?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Repozytoria Git mogą uruchamiać programy za pomocą hooków, filtrów i innych elementów konfiguracji. Zaufaj temu obszarowi roboczemu, zanim BusyMark odczyta dane repozytorium lub włączy działania Git.",
+  "gitTrustRequiredMessage": "BusyMark może sprawdzać ograniczone metadane repozytorium bez zaufania. Udzielenie zaufania włącza operacje Git dla tego repozytorium, które mogą uruchamiać skonfigurowane haki, filtry, pomocniki poświadczeń i narzędzia podpisywania.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

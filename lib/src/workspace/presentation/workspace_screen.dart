@@ -2526,6 +2526,11 @@ class _SidebarHeader extends ConsumerWidget {
                     key: const ValueKey('workspace-sidebar-primary-label'),
                     icon: WorkspaceGlyphs.forKind(workspace.kind),
                     text: _workspaceDisplayName(context, workspace),
+                    tooltip:
+                        selectedTab == _SidebarTab.git ||
+                            selectedTab == _SidebarTab.gitLog
+                        ? busyMarkLtrIsolateFor(context, path)
+                        : null,
                     style: Theme.of(
                       context,
                     ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
@@ -2849,7 +2854,9 @@ class _SidebarHeaderLine extends StatelessWidget {
     );
     final secondaryTapHandler = onSecondaryTapUp;
     if (secondaryTapHandler == null) {
-      return line;
+      return this.tooltip == null
+          ? line
+          : Tooltip(message: this.tooltip!, child: line);
     }
     final clickable = GestureDetector(
       behavior: HitTestBehavior.opaque,

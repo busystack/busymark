@@ -2827,11 +2827,18 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Git-bewerkingen vereisen vertrouwen in de werkruimte.';
+
+  @override
+  String get gitManageBranches => 'Branches beheren';
+
+  @override
   String get gitTrustRequiredTitle => 'Deze werkruimte vertrouwen voor Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git-repository\'s kunnen programma\'s uitvoeren via hooks, filters en andere configuraties. Vertrouw deze werkruimte voordat BusyMark repositorygegevens leest of Git-acties inschakelt.';
+      'BusyMark kan beperkte repositorymetagegevens bekijken zonder vertrouwen. Vertrouwen verlenen schakelt Git-bewerkingen voor deze repository in die ingestelde hooks, filters, aanmeldingshulpprogramma’s en ondertekeningshulpmiddelen kunnen uitvoeren.';
 
   @override
   String get gitTrustWorkspace => 'Werkruimte vertrouwen';

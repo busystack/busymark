@@ -2812,12 +2812,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Git işlemleri çalışma alanına güvenilmesini gerektirir.';
+
+  @override
+  String get gitManageBranches => 'Dalları yönet';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Git için bu çalışma alanına güveniyor musunuz?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git depoları programları kancalar, filtreler ve diğer yapılandırmalar aracılığıyla çalıştırabilir. BusyMark depo verilerini okumadan veya Git eylemlerini etkinleştirmeden önce bu çalışma alanına güvenin.';
+      'BusyMark, güven verilmeden de sınırlı depo meta verilerini inceleyebilir. Güven vermek, bu depo için yapılandırılmış kancaları, filtreleri, kimlik bilgisi yardımcılarını ve imzalama araçlarını çalıştırabilecek Git işlemlerini etkinleştirir.';
 
   @override
   String get gitTrustWorkspace => 'Çalışma alanına güven';

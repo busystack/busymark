@@ -2659,11 +2659,17 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust => 'Git 操作需要信任工作区。';
+
+  @override
+  String get gitManageBranches => '管理分支';
+
+  @override
   String get gitTrustRequiredTitle => '信任此工作区以使用 Git？';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git 存储库可以通过 hook、过滤器和其他配置运行程序。在 BusyMark 读取存储库数据或启用 Git 操作前，请先信任此工作区。';
+      'BusyMark 可以在未授予信任时检查有限的仓库元数据。授予信任后，将启用此仓库的 Git 操作，这些操作可能执行已配置的钩子、过滤器、凭据助手和签名工具。';
 
   @override
   String get gitTrustWorkspace => '信任工作区';
@@ -11133,11 +11139,17 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
+  String get gitOperationsRequireTrust => 'Git 操作需要信任工作区。';
+
+  @override
+  String get gitManageBranches => '管理分支';
+
+  @override
   String get gitTrustRequiredTitle => '信任此工作区以使用 Git？';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git 存储库可以通过 hook、过滤器和其他配置运行程序。在 BusyMark 读取存储库数据或启用 Git 操作前，请先信任此工作区。';
+      'BusyMark 可以在未授予信任时检查有限的仓库元数据。授予信任后，将启用此仓库的 Git 操作，这些操作可能执行已配置的钩子、过滤器、凭据助手和签名工具。';
 
   @override
   String get gitTrustWorkspace => '信任工作区';

@@ -280,13 +280,30 @@ class BusyMarkCompactIconButton { const BusyMarkCompactIconButton(); }
         throw StateError('Empty/unresolved workspace audit passed');
       }
     }
+    final adapterFile = File('${temp.path}/adapter.dart');
+    for (final forbidden in [true, false]) {
+      adapterFile.writeAsStringSync('''
+import 'lib/src/app/busymark_design.dart' as native;
+typedef Hidden = native.BusyMarkCompactIconButton;
+class BusyMarkGitPresentation {
+  Object iconAction() => Object();
+  Object button() => ${forbidden ? 'Hidden.new' : 'Object()'};
+  Object checkbox() => Object();
+  Object changeRow() => Object();
+}
+''');
+      final errors = await auditNativeAdapter(adapterFile);
+      if (errors.isNotEmpty != forbidden) {
+        throw StateError('Native adapter alias enforcement failed');
+      }
+    }
     stdout.writeln('Resolved workspace Git scope audit self-tests passed.');
   } finally {
     temp.deleteSync(recursive: true);
   }
 }
 
-Future<Map<int, String>> auditIconAdapter(File file) async {
+Future<Map<int, String>> auditNativeAdapter(File file) async {
   final path = file.resolveSymbolicLinksSync();
   final collection = AnalysisContextCollection(includedPaths: [path]);
   try {
@@ -304,12 +321,20 @@ Future<Map<int, String>> auditIconAdapter(File file) async {
         .whereType<ClassDeclaration>()
         .where((c) => c.namePart.typeName.lexeme == 'BusyMarkGitPresentation')
         .single;
-    final method = adapter.body.members
+    const requiredMethods = {'iconAction', 'button', 'checkbox', 'changeRow'};
+    final methods = adapter.body.members
         .whereType<MethodDeclaration>()
-        .where((m) => m.name.lexeme == 'iconAction')
-        .single;
+        .where((m) => requiredMethods.contains(m.name.lexeme))
+        .toList();
+    if (methods.length != requiredMethods.length) {
+      throw StateError(
+        'Native Git control mappings moved; update the adapter audit',
+      );
+    }
     final visitor = _NativeReferences();
-    method.accept(visitor);
+    for (final method in methods) {
+      method.accept(visitor);
+    }
     return visitor.violations;
   } finally {
     await collection.dispose();
@@ -324,7 +349,7 @@ Future<void> main(List<String> args) async {
   );
   final violations = await audit(file, production: true);
   final adapter = File('${mark.path}/lib/src/app/busymark_design.dart');
-  final adapterViolations = await auditIconAdapter(adapter);
+  final adapterViolations = await auditNativeAdapter(adapter);
   for (final entry in adapterViolations.entries) {
     stderr.writeln('${adapter.path}:${entry.key}: ${entry.value}');
   }

@@ -3142,11 +3142,13 @@
       }
     }
   },
+  "gitOperationsRequireTrust": "Operasi Git memerlukan kepercayaan pada ruang kerja.",
+  "gitManageBranches": "Kelola cabang",
   "gitTrustRequiredTitle": "Percayai ruang kerja ini untuk Git?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Repositori Git dapat menjalankan program melalui hook, filter, dan konfigurasi lainnya. Percayai ruang kerja ini sebelum BusyMark membaca data repositori atau mengaktifkan tindakan Git.",
+  "gitTrustRequiredMessage": "BusyMark dapat memeriksa metadata repositori terbatas tanpa kepercayaan. Memberikan kepercayaan mengaktifkan operasi Git untuk repositori ini yang dapat menjalankan hook, filter, pembantu kredensial, dan alat penandatanganan yang dikonfigurasi.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

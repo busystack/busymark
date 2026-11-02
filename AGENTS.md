@@ -41,3 +41,11 @@ or changed goldens cannot bless circular controls. Git change rows reuse
 `BusyMarkSidebarTreeRow`. Keep the canonical working-tree-root eligibility at
 both session and authoring-command boundaries, and the exclusive Commit trust
 screen. BusyFiles keeps descendant browsing and its existing trust placement.
+
+Commit's branch button opens the full Branches modal using the native flat
+inline button treatment. Its tooltip describes Manage branches; repository
+paths belong to workspace identity. Refresh is secondary in Repository Actions;
+that menu excludes the duplicate Branches action only in BusyMark. Native
+change rows reserve a sibling trailing-action region outside selection surfaces.
+Amend uses the labelled native desktop checkbox and preserves its state/drafts.
+Run tools/check_git_presentation.sh, including the rendered native contract tests.

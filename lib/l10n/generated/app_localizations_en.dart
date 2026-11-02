@@ -2815,11 +2815,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Git operations require workspace trust.';
+
+  @override
+  String get gitManageBranches => 'Manage branches';
+
+  @override
   String get gitTrustRequiredTitle => 'Trust this workspace for Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.';
+      'BusyMark can inspect limited repository metadata without trust. Granting trust enables Git operations for this repository that may execute configured hooks, filters, credential helpers, and signing tools.';
 
   @override
   String get gitTrustWorkspace => 'Trust workspace';

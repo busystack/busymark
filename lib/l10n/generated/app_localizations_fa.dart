@@ -2853,12 +2853,19 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'عملیات Git به اعتماد به فضای کاری نیاز دارد.';
+
+  @override
+  String get gitManageBranches => 'مدیریت شاخه‌ها';
+
+  @override
   String get gitTrustRequiredTitle =>
       'برای استفاده از Git به این فضای کاری اعتماد می‌کنید؟';
 
   @override
   String get gitTrustRequiredMessage =>
-      'مخزن‌های Git می‌توانند از طریق هوک‌ها، فیلترها و پیکربندی‌های دیگر برنامه اجرا کنند. پیش از اینکه BusyMark داده‌های مخزن را بخواند یا عملیات Git را فعال کند، به این فضای کاری اعتماد کنید.';
+      'BusyMark می‌تواند بدون اعتماد، فراداده‌های محدودی از مخزن را بررسی کند. اعطای اعتماد عملیات Git را برای این مخزن فعال می‌کند که ممکن است هوک‌ها، فیلترها، ابزارهای اعتبارنامه و ابزارهای امضای پیکربندی‌شده را اجرا کنند.';
 
   @override
   String get gitTrustWorkspace => 'اعتماد به فضای کاری';

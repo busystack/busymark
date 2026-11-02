@@ -2817,12 +2817,19 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Git-operasjoner krever at du stoler på arbeidsområdet.';
+
+  @override
+  String get gitManageBranches => 'Administrer grener';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Vil du stole på dette arbeidsområdet for Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git-repositorier kan kjøre programmer via hooks, filtre og annen konfigurasjon. Stol på dette arbeidsområdet før BusyMark leser repositoriedata eller aktiverer Git-handlinger.';
+      'BusyMark kan undersøke begrensede metadata fra depotet uten tillit. Når du gir tillit, aktiveres Git-operasjoner for dette depotet som kan kjøre konfigurerte kroker, filtre, legitimasjonshjelpere og signeringsverktøy.';
 
   @override
   String get gitTrustWorkspace => 'Stol på arbeidsområdet';

@@ -2853,12 +2853,19 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Операції Git потребують довіри до робочої області.';
+
+  @override
+  String get gitManageBranches => 'Керування гілками';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Довіряти цій робочій області під час роботи з Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Репозиторії Git можуть запускати програми за допомогою хуків, фільтрів та інших налаштувань. Позначте цю робочу область як довірену, перш ніж BusyMark прочитає дані репозиторію або ввімкне дії Git.';
+      'BusyMark може перевіряти обмежені метадані сховища без довіри. Надання довіри вмикає операції Git для цього сховища, які можуть запускати налаштовані хуки, фільтри, помічники облікових даних та засоби підписування.';
 
   @override
   String get gitTrustWorkspace => 'Довіряти робочій області';

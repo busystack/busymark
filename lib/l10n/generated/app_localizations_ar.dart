@@ -2828,11 +2828,18 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'تتطلب عمليات Git الوثوق بمساحة العمل.';
+
+  @override
+  String get gitManageBranches => 'إدارة الفروع';
+
+  @override
   String get gitTrustRequiredTitle => 'الوثوق بمساحة العمل هذه لاستخدام Git؟';
 
   @override
   String get gitTrustRequiredMessage =>
-      'يمكن لمستودعات Git تشغيل برامج من خلال الخطافات والمرشحات وإعدادات أخرى. ثق بمساحة العمل هذه قبل أن يقرأ BusyMark بيانات المستودع أو يمكّن إجراءات Git.';
+      'يمكن لـ BusyMark فحص بيانات وصفية محدودة للمستودع دون منحه الثقة. يتيح منح الثقة عمليات Git لهذا المستودع التي قد تشغّل الخطافات وعوامل التصفية ومساعدات بيانات الاعتماد وأدوات التوقيع المضبوطة فيه.';
 
   @override
   String get gitTrustWorkspace => 'الوثوق بمساحة العمل';

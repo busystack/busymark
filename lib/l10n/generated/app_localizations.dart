@@ -4753,16 +4753,28 @@ abstract class AppLocalizations {
   /// **'{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}'**
   String gitUnavailableMessage(String reason);
 
+  /// Concise exclusive Commit sidebar authorization explanation; passive metadata inspection is still restricted but possible.
+  ///
+  /// In en, this message translates to:
+  /// **'Git operations require workspace trust.'**
+  String get gitOperationsRequireTrust;
+
+  /// Action tooltip and accessible name of the current-branch button; opens the complete Branches modal.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage branches'**
+  String get gitManageBranches;
+
   /// Git empty state title shown before repository-controlled commands may run.
   ///
   /// In en, this message translates to:
   /// **'Trust this workspace for Git?'**
   String get gitTrustRequiredTitle;
 
-  /// Security warning shown before Git repository access is enabled for a workspace.
+  /// Confirmation explaining restricted passive inspection and authorization of potentially executable repository operations.
   ///
   /// In en, this message translates to:
-  /// **'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.'**
+  /// **'BusyMark can inspect limited repository metadata without trust. Granting trust enables Git operations for this repository that may execute configured hooks, filters, credential helpers, and signing tools.'**
   String get gitTrustRequiredMessage;
 
   /// Action label for trusting a workspace before enabling Git.

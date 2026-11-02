@@ -2846,12 +2846,19 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Les opérations Git nécessitent de faire confiance à cet espace de travail.';
+
+  @override
+  String get gitManageBranches => 'Gérer les branches';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Faire confiance à cet espace de travail pour Git ?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Les dépôts Git peuvent exécuter des programmes au moyen de hooks, de filtres et d’autres options de configuration. Faites confiance à cet espace de travail avant que BusyMark lise les données du dépôt ou active les actions Git.';
+      'BusyMark peut examiner certaines métadonnées du dépôt sans lui faire confiance. Accorder votre confiance active les opérations Git pour ce dépôt, qui peuvent exécuter les hooks, filtres, assistants d’identification et outils de signature configurés.';
 
   @override
   String get gitTrustWorkspace => 'Faire confiance à l’espace de travail';

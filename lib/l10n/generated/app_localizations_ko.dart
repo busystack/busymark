@@ -2721,11 +2721,17 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust => 'Git 작업에는 작업 공간 신뢰가 필요합니다.';
+
+  @override
+  String get gitManageBranches => '브랜치 관리';
+
+  @override
   String get gitTrustRequiredTitle => 'Git에 대한 이 작업공간을 신뢰하시나요?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git 저장소는 후크, 필터 및 기타 구성을 통해 프로그램을 실행할 수 있습니다. BusyMark가 저장소 데이터를 읽거나 Git 작업을 활성화하기 전에 이 작업공간을 신뢰하세요.';
+      'BusyMark는 신뢰하지 않아도 제한된 저장소 메타데이터를 확인할 수 있습니다. 신뢰를 허용하면 이 저장소의 Git 작업이 활성화되며, 설정된 훅, 필터, 자격 증명 도우미 및 서명 도구가 실행될 수 있습니다.';
 
   @override
   String get gitTrustWorkspace => '작업공간 신뢰';

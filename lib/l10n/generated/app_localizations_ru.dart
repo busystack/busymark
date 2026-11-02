@@ -2844,12 +2844,19 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Для операций Git необходимо доверять рабочей области.';
+
+  @override
+  String get gitManageBranches => 'Управление ветками';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Доверять этой рабочей области при работе с Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Репозитории Git могут запускать программы с помощью хуков, фильтров и других настроек. Подтвердите доверие к этой рабочей области, прежде чем BusyMark прочитает данные репозитория или включит действия Git.';
+      'BusyMark может проверять ограниченные метаданные репозитория без доверия. Предоставление доверия разрешает операции Git для этого репозитория, которые могут запускать настроенные хуки, фильтры, помощники учётных данных и средства подписи.';
 
   @override
   String get gitTrustWorkspace => 'Доверять рабочей области';

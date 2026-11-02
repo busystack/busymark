@@ -2474,11 +2474,13 @@
   },
   "gitUnavailableTitle": "Git недоступен",
   "gitUnavailableMessage": "{reason, select, other{Установите Git или настройте BusyMark для использования доступного исполняемого файла Git. {reason}}}",
+  "gitOperationsRequireTrust": "Для операций Git необходимо доверять рабочей области.",
+  "gitManageBranches": "Управление ветками",
   "gitTrustRequiredTitle": "Доверять этой рабочей области при работе с Git?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Репозитории Git могут запускать программы с помощью хуков, фильтров и других настроек. Подтвердите доверие к этой рабочей области, прежде чем BusyMark прочитает данные репозитория или включит действия Git.",
+  "gitTrustRequiredMessage": "BusyMark может проверять ограниченные метаданные репозитория без доверия. Предоставление доверия разрешает операции Git для этого репозитория, которые могут запускать настроенные хуки, фильтры, помощники учётных данных и средства подписи.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

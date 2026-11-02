@@ -2805,12 +2805,19 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Các thao tác Git yêu cầu tin cậy không gian làm việc.';
+
+  @override
+  String get gitManageBranches => 'Quản lý nhánh';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Tin cậy không gian làm việc này cho Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Kho Git có thể chạy chương trình thông qua hook, bộ lọc và các cấu hình khác. Hãy tin cậy không gian làm việc này trước khi BusyMark đọc dữ liệu kho hoặc bật các thao tác Git.';
+      'BusyMark có thể kiểm tra siêu dữ liệu giới hạn của kho mà không cần tin cậy. Cấp sự tin cậy sẽ bật các thao tác Git cho kho này, có thể chạy các hook, bộ lọc, trình hỗ trợ thông tin xác thực và công cụ ký đã cấu hình.';
 
   @override
   String get gitTrustWorkspace => 'Tin cậy không gian làm việc';

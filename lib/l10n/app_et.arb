@@ -2859,11 +2859,13 @@
       }
     }
   },
+  "gitOperationsRequireTrust": "Giti toimingud nõuavad tööruumi usaldamist.",
+  "gitManageBranches": "Halda harusid",
   "gitTrustRequiredTitle": "Kas usaldada seda tööruumi Giti jaoks?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Giti hoidlad võivad haakide, filtrite ja muude seadistuste kaudu programme käivitada. Usalda seda tööruumi enne, kui BusyMark loeb hoidla andmeid või lubab Giti toimingud.",
+  "gitTrustRequiredMessage": "BusyMark saab usalduseta uurida piiratud hoidla metaandmeid. Usaldamine lubab selle hoidla Giti toimingud, mis võivad käivitada seadistatud haake, filtreid, mandaadiabilisi ja allkirjastamistööriistu.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

@@ -2474,11 +2474,13 @@
   },
   "gitUnavailableTitle": "Git недоступний",
   "gitUnavailableMessage": "{reason, select, other{Установіть Git або налаштуйте BusyMark на використання доступного виконуваного файлу Git. {reason}}}",
+  "gitOperationsRequireTrust": "Операції Git потребують довіри до робочої області.",
+  "gitManageBranches": "Керування гілками",
   "gitTrustRequiredTitle": "Довіряти цій робочій області під час роботи з Git?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Репозиторії Git можуть запускати програми за допомогою хуків, фільтрів та інших налаштувань. Позначте цю робочу область як довірену, перш ніж BusyMark прочитає дані репозиторію або ввімкне дії Git.",
+  "gitTrustRequiredMessage": "BusyMark може перевіряти обмежені метадані сховища без довіри. Надання довіри вмикає операції Git для цього сховища, які можуть запускати налаштовані хуки, фільтри, помічники облікових даних та засоби підписування.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

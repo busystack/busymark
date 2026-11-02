@@ -2841,12 +2841,19 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Git-Operationen erfordern Vertrauen in den Arbeitsbereich.';
+
+  @override
+  String get gitManageBranches => 'Branches verwalten';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Diesem Arbeitsbereich für Git vertrauen?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git-Repositorys können über Hooks, Filter und andere Konfigurationen Programme ausführen. Vertrauen Sie diesem Arbeitsbereich, bevor BusyMark Repository-Daten liest oder Git-Aktionen aktiviert.';
+      'BusyMark kann begrenzte Repository-Metadaten ohne Vertrauen prüfen. Wenn Sie Vertrauen gewähren, werden Git-Operationen für dieses Repository aktiviert, die konfigurierte Hooks, Filter, Anmeldehelfer und Signierwerkzeuge ausführen können.';
 
   @override
   String get gitTrustWorkspace => 'Diesem Arbeitsbereich vertrauen';

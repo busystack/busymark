@@ -2815,11 +2815,18 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Operasi Git memerlukan kepercayaan pada ruang kerja.';
+
+  @override
+  String get gitManageBranches => 'Kelola cabang';
+
+  @override
   String get gitTrustRequiredTitle => 'Percayai ruang kerja ini untuk Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Repositori Git dapat menjalankan program melalui hook, filter, dan konfigurasi lainnya. Percayai ruang kerja ini sebelum BusyMark membaca data repositori atau mengaktifkan tindakan Git.';
+      'BusyMark dapat memeriksa metadata repositori terbatas tanpa kepercayaan. Memberikan kepercayaan mengaktifkan operasi Git untuk repositori ini yang dapat menjalankan hook, filter, pembantu kredensial, dan alat penandatanganan yang dikonfigurasi.';
 
   @override
   String get gitTrustWorkspace => 'Percayai ruang kerja';

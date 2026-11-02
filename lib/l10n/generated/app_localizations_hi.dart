@@ -2810,11 +2810,18 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Git कार्रवाइयों के लिए कार्यस्थान पर भरोसा करना आवश्यक है।';
+
+  @override
+  String get gitManageBranches => 'शाखाएँ प्रबंधित करें';
+
+  @override
   String get gitTrustRequiredTitle => 'Git के लिए इस कार्यस्थान पर भरोसा करें?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git रिपॉज़िटरी हुक, फ़िल्टर और अन्य कॉन्फ़िगरेशन के ज़रिए प्रोग्राम चला सकती हैं। BusyMark के रिपॉज़िटरी डेटा पढ़ने या Git कार्रवाइयाँ चालू करने से पहले इस कार्यस्थान पर भरोसा करें।';
+      'BusyMark बिना भरोसा दिए रिपॉज़िटरी का सीमित मेटाडेटा जाँच सकता है। भरोसा देने से इस रिपॉज़िटरी के लिए Git कार्रवाइयाँ सक्षम होती हैं, जो कॉन्फ़िगर किए गए हुक, फ़िल्टर, क्रेडेंशियल सहायक और हस्ताक्षर उपकरण चला सकती हैं।';
 
   @override
   String get gitTrustWorkspace => 'कार्यस्थान पर भरोसा करें';

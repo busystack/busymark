@@ -3142,11 +3142,13 @@
       }
     }
   },
+  "gitOperationsRequireTrust": "Git 操作にはワークスペースの信頼が必要です。",
+  "gitManageBranches": "ブランチを管理",
   "gitTrustRequiredTitle": "このワークスペースを信頼して Git を使用しますか？",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Git リポジトリでは、フック、フィルター、その他の設定を通じてプログラムを実行できます。BusyMark がリポジトリデータを読み取ったり Git 操作を有効にしたりする前に、このワークスペースを信頼してください。",
+  "gitTrustRequiredMessage": "信頼していなくても、BusyMark はリポジトリの限定的なメタデータを確認できます。信頼を許可すると、このリポジトリで Git 操作が有効になり、設定されたフック、フィルター、認証情報ヘルパー、署名ツールが実行される場合があります。",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },

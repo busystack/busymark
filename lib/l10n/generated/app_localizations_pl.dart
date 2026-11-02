@@ -2848,12 +2848,19 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get gitOperationsRequireTrust =>
+      'Operacje Git wymagają zaufania do obszaru roboczego.';
+
+  @override
+  String get gitManageBranches => 'Zarządzaj gałęziami';
+
+  @override
   String get gitTrustRequiredTitle =>
       'Zaufać temu obszarowi roboczemu na potrzeby Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Repozytoria Git mogą uruchamiać programy za pomocą hooków, filtrów i innych elementów konfiguracji. Zaufaj temu obszarowi roboczemu, zanim BusyMark odczyta dane repozytorium lub włączy działania Git.';
+      'BusyMark może sprawdzać ograniczone metadane repozytorium bez zaufania. Udzielenie zaufania włącza operacje Git dla tego repozytorium, które mogą uruchamiać skonfigurowane haki, filtry, pomocniki poświadczeń i narzędzia podpisywania.';
 
   @override
   String get gitTrustWorkspace => 'Zaufaj obszarowi roboczemu';

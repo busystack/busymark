@@ -20,6 +20,215 @@ import 'package:yaru/yaru.dart';
 void main() {
   for (final brightness in Brightness.values) {
     testWidgets(
+      'flat branch button opens full modal and secondary menu owns Refresh $brightness',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final client = _CommitControlsClient();
+        git.GitSession? session;
+        List<dynamic>? entries;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('busymark/native_menus'),
+          (call) async {
+            if (call.method == 'show') {
+              entries = (call.arguments as Map)['entries'] as List;
+              return entries!.indexWhere(
+                (e) => (e as Map)['label'] == 'Refresh',
+              );
+            }
+            return true;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            const MethodChannel('busymark/native_menus'),
+            null,
+          ),
+        );
+        await tester.pumpWidget(
+          _nativeGitHarness(
+            brightness: brightness,
+            builder: (context, host) {
+              session ??= git.GitSession(
+                client: client,
+                repository: repo,
+                host: host,
+              );
+              return SizedBox(
+                width: busyMarkGitSidebarMinimumWidth(context),
+                height: 900,
+                child: git.GitCommitView(
+                  session: session!,
+                  layout: git.GitCommitLayout.sidebar,
+                  branchActionLabel: AppLocalizations.of(
+                    context,
+                  ).gitManageBranches,
+                  onReview: (_) {},
+                  onLog: () {},
+                  onBranches: () =>
+                      git.GitWorkflowUi(context, session!).branches(),
+                  onPush: () {},
+                  onMore: (anchor) => git.GitWorkflowUi(
+                    anchor,
+                    session!,
+                  ).more(showBranches: false, includeRefresh: true),
+                ),
+              );
+            },
+          ),
+        );
+        addTearDown(() => session?.dispose());
+        await session!.start();
+        await tester.pumpAndSettle();
+        final branch = find.descendant(
+          of: find.byTooltip('Manage branches'),
+          matching: find.byType(TextButton),
+        );
+        expect(branch, findsOneWidget);
+        expect(find.byTooltip('Refresh'), findsNothing);
+        expect(find.byTooltip(repo.root), findsNothing);
+        final button = tester.widget<TextButton>(branch);
+        final context = tester.element(branch);
+        final style = Theme.of(
+          context,
+        ).textButtonTheme.style!.merge(button.style);
+        for (final states in <Set<WidgetState>>[
+          {},
+          {WidgetState.hovered},
+          {WidgetState.pressed},
+          {WidgetState.focused},
+          {WidgetState.selected},
+          {WidgetState.disabled},
+        ]) {
+          expect(style.shape!.resolve(states), isA<RoundedRectangleBorder>());
+        }
+        expect(style.backgroundColor!.resolve({})!.a, 0);
+        expect(
+          tester.getRect(branch).height,
+          greaterThanOrEqualTo(BusyMarkSizes.iconButton),
+        );
+        final branchText = tester.widget<Text>(find.text(client.branch));
+        expect(branchText.maxLines, 1);
+        expect(branchText.overflow, TextOverflow.ellipsis);
+        await tester.tap(branch);
+        await tester.pumpAndSettle();
+        expect(find.byType(git.GitBranchesView), findsOneWidget);
+        expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+        expect(find.text('Local branches'), findsOneWidget);
+        expect(find.text('Remote branches'), findsOneWidget);
+        expect(find.text('Tags'), findsOneWidget);
+        expect(find.text('New branch…'), findsOneWidget);
+        expect(find.byType(DropdownButton<String>), findsNothing);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        final before = client.statusReads;
+        await tester.tap(find.byTooltip('Repository actions'));
+        await tester.pumpAndSettle();
+        expect(entries, isNotNull);
+        // The native service serializes indices, labels and enabled state. Labels
+        // prove the actual host menu mapping; other workflow destinations survive.
+        final labels = entries!.map((e) => (e as Map)['label']).toList();
+        expect(labels, contains('Refresh'));
+        expect(
+          labels.whereType<String>().where((s) => s.startsWith('Branches')),
+          isEmpty,
+        );
+        expect(labels, containsAll(['Fetch…', 'Pull…', 'Push…']));
+        expect(client.statusReads, greaterThan(before));
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'Amend uses native desktop checkbox with one labelled target $brightness',
+      (tester) async {
+        final enabled = ValueNotifier(true), value = ValueNotifier(false);
+        addTearDown(enabled.dispose);
+        addTearDown(value.dispose);
+        var changes = 0;
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(
+          _nativeGitHarness(
+            brightness: brightness,
+            builder: (context, host) => Column(
+              children: [
+                // Established non-Git checkbox is the appearance reference.
+                BusyMarkCheckbox(value: false, onChanged: (_) {}),
+                ValueListenableBuilder<bool>(
+                  valueListenable: enabled,
+                  builder: (_, available, _) => ValueListenableBuilder<bool>(
+                    valueListenable: value,
+                    builder: (_, checked, _) => SizedBox(
+                      width: 300,
+                      child: git.GitCheckbox(
+                        label: 'Amend last commit',
+                        value: checked,
+                        onChanged: available
+                            ? (next) {
+                                changes++;
+                                value.value = next!;
+                              }
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(YaruCheckButton), findsOneWidget);
+        expect(find.byType(YaruCheckbox), findsNWidgets(2));
+        expect(find.byType(Checkbox), findsNothing);
+        final native = find.byType(YaruCheckbox);
+        expect(tester.getSize(native.first), tester.getSize(native.last));
+        await tester.tap(find.text('Amend last commit'));
+        await tester.pumpAndSettle();
+        expect(value.value, isTrue);
+        expect(changes, 1);
+        expect(tester.widget<YaruCheckbox>(native.last).value, isTrue);
+        final node = tester.getSemantics(find.byType(YaruCheckButton));
+        expect(node.label, contains('Amend last commit'));
+        expect(
+          node,
+          matchesSemantics(
+            label: 'Amend last commit',
+            hasCheckedState: true,
+            isChecked: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            isFocusable: true,
+            hasTapAction: true,
+            hasFocusAction: true,
+          ),
+        );
+        final checkContext = tester.element(
+          find
+              .descendant(of: native.last, matching: find.byType(Semantics))
+              .last,
+        );
+        Focus.of(checkContext).requestFocus();
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.space);
+        await tester.pumpAndSettle();
+        expect(value.value, isFalse);
+        expect(changes, 2);
+        enabled.value = false;
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Amend last commit'));
+        await tester.pump();
+        expect(changes, 2);
+        expect(tester.widget<YaruCheckbox>(native.last).onChanged, isNull);
+        semantics.dispose();
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  for (final brightness in Brightness.values) {
+    testWidgets(
       'real BusyMark native Git contract: fields, choices, errors, progress and menus $brightness',
       (tester) async {
         tester.view.physicalSize = const Size(1000, 1000);
@@ -339,6 +548,27 @@ void main() {
       await tester.pumpAndSettle();
       final rows = find.byType(BusyMarkSidebarTreeRow);
       expect(rows, findsNWidgets(3));
+      for (var i = 0; i < 3; i++) {
+        final surface = find.descendant(
+          of: rows.at(i),
+          matching: find.byType(BusyMarkSidebarRowSurface),
+        );
+        final action = find.byTooltip('Stage $i');
+        final surfaceRect = tester.getRect(surface),
+            actionRect = tester.getRect(action);
+        expect(
+          actionRect.left - surfaceRect.right,
+          greaterThanOrEqualTo(BusyMarkSpacing.xs),
+        );
+        expect(
+          actionRect.right,
+          lessThanOrEqualTo(tester.getRect(rows.at(i)).right),
+        );
+        expect(
+          actionRect.height,
+          greaterThanOrEqualTo(BusyMarkSizes.iconButton),
+        );
+      }
       for (var i = 1; i < 3; i++) {
         expect(
           tester.getRect(rows.at(i)).height,
@@ -576,6 +806,7 @@ Widget _nativeGitHarness({
   required Widget Function(BuildContext, git.GitHost) builder,
   Locale locale = const Locale('en'),
   double scale = 1,
+  Brightness brightness = Brightness.light,
 }) => ProviderScope(
   overrides: [
     sharedGitDraftStoreProvider.overrideWithValue(git.MemoryGitDraftStore()),
@@ -583,14 +814,17 @@ Widget _nativeGitHarness({
   child: MaterialApp(
     locale: locale,
     theme: buildBusyMarkTheme(
-      brightness: Brightness.light,
+      brightness: brightness,
       accentColor: busyMarkDefaultAccentColor,
     ),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
       body: MediaQuery(
-        data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+        data: MediaQueryData(
+          size: const Size(1200, 1000),
+          textScaler: TextScaler.linear(scale),
+        ),
         child: Consumer(
           builder: (context, ref, _) {
             final host = busyMarkGitHost(
@@ -616,3 +850,40 @@ Widget _nativeGitHarness({
     ),
   ),
 );
+
+class _CommitControlsClient extends FixtureClient {
+  int statusReads = 0;
+  final branch =
+      'feature/very-long-branch-name-that-must-truncate-without-hiding-actions';
+  final head = git.GitOid('1' * 40);
+  @override
+  Future<git.GitSnapshot> status(
+    git.RepositoryId repository, {
+    git.GitCancellation? cancellation,
+    git.GitReadPolicy policy = git.GitReadPolicy.restricted,
+  }) async {
+    statusReads++;
+    return git.GitSnapshot(
+      repository: repository,
+      head: head,
+      branch: branch,
+      token: 'status',
+      indexToken: 'index',
+      changes: const [],
+      operation: const git.RepositoryOperation(git.GitOperationKind.none),
+      observedAt: DateTime.utc(2026),
+    );
+  }
+
+  @override
+  Future<List<git.GitReference>> references(
+    git.RepositoryId repository,
+  ) async => [
+    for (final name in [
+      'refs/heads/main',
+      'refs/remotes/origin/main',
+      'refs/tags/v1',
+    ])
+      git.GitReference(name: name, oid: head),
+  ];
+}

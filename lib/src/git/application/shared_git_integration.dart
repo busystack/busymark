@@ -602,9 +602,7 @@ Future<bool> _ensureGitTrust(
           ),
         ],
         children: [
-          Text(
-            '${repository.root}\n\n${labels.gitTrustRequiredMessage}\n${labels.gitHostGitOperationsApplyToThisEntireRepositoryAndMay}',
-          ),
+          Text('${repository.root}\n\n${labels.gitTrustRequiredMessage}'),
         ],
       );
     },
@@ -1074,7 +1072,7 @@ class _BusyMarkSharedGitSidebarState
         index: widget.log ? 1 : 0,
         children: [
           ExcludeFocus(
-            excluding: !trusted || !widget.active || widget.log,
+            excluding: !widget.active || widget.log,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -1083,6 +1081,7 @@ class _BusyMarkSharedGitSidebarState
                   maintainState: true,
                   child: shared.GitCommitView(
                     layout: shared.GitCommitLayout.sidebar,
+                    branchActionLabel: context.l10n.gitManageBranches,
                     minimumWidth: busyMarkGitSidebarMinimumWidth(context),
                     trackingDescription: (snapshot) => snapshot.upstream == null
                         ? context.l10n.gitUiNoUpstream
@@ -1111,8 +1110,10 @@ class _BusyMarkSharedGitSidebarState
                         shared.GitWorkflowUi(context, _session!).branches(),
                     onPush: () =>
                         shared.GitWorkflowUi(context, _session!).push(),
-                    onMore: (anchor) =>
-                        shared.GitWorkflowUi(anchor, _session!).more(),
+                    onMore: (anchor) => shared.GitWorkflowUi(
+                      anchor,
+                      _session!,
+                    ).more(showBranches: false, includeRefresh: true),
                   ),
                 ),
                 if (!trusted)
@@ -1123,11 +1124,9 @@ class _BusyMarkSharedGitSidebarState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            context.l10n.gitTrustRequiredTitle,
+                            context.l10n.gitOperationsRequireTrust,
                             style: busyMarkSectionHeaderStyle(context),
                           ),
-                          const SizedBox(height: BusyMarkSpacing.sm),
-                          Text(context.l10n.gitTrustRequiredMessage),
                           const SizedBox(height: BusyMarkSpacing.lg),
                           BusyMarkPushButton.suggested(
                             onPressed: () async {

@@ -7631,19 +7631,44 @@ code
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await pumpUntil(
         tester,
-        () => find.text(l10n.gitTrustRequiredTitle).evaluate().isNotEmpty,
+        () => find.text(l10n.gitOperationsRequireTrust).evaluate().isNotEmpty,
         operation: 'exclusive Commit trust screen',
       );
       expect(find.byType(shared.GitCommitView), findsNothing);
       expect(find.byTooltip('Repository actions'), findsNothing);
+      expect(find.text(l10n.gitTrustRequiredMessage), findsNothing);
       expect(find.text('Commit and Push…'), findsNothing);
-      await tester.tap(find.text(l10n.gitTrustWorkspace));
+      final trustText = tester.element(find.text(l10n.gitTrustWorkspace));
+      final trustFocus = Focus.of(trustText);
+      trustFocus.requestFocus();
+      await tester.pump();
+      expect(trustFocus.hasFocus, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await pumpUntil(
         tester,
         () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
         operation: 'native trust confirmation',
       );
       await tester.pumpAndSettle();
+      final dialog = find.byType(BusyMarkDialogShell);
+      expect(
+        find.descendant(of: dialog, matching: find.textContaining(root)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining(l10n.gitTrustRequiredMessage),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.text(l10n.gitOperationsRequireTrust),
+        ),
+        findsNothing,
+      );
       await tester.tap(find.text(l10n.cancel).last);
       await tester.pumpAndSettle();
       expect(

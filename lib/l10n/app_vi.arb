@@ -3142,11 +3142,13 @@
       }
     }
   },
+  "gitOperationsRequireTrust": "Các thao tác Git yêu cầu tin cậy không gian làm việc.",
+  "gitManageBranches": "Quản lý nhánh",
   "gitTrustRequiredTitle": "Tin cậy không gian làm việc này cho Git?",
   "@gitTrustRequiredTitle": {
     "description": "Git empty state title shown before repository-controlled commands may run."
   },
-  "gitTrustRequiredMessage": "Kho Git có thể chạy chương trình thông qua hook, bộ lọc và các cấu hình khác. Hãy tin cậy không gian làm việc này trước khi BusyMark đọc dữ liệu kho hoặc bật các thao tác Git.",
+  "gitTrustRequiredMessage": "BusyMark có thể kiểm tra siêu dữ liệu giới hạn của kho mà không cần tin cậy. Cấp sự tin cậy sẽ bật các thao tác Git cho kho này, có thể chạy các hook, bộ lọc, trình hỗ trợ thông tin xác thực và công cụ ký đã cấu hình.",
   "@gitTrustRequiredMessage": {
     "description": "Security warning shown before Git repository access is enabled for a workspace."
   },
