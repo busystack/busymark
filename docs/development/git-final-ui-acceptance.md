@@ -100,11 +100,11 @@ execution in a permitted test environment.
 
 ## Source identities and remaining acceptance
 
-Both consumers pin shared UI `0fea495e23bd69bcc37f8d5b87b368c1464aba64`.
+Both consumers pin shared UI `d1978b27d4e482bbdc40f3e6c6ebf65fc3423ff5`.
 Their identical source archive SHA-256 is
-`cb4df929ac0c93da3a19b0be2ab4c34e207f80f85de959b410e28e12597ec1bb`;
+`b885014e3a6d9f75d4b6b00654b3824b5e66aa7d5334943441ba8db80562c954`;
 its validated source-tree digest is
-`02e2c6520d92c40cc5aa86a2508d5ba8fb41a0a0c40afcd1e8e9da67c422fa6b`.
+`a0f7773a438cbd3d7a3cd0eadca567ae2b3214215610a087ff1aaa128190e2bb`.
 The engine pin remains `7d8e55d8034aeb85cddac1c0f498b0f3cc33105b` in both.
 Exact application commits and executable hashes are in the retained delivery
 receipt. No changes were pushed and no artifacts were published or installed.
