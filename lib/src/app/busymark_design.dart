@@ -4959,7 +4959,12 @@ class BusyMarkGitTextEntry extends StatefulWidget {
     this.textStyle,
     this.textDirection,
     this.textAlign = TextAlign.start,
+    this.leading,
     this.trailing,
+    this.dense = false,
+    this.contentPadding,
+    this.textAlignVertical,
+    this.alignLabelWithHint = false,
     this.contextMenuBuilder,
     this.onChanged,
     this.onSubmitted,
@@ -4983,7 +4988,10 @@ class BusyMarkGitTextEntry extends StatefulWidget {
   final TextStyle? textStyle;
   final TextDirection? textDirection;
   final TextAlign textAlign;
-  final Widget? trailing;
+  final Widget? leading, trailing;
+  final bool dense, alignLabelWithHint;
+  final EdgeInsetsGeometry? contentPadding;
+  final TextAlignVertical? textAlignVertical;
   final EditableTextContextMenuBuilder? contextMenuBuilder;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -5040,7 +5048,9 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
     final enabled = widget.enabled;
     final style = (widget.textStyle ?? Theme.of(context).textTheme.bodyMedium)!
         .copyWith(
-          color: enabled ? colors.foreground : colors.disabledForeground,
+          color: enabled
+              ? (widget.textStyle?.color ?? colors.foreground)
+              : colors.disabledForeground,
         );
     final editable = EditableText(
       controller: _controller,
@@ -5052,6 +5062,7 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
       enableSuggestions: widget.enableSuggestions,
       style: style,
       cursorColor: Theme.of(context).colorScheme.primary,
+      rendererIgnoresPointer: !enabled,
       backgroundCursorColor: colors.mutedForeground,
       selectionColor: Theme.of(
         context,
@@ -5072,9 +5083,15 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
           : null,
       onSubmitted: enabled ? widget.onSubmitted : null,
     );
-    final hint = widget.hintText;
+    // Native search entries use an inline placeholder. The semantic label
+    // persists while typing, without a second permanent toolbar line.
+    final label = widget.label.trim();
+    final hint = widget.hintText ?? (widget.dense ? label : null);
     final editor = Stack(
-      alignment: AlignmentDirectional.centerStart,
+      alignment: AlignmentDirectional(
+        -1,
+        widget.textAlignVertical?.y ?? (widget.alignLabelWithHint ? -1 : 0),
+      ),
       children: [
         if (hint != null && hint.isNotEmpty && _controller.text.isEmpty)
           IgnorePointer(
@@ -5086,12 +5103,11 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
         editable,
       ],
     );
-    final label = widget.label.trim();
     final content = Column(
       mainAxisSize: widget.expands ? MainAxisSize.max : MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (label.isNotEmpty) ...[
+        if (!widget.dense && label.isNotEmpty) ...[
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -5109,15 +5125,24 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
       color: busyMarkGroupedSurfaceColor(context),
       border: Border.all(color: colors.divider),
       borderRadius: BorderRadius.circular(kYaruContainerRadius),
-      padding: const EdgeInsets.symmetric(
-        horizontal: BusyMarkSpacing.sm,
-        vertical: BusyMarkSpacing.xs,
+      constraints: BoxConstraints(
+        minHeight: widget.dense ? BusyMarkSizes.iconButton : 0,
       ),
+      padding:
+          widget.contentPadding ??
+          const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.sm,
+            vertical: BusyMarkSpacing.xs,
+          ),
       child: Row(
         crossAxisAlignment: widget.expands
             ? CrossAxisAlignment.start
             : CrossAxisAlignment.center,
         children: [
+          if (widget.leading != null) ...[
+            widget.leading!,
+            const SizedBox(width: BusyMarkSpacing.sm),
+          ],
           Expanded(child: content),
           if (widget.trailing != null) ...[
             const SizedBox(width: BusyMarkSpacing.xs),
@@ -5126,9 +5151,23 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
         ],
       ),
     );
-    final interactive = IgnorePointer(
-      ignoring: !enabled,
-      child: ExcludeFocus(excluding: !enabled, child: surface),
+    final interactive = Semantics(
+      label: label.isEmpty ? null : label,
+      enabled: enabled,
+      child: IgnorePointer(
+        ignoring: !enabled,
+        child: ExcludeFocus(
+          excluding: !enabled,
+          child: ListenableBuilder(
+            listenable: _focusNode,
+            builder: (context, _) => YaruFocusBorder.primary(
+              focused: _focusNode.hasFocus,
+              borderRadius: BorderRadius.circular(kYaruContainerRadius),
+              child: surface,
+            ),
+          ),
+        ),
+      ),
     );
     if (!enabled || widget.onSubmitted == null) return interactive;
     return CallbackShortcuts(
@@ -5824,12 +5863,14 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       staged: native.success,
       unstaged: native.warning,
       conflict: native.error,
-      addedBackground: native.success,
-      removedBackground: native.error,
-      stagedBackground: native.success,
-      unstagedBackground: native.warning,
-      conflictBackground: native.error,
-      searchBackground: native.warning.withValues(alpha: .3),
+      addedBackground: native.success.withValues(alpha: .20),
+      removedBackground: native.error.withValues(alpha: .20),
+      stagedBackground: native.success.withValues(alpha: .16),
+      unstagedBackground: native.warning.withValues(alpha: .16),
+      conflictBackground: native.error.withValues(alpha: .24),
+      searchBackground: Theme.of(
+        context,
+      ).colorScheme.primary.withValues(alpha: .18),
     );
   }
 
@@ -5893,6 +5934,11 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
     return BusyMarkGitTextEntry(
       label: decoration?.labelText ?? '',
       hintText: decoration?.hintText,
+      dense: decoration?.isDense ?? false,
+      leading: decoration?.prefixIcon,
+      contentPadding: decoration?.contentPadding,
+      alignLabelWithHint: decoration?.alignLabelWithHint ?? false,
+      textAlignVertical: control.textAlignVertical,
       contextMenuBuilder: (menuContext, editable) => git.GitTextContextMenu(
         host: git.GitHostScope.of(context)!,
         items: editable.contextMenuButtonItems,
@@ -5957,7 +6003,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
               }
             },
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: control.isExpanded ? MainAxisSize.max : MainAxisSize.min,
         children: [
           Flexible(child: label ?? Text(control.decoration?.labelText ?? '')),
           const git.GitIcon(git.GitGlyph.down),
@@ -5995,40 +6041,71 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
         ],
       );
   @override
-  Widget row(BuildContext context, git.GitActionRow control) {
-    return BusyMarkSidebarRowSurface(
-      enabled: control.enabled,
-      clickable: control.onTap != null,
-      selected: control.selected,
-      onTap: control.onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.xs),
-        child: Row(
-          children: [
-            if (control.leading != null) ...[
-              control.leading!,
-              const SizedBox(width: BusyMarkSpacing.sm),
-            ],
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (control.title != null) control.title!,
-                  if (control.subtitle != null)
-                    DefaultTextStyle.merge(
-                      style: Theme.of(context).textTheme.bodySmall,
-                      child: control.subtitle!,
+  Widget row(BuildContext context, git.GitActionRow control) => Semantics(
+    selected: control.selected,
+    enabled: control.enabled,
+    child: Row(
+      children: [
+        Expanded(
+          child: BusyMarkSidebarRowSurface(
+            enabled: control.enabled,
+            clickable: control.onTap != null,
+            selected: control.selected,
+            onTap: control.onTap,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: control.dense
+                    ? BusyMarkSizes.sidebarTreeRowHeight
+                    : BusyMarkSizes.sidebarRowHeight,
+              ),
+              child: Padding(
+                padding:
+                    control.contentPadding ??
+                    EdgeInsets.symmetric(
+                      horizontal: BusyMarkSpacing.sm,
+                      vertical: control.dense
+                          ? BusyMarkSpacing.xxs
+                          : BusyMarkSpacing.sm,
                     ),
-                ],
+                child: Row(
+                  children: [
+                    if (control.leading != null) ...[
+                      control.leading!,
+                      const SizedBox(width: BusyMarkSpacing.sm),
+                    ],
+                    Expanded(
+                      child: DefaultTextStyle.merge(
+                        style: TextStyle(
+                          color: control.enabled
+                              ? BusyMarkSurfaceColors.of(context).foreground
+                              : BusyMarkSurfaceColors.of(
+                                  context,
+                                ).disabledForeground,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (control.title != null) control.title!,
+                            if (control.subtitle != null)
+                              DefaultTextStyle.merge(
+                                style: Theme.of(context).textTheme.bodySmall,
+                                child: control.subtitle!,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            if (control.trailing != null) control.trailing!,
-          ],
+          ),
         ),
-      ),
-    );
-  }
+        if (control.trailing != null) control.trailing!,
+      ],
+    ),
+  );
 
   @override
   double changeRowTextInset(BuildContext context, int depth) =>
@@ -6075,8 +6152,8 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
     label: control.semanticsLabel,
     liveRegion: true,
     child: control.circular
-        ? const YaruCircularProgressIndicator()
-        : const YaruLinearProgressIndicator(),
+        ? YaruCircularProgressIndicator(strokeWidth: control.strokeWidth)
+        : YaruLinearProgressIndicator(strokeWidth: control.strokeWidth),
   );
   @override
   Widget tooltip(BuildContext context, git.GitTooltip control) =>

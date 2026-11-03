@@ -1,3 +1,4 @@
+import '../../../../busystack_git_flutter/test/support/history_presentation_contract.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import '../../../../busystack_git_flutter/test/support/native_surface_contract.dart';
@@ -18,6 +19,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  historyPresentationContract(
+    mount: (tester, child, brightness) async {
+      await tester.pumpWidget(
+        _nativeGitHarness(
+          brightness: brightness,
+          builder: (context, host) => child,
+        ),
+      );
+      await tester.pumpAndSettle();
+    },
+  );
   for (final brightness in Brightness.values) {
     testWidgets(
       'flat branch button opens full modal and secondary menu owns Refresh $brightness',
