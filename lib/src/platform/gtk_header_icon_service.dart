@@ -81,9 +81,15 @@ BusyMarkLinuxHeaderIcon? _nativeHeaderIcon(IconData glyph) => switch (glyph) {
 
 /// Native symbolic artwork, with the existing Yaru glyph as a test/platform fallback.
 class BusyMarkGtkHeaderIcon extends StatelessWidget {
-  const BusyMarkGtkHeaderIcon(this.glyph, {super.key, this.nativeIcon});
+  const BusyMarkGtkHeaderIcon(
+    this.glyph, {
+    super.key,
+    this.nativeIcon,
+    this.color,
+  });
   final IconData glyph;
   final BusyMarkLinuxHeaderIcon? nativeIcon;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -93,14 +99,14 @@ class BusyMarkGtkHeaderIcon extends StatelessWidget {
         : GtkHeaderIconScope.of(
             context,
           ).catalog.assetFor(icon, Directionality.of(context));
-    if (asset == null) return Icon(glyph, size: 16);
+    if (asset == null) return Icon(glyph, size: 16, color: color);
     return ExcludeSemantics(
       child: Image.memory(
         asset.bytes,
         width: 16,
         height: 16,
         scale: asset.scale.toDouble(),
-        color: IconTheme.of(context).color,
+        color: color ?? IconTheme.of(context).color,
         colorBlendMode: BlendMode.srcIn,
         filterQuality: FilterQuality.none,
         gaplessPlayback: true,

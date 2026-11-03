@@ -211,8 +211,22 @@ void main() {
         find.descendant(of: unstagedRow, matching: find.text('D')),
         findsOneWidget,
       );
-      expect(find.byTooltip(l10n.gitStatusAdded), findsOneWidget);
-      expect(find.byTooltip(l10n.gitStatusDeleted), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.tooltip == l10n.gitStatusAdded,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.tooltip == l10n.gitStatusDeleted,
+        ),
+        findsOneWidget,
+      );
       expect(
         find.descendant(
           of: stagedRow,

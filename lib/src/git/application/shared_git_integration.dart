@@ -593,14 +593,17 @@ Future<bool> _ensureGitTrust(
         Navigator.of(dialogContext).pop(value);
       }
 
-      return BusyMarkDialogShell(
+      return BusyMarkGitDialogShell(
         title: labels.gitTrustRequiredTitle,
         actions: [
-          BusyMarkPushButton.standard(
+          BusyMarkGitActionButton(
+            role: BusyMarkGitActionRole.standard,
             onPressed: () => decide(false),
             child: Text(labels.cancel),
           ),
-          BusyMarkPushButton.suggested(
+          BusyMarkGitActionButton(
+            key: const ValueKey('busy-mark-git-trust-confirm'),
+            role: BusyMarkGitActionRole.suggested,
             onPressed: () => decide(true),
             child: Text(labels.gitTrustWorkspace),
           ),
@@ -676,7 +679,7 @@ shared.GitHost busyMarkGitHost(
     present: <T>(dialogContext, title, child, {bool expanded = false}) =>
         showBusyMarkModalDialog<T>(
           dialogContext,
-          builder: (context) => BusyMarkDialogShell(
+          builder: (context) => BusyMarkGitDialogShell(
             title: title,
             maxWidth: expanded
                 ? MediaQuery.sizeOf(context).width * .94
@@ -690,7 +693,7 @@ shared.GitHost busyMarkGitHost(
       if (snapshot != null) {
         await showBusyMarkModalDialog<void>(
           context,
-          builder: (context) => BusyMarkDialogShell(
+          builder: (context) => BusyMarkGitDialogShell(
             title: context.l10n.gitHostGit,
             maxWidth: MediaQuery.sizeOf(context).width * .85,
             expanded: true,
@@ -914,7 +917,8 @@ class _BusyMarkSharedGitSidebarState
   void didUpdateWidget(covariant BusyMarkSharedGitSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workspace.id != widget.workspace.id ||
-        oldWidget.workspace.rootPath != widget.workspace.rootPath) {
+        oldWidget.workspace.filesystemRootPath !=
+            widget.workspace.filesystemRootPath) {
       _generation++;
       _session = null;
       _loading = false;
@@ -1015,7 +1019,8 @@ class _BusyMarkSharedGitSidebarState
           children: [
             Text(context.l10n.gitNotRepositoryMessage),
             for (final initialize in [false, true])
-              BusyMarkPushButton.standard(
+              BusyMarkGitActionButton(
+                role: BusyMarkGitActionRole.standard,
                 onPressed: () async {
                   final host = busyMarkGitHost(
                     context,
@@ -1137,7 +1142,8 @@ class _BusyMarkSharedGitSidebarState
                             style: busyMarkSectionHeaderStyle(context),
                           ),
                           const SizedBox(height: BusyMarkSpacing.lg),
-                          BusyMarkPushButton.suggested(
+                          BusyMarkGitActionButton(
+                            role: BusyMarkGitActionRole.suggested,
                             onPressed: () async {
                               final session = _session!;
                               if (await _ensureGitTrust(

@@ -83,29 +83,29 @@ void main() {
         addTearDown(() => session?.dispose());
         await session!.start();
         await tester.pumpAndSettle();
-        final branch = find.descendant(
-          of: find.byTooltip('Manage branches'),
-          matching: find.byType(TextButton),
+        final branch = find.ancestor(
+          of: find.text(client.branch),
+          matching: find.byType(BusyMarkGitActionButton),
         );
         expect(branch, findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Semantics &&
+                widget.properties.tooltip == 'Manage branches',
+          ),
+          findsOneWidget,
+        );
         expect(find.byTooltip('Refresh'), findsNothing);
         expect(find.byTooltip(repo.root), findsNothing);
-        final button = tester.widget<TextButton>(branch);
-        final context = tester.element(branch);
-        final style = Theme.of(
-          context,
-        ).textButtonTheme.style!.merge(button.style);
-        for (final states in <Set<WidgetState>>[
-          {},
-          {WidgetState.hovered},
-          {WidgetState.pressed},
-          {WidgetState.focused},
-          {WidgetState.selected},
-          {WidgetState.disabled},
-        ]) {
-          expect(style.shape!.resolve(states), isA<RoundedRectangleBorder>());
-        }
-        expect(style.backgroundColor!.resolve({})!.a, 0);
+        expect(
+          tester.widget<BusyMarkGitActionButton>(branch).role,
+          BusyMarkGitActionRole.inline,
+        );
+        expect(
+          find.descendant(of: branch, matching: find.byType(TextButton)),
+          findsNothing,
+        );
         expect(
           tester.getRect(branch).height,
           greaterThanOrEqualTo(BusyMarkSizes.iconButton),
@@ -116,7 +116,7 @@ void main() {
         await tester.tap(branch);
         await tester.pumpAndSettle();
         expect(find.byType(git.GitBranchesView), findsOneWidget);
-        expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+        expect(find.byType(BusyMarkGitDialogShell), findsOneWidget);
         expect(find.text('Local branches'), findsOneWidget);
         expect(find.text('Remote branches'), findsOneWidget);
         expect(find.text('Tags'), findsOneWidget);
@@ -242,7 +242,7 @@ void main() {
         addTearDown(input.dispose);
         final focus = FocusNode();
         addTearDown(focus.dispose);
-        var chosen = 0, authorized = 0;
+        var chosen = 0, authorized = 0, primaryCalls = 0;
         final calls = <MethodCall>[];
         tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
           const MethodChannel('busymark/native_menus'),
@@ -296,8 +296,12 @@ void main() {
                             child: Column(
                               children: [
                                 git.GitButton.primary(
-                                  onPressed: () {},
+                                  onPressed: () => primaryCalls++,
                                   child: const Text('Primary native action'),
+                                ),
+                                const git.GitButton.standard(
+                                  onPressed: null,
+                                  child: Text('Disabled native action'),
                                 ),
                                 git.GitIconButton(
                                   tooltip: git.GitMessages.refresh,
@@ -354,7 +358,8 @@ void main() {
           ),
         );
         await tester.pump();
-        expect(find.byType(BusyMarkGroupedTextEntry), findsOneWidget);
+        expect(find.byType(BusyMarkGitTextEntry), findsOneWidget);
+        expect(find.byType(TextFormField), findsNothing);
         expect(find.byType(YaruCheckbox), findsOneWidget);
         expect(find.byType(YaruCircularProgressIndicator), findsOneWidget);
         expect(find.byType(YaruLinearProgressIndicator), findsOneWidget);
@@ -362,30 +367,41 @@ void main() {
         expect(find.byType(BusyMarkHeaderIconButton), findsOneWidget);
         final iconFinder = find.descendant(
           of: find.byType(BusyMarkHeaderIconButton),
-          matching: find.byType(IconButton),
+          matching: find.byType(YaruIconButton),
         );
-        final icon = tester.widget<IconButton>(iconFinder);
-        for (final state in <Set<WidgetState>>[
-          {},
-          {WidgetState.hovered},
-          {WidgetState.pressed},
-          {WidgetState.focused},
-          {WidgetState.disabled},
-        ]) {
-          final shape = icon.style!.shape!.resolve(state)!;
-          expect(shape, isA<RoundedRectangleBorder>());
-          expect(
-            (shape as RoundedRectangleBorder).borderRadius.resolve(
-              TextDirection.ltr,
-            ),
-            BorderRadius.circular(BusyMarkRadius.headerButton),
-          );
-        }
+        expect(iconFinder, findsOneWidget);
+        expect(
+          tester.widget<YaruIconButton>(iconFinder).hasFocusBorder,
+          isFalse,
+        );
         final hit = tester.getRect(iconFinder);
         expect(hit.width, greaterThanOrEqualTo(BusyMarkSizes.iconButton));
         expect(hit.height, greaterThanOrEqualTo(BusyMarkSizes.iconButton));
         expect(find.byType(AlertDialog), findsNothing);
         expect(find.byType(DropdownButton<int>), findsNothing);
+        final primaryAction = find.ancestor(
+          of: find.text('Primary native action'),
+          matching: find.byType(BusyMarkGitActionButton),
+        );
+        final disabledAction = find.ancestor(
+          of: find.text('Disabled native action'),
+          matching: find.byType(BusyMarkGitActionButton),
+        );
+        expect(primaryAction, findsOneWidget);
+        expect(
+          tester.widget<BusyMarkGitActionButton>(disabledAction).onPressed,
+          isNull,
+        );
+        await tester.tap(primaryAction);
+        await tester.pump();
+        expect(primaryCalls, 1);
+        expect(
+          FocusManager.instance.primaryFocus?.debugLabel,
+          'BusyMark Git action',
+        );
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pump();
+        expect(primaryCalls, 2);
         focus.requestFocus();
         await tester.pump();
         const value = TextEditingValue(
@@ -410,7 +426,7 @@ void main() {
         await exerciseNativeGitSurfaces(
           tester,
           host: host,
-          nativeField: BusyMarkGroupedTextEntry,
+          nativeField: BusyMarkGitTextEntry,
           mount: (widget) async {
             surface.value = widget;
             await tester.pump();
@@ -498,7 +514,13 @@ void main() {
             find.text(l10n.gitUiCommitScopeEntireRepository),
             findsNothing,
           );
-          expect(find.byTooltip(repo.root), findsOneWidget);
+          expect(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is Semantics && widget.properties.tooltip == repo.root,
+            ),
+            findsOneWidget,
+          );
           expect(find.byType(BusyMarkCompactIconButton), findsNothing);
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox.shrink());
@@ -636,7 +658,7 @@ void main() {
           await tester.pumpAndSettle();
           expect(opened, 1);
           final action = find
-              .widgetWithIcon(IconButton, BusyMarkGlyphs.add)
+              .descendant(of: rows.last, matching: find.byType(YaruIconButton))
               .last;
           final rect = tester.getRect(action);
           final mouse = await tester.createGesture(
@@ -665,7 +687,7 @@ void main() {
           enabled.value = false;
           await tester.pumpAndSettle();
           expect(tester.getRect(action), rect);
-          expect(tester.widget<IconButton>(action).onPressed, isNull);
+          expect(tester.widget<YaruIconButton>(action).onPressed, isNull);
           await tester.tap(
             find.descendant(
               of: rows.last,

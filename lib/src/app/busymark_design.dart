@@ -422,20 +422,7 @@ abstract final class BusyMarkTooltipStyle {
     BuildContext context, {
     required String message,
     required Widget child,
-  }) => Tooltip(
-    message: message,
-    padding: padding,
-    constraints: constraints,
-    decoration: BoxDecoration(
-      color: background,
-      borderRadius: borderRadius,
-      border: Border.all(color: border),
-    ),
-    textStyle: Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: foreground),
-    child: child,
-  );
+  }) => _BusyMarkNativeTooltip(message: message, child: child);
 
   static final Color background = BusyMarkLinuxPalette.black.withValues(
     alpha: BusyMarkAlpha.tooltipBackground,
@@ -454,6 +441,95 @@ abstract final class BusyMarkTooltipStyle {
   static const BoxConstraints constraints = BoxConstraints(
     minHeight: BusyMarkSizes.tooltipMinHeight,
   );
+}
+
+/// BusyMark-owned desktop tooltip presentation without a stock Material
+/// tooltip in the first-party rendering chain.
+///
+/// The overlay uses the existing BusyMark tooltip tokens and exposes the same
+/// information through semantics. Official Flutter overlay/compositing APIs
+/// own placement and lifecycle; no alternate menu or window is introduced.
+class _BusyMarkNativeTooltip extends StatefulWidget {
+  const _BusyMarkNativeTooltip({required this.message, required this.child});
+
+  final String message;
+  final Widget child;
+
+  @override
+  State<_BusyMarkNativeTooltip> createState() => _BusyMarkNativeTooltipState();
+}
+
+class _BusyMarkNativeTooltipState extends State<_BusyMarkNativeTooltip> {
+  final _controller = OverlayPortalController();
+  final _link = LayerLink();
+  Timer? _showTimer;
+
+  void _scheduleShow() {
+    _showTimer?.cancel();
+    _showTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) _controller.show();
+    });
+  }
+
+  void _hide() {
+    _showTimer?.cancel();
+    _showTimer = null;
+    if (_controller.isShowing) _controller.hide();
+  }
+
+  @override
+  void didUpdateWidget(covariant _BusyMarkNativeTooltip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.message != widget.message) _hide();
+  }
+
+  @override
+  void dispose() {
+    _showTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      tooltip: widget.message,
+      child: MouseRegion(
+        onEnter: (_) => _scheduleShow(),
+        onExit: (_) => _hide(),
+        child: OverlayPortal(
+          controller: _controller,
+          overlayChildBuilder: (overlayContext) => CompositedTransformFollower(
+            link: _link,
+            targetAnchor: Alignment.bottomCenter,
+            followerAnchor: Alignment.topCenter,
+            offset: const Offset(0, BusyMarkSpacing.xs),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BusyMarkTooltipStyle.constraints,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: BusyMarkTooltipStyle.background,
+                    borderRadius: BusyMarkTooltipStyle.borderRadius,
+                    border: Border.all(color: BusyMarkTooltipStyle.border),
+                  ),
+                  child: Padding(
+                    padding: BusyMarkTooltipStyle.padding,
+                    child: Text(
+                      widget.message,
+                      style: Theme.of(overlayContext).textTheme.bodySmall
+                          ?.copyWith(color: BusyMarkTooltipStyle.foreground),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          child: CompositedTransformTarget(link: _link, child: widget.child),
+        ),
+      ),
+    );
+  }
 }
 
 /// Filled destructive actions use Yaru's dark red button treatment.
@@ -1144,27 +1220,48 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
             ),
           )
         : semanticStyle;
-    // YaruIconButton merges its defaults as the receiver, so non-null default
-    // colors win over caller-supplied semantic colors. Compose the styles in
-    // the opposite direction and give the result directly to IconButton.
-    final yaruDefaults = YaruIconButton(
-      icon: const SizedBox.shrink(),
-      iconSize: BusyMarkSizes.iconButton,
-    ).defaultStyleOf(context);
-    final button = IconButton(
+    final states = <WidgetState>{
+      if (selected) WidgetState.selected,
+      if (onPressed == null) WidgetState.disabled,
+    };
+    final shape =
+        style.shape?.resolve(states) ??
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+        );
+    final foreground =
+        style.foregroundColor?.resolve(states) ?? colors.foreground;
+    final button = YaruIconButton(
       isSelected: selected,
       tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-      icon: BusyMarkGtkHeaderIcon(icon, nativeIcon: nativeIcon),
+      icon: BusyMarkGtkHeaderIcon(
+        icon,
+        nativeIcon: nativeIcon,
+        color: foreground,
+      ),
+      iconSize: BusyMarkSizes.iconButton,
       padding: EdgeInsets.zero,
-      style: style.merge(yaruDefaults),
+      style: style,
+      hasFocusBorder: false,
       onPressed: onPressed,
+    );
+    final painted = PhysicalShape(
+      clipper: ShapeBorderClipper(shape: shape),
+      color:
+          style.backgroundColor?.resolve(states) ??
+          BusyMarkLinuxPalette.transparent,
+      elevation: style.elevation?.resolve(states) ?? 0,
+      shadowColor:
+          style.shadowColor?.resolve(states) ??
+          BusyMarkLinuxPalette.transparent,
+      child: button,
     );
     final content = YaruTheme.maybeOf(context)?.focusBorders == true
         ? YaruFocusBorder.primary(
             borderRadius: BorderRadius.circular(focusBorderRadius),
-            child: button,
+            child: painted,
           )
-        : button;
+        : painted;
     // The Linux accessibility bridge exposes the semantic label as the
     // control's name; IconButton's tooltip alone is not a native name.
     return MergeSemantics(
@@ -1213,16 +1310,14 @@ class BusyMarkCompactIconButton extends StatelessWidget {
               return foregroundColor;
             }),
     );
-    final yaruDefaults = YaruIconButton(
-      icon: const SizedBox.shrink(),
-      iconSize: size,
-    ).defaultStyleOf(context);
-    final button = IconButton(
+    final button = YaruIconButton(
       tooltip: tooltip,
       icon: Icon(icon, size: glyphSize),
+      iconSize: size,
       constraints: BoxConstraints.tightFor(width: size, height: size),
       padding: EdgeInsets.zero,
-      style: semanticStyle.merge(yaruDefaults),
+      style: semanticStyle,
+      hasFocusBorder: false,
       focusNode: focusNode,
       onPressed: onPressed,
     );
@@ -4066,7 +4161,11 @@ class BusyMarkCheckbox extends StatelessWidget {
     if (message == null || message.isEmpty) {
       return checkbox;
     }
-    return Tooltip(message: message, child: checkbox);
+    return BusyMarkTooltipStyle.wrap(
+      context,
+      message: message,
+      child: checkbox,
+    );
   }
 }
 
@@ -4426,6 +4525,118 @@ class BusyMarkDialogShell extends StatelessWidget {
   }
 }
 
+/// Git's first-party native dialog surface.
+///
+/// The standard BusyMark dialog remains available to unrelated application
+/// screens. Git presentation uses this Yaru surface so its rendering chain
+/// contains no BusyStack-owned stock Material dialog construction.
+class BusyMarkGitDialogShell extends StatelessWidget {
+  const BusyMarkGitDialogShell({
+    super.key,
+    required this.title,
+    this.children = const [],
+    this.body,
+    this.expanded = false,
+    this.maxWidth = BusyMarkSizes.dialog,
+    this.header,
+    this.actions = const [],
+    this.closable = true,
+  });
+
+  final String title;
+  final List<Widget> children;
+  final Widget? body;
+  final bool expanded;
+  final double maxWidth;
+  final Widget? header;
+  final List<Widget> actions;
+  final bool closable;
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = busyMarkDialogSurfaceColor(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final radius = BorderRadius.circular(BusyMarkRadius.window);
+    final content = SizedBox(
+      width: maxWidth,
+      height: expanded
+          ? MediaQuery.sizeOf(context).height *
+                BusyMarkSizes.modalMaxHeightFraction
+          : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          header ??
+              BusyMarkDialogTitleBar(title: Text(title), closable: closable),
+          if (expanded && body != null)
+            Expanded(child: body!)
+          else
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [if (body != null) body!, ...children],
+                ),
+              ),
+            ),
+          if (actions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+              child: OverflowBar(
+                alignment: MainAxisAlignment.end,
+                overflowAlignment: OverflowBarAlignment.end,
+                spacing: BusyMarkSpacing.sm,
+                overflowSpacing: BusyMarkSpacing.sm,
+                children: actions,
+              ),
+            ),
+        ],
+      ),
+    );
+    return Semantics(
+      scopesRoute: true,
+      namesRoute: true,
+      explicitChildNodes: true,
+      label: title,
+      child: BusyMarkSurfaceScope(
+        role: BusyMarkSurfaceRole.dialog,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: BusyMarkSizes.modalHorizontalInset,
+              vertical: BusyMarkSizes.modalVerticalInset,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight:
+                    MediaQuery.sizeOf(context).height -
+                    BusyMarkSizes.modalVerticalInset * 2,
+              ),
+              child: DecoratedBox(
+                decoration: ShapeDecoration(
+                  shape: RoundedRectangleBorder(borderRadius: radius),
+                  shadows: BusyMarkShadow.nativeCardShadowsFor(context),
+                ),
+                child: YaruBorderContainer(
+                  color: surface,
+                  border: Border.all(color: colors.dialogOutline),
+                  borderRadius: radius,
+                  clipBehavior: Clip.antiAlias,
+                  child: content,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Semantic desktop push-button roles backed by real Yaru-themed controls.
 abstract final class BusyMarkPushButton {
   static TextButton flat({
@@ -4523,6 +4734,409 @@ abstract final class BusyMarkPushButton {
       autofocus: autofocus,
       statesController: statesController,
       child: child,
+    );
+  }
+}
+
+enum BusyMarkGitActionRole { inline, standard, suggested }
+
+/// The native BusyMark/Yaru action used by the Git host adapter.
+///
+/// This is a first-party interaction surface, rather than a renamed Material
+/// button. It resolves the application's Yaru button themes for typography,
+/// spacing, colors and shape, while Flutter's focus, pointer and semantics
+/// primitives own interaction. [YaruFocusBorder] supplies the official focus
+/// treatment.
+class BusyMarkGitActionButton extends StatefulWidget {
+  const BusyMarkGitActionButton({
+    super.key,
+    required this.role,
+    required this.child,
+    required this.onPressed,
+  });
+
+  final BusyMarkGitActionRole role;
+  final Widget child;
+  final VoidCallback? onPressed;
+
+  @override
+  State<BusyMarkGitActionButton> createState() =>
+      BusyMarkGitActionButtonState();
+}
+
+class BusyMarkGitActionButtonState extends State<BusyMarkGitActionButton> {
+  final _focusNode = FocusNode(debugLabel: 'BusyMark Git action');
+  var _hovered = false;
+  var _pressed = false;
+  var _focused = false;
+
+  Set<WidgetState> get _states => {
+    if (widget.onPressed == null) WidgetState.disabled,
+    if (_hovered) WidgetState.hovered,
+    if (_pressed) WidgetState.pressed,
+    if (_focused) WidgetState.focused,
+  };
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  void _activate() {
+    if (widget.onPressed != null) widget.onPressed!();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    final style = switch (widget.role) {
+      BusyMarkGitActionRole.inline => theme.textButtonTheme.style,
+      BusyMarkGitActionRole.standard => theme.filledButtonTheme.style,
+      BusyMarkGitActionRole.suggested => theme.elevatedButtonTheme.style,
+    };
+    final states = _states;
+    final enabled = widget.onPressed != null;
+    final foreground = enabled
+        ? style?.foregroundColor?.resolve(states) ?? colors.foreground
+        : colors.disabledForeground;
+    final baseBackground = style?.backgroundColor?.resolve(states);
+    final fallbackOverlay = !enabled
+        ? null
+        : _pressed
+        ? colors.controlActive
+        : _hovered || _focused
+        ? colors.controlHover
+        : null;
+    final overlay = style?.overlayColor?.resolve(states) ?? fallbackOverlay;
+    final background = Color.alphaBlend(
+      overlay ?? BusyMarkLinuxPalette.transparent,
+      baseBackground ?? BusyMarkLinuxPalette.transparent,
+    );
+    final resolvedShape =
+        style?.shape?.resolve(states) ??
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(kYaruButtonRadius),
+        );
+    final side = style?.side?.resolve(states);
+    final shape = side != null
+        ? resolvedShape.copyWith(side: side)
+        : resolvedShape;
+    final radius = resolvedShape is RoundedRectangleBorder
+        ? resolvedShape.borderRadius
+        : BorderRadius.circular(kYaruButtonRadius);
+    final padding =
+        style?.padding?.resolve(states) ??
+        const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.lg);
+    final minimum =
+        style?.minimumSize?.resolve(states) ??
+        const Size(kYaruButtonHeight, kYaruButtonHeight);
+    final maximum =
+        style?.maximumSize?.resolve(states) ??
+        const Size(double.infinity, double.infinity);
+    final fixed = style?.fixedSize?.resolve(states);
+    final constraints = fixed == null
+        ? BoxConstraints(
+            minWidth: minimum.width,
+            minHeight: minimum.height,
+            maxWidth: maximum.width,
+            maxHeight: maximum.height,
+          )
+        : BoxConstraints.tight(fixed);
+    final textStyle = style?.textStyle?.resolve(states);
+    final content = DefaultTextStyle.merge(
+      style:
+          textStyle?.copyWith(color: foreground) ??
+          TextStyle(color: foreground),
+      child: IconTheme.merge(
+        data: IconThemeData(
+          color: style?.iconColor?.resolve(states) ?? foreground,
+          size: style?.iconSize?.resolve(states),
+        ),
+        child: Padding(padding: padding, child: widget.child),
+      ),
+    );
+    final painted = DecoratedBox(
+      decoration: ShapeDecoration(color: background, shape: shape),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(shape: shape),
+        child: ConstrainedBox(
+          constraints: constraints,
+          child: Center(widthFactor: 1, heightFactor: 1, child: content),
+        ),
+      ),
+    );
+    final focused = YaruTheme.maybeOf(context)?.focusBorders == true
+        ? YaruFocusBorder.primary(
+            focused: _focused,
+            borderRadius: radius,
+            child: painted,
+          )
+        : painted;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      onTap: enabled ? _activate : null,
+      child: FocusableActionDetector(
+        focusNode: _focusNode,
+        enabled: enabled,
+        mouseCursor: enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              _activate();
+              return null;
+            },
+          ),
+        },
+        onShowFocusHighlight: (focused) {
+          if (_focused != focused) setState(() => _focused = focused);
+        },
+        child: MouseRegion(
+          onEnter: (_) {
+            if (enabled && !_hovered) setState(() => _hovered = true);
+          },
+          onExit: (_) {
+            if (_hovered || _pressed) {
+              setState(() {
+                _hovered = false;
+                _pressed = false;
+              });
+            }
+          },
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: enabled ? _activate : null,
+            onTapDown: enabled
+                ? (_) {
+                    _focusNode.requestFocus();
+                    _setPressed(true);
+                  }
+                : null,
+            onTapUp: enabled ? (_) => _setPressed(false) : null,
+            onTapCancel: enabled ? () => _setPressed(false) : null,
+            child: focused,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A Git-hosted text entry built from Flutter's editing primitive and the
+/// approved Yaru surface, without routing the host contract through a
+/// first-party Material text-field wrapper.
+class BusyMarkGitTextEntry extends StatefulWidget {
+  const BusyMarkGitTextEntry({
+    super.key,
+    required this.label,
+    this.hintText,
+    this.controller,
+    this.focusNode,
+    this.enabled = true,
+    this.readOnly = false,
+    this.autofocus = false,
+    this.obscureText = false,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
+    this.expands = false,
+    this.minLines,
+    this.maxLines = 1,
+    this.scrollController,
+    this.undoController,
+    this.textStyle,
+    this.textDirection,
+    this.textAlign = TextAlign.start,
+    this.trailing,
+    this.contextMenuBuilder,
+    this.onChanged,
+    this.onSubmitted,
+  });
+
+  final String label;
+  final String? hintText;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final bool enabled;
+  final bool readOnly;
+  final bool autofocus;
+  final bool obscureText;
+  final bool autocorrect;
+  final bool enableSuggestions;
+  final bool expands;
+  final int? minLines;
+  final int? maxLines;
+  final ScrollController? scrollController;
+  final UndoHistoryController? undoController;
+  final TextStyle? textStyle;
+  final TextDirection? textDirection;
+  final TextAlign textAlign;
+  final Widget? trailing;
+  final EditableTextContextMenuBuilder? contextMenuBuilder;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  State<BusyMarkGitTextEntry> createState() => _BusyMarkGitTextEntryState();
+}
+
+class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
+  TextEditingController? _ownedController;
+  FocusNode? _ownedFocusNode;
+
+  TextEditingController get _controller =>
+      widget.controller ?? (_ownedController ??= TextEditingController());
+  FocusNode get _focusNode =>
+      widget.focusNode ?? (_ownedFocusNode ??= FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller?.addListener(_onTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(BusyMarkGitTextEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?.removeListener(_onTextChanged);
+      widget.controller?.addListener(_onTextChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_onTextChanged);
+    _ownedController?.dispose();
+    _ownedFocusNode?.dispose();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _submit() {
+    final composing = _controller.value.composing;
+    if (composing.isValid && !composing.isCollapsed) return;
+    widget.onSubmitted?.call(_controller.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final enabled = widget.enabled;
+    final style = (widget.textStyle ?? Theme.of(context).textTheme.bodyMedium)!
+        .copyWith(
+          color: enabled ? colors.foreground : colors.disabledForeground,
+        );
+    final editable = EditableText(
+      controller: _controller,
+      focusNode: _focusNode,
+      readOnly: widget.readOnly || !enabled,
+      autofocus: enabled && widget.autofocus,
+      obscureText: widget.obscureText,
+      autocorrect: widget.autocorrect,
+      enableSuggestions: widget.enableSuggestions,
+      style: style,
+      cursorColor: Theme.of(context).colorScheme.primary,
+      backgroundCursorColor: colors.mutedForeground,
+      selectionColor: Theme.of(
+        context,
+      ).colorScheme.primary.withValues(alpha: .25),
+      expands: widget.expands,
+      minLines: widget.expands ? null : widget.minLines,
+      maxLines: widget.expands ? null : widget.maxLines,
+      scrollController: widget.scrollController,
+      undoController: widget.undoController,
+      textDirection: widget.textDirection,
+      textAlign: widget.textAlign,
+      contextMenuBuilder: widget.contextMenuBuilder,
+      onChanged: enabled
+          ? (value) {
+              setState(() {});
+              widget.onChanged?.call(value);
+            }
+          : null,
+      onSubmitted: enabled ? widget.onSubmitted : null,
+    );
+    final hint = widget.hintText;
+    final editor = Stack(
+      alignment: AlignmentDirectional.centerStart,
+      children: [
+        if (hint != null && hint.isNotEmpty && _controller.text.isEmpty)
+          IgnorePointer(
+            child: Text(
+              hint,
+              style: style.copyWith(color: colors.mutedForeground),
+            ),
+          ),
+        editable,
+      ],
+    );
+    final label = widget.label.trim();
+    final content = Column(
+      mainAxisSize: widget.expands ? MainAxisSize.max : MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (label.isNotEmpty) ...[
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: enabled
+                  ? colors.mutedForeground
+                  : colors.disabledForeground,
+            ),
+          ),
+          const SizedBox(height: BusyMarkSpacing.xs),
+        ],
+        if (widget.expands) Expanded(child: editor) else editor,
+      ],
+    );
+    final surface = YaruBorderContainer(
+      color: busyMarkGroupedSurfaceColor(context),
+      border: Border.all(color: colors.divider),
+      borderRadius: BorderRadius.circular(kYaruContainerRadius),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BusyMarkSpacing.sm,
+        vertical: BusyMarkSpacing.xs,
+      ),
+      child: Row(
+        crossAxisAlignment: widget.expands
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
+        children: [
+          Expanded(child: content),
+          if (widget.trailing != null) ...[
+            const SizedBox(width: BusyMarkSpacing.xs),
+            widget.trailing!,
+          ],
+        ],
+      ),
+    );
+    final interactive = IgnorePointer(
+      ignoring: !enabled,
+      child: ExcludeFocus(excluding: !enabled, child: surface),
+    );
+    if (!enabled || widget.onSubmitted == null) return interactive;
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.enter): _submit,
+        const SingleActivator(LogicalKeyboardKey.numpadEnter): _submit,
+      },
+      child: interactive,
     );
   }
 }
@@ -4697,7 +5311,7 @@ class SectionLabel extends StatelessWidget {
 typedef BusyMarkSidebarTreeMenuRequest =
     void Function(BuildContext anchorContext, Offset globalPosition);
 
-class BusyMarkSidebarRowSurface extends StatelessWidget {
+class BusyMarkSidebarRowSurface extends StatefulWidget {
   const BusyMarkSidebarRowSurface({
     super.key,
     required this.child,
@@ -4726,36 +5340,125 @@ class BusyMarkSidebarRowSurface extends StatelessWidget {
   final ValueChanged<bool>? onFocusChange;
 
   @override
+  State<BusyMarkSidebarRowSurface> createState() =>
+      BusyMarkSidebarRowSurfaceState();
+}
+
+class BusyMarkSidebarRowSurfaceState extends State<BusyMarkSidebarRowSurface> {
+  FocusNode? _ownedFocusNode;
+  var _hovered = false;
+  var _pressed = false;
+  var _focused = false;
+
+  FocusNode get _focusNode =>
+      widget.focusNode ??
+      (_ownedFocusNode ??= FocusNode(debugLabel: 'BusyMark sidebar row'));
+
+  @override
+  void dispose() {
+    _ownedFocusNode?.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    final result = widget.onKeyEvent?.call(node, event);
+    if (result != null && result != KeyEventResult.ignored) return result;
+    if (widget.enabled &&
+        widget.clickable &&
+        event is KeyDownEvent &&
+        (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.space)) {
+      widget.onTap?.call();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _hover(bool hovered) {
+    if (_hovered != hovered || !hovered && _pressed) {
+      setState(() {
+        _hovered = hovered;
+        if (!hovered) _pressed = false;
+      });
+    }
+    widget.onHoverChanged?.call(hovered);
+  }
+
+  void _focus(bool focused) {
+    if (_focused != focused) setState(() => _focused = focused);
+    widget.onFocusChange?.call(focused);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final background = widget.selected
+        ? busyMarkSelectedBackground(context)
+        : _pressed
+        ? colors.controlActive
+        : _hovered || _focused
+        ? busyMarkRowHoverColor(context)
+        : BusyMarkLinuxPalette.transparent;
+    final radius = BorderRadius.circular(BusyMarkRadius.md);
+    final row = DecoratedBox(
+      decoration: BoxDecoration(color: background, borderRadius: radius),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: BusyMarkSizes.sidebarTreeRowHeight,
+          ),
+          child: widget.child,
+        ),
+      ),
+    );
+    final focused = YaruTheme.maybeOf(context)?.focusBorders == true
+        ? YaruFocusBorder.primary(
+            focused: _focused,
+            borderRadius: radius,
+            borderStrokeAlign: BorderSide.strokeAlignInside,
+            child: row,
+          )
+        : row;
     return MouseRegion(
-      onEnter: onHoverChanged == null ? null : (_) => onHoverChanged!(true),
-      onExit: onHoverChanged == null ? null : (_) => onHoverChanged!(false),
+      cursor: widget.enabled && widget.clickable
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      onEnter: (_) => _hover(true),
+      onExit: (_) => _hover(false),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-        child: Material(
-          color: selected
-              ? busyMarkSelectedBackground(context)
-              : BusyMarkLinuxPalette.transparent,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          clipBehavior: Clip.antiAlias,
-          child: Focus(
-            onKeyEvent: onKeyEvent,
-            child: InkWell(
-              focusNode: focusNode,
-              hoverColor: clickable
-                  ? busyMarkRowHoverColor(context)
-                  : BusyMarkLinuxPalette.transparent,
-              onTap: enabled ? onTap : null,
-              onDoubleTap: enabled ? onDoubleTap : null,
-              onSecondaryTapUp: enabled ? onSecondaryTapUp : null,
-              onFocusChange: onFocusChange,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: BusyMarkSizes.sidebarTreeRowHeight,
-                ),
-                child: child,
-              ),
-            ),
+        child: Focus(
+          focusNode: _focusNode,
+          canRequestFocus: widget.enabled && widget.clickable,
+          onKeyEvent: _handleKeyEvent,
+          onFocusChange: _focus,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.enabled
+                ? () {
+                    if (widget.clickable) _focusNode.requestFocus();
+                    widget.onTap?.call();
+                  }
+                : null,
+            onDoubleTap: widget.enabled ? widget.onDoubleTap : null,
+            onSecondaryTapUp: widget.enabled ? widget.onSecondaryTapUp : null,
+            onTapDown: widget.enabled && widget.clickable
+                ? (_) {
+                    if (!_pressed) setState(() => _pressed = true);
+                  }
+                : null,
+            onTapUp: widget.enabled && widget.clickable
+                ? (_) {
+                    if (_pressed) setState(() => _pressed = false);
+                  }
+                : null,
+            onTapCancel: widget.enabled && widget.clickable
+                ? () {
+                    if (_pressed) setState(() => _pressed = false);
+                  }
+                : null,
+            child: focused,
           ),
         ),
       ),
@@ -5029,7 +5732,11 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
       enabled: widget.enabled,
       child: widget.tooltip == null || widget.tooltip!.isEmpty
           ? row
-          : Tooltip(message: widget.tooltip!, child: row),
+          : BusyMarkTooltipStyle.wrap(
+              context,
+              message: widget.tooltip!,
+              child: row,
+            ),
     );
   }
 }
@@ -5149,21 +5856,15 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
   );
   @override
   Widget button(BuildContext context, git.GitButton control) =>
-      control.variant == git.GitActionStyle.suggested
-      ? BusyMarkPushButton.suggested(
-          onPressed: control.onPressed,
-          child: control.child,
-        )
-      : control.variant == git.GitActionStyle.inline
-      ? BusyMarkPushButton.flat(
-          context: context,
-          onPressed: control.onPressed,
-          child: control.child,
-        )
-      : BusyMarkPushButton.standard(
-          onPressed: control.onPressed,
-          child: control.child,
-        );
+      BusyMarkGitActionButton(
+        role: switch (control.variant) {
+          git.GitActionStyle.inline => BusyMarkGitActionRole.inline,
+          git.GitActionStyle.standard => BusyMarkGitActionRole.standard,
+          git.GitActionStyle.suggested => BusyMarkGitActionRole.suggested,
+        },
+        onPressed: control.onPressed,
+        child: control.child,
+      );
   @override
   Widget iconAction(BuildContext context, git.GitIconButton control) {
     final glyph = switch (control.icon) {
@@ -5189,7 +5890,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
   @override
   Widget field(BuildContext context, git.GitTextField control) {
     final decoration = control.decoration;
-    return BusyMarkGroupedTextEntry(
+    return BusyMarkGitTextEntry(
       label: decoration?.labelText ?? '',
       hintText: decoration?.hintText,
       contextMenuBuilder: (menuContext, editable) => git.GitTextContextMenu(
@@ -5214,7 +5915,6 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       textStyle: control.style,
       textDirection: control.textDirection,
       textAlign: control.textAlign,
-      textAlignVertical: control.textAlignVertical,
       trailing: decoration?.suffixIcon,
       onChanged: control.onChanged,
       onSubmitted: control.onSubmitted,
@@ -5236,7 +5936,8 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
         .where((item) => item.value == selected)
         .map((item) => item.child)
         .firstOrNull;
-    return BusyMarkPushButton.standard(
+    return BusyMarkGitActionButton(
+      role: BusyMarkGitActionRole.standard,
       onPressed: control.onChanged == null
           ? null
           : () async {
@@ -5385,16 +6086,38 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
         child: control.child,
       );
   @override
-  Widget scrollbar(BuildContext context, git.GitScrollbar control) => Scrollbar(
-    controller: control.controller,
-    thumbVisibility: control.thumbVisibility,
-    child: control.child,
-  );
+  Widget scrollbar(BuildContext context, git.GitScrollbar control) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return RawScrollbar(
+      controller: control.controller,
+      thumbVisibility: control.thumbVisibility,
+      thumbColor: colors.mutedForeground.withValues(alpha: .65),
+      radius: const Radius.circular(kYaruButtonRadius),
+      thickness: BusyMarkSpacing.xs,
+      child: control.child,
+    );
+  }
+
   @override
-  Widget separator(BuildContext context, git.GitSeparator control) =>
-      control.vertical
-      ? VerticalDivider(width: control.width)
-      : Divider(height: control.height);
+  Widget separator(BuildContext context, git.GitSeparator control) {
+    final color = BusyMarkSurfaceColors.of(context).divider;
+    return SizedBox(
+      width: control.vertical ? control.width : null,
+      height: control.vertical ? null : control.height,
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(color: color),
+          child: SizedBox(
+            width: control.vertical ? BusyMarkStroke.hairline : double.infinity,
+            height: control.vertical
+                ? double.infinity
+                : BusyMarkStroke.hairline,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget activation(BuildContext context, git.GitActivation control) {
     return BusyMarkSidebarRowSurface(
@@ -5445,19 +6168,22 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
 
   @override
   Widget selectable(BuildContext context, git.GitSelectableText control) =>
-      SelectableText(
-        control.data,
-        semanticsLabel: control.data,
-        style: control.style,
+      SelectableRegion(
+        selectionControls: emptyTextSelectionControls,
         contextMenuBuilder: (menuContext, editable) => git.GitTextContextMenu(
           host: git.GitHostScope.of(context)!,
           items: editable.contextMenuButtonItems,
           position: editable.contextMenuAnchors.primaryAnchor,
           close: editable.hideToolbar,
         ),
+        child: Semantics(
+          label: control.data,
+          child: Text(control.data, style: control.style),
+        ),
       );
   @override
-  Widget selectionArea(BuildContext context, Widget child) => SelectionArea(
+  Widget selectionArea(BuildContext context, Widget child) => SelectableRegion(
+    selectionControls: emptyTextSelectionControls,
     contextMenuBuilder: (menuContext, region) => git.GitTextContextMenu(
       host: git.GitHostScope.of(context)!,
       items: region.contextMenuButtonItems,
@@ -5547,11 +6273,13 @@ class _BusyMarkGitDateRangeState extends State<_BusyMarkGitDateRange> {
         Wrap(
           alignment: WrapAlignment.end,
           children: [
-            BusyMarkPushButton.standard(
+            BusyMarkGitActionButton(
+              role: BusyMarkGitActionRole.standard,
               onPressed: () => git.gitCompleteSurface(context),
               child: Text(labels.cancelButtonLabel),
             ),
-            BusyMarkPushButton.suggested(
+            BusyMarkGitActionButton(
+              role: BusyMarkGitActionRole.suggested,
               onPressed: valid
                   ? () => git.gitCompleteSurface(context, (_start!, _end!))
                   : null,

@@ -5,13 +5,21 @@ The parent BusyStack engineering and official-toolchain policy remains binding.
 Git production views must use the required `GitPresentation` host contract.
 No stock Material controls, constructor tear-offs, palette/icons, invocation
 helpers or menu/dialog fallback paths belong in Git feature code. Native
-construction stays in the existing approved host design implementations:
-`busymark_design.dart` and `busyfiles_design.dart`. A newly named feature wrapper
-is not an approved design boundary. See the shared package's
+construction stays in the existing approved host design implementations, but
+that location is not an exemption: the audit must start at the concrete host
+adapter and follow every reachable first-party implementation. BusyMark's Git
+rendering chain must not directly construct prohibited Material controls behind
+`busymark_design.dart` wrappers. Supported public Yaru controls may retain
+their upstream implementation details. A newly named feature wrapper is never
+evidence of approval. See the shared package's
 `docs/native-presentation.md` for the exact mappings and action destinations.
 
 Run `tool/check_native_presentation.dart` and its self-test from the shared
-package, and audit each consumer's actual Git sources with that tool. Run the
+package. For BusyMark, require `--host-source
+../busymark/lib/src/app/busymark_design.dart --host-root
+BusyMarkGitPresentation --host-root BusyMarkGitDialogShell`; a list of selected
+adapter methods is not sufficient. Audit each consumer's actual Git sources
+with that tool. Run the
 same gate against materialized pinned sources in consumer verification.
 Resolve symbols; import prefixes, aliases, re-exports and helper references
 cannot be exceptions. Missing native provisioning must fail, never fall back.
@@ -66,7 +74,7 @@ existing sidebar. Global reading-order geometry must not interleave the source
 editor with the selected-commit button or metadata actions. Preserve editor Tab
 authoring and the actual host keyboard/modal regression.
 
-Git Commit Details use the existing compact BusyMarkDialogShell, natural height,
+Git Commit Details use the Git-only compact BusyMarkGitDialogShell, natural height,
 dialogWide maximum width and one host-owned overflow scroll view. View Commit
 Details and Copy Commit Hash live in Commit Actions; no permanent copy/details
 icons or generic Copy Text button. Metadata remains selectable with native

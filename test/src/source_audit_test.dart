@@ -182,8 +182,6 @@ void main() {
       ).allMatches(glyphs).map((match) => match.group(0)),
       orderedEquals(<String>[
         'Icons'
-            '.fork_right',
-        'Icons'
             '.functions',
       ]),
     );
@@ -970,13 +968,13 @@ void main() {
       r'class BusyMarkHeaderIconButton[\s\S]*?class '
       r'BusyMarkCompactIconButton',
     ).firstMatch(design)!.group(0)!;
-    expect(headerIcon, contains('final button = IconButton('));
-    expect(headerIcon, contains('style: style.merge(yaruDefaults)'));
+    expect(headerIcon, contains('final button = YaruIconButton('));
+    expect(headerIcon, contains('style: style'));
     expect(headerIcon, contains('isSelected: selected'));
     expect(headerIcon, contains('padding: EdgeInsets.zero'));
     expect(headerIcon, contains('YaruFocusBorder.primary('));
     expect(headerIcon, contains('YaruTheme.maybeOf(context)?.focusBorders'));
-    expect(headerIcon, isNot(contains('return YaruIconButton(')));
+    expect(headerIcon, isNot(contains('final button = IconButton(')));
     expect(headerIcon, isNot(contains('DecoratedBox(')));
     expect(headerIcon, isNot(contains('BoxShadow(')));
     expect(popupItem, contains('extends PopupMenuItem<T>'));
@@ -1149,10 +1147,7 @@ void main() {
     expect(gitSidebar, isNot(contains('color: colors.secondarySidebar')));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
-      contains(
-        'branch = Icons'
-        '.fork_right',
-      ),
+      contains('branch = YaruIcons.share'),
     );
     expect(gitSidebar, isNot(contains('OutlinedButton(')));
     expect(gitSidebar, isNot(contains('SegmentedButton<GitView>')));

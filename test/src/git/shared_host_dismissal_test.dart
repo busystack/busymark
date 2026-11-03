@@ -124,16 +124,16 @@ void main() {
           await pumpUntil(
             tester,
             () => find
-                .byWidgetPredicate((w) => w is TextField && !w.readOnly)
+                .byWidgetPredicate((w) => w is EditableText && !w.readOnly)
                 .evaluate()
                 .isNotEmpty,
             operation: 'load source snapshots and editable result',
           );
           await tester.pumpAndSettle();
           final editor = find
-              .byType(TextField)
+              .byType(EditableText)
               .evaluate()
-              .map((e) => e.widget as TextField)
+              .map((e) => e.widget as EditableText)
               .where((w) => !w.readOnly)
               .toList();
           expect(
@@ -146,10 +146,10 @@ void main() {
                 .toString(),
           );
           final editorFinder = find.byWidget(editor.single);
-          final initialText = editor.single.controller!.text;
+          final initialText = editor.single.controller.text;
           await tester.enterText(editorFinder, 'one\nmanual draft\nend\n');
           if (!beforeFrame) await tester.pump();
-          final controller = editor.single.controller!;
+          final controller = editor.single.controller;
           controller.selection = const TextSelection(
             baseOffset: 4,
             extentOffset: 10,
@@ -206,7 +206,7 @@ void main() {
           if (closeKind == 'Close') {
             await tester.tap(
               find.byWidgetPredicate(
-                (w) => w is TextField && identical(w.controller, controller),
+                (w) => w is EditableText && identical(w.controller, controller),
               ),
             );
             Future<void> historyKey({bool redo = false}) async {

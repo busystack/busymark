@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -1024,7 +1025,20 @@ void main() {
   testWidgets('duplicate Git trust approval preserves its parent review', (
     tester,
   ) async {
-    final service = _IdentityWorkspaceService();
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-git-trust-review-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = _IdentityWorkspaceService(rootPath: root.path);
+    Future<void> flushCanonicalIdentity() async {
+      // Each path-identity step completes in the real I/O zone; pumping then
+      // lets the guarded production future schedule its next checked step.
+      for (var step = 0; step < 4; step++) {
+        await tester.runAsync(() => FileSystemEntity.type(root.path));
+        await tester.pump();
+      }
+    }
+
     late WidgetRef widgetRef;
     late BuildContext hostContext;
     bool? approved;
@@ -1078,19 +1092,29 @@ void main() {
       expanded: true,
     );
     unawaited(review);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Prepare reviewed plan'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    tester
+        .widget<TextButton>(
+          find.widgetWithText(TextButton, 'Prepare reviewed plan'),
+        )
+        .onPressed!();
+    await flushCanonicalIdentity();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(approved, isNull);
+    expect(find.text(l10n.gitTrustRequiredTitle), findsOneWidget);
     final accept = tester
-        .widget<FilledButton>(
-          find.widgetWithText(FilledButton, l10n.gitTrustWorkspace),
+        .widget<BusyMarkGitActionButton>(
+          find.byKey(const ValueKey('busy-mark-git-trust-confirm')),
         )
         .onPressed!;
     // Two queued native activations can arrive before the first dismissal
     // retires the old accessibility node. Only this trust surface may close.
     accept();
     accept();
-    await tester.pumpAndSettle();
+    await flushCanonicalIdentity();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
     expect(approved, isTrue);
     expect(find.text('Preserved rebase plan'), findsOneWidget);
     expect(
@@ -1958,17 +1982,25 @@ class _PendingGitGateway implements GitRepositoryGateway {
 }
 
 class _IdentityWorkspaceService extends WorkspaceService {
-  final rootPath = '/virtual/workspace';
-  final firstPath = '/virtual/workspace/a.md';
-  final secondPath = '/virtual/workspace/b.md';
-  final saveAsPath = '/virtual/workspace/saved.md';
-  final saveAsExtensionlessPath = '/virtual/workspace/notes';
-  final saveAsNormalizedPath = '/virtual/workspace/notes.md';
-  final documents = <String, String>{
-    '/virtual/workspace/a.md': '# External A\n',
-    '/virtual/workspace/b.md': '# Original B\n',
-    '/virtual/workspace/notes.md': '# Existing notes\n',
-  };
+  _IdentityWorkspaceService({this.rootPath = '/virtual/workspace'})
+    : firstPath = '$rootPath/a.md',
+      secondPath = '$rootPath/b.md',
+      saveAsPath = '$rootPath/saved.md',
+      saveAsExtensionlessPath = '$rootPath/notes',
+      saveAsNormalizedPath = '$rootPath/notes.md',
+      documents = {
+        '$rootPath/a.md': '# External A\n',
+        '$rootPath/b.md': '# Original B\n',
+        '$rootPath/notes.md': '# Existing notes\n',
+      };
+
+  final String rootPath;
+  final String firstPath;
+  final String secondPath;
+  final String saveAsPath;
+  final String saveAsExtensionlessPath;
+  final String saveAsNormalizedPath;
+  final Map<String, String> documents;
   final saves = <({String path, String text})>[];
   final fileChangeCheckStarted = Completer<void>();
   final firstSaveStarted = Completer<void>();

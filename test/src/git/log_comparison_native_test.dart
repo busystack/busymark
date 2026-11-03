@@ -320,14 +320,14 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
           await tester.pumpAndSettle();
-          final dialog = find.byType(Dialog);
-          final rect = tester.getRect(
-            find.descendant(of: dialog, matching: find.byType(Material)).first,
+          final dialog = find.byType(BusyMarkGitDialogShell);
+          final nativeSurface = find.descendant(
+            of: dialog,
+            matching: find.byType(YaruBorderContainer),
           );
+          final rect = tester.getRect(nativeSurface);
           expect(
-            tester
-                .widget<BusyMarkDialogShell>(find.byType(BusyMarkDialogShell))
-                .expanded,
+            tester.widget<BusyMarkGitDialogShell>(dialog).expanded,
             isFalse,
           );
           expect(rect.width, lessThanOrEqualTo(BusyMarkSizes.dialogWide));
@@ -384,7 +384,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await tester.binding.handlePopRoute();
           await tester.pumpAndSettle();
-          expect(find.byType(Dialog), findsNothing);
+          expect(find.byType(BusyMarkGitDialogShell), findsNothing);
           expect(
             find.byKey(const ValueKey('git-selected-commit')),
             findsOneWidget,
@@ -581,22 +581,17 @@ void main() {
           );
           final nativeSelected = find.descendant(
             of: selected,
-            matching: find.byType(TextButton),
+            matching: find.byType(BusyMarkGitActionButton),
           );
-          final button = tester.widget<TextButton>(nativeSelected);
-          final style = Theme.of(
-            tester.element(nativeSelected),
-          ).textButtonTheme.style!.merge(button.style);
-          for (final state in <Set<WidgetState>>[
-            {},
-            {WidgetState.hovered},
-            {WidgetState.pressed},
-            {WidgetState.focused},
-            {WidgetState.disabled},
-          ]) {
-            expect(style.shape!.resolve(state), isA<RoundedRectangleBorder>());
-          }
-          expect(style.backgroundColor!.resolve({})!.a, 0);
+          expect(nativeSelected, findsOneWidget);
+          expect(
+            tester.widget<BusyMarkGitActionButton>(nativeSelected).role,
+            BusyMarkGitActionRole.inline,
+          );
+          expect(
+            find.descendant(of: selected, matching: find.byType(TextButton)),
+            findsNothing,
+          );
           expect(
             find.byKey(const ValueKey('git-copy-commit-id')),
             findsNothing,
@@ -660,27 +655,13 @@ void main() {
           );
           final paintedAction = find.descendant(
             of: fileMenu,
-            matching: find.byType(IconButton),
+            matching: find.byType(YaruIconButton),
           );
-          final action = tester.widget<IconButton>(paintedAction);
-          final actionStyle =
-              Theme.of(
-                tester.element(paintedAction),
-              ).iconButtonTheme.style?.merge(action.style) ??
-              action.style!;
-          for (final states in <Set<WidgetState>>[
-            {},
-            {WidgetState.hovered},
-            {WidgetState.pressed},
-            {WidgetState.focused},
-            {WidgetState.disabled},
-          ]) {
-            expect(
-              actionStyle.shape!.resolve(states),
-              isA<RoundedRectangleBorder>(),
-            );
-          }
-          expect(actionStyle.backgroundColor?.resolve({})?.a ?? 0, 0);
+          expect(paintedAction, findsOneWidget);
+          expect(
+            tester.widget<YaruIconButton>(paintedAction).hasFocusBorder,
+            isFalse,
+          );
           expect(
             tester.getRect(nativeMenu).height,
             greaterThanOrEqualTo(BusyMarkSizes.iconButton),
@@ -760,20 +741,18 @@ void main() {
           choose = session!.host.message(git.GitMessages.viewCommitDetails);
           await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
           await tester.pumpAndSettle();
-          final shell = tester.widget<BusyMarkDialogShell>(
-            find.byType(BusyMarkDialogShell),
+          final shell = tester.widget<BusyMarkGitDialogShell>(
+            find.byType(BusyMarkGitDialogShell),
           );
           expect(shell.expanded, isFalse);
           expect(shell.maxWidth, BusyMarkSizes.dialogWide);
           expect(
             tester
                 .getRect(
-                  find
-                      .descendant(
-                        of: find.byType(Dialog),
-                        matching: find.byType(Material),
-                      )
-                      .first,
+                  find.descendant(
+                    of: find.byType(BusyMarkGitDialogShell),
+                    matching: find.byType(YaruBorderContainer),
+                  ),
                 )
                 .width,
             lessThanOrEqualTo(BusyMarkSizes.dialogWide),
@@ -781,14 +760,14 @@ void main() {
           expect(find.text(client.commit.message), findsOneWidget);
           expect(
             find.descendant(
-              of: find.byType(Dialog),
+              of: find.byType(BusyMarkGitDialogShell),
               matching: find.byType(git.GitButton),
             ),
             findsNothing,
           );
           expect(
             find.descendant(
-              of: find.byType(Dialog),
+              of: find.byType(BusyMarkGitDialogShell),
               matching: find.byType(git.GitIconButton),
             ),
             findsNothing,
@@ -819,15 +798,23 @@ void main() {
           );
           expect(
             find.descendant(
-              of: find.byType(Dialog),
-              matching: find.byTooltip('2026-04-05T10:11:12.345Z'),
+              of: find.byType(BusyMarkGitDialogShell),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Semantics &&
+                    widget.properties.tooltip == '2026-04-05T10:11:12.345Z',
+              ),
             ),
             findsOneWidget,
           );
           expect(
             find.descendant(
-              of: find.byType(Dialog),
-              matching: find.byTooltip('2026-04-06T12:13:14.456Z'),
+              of: find.byType(BusyMarkGitDialogShell),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Semantics &&
+                    widget.properties.tooltip == '2026-04-06T12:13:14.456Z',
+              ),
             ),
             findsOneWidget,
           );
