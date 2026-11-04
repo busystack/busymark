@@ -7395,5 +7395,9 @@
   "gitUiCopyCommitMessage": "Copy commit message",
   "@gitUiCopyCommitMessage": {
     "description": "Shared Git interface: Copy commit message"
+  },
+  "gitUiSelectAnotherCommit": "Select another commit…",
+  "@gitUiSelectAnotherCommit": {
+    "description": "Shared Git interface: Select another commit…"
   }
 }

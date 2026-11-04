@@ -8965,4 +8965,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'Копировать сообщение коммита';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Выбрать другой коммит…';
 }

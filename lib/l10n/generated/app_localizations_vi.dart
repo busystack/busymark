@@ -8872,4 +8872,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'Sao chép thông điệp commit';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Chọn commit khác…';
 }

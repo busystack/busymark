@@ -4580,5 +4580,6 @@
   "gitUiCopyCommitHash": "Kopiuj hash commita",
   "gitUiCommitHash": "Hash commita",
   "gitUiCommitReferences": "Referencje",
-  "gitUiCopyCommitMessage": "Kopiuj komunikat commita"
+  "gitUiCopyCommitMessage": "Kopiuj komunikat commita",
+  "gitUiSelectAnotherCommit": "Wybierz inny commit…"
 }

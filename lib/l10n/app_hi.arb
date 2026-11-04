@@ -4554,5 +4554,6 @@
   "gitUiCopyCommitHash": "कमिट हैश कॉपी करें",
   "gitUiCommitHash": "कमिट हैश",
   "gitUiCommitReferences": "संदर्भ",
-  "gitUiCopyCommitMessage": "कमिट संदेश कॉपी करें"
+  "gitUiCopyCommitMessage": "कमिट संदेश कॉपी करें",
+  "gitUiSelectAnotherCommit": "दूसरा कमिट चुनें…"
 }

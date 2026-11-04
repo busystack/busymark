@@ -8508,6 +8508,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => '复制提交说明';
+
+  @override
+  String get gitUiSelectAnotherCommit => '选择其他提交…';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -17012,4 +17015,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiCopyCommitMessage => '复制提交说明';
+
+  @override
+  String get gitUiSelectAnotherCommit => '选择其他提交…';
 }

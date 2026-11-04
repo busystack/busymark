@@ -8973,4 +8973,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'Копіювати повідомлення коміту';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Вибрати інший коміт…';
 }

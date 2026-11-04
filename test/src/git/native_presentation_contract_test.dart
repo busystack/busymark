@@ -17,8 +17,224 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
+import 'package:busymark/src/app/busymark_search_field.dart';
 
 void main() {
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'Git selection paints the approved search-entry theme $brightness',
+      (tester) async {
+        await tester.pumpWidget(
+          _nativeGitHarness(
+            brightness: brightness,
+            builder: (context, host) => const Column(
+              children: [
+                BusyMarkSearchField(hintText: 'Native reference'),
+                git.GitTextField(
+                  decoration: git.GitFieldDecoration(
+                    isDense: true,
+                    labelText: 'Search branches and tags',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        final editors = find.byType(EditableText);
+        await tester.enterText(editors.first, 'selected text');
+        final referenceState = tester.state<EditableTextState>(editors.first);
+        referenceState.widget.controller.selection = const TextSelection(
+          baseOffset: 0,
+          extentOffset: 13,
+        );
+        await tester.pump();
+        final reference = referenceState.renderEditable.selectionColor;
+        expect(reference, isNotNull);
+        await tester.enterText(editors.last, 'selected text');
+        final state = tester.state<EditableTextState>(editors.last);
+        state.widget.controller.selection = const TextSelection(
+          baseOffset: 0,
+          extentOffset: 13,
+        );
+        await tester.pump();
+        expect(
+          state.renderEditable.getBoxesForSelection(
+            state.widget.controller.selection,
+          ),
+          isNotEmpty,
+        );
+        expect(state.renderEditable.selectionColor, reference);
+        expect(
+          tester.widget<EditableText>(editors.last).cursorColor,
+          tester.widget<EditableText>(editors.first).cursorColor,
+        );
+      },
+    );
+  }
+  testWidgets(
+    'native actions show keyboard focus without inherited Yaru settings',
+    (tester) async {
+      final oldStrategy = FocusManager.instance.highlightStrategy;
+      FocusManager.instance.highlightStrategy =
+          FocusHighlightStrategy.alwaysTraditional;
+      addTearDown(() => FocusManager.instance.highlightStrategy = oldStrategy);
+      await tester.pumpWidget(
+        _nativeGitHarness(
+          builder: (context, host) => git.GitButton.standard(
+            compact: true,
+            onPressed: () {},
+            child: const Text('New branch…'),
+          ),
+        ),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      final border = find.descendant(
+        of: find.byType(BusyMarkGitActionButton),
+        matching: find.byType(YaruFocusBorder),
+      );
+      expect(border, findsOneWidget);
+      final paint = tester.widget<AnimatedContainer>(
+        find
+            .descendant(of: border, matching: find.byType(AnimatedContainer))
+            .first,
+      );
+      final decoration = paint.foregroundDecoration! as BoxDecoration;
+      expect(
+        decoration.border!.top.color.a,
+        greaterThan(0),
+        reason:
+            'The focus indicator must actually paint, not merely receive a flag',
+      );
+    },
+  );
+  testWidgets('compact native field exposes one persistent accessible name', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _nativeGitHarness(
+        builder: (context, host) => const git.GitTextField(
+          decoration: git.GitFieldDecoration(
+            labelText: 'Search branches and tags',
+            isDense: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .getSemantics(find.byType(git.GitTextField))
+          .getSemanticsData()
+          .label,
+      'Search branches and tags',
+    );
+    await tester.enterText(find.byType(EditableText), 'main');
+    await tester.pump();
+    expect(
+      tester
+          .getSemantics(find.byType(git.GitTextField))
+          .getSemanticsData()
+          .label,
+      'Search branches and tags',
+    );
+    semantics.dispose();
+  });
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'Branches toolbar has native entry geometry and explicit gaps $brightness',
+      (tester) async {
+        tester.view.physicalSize = const Size(1000, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        git.GitSession? session;
+        await tester.pumpWidget(
+          _nativeGitHarness(
+            brightness: brightness,
+            builder: (context, host) {
+              session ??= git.GitSession(
+                client: _CommitControlsClient(),
+                repository: repo,
+                host: host,
+              );
+              return Column(
+                children: [
+                  const SizedBox(
+                    width: 500,
+                    child: BusyMarkSearchField(hintText: 'Native reference'),
+                  ),
+                  Flexible(
+                    child: SizedBox(
+                      width: 700,
+                      child: git.GitBranchesView(session: session!),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+        addTearDown(() => session?.dispose());
+        await session!.start();
+        await tester.pumpAndSettle();
+        final field = find.byType(git.GitTextField).first;
+        final action = find.widgetWithText(git.GitButton, 'New branch…');
+        final menu = find.byKey(const ValueKey('git-branch-workflows'));
+        final reference = tester.getRect(find.byType(BusyMarkSearchField));
+        expect(tester.getSize(field).height, closeTo(reference.height, 2));
+        expect(
+          tester.getRect(action).left - tester.getRect(field).right,
+          greaterThanOrEqualTo(BusyMarkSpacing.sm),
+        );
+        expect(
+          tester.getRect(menu).left - tester.getRect(action).right,
+          greaterThanOrEqualTo(BusyMarkSpacing.sm),
+        );
+        final input = find.descendant(
+          of: field,
+          matching: find.byType(EditableText),
+        );
+        final icon = find.descendant(
+          of: field,
+          matching: find.byType(git.GitIcon),
+        );
+        expect(
+          (tester.getCenter(input).dy - tester.getCenter(icon).dy).abs(),
+          lessThanOrEqualTo(1),
+        );
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is git.GitMenuButton && w.tooltip.startsWith('Actions for '),
+          ),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+    testWidgets(
+      'inline Git actions use neutral native foreground $brightness',
+      (tester) async {
+        await tester.pumpWidget(
+          _nativeGitHarness(
+            brightness: brightness,
+            builder: (context, host) => const git.GitButton(
+              onPressed: _noop,
+              child: Text('Native action'),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final context = tester.element(find.text('Native action'));
+        expect(
+          DefaultTextStyle.of(context).style.color,
+          BusyMarkSurfaceColors.of(context).foreground,
+        );
+      },
+    );
+  }
   historyPresentationContract(
     mount: (tester, child, brightness) async {
       await tester.pumpWidget(
@@ -27,6 +243,18 @@ void main() {
           builder: (context, host) => child,
         ),
       );
+      await tester.pump();
+      // Isolate-backed diffs need real event-loop progress before settling.
+      for (
+        var i = 0;
+        i < 200 && find.byType(git.GitLoading).evaluate().isNotEmpty;
+        i++
+      ) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump();
+      }
       await tester.pumpAndSettle();
     },
   );
@@ -812,6 +1040,8 @@ void main() {
     },
   );
 }
+
+void _noop() {}
 
 Widget _nativeGitHarness({
   required Widget Function(BuildContext, git.GitHost) builder,

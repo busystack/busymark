@@ -8892,4 +8892,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'Kopier commit-melding';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Velg en annen commit…';
 }

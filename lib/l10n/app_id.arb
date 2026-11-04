@@ -6084,5 +6084,6 @@
   "gitUiCopyCommitHash": "Salin hash commit",
   "gitUiCommitHash": "Hash commit",
   "gitUiCommitReferences": "Referensi",
-  "gitUiCopyCommitMessage": "Salin pesan commit"
+  "gitUiCopyCommitMessage": "Salin pesan commit",
+  "gitUiSelectAnotherCommit": "Pilih commit lain…"
 }

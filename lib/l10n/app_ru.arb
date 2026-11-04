@@ -4580,5 +4580,6 @@
   "gitUiCopyCommitHash": "Копировать хеш коммита",
   "gitUiCommitHash": "Хеш коммита",
   "gitUiCommitReferences": "Ссылки",
-  "gitUiCopyCommitMessage": "Копировать сообщение коммита"
+  "gitUiCopyCommitMessage": "Копировать сообщение коммита",
+  "gitUiSelectAnotherCommit": "Выбрать другой коммит…"
 }

@@ -8888,4 +8888,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'Copy commit message';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Select another commit…';
 }

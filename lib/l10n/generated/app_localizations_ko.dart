@@ -8640,4 +8640,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => '커밋 메시지 복사';
+
+  @override
+  String get gitUiSelectAnotherCommit => '다른 커밋 선택…';
 }

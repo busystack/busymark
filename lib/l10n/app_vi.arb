@@ -6084,5 +6084,6 @@
   "gitUiCopyCommitHash": "Sao chép mã băm commit",
   "gitUiCommitHash": "Mã băm commit",
   "gitUiCommitReferences": "Tham chiếu",
-  "gitUiCopyCommitMessage": "Sao chép thông điệp commit"
+  "gitUiCopyCommitMessage": "Sao chép thông điệp commit",
+  "gitUiSelectAnotherCommit": "Chọn commit khác…"
 }

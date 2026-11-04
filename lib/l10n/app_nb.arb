@@ -4554,5 +4554,6 @@
   "gitUiCopyCommitHash": "Kopier commit-hash",
   "gitUiCommitHash": "Commit-hash",
   "gitUiCommitReferences": "Referanser",
-  "gitUiCopyCommitMessage": "Kopier commit-melding"
+  "gitUiCopyCommitMessage": "Kopier commit-melding",
+  "gitUiSelectAnotherCommit": "Velg en annen commit…"
 }

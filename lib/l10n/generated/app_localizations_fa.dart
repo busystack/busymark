@@ -8901,4 +8901,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'کپی پیام کامیت';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'انتخاب یک کامیت دیگر…';
 }

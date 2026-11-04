@@ -249,6 +249,87 @@ Future<void> _ready(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets(
+    'selected commit is information and its header menu owns selection',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      git.GitSession? session;
+      List<dynamic>? entries;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('busymark/native_menus'),
+        (call) async {
+          if (call.method == 'show') {
+            entries = (call.arguments as Map)['entries'] as List;
+          }
+          return call.method == 'show' ? null : true;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('busymark/native_menus'),
+          null,
+        ),
+      );
+      await tester.pumpWidget(
+        _host(
+          builder: (context, host) {
+            session ??= git.GitSession(
+              client: _ReviewClient()..short = true,
+              repository: repo,
+              host: host,
+            );
+            return SizedBox(
+              width: 320,
+              child: git.GitLogView(session: session!, inspector: true),
+            );
+          },
+        ),
+      );
+      addTearDown(() => session?.dispose());
+      await session!.start();
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 400));
+      await _ready(tester);
+      final header = find.byKey(const ValueKey('git-selected-commit'));
+      final row = tester.widget<git.GitActionRow>(header);
+      expect(
+        row.onTap,
+        isNull,
+        reason: 'The subject is information, not a selector button',
+      );
+      expect(
+        tester
+            .getSemantics(find.text('Short commit'))
+            .getSemanticsData()
+            .hasAction(SemanticsAction.tap),
+        isFalse,
+        reason:
+            'The host surface must not add a no-op tap action to informational text',
+      );
+      final actions = find.byKey(const ValueKey('git-commit-actions'));
+      final headerBounds = tester.getRect(
+        find.byKey(const ValueKey('git-commit-header')),
+      );
+      expect(tester.getRect(actions).right, closeTo(headerBounds.right, 1));
+      expect(
+        tester.getRect(actions).center.dy,
+        closeTo(headerBounds.center.dy, 1),
+      );
+      expect(
+        find.descendant(of: header, matching: find.byType(git.GitButton)),
+        findsNothing,
+      );
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      expect(
+        entries!.where((e) => (e as Map)['label'] == 'Select another commit…'),
+        hasLength(1),
+      );
+      expect(find.byKey(const ValueKey('git-commit-actions')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+    },
+  );
   for (final locale in ['en', 'de', 'ja', 'ar']) {
     for (final scale in [1.0, 2.0]) {
       testWidgets(
@@ -310,7 +391,7 @@ void main() {
             var i = 0;
             i < 20 &&
                 find
-                    .byKey(const ValueKey('git-commit-actions'))
+                    .byKey(const ValueKey('git-changed-files'))
                     .evaluate()
                     .isEmpty;
             i++
@@ -359,7 +440,10 @@ void main() {
             'refs/heads/main',
             'refs/tags/v1',
           ]) {
-            final text = find.text(value);
+            final text = find.descendant(
+              of: dialog,
+              matching: find.text(value),
+            );
             expect(text, findsOneWidget);
             await tester.ensureVisible(text);
             await tester.pumpAndSettle();
@@ -577,17 +661,14 @@ void main() {
           // Renaming a redundant icon's key must not evade the contract.
           expect(
             find.descendant(of: info, matching: find.byType(git.GitIconButton)),
-            findsOneWidget,
+            findsNothing,
           );
           final nativeSelected = find.descendant(
             of: selected,
             matching: find.byType(BusyMarkGitActionButton),
           );
-          expect(nativeSelected, findsOneWidget);
-          expect(
-            tester.widget<BusyMarkGitActionButton>(nativeSelected).role,
-            BusyMarkGitActionRole.inline,
-          );
+          expect(nativeSelected, findsNothing);
+          expect(tester.widget<git.GitActionRow>(selected).onTap, isNull);
           expect(
             find.descendant(of: selected, matching: find.byType(TextButton)),
             findsNothing,
@@ -611,6 +692,7 @@ void main() {
               .where((e) => (e as Map)['separator'] != true)
               .map((e) => (e as Map)['label']);
           for (final message in [
+            git.GitMessages.selectAnotherCommit,
             git.GitMessages.createBranch2,
             git.GitMessages.createTag,
             git.GitMessages.compareRevisions,

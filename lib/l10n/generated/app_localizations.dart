@@ -15064,6 +15064,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy commit message'**
   String get gitUiCopyCommitMessage;
+
+  /// Shared Git interface: Select another commit…
+  ///
+  /// In en, this message translates to:
+  /// **'Select another commit…'**
+  String get gitUiSelectAnotherCommit;
 }
 
 class _AppLocalizationsDelegate

@@ -63,6 +63,7 @@ jobs:
             poppler-utils \
             python3-gi \
             python3-gi-cairo \
+            python3-pil \
             python3-yaml \
             rsync \
             xvfb \
@@ -204,7 +205,24 @@ jobs:
       - name: Build Linux release
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' && steps.linux-dependencies.outcome == 'success' && steps.node.outcome == 'success' }}
         id: release-build
-        run: flutter build linux --release
+        run: |
+          python3 tools/git_native_build_receipt.py capture build/linux/x64/release/git-native-source.json
+          flutter build linux --release
+          python3 tools/git_native_build_receipt.py seal build/linux/x64/release/git-native-source.json build/linux/x64/release/bundle/busymark
+
+      - name: Capture production Git native presentation matrix
+        if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
+        run: /usr/bin/python3 tools/git_native_smoke.py build/linux/x64/release/bundle/busymark build/git-native-acceptance
+
+      - name: Preserve native Git acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: git-native-acceptance
+          path: |
+            build/git-native-acceptance
+            build/linux/x64/release/git-native-source.json
+          if-no-files-found: ignore
 
       - name: Test production GTK accent channel host and lifecycle
         if: ${{ !cancelled() && steps.release-build.outcome == 'success' }}
@@ -343,6 +361,8 @@ jobs:
             tools/test_application_close_smoke.py \
             tools/test_run_owned_fixture.py \
             tools/test_official_flutter_workflow.py \
+            tools/test_git_native_build_receipt.py \
+            tools/test_git_native_geometry.py \
             tools/test_visualization_dependency_policy.py
 
       - name: Test including bundled D2 and Typst paths

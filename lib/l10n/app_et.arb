@@ -5014,5 +5014,6 @@
   "gitUiCopyCommitHash": "Kopeeri kinnituse räsi",
   "gitUiCommitHash": "Kinnituse räsi",
   "gitUiCommitReferences": "Viited",
-  "gitUiCopyCommitMessage": "Kopeeri kinnituse sõnum"
+  "gitUiCopyCommitMessage": "Kopeeri kinnituse sõnum",
+  "gitUiSelectAnotherCommit": "Vali teine sissekanne…"
 }

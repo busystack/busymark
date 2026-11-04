@@ -6084,5 +6084,6 @@
   "gitUiCopyCommitHash": "커밋 해시 복사",
   "gitUiCommitHash": "커밋 해시",
   "gitUiCommitReferences": "참조",
-  "gitUiCopyCommitMessage": "커밋 메시지 복사"
+  "gitUiCopyCommitMessage": "커밋 메시지 복사",
+  "gitUiSelectAnotherCommit": "다른 커밋 선택…"
 }

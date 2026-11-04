@@ -6084,5 +6084,6 @@
   "gitUiCopyCommitHash": "Commit-hash kopiëren",
   "gitUiCommitHash": "Commit-hash",
   "gitUiCommitReferences": "Verwijzingen",
-  "gitUiCopyCommitMessage": "Commitbericht kopiëren"
+  "gitUiCopyCommitMessage": "Commitbericht kopiëren",
+  "gitUiSelectAnotherCommit": "Een andere commit selecteren…"
 }

@@ -8894,4 +8894,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'Salin pesan commit';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Pilih commit lain…';
 }

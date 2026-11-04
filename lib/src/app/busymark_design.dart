@@ -4806,11 +4806,13 @@ class BusyMarkGitActionButton extends StatefulWidget {
     required this.role,
     required this.child,
     required this.onPressed,
+    this.compact = false,
   });
 
   final BusyMarkGitActionRole role;
   final Widget child;
   final VoidCallback? onPressed;
+  final bool compact;
 
   @override
   State<BusyMarkGitActionButton> createState() =>
@@ -4850,7 +4852,12 @@ class BusyMarkGitActionButtonState extends State<BusyMarkGitActionButton> {
     final colors = BusyMarkSurfaceColors.of(context);
     final theme = Theme.of(context);
     final style = switch (widget.role) {
-      BusyMarkGitActionRole.inline => theme.textButtonTheme.style,
+      // Match BusyMarkPushButton.flat: native neutral foreground, never the
+      // accent/link foreground from the application's text-button theme.
+      BusyMarkGitActionRole.inline => theme.textButtonTheme.style?.copyWith(
+        foregroundColor: theme.outlinedButtonTheme.style?.foregroundColor,
+        iconColor: theme.outlinedButtonTheme.style?.iconColor,
+      ),
       BusyMarkGitActionRole.standard => theme.filledButtonTheme.style,
       BusyMarkGitActionRole.suggested => theme.elevatedButtonTheme.style,
     };
@@ -4884,9 +4891,13 @@ class BusyMarkGitActionButtonState extends State<BusyMarkGitActionButton> {
     final radius = resolvedShape is RoundedRectangleBorder
         ? resolvedShape.borderRadius
         : BorderRadius.circular(kYaruButtonRadius);
-    final padding =
-        style?.padding?.resolve(states) ??
-        const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.lg);
+    final padding = widget.compact
+        ? const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.md,
+            vertical: BusyMarkSpacing.xs,
+          )
+        : style?.padding?.resolve(states) ??
+              const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.lg);
     final minimum =
         style?.minimumSize?.resolve(states) ??
         const Size(kYaruButtonHeight, kYaruButtonHeight);
@@ -4897,7 +4908,9 @@ class BusyMarkGitActionButtonState extends State<BusyMarkGitActionButton> {
     final constraints = fixed == null
         ? BoxConstraints(
             minWidth: minimum.width,
-            minHeight: minimum.height,
+            minHeight: widget.compact
+                ? kYaruTitleBarItemHeight
+                : minimum.height,
             maxWidth: maximum.width,
             maxHeight: maximum.height,
           )
@@ -4925,14 +4938,7 @@ class BusyMarkGitActionButtonState extends State<BusyMarkGitActionButton> {
         ),
       ),
     );
-    final focused = YaruTheme.maybeOf(context)?.focusBorders == true
-        ? YaruFocusBorder.primary(
-            focused: _focused,
-            borderRadius: radius,
-            child: painted,
-          )
-        : painted;
-    return Semantics(
+    final action = Semantics(
       button: true,
       enabled: enabled,
       onTap: enabled ? _activate : null,
@@ -4980,11 +4986,14 @@ class BusyMarkGitActionButtonState extends State<BusyMarkGitActionButton> {
                 : null,
             onTapUp: enabled ? (_) => _setPressed(false) : null,
             onTapCancel: enabled ? () => _setPressed(false) : null,
-            child: focused,
+            child: painted,
           ),
         ),
       ),
     );
+    return YaruTheme.maybeOf(context)?.focusBorders != false
+        ? YaruFocusBorder.primary(borderRadius: radius, child: action)
+        : action;
   }
 }
 
@@ -5053,9 +5062,17 @@ class BusyMarkGitTextEntry extends StatefulWidget {
   State<BusyMarkGitTextEntry> createState() => _BusyMarkGitTextEntryState();
 }
 
-class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
+class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry>
+    implements TextSelectionGestureDetectorBuilderDelegate {
   TextEditingController? _ownedController;
   FocusNode? _ownedFocusNode;
+  @override
+  final editableTextKey = GlobalKey<EditableTextState>();
+  @override
+  bool get forcePressEnabled => false;
+  @override
+  bool get selectionEnabled => widget.enabled;
+  late final _gestures = TextSelectionGestureDetectorBuilder(delegate: this);
 
   TextEditingController get _controller =>
       widget.controller ?? (_ownedController ??= TextEditingController());
@@ -5099,6 +5116,7 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final enabled = widget.enabled;
+    final selectionTheme = Theme.of(context).textSelectionTheme;
     final style = (widget.textStyle ?? Theme.of(context).textTheme.bodyMedium)!
         .copyWith(
           color: enabled
@@ -5106,6 +5124,7 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
               : colors.disabledForeground,
         );
     final editable = EditableText(
+      key: editableTextKey,
       controller: _controller,
       focusNode: _focusNode,
       readOnly: widget.readOnly || !enabled,
@@ -5114,12 +5133,16 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
       autocorrect: widget.autocorrect,
       enableSuggestions: widget.enableSuggestions,
       style: style,
-      cursorColor: Theme.of(context).colorScheme.primary,
-      rendererIgnoresPointer: !enabled,
+      cursorColor:
+          selectionTheme.cursorColor ?? Theme.of(context).colorScheme.primary,
+      rendererIgnoresPointer: true,
+      selectionControls: desktopTextSelectionHandleControls,
       backgroundCursorColor: colors.mutedForeground,
-      selectionColor: Theme.of(
-        context,
-      ).colorScheme.primary.withValues(alpha: .25),
+      selectionColor:
+          selectionTheme.selectionColor ??
+          Theme.of(
+            context,
+          ).colorScheme.primary.withValues(alpha: BusyMarkAlpha.textSelection),
       expands: widget.expands,
       minLines: widget.expands ? null : widget.minLines,
       maxLines: widget.expands ? null : widget.maxLines,
@@ -5148,9 +5171,15 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
       children: [
         if (hint != null && hint.isNotEmpty && _controller.text.isEmpty)
           IgnorePointer(
-            child: Text(
-              hint,
-              style: style.copyWith(color: colors.mutedForeground),
+            child: ExcludeSemantics(
+              // The persistent field label names the editor. The placeholder
+              // is visual guidance, not a second accessible field name.
+              child: Text(
+                hint,
+                maxLines: widget.maxLines == 1 ? 1 : null,
+                overflow: widget.maxLines == 1 ? TextOverflow.ellipsis : null,
+                style: style.copyWith(color: colors.mutedForeground),
+              ),
             ),
           ),
         editable,
@@ -5174,34 +5203,53 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
         if (widget.expands) Expanded(child: editor) else editor,
       ],
     );
-    final surface = YaruBorderContainer(
-      color: busyMarkGroupedSurfaceColor(context),
-      border: Border.all(color: colors.divider),
-      borderRadius: BorderRadius.circular(kYaruContainerRadius),
-      constraints: BoxConstraints(
-        minHeight: widget.dense ? BusyMarkSizes.iconButton : 0,
-      ),
-      padding:
-          widget.contentPadding ??
-          const EdgeInsets.symmetric(
-            horizontal: BusyMarkSpacing.sm,
-            vertical: BusyMarkSpacing.xs,
-          ),
-      child: Row(
-        crossAxisAlignment: widget.expands
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
-        children: [
-          if (widget.leading != null) ...[
-            widget.leading!,
-            const SizedBox(width: BusyMarkSpacing.sm),
+    final inputTheme = Theme.of(context).inputDecorationTheme;
+    final radius = BorderRadius.circular(
+      widget.dense ? kYaruButtonRadius : kYaruContainerRadius,
+    );
+    final surface = ListenableBuilder(
+      listenable: _focusNode,
+      builder: (context, _) => YaruBorderContainer(
+        color: widget.dense
+            ? Theme.of(context).colorScheme.surface
+            : busyMarkGroupedSurfaceColor(context),
+        border: Border.fromBorderSide(
+          (_focusNode.hasFocus
+                      ? inputTheme.focusedBorder
+                      : widget.dense && enabled
+                      ? inputTheme.enabledBorder
+                      : widget.dense
+                      ? inputTheme.disabledBorder
+                      : null)
+                  ?.borderSide ??
+              BorderSide(color: colors.divider),
+        ),
+        borderRadius: radius,
+        constraints: BoxConstraints(
+          minHeight: widget.dense ? kYaruTitleBarItemHeight : 0,
+        ),
+        padding:
+            widget.contentPadding ??
+            const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.sm,
+              vertical: BusyMarkSpacing.xs,
+            ),
+        child: Row(
+          crossAxisAlignment: widget.expands
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
+          children: [
+            if (widget.leading != null) ...[
+              widget.leading!,
+              const SizedBox(width: BusyMarkSpacing.sm),
+            ],
+            Expanded(child: content),
+            if (widget.trailing != null) ...[
+              const SizedBox(width: BusyMarkSpacing.xs),
+              widget.trailing!,
+            ],
           ],
-          Expanded(child: content),
-          if (widget.trailing != null) ...[
-            const SizedBox(width: BusyMarkSpacing.xs),
-            widget.trailing!,
-          ],
-        ],
+        ),
       ),
     );
     final interactive = Semantics(
@@ -5211,13 +5259,9 @@ class _BusyMarkGitTextEntryState extends State<BusyMarkGitTextEntry> {
         ignoring: !enabled,
         child: ExcludeFocus(
           excluding: !enabled,
-          child: ListenableBuilder(
-            listenable: _focusNode,
-            builder: (context, _) => YaruFocusBorder.primary(
-              focused: _focusNode.hasFocus,
-              borderRadius: BorderRadius.circular(kYaruContainerRadius),
-              child: surface,
-            ),
+          child: _gestures.buildGestureDetector(
+            behavior: HitTestBehavior.translucent,
+            child: surface,
           ),
         ),
       ),
@@ -5486,9 +5530,9 @@ class BusyMarkSidebarRowSurfaceState extends State<BusyMarkSidebarRowSurface> {
     final colors = BusyMarkSurfaceColors.of(context);
     final background = widget.selected
         ? busyMarkSelectedBackground(context)
-        : widget.enabled && _pressed
+        : widget.enabled && widget.clickable && _pressed
         ? colors.controlActive
-        : widget.enabled && (_hovered || _focused)
+        : widget.enabled && widget.clickable && (_hovered || _focused)
         ? busyMarkRowHoverColor(context)
         : BusyMarkLinuxPalette.transparent;
     final radius = BorderRadius.circular(BusyMarkRadius.md);
@@ -5504,15 +5548,7 @@ class BusyMarkSidebarRowSurfaceState extends State<BusyMarkSidebarRowSurface> {
         ),
       ),
     );
-    final focused = YaruTheme.maybeOf(context)?.focusBorders == true
-        ? YaruFocusBorder.primary(
-            focused: _focused,
-            borderRadius: radius,
-            borderStrokeAlign: BorderSide.strokeAlignInside,
-            child: row,
-          )
-        : row;
-    return MouseRegion(
+    final surface = MouseRegion(
       cursor: widget.enabled && widget.clickable
           ? SystemMouseCursors.click
           : SystemMouseCursors.basic,
@@ -5527,7 +5563,7 @@ class BusyMarkSidebarRowSurfaceState extends State<BusyMarkSidebarRowSurface> {
           onFocusChange: _focus,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: widget.enabled
+            onTap: widget.enabled && widget.onTap != null
                 ? () {
                     if (widget.clickable) _focusNode.requestFocus();
                     widget.onTap?.call();
@@ -5555,11 +5591,18 @@ class BusyMarkSidebarRowSurfaceState extends State<BusyMarkSidebarRowSurface> {
                     if (_pressed) setState(() => _pressed = false);
                   }
                 : null,
-            child: focused,
+            child: row,
           ),
         ),
       ),
     );
+    return YaruTheme.maybeOf(context)?.focusBorders != false && widget.clickable
+        ? YaruFocusBorder.primary(
+            borderRadius: radius,
+            borderStrokeAlign: BorderSide.strokeAlignInside,
+            child: surface,
+          )
+        : surface;
   }
 }
 
@@ -5939,6 +5982,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
   @override
   Widget button(BuildContext context, git.GitButton control) =>
       BusyMarkGitActionButton(
+        compact: control.compact,
         role: switch (control.variant) {
           git.GitActionStyle.inline => BusyMarkGitActionRole.inline,
           git.GitActionStyle.standard => BusyMarkGitActionRole.standard,

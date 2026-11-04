@@ -8876,4 +8876,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'कमिट संदेश कॉपी करें';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'दूसरा कमिट चुनें…';
 }

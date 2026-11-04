@@ -8969,6 +8969,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'Copiar mensagem do commit';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Selecionar outro commit…';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17929,4 +17932,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitUiCopyCommitMessage => 'Copiar mensagem do commit';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'Selecionar outro commit…';
 }

@@ -1309,6 +1309,7 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.commitHash => gitUiCommitHash,
     GitMessages.commitReferences => gitUiCommitReferences,
     GitMessages.copyCommitMessage => gitUiCopyCommitMessage,
+    GitMessages.selectAnotherCommit => gitUiSelectAnotherCommit,
     _ => message,
   };
 }

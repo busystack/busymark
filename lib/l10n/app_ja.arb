@@ -6084,5 +6084,6 @@
   "gitUiCopyCommitHash": "コミットハッシュをコピー",
   "gitUiCommitHash": "コミットハッシュ",
   "gitUiCommitReferences": "参照",
-  "gitUiCopyCommitMessage": "コミットメッセージをコピー"
+  "gitUiCopyCommitMessage": "コミットメッセージをコピー",
+  "gitUiSelectAnotherCommit": "別のコミットを選択…"
 }

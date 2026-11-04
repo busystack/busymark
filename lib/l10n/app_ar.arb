@@ -4554,5 +4554,6 @@
   "gitUiCopyCommitHash": "نسخ تجزئة الإيداع",
   "gitUiCommitHash": "تجزئة الإيداع",
   "gitUiCommitReferences": "المراجع",
-  "gitUiCopyCommitMessage": "نسخ رسالة الإيداع"
+  "gitUiCopyCommitMessage": "نسخ رسالة الإيداع",
+  "gitUiSelectAnotherCommit": "اختيار التزام آخر…"
 }

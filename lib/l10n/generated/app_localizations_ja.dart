@@ -8643,4 +8643,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'コミットメッセージをコピー';
+
+  @override
+  String get gitUiSelectAnotherCommit => '別のコミットを選択…';
 }

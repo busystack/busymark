@@ -8884,4 +8884,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitUiCopyCommitMessage => 'نسخ رسالة الإيداع';
+
+  @override
+  String get gitUiSelectAnotherCommit => 'اختيار التزام آخر…';
 }

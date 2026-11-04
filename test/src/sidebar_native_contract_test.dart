@@ -212,7 +212,19 @@ void main() {
         ),
       );
       expect(find.byType(YaruListTile), findsNothing);
-      expect(find.byType(InkWell), findsNothing);
+      // Official YaruFocusBorder owns an inert InkWell for focus tracking.
+      // First-party action construction is separately rejected by the resolved
+      // source gate; the rendered contract rejects extra activation surfaces.
+      for (final ink in find.byType(InkWell).evaluate()) {
+        expect((ink.widget as InkWell).onTap, isNull);
+        expect(
+          find.ancestor(
+            of: find.byWidget(ink.widget),
+            matching: find.byType(YaruFocusBorder),
+          ),
+          findsOneWidget,
+        );
+      }
       expect(find.byType(BusyMarkCompactIconButton), findsNothing);
       await tester.tap(find.text('12:34:56'), buttons: kSecondaryMouseButton);
       await tester.pump();

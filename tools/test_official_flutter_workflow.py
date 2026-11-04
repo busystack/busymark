@@ -390,9 +390,16 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
     def test_ordinary_standalone_checks_share_one_shipping_build(self):
         self._automatic_product_jobs()
         steps = self.workflow['jobs']['verify']['steps']
-        builds = [s for s in steps if s.get('run', '').startswith('flutter build linux ')]
+        builds = [s for s in steps if any(line.startswith('flutter build linux ')
+                  for line in s.get('run', '').splitlines())]
         self.assertEqual(len(builds), 1)
-        self.assertEqual(shlex.split(builds[0]['run']), ['flutter', 'build', 'linux', '--release'])
+        commands = [shlex.split(line) for line in builds[0]['run'].splitlines() if line.strip()]
+        self.assertEqual(commands[1], ['flutter', 'build', 'linux', '--release'])
+        self.assertEqual(commands[0], ['python3', 'tools/git_native_build_receipt.py', 'capture',
+                                     'build/linux/x64/release/git-native-source.json'])
+        self.assertEqual(commands[2], ['python3', 'tools/git_native_build_receipt.py', 'seal',
+                                     'build/linux/x64/release/git-native-source.json',
+                                     'build/linux/x64/release/bundle/busymark'])
         self.assertEqual(builds[0]['id'], 'release-build')
         for step in steps:
             if any(command in step.get('run', '') for command in

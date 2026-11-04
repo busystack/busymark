@@ -3907,7 +3907,7 @@
   "gitUiMessage": "Nachricht…",
   "gitUiAuthor": "Autor…",
   "gitUiPath": "Pfad...",
-  "gitUiDate": "Verabredung...",
+  "gitUiDate": "Datum…",
   "gitUiMessageFilter": "Nachrichtenfilter",
   "gitUiAuthorFilter": "Autorenfilter",
   "gitUiPathFilter": "Pfadfilter",
@@ -4554,5 +4554,6 @@
   "gitUiCopyCommitHash": "Commit-Hash kopieren",
   "gitUiCommitHash": "Commit-Hash",
   "gitUiCommitReferences": "Referenzen",
-  "gitUiCopyCommitMessage": "Commit-Nachricht kopieren"
+  "gitUiCopyCommitMessage": "Commit-Nachricht kopieren",
+  "gitUiSelectAnotherCommit": "Anderen Commit auswählen…"
 }
