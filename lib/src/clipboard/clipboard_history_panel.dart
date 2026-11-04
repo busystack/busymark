@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:busystack_git_flutter/busystack_git_flutter.dart'
+    show GitContextMenuKeys;
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
@@ -26,6 +28,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   final _listScrollController = ScrollController();
   final _listFocusNode = FocusNode(debugLabel: 'Clipboard History list');
   final _entryKeys = <String, GlobalKey>{};
+  final _menuKeys = GitContextMenuKeys();
   String? _selectedId;
 
   @override
@@ -46,6 +49,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   void dispose() {
     _listScrollController.dispose();
     _listFocusNode.dispose();
+    _menuKeys.clear();
     super.dispose();
   }
 
@@ -68,6 +72,9 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     _entryKeys.removeWhere((id, _) => !visibleIds.contains(id));
     return Focus(
       focusNode: _listFocusNode,
+      onFocusChange: (focused) {
+        if (!focused) _menuKeys.clear();
+      },
       onKeyEvent: (_, event) => _handleKey(event, visible, registry),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,7 +94,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
-                BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>(
+                BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>.native(
                   key: const ValueKey('clipboard-history-actions-menu'),
                   tooltip: context.l10n.actions,
                   icon: BusyMarkGlyphs.menuVertical,
@@ -148,7 +155,8 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
                     children: [
                       for (final payload in visible)
                         _ClipboardEntryTile(
-                          key: _entryKeys.putIfAbsent(
+                          key: ValueKey(payload.id),
+                          geometryKey: _entryKeys.putIfAbsent(
                             payload.id,
                             () => GlobalKey(
                               debugLabel: 'Clipboard entry ${payload.id}',
@@ -194,6 +202,21 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     List<BusyMarkClipboardPayload> visible,
     BusyMarkClipboardInsertionRegistry registry,
   ) {
+    if (_listFocusNode.hasPrimaryFocus &&
+        _menuKeys.handle(event, () {
+          final selected = visible
+              .where((entry) => entry.id == _selectedId)
+              .firstOrNull;
+          final entryContext = _entryKeys[selected?.id]?.currentContext;
+          if (entryContext != null && entryContext.mounted) {
+            Actions.invoke(
+              entryContext,
+              const BusyMarkSidebarContextMenuIntent(),
+            );
+          }
+        })) {
+      return KeyEventResult.handled;
+    }
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.escape) {
       widget.onEscape?.call();
@@ -275,6 +298,7 @@ enum _ClipboardEntryAction { paste, pastePlain, remove }
 class _ClipboardEntryTile extends StatelessWidget {
   const _ClipboardEntryTile({
     super.key,
+    required this.geometryKey,
     required this.payload,
     required this.current,
     required this.selected,
@@ -286,6 +310,7 @@ class _ClipboardEntryTile extends StatelessWidget {
   });
 
   final BusyMarkClipboardPayload payload;
+  final GlobalKey geometryKey;
   final bool current;
   final bool selected;
   final bool canPaste;
@@ -313,6 +338,7 @@ class _ClipboardEntryTile extends StatelessWidget {
     final originPath = origin?.documentPath?.trim();
     final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkSidebarRecordRow<_ClipboardEntryAction>(
+      geometryKey: geometryKey,
       icon: payload.kind == BusyMarkClipboardContentKind.image
           ? BusyMarkGlyphs.image
           : BusyMarkGlyphs.copy,

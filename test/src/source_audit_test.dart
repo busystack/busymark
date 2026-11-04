@@ -1591,7 +1591,12 @@ void main() {
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));
     expect(workspace, contains('label: context.l10n.newChildTopic'));
-    expect(workspace, contains('compactHierarchyIndent: true'));
+    expect(workspace, isNot(contains('compactHierarchyIndent: true')));
+    expect(shared, contains('const expanderGap = BusyMarkSpacing.xs'));
+    expect(
+      shared,
+      contains('const expanderWidth = BusyMarkSizes.sidebarTreeControl'),
+    );
     expect(workspace, contains('_SidebarTab.git,'));
     expect(workspace, isNot(contains('class _FileTreeRow')));
     expect(workspace, isNot(contains('class _SidebarTile')));

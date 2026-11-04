@@ -2508,6 +2508,14 @@ class _SidebarHeader extends ConsumerWidget {
     final buildTabMenu =
         selectedTab == _SidebarTab.git || selectedTab == _SidebarTab.gitLog
         ? BusyMarkHeaderPopupMenuButton<_SidebarTab>.native
+        : const {
+            _SidebarTab.files,
+            _SidebarTab.toc,
+            _SidebarTab.outline,
+            _SidebarTab.localHistory,
+            _SidebarTab.clipboard,
+          }.contains(selectedTab)
+        ? BusyMarkHeaderPopupMenuButton<_SidebarTab>.native
         : BusyMarkHeaderPopupMenuButton<_SidebarTab>.new;
     final selectedTabMenuItem = selectedTab == null
         ? null
@@ -2576,7 +2584,7 @@ class _SidebarHeader extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_PathMenuAction>(
+                  BusyMarkHeaderPopupMenuButton<_PathMenuAction>.native(
                     key: const ValueKey('workspace-sidebar-path-menu'),
                     tooltip: context.l10n.pathActions,
                     icon: BusyMarkGlyphs.menuVertical,
@@ -2629,7 +2637,7 @@ class _SidebarHeader extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_OutlineDocumentAction>(
+                  BusyMarkHeaderPopupMenuButton<_OutlineDocumentAction>.native(
                     key: const ValueKey('workspace-sidebar-outline-file-menu'),
                     tooltip: context.l10n.actions,
                     icon: BusyMarkGlyphs.menuVertical,
@@ -4390,7 +4398,7 @@ Future<T?> _showSidebarTreeMenu<T>(
   Offset position, {
   required List<PopupMenuEntry<T>> items,
 }) {
-  return showBusyMarkContextMenu<T>(context, position, items: items);
+  return showBusyMarkNativeContextMenu<T>(context, position, items: items);
 }
 
 bool _canPasteFileTreeEntry(
@@ -5389,19 +5397,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 child: Listener(
                   onPointerDown: (event) {
                     if (event.buttons == kPrimaryMouseButton) {
-                      // Let the trailing action button keep its own focus and
-                      // gesture until it opens the menu. Row selection on
-                      // pointer-down is only needed for a possible row drag.
-                      final box = _rowMenuKeys[key]?.currentContext
-                          ?.findRenderObject();
-                      if (box is RenderBox) {
-                        final x = box.globalToLocal(event.position).dx;
-                        final onActions =
-                            Directionality.of(context) == TextDirection.rtl
-                            ? x < BusyMarkSizes.iconButton
-                            : x > box.size.width - BusyMarkSizes.iconButton;
-                        if (onActions) return;
-                      }
                       final modifiers = _treeSelectionModifiers();
                       // A press on the current multi-selection may start a
                       // group drag; collapse it only after an ordinary tap.
@@ -5452,7 +5447,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     hasChildren: hasChildren,
                     expanded: expanded,
                     muted: node.hidden,
-                    compactHierarchyIndent: true,
                     onToggle: hasChildren ? toggle : null,
                     onDoubleTap: () async {
                       final modifiers =
@@ -7082,9 +7076,9 @@ Future<_TocTreeAction?> _showTocTreeMenu(
 }) {
   // Keep the same menu layout and keyboard behavior when selection changes
   // between a nested single-item menu and a flat multiple-selection menu.
-  return showBusyMarkMenu<_TocTreeAction>(
-    context: context,
-    anchorPoint: position,
+  return showBusyMarkNativeContextMenu<_TocTreeAction>(
+    context,
+    position,
     items: [
       if (!multipleSelection) ...[
         BusyMarkSubmenuItem(
@@ -7710,7 +7704,7 @@ class _TocHeader extends StatelessWidget {
                         style: busyMarkSectionHeaderStyle(context),
                       ),
                     ),
-                    BusyMarkHeaderPopupMenuButton<String>(
+                    BusyMarkHeaderPopupMenuButton<String>.native(
                       key: const ValueKey('writerside-module-selector'),
                       tooltip: context.l10n.workspaceKindWritersideModule,
                       icon: BusyMarkGlyphs.menuVertical,
@@ -7746,7 +7740,7 @@ class _TocHeader extends StatelessWidget {
                     onOpenTocFile: onOpenTocFile,
                   ),
                 ),
-                BusyMarkHeaderPopupMenuButton<_TocCreationChoice>(
+                BusyMarkHeaderPopupMenuButton<_TocCreationChoice>.native(
                   key: const ValueKey('workspace-sidebar-new-topic-menu'),
                   tooltip: context.l10n.newTopic,
                   icon: BusyMarkGlyphs.add,
@@ -7779,7 +7773,7 @@ class _TocHeader extends StatelessWidget {
                   ],
                   onSelected: onCreateTopic,
                 ),
-                BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
+                BusyMarkHeaderPopupMenuButton<_TocHeaderAction>.native(
                   key: const ValueKey('workspace-sidebar-toc-menu'),
                   tooltip: context.l10n.tocActions,
                   icon: BusyMarkGlyphs.menuVertical,
@@ -7864,11 +7858,10 @@ class _WritersideInstanceSelector extends StatelessWidget {
       instanceColors[selectedPath] ?? WritersideInstanceIconColor.blue,
     );
     final selectorEnabled = instances.isNotEmpty;
-    return BusyMarkMenuButton<String>(
+    return BusyMarkMenuButton<String>.native(
       key: const ValueKey('writerside-instance-selector'),
       tooltip: context.l10n.instances,
       enabled: selectorEnabled,
-      fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
       items: [
         for (final instance in instances)
           BusyMarkPopupMenuItem<String>(
@@ -7886,7 +7879,8 @@ class _WritersideInstanceSelector extends StatelessWidget {
       ],
       onSelected: onSelected,
       triggerBuilder: (context, trigger) => trigger.anchor(
-        child: Tooltip(
+        child: BusyMarkTooltipStyle.wrap(
+          context,
           message: context.l10n.instances,
           child: Semantics(
             expanded: trigger.isOpen,
@@ -7953,7 +7947,7 @@ class _WritersideInstanceSelector extends StatelessWidget {
   }
 
   Future<void> _showInstanceMenu(BuildContext context, Offset position) async {
-    final open = await showBusyMarkContextMenu<bool>(
+    final open = await showBusyMarkNativeContextMenu<bool>(
       context,
       position,
       items: [
@@ -8846,7 +8840,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
             widget.headings,
             selectedHeadings.single.index,
           );
-    final action = await showBusyMarkContextMenu<_OutlineSectionAction>(
+    final action = await showBusyMarkNativeContextMenu<_OutlineSectionAction>(
       context,
       position,
       items: _outlineSectionMenuItems(

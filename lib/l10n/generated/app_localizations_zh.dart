@@ -23,31 +23,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesExportOperationFailed => '导出在发布前失败。请检查来源和目标后重新导出。';
 
   @override
-  String get notesRecoveryCreatedNotOpened =>
-      '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
+  String get notesRecoveryCreatedNotOpened => '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
 
   @override
-  String get notesSettingsPendingNotes =>
-      '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
+  String get notesSettingsPendingNotes => '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
 
   @override
-  String get notesSettingsPendingAttachments =>
-      '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
+  String get notesSettingsPendingAttachments => '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
 
   @override
-  String get notesAccountServerAddress =>
-      '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
+  String get notesAccountServerAddress => '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
 
   @override
-  String get notesAccountUnsupported =>
-      '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
+  String get notesAccountUnsupported => '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
 
   @override
   String get notesAccountAuthorizeAgain => 'Nextcloud 拒绝了凭据。请重新授权或重新连接账户。';
 
   @override
-  String get notesAccountCheckForbidden =>
-      'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
+  String get notesAccountCheckForbidden => 'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
 
   @override
   String get notesAccountMalformed => '无法验证 Nextcloud 的响应。请检查服务器安装并重新登录。';
@@ -74,8 +68,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesTransferUnreadable => '无法读取来源。请检查文件或文件夹的访问权限，再重新审核。';
 
   @override
-  String get notesTransferInvalidSnapshot =>
-      '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
+  String get notesTransferInvalidSnapshot => '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
 
   @override
   String get notesTransferMediaLimit => '媒体超出导入大小限制。请缩小受影响项目的媒体，再重新审核。';
@@ -123,8 +116,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wsHeadingNotPublished => '此构建器不会发布此属性。';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation =>
-      '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
+  String get wsMarkdownInstanceTitleLimitation => '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
 
   @override
   String get wsTopicIdentity => '主题 ID';
@@ -196,8 +188,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wsGeneratedAnchor => '自动生成的锚点；输入值可覆盖。';
 
   @override
-  String get wsHeadingBuilderLimitation =>
-      '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
+  String get wsHeadingBuilderLimitation => '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
 
   @override
   String get closeOtherTabs => '关闭其他标签页';
@@ -395,8 +386,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tocInstanceTitleExplanation => '仅用于当前实例。默认继承主题标题。';
 
   @override
-  String get tocOnlyTitleExplanation =>
-      '仅用于目录。默认继承主题标题；如果设置了实例专用标题，则继承该标题。标题的说明见';
+  String get tocOnlyTitleExplanation => '仅用于目录。默认继承主题标题；如果设置了实例专用标题，则继承该标题。标题的说明见';
 
   @override
   String get tocTitleDocumentationLink => '此处';
@@ -513,8 +503,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedbackIncludeTechnicalDetails => '包含技术详细信息';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure =>
-      '启用后，此选项仅会添加您的 Linux 操作系统版本和 BusyMark 应用语言。不会附加日志、文件、账户数据或其他诊断信息。';
+  String get feedbackTechnicalDetailsDisclosure => '启用后，此选项仅会添加您的 Linux 操作系统版本和 BusyMark 应用语言。不会附加日志、文件、账户数据或其他诊断信息。';
 
   @override
   String get feedbackSubmit => '提交';
@@ -842,8 +831,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openFolderOrWritersideProject => '打开文件夹或 Writerside 项目';
 
   @override
-  String get markdownFolderOrWritersideProject =>
-      'Markdown 文件夹或兼容 Writerside 的项目';
+  String get markdownFolderOrWritersideProject => 'Markdown 文件夹或兼容 Writerside 的项目';
 
   @override
   String get noOpenFile => '没有打开的文件';
@@ -1122,8 +1110,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get allowRemoteImages => '加载远程图像';
 
   @override
-  String get allowRemoteImagesDescription =>
-      '允许 Markdown 预览和编辑器从 http 和 https URL 加载图像。';
+  String get allowRemoteImagesDescription => '允许 Markdown 预览和编辑器从 http 和 https URL 加载图像。';
 
   @override
   String get clearRemoteImagePermissions => '清除远程图像权限';
@@ -1165,22 +1152,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsReopenWorkspaceOnStartupTitle => '启动时重新打开上次的工作区';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription =>
-      'BusyMark 启动时打开上次会话中的工作区和标签页。';
+  String get settingsReopenWorkspaceOnStartupDescription => 'BusyMark 启动时打开上次会话中的工作区和标签页。';
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesTitle => '有未保存更改时关闭前进行确认';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      '文档有未保存更改时，关闭 BusyMark 前先进行询问。';
+  String get settingsConfirmCloseWithUnsavedChangesDescription => '文档有未保存更改时，关闭 BusyMark 前先进行询问。';
 
   @override
   String get closeUnsavedChangesTitle => '未保存的更改';
 
   @override
-  String get closeUnsavedChangesSingleMessage =>
-      '此文档有未保存的更改。关闭 BusyMark 前保存更改？';
+  String get closeUnsavedChangesSingleMessage => '此文档有未保存的更改。关闭 BusyMark 前保存更改？';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
@@ -1477,8 +1461,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteImagesBlockedTitle => '远程图像已阻止';
 
   @override
-  String get remoteImagesBlockedMessage =>
-      '本文档引用了来自互联网的图像。加载这些图像可能会向图像托管方泄露网络信息。';
+  String get remoteImagesBlockedMessage => '本文档引用了来自互联网的图像。加载这些图像可能会向图像托管方泄露网络信息。';
 
   @override
   String get loadRemoteImagesForWorkspace => '为此工作区加载';
@@ -1932,12 +1915,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceReplaceIssueBufferChanged => '已跳过预览后发生变化的编辑器缓冲区。';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired =>
-      '请在替换前选择 LF 或 CRLF 规范化。';
+  String get workspaceReplaceIssueNormalizationRequired => '请在替换前选择 LF 或 CRLF 规范化。';
 
   @override
-  String get workspaceReplaceIssuePartialConflict =>
-      '由于文件同时发生了变化，回滚已停止。部分替换可能仍然存在；被移出的内容已保留在下方路径中。';
+  String get workspaceReplaceIssuePartialConflict => '由于文件同时发生了变化，回滚已停止。部分替换可能仍然存在；被移出的内容已保留在下方路径中。';
 
   @override
   String get workspaceReplaceIssueApplyFailed => '无法提交经过审查的替换；没有文件发生更改。';
@@ -2273,21 +2254,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(
-    String module,
-    String count,
-    String paths,
-  ) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
     return '无法安全地重命名并更新所有项目引用，因为模块 $module 中有 $count 个主题文件尚未解析：$paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty =>
-      'Writerside 项目文件有未保存的更改。请先处理这些更改，再准备新的重命名预览。';
+  String get errorWritersideTopicRenameProjectBuffersDirty => 'Writerside 项目文件有未保存的更改。请先处理这些更改，再准备新的重命名预览。';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged =>
-      'Writerside 项目的模块集合已更改。请在重构前准备新的重命名预览。';
+  String get errorWritersideTopicRenameProjectInventoryChanged => 'Writerside 项目的模块集合已更改。请在重构前准备新的重命名预览。';
 
   @override
   String get errorTopicsRootUnsafe => '主题根目录必须是安全的相对目录。';
@@ -2338,12 +2313,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      '额外的顶级 H1 标题将被视为章节。';
+  String get diagnosticWritersideTopicH1ConvertedToChapter => '额外的顶级 H1 标题将被视为章节。';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside Markdown 主题没有 H1 或 front matter 标题。';
+  String get diagnosticWritersideMarkdownTopicMissingTitle => 'Writerside Markdown 主题没有 H1 或 front matter 标题。';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle => 'XML 主题缺少标题。';
@@ -2385,16 +2358,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot =>
-      'writerside.cfg 根元素必须是 <ihp>。';
+  String get diagnosticWritersideConfigInvalidRoot => 'writerside.cfg 根元素必须是 <ihp>。';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'snippets 声明缺少 src。';
+  String get diagnosticWritersideConfigMissingSnippetsSrc => 'snippets 声明缺少 src。';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'instance-groups 声明缺少 src。';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'instance-groups 声明缺少 src。';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -2402,16 +2372,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'instance 声明缺少 src。';
+  String get diagnosticWritersideConfigMissingInstanceSrc => 'instance 声明缺少 src。';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance =>
-      'writerside.cfg 未注册实例。';
+  String get diagnosticWritersideConfigMissingInstance => 'writerside.cfg 未注册实例。';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot =>
-      '.tree 根元素必须是 <instance-profile>。';
+  String get diagnosticWritersideTreeInvalidRoot => '.tree 根元素必须是 <instance-profile>。';
 
   @override
   String get diagnosticWritersideTreeMissingId => '实例配置文件缺少 id。';
@@ -2435,8 +2402,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration =>
-      '变量声明必须包含名称和值。';
+  String get diagnosticWritersideVariableMalformedDeclaration => '变量声明必须包含名称和值。';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -2476,27 +2442,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diagnosticWritersideTopicAnchorMissingHref => '<a> 缺少 href。';
 
   @override
-  String get diagnosticWritersideConfigMissing =>
-      'Writerside 模式需要 writerside.cfg。';
+  String get diagnosticWritersideConfigMissing => 'Writerside 模式需要 writerside.cfg。';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
     return '配置的构建配置目录不存在：$relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
     return '配置的 API 规范目录不存在：$relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
     return '配置的 snippets 目录不存在：$relativePath';
   }
 
@@ -2511,9 +2470,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
     return '配置的实例组文件不存在：$relativePath';
   }
 
@@ -2528,9 +2485,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(
-    String relativePath,
-  ) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
     return '默认主题目录不存在：$relativePath';
   }
 
@@ -2550,21 +2505,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(
-    String instanceId,
-    String webFileName,
-    String topic,
-  ) {
+  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
     return '实例 \"$instanceId\" 为主题 \"$topic\" 发布了无效的 Web 文件名 \"$webFileName\"。';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(
-    String instanceId,
-    String webFileName,
-    String firstTopic,
-    String secondTopic,
-  ) {
+  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
     return '实例 \"$instanceId\" 将 \"$firstTopic\" 和 \"$secondTopic\" 都发布为 \"$webFileName\"。';
   }
 
@@ -2589,10 +2535,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(
-    String anchor,
-    String targetName,
-  ) {
+  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
     return '“$targetName”中不存在锚点“$anchor”。';
   }
 
@@ -2605,10 +2548,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(
-    String elementId,
-    String from,
-  ) {
+  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
     return '“$from”中不存在包含元素“$elementId”。';
   }
 
@@ -2652,9 +2592,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(reason, {
-      'other': '安装 Git，或配置 BusyMark 以使用可用的 Git 可执行文件。$reason',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      reason,
+      {
+        'other': '安装 Git，或配置 BusyMark 以使用可用的 Git 可执行文件。$reason',
+      },
+    );
     return '$_temp0';
   }
 
@@ -2668,8 +2611,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitTrustRequiredTitle => '信任此工作区以使用 Git？';
 
   @override
-  String get gitTrustRequiredMessage =>
-      'BusyMark 可以在未授予信任时检查有限的仓库元数据。授予信任后，将启用此仓库的 Git 操作，这些操作可能执行已配置的钩子、过滤器、凭据助手和签名工具。';
+  String get gitTrustRequiredMessage => 'BusyMark 可以在未授予信任时检查有限的仓库元数据。授予信任后，将启用此仓库的 Git 操作，这些操作可能执行已配置的钩子、过滤器、凭据助手和签名工具。';
 
   @override
   String get gitTrustWorkspace => '信任工作区';
@@ -2908,8 +2850,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitConfirmRestoreTitle => '还原此文件版本？';
 
   @override
-  String get gitConfirmRestoreMessage =>
-      'BusyMark 将使用选中的已提交版本替换当前工作树中的文件。还原后的文件将保持未暂存状态。';
+  String get gitConfirmRestoreMessage => 'BusyMark 将使用选中的已提交版本替换当前工作树中的文件。还原后的文件将保持未暂存状态。';
 
   @override
   String get gitCommitActions => '提交操作';
@@ -2934,8 +2875,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitResetModeSoft => '软';
 
   @override
-  String get gitResetModeSoftDescription =>
-      '仅移动分支。保持索引和工作树不变；与选中提交之间的差异仍会保持暂存状态。';
+  String get gitResetModeSoftDescription => '仅移动分支。保持索引和工作树不变；与选中提交之间的差异仍会保持暂存状态。';
 
   @override
   String get gitResetModeMixed => '混合';
@@ -2947,15 +2887,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitResetModeHard => '硬';
 
   @override
-  String get gitResetModeHardDescription =>
-      '移动分支并重置索引和工作树。已跟踪的更改将被放弃；造成阻碍的未跟踪文件可能会被删除。';
+  String get gitResetModeHardDescription => '移动分支并重置索引和工作树。已跟踪的更改将被放弃；造成阻碍的未跟踪文件可能会被删除。';
 
   @override
   String get gitResetModeKeep => '保留';
 
   @override
-  String get gitResetModeKeepDescription =>
-      '移动分支并重置已跟踪文件，同时保留本地更改。如果这些更改与重置冲突，Git 将中止操作。';
+  String get gitResetModeKeepDescription => '移动分支并重置已跟踪文件，同时保留本地更改。如果这些更改与重置冲突，Git 将中止操作。';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -3041,8 +2979,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitAuthorIdentityTitle => 'Git 作者身份';
 
   @override
-  String get gitAuthorIdentityMessage =>
-      '请输入 Git 应记录在提交中的身份信息。BusyMark 将保存它并重试此次提交。';
+  String get gitAuthorIdentityMessage => '请输入 Git 应记录在提交中的身份信息。BusyMark 将保存它并重试此次提交。';
 
   @override
   String get gitAuthorName => '姓名';
@@ -3054,8 +2991,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitAuthorIdentityGlobal => '用于所有存储库';
 
   @override
-  String get gitAuthorIdentityGlobalDescription =>
-      '作为 Snap 安装时，此设置适用于在 BusyMark 中打开的存储库。';
+  String get gitAuthorIdentityGlobalDescription => '作为 Snap 安装时，此设置适用于在 BusyMark 中打开的存储库。';
 
   @override
   String get gitSaveIdentityAndCommit => '保存并提交';
@@ -3079,29 +3015,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceMarkdownBlocks => 'Markdown 块';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription =>
-      'Markdown 源代码和预览中支持的块结构。';
+  String get syntaxReferenceMarkdownBlocksDescription => 'Markdown 源代码和预览中支持的块结构。';
 
   @override
   String get syntaxReferenceInlineFormatting => '行内 Markdown';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription =>
-      '可出现在段落、列表项和表格单元格中的格式。';
+  String get syntaxReferenceInlineFormattingDescription => '可出现在段落、列表项和表格单元格中的格式。';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => '原始 HTML 块';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription =>
-      '通过 BusyMark 预览组件渲染的安全块级 HTML 标签。';
+  String get syntaxReferenceRawHtmlBlocksDescription => '通过 BusyMark 预览组件渲染的安全块级 HTML 标签。';
 
   @override
   String get syntaxReferenceRawHtmlInline => '原始 HTML 行内标签';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription =>
-      '安全的行内 HTML 标签，渲染时不会显示字面标签。';
+  String get syntaxReferenceRawHtmlInlineDescription => '安全的行内 HTML 标签，渲染时不会显示字面标签。';
 
   @override
   String get syntaxReferenceHeadings => '标题';
@@ -3140,24 +3072,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => '语义文本标签';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription =>
-      '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
+  String get syntaxReferenceSanitizedPreviewDescription => '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription =>
-      '未经编辑的原始 HTML 会按源文本原样保存。';
+  String get syntaxReferenceSourcePreservedDescription => '未经编辑的原始 HTML 会按源文本原样保存。';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription =>
-      '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
+  String get syntaxReferenceMarkdownInsideHtmlDescription => '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
 
   @override
-  String get syntaxReferenceBlockedContentDescription =>
-      '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
+  String get syntaxReferenceBlockedContentDescription => '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription =>
-      '链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。';
+  String get syntaxReferenceSafeUrlsDescription => '链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。';
 
   @override
   String get syntaxReferenceCategory => '类别';
@@ -3190,30 +3117,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceScopeWritersideMarkdown => '仅 Writerside Markdown';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
-      '仅 Writerside Markdown 和 Writerside XML';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml => '仅 Writerside Markdown 和 Writerside XML';
 
   @override
-  String get syntaxReferenceMarkdownDescription =>
-      'BusyMark 可以编写和预览的核心 Markdown 形式。';
+  String get syntaxReferenceMarkdownDescription => 'BusyMark 可以编写和预览的核心 Markdown 形式。';
 
   @override
   String get syntaxReferenceParagraphExample => '一段文本。';
 
   @override
-  String get syntaxReferenceTableLimitation =>
-      '表格使用 GitHub Flavored Markdown 的竖线语法。';
+  String get syntaxReferenceTableLimitation => '表格使用 GitHub Flavored Markdown 的竖线语法。';
 
   @override
   String get syntaxReferenceHardBreakIdentifiers => '行尾两个空格、\\、<br>';
 
   @override
-  String get syntaxReferenceHtmlDescription =>
-      'BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。';
+  String get syntaxReferenceHtmlDescription => 'BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。';
 
   @override
-  String get syntaxReferenceDiagramsDescription =>
-      '带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。';
+  String get syntaxReferenceDiagramsDescription => '带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -3228,26 +3150,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation =>
-      '请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。';
+  String get syntaxReferenceOpenApiLimitation => '请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。';
 
   @override
   String get syntaxReferenceSemanticDiagramBlocks => '图表的语义代码块';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation =>
-      '语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。';
+  String get syntaxReferenceSemanticDiagramLimitation => '语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。';
 
   @override
   String get syntaxReferenceReferencedDiagramSource => '引用的图表源';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation =>
-      '路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。';
+  String get syntaxReferenceReferencedDiagramLimitation => '路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。';
 
   @override
-  String get syntaxReferenceMathematicsDescription =>
-      'BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。';
+  String get syntaxReferenceMathematicsDescription => 'BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。';
 
   @override
   String get syntaxReferenceInlineMath => '行内数学公式';
@@ -3265,40 +3183,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceTexFence => 'tex 围栏';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation =>
-      'BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。';
+  String get syntaxReferenceMathDelimitersLimitation => 'BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。';
 
   @override
-  String get syntaxReferenceTexFenceLimitation =>
-      '在 Writerside 模式之外，tex 围栏仍是普通代码块。';
+  String get syntaxReferenceTexFenceLimitation => '在 Writerside 模式之外，tex 围栏仍是普通代码块。';
 
   @override
   String get syntaxReferenceWritersideMathElement => 'Writerside math 元素';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation =>
-      'math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。';
+  String get syntaxReferenceWritersideMathElementLimitation => 'math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。';
 
   @override
   String get syntaxReferenceSemanticTexBlock => '语义 TeX 代码块';
 
   @override
-  String get syntaxReferenceWritersideDescription =>
-      '这些特定扩展仅在已打开的 Writerside 项目中解析。';
+  String get syntaxReferenceWritersideDescription => '这些特定扩展仅在已打开的 Writerside 项目中解析。';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => '提示块引用';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation =>
-      '普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。';
+  String get syntaxReferenceAdmonitionLimitation => '普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => '语义提示';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation =>
-      '普通 Markdown 不会解析这些 Writerside 语义元素。';
+  String get syntaxReferenceSemanticMarkupLimitation => '普通 Markdown 不会解析这些 Writerside 语义元素。';
 
   @override
   String get syntaxReferenceCollapsibleHeading => '可折叠标题';
@@ -3310,8 +3222,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceSemanticCollapsibles => '语义可折叠内容';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation =>
-      'BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。';
+  String get syntaxReferenceSemanticCollapsiblesLimitation => 'BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。';
 
   @override
   String get syntaxReferenceSemanticCodeBlocks => '数学和图表的语义代码块';
@@ -3320,8 +3231,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceVideo => 'Writerside 视频';
 
   @override
-  String get syntaxReferenceVideoLimitation =>
-      '本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。';
+  String get syntaxReferenceVideoLimitation => '本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。';
 
   @override
   String get exportAsPdf => '导出为 PDF';
@@ -3504,8 +3414,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseMarkdownFolder => '选择 Markdown 文件夹';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired =>
-      '选择包含 Markdown 文件的文件夹。';
+  String get errorWritersideInstanceImportSourceRequired => '选择包含 Markdown 文件的文件夹。';
 
   @override
   String get instanceAppearance => '外观';
@@ -3634,8 +3543,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired =>
-      '请选择至少一个 Markdown 文件进行导入。';
+  String get errorWritersideInstanceImportSelectionRequired => '请选择至少一个 Markdown 文件进行导入。';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -3662,8 +3570,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorWritersideInstanceWebPathInvalid => 'Web 路径必须为单行文本。';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid =>
-      'Writerside 实例配置无效。请修正其诊断信息后重试。';
+  String get errorWritersideInstanceConfigurationInvalid => 'Writerside 实例配置无效。请修正其诊断信息后重试。';
 
   @override
   String get errorWritersideInstanceTemporaryFile => 'BusyMark 无法安全暂存实例更改。';
@@ -3679,36 +3586,27 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot =>
-      'buildprofiles.xml 必须包含 <buildprofiles> 根元素。';
+  String get diagnosticWritersideBuildProfilesInvalidRoot => 'buildprofiles.xml 必须包含 <buildprofiles> 根元素。';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(
-    String name,
-    String value,
-  ) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
     return '$name 值“$value”必须为 true 或 false。';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance =>
-      '<build-profile> 元素必须指定实例 ID。';
+  String get diagnosticWritersideBuildProfileMissingInstance => '<build-profile> 元素必须指定实例 ID。';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude =>
-      '树中的 <include> 必须同时指定 from 和 element-id。';
+  String get diagnosticWritersideTreeInvalidInclude => '树中的 <include> 必须同时指定 from 和 element-id。';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId =>
-      '树中的 <snippet> 必须指定 id。';
+  String get diagnosticWritersideTreeMissingSnippetId => '树中的 <snippet> 必须指定 id。';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
-      '跨实例目录引用必须同时指定 ref 和 in。';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference => '跨实例目录引用必须同时指定 ref 和 in。';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets =>
-      '目录元素不能同时指向多个主题、引用、链接或重定向。';
+  String get diagnosticWritersideTreeConflictingTargets => '目录元素不能同时指向多个主题、引用、链接或重定向。';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3716,8 +3614,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      '实例组文件必须包含 <instance-groups> 根元素。';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot => '实例组文件必须包含 <instance-groups> 根元素。';
 
   @override
   String get diagnosticWritersideInstanceGroupInvalid => '实例组必须指定非空 ID 和实例列表。';
@@ -3728,19 +3625,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(
-    String source,
-    String id,
-    String origin,
-  ) {
+  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
     return '目录包含项“$source#$id”属于外部模块“$origin”，无法在此工作区中展开。';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(
-    String source,
-    String id,
-  ) {
+  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
     return '已注册树“$source”中不存在树元素“$id”。';
   }
 
@@ -3760,10 +3650,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(
-    String topic,
-    String instance,
-  ) {
+  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
     return '主题“$topic”不在被引用的实例“$instance”中。';
   }
 
@@ -3792,8 +3679,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiDisabled => '已禁用';
 
   @override
-  String get aiExplicitEditingDescription =>
-      'AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。';
+  String get aiExplicitEditingDescription => 'AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。';
 
   @override
   String get aiProvider => 'AI 提供商';
@@ -3979,8 +3865,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiCloudConsentMessage =>
-      '只会发送每个 AI 审核对话框中显示的内容。请求不保存状态，建议需要审核，API 密钥存储在 Linux 系统凭据存储中。';
+  String get aiCloudConsentMessage => '只会发送每个 AI 审核对话框中显示的内容。请求不保存状态，建议需要审核，API 密钥存储在 Linux 系统凭据存储中。';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -4064,17 +3949,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideSchema(
-    String element,
-    String attribute,
-    String reason,
-  ) {
+  String diagnosticWritersideSchema(String element, String attribute, String reason) {
     return '无效的 Writerside 标记：$element，$attribute。$reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt =>
-      '请使用 <llms-txt>true</llms-txt> 或 <llms-txt>false</llms-txt>；不再支持 single-file。';
+  String get diagnosticWritersideLlmsTxt => '请使用 <llms-txt>true</llms-txt> 或 <llms-txt>false</llms-txt>；不再支持 single-file。';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -4106,8 +3986,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get htmlInstance => '实例';
 
   @override
-  String get htmlOwnedDirectoryOnly =>
-      '只能替换由 BusyMark HTML 导出创建的文件夹。已修改或无关的文件将被保留。';
+  String get htmlOwnedDirectoryOnly => '只能替换由 BusyMark HTML 导出创建的文件夹。已修改或无关的文件将被保留。';
 
   @override
   String get showInFolder => '在文件夹中显示';
@@ -4229,12 +4108,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportRemoveCss => '移除自定义样式表';
 
   @override
-  String get exportCssNote =>
-      '可选用 UTF-8 CSS 文件（最大 256 KiB）。不接受导入、资源 URL、可执行或转义 CSS。样式在 BusyMark 样式表之后应用。不会获取远程资源。';
+  String get exportCssNote => '可选用 UTF-8 CSS 文件（最大 256 KiB）。不接受导入、资源 URL、可执行或转义 CSS。样式在 BusyMark 样式表之后应用。不会获取远程资源。';
 
   @override
-  String get exportSitePackagingNote =>
-      'Writerside 保留独立且相互链接的主题页面。单文件模式将资源嵌入每个页面。';
+  String get exportSitePackagingNote => 'Writerside 保留独立且相互链接的主题页面。单文件模式将资源嵌入每个页面。';
 
   @override
   String get exportInvalidGeometry => '扣除边距后，请至少保留 20 mm 的内容宽度和高度。';
@@ -4243,8 +4120,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportInvalidColor => '请输入 #RRGGBB 格式的颜色。';
 
   @override
-  String get exportInvalidCss =>
-      '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
+  String get exportInvalidCss => '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
 
   @override
   String get clipboardHistory => '剪贴板历史';
@@ -4394,8 +4270,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled =>
-      '录音已禁用或此路径已排除。 在恢复之前重新启用录音。';
+  String get localHistoryWarningRecordingDisabled => '录音已禁用或此路径已排除。 在恢复之前重新启用录音。';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -4456,8 +4331,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsClipboardHistoryTitle => '收集剪贴板历史';
 
   @override
-  String get settingsClipboardHistoryDescription =>
-      '只保留本次 BusyMark 会话中已复制并成功粘贴的内容。';
+  String get settingsClipboardHistoryDescription => '只保留本次 BusyMark 会话中已复制并成功粘贴的内容。';
 
   @override
   String get settingsLocalHistoryTitle => '记录本地历史';
@@ -4692,15 +4566,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextcloudDeleteNote => '删除笔记？';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable =>
-      'Nextcloud Notes不支持工作区整体替换。请在每条笔记中替换。';
+  String get nextcloudWorkspaceReplaceUnavailable => 'Nextcloud Notes不支持工作区整体替换。请在每条笔记中替换。';
 
   @override
   String get nextcloudSaveLocalCopy => '保存本地副本…';
 
   @override
-  String get nextcloudDisconnectWarning =>
-      '移除此账户将删除此设备上缓存的笔记和待同步的更改。请先同步，将工作保留在服务器上。';
+  String get nextcloudDisconnectWarning => '移除此账户将删除此设备上缓存的笔记和待同步的更改。请先同步，将工作保留在服务器上。';
 
   @override
   String get nextcloudAttachmentRetryWarning => '如果上次上传成功，重试可能会在服务器上留下未使用的附件。';
@@ -4712,8 +4584,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextcloudAddAttachment => '添加附件…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning =>
-      '删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。';
+  String get nextcloudDeleteAttachmentWarning => '删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。';
 
   @override
   String get nextcloudChooseConflictingAttributes => '为每个冲突属性选择一个值。';
@@ -4722,8 +4593,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextcloudUseServerNote => '使用此服务器笔记';
 
   @override
-  String get nextcloudUseServerNoteExplanation =>
-      '将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。';
+  String get nextcloudUseServerNoteExplanation => '将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。';
 
   @override
   String get nextcloudExactCandidate => '与请求完全匹配；身份尚未确认。';
@@ -4738,8 +4608,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextcloudCreateSeparate => '创建独立笔记';
 
   @override
-  String get nextcloudCreateSeparateWarning =>
-      '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
+  String get nextcloudCreateSeparateWarning => '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
 
   @override
   String get wsSemanticFormats => '语义格式';
@@ -4850,8 +4719,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextcloudFileSuffix => '新笔记的文件后缀';
 
   @override
-  String get nextcloudServerSettingsExplanation =>
-      '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
+  String get nextcloudServerSettingsExplanation => '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
 
   @override
   String get nextcloudSettingsSaved => '服务器设置已保存';
@@ -5081,8 +4949,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wsWideLayout => '宽';
 
   @override
-  String get wsCodeSourceConflict =>
-      '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
+  String get wsCodeSourceConflict => '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
 
   @override
   String get wsInherited => '从列表继承';
@@ -5228,8 +5095,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get wsModuleCapsIgnored =>
-      '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
+  String get wsModuleCapsIgnored => '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
 
   @override
   String get wsInsertElements => '插入元素';
@@ -5493,12 +5359,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesRemovingConnection => '正在移除本地账户…';
 
   @override
-  String get notesRemovedWarning =>
-      '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
+  String get notesRemovedWarning => '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
 
   @override
-  String get notesBuffersNotSaved =>
-      '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
+  String get notesBuffersNotSaved => '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
 
   @override
   String get notesSettingsLeave => '离开前保存 Nextcloud 设置更改吗？';
@@ -5513,8 +5377,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notesSettingsReloadHelp => '重新加载会用 Nextcloud 当前设置替换草稿。放弃草稿并重新加载吗？';
 
   @override
-  String get notesSettingsRefreshFailed =>
-      'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
+  String get notesSettingsRefreshFailed => 'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
 
   @override
   String get notesUnavailable => '离线 · 文本已在本地可用 · 已保存到本地 · 等待同步';
@@ -5615,8 +5478,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage =>
-      '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
+  String get gitNonUtf8FilenameMessage => '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
 
   @override
   String get gitUiMergeInProgress => '合并进行中';
@@ -5667,8 +5529,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiInspectStashedUntrackedFiles => '检查隐藏的未跟踪文件...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
-      '在应用时恢复藏品的阶段状态/索引状态';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => '在应用时恢复藏品的阶段状态/索引状态';
 
   @override
   String get gitUiApplyAndRetain => '应用和保留';
@@ -5686,8 +5547,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiBranchFromStash => '从贮藏创建分支';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
-      '创建/ 切换到藏匿处的分支, 然后应用它 。 原始隐藏部分留待日后明确删除 。';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => '创建/ 切换到藏匿处的分支, 然后应用它 。 原始隐藏部分留待日后明确删除 。';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -5695,16 +5555,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
-      '如果适用冲突,则保留原始藏品。';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => '如果适用冲突,则保留原始藏品。';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
-      '删除此隐藏条目。 其更改不应用 。';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => '删除此隐藏条目。 其更改不应用 。';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
-      '请解决未合并文件的冲突。Git 没有 stash 的继续或中止命令；原始贮藏会被保留。';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => '请解决未合并文件的冲突。Git 没有 stash 的继续或中止命令；原始贮藏会被保留。';
 
   @override
   String get gitUiStashNameMessage => '堆放名称/信息';
@@ -5716,8 +5573,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStashTrackedWorkingAndStagedChanges => '被跟踪的工作和分阶段的变更';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
-      '贮藏更改并保留已暂存的更改 (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => '贮藏更改并保留已暂存的更改 (--keep-index)';
 
   @override
   String get gitUiStashOnlyStagedChangesStaged => '仅贮藏已暂存的更改 (--staged)';
@@ -5741,8 +5597,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiCreateWorktree => '创建工作树...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
-      '在 HEAD 处创建工作树之前，请先创建提交。';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => '在 HEAD 处创建工作树之前，请先创建提交。';
 
   @override
   String get gitUiDetachedHEAD => '分离的 HEAD';
@@ -5790,12 +5645,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiNewWorktreeBranch => '新建工作树分支';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
     return '在 $arg2（$arg3）创建本地分支，并创建 $arg0/$arg1。';
   }
 
@@ -5806,13 +5656,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiRemoveWorktree => '移除工作树?';
 
   @override
-  String
-  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
-      '明确丢弃此工作树中所有本地跟踪/未跟踪的更改。 锁定/ 使用的工作树仍受到保护 。';
+  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => '明确丢弃此工作树中所有本地跟踪/未跟踪的更改。 锁定/ 使用的工作树仍受到保护 。';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
-      'Git拒绝删除本地更改、未跟踪的文件或锁定 。';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'Git拒绝删除本地更改、未跟踪的文件或锁定 。';
 
   @override
   String get gitUiDiscardLocalWorktreeContentsAndRemove => '丢弃本地工作树内容并删除';
@@ -5821,9 +5668,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiRemoveCleanWorktree2 => '删除清洁工作树';
 
   @override
-  String
-  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
-      '明确循环到嵌入的子模块中进行更新/同步';
+  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => '明确循环到嵌入的子模块中进行更新/同步';
 
   @override
   String get gitUiNoRecordedSubmodules => '没有记录子模块';
@@ -5864,8 +5709,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStageCurrentSubmodulePointerInParent => '父体中当前子模块指针的阶段';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
-      '父母和子模块承诺、 推动和肮脏状态保持分离 。 浏览不初始化或更新它们 。';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => '父母和子模块承诺、 推动和肮脏状态保持分离 。 浏览不初始化或更新它们 。';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -5873,17 +5717,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
     return '根据需要初始化并检查准确的$arg0。递归:$arg1。';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
-    String arg0,
-  ) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
     return '应用已审查的子模块配置操作。 递归: $arg0 。';
   }
 
@@ -5891,8 +5730,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiApplySubmoduleOperation => '应用子模块操作';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
-      '检查已记录的修订版或创建回收分支。 Reflog 并不恢复任意的未保存或未跟踪的内容 。';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => '检查已记录的修订版或创建回收分支。 Reflog 并不恢复任意的未保存或未跟踪的内容 。';
 
   @override
   String get gitUiSelectAReflogEntry => '选择重写条目';
@@ -5929,16 +5767,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
-      'Git 文本历史必须拥有可编辑的字段 。';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'Git 文本历史必须拥有可编辑的字段 。';
 
   @override
   String get gitUiEditHEADIndexWorkingTree => '编辑 HEAD | 暂存区 | 工作区…';
 
   @override
-  String
-  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
-      '经审查的索引或工作内容已改变。 在开始之前刷新此比较 。';
+  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => '经审查的索引或工作内容已改变。 在开始之前刷新此比较 。';
 
   @override
   String get gitUiRefreshComparison => '刷新比较';
@@ -6007,33 +5842,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStageWholeFile => '暂存整个文件';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
-    String arg0,
-  ) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
     return '$arg0 只用空格修改的行隐藏 □ 显示精确的更改';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
-    String arg0,
-  ) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
     return '已选择 $arg0 个更改行。';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
-      '只读比较 · 复制文本或调整显示设置。';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => '只读比较 · 复制文本或调整显示设置。';
 
   @override
   String get gitUiNoFinalNewline => ' · 没有最终的新线';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0 ° $arg1 ° $arg2 字节 $arg3';
   }
 
@@ -6041,8 +5866,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiTextComparisonIsUnavailableForTheseContents => '这些内容没有文本比较 。';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
-      '此比较超过了约束文本审查的限制。 内容未被宣布为完全相同 。';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => '此比较超过了约束文本审查的限制。 内容未被宣布为完全相同 。';
 
   @override
   String get gitUiTheComparedContentsAreIdentical => '比较的内容相同 。';
@@ -6105,8 +5929,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiReloadIndexReview => '重新装入索引审查吗 ?';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
-      '重新加载当前 HEAD、暂存区和工作版本。这会替换暂存区编辑器中未保存的草稿。';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => '重新加载当前 HEAD、暂存区和工作版本。这会替换暂存区编辑器中未保存的草稿。';
 
   @override
   String get gitUiReplaceDraftAndReload => '替换草稿和重新装入';
@@ -6118,17 +5941,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiWriteEditedResultToThisIndexEntry => '将编辑的结果写入此索引条目';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
-      '工作文件仍保留在磁盘上。 在应用前先审查编辑后的索引 。';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => '工作文件仍保留在磁盘上。 在应用前先审查编辑后的索引 。';
 
   @override
   String get gitUiReviewIndexTextFormatChanges => '审查索引文本格式更改';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
     return '仅更新已审阅的 $arg0 索引条目。\n\n$arg1';
   }
 
@@ -6136,8 +5955,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiWriteReviewedIndexResult => '写入已审查的索引结果';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
-      '经编辑的结果在格式审查中更改。 重审一次 。';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => '经编辑的结果在格式审查中更改。 重审一次 。';
 
   @override
   String get gitUiSynchronizeScrolling => '同步滚动';
@@ -6149,8 +5967,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiEditableIndexContent => '可编辑索引内容';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
-      '请求的修订版在当前过滤器之外。 重置过滤器以显示它 。';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => '请求的修订版在当前过滤器之外。 重置过滤器以显示它 。';
 
   @override
   String get gitUiFilterLog => '过滤日志';
@@ -6310,12 +6127,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
-      '浅色/ 部分边界: 父对象不可用 。';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => '浅色/ 部分边界: 父对象不可用 。';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
-      '父权在此页面外, 或浅边界外 。';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => '父权在此页面外, 或浅边界外 。';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -6353,20 +6168,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiGoToCommitReference2 => '进行/ 引用';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
-      '输入要在日志中显示的承付 ID 或引用 。';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog => '输入要在日志中显示的承付 ID 或引用 。';
 
   @override
   String get gitUiTheRequestedRevisionIsUnavailable => '请求的修订无法使用 。';
 
   @override
-  String
-  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
-      '仓库元数据只读。 部门检查和比较仍然可用 。';
+  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => '仓库元数据只读。 部门检查和比较仍然可用 。';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
-      '工作文件不可用或只读。 部门切换和合并不可用 。';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => '工作文件不可用或只读。 部门切换和合并不可用 。';
 
   @override
   String get gitUiSearchBranchesAndTags => '搜索分支和标签';
@@ -6470,10 +6281,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
     return '$arg0\n目标 $arg1\n仅删除本地分支。未合并的分支会被拒绝删除。';
   }
 
@@ -6520,16 +6328,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStopBeforeCreatingTheMergeCommit => '创建合并前停止';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
-      '已禁用快进，以防 HEAD 在审阅之前移动。';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => '已禁用快进，以防 HEAD 在审阅之前移动。';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
-      '用于单项承诺的请假已逐步更改;这不是持续合并。';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => '用于单项承诺的请假已逐步更改;这不是持续合并。';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
-      '在共同的解决方案工作空间中仍然存在冲突。';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => '在共同的解决方案工作空间中仍然存在冲突。';
 
   @override
   String get gitUiAddRemote => '添加远程...';
@@ -6569,8 +6374,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiEnterTheExactReviewedDestinationToRemove => '输入要删除的确切审查对象 。';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
-      '证书由配置的助手或私人提示提供 。';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => '证书由配置的助手或私人提示提供 。';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -6578,9 +6382,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
-      '删除本地远程配置和跟踪引用。 它不删除服务器仓库 。';
+  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => '删除本地远程配置和跟踪引用。 它不删除服务器仓库 。';
 
   @override
   String get gitUiRemoveRemote2 => '删除远程';
@@ -6598,8 +6400,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiConfiguredHooksAndSigningAreRespected => '配置钩和签名受到尊重。';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
-      '重写选中的 HEAD 提交。远程跟踪信息无法证明它尚未发布。';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => '重写选中的 HEAD 提交。远程跟踪信息无法证明它尚未发布。';
 
   @override
   String get gitUiRepository => '仓库';
@@ -6616,21 +6417,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiRepositoryActions => '仓库操作';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
     return '缓存的跟踪信息 · $upstream · 领先 $ahead · 落后 $behind';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
-      '无工作树。打开日志检查其历史 。';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => '无工作树。打开日志检查其历史 。';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
-      '无法进行只读存储器 / 中继和承付 。';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => '无法进行只读存储器 / 中继和承付 。';
 
   @override
   String get gitUiRepositoryStatusUnavailable => '没有仓库状态';
@@ -6705,8 +6500,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiReplaceMessageDraft => '替换信件草稿吗 ?';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
-      '用选中的信件替换现有承诺信件吗 ?';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => '用选中的信件替换现有承诺信件吗 ?';
 
   @override
   String get gitUiReplaceDraft => '替换草稿';
@@ -6717,9 +6511,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
-    String arg0,
-  ) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
     return '本地承诺 $arg0 存在。 在尝试再次承诺前先查看日志。 信件草稿已被保留 。';
   }
 
@@ -6746,8 +6538,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
-      '签署确认尾注是提交说明中的声明，与密码学签名不同。身份信息仅保存到此仓库的本地配置中；草稿会被保留。';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage => '签署确认尾注是提交说明中的声明，与密码学签名不同。身份信息仅保存到此仓库的本地配置中；草稿会被保留。';
 
   @override
   String get gitUiSaveRepositoryIdentity => '保存仓库身份';
@@ -6823,10 +6614,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
     return '$arg0 字节 · $arg1\n使用索引内容替换工作文件，或删除此未跟踪文件。暂存内容保持不变。必须先检查应用中未保存的文档。';
   }
 
@@ -6842,8 +6630,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
-      '这将删除下面列出的每个实际推进目标的引用。 保留本地分支/ 标签。 本次审查将固定预期提示 。';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => '这将删除下面列出的每个实际推进目标的引用。 保留本地分支/ 标签。 本次审查将固定预期提示 。';
 
   @override
   String get gitUiReferenceDoesNotExist => '不存在引用';
@@ -6862,8 +6649,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
-      '上面显示的确切目标提示将被删除。 任何已更改的远程提示都会停止操作, 以便再次审查 。';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => '上面显示的确切目标提示将被删除。 任何已更改的远程提示都会停止操作, 以便再次审查 。';
 
   @override
   String get gitUiReviewAndDeleteFromRemote => '从远程审查并删除...';
@@ -6883,15 +6669,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
-      '目的地已承诺本地无法使用 。 在检查即将离开的历史前先获取已审查的目的地 。';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => '目的地已承诺本地无法使用 。 在检查即将离开的历史前先获取已审查的目的地 。';
 
   @override
   String get gitUiFetchReviewedDestination => '获取已审查的目标';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
-      '选择目的地并审查即将退出的承诺 。';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => '选择目的地并审查即将退出的承诺 。';
 
   @override
   String get gitUiNoOutgoingCommits => '没有退出承诺';
@@ -6922,12 +6706,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
-      '推进完成。 本地承诺仍然在日志中 。';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => '推进完成。 本地承诺仍然在日志中 。';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
-      '强制推送要求目标引用的顶端与本次审查显示的值完全一致。';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => '强制推送要求目标引用的顶端与本次审查显示的值完全一致。';
 
   @override
   String get gitUiForceWithReviewedLease => '强制使用经审核的租赁...';
@@ -6944,16 +6726,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
-      '其他人可能已经在使用这些历史。后台获取不会更新本次租约保护条件。';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => '其他人可能已经在使用这些历史。后台获取不会更新本次租约保护条件。';
 
   @override
   String get gitUiForceWithLease => '租赁';
 
   @override
-  String
-  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
-      '远程结果不确定。 在再次推动之前再次审查目的地 。';
+  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => '远程结果不确定。 在再次推动之前再次审查目的地 。';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -6967,9 +6746,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiPruneDeletedRemoteTrackingBranches => 'Prune 删除远程跟踪分支';
 
   @override
-  String
-  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
-      '在不替换工作文件的情况下获取远程跟踪信息更新 。';
+  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => '在不替换工作文件的情况下获取远程跟踪信息更新 。';
 
   @override
   String get gitUiFetch => '获取';
@@ -6990,26 +6767,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiRebase => '变基';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
-      '如果目的地不能快速前进, 则停止; 永远不要合并或重置 。';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => '如果目的地不能快速前进, 则停止; 永远不要合并或重置 。';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
-      '与合并承诺合并,包括当有可能快速前进时。';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => '与合并承诺合并,包括当有可能快速前进时。';
 
   @override
   String get gitUiMergeAllowFastForwardWhenPossible => '合并; 允许在可能情况下快速前进 。';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
-      '重设本地历史, 保留本地合并承诺 。';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => '重设本地历史, 保留本地合并承诺 。';
 
   @override
   String get gitUiRebaseLocalCommitsAsALinearHistory => '重设本地承诺为线性历史 。';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
-      'Git 被配置为交互式重置。 在此选择明确的拉动策略, 或者获取并打开 Rebase... 来审查一个计划 。';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'Git 被配置为交互式重置。 在此选择明确的拉动策略, 或者获取并打开 Rebase... 来审查一个计划 。';
 
   @override
   String get gitUiUseReviewedOrdinaryRebaseForThisPull => '使用经过审查的普通重标进行此拉';
@@ -7024,8 +6797,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiPreserveLocalMergeCommits => '保存本地合并承诺';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
-      '本地更改可能阻止拉动。 检查/ 承诺它们或明确创建隐藏 。';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => '本地更改可能阻止拉动。 检查/ 承诺它们或明确创建隐藏 。';
 
   @override
   String get gitUiStashes => '贮藏';
@@ -7052,23 +6824,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiChoose => '选择...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
-      '仅创建 Git 元数据。 现有文件没有进行编程或承诺 。';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => '仅创建 Git 元数据。 现有文件没有进行编程或承诺 。';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
-      '最终目标必须不存在或为空。绝不会覆盖已有的用户数据。';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => '最终目标必须不存在或为空。绝不会覆盖已有的用户数据。';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
-      '· 空白使用有效的 Git 政策';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => '· 空白使用有效的 Git 政策';
 
   @override
   String get gitUiSelectedBranchOptional => '选定分支 □ 可选';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
-      '循环明确初始化/更新子模块';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => '循环明确初始化/更新子模块';
 
   @override
   String get gitUiPreparingGitOperation => '准备 Git 操作...';
@@ -7080,8 +6848,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiTheDestinationExistedBeforeThisAttempt => '在这次尝试之前,目的地已经存在:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
-      '目录还在检查中,在再次复制之前再检查一下';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => '目录还在检查中,在再次复制之前再检查一下';
 
   @override
   String get gitUiNoDestinationDirectoryRemains => '没有目标目录 。';
@@ -7117,12 +6884,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiUseUpstreamAsNewBase => '将上游用作新的基地';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
-      '从日志中选择一个有效的分支、标记或承诺 。';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog => '从日志中选择一个有效的分支、标记或承诺 。';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
-      '分支块中第一个保留的提交不能设为 squash 或 fixup，因为它前面没有可合并的目标提交。';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => '分支块中第一个保留的提交不能设为 squash 或 fixup，因为它前面没有可合并的目标提交。';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -7136,9 +6901,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiPlannedCommitMessages => '计划承诺信息';
 
   @override
-  String
-  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
-      '原始/ 合并信件预览';
+  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => '原始/ 合并信件预览';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -7154,9 +6917,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiDetachedHEAD2 => '分离的 HEAD';
 
   @override
-  String
-  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
-      '变基会重写提交的标识。远程跟踪信息无法证明这些历史从未被发布。';
+  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => '变基会重写提交的标识。远程跟踪信息无法证明这些历史从未被发布。';
 
   @override
   String get gitUiIncludeRootCommits => '包含根提交';
@@ -7182,14 +6943,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
-      '包括从此分支可以达到的所有 root 。';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => '包括从此分支可以达到的所有 root 。';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
-    String boundary,
-    String base,
-  ) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
     return '将把 $boundary 之后的提交重放到 $base 上；不包含边界提交本身。';
   }
 
@@ -7200,8 +6957,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiGitBranchLabelResetMergeStructure => 'Git 分支/ 标签/ 重置/ 合并结构';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
-      '选择明确的旧边界或根模式, 然后制定计划 。';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => '选择明确的旧边界或根模式, 然后制定计划 。';
 
   @override
   String get gitUiMoveUp => '上移';
@@ -7224,8 +6980,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiPreviewCombinedCommitMessages => '预览合并信件...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
-      'Alt/  移动选中的承诺。 无关的分支引用不会自动更新 。';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt/  移动选中的承诺。 无关的分支引用不会自动更新 。';
 
   @override
   String get gitUiCancelPlan => '取消计划';
@@ -7234,10 +6989,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStartReviewedRebase => '开始已审阅的变基？';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
     return '计划于$arg1年重写$arg0,被放弃的承诺在开始之前仍明显可见。';
   }
 
@@ -7251,19 +7003,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStoppedForEditingAmend => ' · 停止编辑/修正';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
-      '这些是未合并的索引条目, 可能来自隐藏应用程序。 Git 没有隐藏继续或中止命令 。';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => '这些是未合并的索引条目, 可能来自隐藏应用程序。 Git 没有隐藏继续或中止命令 。';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
-      '编辑工作文件, 阶段和修正当前承诺, 然后继续重标 。';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => '编辑工作文件, 阶段和修正当前承诺, 然后继续重标 。';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
     return '$arg0$arg1 · 未合并的暂存阶段 $arg2';
   }
 
@@ -7274,24 +7020,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => '将当前承诺保留为空承诺';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
-      '真实索引没有分阶段的更改。 创建一个明确的空承诺, 如果仍然活跃, 则继续排序 。';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => '真实索引没有分阶段的更改。 创建一个明确的空承诺, 如果仍然活跃, 则继续排序 。';
 
   @override
   String get gitUiKeepEmptyCommit => '保持空承诺...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
-      'Git 会尝试回到操作开始时的状态，但无法保证恢复操作前已有的未暂存、未跟踪或未保存内容。';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'Git 会尝试回到操作开始时的状态，但无法保证恢复操作前已有的未暂存、未跟踪或未保存内容。';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
-      '跳过当前承诺, 继续下一个计划的承诺 。';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => '跳过当前承诺, 继续下一个计划的承诺 。';
 
   @override
-  String
-  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
-      '忘记此操作的簿记, 同时保留当前文件和索引 。';
+  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => '忘记此操作的簿记, 同时保留当前文件和索引 。';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -7302,8 +7043,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiReloadConflictVersions => '重新装入冲突版本 ?';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
-      '将未保存结果草稿替换为当前工作文件。 保存的工作内容将予保留 。';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => '将未保存结果草稿替换为当前工作文件。 保存的工作内容将予保留 。';
 
   @override
   String get gitUiLoadingConflictVersions => '正在装入冲突版本...';
@@ -7336,18 +7076,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiManualResolution => '人工解析';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
     return '地区 $arg0/$arg1 X XX $arg2 检查';
   }
 
   @override
-  String
-  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
-      '源对齐超过了文本比较限制;源板仍然可供手工审查。';
+  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => '源对齐超过了文本比较限制;源板仍然可供手工审查。';
 
   @override
   String get gitUiAcceptLeftRegion => '接受左区域';
@@ -7362,8 +7096,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiApplyGitSNonConflictingChanges => '应用 Git 的非冲突性变化吗 ?';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
-      '将当前结果草稿替换为 Git 合并预览。 此丢弃未保存的手动结果编辑; 工作文件在保存前保持不变 。';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => '将当前结果草稿替换为 Git 合并预览。 此丢弃未保存的手动结果编辑; 工作文件在保存前保持不变 。';
 
   @override
   String get gitUiUseMergePreview => '使用合并预览';
@@ -7387,13 +7120,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStage3 => '第3阶段';
 
   @override
-  String
-  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
-      '没有冲突版本。 刷新以审查当前状态 。';
+  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => '没有冲突版本。 刷新以审查当前状态 。';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
-      '结果已保存到磁盘。 索引仍然决定此文件是否已经解决 。';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => '结果已保存到磁盘。 索引仍然决定此文件是否已经解决 。';
 
   @override
   String get gitUiSaveResultDraft => '保存结果草稿';
@@ -7408,18 +7138,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiEditableConflictResult => '可编辑的冲突结果';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return '左侧：$arg0 · $arg1\n右侧：$arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
-      '选择内容、 删除或子模块明确承诺。 没有二进制数据被解码为可编辑文本 。';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => '选择内容、 删除或子模块明确承诺。 没有二进制数据被解码为可编辑文本 。';
 
   @override
   String get gitUiUseEntireLeftContent => '使用全部左侧内容...';
@@ -7434,8 +7158,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiResolvedSubmoduleCommit => '已解析子模块承诺';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
-      '在父体中弹出精确的 gitlink 。 这不会检查或执行子模块 。';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => '在父体中弹出精确的 gitlink 。 这不会检查或执行子模块 。';
 
   @override
   String get gitUiSetResolvedGitlink => '设定解析 gitlink...';
@@ -7446,8 +7169,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
-      '结果是经过编辑的。 保留手动结果或选择其它未变区域 。';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => '结果是经过编辑的。 保留手动结果或选择其它未变区域 。';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -7455,13 +7177,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
-      '阶段 所选 gitlink 承诺在母体中。 子模块检查及其文件不被替换 。';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => '阶段 所选 gitlink 承诺在母体中。 子模块检查及其文件不被替换 。';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
-    String arg0,
-  ) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
     return '替换整个工作路径 $arg0, 并分阶段作出决定。 当前的工作内容和任何未保存的结果草稿将被丢弃 。';
   }
 
@@ -7472,10 +7191,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiStageThisConflictResolution => '分阶段解决冲突?';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
     return '使用整个编辑结果为 $arg0。 Git 记录了预设时的解析路径。 首先审查所有预定内容 $arg1';
   }
 
@@ -7489,9 +7205,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiSaveReviewedResult => '保存已审查的结果';
 
   @override
-  String
-  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
-      '无法访问本地的 Git 表格。 在重新连接应用程序后重试 。';
+  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => '无法访问本地的 Git 表格。 在重新连接应用程序后重试 。';
 
   @override
   String get gitUiSans => '孙子';
@@ -7544,14 +7258,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
-      '经审查的仓库仅用于此操作,历史和内容检查仍然可用。';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => '经审查的仓库仅用于此操作,历史和内容检查仍然可用。';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
     return 'Git 返回 $arg0。 应用程序无法刷新其文档 :\\\\ $arg1';
   }
 
@@ -7562,8 +7272,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiCurrentBranch => '当前分支';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
-      '没有匹配的分支或标记。 在日志中选择一个承诺 。';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => '没有匹配的分支或标记。 在日志中选择一个承诺 。';
 
   @override
   String get gitUiBranches => '分支';
@@ -7676,61 +7385,46 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
-      '仓库已更改。 重新刷新和审查后再尝试 。';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => '仓库已更改。 重新刷新和审查后再尝试 。';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
-      '另一个操作持有仓库或索引锁定。 等等, 然后刷新 。';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => '另一个操作持有仓库或索引锁定。 等等, 然后刷新 。';
 
   @override
   String get gitUiRepositoryTrustIsRequiredForThisOperation => '本次操作需要仓库信任 。';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
-      'Git 服务断开。 重新连接并调节仓库 。';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'Git 服务断开。 重新连接并调节仓库 。';
 
   @override
-  String
-  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
-      '已安装的 Git 可执行文件无法支持此操作。 请在下面审查运行时间要求 。';
+  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => '已安装的 Git 可执行文件无法支持此操作。 请在下面审查运行时间要求 。';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
-      '此仓库仅用于请求的操作。 仍然可用 。';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => '此仓库仅用于请求的操作。 仍然可用 。';
 
   @override
-  String
-  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
-      '操作需要调节。 在重复之前先审查生成的仓库或远程状态 。';
+  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => '操作需要调节。 在重复之前先审查生成的仓库或远程状态 。';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
-      'Git 认证失败。 审查证书助手或解锁配置的密钥环 。';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'Git 认证失败。 审查证书助手或解锁配置的密钥环 。';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
-      'SSH 主机验证失败。 通过您配置的 SSH 工具审查主机身份 。';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'SSH 主机验证失败。 通过您配置的 SSH 工具审查主机身份 。';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
-      '提交签名失败或已取消。 请审查签名密钥、 代理和配置的签名工具 。';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => '提交签名失败或已取消。 请审查签名密钥、 代理和配置的签名工具 。';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
-      '设置仓库作者名称和电子邮件, 然后返回到保存的信件草稿 。';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => '设置仓库作者名称和电子邮件, 然后返回到保存的信件草稿 。';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
-      'Git 拒绝了已审查的更新。 刷新并审查实际目的地, 然后再尝试 。';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'Git 拒绝了已审查的更新。 刷新并审查实际目的地, 然后再尝试 。';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
-      '工作或分阶段的修改阻止了这一操作。 审查、 承诺或明确隐藏这些操作 。';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => '工作或分阶段的修改阻止了这一操作。 审查、 承诺或明确隐藏这些操作 。';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
-      '所需的 Git 对象不可用。 检查浅处或部分仓库的边界, 必要时可以明确获取 。';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => '所需的 Git 对象不可用。 检查浅处或部分仓库的边界, 必要时可以明确获取 。';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -7795,25 +7489,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
-      '移动 HEAD/当前分支。reflog 无法恢复任意未跟踪或未保存的内容。';
+  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => '移动 HEAD/当前分支。reflog 无法恢复任意未跟踪或未保存的内容。';
 
   @override
   String get gitUiMoveHEADKeepIndexAndWorkingFiles => '移动 HEAD，保留暂存区和工作文件。';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
-      '移动 HEAD 并替换暂存区，保留工作文件。';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => '移动 HEAD 并替换暂存区，保留工作文件。';
 
   @override
-  String
-  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
-      '替换 HEAD、暂存区和已跟踪的工作文件；可能覆盖妨碍操作的未跟踪文件。';
+  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => '替换 HEAD、暂存区和已跟踪的工作文件；可能覆盖妨碍操作的未跟踪文件。';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
-      '替换 HEAD、暂存区及符合条件的文件；若会丢失本地更改则拒绝操作。';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => '替换 HEAD、暂存区及符合条件的文件；若会丢失本地更改则拒绝操作。';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -7821,10 +7509,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
     return '+$arg0  $arg1 在应用前先审查选中模式的效果 。';
   }
 
@@ -7860,8 +7545,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiTagMessage => '标记消息';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
-      '本地创建标记。 在 Push 审评中明确发布选中的标记 。';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => '本地创建标记。 在 Push 审评中明确发布选中的标记 。';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -7872,8 +7556,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiNextChangedFilePage => '下一个已更改的文件页';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
-      '只读仓库快照。 打开文件时从未检查此版本 。';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => '只读仓库快照。 打开文件时从未检查此版本 。';
 
   @override
   String get gitUiOpenReadOnlyVersion => '打开只读版本';
@@ -7895,9 +7578,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
-    String arg0,
-  ) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
     return '将此工作路径替换为订正版 $arg0。 保留现有分阶段内容。';
   }
 
@@ -7943,12 +7624,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiBoundary => ' · 边界';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0  $arg1\n原始行 $arg2$arg3';
   }
 
@@ -7982,12 +7658,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiApplyChangesWithoutCreatingCommits => '应用更改而不创建承诺';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
-      '使用此明确的主行父母来合并承诺';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits => '使用此明确的主行父母来合并承诺';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
-      '空的或已经应用的承诺可以阻止Git作出明确的跳过或继续决定。';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => '空的或已经应用的承诺可以阻止Git作出明确的跳过或继续决定。';
 
   @override
   String get gitUiRevertInReviewedOrder => '按审查顺序还原';
@@ -8177,11 +7851,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String gitUiRebaseStepSemantics(
-    String position,
-    String action,
-    String subject,
-  ) {
+  String gitUiRebaseStepSemantics(String position, String action, String subject) {
     return '$position, $action, $subject';
   }
 
@@ -8272,8 +7942,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
-      'Git 操作适用于整个仓库, 并可以执行配置的钩子、 过滤器、 证书和签名工具 。';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'Git 操作适用于整个仓库, 并可以执行配置的钩子、 过滤器、 证书和签名工具 。';
 
   @override
   String get gitHostContentUnavailable => '无内容';
@@ -8343,8 +8012,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiDiscardUnsavedIndexDraft => '丢弃未保存的索引草稿？';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
-      '关闭索引编辑器只会丢弃草稿。索引和工作文件不会更改。';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => '关闭索引编辑器只会丢弃草稿。索引和工作文件不会更改。';
 
   @override
   String get gitUiDiscardIndexDraft => '丢弃索引草稿';
@@ -8353,8 +8021,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiDiscardUnsavedConflictDraft => '放弃未保存的冲突解决结果？';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
-      '关闭冲突编辑器只会放弃未保存的结果草稿。已保存的工作内容和索引保持不变。';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => '关闭冲突编辑器只会放弃未保存的结果草稿。已保存的工作内容和索引保持不变。';
 
   @override
   String get gitUiDiscardConflictDraft => '放弃冲突草稿';
@@ -8419,8 +8086,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiIgnoreRightRegion => '忽略右侧建议';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved =>
-      '已将提交的草稿写入索引。较新的文本仍保留在此编辑器中。应用前请重新加载并检查当前版本。';
+  String get gitUiIndexAppliedNewerDraftPreserved => '已将提交的草稿写入索引。较新的文本仍保留在此编辑器中。应用前请重新加载并检查当前版本。';
 
   @override
   String get gitUiNewerConflictDraftRetained => '提交的结果已保存。较新的结果草稿仍未保存。';
@@ -8432,8 +8098,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiReviewSavedIndexAndKeepDraft => '检查已保存的索引并保留草稿';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply =>
-      '已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。';
+  String get gitUiIndexSourcesChangedSinceApply => '已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。';
 
   @override
   String get gitUiReviewSavedMessage => '查看已保存的消息';
@@ -8448,15 +8113,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiUseSavedMessage => '使用已保存的消息';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow =>
-      '此消息已在另一个窗口中更改。请先查看已保存的消息，再进行替换。';
+  String get gitUiCommitDraftChangedInAnotherWindow => '此消息已在另一个窗口中更改。请先查看已保存的消息，再进行替换。';
 
   @override
   String get gitUiDiscardUnsavedCommitMessages => '丢弃未保存的提交消息？';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
-      '无法保存的消息仍保留在此窗口中。丢弃这些消息不会更改已保存的版本。';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => '无法保存的消息仍保留在此窗口中。丢弃这些消息不会更改已保存的版本。';
 
   @override
   String get gitUiDiscardCommitMessages => '丢弃消息';
@@ -8474,11 +8137,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitWorkspaceRootRequired => '请打开仓库工作树的根目录，以在此工作区使用 Git。';
 
   @override
-  String gitLocalTrackingDescription(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
     return '$upstream · 领先 $ahead，落后 $behind。本地已知的远程跟踪信息；并非实时服务器检查。';
   }
 
@@ -8512,7 +8171,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
 /// The translations for Chinese, as used in China (`zh_CN`).
 class AppLocalizationsZhCn extends AppLocalizationsZh {
-  AppLocalizationsZhCn() : super('zh_CN');
+  AppLocalizationsZhCn(): super('zh_CN');
 
   @override
   String get notesNewFromRetainedText => '从保留的文本新建笔记';
@@ -8527,31 +8186,25 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get notesExportOperationFailed => '导出在发布前失败。请检查来源和目标后重新导出。';
 
   @override
-  String get notesRecoveryCreatedNotOpened =>
-      '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
+  String get notesRecoveryCreatedNotOpened => '恢复的笔记已保存，但无法打开。请处理待保存的编辑或属性，再打开这篇已有笔记。';
 
   @override
-  String get notesSettingsPendingNotes =>
-      '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
+  String get notesSettingsPendingNotes => '待处理的笔记、冲突或结果不明的创建阻止了此更改。请在笔记中同步或检查，再重试保留的设置草稿。';
 
   @override
-  String get notesSettingsPendingAttachments =>
-      '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
+  String get notesSettingsPendingAttachments => '待处理的附件操作阻止了此更改。请在笔记中检查附件，再重试保留的设置草稿。';
 
   @override
-  String get notesAccountServerAddress =>
-      '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
+  String get notesAccountServerAddress => '请使用 Nextcloud 的规范 HTTPS 地址并重新登录。无法验证地址或重定向。';
 
   @override
-  String get notesAccountUnsupported =>
-      '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
+  String get notesAccountUnsupported => '笔记不可用或 API 不受支持。请启用 API 主版本为 1、次版本不低于 4 的 Nextcloud Notes。';
 
   @override
   String get notesAccountAuthorizeAgain => 'Nextcloud 拒绝了凭据。请重新授权或重新连接账户。';
 
   @override
-  String get notesAccountCheckForbidden =>
-      'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
+  String get notesAccountCheckForbidden => 'Nextcloud 拒绝了笔记功能检查。请联系管理员允许此检查后重试。';
 
   @override
   String get notesAccountMalformed => '无法验证 Nextcloud 的响应。请检查服务器安装并重新登录。';
@@ -8578,8 +8231,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get notesTransferUnreadable => '无法读取来源。请检查文件或文件夹的访问权限，再重新审核。';
 
   @override
-  String get notesTransferInvalidSnapshot =>
-      '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
+  String get notesTransferInvalidSnapshot => '快照无效或不受支持。请选择有效的 BusyMark Notes 快照或 Markdown 来源。';
 
   @override
   String get notesTransferMediaLimit => '媒体超出导入大小限制。请缩小受影响项目的媒体，再重新审核。';
@@ -8627,8 +8279,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wsHeadingNotPublished => '此构建器不会发布此属性。';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation =>
-      '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
+  String get wsMarkdownInstanceTitleLimitation => '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
 
   @override
   String get wsTopicIdentity => '主题 ID';
@@ -8700,8 +8351,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wsGeneratedAnchor => '自动生成的锚点；输入值可覆盖。';
 
   @override
-  String get wsHeadingBuilderLimitation =>
-      '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
+  String get wsHeadingBuilderLimitation => '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
 
   @override
   String get closeOtherTabs => '关闭其他标签页';
@@ -8899,8 +8549,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get tocInstanceTitleExplanation => '仅用于当前实例。默认继承主题标题。';
 
   @override
-  String get tocOnlyTitleExplanation =>
-      '仅用于目录。默认继承主题标题；如果设置了实例专用标题，则继承该标题。标题的说明见';
+  String get tocOnlyTitleExplanation => '仅用于目录。默认继承主题标题；如果设置了实例专用标题，则继承该标题。标题的说明见';
 
   @override
   String get tocTitleDocumentationLink => '此处';
@@ -9017,8 +8666,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get feedbackIncludeTechnicalDetails => '包含技术详细信息';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure =>
-      '启用后，此选项仅会添加您的 Linux 操作系统版本和 BusyMark 应用语言。不会附加日志、文件、账户数据或其他诊断信息。';
+  String get feedbackTechnicalDetailsDisclosure => '启用后，此选项仅会添加您的 Linux 操作系统版本和 BusyMark 应用语言。不会附加日志、文件、账户数据或其他诊断信息。';
 
   @override
   String get feedbackSubmit => '提交';
@@ -9346,8 +8994,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get openFolderOrWritersideProject => '打开文件夹或 Writerside 项目';
 
   @override
-  String get markdownFolderOrWritersideProject =>
-      'Markdown 文件夹或兼容 Writerside 的项目';
+  String get markdownFolderOrWritersideProject => 'Markdown 文件夹或兼容 Writerside 的项目';
 
   @override
   String get noOpenFile => '没有打开的文件';
@@ -9626,8 +9273,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get allowRemoteImages => '加载远程图像';
 
   @override
-  String get allowRemoteImagesDescription =>
-      '允许 Markdown 预览和编辑器从 http 和 https URL 加载图像。';
+  String get allowRemoteImagesDescription => '允许 Markdown 预览和编辑器从 http 和 https URL 加载图像。';
 
   @override
   String get clearRemoteImagePermissions => '清除远程图像权限';
@@ -9669,22 +9315,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsReopenWorkspaceOnStartupTitle => '启动时重新打开上次的工作区';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription =>
-      'BusyMark 启动时打开上次会话中的工作区和标签页。';
+  String get settingsReopenWorkspaceOnStartupDescription => 'BusyMark 启动时打开上次会话中的工作区和标签页。';
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesTitle => '有未保存更改时关闭前进行确认';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      '文档有未保存更改时，关闭 BusyMark 前先进行询问。';
+  String get settingsConfirmCloseWithUnsavedChangesDescription => '文档有未保存更改时，关闭 BusyMark 前先进行询问。';
 
   @override
   String get closeUnsavedChangesTitle => '未保存的更改';
 
   @override
-  String get closeUnsavedChangesSingleMessage =>
-      '此文档有未保存的更改。关闭 BusyMark 前保存更改？';
+  String get closeUnsavedChangesSingleMessage => '此文档有未保存的更改。关闭 BusyMark 前保存更改？';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
@@ -9981,8 +9624,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get remoteImagesBlockedTitle => '远程图像已阻止';
 
   @override
-  String get remoteImagesBlockedMessage =>
-      '本文档引用了来自互联网的图像。加载这些图像可能会向图像托管方泄露网络信息。';
+  String get remoteImagesBlockedMessage => '本文档引用了来自互联网的图像。加载这些图像可能会向图像托管方泄露网络信息。';
 
   @override
   String get loadRemoteImagesForWorkspace => '为此工作区加载';
@@ -10436,12 +10078,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get workspaceReplaceIssueBufferChanged => '已跳过预览后发生变化的编辑器缓冲区。';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired =>
-      '请在替换前选择 LF 或 CRLF 规范化。';
+  String get workspaceReplaceIssueNormalizationRequired => '请在替换前选择 LF 或 CRLF 规范化。';
 
   @override
-  String get workspaceReplaceIssuePartialConflict =>
-      '由于文件同时发生了变化，回滚已停止。部分替换可能仍然存在；被移出的内容已保留在下方路径中。';
+  String get workspaceReplaceIssuePartialConflict => '由于文件同时发生了变化，回滚已停止。部分替换可能仍然存在；被移出的内容已保留在下方路径中。';
 
   @override
   String get workspaceReplaceIssueApplyFailed => '无法提交经过审查的替换；没有文件发生更改。';
@@ -10777,21 +10417,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(
-    String module,
-    String count,
-    String paths,
-  ) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
     return '无法安全地重命名并更新所有项目引用，因为模块 $module 中有 $count 个主题文件尚未解析：$paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty =>
-      'Writerside 项目文件有未保存的更改。请先处理这些更改，再准备新的重命名预览。';
+  String get errorWritersideTopicRenameProjectBuffersDirty => 'Writerside 项目文件有未保存的更改。请先处理这些更改，再准备新的重命名预览。';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged =>
-      'Writerside 项目的模块集合已更改。请在重构前准备新的重命名预览。';
+  String get errorWritersideTopicRenameProjectInventoryChanged => 'Writerside 项目的模块集合已更改。请在重构前准备新的重命名预览。';
 
   @override
   String get errorTopicsRootUnsafe => '主题根目录必须是安全的相对目录。';
@@ -10842,12 +10476,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      '额外的顶级 H1 标题将被视为章节。';
+  String get diagnosticWritersideTopicH1ConvertedToChapter => '额外的顶级 H1 标题将被视为章节。';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside Markdown 主题没有 H1 或 front matter 标题。';
+  String get diagnosticWritersideMarkdownTopicMissingTitle => 'Writerside Markdown 主题没有 H1 或 front matter 标题。';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle => 'XML 主题缺少标题。';
@@ -10889,16 +10521,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot =>
-      'writerside.cfg 根元素必须是 <ihp>。';
+  String get diagnosticWritersideConfigInvalidRoot => 'writerside.cfg 根元素必须是 <ihp>。';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'snippets 声明缺少 src。';
+  String get diagnosticWritersideConfigMissingSnippetsSrc => 'snippets 声明缺少 src。';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'instance-groups 声明缺少 src。';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'instance-groups 声明缺少 src。';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -10906,16 +10535,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'instance 声明缺少 src。';
+  String get diagnosticWritersideConfigMissingInstanceSrc => 'instance 声明缺少 src。';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance =>
-      'writerside.cfg 未注册实例。';
+  String get diagnosticWritersideConfigMissingInstance => 'writerside.cfg 未注册实例。';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot =>
-      '.tree 根元素必须是 <instance-profile>。';
+  String get diagnosticWritersideTreeInvalidRoot => '.tree 根元素必须是 <instance-profile>。';
 
   @override
   String get diagnosticWritersideTreeMissingId => '实例配置文件缺少 id。';
@@ -10939,8 +10565,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration =>
-      '变量声明必须包含名称和值。';
+  String get diagnosticWritersideVariableMalformedDeclaration => '变量声明必须包含名称和值。';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -10980,27 +10605,20 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get diagnosticWritersideTopicAnchorMissingHref => '<a> 缺少 href。';
 
   @override
-  String get diagnosticWritersideConfigMissing =>
-      'Writerside 模式需要 writerside.cfg。';
+  String get diagnosticWritersideConfigMissing => 'Writerside 模式需要 writerside.cfg。';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
     return '配置的构建配置目录不存在：$relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
     return '配置的 API 规范目录不存在：$relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
     return '配置的 snippets 目录不存在：$relativePath';
   }
 
@@ -11015,9 +10633,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
     return '配置的实例组文件不存在：$relativePath';
   }
 
@@ -11032,9 +10648,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(
-    String relativePath,
-  ) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
     return '默认主题目录不存在：$relativePath';
   }
 
@@ -11054,21 +10668,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(
-    String instanceId,
-    String webFileName,
-    String topic,
-  ) {
+  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
     return '实例 \"$instanceId\" 为主题 \"$topic\" 发布了无效的 Web 文件名 \"$webFileName\"。';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(
-    String instanceId,
-    String webFileName,
-    String firstTopic,
-    String secondTopic,
-  ) {
+  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
     return '实例 \"$instanceId\" 将 \"$firstTopic\" 和 \"$secondTopic\" 都发布为 \"$webFileName\"。';
   }
 
@@ -11093,10 +10698,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(
-    String anchor,
-    String targetName,
-  ) {
+  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
     return '“$targetName”中不存在锚点“$anchor”。';
   }
 
@@ -11109,10 +10711,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(
-    String elementId,
-    String from,
-  ) {
+  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
     return '“$from”中不存在包含元素“$elementId”。';
   }
 
@@ -11156,9 +10755,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(reason, {
-      'other': '安装 Git，或配置 BusyMark 以使用可用的 Git 可执行文件。$reason',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      reason,
+      {
+        'other': '安装 Git，或配置 BusyMark 以使用可用的 Git 可执行文件。$reason',
+      },
+    );
     return '$_temp0';
   }
 
@@ -11172,8 +10774,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitTrustRequiredTitle => '信任此工作区以使用 Git？';
 
   @override
-  String get gitTrustRequiredMessage =>
-      'BusyMark 可以在未授予信任时检查有限的仓库元数据。授予信任后，将启用此仓库的 Git 操作，这些操作可能执行已配置的钩子、过滤器、凭据助手和签名工具。';
+  String get gitTrustRequiredMessage => 'BusyMark 可以在未授予信任时检查有限的仓库元数据。授予信任后，将启用此仓库的 Git 操作，这些操作可能执行已配置的钩子、过滤器、凭据助手和签名工具。';
 
   @override
   String get gitTrustWorkspace => '信任工作区';
@@ -11412,8 +11013,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitConfirmRestoreTitle => '还原此文件版本？';
 
   @override
-  String get gitConfirmRestoreMessage =>
-      'BusyMark 将使用选中的已提交版本替换当前工作树中的文件。还原后的文件将保持未暂存状态。';
+  String get gitConfirmRestoreMessage => 'BusyMark 将使用选中的已提交版本替换当前工作树中的文件。还原后的文件将保持未暂存状态。';
 
   @override
   String get gitCommitActions => '提交操作';
@@ -11438,8 +11038,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitResetModeSoft => '软';
 
   @override
-  String get gitResetModeSoftDescription =>
-      '仅移动分支。保持索引和工作树不变；与选中提交之间的差异仍会保持暂存状态。';
+  String get gitResetModeSoftDescription => '仅移动分支。保持索引和工作树不变；与选中提交之间的差异仍会保持暂存状态。';
 
   @override
   String get gitResetModeMixed => '混合';
@@ -11451,15 +11050,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitResetModeHard => '硬';
 
   @override
-  String get gitResetModeHardDescription =>
-      '移动分支并重置索引和工作树。已跟踪的更改将被放弃；造成阻碍的未跟踪文件可能会被删除。';
+  String get gitResetModeHardDescription => '移动分支并重置索引和工作树。已跟踪的更改将被放弃；造成阻碍的未跟踪文件可能会被删除。';
 
   @override
   String get gitResetModeKeep => '保留';
 
   @override
-  String get gitResetModeKeepDescription =>
-      '移动分支并重置已跟踪文件，同时保留本地更改。如果这些更改与重置冲突，Git 将中止操作。';
+  String get gitResetModeKeepDescription => '移动分支并重置已跟踪文件，同时保留本地更改。如果这些更改与重置冲突，Git 将中止操作。';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -11545,8 +11142,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitAuthorIdentityTitle => 'Git 作者身份';
 
   @override
-  String get gitAuthorIdentityMessage =>
-      '请输入 Git 应记录在提交中的身份信息。BusyMark 将保存它并重试此次提交。';
+  String get gitAuthorIdentityMessage => '请输入 Git 应记录在提交中的身份信息。BusyMark 将保存它并重试此次提交。';
 
   @override
   String get gitAuthorName => '姓名';
@@ -11558,8 +11154,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitAuthorIdentityGlobal => '用于所有存储库';
 
   @override
-  String get gitAuthorIdentityGlobalDescription =>
-      '作为 Snap 安装时，此设置适用于在 BusyMark 中打开的存储库。';
+  String get gitAuthorIdentityGlobalDescription => '作为 Snap 安装时，此设置适用于在 BusyMark 中打开的存储库。';
 
   @override
   String get gitSaveIdentityAndCommit => '保存并提交';
@@ -11583,29 +11178,25 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceMarkdownBlocks => 'Markdown 块';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription =>
-      'Markdown 源代码和预览中支持的块结构。';
+  String get syntaxReferenceMarkdownBlocksDescription => 'Markdown 源代码和预览中支持的块结构。';
 
   @override
   String get syntaxReferenceInlineFormatting => '行内 Markdown';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription =>
-      '可出现在段落、列表项和表格单元格中的格式。';
+  String get syntaxReferenceInlineFormattingDescription => '可出现在段落、列表项和表格单元格中的格式。';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => '原始 HTML 块';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription =>
-      '通过 BusyMark 预览组件渲染的安全块级 HTML 标签。';
+  String get syntaxReferenceRawHtmlBlocksDescription => '通过 BusyMark 预览组件渲染的安全块级 HTML 标签。';
 
   @override
   String get syntaxReferenceRawHtmlInline => '原始 HTML 行内标签';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription =>
-      '安全的行内 HTML 标签，渲染时不会显示字面标签。';
+  String get syntaxReferenceRawHtmlInlineDescription => '安全的行内 HTML 标签，渲染时不会显示字面标签。';
 
   @override
   String get syntaxReferenceHeadings => '标题';
@@ -11644,24 +11235,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceHtmlNeutralInlineTags => '语义文本标签';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription =>
-      '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
+  String get syntaxReferenceSanitizedPreviewDescription => '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription =>
-      '未经编辑的原始 HTML 会按源文本原样保存。';
+  String get syntaxReferenceSourcePreservedDescription => '未经编辑的原始 HTML 会按源文本原样保存。';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription =>
-      '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
+  String get syntaxReferenceMarkdownInsideHtmlDescription => '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
 
   @override
-  String get syntaxReferenceBlockedContentDescription =>
-      '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
+  String get syntaxReferenceBlockedContentDescription => '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription =>
-      '链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。';
+  String get syntaxReferenceSafeUrlsDescription => '链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。';
 
   @override
   String get syntaxReferenceCategory => '类别';
@@ -11694,30 +11280,25 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceScopeWritersideMarkdown => '仅 Writerside Markdown';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
-      '仅 Writerside Markdown 和 Writerside XML';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml => '仅 Writerside Markdown 和 Writerside XML';
 
   @override
-  String get syntaxReferenceMarkdownDescription =>
-      'BusyMark 可以编写和预览的核心 Markdown 形式。';
+  String get syntaxReferenceMarkdownDescription => 'BusyMark 可以编写和预览的核心 Markdown 形式。';
 
   @override
   String get syntaxReferenceParagraphExample => '一段文本。';
 
   @override
-  String get syntaxReferenceTableLimitation =>
-      '表格使用 GitHub Flavored Markdown 的竖线语法。';
+  String get syntaxReferenceTableLimitation => '表格使用 GitHub Flavored Markdown 的竖线语法。';
 
   @override
   String get syntaxReferenceHardBreakIdentifiers => '行尾两个空格、\\、<br>';
 
   @override
-  String get syntaxReferenceHtmlDescription =>
-      'BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。';
+  String get syntaxReferenceHtmlDescription => 'BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。';
 
   @override
-  String get syntaxReferenceDiagramsDescription =>
-      '带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。';
+  String get syntaxReferenceDiagramsDescription => '带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -11732,26 +11313,22 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation =>
-      '请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。';
+  String get syntaxReferenceOpenApiLimitation => '请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。';
 
   @override
   String get syntaxReferenceSemanticDiagramBlocks => '图表的语义代码块';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation =>
-      '语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。';
+  String get syntaxReferenceSemanticDiagramLimitation => '语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。';
 
   @override
   String get syntaxReferenceReferencedDiagramSource => '引用的图表源';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation =>
-      '路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。';
+  String get syntaxReferenceReferencedDiagramLimitation => '路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。';
 
   @override
-  String get syntaxReferenceMathematicsDescription =>
-      'BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。';
+  String get syntaxReferenceMathematicsDescription => 'BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。';
 
   @override
   String get syntaxReferenceInlineMath => '行内数学公式';
@@ -11769,40 +11346,34 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceTexFence => 'tex 围栏';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation =>
-      'BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。';
+  String get syntaxReferenceMathDelimitersLimitation => 'BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。';
 
   @override
-  String get syntaxReferenceTexFenceLimitation =>
-      '在 Writerside 模式之外，tex 围栏仍是普通代码块。';
+  String get syntaxReferenceTexFenceLimitation => '在 Writerside 模式之外，tex 围栏仍是普通代码块。';
 
   @override
   String get syntaxReferenceWritersideMathElement => 'Writerside math 元素';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation =>
-      'math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。';
+  String get syntaxReferenceWritersideMathElementLimitation => 'math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。';
 
   @override
   String get syntaxReferenceSemanticTexBlock => '语义 TeX 代码块';
 
   @override
-  String get syntaxReferenceWritersideDescription =>
-      '这些特定扩展仅在已打开的 Writerside 项目中解析。';
+  String get syntaxReferenceWritersideDescription => '这些特定扩展仅在已打开的 Writerside 项目中解析。';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => '提示块引用';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation =>
-      '普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。';
+  String get syntaxReferenceAdmonitionLimitation => '普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => '语义提示';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation =>
-      '普通 Markdown 不会解析这些 Writerside 语义元素。';
+  String get syntaxReferenceSemanticMarkupLimitation => '普通 Markdown 不会解析这些 Writerside 语义元素。';
 
   @override
   String get syntaxReferenceCollapsibleHeading => '可折叠标题';
@@ -11814,8 +11385,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceSemanticCollapsibles => '语义可折叠内容';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation =>
-      'BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。';
+  String get syntaxReferenceSemanticCollapsiblesLimitation => 'BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。';
 
   @override
   String get syntaxReferenceSemanticCodeBlocks => '数学和图表的语义代码块';
@@ -11824,8 +11394,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceVideo => 'Writerside 视频';
 
   @override
-  String get syntaxReferenceVideoLimitation =>
-      '本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。';
+  String get syntaxReferenceVideoLimitation => '本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。';
 
   @override
   String get exportAsPdf => '导出为 PDF';
@@ -12008,8 +11577,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get chooseMarkdownFolder => '选择 Markdown 文件夹';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired =>
-      '选择包含 Markdown 文件的文件夹。';
+  String get errorWritersideInstanceImportSourceRequired => '选择包含 Markdown 文件的文件夹。';
 
   @override
   String get instanceAppearance => '外观';
@@ -12138,8 +11706,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired =>
-      '请选择至少一个 Markdown 文件进行导入。';
+  String get errorWritersideInstanceImportSelectionRequired => '请选择至少一个 Markdown 文件进行导入。';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -12166,8 +11733,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get errorWritersideInstanceWebPathInvalid => 'Web 路径必须为单行文本。';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid =>
-      'Writerside 实例配置无效。请修正其诊断信息后重试。';
+  String get errorWritersideInstanceConfigurationInvalid => 'Writerside 实例配置无效。请修正其诊断信息后重试。';
 
   @override
   String get errorWritersideInstanceTemporaryFile => 'BusyMark 无法安全暂存实例更改。';
@@ -12183,36 +11749,27 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot =>
-      'buildprofiles.xml 必须包含 <buildprofiles> 根元素。';
+  String get diagnosticWritersideBuildProfilesInvalidRoot => 'buildprofiles.xml 必须包含 <buildprofiles> 根元素。';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(
-    String name,
-    String value,
-  ) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
     return '$name 值“$value”必须为 true 或 false。';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance =>
-      '<build-profile> 元素必须指定实例 ID。';
+  String get diagnosticWritersideBuildProfileMissingInstance => '<build-profile> 元素必须指定实例 ID。';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude =>
-      '树中的 <include> 必须同时指定 from 和 element-id。';
+  String get diagnosticWritersideTreeInvalidInclude => '树中的 <include> 必须同时指定 from 和 element-id。';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId =>
-      '树中的 <snippet> 必须指定 id。';
+  String get diagnosticWritersideTreeMissingSnippetId => '树中的 <snippet> 必须指定 id。';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
-      '跨实例目录引用必须同时指定 ref 和 in。';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference => '跨实例目录引用必须同时指定 ref 和 in。';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets =>
-      '目录元素不能同时指向多个主题、引用、链接或重定向。';
+  String get diagnosticWritersideTreeConflictingTargets => '目录元素不能同时指向多个主题、引用、链接或重定向。';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -12220,8 +11777,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      '实例组文件必须包含 <instance-groups> 根元素。';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot => '实例组文件必须包含 <instance-groups> 根元素。';
 
   @override
   String get diagnosticWritersideInstanceGroupInvalid => '实例组必须指定非空 ID 和实例列表。';
@@ -12232,19 +11788,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(
-    String source,
-    String id,
-    String origin,
-  ) {
+  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
     return '目录包含项“$source#$id”属于外部模块“$origin”，无法在此工作区中展开。';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(
-    String source,
-    String id,
-  ) {
+  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
     return '已注册树“$source”中不存在树元素“$id”。';
   }
 
@@ -12264,10 +11813,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(
-    String topic,
-    String instance,
-  ) {
+  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
     return '主题“$topic”不在被引用的实例“$instance”中。';
   }
 
@@ -12296,8 +11842,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get aiDisabled => '已禁用';
 
   @override
-  String get aiExplicitEditingDescription =>
-      'AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。';
+  String get aiExplicitEditingDescription => 'AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。';
 
   @override
   String get aiProvider => 'AI 提供商';
@@ -12483,8 +12028,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get aiCloudConsentMessage =>
-      '只会发送每个 AI 审核对话框中显示的内容。请求不保存状态，建议需要审核，API 密钥存储在 Linux 系统凭据存储中。';
+  String get aiCloudConsentMessage => '只会发送每个 AI 审核对话框中显示的内容。请求不保存状态，建议需要审核，API 密钥存储在 Linux 系统凭据存储中。';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -12568,17 +12112,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String diagnosticWritersideSchema(
-    String element,
-    String attribute,
-    String reason,
-  ) {
+  String diagnosticWritersideSchema(String element, String attribute, String reason) {
     return '无效的 Writerside 标记：$element，$attribute。$reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt =>
-      '请使用 <llms-txt>true</llms-txt> 或 <llms-txt>false</llms-txt>；不再支持 single-file。';
+  String get diagnosticWritersideLlmsTxt => '请使用 <llms-txt>true</llms-txt> 或 <llms-txt>false</llms-txt>；不再支持 single-file。';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -12610,8 +12149,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get htmlInstance => '实例';
 
   @override
-  String get htmlOwnedDirectoryOnly =>
-      '只能替换由 BusyMark HTML 导出创建的文件夹。已修改或无关的文件将被保留。';
+  String get htmlOwnedDirectoryOnly => '只能替换由 BusyMark HTML 导出创建的文件夹。已修改或无关的文件将被保留。';
 
   @override
   String get showInFolder => '在文件夹中显示';
@@ -12733,12 +12271,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get exportRemoveCss => '移除自定义样式表';
 
   @override
-  String get exportCssNote =>
-      '可选用 UTF-8 CSS 文件（最大 256 KiB）。不接受导入、资源 URL、可执行或转义 CSS。样式在 BusyMark 样式表之后应用。不会获取远程资源。';
+  String get exportCssNote => '可选用 UTF-8 CSS 文件（最大 256 KiB）。不接受导入、资源 URL、可执行或转义 CSS。样式在 BusyMark 样式表之后应用。不会获取远程资源。';
 
   @override
-  String get exportSitePackagingNote =>
-      'Writerside 保留独立且相互链接的主题页面。单文件模式将资源嵌入每个页面。';
+  String get exportSitePackagingNote => 'Writerside 保留独立且相互链接的主题页面。单文件模式将资源嵌入每个页面。';
 
   @override
   String get exportInvalidGeometry => '扣除边距后，请至少保留 20 mm 的内容宽度和高度。';
@@ -12747,8 +12283,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get exportInvalidColor => '请输入 #RRGGBB 格式的颜色。';
 
   @override
-  String get exportInvalidCss =>
-      '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
+  String get exportInvalidCss => '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
 
   @override
   String get clipboardHistory => '剪贴板历史';
@@ -12898,8 +12433,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled =>
-      '录音已禁用或此路径已排除。 在恢复之前重新启用录音。';
+  String get localHistoryWarningRecordingDisabled => '录音已禁用或此路径已排除。 在恢复之前重新启用录音。';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -12960,8 +12494,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsClipboardHistoryTitle => '收集剪贴板历史';
 
   @override
-  String get settingsClipboardHistoryDescription =>
-      '只保留本次 BusyMark 会话中已复制并成功粘贴的内容。';
+  String get settingsClipboardHistoryDescription => '只保留本次 BusyMark 会话中已复制并成功粘贴的内容。';
 
   @override
   String get settingsLocalHistoryTitle => '记录本地历史';
@@ -13196,15 +12729,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get nextcloudDeleteNote => '删除笔记？';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable =>
-      'Nextcloud Notes不支持工作区整体替换。请在每条笔记中替换。';
+  String get nextcloudWorkspaceReplaceUnavailable => 'Nextcloud Notes不支持工作区整体替换。请在每条笔记中替换。';
 
   @override
   String get nextcloudSaveLocalCopy => '保存本地副本…';
 
   @override
-  String get nextcloudDisconnectWarning =>
-      '移除此账户将删除此设备上缓存的笔记和待同步的更改。请先同步，将工作保留在服务器上。';
+  String get nextcloudDisconnectWarning => '移除此账户将删除此设备上缓存的笔记和待同步的更改。请先同步，将工作保留在服务器上。';
 
   @override
   String get nextcloudAttachmentRetryWarning => '如果上次上传成功，重试可能会在服务器上留下未使用的附件。';
@@ -13216,8 +12747,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get nextcloudAddAttachment => '添加附件…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning =>
-      '删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。';
+  String get nextcloudDeleteAttachmentWarning => '删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。';
 
   @override
   String get nextcloudChooseConflictingAttributes => '为每个冲突属性选择一个值。';
@@ -13226,8 +12756,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get nextcloudUseServerNote => '使用此服务器笔记';
 
   @override
-  String get nextcloudUseServerNoteExplanation =>
-      '将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。';
+  String get nextcloudUseServerNoteExplanation => '将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。';
 
   @override
   String get nextcloudExactCandidate => '与请求完全匹配；身份尚未确认。';
@@ -13242,8 +12771,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get nextcloudCreateSeparate => '创建独立笔记';
 
   @override
-  String get nextcloudCreateSeparateWarning =>
-      '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
+  String get nextcloudCreateSeparateWarning => '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
 
   @override
   String get wsSemanticFormats => '语义格式';
@@ -13354,8 +12882,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get nextcloudFileSuffix => '新笔记的文件后缀';
 
   @override
-  String get nextcloudServerSettingsExplanation =>
-      '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
+  String get nextcloudServerSettingsExplanation => '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
 
   @override
   String get nextcloudSettingsSaved => '服务器设置已保存';
@@ -13585,8 +13112,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wsWideLayout => '宽';
 
   @override
-  String get wsCodeSourceConflict =>
-      '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
+  String get wsCodeSourceConflict => '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
 
   @override
   String get wsInherited => '从列表继承';
@@ -13732,8 +13258,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get wsModuleCapsIgnored =>
-      '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
+  String get wsModuleCapsIgnored => '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
 
   @override
   String get wsInsertElements => '插入元素';
@@ -13997,12 +13522,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get notesRemovingConnection => '正在移除本地账户…';
 
   @override
-  String get notesRemovedWarning =>
-      '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
+  String get notesRemovedWarning => '本地 Nextcloud 账户已移除，但无法确认应用密码已撤销。请在 Nextcloud 安全设置中移除 BusyMark 的应用密码。';
 
   @override
-  String get notesBuffersNotSaved =>
-      '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
+  String get notesBuffersNotSaved => '无法将所有打开的笔记保存到本地。请在工作区检查保存、冲突或规范化处理。待处理的本地更改可能仍需与 Nextcloud 同步。';
 
   @override
   String get notesSettingsLeave => '离开前保存 Nextcloud 设置更改吗？';
@@ -14017,8 +13540,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get notesSettingsReloadHelp => '重新加载会用 Nextcloud 当前设置替换草稿。放弃草稿并重新加载吗？';
 
   @override
-  String get notesSettingsRefreshFailed =>
-      'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
+  String get notesSettingsRefreshFailed => 'Nextcloud 已接受设置，但刷新笔记失败。显示的是服务器确认的设置值。请从笔记界面重试刷新。';
 
   @override
   String get notesUnavailable => '离线 · 文本已在本地可用 · 已保存到本地 · 等待同步';
@@ -14119,8 +13641,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage =>
-      '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
+  String get gitNonUtf8FilenameMessage => '此文件名包含非 UTF-8 字节。仍可进行 Git 审阅和暂存；文档编辑器需要 UTF-8 文件名。';
 
   @override
   String get gitUiMergeInProgress => '合并进行中';
@@ -14171,8 +13692,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiInspectStashedUntrackedFiles => '检查隐藏的未跟踪文件...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
-      '在应用时恢复藏品的阶段状态/索引状态';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => '在应用时恢复藏品的阶段状态/索引状态';
 
   @override
   String get gitUiApplyAndRetain => '应用和保留';
@@ -14190,8 +13710,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiBranchFromStash => '从贮藏创建分支';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
-      '创建/ 切换到藏匿处的分支, 然后应用它 。 原始隐藏部分留待日后明确删除 。';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => '创建/ 切换到藏匿处的分支, 然后应用它 。 原始隐藏部分留待日后明确删除 。';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -14199,16 +13718,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
-      '如果适用冲突,则保留原始藏品。';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => '如果适用冲突,则保留原始藏品。';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
-      '删除此隐藏条目。 其更改不应用 。';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => '删除此隐藏条目。 其更改不应用 。';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
-      '请解决未合并文件的冲突。Git 没有 stash 的继续或中止命令；原始贮藏会被保留。';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => '请解决未合并文件的冲突。Git 没有 stash 的继续或中止命令；原始贮藏会被保留。';
 
   @override
   String get gitUiStashNameMessage => '堆放名称/信息';
@@ -14220,8 +13736,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStashTrackedWorkingAndStagedChanges => '被跟踪的工作和分阶段的变更';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
-      '贮藏更改并保留已暂存的更改 (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => '贮藏更改并保留已暂存的更改 (--keep-index)';
 
   @override
   String get gitUiStashOnlyStagedChangesStaged => '仅贮藏已暂存的更改 (--staged)';
@@ -14245,8 +13760,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiCreateWorktree => '创建工作树...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
-      '在 HEAD 处创建工作树之前，请先创建提交。';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => '在 HEAD 处创建工作树之前，请先创建提交。';
 
   @override
   String get gitUiDetachedHEAD => '分离的 HEAD';
@@ -14294,12 +13808,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiNewWorktreeBranch => '新建工作树分支';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
     return '在 $arg2（$arg3）创建本地分支，并创建 $arg0/$arg1。';
   }
 
@@ -14310,13 +13819,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiRemoveWorktree => '移除工作树?';
 
   @override
-  String
-  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
-      '明确丢弃此工作树中所有本地跟踪/未跟踪的更改。 锁定/ 使用的工作树仍受到保护 。';
+  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => '明确丢弃此工作树中所有本地跟踪/未跟踪的更改。 锁定/ 使用的工作树仍受到保护 。';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
-      'Git拒绝删除本地更改、未跟踪的文件或锁定 。';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'Git拒绝删除本地更改、未跟踪的文件或锁定 。';
 
   @override
   String get gitUiDiscardLocalWorktreeContentsAndRemove => '丢弃本地工作树内容并删除';
@@ -14325,9 +13831,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiRemoveCleanWorktree2 => '删除清洁工作树';
 
   @override
-  String
-  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
-      '明确循环到嵌入的子模块中进行更新/同步';
+  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => '明确循环到嵌入的子模块中进行更新/同步';
 
   @override
   String get gitUiNoRecordedSubmodules => '没有记录子模块';
@@ -14368,8 +13872,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStageCurrentSubmodulePointerInParent => '父体中当前子模块指针的阶段';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
-      '父母和子模块承诺、 推动和肮脏状态保持分离 。 浏览不初始化或更新它们 。';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => '父母和子模块承诺、 推动和肮脏状态保持分离 。 浏览不初始化或更新它们 。';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -14377,17 +13880,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
     return '根据需要初始化并检查准确的$arg0。递归:$arg1。';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
-    String arg0,
-  ) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
     return '应用已审查的子模块配置操作。 递归: $arg0 。';
   }
 
@@ -14395,8 +13893,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiApplySubmoduleOperation => '应用子模块操作';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
-      '检查已记录的修订版或创建回收分支。 Reflog 并不恢复任意的未保存或未跟踪的内容 。';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => '检查已记录的修订版或创建回收分支。 Reflog 并不恢复任意的未保存或未跟踪的内容 。';
 
   @override
   String get gitUiSelectAReflogEntry => '选择重写条目';
@@ -14433,16 +13930,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
-      'Git 文本历史必须拥有可编辑的字段 。';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'Git 文本历史必须拥有可编辑的字段 。';
 
   @override
   String get gitUiEditHEADIndexWorkingTree => '编辑 HEAD | 暂存区 | 工作区…';
 
   @override
-  String
-  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
-      '经审查的索引或工作内容已改变。 在开始之前刷新此比较 。';
+  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => '经审查的索引或工作内容已改变。 在开始之前刷新此比较 。';
 
   @override
   String get gitUiRefreshComparison => '刷新比较';
@@ -14511,33 +14005,23 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStageWholeFile => '暂存整个文件';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
-    String arg0,
-  ) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
     return '$arg0 只用空格修改的行隐藏 □ 显示精确的更改';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
-    String arg0,
-  ) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
     return '已选择 $arg0 个更改行。';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
-      '只读比较 · 复制文本或调整显示设置。';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => '只读比较 · 复制文本或调整显示设置。';
 
   @override
   String get gitUiNoFinalNewline => ' · 没有最终的新线';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0 ° $arg1 ° $arg2 字节 $arg3';
   }
 
@@ -14545,8 +14029,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiTextComparisonIsUnavailableForTheseContents => '这些内容没有文本比较 。';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
-      '此比较超过了约束文本审查的限制。 内容未被宣布为完全相同 。';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => '此比较超过了约束文本审查的限制。 内容未被宣布为完全相同 。';
 
   @override
   String get gitUiTheComparedContentsAreIdentical => '比较的内容相同 。';
@@ -14609,8 +14092,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiReloadIndexReview => '重新装入索引审查吗 ?';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
-      '重新加载当前 HEAD、暂存区和工作版本。这会替换暂存区编辑器中未保存的草稿。';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => '重新加载当前 HEAD、暂存区和工作版本。这会替换暂存区编辑器中未保存的草稿。';
 
   @override
   String get gitUiReplaceDraftAndReload => '替换草稿和重新装入';
@@ -14622,17 +14104,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiWriteEditedResultToThisIndexEntry => '将编辑的结果写入此索引条目';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
-      '工作文件仍保留在磁盘上。 在应用前先审查编辑后的索引 。';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => '工作文件仍保留在磁盘上。 在应用前先审查编辑后的索引 。';
 
   @override
   String get gitUiReviewIndexTextFormatChanges => '审查索引文本格式更改';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
     return '仅更新已审阅的 $arg0 索引条目。\n\n$arg1';
   }
 
@@ -14640,8 +14118,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiWriteReviewedIndexResult => '写入已审查的索引结果';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
-      '经编辑的结果在格式审查中更改。 重审一次 。';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => '经编辑的结果在格式审查中更改。 重审一次 。';
 
   @override
   String get gitUiSynchronizeScrolling => '同步滚动';
@@ -14653,8 +14130,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiEditableIndexContent => '可编辑索引内容';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
-      '请求的修订版在当前过滤器之外。 重置过滤器以显示它 。';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => '请求的修订版在当前过滤器之外。 重置过滤器以显示它 。';
 
   @override
   String get gitUiFilterLog => '过滤日志';
@@ -14814,12 +14290,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
-      '浅色/ 部分边界: 父对象不可用 。';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => '浅色/ 部分边界: 父对象不可用 。';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
-      '父权在此页面外, 或浅边界外 。';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => '父权在此页面外, 或浅边界外 。';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -14857,20 +14331,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiGoToCommitReference2 => '进行/ 引用';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
-      '输入要在日志中显示的承付 ID 或引用 。';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog => '输入要在日志中显示的承付 ID 或引用 。';
 
   @override
   String get gitUiTheRequestedRevisionIsUnavailable => '请求的修订无法使用 。';
 
   @override
-  String
-  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
-      '仓库元数据只读。 部门检查和比较仍然可用 。';
+  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => '仓库元数据只读。 部门检查和比较仍然可用 。';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
-      '工作文件不可用或只读。 部门切换和合并不可用 。';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => '工作文件不可用或只读。 部门切换和合并不可用 。';
 
   @override
   String get gitUiSearchBranchesAndTags => '搜索分支和标签';
@@ -14974,10 +14444,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
     return '$arg0\n目标 $arg1\n仅删除本地分支。未合并的分支会被拒绝删除。';
   }
 
@@ -15024,16 +14491,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStopBeforeCreatingTheMergeCommit => '创建合并前停止';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
-      '已禁用快进，以防 HEAD 在审阅之前移动。';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => '已禁用快进，以防 HEAD 在审阅之前移动。';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
-      '用于单项承诺的请假已逐步更改;这不是持续合并。';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => '用于单项承诺的请假已逐步更改;这不是持续合并。';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
-      '在共同的解决方案工作空间中仍然存在冲突。';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => '在共同的解决方案工作空间中仍然存在冲突。';
 
   @override
   String get gitUiAddRemote => '添加远程...';
@@ -15073,8 +14537,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiEnterTheExactReviewedDestinationToRemove => '输入要删除的确切审查对象 。';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
-      '证书由配置的助手或私人提示提供 。';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => '证书由配置的助手或私人提示提供 。';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -15082,9 +14545,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String
-  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
-      '删除本地远程配置和跟踪引用。 它不删除服务器仓库 。';
+  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => '删除本地远程配置和跟踪引用。 它不删除服务器仓库 。';
 
   @override
   String get gitUiRemoveRemote2 => '删除远程';
@@ -15102,8 +14563,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiConfiguredHooksAndSigningAreRespected => '配置钩和签名受到尊重。';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
-      '重写选中的 HEAD 提交。远程跟踪信息无法证明它尚未发布。';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => '重写选中的 HEAD 提交。远程跟踪信息无法证明它尚未发布。';
 
   @override
   String get gitUiRepository => '仓库';
@@ -15120,21 +14580,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiRepositoryActions => '仓库操作';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
     return '缓存的跟踪信息 · $upstream · 领先 $ahead · 落后 $behind';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
-      '无工作树。打开日志检查其历史 。';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => '无工作树。打开日志检查其历史 。';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
-      '无法进行只读存储器 / 中继和承付 。';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => '无法进行只读存储器 / 中继和承付 。';
 
   @override
   String get gitUiRepositoryStatusUnavailable => '没有仓库状态';
@@ -15209,8 +14663,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiReplaceMessageDraft => '替换信件草稿吗 ?';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
-      '用选中的信件替换现有承诺信件吗 ?';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => '用选中的信件替换现有承诺信件吗 ?';
 
   @override
   String get gitUiReplaceDraft => '替换草稿';
@@ -15221,9 +14674,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
-    String arg0,
-  ) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
     return '本地承诺 $arg0 存在。 在尝试再次承诺前先查看日志。 信件草稿已被保留 。';
   }
 
@@ -15250,8 +14701,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
-      '签署确认尾注是提交说明中的声明，与密码学签名不同。身份信息仅保存到此仓库的本地配置中；草稿会被保留。';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage => '签署确认尾注是提交说明中的声明，与密码学签名不同。身份信息仅保存到此仓库的本地配置中；草稿会被保留。';
 
   @override
   String get gitUiSaveRepositoryIdentity => '保存仓库身份';
@@ -15327,10 +14777,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
     return '$arg0 字节 · $arg1\n使用索引内容替换工作文件，或删除此未跟踪文件。暂存内容保持不变。必须先检查应用中未保存的文档。';
   }
 
@@ -15346,8 +14793,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
-      '这将删除下面列出的每个实际推进目标的引用。 保留本地分支/ 标签。 本次审查将固定预期提示 。';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => '这将删除下面列出的每个实际推进目标的引用。 保留本地分支/ 标签。 本次审查将固定预期提示 。';
 
   @override
   String get gitUiReferenceDoesNotExist => '不存在引用';
@@ -15366,8 +14812,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
-      '上面显示的确切目标提示将被删除。 任何已更改的远程提示都会停止操作, 以便再次审查 。';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => '上面显示的确切目标提示将被删除。 任何已更改的远程提示都会停止操作, 以便再次审查 。';
 
   @override
   String get gitUiReviewAndDeleteFromRemote => '从远程审查并删除...';
@@ -15387,15 +14832,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
-      '目的地已承诺本地无法使用 。 在检查即将离开的历史前先获取已审查的目的地 。';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => '目的地已承诺本地无法使用 。 在检查即将离开的历史前先获取已审查的目的地 。';
 
   @override
   String get gitUiFetchReviewedDestination => '获取已审查的目标';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
-      '选择目的地并审查即将退出的承诺 。';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => '选择目的地并审查即将退出的承诺 。';
 
   @override
   String get gitUiNoOutgoingCommits => '没有退出承诺';
@@ -15426,12 +14869,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
-      '推进完成。 本地承诺仍然在日志中 。';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => '推进完成。 本地承诺仍然在日志中 。';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
-      '强制推送要求目标引用的顶端与本次审查显示的值完全一致。';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => '强制推送要求目标引用的顶端与本次审查显示的值完全一致。';
 
   @override
   String get gitUiForceWithReviewedLease => '强制使用经审核的租赁...';
@@ -15448,16 +14889,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
-      '其他人可能已经在使用这些历史。后台获取不会更新本次租约保护条件。';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => '其他人可能已经在使用这些历史。后台获取不会更新本次租约保护条件。';
 
   @override
   String get gitUiForceWithLease => '租赁';
 
   @override
-  String
-  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
-      '远程结果不确定。 在再次推动之前再次审查目的地 。';
+  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => '远程结果不确定。 在再次推动之前再次审查目的地 。';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -15471,9 +14909,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiPruneDeletedRemoteTrackingBranches => 'Prune 删除远程跟踪分支';
 
   @override
-  String
-  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
-      '在不替换工作文件的情况下获取远程跟踪信息更新 。';
+  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => '在不替换工作文件的情况下获取远程跟踪信息更新 。';
 
   @override
   String get gitUiFetch => '获取';
@@ -15494,26 +14930,22 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiRebase => '变基';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
-      '如果目的地不能快速前进, 则停止; 永远不要合并或重置 。';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => '如果目的地不能快速前进, 则停止; 永远不要合并或重置 。';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
-      '与合并承诺合并,包括当有可能快速前进时。';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => '与合并承诺合并,包括当有可能快速前进时。';
 
   @override
   String get gitUiMergeAllowFastForwardWhenPossible => '合并; 允许在可能情况下快速前进 。';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
-      '重设本地历史, 保留本地合并承诺 。';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => '重设本地历史, 保留本地合并承诺 。';
 
   @override
   String get gitUiRebaseLocalCommitsAsALinearHistory => '重设本地承诺为线性历史 。';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
-      'Git 被配置为交互式重置。 在此选择明确的拉动策略, 或者获取并打开 Rebase... 来审查一个计划 。';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'Git 被配置为交互式重置。 在此选择明确的拉动策略, 或者获取并打开 Rebase... 来审查一个计划 。';
 
   @override
   String get gitUiUseReviewedOrdinaryRebaseForThisPull => '使用经过审查的普通重标进行此拉';
@@ -15528,8 +14960,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiPreserveLocalMergeCommits => '保存本地合并承诺';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
-      '本地更改可能阻止拉动。 检查/ 承诺它们或明确创建隐藏 。';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => '本地更改可能阻止拉动。 检查/ 承诺它们或明确创建隐藏 。';
 
   @override
   String get gitUiStashes => '贮藏';
@@ -15556,23 +14987,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiChoose => '选择...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
-      '仅创建 Git 元数据。 现有文件没有进行编程或承诺 。';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => '仅创建 Git 元数据。 现有文件没有进行编程或承诺 。';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
-      '最终目标必须不存在或为空。绝不会覆盖已有的用户数据。';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => '最终目标必须不存在或为空。绝不会覆盖已有的用户数据。';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
-      '· 空白使用有效的 Git 政策';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => '· 空白使用有效的 Git 政策';
 
   @override
   String get gitUiSelectedBranchOptional => '选定分支 □ 可选';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
-      '循环明确初始化/更新子模块';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => '循环明确初始化/更新子模块';
 
   @override
   String get gitUiPreparingGitOperation => '准备 Git 操作...';
@@ -15584,8 +15011,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiTheDestinationExistedBeforeThisAttempt => '在这次尝试之前,目的地已经存在:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
-      '目录还在检查中,在再次复制之前再检查一下';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => '目录还在检查中,在再次复制之前再检查一下';
 
   @override
   String get gitUiNoDestinationDirectoryRemains => '没有目标目录 。';
@@ -15621,12 +15047,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiUseUpstreamAsNewBase => '将上游用作新的基地';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
-      '从日志中选择一个有效的分支、标记或承诺 。';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog => '从日志中选择一个有效的分支、标记或承诺 。';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
-      '分支块中第一个保留的提交不能设为 squash 或 fixup，因为它前面没有可合并的目标提交。';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => '分支块中第一个保留的提交不能设为 squash 或 fixup，因为它前面没有可合并的目标提交。';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -15640,9 +15064,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiPlannedCommitMessages => '计划承诺信息';
 
   @override
-  String
-  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
-      '原始/ 合并信件预览';
+  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => '原始/ 合并信件预览';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -15658,9 +15080,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiDetachedHEAD2 => '分离的 HEAD';
 
   @override
-  String
-  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
-      '变基会重写提交的标识。远程跟踪信息无法证明这些历史从未被发布。';
+  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => '变基会重写提交的标识。远程跟踪信息无法证明这些历史从未被发布。';
 
   @override
   String get gitUiIncludeRootCommits => '包含根提交';
@@ -15686,14 +15106,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
-      '包括从此分支可以达到的所有 root 。';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => '包括从此分支可以达到的所有 root 。';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
-    String boundary,
-    String base,
-  ) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
     return '将把 $boundary 之后的提交重放到 $base 上；不包含边界提交本身。';
   }
 
@@ -15704,8 +15120,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiGitBranchLabelResetMergeStructure => 'Git 分支/ 标签/ 重置/ 合并结构';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
-      '选择明确的旧边界或根模式, 然后制定计划 。';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => '选择明确的旧边界或根模式, 然后制定计划 。';
 
   @override
   String get gitUiMoveUp => '上移';
@@ -15728,8 +15143,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiPreviewCombinedCommitMessages => '预览合并信件...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
-      'Alt/  移动选中的承诺。 无关的分支引用不会自动更新 。';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt/  移动选中的承诺。 无关的分支引用不会自动更新 。';
 
   @override
   String get gitUiCancelPlan => '取消计划';
@@ -15738,10 +15152,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStartReviewedRebase => '开始已审阅的变基？';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
     return '计划于$arg1年重写$arg0,被放弃的承诺在开始之前仍明显可见。';
   }
 
@@ -15755,19 +15166,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStoppedForEditingAmend => ' · 停止编辑/修正';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
-      '这些是未合并的索引条目, 可能来自隐藏应用程序。 Git 没有隐藏继续或中止命令 。';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => '这些是未合并的索引条目, 可能来自隐藏应用程序。 Git 没有隐藏继续或中止命令 。';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
-      '编辑工作文件, 阶段和修正当前承诺, 然后继续重标 。';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => '编辑工作文件, 阶段和修正当前承诺, 然后继续重标 。';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
     return '$arg0$arg1 · 未合并的暂存阶段 $arg2';
   }
 
@@ -15778,24 +15183,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => '将当前承诺保留为空承诺';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
-      '真实索引没有分阶段的更改。 创建一个明确的空承诺, 如果仍然活跃, 则继续排序 。';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => '真实索引没有分阶段的更改。 创建一个明确的空承诺, 如果仍然活跃, 则继续排序 。';
 
   @override
   String get gitUiKeepEmptyCommit => '保持空承诺...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
-      'Git 会尝试回到操作开始时的状态，但无法保证恢复操作前已有的未暂存、未跟踪或未保存内容。';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'Git 会尝试回到操作开始时的状态，但无法保证恢复操作前已有的未暂存、未跟踪或未保存内容。';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
-      '跳过当前承诺, 继续下一个计划的承诺 。';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => '跳过当前承诺, 继续下一个计划的承诺 。';
 
   @override
-  String
-  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
-      '忘记此操作的簿记, 同时保留当前文件和索引 。';
+  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => '忘记此操作的簿记, 同时保留当前文件和索引 。';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -15806,8 +15206,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiReloadConflictVersions => '重新装入冲突版本 ?';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
-      '将未保存结果草稿替换为当前工作文件。 保存的工作内容将予保留 。';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => '将未保存结果草稿替换为当前工作文件。 保存的工作内容将予保留 。';
 
   @override
   String get gitUiLoadingConflictVersions => '正在装入冲突版本...';
@@ -15840,18 +15239,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiManualResolution => '人工解析';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
     return '地区 $arg0/$arg1 X XX $arg2 检查';
   }
 
   @override
-  String
-  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
-      '源对齐超过了文本比较限制;源板仍然可供手工审查。';
+  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => '源对齐超过了文本比较限制;源板仍然可供手工审查。';
 
   @override
   String get gitUiAcceptLeftRegion => '接受左区域';
@@ -15866,8 +15259,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiApplyGitSNonConflictingChanges => '应用 Git 的非冲突性变化吗 ?';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
-      '将当前结果草稿替换为 Git 合并预览。 此丢弃未保存的手动结果编辑; 工作文件在保存前保持不变 。';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => '将当前结果草稿替换为 Git 合并预览。 此丢弃未保存的手动结果编辑; 工作文件在保存前保持不变 。';
 
   @override
   String get gitUiUseMergePreview => '使用合并预览';
@@ -15891,13 +15283,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStage3 => '第3阶段';
 
   @override
-  String
-  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
-      '没有冲突版本。 刷新以审查当前状态 。';
+  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => '没有冲突版本。 刷新以审查当前状态 。';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
-      '结果已保存到磁盘。 索引仍然决定此文件是否已经解决 。';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => '结果已保存到磁盘。 索引仍然决定此文件是否已经解决 。';
 
   @override
   String get gitUiSaveResultDraft => '保存结果草稿';
@@ -15912,18 +15301,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiEditableConflictResult => '可编辑的冲突结果';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return '左侧：$arg0 · $arg1\n右侧：$arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
-      '选择内容、 删除或子模块明确承诺。 没有二进制数据被解码为可编辑文本 。';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => '选择内容、 删除或子模块明确承诺。 没有二进制数据被解码为可编辑文本 。';
 
   @override
   String get gitUiUseEntireLeftContent => '使用全部左侧内容...';
@@ -15938,8 +15321,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiResolvedSubmoduleCommit => '已解析子模块承诺';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
-      '在父体中弹出精确的 gitlink 。 这不会检查或执行子模块 。';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => '在父体中弹出精确的 gitlink 。 这不会检查或执行子模块 。';
 
   @override
   String get gitUiSetResolvedGitlink => '设定解析 gitlink...';
@@ -15950,8 +15332,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
-      '结果是经过编辑的。 保留手动结果或选择其它未变区域 。';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => '结果是经过编辑的。 保留手动结果或选择其它未变区域 。';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -15959,13 +15340,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
-      '阶段 所选 gitlink 承诺在母体中。 子模块检查及其文件不被替换 。';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => '阶段 所选 gitlink 承诺在母体中。 子模块检查及其文件不被替换 。';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
-    String arg0,
-  ) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
     return '替换整个工作路径 $arg0, 并分阶段作出决定。 当前的工作内容和任何未保存的结果草稿将被丢弃 。';
   }
 
@@ -15976,10 +15354,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiStageThisConflictResolution => '分阶段解决冲突?';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
     return '使用整个编辑结果为 $arg0。 Git 记录了预设时的解析路径。 首先审查所有预定内容 $arg1';
   }
 
@@ -15993,9 +15368,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiSaveReviewedResult => '保存已审查的结果';
 
   @override
-  String
-  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
-      '无法访问本地的 Git 表格。 在重新连接应用程序后重试 。';
+  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => '无法访问本地的 Git 表格。 在重新连接应用程序后重试 。';
 
   @override
   String get gitUiSans => '孙子';
@@ -16048,14 +15421,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
-      '经审查的仓库仅用于此操作,历史和内容检查仍然可用。';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => '经审查的仓库仅用于此操作,历史和内容检查仍然可用。';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
     return 'Git 返回 $arg0。 应用程序无法刷新其文档 :\\\\ $arg1';
   }
 
@@ -16066,8 +15435,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiCurrentBranch => '当前分支';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
-      '没有匹配的分支或标记。 在日志中选择一个承诺 。';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => '没有匹配的分支或标记。 在日志中选择一个承诺 。';
 
   @override
   String get gitUiBranches => '分支';
@@ -16180,61 +15548,46 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
-      '仓库已更改。 重新刷新和审查后再尝试 。';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => '仓库已更改。 重新刷新和审查后再尝试 。';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
-      '另一个操作持有仓库或索引锁定。 等等, 然后刷新 。';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => '另一个操作持有仓库或索引锁定。 等等, 然后刷新 。';
 
   @override
   String get gitUiRepositoryTrustIsRequiredForThisOperation => '本次操作需要仓库信任 。';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
-      'Git 服务断开。 重新连接并调节仓库 。';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'Git 服务断开。 重新连接并调节仓库 。';
 
   @override
-  String
-  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
-      '已安装的 Git 可执行文件无法支持此操作。 请在下面审查运行时间要求 。';
+  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => '已安装的 Git 可执行文件无法支持此操作。 请在下面审查运行时间要求 。';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
-      '此仓库仅用于请求的操作。 仍然可用 。';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => '此仓库仅用于请求的操作。 仍然可用 。';
 
   @override
-  String
-  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
-      '操作需要调节。 在重复之前先审查生成的仓库或远程状态 。';
+  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => '操作需要调节。 在重复之前先审查生成的仓库或远程状态 。';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
-      'Git 认证失败。 审查证书助手或解锁配置的密钥环 。';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'Git 认证失败。 审查证书助手或解锁配置的密钥环 。';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
-      'SSH 主机验证失败。 通过您配置的 SSH 工具审查主机身份 。';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'SSH 主机验证失败。 通过您配置的 SSH 工具审查主机身份 。';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
-      '提交签名失败或已取消。 请审查签名密钥、 代理和配置的签名工具 。';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => '提交签名失败或已取消。 请审查签名密钥、 代理和配置的签名工具 。';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
-      '设置仓库作者名称和电子邮件, 然后返回到保存的信件草稿 。';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => '设置仓库作者名称和电子邮件, 然后返回到保存的信件草稿 。';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
-      'Git 拒绝了已审查的更新。 刷新并审查实际目的地, 然后再尝试 。';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'Git 拒绝了已审查的更新。 刷新并审查实际目的地, 然后再尝试 。';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
-      '工作或分阶段的修改阻止了这一操作。 审查、 承诺或明确隐藏这些操作 。';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => '工作或分阶段的修改阻止了这一操作。 审查、 承诺或明确隐藏这些操作 。';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
-      '所需的 Git 对象不可用。 检查浅处或部分仓库的边界, 必要时可以明确获取 。';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => '所需的 Git 对象不可用。 检查浅处或部分仓库的边界, 必要时可以明确获取 。';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -16299,25 +15652,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String
-  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
-      '移动 HEAD/当前分支。reflog 无法恢复任意未跟踪或未保存的内容。';
+  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => '移动 HEAD/当前分支。reflog 无法恢复任意未跟踪或未保存的内容。';
 
   @override
   String get gitUiMoveHEADKeepIndexAndWorkingFiles => '移动 HEAD，保留暂存区和工作文件。';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
-      '移动 HEAD 并替换暂存区，保留工作文件。';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => '移动 HEAD 并替换暂存区，保留工作文件。';
 
   @override
-  String
-  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
-      '替换 HEAD、暂存区和已跟踪的工作文件；可能覆盖妨碍操作的未跟踪文件。';
+  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => '替换 HEAD、暂存区和已跟踪的工作文件；可能覆盖妨碍操作的未跟踪文件。';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
-      '替换 HEAD、暂存区及符合条件的文件；若会丢失本地更改则拒绝操作。';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => '替换 HEAD、暂存区及符合条件的文件；若会丢失本地更改则拒绝操作。';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -16325,10 +15672,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
     return '+$arg0  $arg1 在应用前先审查选中模式的效果 。';
   }
 
@@ -16364,8 +15708,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiTagMessage => '标记消息';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
-      '本地创建标记。 在 Push 审评中明确发布选中的标记 。';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => '本地创建标记。 在 Push 审评中明确发布选中的标记 。';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -16376,8 +15719,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiNextChangedFilePage => '下一个已更改的文件页';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
-      '只读仓库快照。 打开文件时从未检查此版本 。';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => '只读仓库快照。 打开文件时从未检查此版本 。';
 
   @override
   String get gitUiOpenReadOnlyVersion => '打开只读版本';
@@ -16399,9 +15741,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
-    String arg0,
-  ) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
     return '将此工作路径替换为订正版 $arg0。 保留现有分阶段内容。';
   }
 
@@ -16447,12 +15787,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiBoundary => ' · 边界';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0  $arg1\n原始行 $arg2$arg3';
   }
 
@@ -16486,12 +15821,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiApplyChangesWithoutCreatingCommits => '应用更改而不创建承诺';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
-      '使用此明确的主行父母来合并承诺';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits => '使用此明确的主行父母来合并承诺';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
-      '空的或已经应用的承诺可以阻止Git作出明确的跳过或继续决定。';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => '空的或已经应用的承诺可以阻止Git作出明确的跳过或继续决定。';
 
   @override
   String get gitUiRevertInReviewedOrder => '按审查顺序还原';
@@ -16681,11 +16014,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String gitUiRebaseStepSemantics(
-    String position,
-    String action,
-    String subject,
-  ) {
+  String gitUiRebaseStepSemantics(String position, String action, String subject) {
     return '$position, $action, $subject';
   }
 
@@ -16776,8 +16105,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
-      'Git 操作适用于整个仓库, 并可以执行配置的钩子、 过滤器、 证书和签名工具 。';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'Git 操作适用于整个仓库, 并可以执行配置的钩子、 过滤器、 证书和签名工具 。';
 
   @override
   String get gitHostContentUnavailable => '无内容';
@@ -16847,8 +16175,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiDiscardUnsavedIndexDraft => '丢弃未保存的索引草稿？';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
-      '关闭索引编辑器只会丢弃草稿。索引和工作文件不会更改。';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => '关闭索引编辑器只会丢弃草稿。索引和工作文件不会更改。';
 
   @override
   String get gitUiDiscardIndexDraft => '丢弃索引草稿';
@@ -16857,8 +16184,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiDiscardUnsavedConflictDraft => '放弃未保存的冲突解决结果？';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
-      '关闭冲突编辑器只会放弃未保存的结果草稿。已保存的工作内容和索引保持不变。';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => '关闭冲突编辑器只会放弃未保存的结果草稿。已保存的工作内容和索引保持不变。';
 
   @override
   String get gitUiDiscardConflictDraft => '放弃冲突草稿';
@@ -16923,8 +16249,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiIgnoreRightRegion => '忽略右侧建议';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved =>
-      '已将提交的草稿写入索引。较新的文本仍保留在此编辑器中。应用前请重新加载并检查当前版本。';
+  String get gitUiIndexAppliedNewerDraftPreserved => '已将提交的草稿写入索引。较新的文本仍保留在此编辑器中。应用前请重新加载并检查当前版本。';
 
   @override
   String get gitUiNewerConflictDraftRetained => '提交的结果已保存。较新的结果草稿仍未保存。';
@@ -16936,8 +16261,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiReviewSavedIndexAndKeepDraft => '检查已保存的索引并保留草稿';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply =>
-      '已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。';
+  String get gitUiIndexSourcesChangedSinceApply => '已保存的索引或其源内容已更改。较新的草稿已保留；应用前请单独检查这些更改。';
 
   @override
   String get gitUiReviewSavedMessage => '查看已保存的消息';
@@ -16952,15 +16276,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiUseSavedMessage => '使用已保存的消息';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow =>
-      '此消息已在另一个窗口中更改。请先查看已保存的消息，再进行替换。';
+  String get gitUiCommitDraftChangedInAnotherWindow => '此消息已在另一个窗口中更改。请先查看已保存的消息，再进行替换。';
 
   @override
   String get gitUiDiscardUnsavedCommitMessages => '丢弃未保存的提交消息？';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
-      '无法保存的消息仍保留在此窗口中。丢弃这些消息不会更改已保存的版本。';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => '无法保存的消息仍保留在此窗口中。丢弃这些消息不会更改已保存的版本。';
 
   @override
   String get gitUiDiscardCommitMessages => '丢弃消息';
@@ -16978,11 +16300,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitWorkspaceRootRequired => '请打开仓库工作树的根目录，以在此工作区使用 Git。';
 
   @override
-  String gitLocalTrackingDescription(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
     return '$upstream · 领先 $ahead，落后 $behind。本地已知的远程跟踪信息；并非实时服务器检查。';
   }
 

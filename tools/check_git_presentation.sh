@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 python3 tools/checkout_shared_dependencies.py --check
 (cd ../busystack_git_flutter && dart run tool/test_native_presentation_audit.dart && dart run tool/check_native_presentation.dart lib/src ../busymark/lib/src/git --host-source ../busymark/lib/src/app/busymark_design.dart --host-root BusyMarkGitPresentation --host-root BusyMarkGitDialogShell)
 
-(cd tools/git_ui_audit && dart pub get --offline --enforce-lockfile && dart run bin/check.dart --self-test && dart run bin/check.dart)
+(cd tools/git_ui_audit && dart pub get --offline --enforce-lockfile && dart run bin/check.dart --self-test && dart run bin/check.dart && dart run bin/check_sidebar.dart --self-test && dart run bin/check_sidebar.dart)
 
 # Resolved source compliance is paired with actual host geometry/state checks.
-flutter test --no-pub test/src/git/native_presentation_contract_test.dart test/src/git/log_comparison_native_test.dart
+flutter test --no-pub test/src/git/native_presentation_contract_test.dart test/src/git/log_comparison_native_test.dart test/src/sidebar_native_contract_test.dart

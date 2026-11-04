@@ -103,7 +103,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
           browsingDocuments: state.browsingDocuments,
           inspectingRetainedDocument: state.inspectingRetainedDocument,
           onBack: () => unawaited(_selectActive(preserveLookup: false)),
-          actions: BusyMarkHeaderPopupMenuButton<_HistoryAction>(
+          actions: BusyMarkHeaderPopupMenuButton<_HistoryAction>.native(
             key: const ValueKey('local-history-actions-menu'),
             tooltip: context.l10n.actions,
             icon: BusyMarkGlyphs.menuVertical,

@@ -14,130 +14,100 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesNewFromRetainedText => 'Ghi chú mới từ văn bản được giữ lại';
 
   @override
-  String get notesAccountThrottled =>
-      'Nextcloud yêu cầu tạm dừng. Hãy đợi trước khi đăng nhập lại.';
+  String get notesAccountThrottled => 'Nextcloud yêu cầu tạm dừng. Hãy đợi trước khi đăng nhập lại.';
 
   @override
-  String get notesSettingsRefreshing =>
-      'Đang làm mới Notes sau khi xác nhận cài đặt';
+  String get notesSettingsRefreshing => 'Đang làm mới Notes sau khi xác nhận cài đặt';
 
   @override
-  String get notesExportOperationFailed =>
-      'Xuất thất bại trước khi công bố. Kiểm tra nguồn và đích rồi xuất lại.';
+  String get notesExportOperationFailed => 'Xuất thất bại trước khi công bố. Kiểm tra nguồn và đích rồi xuất lại.';
 
   @override
-  String get notesRecoveryCreatedNotOpened =>
-      'Ghi chú khôi phục đã được lưu nhưng không mở được. Giải quyết thay đổi đang chờ trong trình soạn thảo hoặc thuộc tính rồi mở ghi chú hiện có này.';
+  String get notesRecoveryCreatedNotOpened => 'Ghi chú khôi phục đã được lưu nhưng không mở được. Giải quyết thay đổi đang chờ trong trình soạn thảo hoặc thuộc tính rồi mở ghi chú hiện có này.';
 
   @override
-  String get notesSettingsPendingNotes =>
-      'Ghi chú đang chờ, xung đột hoặc lần tạo chưa rõ kết quả đang chặn thay đổi. Đồng bộ hoặc xem xét trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
+  String get notesSettingsPendingNotes => 'Ghi chú đang chờ, xung đột hoặc lần tạo chưa rõ kết quả đang chặn thay đổi. Đồng bộ hoặc xem xét trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
 
   @override
-  String get notesSettingsPendingAttachments =>
-      'Thao tác tệp đính kèm đang chờ đang chặn thay đổi. Xem xét tệp đính kèm trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
+  String get notesSettingsPendingAttachments => 'Thao tác tệp đính kèm đang chờ đang chặn thay đổi. Xem xét tệp đính kèm trong Notes rồi lưu lại bản nháp cài đặt được giữ.';
 
   @override
-  String get notesAccountServerAddress =>
-      'Dùng địa chỉ HTTPS chuẩn của Nextcloud rồi đăng nhập lại. Không thể xác minh địa chỉ hoặc chuyển hướng.';
+  String get notesAccountServerAddress => 'Dùng địa chỉ HTTPS chuẩn của Nextcloud rồi đăng nhập lại. Không thể xác minh địa chỉ hoặc chuyển hướng.';
 
   @override
-  String get notesAccountUnsupported =>
-      'Notes không khả dụng hoặc API không được hỗ trợ. Bật Nextcloud Notes với API phiên bản chính 1, phụ từ 4 trở lên.';
+  String get notesAccountUnsupported => 'Notes không khả dụng hoặc API không được hỗ trợ. Bật Nextcloud Notes với API phiên bản chính 1, phụ từ 4 trở lên.';
 
   @override
-  String get notesAccountAuthorizeAgain =>
-      'Nextcloud từ chối thông tin xác thực. Cấp quyền lại hoặc kết nối lại tài khoản.';
+  String get notesAccountAuthorizeAgain => 'Nextcloud từ chối thông tin xác thực. Cấp quyền lại hoặc kết nối lại tài khoản.';
 
   @override
-  String get notesAccountCheckForbidden =>
-      'Nextcloud cấm kiểm tra khả năng Notes. Nhờ quản trị viên cho phép rồi thử lại.';
+  String get notesAccountCheckForbidden => 'Nextcloud cấm kiểm tra khả năng Notes. Nhờ quản trị viên cho phép rồi thử lại.';
 
   @override
-  String get notesAccountMalformed =>
-      'Không thể xác minh phản hồi Nextcloud. Kiểm tra cài đặt máy chủ rồi đăng nhập lại.';
+  String get notesAccountMalformed => 'Không thể xác minh phản hồi Nextcloud. Kiểm tra cài đặt máy chủ rồi đăng nhập lại.';
 
   @override
-  String get notesAccountTimedOut =>
-      'Đăng nhập hết thời gian. Bắt đầu lại và hoàn tất cấp quyền trong trình duyệt.';
+  String get notesAccountTimedOut => 'Đăng nhập hết thời gian. Bắt đầu lại và hoàn tất cấp quyền trong trình duyệt.';
 
   @override
-  String get notesAccountBrowserUnavailable =>
-      'Không mở được trình duyệt hệ thống. Kiểm tra trình duyệt mặc định rồi đăng nhập lại.';
+  String get notesAccountBrowserUnavailable => 'Không mở được trình duyệt hệ thống. Kiểm tra trình duyệt mặc định rồi đăng nhập lại.';
 
   @override
-  String get notesAccountNetwork =>
-      'Không thể kết nối Nextcloud. Kiểm tra kết nối và máy chủ rồi đăng nhập lại.';
+  String get notesAccountNetwork => 'Không thể kết nối Nextcloud. Kiểm tra kết nối và máy chủ rồi đăng nhập lại.';
 
   @override
-  String get notesAccountRejected =>
-      'Nextcloud từ chối yêu cầu khả năng. Kiểm tra quyền truy cập với quản trị viên rồi thử lại.';
+  String get notesAccountRejected => 'Nextcloud từ chối yêu cầu khả năng. Kiểm tra quyền truy cập với quản trị viên rồi thử lại.';
 
   @override
-  String get notesAccountFailed =>
-      'Không hoàn tất thiết lập tài khoản. Hãy đăng nhập lại.';
+  String get notesAccountFailed => 'Không hoàn tất thiết lập tài khoản. Hãy đăng nhập lại.';
 
   @override
-  String get notesTransferSourceChanged =>
-      'Nguồn đã đổi sau khi xem xét. Xem xét tệp hiện tại hoặc tạo ảnh chụp mới trước khi thử lại.';
+  String get notesTransferSourceChanged => 'Nguồn đã đổi sau khi xem xét. Xem xét tệp hiện tại hoặc tạo ảnh chụp mới trước khi thử lại.';
 
   @override
-  String get notesTransferUnreadable =>
-      'Không thể đọc nguồn. Kiểm tra quyền truy cập tệp hoặc thư mục rồi xem xét lại.';
+  String get notesTransferUnreadable => 'Không thể đọc nguồn. Kiểm tra quyền truy cập tệp hoặc thư mục rồi xem xét lại.';
 
   @override
-  String get notesTransferInvalidSnapshot =>
-      'Ảnh chụp không hợp lệ hoặc không được hỗ trợ. Chọn ảnh chụp BusyMark Notes hợp lệ hoặc nguồn Markdown.';
+  String get notesTransferInvalidSnapshot => 'Ảnh chụp không hợp lệ hoặc không được hỗ trợ. Chọn ảnh chụp BusyMark Notes hợp lệ hoặc nguồn Markdown.';
 
   @override
-  String get notesTransferMediaLimit =>
-      'Nội dung đa phương tiện vượt giới hạn nhập. Giảm kích thước của mục liên quan rồi xem xét lại.';
+  String get notesTransferMediaLimit => 'Nội dung đa phương tiện vượt giới hạn nhập. Giảm kích thước của mục liên quan rồi xem xét lại.';
 
   @override
-  String get notesTransferUnsafeSource =>
-      'Nguồn chứa đường dẫn không an toàn. Chọn tệp trong thư mục nguồn rồi xem xét lại.';
+  String get notesTransferUnsafeSource => 'Nguồn chứa đường dẫn không an toàn. Chọn tệp trong thư mục nguồn rồi xem xét lại.';
 
   @override
-  String get notesTransferDestination =>
-      'Không thể ghi bản xuất. Kiểm tra quyền truy cập và chỗ trống ở đích rồi xuất lại.';
+  String get notesTransferDestination => 'Không thể ghi bản xuất. Kiểm tra quyền truy cập và chỗ trống ở đích rồi xuất lại.';
 
   @override
-  String get notesTransferOperationFailed =>
-      'Không hoàn tất truyền. Xem xét các mục liên quan rồi thử lại. Các mục đã nhập vẫn được lưu.';
+  String get notesTransferOperationFailed => 'Không hoàn tất truyền. Xem xét các mục liên quan rồi thử lại. Các mục đã nhập vẫn được lưu.';
 
   @override
-  String get notesExportPublishedWithOmissions =>
-      'Bản xuất có sẵn nhưng có mục bị bỏ qua';
+  String get notesExportPublishedWithOmissions => 'Bản xuất có sẵn nhưng có mục bị bỏ qua';
 
   @override
   String get notesBatchUnchanged => 'Các giá trị yêu cầu đã được đặt.';
 
   @override
-  String get notesBatchReadOnly =>
-      'Ghi chú này chỉ đọc. Không thể sửa thuộc tính được bảo vệ; vẫn có thể đổi Yêu thích.';
+  String get notesBatchReadOnly => 'Ghi chú này chỉ đọc. Không thể sửa thuộc tính được bảo vệ; vẫn có thể đổi Yêu thích.';
 
   @override
-  String get notesBatchReviewChanged =>
-      'Ghi chú đã đổi sau khi xem xét. Xem xét trạng thái hiện tại trước khi thực hiện lại.';
+  String get notesBatchReviewChanged => 'Ghi chú đã đổi sau khi xem xét. Xem xét trạng thái hiện tại trước khi thực hiện lại.';
 
   @override
-  String get notesBatchMissing =>
-      'Ghi chú không còn khả dụng. Làm mới danh sách rồi xem xét lại các mục đích.';
+  String get notesBatchMissing => 'Ghi chú không còn khả dụng. Làm mới danh sách rồi xem xét lại các mục đích.';
 
   @override
-  String get notesBatchStorage =>
-      'Lưu cục bộ thất bại. Kiểm tra bộ nhớ rồi thử lại mục này; các mục thành công vẫn được lưu.';
+  String get notesBatchStorage => 'Lưu cục bộ thất bại. Kiểm tra bộ nhớ rồi thử lại mục này; các mục thành công vẫn được lưu.';
 
   @override
-  String get notesRemoteReviewChanged =>
-      'Ghi chú trên máy chủ đã đổi. Bản nháp hợp nhất được giữ. Xem xét so sánh mới rồi chọn lại cách giải quyết.';
+  String get notesRemoteReviewChanged => 'Ghi chú trên máy chủ đã đổi. Bản nháp hợp nhất được giữ. Xem xét so sánh mới rồi chọn lại cách giải quyết.';
 
   @override
   String get notesReviewRemote => 'Tôi đã xem xét phiên bản máy chủ hiện tại';
 
   @override
-  String get wsModuleCapsNotPublished =>
-      'Quy tắc viết hoa của mô-đun không được xuất bản.';
+  String get wsModuleCapsNotPublished => 'Quy tắc viết hoa của mô-đun không được xuất bản.';
 
   @override
   String get wsTitleOverridesAction => 'Tiêu đề phiên bản và mục lục…';
@@ -146,8 +116,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsHeadingNotPublished => 'Trình dựng này không xuất bản.';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation =>
-      'Builder cố định không xuất bản tiêu đề phiên bản trong chủ đề Markdown. Giữ nguyên đánh dấu hiện có; kiểm tra trong Nguồn.';
+  String get wsMarkdownInstanceTitleLimitation => 'Builder cố định không xuất bản tiêu đề phiên bản trong chủ đề Markdown. Giữ nguyên đánh dấu hiện có; kiểm tra trong Nguồn.';
 
   @override
   String get wsTopicIdentity => 'ID chủ đề';
@@ -174,26 +143,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsSettingsPresent => 'Có thiết lập được ghi rõ';
 
   @override
-  String get wsTitleOverrideExplanation =>
-      'Ghi đè tiêu đề xuất bản; văn bản tiêu đề không đổi.';
+  String get wsTitleOverrideExplanation => 'Ghi đè tiêu đề xuất bản; văn bản tiêu đề không đổi.';
 
   @override
   String get wsIgnoreVariables => 'Xử lý biến như văn bản nguyên dạng';
 
   @override
-  String get wsIgnoreVariablesExplanation =>
-      'Khi bật, văn bản giống biến không được thay thế.';
+  String get wsIgnoreVariablesExplanation => 'Khi bật, văn bản giống biến không được thay thế.';
 
   @override
   String get wsInstanceSelection => 'Phiên bản trợ giúp';
 
   @override
-  String get wsInstanceExplanation =>
-      'Chọn đầu ra theo tên, nhóm, danh sách, loại trừ hoặc biểu thức.';
+  String get wsInstanceExplanation => 'Chọn đầu ra theo tên, nhóm, danh sách, loại trừ hoặc biểu thức.';
 
   @override
-  String get wsFilterExplanation =>
-      'Lọc nội dung tái sử dụng theo tiêu chí; không chọn phiên bản trợ giúp.';
+  String get wsFilterExplanation => 'Lọc nội dung tái sử dụng theo tiêu chí; không chọn phiên bản trợ giúp.';
 
   @override
   String get wsContextHelp => 'ID trợ giúp ngữ cảnh';
@@ -211,24 +176,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsMissingTopicHeading => 'Chưa có H1 chủ đề. Thêm trong Nguồn.';
 
   @override
-  String get wsMultipleTopicHeadings =>
-      'H1 đầu tiên xác định tiêu đề chủ đề. Các H1 sau là tiêu đề riêng.';
+  String get wsMultipleTopicHeadings => 'H1 đầu tiên xác định tiêu đề chủ đề. Các H1 sau là tiêu đề riêng.';
 
   @override
-  String get wsTopicIdentityMismatch =>
-      'id gốc khác ID theo tên tệp. Dùng Đổi tên tệp chủ đề hoặc kiểm tra Nguồn.';
+  String get wsTopicIdentityMismatch => 'id gốc khác ID theo tên tệp. Dùng Đổi tên tệp chủ đề hoặc kiểm tra Nguồn.';
 
   @override
-  String get wsUnsupportedProperties =>
-      'Thuộc tính không hỗ trợ được giữ lại. Kiểm tra trong Nguồn.';
+  String get wsUnsupportedProperties => 'Thuộc tính không hỗ trợ được giữ lại. Kiểm tra trong Nguồn.';
 
   @override
-  String get wsGeneratedAnchor =>
-      'Neo được tạo tự động; nhập giá trị để ghi đè.';
+  String get wsGeneratedAnchor => 'Neo được tạo tự động; nhập giá trị để ghi đè.';
 
   @override
-  String get wsHeadingBuilderLimitation =>
-      'Builder cố định không xuất bản thuộc tính H1. Chúng thuộc tiêu đề, không thuộc gốc XML.';
+  String get wsHeadingBuilderLimitation => 'Builder cố định không xuất bản thuộc tính H1. Chúng thuộc tiêu đề, không thuộc gốc XML.';
 
   @override
   String get closeOtherTabs => 'Đóng các thẻ khác';
@@ -285,20 +245,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get tocTemplateExtension => 'Phần mở rộng:';
 
   @override
-  String get tocTemplateLoadError =>
-      'Không thể tải mẫu. Các mẫu hiện có không bị thay đổi.';
+  String get tocTemplateLoadError => 'Không thể tải mẫu. Các mẫu hiện có không bị thay đổi.';
 
   @override
-  String get tocTemplateSaveError =>
-      'Không thể lưu mẫu. Các chỉnh sửa của bạn vẫn còn ở đây.';
+  String get tocTemplateSaveError => 'Không thể lưu mẫu. Các chỉnh sửa của bạn vẫn còn ở đây.';
 
   @override
-  String get tocTemplateConflict =>
-      'Mẫu đã thay đổi trong cửa sổ khác. Hãy hủy và mở lại trình chỉnh sửa.';
+  String get tocTemplateConflict => 'Mẫu đã thay đổi trong cửa sổ khác. Hãy hủy và mở lại trình chỉnh sửa.';
 
   @override
-  String get tocTemplateDuplicateName =>
-      'Đã có mẫu với tên và phần mở rộng này.';
+  String get tocTemplateDuplicateName => 'Đã có mẫu với tên và phần mở rộng này.';
 
   @override
   String get tocTemplateFormat => 'Định dạng:';
@@ -315,15 +271,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get tocRemoveElementsRetainFiles =>
-      'Các tệp nguồn liên kết với những phần tử mục lục này sẽ không bị xóa.';
+  String get tocRemoveElementsRetainFiles => 'Các tệp nguồn liên kết với những phần tử mục lục này sẽ không bị xóa.';
 
   @override
   String get tocOk => 'OK';
 
   @override
-  String get tocSelectExistingTopic =>
-      'Chọn chủ đề để thêm vào phiên bản hiện tại';
+  String get tocSelectExistingTopic => 'Chọn chủ đề để thêm vào phiên bản hiện tại';
 
   @override
   String get tocGroupName => 'Tên nhóm';
@@ -429,12 +383,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get tocOnlyTitleField => 'Tiêu đề chỉ dành cho mục lục:';
 
   @override
-  String get tocInstanceTitleExplanation =>
-      'Chỉ dùng cho thực thể hiện tại. Theo mặc định, kế thừa từ tiêu đề chủ đề.';
+  String get tocInstanceTitleExplanation => 'Chỉ dùng cho thực thể hiện tại. Theo mặc định, kế thừa từ tiêu đề chủ đề.';
 
   @override
-  String get tocOnlyTitleExplanation =>
-      'Chỉ dùng trong mục lục. Theo mặc định, kế thừa từ tiêu đề chủ đề hoặc tiêu đề riêng của thực thể nếu đã đặt. Phần giải thích về tiêu đề có';
+  String get tocOnlyTitleExplanation => 'Chỉ dùng trong mục lục. Theo mặc định, kế thừa từ tiêu đề chủ đề hoặc tiêu đề riêng của thực thể nếu đã đặt. Phần giải thích về tiêu đề có';
 
   @override
   String get tocTitleDocumentationLink => 'tại đây';
@@ -464,8 +416,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pdfIncludeTitlePage => 'Bao gồm trang tiêu đề';
 
   @override
-  String get pdfTitlePageNote =>
-      'Trang này không có đầu trang, chân trang hoặc số trang hiển thị.';
+  String get pdfTitlePageNote => 'Trang này không có đầu trang, chân trang hoặc số trang hiển thị.';
 
   @override
   String get pdfTitlePageTitle => 'Tiêu đề';
@@ -489,15 +440,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pdfTitlePageTitleRequired => 'Nhập tiêu đề cho trang tiêu đề.';
 
   @override
-  String get pdfTocSectionNote =>
-      'Bắt đầu trên trang riêng và có thể kéo dài nhiều trang.';
+  String get pdfTocSectionNote => 'Bắt đầu trên trang riêng và có thể kéo dài nhiều trang.';
 
   @override
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle =>
-      'Trình biên tập tệp Markdown và các dự án tài liệu tương thích với Writerside.';
+  String get appSubtitle => 'Trình biên tập tệp Markdown và các dự án tài liệu tương thích với Writerside.';
 
   @override
   String get aboutBusyMark => 'Giới thiệu BusyMark';
@@ -533,8 +482,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get feedbackCategoryFeature => 'Đề xuất tính năng';
 
   @override
-  String get feedbackCategoryPrivacySecurity =>
-      'Mối lo ngại về quyền riêng tư hoặc bảo mật';
+  String get feedbackCategoryPrivacySecurity => 'Mối lo ngại về quyền riêng tư hoặc bảo mật';
 
   @override
   String get feedbackCategoryUsability => 'Mối lo ngại về khả năng sử dụng';
@@ -555,8 +503,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get feedbackIncludeTechnicalDetails => 'Bao gồm thông tin kỹ thuật';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure =>
-      'Khi bật, tùy chọn này chỉ thêm phiên bản hệ điều hành Linux và ngôn ngữ của ứng dụng BusyMark. Không có nhật ký, tệp, dữ liệu tài khoản hoặc thông tin chẩn đoán nào khác được đính kèm.';
+  String get feedbackTechnicalDetailsDisclosure => 'Khi bật, tùy chọn này chỉ thêm phiên bản hệ điều hành Linux và ngôn ngữ của ứng dụng BusyMark. Không có nhật ký, tệp, dữ liệu tài khoản hoặc thông tin chẩn đoán nào khác được đính kèm.';
 
   @override
   String get feedbackSubmit => 'Gửi';
@@ -574,28 +521,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get feedbackMessageLength => 'Nội dung phải có từ 10 đến 5.000 ký tự.';
 
   @override
-  String get feedbackReplyEmailInvalid =>
-      'Nhập địa chỉ email hợp lệ hoặc để trống trường này.';
+  String get feedbackReplyEmailInvalid => 'Nhập địa chỉ email hợp lệ hoặc để trống trường này.';
 
   @override
-  String get feedbackConnectionFailure =>
-      'BusyMark không thể kết nối. Hãy kiểm tra kết nối Internet rồi thử lại.';
+  String get feedbackConnectionFailure => 'BusyMark không thể kết nối. Hãy kiểm tra kết nối Internet rồi thử lại.';
 
   @override
-  String get feedbackTimeoutFailure =>
-      'Yêu cầu đã hết thời gian chờ. Hãy thử lại.';
+  String get feedbackTimeoutFailure => 'Yêu cầu đã hết thời gian chờ. Hãy thử lại.';
 
   @override
-  String get feedbackRateLimitedFailure =>
-      'Quá nhiều báo cáo đã được gửi từ kết nối này. Hãy chờ rồi thử lại.';
+  String get feedbackRateLimitedFailure => 'Quá nhiều báo cáo đã được gửi từ kết nối này. Hãy chờ rồi thử lại.';
 
   @override
-  String get feedbackRejectedFailure =>
-      'Máy chủ đã từ chối báo cáo này. Hãy kiểm tra các trường trong biểu mẫu rồi thử lại.';
+  String get feedbackRejectedFailure => 'Máy chủ đã từ chối báo cáo này. Hãy kiểm tra các trường trong biểu mẫu rồi thử lại.';
 
   @override
-  String get feedbackServerFailure =>
-      'Máy chủ không thể tiếp nhận báo cáo. Hãy thử lại sau.';
+  String get feedbackServerFailure => 'Máy chủ không thể tiếp nhận báo cáo. Hãy thử lại sau.';
 
   @override
   String feedbackSuccess(String id) {
@@ -639,8 +580,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get copyPlainText => 'Sao chép dưới dạng văn bản thuần';
 
   @override
-  String get clipboardCopyFailed =>
-      'Không thể sao chép nội dung đã chọn vào bảng nhớ tạm.';
+  String get clipboardCopyFailed => 'Không thể sao chép nội dung đã chọn vào bảng nhớ tạm.';
 
   @override
   String get copyName => 'Sao chép tên';
@@ -708,8 +648,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get keyboardShortcuts => 'Phím tắt';
 
   @override
-  String get commandUnavailableInContext =>
-      'Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại';
+  String get commandUnavailableInContext => 'Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại';
 
   @override
   String get lightTheme => 'Sáng';
@@ -889,19 +828,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get markdownFileExtensions => '.md hoặc .markdown';
 
   @override
-  String get openFolderOrWritersideProject =>
-      'Mở thư mục hoặc dự án Writerside';
+  String get openFolderOrWritersideProject => 'Mở thư mục hoặc dự án Writerside';
 
   @override
-  String get markdownFolderOrWritersideProject =>
-      'Thư mục Markdown hoặc dự án tương thích với Writerside';
+  String get markdownFolderOrWritersideProject => 'Thư mục Markdown hoặc dự án tương thích với Writerside';
 
   @override
   String get noOpenFile => 'Không có tệp nào đang mở';
 
   @override
-  String get shortcutDeleteTreeItemDescription =>
-      'Xóa mục Tệp đã chọn hoặc xóa chủ đề đã chọn khỏi mục lục';
+  String get shortcutDeleteTreeItemDescription => 'Xóa mục Tệp đã chọn hoặc xóa chủ đề đã chọn khỏi mục lục';
 
   @override
   String get shortcutGroupGeneral => 'Chung';
@@ -910,23 +846,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutNewDocument => 'Tạo';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Tạo tệp Markdown hoặc dự án Writerside';
+  String get shortcutNewDocumentDescription => 'Tạo tệp Markdown hoặc dự án Writerside';
 
   @override
-  String get shortcutOpenDescription =>
-      'Mở tệp Markdown, thư mục hoặc dự án Writerside';
+  String get shortcutOpenDescription => 'Mở tệp Markdown, thư mục hoặc dự án Writerside';
 
   @override
   String get shortcutSaveDescription => 'Lưu tài liệu hiện tại';
 
   @override
-  String get shortcutSearchDescription =>
-      'Tìm kiếm trong không gian làm việc hiện tại';
+  String get shortcutSearchDescription => 'Tìm kiếm trong không gian làm việc hiện tại';
 
   @override
-  String get shortcutKeyboardShortcutsDescription =>
-      'Tùy chỉnh phím tắt của ứng dụng';
+  String get shortcutKeyboardShortcutsDescription => 'Tùy chỉnh phím tắt của ứng dụng';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Mở tham chiếu cú pháp';
@@ -944,8 +876,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutPreviousTab => 'Tab trước';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Chuyển đến tab đang mở trước đó';
+  String get shortcutPreviousTabDescription => 'Chuyển đến tab đang mở trước đó';
 
   @override
   String get shortcutCloseTab => 'Đóng tab';
@@ -963,8 +894,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutGroupTextEditing => 'Chỉnh sửa văn bản';
 
   @override
-  String get shortcutSelectAllDescription =>
-      'Trong chế độ Mã nguồn, chọn toàn bộ văn bản; trong chế độ Trình biên tập, nhấn hai lần để chọn mọi khối';
+  String get shortcutSelectAllDescription => 'Trong chế độ Mã nguồn, chọn toàn bộ văn bản; trong chế độ Trình biên tập, nhấn hai lần để chọn mọi khối';
 
   @override
   String get shortcutCutDescription => 'Cắt văn bản đã chọn';
@@ -976,8 +906,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutPasteDescription => 'Dán từ bảng nhớ tạm';
 
   @override
-  String get shortcutPastePlainTextDescription =>
-      'Dán văn bản trong bảng nhớ tạm không định dạng';
+  String get shortcutPastePlainTextDescription => 'Dán văn bản trong bảng nhớ tạm không định dạng';
 
   @override
   String get shortcutUndoDescription => 'Hoàn tác chỉnh sửa gần nhất';
@@ -989,48 +918,40 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutInsertIndentation => 'Chèn thụt lề';
 
   @override
-  String get shortcutInsertIndentationDescription =>
-      'Chèn thụt lề tại vị trí con trỏ';
+  String get shortcutInsertIndentationDescription => 'Chèn thụt lề tại vị trí con trỏ';
 
   @override
   String get shortcutOutdentSource => 'Bỏ thụt lề mã nguồn';
 
   @override
-  String get shortcutOutdentSourceDescription =>
-      'Xóa một cấp thụt lề trong chế độ Mã nguồn';
+  String get shortcutOutdentSourceDescription => 'Xóa một cấp thụt lề trong chế độ Mã nguồn';
 
   @override
   String get shortcutEscape => 'Đóng tìm kiếm hoặc xóa lựa chọn khối';
 
   @override
-  String get shortcutEscapeDescription =>
-      'Đóng tìm kiếm trong không gian làm việc hoặc xóa lựa chọn khối trong chế độ Trình biên tập';
+  String get shortcutEscapeDescription => 'Đóng tìm kiếm trong không gian làm việc hoặc xóa lựa chọn khối trong chế độ Trình biên tập';
 
   @override
   String get shortcutGroupFormatting => 'Định dạng';
 
   @override
-  String get shortcutBoldDescription =>
-      'Bật hoặc tắt chữ đậm cho văn bản đã chọn';
+  String get shortcutBoldDescription => 'Bật hoặc tắt chữ đậm cho văn bản đã chọn';
 
   @override
-  String get shortcutItalicDescription =>
-      'Bật hoặc tắt chữ nghiêng cho văn bản đã chọn';
+  String get shortcutItalicDescription => 'Bật hoặc tắt chữ nghiêng cho văn bản đã chọn';
 
   @override
-  String get shortcutUnderlineDescription =>
-      'Bật hoặc tắt gạch chân cho văn bản đã chọn';
+  String get shortcutUnderlineDescription => 'Bật hoặc tắt gạch chân cho văn bản đã chọn';
 
   @override
   String get shortcutLinkDescription => 'Chèn hoặc chỉnh sửa liên kết';
 
   @override
-  String get shortcutInlineCodeDescription =>
-      'Bật hoặc tắt mã nội tuyến cho văn bản đã chọn';
+  String get shortcutInlineCodeDescription => 'Bật hoặc tắt mã nội tuyến cho văn bản đã chọn';
 
   @override
-  String get shortcutStrikethroughDescription =>
-      'Bật hoặc tắt gạch ngang cho văn bản đã chọn';
+  String get shortcutStrikethroughDescription => 'Bật hoặc tắt gạch ngang cho văn bản đã chọn';
 
   @override
   String get shortcutGroupBlocks => 'Khối';
@@ -1063,22 +984,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get numberedList => 'Danh sách đánh số';
 
   @override
-  String get shortcutNumberedListDescription =>
-      'Bật hoặc tắt định dạng danh sách đánh số';
+  String get shortcutNumberedListDescription => 'Bật hoặc tắt định dạng danh sách đánh số';
 
   @override
   String get bulletedList => 'Danh sách dấu đầu dòng';
 
   @override
-  String get shortcutBulletedListDescription =>
-      'Bật hoặc tắt định dạng danh sách dấu đầu dòng';
+  String get shortcutBulletedListDescription => 'Bật hoặc tắt định dạng danh sách dấu đầu dòng';
 
   @override
   String get checklist => 'Danh sách kiểm tra';
 
   @override
-  String get shortcutChecklistDescription =>
-      'Bật hoặc tắt định dạng danh sách kiểm tra';
+  String get shortcutChecklistDescription => 'Bật hoặc tắt định dạng danh sách kiểm tra';
 
   @override
   String get shortcutGroupSidebar => 'Thanh bên';
@@ -1090,15 +1008,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get createMarkdownFile => 'Tạo tệp Markdown';
 
   @override
-  String get createMarkdownFileDescription =>
-      'Bắt đầu một tài liệu Markdown cục bộ chưa lưu';
+  String get createMarkdownFileDescription => 'Bắt đầu một tài liệu Markdown cục bộ chưa lưu';
 
   @override
   String get createWritersideProject => 'Tạo dự án Writerside';
 
   @override
-  String get createWritersideProjectDescription =>
-      'Bắt đầu một dự án tương thích với Writerside trên máy';
+  String get createWritersideProjectDescription => 'Bắt đầu một dự án tương thích với Writerside trên máy';
 
   @override
   String get defaultProjectName => 'Tài liệu';
@@ -1134,12 +1050,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get directoryNameRequired => 'Tên thư mục là bắt buộc.';
 
   @override
-  String get useSingleSafeDirectoryName =>
-      'Sử dụng một tên thư mục an toàn duy nhất.';
+  String get useSingleSafeDirectoryName => 'Sử dụng một tên thư mục an toàn duy nhất.';
 
   @override
-  String get useLowercaseIdentifier =>
-      'Sử dụng mã định danh viết thường, chỉ gồm chữ cái, chữ số, dấu gạch dưới hoặc dấu gạch nối.';
+  String get useLowercaseIdentifier => 'Sử dụng mã định danh viết thường, chỉ gồm chữ cái, chữ số, dấu gạch dưới hoặc dấu gạch nối.';
 
   @override
   String get startTopicTitleRequired => 'Tiêu đề chủ đề bắt đầu là bắt buộc.';
@@ -1154,15 +1068,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get autoSave => 'Tự động lưu';
 
   @override
-  String get autoSaveDescription =>
-      'Tự động lưu các thay đổi của tệp sau một khoảng thời gian ngắn không hoạt động.';
+  String get autoSaveDescription => 'Tự động lưu các thay đổi của tệp sau một khoảng thời gian ngắn không hoạt động.';
 
   @override
   String get wordWrap => 'Tự động xuống dòng';
 
   @override
-  String get wordWrapDescription =>
-      'Ngắt các dòng dài cho vừa chiều rộng trình biên tập thay vì cuộn ngang.';
+  String get wordWrapDescription => 'Ngắt các dòng dài cho vừa chiều rộng trình biên tập thay vì cuộn ngang.';
 
   @override
   String get editorFontSize => 'Cỡ chữ trình biên tập';
@@ -1177,15 +1089,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get editingButtonsPosition => 'Vị trí các nút chỉnh sửa';
 
   @override
-  String get editingButtonsPositionDescription =>
-      'Chọn nơi hiển thị các nút chỉnh sửa WYSIWYG nổi.';
+  String get editingButtonsPositionDescription => 'Chọn nơi hiển thị các nút chỉnh sửa WYSIWYG nổi.';
 
   @override
   String get editingButtonsDirection => 'Hướng của các nút chỉnh sửa';
 
   @override
-  String get editingButtonsDirectionDescription =>
-      'Chọn sắp xếp các nút chỉnh sửa WYSIWYG nổi theo chiều ngang hay chiều dọc.';
+  String get editingButtonsDirectionDescription => 'Chọn sắp xếp các nút chỉnh sửa WYSIWYG nổi theo chiều ngang hay chiều dọc.';
 
   @override
   String get horizontal => 'Ngang';
@@ -1200,23 +1110,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get allowRemoteImages => 'Tải hình ảnh từ xa';
 
   @override
-  String get allowRemoteImagesDescription =>
-      'Cho phép hình ảnh trong phần xem trước và trình biên tập Markdown được tải từ các URL http và https.';
+  String get allowRemoteImagesDescription => 'Cho phép hình ảnh trong phần xem trước và trình biên tập Markdown được tải từ các URL http và https.';
 
   @override
   String get clearRemoteImagePermissions => 'Xóa quyền hình ảnh từ xa';
 
   @override
-  String get clearRemoteImagePermissionsDescription =>
-      'Quên các không gian làm việc đã được cho phép tải hình ảnh từ xa.';
+  String get clearRemoteImagePermissionsDescription => 'Quên các không gian làm việc đã được cho phép tải hình ảnh từ xa.';
 
   @override
-  String get clearGitWorkspaceTrust =>
-      'Xóa các không gian làm việc Git đáng tin cậy';
+  String get clearGitWorkspaceTrust => 'Xóa các không gian làm việc Git đáng tin cậy';
 
   @override
-  String get clearGitWorkspaceTrustDescription =>
-      'Hỏi trước khi bật các tính năng Git cho những không gian làm việc đã từng được tin cậy.';
+  String get clearGitWorkspaceTrustDescription => 'Hỏi trước khi bật các tính năng Git cho những không gian làm việc đã từng được tin cậy.';
 
   @override
   String get settingsEditingButtonsSectionTitle => 'Nút chỉnh sửa';
@@ -1225,8 +1131,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get spellingDictionaries => 'Từ điển chính tả';
 
   @override
-  String get spellingDictionariesDescription =>
-      'Cài đặt và quản lý từ điển chính tả';
+  String get spellingDictionariesDescription => 'Cài đặt và quản lý từ điển chính tả';
 
   @override
   String get settingsDictionariesSectionTitle => 'Từ điển';
@@ -1244,37 +1149,30 @@ class AppLocalizationsVi extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Cửa sổ';
 
   @override
-  String get settingsReopenWorkspaceOnStartupTitle =>
-      'Mở lại không gian làm việc trước đó khi khởi động';
+  String get settingsReopenWorkspaceOnStartupTitle => 'Mở lại không gian làm việc trước đó khi khởi động';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription =>
-      'Mở không gian làm việc và các tab từ phiên trước khi BusyMark khởi động.';
+  String get settingsReopenWorkspaceOnStartupDescription => 'Mở không gian làm việc và các tab từ phiên trước khi BusyMark khởi động.';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesTitle =>
-      'Xác nhận trước khi đóng khi có thay đổi chưa lưu';
+  String get settingsConfirmCloseWithUnsavedChangesTitle => 'Xác nhận trước khi đóng khi có thay đổi chưa lưu';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      'Hỏi trước khi đóng BusyMark nếu tài liệu có thay đổi chưa lưu.';
+  String get settingsConfirmCloseWithUnsavedChangesDescription => 'Hỏi trước khi đóng BusyMark nếu tài liệu có thay đổi chưa lưu.';
 
   @override
   String get closeUnsavedChangesTitle => 'Thay đổi chưa lưu';
 
   @override
-  String get closeUnsavedChangesSingleMessage =>
-      'Tài liệu này có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?';
+  String get closeUnsavedChangesSingleMessage => 'Tài liệu này có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          '$count tài liệu có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?',
-      one:
-          '1 tài liệu có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?',
+      other: '$count tài liệu có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?',
+      one: '1 tài liệu có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?',
       zero: 'Lưu thay đổi trước khi đóng BusyMark?',
     );
     return '$_temp0';
@@ -1305,8 +1203,7 @@ class AppLocalizationsVi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          '$count tài liệu có thay đổi chưa lưu. Lưu các tài liệu trước khi tiếp tục?',
+      other: '$count tài liệu có thay đổi chưa lưu. Lưu các tài liệu trước khi tiếp tục?',
       one: '1 tài liệu có thay đổi chưa lưu. Lưu tài liệu trước khi tiếp tục?',
     );
     return '$_temp0';
@@ -1316,8 +1213,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get fileChangedOnDisk => 'Tệp đã thay đổi trên đĩa';
 
   @override
-  String get fileChangedOnDiskMessage =>
-      'Tệp này đã thay đổi trên đĩa kể từ khi bạn mở. Ghi đè tệp?';
+  String get fileChangedOnDiskMessage => 'Tệp này đã thay đổi trên đĩa kể từ khi bạn mở. Ghi đè tệp?';
 
   @override
   String get untitledMarkdownFileName => 'Chưa có tên.md';
@@ -1368,8 +1264,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get videoPreview => 'Xem trước video';
 
   @override
-  String get diagnosticWritersideVideoMissingSource =>
-      'Video thiếu thuộc tính src.';
+  String get diagnosticWritersideVideoMissingSource => 'Video thiếu thuộc tính src.';
 
   @override
   String diagnosticWritersideVideoUnsupportedSource(String source) {
@@ -1560,15 +1455,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get remoteImageBlocked => 'Hình ảnh từ xa bị chặn';
 
   @override
-  String get remoteImageBlockedTooltip =>
-      'Chọn xem BusyMark có thể tải hình ảnh từ xa hay không.';
+  String get remoteImageBlockedTooltip => 'Chọn xem BusyMark có thể tải hình ảnh từ xa hay không.';
 
   @override
   String get remoteImagesBlockedTitle => 'Hình ảnh từ xa bị chặn';
 
   @override
-  String get remoteImagesBlockedMessage =>
-      'Tài liệu này tham chiếu đến hình ảnh trên Internet. Việc tải chúng có thể tiết lộ thông tin mạng cho máy chủ lưu trữ hình ảnh.';
+  String get remoteImagesBlockedMessage => 'Tài liệu này tham chiếu đến hình ảnh trên Internet. Việc tải chúng có thể tiết lộ thông tin mạng cho máy chủ lưu trữ hình ảnh.';
 
   @override
   String get loadRemoteImagesForWorkspace => 'Tải cho không gian làm việc này';
@@ -1739,8 +1632,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get topicIsHomePageRemovalWarning =>
-      'Chủ đề này là trang chủ của thực thể này. Chọn trang chủ khác trước khi xóa chủ đề khỏi mục lục.';
+  String get topicIsHomePageRemovalWarning => 'Chủ đề này là trang chủ của thực thể này. Chọn trang chủ khác trước khi xóa chủ đề khỏi mục lục.';
 
   @override
   String get newHomePage => 'Trang chủ mới';
@@ -1749,12 +1641,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get chooseHomePage => 'Chọn trang chủ';
 
   @override
-  String get noHomePageReplacement =>
-      'Thêm hoặc liên kết một chủ đề hợp lệ khác vào thực thể này trước khi xóa trang chủ của nó.';
+  String get noHomePageReplacement => 'Thêm hoặc liên kết một chủ đề hợp lệ khác vào thực thể này trước khi xóa trang chủ của nó.';
 
   @override
-  String get topicIsStartPageRemovalWarning =>
-      'Chủ đề này là trang chủ của một thực thể. Chỉ định trang chủ khác trước khi xóa tệp nguồn của chủ đề.';
+  String get topicIsStartPageRemovalWarning => 'Chủ đề này là trang chủ của một thực thể. Chỉ định trang chủ khác trước khi xóa tệp nguồn của chủ đề.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1762,12 +1652,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get noBreakingTopicUsages =>
-      'Không tìm thấy tham chiếu nào có thể bị hỏng.';
+  String get noBreakingTopicUsages => 'Không tìm thấy tham chiếu nào có thể bị hỏng.';
 
   @override
-  String get topicUsagesFound =>
-      'BusyMark đã tìm thấy các tham chiếu sau đến chủ đề này.';
+  String get topicUsagesFound => 'BusyMark đã tìm thấy các tham chiếu sau đến chủ đề này.';
 
   @override
   String get topicUsageTocElements => 'Phần tử mục lục';
@@ -1799,26 +1687,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get updateUsagesAutomatically => 'Tự động cập nhật cách sử dụng';
 
   @override
-  String get updateUsagesAutomaticallyDescription =>
-      'Xóa các tham chiếu mục lục và nội dung bao gồm, đồng thời giữ nguyên văn bản liên kết.';
+  String get updateUsagesAutomaticallyDescription => 'Xóa các tham chiếu mục lục và nội dung bao gồm, đồng thời giữ nguyên văn bản liên kết.';
 
   @override
-  String get manualUsageUpdatesRequired =>
-      'Một số cách sử dụng cần được thay đổi thủ công trước khi thực hiện tái cấu trúc này.';
+  String get manualUsageUpdatesRequired => 'Một số cách sử dụng cần được thay đổi thủ công trước khi thực hiện tái cấu trúc này.';
 
   @override
   String get setRedirectTo => 'Đặt chuyển hướng đến:';
 
   @override
-  String get noRedirectDescription =>
-      'Không chuyển hướng trang đã xuất bản cũ.';
+  String get noRedirectDescription => 'Không chuyển hướng trang đã xuất bản cũ.';
 
   @override
   String get redirectTarget => 'Đích chuyển hướng';
 
   @override
-  String get remainingUsagesBlockRemoval =>
-      'Xem lại và cập nhật các cách sử dụng còn lại trước khi tiếp tục hoặc bật cập nhật tự động nếu có.';
+  String get remainingUsagesBlockRemoval => 'Xem lại và cập nhật các cách sử dụng còn lại trước khi tiếp tục hoặc bật cập nhật tự động nếu có.';
 
   @override
   String usagesOfTopic(String topic) {
@@ -1912,8 +1796,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get useIdentifierCharacters =>
-      'Sử dụng chữ cái, chữ số, dấu gạch dưới hoặc dấu gạch nối trước phần mở rộng.';
+  String get useIdentifierCharacters => 'Sử dụng chữ cái, chữ số, dấu gạch dưới hoặc dấu gạch nối trước phần mở rộng.';
 
   @override
   String get topicIdAlreadyExists => 'ID chủ đề đã tồn tại.';
@@ -2006,8 +1889,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get normalizeLineEndings => 'Chuẩn hóa kết thúc dòng';
 
   @override
-  String get mixedLineEndingsSavePrompt =>
-      'Tài liệu này chứa các kiểu kết thúc dòng khác nhau. Hãy chọn một định dạng.';
+  String get mixedLineEndingsSavePrompt => 'Tài liệu này chứa các kiểu kết thúc dòng khác nhau. Hãy chọn một định dạng.';
 
   @override
   String workspaceReplaceMixedLineEndings(String fileName) {
@@ -2018,36 +1900,28 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workspaceReplaceIssueOversized => 'Đã bỏ qua một tệp quá lớn.';
 
   @override
-  String get workspaceReplaceIssueUnreadable =>
-      'Đã bỏ qua một tệp không thể đọc.';
+  String get workspaceReplaceIssueUnreadable => 'Đã bỏ qua một tệp không thể đọc.';
 
   @override
-  String get workspaceReplaceIssueInvalidUtf8 =>
-      'Đã bỏ qua một tệp không phải UTF-8 hợp lệ.';
+  String get workspaceReplaceIssueInvalidUtf8 => 'Đã bỏ qua một tệp không phải UTF-8 hợp lệ.';
 
   @override
-  String get workspaceReplaceIssueTruncated =>
-      'Bản xem trước thay thế đã bị cắt bớt.';
+  String get workspaceReplaceIssueTruncated => 'Bản xem trước thay thế đã bị cắt bớt.';
 
   @override
-  String get workspaceReplaceIssueFileChanged =>
-      'Đã bỏ qua một tệp đã thay đổi sau khi xem trước.';
+  String get workspaceReplaceIssueFileChanged => 'Đã bỏ qua một tệp đã thay đổi sau khi xem trước.';
 
   @override
-  String get workspaceReplaceIssueBufferChanged =>
-      'Đã bỏ qua một bộ đệm trình biên tập đã thay đổi sau khi xem trước.';
+  String get workspaceReplaceIssueBufferChanged => 'Đã bỏ qua một bộ đệm trình biên tập đã thay đổi sau khi xem trước.';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired =>
-      'Chọn chuẩn hóa LF hoặc CRLF trước khi thay thế.';
+  String get workspaceReplaceIssueNormalizationRequired => 'Chọn chuẩn hóa LF hoặc CRLF trước khi thay thế.';
 
   @override
-  String get workspaceReplaceIssuePartialConflict =>
-      'Đã dừng khôi phục vì tệp bị thay đổi đồng thời. Một số thay thế có thể vẫn còn; nội dung bị di dời đã được giữ lại tại đường dẫn bên dưới.';
+  String get workspaceReplaceIssuePartialConflict => 'Đã dừng khôi phục vì tệp bị thay đổi đồng thời. Một số thay thế có thể vẫn còn; nội dung bị di dời đã được giữ lại tại đường dẫn bên dưới.';
 
   @override
-  String get workspaceReplaceIssueApplyFailed =>
-      'Không thể ghi nhận thay thế đã xem lại; không có tệp nào bị thay đổi.';
+  String get workspaceReplaceIssueApplyFailed => 'Không thể ghi nhận thay thế đã xem lại; không có tệp nào bị thay đổi.';
 
   @override
   String externalChangesTitle(String fileName) {
@@ -2058,8 +1932,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get externalFileDeleted => 'Tệp này đã bị xóa trên đĩa.';
 
   @override
-  String get externalFileChanged =>
-      'Tệp này đã thay đổi trên đĩa trong khi bạn có các chỉnh sửa chưa lưu.';
+  String get externalFileChanged => 'Tệp này đã thay đổi trên đĩa trong khi bạn có các chỉnh sửa chưa lưu.';
 
   @override
   String recoveredDocumentReview(String fileName) {
@@ -2079,19 +1952,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get saveAs => 'Lưu thành';
 
   @override
-  String get workspaceSearchIncomplete =>
-      'Chỉ hiển thị một phần kết quả. Hiển thị thêm hoặc thu hẹp tìm kiếm.';
+  String get workspaceSearchIncomplete => 'Chỉ hiển thị một phần kết quả. Hiển thị thêm hoặc thu hẹp tìm kiếm.';
 
   @override
   String get workspaceSearchShowMore => 'Hiển thị thêm kết quả';
 
   @override
-  String get workspaceSearchSkippedFiles =>
-      'Tìm kiếm chưa đầy đủ. Các tệp này vượt quá 1 MiB hoặc không thể đọc được:';
+  String get workspaceSearchSkippedFiles => 'Tìm kiếm chưa đầy đủ. Các tệp này vượt quá 1 MiB hoặc không thể đọc được:';
 
   @override
-  String get sourceLargeFileFeaturesPaused =>
-      'Tệp lớn: đã tạm dừng tô sáng và thu gọn';
+  String get sourceLargeFileFeaturesPaused => 'Tệp lớn: đã tạm dừng tô sáng và thu gọn';
 
   @override
   String get nothingToRead => 'Không có nội dung để đọc';
@@ -2140,8 +2010,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get cannotOpenFileTypeInEditor =>
-      'Không thể mở loại tệp này trong trình biên tập';
+  String get cannotOpenFileTypeInEditor => 'Không thể mở loại tệp này trong trình biên tập';
 
   @override
   String anchorNotFound(String anchor) {
@@ -2166,8 +2035,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get documentKindMarkdownFile => 'Tệp Markdown';
 
   @override
-  String get documentKindWritersideMarkdownTopic =>
-      'Chủ đề Markdown Writerside';
+  String get documentKindWritersideMarkdownTopic => 'Chủ đề Markdown Writerside';
 
   @override
   String get documentKindWritersideXmlTopic => 'Chủ đề XML Writerside';
@@ -2213,12 +2081,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrorChooseWhereToSaveMarkdown =>
-      'Chọn nơi lưu tệp Markdown này.';
+  String get workspaceErrorChooseWhereToSaveMarkdown => 'Chọn nơi lưu tệp Markdown này.';
 
   @override
-  String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'Đã chặn lưu: tệp đã thay đổi trên đĩa.';
+  String get workspaceErrorSaveBlockedFileChangedOnDisk => 'Đã chặn lưu: tệp đã thay đổi trên đĩa.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -2240,10 +2106,8 @@ class AppLocalizationsVi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'Đã khôi phục $count tài liệu chưa lưu. Hãy xem lại từng tài liệu trước khi lưu hoặc loại bỏ.',
-      one:
-          'Đã khôi phục 1 tài liệu chưa lưu. Hãy xem lại trước khi lưu hoặc loại bỏ.',
+      other: 'Đã khôi phục $count tài liệu chưa lưu. Hãy xem lại từng tài liệu trước khi lưu hoặc loại bỏ.',
+      one: 'Đã khôi phục 1 tài liệu chưa lưu. Hãy xem lại trước khi lưu hoặc loại bỏ.',
     );
     return '$_temp0';
   }
@@ -2253,10 +2117,8 @@ class AppLocalizationsVi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'Không thể khôi phục $count bản ghi khôi phục bị hỏng. Các bản ghi khôi phục hợp lệ vẫn còn khả dụng.',
-      one:
-          'Không thể khôi phục một bản ghi khôi phục bị hỏng. Tệp khôi phục gốc đã được giữ lại để kiểm tra.',
+      other: 'Không thể khôi phục $count bản ghi khôi phục bị hỏng. Các bản ghi khôi phục hợp lệ vẫn còn khả dụng.',
+      one: 'Không thể khôi phục một bản ghi khôi phục bị hỏng. Tệp khôi phục gốc đã được giữ lại để kiểm tra.',
     );
     return '$_temp0';
   }
@@ -2303,20 +2165,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorFileNameRequired => 'Tên tệp là bắt buộc.';
 
   @override
-  String get errorFileNameUnsafe =>
-      'Tên tệp phải là một phần đường dẫn an toàn duy nhất.';
+  String get errorFileNameUnsafe => 'Tên tệp phải là một phần đường dẫn an toàn duy nhất.';
 
   @override
-  String get errorFileOperationInvalidTarget =>
-      'Không thể di chuyển thư mục vào chính nó.';
+  String get errorFileOperationInvalidTarget => 'Không thể di chuyển thư mục vào chính nó.';
 
   @override
-  String get errorFileOperationOutsideRoot =>
-      'Thao tác với tệp phải nằm trong không gian làm việc.';
+  String get errorFileOperationOutsideRoot => 'Thao tác với tệp phải nằm trong không gian làm việc.';
 
   @override
-  String get errorFileOperationRoot =>
-      'Không thể thay đổi thư mục gốc của không gian làm việc từ cây tệp.';
+  String get errorFileOperationRoot => 'Không thể thay đổi thư mục gốc của không gian làm việc từ cây tệp.';
 
   @override
   String get errorProjectNameRequired => 'Tên dự án là bắt buộc.';
@@ -2325,16 +2183,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorDirectoryNameRequired => 'Tên thư mục là bắt buộc.';
 
   @override
-  String get errorDirectoryNameUnsafe =>
-      'Tên thư mục phải là một phần đường dẫn an toàn duy nhất.';
+  String get errorDirectoryNameUnsafe => 'Tên thư mục phải là một phần đường dẫn an toàn duy nhất.';
 
   @override
-  String get errorInstanceIdInvalid =>
-      'ID thực thể phải bắt đầu bằng chữ thường và chỉ gồm chữ thường, chữ số, dấu gạch dưới và dấu gạch nối.';
+  String get errorInstanceIdInvalid => 'ID thực thể phải bắt đầu bằng chữ thường và chỉ gồm chữ thường, chữ số, dấu gạch dưới và dấu gạch nối.';
 
   @override
-  String get errorTopicFileInvalid =>
-      'Tên tệp chủ đề phải là tên tệp Markdown không có dấu phân cách đường dẫn.';
+  String get errorTopicFileInvalid => 'Tên tệp chủ đề phải là tên tệp Markdown không có dấu phân cách đường dẫn.';
 
   @override
   String get errorTopicTitleRequired => 'Tiêu đề chủ đề là bắt buộc.';
@@ -2345,12 +2200,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideModuleNotOpen =>
-      'Phải mở một mô-đun Writerside để tạo chủ đề.';
+  String get errorWritersideModuleNotOpen => 'Phải mở một mô-đun Writerside để tạo chủ đề.';
 
   @override
-  String get errorWritersideInstanceTreeMissing =>
-      'Mô-đun Writerside không có cây thực thể.';
+  String get errorWritersideInstanceTreeMissing => 'Mô-đun Writerside không có cây thực thể.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2373,12 +2226,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideTocNodeMissing =>
-      'Mục nhập mục lục đã chọn không còn tồn tại.';
+  String get errorWritersideTocNodeMissing => 'Mục nhập mục lục đã chọn không còn tồn tại.';
 
   @override
-  String get errorWritersideTocInvalidMove =>
-      'Không thể di chuyển mục nhập mục lục vào chính nó hoặc một mục con của nó.';
+  String get errorWritersideTocInvalidMove => 'Không thể di chuyển mục nhập mục lục vào chính nó hoặc một mục con của nó.';
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
@@ -2386,20 +2237,16 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideSafeDeleteRequired =>
-      'Sử dụng Xóa an toàn cho các tệp chủ đề Writerside.';
+  String get errorWritersideSafeDeleteRequired => 'Sử dụng Xóa an toàn cho các tệp chủ đề Writerside.';
 
   @override
-  String get errorWritersideTopicUsageScanFailed =>
-      'Không thể hoàn tất quá trình quét cách sử dụng chủ đề. Không có tệp nào bị thay đổi.';
+  String get errorWritersideTopicUsageScanFailed => 'Không thể hoàn tất quá trình quét cách sử dụng chủ đề. Không có tệp nào bị thay đổi.';
 
   @override
-  String get errorWritersideTopicUsagesRemain =>
-      'Một số cách sử dụng chủ đề vẫn cần được xử lý. Hãy xem lại trước khi tiếp tục.';
+  String get errorWritersideTopicUsagesRemain => 'Một số cách sử dụng chủ đề vẫn cần được xử lý. Hãy xem lại trước khi tiếp tục.';
 
   @override
-  String get errorWritersideRedirectInvalid =>
-      'Đích chuyển hướng đã chọn không còn hợp lệ. Hãy chọn lại.';
+  String get errorWritersideRedirectInvalid => 'Đích chuyển hướng đã chọn không còn hợp lệ. Hãy chọn lại.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
@@ -2407,29 +2254,21 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(
-    String module,
-    String count,
-    String paths,
-  ) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
     return 'Không thể đổi tên và cập nhật an toàn mọi tham chiếu trong dự án vì $count tệp chủ đề trong mô-đun $module chưa được phân tích: $paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty =>
-      'Các tệp dự án Writerside có thay đổi chưa lưu. Hãy xử lý chúng và chuẩn bị bản xem trước đổi tên mới.';
+  String get errorWritersideTopicRenameProjectBuffersDirty => 'Các tệp dự án Writerside có thay đổi chưa lưu. Hãy xử lý chúng và chuẩn bị bản xem trước đổi tên mới.';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged =>
-      'Tập hợp mô-đun của dự án Writerside đã thay đổi. Hãy chuẩn bị bản xem trước đổi tên mới trước khi tái cấu trúc.';
+  String get errorWritersideTopicRenameProjectInventoryChanged => 'Tập hợp mô-đun của dự án Writerside đã thay đổi. Hãy chuẩn bị bản xem trước đổi tên mới trước khi tái cấu trúc.';
 
   @override
-  String get errorTopicsRootUnsafe =>
-      'Gốc chủ đề phải là một thư mục tương đối an toàn.';
+  String get errorTopicsRootUnsafe => 'Gốc chủ đề phải là một thư mục tương đối an toàn.';
 
   @override
-  String get errorTopicFileNameUnsafe =>
-      'Tên tệp chủ đề phải là một phần đường dẫn an toàn duy nhất.';
+  String get errorTopicFileNameUnsafe => 'Tên tệp chủ đề phải là một phần đường dẫn an toàn duy nhất.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -2437,8 +2276,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorTopicFileNameInvalid =>
-      'Tên tệp chủ đề chỉ được chứa chữ cái, chữ số, dấu gạch dưới và dấu gạch nối.';
+  String get errorTopicFileNameInvalid => 'Tên tệp chủ đề chỉ được chứa chữ cái, chữ số, dấu gạch dưới và dấu gạch nối.';
 
   @override
   String errorUnknown(String code) {
@@ -2451,8 +2289,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceScanSkipped =>
-      'Đã phát hiện không gian làm việc lớn. Một số tệp đã được bỏ qua để ứng dụng vẫn phản hồi nhanh.';
+  String get diagnosticWorkspaceScanSkipped => 'Đã phát hiện không gian làm việc lớn. Một số tệp đã được bỏ qua để ứng dụng vẫn phản hồi nhanh.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
@@ -2460,8 +2297,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceFileTooLarge =>
-      'Tệp vượt quá giới hạn phân tích tự động beta.';
+  String get diagnosticWorkspaceFileTooLarge => 'Tệp vượt quá giới hạn phân tích tự động beta.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -2469,8 +2305,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownAttributeMalformed =>
-      'Khối thuộc tính tiêu đề Writerside không đúng định dạng.';
+  String get diagnosticMarkdownAttributeMalformed => 'Khối thuộc tính tiêu đề Writerside không đúng định dạng.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -2478,16 +2313,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'Các tiêu đề H1 cấp cao nhất bổ sung được xử lý như các chương.';
+  String get diagnosticWritersideTopicH1ConvertedToChapter => 'Các tiêu đề H1 cấp cao nhất bổ sung được xử lý như các chương.';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Chủ đề Markdown Writerside không có H1 hoặc tiêu đề trong front matter.';
+  String get diagnosticWritersideMarkdownTopicMissingTitle => 'Chủ đề Markdown Writerside không có H1 hoặc tiêu đề trong front matter.';
 
   @override
-  String get diagnosticWritersideXmlTopicMissingTitle =>
-      'Chủ đề XML thiếu tiêu đề.';
+  String get diagnosticWritersideXmlTopicMissingTitle => 'Chủ đề XML thiếu tiêu đề.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -2495,8 +2327,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownFrontMatterMalformed =>
-      'Front matter chưa được đóng.';
+  String get diagnosticMarkdownFrontMatterMalformed => 'Front matter chưa được đóng.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Phần tử HTML không an toàn.';
@@ -2527,16 +2358,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot =>
-      'Gốc writerside.cfg phải là <ihp>.';
+  String get diagnosticWritersideConfigInvalidRoot => 'Gốc writerside.cfg phải là <ihp>.';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'Khai báo snippets thiếu src.';
+  String get diagnosticWritersideConfigMissingSnippetsSrc => 'Khai báo snippets thiếu src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'Khai báo instance-groups thiếu src.';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'Khai báo instance-groups thiếu src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -2544,16 +2372,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'Khai báo instance thiếu src.';
+  String get diagnosticWritersideConfigMissingInstanceSrc => 'Khai báo instance thiếu src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance =>
-      'writerside.cfg không đăng ký thực thể nào.';
+  String get diagnosticWritersideConfigMissingInstance => 'writerside.cfg không đăng ký thực thể nào.';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot =>
-      'Gốc .tree phải là <instance-profile>.';
+  String get diagnosticWritersideTreeInvalidRoot => 'Gốc .tree phải là <instance-profile>.';
 
   @override
   String get diagnosticWritersideTreeMissingId => 'Hồ sơ thực thể thiếu id.';
@@ -2564,8 +2389,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTreeMissingStartPage =>
-      'Phiên bản không phải thư viện thiếu start-page.';
+  String get diagnosticWritersideTreeMissingStartPage => 'Phiên bản không phải thư viện thiếu start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2578,8 +2402,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration =>
-      'Khai báo biến phải có tên và giá trị.';
+  String get diagnosticWritersideVariableMalformedDeclaration => 'Khai báo biến phải có tên và giá trị.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -2600,12 +2423,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicInvalidRoot =>
-      'Gốc .topic phải là <topic>.';
+  String get diagnosticWritersideTopicInvalidRoot => 'Gốc .topic phải là <topic>.';
 
   @override
-  String get diagnosticWritersideTopicMissingRootId =>
-      'Chủ đề XML thiếu id ở gốc.';
+  String get diagnosticWritersideTopicMissingRootId => 'Chủ đề XML thiếu id ở gốc.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
@@ -2621,27 +2442,20 @@ class AppLocalizationsVi extends AppLocalizations {
   String get diagnosticWritersideTopicAnchorMissingHref => '<a> thiếu href.';
 
   @override
-  String get diagnosticWritersideConfigMissing =>
-      'Chế độ Writerside yêu cầu writerside.cfg.';
+  String get diagnosticWritersideConfigMissing => 'Chế độ Writerside yêu cầu writerside.cfg.';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
     return 'Thư mục cấu hình build đã định không tồn tại: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
     return 'Thư mục đặc tả API đã định không tồn tại: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
     return 'Thư mục snippets đã định không tồn tại: $relativePath';
   }
 
@@ -2656,9 +2470,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
     return 'Tệp nhóm thực thể đã định không tồn tại: $relativePath';
   }
 
@@ -2673,9 +2485,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(
-    String relativePath,
-  ) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
     return 'Thư mục chủ đề mặc định không tồn tại: $relativePath';
   }
 
@@ -2695,21 +2505,12 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(
-    String instanceId,
-    String webFileName,
-    String topic,
-  ) {
+  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
     return 'Phiên bản \"$instanceId\" xuất bản tên tệp web không hợp lệ \"$webFileName\" cho chủ đề \"$topic\".';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(
-    String instanceId,
-    String webFileName,
-    String firstTopic,
-    String secondTopic,
-  ) {
+  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
     return 'Phiên bản \"$instanceId\" xuất bản cả \"$firstTopic\" và \"$secondTopic\" dưới tên \"$webFileName\".';
   }
 
@@ -2734,10 +2535,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(
-    String anchor,
-    String targetName,
-  ) {
+  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
     return 'Neo \"$anchor\" không tồn tại trong \"$targetName\".';
   }
 
@@ -2750,10 +2548,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(
-    String elementId,
-    String from,
-  ) {
+  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
     return 'Phần tử include \"$elementId\" không tồn tại trong \"$from\".';
   }
 
@@ -2797,27 +2592,26 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(reason, {
-      'other':
-          'Cài đặt Git hoặc cấu hình BusyMark để sử dụng một tệp thực thi Git khả dụng. $reason',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      reason,
+      {
+        'other': 'Cài đặt Git hoặc cấu hình BusyMark để sử dụng một tệp thực thi Git khả dụng. $reason',
+      },
+    );
     return '$_temp0';
   }
 
   @override
-  String get gitOperationsRequireTrust =>
-      'Các thao tác Git yêu cầu tin cậy không gian làm việc.';
+  String get gitOperationsRequireTrust => 'Các thao tác Git yêu cầu tin cậy không gian làm việc.';
 
   @override
   String get gitManageBranches => 'Quản lý nhánh';
 
   @override
-  String get gitTrustRequiredTitle =>
-      'Tin cậy không gian làm việc này cho Git?';
+  String get gitTrustRequiredTitle => 'Tin cậy không gian làm việc này cho Git?';
 
   @override
-  String get gitTrustRequiredMessage =>
-      'BusyMark có thể kiểm tra siêu dữ liệu giới hạn của kho mà không cần tin cậy. Cấp sự tin cậy sẽ bật các thao tác Git cho kho này, có thể chạy các hook, bộ lọc, trình hỗ trợ thông tin xác thực và công cụ ký đã cấu hình.';
+  String get gitTrustRequiredMessage => 'BusyMark có thể kiểm tra siêu dữ liệu giới hạn của kho mà không cần tin cậy. Cấp sự tin cậy sẽ bật các thao tác Git cho kho này, có thể chạy các hook, bộ lọc, trình hỗ trợ thông tin xác thực và công cụ ký đã cấu hình.';
 
   @override
   String get gitTrustWorkspace => 'Tin cậy không gian làm việc';
@@ -2826,8 +2620,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitNotRepositoryTitle => 'Không phải kho Git';
 
   @override
-  String get gitNotRepositoryMessage =>
-      'Không gian làm việc này không nằm trong kho Git.';
+  String get gitNotRepositoryMessage => 'Không gian làm việc này không nằm trong kho Git.';
 
   @override
   String get gitInitializeRepository => 'Khởi tạo kho';
@@ -2926,8 +2719,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitCommitSelectedFiles => 'Tệp đã chọn';
 
   @override
-  String get gitCommitNoSelectedFiles =>
-      'Đưa ít nhất một tệp vào stage trước khi commit.';
+  String get gitCommitNoSelectedFiles => 'Đưa ít nhất một tệp vào stage trước khi commit.';
 
   @override
   String gitStagedFileCount(int count) {
@@ -2971,8 +2763,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitNoDiff => 'Không có khác biệt để hiển thị';
 
   @override
-  String get gitBinaryFile =>
-      'Tệp nhị phân. BusyMark không kết xuất bản vá nhị phân.';
+  String get gitBinaryFile => 'Tệp nhị phân. BusyMark không kết xuất bản vá nhị phân.';
 
   @override
   String gitBinaryFileInfo(int size) {
@@ -2980,8 +2771,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUnsavedChangesBanner =>
-      'Các thay đổi trong trình biên tập chưa lưu sẽ không được đưa vào cho đến khi lưu.';
+  String get gitUnsavedChangesBanner => 'Các thay đổi trong trình biên tập chưa lưu sẽ không được đưa vào cho đến khi lưu.';
 
   @override
   String get gitConfirmDiscardTitle => 'Loại bỏ các thay đổi Git?';
@@ -2991,10 +2781,8 @@ class AppLocalizationsVi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'Tất cả thay đổi đã đưa và chưa đưa vào stage trong các tệp được theo dõi đã chọn sẽ được khôi phục về HEAD.',
-      one:
-          'Tất cả thay đổi đã đưa và chưa đưa vào stage trong tệp được theo dõi đã chọn sẽ được khôi phục về HEAD.',
+      other: 'Tất cả thay đổi đã đưa và chưa đưa vào stage trong các tệp được theo dõi đã chọn sẽ được khôi phục về HEAD.',
+      one: 'Tất cả thay đổi đã đưa và chưa đưa vào stage trong tệp được theo dõi đã chọn sẽ được khôi phục về HEAD.',
     );
     return '$_temp0';
   }
@@ -3015,8 +2803,7 @@ class AppLocalizationsVi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'Các tệp đã chọn sẽ được khôi phục hoặc xóa tùy theo trạng thái Git.',
+      other: 'Các tệp đã chọn sẽ được khôi phục hoặc xóa tùy theo trạng thái Git.',
       one: 'Tệp đã chọn sẽ được khôi phục hoặc xóa tùy theo trạng thái Git.',
     );
     return '$_temp0';
@@ -3028,8 +2815,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitConfirmSwitchBranchMessage =>
-      'BusyMark sẽ tải lại không gian làm việc từ đĩa sau khi Git chuyển nhánh.';
+  String get gitConfirmSwitchBranchMessage => 'BusyMark sẽ tải lại không gian làm việc từ đĩa sau khi Git chuyển nhánh.';
 
   @override
   String get gitConfirmPushSetUpstreamTitle => 'Đặt nhánh upstream?';
@@ -3046,8 +2832,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitFileHistory => 'Lịch sử tệp';
 
   @override
-  String get gitFileHistoryRequiresOpenFile =>
-      'Lịch sử tệp yêu cầu một tệp Markdown đang mở.';
+  String get gitFileHistoryRequiresOpenFile => 'Lịch sử tệp yêu cầu một tệp Markdown đang mở.';
 
   @override
   String get gitLoadMore => 'Tải thêm';
@@ -3065,8 +2850,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitConfirmRestoreTitle => 'Khôi phục phiên bản tệp này?';
 
   @override
-  String get gitConfirmRestoreMessage =>
-      'BusyMark sẽ thay thế tệp trong cây làm việc hiện tại bằng phiên bản đã commit được chọn. Tệp đã khôi phục sẽ vẫn ở trạng thái chưa đưa vào stage.';
+  String get gitConfirmRestoreMessage => 'BusyMark sẽ thay thế tệp trong cây làm việc hiện tại bằng phiên bản đã commit được chọn. Tệp đã khôi phục sẽ vẫn ở trạng thái chưa đưa vào stage.';
 
   @override
   String get gitCommitActions => 'Thao tác commit';
@@ -3091,29 +2875,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitResetModeSoft => 'Mềm';
 
   @override
-  String get gitResetModeSoftDescription =>
-      'Chỉ di chuyển nhánh. Giữ nguyên index và cây làm việc; các khác biệt so với commit đã chọn vẫn được đưa vào stage.';
+  String get gitResetModeSoftDescription => 'Chỉ di chuyển nhánh. Giữ nguyên index và cây làm việc; các khác biệt so với commit đã chọn vẫn được đưa vào stage.';
 
   @override
   String get gitResetModeMixed => 'Hỗn hợp';
 
   @override
-  String get gitResetModeMixedDescription =>
-      'Di chuyển nhánh và đặt lại index. Giữ nguyên cây làm việc, để lại các khác biệt ở trạng thái chưa đưa vào stage.';
+  String get gitResetModeMixedDescription => 'Di chuyển nhánh và đặt lại index. Giữ nguyên cây làm việc, để lại các khác biệt ở trạng thái chưa đưa vào stage.';
 
   @override
   String get gitResetModeHard => 'Cứng';
 
   @override
-  String get gitResetModeHardDescription =>
-      'Di chuyển nhánh và đặt lại index cùng cây làm việc. Các thay đổi được theo dõi sẽ bị loại bỏ; các tệp chưa được theo dõi gây cản trở có thể bị xóa.';
+  String get gitResetModeHardDescription => 'Di chuyển nhánh và đặt lại index cùng cây làm việc. Các thay đổi được theo dõi sẽ bị loại bỏ; các tệp chưa được theo dõi gây cản trở có thể bị xóa.';
 
   @override
   String get gitResetModeKeep => 'Giữ';
 
   @override
-  String get gitResetModeKeepDescription =>
-      'Di chuyển nhánh và đặt lại các tệp được theo dõi nhưng giữ lại các thay đổi cục bộ. Git sẽ hủy nếu các thay đổi đó xung đột với thao tác đặt lại.';
+  String get gitResetModeKeepDescription => 'Di chuyển nhánh và đặt lại các tệp được theo dõi nhưng giữ lại các thay đổi cục bộ. Git sẽ hủy nếu các thay đổi đó xung đột với thao tác đặt lại.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -3160,12 +2940,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitErrorUnavailable => 'Git không khả dụng.';
 
   @override
-  String get gitErrorNotRepository =>
-      'Không gian làm việc này không phải là kho Git.';
+  String get gitErrorNotRepository => 'Không gian làm việc này không phải là kho Git.';
 
   @override
-  String get gitErrorUnsafePath =>
-      'BusyMark đã chặn một đường dẫn Git không an toàn.';
+  String get gitErrorUnsafePath => 'BusyMark đã chặn một đường dẫn Git không an toàn.';
 
   @override
   String get gitErrorInvalidBranchName => 'Nhập tên nhánh hợp lệ.';
@@ -3177,39 +2955,31 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitErrorNoUpstream => 'Chưa cấu hình nhánh upstream.';
 
   @override
-  String get gitErrorMultipleRemotes =>
-      'Có nhiều remote được cấu hình. Hãy chọn upstream bên ngoài thực thể BusyMark này.';
+  String get gitErrorMultipleRemotes => 'Có nhiều remote được cấu hình. Hãy chọn upstream bên ngoài thực thể BusyMark này.';
 
   @override
-  String get gitErrorDirtyWorkspace =>
-      'Lưu hoặc loại bỏ các thay đổi trong trình biên tập BusyMark trước khi chuyển nhánh.';
+  String get gitErrorDirtyWorkspace => 'Lưu hoặc loại bỏ các thay đổi trong trình biên tập BusyMark trước khi chuyển nhánh.';
 
   @override
-  String get gitErrorResetDirtyWorkspace =>
-      'Lưu hoặc loại bỏ các thay đổi trong trình biên tập BusyMark trước khi đặt lại nhánh hiện tại.';
+  String get gitErrorResetDirtyWorkspace => 'Lưu hoặc loại bỏ các thay đổi trong trình biên tập BusyMark trước khi đặt lại nhánh hiện tại.';
 
   @override
-  String get gitErrorRestoreStagedFile =>
-      'Bỏ tệp khỏi stage trước khi khôi phục phiên bản trong lịch sử.';
+  String get gitErrorRestoreStagedFile => 'Bỏ tệp khỏi stage trước khi khôi phục phiên bản trong lịch sử.';
 
   @override
-  String get gitErrorResetDetachedHead =>
-      'Chuyển sang một nhánh trước khi đặt lại.';
+  String get gitErrorResetDetachedHead => 'Chuyển sang một nhánh trước khi đặt lại.';
 
   @override
-  String get gitErrorDiverged =>
-      'Nhánh đã phân kỳ. Hãy giải quyết thao tác merge hoặc rebase bên ngoài thực thể BusyMark này.';
+  String get gitErrorDiverged => 'Nhánh đã phân kỳ. Hãy giải quyết thao tác merge hoặc rebase bên ngoài thực thể BusyMark này.';
 
   @override
-  String get gitErrorAuthorIdentity =>
-      'Git cần tên và địa chỉ email tác giả trước khi có thể commit.';
+  String get gitErrorAuthorIdentity => 'Git cần tên và địa chỉ email tác giả trước khi có thể commit.';
 
   @override
   String get gitAuthorIdentityTitle => 'Danh tính tác giả Git';
 
   @override
-  String get gitAuthorIdentityMessage =>
-      'Nhập danh tính Git sẽ ghi vào các commit. BusyMark sẽ lưu danh tính đó và thử lại commit này.';
+  String get gitAuthorIdentityMessage => 'Nhập danh tính Git sẽ ghi vào các commit. BusyMark sẽ lưu danh tính đó và thử lại commit này.';
 
   @override
   String get gitAuthorName => 'Tên';
@@ -3221,8 +2991,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitAuthorIdentityGlobal => 'Dùng cho tất cả kho';
 
   @override
-  String get gitAuthorIdentityGlobalDescription =>
-      'Khi được cài đặt dưới dạng Snap, tùy chọn này áp dụng cho các kho được mở trong BusyMark.';
+  String get gitAuthorIdentityGlobalDescription => 'Khi được cài đặt dưới dạng Snap, tùy chọn này áp dụng cho các kho được mở trong BusyMark.';
 
   @override
   String get gitSaveIdentityAndCommit => 'Lưu và commit';
@@ -3234,8 +3003,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitErrorNetwork => 'Thao tác mạng Git không thành công.';
 
   @override
-  String get gitErrorConflict =>
-      'Git báo cáo các xung đột chưa được giải quyết.';
+  String get gitErrorConflict => 'Git báo cáo các xung đột chưa được giải quyết.';
 
   @override
   String get gitErrorCommandFailed => 'Lệnh Git không thành công.';
@@ -3247,29 +3015,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get syntaxReferenceMarkdownBlocks => 'Khối Markdown';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription =>
-      'Các cấu trúc khối được hỗ trợ trong mã nguồn và bản xem trước Markdown.';
+  String get syntaxReferenceMarkdownBlocksDescription => 'Các cấu trúc khối được hỗ trợ trong mã nguồn và bản xem trước Markdown.';
 
   @override
   String get syntaxReferenceInlineFormatting => 'Định dạng Markdown nội tuyến';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription =>
-      'Định dạng có thể xuất hiện trong đoạn văn, mục danh sách và ô bảng.';
+  String get syntaxReferenceInlineFormattingDescription => 'Định dạng có thể xuất hiện trong đoạn văn, mục danh sách và ô bảng.';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => 'Khối HTML thô';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription =>
-      'Các thẻ HTML cấp khối an toàn được kết xuất thông qua các tiện ích xem trước của BusyMark.';
+  String get syntaxReferenceRawHtmlBlocksDescription => 'Các thẻ HTML cấp khối an toàn được kết xuất thông qua các tiện ích xem trước của BusyMark.';
 
   @override
   String get syntaxReferenceRawHtmlInline => 'Thẻ HTML nội tuyến thô';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription =>
-      'Các thẻ HTML nội tuyến an toàn được kết xuất mà không hiển thị thẻ theo nghĩa đen.';
+  String get syntaxReferenceRawHtmlInlineDescription => 'Các thẻ HTML nội tuyến an toàn được kết xuất mà không hiển thị thẻ theo nghĩa đen.';
 
   @override
   String get syntaxReferenceHeadings => 'Tiêu đề';
@@ -3308,24 +3072,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Thẻ văn bản ngữ nghĩa';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription =>
-      'HTML được cho phép được chuyển thành các khối xem trước của BusyMark, không được kết xuất trong trình duyệt.';
+  String get syntaxReferenceSanitizedPreviewDescription => 'HTML được cho phép được chuyển thành các khối xem trước của BusyMark, không được kết xuất trong trình duyệt.';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription =>
-      'HTML thô chưa chỉnh sửa được lưu lại chính xác như văn bản mã nguồn.';
+  String get syntaxReferenceSourcePreservedDescription => 'HTML thô chưa chỉnh sửa được lưu lại chính xác như văn bản mã nguồn.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription =>
-      'Các dấu Markdown bên trong HTML thô được kết xuất như văn bản theo nghĩa đen.';
+  String get syntaxReferenceMarkdownInsideHtmlDescription => 'Các dấu Markdown bên trong HTML thô được kết xuất như văn bản theo nghĩa đen.';
 
   @override
-  String get syntaxReferenceBlockedContentDescription =>
-      'Script, style, frame, form, SVG, MathML, sự kiện và các thuộc tính không an toàn bị chặn.';
+  String get syntaxReferenceBlockedContentDescription => 'Script, style, frame, form, SVG, MathML, sự kiện và các thuộc tính không an toàn bị chặn.';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription =>
-      'Liên kết cho phép URL http, https, mailto, tel, tương đối và fragment; các scheme không an toàn bị chặn.';
+  String get syntaxReferenceSafeUrlsDescription => 'Liên kết cho phép URL http, https, mailto, tel, tương đối và fragment; các scheme không an toàn bị chặn.';
 
   @override
   String get syntaxReferenceCategory => 'Danh mục';
@@ -3355,35 +3114,28 @@ class AppLocalizationsVi extends AppLocalizations {
   String get syntaxReferenceOfficialDocumentation => 'Tài liệu chính thức';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdown =>
-      'Chỉ Markdown Writerside';
+  String get syntaxReferenceScopeWritersideMarkdown => 'Chỉ Markdown Writerside';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
-      'Chỉ Markdown Writerside và XML Writerside';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml => 'Chỉ Markdown Writerside và XML Writerside';
 
   @override
-  String get syntaxReferenceMarkdownDescription =>
-      'Các dạng Markdown cốt lõi mà BusyMark có thể soạn và xem trước.';
+  String get syntaxReferenceMarkdownDescription => 'Các dạng Markdown cốt lõi mà BusyMark có thể soạn và xem trước.';
 
   @override
   String get syntaxReferenceParagraphExample => 'Một đoạn văn bản.';
 
   @override
-  String get syntaxReferenceTableLimitation =>
-      'Bảng dùng cú pháp dấu gạch đứng của GitHub Flavored Markdown.';
+  String get syntaxReferenceTableLimitation => 'Bảng dùng cú pháp dấu gạch đứng của GitHub Flavored Markdown.';
 
   @override
-  String get syntaxReferenceHardBreakIdentifiers =>
-      'hai dấu cách ở cuối dòng, \\, <br>';
+  String get syntaxReferenceHardBreakIdentifiers => 'hai dấu cách ở cuối dòng, \\, <br>';
 
   @override
-  String get syntaxReferenceHtmlDescription =>
-      'BusyMark chấp nhận một tập con HTML thô an toàn, có giới hạn trong mã nguồn Markdown.';
+  String get syntaxReferenceHtmlDescription => 'BusyMark chấp nhận một tập con HTML thô an toàn, có giới hạn trong mã nguồn Markdown.';
 
   @override
-  String get syntaxReferenceDiagramsDescription =>
-      'Các khối có hàng rào Mermaid, PlantUML, D2 và OpenAPI hoạt động trong mã nguồn Markdown. Định danh hàng rào không phân biệt hoa thường và BusyMark giữ nguyên cách viết ban đầu.';
+  String get syntaxReferenceDiagramsDescription => 'Các khối có hàng rào Mermaid, PlantUML, D2 và OpenAPI hoạt động trong mã nguồn Markdown. Định danh hàng rào không phân biệt hoa thường và BusyMark giữ nguyên cách viết ban đầu.';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -3398,35 +3150,28 @@ class AppLocalizationsVi extends AppLocalizations {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation =>
-      'Dùng nội dung YAML hoặc JSON có hàng rào. BusyMark không coi một tài liệu YAML hoặc JSON toàn tệp bất kỳ là tham chiếu OpenAPI.';
+  String get syntaxReferenceOpenApiLimitation => 'Dùng nội dung YAML hoặc JSON có hàng rào. BusyMark không coi một tài liệu YAML hoặc JSON toàn tệp bất kỳ là tham chiếu OpenAPI.';
 
   @override
-  String get syntaxReferenceSemanticDiagramBlocks =>
-      'Khối mã ngữ nghĩa cho sơ đồ';
+  String get syntaxReferenceSemanticDiagramBlocks => 'Khối mã ngữ nghĩa cho sơ đồ';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation =>
-      'Dạng ngữ nghĩa code-block và src hỗ trợ Mermaid, PlantUML và D2, không hỗ trợ OpenAPI, và chỉ dùng trong dự án Writerside.';
+  String get syntaxReferenceSemanticDiagramLimitation => 'Dạng ngữ nghĩa code-block và src hỗ trợ Mermaid, PlantUML và D2, không hỗ trợ OpenAPI, và chỉ dùng trong dự án Writerside.';
 
   @override
-  String get syntaxReferenceReferencedDiagramSource =>
-      'Nguồn sơ đồ được tham chiếu';
+  String get syntaxReferenceReferencedDiagramSource => 'Nguồn sơ đồ được tham chiếu';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation =>
-      'Đường dẫn phải tương đối và nằm trong dự án Writerside đang mở; dạng hàng rào kèm src chỉ dành cho Markdown Writerside.';
+  String get syntaxReferenceReferencedDiagramLimitation => 'Đường dẫn phải tương đối và nằm trong dự án Writerside đang mở; dạng hàng rào kèm src chỉ dành cho Markdown Writerside.';
 
   @override
-  String get syntaxReferenceMathematicsDescription =>
-      'BusyMark hỗ trợ biểu thức TeX, không hỗ trợ tài liệu TeX hoặc LaTeX hoàn chỉnh.';
+  String get syntaxReferenceMathematicsDescription => 'BusyMark hỗ trợ biểu thức TeX, không hỗ trợ tài liệu TeX hoặc LaTeX hoàn chỉnh.';
 
   @override
   String get syntaxReferenceInlineMath => 'Toán học nội dòng';
 
   @override
-  String get syntaxReferenceGithubMath =>
-      'Toán học GitHub với dấu đô la và dấu huyền';
+  String get syntaxReferenceGithubMath => 'Toán học GitHub với dấu đô la và dấu huyền';
 
   @override
   String get syntaxReferenceDisplayMath => 'Toán học dạng khối';
@@ -3438,41 +3183,34 @@ class AppLocalizationsVi extends AppLocalizations {
   String get syntaxReferenceTexFence => 'Hàng rào tex';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation =>
-      'BusyMark không nhận dạng \\(...\\) hoặc \\[...\\] là dấu phân cách toán học Markdown.';
+  String get syntaxReferenceMathDelimitersLimitation => 'BusyMark không nhận dạng \\(...\\) hoặc \\[...\\] là dấu phân cách toán học Markdown.';
 
   @override
-  String get syntaxReferenceTexFenceLimitation =>
-      'Ngoài chế độ Writerside, hàng rào tex vẫn là khối mã thông thường.';
+  String get syntaxReferenceTexFenceLimitation => 'Ngoài chế độ Writerside, hàng rào tex vẫn là khối mã thông thường.';
 
   @override
-  String get syntaxReferenceWritersideMathElement =>
-      'Phần tử math của Writerside';
+  String get syntaxReferenceWritersideMathElement => 'Phần tử math của Writerside';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation =>
-      'Phần tử math là cú pháp Writerside ngữ nghĩa, không phải HTML MathML thô được phép.';
+  String get syntaxReferenceWritersideMathElementLimitation => 'Phần tử math là cú pháp Writerside ngữ nghĩa, không phải HTML MathML thô được phép.';
 
   @override
   String get syntaxReferenceSemanticTexBlock => 'Khối mã TeX ngữ nghĩa';
 
   @override
-  String get syntaxReferenceWritersideDescription =>
-      'Các phần mở rộng trọng tâm này chỉ được diễn giải trong dự án Writerside đang mở.';
+  String get syntaxReferenceWritersideDescription => 'Các phần mở rộng trọng tâm này chỉ được diễn giải trong dự án Writerside đang mở.';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => 'Trích dẫn khối lưu ý';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation =>
-      'Trích dẫn khối thuần là mẹo trong Markdown Writerside; trong Markdown thông thường, nó vẫn là trích dẫn thường.';
+  String get syntaxReferenceAdmonitionLimitation => 'Trích dẫn khối thuần là mẹo trong Markdown Writerside; trong Markdown thông thường, nó vẫn là trích dẫn thường.';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => 'Lưu ý ngữ nghĩa';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation =>
-      'Markdown thông thường không diễn giải các phần tử Writerside ngữ nghĩa này.';
+  String get syntaxReferenceSemanticMarkupLimitation => 'Markdown thông thường không diễn giải các phần tử Writerside ngữ nghĩa này.';
 
   @override
   String get syntaxReferenceCollapsibleHeading => 'Tiêu đề có thể thu gọn';
@@ -3481,34 +3219,28 @@ class AppLocalizationsVi extends AppLocalizations {
   String get syntaxReferenceCollapsibleCode => 'Hàng rào mã có thể thu gọn';
 
   @override
-  String get syntaxReferenceSemanticCollapsibles =>
-      'Nội dung ngữ nghĩa có thể thu gọn';
+  String get syntaxReferenceSemanticCollapsibles => 'Nội dung ngữ nghĩa có thể thu gọn';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation =>
-      'BusyMark hỗ trợ các dạng chapter, procedure, code-block và danh sách định nghĩa có thể thu gọn, không hỗ trợ toàn bộ danh mục Writerside.';
+  String get syntaxReferenceSemanticCollapsiblesLimitation => 'BusyMark hỗ trợ các dạng chapter, procedure, code-block và danh sách định nghĩa có thể thu gọn, không hỗ trợ toàn bộ danh mục Writerside.';
 
   @override
-  String get syntaxReferenceSemanticCodeBlocks =>
-      'Khối mã ngữ nghĩa cho toán học và sơ đồ';
+  String get syntaxReferenceSemanticCodeBlocks => 'Khối mã ngữ nghĩa cho toán học và sơ đồ';
 
   @override
   String get syntaxReferenceVideo => 'Video Writerside';
 
   @override
-  String get syntaxReferenceVideoLimitation =>
-      'Video cục bộ dùng ảnh preview-src cục bộ; nguồn lưu trữ phải là URL HTTPS YouTube hoặc Vimeo được hỗ trợ.';
+  String get syntaxReferenceVideoLimitation => 'Video cục bộ dùng ảnh preview-src cục bộ; nguồn lưu trữ phải là URL HTTPS YouTube hoặc Vimeo được hỗ trợ.';
 
   @override
   String get exportAsPdf => 'Xuất dưới dạng PDF';
 
   @override
-  String get pdfExportDescription =>
-      'Chọn bố cục trang cho tệp PDF hoàn chỉnh, được trình bày chuyên nghiệp.';
+  String get pdfExportDescription => 'Chọn bố cục trang cho tệp PDF hoàn chỉnh, được trình bày chuyên nghiệp.';
 
   @override
-  String get pdfRemoteImagesNote =>
-      'Hình ảnh từ xa không được tải xuống trong quá trình xuất. Hình ảnh cục bộ sẽ được đưa vào khi có thể.';
+  String get pdfRemoteImagesNote => 'Hình ảnh từ xa không được tải xuống trong quá trình xuất. Hình ảnh cục bộ sẽ được đưa vào khi có thể.';
 
   @override
   String get pdfPageSize => 'Cỡ trang';
@@ -3572,16 +3304,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get pdfExportUnavailable =>
-      'Thiếu thành phần xuất PDF. Hãy cài đặt lại BusyMark và thử lại.';
+  String get pdfExportUnavailable => 'Thiếu thành phần xuất PDF. Hãy cài đặt lại BusyMark và thử lại.';
 
   @override
-  String get pdfExportTimedOut =>
-      'Quá trình xuất PDF mất quá nhiều thời gian và đã bị dừng.';
+  String get pdfExportTimedOut => 'Quá trình xuất PDF mất quá nhiều thời gian và đã bị dừng.';
 
   @override
-  String get pdfExportFailed =>
-      'BusyMark không thể xuất tài liệu này dưới dạng PDF.';
+  String get pdfExportFailed => 'BusyMark không thể xuất tài liệu này dưới dạng PDF.';
 
   @override
   String get visualizationRendering => 'Đang kết xuất…';
@@ -3635,8 +3364,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get visualizationSearchOperations => 'Tìm kiếm thao tác';
 
   @override
-  String get visualizationRenderFailed =>
-      'Không thể kết xuất hình minh họa này.';
+  String get visualizationRenderFailed => 'Không thể kết xuất hình minh họa này.';
 
   @override
   String get visualizationRetry => 'Thử lại';
@@ -3647,8 +3375,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get shortcutExportPdfDescription =>
-      'Xuất tài liệu hiện tại hoặc mô-đun Writerside dưới dạng PDF.';
+  String get shortcutExportPdfDescription => 'Xuất tài liệu hiện tại hoặc mô-đun Writerside dưới dạng PDF.';
 
   @override
   String get instances => 'Các thực thể';
@@ -3687,8 +3414,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get chooseMarkdownFolder => 'Chọn thư mục Markdown';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired =>
-      'Chọn một thư mục chứa các tệp Markdown.';
+  String get errorWritersideInstanceImportSourceRequired => 'Chọn một thư mục chứa các tệp Markdown.';
 
   @override
   String get instanceAppearance => 'Giao diện';
@@ -3720,19 +3446,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get instanceStatusDeprecated => 'Không còn được dùng';
 
   @override
-  String get allowSearchEngineIndexing =>
-      'Cho phép công cụ tìm kiếm lập chỉ mục';
+  String get allowSearchEngineIndexing => 'Cho phép công cụ tìm kiếm lập chỉ mục';
 
   @override
-  String get allowSearchEngineIndexingDescription =>
-      'Cho phép các công cụ tìm kiếm bên ngoài lập chỉ mục đầu ra này.';
+  String get allowSearchEngineIndexingDescription => 'Cho phép các công cụ tìm kiếm bên ngoài lập chỉ mục đầu ra này.';
 
   @override
   String get offlineArtifact => 'Gói ngoại tuyến';
 
   @override
-  String get offlineArtifactDescription =>
-      'Đóng gói tài nguyên để tài liệu được xây dựng có thể hoạt động độc lập.';
+  String get offlineArtifactDescription => 'Đóng gói tài nguyên để tài liệu được xây dựng có thể hoạt động độc lập.';
 
   @override
   String get instanceOutputSettings => 'Cài đặt đầu ra';
@@ -3752,15 +3475,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get noMarkdownFilesFound =>
-      'Không tìm thấy tệp Markdown nào trong thư mục này.';
+  String get noMarkdownFilesFound => 'Không tìm thấy tệp Markdown nào trong thư mục này.';
 
   @override
   String get copyReferencedMedia => 'Sao chép phương tiện được tham chiếu';
 
   @override
-  String get copyReferencedMediaDescription =>
-      'Sao chép hình ảnh và video cục bộ được các tệp đã chọn tham chiếu, đồng thời giữ nguyên đường dẫn tương đối.';
+  String get copyReferencedMediaDescription => 'Sao chép hình ảnh và video cục bộ được các tệp đã chọn tham chiếu, đồng thời giữ nguyên đường dẫn tương đối.';
 
   @override
   String get instanceIdRenameWarningTitle => 'Đổi tên ID thực thể?';
@@ -3774,8 +3495,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get renameAndUpdateReferences => 'Đổi tên và cập nhật tham chiếu';
 
   @override
-  String get tocLibraryDescription =>
-      'Thư viện mục lục lưu trữ các phần có thể tái sử dụng và không tạo đầu ra riêng.';
+  String get tocLibraryDescription => 'Thư viện mục lục lưu trữ các phần có thể tái sử dụng và không tạo đầu ra riêng.';
 
   @override
   String get defaultTocLibraryName => 'Mục lục dùng chung';
@@ -3823,8 +3543,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired =>
-      'Chọn ít nhất một tệp Markdown để nhập.';
+  String get errorWritersideInstanceImportSelectionRequired => 'Chọn ít nhất một tệp Markdown để nhập.';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -3837,8 +3556,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceFilesChanged =>
-      'Các tệp thực thể đã thay đổi trên đĩa. Hãy xem lại và thử lại.';
+  String get errorWritersideInstanceFilesChanged => 'Các tệp thực thể đã thay đổi trên đĩa. Hãy xem lại và thử lại.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
@@ -3846,20 +3564,16 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceLibraryImport =>
-      'Thư viện mục lục không thể nhập các chủ đề Markdown.';
+  String get errorWritersideInstanceLibraryImport => 'Thư viện mục lục không thể nhập các chủ đề Markdown.';
 
   @override
-  String get errorWritersideInstanceWebPathInvalid =>
-      'Đường dẫn web phải nằm trên một dòng duy nhất.';
+  String get errorWritersideInstanceWebPathInvalid => 'Đường dẫn web phải nằm trên một dòng duy nhất.';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid =>
-      'Cấu hình thực thể Writerside không hợp lệ. Hãy sửa các chẩn đoán rồi thử lại.';
+  String get errorWritersideInstanceConfigurationInvalid => 'Cấu hình thực thể Writerside không hợp lệ. Hãy sửa các chẩn đoán rồi thử lại.';
 
   @override
-  String get errorWritersideInstanceTemporaryFile =>
-      'BusyMark không thể đưa các thay đổi của thực thể vào stage một cách an toàn.';
+  String get errorWritersideInstanceTemporaryFile => 'BusyMark không thể đưa các thay đổi của thực thể vào stage một cách an toàn.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
@@ -3872,36 +3586,27 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot =>
-      'buildprofiles.xml phải có phần tử gốc <buildprofiles>.';
+  String get diagnosticWritersideBuildProfilesInvalidRoot => 'buildprofiles.xml phải có phần tử gốc <buildprofiles>.';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(
-    String name,
-    String value,
-  ) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
     return 'Giá trị $name “$value” phải là true hoặc false.';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance =>
-      'Phần tử <build-profile> phải chỉ định ID thực thể.';
+  String get diagnosticWritersideBuildProfileMissingInstance => 'Phần tử <build-profile> phải chỉ định ID thực thể.';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude =>
-      '<include> trong cây phải chỉ định cả from và element-id.';
+  String get diagnosticWritersideTreeInvalidInclude => '<include> trong cây phải chỉ định cả from và element-id.';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId =>
-      '<snippet> trong cây phải chỉ định id.';
+  String get diagnosticWritersideTreeMissingSnippetId => '<snippet> trong cây phải chỉ định id.';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
-      'Tham chiếu mục lục giữa các thực thể phải chỉ định cả ref và in.';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference => 'Tham chiếu mục lục giữa các thực thể phải chỉ định cả ref và in.';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets =>
-      'Một phần tử mục lục không thể nhắm đến nhiều hơn một chủ đề, tham chiếu, liên kết hoặc chuyển hướng.';
+  String get diagnosticWritersideTreeConflictingTargets => 'Một phần tử mục lục không thể nhắm đến nhiều hơn một chủ đề, tham chiếu, liên kết hoặc chuyển hướng.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3909,12 +3614,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      'Tệp nhóm thực thể phải có phần tử gốc <instance-groups>.';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot => 'Tệp nhóm thực thể phải có phần tử gốc <instance-groups>.';
 
   @override
-  String get diagnosticWritersideInstanceGroupInvalid =>
-      'Một nhóm thực thể phải chỉ định id không trống và danh sách thực thể.';
+  String get diagnosticWritersideInstanceGroupInvalid => 'Một nhóm thực thể phải chỉ định id không trống và danh sách thực thể.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
@@ -3922,19 +3625,12 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(
-    String source,
-    String id,
-    String origin,
-  ) {
+  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
     return 'Include mục lục “$source#$id” thuộc mô-đun bên ngoài “$origin” và không thể mở rộng trong không gian làm việc này.';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(
-    String source,
-    String id,
-  ) {
+  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
     return 'Phần tử cây “$id” không tồn tại trong cây đã đăng ký “$source”.';
   }
 
@@ -3954,10 +3650,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(
-    String topic,
-    String instance,
-  ) {
+  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
     return 'Chủ đề “$topic” không nằm trong thực thể được tham chiếu “$instance”.';
   }
 
@@ -3986,8 +3679,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiDisabled => 'Đã tắt';
 
   @override
-  String get aiExplicitEditingDescription =>
-      'Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.';
+  String get aiExplicitEditingDescription => 'Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.';
 
   @override
   String get aiProvider => 'Nhà cung cấp AI';
@@ -4022,12 +3714,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiNoModels => 'Chưa chọn mô hình nào.';
 
   @override
-  String get aiConnectionFailed =>
-      'BusyMark không thể xác minh việc tạo văn bản bằng AI.';
+  String get aiConnectionFailed => 'BusyMark không thể xác minh việc tạo văn bản bằng AI.';
 
   @override
-  String get aiConfigureFirst =>
-      'Bật một nhà cung cấp AI và xác minh mô hình trong Cài đặt → AI.';
+  String get aiConfigureFirst => 'Bật một nhà cung cấp AI và xác minh mô hình trong Cài đặt → AI.';
 
   @override
   String get aiEditWithAi => 'Chỉnh sửa bằng AI';
@@ -4103,12 +3793,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get aiStaleProposal =>
-      'Tài liệu đã thay đổi trong khi đề xuất này được tạo. Hãy thực hiện lại thao tác.';
+  String get aiStaleProposal => 'Tài liệu đã thay đổi trong khi đề xuất này được tạo. Hãy thực hiện lại thao tác.';
 
   @override
-  String get gitAiStagedChangesChanged =>
-      'Các thay đổi trong stage đã thay đổi trong khi thông điệp commit này được tạo. Hãy thực hiện lại thao tác.';
+  String get gitAiStagedChangesChanged => 'Các thay đổi trong stage đã thay đổi trong khi thông điệp commit này được tạo. Hãy thực hiện lại thao tác.';
 
   @override
   String get aiViewContext => 'Xem ngữ cảnh đã gửi';
@@ -4126,8 +3814,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiApiKey => 'Khóa API';
 
   @override
-  String get aiApiKeyStoredHint =>
-      'Khóa đã được lưu trong kho thông tin xác thực của hệ thống';
+  String get aiApiKeyStoredHint => 'Khóa đã được lưu trong kho thông tin xác thực của hệ thống';
 
   @override
   String get aiApiKeyEnterHint => 'Nhập khóa API của nhà cung cấp';
@@ -4142,8 +3829,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiRemoveApiKey => 'Xóa khóa API đã lưu';
 
   @override
-  String get aiCredentialSaved =>
-      'Đã lưu khóa API trong kho thông tin xác thực của hệ thống.';
+  String get aiCredentialSaved => 'Đã lưu khóa API trong kho thông tin xác thực của hệ thống.';
 
   @override
   String get aiCredentialRemoved => 'Đã xóa khóa API đã lưu.';
@@ -4179,8 +3865,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get aiCloudConsentMessage =>
-      'Chỉ nội dung hiển thị trong mỗi hộp thoại xem lại AI được gửi đi. Yêu cầu không được lưu trạng thái, đề xuất cần được xem lại và khóa API được lưu trong kho thông tin xác thực hệ thống Linux.';
+  String get aiCloudConsentMessage => 'Chỉ nội dung hiển thị trong mỗi hộp thoại xem lại AI được gửi đi. Yêu cầu không được lưu trạng thái, đề xuất cần được xem lại và khóa API được lưu trong kho thông tin xác thực hệ thống Linux.';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -4193,12 +3878,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get aiColdStartObserved =>
-      'Đã phát hiện khởi động nguội của mô hình cục bộ.';
+  String get aiColdStartObserved => 'Đã phát hiện khởi động nguội của mô hình cục bộ.';
 
   @override
-  String get aiNoCompatibleModels =>
-      'Không có mô hình tạo văn bản tương thích nào khả dụng.';
+  String get aiNoCompatibleModels => 'Không có mô hình tạo văn bản tương thích nào khả dụng.';
 
   @override
   String get aiEnableProvider => 'Trước tiên, hãy bật một nhà cung cấp AI.';
@@ -4218,8 +3901,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownLinkEmptyText =>
-      'Văn bản liên kết trống; hãy cung cấp tên có khả năng truy cập mô tả mục đích của liên kết.';
+  String get diagnosticMarkdownLinkEmptyText => 'Văn bản liên kết trống; hãy cung cấp tên có khả năng truy cập mô tả mục đích của liên kết.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {
@@ -4227,8 +3909,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownTableEmptyHeader =>
-      'Các ô tiêu đề bảng phải xác định cột của chúng; hãy hoàn thành từng tiêu đề trống.';
+  String get diagnosticMarkdownTableEmptyHeader => 'Các ô tiêu đề bảng phải xác định cột của chúng; hãy hoàn thành từng tiêu đề trống.';
 
   @override
   String get mathRenderFailed => 'Không thể kết xuất biểu thức toán học.';
@@ -4246,19 +3927,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get findUsages => 'Tìm nơi sử dụng';
 
   @override
-  String get cannotRenameSymbol =>
-      'Không thể đổi tên ký hiệu một cách an toàn. Kiểm tra tên và làm mới tham chiếu trước khi thử lại.';
+  String get cannotRenameSymbol => 'Không thể đổi tên ký hiệu một cách an toàn. Kiểm tra tên và làm mới tham chiếu trước khi thử lại.';
 
   @override
-  String get renameTopicFileInstead =>
-      'ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.';
+  String get renameTopicFileInstead => 'ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.';
 
   @override
   String get keyboardLayout => 'Bố cục bàn phím';
 
   @override
-  String get diagnosticWritersideUnsupported =>
-      'Nội dung không được hỗ trợ hoặc sai định dạng được hiển thị dưới dạng mã nguồn.';
+  String get diagnosticWritersideUnsupported => 'Nội dung không được hỗ trợ hoặc sai định dạng được hiển thị dưới dạng mã nguồn.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
@@ -4271,17 +3949,12 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideSchema(
-    String element,
-    String attribute,
-    String reason,
-  ) {
+  String diagnosticWritersideSchema(String element, String attribute, String reason) {
     return 'Đánh dấu Writerside không hợp lệ: $element, $attribute. $reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt =>
-      'Dùng <llms-txt>true</llms-txt> hoặc <llms-txt>false</llms-txt>; single-file không còn được hỗ trợ.';
+  String get diagnosticWritersideLlmsTxt => 'Dùng <llms-txt>true</llms-txt> hoặc <llms-txt>false</llms-txt>; single-file không còn được hỗ trợ.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -4304,19 +3977,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get htmlExportFailed => 'Xuất HTML thất bại';
 
   @override
-  String get htmlKeepAssetsTogether =>
-      'Khi sao chép bản xuất, hãy giữ tệp HTML và thư mục tài nguyên đi kèm ở cùng nhau.';
+  String get htmlKeepAssetsTogether => 'Khi sao chép bản xuất, hãy giữ tệp HTML và thư mục tài nguyên đi kèm ở cùng nhau.';
 
   @override
-  String get htmlInstanceDescription =>
-      'Xuất một phiên bản thành các trang ngoại tuyến có liên kết. Chọn tên cho thư mục đầu ra riêng.';
+  String get htmlInstanceDescription => 'Xuất một phiên bản thành các trang ngoại tuyến có liên kết. Chọn tên cho thư mục đầu ra riêng.';
 
   @override
   String get htmlInstance => 'Phiên bản';
 
   @override
-  String get htmlOwnedDirectoryOnly =>
-      'Chỉ có thể thay thế thư mục được tạo bởi chức năng xuất HTML của BusyMark. Các tệp đã sửa đổi hoặc không liên quan sẽ được giữ lại.';
+  String get htmlOwnedDirectoryOnly => 'Chỉ có thể thay thế thư mục được tạo bởi chức năng xuất HTML của BusyMark. Các tệp đã sửa đổi hoặc không liên quan sẽ được giữ lại.';
 
   @override
   String get showInFolder => 'Hiển thị trong thư mục';
@@ -4438,23 +4108,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exportRemoveCss => 'Xóa biểu định kiểu tùy chỉnh';
 
   @override
-  String get exportCssNote =>
-      'Chọn tệp CSS UTF-8 tùy chọn (tối đa 256 KiB). Không chấp nhận nhập tài nguyên, URL tài nguyên, CSS thực thi hoặc có ký tự thoát. Kiểu được áp dụng sau CSS của BusyMark. Không tải tài nguyên từ xa.';
+  String get exportCssNote => 'Chọn tệp CSS UTF-8 tùy chọn (tối đa 256 KiB). Không chấp nhận nhập tài nguyên, URL tài nguyên, CSS thực thi hoặc có ký tự thoát. Kiểu được áp dụng sau CSS của BusyMark. Không tải tài nguyên từ xa.';
 
   @override
-  String get exportSitePackagingNote =>
-      'Writerside giữ các trang chủ đề riêng có liên kết. Chế độ một tệp nhúng tài nguyên vào từng trang.';
+  String get exportSitePackagingNote => 'Writerside giữ các trang chủ đề riêng có liên kết. Chế độ một tệp nhúng tài nguyên vào từng trang.';
 
   @override
-  String get exportInvalidGeometry =>
-      'Sau khi trừ lề, hãy để nội dung rộng và cao ít nhất 20 mm.';
+  String get exportInvalidGeometry => 'Sau khi trừ lề, hãy để nội dung rộng và cao ít nhất 20 mm.';
 
   @override
   String get exportInvalidColor => 'Nhập màu theo dạng #RRGGBB.';
 
   @override
-  String get exportInvalidCss =>
-      'Chọn tệp .css UTF-8 đọc được tối đa 256 KiB, không có nhập tài nguyên, URL tài nguyên, HTML, CSS thực thi hoặc ký tự thoát.';
+  String get exportInvalidCss => 'Chọn tệp .css UTF-8 đọc được tối đa 256 KiB, không có nhập tài nguyên, URL tài nguyên, HTML, CSS thực thi hoặc ký tự thoát.';
 
   @override
   String get clipboardHistory => 'Lịch sử sao chép';
@@ -4466,8 +4132,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get clipboardCurrent => 'Lịch sử sao chép hiện tại';
 
   @override
-  String get clipboardCurrentExternal =>
-      'Lịch sử sao chép từ một ứng dụng khác';
+  String get clipboardCurrentExternal => 'Lịch sử sao chép từ một ứng dụng khác';
 
   @override
   String clipboardDestination(String name) {
@@ -4481,12 +4146,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get clipboardNoItems => 'Lịch sử sao chép trống.';
 
   @override
-  String get clipboardDisabled =>
-      'Bộ sưu tập Lịch sử sao chép bị vô hiệu hóa trong Cài đặt.';
+  String get clipboardDisabled => 'Bộ sưu tập Lịch sử sao chép bị vô hiệu hóa trong Cài đặt.';
 
   @override
-  String get clipboardUnavailable =>
-      'Nội dung sao chép hiện tại không khả dụng hoặc không được hỗ trợ.';
+  String get clipboardUnavailable => 'Nội dung sao chép hiện tại không khả dụng hoặc không được hỗ trợ.';
 
   @override
   String get clipboardTooLarge => 'Mục này trong clipboard quá lớn để lưu.';
@@ -4518,23 +4181,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get localHistoryEllipsis => 'Lịch sử cục bộ…';
 
   @override
-  String get localHistoryDescription =>
-      'Hiển thị các phiên bản cục bộ đã lưu và tự động cho tài liệu hiện tại.';
+  String get localHistoryDescription => 'Hiển thị các phiên bản cục bộ đã lưu và tự động cho tài liệu hiện tại.';
 
   @override
   String get findLocalHistoryEllipsis => 'Tìm trong Lịch sử cục bộ…';
 
   @override
-  String get findLocalHistoryDescription =>
-      'Tìm kiếm các tài liệu và nội dung phiên bản trong Lịch sử cục bộ.';
+  String get findLocalHistoryDescription => 'Tìm kiếm các tài liệu và nội dung phiên bản trong Lịch sử cục bộ.';
 
   @override
-  String get localHistoryNoDocuments =>
-      'Chưa có tài liệu nào có Lịch sử cục bộ.';
+  String get localHistoryNoDocuments => 'Chưa có tài liệu nào có Lịch sử cục bộ.';
 
   @override
-  String get localHistoryNoRevisions =>
-      'Tài liệu này không có các phiên bản Lịch sử cục bộ.';
+  String get localHistoryNoRevisions => 'Tài liệu này không có các phiên bản Lịch sử cục bộ.';
 
   @override
   String get localHistorySelectedRevision => 'Phiên bản đã chọn';
@@ -4552,8 +4211,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get localHistoryRestoreRevision => 'Khôi phục Phiên bản';
 
   @override
-  String get localHistoryRestoreOriginalLocation =>
-      'Khôi phục về Vị trí Ban đầu';
+  String get localHistoryRestoreOriginalLocation => 'Khôi phục về Vị trí Ban đầu';
 
   @override
   String get localHistoryRestoreNewLocation => 'Khôi phục về Vị trí Mới…';
@@ -4562,12 +4220,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get localHistoryRestoreChange => 'Khôi phục Thay đổi';
 
   @override
-  String get localHistoryRestoreUnavailable =>
-      'Thay đổi này không thể khôi phục vì so sánh không còn hợp lệ.';
+  String get localHistoryRestoreUnavailable => 'Thay đổi này không thể khôi phục vì so sánh không còn hợp lệ.';
 
   @override
-  String get localHistoryComparisonSimplified =>
-      'So sánh này rất lớn, khôi phục thay đổi riêng không khả thi.';
+  String get localHistoryComparisonSimplified => 'So sánh này rất lớn, khôi phục thay đổi riêng không khả thi.';
 
   @override
   String localHistoryOlderChange(String text) {
@@ -4598,12 +4254,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get localHistoryClearAllTitle => 'Xóa lịch sử địa phương?';
 
   @override
-  String get localHistoryClearConfirmation =>
-      'Điều này sẽ xóa vĩnh viễn các phiên bản đã lưu. Hành động này không thể hoàn tác.';
+  String get localHistoryClearConfirmation => 'Điều này sẽ xóa vĩnh viễn các phiên bản đã lưu. Hành động này không thể hoàn tác.';
 
   @override
-  String get localHistoryWarningIndexRebuilt =>
-      'Chỉ mục Lịch Sử Địa Phương bị hỏng và được xây dựng lại từ các phiên bản còn nguyên vẹn.';
+  String get localHistoryWarningIndexRebuilt => 'Chỉ mục Lịch Sử Địa Phương bị hỏng và được xây dựng lại từ các phiên bản còn nguyên vẹn.';
 
   @override
   String localHistoryWarningUnsupportedFormat(String version) {
@@ -4616,8 +4270,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled =>
-      'Ghi âm bị tắt hoặc đường dẫn này bị loại trừ. Vui lòng bật lại ghi âm trước khi khôi phục.';
+  String get localHistoryWarningRecordingDisabled => 'Ghi âm bị tắt hoặc đường dẫn này bị loại trừ. Vui lòng bật lại ghi âm trước khi khôi phục.';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -4630,8 +4283,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRevisionMissing =>
-      'Phiên bản đã chọn bị thiếu hoặc bị hỏng.';
+  String get localHistoryWarningRevisionMissing => 'Phiên bản đã chọn bị thiếu hoặc bị hỏng.';
 
   @override
   String localHistoryWarningRevisionRead(String detail) {
@@ -4679,15 +4331,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get settingsClipboardHistoryTitle => 'Thu thập lịch sử sao chép';
 
   @override
-  String get settingsClipboardHistoryDescription =>
-      'Giữ nội dung đã sao chép và dán thành công chỉ cho phiên BusyMark này.';
+  String get settingsClipboardHistoryDescription => 'Giữ nội dung đã sao chép và dán thành công chỉ cho phiên BusyMark này.';
 
   @override
   String get settingsLocalHistoryTitle => 'Ghi lại lịch sử cục bộ';
 
   @override
-  String get settingsLocalHistoryDescription =>
-      'Lưu các phiên bản tài liệu trên thiết bị để khôi phục và so sánh.';
+  String get settingsLocalHistoryDescription => 'Lưu các phiên bản tài liệu trên thiết bị để khôi phục và so sánh.';
 
   @override
   String get settingsHistoryCheckpoint => 'Khoảng thời gian kiểm tra tự động';
@@ -4702,8 +4352,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get settingsHistoryExcludedPaths => 'Đường dẫn bị loại trừ';
 
   @override
-  String get settingsHistoryExcludedPathsHint =>
-      'Một đường dẫn tuyệt đối trên mỗi dòng';
+  String get settingsHistoryExcludedPathsHint => 'Một đường dẫn tuyệt đối trên mỗi dòng';
 
   @override
   String settingsSecondsValue(int value) {
@@ -4784,8 +4433,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get spellingCheckFailed => 'Kiểm tra chính tả thất bại';
 
   @override
-  String get spellingSettingsLoadFailed =>
-      'Không thể tải cài đặt kiểm tra chính tả';
+  String get spellingSettingsLoadFailed => 'Không thể tải cài đặt kiểm tra chính tả';
 
   @override
   String get retrySpellingSettings => 'Thử tải lại cài đặt kiểm tra chính tả';
@@ -4830,8 +4478,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get spellingDictionaryValidating => 'Đang xác thực từ điển…';
 
   @override
-  String get spellingDictionaryInstallFailed =>
-      'Cài đặt từ điển thất bại — chọn để thử lại';
+  String get spellingDictionaryInstallFailed => 'Cài đặt từ điển thất bại — chọn để thử lại';
 
   @override
   String spellingDictionaryInstallPrompt(String dictionary, String size) {
@@ -4850,8 +4497,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get spellingDictionaryRecoveryConflict =>
-      'Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại.';
+  String get spellingDictionaryRecoveryConflict => 'Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại.';
 
   @override
   String get windowMinimize => 'Thu nhỏ';
@@ -4920,49 +4566,40 @@ class AppLocalizationsVi extends AppLocalizations {
   String get nextcloudDeleteNote => 'Xóa ghi chú?';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable =>
-      'Không thể thay thế toàn bộ không gian làm việc với Nextcloud Notes. Hãy thay thế trong từng ghi chú.';
+  String get nextcloudWorkspaceReplaceUnavailable => 'Không thể thay thế toàn bộ không gian làm việc với Nextcloud Notes. Hãy thay thế trong từng ghi chú.';
 
   @override
   String get nextcloudSaveLocalCopy => 'Lưu bản sao cục bộ…';
 
   @override
-  String get nextcloudDisconnectWarning =>
-      'Xóa tài khoản này sẽ xóa ghi chú đã lưu và thay đổi đang chờ trên thiết bị. Hãy đồng bộ trước để giữ công việc trên máy chủ.';
+  String get nextcloudDisconnectWarning => 'Xóa tài khoản này sẽ xóa ghi chú đã lưu và thay đổi đang chờ trên thiết bị. Hãy đồng bộ trước để giữ công việc trên máy chủ.';
 
   @override
-  String get nextcloudAttachmentRetryWarning =>
-      'Nếu lần tải lên trước đã thành công, thử lại có thể để lại tệp đính kèm không dùng trên máy chủ.';
+  String get nextcloudAttachmentRetryWarning => 'Nếu lần tải lên trước đã thành công, thử lại có thể để lại tệp đính kèm không dùng trên máy chủ.';
 
   @override
-  String get nextcloudAttachmentReference =>
-      'Tham chiếu tệp đính kèm trên máy chủ';
+  String get nextcloudAttachmentReference => 'Tham chiếu tệp đính kèm trên máy chủ';
 
   @override
   String get nextcloudAddAttachment => 'Thêm tệp đính kèm…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning =>
-      'Xóa tệp đính kèm này sẽ khiến các liên kết đến tệp trong ghi chú không còn khả dụng. Dữ liệu được giữ lại có thể khôi phục qua lịch sử cục bộ.';
+  String get nextcloudDeleteAttachmentWarning => 'Xóa tệp đính kèm này sẽ khiến các liên kết đến tệp trong ghi chú không còn khả dụng. Dữ liệu được giữ lại có thể khôi phục qua lịch sử cục bộ.';
 
   @override
-  String get nextcloudChooseConflictingAttributes =>
-      'Chọn giá trị cho từng thuộc tính xung đột.';
+  String get nextcloudChooseConflictingAttributes => 'Chọn giá trị cho từng thuộc tính xung đột.';
 
   @override
   String get nextcloudUseServerNote => 'Dùng ghi chú trên máy chủ này';
 
   @override
-  String get nextcloudUseServerNoteExplanation =>
-      'Liên kết bản nháp này với ghi chú đã chọn trên máy chủ, rồi đồng bộ các thay đổi cục bộ được giữ lại. Yêu cầu trùng khớp không xác nhận ai đã tạo ghi chú.';
+  String get nextcloudUseServerNoteExplanation => 'Liên kết bản nháp này với ghi chú đã chọn trên máy chủ, rồi đồng bộ các thay đổi cục bộ được giữ lại. Yêu cầu trùng khớp không xác nhận ai đã tạo ghi chú.';
 
   @override
-  String get nextcloudExactCandidate =>
-      'Khớp chính xác với yêu cầu; chưa xác nhận danh tính.';
+  String get nextcloudExactCandidate => 'Khớp chính xác với yêu cầu; chưa xác nhận danh tính.';
 
   @override
-  String get nextcloudPossibleCandidate =>
-      'Có thể khớp sau khi chuẩn hóa yêu cầu; chưa xác nhận danh tính.';
+  String get nextcloudPossibleCandidate => 'Có thể khớp sau khi chuẩn hóa yêu cầu; chưa xác nhận danh tính.';
 
   @override
   String get nextcloudSelectCandidate => 'Chọn ghi chú trên máy chủ để xem xét';
@@ -4971,8 +4608,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get nextcloudCreateSeparate => 'Tạo ghi chú riêng';
 
   @override
-  String get nextcloudCreateSeparateWarning =>
-      'Yêu cầu đầu tiên có thể đã tạo ghi chú trên máy chủ. Thao tác này tạo ghi chú riêng với công việc cục bộ được giữ lại. Không xóa ghi chú nào bị nghi trùng lặp.';
+  String get nextcloudCreateSeparateWarning => 'Yêu cầu đầu tiên có thể đã tạo ghi chú trên máy chủ. Thao tác này tạo ghi chú riêng với công việc cục bộ được giữ lại. Không xóa ghi chú nào bị nghi trùng lặp.';
 
   @override
   String get wsSemanticFormats => 'Định dạng ngữ nghĩa';
@@ -5083,15 +4719,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get nextcloudFileSuffix => 'Phần mở rộng của ghi chú mới';
 
   @override
-  String get nextcloudServerSettingsExplanation =>
-      'Các cài đặt Notes này ảnh hưởng đến các ứng dụng khách khác. Đổi đường dẫn không di chuyển tệp; đổi phần mở rộng không đổi tên ghi chú hiện có.';
+  String get nextcloudServerSettingsExplanation => 'Các cài đặt Notes này ảnh hưởng đến các ứng dụng khách khác. Đổi đường dẫn không di chuyển tệp; đổi phần mở rộng không đổi tên ghi chú hiện có.';
 
   @override
   String get nextcloudSettingsSaved => 'Đã lưu cài đặt máy chủ';
 
   @override
-  String get nextcloudSettingsNormalized =>
-      'Đã lưu các giá trị được máy chủ chuẩn hóa';
+  String get nextcloudSettingsNormalized => 'Đã lưu các giá trị được máy chủ chuẩn hóa';
 
   @override
   String get nextcloudPendingUpload => 'Đang chờ tải tệp đính kèm lên';
@@ -5153,15 +4787,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesIndexing => 'Đang lập chỉ mục ghi chú…';
 
   @override
-  String get notesSearchHelp =>
-      'Các từ kết hợp bằng VÀ. Dùng \"cụm từ trích dẫn\", title: và category:.';
+  String get notesSearchHelp => 'Các từ kết hợp bằng VÀ. Dùng \"cụm từ trích dẫn\", title: và category:.';
 
   @override
   String get notesSourceLocation => 'Vị trí mã nguồn';
 
   @override
-  String get notesRecoveryHelp =>
-      'Chỉ gồm ghi chú cục bộ được giữ và lịch sử cục bộ. Không có thùng rác hoặc lịch sử máy chủ.';
+  String get notesRecoveryHelp => 'Chỉ gồm ghi chú cục bộ được giữ và lịch sử cục bộ. Không có thùng rác hoặc lịch sử máy chủ.';
 
   @override
   String get notesImport => 'Nhập ghi chú';
@@ -5182,8 +4814,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesSelected => 'Ghi chú đã chọn';
 
   @override
-  String get notesNoHistory =>
-      'Không có phiên bản được giữ. Lịch sử có thể bị tắt, hết hạn hoặc bị xóa.';
+  String get notesNoHistory => 'Không có phiên bản được giữ. Lịch sử có thể bị tắt, hết hạn hoặc bị xóa.';
 
   @override
   String get notesTextAvailable => 'Văn bản có sẵn cục bộ';
@@ -5249,8 +4880,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get referenceUnsupported => 'Không được hỗ trợ';
 
   @override
-  String get referenceNoPortableId =>
-      'Đích này không có URL ghi chú di động đã xác minh.';
+  String get referenceNoPortableId => 'Đích này không có URL ghi chú di động đã xác minh.';
 
   @override
   String get wsIncludeLines => 'Gồm các dòng';
@@ -5268,8 +4898,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsPropertiesProtected => 'Phần tử được bảo vệ. Hãy sửa mã nguồn.';
 
   @override
-  String get wsPropertiesConflict =>
-      'Tài liệu hoặc phần tử đã đổi. Hoàn nguyên bản nháp và chọn lại.';
+  String get wsPropertiesConflict => 'Tài liệu hoặc phần tử đã đổi. Hoàn nguyên bản nháp và chọn lại.';
 
   @override
   String get wsPropertiesUnresolved => 'Hiện không thể phân giải tham chiếu.';
@@ -5299,8 +4928,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsHeight => 'Chiều cao';
 
   @override
-  String get wsPropertiesInactive =>
-      'Thuộc tính chỉ có tác dụng khi bật thu gọn lúc xuất bản.';
+  String get wsPropertiesInactive => 'Thuộc tính chỉ có tác dụng khi bật thu gọn lúc xuất bản.';
 
   @override
   String get wsNavigationAll => 'Mọi phần tử có tiêu đề';
@@ -5321,19 +4949,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsWideLayout => 'Rộng';
 
   @override
-  String get wsCodeSourceConflict =>
-      'Di chuyển hoặc xóa mã được viết trong khối này trước khi đặt src. Writerside từ chối khối mã không trống có tham chiếu nguồn.';
+  String get wsCodeSourceConflict => 'Di chuyển hoặc xóa mã được viết trong khối này trước khi đặt src. Writerside từ chối khối mã không trống có tham chiếu nguồn.';
 
   @override
   String get wsInherited => 'Kế thừa từ danh sách';
 
   @override
-  String get wsExternalImageSize =>
-      'Writerside không đặt kích thước ảnh bên ngoài một cách tin cậy. Có thể xem và xóa kích thước hiện có.';
+  String get wsExternalImageSize => 'Writerside không đặt kích thước ảnh bên ngoài một cách tin cậy. Có thể xem và xóa kích thước hiện có.';
 
   @override
-  String get wsPropertiesNotSerialized =>
-      'Thay đổi này chưa được ghi vào nguồn. Bản nháp đã được giữ lại.';
+  String get wsPropertiesNotSerialized => 'Thay đổi này chưa được ghi vào nguồn. Bản nháp đã được giữ lại.';
 
   @override
   String get wsListItem => 'Mục danh sách';
@@ -5470,8 +5095,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get wsModuleCapsIgnored =>
-      'Trình dựng cố định bỏ qua quy tắc <caps> của mô-đun. Dùng thuộc tính caps cục bộ hoặc default-property.';
+  String get wsModuleCapsIgnored => 'Trình dựng cố định bỏ qua quy tắc <caps> của mô-đun. Dùng thuộc tính caps cục bộ hoặc default-property.';
 
   @override
   String get wsInsertElements => 'Chèn phần tử';
@@ -5483,8 +5107,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsSemanticText => 'Văn bản ngữ nghĩa';
 
   @override
-  String get wsPropertiesUnavailable =>
-      'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
+  String get wsPropertiesUnavailable => 'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
 
   @override
   String get searchDocumentsCategory => 'Tài liệu';
@@ -5562,8 +5185,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get searchActionsHint => 'Tìm thao tác…';
 
   @override
-  String get searchRequiresNotesWorkspace =>
-      'Yêu cầu không gian làm việc Ghi chú';
+  String get searchRequiresNotesWorkspace => 'Yêu cầu không gian làm việc Ghi chú';
 
   @override
   String get searchSidebarLabel => 'Tìm kiếm:';
@@ -5590,26 +5212,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutRestoreAll => 'Khôi phục tất cả mặc định';
 
   @override
-  String get shortcutRestoreAllQuestion =>
-      'Khôi phục phím tắt mặc định của mọi thao tác? Các gán tùy chỉnh sẽ bị xóa.';
+  String get shortcutRestoreAllQuestion => 'Khôi phục phím tắt mặc định của mọi thao tác? Các gán tùy chỉnh sẽ bị xóa.';
 
   @override
-  String get shortcutSaveFailed =>
-      'Phím tắt đang có hiệu lực nhưng chưa lưu được. Thử lưu lại để giữ chúng sau khi khởi động lại.';
+  String get shortcutSaveFailed => 'Phím tắt đang có hiệu lực nhưng chưa lưu được. Thử lưu lại để giữ chúng sau khi khởi động lại.';
 
   @override
   String get shortcutRetry => 'Thử lưu lại';
 
   @override
-  String get shortcutChanged =>
-      'Các gán đã thay đổi. Xem lại phím tắt hiện tại và thử lại.';
+  String get shortcutChanged => 'Các gán đã thay đổi. Xem lại phím tắt hiện tại và thử lại.';
 
   @override
   String get shortcutInvalid => 'Không thể gán tổ hợp này trong ngữ cảnh này.';
 
   @override
-  String get shortcutSystemWarning =>
-      'Môi trường màn hình có thể dùng tổ hợp này. BusyMark không thể ghi đè phím tắt hệ thống.';
+  String get shortcutSystemWarning => 'Môi trường màn hình có thể dùng tổ hợp này. BusyMark không thể ghi đè phím tắt hệ thống.';
 
   @override
   String get shortcutConflicts => 'Phím tắt này xung đột với các thao tác sau:';
@@ -5651,8 +5269,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shortcutFixed => 'Do trình soạn thảo quản lý; không thể cấu hình.';
 
   @override
-  String get shortcutDefaultConflict =>
-      'Phím tắt mặc định xung đột với gán tùy chỉnh.';
+  String get shortcutDefaultConflict => 'Phím tắt mặc định xung đột với gán tùy chỉnh.';
 
   @override
   String get shortcutCurrentBinding => 'Phím tắt hiện tại';
@@ -5682,12 +5299,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesOfflineCategory => 'Cho phép dùng ngoại tuyến · Danh mục';
 
   @override
-  String get notesOfflineRemoveAll =>
-      'Bỏ yêu cầu lưu ngoại tuyến · Tất cả ghi chú';
+  String get notesOfflineRemoveAll => 'Bỏ yêu cầu lưu ngoại tuyến · Tất cả ghi chú';
 
   @override
-  String get notesOfflineRemoveCategory =>
-      'Bỏ yêu cầu lưu ngoại tuyến · Danh mục';
+  String get notesOfflineRemoveCategory => 'Bỏ yêu cầu lưu ngoại tuyến · Danh mục';
 
   @override
   String get notesOfflinePause => 'Tạm dừng tải xuống';
@@ -5699,16 +5314,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesOfflineKeep => 'Cho phép dùng ngoại tuyến';
 
   @override
-  String get notesOfflineRetentionHelp =>
-      'Bỏ yêu cầu này vẫn giữ nội dung đã lưu đệm. Yêu cầu của danh mục hoặc tài khoản có thể vẫn giữ ghi chú này.';
+  String get notesOfflineRetentionHelp => 'Bỏ yêu cầu này vẫn giữ nội dung đã lưu đệm. Yêu cầu của danh mục hoặc tài khoản có thể vẫn giữ ghi chú này.';
 
   @override
-  String get notesOfflineBroader =>
-      'Ghi chú này cũng được giữ theo yêu cầu của danh mục hoặc tài khoản.';
+  String get notesOfflineBroader => 'Ghi chú này cũng được giữ theo yêu cầu của danh mục hoặc tài khoản.';
 
   @override
-  String get notesOfflineExternal =>
-      'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark chỉ giữ văn bản ghi chú và tệp đính kèm được quản lý.';
+  String get notesOfflineExternal => 'Nội dung đa phương tiện bên ngoài cần kết nối. BusyMark chỉ giữ văn bản ghi chú và tệp đính kèm được quản lý.';
 
   @override
   String get notesEmptyAll => 'Chưa có ghi chú. Hãy tạo ghi chú đầu tiên.';
@@ -5723,15 +5335,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesEmptyUncategorized => 'Không có ghi chú chưa phân loại.';
 
   @override
-  String get notesEmptyRecovery =>
-      'Không có ghi chú được giữ lại để khôi phục.';
+  String get notesEmptyRecovery => 'Không có ghi chú được giữ lại để khôi phục.';
 
   @override
   String get notesLoadFailed => 'Nextcloud Notes · Thất bại. Thử lại';
 
   @override
-  String get notesOperationFailed =>
-      'Không thể hoàn tất thao tác. Bản nháp vẫn được giữ. Kiểm tra việc lưu và xung đột rồi thử lại.';
+  String get notesOperationFailed => 'Không thể hoàn tất thao tác. Bản nháp vẫn được giữ. Kiểm tra việc lưu và xung đột rồi thử lại.';
 
   @override
   String get notesInspectionFailed => 'Tệp đính kèm · Thất bại. Thử lại';
@@ -5740,8 +5350,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesStartingConnection => 'Đang bắt đầu kết nối Nextcloud…';
 
   @override
-  String get notesVerifyingConnection =>
-      'Đang xác minh quyền truy cập ghi chú…';
+  String get notesVerifyingConnection => 'Đang xác minh quyền truy cập ghi chú…';
 
   @override
   String get notesCancellingConnection => 'Đang hủy đăng nhập và dọn dẹp…';
@@ -5750,47 +5359,37 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesRemovingConnection => 'Đang xóa tài khoản cục bộ…';
 
   @override
-  String get notesRemovedWarning =>
-      'Đã xóa tài khoản Nextcloud cục bộ. Chưa xác nhận thu hồi mật khẩu ứng dụng. Hãy xóa mật khẩu BusyMark trong cài đặt Bảo mật Nextcloud.';
+  String get notesRemovedWarning => 'Đã xóa tài khoản Nextcloud cục bộ. Chưa xác nhận thu hồi mật khẩu ứng dụng. Hãy xóa mật khẩu BusyMark trong cài đặt Bảo mật Nextcloud.';
 
   @override
-  String get notesBuffersNotSaved =>
-      'Không thể lưu cục bộ tất cả ghi chú đang mở. Kiểm tra việc lưu, xung đột hoặc chuẩn hóa trong không gian làm việc. Thay đổi cục bộ có thể vẫn cần đồng bộ với Nextcloud.';
+  String get notesBuffersNotSaved => 'Không thể lưu cục bộ tất cả ghi chú đang mở. Kiểm tra việc lưu, xung đột hoặc chuẩn hóa trong không gian làm việc. Thay đổi cục bộ có thể vẫn cần đồng bộ với Nextcloud.';
 
   @override
-  String get notesSettingsLeave =>
-      'Lưu thay đổi cài đặt Nextcloud trước khi rời đi?';
+  String get notesSettingsLeave => 'Lưu thay đổi cài đặt Nextcloud trước khi rời đi?';
 
   @override
-  String get notesSettingsLeaveHelp =>
-      'Cài đặt Notes trên máy chủ · Thay đổi chưa lưu';
+  String get notesSettingsLeaveHelp => 'Cài đặt Notes trên máy chủ · Thay đổi chưa lưu';
 
   @override
   String get notesSettingsReload => 'Tải lại cài đặt máy chủ…';
 
   @override
-  String get notesSettingsReloadHelp =>
-      'Tải lại sẽ thay bản nháp bằng cài đặt Nextcloud hiện tại. Bỏ bản nháp và tải lại?';
+  String get notesSettingsReloadHelp => 'Tải lại sẽ thay bản nháp bằng cài đặt Nextcloud hiện tại. Bỏ bản nháp và tải lại?';
 
   @override
-  String get notesSettingsRefreshFailed =>
-      'Nextcloud đã nhận cài đặt nhưng không làm mới được ghi chú. Giá trị hiển thị đã được máy chủ xác nhận. Hãy thử làm mới từ Ghi chú.';
+  String get notesSettingsRefreshFailed => 'Nextcloud đã nhận cài đặt nhưng không làm mới được ghi chú. Giá trị hiển thị đã được máy chủ xác nhận. Hãy thử làm mới từ Ghi chú.';
 
   @override
-  String get notesUnavailable =>
-      'Ngoại tuyến · Văn bản có sẵn cục bộ · Đã lưu cục bộ · chờ đồng bộ';
+  String get notesUnavailable => 'Ngoại tuyến · Văn bản có sẵn cục bộ · Đã lưu cục bộ · chờ đồng bộ';
 
   @override
-  String get notesStorageFull =>
-      'Bộ nhớ Nextcloud đã đầy. Giải phóng dung lượng máy chủ rồi thử lại.';
+  String get notesStorageFull => 'Bộ nhớ Nextcloud đã đầy. Giải phóng dung lượng máy chủ rồi thử lại.';
 
   @override
-  String get notesRejected =>
-      'Nextcloud từ chối thay đổi này. Kiểm tra ghi chú và lưu bản sao cục bộ trước khi thử lại.';
+  String get notesRejected => 'Nextcloud từ chối thay đổi này. Kiểm tra ghi chú và lưu bản sao cục bộ trước khi thử lại.';
 
   @override
-  String get notesThrottled =>
-      'Nextcloud yêu cầu chờ. Đồng bộ sẽ tiếp tục sau thời hạn thử lại.';
+  String get notesThrottled => 'Nextcloud yêu cầu chờ. Đồng bộ sẽ tiếp tục sau thời hạn thử lại.';
 
   @override
   String get notesRecoveryRequired => 'Xung đột · So sánh';
@@ -5811,8 +5410,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesTransferFailed => 'Thất bại. Thử lại';
 
   @override
-  String get notesImportPartialHelp =>
-      'Các mục trước có thể đã được lưu cục bộ. Tiếp tục lần nhập này để tránh tạo bản trùng.';
+  String get notesImportPartialHelp => 'Các mục trước có thể đã được lưu cục bộ. Tiếp tục lần nhập này để tránh tạo bản trùng.';
 
   @override
   String get notesNotStarted => 'Chưa bắt đầu';
@@ -5821,8 +5419,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesCreated => 'Đã tạo';
 
   @override
-  String get notesRemoteDeleteUnavailable =>
-      'Địa chỉ máy chủ · Không được hỗ trợ · Xóa · Tệp đính kèm';
+  String get notesRemoteDeleteUnavailable => 'Địa chỉ máy chủ · Không được hỗ trợ · Xóa · Tệp đính kèm';
 
   @override
   String get notesCurrentText => 'Văn bản hiện đang được giữ lại';
@@ -5837,12 +5434,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesSort => 'Sắp xếp ghi chú';
 
   @override
-  String get notesPathRelative =>
-      'Đường dẫn thư mục ghi chú tương đối với bộ nhớ Nextcloud của bạn.';
+  String get notesPathRelative => 'Đường dẫn thư mục ghi chú tương đối với bộ nhớ Nextcloud của bạn.';
 
   @override
-  String get notesSettingsStale =>
-      'Cài đặt trên Nextcloud đã thay đổi. Tải lại và kiểm tra giá trị máy chủ trước khi thay bản nháp.';
+  String get notesSettingsStale => 'Cài đặt trên Nextcloud đã thay đổi. Tải lại và kiểm tra giá trị máy chủ trước khi thay bản nháp.';
 
   @override
   String get notesDownloadsPaused => 'Đã tạm dừng tải xuống';
@@ -5851,20 +5446,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notesExportNotPublished => 'Không có bản xuất nào được công bố.';
 
   @override
-  String get notesKeyringUnavailable =>
-      'Mở khóa kho khóa của máy tính rồi thử lại.';
+  String get notesKeyringUnavailable => 'Mở khóa kho khóa của máy tính rồi thử lại.';
 
   @override
-  String get notesConnectFailed =>
-      'Không thể kết nối Nextcloud Notes. Kiểm tra địa chỉ máy chủ rồi thử lại.';
+  String get notesConnectFailed => 'Không thể kết nối Nextcloud Notes. Kiểm tra địa chỉ máy chủ rồi thử lại.';
 
   @override
-  String get notesAccountMismatch =>
-      'Đăng nhập cùng tài khoản Nextcloud. Xóa tài khoản này trước để kết nối tài khoản khác.';
+  String get notesAccountMismatch => 'Đăng nhập cùng tài khoản Nextcloud. Xóa tài khoản này trước để kết nối tài khoản khác.';
 
   @override
-  String get notesLocalRemovalFailed =>
-      'Dọn dẹp tài khoản cục bộ thất bại. Tài khoản được giữ để bạn thử xóa lại.';
+  String get notesLocalRemovalFailed => 'Dọn dẹp tài khoản cục bộ thất bại. Tài khoản được giữ để bạn thử xóa lại.';
 
   @override
   String get notesTransferring => 'Đang chuyển ghi chú…';
@@ -5887,8 +5478,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage =>
-      'Tên tệp này chứa byte không phải UTF-8. Vẫn có thể xem xét và đưa vào vùng đệm Git; trình soạn thảo tài liệu yêu cầu tên tệp UTF-8.';
+  String get gitNonUtf8FilenameMessage => 'Tên tệp này chứa byte không phải UTF-8. Vẫn có thể xem xét và đưa vào vùng đệm Git; trình soạn thảo tài liệu yêu cầu tên tệp UTF-8.';
 
   @override
   String get gitUiMergeInProgress => 'Đang trộn';
@@ -5903,16 +5493,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRevertInProgress => 'Hoàn nguyên trong tiến trình';
 
   @override
-  String get gitUiPatchApplicationInProgress =>
-      'Đắp vá ứng dụng đang tiến hành';
+  String get gitUiPatchApplicationInProgress => 'Đắp vá ứng dụng đang tiến hành';
 
   @override
-  String get gitUiSquashMergeResultAwaitingCommit =>
-      'Kết quả hợp nhất Squash đang chờ cam kết';
+  String get gitUiSquashMergeResultAwaitingCommit => 'Kết quả hợp nhất Squash đang chờ cam kết';
 
   @override
-  String get gitUiUnresolvedIndexConflicts =>
-      'Xung đột phụ lục chưa được giải quyết';
+  String get gitUiUnresolvedIndexConflicts => 'Xung đột phụ lục chưa được giải quyết';
 
   @override
   String get gitUiUnresolvedConflicts => ' · xung đột chưa được giải quyết';
@@ -5933,19 +5520,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiNoStashes => 'Không giấu';
 
   @override
-  String get gitUiSelectAStashToInspectItsChanges =>
-      'Chọn nơi lưu trữ cần kiểm tra các thay đổi của nó';
+  String get gitUiSelectAStashToInspectItsChanges => 'Chọn nơi lưu trữ cần kiểm tra các thay đổi của nó';
 
   @override
   String get gitUiStashedUntrackedFiles => 'Comment';
 
   @override
-  String get gitUiInspectStashedUntrackedFiles =>
-      'Đang kiểm tra các tập tin chưa được ghi rõ...';
+  String get gitUiInspectStashedUntrackedFiles => 'Đang kiểm tra các tập tin chưa được ghi rõ...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
-      'Tăng cường trạng thái của nơi ẩn náu khi nộp đơn';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => 'Tăng cường trạng thái của nơi ẩn náu khi nộp đơn';
 
   @override
   String get gitUiApplyAndRetain => 'Áp dụng và ghi lại';
@@ -5963,8 +5547,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiBranchFromStash => 'Tạo nhánh từ bản cất tạm';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
-      'Tạo ra/sction to a chi nhánh tại căn cứ gốc của kho, sau đó áp dụng nó.';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => 'Tạo ra/sction to a chi nhánh tại căn cứ gốc của kho, sau đó áp dụng nó.';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -5972,16 +5555,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
-      'Nếu áp dụng xung đột, người ta giữ lại chỗ cất giấu gốc.';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => 'Nếu áp dụng xung đột, người ta giữ lại chỗ cất giấu gốc.';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
-      'Xoá mục này. Thay đổi của nó không được áp dụng.';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => 'Xoá mục này. Thay đổi của nó không được áp dụng.';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
-      'Giải quyết các tệp chưa hợp nhất. Git không có lệnh tiếp tục hay hủy thao tác stash; bản cất tạm gốc vẫn được giữ.';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => 'Giải quyết các tệp chưa hợp nhất. Git không có lệnh tiếp tục hay hủy thao tác stash; bản cất tạm gốc vẫn được giữ.';
 
   @override
   String get gitUiStashNameMessage => 'Tên giả/ Thông báo';
@@ -5993,27 +5573,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiStashTrackedWorkingAndStagedChanges => 'Name';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
-      'Cất tạm thay đổi, giữ nguyên thay đổi đã đưa vào chỉ mục (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => 'Cất tạm thay đổi, giữ nguyên thay đổi đã đưa vào chỉ mục (--keep-index)';
 
   @override
-  String get gitUiStashOnlyStagedChangesStaged =>
-      'Chỉ cất tạm các thay đổi đã đưa vào chỉ mục (--staged)';
+  String get gitUiStashOnlyStagedChangesStaged => 'Chỉ cất tạm các thay đổi đã đưa vào chỉ mục (--staged)';
 
   @override
   String get gitUiIncludeUntrackedFiles => 'Gồm tập tin chưa được đánh dấu';
 
   @override
-  String get gitUiAllEligiblePathsInThisRepository =>
-      'Tất cả các đường dẫn thích hợp trong kho chứa này';
+  String get gitUiAllEligiblePathsInThisRepository => 'Tất cả các đường dẫn thích hợp trong kho chứa này';
 
   @override
-  String get gitUiNoEligibleChangesForTheseStashOptions =>
-      'Không có thay đổi thích hợp cho các tùy chọn ẩn giấu này.';
+  String get gitUiNoEligibleChangesForTheseStashOptions => 'Không có thay đổi thích hợp cho các tùy chọn ẩn giấu này.';
 
   @override
-  String get gitUiSelectAtLeastOneEligiblePath =>
-      'Chọn ít nhất một đường thích hợp.';
+  String get gitUiSelectAtLeastOneEligiblePath => 'Chọn ít nhất một đường thích hợp.';
 
   @override
   String get gitUiCreateStash2 => 'Tạo bản cất tạm';
@@ -6022,8 +5597,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCreateWorktree => 'Tạo cây làm việc...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
-      'Tạo commit trước khi tạo cây làm việc tại HEAD.';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => 'Tạo commit trước khi tạo cây làm việc tại HEAD.';
 
   @override
   String get gitUiDetachedHEAD => 'HEAD tách rời';
@@ -6062,8 +5636,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRemoveCleanWorktree => 'Gỡ bỏ cây làm việc sạch...';
 
   @override
-  String get gitUiReviewRemovalIncludingLocalChanges =>
-      'Xem lại việc gỡ bỏ bao gồm các thay đổi cục bộ...';
+  String get gitUiReviewRemovalIncludingLocalChanges => 'Xem lại việc gỡ bỏ bao gồm các thay đổi cục bộ...';
 
   @override
   String get gitUiNewWorktreeFolderName => 'Tên thư mục làm việc mới';
@@ -6072,12 +5645,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiNewWorktreeBranch => 'Chi nhánh cây làm việc mới';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
     return 'Tạo $arg0/$arg1 với một chi nhánh cục bộ mới tại $arg2 ($arg3).';
   }
 
@@ -6088,25 +5656,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRemoveWorktree => 'Loại bỏ cây lao động?';
 
   @override
-  String
-  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
-      'Bỏ qua hoàn toàn tất cả các thay đổi theo dõi/không theo dõi cục bộ trong cây làm việc này. Các cây lao động khóa/ trong sử dụng vẫn còn được bảo vệ.';
+  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => 'Bỏ qua hoàn toàn tất cả các thay đổi theo dõi/không theo dõi cục bộ trong cây làm việc này. Các cây lao động khóa/ trong sử dụng vẫn còn được bảo vệ.';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
-      'Git từ chối gỡ bỏ nếu có thay đổi cục bộ, tập tin chưa được đánh dấu, hoặc khóa.';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'Git từ chối gỡ bỏ nếu có thay đổi cục bộ, tập tin chưa được đánh dấu, hoặc khóa.';
 
   @override
-  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
-      'Bỏ qua nội dung của cây làm việc cục bộ và gỡ bỏ';
+  String get gitUiDiscardLocalWorktreeContentsAndRemove => 'Bỏ qua nội dung của cây làm việc cục bộ và gỡ bỏ';
 
   @override
   String get gitUiRemoveCleanWorktree2 => 'Gỡ bỏ cây làm việc sạch';
 
   @override
-  String
-  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
-      'Tự động lặp lại thành các tiểu trang được làm tổ để cập nhật/ phù hợp';
+  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => 'Tự động lặp lại thành các tiểu trang được làm tổ để cập nhật/ phù hợp';
 
   @override
   String get gitUiNoRecordedSubmodules => 'Không ghi âm các tập tin phụ';
@@ -6126,8 +5688,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCleanNestedRepository => 'kho chứa đã làm sạch';
 
   @override
-  String get gitUiNestedStatusUnavailable =>
-      'Trạng thái tổ chức không sẵn sàng';
+  String get gitUiNestedStatusUnavailable => 'Trạng thái tổ chức không sẵn sàng';
 
   @override
   String get gitUiEnterNestedRepository => 'Nhập kho chứa tổ';
@@ -6136,23 +5697,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiInitializeConfiguration => 'Đang khởi tạo cấu hình';
 
   @override
-  String get gitUiUpdateToParentSRecordedCommit =>
-      'Cập nhật cho cha mẹ ghi chép về bản cam kết...';
+  String get gitUiUpdateToParentSRecordedCommit => 'Cập nhật cho cha mẹ ghi chép về bản cam kết...';
 
   @override
-  String get gitUiFollowConfiguredRemoteBranch =>
-      'Theo chi nhánh được cấu hình từ xa...';
+  String get gitUiFollowConfiguredRemoteBranch => 'Theo chi nhánh được cấu hình từ xa...';
 
   @override
   String get gitUiSynchronizeConfiguredURLs => 'Đồng bộ hoá URL đã cấu hình...';
 
   @override
-  String get gitUiStageCurrentSubmodulePointerInParent =>
-      'Chuyển động con trỏ con dưới màn hình nền hiện tại trong cha mẹ';
+  String get gitUiStageCurrentSubmodulePointerInParent => 'Chuyển động con trỏ con dưới màn hình nền hiện tại trong cha mẹ';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
-      'Cha mẹ và tiểu học cam kết, thúc đẩy và trạng thái dơ bẩn vẫn còn tách biệt. Duyệt không khởi tạo hay cập nhật chúng.';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => 'Cha mẹ và tiểu học cam kết, thúc đẩy và trạng thái dơ bẩn vẫn còn tách biệt. Duyệt không khởi tạo hay cập nhật chúng.';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -6160,17 +5717,12 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
     return 'Khởi tạo nếu cần và chuyển đến chính xác $arg0. Đệ quy: $arg1.';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
-    String arg0,
-  ) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
     return 'Áp dụng thao tác cấu hình phụ đã duyệt. Đệ quy: $arg0.';
   }
 
@@ -6178,8 +5730,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiApplySubmoduleOperation => 'Áp dụng thao tác phụ';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
-      'Xem xét một bản sửa đổi được ghi lại hoặc tạo một chi nhánh phục hồi. Không lấy lại nội dung không được lưu trữ tùy ý hoặc không bị theo dõi.';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => 'Xem xét một bản sửa đổi được ghi lại hoặc tạo một chi nhánh phục hồi. Không lấy lại nội dung không được lưu trữ tùy ý hoặc không bị theo dõi.';
 
   @override
   String get gitUiSelectAReflogEntry => 'Chọn mục nhập thay đổi tên';
@@ -6216,17 +5767,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
-      'Một lịch sử văn bản Git phải sở hữu trường hiệu chỉnh của nó.';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'Một lịch sử văn bản Git phải sở hữu trường hiệu chỉnh của nó.';
 
   @override
-  String get gitUiEditHEADIndexWorkingTree =>
-      'Chỉnh sửa HEAD | Chỉ mục | Cây làm việc…';
+  String get gitUiEditHEADIndexWorkingTree => 'Chỉnh sửa HEAD | Chỉ mục | Cây làm việc…';
 
   @override
-  String
-  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
-      'Chỉ mục ôn lại hoặc nội dung hoạt động đã thay đổi. Hãy làm tươi sáng so sánh này trước khi thiết lập lại.';
+  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => 'Chỉ mục ôn lại hoặc nội dung hoạt động đã thay đổi. Hãy làm tươi sáng so sánh này trước khi thiết lập lại.';
 
   @override
   String get gitUiRefreshComparison => 'So sánh cập nhật';
@@ -6283,12 +5830,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiStagingActions2 => 'Thao tác với chỉ mục…';
 
   @override
-  String get gitUiUnstageSelectedChangedLines =>
-      'Bỏ dòng thay đổi đã chọn khỏi chỉ mục';
+  String get gitUiUnstageSelectedChangedLines => 'Bỏ dòng thay đổi đã chọn khỏi chỉ mục';
 
   @override
-  String get gitUiStageSelectedChangedLines =>
-      'Đưa dòng thay đổi đã chọn vào chỉ mục';
+  String get gitUiStageSelectedChangedLines => 'Đưa dòng thay đổi đã chọn vào chỉ mục';
 
   @override
   String get gitUiUnstageWholeFile => 'Bỏ toàn bộ tệp khỏi chỉ mục';
@@ -6297,47 +5842,34 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiStageWholeFile => 'Đưa toàn bộ tệp vào chỉ mục';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
-    String arg0,
-  ) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
     return '$arg0-Chỉ thay đổi dòng ẩn · Hiển thị các thay đổi chính xác';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
-    String arg0,
-  ) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
     return 'Đã chọn $arg0 dòng thay đổi.';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
-      'So sánh chỉ đọc · Sao chép văn bản hoặc chỉnh cách hiển thị.';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => 'So sánh chỉ đọc · Sao chép văn bản hoặc chỉnh cách hiển thị.';
 
   @override
   String get gitUiNoFinalNewline => ' · Không có dòng mới cuối';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0 · $arg1 · $arg2 byte$arg3';
   }
 
   @override
-  String get gitUiTextComparisonIsUnavailableForTheseContents =>
-      'So sánh văn bản không sẵn sàng cho nội dung này.';
+  String get gitUiTextComparisonIsUnavailableForTheseContents => 'So sánh văn bản không sẵn sàng cho nội dung này.';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
-      'Sự so sánh này vượt quá giới hạn xem xét văn bản bị giới hạn. Nội dung chưa được tuyên bố giống hệt nhau.';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => 'Sự so sánh này vượt quá giới hạn xem xét văn bản bị giới hạn. Nội dung chưa được tuyên bố giống hệt nhau.';
 
   @override
-  String get gitUiTheComparedContentsAreIdentical =>
-      'Nội dung so sánh giống hệt nhau.';
+  String get gitUiTheComparedContentsAreIdentical => 'Nội dung so sánh giống hệt nhau.';
 
   @override
   String get gitUiUnstage => 'Mở màn';
@@ -6368,8 +5900,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiWritingReviewedIndexResult =>
-      'Đang ghi kết quả xem xét chỉ mục';
+  String get gitUiWritingReviewedIndexResult => 'Đang ghi kết quả xem xét chỉ mục';
 
   @override
   String get gitUiHead => 'HEAD';
@@ -6398,8 +5929,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiReloadIndexReview => 'Xem xét lại chỉ mục?';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
-      'Tải lại phiên bản HEAD, chỉ mục và làm việc hiện tại. Thao tác này thay bản nháp chưa lưu trong trình sửa chỉ mục.';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => 'Tải lại phiên bản HEAD, chỉ mục và làm việc hiện tại. Thao tác này thay bản nháp chưa lưu trong trình sửa chỉ mục.';
 
   @override
   String get gitUiReplaceDraftAndReload => 'Thay thế bản nháp và nạp lại';
@@ -6408,22 +5938,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiReloadVersions => 'Tải lại phiên bản...';
 
   @override
-  String get gitUiWriteEditedResultToThisIndexEntry =>
-      'Ghi kết quả đã biên tập vào mục nhập chỉ mục này';
+  String get gitUiWriteEditedResultToThisIndexEntry => 'Ghi kết quả đã biên tập vào mục nhập chỉ mục này';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
-      'Làm việc tập tin còn lại trên đĩa. Xem lại chỉ mục đã sửa trước khi áp dụng.';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => 'Làm việc tập tin còn lại trên đĩa. Xem lại chỉ mục đã sửa trước khi áp dụng.';
 
   @override
-  String get gitUiReviewIndexTextFormatChanges =>
-      'Xem lại định dạng văn bản phụ lục';
+  String get gitUiReviewIndexTextFormatChanges => 'Xem lại định dạng văn bản phụ lục';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
     return 'Cập nhật chỉ mục ghi chú $arg0. $arg1';
   }
 
@@ -6431,8 +5955,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiWriteReviewedIndexResult => 'Ghi kết quả đã ôn lại chỉ mục';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
-      'Kết quả đã thay đổi trong quá trình xem xét định dạng. Xem lại lần nữa.';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => 'Kết quả đã thay đổi trong quá trình xem xét định dạng. Xem lại lần nữa.';
 
   @override
   String get gitUiSynchronizeScrolling => 'Đồng bộ hoá cuộn';
@@ -6444,8 +5967,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiEditableIndexContent => 'Nội dung chỉ mục có thể sửa';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
-      'Việc sửa đổi đã yêu cầu nằm ngoài bộ lọc hiện thời. Đặt lại bộ lọc để hiển thị nó.';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => 'Việc sửa đổi đã yêu cầu nằm ngoài bộ lọc hiện thời. Đặt lại bộ lọc để hiển thị nó.';
 
   @override
   String get gitUiFilterLog => 'Bản ghi bộ lọc';
@@ -6512,8 +6034,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiCompareTwoSelectedRevisions =>
-      'So sánh hai hiệu chỉnh đã chọn...';
+  String get gitUiCompareTwoSelectedRevisions => 'So sánh hai hiệu chỉnh đã chọn...';
 
   @override
   String get gitUiToggleBranchesPane => 'Bật/ tắt ô ô chi nhánh';
@@ -6553,8 +6074,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiTags => 'Thẻ';
 
   @override
-  String get gitUiNoCommitsMatchTheCurrentFilters =>
-      'Không có cam kết phù hợp với bộ lọc hiện thời.';
+  String get gitUiNoCommitsMatchTheCurrentFilters => 'Không có cam kết phù hợp với bộ lọc hiện thời.';
 
   @override
   String get gitUiObjectID => 'ID đối tượng';
@@ -6607,12 +6127,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
-      'Giới hạn dưới: không có đối tượng phụ huynh.';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => 'Giới hạn dưới: không có đối tượng phụ huynh.';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
-      'Cha mẹ ở ngoài trang này hoặc là một giới hạn nông cạn.';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => 'Cha mẹ ở ngoài trang này hoặc là một giới hạn nông cạn.';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -6650,21 +6168,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiGoToCommitReference2 => 'Tới để xác nhận/ truy cập';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
-      'Hãy nhập vào tên người dùng hoặc tham chiếu để tiết lộ trong bản ghi.';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog => 'Hãy nhập vào tên người dùng hoặc tham chiếu để tiết lộ trong bản ghi.';
 
   @override
-  String get gitUiTheRequestedRevisionIsUnavailable =>
-      'Việc sửa đổi đã yêu cầu không sẵn sàng.';
+  String get gitUiTheRequestedRevisionIsUnavailable => 'Việc sửa đổi đã yêu cầu không sẵn sàng.';
 
   @override
-  String
-  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
-      'Thư mục siêu dữ liệu cục bộ chỉ được đọc. Kiểm tra chi nhánh và so sánh sẵn sàng.';
+  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => 'Thư mục siêu dữ liệu cục bộ chỉ được đọc. Kiểm tra chi nhánh và so sánh sẵn sàng.';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
-      'Tập tin làm việc không sẵn sàng hay chỉ đọc. Không có khả năng chuyển đổi và trộn các nhánh.';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => 'Tập tin làm việc không sẵn sàng hay chỉ đọc. Không có khả năng chuyển đổi và trộn các nhánh.';
 
   @override
   String get gitUiSearchBranchesAndTags => 'Tìm nhánh và thẻ';
@@ -6689,8 +6202,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiRefreshingBranchMetadata =>
-      'Đang cập nhật siêu dữ liệu chi nhánh';
+  String get gitUiRefreshingBranchMetadata => 'Đang cập nhật siêu dữ liệu chi nhánh';
 
   @override
   String gitUiSwitchToArg0(String arg0) {
@@ -6701,8 +6213,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiOpenOccupiedWorktree => 'Mở cây lao động bận';
 
   @override
-  String get gitUiCreateLocalTrackingBranch =>
-      'Tạo chi nhánh theo dõi cục bộ...';
+  String get gitUiCreateLocalTrackingBranch => 'Tạo chi nhánh theo dõi cục bộ...';
 
   @override
   String get gitUiCompareToCurrentHEAD => 'So sánh với HEAD hiện tại';
@@ -6770,10 +6281,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
     return '$arg0 Target $arg1 địa phương chỉ bị xóa bỏ.';
   }
 
@@ -6808,31 +6316,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiFastForwardWhenPossible => 'tua nhanh khi có thể';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommit =>
-      'Luôn luôn tạo ra một cam kết nhập';
+  String get gitUiAlwaysCreateAMergeCommit => 'Luôn luôn tạo ra một cam kết nhập';
 
   @override
   String get gitUiFastForwardOnly => 'Chỉ tua nhanh';
 
   @override
-  String get gitUiSquashIntoStagedChanges =>
-      'Squash thành các thay đổi đã dàn dựng';
+  String get gitUiSquashIntoStagedChanges => 'Squash thành các thay đổi đã dàn dựng';
 
   @override
-  String get gitUiStopBeforeCreatingTheMergeCommit =>
-      'Dừng lại trước khi tạo ra sự hợp nhất';
+  String get gitUiStopBeforeCreatingTheMergeCommit => 'Dừng lại trước khi tạo ra sự hợp nhất';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
-      'Tua nhanh bị tắt để HEAD không di chuyển trước khi xem xét.';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => 'Tua nhanh bị tắt để HEAD không di chuyển trước khi xem xét.';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
-      'Để lại những thay đổi được sắp xếp cho một cam kết riêng biệt; đây không phải là một sự kết hợp liên tục.';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => 'Để lại những thay đổi được sắp xếp cho một cam kết riêng biệt; đây không phải là một sự kết hợp liên tục.';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
-      'Các cuộc xung đột vẫn còn trong vùng làm việc giải quyết chung.';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => 'Các cuộc xung đột vẫn còn trong vùng làm việc giải quyết chung.';
 
   @override
   String get gitUiAddRemote => 'Thêm từ xa...';
@@ -6869,12 +6371,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRepositoryURLOrLocalSource => 'Thư điện tử hoặc nguồn cục bộ';
 
   @override
-  String get gitUiEnterTheExactReviewedDestinationToRemove =>
-      'Hãy nhập đích xem lại chính xác cần gỡ bỏ.';
+  String get gitUiEnterTheExactReviewedDestinationToRemove => 'Hãy nhập đích xem lại chính xác cần gỡ bỏ.';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
-      'Tài liệu nhận diện được cung cấp bởi những người giúp việc đã cấu hình hoặc một dấu nhắc riêng.';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => 'Tài liệu nhận diện được cung cấp bởi những người giúp việc đã cấu hình hoặc một dấu nhắc riêng.';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -6882,9 +6382,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
-      'Gỡ bỏ các cấu hình và tham chiếu theo từ xa cục bộ. Nó không xóa bỏ kho phần mềm của máy phục vụ.';
+  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => 'Gỡ bỏ các cấu hình và tham chiếu theo từ xa cục bộ. Nó không xóa bỏ kho phần mềm của máy phục vụ.';
 
   @override
   String get gitUiRemoveRemote2 => 'Gỡ bỏ từ xa';
@@ -6899,12 +6397,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiAmendLastCommit => 'Sửa commit cuối';
 
   @override
-  String get gitUiConfiguredHooksAndSigningAreRespected =>
-      'Những cái móc được cấu hình và ký được tôn trọng.';
+  String get gitUiConfiguredHooksAndSigningAreRespected => 'Những cái móc được cấu hình và ký được tôn trọng.';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
-      'Viết lại commit HEAD đã chọn. Theo dõi từ xa không chứng minh commit chưa được công bố.';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => 'Viết lại commit HEAD đã chọn. Theo dõi từ xa không chứng minh commit chưa được công bố.';
 
   @override
   String get gitUiRepository => 'Kho lưu trữ';
@@ -6921,25 +6417,18 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRepositoryActions => 'Thao tác kho lưu trữ';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
     return 'Thông tin theo dõi đã lưu · $upstream · đi trước $ahead · đi sau $behind';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
-      'Kho lưu trữ · không có cây lao động mở bản ghi để kiểm tra lịch sử của nó.';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => 'Kho lưu trữ · không có cây lao động mở bản ghi để kiểm tra lịch sử của nó.';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
-      'Không có kho phần mềm đọc e· deciting và cam kết.';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => 'Không có kho phần mềm đọc e· deciting và cam kết.';
 
   @override
-  String get gitUiRepositoryStatusUnavailable =>
-      'Không thể tạo thư mục home% 1. Lỗi:% 2';
+  String get gitUiRepositoryStatusUnavailable => 'Không thể tạo thư mục home% 1. Lỗi:% 2';
 
   @override
   String gitUiAmendRevision(String revision) {
@@ -6950,8 +6439,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiAddSignOffTrailer => 'Thêm dòng xác nhận';
 
   @override
-  String get gitUiUseConfiguredSigningPolicy =>
-      'Dùng chính sách ký tự đã cấu hình';
+  String get gitUiUseConfiguredSigningPolicy => 'Dùng chính sách ký tự đã cấu hình';
 
   @override
   String get gitUiCryptographicallySignThisCommit => 'Mật mã ký cam kết này';
@@ -6966,8 +6454,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiUseConfiguredCommitTemplate => 'Dùng mẫu đã cấu hình...';
 
   @override
-  String get gitUiAuthorIdentityAndConfiguredHooks =>
-      'Tác giả và móc đã cấu hình...';
+  String get gitUiAuthorIdentityAndConfiguredHooks => 'Tác giả và móc đã cấu hình...';
 
   @override
   String get gitUiDraftMessage => 'Đang cập nhật thông điệp...';
@@ -7001,8 +6488,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCommitAndPush => 'Commit rồi đẩy lên…';
 
   @override
-  String get gitUiNoReadableCommitTemplateIsConfigured =>
-      'Không có mẫu nhập có khả năng đọc.';
+  String get gitUiNoReadableCommitTemplateIsConfigured => 'Không có mẫu nhập có khả năng đọc.';
 
   @override
   String get gitUiCommitIdentityAndHooks => 'Tạo danh tính và móc';
@@ -7014,8 +6500,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiReplaceMessageDraft => 'Bản nháp thông điệp thay thế?';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
-      'Thay thế thông điệp cam kết tồn tại bằng thông điệp đã chọn?';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => 'Thay thế thông điệp cam kết tồn tại bằng thông điệp đã chọn?';
 
   @override
   String get gitUiReplaceDraft => 'Bản nháp thay thế';
@@ -7026,9 +6511,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
-    String arg0,
-  ) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
     return 'Địa phương thông báo $arg0 tồn tại. Xem lại bản ghi trước khi cố thực hiện một nhiệm vụ khác. Bản nháp thông điệp đã được giữ lại.';
   }
 
@@ -7055,8 +6538,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
-      'Dòng xác nhận là tuyên bố trong thông điệp, khác với chữ ký mật mã. Danh tính chỉ được lưu vào cấu hình cục bộ của kho này; bản nháp được giữ lại.';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage => 'Dòng xác nhận là tuyên bố trong thông điệp, khác với chữ ký mật mã. Danh tính chỉ được lưu vào cấu hình cục bộ của kho này; bản nháp được giữ lại.';
 
   @override
   String get gitUiSaveRepositoryIdentity => 'Lưu tên kho phần mềm';
@@ -7121,8 +6603,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiDeleteUntrackedFile => 'Xoá tập tin chưa được theo dõi...';
 
   @override
-  String get gitUiDiscardUnstagedChange =>
-      'Bỏ qua những thay đổi chưa được chuẩn bị...';
+  String get gitUiDiscardUnstagedChange => 'Bỏ qua những thay đổi chưa được chuẩn bị...';
 
   @override
   String get gitUiFileHistory => 'Lịch sử tệp';
@@ -7133,10 +6614,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
     return '$arg0 byte· $arg1 thay thế nội dung hoạt động bằng chỉ mục, hoặc xoá tập tin chưa được theo dõi này. Nội dung cơ bản đã được giữ lại. Cần phải xem lại tài liệu máy chủ chưa được lưu trước tiên.';
   }
 
@@ -7152,8 +6630,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
-      'Việc này xóa bỏ tham chiếu về mỗi đích thực được liệt kê bên dưới. Các nhánh/g địa phương được giữ lại. Các mẹo được mong đợi sẽ được cố định bởi đánh giá này.';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => 'Việc này xóa bỏ tham chiếu về mỗi đích thực được liệt kê bên dưới. Các nhánh/g địa phương được giữ lại. Các mẹo được mong đợi sẽ được cố định bởi đánh giá này.';
 
   @override
   String get gitUiReferenceDoesNotExist => 'tham chiếu không tồn tại';
@@ -7172,8 +6649,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
-      'Các lời mách đích đích chính xác được hiển thị ở trên sẽ bị gỡ bỏ. Bất kỳ mẹo nào thay đổi từ xa sẽ dừng thao tác này lại để xem xét lại một lần nữa.';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => 'Các lời mách đích đích chính xác được hiển thị ở trên sẽ bị gỡ bỏ. Bất kỳ mẹo nào thay đổi từ xa sẽ dừng thao tác này lại để xem xét lại một lần nữa.';
 
   @override
   String get gitUiReviewAndDeleteFromRemote => 'Xem lại và xoá từ xa...';
@@ -7193,15 +6669,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
-      'Một điểm đến đã cam kết không sẵn sàng tại địa phương. Hãy tìm điểm đến đó trước khi xem lại lịch sử đi.';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => 'Một điểm đến đã cam kết không sẵn sàng tại địa phương. Hãy tìm điểm đến đó trước khi xem lại lịch sử đi.';
 
   @override
   String get gitUiFetchReviewedDestination => 'Lấy điểm đến đã ôn lại';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
-      'Chọn một đích và xem lại các cam kết đi.';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => 'Chọn một đích và xem lại các cam kết đi.';
 
   @override
   String get gitUiNoOutgoingCommits => 'Không ai được phép ra tay';
@@ -7213,8 +6687,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiLoadMoreOutgoingCommits => 'Tải thêm thông tin đi';
 
   @override
-  String get gitUiSetThisDestinationAsUpstream =>
-      'Đặt đích này là thượng nguồn';
+  String get gitUiSetThisDestinationAsUpstream => 'Đặt đích này là thượng nguồn';
 
   @override
   String get gitUiChooseExactTagsToPublish => 'Chọn thẻ chính xác cần xuất';
@@ -7233,23 +6706,19 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
-      'Nhấn hoàn tất.';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => 'Nhấn hoàn tất.';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
-      'Đẩy cưỡng bức yêu cầu đầu các tham chiếu đích trùng khớp chính xác với những gì được xem xét ở đây.';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => 'Đẩy cưỡng bức yêu cầu đầu các tham chiếu đích trùng khớp chính xác với những gì được xem xét ở đây.';
 
   @override
-  String get gitUiForceWithReviewedLease =>
-      'Lực lượng đã xem xét lại hợp đồng thuê...';
+  String get gitUiForceWithReviewedLease => 'Lực lượng đã xem xét lại hợp đồng thuê...';
 
   @override
   String get gitUiPush => 'Đẩy lên';
 
   @override
-  String get gitUiForcePushWithReviewedLeases =>
-      'Bắt buộc phải tăng giá hợp đồng thuê?';
+  String get gitUiForcePushWithReviewedLeases => 'Bắt buộc phải tăng giá hợp đồng thuê?';
 
   @override
   String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
@@ -7257,16 +6726,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
-      'Người khác có thể đã dùng lịch sử này. Việc tải về trong nền không gia hạn điều kiện bảo vệ này.';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => 'Người khác có thể đã dùng lịch sử này. Việc tải về trong nền không gia hạn điều kiện bảo vệ này.';
 
   @override
   String get gitUiForceWithLease => 'Buộc phải thuê nhà';
 
   @override
-  String
-  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
-      'Kết quả từ xa không chắc chắn. Xem lại đích đến trước khi đẩy.';
+  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => 'Kết quả từ xa không chắc chắn. Xem lại đích đến trước khi đẩy.';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -7277,13 +6743,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRemoteToFetch => '♪ Từ xa để lấy ♪';
 
   @override
-  String get gitUiPruneDeletedRemoteTrackingBranches =>
-      'Prune xoá các nhánh theo dõi từ xa';
+  String get gitUiPruneDeletedRemoteTrackingBranches => 'Prune xoá các nhánh theo dõi từ xa';
 
   @override
-  String
-  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
-      'Lấy cập nhật cho các thông tin theo dõi từ xa mà không thay thế tập tin hoạt động.';
+  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => 'Lấy cập nhật cho các thông tin theo dõi từ xa mà không thay thế tập tin hoạt động.';
 
   @override
   String get gitUiFetch => 'Tải về';
@@ -7304,46 +6767,37 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRebase => 'Đổi gốc';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
-      'Dừng lại nếu đích không thể tua lại nhanh; không bao giờ hợp nhất hoặc rease.';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => 'Dừng lại nếu đích không thể tua lại nhanh; không bao giờ hợp nhất hoặc rease.';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
-      'Nhập với sự hợp nhất, bao gồm cả khi có thể.';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => 'Nhập với sự hợp nhất, bao gồm cả khi có thể.';
 
   @override
-  String get gitUiMergeAllowFastForwardWhenPossible =>
-      'Nhập; cho phép tua nhanh khi có thể.';
+  String get gitUiMergeAllowFastForwardWhenPossible => 'Nhập; cho phép tua nhanh khi có thể.';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
-      'Hãy xây dựng lại lịch sử địa phương trong khi bảo tồn việc hợp nhất địa phương.';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => 'Hãy xây dựng lại lịch sử địa phương trong khi bảo tồn việc hợp nhất địa phương.';
 
   @override
-  String get gitUiRebaseLocalCommitsAsALinearHistory =>
-      'Căn cứ vào địa phương như một lịch sử tuyến tính.';
+  String get gitUiRebaseLocalCommitsAsALinearHistory => 'Căn cứ vào địa phương như một lịch sử tuyến tính.';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
-      'Git được cấu hình cho cơ sở dữ liệu tương tác. Hãy chọn một chiến lược kéo rõ ràng ở đây, hoặc lấy và mở khung... để xem xét một kế hoạch.';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'Git được cấu hình cho cơ sở dữ liệu tương tác. Hãy chọn một chiến lược kéo rõ ràng ở đây, hoặc lấy và mở khung... để xem xét một kế hoạch.';
 
   @override
-  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
-      'Dùng cơ số xem xét lại thường cho kéo này';
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull => 'Dùng cơ số xem xét lại thường cho kéo này';
 
   @override
   String get gitUiOptions => 'Tùy chọn';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
-      'Luôn luôn tạo một thực hiện hợp nhất (không tua nhanh)';
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward => 'Luôn luôn tạo một thực hiện hợp nhất (không tua nhanh)';
 
   @override
   String get gitUiPreserveLocalMergeCommits => 'Bảo tồn hợp nhất cục bộ';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
-      'Thay đổi cục bộ có thể ngăn cản kéo. Xem lại/ hứa hẹn hoặc tạo ra một nơi cất giấu rõ ràng.';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => 'Thay đổi cục bộ có thể ngăn cản kéo. Xem lại/ hứa hẹn hoặc tạo ra một nơi cất giấu rõ ràng.';
 
   @override
   String get gitUiStashes => 'Các bản cất tạm';
@@ -7355,8 +6809,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiPullWithSelectedStrategy => 'Kéo với chiến lược đã chọn';
 
   @override
-  String get gitUiRepositoryURLOrLocalGitSource =>
-      'Thư điện tử hoặc nguồn Git cục bộ';
+  String get gitUiRepositoryURLOrLocalGitSource => 'Thư điện tử hoặc nguồn Git cục bộ';
 
   @override
   String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH, hoặc đường dẫn cục bộ';
@@ -7371,23 +6824,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiChoose => 'Chọn...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
-      'Tạo chỉ siêu dữ liệu Git. Không tạo hay thực hiện tập tin tồn tại.';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => 'Tạo chỉ siêu dữ liệu Git. Không tạo hay thực hiện tập tin tồn tại.';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
-      'Đích cuối cùng phải chưa tồn tại hoặc phải trống. Dữ liệu sẵn có của người dùng không bao giờ bị ghi đè.';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => 'Đích cuối cùng phải chưa tồn tại hoặc phải trống. Dữ liệu sẵn có của người dùng không bao giờ bị ghi đè.';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
-      'Ban đầu, nhánh · trống sử dụng chính sách Git hiệu quả';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => 'Ban đầu, nhánh · trống sử dụng chính sách Git hiệu quả';
 
   @override
   String get gitUiSelectedBranchOptional => 'Chi nhánh đã chọn · tùy chọn';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
-      'Hoàn toàn khởi động/ cập nhật phụ thuộc vào đệ quy';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => 'Hoàn toàn khởi động/ cập nhật phụ thuộc vào đệ quy';
 
   @override
   String get gitUiPreparingGitOperation => 'Đang chuẩn bị hoạt động Git...';
@@ -7396,16 +6845,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiThisAttemptCreated => 'Thử ra';
 
   @override
-  String get gitUiTheDestinationExistedBeforeThisAttempt =>
-      'Địa điểm đã tồn tại trước khi thử nghiệm này:';
+  String get gitUiTheDestinationExistedBeforeThisAttempt => 'Địa điểm đã tồn tại trước khi thử nghiệm này:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
-      'Thư mục còn lại để kiểm tra.';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => 'Thư mục còn lại để kiểm tra.';
 
   @override
-  String get gitUiNoDestinationDirectoryRemains =>
-      'Không còn thư mục đích nào còn lại.';
+  String get gitUiNoDestinationDirectoryRemains => 'Không còn thư mục đích nào còn lại.';
 
   @override
   String get gitUiCancelProcess => 'Hủy tiến trình';
@@ -7426,8 +6872,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiNewBase => 'Gốc mới';
 
   @override
-  String get gitUiUpstreamBoundaryExcluded =>
-      'Ranh giới thượng nguồn · không bao gồm';
+  String get gitUiUpstreamBoundaryExcluded => 'Ranh giới thượng nguồn · không bao gồm';
 
   @override
   String get gitUiSameAsUpstreamBoundary => 'Giống ranh giới thượng nguồn';
@@ -7439,12 +6884,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiUseUpstreamAsNewBase => 'Dùng dòng lên làm cơ sở mới';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
-      'Chọn một nhánh hợp lệ, thẻ hoặc tác vụ từ bản ghi.';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog => 'Chọn một nhánh hợp lệ, thẻ hoặc tác vụ từ bản ghi.';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
-      'Commit đầu tiên được giữ trong khối nhánh không thể dùng squash hay fixup vì chưa có commit đích đứng trước.';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => 'Commit đầu tiên được giữ trong khối nhánh không thể dùng squash hay fixup vì chưa có commit đích đứng trước.';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -7452,16 +6895,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiRewordWillRequestANewMessage =>
-      '[Từ ngữ sẽ yêu cầu một thông điệp mới]\n';
+  String get gitUiRewordWillRequestANewMessage => '[Từ ngữ sẽ yêu cầu một thông điệp mới]\n';
 
   @override
   String get gitUiPlannedCommitMessages => 'Comment';
 
   @override
-  String
-  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
-      'Xem thử thông điệp gốc/ tổ hợp · Git yêu cầu tin nhắn cuối cùng';
+  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => 'Xem thử thông điệp gốc/ tổ hợp · Git yêu cầu tin nhắn cuối cùng';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -7477,9 +6917,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiDetachedHEAD2 => 'HEAD tách rời';
 
   @override
-  String
-  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
-      'Đổi gốc sẽ viết lại định danh commit. Thông tin theo dõi từ xa không chứng minh rằng lịch sử chưa từng được công bố.';
+  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => 'Đổi gốc sẽ viết lại định danh commit. Thông tin theo dõi từ xa không chứng minh rằng lịch sử chưa từng được công bố.';
 
   @override
   String get gitUiIncludeRootCommits => 'Bao gồm commit gốc';
@@ -7505,14 +6943,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
-      'Bao gồm tất cả các gốc cây cam kết có thể đạt được từ chi nhánh này.';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => 'Bao gồm tất cả các gốc cây cam kết có thể đạt được từ chi nhánh này.';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
-    String boundary,
-    String base,
-  ) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
     return 'Các commit sau $boundary sẽ được áp dụng lại lên $base; bản thân commit ranh giới không được bao gồm.';
   }
 
@@ -7520,12 +6954,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRoot => 'Gốc';
 
   @override
-  String get gitUiGitBranchLabelResetMergeStructure =>
-      'Cấu trúc chi nhánh/ Nhãn/reset/merge';
+  String get gitUiGitBranchLabelResetMergeStructure => 'Cấu trúc chi nhánh/ Nhãn/reset/merge';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
-      'Chọn một giới hạn cũ rõ ràng hoặc chế độ gốc, sau đó chuẩn bị kế hoạch.';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => 'Chọn một giới hạn cũ rõ ràng hoặc chế độ gốc, sau đó chuẩn bị kế hoạch.';
 
   @override
   String get gitUiMoveUp => 'Chuyển lên';
@@ -7542,16 +6974,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectACommitForDetailsAndChangedFiles =>
-      'Chọn một cam kết để tìm chi tiết và thay đổi tập tin';
+  String get gitUiSelectACommitForDetailsAndChangedFiles => 'Chọn một cam kết để tìm chi tiết và thay đổi tập tin';
 
   @override
-  String get gitUiPreviewCombinedCommitMessages =>
-      'Xem thử tổng hợp gửi tin nhắn...';
+  String get gitUiPreviewCombinedCommitMessages => 'Xem thử tổng hợp gửi tin nhắn...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
-      'Alt+At/ cấu hình di chuyển các cam kết đã chọn. Những tham khảo chi nhánh không liên quan sẽ không được cập nhật tự động.';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt+At/ cấu hình di chuyển các cam kết đã chọn. Những tham khảo chi nhánh không liên quan sẽ không được cập nhật tự động.';
 
   @override
   String get gitUiCancelPlan => 'Hủy kế hoạch';
@@ -7560,10 +6989,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiStartReviewedRebase => 'Bắt đầu đổi gốc đã xem lại?';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
     return 'Viết lại kế hoạch $arg0 thực hiện trên $arg1. rơi xuống các cam kết vẫn còn được đánh dấu trong kế hoạch này cho đến khi bạn bắt đầu.';
   }
 
@@ -7577,49 +7003,36 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiStoppedForEditingAmend => ' · dừng lại để biên tập/amend';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
-      'Đây là mục nhập chỉ mục chưa được sửa đổi, có thể từ ứng dụng ẩn. Git không có lệnh cất giữ hay hủy bỏ.';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => 'Đây là mục nhập chỉ mục chưa được sửa đổi, có thể từ ứng dụng ẩn. Git không có lệnh cất giữ hay hủy bỏ.';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
-      'Sửa chữa các tập tin hoạt động, sân khấu và sửa đổi các cam kết hiện thời, sau đó tiếp tục cơ sở hạ tầng này.';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => 'Sửa chữa các tập tin hoạt động, sân khấu và sửa đổi các cam kết hiện thời, sau đó tiếp tục cơ sở hạ tầng này.';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
     return '$arg0$arg1 · các giai đoạn chỉ mục chưa hợp nhất $arg2';
   }
 
   @override
-  String get gitUiTheIndexHasNoUnresolvedEntries =>
-      'Chỉ mục này không có mục nhập chưa được giải quyết.';
+  String get gitUiTheIndexHasNoUnresolvedEntries => 'Chỉ mục này không có mục nhập chưa được giải quyết.';
 
   @override
-  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
-      'Giữ tác vụ hiện thời là một nhiệm vụ trống';
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => 'Giữ tác vụ hiện thời là một nhiệm vụ trống';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
-      'Chỉ mục thật không có thay đổi sắp xếp. Tạo một cam kết trống rõ ràng, sau đó tiếp tục trình sắp xếp lại nếu nó còn hoạt động.';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => 'Chỉ mục thật không có thay đổi sắp xếp. Tạo một cam kết trống rõ ràng, sau đó tiếp tục trình sắp xếp lại nếu nó còn hoạt động.';
 
   @override
   String get gitUiKeepEmptyCommit => 'Giữ nguyên sự cam kết rỗng...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
-      'Git sẽ cố trở về điểm bắt đầu thao tác. Không bảo đảm khôi phục nội dung vốn có chưa đưa vào chỉ mục, chưa được theo dõi hoặc chưa được lưu.';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'Git sẽ cố trở về điểm bắt đầu thao tác. Không bảo đảm khôi phục nội dung vốn có chưa đưa vào chỉ mục, chưa được theo dõi hoặc chưa được lưu.';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
-      'Bỏ qua cam kết hiện thời và tiếp tục với kế hoạch tiếp theo.';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => 'Bỏ qua cam kết hiện thời và tiếp tục với kế hoạch tiếp theo.';
 
   @override
-  String
-  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
-      'Hãy quên việc ghi sổ trong khi lưu các tập tin và chỉ mục hiện thời.';
+  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => 'Hãy quên việc ghi sổ trong khi lưu các tập tin và chỉ mục hiện thời.';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -7630,8 +7043,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiReloadConflictVersions => 'Nạp lại phiên bản xung đột?';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
-      'Thay thế bản nháp kết quả chưa lưu bằng tập tin hoạt động hiện thời. Vẫn còn lưu nội dung hoạt động.';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => 'Thay thế bản nháp kết quả chưa lưu bằng tập tin hoạt động hiện thời. Vẫn còn lưu nội dung hoạt động.';
 
   @override
   String get gitUiLoadingConflictVersions => 'Đang tải phiên bản xung đột...';
@@ -7646,12 +7058,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiBaseRight => 'Cơ sở dữ liệu';
 
   @override
-  String get gitUiNoBaseEntryForThisConflict =>
-      'Không có mục nhập cơ bản cho xung đột này';
+  String get gitUiNoBaseEntryForThisConflict => 'Không có mục nhập cơ bản cho xung đột này';
 
   @override
-  String get gitUiAcceptEntireLeftFile =>
-      'Chấp nhận toàn bộ tập tin bên trái...';
+  String get gitUiAcceptEntireLeftFile => 'Chấp nhận toàn bộ tập tin bên trái...';
 
   @override
   String get gitUiAcceptEntireRightFile => 'Chấp nhận toàn bộ tệp bên phải…';
@@ -7666,18 +7076,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiManualResolution => 'Độ phân giải thủ công';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
     return 'Khu vực $arg0/$arg1 · $arg2 đã xem xét';
   }
 
   @override
-  String
-  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
-      'Việc sắp xếp các nguồn vượt quá giới hạn so sánh văn bản; vẫn còn sẵn sàng cho việc ôn lại bằng tay.';
+  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => 'Việc sắp xếp các nguồn vượt quá giới hạn so sánh văn bản; vẫn còn sẵn sàng cho việc ôn lại bằng tay.';
 
   @override
   String get gitUiAcceptLeftRegion => 'Chấp nhận vùng bên trái';
@@ -7689,19 +7093,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiKeepManualResultForRegion => 'Giữ kết quả thủ công cho vùng';
 
   @override
-  String get gitUiApplyGitSNonConflictingChanges =>
-      'Áp dụng thay đổi không gây hấn của Giut?';
+  String get gitUiApplyGitSNonConflictingChanges => 'Áp dụng thay đổi không gây hấn của Giut?';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
-      'Thay thế bản nháp kết quả hiện thời bằng ô xem thử hợp nhất của Git. Bỏ đi việc bỏ đi những hiệu quả sửa đổi bằng tay chưa lưu; tập tin làm việc không thay đổi cho đến khi lưu.';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => 'Thay thế bản nháp kết quả hiện thời bằng ô xem thử hợp nhất của Git. Bỏ đi việc bỏ đi những hiệu quả sửa đổi bằng tay chưa lưu; tập tin làm việc không thay đổi cho đến khi lưu.';
 
   @override
   String get gitUiUseMergePreview => 'Dùng ô xem thử trộn';
 
   @override
-  String get gitUiApplyNonConflictingChanges =>
-      'Áp dụng thay đổi không gây nhiễu...';
+  String get gitUiApplyNonConflictingChanges => 'Áp dụng thay đổi không gây nhiễu...';
 
   @override
   String get gitUiLeftSource => 'Nguồn trái';
@@ -7719,41 +7120,30 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiStage3 => 'Giai đoạn 3';
 
   @override
-  String
-  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
-      'Không có phiên bản xung đột. Hãy ôn lại tình trạng hiện thời của chúng.';
+  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => 'Không có phiên bản xung đột. Hãy ôn lại tình trạng hiện thời của chúng.';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
-      'Kết quả được lưu vào đĩa. Chỉ mục vẫn quyết định tập tin này có được giải quyết hay không.';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => 'Kết quả được lưu vào đĩa. Chỉ mục vẫn quyết định tập tin này có được giải quyết hay không.';
 
   @override
   String get gitUiSaveResultDraft => 'Lưu bản nháp kết quả';
 
   @override
-  String get gitUiApplyResultAndStageResolution =>
-      'Áp dụng kết quả và đưa cách giải quyết vào chỉ mục';
+  String get gitUiApplyResultAndStageResolution => 'Áp dụng kết quả và đưa cách giải quyết vào chỉ mục';
 
   @override
-  String get gitUiResultEditableUTF8WorkingContent =>
-      'Kết quả là UTF- 8 có khả năng sửa đổi nội dung hoạt động';
+  String get gitUiResultEditableUTF8WorkingContent => 'Kết quả là UTF- 8 có khả năng sửa đổi nội dung hoạt động';
 
   @override
   String get gitUiEditableConflictResult => 'Kết quả xung đột có thể sửa';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return 'Trái: $arg0 · $arg1\nPhải: $arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
-      'Chọn nội dung, xoá, hoặc một tiểu cầu rõ ràng. Không có dữ liệu nhị phân được giải mã như văn bản có thể sửa đổi.';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => 'Chọn nội dung, xoá, hoặc một tiểu cầu rõ ràng. Không có dữ liệu nhị phân được giải mã như văn bản có thể sửa đổi.';
 
   @override
   String get gitUiUseEntireLeftContent => 'Dùng toàn bộ nội dung bên trái...';
@@ -7765,12 +7155,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiDeleteThisPath => 'Xoá đường này...';
 
   @override
-  String get gitUiResolvedSubmoduleCommit =>
-      'Đã giải quyết tiểu cầu đã cam kết';
+  String get gitUiResolvedSubmoduleCommit => 'Đã giải quyết tiểu cầu đã cam kết';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
-      'Giai đoạn này chính xác trong cha. Không kiểm tra hay thực hiện tiểu cầu.';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => 'Giai đoạn này chính xác trong cha. Không kiểm tra hay thực hiện tiểu cầu.';
 
   @override
   String get gitUiSetResolvedGitlink => 'Đặt liên kết gitlink đã giải quyết...';
@@ -7781,8 +7169,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
-      'Kết quả đã được biên soạn. Giữ kết quả thủ công hoặc chọn vùng không thay đổi khác.';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => 'Kết quả đã được biên soạn. Giữ kết quả thủ công hoặc chọn vùng không thay đổi khác.';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -7790,29 +7177,21 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
-      'Giai đoạn mà gitlink đã chọn cam kết trong cha. Việc kiểm tra tiểu cầu và tập tin của nó chưa được thay thế.';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => 'Giai đoạn mà gitlink đã chọn cam kết trong cha. Việc kiểm tra tiểu cầu và tập tin của nó chưa được thay thế.';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
-    String arg0,
-  ) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
     return 'Thay thế toàn bộ con đường làm việc $arg0 và đưa ra quyết định. nội dung làm việc hiện tại và kết quả chưa được lưu sẽ bị hủy bỏ.';
   }
 
   @override
-  String get gitUiApplyEntireFileDecision =>
-      'Áp dụng toàn bộ quyết định tập tin';
+  String get gitUiApplyEntireFileDecision => 'Áp dụng toàn bộ quyết định tập tin';
 
   @override
-  String get gitUiStageThisConflictResolution =>
-      'Giai đoạn giải quyết xung đột này?';
+  String get gitUiStageThisConflictResolution => 'Giai đoạn giải quyết xung đột này?';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
     return 'Sử dụng toàn bộ kết quả biên tập là $arg0. Git ghi lại đường dẫn đã được giải quyết khi nó được thiết lập. ôn lại tất cả nội dung đã định trước đầu tiên.$arg1';
   }
 
@@ -7820,16 +7199,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiApplyAndStage => 'Áp dụng và đưa vào chỉ mục';
 
   @override
-  String get gitUiReviewResultTextFormatChanges =>
-      'Xem lại định dạng văn bản thay đổi';
+  String get gitUiReviewResultTextFormatChanges => 'Xem lại định dạng văn bản thay đổi';
 
   @override
   String get gitUiSaveReviewedResult => 'Lưu kết quả đã xem xét';
 
   @override
-  String
-  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
-      'Không có khả năng truy cập bảng bản địa. Hãy thử lại sau khi kết nối lại ứng dụng.';
+  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => 'Không có khả năng truy cập bảng bản địa. Hãy thử lại sau khi kết nối lại ứng dụng.';
 
   @override
   String get gitUiSans => 'Sans';
@@ -7882,14 +7258,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
-      'Kho được duyệt chỉ được đọc trong thao tác này. Lịch sử và kiểm tra nội dung vẫn còn tồn tại.';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => 'Kho được duyệt chỉ được đọc trong thao tác này. Lịch sử và kiểm tra nội dung vẫn còn tồn tại.';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
     return 'Git trả lại $arg0. Ứng dụng này không thể phục hồi tài liệu: $arg1';
   }
 
@@ -7900,8 +7272,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCurrentBranch => 'Nhánh hiện tại';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
-      'Không có chi nhánh hay thẻ tương ứng. Hãy chọn sự ghi lưu.';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => 'Không có chi nhánh hay thẻ tương ứng. Hãy chọn sự ghi lưu.';
 
   @override
   String get gitUiBranches => 'Nhánh';
@@ -7949,8 +7320,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRebase2 => 'Đổi gốc…';
 
   @override
-  String get gitUiConflictsAndCurrentOperation =>
-      'Xung đột và thao tác hiện thời...';
+  String get gitUiConflictsAndCurrentOperation => 'Xung đột và thao tác hiện thời...';
 
   @override
   String get gitUiStashes2 => 'Các bản cất tạm…';
@@ -7971,12 +7341,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRevokeRepositoryTrust => 'Thu hồi sự tin cậy đối với kho';
 
   @override
-  String get gitUiWaitingForRepositoryStatus =>
-      'Đang chờ trạng thái kho phần mềm';
+  String get gitUiWaitingForRepositoryStatus => 'Đang chờ trạng thái kho phần mềm';
 
   @override
-  String get gitUiRepositoryStatusUnavailableRefresh =>
-      'Không thể lưu cục bộ; cập nhật';
+  String get gitUiRepositoryStatusUnavailableRefresh => 'Không thể lưu cục bộ; cập nhật';
 
   @override
   String get gitUiManageRemotes2 => 'Quản lý kho từ xa';
@@ -8017,62 +7385,46 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
-      'Thư mục đã thay đổi. Cập nhật và xem lại trước khi thử lại.';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => 'Thư mục đã thay đổi. Cập nhật và xem lại trước khi thử lại.';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
-      'Một thao tác khác giữ kho phần mềm hoặc khóa chỉ mục. Đợi, sau đó cập nhật lại.';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => 'Một thao tác khác giữ kho phần mềm hoặc khóa chỉ mục. Đợi, sau đó cập nhật lại.';
 
   @override
-  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
-      'Cần thiết sự tin tưởng cục bộ cho chiến dịch này.';
+  String get gitUiRepositoryTrustIsRequiredForThisOperation => 'Cần thiết sự tin tưởng cục bộ cho chiến dịch này.';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
-      'Dịch vụ Git đã ngắt kết nối và dung hòa kho lưu.';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'Dịch vụ Git đã ngắt kết nối và dung hòa kho lưu.';
 
   @override
-  String
-  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
-      'Tập tin thực hiện được Git không thể hỗ trợ thao tác này. Xem lại yêu cầu thời gian chạy bên dưới.';
+  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => 'Tập tin thực hiện được Git không thể hỗ trợ thao tác này. Xem lại yêu cầu thời gian chạy bên dưới.';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
-      'Kho phần mềm này chỉ được đọc cho thao tác đã yêu cầu. Xem lại và lịch sử còn lại.';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => 'Kho phần mềm này chỉ được đọc cho thao tác đã yêu cầu. Xem lại và lịch sử còn lại.';
 
   @override
-  String
-  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
-      'Thao tác này cần phải hòa giải. Xem xét lại kết quả kho hoặc trạng thái từ xa trước khi lặp lại nó.';
+  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => 'Thao tác này cần phải hòa giải. Xem xét lại kết quả kho hoặc trạng thái từ xa trước khi lặp lại nó.';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
-      'Việc xác thực Git bị lỗi. Xem lại trình trợ giúp nhận diện hay bỏ khoá đã cấu hình.';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'Việc xác thực Git bị lỗi. Xem lại trình trợ giúp nhận diện hay bỏ khoá đã cấu hình.';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
-      'Việc kiểm tra tên máy SSH bị lỗi. Hãy kiểm tra lại tên máy qua các công cụ của bạn đã cấu hình.';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'Việc kiểm tra tên máy SSH bị lỗi. Hãy kiểm tra lại tên máy qua các công cụ của bạn đã cấu hình.';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
-      'Việc ký cam kết bị lỗi hoặc bị thôi. Xem lại phím ký, tác vụ và công cụ đã cấu hình.';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => 'Việc ký cam kết bị lỗi hoặc bị thôi. Xem lại phím ký, tác vụ và công cụ đã cấu hình.';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
-      'Đặt tên tác giả và thư điện tử kho phần mềm, rồi trở lại bản nháp thông điệp đã lưu.';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => 'Đặt tên tác giả và thư điện tử kho phần mềm, rồi trở lại bản nháp thông điệp đã lưu.';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
-      'Git từ chối cập nhật đã duyệt. Cập nhật và xem lại đích thật trước khi thử lại.';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'Git từ chối cập nhật đã duyệt. Cập nhật và xem lại đích thật trước khi thử lại.';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
-      'Những thay đổi làm việc hoặc sắp xếp để ngăn chặn hoạt động này. Xem lại, cam kết hoặc giấu chúng đi.';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => 'Những thay đổi làm việc hoặc sắp xếp để ngăn chặn hoạt động này. Xem lại, cam kết hoặc giấu chúng đi.';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
-      'Một đối tượng Git cần thiết không sẵn sàng. Xem lại các ranh giới nông hoặc một phần của nó và lấy ra rõ ràng nếu cần thiết.';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => 'Một đối tượng Git cần thiết không sẵn sàng. Xem lại các ranh giới nông hoặc một phần của nó và lấy ra rõ ràng nếu cần thiết.';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -8097,8 +7449,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
-      'Tạo ra một chi nhánh địa phương mà không cần kiểm tra.';
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut => 'Tạo ra một chi nhánh địa phương mà không cần kiểm tra.';
 
   @override
   String gitUiTagArg0(String arg0) {
@@ -8125,8 +7476,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiEnterAFullValidObjectID =>
-      'Nhập một ID đối tượng hợp lệ đầy đủ.';
+  String get gitUiEnterAFullValidObjectID => 'Nhập một ID đối tượng hợp lệ đầy đủ.';
 
   @override
   String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
@@ -8139,26 +7489,19 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
-      'Di chuyển HEAD/nhánh hiện tại. Reflog không phục hồi mọi nội dung chưa được theo dõi hoặc chưa lưu.';
+  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => 'Di chuyển HEAD/nhánh hiện tại. Reflog không phục hồi mọi nội dung chưa được theo dõi hoặc chưa lưu.';
 
   @override
-  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
-      'Di chuyển HEAD; giữ nguyên chỉ mục và tệp làm việc.';
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles => 'Di chuyển HEAD; giữ nguyên chỉ mục và tệp làm việc.';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
-      'Di chuyển HEAD và thay chỉ mục; giữ nguyên tệp làm việc.';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => 'Di chuyển HEAD và thay chỉ mục; giữ nguyên tệp làm việc.';
 
   @override
-  String
-  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
-      'Thay HEAD, chỉ mục và tệp làm việc được theo dõi; có thể ghi đè các tệp chưa được theo dõi đang cản trở.';
+  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => 'Thay HEAD, chỉ mục và tệp làm việc được theo dõi; có thể ghi đè các tệp chưa được theo dõi đang cản trở.';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
-      'Thay HEAD, chỉ mục và tệp phù hợp; từ chối nếu sẽ làm mất thay đổi cục bộ.';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => 'Thay HEAD, chỉ mục và tệp phù hợp; từ chối nếu sẽ làm mất thay đổi cục bộ.';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -8166,10 +7509,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
     return '$arg0 _ $arg1 ôn lại các hiệu ứng của chế độ đã chọn trước khi áp dụng.';
   }
 
@@ -8205,8 +7545,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiTagMessage => 'Tin nhắn thẻ';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
-      'Tạo thẻ cục bộ. Xuất bản các thẻ đã chọn một cách rõ ràng trong việc duyệt.';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => 'Tạo thẻ cục bộ. Xuất bản các thẻ đã chọn một cách rõ ràng trong việc duyệt.';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -8217,15 +7556,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiNextChangedFilePage => 'Trang đã thay đổi kế';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
-      'Ảnh chụp kho chứa chỉ đọc. Mở tập tin không bao giờ kiểm tra bản sửa đổi này.';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => 'Ảnh chụp kho chứa chỉ đọc. Mở tập tin không bao giờ kiểm tra bản sửa đổi này.';
 
   @override
   String get gitUiOpenReadOnlyVersion => 'Mở phiên bản chỉ đọc';
 
   @override
-  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
-      'Phục hồi đường dẫn này... v. chờ trạng thái kho lưu';
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus => 'Phục hồi đường dẫn này... v. chờ trạng thái kho lưu';
 
   @override
   String get gitUiRestoreThisPath => 'Phục hồi đường này...';
@@ -8241,9 +7578,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
-    String arg0,
-  ) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
     return 'Thay thế đường dẫn làm việc này bằng việc sửa đổi $arg0. Đang chạy lại nội dung đã cài đặt.';
   }
 
@@ -8256,8 +7591,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiBlameCommittedContent =>
-      'Tác giả từng dòng · nội dung đã commit';
+  String get gitUiBlameCommittedContent => 'Tác giả từng dòng · nội dung đã commit';
 
   @override
   String get gitUiBlame => 'Tác giả từng dòng…';
@@ -8290,12 +7624,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiBoundary => ' · giới hạn ·';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0  $arg1\nDòng gốc $arg2$arg3';
   }
 
@@ -8326,16 +7655,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiRemoveFromReviewedSequence => 'Gỡ bỏ khỏi chuỗi đã duyệt';
 
   @override
-  String get gitUiApplyChangesWithoutCreatingCommits =>
-      'Áp dụng các thay đổi mà không tạo ra mật khẩu';
+  String get gitUiApplyChangesWithoutCreatingCommits => 'Áp dụng các thay đổi mà không tạo ra mật khẩu';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
-      'Sử dụng cha chính rõ ràng này để hợp nhất cam kết';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits => 'Sử dụng cha chính rõ ràng này để hợp nhất cam kết';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
-      'Những cam kết rỗng hoặc đã được áp dụng có thể ngăn cản Git để một quyết định nhảy qua hay tiếp tục tiếp tục.';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => 'Những cam kết rỗng hoặc đã được áp dụng có thể ngăn cản Git để một quyết định nhảy qua hay tiếp tục tiếp tục.';
 
   @override
   String get gitUiRevertInReviewedOrder => 'Hoàn nguyên theo thứ tự ôn lại';
@@ -8507,8 +7833,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiGitMergePreview => 'Xem thử hợp nhất Git';
 
   @override
-  String get gitUiNormalizedWorking =>
-      'Làm việc với cây_ cập · Git bình thường';
+  String get gitUiNormalizedWorking => 'Làm việc với cây_ cập · Git bình thường';
 
   @override
   String gitUiPercentValue(String value) {
@@ -8526,11 +7851,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String gitUiRebaseStepSemantics(
-    String position,
-    String action,
-    String subject,
-  ) {
+  String gitUiRebaseStepSemantics(String position, String action, String subject) {
     return '$position, $action, $subject';
   }
 
@@ -8541,12 +7862,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiUtf8NoBom => 'UTF- 8 mà không có dấu xếp theo thứ tự (BOM)';
 
   @override
-  String get gitUiAddsBom =>
-      'Bộ sửa đổi thêm một dấu hiệu UTF- thứ tự (BOM) ở đầu tập tin.';
+  String get gitUiAddsBom => 'Bộ sửa đổi thêm một dấu hiệu UTF- thứ tự (BOM) ở đầu tập tin.';
 
   @override
-  String get gitUiRemovesBom =>
-      'Bộ sửa đổi này gỡ bỏ đánh dấu UTF- theo thứ tự (BOM) từ đầu tập tin.';
+  String get gitUiRemovesBom => 'Bộ sửa đổi này gỡ bỏ đánh dấu UTF- theo thứ tự (BOM) từ đầu tập tin.';
 
   @override
   String get gitUiNoLineTerminators => 'Không có tổ hợp phím tắt';
@@ -8572,8 +7891,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiGitFailure =>
-      'Thao tác Git thất bại. Xem lại các chẩn đoán bên dưới.';
+  String get gitUiGitFailure => 'Thao tác Git thất bại. Xem lại các chẩn đoán bên dưới.';
 
   @override
   String get gitUiAbortInline => 'Hủy thao tác';
@@ -8624,8 +7942,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
-      'Các thao tác Git áp dụng cho toàn bộ kho này và có thể thực hiện các móc đã cấu hình, bộ lọc, văn bản và các công cụ ký hiệu.';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'Các thao tác Git áp dụng cho toàn bộ kho này và có thể thực hiện các móc đã cấu hình, bộ lọc, văn bản và các công cụ ký hiệu.';
 
   @override
   String get gitHostContentUnavailable => 'Nội dung không sẵn sàng';
@@ -8684,8 +8001,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiAddAddConflict => 'Đã thêm vào cả hai bên';
 
   @override
-  String get gitUiModifyDeleteConflict =>
-      'Sửa đổi/ tắt đã thay đổi hoặc bị tắt';
+  String get gitUiModifyDeleteConflict => 'Sửa đổi/ tắt đã thay đổi hoặc bị tắt';
 
   @override
   String gitUiConflictIdentity(String path, String kind) {
@@ -8696,19 +8012,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiDiscardUnsavedIndexDraft => 'Bỏ bản nháp chỉ mục chưa lưu?';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
-      'Đóng trình sửa chỉ mục chỉ bỏ bản nháp. Chỉ mục và tệp làm việc không thay đổi.';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => 'Đóng trình sửa chỉ mục chỉ bỏ bản nháp. Chỉ mục và tệp làm việc không thay đổi.';
 
   @override
   String get gitUiDiscardIndexDraft => 'Bỏ bản nháp chỉ mục';
 
   @override
-  String get gitUiDiscardUnsavedConflictDraft =>
-      'Bỏ kết quả xung đột chưa lưu?';
+  String get gitUiDiscardUnsavedConflictDraft => 'Bỏ kết quả xung đột chưa lưu?';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
-      'Đóng trình sửa xung đột chỉ bỏ bản nháp kết quả chưa lưu. Nội dung làm việc đã lưu và chỉ mục vẫn giữ nguyên.';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => 'Đóng trình sửa xung đột chỉ bỏ bản nháp kết quả chưa lưu. Nội dung làm việc đã lưu và chỉ mục vẫn giữ nguyên.';
 
   @override
   String get gitUiDiscardConflictDraft => 'Bỏ bản nháp xung đột';
@@ -8733,8 +8046,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiRevealRevisionWithoutFilters =>
-      'Hiển thị bản sửa đổi không có bộ lọc';
+  String get gitUiRevealRevisionWithoutFilters => 'Hiển thị bản sửa đổi không có bộ lọc';
 
   @override
   String get gitUiRestoreHistoryFilters => 'Khôi phục bộ lọc lịch sử';
@@ -8754,12 +8066,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiChangedLine => 'Dòng đã thay đổi';
 
   @override
-  String get gitUiCopyHeadRegionIntoIndexDraft =>
-      'Sao chép vùng HEAD vào bản nháp chỉ mục';
+  String get gitUiCopyHeadRegionIntoIndexDraft => 'Sao chép vùng HEAD vào bản nháp chỉ mục';
 
   @override
-  String get gitUiCopyWorkingRegionIntoIndexDraft =>
-      'Sao chép vùng làm việc vào bản nháp chỉ mục';
+  String get gitUiCopyWorkingRegionIntoIndexDraft => 'Sao chép vùng làm việc vào bản nháp chỉ mục';
 
   @override
   String get gitUiUpdatingConflictRegions => 'Đang cập nhật các vùng xung đột';
@@ -8776,24 +8086,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiIgnoreRightRegion => 'Bỏ qua đề xuất bên phải';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved =>
-      'Bản nháp đã gửi được ghi vào chỉ mục. Văn bản mới hơn vẫn ở trong trình sửa này. Hãy tải lại và xem xét các phiên bản hiện tại trước khi áp dụng.';
+  String get gitUiIndexAppliedNewerDraftPreserved => 'Bản nháp đã gửi được ghi vào chỉ mục. Văn bản mới hơn vẫn ở trong trình sửa này. Hãy tải lại và xem xét các phiên bản hiện tại trước khi áp dụng.';
 
   @override
-  String get gitUiNewerConflictDraftRetained =>
-      'Kết quả đã gửi được lưu. Bản nháp kết quả mới hơn của bạn vẫn chưa được lưu.';
+  String get gitUiNewerConflictDraftRetained => 'Kết quả đã gửi được lưu. Bản nháp kết quả mới hơn của bạn vẫn chưa được lưu.';
 
   @override
-  String get gitUiNoFileHistoryForThisPathAndRevision =>
-      'Không có lịch sử tệp cho đường dẫn và bản sửa đổi này.';
+  String get gitUiNoFileHistoryForThisPathAndRevision => 'Không có lịch sử tệp cho đường dẫn và bản sửa đổi này.';
 
   @override
-  String get gitUiReviewSavedIndexAndKeepDraft =>
-      'Xem lại chỉ mục đã lưu và giữ bản nháp';
+  String get gitUiReviewSavedIndexAndKeepDraft => 'Xem lại chỉ mục đã lưu và giữ bản nháp';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply =>
-      'Chỉ mục đã lưu hoặc các nguồn của nó đã thay đổi. Bản nháp mới hơn vẫn được giữ; hãy xem lại riêng các thay đổi này trước khi áp dụng.';
+  String get gitUiIndexSourcesChangedSinceApply => 'Chỉ mục đã lưu hoặc các nguồn của nó đã thay đổi. Bản nháp mới hơn vẫn được giữ; hãy xem lại riêng các thay đổi này trước khi áp dụng.';
 
   @override
   String get gitUiReviewSavedMessage => 'Xem lại thông điệp đã lưu';
@@ -8808,16 +8113,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiUseSavedMessage => 'Dùng thông điệp đã lưu';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow =>
-      'Thông điệp này đã thay đổi trong cửa sổ khác. Hãy xem lại thông điệp đã lưu trước khi thay thế.';
+  String get gitUiCommitDraftChangedInAnotherWindow => 'Thông điệp này đã thay đổi trong cửa sổ khác. Hãy xem lại thông điệp đã lưu trước khi thay thế.';
 
   @override
-  String get gitUiDiscardUnsavedCommitMessages =>
-      'Bỏ các thông điệp commit chưa lưu?';
+  String get gitUiDiscardUnsavedCommitMessages => 'Bỏ các thông điệp commit chưa lưu?';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
-      'Các thông điệp không lưu được vẫn còn trong cửa sổ này. Việc bỏ chúng không thay đổi các phiên bản đã lưu.';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => 'Các thông điệp không lưu được vẫn còn trong cửa sổ này. Việc bỏ chúng không thay đổi các phiên bản đã lưu.';
 
   @override
   String get gitUiDiscardCommitMessages => 'Bỏ các thông điệp';
@@ -8829,19 +8131,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiNoCommitsYet => 'Chưa có commit';
 
   @override
-  String get gitUiNativeMenuUnavailable =>
-      'Dịch vụ menu gốc không khả dụng. Hãy thử lại.';
+  String get gitUiNativeMenuUnavailable => 'Dịch vụ menu gốc không khả dụng. Hãy thử lại.';
 
   @override
-  String get gitWorkspaceRootRequired =>
-      'Mở thư mục gốc cây làm việc của kho để dùng Git trong không gian làm việc này.';
+  String get gitWorkspaceRootRequired => 'Mở thư mục gốc cây làm việc của kho để dùng Git trong không gian làm việc này.';
 
   @override
-  String gitLocalTrackingDescription(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
     return '$upstream · đi trước $ahead, đi sau $behind. Thông tin theo dõi từ xa đã biết cục bộ; không phải kiểm tra máy chủ trực tiếp.';
   }
 
@@ -8855,8 +8151,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiUnstageSelectedLines => 'Bỏ dòng đã chọn khỏi chỉ mục';
 
   @override
-  String get gitUiEditIndexInThreeWayView =>
-      'Chỉnh sửa chỉ mục trong chế độ xem ba phía…';
+  String get gitUiEditIndexInThreeWayView => 'Chỉnh sửa chỉ mục trong chế độ xem ba phía…';
 
   @override
   String get gitUiViewCommitDetails => 'Xem chi tiết commit…';

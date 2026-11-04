@@ -638,33 +638,9 @@ void main() {
           expect(copied, client.commit.message);
           choose = null;
           final file = git.RepoPath.text('docs/a.md');
-          final fileMenu = find.byKey(
-            ValueKey('git-historical-menu:${file.key}'),
-          );
           expect(
-            tester.widget<git.GitMenuButton>(fileMenu).glyph,
-            git.GitGlyph.moreHorizontal,
-          );
-          final nativeMenu = find.descendant(
-            of: fileMenu,
-            matching: find.byType(BusyMarkHeaderIconButton),
-          );
-          expect(
-            tester.widget<BusyMarkHeaderIconButton>(nativeMenu).icon,
-            YaruIcons.view_more_horizontal,
-          );
-          final paintedAction = find.descendant(
-            of: fileMenu,
-            matching: find.byType(YaruIconButton),
-          );
-          expect(paintedAction, findsOneWidget);
-          expect(
-            tester.widget<YaruIconButton>(paintedAction).hasFocusBorder,
-            isFalse,
-          );
-          expect(
-            tester.getRect(nativeMenu).height,
-            greaterThanOrEqualTo(BusyMarkSizes.iconButton),
+            find.byKey(ValueKey('git-historical-menu:${file.key}')),
+            findsNothing,
           );
           final filename = find.text('a.md').first;
           final surface = find
@@ -673,18 +649,11 @@ void main() {
                 matching: find.byType(BusyMarkSidebarRowSurface),
               )
               .first;
-          if (locale == 'ar') {
-            expect(
-              tester.getRect(fileMenu).right,
-              lessThanOrEqualTo(tester.getRect(surface).left),
-            );
-          } else {
-            expect(
-              tester.getRect(surface).right,
-              lessThanOrEqualTo(tester.getRect(fileMenu).left),
-            );
-          }
-          await tester.tap(fileMenu);
+          expect(
+            tester.getRect(surface).left,
+            greaterThanOrEqualTo(BusyMarkSpacing.sm),
+          );
+          await tester.tap(filename, buttons: kSecondaryMouseButton);
           await tester.pumpAndSettle();
           expect(opened, isEmpty);
           expect(
@@ -714,14 +683,7 @@ void main() {
             anchors.last['y'],
             closeTo(tester.getRect(nativeRow).bottom, 1),
           );
-          final focusContext = tester.element(
-            find
-                .descendant(of: fileMenu, matching: find.byType(Semantics))
-                .last,
-          );
-          Focus.of(focusContext).requestFocus();
-          await tester.pump();
-          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
           await tester.pumpAndSettle();
           expect(menus.length, menuCount + 2);
           expect(opened, hasLength(1));

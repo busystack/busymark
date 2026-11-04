@@ -14,127 +14,97 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesNewFromRetainedText => 'Uus märge säilitatud tekstist';
 
   @override
-  String get notesAccountThrottled =>
-      'Nextcloud palus pausi. Oota enne uuesti sisselogimist.';
+  String get notesAccountThrottled => 'Nextcloud palus pausi. Oota enne uuesti sisselogimist.';
 
   @override
-  String get notesSettingsRefreshing =>
-      'Notes värskendamine pärast seadete kinnitamist';
+  String get notesSettingsRefreshing => 'Notes värskendamine pärast seadete kinnitamist';
 
   @override
-  String get notesExportOperationFailed =>
-      'Eksport nurjus enne avaldamist. Kontrolli allikat ja sihtkohta ning ekspordi uuesti.';
+  String get notesExportOperationFailed => 'Eksport nurjus enne avaldamist. Kontrolli allikat ja sihtkohta ning ekspordi uuesti.';
 
   @override
-  String get notesRecoveryCreatedNotOpened =>
-      'Taastatud märge on salvestatud, kuid ei avanenud. Lahenda ootel redaktori- või omaduste muudatused ning ava see olemasolev märge.';
+  String get notesRecoveryCreatedNotOpened => 'Taastatud märge on salvestatud, kuid ei avanenud. Lahenda ootel redaktori- või omaduste muudatused ning ava see olemasolev märge.';
 
   @override
-  String get notesSettingsPendingNotes =>
-      'Ootel märkmed, konfliktid või ebakindlad loomised takistavad muudatust. Sünkrooni või vaata need Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
+  String get notesSettingsPendingNotes => 'Ootel märkmed, konfliktid või ebakindlad loomised takistavad muudatust. Sünkrooni või vaata need Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
 
   @override
-  String get notesSettingsPendingAttachments =>
-      'Ootel manuste toimingud takistavad muudatust. Vaata manused Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
+  String get notesSettingsPendingAttachments => 'Ootel manuste toimingud takistavad muudatust. Vaata manused Notes’is üle ning salvesta säilitatud seadete mustand uuesti.';
 
   @override
-  String get notesAccountServerAddress =>
-      'Kasuta Nextcloudi kanoonilist HTTPS-aadressi ja logi uuesti sisse. Aadressi või ümbersuunamist ei saanud kinnitada.';
+  String get notesAccountServerAddress => 'Kasuta Nextcloudi kanoonilist HTTPS-aadressi ja logi uuesti sisse. Aadressi või ümbersuunamist ei saanud kinnitada.';
 
   @override
-  String get notesAccountUnsupported =>
-      'Notes pole saadaval või API pole toetatud. Luba Nextcloud Notes API põhiversiooniga 1, alamversiooniga 4 või uuemaga.';
+  String get notesAccountUnsupported => 'Notes pole saadaval või API pole toetatud. Luba Nextcloud Notes API põhiversiooniga 1, alamversiooniga 4 või uuemaga.';
 
   @override
-  String get notesAccountAuthorizeAgain =>
-      'Nextcloud lükkas pääsuandmed tagasi. Volita konto uuesti või ühenda uuesti.';
+  String get notesAccountAuthorizeAgain => 'Nextcloud lükkas pääsuandmed tagasi. Volita konto uuesti või ühenda uuesti.';
 
   @override
-  String get notesAccountCheckForbidden =>
-      'Nextcloud keelas Notes’i võimaluste kontrolli. Palu administraatoril see lubada ja proovi uuesti.';
+  String get notesAccountCheckForbidden => 'Nextcloud keelas Notes’i võimaluste kontrolli. Palu administraatoril see lubada ja proovi uuesti.';
 
   @override
-  String get notesAccountMalformed =>
-      'Nextcloudi vastust ei saanud kinnitada. Kontrolli serveri paigaldust ja logi uuesti sisse.';
+  String get notesAccountMalformed => 'Nextcloudi vastust ei saanud kinnitada. Kontrolli serveri paigaldust ja logi uuesti sisse.';
 
   @override
-  String get notesAccountTimedOut =>
-      'Sisselogimise aeg sai läbi. Alusta uuesti ja lõpeta volitamine brauseris.';
+  String get notesAccountTimedOut => 'Sisselogimise aeg sai läbi. Alusta uuesti ja lõpeta volitamine brauseris.';
 
   @override
-  String get notesAccountBrowserUnavailable =>
-      'Süsteemi brauser ei avanenud. Kontrolli vaikebrauserit ja logi uuesti sisse.';
+  String get notesAccountBrowserUnavailable => 'Süsteemi brauser ei avanenud. Kontrolli vaikebrauserit ja logi uuesti sisse.';
 
   @override
-  String get notesAccountNetwork =>
-      'Nextcloudiga ei saadud ühendust. Kontrolli võrku ja serverit ning logi uuesti sisse.';
+  String get notesAccountNetwork => 'Nextcloudiga ei saadud ühendust. Kontrolli võrku ja serverit ning logi uuesti sisse.';
 
   @override
-  String get notesAccountRejected =>
-      'Nextcloud lükkas võimaluste päringu tagasi. Kontrolli administraatoriga ligipääsu ja proovi uuesti.';
+  String get notesAccountRejected => 'Nextcloud lükkas võimaluste päringu tagasi. Kontrolli administraatoriga ligipääsu ja proovi uuesti.';
 
   @override
-  String get notesAccountFailed =>
-      'Konto seadistamine nurjus. Proovi uuesti sisse logida.';
+  String get notesAccountFailed => 'Konto seadistamine nurjus. Proovi uuesti sisse logida.';
 
   @override
-  String get notesTransferSourceChanged =>
-      'Allikas muutus pärast ülevaatust. Vaata praegune fail üle või loo uus hetktõmmis.';
+  String get notesTransferSourceChanged => 'Allikas muutus pärast ülevaatust. Vaata praegune fail üle või loo uus hetktõmmis.';
 
   @override
-  String get notesTransferUnreadable =>
-      'Allikat ei saanud lugeda. Kontrolli faili või kausta ligipääsu ja vaata uuesti üle.';
+  String get notesTransferUnreadable => 'Allikat ei saanud lugeda. Kontrolli faili või kausta ligipääsu ja vaata uuesti üle.';
 
   @override
-  String get notesTransferInvalidSnapshot =>
-      'Hetktõmmis on vigane või toetamata. Vali kehtiv BusyMark Notes’i hetktõmmis või Markdown-allikas.';
+  String get notesTransferInvalidSnapshot => 'Hetktõmmis on vigane või toetamata. Vali kehtiv BusyMark Notes’i hetktõmmis või Markdown-allikas.';
 
   @override
-  String get notesTransferMediaLimit =>
-      'Meedia ületab impordi mahupiiri. Vähenda vastava kirje meediat ja vaata uuesti üle.';
+  String get notesTransferMediaLimit => 'Meedia ületab impordi mahupiiri. Vähenda vastava kirje meediat ja vaata uuesti üle.';
 
   @override
-  String get notesTransferUnsafeSource =>
-      'Allikas sisaldab ohtlikku teed. Vali failid allikakausta seest ja vaata uuesti üle.';
+  String get notesTransferUnsafeSource => 'Allikas sisaldab ohtlikku teed. Vali failid allikakausta seest ja vaata uuesti üle.';
 
   @override
-  String get notesTransferDestination =>
-      'Eksporti ei saanud kirjutada. Kontrolli sihtkoha ligipääsu ja vaba ruumi ning proovi uuesti.';
+  String get notesTransferDestination => 'Eksporti ei saanud kirjutada. Kontrolli sihtkoha ligipääsu ja vaba ruumi ning proovi uuesti.';
 
   @override
-  String get notesTransferOperationFailed =>
-      'Edastus ei lõppenud. Vaata vastavad kirjed üle ja proovi uuesti. Varem imporditud kirjed on salvestatud.';
+  String get notesTransferOperationFailed => 'Edastus ei lõppenud. Vaata vastavad kirjed üle ja proovi uuesti. Varem imporditud kirjed on salvestatud.';
 
   @override
-  String get notesExportPublishedWithOmissions =>
-      'Eksport on saadaval koos väljajättudega';
+  String get notesExportPublishedWithOmissions => 'Eksport on saadaval koos väljajättudega';
 
   @override
   String get notesBatchUnchanged => 'Soovitud väärtused olid juba määratud.';
 
   @override
-  String get notesBatchReadOnly =>
-      'Märge on kirjutuskaitstud. Kaitstud omadusi muuta ei saa; lemmikuks märkimine on lubatud.';
+  String get notesBatchReadOnly => 'Märge on kirjutuskaitstud. Kaitstud omadusi muuta ei saa; lemmikuks märkimine on lubatud.';
 
   @override
-  String get notesBatchReviewChanged =>
-      'Märge muutus pärast ülevaatust. Vaata selle praegune olek enne toimingu kordamist üle.';
+  String get notesBatchReviewChanged => 'Märge muutus pärast ülevaatust. Vaata selle praegune olek enne toimingu kordamist üle.';
 
   @override
-  String get notesBatchMissing =>
-      'Märge pole enam saadaval. Värskenda loendit ja vaata sihtkirjed uuesti üle.';
+  String get notesBatchMissing => 'Märge pole enam saadaval. Värskenda loendit ja vaata sihtkirjed uuesti üle.';
 
   @override
-  String get notesBatchStorage =>
-      'Kohalik salvestamine nurjus. Kontrolli andmeruumi ja proovi seda kirjet uuesti; õnnestunud kirjed on salvestatud.';
+  String get notesBatchStorage => 'Kohalik salvestamine nurjus. Kontrolli andmeruumi ja proovi seda kirjet uuesti; õnnestunud kirjed on salvestatud.';
 
   @override
-  String get notesRemoteReviewChanged =>
-      'Serveri märge muutus. Liitmise mustand säilis. Vaata uus võrdlus üle ja vali lahendus uuesti.';
+  String get notesRemoteReviewChanged => 'Serveri märge muutus. Liitmise mustand säilis. Vaata uus võrdlus üle ja vali lahendus uuesti.';
 
   @override
-  String get notesReviewRemote =>
-      'Olen serveri praeguse versiooni üle vaadanud';
+  String get notesReviewRemote => 'Olen serveri praeguse versiooni üle vaadanud';
 
   @override
   String get wsModuleCapsNotPublished => 'Mooduli suurtähereeglit ei avaldata.';
@@ -146,8 +116,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsHeadingNotPublished => 'See koostaja ei avalda seda.';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation =>
-      'Kinnitatud koostaja ei avalda Markdowni teemade instantsipealkirju. Olemasolev märgistus säilitatakse; vaata lähteteksti.';
+  String get wsMarkdownInstanceTitleLimitation => 'Kinnitatud koostaja ei avalda Markdowni teemade instantsipealkirju. Olemasolev märgistus säilitatakse; vaata lähteteksti.';
 
   @override
   String get wsTopicIdentity => 'Teema ID';
@@ -174,26 +143,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsSettingsPresent => 'Koostatud sätted olemas';
 
   @override
-  String get wsTitleOverrideExplanation =>
-      'Asendab avaldatud pealkirja; pealkirja tekst ei muutu.';
+  String get wsTitleOverrideExplanation => 'Asendab avaldatud pealkirja; pealkirja tekst ei muutu.';
 
   @override
   String get wsIgnoreVariables => 'Käsitle muutujaid sõnasõnalise tekstina';
 
   @override
-  String get wsIgnoreVariablesExplanation =>
-      'Lubamisel ei asendata muutujalaadset teksti.';
+  String get wsIgnoreVariablesExplanation => 'Lubamisel ei asendata muutujalaadset teksti.';
 
   @override
   String get wsInstanceSelection => 'Spikri instantsid';
 
   @override
-  String get wsInstanceExplanation =>
-      'Vali väljundid nimede, rühmade, loendite, välistuste või avaldistega.';
+  String get wsInstanceExplanation => 'Vali väljundid nimede, rühmade, loendite, välistuste või avaldistega.';
 
   @override
-  String get wsFilterExplanation =>
-      'Filtreerib korduvkasutatavat sisu tingimuste järgi; ei vali spikri instantsi.';
+  String get wsFilterExplanation => 'Filtreerib korduvkasutatavat sisu tingimuste järgi; ei vali spikri instantsi.';
 
   @override
   String get wsContextHelp => 'Kontekstispikri ID';
@@ -211,23 +176,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsMissingTopicHeading => 'Teema H1 puudub. Lisa see lähtetekstis.';
 
   @override
-  String get wsMultipleTopicHeadings =>
-      'Esimene H1 määrab teema pealkirja. Hilisemad H1-d on eraldi pealkirjad.';
+  String get wsMultipleTopicHeadings => 'Esimene H1 määrab teema pealkirja. Hilisemad H1-d on eraldi pealkirjad.';
 
   @override
-  String get wsTopicIdentityMismatch =>
-      'Juure id erineb failinimest tulenevast teema ID-st. Nimeta teemafail ümber või vaata lähteteksti.';
+  String get wsTopicIdentityMismatch => 'Juure id erineb failinimest tulenevast teema ID-st. Nimeta teemafail ümber või vaata lähteteksti.';
 
   @override
-  String get wsUnsupportedProperties =>
-      'Toetamata atribuudid säilitatakse. Vaata neid lähtetekstis.';
+  String get wsUnsupportedProperties => 'Toetamata atribuudid säilitatakse. Vaata neid lähtetekstis.';
 
   @override
   String get wsGeneratedAnchor => 'Loodud ankur; väärtus loob ülekirjutuse.';
 
   @override
-  String get wsHeadingBuilderLimitation =>
-      'Kinnitatud koostaja ei avalda H1 atribuute. Need kuuluvad pealkirjale, mitte XML-juurele.';
+  String get wsHeadingBuilderLimitation => 'Kinnitatud koostaja ei avalda H1 atribuute. Need kuuluvad pealkirjale, mitte XML-juurele.';
 
   @override
   String get closeOtherTabs => 'Sulge teised vahelehed';
@@ -284,20 +245,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get tocTemplateExtension => 'Laiend:';
 
   @override
-  String get tocTemplateLoadError =>
-      'Malle ei saanud laadida. Olemasolevaid malle pole muudetud.';
+  String get tocTemplateLoadError => 'Malle ei saanud laadida. Olemasolevaid malle pole muudetud.';
 
   @override
-  String get tocTemplateSaveError =>
-      'Malle ei saanud salvestada. Muudatused on siin endiselt alles.';
+  String get tocTemplateSaveError => 'Malle ei saanud salvestada. Muudatused on siin endiselt alles.';
 
   @override
-  String get tocTemplateConflict =>
-      'Malle muudeti teises aknas. Tühista ja ava redaktor uuesti.';
+  String get tocTemplateConflict => 'Malle muudeti teises aknas. Tühista ja ava redaktor uuesti.';
 
   @override
-  String get tocTemplateDuplicateName =>
-      'Selle nime ja laiendiga mall on juba olemas.';
+  String get tocTemplateDuplicateName => 'Selle nime ja laiendiga mall on juba olemas.';
 
   @override
   String get tocTemplateFormat => 'Vorming:';
@@ -314,15 +271,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get tocRemoveElementsRetainFiles =>
-      'Nende sisukorraelementidega seotud lähtefaile ei kustutata.';
+  String get tocRemoveElementsRetainFiles => 'Nende sisukorraelementidega seotud lähtefaile ei kustutata.';
 
   @override
   String get tocOk => 'OK';
 
   @override
-  String get tocSelectExistingTopic =>
-      'Vali praegusesse eksemplari lisatav teema';
+  String get tocSelectExistingTopic => 'Vali praegusesse eksemplari lisatav teema';
 
   @override
   String get tocGroupName => 'Rühma nimi';
@@ -428,12 +383,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get tocOnlyTitleField => 'Ainult sisukorra pealkiri:';
 
   @override
-  String get tocInstanceTitleExplanation =>
-      'Kasutatakse ainult praeguse eksemplari jaoks. Vaikimisi päritakse teema pealkirjast.';
+  String get tocInstanceTitleExplanation => 'Kasutatakse ainult praeguse eksemplari jaoks. Vaikimisi päritakse teema pealkirjast.';
 
   @override
-  String get tocOnlyTitleExplanation =>
-      'Kasutatakse ainult sisukorras. Vaikimisi päritakse teema pealkirjast või eksemplaripõhisest pealkirjast, kui see on määratud. Pealkirjade selgitused leiate';
+  String get tocOnlyTitleExplanation => 'Kasutatakse ainult sisukorras. Vaikimisi päritakse teema pealkirjast või eksemplaripõhisest pealkirjast, kui see on määratud. Pealkirjade selgitused leiate';
 
   @override
   String get tocTitleDocumentationLink => 'siit';
@@ -463,8 +416,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get pdfIncludeTitlePage => 'Lisa tiitelleht';
 
   @override
-  String get pdfTitlePageNote =>
-      'Sellel lehel pole päist, jalust ega nähtavat leheküljenumbrit.';
+  String get pdfTitlePageNote => 'Sellel lehel pole päist, jalust ega nähtavat leheküljenumbrit.';
 
   @override
   String get pdfTitlePageTitle => 'Pealkiri';
@@ -488,15 +440,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get pdfTitlePageTitleRequired => 'Sisesta tiitellehe pealkiri.';
 
   @override
-  String get pdfTocSectionNote =>
-      'Algab eraldi lehelt ja võib hõlmata mitut lehte.';
+  String get pdfTocSectionNote => 'Algab eraldi lehelt ja võib hõlmata mitut lehte.';
 
   @override
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle =>
-      'Markdowni failide ja Writerside’iga ühilduvate dokumentatsiooniprojektide redaktor.';
+  String get appSubtitle => 'Markdowni failide ja Writerside’iga ühilduvate dokumentatsiooniprojektide redaktor.';
 
   @override
   String get aboutBusyMark => 'Teave BusyMarki kohta';
@@ -547,15 +497,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get feedbackMessage => 'Üksikasjalik sõnum';
 
   @override
-  String get feedbackReplyEmail =>
-      'E-posti aadress vastuse saamiseks (valikuline)';
+  String get feedbackReplyEmail => 'E-posti aadress vastuse saamiseks (valikuline)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Lisa tehnilised andmed';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure =>
-      'Kui see on lubatud, lisatakse ainult Linuxi operatsioonisüsteemi versioon ja BusyMarki rakenduse lokaat. Logisid, faile, kontoandmeid ega muid diagnostikaandmeid ei lisata.';
+  String get feedbackTechnicalDetailsDisclosure => 'Kui see on lubatud, lisatakse ainult Linuxi operatsioonisüsteemi versioon ja BusyMarki rakenduse lokaat. Logisid, faile, kontoandmeid ega muid diagnostikaandmeid ei lisata.';
 
   @override
   String get feedbackSubmit => 'Saada';
@@ -573,27 +521,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get feedbackMessageLength => 'Sõnum peab olema 10–5000 märki pikk.';
 
   @override
-  String get feedbackReplyEmailInvalid =>
-      'Sisesta kehtiv e-posti aadress või jäta see väli tühjaks.';
+  String get feedbackReplyEmailInvalid => 'Sisesta kehtiv e-posti aadress või jäta see väli tühjaks.';
 
   @override
-  String get feedbackConnectionFailure =>
-      'BusyMark ei saanud ühendust luua. Kontrolli internetiühendust ja proovi uuesti.';
+  String get feedbackConnectionFailure => 'BusyMark ei saanud ühendust luua. Kontrolli internetiühendust ja proovi uuesti.';
 
   @override
   String get feedbackTimeoutFailure => 'Päring aegus. Proovi uuesti.';
 
   @override
-  String get feedbackRateLimitedFailure =>
-      'Selle ühenduse kaudu saadeti liiga palju teateid. Oota ja proovi uuesti.';
+  String get feedbackRateLimitedFailure => 'Selle ühenduse kaudu saadeti liiga palju teateid. Oota ja proovi uuesti.';
 
   @override
-  String get feedbackRejectedFailure =>
-      'Server lükkas teate tagasi. Kontrolli vormivälju ja proovi uuesti.';
+  String get feedbackRejectedFailure => 'Server lükkas teate tagasi. Kontrolli vormivälju ja proovi uuesti.';
 
   @override
-  String get feedbackServerFailure =>
-      'Server ei saanud teadet vastu võtta. Proovi hiljem uuesti.';
+  String get feedbackServerFailure => 'Server ei saanud teadet vastu võtta. Proovi hiljem uuesti.';
 
   @override
   String feedbackSuccess(String id) {
@@ -705,8 +648,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get keyboardShortcuts => 'Kiirklahvid';
 
   @override
-  String get commandUnavailableInContext =>
-      'See käsk pole praeguses kontekstis saadaval.';
+  String get commandUnavailableInContext => 'See käsk pole praeguses kontekstis saadaval.';
 
   @override
   String get lightTheme => 'Hele';
@@ -886,19 +828,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get markdownFileExtensions => '.md või .markdown';
 
   @override
-  String get openFolderOrWritersideProject =>
-      'Ava kaust või Writerside’i projekt';
+  String get openFolderOrWritersideProject => 'Ava kaust või Writerside’i projekt';
 
   @override
-  String get markdownFolderOrWritersideProject =>
-      'Markdowni kaust või Writerside’iga ühilduv projekt';
+  String get markdownFolderOrWritersideProject => 'Markdowni kaust või Writerside’iga ühilduv projekt';
 
   @override
   String get noOpenFile => 'Ühtegi faili pole avatud';
 
   @override
-  String get shortcutDeleteTreeItemDescription =>
-      'Kustuta failivaates valitud üksus või eemalda valitud teema sisukorrast';
+  String get shortcutDeleteTreeItemDescription => 'Kustuta failivaates valitud üksus või eemalda valitud teema sisukorrast';
 
   @override
   String get shortcutGroupGeneral => 'Üldine';
@@ -907,12 +846,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutNewDocument => 'Loo';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'Loo Markdowni fail või Writerside’i projekt';
+  String get shortcutNewDocumentDescription => 'Loo Markdowni fail või Writerside’i projekt';
 
   @override
-  String get shortcutOpenDescription =>
-      'Ava Markdowni fail, kaust või Writerside’i projekt';
+  String get shortcutOpenDescription => 'Ava Markdowni fail, kaust või Writerside’i projekt';
 
   @override
   String get shortcutSaveDescription => 'Salvesta praegune dokument';
@@ -921,8 +858,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutSearchDescription => 'Otsi praegusest tööruumist';
 
   @override
-  String get shortcutKeyboardShortcutsDescription =>
-      'Kohanda rakenduse kiirklahve';
+  String get shortcutKeyboardShortcutsDescription => 'Kohanda rakenduse kiirklahve';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Ava süntaksiviide';
@@ -934,15 +870,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutNextTab => 'Järgmine vahekaart';
 
   @override
-  String get shortcutNextTabDescription =>
-      'Liigu järgmisele avatud vahekaardile';
+  String get shortcutNextTabDescription => 'Liigu järgmisele avatud vahekaardile';
 
   @override
   String get shortcutPreviousTab => 'Eelmine vahekaart';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Liigu eelmisele avatud vahekaardile';
+  String get shortcutPreviousTabDescription => 'Liigu eelmisele avatud vahekaardile';
 
   @override
   String get shortcutCloseTab => 'Sulge vahekaart';
@@ -960,8 +894,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutGroupTextEditing => 'Teksti redigeerimine';
 
   @override
-  String get shortcutSelectAllDescription =>
-      'Vali lähtekoodirežiimis kogu tekst; redaktorirežiimis vajuta kaks korda, et valida kõik plokid';
+  String get shortcutSelectAllDescription => 'Vali lähtekoodirežiimis kogu tekst; redaktorirežiimis vajuta kaks korda, et valida kõik plokid';
 
   @override
   String get shortcutCutDescription => 'Lõika valitud tekst';
@@ -973,8 +906,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutPasteDescription => 'Aseta lõikelaualt';
 
   @override
-  String get shortcutPastePlainTextDescription =>
-      'Aseta lõikelaua tekst vorminduseta';
+  String get shortcutPastePlainTextDescription => 'Aseta lõikelaua tekst vorminduseta';
 
   @override
   String get shortcutUndoDescription => 'Võta viimane muudatus tagasi';
@@ -986,48 +918,40 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutInsertIndentation => 'Sisesta taane';
 
   @override
-  String get shortcutInsertIndentationDescription =>
-      'Sisesta kursori asukohta taane';
+  String get shortcutInsertIndentationDescription => 'Sisesta kursori asukohta taane';
 
   @override
   String get shortcutOutdentSource => 'Vähenda lähtekoodi taanet';
 
   @override
-  String get shortcutOutdentSourceDescription =>
-      'Eemalda lähtekoodirežiimis üks taandetase';
+  String get shortcutOutdentSourceDescription => 'Eemalda lähtekoodirežiimis üks taandetase';
 
   @override
   String get shortcutEscape => 'Sulge otsing või tühista plokkide valik';
 
   @override
-  String get shortcutEscapeDescription =>
-      'Sulge tööruumi otsing või tühista plokkide valik redaktorirežiimis';
+  String get shortcutEscapeDescription => 'Sulge tööruumi otsing või tühista plokkide valik redaktorirežiimis';
 
   @override
   String get shortcutGroupFormatting => 'Vormindamine';
 
   @override
-  String get shortcutBoldDescription =>
-      'Lülita valitud tekstil paks kiri sisse või välja';
+  String get shortcutBoldDescription => 'Lülita valitud tekstil paks kiri sisse või välja';
 
   @override
-  String get shortcutItalicDescription =>
-      'Lülita valitud teksti kursiivvormindus sisse või välja';
+  String get shortcutItalicDescription => 'Lülita valitud teksti kursiivvormindus sisse või välja';
 
   @override
-  String get shortcutUnderlineDescription =>
-      'Lülita valitud teksti allajoonimine sisse või välja';
+  String get shortcutUnderlineDescription => 'Lülita valitud teksti allajoonimine sisse või välja';
 
   @override
   String get shortcutLinkDescription => 'Lisa või muuda linki';
 
   @override
-  String get shortcutInlineCodeDescription =>
-      'Lülita valitud teksti reasisene koodivormindus sisse või välja';
+  String get shortcutInlineCodeDescription => 'Lülita valitud teksti reasisene koodivormindus sisse või välja';
 
   @override
-  String get shortcutStrikethroughDescription =>
-      'Lülita valitud teksti läbikriipsutus sisse või välja';
+  String get shortcutStrikethroughDescription => 'Lülita valitud teksti läbikriipsutus sisse või välja';
 
   @override
   String get shortcutGroupBlocks => 'Plokid';
@@ -1036,28 +960,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutParagraphDescription => 'Muuda praegune plokk lõiguks';
 
   @override
-  String get shortcutHeading1Description =>
-      'Muuda praegune plokk 1. taseme pealkirjaks';
+  String get shortcutHeading1Description => 'Muuda praegune plokk 1. taseme pealkirjaks';
 
   @override
-  String get shortcutHeading2Description =>
-      'Muuda praegune plokk 2. taseme pealkirjaks';
+  String get shortcutHeading2Description => 'Muuda praegune plokk 2. taseme pealkirjaks';
 
   @override
-  String get shortcutHeading3Description =>
-      'Muuda praegune plokk 3. taseme pealkirjaks';
+  String get shortcutHeading3Description => 'Muuda praegune plokk 3. taseme pealkirjaks';
 
   @override
-  String get shortcutHeading4Description =>
-      'Muuda praegune plokk 4. taseme pealkirjaks';
+  String get shortcutHeading4Description => 'Muuda praegune plokk 4. taseme pealkirjaks';
 
   @override
-  String get shortcutHeading5Description =>
-      'Muuda praegune plokk 5. taseme pealkirjaks';
+  String get shortcutHeading5Description => 'Muuda praegune plokk 5. taseme pealkirjaks';
 
   @override
-  String get shortcutHeading6Description =>
-      'Muuda praegune plokk 6. taseme pealkirjaks';
+  String get shortcutHeading6Description => 'Muuda praegune plokk 6. taseme pealkirjaks';
 
   @override
   String get shortcutGroupLists => 'Loendid';
@@ -1066,22 +984,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get numberedList => 'Nummerdatud loend';
 
   @override
-  String get shortcutNumberedListDescription =>
-      'Lülita nummerdatud loendi vormindus sisse või välja';
+  String get shortcutNumberedListDescription => 'Lülita nummerdatud loendi vormindus sisse või välja';
 
   @override
   String get bulletedList => 'Täpploend';
 
   @override
-  String get shortcutBulletedListDescription =>
-      'Lülita täpploendi vormindus sisse või välja';
+  String get shortcutBulletedListDescription => 'Lülita täpploendi vormindus sisse või välja';
 
   @override
   String get checklist => 'Kontrollnimekiri';
 
   @override
-  String get shortcutChecklistDescription =>
-      'Lülita kontrollnimekirja vormindus sisse või välja';
+  String get shortcutChecklistDescription => 'Lülita kontrollnimekirja vormindus sisse või välja';
 
   @override
   String get shortcutGroupSidebar => 'Külgpaneel';
@@ -1093,15 +1008,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get createMarkdownFile => 'Loo Markdowni fail';
 
   @override
-  String get createMarkdownFileDescription =>
-      'Alusta salvestamata kohalikku Markdowni dokumenti';
+  String get createMarkdownFileDescription => 'Alusta salvestamata kohalikku Markdowni dokumenti';
 
   @override
   String get createWritersideProject => 'Loo Writerside’i projekt';
 
   @override
-  String get createWritersideProjectDescription =>
-      'Alusta kohalikku Writerside’iga ühilduvat projekti';
+  String get createWritersideProjectDescription => 'Alusta kohalikku Writerside’iga ühilduvat projekti';
 
   @override
   String get defaultProjectName => 'Dokumentatsioon';
@@ -1140,15 +1053,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get useSingleSafeDirectoryName => 'Kasuta üht ohutut katalooginime.';
 
   @override
-  String get useLowercaseIdentifier =>
-      'Kasuta väiketähtedest, numbritest, allkriipsudest või sidekriipsudest koosnevat identifikaatorit.';
+  String get useLowercaseIdentifier => 'Kasuta väiketähtedest, numbritest, allkriipsudest või sidekriipsudest koosnevat identifikaatorit.';
 
   @override
   String get startTopicTitleRequired => 'Avalehteema pealkiri on nõutav.';
 
   @override
-  String get createWritersideProjectFailed =>
-      'Writerside’i projekti loomine nurjus.';
+  String get createWritersideProjectFailed => 'Writerside’i projekti loomine nurjus.';
 
   @override
   String get settingsTitle => 'BusyMarki sätted';
@@ -1157,15 +1068,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get autoSave => 'Automaatne salvestamine';
 
   @override
-  String get autoSaveDescription =>
-      'Salvesta failimuudatused pärast lühikest tegevusetust automaatselt.';
+  String get autoSaveDescription => 'Salvesta failimuudatused pärast lühikest tegevusetust automaatselt.';
 
   @override
   String get wordWrap => 'Reamurdmine';
 
   @override
-  String get wordWrapDescription =>
-      'Murrab pikad read redaktori laiusele, selle asemel et horisontaalselt kerida.';
+  String get wordWrapDescription => 'Murrab pikad read redaktori laiusele, selle asemel et horisontaalselt kerida.';
 
   @override
   String get editorFontSize => 'Redaktori fondi suurus';
@@ -1180,15 +1089,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get editingButtonsPosition => 'Redigeerimisnuppude asukoht';
 
   @override
-  String get editingButtonsPositionDescription =>
-      'Vali, kus kuvatakse hõljuvad WYSIWYG-redigeerimisnupud.';
+  String get editingButtonsPositionDescription => 'Vali, kus kuvatakse hõljuvad WYSIWYG-redigeerimisnupud.';
 
   @override
   String get editingButtonsDirection => 'Redigeerimisnuppude paigutussuund';
 
   @override
-  String get editingButtonsDirectionDescription =>
-      'Vali, kas hõljuvad WYSIWYG-redigeerimisnupud paigutatakse horisontaalselt või vertikaalselt.';
+  String get editingButtonsDirectionDescription => 'Vali, kas hõljuvad WYSIWYG-redigeerimisnupud paigutatakse horisontaalselt või vertikaalselt.';
 
   @override
   String get horizontal => 'Horisontaalne';
@@ -1203,24 +1110,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get allowRemoteImages => 'Laadi välispildid';
 
   @override
-  String get allowRemoteImagesDescription =>
-      'Luba Markdowni eelvaatel ja redaktoril laadida pilte HTTP- ja HTTPS-aadressidelt.';
+  String get allowRemoteImagesDescription => 'Luba Markdowni eelvaatel ja redaktoril laadida pilte HTTP- ja HTTPS-aadressidelt.';
 
   @override
-  String get clearRemoteImagePermissions =>
-      'Eemalda välispiltide laadimise load';
+  String get clearRemoteImagePermissions => 'Eemalda välispiltide laadimise load';
 
   @override
-  String get clearRemoteImagePermissionsDescription =>
-      'Unusta tööruumid, millel oli lubatud välispilte laadida.';
+  String get clearRemoteImagePermissionsDescription => 'Unusta tööruumid, millel oli lubatud välispilte laadida.';
 
   @override
-  String get clearGitWorkspaceTrust =>
-      'Tühjenda usaldatud Giti tööruumide loend';
+  String get clearGitWorkspaceTrust => 'Tühjenda usaldatud Giti tööruumide loend';
 
   @override
-  String get clearGitWorkspaceTrustDescription =>
-      'Küsi varem usaldatud tööruumides Giti funktsioonide lubamisel uuesti kinnitust.';
+  String get clearGitWorkspaceTrustDescription => 'Küsi varem usaldatud tööruumides Giti funktsioonide lubamisel uuesti kinnitust.';
 
   @override
   String get settingsEditingButtonsSectionTitle => 'Redigeerimisnupud';
@@ -1229,8 +1131,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get spellingDictionaries => 'Õigekirjasõnastikud';
 
   @override
-  String get spellingDictionariesDescription =>
-      'Õigekirjasõnastike installimine ja haldamine';
+  String get spellingDictionariesDescription => 'Õigekirjasõnastike installimine ja haldamine';
 
   @override
   String get settingsDictionariesSectionTitle => 'Sõnastikud';
@@ -1248,37 +1149,30 @@ class AppLocalizationsEt extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Aken';
 
   @override
-  String get settingsReopenWorkspaceOnStartupTitle =>
-      'Eelmise tööruumi taasavamine käivitamisel';
+  String get settingsReopenWorkspaceOnStartupTitle => 'Eelmise tööruumi taasavamine käivitamisel';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription =>
-      'Ava BusyMarki käivitamisel eelmise seansi tööruum ja vahekaardid.';
+  String get settingsReopenWorkspaceOnStartupDescription => 'Ava BusyMarki käivitamisel eelmise seansi tööruum ja vahekaardid.';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesTitle =>
-      'Küsi salvestamata muudatuste korral enne sulgemist kinnitust';
+  String get settingsConfirmCloseWithUnsavedChangesTitle => 'Küsi salvestamata muudatuste korral enne sulgemist kinnitust';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      'Küsi enne BusyMarki sulgemist kinnitust, kui dokumentides on salvestamata muudatusi.';
+  String get settingsConfirmCloseWithUnsavedChangesDescription => 'Küsi enne BusyMarki sulgemist kinnitust, kui dokumentides on salvestamata muudatusi.';
 
   @override
   String get closeUnsavedChangesTitle => 'Salvestamata muudatused';
 
   @override
-  String get closeUnsavedChangesSingleMessage =>
-      'Selles dokumendis on salvestamata muudatusi. Kas salvestada muudatused enne BusyMarki sulgemist?';
+  String get closeUnsavedChangesSingleMessage => 'Selles dokumendis on salvestamata muudatusi. Kas salvestada muudatused enne BusyMarki sulgemist?';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          '$count dokumendis on salvestamata muudatusi. Kas salvestada muudatused enne BusyMarki sulgemist?',
-      one:
-          'Ühes dokumendis on salvestamata muudatusi. Kas salvestada muudatused enne BusyMarki sulgemist?',
+      other: '$count dokumendis on salvestamata muudatusi. Kas salvestada muudatused enne BusyMarki sulgemist?',
+      one: 'Ühes dokumendis on salvestamata muudatusi. Kas salvestada muudatused enne BusyMarki sulgemist?',
       zero: 'Kas salvestada muudatused enne BusyMarki sulgemist?',
     );
     return '$_temp0';
@@ -1309,10 +1203,8 @@ class AppLocalizationsEt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          '$count dokumendil on salvestamata muudatusi. Salvestage need enne jätkamist.',
-      one:
-          '1 dokumendil on salvestamata muudatusi. Salvestage see enne jätkamist.',
+      other: '$count dokumendil on salvestamata muudatusi. Salvestage need enne jätkamist.',
+      one: '1 dokumendil on salvestamata muudatusi. Salvestage see enne jätkamist.',
     );
     return '$_temp0';
   }
@@ -1321,8 +1213,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get fileChangedOnDisk => 'Faili on kettal muudetud';
 
   @override
-  String get fileChangedOnDiskMessage =>
-      'Seda faili on pärast avamist kettal muudetud. Kas kirjutada see üle?';
+  String get fileChangedOnDiskMessage => 'Seda faili on pärast avamist kettal muudetud. Kas kirjutada see üle?';
 
   @override
   String get untitledMarkdownFileName => 'Nimetu.md';
@@ -1373,8 +1264,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get videoPreview => 'Video eelvaade';
 
   @override
-  String get diagnosticWritersideVideoMissingSource =>
-      'Videol puudub atribuut src.';
+  String get diagnosticWritersideVideoMissingSource => 'Videol puudub atribuut src.';
 
   @override
   String diagnosticWritersideVideoUnsupportedSource(String source) {
@@ -1565,15 +1455,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get remoteImageBlocked => 'Välispilt on blokeeritud';
 
   @override
-  String get remoteImageBlockedTooltip =>
-      'Vali, kas BusyMark võib välispilte laadida.';
+  String get remoteImageBlockedTooltip => 'Vali, kas BusyMark võib välispilte laadida.';
 
   @override
   String get remoteImagesBlockedTitle => 'Välispildid on blokeeritud';
 
   @override
-  String get remoteImagesBlockedMessage =>
-      'See dokument viitab internetis olevatele piltidele. Nende laadimine võib avaldada pildi majutajale teie võrguteavet.';
+  String get remoteImagesBlockedMessage => 'See dokument viitab internetis olevatele piltidele. Nende laadimine võib avaldada pildi majutajale teie võrguteavet.';
 
   @override
   String get loadRemoteImagesForWorkspace => 'Laadi selles tööruumis';
@@ -1744,8 +1632,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get topicIsHomePageRemovalWarning =>
-      'See teema on selle eksemplari avaleht. Vali teine avaleht enne selle eemaldamist sisukorrast.';
+  String get topicIsHomePageRemovalWarning => 'See teema on selle eksemplari avaleht. Vali teine avaleht enne selle eemaldamist sisukorrast.';
 
   @override
   String get newHomePage => 'Uus avaleht';
@@ -1754,12 +1641,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get chooseHomePage => 'Vali avaleht';
 
   @override
-  String get noHomePageReplacement =>
-      'Lisa või lingi sellele eksemplarile teine sobiv teema enne selle avalehe eemaldamist.';
+  String get noHomePageReplacement => 'Lisa või lingi sellele eksemplarile teine sobiv teema enne selle avalehe eemaldamist.';
 
   @override
-  String get topicIsStartPageRemovalWarning =>
-      'See teema on eksemplari avaleht. Määra teine avaleht enne selle lähtefaili kustutamist.';
+  String get topicIsStartPageRemovalWarning => 'See teema on eksemplari avaleht. Määra teine avaleht enne selle lähtefaili kustutamist.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1767,12 +1652,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get noBreakingTopicUsages =>
-      'Ei leitud viiteid, mis selle toimingu tõttu katkeksid.';
+  String get noBreakingTopicUsages => 'Ei leitud viiteid, mis selle toimingu tõttu katkeksid.';
 
   @override
-  String get topicUsagesFound =>
-      'BusyMark leidis järgmised viited sellele teemale.';
+  String get topicUsagesFound => 'BusyMark leidis järgmised viited sellele teemale.';
 
   @override
   String get topicUsageTocElements => 'Sisukorraelemendid';
@@ -1804,12 +1687,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get updateUsagesAutomatically => 'Uuenda kasutuskohad automaatselt';
 
   @override
-  String get updateUsagesAutomaticallyDescription =>
-      'Eemalda sisukorraviited ja kaasamiselemendid ning säilita linkide tekst.';
+  String get updateUsagesAutomaticallyDescription => 'Eemalda sisukorraviited ja kaasamiselemendid ning säilita linkide tekst.';
 
   @override
-  String get manualUsageUpdatesRequired =>
-      'Mõnda kasutuskohta tuleb enne refaktoreerimist käsitsi muuta.';
+  String get manualUsageUpdatesRequired => 'Mõnda kasutuskohta tuleb enne refaktoreerimist käsitsi muuta.';
 
   @override
   String get setRedirectTo => 'Määra ümbersuunamine:';
@@ -1821,8 +1702,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get redirectTarget => 'Ümbersuunamise sihtkoht';
 
   @override
-  String get remainingUsagesBlockRemoval =>
-      'Enne jätkamist vaata üle ja uuenda ülejäänud kasutuskohad või luba automaatne uuendamine, kui see on saadaval.';
+  String get remainingUsagesBlockRemoval => 'Enne jätkamist vaata üle ja uuenda ülejäänud kasutuskohad või luba automaatne uuendamine, kui see on saadaval.';
 
   @override
   String usagesOfTopic(String topic) {
@@ -1916,15 +1796,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get useIdentifierCharacters =>
-      'Kasuta laiendi ees ainult tähti, numbreid, allkriipse või sidekriipse.';
+  String get useIdentifierCharacters => 'Kasuta laiendi ees ainult tähti, numbreid, allkriipse või sidekriipse.';
 
   @override
   String get topicIdAlreadyExists => 'Teema ID on juba olemas.';
 
   @override
-  String get createWritersideTopicFailed =>
-      'Writerside’i teema loomine nurjus.';
+  String get createWritersideTopicFailed => 'Writerside’i teema loomine nurjus.';
 
   @override
   String get noOutline => 'Liigendus puudub';
@@ -2011,8 +1889,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get normalizeLineEndings => 'Normaliseeri reavahetused';
 
   @override
-  String get mixedLineEndingsSavePrompt =>
-      'See dokument sisaldab eri tüüpi reavahetusi. Vali vorming.';
+  String get mixedLineEndingsSavePrompt => 'See dokument sisaldab eri tüüpi reavahetusi. Vali vorming.';
 
   @override
   String workspaceReplaceMixedLineEndings(String fileName) {
@@ -2023,35 +1900,28 @@ class AppLocalizationsEt extends AppLocalizations {
   String get workspaceReplaceIssueOversized => 'Liiga suur fail jäeti vahele.';
 
   @override
-  String get workspaceReplaceIssueUnreadable =>
-      'Fail, mida ei saanud lugeda, jäeti vahele.';
+  String get workspaceReplaceIssueUnreadable => 'Fail, mida ei saanud lugeda, jäeti vahele.';
 
   @override
-  String get workspaceReplaceIssueInvalidUtf8 =>
-      'Fail, mis pole korrektne UTF-8, jäeti vahele.';
+  String get workspaceReplaceIssueInvalidUtf8 => 'Fail, mis pole korrektne UTF-8, jäeti vahele.';
 
   @override
   String get workspaceReplaceIssueTruncated => 'Asenduste eelvaade kärbiti.';
 
   @override
-  String get workspaceReplaceIssueFileChanged =>
-      'Pärast eelvaadet muutunud fail jäeti vahele.';
+  String get workspaceReplaceIssueFileChanged => 'Pärast eelvaadet muutunud fail jäeti vahele.';
 
   @override
-  String get workspaceReplaceIssueBufferChanged =>
-      'Pärast eelvaadet muutunud redaktoripuhver jäeti vahele.';
+  String get workspaceReplaceIssueBufferChanged => 'Pärast eelvaadet muutunud redaktoripuhver jäeti vahele.';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired =>
-      'Vali enne asendamist LF- või CRLF-normaliseerimine.';
+  String get workspaceReplaceIssueNormalizationRequired => 'Vali enne asendamist LF- või CRLF-normaliseerimine.';
 
   @override
-  String get workspaceReplaceIssuePartialConflict =>
-      'Tagasivõtmine peatati, sest faili muudeti samal ajal. Mõned asendused võivad alles jääda; väljatõrjutud sisu säilitati alloleval teel.';
+  String get workspaceReplaceIssuePartialConflict => 'Tagasivõtmine peatati, sest faili muudeti samal ajal. Mõned asendused võivad alles jääda; väljatõrjutud sisu säilitati alloleval teel.';
 
   @override
-  String get workspaceReplaceIssueApplyFailed =>
-      'Asendusi ei rakendatud, sest läbivaadatud kogumit ei saanud turvaliselt salvestada.';
+  String get workspaceReplaceIssueApplyFailed => 'Asendusi ei rakendatud, sest läbivaadatud kogumit ei saanud turvaliselt salvestada.';
 
   @override
   String externalChangesTitle(String fileName) {
@@ -2062,8 +1932,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get externalFileDeleted => 'See fail kustutati kettalt.';
 
   @override
-  String get externalFileChanged =>
-      'See fail muutus kettal ajal, kui sul on salvestamata muudatusi.';
+  String get externalFileChanged => 'See fail muutus kettal ajal, kui sul on salvestamata muudatusi.';
 
   @override
   String recoveredDocumentReview(String fileName) {
@@ -2083,19 +1952,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get saveAs => 'Salvesta nimega';
 
   @override
-  String get workspaceSearchIncomplete =>
-      'Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.';
+  String get workspaceSearchIncomplete => 'Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.';
 
   @override
   String get workspaceSearchShowMore => 'Kuva rohkem tulemusi';
 
   @override
-  String get workspaceSearchSkippedFiles =>
-      'Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:';
+  String get workspaceSearchSkippedFiles => 'Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:';
 
   @override
-  String get sourceLargeFileFeaturesPaused =>
-      'Suur fail: esiletõstmine ja voltimine on peatatud';
+  String get sourceLargeFileFeaturesPaused => 'Suur fail: esiletõstmine ja voltimine on peatatud';
 
   @override
   String get nothingToRead => 'Pole midagi lugeda';
@@ -2144,8 +2010,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get cannotOpenFileTypeInEditor =>
-      'Seda failitüüpi ei saa redaktoris avada';
+  String get cannotOpenFileTypeInEditor => 'Seda failitüüpi ei saa redaktoris avada';
 
   @override
   String anchorNotFound(String anchor) {
@@ -2170,8 +2035,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get documentKindMarkdownFile => 'Markdowni fail';
 
   @override
-  String get documentKindWritersideMarkdownTopic =>
-      'Writerside’i Markdowni teema';
+  String get documentKindWritersideMarkdownTopic => 'Writerside’i Markdowni teema';
 
   @override
   String get documentKindWritersideXmlTopic => 'Writerside’i XML-teema';
@@ -2217,12 +2081,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrorChooseWhereToSaveMarkdown =>
-      'Vali selle Markdowni faili salvestuskoht.';
+  String get workspaceErrorChooseWhereToSaveMarkdown => 'Vali selle Markdowni faili salvestuskoht.';
 
   @override
-  String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'Salvestamine blokeeriti: faili on kettal muudetud.';
+  String get workspaceErrorSaveBlockedFileChangedOnDisk => 'Salvestamine blokeeriti: faili on kettal muudetud.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -2244,10 +2106,8 @@ class AppLocalizationsEt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'Taastati $count salvestamata dokumenti. Kontrolli igaüht enne salvestamist või hülgamist.',
-      one:
-          'Taastati 1 salvestamata dokumendi. Kontrolli see enne salvestamist või hülgamist.',
+      other: 'Taastati $count salvestamata dokumenti. Kontrolli igaüht enne salvestamist või hülgamist.',
+      one: 'Taastati 1 salvestamata dokumendi. Kontrolli see enne salvestamist või hülgamist.',
     );
     return '$_temp0';
   }
@@ -2257,10 +2117,8 @@ class AppLocalizationsEt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          '$count kahjustunud taastamiskirjet ei õnnestunud taastada. Kehtivad taastamiskirjed jäävad alles.',
-      one:
-          'Ühte kahjustunud taastamiskirjet ei õnnestunud taastada. Algne taastamisfail on ülevaatuseks alles jäetud.',
+      other: '$count kahjustunud taastamiskirjet ei õnnestunud taastada. Kehtivad taastamiskirjed jäävad alles.',
+      one: 'Ühte kahjustunud taastamiskirjet ei õnnestunud taastada. Algne taastamisfail on ülevaatuseks alles jäetud.',
     );
     return '$_temp0';
   }
@@ -2310,16 +2168,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get errorFileNameUnsafe => 'Failinimi peab olema üks ohutu teeosa.';
 
   @override
-  String get errorFileOperationInvalidTarget =>
-      'Kausta ei saa iseendasse teisaldada.';
+  String get errorFileOperationInvalidTarget => 'Kausta ei saa iseendasse teisaldada.';
 
   @override
-  String get errorFileOperationOutsideRoot =>
-      'Failitoiming peab jääma tööruumi piiresse.';
+  String get errorFileOperationOutsideRoot => 'Failitoiming peab jääma tööruumi piiresse.';
 
   @override
-  String get errorFileOperationRoot =>
-      'Tööruumi juurkausta ei saa failipuus muuta.';
+  String get errorFileOperationRoot => 'Tööruumi juurkausta ei saa failipuus muuta.';
 
   @override
   String get errorProjectNameRequired => 'Projekti nimi on nõutav.';
@@ -2328,16 +2183,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get errorDirectoryNameRequired => 'Kataloogi nimi on nõutav.';
 
   @override
-  String get errorDirectoryNameUnsafe =>
-      'Katalooginimi peab olema üks ohutu teeosa.';
+  String get errorDirectoryNameUnsafe => 'Katalooginimi peab olema üks ohutu teeosa.';
 
   @override
-  String get errorInstanceIdInvalid =>
-      'Eksemplari ID peab algama väiketähega ning sisaldama ainult väiketähti, numbreid, allkriipse ja sidekriipse.';
+  String get errorInstanceIdInvalid => 'Eksemplari ID peab algama väiketähega ning sisaldama ainult väiketähti, numbreid, allkriipse ja sidekriipse.';
 
   @override
-  String get errorTopicFileInvalid =>
-      'Teemafaili nimi peab olema Markdowni failinimi ilma kataloogieraldajateta.';
+  String get errorTopicFileInvalid => 'Teemafaili nimi peab olema Markdowni failinimi ilma kataloogieraldajateta.';
 
   @override
   String get errorTopicTitleRequired => 'Teema pealkiri on nõutav.';
@@ -2348,12 +2200,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideModuleNotOpen =>
-      'Teema loomiseks peab Writerside’i moodul olema avatud.';
+  String get errorWritersideModuleNotOpen => 'Teema loomiseks peab Writerside’i moodul olema avatud.';
 
   @override
-  String get errorWritersideInstanceTreeMissing =>
-      'Writerside’i moodulil puudub eksemplaripuu.';
+  String get errorWritersideInstanceTreeMissing => 'Writerside’i moodulil puudub eksemplaripuu.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2376,12 +2226,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideTocNodeMissing =>
-      'Valitud sisukorra kirjet pole enam olemas.';
+  String get errorWritersideTocNodeMissing => 'Valitud sisukorra kirjet pole enam olemas.';
 
   @override
-  String get errorWritersideTocInvalidMove =>
-      'Sisukorra kirjet ei saa teisaldada iseenda ega ühegi oma alamkirje alla.';
+  String get errorWritersideTocInvalidMove => 'Sisukorra kirjet ei saa teisaldada iseenda ega ühegi oma alamkirje alla.';
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
@@ -2389,20 +2237,16 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideSafeDeleteRequired =>
-      'Writerside’i teemafaili kustutamiseks kasuta turvalist kustutamist.';
+  String get errorWritersideSafeDeleteRequired => 'Writerside’i teemafaili kustutamiseks kasuta turvalist kustutamist.';
 
   @override
-  String get errorWritersideTopicUsageScanFailed =>
-      'Teema kasutuskohtade kontrolli ei saanud lõpule viia. Ühtegi faili ei muudetud.';
+  String get errorWritersideTopicUsageScanFailed => 'Teema kasutuskohtade kontrolli ei saanud lõpule viia. Ühtegi faili ei muudetud.';
 
   @override
-  String get errorWritersideTopicUsagesRemain =>
-      'Mõned teema kasutuskohad vajavad veel tähelepanu. Vaata need enne jätkamist üle.';
+  String get errorWritersideTopicUsagesRemain => 'Mõned teema kasutuskohad vajavad veel tähelepanu. Vaata need enne jätkamist üle.';
 
   @override
-  String get errorWritersideRedirectInvalid =>
-      'Valitud ümbersuunamise sihtkoht ei ole enam kehtiv. Vali see uuesti.';
+  String get errorWritersideRedirectInvalid => 'Valitud ümbersuunamise sihtkoht ei ole enam kehtiv. Vali see uuesti.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
@@ -2410,29 +2254,21 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(
-    String module,
-    String count,
-    String paths,
-  ) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
     return 'Ümbernimetamine ei saa kõiki projektiviiteid ohutult uuendada, sest moodulis $module jäi sõelumata $count teemafaili: $paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty =>
-      'Writerside’i projektifailides on salvestamata muudatusi. Lahenda need ja koosta uus ümbernimetamise eelvaade.';
+  String get errorWritersideTopicRenameProjectBuffersDirty => 'Writerside’i projektifailides on salvestamata muudatusi. Lahenda need ja koosta uus ümbernimetamise eelvaade.';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged =>
-      'Writerside’i projekti moodulite komplekt muutus. Koosta enne refaktoreerimist uus ümbernimetamise eelvaade.';
+  String get errorWritersideTopicRenameProjectInventoryChanged => 'Writerside’i projekti moodulite komplekt muutus. Koosta enne refaktoreerimist uus ümbernimetamise eelvaade.';
 
   @override
-  String get errorTopicsRootUnsafe =>
-      'Teemade juurkaust peab olema ohutu suhteline kataloog.';
+  String get errorTopicsRootUnsafe => 'Teemade juurkaust peab olema ohutu suhteline kataloog.';
 
   @override
-  String get errorTopicFileNameUnsafe =>
-      'Teemafaili nimi peab olema üks ohutu teeosa.';
+  String get errorTopicFileNameUnsafe => 'Teemafaili nimi peab olema üks ohutu teeosa.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -2440,8 +2276,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get errorTopicFileNameInvalid =>
-      'Teemafaili nimi tohib sisaldada ainult tähti, numbreid, allkriipse ja sidekriipse.';
+  String get errorTopicFileNameInvalid => 'Teemafaili nimi tohib sisaldada ainult tähti, numbreid, allkriipse ja sidekriipse.';
 
   @override
   String errorUnknown(String code) {
@@ -2454,8 +2289,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceScanSkipped =>
-      'Tuvastati suur tööruum. Rakenduse reageerimisvõime säilitamiseks jäeti osa faile vahele.';
+  String get diagnosticWorkspaceScanSkipped => 'Tuvastati suur tööruum. Rakenduse reageerimisvõime säilitamiseks jäeti osa faile vahele.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
@@ -2463,8 +2297,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceFileTooLarge =>
-      'Fail ületab beetaversiooni automaatse parsimise mahupiirangu.';
+  String get diagnosticWorkspaceFileTooLarge => 'Fail ületab beetaversiooni automaatse parsimise mahupiirangu.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -2472,8 +2305,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownAttributeMalformed =>
-      'Writerside’i pealkirja atribuudiplokk on vigane.';
+  String get diagnosticMarkdownAttributeMalformed => 'Writerside’i pealkirja atribuudiplokk on vigane.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -2481,16 +2313,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'Täiendavaid kõrgeima taseme H1-pealkirju käsitletakse peatükkidena.';
+  String get diagnosticWritersideTopicH1ConvertedToChapter => 'Täiendavaid kõrgeima taseme H1-pealkirju käsitletakse peatükkidena.';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside’i Markdowni teemal pole H1- ega metaandmeploki pealkirja.';
+  String get diagnosticWritersideMarkdownTopicMissingTitle => 'Writerside’i Markdowni teemal pole H1- ega metaandmeploki pealkirja.';
 
   @override
-  String get diagnosticWritersideXmlTopicMissingTitle =>
-      'XML-teemal puudub pealkiri.';
+  String get diagnosticWritersideXmlTopicMissingTitle => 'XML-teemal puudub pealkiri.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -2498,8 +2327,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownFrontMatterMalformed =>
-      'Metaandmeplokk pole suletud.';
+  String get diagnosticMarkdownFrontMatterMalformed => 'Metaandmeplokk pole suletud.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Ebaturvaline HTML-element.';
@@ -2530,16 +2358,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot =>
-      'Faili writerside.cfg juurelement peab olema <ihp>.';
+  String get diagnosticWritersideConfigInvalidRoot => 'Faili writerside.cfg juurelement peab olema <ihp>.';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'Deklaratsioonil snippets puudub atribuut src.';
+  String get diagnosticWritersideConfigMissingSnippetsSrc => 'Deklaratsioonil snippets puudub atribuut src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'Deklaratsioonil instance-groups puudub atribuut src.';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'Deklaratsioonil instance-groups puudub atribuut src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -2547,20 +2372,16 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'Eksemplari deklaratsioonil puudub atribuut src.';
+  String get diagnosticWritersideConfigMissingInstanceSrc => 'Eksemplari deklaratsioonil puudub atribuut src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance =>
-      'Failis writerside.cfg pole registreeritud ühtegi eksemplari.';
+  String get diagnosticWritersideConfigMissingInstance => 'Failis writerside.cfg pole registreeritud ühtegi eksemplari.';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot =>
-      '.tree-faili juurelement peab olema <instance-profile>.';
+  String get diagnosticWritersideTreeInvalidRoot => '.tree-faili juurelement peab olema <instance-profile>.';
 
   @override
-  String get diagnosticWritersideTreeMissingId =>
-      'Eksemplariprofiilil puudub atribuut id.';
+  String get diagnosticWritersideTreeMissingId => 'Eksemplariprofiilil puudub atribuut id.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
@@ -2568,8 +2389,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTreeMissingStartPage =>
-      'Eksemplaril, mis pole teek, puudub atribuut start-page.';
+  String get diagnosticWritersideTreeMissingStartPage => 'Eksemplaril, mis pole teek, puudub atribuut start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2582,8 +2402,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration =>
-      'Muutuja deklaratsioonil peavad olema atribuudid name ja value.';
+  String get diagnosticWritersideVariableMalformedDeclaration => 'Muutuja deklaratsioonil peavad olema atribuudid name ja value.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -2591,8 +2410,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideCategoryMissingId =>
-      'Kategoorial puudub atribuut id.';
+  String get diagnosticWritersideCategoryMissingId => 'Kategoorial puudub atribuut id.';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
@@ -2605,12 +2423,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicInvalidRoot =>
-      '.topic-faili juurelement peab olema <topic>.';
+  String get diagnosticWritersideTopicInvalidRoot => '.topic-faili juurelement peab olema <topic>.';
 
   @override
-  String get diagnosticWritersideTopicMissingRootId =>
-      'XML-teema juurelemendil puudub atribuut id.';
+  String get diagnosticWritersideTopicMissingRootId => 'XML-teema juurelemendil puudub atribuut id.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
@@ -2623,31 +2439,23 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicAnchorMissingHref =>
-      'Elemendil <a> puudub atribuut href.';
+  String get diagnosticWritersideTopicAnchorMissingHref => 'Elemendil <a> puudub atribuut href.';
 
   @override
-  String get diagnosticWritersideConfigMissing =>
-      'Writerside’i režiim nõuab faili writerside.cfg.';
+  String get diagnosticWritersideConfigMissing => 'Writerside’i režiim nõuab faili writerside.cfg.';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
     return 'Seadistatud koostekonfiguratsiooni kataloog puudub: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
     return 'Seadistatud API-spetsifikatsioonide kataloog puudub: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
     return 'Seadistatud koodilõikude kataloog puudub: $relativePath';
   }
 
@@ -2662,9 +2470,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
     return 'Seadistatud eksemplarirühmade fail puudub: $relativePath';
   }
 
@@ -2679,9 +2485,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(
-    String relativePath,
-  ) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
     return 'Vaikimisi teemakataloog puudub: $relativePath';
   }
 
@@ -2701,21 +2505,12 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(
-    String instanceId,
-    String webFileName,
-    String topic,
-  ) {
+  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
     return 'Eksemplar \"$instanceId\" avaldab teema \"$topic\" jaoks sobimatu veebifailinime \"$webFileName\".';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(
-    String instanceId,
-    String webFileName,
-    String firstTopic,
-    String secondTopic,
-  ) {
+  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
     return 'Eksemplar \"$instanceId\" avaldab nii \"$firstTopic\" kui ka \"$secondTopic\" nimega \"$webFileName\".';
   }
 
@@ -2740,16 +2535,12 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(
-    String anchor,
-    String targetName,
-  ) {
+  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
     return 'Ankrut „$anchor” pole sihtkohas „$targetName”.';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom =>
-      'Elemendil <include> puudub atribuut from.';
+  String get diagnosticWritersideIncludeMissingFrom => 'Elemendil <include> puudub atribuut from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2757,10 +2548,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(
-    String elementId,
-    String from,
-  ) {
+  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
     return 'Kaasatavat elementi „$elementId” pole allikas „$from”.';
   }
 
@@ -2804,16 +2592,17 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(reason, {
-      'other':
-          'Paigalda Git või seadista BusyMark kasutama saadaolevat Giti täitmisfaili. $reason',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      reason,
+      {
+        'other': 'Paigalda Git või seadista BusyMark kasutama saadaolevat Giti täitmisfaili. $reason',
+      },
+    );
     return '$_temp0';
   }
 
   @override
-  String get gitOperationsRequireTrust =>
-      'Giti toimingud nõuavad tööruumi usaldamist.';
+  String get gitOperationsRequireTrust => 'Giti toimingud nõuavad tööruumi usaldamist.';
 
   @override
   String get gitManageBranches => 'Halda harusid';
@@ -2822,8 +2611,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitTrustRequiredTitle => 'Kas usaldada seda tööruumi Giti jaoks?';
 
   @override
-  String get gitTrustRequiredMessage =>
-      'BusyMark saab usalduseta uurida piiratud hoidla metaandmeid. Usaldamine lubab selle hoidla Giti toimingud, mis võivad käivitada seadistatud haake, filtreid, mandaadiabilisi ja allkirjastamistööriistu.';
+  String get gitTrustRequiredMessage => 'BusyMark saab usalduseta uurida piiratud hoidla metaandmeid. Usaldamine lubab selle hoidla Giti toimingud, mis võivad käivitada seadistatud haake, filtreid, mandaadiabilisi ja allkirjastamistööriistu.';
 
   @override
   String get gitTrustWorkspace => 'Usalda tööruumi';
@@ -2931,8 +2719,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitCommitSelectedFiles => 'Valitud failid';
 
   @override
-  String get gitCommitNoSelectedFiles =>
-      'Lisa enne commiti loomist vähemalt üks fail indeksisse.';
+  String get gitCommitNoSelectedFiles => 'Lisa enne commiti loomist vähemalt üks fail indeksisse.';
 
   @override
   String gitStagedFileCount(int count) {
@@ -2984,8 +2771,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUnsavedChangesBanner =>
-      'Redaktori salvestamata muudatusi ei kaasata enne salvestamist.';
+  String get gitUnsavedChangesBanner => 'Redaktori salvestamata muudatusi ei kaasata enne salvestamist.';
 
   @override
   String get gitConfirmDiscardTitle => 'Kas hüljata Giti muudatused?';
@@ -2995,10 +2781,8 @@ class AppLocalizationsEt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'Valitud jälgitavate failide kõiki indekseeritud ja indekseerimata muudatusi taastatakse HEAD-ile.',
-      one:
-          'Valitud jälgitava faili kõiki indekseeritud ja indekseerimata muudatusi taastatakse HEAD-ile.',
+      other: 'Valitud jälgitavate failide kõiki indekseeritud ja indekseerimata muudatusi taastatakse HEAD-ile.',
+      one: 'Valitud jälgitava faili kõiki indekseeritud ja indekseerimata muudatusi taastatakse HEAD-ile.',
     );
     return '$_temp0';
   }
@@ -3019,10 +2803,8 @@ class AppLocalizationsEt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'Valitud failid taastatakse või kustutatakse vastavalt nende Giti olekule.',
-      one:
-          'Valitud fail taastatakse või kustutatakse vastavalt selle Giti olekule.',
+      other: 'Valitud failid taastatakse või kustutatakse vastavalt nende Giti olekule.',
+      one: 'Valitud fail taastatakse või kustutatakse vastavalt selle Giti olekule.',
     );
     return '$_temp0';
   }
@@ -3033,8 +2815,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitConfirmSwitchBranchMessage =>
-      'Pärast haru vahetamist laadib BusyMark tööruumi kettalt uuesti.';
+  String get gitConfirmSwitchBranchMessage => 'Pärast haru vahetamist laadib BusyMark tööruumi kettalt uuesti.';
 
   @override
   String get gitConfirmPushSetUpstreamTitle => 'Kas määrata upstream-haru?';
@@ -3051,8 +2832,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitFileHistory => 'Faili ajalugu';
 
   @override
-  String get gitFileHistoryRequiresOpenFile =>
-      'Failiajalugu nõuab avatud Markdowni faili.';
+  String get gitFileHistoryRequiresOpenFile => 'Failiajalugu nõuab avatud Markdowni faili.';
 
   @override
   String get gitLoadMore => 'Laadi veel';
@@ -3070,8 +2850,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitConfirmRestoreTitle => 'Kas taastada see failiversioon?';
 
   @override
-  String get gitConfirmRestoreMessage =>
-      'BusyMark asendab praeguse tööpuu faili valitud sissekande versiooniga. Taastatud fail jääb indekseerimata.';
+  String get gitConfirmRestoreMessage => 'BusyMark asendab praeguse tööpuu faili valitud sissekande versiooniga. Taastatud fail jääb indekseerimata.';
 
   @override
   String get gitCommitActions => 'Sissekande toimingud';
@@ -3096,29 +2875,25 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitResetModeSoft => 'Soft';
 
   @override
-  String get gitResetModeSoftDescription =>
-      'Liiguta ainult haru. Jäta indeks ja tööpuu muutmata; erinevused valitud sissekandest jäävad indekseerituks.';
+  String get gitResetModeSoftDescription => 'Liiguta ainult haru. Jäta indeks ja tööpuu muutmata; erinevused valitud sissekandest jäävad indekseerituks.';
 
   @override
   String get gitResetModeMixed => 'Mixed';
 
   @override
-  String get gitResetModeMixedDescription =>
-      'Liiguta haru ja lähtesta indeks. Jäta tööpuu muutmata, nii et erinevused jäävad indekseerimata.';
+  String get gitResetModeMixedDescription => 'Liiguta haru ja lähtesta indeks. Jäta tööpuu muutmata, nii et erinevused jäävad indekseerimata.';
 
   @override
   String get gitResetModeHard => 'Hard';
 
   @override
-  String get gitResetModeHardDescription =>
-      'Liiguta haru ning lähtesta indeks ja tööpuu. Jälgitavad muudatused hüljatakse; toimingut takistavad jälgimata failid võidakse kustutada.';
+  String get gitResetModeHardDescription => 'Liiguta haru ning lähtesta indeks ja tööpuu. Jälgitavad muudatused hüljatakse; toimingut takistavad jälgimata failid võidakse kustutada.';
 
   @override
   String get gitResetModeKeep => 'Keep';
 
   @override
-  String get gitResetModeKeepDescription =>
-      'Liiguta haru ja lähtesta jälgitavad failid, säilitades kohalikud muudatused. Git katkestab, kui need muudatused on lähtestamisega vastuolus.';
+  String get gitResetModeKeepDescription => 'Liiguta haru ja lähtesta jälgitavad failid, säilitades kohalikud muudatused. Git katkestab, kui need muudatused on lähtestamisega vastuolus.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -3180,39 +2955,31 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitErrorNoUpstream => 'Upstream-haru pole seadistatud.';
 
   @override
-  String get gitErrorMultipleRemotes =>
-      'Seadistatud on mitu kaughoidlat. Vali upstream-haru mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
+  String get gitErrorMultipleRemotes => 'Seadistatud on mitu kaughoidlat. Vali upstream-haru mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
 
   @override
-  String get gitErrorDirtyWorkspace =>
-      'Enne haru vahetamist salvesta või hülga BusyMarki redaktori muudatused.';
+  String get gitErrorDirtyWorkspace => 'Enne haru vahetamist salvesta või hülga BusyMarki redaktori muudatused.';
 
   @override
-  String get gitErrorResetDirtyWorkspace =>
-      'Salvesta või hülga BusyMarki redaktori muudatused enne praeguse haru lähtestamist.';
+  String get gitErrorResetDirtyWorkspace => 'Salvesta või hülga BusyMarki redaktori muudatused enne praeguse haru lähtestamist.';
 
   @override
-  String get gitErrorRestoreStagedFile =>
-      'Eemalda fail enne varasema versiooni taastamist indeksist.';
+  String get gitErrorRestoreStagedFile => 'Eemalda fail enne varasema versiooni taastamist indeksist.';
 
   @override
-  String get gitErrorResetDetachedHead =>
-      'Enne lähtestamist võta kasutusele mõni haru.';
+  String get gitErrorResetDetachedHead => 'Enne lähtestamist võta kasutusele mõni haru.';
 
   @override
-  String get gitErrorDiverged =>
-      'Haru ajalugu on lahknenud. Lahenda ühendamine või ümberbaasimine mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
+  String get gitErrorDiverged => 'Haru ajalugu on lahknenud. Lahenda ühendamine või ümberbaasimine mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
 
   @override
-  String get gitErrorAuthorIdentity =>
-      'Git vajab enne sissekande loomist autori nime ja e-posti aadressi.';
+  String get gitErrorAuthorIdentity => 'Git vajab enne sissekande loomist autori nime ja e-posti aadressi.';
 
   @override
   String get gitAuthorIdentityTitle => 'Giti autori identiteet';
 
   @override
-  String get gitAuthorIdentityMessage =>
-      'Sisesta identiteet, mille Git peaks sissekannetele lisama. BusyMark salvestab selle ja proovib sissekannet uuesti.';
+  String get gitAuthorIdentityMessage => 'Sisesta identiteet, mille Git peaks sissekannetele lisama. BusyMark salvestab selle ja proovib sissekannet uuesti.';
 
   @override
   String get gitAuthorName => 'Nimi';
@@ -3224,8 +2991,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitAuthorIdentityGlobal => 'Kasuta kõigis hoidlates';
 
   @override
-  String get gitAuthorIdentityGlobalDescription =>
-      'Snapi paigalduses kehtib see BusyMarkis avatud hoidlatele.';
+  String get gitAuthorIdentityGlobalDescription => 'Snapi paigalduses kehtib see BusyMarkis avatud hoidlatele.';
 
   @override
   String get gitSaveIdentityAndCommit => 'Salvesta ja loo sissekanne';
@@ -3249,30 +3015,25 @@ class AppLocalizationsEt extends AppLocalizations {
   String get syntaxReferenceMarkdownBlocks => 'Markdowni plokid';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription =>
-      'Markdowni lähtekoodis ja eelvaates toetatud plokkstruktuurid.';
+  String get syntaxReferenceMarkdownBlocksDescription => 'Markdowni lähtekoodis ja eelvaates toetatud plokkstruktuurid.';
 
   @override
   String get syntaxReferenceInlineFormatting => 'Reasisene Markdown';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription =>
-      'Vormindus, mida saab kasutada lõikudes, loendiüksustes ja tabelilahtrites.';
+  String get syntaxReferenceInlineFormattingDescription => 'Vormindus, mida saab kasutada lõikudes, loendiüksustes ja tabelilahtrites.';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => 'Töötlemata HTML-plokid';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription =>
-      'Turvalised plokitaseme HTML-märgendid, mis kuvatakse BusyMarki eelvaatevidinate kaudu.';
+  String get syntaxReferenceRawHtmlBlocksDescription => 'Turvalised plokitaseme HTML-märgendid, mis kuvatakse BusyMarki eelvaatevidinate kaudu.';
 
   @override
-  String get syntaxReferenceRawHtmlInline =>
-      'Reasisesed töötlemata HTML-märgendid';
+  String get syntaxReferenceRawHtmlInline => 'Reasisesed töötlemata HTML-märgendid';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription =>
-      'Turvalised reasisesed HTML-märgendid, mis kuvatakse märgendeid endid näitamata.';
+  String get syntaxReferenceRawHtmlInlineDescription => 'Turvalised reasisesed HTML-märgendid, mis kuvatakse märgendeid endid näitamata.';
 
   @override
   String get syntaxReferenceHeadings => 'Pealkirjad';
@@ -3308,28 +3069,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get syntaxReferenceHtmlInlineCodeTags => 'Reasisesed koodimärgendid';
 
   @override
-  String get syntaxReferenceHtmlNeutralInlineTags =>
-      'Semantilised tekstimärgendid';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Semantilised tekstimärgendid';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription =>
-      'Lubatud HTML teisendatakse BusyMarki eelvaateplokkideks; seda ei kuvata brauseris.';
+  String get syntaxReferenceSanitizedPreviewDescription => 'Lubatud HTML teisendatakse BusyMarki eelvaateplokkideks; seda ei kuvata brauseris.';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription =>
-      'Redigeerimata töötlemata HTML salvestatakse lähdetekstina täpselt algsel kujul.';
+  String get syntaxReferenceSourcePreservedDescription => 'Redigeerimata töötlemata HTML salvestatakse lähdetekstina täpselt algsel kujul.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription =>
-      'Töötlemata HTML-is olevad Markdowni vormindusmärgid kuvatakse lihttekstina.';
+  String get syntaxReferenceMarkdownInsideHtmlDescription => 'Töötlemata HTML-is olevad Markdowni vormindusmärgid kuvatakse lihttekstina.';
 
   @override
-  String get syntaxReferenceBlockedContentDescription =>
-      'Skriptid, stiilid, raamid, vormid, SVG, MathML, sündmused ja ebaturvalised atribuudid blokeeritakse.';
+  String get syntaxReferenceBlockedContentDescription => 'Skriptid, stiilid, raamid, vormid, SVG, MathML, sündmused ja ebaturvalised atribuudid blokeeritakse.';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription =>
-      'Linkides on lubatud HTTP-, HTTPS-, mailto- ja tel-skeemiga URL-id ning suhtelised ja fragmendi-URL-id; ebaturvalised skeemid blokeeritakse.';
+  String get syntaxReferenceSafeUrlsDescription => 'Linkides on lubatud HTTP-, HTTPS-, mailto- ja tel-skeemiga URL-id ning suhtelised ja fragmendi-URL-id; ebaturvalised skeemid blokeeritakse.';
 
   @override
   String get syntaxReferenceCategory => 'Kategooria';
@@ -3359,35 +3114,28 @@ class AppLocalizationsEt extends AppLocalizations {
   String get syntaxReferenceOfficialDocumentation => 'Ametlik dokumentatsioon';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdown =>
-      'Ainult Writerside Markdown';
+  String get syntaxReferenceScopeWritersideMarkdown => 'Ainult Writerside Markdown';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
-      'Ainult Writerside Markdown ja Writerside XML';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml => 'Ainult Writerside Markdown ja Writerside XML';
 
   @override
-  String get syntaxReferenceMarkdownDescription =>
-      'Põhilised Markdowni vormid, mida BusyMark võimaldab kirjutada ja eelvaadata.';
+  String get syntaxReferenceMarkdownDescription => 'Põhilised Markdowni vormid, mida BusyMark võimaldab kirjutada ja eelvaadata.';
 
   @override
   String get syntaxReferenceParagraphExample => 'Tekstilõik.';
 
   @override
-  String get syntaxReferenceTableLimitation =>
-      'Tabelid kasutavad GitHub Flavored Markdowni püstkriipsusüntaksit.';
+  String get syntaxReferenceTableLimitation => 'Tabelid kasutavad GitHub Flavored Markdowni püstkriipsusüntaksit.';
 
   @override
-  String get syntaxReferenceHardBreakIdentifiers =>
-      'kaks tühikut rea lõpus, \\, <br>';
+  String get syntaxReferenceHardBreakIdentifiers => 'kaks tühikut rea lõpus, \\, <br>';
 
   @override
-  String get syntaxReferenceHtmlDescription =>
-      'BusyMark aktsepteerib Markdowni lähtekoodis piiratud turvalist toor-HTML-i alamhulka.';
+  String get syntaxReferenceHtmlDescription => 'BusyMark aktsepteerib Markdowni lähtekoodis piiratud turvalist toor-HTML-i alamhulka.';
 
   @override
-  String get syntaxReferenceDiagramsDescription =>
-      'Piiratud Mermaid-, PlantUML-, D2- ja OpenAPI-plokid töötavad Markdowni lähtekoodis. Plokiidentifikaatorid ei ole tõstutundlikud ja BusyMark säilitab algse kirjapildi.';
+  String get syntaxReferenceDiagramsDescription => 'Piiratud Mermaid-, PlantUML-, D2- ja OpenAPI-plokid töötavad Markdowni lähtekoodis. Plokiidentifikaatorid ei ole tõstutundlikud ja BusyMark säilitab algse kirjapildi.';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -3402,35 +3150,28 @@ class AppLocalizationsEt extends AppLocalizations {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation =>
-      'Kasuta piiratud YAML- või JSON-sisu. BusyMark ei käsitle suvalist terviklikku YAML- või JSON-dokumenti OpenAPI viitena.';
+  String get syntaxReferenceOpenApiLimitation => 'Kasuta piiratud YAML- või JSON-sisu. BusyMark ei käsitle suvalist terviklikku YAML- või JSON-dokumenti OpenAPI viitena.';
 
   @override
-  String get syntaxReferenceSemanticDiagramBlocks =>
-      'Semantilised diagrammi koodiplokid';
+  String get syntaxReferenceSemanticDiagramBlocks => 'Semantilised diagrammi koodiplokid';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation =>
-      'Semantilised code-block- ja src-vormid toetavad Mermaidi, PlantUML-i ja D2-te, mitte OpenAPI-t, ning ainult Writerside\'i projektides.';
+  String get syntaxReferenceSemanticDiagramLimitation => 'Semantilised code-block- ja src-vormid toetavad Mermaidi, PlantUML-i ja D2-te, mitte OpenAPI-t, ning ainult Writerside\'i projektides.';
 
   @override
-  String get syntaxReferenceReferencedDiagramSource =>
-      'Viidatud diagrammiallikas';
+  String get syntaxReferenceReferencedDiagramSource => 'Viidatud diagrammiallikas';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation =>
-      'Teed peavad olema suhtelised ja jääma avatud Writerside\'i projekti sisse; piiratud vorm koos src-ga on ainult Writerside Markdowni jaoks.';
+  String get syntaxReferenceReferencedDiagramLimitation => 'Teed peavad olema suhtelised ja jääma avatud Writerside\'i projekti sisse; piiratud vorm koos src-ga on ainult Writerside Markdowni jaoks.';
 
   @override
-  String get syntaxReferenceMathematicsDescription =>
-      'BusyMark toetab TeX-i avaldisi, mitte terviklikke TeX-i või LaTeX-i dokumente.';
+  String get syntaxReferenceMathematicsDescription => 'BusyMark toetab TeX-i avaldisi, mitte terviklikke TeX-i või LaTeX-i dokumente.';
 
   @override
   String get syntaxReferenceInlineMath => 'Reasisene matemaatika';
 
   @override
-  String get syntaxReferenceGithubMath =>
-      'GitHubi matemaatika dollari- ja graavimärgiga';
+  String get syntaxReferenceGithubMath => 'GitHubi matemaatika dollari- ja graavimärgiga';
 
   @override
   String get syntaxReferenceDisplayMath => 'Plokina matemaatika';
@@ -3442,41 +3183,34 @@ class AppLocalizationsEt extends AppLocalizations {
   String get syntaxReferenceTexFence => 'tex-plokk';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation =>
-      'BusyMark ei tuvasta \\(...\\) ega \\[...\\] Markdowni matemaatika eraldajatena.';
+  String get syntaxReferenceMathDelimitersLimitation => 'BusyMark ei tuvasta \\(...\\) ega \\[...\\] Markdowni matemaatika eraldajatena.';
 
   @override
-  String get syntaxReferenceTexFenceLimitation =>
-      'Väljaspool Writerside\'i režiimi jääb tex-plokk tavaliseks koodiplokiks.';
+  String get syntaxReferenceTexFenceLimitation => 'Väljaspool Writerside\'i režiimi jääb tex-plokk tavaliseks koodiplokiks.';
 
   @override
-  String get syntaxReferenceWritersideMathElement =>
-      'Writerside\'i math-element';
+  String get syntaxReferenceWritersideMathElement => 'Writerside\'i math-element';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation =>
-      'math-element on semantiline Writerside\'i süntaks, mitte lubatud toor-HTML-i MathML.';
+  String get syntaxReferenceWritersideMathElementLimitation => 'math-element on semantiline Writerside\'i süntaks, mitte lubatud toor-HTML-i MathML.';
 
   @override
   String get syntaxReferenceSemanticTexBlock => 'Semantiline TeX-i koodiplokk';
 
   @override
-  String get syntaxReferenceWritersideDescription =>
-      'Neid valitud laiendusi tõlgendatakse ainult avatud Writerside\'i projektides.';
+  String get syntaxReferenceWritersideDescription => 'Neid valitud laiendusi tõlgendatakse ainult avatud Writerside\'i projektides.';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => 'Märkuse plokktsitaat';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation =>
-      'Tavaline plokktsitaat on Writerside Markdownis nõuanne; tavalises Markdownis jääb see tavaliseks tsitaadiks.';
+  String get syntaxReferenceAdmonitionLimitation => 'Tavaline plokktsitaat on Writerside Markdownis nõuanne; tavalises Markdownis jääb see tavaliseks tsitaadiks.';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => 'Semantilised märkused';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation =>
-      'Tavaline Markdown ei tõlgenda neid Writerside\'i semantilisi elemente.';
+  String get syntaxReferenceSemanticMarkupLimitation => 'Tavaline Markdown ei tõlgenda neid Writerside\'i semantilisi elemente.';
 
   @override
   String get syntaxReferenceCollapsibleHeading => 'Ahendatav pealkiri';
@@ -3485,34 +3219,28 @@ class AppLocalizationsEt extends AppLocalizations {
   String get syntaxReferenceCollapsibleCode => 'Ahendatav koodiplokk';
 
   @override
-  String get syntaxReferenceSemanticCollapsibles =>
-      'Semantiline ahendatav sisu';
+  String get syntaxReferenceSemanticCollapsibles => 'Semantiline ahendatav sisu';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation =>
-      'BusyMark toetab ahendatavaid chapter-, procedure-, code-block- ja definitsiooniloendi vorme, mitte kogu Writerside\'i kataloogi.';
+  String get syntaxReferenceSemanticCollapsiblesLimitation => 'BusyMark toetab ahendatavaid chapter-, procedure-, code-block- ja definitsiooniloendi vorme, mitte kogu Writerside\'i kataloogi.';
 
   @override
-  String get syntaxReferenceSemanticCodeBlocks =>
-      'Semantilised koodiplokid matemaatika ja diagrammide jaoks';
+  String get syntaxReferenceSemanticCodeBlocks => 'Semantilised koodiplokid matemaatika ja diagrammide jaoks';
 
   @override
   String get syntaxReferenceVideo => 'Writerside\'i video';
 
   @override
-  String get syntaxReferenceVideoLimitation =>
-      'Kohalik video kasutab kohalikku preview-src-pilti; majutatud allikad peavad olema toetatud YouTube\'i või Vimeo HTTPS-aadressid.';
+  String get syntaxReferenceVideoLimitation => 'Kohalik video kasutab kohalikku preview-src-pilti; majutatud allikad peavad olema toetatud YouTube\'i või Vimeo HTTPS-aadressid.';
 
   @override
   String get exportAsPdf => 'Ekspordi PDF-ina';
 
   @override
-  String get pdfExportDescription =>
-      'Vali viimistletud ja iseseisva PDF-i leheküljendus.';
+  String get pdfExportDescription => 'Vali viimistletud ja iseseisva PDF-i leheküljendus.';
 
   @override
-  String get pdfRemoteImagesNote =>
-      'Kaugpilte eksportimisel alla ei laadita. Kohalikud pildid lisatakse, kui need on saadaval.';
+  String get pdfRemoteImagesNote => 'Kaugpilte eksportimisel alla ei laadita. Kohalikud pildid lisatakse, kui need on saadaval.';
 
   @override
   String get pdfPageSize => 'Lehe suurus';
@@ -3576,16 +3304,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get pdfExportUnavailable =>
-      'PDF-i ekspordikomponent puudub. Paigalda BusyMark uuesti ja proovi veel kord.';
+  String get pdfExportUnavailable => 'PDF-i ekspordikomponent puudub. Paigalda BusyMark uuesti ja proovi veel kord.';
 
   @override
-  String get pdfExportTimedOut =>
-      'PDF-i eksport võttis liiga kaua aega ja peatati.';
+  String get pdfExportTimedOut => 'PDF-i eksport võttis liiga kaua aega ja peatati.';
 
   @override
-  String get pdfExportFailed =>
-      'BusyMark ei saanud seda dokumenti PDF-ina eksportida.';
+  String get pdfExportFailed => 'BusyMark ei saanud seda dokumenti PDF-ina eksportida.';
 
   @override
   String get visualizationRendering => 'Renderdamine…';
@@ -3639,8 +3364,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get visualizationSearchOperations => 'Otsi toiminguid';
 
   @override
-  String get visualizationRenderFailed =>
-      'Seda visualiseeringut ei saanud renderdada.';
+  String get visualizationRenderFailed => 'Seda visualiseeringut ei saanud renderdada.';
 
   @override
   String get visualizationRetry => 'Proovi uuesti';
@@ -3651,8 +3375,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get shortcutExportPdfDescription =>
-      'Ekspordi aktiivne dokument või Writerside’i moodul PDF-ina.';
+  String get shortcutExportPdfDescription => 'Ekspordi aktiivne dokument või Writerside’i moodul PDF-ina.';
 
   @override
   String get instances => 'Eksemplarid';
@@ -3691,8 +3414,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get chooseMarkdownFolder => 'Vali Markdowni kaust';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired =>
-      'Vali Markdowni faile sisaldav kaust.';
+  String get errorWritersideInstanceImportSourceRequired => 'Vali Markdowni faile sisaldav kaust.';
 
   @override
   String get instanceAppearance => 'Välimus';
@@ -3727,15 +3449,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get allowSearchEngineIndexing => 'Luba otsingumootoritel indekseerida';
 
   @override
-  String get allowSearchEngineIndexingDescription =>
-      'Luba välistel otsingumootoritel seda väljundit indekseerida.';
+  String get allowSearchEngineIndexingDescription => 'Luba välistel otsingumootoritel seda väljundit indekseerida.';
 
   @override
   String get offlineArtifact => 'Võrguühenduseta pakett';
 
   @override
-  String get offlineArtifactDescription =>
-      'Paki ressursid kaasa, et loodud dokumentatsioon oleks iseseisev.';
+  String get offlineArtifactDescription => 'Paki ressursid kaasa, et loodud dokumentatsioon oleks iseseisev.';
 
   @override
   String get instanceOutputSettings => 'Väljundi sätted';
@@ -3755,19 +3475,16 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get noMarkdownFilesFound =>
-      'Sellest kaustast ei leitud Markdowni faile.';
+  String get noMarkdownFilesFound => 'Sellest kaustast ei leitud Markdowni faile.';
 
   @override
   String get copyReferencedMedia => 'Kopeeri viidatud meedia';
 
   @override
-  String get copyReferencedMediaDescription =>
-      'Kopeeri valitud failides viidatud kohalikud pildid ja videod ning säilita suhtelised teed.';
+  String get copyReferencedMediaDescription => 'Kopeeri valitud failides viidatud kohalikud pildid ja videod ning säilita suhtelised teed.';
 
   @override
-  String get instanceIdRenameWarningTitle =>
-      'Kas nimetada eksemplari ID ümber?';
+  String get instanceIdRenameWarningTitle => 'Kas nimetada eksemplari ID ümber?';
 
   @override
   String instanceIdRenameWarning(String oldId, String newId) {
@@ -3778,8 +3495,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get renameAndUpdateReferences => 'Nimeta ümber ja värskenda viited';
 
   @override
-  String get tocLibraryDescription =>
-      'Sisukorrateek talletab korduskasutatavaid jaotisi ega loo oma väljundit.';
+  String get tocLibraryDescription => 'Sisukorrateek talletab korduskasutatavaid jaotisi ega loo oma väljundit.';
 
   @override
   String get defaultTocLibraryName => 'Ühine sisukord';
@@ -3827,8 +3543,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired =>
-      'Vali importimiseks vähemalt üks Markdowni fail.';
+  String get errorWritersideInstanceImportSelectionRequired => 'Vali importimiseks vähemalt üks Markdowni fail.';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -3841,8 +3556,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceFilesChanged =>
-      'Eksemplari failid on kettal muutunud. Vaata need üle ja proovi uuesti.';
+  String get errorWritersideInstanceFilesChanged => 'Eksemplari failid on kettal muutunud. Vaata need üle ja proovi uuesti.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
@@ -3850,20 +3564,16 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceLibraryImport =>
-      'Sisukorrateeki ei saa Markdowni teemasid importida.';
+  String get errorWritersideInstanceLibraryImport => 'Sisukorrateeki ei saa Markdowni teemasid importida.';
 
   @override
-  String get errorWritersideInstanceWebPathInvalid =>
-      'Veebitee peab olema ühel real.';
+  String get errorWritersideInstanceWebPathInvalid => 'Veebitee peab olema ühel real.';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid =>
-      'Writerside’i eksemplari konfiguratsioon ei kehti. Paranda diagnostikateated ja proovi uuesti.';
+  String get errorWritersideInstanceConfigurationInvalid => 'Writerside’i eksemplari konfiguratsioon ei kehti. Paranda diagnostikateated ja proovi uuesti.';
 
   @override
-  String get errorWritersideInstanceTemporaryFile =>
-      'BusyMark ei saanud eksemplari muudatusi turvaliselt ette valmistada.';
+  String get errorWritersideInstanceTemporaryFile => 'BusyMark ei saanud eksemplari muudatusi turvaliselt ette valmistada.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
@@ -3876,36 +3586,27 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot =>
-      'Faili buildprofiles.xml juurelement peab olema <buildprofiles>.';
+  String get diagnosticWritersideBuildProfilesInvalidRoot => 'Faili buildprofiles.xml juurelement peab olema <buildprofiles>.';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(
-    String name,
-    String value,
-  ) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
     return 'Väärtuse $name väärtus „$value” peab olema true või false.';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance =>
-      'Element <build-profile> peab määrama eksemplari ID.';
+  String get diagnosticWritersideBuildProfileMissingInstance => 'Element <build-profile> peab määrama eksemplari ID.';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude =>
-      'Puu element <include> peab määrama nii atribuudi from kui ka element-id.';
+  String get diagnosticWritersideTreeInvalidInclude => 'Puu element <include> peab määrama nii atribuudi from kui ka element-id.';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId =>
-      'Puu element <snippet> peab määrama atribuudi id.';
+  String get diagnosticWritersideTreeMissingSnippetId => 'Puu element <snippet> peab määrama atribuudi id.';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
-      'Eksemplariülene sisukorraviide peab määrama nii atribuudi ref kui ka in.';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference => 'Eksemplariülene sisukorraviide peab määrama nii atribuudi ref kui ka in.';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets =>
-      'Sisukorraelement ei saa sihtida korraga mitut teemat, viidet, linki ega ümbersuunamist.';
+  String get diagnosticWritersideTreeConflictingTargets => 'Sisukorraelement ei saa sihtida korraga mitut teemat, viidet, linki ega ümbersuunamist.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3913,12 +3614,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      'Eksemplarirühmade faili juurelement peab olema <instance-groups>.';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot => 'Eksemplarirühmade faili juurelement peab olema <instance-groups>.';
 
   @override
-  String get diagnosticWritersideInstanceGroupInvalid =>
-      'Eksemplarirühm peab määrama mittetühja ID ja eksemplaride loendi.';
+  String get diagnosticWritersideInstanceGroupInvalid => 'Eksemplarirühm peab määrama mittetühja ID ja eksemplaride loendi.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
@@ -3926,19 +3625,12 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(
-    String source,
-    String id,
-    String origin,
-  ) {
+  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
     return 'Sisukorra kaasamine „$source#$id” kuulub välisesse moodulisse „$origin” ja seda ei saa selles tööruumis laiendada.';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(
-    String source,
-    String id,
-  ) {
+  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
     return 'Puuelementi „$id” pole registreeritud puus „$source”.';
   }
 
@@ -3958,10 +3650,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(
-    String topic,
-    String instance,
-  ) {
+  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
     return 'Teemat „$topic” pole viidatud eksemplaris „$instance”.';
   }
 
@@ -3990,8 +3679,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiDisabled => 'Keelatud';
 
   @override
-  String get aiExplicitEditingDescription =>
-      'Tehisintellektiga redigeerimine käivitatakse ainult selgesõnaliselt. BusyMark saadab valitud teenusepakkujale üksnes kuvatud konteksti ega rakenda ettepanekut ilma ülevaatuseta.';
+  String get aiExplicitEditingDescription => 'Tehisintellektiga redigeerimine käivitatakse ainult selgesõnaliselt. BusyMark saadab valitud teenusepakkujale üksnes kuvatud konteksti ega rakenda ettepanekut ilma ülevaatuseta.';
 
   @override
   String get aiProvider => 'TI-teenuse pakkuja';
@@ -4026,12 +3714,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiNoModels => 'Mudelit pole valitud.';
 
   @override
-  String get aiConnectionFailed =>
-      'BusyMark ei saanud tehisintellekti tekstiloomet kontrollida.';
+  String get aiConnectionFailed => 'BusyMark ei saanud tehisintellekti tekstiloomet kontrollida.';
 
   @override
-  String get aiConfigureFirst =>
-      'Luba jaotises Sätted → TI teenusepakkuja ning kontrolli mudelit.';
+  String get aiConfigureFirst => 'Luba jaotises Sätted → TI teenusepakkuja ning kontrolli mudelit.';
 
   @override
   String get aiEditWithAi => 'Redigeeri TI abil';
@@ -4107,12 +3793,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get aiStaleProposal =>
-      'Dokumenti muudeti ettepaneku loomise ajal. Käivita toiming uuesti.';
+  String get aiStaleProposal => 'Dokumenti muudeti ettepaneku loomise ajal. Käivita toiming uuesti.';
 
   @override
-  String get gitAiStagedChangesChanged =>
-      'Indekseeritud muudatused muutusid selle commit-sõnumi loomise ajal. Käivita toiming uuesti.';
+  String get gitAiStagedChangesChanged => 'Indekseeritud muudatused muutusid selle commit-sõnumi loomise ajal. Käivita toiming uuesti.';
 
   @override
   String get aiViewContext => 'Kuva saadetud kontekst';
@@ -4130,8 +3814,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiApiKey => 'API-võti';
 
   @override
-  String get aiApiKeyStoredHint =>
-      'Võti on salvestatud süsteemi mandaadihoidlasse';
+  String get aiApiKeyStoredHint => 'Võti on salvestatud süsteemi mandaadihoidlasse';
 
   @override
   String get aiApiKeyEnterHint => 'Sisesta teenusepakkuja API-võti';
@@ -4146,8 +3829,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiRemoveApiKey => 'Eemalda salvestatud API-võti';
 
   @override
-  String get aiCredentialSaved =>
-      'API-võti salvestati süsteemi mandaadihoidlasse.';
+  String get aiCredentialSaved => 'API-võti salvestati süsteemi mandaadihoidlasse.';
 
   @override
   String get aiCredentialRemoved => 'Salvestatud API-võti eemaldati.';
@@ -4183,8 +3865,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get aiCloudConsentMessage =>
-      'Saadetakse ainult igas TI ülevaatusdialoogis kuvatud sisu. Päringud on olekuta, ettepanekud vajavad ülevaatust ja API-võti salvestatakse Linuxi süsteemi mandaadihoidlasse.';
+  String get aiCloudConsentMessage => 'Saadetakse ainult igas TI ülevaatusdialoogis kuvatud sisu. Päringud on olekuta, ettepanekud vajavad ülevaatust ja API-võti salvestatakse Linuxi süsteemi mandaadihoidlasse.';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -4200,8 +3881,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiColdStartObserved => 'Tuvastati kohaliku mudeli külmkäivitus.';
 
   @override
-  String get aiNoCompatibleModels =>
-      'Ühilduvat tekstiloome mudelit ei ole saadaval.';
+  String get aiNoCompatibleModels => 'Ühilduvat tekstiloome mudelit ei ole saadaval.';
 
   @override
   String get aiEnableProvider => 'Luba esmalt TI teenusepakkuja.';
@@ -4221,8 +3901,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownLinkEmptyText =>
-      'Lingi tekst on tühi; lisa ligipääsetav nimi, mis kirjeldab selle otstarvet.';
+  String get diagnosticMarkdownLinkEmptyText => 'Lingi tekst on tühi; lisa ligipääsetav nimi, mis kirjeldab selle otstarvet.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {
@@ -4230,8 +3909,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownTableEmptyHeader =>
-      'Tabelipäised peavad veerge kirjeldama; täida kõik tühjad päised.';
+  String get diagnosticMarkdownTableEmptyHeader => 'Tabelipäised peavad veerge kirjeldama; täida kõik tühjad päised.';
 
   @override
   String get mathRenderFailed => 'Matemaatilist avaldist ei saanud kuvada.';
@@ -4249,19 +3927,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get findUsages => 'Otsi kasutusi';
 
   @override
-  String get cannotRenameSymbol =>
-      'Sümbolit ei saa turvaliselt ümber nimetada. Kontrolli nime ja värskenda viidet enne uuesti proovimist.';
+  String get cannotRenameSymbol => 'Sümbolit ei saa turvaliselt ümber nimetada. Kontrolli nime ja värskenda viidet enne uuesti proovimist.';
 
   @override
-  String get renameTopicFileInstead =>
-      'Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.';
+  String get renameTopicFileInstead => 'Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.';
 
   @override
   String get keyboardLayout => 'Klaviatuuripaigutus';
 
   @override
-  String get diagnosticWritersideUnsupported =>
-      'Toetamata või vigane sisu kuvatakse lähtekoodina.';
+  String get diagnosticWritersideUnsupported => 'Toetamata või vigane sisu kuvatakse lähtekoodina.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
@@ -4274,17 +3949,12 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideSchema(
-    String element,
-    String attribute,
-    String reason,
-  ) {
+  String diagnosticWritersideSchema(String element, String attribute, String reason) {
     return 'Vigane Writerside’i märgistus: $element, $attribute. $reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt =>
-      'Kasuta <llms-txt>true</llms-txt> või <llms-txt>false</llms-txt>; single-file ei ole enam toetatud.';
+  String get diagnosticWritersideLlmsTxt => 'Kasuta <llms-txt>true</llms-txt> või <llms-txt>false</llms-txt>; single-file ei ole enam toetatud.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -4307,19 +3977,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get htmlExportFailed => 'HTML-i eksport ebaõnnestus';
 
   @override
-  String get htmlKeepAssetsTogether =>
-      'Hoia eksporti kopeerides HTML-fail ja selle ressursikaust koos.';
+  String get htmlKeepAssetsTogether => 'Hoia eksporti kopeerides HTML-fail ja selle ressursikaust koos.';
 
   @override
-  String get htmlInstanceDescription =>
-      'Ekspordi üks eksemplar lingitud võrguühenduseta lehtedena. Vali eraldi väljundkaustale nimi.';
+  String get htmlInstanceDescription => 'Ekspordi üks eksemplar lingitud võrguühenduseta lehtedena. Vali eraldi väljundkaustale nimi.';
 
   @override
   String get htmlInstance => 'Eksemplar';
 
   @override
-  String get htmlOwnedDirectoryOnly =>
-      'Asendada saab ainult BusyMarki HTML-ekspordiga loodud kausta. Muudetud ja kõrvalised failid säilitatakse.';
+  String get htmlOwnedDirectoryOnly => 'Asendada saab ainult BusyMarki HTML-ekspordiga loodud kausta. Muudetud ja kõrvalised failid säilitatakse.';
 
   @override
   String get showInFolder => 'Näita kaustas';
@@ -4441,37 +4108,31 @@ class AppLocalizationsEt extends AppLocalizations {
   String get exportRemoveCss => 'Eemalda kohandatud laadileht';
 
   @override
-  String get exportCssNote =>
-      'Vali soovi korral UTF-8 CSS-fail (kuni 256 KiB). Importimine, ressursside URL-id ning käivitatav või paojadadega CSS pole lubatud. Laadid järgnevad BusyMarki laadidele. Võrguressursse ei laadita.';
+  String get exportCssNote => 'Vali soovi korral UTF-8 CSS-fail (kuni 256 KiB). Importimine, ressursside URL-id ning käivitatav või paojadadega CSS pole lubatud. Laadid järgnevad BusyMarki laadidele. Võrguressursse ei laadita.';
 
   @override
-  String get exportSitePackagingNote =>
-      'Writerside säilitab eraldi lingitud teemalehed. Ühe faili režiim manustab ressursid igale lehele.';
+  String get exportSitePackagingNote => 'Writerside säilitab eraldi lingitud teemalehed. Ühe faili režiim manustab ressursid igale lehele.';
 
   @override
-  String get exportInvalidGeometry =>
-      'Jäta pärast veeriseid sisule vähemalt 20 mm laiust ja kõrgust.';
+  String get exportInvalidGeometry => 'Jäta pärast veeriseid sisule vähemalt 20 mm laiust ja kõrgust.';
 
   @override
   String get exportInvalidColor => 'Sisesta värv kujul #RRGGBB.';
 
   @override
-  String get exportInvalidCss =>
-      'Vali loetav UTF-8 .css-fail kuni 256 KiB, ilma importide, ressursside URL-ide, HTML-i ning käivitatava või paojadadega CSS-ita.';
+  String get exportInvalidCss => 'Vali loetav UTF-8 .css-fail kuni 256 KiB, ilma importide, ressursside URL-ide, HTML-i ning käivitatava või paojadadega CSS-ita.';
 
   @override
   String get clipboardHistory => 'Kleepimiskredi ajalugu';
 
   @override
-  String get clipboardHistoryDescription =>
-      'Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.';
+  String get clipboardHistoryDescription => 'Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.';
 
   @override
   String get clipboardCurrent => 'Praegune kleepimiskredi';
 
   @override
-  String get clipboardCurrentExternal =>
-      'Praegune kleepimiskredi teistest rakendusest';
+  String get clipboardCurrentExternal => 'Praegune kleepimiskredi teistest rakendusest';
 
   @override
   String clipboardDestination(String name) {
@@ -4479,23 +4140,19 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get clipboardSessionOnly =>
-      'Salvestatud ainult sellele BusyMark sessioonile.';
+  String get clipboardSessionOnly => 'Salvestatud ainult sellele BusyMark sessioonile.';
 
   @override
   String get clipboardNoItems => 'Kleepimiskredi ajalugu on tühi.';
 
   @override
-  String get clipboardDisabled =>
-      'Kleepimiskredi ajalugu on peatatud seadetes.';
+  String get clipboardDisabled => 'Kleepimiskredi ajalugu on peatatud seadetes.';
 
   @override
-  String get clipboardUnavailable =>
-      'Praegune kleepimiskredi sisu pole saadaval või toetatud.';
+  String get clipboardUnavailable => 'Praegune kleepimiskredi sisu pole saadaval või toetatud.';
 
   @override
-  String get clipboardTooLarge =>
-      'See kleepimiskredi element on liiga suur, et seda säilitada.';
+  String get clipboardTooLarge => 'See kleepimiskredi element on liiga suur, et seda säilitada.';
 
   @override
   String get clipboardPastePlainText => 'Kleepi kui tavatekst';
@@ -4524,22 +4181,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get localHistoryEllipsis => 'Paikne ajalugu…';
 
   @override
-  String get localHistoryDescription =>
-      'Näita salvestatud ja automaatseid paikseid versioone sellele dokumendile.';
+  String get localHistoryDescription => 'Näita salvestatud ja automaatseid paikseid versioone sellele dokumendile.';
 
   @override
   String get findLocalHistoryEllipsis => 'Leia kohalikust ajaloost…';
 
   @override
-  String get findLocalHistoryDescription =>
-      'Otsi kohalises ajaloos ja versioonide sisu.';
+  String get findLocalHistoryDescription => 'Otsi kohalises ajaloos ja versioonide sisu.';
 
   @override
   String get localHistoryNoDocuments => 'Mida ei ole kohalist ajaloos.';
 
   @override
-  String get localHistoryNoRevisions =>
-      'Selle dokumendil pole kohalist ajaloos.';
+  String get localHistoryNoRevisions => 'Selle dokumendil pole kohalist ajaloos.';
 
   @override
   String get localHistorySelectedRevision => 'Valitud versioon';
@@ -4566,12 +4220,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get localHistoryRestoreChange => 'Taasta muudatus';
 
   @override
-  String get localHistoryRestoreUnavailable =>
-      'Seda muudatust ei saa taastada, kuna võrdlemine pole enam kehtiv.';
+  String get localHistoryRestoreUnavailable => 'Seda muudatust ei saa taastada, kuna võrdlemine pole enam kehtiv.';
 
   @override
-  String get localHistoryComparisonSimplified =>
-      'See suur võrdlemine on lihtsustatud. Eraldi muudatuste taastamine pole võimalik.';
+  String get localHistoryComparisonSimplified => 'See suur võrdlemine on lihtsustatud. Eraldi muudatuste taastamine pole võimalik.';
 
   @override
   String localHistoryOlderChange(String text) {
@@ -4596,20 +4248,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get localHistoryClearAll => 'Kõik kohalikud ajaloo kustutada';
 
   @override
-  String get localHistoryClearDocumentTitle =>
-      'Kas soovite kustutada dokumendi ajaloo?';
+  String get localHistoryClearDocumentTitle => 'Kas soovite kustutada dokumendi ajaloo?';
 
   @override
-  String get localHistoryClearAllTitle =>
-      'Kas soovite kustutada kõik kohaliku aja?';
+  String get localHistoryClearAllTitle => 'Kas soovite kustutada kõik kohaliku aja?';
 
   @override
-  String get localHistoryClearConfirmation =>
-      'See eemaldab püsivalt salvestatud versioonid. Seda toimingut ei saa tagasi pöörata.';
+  String get localHistoryClearConfirmation => 'See eemaldab püsivalt salvestatud versioonid. Seda toimingut ei saa tagasi pöörata.';
 
   @override
-  String get localHistoryWarningIndexRebuilt =>
-      'Kohalik ajaloo indeks oli kahjustatud ja taastati tervete versioonide abil.';
+  String get localHistoryWarningIndexRebuilt => 'Kohalik ajaloo indeks oli kahjustatud ja taastati tervete versioonide abil.';
 
   @override
   String localHistoryWarningUnsupportedFormat(String version) {
@@ -4622,8 +4270,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled =>
-      'Salvestamine on välja lülitatud või see tee on eemaldatud. Lülitage salvestamine uuesti sisse enne taastamist.';
+  String get localHistoryWarningRecordingDisabled => 'Salvestamine on välja lülitatud või see tee on eemaldatud. Lülitage salvestamine uuesti sisse enne taastamist.';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -4636,8 +4283,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRevisionMissing =>
-      'Valitud versioon on kadunud või kahjustatud.';
+  String get localHistoryWarningRevisionMissing => 'Valitud versioon on kadunud või kahjustatud.';
 
   @override
   String localHistoryWarningRevisionRead(String detail) {
@@ -4661,8 +4307,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get localHistoryReasonSaved => 'Salvestatud';
 
   @override
-  String get localHistoryReasonAutomaticCheckpoint =>
-      'Automaatne kontrollpunkt';
+  String get localHistoryReasonAutomaticCheckpoint => 'Automaatne kontrollpunkt';
 
   @override
   String get localHistoryReasonBeforeReload => 'Enne laadimist';
@@ -4686,15 +4331,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get settingsClipboardHistoryTitle => 'Salvesta klipi ajalugu';
 
   @override
-  String get settingsClipboardHistoryDescription =>
-      'Hoiab salvestatud ja edukalt kopeeritud sisu ainult selle BusyMark sessiooni jaoks.';
+  String get settingsClipboardHistoryDescription => 'Hoiab salvestatud ja edukalt kopeeritud sisu ainult selle BusyMark sessiooni jaoks.';
 
   @override
   String get settingsLocalHistoryTitle => 'Salvesta kohalik ajalugu';
 
   @override
-  String get settingsLocalHistoryDescription =>
-      'Salvesta dokumendi versioonid selle seadmele taastamiseks ja võrdlemiseks.';
+  String get settingsLocalHistoryDescription => 'Salvesta dokumendi versioonid selle seadmele taastamiseks ja võrdlemiseks.';
 
   @override
   String get settingsHistoryCheckpoint => 'Automaatne kontrollpunkte intervall';
@@ -4790,8 +4433,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get spellingCheckFailed => 'Õigekirjakontroll nurjus';
 
   @override
-  String get spellingSettingsLoadFailed =>
-      'Õigekirjakontrolli sätteid ei õnnestunud laadida';
+  String get spellingSettingsLoadFailed => 'Õigekirjakontrolli sätteid ei õnnestunud laadida';
 
   @override
   String get retrySpellingSettings => 'Laadi õigekirjakontrolli sätted uuesti';
@@ -4822,12 +4464,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get removeSpellingDictionary => 'Eemalda sõnastik';
 
   @override
-  String get cancelSpellingDictionaryInstall =>
-      'Katkesta sõnastiku allalaadimine';
+  String get cancelSpellingDictionaryInstall => 'Katkesta sõnastiku allalaadimine';
 
   @override
-  String get retrySpellingDictionaryInstall =>
-      'Proovi sõnastikku uuesti installida';
+  String get retrySpellingDictionaryInstall => 'Proovi sõnastikku uuesti installida';
 
   @override
   String spellingDictionaryDownloading(String size) {
@@ -4838,8 +4478,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get spellingDictionaryValidating => 'Sõnastiku kontrollimine…';
 
   @override
-  String get spellingDictionaryInstallFailed =>
-      'Sõnastiku installimine nurjus — uuesti proovimiseks vali see';
+  String get spellingDictionaryInstallFailed => 'Sõnastiku installimine nurjus — uuesti proovimiseks vali see';
 
   @override
   String spellingDictionaryInstallPrompt(String dictionary, String size) {
@@ -4858,8 +4497,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get spellingDictionaryRecoveryConflict =>
-      'Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati.';
+  String get spellingDictionaryRecoveryConflict => 'Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati.';
 
   @override
   String get windowMinimize => 'Minimeeri';
@@ -4895,8 +4533,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get nextcloudNewNote => 'Uus märge';
 
   @override
-  String get nextcloudSavedLocally =>
-      'Salvestatud kohalikult · sünkroonimine ootel';
+  String get nextcloudSavedLocally => 'Salvestatud kohalikult · sünkroonimine ootel';
 
   @override
   String get nextcloudSyncing => 'Sünkroonimine';
@@ -4929,19 +4566,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get nextcloudDeleteNote => 'Kustutada märge?';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable =>
-      'Tööruumi asendamine pole Nextcloud Notesi jaoks saadaval. Asenda igas märkmes eraldi.';
+  String get nextcloudWorkspaceReplaceUnavailable => 'Tööruumi asendamine pole Nextcloud Notesi jaoks saadaval. Asenda igas märkmes eraldi.';
 
   @override
   String get nextcloudSaveLocalCopy => 'Salvesta kohalik koopia…';
 
   @override
-  String get nextcloudDisconnectWarning =>
-      'Konto eemaldamine kustutab sellest seadmest puhverdatud märkmed ja ootel muudatused. Sünkrooni esmalt, et töö serveris säiliks.';
+  String get nextcloudDisconnectWarning => 'Konto eemaldamine kustutab sellest seadmest puhverdatud märkmed ja ootel muudatused. Sünkrooni esmalt, et töö serveris säiliks.';
 
   @override
-  String get nextcloudAttachmentRetryWarning =>
-      'Kui eelmine üleslaadimine õnnestus, võib uus katse jätta serverisse kasutamata manuse.';
+  String get nextcloudAttachmentRetryWarning => 'Kui eelmine üleslaadimine õnnestus, võib uus katse jätta serverisse kasutamata manuse.';
 
   @override
   String get nextcloudAttachmentReference => 'Manuse viide serveris';
@@ -4950,27 +4584,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get nextcloudAddAttachment => 'Lisa manus…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning =>
-      'Manuse kustutamine muudab selle lingid märkmes kättesaamatuks. Säilitatud andmed saab taastada kohalikust ajaloost.';
+  String get nextcloudDeleteAttachmentWarning => 'Manuse kustutamine muudab selle lingid märkmes kättesaamatuks. Säilitatud andmed saab taastada kohalikust ajaloost.';
 
   @override
-  String get nextcloudChooseConflictingAttributes =>
-      'Valige iga vastuolulise atribuudi väärtus.';
+  String get nextcloudChooseConflictingAttributes => 'Valige iga vastuolulise atribuudi väärtus.';
 
   @override
   String get nextcloudUseServerNote => 'Kasuta seda serverimärkust';
 
   @override
-  String get nextcloudUseServerNoteExplanation =>
-      'Seob mustandi valitud serverimärkusega ja sünkroonib seejärel säilitatud kohalikud muudatused. Päringu vastavus ei kinnita märkuse loojat.';
+  String get nextcloudUseServerNoteExplanation => 'Seob mustandi valitud serverimärkusega ja sünkroonib seejärel säilitatud kohalikud muudatused. Päringu vastavus ei kinnita märkuse loojat.';
 
   @override
-  String get nextcloudExactCandidate =>
-      'Täpne päringu vaste; identiteet on kinnitamata.';
+  String get nextcloudExactCandidate => 'Täpne päringu vaste; identiteet on kinnitamata.';
 
   @override
-  String get nextcloudPossibleCandidate =>
-      'Võimalik puhastatud päringu vaste; identiteet on kinnitamata.';
+  String get nextcloudPossibleCandidate => 'Võimalik puhastatud päringu vaste; identiteet on kinnitamata.';
 
   @override
   String get nextcloudSelectCandidate => 'Vali ülevaatamiseks serverimärkus';
@@ -4979,8 +4608,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get nextcloudCreateSeparate => 'Loo eraldi märkus';
 
   @override
-  String get nextcloudCreateSeparateWarning =>
-      'Esimene päring võis serveris juba märkuse luua. See loob eraldi märkuse koos säilitatud kohaliku tööga. Võimalikke duplikaate ei kustutata.';
+  String get nextcloudCreateSeparateWarning => 'Esimene päring võis serveris juba märkuse luua. See loob eraldi märkuse koos säilitatud kohaliku tööga. Võimalikke duplikaate ei kustutata.';
 
   @override
   String get wsSemanticFormats => 'Semantiline vormindus';
@@ -5091,15 +4719,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get nextcloudFileSuffix => 'Uute märkmete faililaiend';
 
   @override
-  String get nextcloudServerSettingsExplanation =>
-      'Need Notesi seaded mõjutavad teisi kliente. Tee muutmine ei teisalda faile; laiendi muutmine ei nimeta olemasolevaid märkmeid ümber.';
+  String get nextcloudServerSettingsExplanation => 'Need Notesi seaded mõjutavad teisi kliente. Tee muutmine ei teisalda faile; laiendi muutmine ei nimeta olemasolevaid märkmeid ümber.';
 
   @override
   String get nextcloudSettingsSaved => 'Serveri seaded salvestatud';
 
   @override
-  String get nextcloudSettingsNormalized =>
-      'Salvestatud serveri normaliseeritud väärtustega';
+  String get nextcloudSettingsNormalized => 'Salvestatud serveri normaliseeritud väärtustega';
 
   @override
   String get nextcloudPendingUpload => 'Manuse üleslaadimine ootel';
@@ -5161,15 +4787,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesIndexing => 'Märkmete indekseerimine…';
 
   @override
-  String get notesSearchHelp =>
-      'Mõisted ühendatakse JA abil. Kasuta \"tsiteeritud fraase\", title: ja category:.';
+  String get notesSearchHelp => 'Mõisted ühendatakse JA abil. Kasuta \"tsiteeritud fraase\", title: ja category:.';
 
   @override
   String get notesSourceLocation => 'Lähtekoht';
 
   @override
-  String get notesRecoveryHelp =>
-      'Ainult säilitatud kohalikud märkmed ja kohalik ajalugu. Serveri prügikast ja ajalugu pole saadaval.';
+  String get notesRecoveryHelp => 'Ainult säilitatud kohalikud märkmed ja kohalik ajalugu. Serveri prügikast ja ajalugu pole saadaval.';
 
   @override
   String get notesImport => 'Impordi märkmed';
@@ -5190,8 +4814,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesSelected => 'Valitud märkmed';
 
   @override
-  String get notesNoHistory =>
-      'Säilitatud versioone pole. Ajalugu võib olla keelatud, aegunud või kustutatud.';
+  String get notesNoHistory => 'Säilitatud versioone pole. Ajalugu võib olla keelatud, aegunud või kustutatud.';
 
   @override
   String get notesTextAvailable => 'Tekst on kohalikult saadaval';
@@ -5257,8 +4880,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get referenceUnsupported => 'Pole toetatud';
 
   @override
-  String get referenceNoPortableId =>
-      'Sellel sihtkohal pole kinnitatud teisaldatavat märkme URL-i.';
+  String get referenceNoPortableId => 'Sellel sihtkohal pole kinnitatud teisaldatavat märkme URL-i.';
 
   @override
   String get wsIncludeLines => 'Kaasa read';
@@ -5270,15 +4892,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsEmphasizeLines => 'Tõsta kuvatud read esile';
 
   @override
-  String get wsPropertiesReadOnly =>
-      'Selles vaates on omadused kirjutuskaitstud.';
+  String get wsPropertiesReadOnly => 'Selles vaates on omadused kirjutuskaitstud.';
 
   @override
   String get wsPropertiesProtected => 'Element on kaitstud. Muuda lähtekoodi.';
 
   @override
-  String get wsPropertiesConflict =>
-      'Dokument või element muutus. Taasta mustand ja vali uuesti.';
+  String get wsPropertiesConflict => 'Dokument või element muutus. Taasta mustand ja vali uuesti.';
 
   @override
   String get wsPropertiesUnresolved => 'Viidet ei saa praegu lahendada.';
@@ -5308,8 +4928,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsHeight => 'Kõrgus';
 
   @override
-  String get wsPropertiesInactive =>
-      'Omadus toimib ainult avaldatud ahendamise korral.';
+  String get wsPropertiesInactive => 'Omadus toimib ainult avaldatud ahendamise korral.';
 
   @override
   String get wsNavigationAll => 'Kõik pealkirjaga elemendid';
@@ -5330,19 +4949,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsWideLayout => 'Lai';
 
   @override
-  String get wsCodeSourceConflict =>
-      'Enne src määramist teisalda või eemalda sellesse plokki kirjutatud kood. Writerside ei luba lähteviitega mittetühja koodiplokki.';
+  String get wsCodeSourceConflict => 'Enne src määramist teisalda või eemalda sellesse plokki kirjutatud kood. Writerside ei luba lähteviitega mittetühja koodiplokki.';
 
   @override
   String get wsInherited => 'Päri loendilt';
 
   @override
-  String get wsExternalImageSize =>
-      'Writerside ei määra väliste piltide mõõtmeid usaldusväärselt. Olemasolevaid mõõtmeid saab vaadata ja eemaldada.';
+  String get wsExternalImageSize => 'Writerside ei määra väliste piltide mõõtmeid usaldusväärselt. Olemasolevaid mõõtmeid saab vaadata ja eemaldada.';
 
   @override
-  String get wsPropertiesNotSerialized =>
-      'Muudatust ei rakendatud lähtetekstile. Mustand on alles.';
+  String get wsPropertiesNotSerialized => 'Muudatust ei rakendatud lähtetekstile. Mustand on alles.';
 
   @override
   String get wsListItem => 'Loendiüksus';
@@ -5479,8 +5095,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get wsModuleCapsIgnored =>
-      'Fikseeritud koostaja eirab mooduli <caps>-reegleid. Kasuta kohalikku caps-atribuuti või default-property sätet.';
+  String get wsModuleCapsIgnored => 'Fikseeritud koostaja eirab mooduli <caps>-reegleid. Kasuta kohalikku caps-atribuuti või default-property sätet.';
 
   @override
   String get wsInsertElements => 'Lisa elemendid';
@@ -5492,8 +5107,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsSemanticText => 'Semantiline tekst';
 
   @override
-  String get wsPropertiesUnavailable =>
-      'Vaadeldav element pole saadaval. Jätkamiseks vali element.';
+  String get wsPropertiesUnavailable => 'Vaadeldav element pole saadaval. Jätkamiseks vali element.';
 
   @override
   String get searchDocumentsCategory => 'Dokumendid';
@@ -5598,31 +5212,25 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutRestoreAll => 'Taasta kõik vaikeväärtused';
 
   @override
-  String get shortcutRestoreAllQuestion =>
-      'Kas taastada kõigi toimingute vaikekiirklahvid? Kohandatud määrangud eemaldatakse.';
+  String get shortcutRestoreAllQuestion => 'Kas taastada kõigi toimingute vaikekiirklahvid? Kohandatud määrangud eemaldatakse.';
 
   @override
-  String get shortcutSaveFailed =>
-      'Kiirklahvid on aktiivsed, kuid neid ei saanud salvestada. Proovi uuesti, et säilitada need pärast taaskäivitamist.';
+  String get shortcutSaveFailed => 'Kiirklahvid on aktiivsed, kuid neid ei saanud salvestada. Proovi uuesti, et säilitada need pärast taaskäivitamist.';
 
   @override
   String get shortcutRetry => 'Proovi salvestamist uuesti';
 
   @override
-  String get shortcutChanged =>
-      'Määrangud on muutunud. Vaata praegused kiirklahvid üle ja proovi uuesti.';
+  String get shortcutChanged => 'Määrangud on muutunud. Vaata praegused kiirklahvid üle ja proovi uuesti.';
 
   @override
-  String get shortcutInvalid =>
-      'Seda kombinatsiooni ei saa selles kontekstis määrata.';
+  String get shortcutInvalid => 'Seda kombinatsiooni ei saa selles kontekstis määrata.';
 
   @override
-  String get shortcutSystemWarning =>
-      'Töölaud võib seda kombinatsiooni kasutada. BusyMark ei saa süsteemi kiirklahve alistada.';
+  String get shortcutSystemWarning => 'Töölaud võib seda kombinatsiooni kasutada. BusyMark ei saa süsteemi kiirklahve alistada.';
 
   @override
-  String get shortcutConflicts =>
-      'See kiirklahv kattub järgmiste toimingutega:';
+  String get shortcutConflicts => 'See kiirklahv kattub järgmiste toimingutega:';
 
   @override
   String get shortcutRemove => 'Eemalda määrang';
@@ -5661,8 +5269,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutFixed => 'Redaktori hallatav; pole seadistatav.';
 
   @override
-  String get shortcutDefaultConflict =>
-      'Vaikimisi otsetee on vastuolus kohandatud määranguga.';
+  String get shortcutDefaultConflict => 'Vaikimisi otsetee on vastuolus kohandatud määranguga.';
 
   @override
   String get shortcutCurrentBinding => 'Praegune otsetee';
@@ -5692,12 +5299,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesOfflineCategory => 'Tee võrguta kättesaadavaks · Kategooria';
 
   @override
-  String get notesOfflineRemoveAll =>
-      'Eemalda võrguta säilitamine · Kõik märkmed';
+  String get notesOfflineRemoveAll => 'Eemalda võrguta säilitamine · Kõik märkmed';
 
   @override
-  String get notesOfflineRemoveCategory =>
-      'Eemalda võrguta säilitamine · Kategooria';
+  String get notesOfflineRemoveCategory => 'Eemalda võrguta säilitamine · Kategooria';
 
   @override
   String get notesOfflinePause => 'Peata allalaadimised';
@@ -5709,16 +5314,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesOfflineKeep => 'Tee võrguta kättesaadavaks';
 
   @override
-  String get notesOfflineRetentionHelp =>
-      'Selle nõude eemaldamine jätab vahemälu alles. Kategooria või konto nõue võib märget endiselt säilitada.';
+  String get notesOfflineRetentionHelp => 'Selle nõude eemaldamine jätab vahemälu alles. Kategooria või konto nõue võib märget endiselt säilitada.';
 
   @override
-  String get notesOfflineBroader =>
-      'Seda märget säilitatakse ka kategooria või konto nõude tõttu.';
+  String get notesOfflineBroader => 'Seda märget säilitatakse ka kategooria või konto nõude tõttu.';
 
   @override
-  String get notesOfflineExternal =>
-      'Väline meedia vajab ühendust. BusyMark säilitab vaid märkmete teksti ja hallatavad manused.';
+  String get notesOfflineExternal => 'Väline meedia vajab ühendust. BusyMark säilitab vaid märkmete teksti ja hallatavad manused.';
 
   @override
   String get notesEmptyAll => 'Märkmeid veel pole. Alustamiseks loo märge.';
@@ -5739,8 +5341,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesLoadFailed => 'Nextcloud Notes · Ebaõnnestus. Proovi uuesti';
 
   @override
-  String get notesOperationFailed =>
-      'Toiming ei lõppenud. Mustand on alles. Kontrolli salvestamist ja konflikte ning proovi uuesti.';
+  String get notesOperationFailed => 'Toiming ei lõppenud. Mustand on alles. Kontrolli salvestamist ja konflikte ning proovi uuesti.';
 
   @override
   String get notesInspectionFailed => 'Manused · Ebaõnnestus. Proovi uuesti';
@@ -5752,54 +5353,43 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesVerifyingConnection => 'Märkmete ligipääsu kontrollimine…';
 
   @override
-  String get notesCancellingConnection =>
-      'Sisselogimise tühistamine ja puhastamine…';
+  String get notesCancellingConnection => 'Sisselogimise tühistamine ja puhastamine…';
 
   @override
   String get notesRemovingConnection => 'Kohaliku konto eemaldamine…';
 
   @override
-  String get notesRemovedWarning =>
-      'Kohalik Nextcloudi konto eemaldati. Rakenduse parooli tühistamist ei kinnitatud. Eemalda BusyMarki parool Nextcloudi turvaseadetest.';
+  String get notesRemovedWarning => 'Kohalik Nextcloudi konto eemaldati. Rakenduse parooli tühistamist ei kinnitatud. Eemalda BusyMarki parool Nextcloudi turvaseadetest.';
 
   @override
-  String get notesBuffersNotSaved =>
-      'Kõiki avatud märkmeid ei saanud kohalikult salvestada. Kontrolli tööruumis salvestamist, konflikte või normaliseerimist. Kohalikud muudatused võivad veel vajada Nextcloudiga sünkroonimist.';
+  String get notesBuffersNotSaved => 'Kõiki avatud märkmeid ei saanud kohalikult salvestada. Kontrolli tööruumis salvestamist, konflikte või normaliseerimist. Kohalikud muudatused võivad veel vajada Nextcloudiga sünkroonimist.';
 
   @override
-  String get notesSettingsLeave =>
-      'Kas salvestada Nextcloudi seadete muudatused enne lahkumist?';
+  String get notesSettingsLeave => 'Kas salvestada Nextcloudi seadete muudatused enne lahkumist?';
 
   @override
-  String get notesSettingsLeaveHelp =>
-      'Serveri Notesi seaded · Salvestamata muudatused';
+  String get notesSettingsLeaveHelp => 'Serveri Notesi seaded · Salvestamata muudatused';
 
   @override
   String get notesSettingsReload => 'Laadi serveri seaded uuesti…';
 
   @override
-  String get notesSettingsReloadHelp =>
-      'Uuesti laadimine asendab mustandi Nextcloudi praeguste seadetega. Kas loobuda mustandist ja laadida uuesti?';
+  String get notesSettingsReloadHelp => 'Uuesti laadimine asendab mustandi Nextcloudi praeguste seadetega. Kas loobuda mustandist ja laadida uuesti?';
 
   @override
-  String get notesSettingsRefreshFailed =>
-      'Nextcloud kinnitas seaded, kuid märkmete värskendamine ebaõnnestus. Kuvatakse serveri kinnitatud väärtused. Proovi märkmete värskendamist uuesti.';
+  String get notesSettingsRefreshFailed => 'Nextcloud kinnitas seaded, kuid märkmete värskendamine ebaõnnestus. Kuvatakse serveri kinnitatud väärtused. Proovi märkmete värskendamist uuesti.';
 
   @override
-  String get notesUnavailable =>
-      'Ühenduseta · Tekst on kohalikult saadaval · Salvestatud kohalikult · sünkroonimine ootel';
+  String get notesUnavailable => 'Ühenduseta · Tekst on kohalikult saadaval · Salvestatud kohalikult · sünkroonimine ootel';
 
   @override
-  String get notesStorageFull =>
-      'Nextcloudi salvestusruum on täis. Vabasta serveris ruumi ja proovi uuesti.';
+  String get notesStorageFull => 'Nextcloudi salvestusruum on täis. Vabasta serveris ruumi ja proovi uuesti.';
 
   @override
-  String get notesRejected =>
-      'Nextcloud lükkas muudatuse tagasi. Kontrolli märget ja salvesta enne uut katset kohalik koopia.';
+  String get notesRejected => 'Nextcloud lükkas muudatuse tagasi. Kontrolli märget ja salvesta enne uut katset kohalik koopia.';
 
   @override
-  String get notesThrottled =>
-      'Nextcloud palus oodata. Sünkroonimine jätkub pärast ooteaja lõppu.';
+  String get notesThrottled => 'Nextcloud palus oodata. Sünkroonimine jätkub pärast ooteaja lõppu.';
 
   @override
   String get notesRecoveryRequired => 'Konfliktid · Võrdle';
@@ -5820,8 +5410,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesTransferFailed => 'Ebaõnnestus. Proovi uuesti';
 
   @override
-  String get notesImportPartialHelp =>
-      'Varasemad üksused võivad olla juba kohalikult salvestatud. Jätka sama importi, et vältida duplikaate.';
+  String get notesImportPartialHelp => 'Varasemad üksused võivad olla juba kohalikult salvestatud. Jätka sama importi, et vältida duplikaate.';
 
   @override
   String get notesNotStarted => 'Alustamata';
@@ -5830,8 +5419,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesCreated => 'Loodud';
 
   @override
-  String get notesRemoteDeleteUnavailable =>
-      'Serveri aadress · Pole toetatud · Kustuta · Manused';
+  String get notesRemoteDeleteUnavailable => 'Serveri aadress · Pole toetatud · Kustuta · Manused';
 
   @override
   String get notesCurrentText => 'Praegu säilitatud tekst';
@@ -5840,19 +5428,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesRecovering => 'Taastamine uue märkmena…';
 
   @override
-  String get notesReadOnlyHelp =>
-      'Kirjutuskaitstud · Lemmikud · Salvesta kohalik koopia…';
+  String get notesReadOnlyHelp => 'Kirjutuskaitstud · Lemmikud · Salvesta kohalik koopia…';
 
   @override
   String get notesSort => 'Sordi märkmeid';
 
   @override
-  String get notesPathRelative =>
-      'Märkmete kaustatee on suhteline sinu Nextcloudi salvestusruumi suhtes.';
+  String get notesPathRelative => 'Märkmete kaustatee on suhteline sinu Nextcloudi salvestusruumi suhtes.';
 
   @override
-  String get notesSettingsStale =>
-      'Seaded muutusid Nextcloudis. Laadi serveri väärtused uuesti ja vaata üle enne mustandi asendamist.';
+  String get notesSettingsStale => 'Seaded muutusid Nextcloudis. Laadi serveri väärtused uuesti ja vaata üle enne mustandi asendamist.';
 
   @override
   String get notesDownloadsPaused => 'Allalaadimised peatatud';
@@ -5861,20 +5446,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesExportNotPublished => 'Eksporti ei avaldatud.';
 
   @override
-  String get notesKeyringUnavailable =>
-      'Ava töölaua võtmehoidla ja proovi uuesti.';
+  String get notesKeyringUnavailable => 'Ava töölaua võtmehoidla ja proovi uuesti.';
 
   @override
-  String get notesConnectFailed =>
-      'Nextcloudi märkmetega ei saanud ühendust. Kontrolli serveri aadressi ja proovi uuesti.';
+  String get notesConnectFailed => 'Nextcloudi märkmetega ei saanud ühendust. Kontrolli serveri aadressi ja proovi uuesti.';
 
   @override
-  String get notesAccountMismatch =>
-      'Logi sisse samale Nextcloudi kontole. Teise konto ühendamiseks eemalda esmalt see konto.';
+  String get notesAccountMismatch => 'Logi sisse samale Nextcloudi kontole. Teise konto ühendamiseks eemalda esmalt see konto.';
 
   @override
-  String get notesLocalRemovalFailed =>
-      'Kohaliku konto puhastamine ebaõnnestus. Konto on alles, et saaksid eemaldamist korrata.';
+  String get notesLocalRemovalFailed => 'Kohaliku konto puhastamine ebaõnnestus. Konto on alles, et saaksid eemaldamist korrata.';
 
   @override
   String get notesTransferring => 'Märkmete teisaldamine…';
@@ -5886,8 +5467,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get notesPauseRequirement => 'Peata võrguühenduseta säilitamise nõue';
 
   @override
-  String get notesResumeRequirement =>
-      'Jätka võrguühenduseta säilitamise nõuet';
+  String get notesResumeRequirement => 'Jätka võrguühenduseta säilitamise nõuet';
 
   @override
   String get gitReturnToDocument => 'Tagasi dokumendi juurde';
@@ -5898,8 +5478,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage =>
-      'Failinimi sisaldab baite, mis pole UTF-8. Giti ülevaatus ja indekseerimine on endiselt saadaval; dokumendiredaktor vajab UTF-8-failinime.';
+  String get gitNonUtf8FilenameMessage => 'Failinimi sisaldab baite, mis pole UTF-8. Giti ülevaatus ja indekseerimine on endiselt saadaval; dokumendiredaktor vajab UTF-8-failinime.';
 
   @override
   String get gitUiMergeInProgress => 'Käimasolev ühendamine';
@@ -5917,8 +5496,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiPatchApplicationInProgress => 'Käimasolev taotlus';
 
   @override
-  String get gitUiSquashMergeResultAwaitingCommit =>
-      'Squash ühendamise tulemus ootab kohustuse';
+  String get gitUiSquashMergeResultAwaitingCommit => 'Squash ühendamise tulemus ootab kohustuse';
 
   @override
   String get gitUiUnresolvedIndexConflicts => 'Lahendamata indeksikonfliktid';
@@ -5942,19 +5520,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiNoStashes => 'Ei mingeid peidikuid.';
 
   @override
-  String get gitUiSelectAStashToInspectItsChanges =>
-      'Valige varu, et kontrollida selle muudatusi';
+  String get gitUiSelectAStashToInspectItsChanges => 'Valige varu, et kontrollida selle muudatusi';
 
   @override
   String get gitUiStashedUntrackedFiles => 'Jälitamata failid';
 
   @override
-  String get gitUiInspectStashedUntrackedFiles =>
-      'Kontrolli peidetud jälgimata faile...';
+  String get gitUiInspectStashedUntrackedFiles => 'Kontrolli peidetud jälgimata faile...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
-      'Reinstate the stash\'s lavastatud/index state when application';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => 'Reinstate the stash\'s lavastatud/index state when application';
 
   @override
   String get gitUiApplyAndRetain => 'Rakendada ja säilitada';
@@ -5972,8 +5547,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiBranchFromStash => 'Loo haru peidetud muudatustest';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
-      'Loo / switch filiaali juures stash\'s esialgse baasi, seejärel rakendada seda. Originaal stash on säilitada selge hilisema kustutamise.';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => 'Loo / switch filiaali juures stash\'s esialgse baasi, seejärel rakendada seda. Originaal stash on säilitada selge hilisema kustutamise.';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -5981,50 +5555,40 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
-      'Konfliktide rakendamisel säilitatakse algne peidupaik.';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => 'Konfliktide rakendamisel säilitatakse algne peidupaik.';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
-      'Kustutab kirje. Selle muudatusi ei rakendata.';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => 'Kustutab kirje. Selle muudatusi ei rakendata.';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
-      'Lahenda ühendamata failid. Gitil pole peidetud muudatuste jätkamis- ega katkestamiskäsku; algne peidetud muudatuste kirje säilib.';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => 'Lahenda ühendamata failid. Gitil pole peidetud muudatuste jätkamis- ega katkestamiskäsku; algne peidetud muudatuste kirje säilib.';
 
   @override
   String get gitUiStashNameMessage => 'Varraste nimi/sõnum';
 
   @override
-  String get gitUiStashContentAndResultingIndex =>
-      'Lihvisisaldus ja sellest tulenev indeks';
+  String get gitUiStashContentAndResultingIndex => 'Lihvisisaldus ja sellest tulenev indeks';
 
   @override
-  String get gitUiStashTrackedWorkingAndStagedChanges =>
-      'Stash jälgis tööd ja lavastatud muutusi';
+  String get gitUiStashTrackedWorkingAndStagedChanges => 'Stash jälgis tööd ja lavastatud muutusi';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
-      'Peida muudatused, säilita indeksi sisu paigal (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => 'Peida muudatused, säilita indeksi sisu paigal (--keep-index)';
 
   @override
-  String get gitUiStashOnlyStagedChangesStaged =>
-      'Peida ainult indeksi muudatused (--staged)';
+  String get gitUiStashOnlyStagedChangesStaged => 'Peida ainult indeksi muudatused (--staged)';
 
   @override
   String get gitUiIncludeUntrackedFiles => 'Jälitamata failide kaasamine';
 
   @override
-  String get gitUiAllEligiblePathsInThisRepository =>
-      'Kõik selles hoidlas asuvad sobivad teed';
+  String get gitUiAllEligiblePathsInThisRepository => 'Kõik selles hoidlas asuvad sobivad teed';
 
   @override
-  String get gitUiNoEligibleChangesForTheseStashOptions =>
-      'Nende varude valikute puhul ei ole võimalik muudatusi teha.';
+  String get gitUiNoEligibleChangesForTheseStashOptions => 'Nende varude valikute puhul ei ole võimalik muudatusi teha.';
 
   @override
-  String get gitUiSelectAtLeastOneEligiblePath =>
-      'Valige vähemalt üks sobiv tee.';
+  String get gitUiSelectAtLeastOneEligiblePath => 'Valige vähemalt üks sobiv tee.';
 
   @override
   String get gitUiCreateStash2 => 'Peida muudatused';
@@ -6033,8 +5597,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCreateWorktree => 'Loo tööpuu...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
-      'Loo sissekanne enne tööpuu loomist HEAD-i juurde.';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => 'Loo sissekanne enne tööpuu loomist HEAD-i juurde.';
 
   @override
   String get gitUiDetachedHEAD => 'Lahutatud HEAD';
@@ -6073,8 +5636,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRemoveCleanWorktree => 'Eemalda puhas tööpuu...';
 
   @override
-  String get gitUiReviewRemovalIncludingLocalChanges =>
-      'Vaata väljajätmist, kaasa arvatud kohalikke muudatusi...';
+  String get gitUiReviewRemovalIncludingLocalChanges => 'Vaata väljajätmist, kaasa arvatud kohalikke muudatusi...';
 
   @override
   String get gitUiNewWorktreeFolderName => 'Uus tööpuu kataloogi nimi';
@@ -6083,12 +5645,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiNewWorktreeBranch => 'Uus tööpuu oks';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
     return 'Loo $arg0/$arg1 uue kohaliku haruga aadressil $arg2 ($arg3).';
   }
 
@@ -6099,25 +5656,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRemoveWorktree => 'Kas eemaldada tööpuu?';
 
   @override
-  String
-  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
-      'Lukustatud/kasutuses olevad tööpuud jäävad kaitstuks.';
+  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => 'Lukustatud/kasutuses olevad tööpuud jäävad kaitstuks.';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
-      'Git keeldub eemaldamisest, kui on toimunud kohalikud muudatused, jälgimata failid või lukk.';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'Git keeldub eemaldamisest, kui on toimunud kohalikud muudatused, jälgimata failid või lukk.';
 
   @override
-  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
-      'Kõrvalda kohalik tööpuu sisu ja eemalda';
+  String get gitUiDiscardLocalWorktreeContentsAndRemove => 'Kõrvalda kohalik tööpuu sisu ja eemalda';
 
   @override
   String get gitUiRemoveCleanWorktree2 => 'Eemalda puhas tööpuu';
 
   @override
-  String
-  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
-      'Selgelt rekurseeruda pesastatud alammoodulid uuendused / sünkroniseerimine';
+  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => 'Selgelt rekurseeruda pesastatud alammoodulid uuendused / sünkroniseerimine';
 
   @override
   String get gitUiNoRecordedSubmodules => 'Salvestatud alammoodulid puuduvad';
@@ -6146,24 +5697,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiInitializeConfiguration => 'Seadistamine';
 
   @override
-  String get gitUiUpdateToParentSRecordedCommit =>
-      'Uuenda registreeritud lapsevanematele...';
+  String get gitUiUpdateToParentSRecordedCommit => 'Uuenda registreeritud lapsevanematele...';
 
   @override
-  String get gitUiFollowConfiguredRemoteBranch =>
-      'Järgi seadistatud võrguharu...';
+  String get gitUiFollowConfiguredRemoteBranch => 'Järgi seadistatud võrguharu...';
 
   @override
-  String get gitUiSynchronizeConfiguredURLs =>
-      'Konfigureeritud URL- ide sünkroniseerimine...';
+  String get gitUiSynchronizeConfiguredURLs => 'Konfigureeritud URL- ide sünkroniseerimine...';
 
   @override
-  String get gitUiStageCurrentSubmodulePointerInParent =>
-      'Aktiivse alamooduli etapi osuti vanemas';
+  String get gitUiStageCurrentSubmodulePointerInParent => 'Aktiivse alamooduli etapi osuti vanemas';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
-      'Vanem ja alamoodul kohustub, surub, ja määrdunud olekut jääda eraldi. Sirvimine ei initsialiseeri ega uuenda neid.';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => 'Vanem ja alamoodul kohustub, surub, ja määrdunud olekut jääda eraldi. Sirvimine ei initsialiseeri ega uuenda neid.';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -6171,17 +5717,12 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
     return 'Initsialiseerida vastavalt vajadusele ja kontrollida täpselt $arg0. Rekursiivne: $arg1.';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
-    String arg0,
-  ) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
     return 'Rakendab muudetud alammooduli seadistuse toimingut. Rekursiivne: $arg0.';
   }
 
@@ -6189,8 +5730,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiApplySubmoduleOperation => 'Alammooduli rakendamine';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
-      'Kontrollige salvestatud versiooni või luua taastamise filiaal. Reflog ei taasta suvalise salvestamata või kontrollimata sisu.';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => 'Kontrollige salvestatud versiooni või luua taastamise filiaal. Reflog ei taasta suvalise salvestamata või kontrollimata sisu.';
 
   @override
   String get gitUiSelectAReflogEntry => 'Vali reflog kirje';
@@ -6227,16 +5767,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
-      'Git teksti ajalugu peab omama oma redigeeritav väli.';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'Git teksti ajalugu peab omama oma redigeeritav väli.';
 
   @override
   String get gitUiEditHEADIndexWorkingTree => 'Muuda HEAD | Indeks | Tööpuu…';
 
   @override
-  String
-  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
-      'Läbivaadatud indeks või töösisu muutus. Värskenda seda võrdlust enne lavastamist.';
+  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => 'Läbivaadatud indeks või töösisu muutus. Värskenda seda võrdlust enne lavastamist.';
 
   @override
   String get gitUiRefreshComparison => 'Värskenda võrdlust';
@@ -6293,12 +5830,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiStagingActions2 => 'Indeksi toimingud…';
 
   @override
-  String get gitUiUnstageSelectedChangedLines =>
-      'Eemalda valitud muudetud read indeksist';
+  String get gitUiUnstageSelectedChangedLines => 'Eemalda valitud muudetud read indeksist';
 
   @override
-  String get gitUiStageSelectedChangedLines =>
-      'Lisa valitud muudetud read indeksisse';
+  String get gitUiStageSelectedChangedLines => 'Lisa valitud muudetud read indeksisse';
 
   @override
   String get gitUiUnstageWholeFile => 'Eemalda kogu fail indeksist';
@@ -6307,47 +5842,34 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiStageWholeFile => 'Lisa kogu fail indeksisse';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
-    String arg0,
-  ) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
     return '$arg0 ainult tühimärkidega muudetud read peidetud · Täpsete muudatuste näitamine';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
-    String arg0,
-  ) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
     return 'Valitud on $arg0 muudetud rida.';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
-      'Kirjutuskaitstud võrdlus · Kopeeri teksti või muuda kuvaseadeid.';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => 'Kirjutuskaitstud võrdlus · Kopeeri teksti või muuda kuvaseadeid.';
 
   @override
   String get gitUiNoFinalNewline => ' · lõplik uus rida puudub';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0 · $arg1 · $arg2 baites$arg3';
   }
 
   @override
-  String get gitUiTextComparisonIsUnavailableForTheseContents =>
-      'Teksti võrdlus ei ole nende sisude puhul kättesaadav.';
+  String get gitUiTextComparisonIsUnavailableForTheseContents => 'Teksti võrdlus ei ole nende sisude puhul kättesaadav.';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
-      'See võrdlus ületab teksti piiratud läbivaatamise piiri. Sisu ei ole tunnistatud identseks.';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => 'See võrdlus ületab teksti piiratud läbivaatamise piiri. Sisu ei ole tunnistatud identseks.';
 
   @override
-  String get gitUiTheComparedContentsAreIdentical =>
-      'Võrdluse sisu on identne.';
+  String get gitUiTheComparedContentsAreIdentical => 'Võrdluse sisu on identne.';
 
   @override
   String get gitUiUnstage => 'Lavastamata';
@@ -6378,8 +5900,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiWritingReviewedIndexResult =>
-      'Läbivaadatud indeksi tulemuse kirjutamine';
+  String get gitUiWritingReviewedIndexResult => 'Läbivaadatud indeksi tulemuse kirjutamine';
 
   @override
   String get gitUiHead => 'HEAD';
@@ -6408,8 +5929,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiReloadIndexReview => 'Uuesti laadida indeksi ülevaade?';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
-      'Laadi praegused HEAD-i, indeksi ja tööversioonid uuesti. See asendab indeksiredaktori salvestamata mustandi.';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => 'Laadi praegused HEAD-i, indeksi ja tööversioonid uuesti. See asendab indeksiredaktori salvestamata mustandi.';
 
   @override
   String get gitUiReplaceDraftAndReload => 'Asenda mustand ja laadi uuesti';
@@ -6418,46 +5938,36 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiReloadVersions => 'Laadi versioonid uuesti...';
 
   @override
-  String get gitUiWriteEditedResultToThisIndexEntry =>
-      'Redigeeritud tulemuse kirjutamine sellesse indeksikirjesse';
+  String get gitUiWriteEditedResultToThisIndexEntry => 'Redigeeritud tulemuse kirjutamine sellesse indeksikirjesse';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
-      'Tööfailid jäävad kettale. Enne rakendamist vaata redigeeritud indeks üle.';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => 'Tööfailid jäävad kettale. Enne rakendamist vaata redigeeritud indeks üle.';
 
   @override
-  String get gitUiReviewIndexTextFormatChanges =>
-      'Indeksi tekstivormingu muutmine';
+  String get gitUiReviewIndexTextFormatChanges => 'Indeksi tekstivormingu muutmine';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
     return 'Uuenda ainult $arg0 läbivaadatud indeksikirjet. $arg1';
   }
 
   @override
-  String get gitUiWriteReviewedIndexResult =>
-      'Kirjuta läbi vaadatud indeksi tulemus';
+  String get gitUiWriteReviewedIndexResult => 'Kirjuta läbi vaadatud indeksi tulemus';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
-      'Redigeeritud tulemus muutus vormingu läbivaatamise ajal. Vaata uuesti üle.';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => 'Redigeeritud tulemus muutus vormingu läbivaatamise ajal. Vaata uuesti üle.';
 
   @override
   String get gitUiSynchronizeScrolling => 'Ürituse sünkroniseerimine';
 
   @override
-  String get gitUiReadOnlyRevisionContent =>
-      'Ainult lugemiseks mõeldud versiooni sisu';
+  String get gitUiReadOnlyRevisionContent => 'Ainult lugemiseks mõeldud versiooni sisu';
 
   @override
   String get gitUiEditableIndexContent => 'Redigeeritava indeksi sisu';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
-      'Soovitud versioon on väljaspool aktiivseid filtreid. Selle avamiseks lähtesta filtrid.';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => 'Soovitud versioon on väljaspool aktiivseid filtreid. Selle avamiseks lähtesta filtrid.';
 
   @override
   String get gitUiFilterLog => 'Filtri logi';
@@ -6524,8 +6034,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCompareTwoSelectedRevisions =>
-      'Võrdle kahte valitud parandust...';
+  String get gitUiCompareTwoSelectedRevisions => 'Võrdle kahte valitud parandust...';
 
   @override
   String get gitUiToggleBranchesPane => 'Lülitab harude paneeli sisse ja välja';
@@ -6565,8 +6074,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiTags => 'Sildid';
 
   @override
-  String get gitUiNoCommitsMatchTheCurrentFilters =>
-      'Praegused filtrid ei sobi kokku.';
+  String get gitUiNoCommitsMatchTheCurrentFilters => 'Praegused filtrid ei sobi kokku.';
 
   @override
   String get gitUiObjectID => 'Objekti ID';
@@ -6619,12 +6127,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
-      'Madal/osaline piir: vanemobjekt ei ole kättesaadav.';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => 'Madal/osaline piir: vanemobjekt ei ole kättesaadav.';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
-      'Vanem on väljaspool seda lehekülge või madala piiri.';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => 'Vanem on väljaspool seda lehekülge või madala piiri.';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -6653,8 +6159,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRevertCommit => 'Taaskäivita sissekanne';
 
   @override
-  String get gitUiInteractiveRebaseAfterThisBoundary =>
-      'Interaktiivne rebane pärast seda piiri';
+  String get gitUiInteractiveRebaseAfterThisBoundary => 'Interaktiivne rebane pärast seda piiri';
 
   @override
   String get gitUiResetCurrentBranch => 'Lähtesta praegune haru';
@@ -6663,21 +6168,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiGoToCommitReference2 => 'Mine pühendu/viida';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
-      'Sisesta sissekande ID või viide logis avaldamisele.';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog => 'Sisesta sissekande ID või viide logis avaldamisele.';
 
   @override
-  String get gitUiTheRequestedRevisionIsUnavailable =>
-      'Soovitud läbivaatamine ei ole kättesaadav.';
+  String get gitUiTheRequestedRevisionIsUnavailable => 'Soovitud läbivaatamine ei ole kättesaadav.';
 
   @override
-  String
-  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
-      'Hoidla metaandmed on ainult lugemiseks. Harustiku kontroll ja võrdlus on endiselt saadaval.';
+  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => 'Hoidla metaandmed on ainult lugemiseks. Harustiku kontroll ja võrdlus on endiselt saadaval.';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
-      'Tööfailid ei ole kättesaadavad või on ainult lugemiseks. Haru vahetamine ja ühendamine ei ole võimalik.';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => 'Tööfailid ei ole kättesaadavad või on ainult lugemiseks. Haru vahetamine ja ühendamine ei ole võimalik.';
 
   @override
   String get gitUiSearchBranchesAndTags => 'Otsi harusid ja silte';
@@ -6781,10 +6281,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
     return '$arg0 Target $arg1 Ainult kohalik kustutamine. Ühendamata filiaal on keeldutud.';
   }
 
@@ -6802,8 +6299,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiDeleteUnmergedLocalBranch =>
-      'Kustuta ühendamata kohalik haru';
+  String get gitUiDeleteUnmergedLocalBranch => 'Kustuta ühendamata kohalik haru';
 
   @override
   String gitUiDestinationArg0Arg1(String arg0, String arg1) {
@@ -6829,20 +6325,16 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiSquashIntoStagedChanges => 'Squash astmelisteks muutusteks';
 
   @override
-  String get gitUiStopBeforeCreatingTheMergeCommit =>
-      'Peata enne ühendamise sooritamist';
+  String get gitUiStopBeforeCreatingTheMergeCommit => 'Peata enne ühendamise sooritamist';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
-      'Edasikerimine on keelatud, et HEAD ei liiguks enne ülevaatust.';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => 'Edasikerimine on keelatud, et HEAD ei liiguks enne ülevaatust.';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
-      'Jätab etapiviisilised muudatused eraldi kohustuse jaoks, see ei ole jätkuv ühendamine.';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => 'Jätab etapiviisilised muudatused eraldi kohustuse jaoks, see ei ole jätkuv ühendamine.';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
-      'Konfliktid on endiselt kättesaadavad ühise kriisilahenduse tööpiirkonnas.';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => 'Konfliktid on endiselt kättesaadavad ühise kriisilahenduse tööpiirkonnas.';
 
   @override
   String get gitUiAddRemote => 'Lisa võrgus...';
@@ -6876,16 +6368,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiNewRemoteName => 'Uus võrgunimi';
 
   @override
-  String get gitUiRepositoryURLOrLocalSource =>
-      'Hoidla URL või kohalik allikas';
+  String get gitUiRepositoryURLOrLocalSource => 'Hoidla URL või kohalik allikas';
 
   @override
-  String get gitUiEnterTheExactReviewedDestinationToRemove =>
-      'Sisesta eemaldatav täpne läbivaadatav sihtkoht.';
+  String get gitUiEnterTheExactReviewedDestinationToRemove => 'Sisesta eemaldatav täpne läbivaadatav sihtkoht.';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
-      'Usaldusväärsusi pakuvad määratud abilised või privaatne kiirteave.';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => 'Usaldusväärsusi pakuvad määratud abilised või privaatne kiirteave.';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -6893,16 +6382,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
-      'Eemaldab kohaliku võrguseadistuse ja jälitusviited. See ei kustuta serveri hoidlat.';
+  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => 'Eemaldab kohaliku võrguseadistuse ja jälitusviited. See ei kustuta serveri hoidlat.';
 
   @override
   String get gitUiRemoveRemote2 => 'Eemalda võrgust';
 
   @override
-  String get gitUiCommitScopeEntireRepository =>
-      'Säilitage ulatus: kogu hoidla';
+  String get gitUiCommitScopeEntireRepository => 'Säilitage ulatus: kogu hoidla';
 
   @override
   String get gitUiCachedTracking => 'Lõksuga jälitamine';
@@ -6911,12 +6397,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiAmendLastCommit => 'Muuda viimast sissekannet';
 
   @override
-  String get gitUiConfiguredHooksAndSigningAreRespected =>
-      'Seadistatud konksud ja signeerimine on lubatud.';
+  String get gitUiConfiguredHooksAndSigningAreRespected => 'Seadistatud konksud ja signeerimine on lubatud.';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
-      'Kirjutab valitud HEAD-i sissekande ümber. Kaugjälgimine ei tõesta, et see on avaldamata.';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => 'Kirjutab valitud HEAD-i sissekande ümber. Kaugjälgimine ei tõesta, et see on avaldamata.';
 
   @override
   String get gitUiRepository => 'Hoidla';
@@ -6933,25 +6417,18 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRepositoryActions => 'Hoidla toimingud';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
     return 'Vahemälus jälgimisandmed · $upstream · $ahead ees · $behind taga';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
-      'Avar hoidla · ei tööta puu. Ava logi ajaloo kontrollimiseks.';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => 'Avar hoidla · ei tööta puu. Ava logi ajaloo kontrollimiseks.';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
-      'Lugeda ainult hoidla · lavastamine ja toimetused on kättesaamatu.';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => 'Lugeda ainult hoidla · lavastamine ja toimetused on kättesaamatu.';
 
   @override
-  String get gitUiRepositoryStatusUnavailable =>
-      'Hoidla staatus ei ole kättesaadav';
+  String get gitUiRepositoryStatusUnavailable => 'Hoidla staatus ei ole kättesaadav';
 
   @override
   String gitUiAmendRevision(String revision) {
@@ -6962,27 +6439,22 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiAddSignOffTrailer => 'Lisa kinnituslõpp';
 
   @override
-  String get gitUiUseConfiguredSigningPolicy =>
-      'Seadistatud signeerimisreegli kasutamine';
+  String get gitUiUseConfiguredSigningPolicy => 'Seadistatud signeerimisreegli kasutamine';
 
   @override
-  String get gitUiCryptographicallySignThisCommit =>
-      'Krüptograafiliselt allkirjastage see kohustus';
+  String get gitUiCryptographicallySignThisCommit => 'Krüptograafiliselt allkirjastage see kohustus';
 
   @override
   String get gitUiDoNotSignThisCommit => 'Ära kirjuta sellele kohustusele alla';
 
   @override
-  String get gitUiRecentCommitMessages =>
-      'Hiljutised kirjad... @ info: whatsthis';
+  String get gitUiRecentCommitMessages => 'Hiljutised kirjad... @ info: whatsthis';
 
   @override
-  String get gitUiUseConfiguredCommitTemplate =>
-      'Kasutatakse seadistatud eraldamismall...';
+  String get gitUiUseConfiguredCommitTemplate => 'Kasutatakse seadistatud eraldamismall...';
 
   @override
-  String get gitUiAuthorIdentityAndConfiguredHooks =>
-      'Autori identiteet ja konfigureeritud konksud...';
+  String get gitUiAuthorIdentityAndConfiguredHooks => 'Autori identiteet ja konfigureeritud konksud...';
 
   @override
   String get gitUiDraftMessage => 'Sõnumi mustand...';
@@ -7016,12 +6488,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCommitAndPush => 'Tee sissekanne ja lükka…';
 
   @override
-  String get gitUiNoReadableCommitTemplateIsConfigured =>
-      'Lugematu sissekande mall ei ole seadistatud.';
+  String get gitUiNoReadableCommitTemplateIsConfigured => 'Lugematu sissekande mall ei ole seadistatud.';
 
   @override
-  String get gitUiCommitIdentityAndHooks =>
-      'Sisselogimise identiteet ja konksud';
+  String get gitUiCommitIdentityAndHooks => 'Sisselogimise identiteet ja konksud';
 
   @override
   String get gitUiRecentMessages => 'Viimased kirjad';
@@ -7030,8 +6500,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiReplaceMessageDraft => 'Kas asendada kirja kavand?';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
-      'Kas asendada olemasolev teade valitud sõnumiga?';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => 'Kas asendada olemasolev teade valitud sõnumiga?';
 
   @override
   String get gitUiReplaceDraft => 'Asenda mustand';
@@ -7042,9 +6511,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
-    String arg0,
-  ) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
     return 'Kohalik sissekanne $arg0 on olemas. Enne teise sissekande tegemist vaata logi üle. Sõnumi projekt on alles.';
   }
 
@@ -7071,8 +6538,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
-      'Kinnituslõpp on sõnumis olev avaldus, mitte krüptograafiline allkiri. Identiteet salvestatakse ainult selle hoidla kohalikku seadistusse; mustand säilib.';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage => 'Kinnituslõpp on sõnumis olev avaldus, mitte krüptograafiline allkiri. Identiteet salvestatakse ainult selle hoidla kohalikku seadistusse; mustand säilib.';
 
   @override
   String get gitUiSaveRepositoryIdentity => 'Hoidla identiteedi salvestamine';
@@ -7148,10 +6614,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
     return '$arg0 baite · $arg1 Asendab töösisu indeksiga või kustutab selle jälgimata faili. Säilitatakse etapistatud sisu. Kõigepealt tuleb vaadata salvestamata masinadokumendid.';
   }
 
@@ -7167,8 +6630,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
-      'See eemaldab viite igale allpool loetletud tegelikule tõukesihtkohale. Säilitatakse kohalikud harud/sildid. Oodatavad nõuanded määratakse kindlaks käesoleva ülevaatega.';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => 'See eemaldab viite igale allpool loetletud tegelikule tõukesihtkohale. Säilitatakse kohalikud harud/sildid. Oodatavad nõuanded määratakse kindlaks käesoleva ülevaatega.';
 
   @override
   String get gitUiReferenceDoesNotExist => 'Viidet ei ole olemas';
@@ -7187,8 +6649,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
-      'Täpsed ülal näidatud sihtotsikud eemaldatakse. Iga muudetud kaugnipp peatab operatsiooni uueks läbivaatamiseks.';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => 'Täpsed ülal näidatud sihtotsikud eemaldatakse. Iga muudetud kaugnipp peatab operatsiooni uueks läbivaatamiseks.';
 
   @override
   String get gitUiReviewAndDeleteFromRemote => 'Vaata ja kustuta võrgust...';
@@ -7208,15 +6669,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
-      'Sihtmärk on kohustatud, mis ei ole kohapeal kättesaadav. Tõmba, et läbivaadatud sihtkoht enne ülevaatamist väljaminev ajalugu.';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => 'Sihtmärk on kohustatud, mis ei ole kohapeal kättesaadav. Tõmba, et läbivaadatud sihtkoht enne ülevaatamist väljaminev ajalugu.';
 
   @override
   String get gitUiFetchReviewedDestination => 'Tõsta läbi vaadatud sihtkoht';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
-      'Valige sihtkoht ja kontrollige väljuvaid kohustusi.';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => 'Valige sihtkoht ja kontrollige väljuvaid kohustusi.';
 
   @override
   String get gitUiNoOutgoingCommits => 'Väljaminevad kohustused puuduvad';
@@ -7225,16 +6684,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiSelectAnOutgoingCommit => 'Väljamineva kohustuse valimine';
 
   @override
-  String get gitUiLoadMoreOutgoingCommits =>
-      'Laadi rohkem väljaminevaid kohustusi';
+  String get gitUiLoadMoreOutgoingCommits => 'Laadi rohkem väljaminevaid kohustusi';
 
   @override
-  String get gitUiSetThisDestinationAsUpstream =>
-      'Määra see sihtkoht ülesvoolu';
+  String get gitUiSetThisDestinationAsUpstream => 'Määra see sihtkoht ülesvoolu';
 
   @override
-  String get gitUiChooseExactTagsToPublish =>
-      'Täpsete siltide valimine avaldamiseks';
+  String get gitUiChooseExactTagsToPublish => 'Täpsete siltide valimine avaldamiseks';
 
   @override
   String get gitUiTagsNone => 'Sildid: puuduvad';
@@ -7250,12 +6706,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
-      'Vajuta lõpetatud. Kohalik kohustus on saadaval logis.';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => 'Vajuta lõpetatud. Kohalik kohustus on saadaval logis.';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
-      'Sundlükkamine nõuab täpselt siin üle vaadatud sihtviidete tippe.';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => 'Sundlükkamine nõuab täpselt siin üle vaadatud sihtviidete tippe.';
 
   @override
   String get gitUiForceWithReviewedLease => 'Jõud läbivaadatud rendiga...';
@@ -7264,8 +6718,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiPush => 'Lükka';
 
   @override
-  String get gitUiForcePushWithReviewedLeases =>
-      'Jõud suruda läbi vaadatud liisingutega?';
+  String get gitUiForcePushWithReviewedLeases => 'Jõud suruda läbi vaadatud liisingutega?';
 
   @override
   String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
@@ -7273,16 +6726,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
-      'Teised võivad seda ajalugu juba kasutada. Taustal toomine ei uuenda seda turvatingimust.';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => 'Teised võivad seda ajalugu juba kasutada. Taustal toomine ei uuenda seda turvatingimust.';
 
   @override
   String get gitUiForceWithLease => 'Renditud jõud';
 
   @override
-  String
-  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
-      'Kaugtulemus on ebakindel. Vaata uuesti sihtkohtadesse enne teise tõuke.';
+  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => 'Kaugtulemus on ebakindel. Vaata uuesti sihtkohtadesse enne teise tõuke.';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -7293,13 +6743,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRemoteToFetch => 'Tõmbatav võrgus';
 
   @override
-  String get gitUiPruneDeletedRemoteTrackingBranches =>
-      'Pruunid kustutatud kaugseire oksad';
+  String get gitUiPruneDeletedRemoteTrackingBranches => 'Pruunid kustutatud kaugseire oksad';
 
   @override
-  String
-  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
-      'Uuenduste tõmbamine kaugjälgimise infosse ilma tööfaile asendamata.';
+  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => 'Uuenduste tõmbamine kaugjälgimise infosse ilma tööfaile asendamata.';
 
   @override
   String get gitUiFetch => 'Too';
@@ -7320,47 +6767,37 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRebase => 'Paiguta ümber';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
-      'Peata, kui sihtkoht ei saa edasi liikuda, mitte kunagi ei ühine ega taasalusta.';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => 'Peata, kui sihtkoht ei saa edasi liikuda, mitte kunagi ei ühine ega taasalusta.';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
-      'Ühendamine ühendamisega, kaasa arvatud siis, kui on võimalik edasi kerida.';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => 'Ühendamine ühendamisega, kaasa arvatud siis, kui on võimalik edasi kerida.';
 
   @override
-  String get gitUiMergeAllowFastForwardWhenPossible =>
-      'Ühenda; võimaldab võimaluse korral kerida edasi.';
+  String get gitUiMergeAllowFastForwardWhenPossible => 'Ühenda; võimaldab võimaluse korral kerida edasi.';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
-      'Kohaliku ajaloo taastamine kohaliku ühendamise säilitamise ajal kohustab.';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => 'Kohaliku ajaloo taastamine kohaliku ühendamise säilitamise ajal kohustab.';
 
   @override
-  String get gitUiRebaseLocalCommitsAsALinearHistory =>
-      'Kohalike kohustuste taastamine on lineaarne ajalugu.';
+  String get gitUiRebaseLocalCommitsAsALinearHistory => 'Kohalike kohustuste taastamine on lineaarne ajalugu.';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
-      'Git on seadistatud interaktiivseks rebaseks. Siin saab valida tõmbamisstrateegia või tõmmata ja avada rebase... plaani läbivaatamiseks.';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'Git on seadistatud interaktiivseks rebaseks. Siin saab valida tõmbamisstrateegia või tõmmata ja avada rebase... plaani läbivaatamiseks.';
 
   @override
-  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
-      'Selle tõmmise korral kasutatakse läbivaadatud tavalist rebast';
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull => 'Selle tõmmise korral kasutatakse läbivaadatud tavalist rebast';
 
   @override
   String get gitUiOptions => 'Valikud';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
-      'Alati luua ühendamise kohustuse (no kerida)';
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward => 'Alati luua ühendamise kohustuse (no kerida)';
 
   @override
-  String get gitUiPreserveLocalMergeCommits =>
-      'Kohaliku ühendamise säilitamine';
+  String get gitUiPreserveLocalMergeCommits => 'Kohaliku ühendamise säilitamine';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
-      'Kohalikud muudatused võivad takistada tõmbamist. Vaata neid üle või pane need otseselt kokku.';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => 'Kohalikud muudatused võivad takistada tõmbamist. Vaata neid üle või pane need otseselt kokku.';
 
   @override
   String get gitUiStashes => 'Peidetud muudatused';
@@ -7372,8 +6809,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiPullWithSelectedStrategy => 'Valitud strateegia tõmbamine';
 
   @override
-  String get gitUiRepositoryURLOrLocalGitSource =>
-      'Hoidla URL või kohalik Git allikas';
+  String get gitUiRepositoryURLOrLocalGitSource => 'Hoidla URL või kohalik Git allikas';
 
   @override
   String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH või kohalik asukoht';
@@ -7388,23 +6824,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiChoose => 'Vali...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
-      'Loob ainult git metaandmed. Olemasolevaid faile ei ole lavastatud ega toimetatud.';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => 'Loob ainult git metaandmed. Olemasolevaid faile ei ole lavastatud ega toimetatud.';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
-      'Lõppsiht peab puuduma või olema tühi. Olemasolevaid kasutajaandmeid ei kirjutata kunagi üle.';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => 'Lõppsiht peab puuduma või olema tühi. Olemasolevaid kasutajaandmeid ei kirjutata kunagi üle.';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
-      'Esialgne haru · tühi kasutab efektiivset Git\' i reeglit';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => 'Esialgne haru · tühi kasutab efektiivset Git\' i reeglit';
 
   @override
   String get gitUiSelectedBranchOptional => 'Valitud haru · vabatahtlik';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
-      'Submodules recursively initsialiseeri/update';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => 'Submodules recursively initsialiseeri/update';
 
   @override
   String get gitUiPreparingGitOperation => 'Ettevalmistus Git operatsiooni...';
@@ -7413,12 +6845,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiThisAttemptCreated => 'See katse on loodud';
 
   @override
-  String get gitUiTheDestinationExistedBeforeThisAttempt =>
-      'Sihtpunkt oli olemas enne seda katset:';
+  String get gitUiTheDestinationExistedBeforeThisAttempt => 'Sihtpunkt oli olemas enne seda katset:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
-      'Kataloog jääb ülevaatuseks, vaata see üle enne kloonimiskatset.';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => 'Kataloog jääb ülevaatuseks, vaata see üle enne kloonimiskatset.';
 
   @override
   String get gitUiNoDestinationDirectoryRemains => 'Sihtkataloogi ei ole veel.';
@@ -7454,12 +6884,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiUseUpstreamAsNewBase => 'Kasutatakse uue alusena ülesvoolu';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
-      'Valib õige haru, sildi või sooritab toimingu logist.';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog => 'Valib õige haru, sildi või sooritab toimingu logist.';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
-      'Haruploki esimene allesjäetav sissekanne ei saa olla squash ega fixup: sellele ei eelne sihtsissekannet.';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => 'Haruploki esimene allesjäetav sissekanne ei saa olla squash ega fixup: sellele ei eelne sihtsissekannet.';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -7467,16 +6895,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiRewordWillRequestANewMessage =>
-      '[Märkus nõuab uut sõnumit]\n';
+  String get gitUiRewordWillRequestANewMessage => '[Märkus nõuab uut sõnumit]\n';
 
   @override
   String get gitUiPlannedCommitMessages => 'Kavandatavad sõnumid';
 
   @override
-  String
-  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
-      'Originaal/kombineeritud teate eelvaatlus · Git soovib viimast ümbersõnastamist/lükkamist';
+  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => 'Originaal/kombineeritud teate eelvaatlus · Git soovib viimast ümbersõnastamist/lükkamist';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -7492,9 +6917,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiDetachedHEAD2 => 'Lahutatud HEAD';
 
   @override
-  String
-  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
-      'Ümberpaigutamine muudab sissekannete identiteeti. Kaugharude jälgimisandmed ei tõesta, et ajalugu pole kunagi avaldatud.';
+  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => 'Ümberpaigutamine muudab sissekannete identiteeti. Kaugharude jälgimisandmed ei tõesta, et ajalugu pole kunagi avaldatud.';
 
   @override
   String get gitUiIncludeRootCommits => 'Kaasa juursissekanded';
@@ -7520,14 +6943,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
-      'Kaasa arvatud kõik juured, mis on sellelt harult kättesaadavad.';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => 'Kaasa arvatud kõik juured, mis on sellelt harult kättesaadavad.';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
-    String boundary,
-    String base,
-  ) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
     return 'Sissekanded pärast $boundary rakendatakse uuesti alusele $base; piirsissekanne ise on välja jäetud.';
   }
 
@@ -7535,12 +6954,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRoot => 'Juur';
 
   @override
-  String get gitUiGitBranchLabelResetMergeStructure =>
-      'Tsirkooniumi haru/märgis/taastatud/ühendatud struktuur';
+  String get gitUiGitBranchLabelResetMergeStructure => 'Tsirkooniumi haru/märgis/taastatud/ühendatud struktuur';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
-      'Valige selgesõnaline vana piir või juurrežiim, seejärel valmistage ette plaan.';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => 'Valige selgesõnaline vana piir või juurrežiim, seejärel valmistage ette plaan.';
 
   @override
   String get gitUiMoveUp => 'Liiguta üles';
@@ -7557,16 +6974,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectACommitForDetailsAndChangedFiles =>
-      'Üksikasjade ja muudetud failide jaoks kohustuse valimine';
+  String get gitUiSelectACommitForDetailsAndChangedFiles => 'Üksikasjade ja muudetud failide jaoks kohustuse valimine';
 
   @override
-  String get gitUiPreviewCombinedCommitMessages =>
-      'Eelvaatlus ühendatud kirjad...';
+  String get gitUiPreviewCombinedCommitMessages => 'Eelvaatlus ühendatud kirjad...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
-      'Alt+↑/↓ liigutab valitud toimingut. Seotud haruviiteid automaatselt ei uuendata.';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt+↑/↓ liigutab valitud toimingut. Seotud haruviiteid automaatselt ei uuendata.';
 
   @override
   String get gitUiCancelPlan => 'Tühista plaan';
@@ -7575,10 +6989,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiStartReviewedRebase => 'Kas alustada ülevaadatud rebase’i?';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
     return 'Kirjuta $arg0 planeeritud kohustub $arg1. Visatud kohustused jäävad nähtavalt märgitud selles plaanis kuni sa alustad.';
   }
 
@@ -7589,53 +7000,39 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiNoContinuingGitOperation => 'Ei jätkata žit- toimingut';
 
   @override
-  String get gitUiStoppedForEditingAmend =>
-      ' · peatatud redigeerimiseks/muutmiseks';
+  String get gitUiStoppedForEditingAmend => ' · peatatud redigeerimiseks/muutmiseks';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
-      'Need on ühendamata indeksikirjed, võimalik, et ka varurakendusest. Gitil pole enam midagi varuda või katkestada käsku.';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => 'Need on ühendamata indeksikirjed, võimalik, et ka varurakendusest. Gitil pole enam midagi varuda või katkestada käsku.';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
-      'Redigeeri töötavaid faile, lava ja muuda aktiivseid kohustusi, seejärel jätka selle baasiga.';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => 'Redigeeri töötavaid faile, lava ja muuda aktiivseid kohustusi, seejärel jätka selle baasiga.';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
     return '$arg0$arg1 · ühendamata indeksiastmed $arg2';
   }
 
   @override
-  String get gitUiTheIndexHasNoUnresolvedEntries =>
-      'Indeksil pole lahendamata kirjeid.';
+  String get gitUiTheIndexHasNoUnresolvedEntries => 'Indeksil pole lahendamata kirjeid.';
 
   @override
-  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
-      'Praeguse kohustuse säilitamine tühja kohustusena';
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => 'Praeguse kohustuse säilitamine tühja kohustusena';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
-      'Tegelikul indeksil ei ole astmelisi muudatusi. Loo selgesõnaline tühi kohustus, seejärel jätka järjestuse kasutamist, kui see jääb aktiivseks.';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => 'Tegelikul indeksil ei ole astmelisi muudatusi. Loo selgesõnaline tühi kohustus, seejärel jätka järjestuse kasutamist, kui see jääb aktiivseks.';
 
   @override
   String get gitUiKeepEmptyCommit => 'Hoidke tühi pühendus...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
-      'Git proovib naasta toimingu alguspunkti. Varasema indeksisse lisamata, jälgimata ja salvestamata sisu taastamine pole tagatud.';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'Git proovib naasta toimingu alguspunkti. Varasema indeksisse lisamata, jälgimata ja salvestamata sisu taastamine pole tagatud.';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
-      'Jäta praegune kohustus vahele ja jätka järgmise plaaniga.';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => 'Jäta praegune kohustus vahele ja jätka järgmise plaaniga.';
 
   @override
-  String
-  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
-      'Unusta see operatsioon, mille käigus säilitatakse aktiivsed failid ja indeks.';
+  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => 'Unusta see operatsioon, mille käigus säilitatakse aktiivsed failid ja indeks.';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -7643,16 +7040,13 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiReloadConflictVersions =>
-      'Kas laadida konflikti versioonid uuesti?';
+  String get gitUiReloadConflictVersions => 'Kas laadida konflikti versioonid uuesti?';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
-      'Asendab salvestamata tulemuse projekti aktiivse tööfailiga. Salvestatud töösisu säilitatakse.';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => 'Asendab salvestamata tulemuse projekti aktiivse tööfailiga. Salvestatud töösisu säilitatakse.';
 
   @override
-  String get gitUiLoadingConflictVersions =>
-      'Konfliktiversioonide laadimine...';
+  String get gitUiLoadingConflictVersions => 'Konfliktiversioonide laadimine...';
 
   @override
   String get gitUiLoadingConflict => 'Konflikti laadimine';
@@ -7664,12 +7058,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiBaseRight => 'Baas → paremale';
 
   @override
-  String get gitUiNoBaseEntryForThisConflict =>
-      'Konflikti baassissekanne puudub';
+  String get gitUiNoBaseEntryForThisConflict => 'Konflikti baassissekanne puudub';
 
   @override
-  String get gitUiAcceptEntireLeftFile =>
-      'Aktsepteeritakse kogu vasakut faili...';
+  String get gitUiAcceptEntireLeftFile => 'Aktsepteeritakse kogu vasakut faili...';
 
   @override
   String get gitUiAcceptEntireRightFile => 'Võta vastu kogu parempoolne fail…';
@@ -7684,18 +7076,12 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiManualResolution => 'Käsitsi eraldusvõime';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
     return '$arg0/$arg1 · $arg2 review';
   }
 
   @override
-  String
-  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
-      'Allika joondamine ületas teksti võrdluspiiri; lähtepaneelid on saadaval käsitsi läbivaatamiseks.';
+  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => 'Allika joondamine ületas teksti võrdluspiiri; lähtepaneelid on saadaval käsitsi läbivaatamiseks.';
 
   @override
   String get gitUiAcceptLeftRegion => 'Vasakpoolne piirkond';
@@ -7704,23 +7090,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiAcceptRightRegion => 'Nõustu õige piirkonnaga';
 
   @override
-  String get gitUiKeepManualResultForRegion =>
-      'Säilitada piirkonna käsitsi saadud tulemus';
+  String get gitUiKeepManualResultForRegion => 'Säilitada piirkonna käsitsi saadud tulemus';
 
   @override
-  String get gitUiApplyGitSNonConflictingChanges =>
-      'Kas rakendada Git\'si mittekonflikte?';
+  String get gitUiApplyGitSNonConflictingChanges => 'Kas rakendada Git\'si mittekonflikte?';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
-      'Asendab aktiivse tulemuse projekti Git\' s ühendamise eelvaatlusega. See jätab salvestamata käsitsi salvestamata tulemuse redigeerimise. Tööfaili ei muudeta kuni Salvesta.';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => 'Asendab aktiivse tulemuse projekti Git\' s ühendamise eelvaatlusega. See jätab salvestamata käsitsi salvestamata tulemuse redigeerimise. Tööfaili ei muudeta kuni Salvesta.';
 
   @override
   String get gitUiUseMergePreview => 'Ühendamise eelvaatluse kasutamine';
 
   @override
-  String get gitUiApplyNonConflictingChanges =>
-      'Rakenda mittekonfliktid muudatused...';
+  String get gitUiApplyNonConflictingChanges => 'Rakenda mittekonfliktid muudatused...';
 
   @override
   String get gitUiLeftSource => 'Vasak allikas';
@@ -7738,41 +7120,30 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiStage3 => 'etapp';
 
   @override
-  String
-  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
-      'Konfliktide versioonid ei ole kättesaadavad. Värskenda nende praeguse oleku läbivaatamiseks.';
+  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => 'Konfliktide versioonid ei ole kättesaadavad. Värskenda nende praeguse oleku läbivaatamiseks.';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
-      'Tulemus salvestatud kettale. Indeks määrab ikka veel, kas see fail on lahendatud.';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => 'Tulemus salvestatud kettale. Indeks määrab ikka veel, kas see fail on lahendatud.';
 
   @override
   String get gitUiSaveResultDraft => 'Salvesta tulemuse mustand';
 
   @override
-  String get gitUiApplyResultAndStageResolution =>
-      'Rakenda tulemus ja lisa lahendus indeksisse';
+  String get gitUiApplyResultAndStageResolution => 'Rakenda tulemus ja lisa lahendus indeksisse';
 
   @override
-  String get gitUiResultEditableUTF8WorkingContent =>
-      'Tulemus · redigeeritav UTF-8 töötav sisu';
+  String get gitUiResultEditableUTF8WorkingContent => 'Tulemus · redigeeritav UTF-8 töötav sisu';
 
   @override
   String get gitUiEditableConflictResult => 'Redigeeritava konflikti tulemus';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return 'Vasakul: $arg0 · $arg1\nParemal: $arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
-      'Sisu, kustutamise või alammooduli valimine kohustab selgesõnaliselt. Kahekomponentseid andmeid ei dekodeerita redigeeritava tekstina.';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => 'Sisu, kustutamise või alammooduli valimine kohustab selgesõnaliselt. Kahekomponentseid andmeid ei dekodeerita redigeeritava tekstina.';
 
   @override
   String get gitUiUseEntireLeftContent => 'Kasuta kogu vasakult sisu...';
@@ -7787,8 +7158,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiResolvedSubmoduleCommit => 'Lahendatud alammoodul';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
-      'See gitlinki täpne etapp vanemas. See ei märgi allmoodulit ega soorita alammoodulit.';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => 'See gitlinki täpne etapp vanemas. See ei märgi allmoodulit ega soorita alammoodulit.';
 
   @override
   String get gitUiSetResolvedGitlink => 'Määra lahendatud gitlink...';
@@ -7799,8 +7169,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
-      'Tulemus muudeti. Jäta käsitsi tulemus alles või vali mõni muu muutmata piirkond.';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => 'Tulemus muudeti. Jäta käsitsi tulemus alles või vali mõni muu muutmata piirkond.';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -7808,13 +7177,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
-      'Valitud gitlinki saatmise etapp vanemas. Alammooduli väljavõtet ja selle faile ei asendata.';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => 'Valitud gitlinki saatmise etapp vanemas. Alammooduli väljavõtet ja selle faile ei asendata.';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
-    String arg0,
-  ) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
     return 'Asendab kogu töötee $arg0 ja lõpetab otsuse. Praegune töösisu ja salvestamata tulemuse eelnõu jäetakse kõrvale.';
   }
 
@@ -7822,14 +7188,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiApplyEntireFileDecision => 'Rakenda kogu faili otsus';
 
   @override
-  String get gitUiStageThisConflictResolution =>
-      'Lavastada see konflikti lahendamine?';
+  String get gitUiStageThisConflictResolution => 'Lavastada see konflikti lahendamine?';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
     return 'Kasuta kogu redigeeritud Tulemust $arg0. Git salvestab tee, mis on lahendatud, kui see on lavastatud. Vaata kõigepealt üle kogu soovitud sisu. $arg1';
   }
 
@@ -7837,16 +7199,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiApplyAndStage => 'Rakenda ja lisa indeksisse';
 
   @override
-  String get gitUiReviewResultTextFormatChanges =>
-      'Tulemusteksti vormingu muutmine';
+  String get gitUiReviewResultTextFormatChanges => 'Tulemusteksti vormingu muutmine';
 
   @override
   String get gitUiSaveReviewedResult => 'Salvesta läbi vaadatud tulemus';
 
   @override
-  String
-  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
-      'Kohalik Git tabeli ligipääs ei ole kättesaadav. Proovi pärast rakenduse taasühendamist uuesti.';
+  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => 'Kohalik Git tabeli ligipääs ei ole kättesaadav. Proovi pärast rakenduse taasühendamist uuesti.';
 
   @override
   String get gitUiSans => 'SansCity in Newfoundland Canada';
@@ -7899,14 +7258,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
-      'Läbivaadatud hoidla on ainult lugemiseks selle operatsiooni jaoks. Ajalugu ja sisu kontroll on veel saadaval.';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => 'Läbivaadatud hoidla on ainult lugemiseks selle operatsiooni jaoks. Ajalugu ja sisu kontroll on veel saadaval.';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
     return 'Git tagastatud $arg0. Rakendus ei suutnud oma dokumente värskendada: $arg1';
   }
 
@@ -7917,8 +7272,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCurrentBranch => 'Praegune haru';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
-      'Ei sobi harusid ega silte. Vali sisselogimine.';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => 'Ei sobi harusid ega silte. Vali sisselogimine.';
 
   @override
   String get gitUiBranches => 'Harud';
@@ -7966,8 +7320,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRebase2 => 'Paiguta ümber…';
 
   @override
-  String get gitUiConflictsAndCurrentOperation =>
-      'Konfliktid ja praegune operatsioon...';
+  String get gitUiConflictsAndCurrentOperation => 'Konfliktid ja praegune operatsioon...';
 
   @override
   String get gitUiStashes2 => 'Peidetud muudatused…';
@@ -7991,8 +7344,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiWaitingForRepositoryStatus => 'Hoidla oleku ootamine';
 
   @override
-  String get gitUiRepositoryStatusUnavailableRefresh =>
-      'Hoidla olek ei ole kättesaadav; värskenda';
+  String get gitUiRepositoryStatusUnavailableRefresh => 'Hoidla olek ei ole kättesaadav; värskenda';
 
   @override
   String get gitUiManageRemotes2 => 'Halda kaughoidlaid';
@@ -8033,62 +7385,46 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
-      'Hoidla muutus. Värskenda ja vaadata enne proovimist uuesti.';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => 'Hoidla muutus. Värskenda ja vaadata enne proovimist uuesti.';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
-      'Veel üks toiming hoiab hoidlat või indeksilukku. Oota, siis uuenda.';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => 'Veel üks toiming hoiab hoidlat või indeksilukku. Oota, siis uuenda.';
 
   @override
-  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
-      'Selle operatsiooni jaoks on vajalik usaldus.';
+  String get gitUiRepositoryTrustIsRequiredForThisOperation => 'Selle operatsiooni jaoks on vajalik usaldus.';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
-      'Git teenus lahti ühendatud. Ühendada ja lepitada hoidla.';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'Git teenus lahti ühendatud. Ühendada ja lepitada hoidla.';
 
   @override
-  String
-  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
-      'Paigaldatud git käivitatav ei saa seda toimingut toetada. Vaata selle tööaega puudutavaid nõudeid allpool.';
+  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => 'Paigaldatud git käivitatav ei saa seda toimingut toetada. Vaata selle tööaega puudutavaid nõudeid allpool.';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
-      'See hoidla on ainult lugemiseks soovitud toimingu jaoks. Ülevaatamine ja ajalugu on endiselt saadaval.';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => 'See hoidla on ainult lugemiseks soovitud toimingu jaoks. Ülevaatamine ja ajalugu on endiselt saadaval.';
 
   @override
-  String
-  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
-      'Operatsioon vajab leppimist. Enne selle kordamist vaata üle saadud hoidla või kaugolek.';
+  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => 'Operatsioon vajab leppimist. Enne selle kordamist vaata üle saadud hoidla või kaugolek.';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
-      'Git autentimine nurjus. Kontrolli abilist või ava seadistatud võtmerõngas.';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'Git autentimine nurjus. Kontrolli abilist või ava seadistatud võtmerõngas.';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
-      'SSH masina kontroll nurjus. Kontrolli masina identiteeti oma seadistatud SSH tööriistade kaudu.';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'SSH masina kontroll nurjus. Kontrolli masina identiteeti oma seadistatud SSH tööriistade kaudu.';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
-      'Kirjutamine nurjus või tühistati. Kontrolli signeerimisklahvi, agenti ja seadistatud signeerimisvahendit.';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => 'Kirjutamine nurjus või tühistati. Kontrolli signeerimisklahvi, agenti ja seadistatud signeerimisvahendit.';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
-      'Määrab hoidla autori nime ja e- posti, seejärel naaseb salvestatud sõnumi projekti.';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => 'Määrab hoidla autori nime ja e- posti, seejärel naaseb salvestatud sõnumi projekti.';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
-      'Git tagasi uuendatud värskendus. Värskenda ja vaata tegelik sihtkoht enne proovimist uuesti.';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'Git tagasi uuendatud värskendus. Värskenda ja vaata tegelik sihtkoht enne proovimist uuesti.';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
-      'Töötamine või etapiline muudatused vältida seda operatsiooni. Review, kohustuse või selgesõnaliselt peidab neid.';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => 'Töötamine või etapiline muudatused vältida seda operatsiooni. Review, kohustuse või selgesõnaliselt peidab neid.';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
-      'Nõutav git objekt ei ole saadaval. Vaadata üle madalad või osalise hoidla piirid ja tõmmata selgesõnaliselt, kui vaja.';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => 'Nõutav git objekt ei ole saadaval. Vaadata üle madalad või osalise hoidla piirid ja tõmmata selgesõnaliselt, kui vaja.';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -8113,8 +7449,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
-      'Loob kohaliku haru ilma seda kontrollimata.';
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut => 'Loob kohaliku haru ilma seda kontrollimata.';
 
   @override
   String gitUiTagArg0(String arg0) {
@@ -8141,8 +7476,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiEnterAFullValidObjectID =>
-      'Sisesta täielik kehtiv objekti ID.';
+  String get gitUiEnterAFullValidObjectID => 'Sisesta täielik kehtiv objekti ID.';
 
   @override
   String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
@@ -8155,26 +7489,19 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
-      'Liigutab HEAD-i/praegust haru. Reflog ei taasta suvalist jälgimata või salvestamata sisu.';
+  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => 'Liigutab HEAD-i/praegust haru. Reflog ei taasta suvalist jälgimata või salvestamata sisu.';
 
   @override
-  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
-      'Liiguta HEAD-i; säilita indeks ja tööfailid.';
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles => 'Liiguta HEAD-i; säilita indeks ja tööfailid.';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
-      'Liiguta HEAD-i ja asenda indeks; säilita tööfailid.';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => 'Liiguta HEAD-i ja asenda indeks; säilita tööfailid.';
 
   @override
-  String
-  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
-      'Asenda HEAD, indeks ja jälgitavad tööfailid; ette jäävad jälgimata failid võidakse üle kirjutada.';
+  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => 'Asenda HEAD, indeks ja jälgitavad tööfailid; ette jäävad jälgimata failid võidakse üle kirjutada.';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
-      'Asenda HEAD, indeks ja sobivad failid; keeldu, kui kohalikud muudatused läheksid kaotsi.';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => 'Asenda HEAD, indeks ja sobivad failid; keeldu, kui kohalikud muudatused läheksid kaotsi.';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -8182,10 +7509,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
     return '$arg0 → $arg1 Enne kasutamist vaadake üle valitud režiimi mõjud.';
   }
 
@@ -8221,8 +7545,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiTagMessage => 'Sildisõnum';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
-      'Loob sildi kohalikult. Avaldab valitud sildid selgesõnaliselt Push review\' s.';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => 'Loob sildi kohalikult. Avaldab valitud sildid selgesõnaliselt Push review\' s.';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -8233,16 +7556,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiNextChangedFilePage => 'Järgmine muudetud faili lehekülg';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
-      'Ainult lugemisega hoidla pilt. Faili avamine ei kontrolli kunagi seda versiooni.';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => 'Ainult lugemisega hoidla pilt. Faili avamine ei kontrolli kunagi seda versiooni.';
 
   @override
-  String get gitUiOpenReadOnlyVersion =>
-      'Ava ainult lugemiseks mõeldud versioon';
+  String get gitUiOpenReadOnlyVersion => 'Ava ainult lugemiseks mõeldud versioon';
 
   @override
-  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
-      'Taasta see asukoht... · Hoidla oleku ootamine';
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus => 'Taasta see asukoht... · Hoidla oleku ootamine';
 
   @override
   String get gitUiRestoreThisPath => 'Taasta see tee...';
@@ -8258,9 +7578,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
-    String arg0,
-  ) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
     return 'Asendab selle töötee versiooniga $arg0. Säilitatakse olemasolev astmeline sisu.';
   }
 
@@ -8284,8 +7602,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiOpenReadOnlyHistoricalFile =>
-      'Ava ainult lugemisega seotud ajalooline fail';
+  String get gitUiOpenReadOnlyHistoricalFile => 'Ava ainult lugemisega seotud ajalooline fail';
 
   @override
   String get gitUiCompareToCurrentFile => 'Võrreldes aktiivse failiga';
@@ -8307,12 +7624,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiBoundary => ' · Piir';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0  $arg1\nAlgne rida $arg2$arg3';
   }
 
@@ -8343,24 +7655,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiRemoveFromReviewedSequence => 'Eemalda läbivaadatud jadast';
 
   @override
-  String get gitUiApplyChangesWithoutCreatingCommits =>
-      'Muudatuste rakendamine ilma kohustusteta';
+  String get gitUiApplyChangesWithoutCreatingCommits => 'Muudatuste rakendamine ilma kohustusteta';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
-      'Kasuta see selgesõnaline põhiliini vanem ühendamisel';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits => 'Kasuta see selgesõnaline põhiliini vanem ühendamisel';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
-      'Tühi või juba rakendatud kohustused võivad peatada Git selgesõnaline vahelejätmine või jätkamise otsus.';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => 'Tühi või juba rakendatud kohustused võivad peatada Git selgesõnaline vahelejätmine või jätkamise otsus.';
 
   @override
-  String get gitUiRevertInReviewedOrder =>
-      'Taaskäivita uuesti läbi vaadatud järjekorras';
+  String get gitUiRevertInReviewedOrder => 'Taaskäivita uuesti läbi vaadatud järjekorras';
 
   @override
-  String get gitUiCherryPickInReviewedOrder =>
-      'Kirsiork läbi vaadatud järjekorras';
+  String get gitUiCherryPickInReviewedOrder => 'Kirsiork läbi vaadatud järjekorras';
 
   @override
   String get gitUiReturnToFiles => 'Tagastamine failidesse';
@@ -8544,11 +7851,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String gitUiRebaseStepSemantics(
-    String position,
-    String action,
-    String subject,
-  ) {
+  String gitUiRebaseStepSemantics(String position, String action, String subject) {
     return '$position, $action, $subject';
   }
 
@@ -8559,12 +7862,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiUtf8NoBom => 'UTF-8 ilma baidimärgita (BOM)';
 
   @override
-  String get gitUiAddsBom =>
-      'See muudatus lisab faili algusesse UTF-8 baidijärjekorra märgi (BOM).';
+  String get gitUiAddsBom => 'See muudatus lisab faili algusesse UTF-8 baidijärjekorra märgi (BOM).';
 
   @override
-  String get gitUiRemovesBom =>
-      'Redigeerimine eemaldab faili algusest UTF- 8 baidijärjekorra märgi (BOM).';
+  String get gitUiRemovesBom => 'Redigeerimine eemaldab faili algusest UTF- 8 baidijärjekorra märgi (BOM).';
 
   @override
   String get gitUiNoLineTerminators => 'Reaterminaatorid puuduvad';
@@ -8590,8 +7891,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiGitFailure =>
-      'Kihvt operatsioon nurjus. Vaata allpool esitatud diagnostikat.';
+  String get gitUiGitFailure => 'Kihvt operatsioon nurjus. Vaata allpool esitatud diagnostikat.';
 
   @override
   String get gitUiAbortInline => 'Katkesta';
@@ -8642,8 +7942,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
-      'Git toimingud kehtivad kogu selle hoidla ja võib käivitada oma konksud, filtrid, voli- ja signeerimistööriistad.';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'Git toimingud kehtivad kogu selle hoidla ja võib käivitada oma konksud, filtrid, voli- ja signeerimistööriistad.';
 
   @override
   String get gitHostContentUnavailable => 'Sisu ei ole kättesaadav';
@@ -8702,8 +8001,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiAddAddConflict => 'Lisatud mõlemale poolele';
 
   @override
-  String get gitUiModifyDeleteConflict =>
-      'Muudetud/välja jäetud või ümber nimetatud/välja jäetud';
+  String get gitUiModifyDeleteConflict => 'Muudetud/välja jäetud või ümber nimetatud/välja jäetud';
 
   @override
   String gitUiConflictIdentity(String path, String kind) {
@@ -8711,23 +8009,19 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiDiscardUnsavedIndexDraft =>
-      'Kas hüljata salvestamata indeksi mustand?';
+  String get gitUiDiscardUnsavedIndexDraft => 'Kas hüljata salvestamata indeksi mustand?';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
-      'Indeksiredaktori sulgemine hülgab ainult selle mustandi. Indeks ja tööfail jäävad muutmata.';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => 'Indeksiredaktori sulgemine hülgab ainult selle mustandi. Indeks ja tööfail jäävad muutmata.';
 
   @override
   String get gitUiDiscardIndexDraft => 'Hülga indeksi mustand';
 
   @override
-  String get gitUiDiscardUnsavedConflictDraft =>
-      'Kas loobuda salvestamata konflikti tulemusest?';
+  String get gitUiDiscardUnsavedConflictDraft => 'Kas loobuda salvestamata konflikti tulemusest?';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
-      'Konfliktiredaktori sulgemisel hüljatakse ainult salvestamata tulemuse mustand. Salvestatud tööfaili sisu ja indeks ei muutu.';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => 'Konfliktiredaktori sulgemisel hüljatakse ainult salvestamata tulemuse mustand. Salvestatud tööfaili sisu ja indeks ei muutu.';
 
   @override
   String get gitUiDiscardConflictDraft => 'Hülga konflikti mustand';
@@ -8752,8 +8046,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiRevealRevisionWithoutFilters =>
-      'Näita revisjoni ilma filtriteta';
+  String get gitUiRevealRevisionWithoutFilters => 'Näita revisjoni ilma filtriteta';
 
   @override
   String get gitUiRestoreHistoryFilters => 'Taasta ajaloo filtrid';
@@ -8773,12 +8066,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiChangedLine => 'Muudetud rida';
 
   @override
-  String get gitUiCopyHeadRegionIntoIndexDraft =>
-      'Kopeeri HEAD-i piirkond indeksi mustandisse';
+  String get gitUiCopyHeadRegionIntoIndexDraft => 'Kopeeri HEAD-i piirkond indeksi mustandisse';
 
   @override
-  String get gitUiCopyWorkingRegionIntoIndexDraft =>
-      'Kopeeri tööfaili piirkond indeksi mustandisse';
+  String get gitUiCopyWorkingRegionIntoIndexDraft => 'Kopeeri tööfaili piirkond indeksi mustandisse';
 
   @override
   String get gitUiUpdatingConflictRegions => 'Konfliktipiirkondade uuendamine';
@@ -8795,24 +8086,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiIgnoreRightRegion => 'Eira parempoolset soovitust';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved =>
-      'Esitatud mustand kirjutati indeksisse. Uuem tekst on endiselt selles redaktoris. Enne selle rakendamist laadi praegused versioonid uuesti ja vaata üle.';
+  String get gitUiIndexAppliedNewerDraftPreserved => 'Esitatud mustand kirjutati indeksisse. Uuem tekst on endiselt selles redaktoris. Enne selle rakendamist laadi praegused versioonid uuesti ja vaata üle.';
 
   @override
-  String get gitUiNewerConflictDraftRetained =>
-      'Esitatud tulemus salvestati. Uuem tulemuse mustand on endiselt salvestamata.';
+  String get gitUiNewerConflictDraftRetained => 'Esitatud tulemus salvestati. Uuem tulemuse mustand on endiselt salvestamata.';
 
   @override
-  String get gitUiNoFileHistoryForThisPathAndRevision =>
-      'Selle tee ja revisjoni kohta pole failiajalugu.';
+  String get gitUiNoFileHistoryForThisPathAndRevision => 'Selle tee ja revisjoni kohta pole failiajalugu.';
 
   @override
-  String get gitUiReviewSavedIndexAndKeepDraft =>
-      'Vaata salvestatud indeks üle ja säilita mustand';
+  String get gitUiReviewSavedIndexAndKeepDraft => 'Vaata salvestatud indeks üle ja säilita mustand';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply =>
-      'Salvestatud indeks või selle allikad on muutunud. Uuem mustand säilitatakse; vaata need muudatused enne rakendamist eraldi üle.';
+  String get gitUiIndexSourcesChangedSinceApply => 'Salvestatud indeks või selle allikad on muutunud. Uuem mustand säilitatakse; vaata need muudatused enne rakendamist eraldi üle.';
 
   @override
   String get gitUiReviewSavedMessage => 'Vaata salvestatud sõnum üle';
@@ -8827,16 +8113,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiUseSavedMessage => 'Kasuta salvestatud sõnumit';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow =>
-      'Seda sõnumit muudeti teises aknas. Enne asendamist vaata salvestatud sõnum üle.';
+  String get gitUiCommitDraftChangedInAnotherWindow => 'Seda sõnumit muudeti teises aknas. Enne asendamist vaata salvestatud sõnum üle.';
 
   @override
-  String get gitUiDiscardUnsavedCommitMessages =>
-      'Kas loobuda salvestamata commit’i sõnumitest?';
+  String get gitUiDiscardUnsavedCommitMessages => 'Kas loobuda salvestamata commit’i sõnumitest?';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
-      'Sõnumid, mida ei saanud salvestada, on endiselt selles aknas. Nendest loobumine ei muuda salvestatud versioone.';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => 'Sõnumid, mida ei saanud salvestada, on endiselt selles aknas. Nendest loobumine ei muuda salvestatud versioone.';
 
   @override
   String get gitUiDiscardCommitMessages => 'Loobu sõnumitest';
@@ -8848,19 +8131,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiNoCommitsYet => 'Kinnitusi veel pole';
 
   @override
-  String get gitUiNativeMenuUnavailable =>
-      'Süsteemne menüüteenus pole saadaval. Proovi uuesti.';
+  String get gitUiNativeMenuUnavailable => 'Süsteemne menüüteenus pole saadaval. Proovi uuesti.';
 
   @override
-  String get gitWorkspaceRootRequired =>
-      'Git’i kasutamiseks selles tööruumis ava hoidla tööpuu juurkataloog.';
+  String get gitWorkspaceRootRequired => 'Git’i kasutamiseks selles tööruumis ava hoidla tööpuu juurkataloog.';
 
   @override
-  String gitLocalTrackingDescription(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
     return '$upstream · $ahead ees, $behind taga. Kohalikult teadaolev kaugharu jälgimisteave; mitte serveri reaalajas kontroll.';
   }
 
@@ -8874,8 +8151,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiUnstageSelectedLines => 'Eemalda valitud read indeksist';
 
   @override
-  String get gitUiEditIndexInThreeWayView =>
-      'Muuda indeksit kolme poole vaates…';
+  String get gitUiEditIndexInThreeWayView => 'Muuda indeksit kolme poole vaates…';
 
   @override
   String get gitUiViewCommitDetails => 'Vaata kinnituse üksikasju…';

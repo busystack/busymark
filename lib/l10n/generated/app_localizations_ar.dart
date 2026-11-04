@@ -14,122 +14,94 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesNewFromRetainedText => 'ملاحظة جديدة من النص المحتفَظ به';
 
   @override
-  String get notesAccountThrottled =>
-      'طلب Nextcloud التوقف مؤقتًا. انتظر قبل بدء تسجيل الدخول مجددًا.';
+  String get notesAccountThrottled => 'طلب Nextcloud التوقف مؤقتًا. انتظر قبل بدء تسجيل الدخول مجددًا.';
 
   @override
   String get notesSettingsRefreshing => 'جارٍ تحديث Notes بعد تأكيد الإعدادات';
 
   @override
-  String get notesExportOperationFailed =>
-      'فشل التصدير قبل النشر. تحقق من المصدر والوجهة ثم أعد التصدير.';
+  String get notesExportOperationFailed => 'فشل التصدير قبل النشر. تحقق من المصدر والوجهة ثم أعد التصدير.';
 
   @override
-  String get notesRecoveryCreatedNotOpened =>
-      'حُفظت الملاحظة المستردة لكن تعذر فتحها. عالج تعديلات المحرر أو الخصائص المعلقة ثم افتح هذه الملاحظة الموجودة.';
+  String get notesRecoveryCreatedNotOpened => 'حُفظت الملاحظة المستردة لكن تعذر فتحها. عالج تعديلات المحرر أو الخصائص المعلقة ثم افتح هذه الملاحظة الموجودة.';
 
   @override
-  String get notesSettingsPendingNotes =>
-      'تمنع الملاحظات المعلقة أو التعارضات أو عمليات الإنشاء غير المؤكدة هذا التغيير. زامنها أو راجعها في Notes ثم أعد حفظ مسودة الإعدادات المحفوظة.';
+  String get notesSettingsPendingNotes => 'تمنع الملاحظات المعلقة أو التعارضات أو عمليات الإنشاء غير المؤكدة هذا التغيير. زامنها أو راجعها في Notes ثم أعد حفظ مسودة الإعدادات المحفوظة.';
 
   @override
-  String get notesSettingsPendingAttachments =>
-      'تمنع عمليات المرفقات المعلقة هذا التغيير. راجع المرفقات في Notes ثم أعد حفظ مسودة الإعدادات المحفوظة.';
+  String get notesSettingsPendingAttachments => 'تمنع عمليات المرفقات المعلقة هذا التغيير. راجع المرفقات في Notes ثم أعد حفظ مسودة الإعدادات المحفوظة.';
 
   @override
-  String get notesAccountServerAddress =>
-      'استخدم عنوان HTTPS الأساسي لخادم Nextcloud وأعد تسجيل الدخول. تعذر التحقق من العنوان أو إعادة التوجيه.';
+  String get notesAccountServerAddress => 'استخدم عنوان HTTPS الأساسي لخادم Nextcloud وأعد تسجيل الدخول. تعذر التحقق من العنوان أو إعادة التوجيه.';
 
   @override
-  String get notesAccountUnsupported =>
-      'Notes غير متاح أو واجهته غير مدعومة. فعّل Nextcloud Notes بواجهة API ذات الإصدار الرئيسي 1 والفرعي 4 أو أحدث.';
+  String get notesAccountUnsupported => 'Notes غير متاح أو واجهته غير مدعومة. فعّل Nextcloud Notes بواجهة API ذات الإصدار الرئيسي 1 والفرعي 4 أو أحدث.';
 
   @override
-  String get notesAccountAuthorizeAgain =>
-      'رفض Nextcloud بيانات الاعتماد. أعد تفويض الحساب أو الاتصال به.';
+  String get notesAccountAuthorizeAgain => 'رفض Nextcloud بيانات الاعتماد. أعد تفويض الحساب أو الاتصال به.';
 
   @override
-  String get notesAccountCheckForbidden =>
-      'رفض Nextcloud فحص إمكانات Notes. اطلب من مسؤول الخادم السماح به ثم أعد المحاولة.';
+  String get notesAccountCheckForbidden => 'رفض Nextcloud فحص إمكانات Notes. اطلب من مسؤول الخادم السماح به ثم أعد المحاولة.';
 
   @override
-  String get notesAccountMalformed =>
-      'تعذر التحقق من استجابة Nextcloud. تحقق من تثبيت الخادم ثم أعد تسجيل الدخول.';
+  String get notesAccountMalformed => 'تعذر التحقق من استجابة Nextcloud. تحقق من تثبيت الخادم ثم أعد تسجيل الدخول.';
 
   @override
-  String get notesAccountTimedOut =>
-      'انتهت مهلة تسجيل الدخول. ابدأ مجددًا وأكمل التفويض في المتصفح.';
+  String get notesAccountTimedOut => 'انتهت مهلة تسجيل الدخول. ابدأ مجددًا وأكمل التفويض في المتصفح.';
 
   @override
-  String get notesAccountBrowserUnavailable =>
-      'تعذر فتح متصفح النظام. تحقق من المتصفح الافتراضي ثم أعد تسجيل الدخول.';
+  String get notesAccountBrowserUnavailable => 'تعذر فتح متصفح النظام. تحقق من المتصفح الافتراضي ثم أعد تسجيل الدخول.';
 
   @override
-  String get notesAccountNetwork =>
-      'تعذر الوصول إلى Nextcloud. تحقق من الاتصال والخادم ثم أعد تسجيل الدخول.';
+  String get notesAccountNetwork => 'تعذر الوصول إلى Nextcloud. تحقق من الاتصال والخادم ثم أعد تسجيل الدخول.';
 
   @override
-  String get notesAccountRejected =>
-      'رفض Nextcloud طلب الإمكانات. تحقق من صلاحية الوصول مع المسؤول ثم أعد المحاولة.';
+  String get notesAccountRejected => 'رفض Nextcloud طلب الإمكانات. تحقق من صلاحية الوصول مع المسؤول ثم أعد المحاولة.';
 
   @override
-  String get notesAccountFailed =>
-      'تعذر إكمال إعداد الحساب. أعد محاولة تسجيل الدخول.';
+  String get notesAccountFailed => 'تعذر إكمال إعداد الحساب. أعد محاولة تسجيل الدخول.';
 
   @override
-  String get notesTransferSourceChanged =>
-      'تغير المصدر بعد المراجعة. راجع الملف الحالي أو التقط نسخة جديدة قبل إعادة المحاولة.';
+  String get notesTransferSourceChanged => 'تغير المصدر بعد المراجعة. راجع الملف الحالي أو التقط نسخة جديدة قبل إعادة المحاولة.';
 
   @override
-  String get notesTransferUnreadable =>
-      'تعذرت قراءة المصدر. تحقق من الوصول إلى الملف أو المجلد ثم راجعه مجددًا.';
+  String get notesTransferUnreadable => 'تعذرت قراءة المصدر. تحقق من الوصول إلى الملف أو المجلد ثم راجعه مجددًا.';
 
   @override
-  String get notesTransferInvalidSnapshot =>
-      'النسخة غير صالحة أو غير مدعومة. اختر نسخة BusyMark Notes صالحة أو مصدر Markdown.';
+  String get notesTransferInvalidSnapshot => 'النسخة غير صالحة أو غير مدعومة. اختر نسخة BusyMark Notes صالحة أو مصدر Markdown.';
 
   @override
-  String get notesTransferMediaLimit =>
-      'تتجاوز الوسائط حد الاستيراد. قلل وسائط العنصر المتأثر ثم راجعه مجددًا.';
+  String get notesTransferMediaLimit => 'تتجاوز الوسائط حد الاستيراد. قلل وسائط العنصر المتأثر ثم راجعه مجددًا.';
 
   @override
-  String get notesTransferUnsafeSource =>
-      'يحتوي المصدر على مسار غير آمن. اختر ملفات داخل مجلد المصدر ثم راجعها مجددًا.';
+  String get notesTransferUnsafeSource => 'يحتوي المصدر على مسار غير آمن. اختر ملفات داخل مجلد المصدر ثم راجعها مجددًا.';
 
   @override
-  String get notesTransferDestination =>
-      'تعذرت كتابة التصدير. تحقق من الوصول والمساحة المتاحة في الوجهة ثم أعد التصدير.';
+  String get notesTransferDestination => 'تعذرت كتابة التصدير. تحقق من الوصول والمساحة المتاحة في الوجهة ثم أعد التصدير.';
 
   @override
-  String get notesTransferOperationFailed =>
-      'تعذر إكمال النقل. راجع العناصر المتأثرة وأعد المحاولة. تبقى العناصر المستوردة سابقًا محفوظة.';
+  String get notesTransferOperationFailed => 'تعذر إكمال النقل. راجع العناصر المتأثرة وأعد المحاولة. تبقى العناصر المستوردة سابقًا محفوظة.';
 
   @override
-  String get notesExportPublishedWithOmissions =>
-      'التصدير متاح مع عناصر مستثناة';
+  String get notesExportPublishedWithOmissions => 'التصدير متاح مع عناصر مستثناة';
 
   @override
   String get notesBatchUnchanged => 'القيم المطلوبة مضبوطة بالفعل.';
 
   @override
-  String get notesBatchReadOnly =>
-      'هذه الملاحظة للقراءة فقط. لا يمكن تغيير الخصائص المحمية؛ ما زال تغيير المفضلة مسموحًا.';
+  String get notesBatchReadOnly => 'هذه الملاحظة للقراءة فقط. لا يمكن تغيير الخصائص المحمية؛ ما زال تغيير المفضلة مسموحًا.';
 
   @override
-  String get notesBatchReviewChanged =>
-      'تغيرت هذه الملاحظة بعد المراجعة. راجع حالتها الحالية قبل تطبيق الإجراء مجددًا.';
+  String get notesBatchReviewChanged => 'تغيرت هذه الملاحظة بعد المراجعة. راجع حالتها الحالية قبل تطبيق الإجراء مجددًا.';
 
   @override
-  String get notesBatchMissing =>
-      'لم تعد هذه الملاحظة متاحة. حدّث القائمة وراجع العناصر المستهدفة مجددًا.';
+  String get notesBatchMissing => 'لم تعد هذه الملاحظة متاحة. حدّث القائمة وراجع العناصر المستهدفة مجددًا.';
 
   @override
-  String get notesBatchStorage =>
-      'فشل الحفظ المحلي. تحقق من التخزين وأعد محاولة هذا العنصر؛ تبقى العناصر الناجحة محفوظة.';
+  String get notesBatchStorage => 'فشل الحفظ المحلي. تحقق من التخزين وأعد محاولة هذا العنصر؛ تبقى العناصر الناجحة محفوظة.';
 
   @override
-  String get notesRemoteReviewChanged =>
-      'تغيرت ملاحظة الخادم. مسودة الدمج محفوظة. راجع المقارنة المحدثة واختر طريقة الحل مجددًا.';
+  String get notesRemoteReviewChanged => 'تغيرت ملاحظة الخادم. مسودة الدمج محفوظة. راجع المقارنة المحدثة واختر طريقة الحل مجددًا.';
 
   @override
   String get notesReviewRemote => 'راجعت إصدار الخادم الحالي';
@@ -144,8 +116,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsHeadingNotPublished => 'لا ينشرها هذا المنشئ.';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation =>
-      'لا ينشر الباني المثبّت عناوين النسخ في مواضيع Markdown. تُحفظ العلامات الحالية؛ افحصها في المصدر.';
+  String get wsMarkdownInstanceTitleLimitation => 'لا ينشر الباني المثبّت عناوين النسخ في مواضيع Markdown. تُحفظ العلامات الحالية؛ افحصها في المصدر.';
 
   @override
   String get wsTopicIdentity => 'معرّف الموضوع';
@@ -172,26 +143,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsSettingsPresent => 'توجد إعدادات مكتوبة';
 
   @override
-  String get wsTitleOverrideExplanation =>
-      'يتجاوز العنوان المنشور؛ يبقى نص العنوان كما هو.';
+  String get wsTitleOverrideExplanation => 'يتجاوز العنوان المنشور؛ يبقى نص العنوان كما هو.';
 
   @override
   String get wsIgnoreVariables => 'معاملة المتغيرات كنص حرفي';
 
   @override
-  String get wsIgnoreVariablesExplanation =>
-      'عند التفعيل، لا يُستبدل النص الذي يشبه المتغيرات.';
+  String get wsIgnoreVariablesExplanation => 'عند التفعيل، لا يُستبدل النص الذي يشبه المتغيرات.';
 
   @override
   String get wsInstanceSelection => 'نُسخ المساعدة';
 
   @override
-  String get wsInstanceExplanation =>
-      'اختر المخرجات بالأسماء أو المجموعات أو القوائم أو الاستثناءات أو التعبيرات.';
+  String get wsInstanceExplanation => 'اختر المخرجات بالأسماء أو المجموعات أو القوائم أو الاستثناءات أو التعبيرات.';
 
   @override
-  String get wsFilterExplanation =>
-      'يرشّح المحتوى المعاد استخدامه حسب المعايير؛ لا يختار نسخة مساعدة.';
+  String get wsFilterExplanation => 'يرشّح المحتوى المعاد استخدامه حسب المعايير؛ لا يختار نسخة مساعدة.';
 
   @override
   String get wsContextHelp => 'معرّف المساعدة السياقية';
@@ -209,23 +176,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsMissingTopicHeading => 'لا يوجد H1 للموضوع. أضفه في المصدر.';
 
   @override
-  String get wsMultipleTopicHeadings =>
-      'يحدّد أول H1 عنوان الموضوع. عناوين H1 اللاحقة مستقلة.';
+  String get wsMultipleTopicHeadings => 'يحدّد أول H1 عنوان الموضوع. عناوين H1 اللاحقة مستقلة.';
 
   @override
-  String get wsTopicIdentityMismatch =>
-      'يختلف id الجذر عن معرّف الموضوع المشتق من اسم الملف. استخدم إعادة تسمية ملف الموضوع أو افحص المصدر.';
+  String get wsTopicIdentityMismatch => 'يختلف id الجذر عن معرّف الموضوع المشتق من اسم الملف. استخدم إعادة تسمية ملف الموضوع أو افحص المصدر.';
 
   @override
-  String get wsUnsupportedProperties =>
-      'تُحفظ السمات غير المدعومة. افحصها في المصدر.';
+  String get wsUnsupportedProperties => 'تُحفظ السمات غير المدعومة. افحصها في المصدر.';
 
   @override
   String get wsGeneratedAnchor => 'مرساة مولّدة؛ إدخال قيمة ينشئ تجاوزًا.';
 
   @override
-  String get wsHeadingBuilderLimitation =>
-      'لا ينشر الباني المثبّت سمات H1. تخص العنوان وليس جذر XML.';
+  String get wsHeadingBuilderLimitation => 'لا ينشر الباني المثبّت سمات H1. تخص العنوان وليس جذر XML.';
 
   @override
   String get closeOtherTabs => 'إغلاق علامات التبويب الأخرى';
@@ -282,20 +245,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tocTemplateExtension => 'الامتداد:';
 
   @override
-  String get tocTemplateLoadError =>
-      'تعذر تحميل القوالب. لم تتغير القوالب الموجودة.';
+  String get tocTemplateLoadError => 'تعذر تحميل القوالب. لم تتغير القوالب الموجودة.';
 
   @override
-  String get tocTemplateSaveError =>
-      'تعذر حفظ القوالب. لا تزال تعديلاتك متاحة هنا.';
+  String get tocTemplateSaveError => 'تعذر حفظ القوالب. لا تزال تعديلاتك متاحة هنا.';
 
   @override
-  String get tocTemplateConflict =>
-      'تغيرت القوالب في نافذة أخرى. ألغِ وأعد فتح المحرر.';
+  String get tocTemplateConflict => 'تغيرت القوالب في نافذة أخرى. ألغِ وأعد فتح المحرر.';
 
   @override
-  String get tocTemplateDuplicateName =>
-      'يوجد بالفعل قالب بهذا الاسم والامتداد.';
+  String get tocTemplateDuplicateName => 'يوجد بالفعل قالب بهذا الاسم والامتداد.';
 
   @override
   String get tocTemplateFormat => 'التنسيق:';
@@ -312,15 +271,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get tocRemoveElementsRetainFiles =>
-      'لن تُحذف ملفات المصدر المرتبطة بعناصر جدول المحتويات هذه.';
+  String get tocRemoveElementsRetainFiles => 'لن تُحذف ملفات المصدر المرتبطة بعناصر جدول المحتويات هذه.';
 
   @override
   String get tocOk => 'موافق';
 
   @override
-  String get tocSelectExistingTopic =>
-      'اختر موضوعًا لإضافته إلى النسخة الحالية';
+  String get tocSelectExistingTopic => 'اختر موضوعًا لإضافته إلى النسخة الحالية';
 
   @override
   String get tocGroupName => 'اسم المجموعة';
@@ -426,12 +383,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tocOnlyTitleField => 'عنوان خاص بجدول المحتويات:';
 
   @override
-  String get tocInstanceTitleExplanation =>
-      'يُستخدم للمثيل الحالي فقط. يُورث من عنوان الموضوع افتراضيًا.';
+  String get tocInstanceTitleExplanation => 'يُستخدم للمثيل الحالي فقط. يُورث من عنوان الموضوع افتراضيًا.';
 
   @override
-  String get tocOnlyTitleExplanation =>
-      'يُستخدم في جدول المحتويات فقط. يُورث افتراضيًا من عنوان الموضوع أو من العنوان الخاص بالمثيل إن وُجد. تجد شرحًا للعناوين';
+  String get tocOnlyTitleExplanation => 'يُستخدم في جدول المحتويات فقط. يُورث افتراضيًا من عنوان الموضوع أو من العنوان الخاص بالمثيل إن وُجد. تجد شرحًا للعناوين';
 
   @override
   String get tocTitleDocumentationLink => 'هنا';
@@ -461,8 +416,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pdfIncludeTitlePage => 'تضمين صفحة العنوان';
 
   @override
-  String get pdfTitlePageNote =>
-      'لا تحتوي هذه الصفحة على رأس أو تذييل أو رقم صفحة ظاهر.';
+  String get pdfTitlePageNote => 'لا تحتوي هذه الصفحة على رأس أو تذييل أو رقم صفحة ظاهر.';
 
   @override
   String get pdfTitlePageTitle => 'العنوان';
@@ -492,8 +446,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle =>
-      'محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside.';
+  String get appSubtitle => 'محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside.';
 
   @override
   String get aboutBusyMark => 'حول BusyMark';
@@ -529,8 +482,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get feedbackCategoryFeature => 'طلب ميزة';
 
   @override
-  String get feedbackCategoryPrivacySecurity =>
-      'مخاوف تتعلق بالخصوصية أو الأمان';
+  String get feedbackCategoryPrivacySecurity => 'مخاوف تتعلق بالخصوصية أو الأمان';
 
   @override
   String get feedbackCategoryUsability => 'مخاوف تتعلق بسهولة الاستخدام';
@@ -551,8 +503,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get feedbackIncludeTechnicalDetails => 'تضمين التفاصيل التقنية';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure =>
-      'عند التفعيل، لا يُضاف سوى إصدار نظام التشغيل Linux والإعدادات المحلية لتطبيق BusyMark. لا يتم إرفاق أي سجلات أو ملفات أو بيانات حساب أو معلومات تشخيصية أخرى.';
+  String get feedbackTechnicalDetailsDisclosure => 'عند التفعيل، لا يُضاف سوى إصدار نظام التشغيل Linux والإعدادات المحلية لتطبيق BusyMark. لا يتم إرفاق أي سجلات أو ملفات أو بيانات حساب أو معلومات تشخيصية أخرى.';
 
   @override
   String get feedbackSubmit => 'إرسال';
@@ -570,27 +521,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get feedbackMessageLength => 'يجب أن تتراوح الرسالة بين 10 و5000 حرف.';
 
   @override
-  String get feedbackReplyEmailInvalid =>
-      'أدخل عنوان بريد إلكتروني صالحًا أو اترك هذا الحقل فارغًا.';
+  String get feedbackReplyEmailInvalid => 'أدخل عنوان بريد إلكتروني صالحًا أو اترك هذا الحقل فارغًا.';
 
   @override
-  String get feedbackConnectionFailure =>
-      'تعذر على BusyMark الاتصال. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.';
+  String get feedbackConnectionFailure => 'تعذر على BusyMark الاتصال. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.';
 
   @override
   String get feedbackTimeoutFailure => 'انتهت مهلة الطلب. حاول مرة أخرى.';
 
   @override
-  String get feedbackRateLimitedFailure =>
-      'تم إرسال عدد كبير جدًا من البلاغات عبر هذا الاتصال. انتظر ثم حاول مرة أخرى.';
+  String get feedbackRateLimitedFailure => 'تم إرسال عدد كبير جدًا من البلاغات عبر هذا الاتصال. انتظر ثم حاول مرة أخرى.';
 
   @override
-  String get feedbackRejectedFailure =>
-      'رفض الخادم البلاغ. تحقّق من حقول النموذج وحاول مرة أخرى.';
+  String get feedbackRejectedFailure => 'رفض الخادم البلاغ. تحقّق من حقول النموذج وحاول مرة أخرى.';
 
   @override
-  String get feedbackServerFailure =>
-      'تعذر على الخادم قبول البلاغ. حاول مرة أخرى لاحقًا.';
+  String get feedbackServerFailure => 'تعذر على الخادم قبول البلاغ. حاول مرة أخرى لاحقًا.';
 
   @override
   String feedbackSuccess(String id) {
@@ -702,8 +648,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get keyboardShortcuts => 'اختصارات لوحة المفاتيح';
 
   @override
-  String get commandUnavailableInContext =>
-      'هذا الأمر غير متاح في السياق الحالي.';
+  String get commandUnavailableInContext => 'هذا الأمر غير متاح في السياق الحالي.';
 
   @override
   String get lightTheme => 'فاتح';
@@ -886,15 +831,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get openFolderOrWritersideProject => 'فتح مجلد أو مشروع Writerside';
 
   @override
-  String get markdownFolderOrWritersideProject =>
-      'مجلد Markdown أو مشروع متوافق مع Writerside';
+  String get markdownFolderOrWritersideProject => 'مجلد Markdown أو مشروع متوافق مع Writerside';
 
   @override
   String get noOpenFile => 'لا يوجد ملف مفتوح';
 
   @override
-  String get shortcutDeleteTreeItemDescription =>
-      'حذف العنصر المحدد في الملفات أو إزالة الموضوع المحدد من جدول المحتويات';
+  String get shortcutDeleteTreeItemDescription => 'حذف العنصر المحدد في الملفات أو إزالة الموضوع المحدد من جدول المحتويات';
 
   @override
   String get shortcutGroupGeneral => 'عام';
@@ -903,12 +846,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutNewDocument => 'إنشاء';
 
   @override
-  String get shortcutNewDocumentDescription =>
-      'إنشاء ملف Markdown أو مشروع Writerside';
+  String get shortcutNewDocumentDescription => 'إنشاء ملف Markdown أو مشروع Writerside';
 
   @override
-  String get shortcutOpenDescription =>
-      'فتح ملف Markdown أو مجلد أو مشروع Writerside';
+  String get shortcutOpenDescription => 'فتح ملف Markdown أو مجلد أو مشروع Writerside';
 
   @override
   String get shortcutSaveDescription => 'حفظ المستند الحالي';
@@ -917,8 +858,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutSearchDescription => 'البحث في مساحة العمل الحالية';
 
   @override
-  String get shortcutKeyboardShortcutsDescription =>
-      'تخصيص اختصارات لوحة مفاتيح التطبيق';
+  String get shortcutKeyboardShortcutsDescription => 'تخصيص اختصارات لوحة مفاتيح التطبيق';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'فتح مرجع بناء الجملة';
@@ -930,15 +870,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutNextTab => 'علامة التبويب التالية';
 
   @override
-  String get shortcutNextTabDescription =>
-      'الانتقال إلى علامة التبويب المفتوحة التالية';
+  String get shortcutNextTabDescription => 'الانتقال إلى علامة التبويب المفتوحة التالية';
 
   @override
   String get shortcutPreviousTab => 'علامة التبويب السابقة';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'الانتقال إلى علامة التبويب المفتوحة السابقة';
+  String get shortcutPreviousTabDescription => 'الانتقال إلى علامة التبويب المفتوحة السابقة';
 
   @override
   String get shortcutCloseTab => 'إغلاق علامة التبويب';
@@ -950,15 +888,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutCloseAllTabs => 'إغلاق كل علامات التبويب';
 
   @override
-  String get shortcutCloseAllTabsDescription =>
-      'إغلاق كل علامات التبويب المفتوحة';
+  String get shortcutCloseAllTabsDescription => 'إغلاق كل علامات التبويب المفتوحة';
 
   @override
   String get shortcutGroupTextEditing => 'تحرير النص';
 
   @override
-  String get shortcutSelectAllDescription =>
-      'في وضع المصدر، حدد النص بالكامل؛ في وضع المحرر، اضغط مرتين لتحديد كل الكتل';
+  String get shortcutSelectAllDescription => 'في وضع المصدر، حدد النص بالكامل؛ في وضع المحرر، اضغط مرتين لتحديد كل الكتل';
 
   @override
   String get shortcutCutDescription => 'قص النص المحدد';
@@ -982,48 +918,40 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutInsertIndentation => 'إدراج مسافة بادئة';
 
   @override
-  String get shortcutInsertIndentationDescription =>
-      'إدراج مسافة بادئة عند المؤشر';
+  String get shortcutInsertIndentationDescription => 'إدراج مسافة بادئة عند المؤشر';
 
   @override
   String get shortcutOutdentSource => 'تقليل المسافة البادئة في المصدر';
 
   @override
-  String get shortcutOutdentSourceDescription =>
-      'إزالة مستوى واحد من المسافة البادئة في وضع المصدر';
+  String get shortcutOutdentSourceDescription => 'إزالة مستوى واحد من المسافة البادئة في وضع المصدر';
 
   @override
   String get shortcutEscape => 'إغلاق البحث أو مسح تحديد الكتل';
 
   @override
-  String get shortcutEscapeDescription =>
-      'إغلاق البحث في مساحة العمل أو إلغاء تحديد الكتل في وضع المحرر';
+  String get shortcutEscapeDescription => 'إغلاق البحث في مساحة العمل أو إلغاء تحديد الكتل في وضع المحرر';
 
   @override
   String get shortcutGroupFormatting => 'التنسيق';
 
   @override
-  String get shortcutBoldDescription =>
-      'تطبيق/إزالة التنسيق العريض على النص المحدد';
+  String get shortcutBoldDescription => 'تطبيق/إزالة التنسيق العريض على النص المحدد';
 
   @override
-  String get shortcutItalicDescription =>
-      'تطبيق/إزالة التنسيق المائل على النص المحدد';
+  String get shortcutItalicDescription => 'تطبيق/إزالة التنسيق المائل على النص المحدد';
 
   @override
-  String get shortcutUnderlineDescription =>
-      'تطبيق/إزالة التسطير على النص المحدد';
+  String get shortcutUnderlineDescription => 'تطبيق/إزالة التسطير على النص المحدد';
 
   @override
   String get shortcutLinkDescription => 'إدراج رابط أو تحريره';
 
   @override
-  String get shortcutInlineCodeDescription =>
-      'تطبيق/إزالة الكود المضمن على النص المحدد';
+  String get shortcutInlineCodeDescription => 'تطبيق/إزالة الكود المضمن على النص المحدد';
 
   @override
-  String get shortcutStrikethroughDescription =>
-      'تطبيق/إزالة الشطب على النص المحدد';
+  String get shortcutStrikethroughDescription => 'تطبيق/إزالة الشطب على النص المحدد';
 
   @override
   String get shortcutGroupBlocks => 'الكتل';
@@ -1080,15 +1008,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createMarkdownFile => 'إنشاء ملف Markdown';
 
   @override
-  String get createMarkdownFileDescription =>
-      'بدء مستند Markdown محلي غير محفوظ';
+  String get createMarkdownFileDescription => 'بدء مستند Markdown محلي غير محفوظ';
 
   @override
   String get createWritersideProject => 'إنشاء مشروع Writerside';
 
   @override
-  String get createWritersideProjectDescription =>
-      'بدء مشروع محلي متوافق مع Writerside';
+  String get createWritersideProjectDescription => 'بدء مشروع محلي متوافق مع Writerside';
 
   @override
   String get defaultProjectName => 'التوثيق';
@@ -1127,8 +1053,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get useSingleSafeDirectoryName => 'استخدم اسم دليل واحدًا آمنًا.';
 
   @override
-  String get useLowercaseIdentifier =>
-      'استخدم معرّفًا بأحرف صغيرة يتكون من أحرف وأرقام وشرطات سفلية وواصلات.';
+  String get useLowercaseIdentifier => 'استخدم معرّفًا بأحرف صغيرة يتكون من أحرف وأرقام وشرطات سفلية وواصلات.';
 
   @override
   String get startTopicTitleRequired => 'عنوان موضوع البداية مطلوب.';
@@ -1143,15 +1068,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get autoSave => 'الحفظ التلقائي';
 
   @override
-  String get autoSaveDescription =>
-      'حفظ تغييرات الملف تلقائيًا بعد فترة قصيرة من عدم النشاط.';
+  String get autoSaveDescription => 'حفظ تغييرات الملف تلقائيًا بعد فترة قصيرة من عدم النشاط.';
 
   @override
   String get wordWrap => 'التفاف النص';
 
   @override
-  String get wordWrapDescription =>
-      'التفاف السطور الطويلة لتلائم عرض المحرر بدلاً من التمرير أفقيًا.';
+  String get wordWrapDescription => 'التفاف السطور الطويلة لتلائم عرض المحرر بدلاً من التمرير أفقيًا.';
 
   @override
   String get editorFontSize => 'حجم خط المحرر';
@@ -1166,15 +1089,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get editingButtonsPosition => 'موضع أزرار التحرير';
 
   @override
-  String get editingButtonsPositionDescription =>
-      'اختر مكان ظهور أزرار تحرير WYSIWYG العائمة.';
+  String get editingButtonsPositionDescription => 'اختر مكان ظهور أزرار تحرير WYSIWYG العائمة.';
 
   @override
   String get editingButtonsDirection => 'اتجاه أزرار التحرير';
 
   @override
-  String get editingButtonsDirectionDescription =>
-      'اختر ترتيب أزرار تحرير WYSIWYG العائمة أفقيًا أو عموديًا.';
+  String get editingButtonsDirectionDescription => 'اختر ترتيب أزرار تحرير WYSIWYG العائمة أفقيًا أو عموديًا.';
 
   @override
   String get horizontal => 'أفقي';
@@ -1189,22 +1110,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get allowRemoteImages => 'تحميل الصور البعيدة';
 
   @override
-  String get allowRemoteImagesDescription =>
-      'السماح بتحميل صور معاينة Markdown والمحرر من عناوين URL التي تستخدم http وhttps.';
+  String get allowRemoteImagesDescription => 'السماح بتحميل صور معاينة Markdown والمحرر من عناوين URL التي تستخدم http وhttps.';
 
   @override
   String get clearRemoteImagePermissions => 'مسح أذونات الصور البعيدة';
 
   @override
-  String get clearRemoteImagePermissionsDescription =>
-      'نسيان مساحات العمل التي سُمح لها بتحميل الصور البعيدة.';
+  String get clearRemoteImagePermissionsDescription => 'نسيان مساحات العمل التي سُمح لها بتحميل الصور البعيدة.';
 
   @override
   String get clearGitWorkspaceTrust => 'مسح مساحات عمل Git الموثوقة';
 
   @override
-  String get clearGitWorkspaceTrustDescription =>
-      'طلب التأكيد قبل تمكين ميزات Git لمساحات العمل التي سبق الوثوق بها.';
+  String get clearGitWorkspaceTrustDescription => 'طلب التأكيد قبل تمكين ميزات Git لمساحات العمل التي سبق الوثوق بها.';
 
   @override
   String get settingsEditingButtonsSectionTitle => 'أزرار التحرير';
@@ -1213,8 +1131,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get spellingDictionaries => 'قواميس التدقيق الإملائي';
 
   @override
-  String get spellingDictionariesDescription =>
-      'تثبيت قواميس التدقيق الإملائي وإدارتها';
+  String get spellingDictionariesDescription => 'تثبيت قواميس التدقيق الإملائي وإدارتها';
 
   @override
   String get settingsDictionariesSectionTitle => 'القواميس';
@@ -1232,43 +1149,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsWindowSectionTitle => 'النافذة';
 
   @override
-  String get settingsReopenWorkspaceOnStartupTitle =>
-      'إعادة فتح مساحة العمل السابقة عند بدء التشغيل';
+  String get settingsReopenWorkspaceOnStartupTitle => 'إعادة فتح مساحة العمل السابقة عند بدء التشغيل';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription =>
-      'افتح مساحة العمل وعلامات التبويب من الجلسة السابقة عند بدء BusyMark.';
+  String get settingsReopenWorkspaceOnStartupDescription => 'افتح مساحة العمل وعلامات التبويب من الجلسة السابقة عند بدء BusyMark.';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesTitle =>
-      'التأكيد قبل الإغلاق عند وجود تغييرات غير محفوظة';
+  String get settingsConfirmCloseWithUnsavedChangesTitle => 'التأكيد قبل الإغلاق عند وجود تغييرات غير محفوظة';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      'اطلب التأكيد قبل إغلاق BusyMark عندما تحتوي المستندات على تغييرات غير محفوظة.';
+  String get settingsConfirmCloseWithUnsavedChangesDescription => 'اطلب التأكيد قبل إغلاق BusyMark عندما تحتوي المستندات على تغييرات غير محفوظة.';
 
   @override
   String get closeUnsavedChangesTitle => 'تغييرات غير محفوظة';
 
   @override
-  String get closeUnsavedChangesSingleMessage =>
-      'يحتوي هذا المستند على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟';
+  String get closeUnsavedChangesSingleMessage => 'يحتوي هذا المستند على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'توجد تغييرات غير محفوظة في $count مستند. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
-      many:
-          'توجد تغييرات غير محفوظة في $count مستندًا. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
-      few:
-          'توجد تغييرات غير محفوظة في $count مستندات. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
-      two:
-          'يحتوي مستندان على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
-      one:
-          'يحتوي مستند واحد على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      other: 'توجد تغييرات غير محفوظة في $count مستند. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      many: 'توجد تغييرات غير محفوظة في $count مستندًا. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      few: 'توجد تغييرات غير محفوظة في $count مستندات. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      two: 'يحتوي مستندان على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      one: 'يحتوي مستند واحد على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
       zero: 'هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
     );
     return '$_temp0';
@@ -1313,8 +1220,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fileChangedOnDisk => 'تغيّر الملف على القرص';
 
   @override
-  String get fileChangedOnDiskMessage =>
-      'تغيّر هذا الملف على القرص منذ فتحه. هل تريد الكتابة فوقه؟';
+  String get fileChangedOnDiskMessage => 'تغيّر هذا الملف على القرص منذ فتحه. هل تريد الكتابة فوقه؟';
 
   @override
   String get untitledMarkdownFileName => 'بلا عنوان.md';
@@ -1556,15 +1462,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get remoteImageBlocked => 'الصورة البعيدة محظورة';
 
   @override
-  String get remoteImageBlockedTooltip =>
-      'اختر ما إذا كان بإمكان BusyMark تحميل الصور البعيدة.';
+  String get remoteImageBlockedTooltip => 'اختر ما إذا كان بإمكان BusyMark تحميل الصور البعيدة.';
 
   @override
   String get remoteImagesBlockedTitle => 'الصور البعيدة محظورة';
 
   @override
-  String get remoteImagesBlockedMessage =>
-      'يشير هذا المستند إلى صور من الإنترنت. قد يكشف تحميلها معلومات عن الشبكة لمضيف الصورة.';
+  String get remoteImagesBlockedMessage => 'يشير هذا المستند إلى صور من الإنترنت. قد يكشف تحميلها معلومات عن الشبكة لمضيف الصورة.';
 
   @override
   String get loadRemoteImagesForWorkspace => 'تحميل لمساحة العمل هذه';
@@ -1746,8 +1650,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get topicIsHomePageRemovalWarning =>
-      'هذا الموضوع هو الصفحة الرئيسية لهذا المثيل. اختر صفحة رئيسية أخرى قبل إزالته من جدول المحتويات.';
+  String get topicIsHomePageRemovalWarning => 'هذا الموضوع هو الصفحة الرئيسية لهذا المثيل. اختر صفحة رئيسية أخرى قبل إزالته من جدول المحتويات.';
 
   @override
   String get newHomePage => 'الصفحة الرئيسية الجديدة';
@@ -1756,12 +1659,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chooseHomePage => 'اختر صفحة رئيسية';
 
   @override
-  String get noHomePageReplacement =>
-      'أضف موضوعًا مؤهلًا آخر إلى هذا المثيل أو اربطه به قبل إزالة صفحته الرئيسية.';
+  String get noHomePageReplacement => 'أضف موضوعًا مؤهلًا آخر إلى هذا المثيل أو اربطه به قبل إزالة صفحته الرئيسية.';
 
   @override
-  String get topicIsStartPageRemovalWarning =>
-      'هذا الموضوع هو الصفحة الرئيسية لمثيل. عيّن صفحة رئيسية أخرى قبل حذف ملفه المصدر.';
+  String get topicIsStartPageRemovalWarning => 'هذا الموضوع هو الصفحة الرئيسية لمثيل. عيّن صفحة رئيسية أخرى قبل حذف ملفه المصدر.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1772,8 +1673,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noBreakingTopicUsages => 'لم يُعثر على مراجع قد تتعطل.';
 
   @override
-  String get topicUsagesFound =>
-      'عثر BusyMark على المراجع التالية لهذا الموضوع.';
+  String get topicUsagesFound => 'عثر BusyMark على المراجع التالية لهذا الموضوع.';
 
   @override
   String get topicUsageTocElements => 'عناصر جدول المحتويات';
@@ -1809,26 +1709,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get updateUsagesAutomatically => 'تحديث الاستخدامات تلقائيًا';
 
   @override
-  String get updateUsagesAutomaticallyDescription =>
-      'إزالة مراجع جدول المحتويات والتضمينات مع الاحتفاظ بنص الروابط.';
+  String get updateUsagesAutomaticallyDescription => 'إزالة مراجع جدول المحتويات والتضمينات مع الاحتفاظ بنص الروابط.';
 
   @override
-  String get manualUsageUpdatesRequired =>
-      'تتطلب بعض الاستخدامات تغييرات يدوية قبل إعادة الهيكلة هذه.';
+  String get manualUsageUpdatesRequired => 'تتطلب بعض الاستخدامات تغييرات يدوية قبل إعادة الهيكلة هذه.';
 
   @override
   String get setRedirectTo => 'تعيين إعادة التوجيه إلى:';
 
   @override
-  String get noRedirectDescription =>
-      'عدم إعادة توجيه الصفحة القديمة المنشورة.';
+  String get noRedirectDescription => 'عدم إعادة توجيه الصفحة القديمة المنشورة.';
 
   @override
   String get redirectTarget => 'وجهة إعادة التوجيه';
 
   @override
-  String get remainingUsagesBlockRemoval =>
-      'راجع الاستخدامات المتبقية وحدّثها قبل المتابعة، أو فعّل التحديثات التلقائية عند توفرها.';
+  String get remainingUsagesBlockRemoval => 'راجع الاستخدامات المتبقية وحدّثها قبل المتابعة، أو فعّل التحديثات التلقائية عند توفرها.';
 
   @override
   String usagesOfTopic(String topic) {
@@ -1922,8 +1818,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get useIdentifierCharacters =>
-      'استخدم الأحرف والأرقام والشرطات السفلية والواصلات قبل الامتداد.';
+  String get useIdentifierCharacters => 'استخدم الأحرف والأرقام والشرطات السفلية والواصلات قبل الامتداد.';
 
   @override
   String get topicIdAlreadyExists => 'معرّف الموضوع موجود بالفعل.';
@@ -2016,8 +1911,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get normalizeLineEndings => 'توحيد نهايات الأسطر';
 
   @override
-  String get mixedLineEndingsSavePrompt =>
-      'يحتوي هذا المستند على نهايات أسطر مختلطة. اختر تنسيقًا.';
+  String get mixedLineEndingsSavePrompt => 'يحتوي هذا المستند على نهايات أسطر مختلطة. اختر تنسيقًا.';
 
   @override
   String workspaceReplaceMixedLineEndings(String fileName) {
@@ -2025,38 +1919,31 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get workspaceReplaceIssueOversized =>
-      'تم تخطي ملف يتجاوز الحجم المسموح.';
+  String get workspaceReplaceIssueOversized => 'تم تخطي ملف يتجاوز الحجم المسموح.';
 
   @override
   String get workspaceReplaceIssueUnreadable => 'تم تخطي ملف تعذرت قراءته.';
 
   @override
-  String get workspaceReplaceIssueInvalidUtf8 =>
-      'تم تخطي ملف بترميز UTF-8 غير صالح.';
+  String get workspaceReplaceIssueInvalidUtf8 => 'تم تخطي ملف بترميز UTF-8 غير صالح.';
 
   @override
   String get workspaceReplaceIssueTruncated => 'تم اقتطاع معاينة الاستبدال.';
 
   @override
-  String get workspaceReplaceIssueFileChanged =>
-      'تم تخطي ملف تغيّر بعد المعاينة.';
+  String get workspaceReplaceIssueFileChanged => 'تم تخطي ملف تغيّر بعد المعاينة.';
 
   @override
-  String get workspaceReplaceIssueBufferChanged =>
-      'تم تخطي مخزن محرر مؤقت تغيّر بعد المعاينة.';
+  String get workspaceReplaceIssueBufferChanged => 'تم تخطي مخزن محرر مؤقت تغيّر بعد المعاينة.';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired =>
-      'اختر توحيد LF أو CRLF قبل الاستبدال.';
+  String get workspaceReplaceIssueNormalizationRequired => 'اختر توحيد LF أو CRLF قبل الاستبدال.';
 
   @override
-  String get workspaceReplaceIssuePartialConflict =>
-      'توقف التراجع لأن الملف تغير بالتزامن. قد تبقى بعض الاستبدالات؛ حُفظ المحتوى المُزاح في المسار أدناه.';
+  String get workspaceReplaceIssuePartialConflict => 'توقف التراجع لأن الملف تغير بالتزامن. قد تبقى بعض الاستبدالات؛ حُفظ المحتوى المُزاح في المسار أدناه.';
 
   @override
-  String get workspaceReplaceIssueApplyFailed =>
-      'لم تُطبّق أي استبدالات لأن المجموعة التي تمت مراجعتها تعذر حفظها بأمان.';
+  String get workspaceReplaceIssueApplyFailed => 'لم تُطبّق أي استبدالات لأن المجموعة التي تمت مراجعتها تعذر حفظها بأمان.';
 
   @override
   String externalChangesTitle(String fileName) {
@@ -2067,8 +1954,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get externalFileDeleted => 'تم حذف هذا الملف من القرص.';
 
   @override
-  String get externalFileChanged =>
-      'تغيّر هذا الملف على القرص بينما لديك تعديلات غير محفوظة.';
+  String get externalFileChanged => 'تغيّر هذا الملف على القرص بينما لديك تعديلات غير محفوظة.';
 
   @override
   String recoveredDocumentReview(String fileName) {
@@ -2088,19 +1974,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get saveAs => 'حفظ باسم';
 
   @override
-  String get workspaceSearchIncomplete =>
-      'تظهر بعض النتائج فقط. اعرض المزيد أو ضيّق نطاق البحث.';
+  String get workspaceSearchIncomplete => 'تظهر بعض النتائج فقط. اعرض المزيد أو ضيّق نطاق البحث.';
 
   @override
   String get workspaceSearchShowMore => 'عرض المزيد من النتائج';
 
   @override
-  String get workspaceSearchSkippedFiles =>
-      'البحث غير مكتمل. تجاوز حجم هذه الملفات 1 MiB أو تعذّرت قراءتها:';
+  String get workspaceSearchSkippedFiles => 'البحث غير مكتمل. تجاوز حجم هذه الملفات 1 MiB أو تعذّرت قراءتها:';
 
   @override
-  String get sourceLargeFileFeaturesPaused =>
-      'ملف كبير: تم إيقاف التمييز والطي مؤقتًا';
+  String get sourceLargeFileFeaturesPaused => 'ملف كبير: تم إيقاف التمييز والطي مؤقتًا';
 
   @override
   String get nothingToRead => 'لا يوجد محتوى للقراءة';
@@ -2149,8 +2032,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get cannotOpenFileTypeInEditor =>
-      'لا يمكن فتح هذا النوع من الملفات في المحرر';
+  String get cannotOpenFileTypeInEditor => 'لا يمكن فتح هذا النوع من الملفات في المحرر';
 
   @override
   String anchorNotFound(String anchor) {
@@ -2221,12 +2103,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrorChooseWhereToSaveMarkdown =>
-      'اختر مكان حفظ ملف Markdown هذا.';
+  String get workspaceErrorChooseWhereToSaveMarkdown => 'اختر مكان حفظ ملف Markdown هذا.';
 
   @override
-  String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'تم حظر الحفظ: تغيّر الملف على القرص.';
+  String get workspaceErrorSaveBlockedFileChangedOnDisk => 'تم حظر الحفظ: تغيّر الملف على القرص.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -2248,12 +2128,9 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'تمت استعادة ⁨$count⁩ مستند غير محفوظ. راجع كل مستند قبل حفظه أو تجاهله.',
-      many:
-          'تمت استعادة ⁨$count⁩ مستندًا غير محفوظ. راجع كل مستند قبل حفظه أو تجاهله.',
-      few:
-          'تمت استعادة ⁨$count⁩ مستندات غير محفوظة. راجع كل مستند قبل حفظه أو تجاهله.',
+      other: 'تمت استعادة ⁨$count⁩ مستند غير محفوظ. راجع كل مستند قبل حفظه أو تجاهله.',
+      many: 'تمت استعادة ⁨$count⁩ مستندًا غير محفوظ. راجع كل مستند قبل حفظه أو تجاهله.',
+      few: 'تمت استعادة ⁨$count⁩ مستندات غير محفوظة. راجع كل مستند قبل حفظه أو تجاهله.',
       two: 'تمت استعادة مستندين غير محفوظين. راجعهما قبل حفظهما أو تجاهلهما.',
       one: 'تمت استعادة مستند واحد غير محفوظ. راجعه قبل حفظه أو تجاهله.',
       zero: 'لم تتم استعادة أي مستندات غير محفوظة.',
@@ -2266,16 +2143,11 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'تعذر استعادة ⁨$count⁩ سجل استعادة تالف. لا تزال سجلات الاسترداد الصالحة متاحة.',
-      many:
-          'تعذر استعادة ⁨$count⁩ سجل استعادة تالفًا. لا تزال سجلات الاسترداد الصالحة متاحة.',
-      few:
-          'تعذر استعادة ⁨$count⁩ سجلات استعادة تالفة. لا تزال سجلات الاسترداد الصالحة متاحة.',
-      two:
-          'تعذر استعادة سجلَّي استعادة تالفين. لا تزال سجلات الاسترداد الصالحة متاحة.',
-      one:
-          'تعذر استعادة سجل استعادة تالف واحد. تم الاحتفاظ بملف الاسترداد الأصلي للفحص.',
+      other: 'تعذر استعادة ⁨$count⁩ سجل استعادة تالف. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      many: 'تعذر استعادة ⁨$count⁩ سجل استعادة تالفًا. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      few: 'تعذر استعادة ⁨$count⁩ سجلات استعادة تالفة. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      two: 'تعذر استعادة سجلَّي استعادة تالفين. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      one: 'تعذر استعادة سجل استعادة تالف واحد. تم الاحتفاظ بملف الاسترداد الأصلي للفحص.',
       zero: 'لا توجد سجلات استعادة تالفة.',
     );
     return '$_temp0';
@@ -2323,20 +2195,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorFileNameRequired => 'اسم الملف مطلوب.';
 
   @override
-  String get errorFileNameUnsafe =>
-      'يجب أن يكون اسم الملف مقطع مسار آمنًا واحدًا.';
+  String get errorFileNameUnsafe => 'يجب أن يكون اسم الملف مقطع مسار آمنًا واحدًا.';
 
   @override
-  String get errorFileOperationInvalidTarget =>
-      'لا يمكن نقل مجلد إلى داخل نفسه.';
+  String get errorFileOperationInvalidTarget => 'لا يمكن نقل مجلد إلى داخل نفسه.';
 
   @override
-  String get errorFileOperationOutsideRoot =>
-      'يجب أن تبقى عملية الملف داخل مساحة العمل.';
+  String get errorFileOperationOutsideRoot => 'يجب أن تبقى عملية الملف داخل مساحة العمل.';
 
   @override
-  String get errorFileOperationRoot =>
-      'لا يمكن تغيير جذر مساحة العمل من شجرة الملفات.';
+  String get errorFileOperationRoot => 'لا يمكن تغيير جذر مساحة العمل من شجرة الملفات.';
 
   @override
   String get errorProjectNameRequired => 'اسم المشروع مطلوب.';
@@ -2345,16 +2213,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorDirectoryNameRequired => 'اسم الدليل مطلوب.';
 
   @override
-  String get errorDirectoryNameUnsafe =>
-      'يجب أن يكون اسم الدليل مقطع مسار واحدًا آمنًا.';
+  String get errorDirectoryNameUnsafe => 'يجب أن يكون اسم الدليل مقطع مسار واحدًا آمنًا.';
 
   @override
-  String get errorInstanceIdInvalid =>
-      'يجب أن يبدأ معرّف المثيل بحرف صغير وأن يحتوي فقط على أحرف صغيرة وأرقام وشرطات سفلية وواصلات.';
+  String get errorInstanceIdInvalid => 'يجب أن يبدأ معرّف المثيل بحرف صغير وأن يحتوي فقط على أحرف صغيرة وأرقام وشرطات سفلية وواصلات.';
 
   @override
-  String get errorTopicFileInvalid =>
-      'يجب أن يكون اسم ملف الموضوع اسم ملف Markdown بدون فواصل المسار.';
+  String get errorTopicFileInvalid => 'يجب أن يكون اسم ملف الموضوع اسم ملف Markdown بدون فواصل المسار.';
 
   @override
   String get errorTopicTitleRequired => 'عنوان الموضوع مطلوب.';
@@ -2365,12 +2230,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideModuleNotOpen =>
-      'يجب أن تكون وحدة Writerside مفتوحة لإنشاء موضوع.';
+  String get errorWritersideModuleNotOpen => 'يجب أن تكون وحدة Writerside مفتوحة لإنشاء موضوع.';
 
   @override
-  String get errorWritersideInstanceTreeMissing =>
-      'لا تحتوي وحدة Writerside على شجرة مثيل.';
+  String get errorWritersideInstanceTreeMissing => 'لا تحتوي وحدة Writerside على شجرة مثيل.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2393,12 +2256,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideTocNodeMissing =>
-      'لم يعد عنصر جدول المحتويات المحدد موجودًا.';
+  String get errorWritersideTocNodeMissing => 'لم يعد عنصر جدول المحتويات المحدد موجودًا.';
 
   @override
-  String get errorWritersideTocInvalidMove =>
-      'لا يمكن نقل عنصر في جدول المحتويات إلى نفسه أو إلى أحد العناصر الفرعية التابعة له.';
+  String get errorWritersideTocInvalidMove => 'لا يمكن نقل عنصر في جدول المحتويات إلى نفسه أو إلى أحد العناصر الفرعية التابعة له.';
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
@@ -2406,20 +2267,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideSafeDeleteRequired =>
-      'استخدم الحذف الآمن لملفات موضوعات Writerside.';
+  String get errorWritersideSafeDeleteRequired => 'استخدم الحذف الآمن لملفات موضوعات Writerside.';
 
   @override
-  String get errorWritersideTopicUsageScanFailed =>
-      'تعذّر إكمال فحص استخدامات الموضوع. لم تُغيَّر أي ملفات.';
+  String get errorWritersideTopicUsageScanFailed => 'تعذّر إكمال فحص استخدامات الموضوع. لم تُغيَّر أي ملفات.';
 
   @override
-  String get errorWritersideTopicUsagesRemain =>
-      'لا تزال بعض استخدامات الموضوع تتطلب المعالجة. راجعها قبل المتابعة.';
+  String get errorWritersideTopicUsagesRemain => 'لا تزال بعض استخدامات الموضوع تتطلب المعالجة. راجعها قبل المتابعة.';
 
   @override
-  String get errorWritersideRedirectInvalid =>
-      'لم يعد هدف إعادة التوجيه المحدد صالحًا. حدده مرة أخرى.';
+  String get errorWritersideRedirectInvalid => 'لم يعد هدف إعادة التوجيه المحدد صالحًا. حدده مرة أخرى.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
@@ -2427,29 +2284,21 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(
-    String module,
-    String count,
-    String paths,
-  ) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
     return 'لا يمكن لإعادة التسمية تحديث كل مراجع المشروع بأمان لأن $count من ملفات المواضيع في الوحدة $module لم تُحلَّل: $paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty =>
-      'تحتوي ملفات مشروع Writerside على تغييرات غير محفوظة. عالجها وأنشئ معاينة جديدة لإعادة التسمية.';
+  String get errorWritersideTopicRenameProjectBuffersDirty => 'تحتوي ملفات مشروع Writerside على تغييرات غير محفوظة. عالجها وأنشئ معاينة جديدة لإعادة التسمية.';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged =>
-      'تغيّرت مجموعة وحدات مشروع Writerside. أنشئ معاينة جديدة لإعادة التسمية قبل إعادة الهيكلة.';
+  String get errorWritersideTopicRenameProjectInventoryChanged => 'تغيّرت مجموعة وحدات مشروع Writerside. أنشئ معاينة جديدة لإعادة التسمية قبل إعادة الهيكلة.';
 
   @override
-  String get errorTopicsRootUnsafe =>
-      'يجب أن يكون جذر المواضيع دليلاً نسبيًا آمنًا.';
+  String get errorTopicsRootUnsafe => 'يجب أن يكون جذر المواضيع دليلاً نسبيًا آمنًا.';
 
   @override
-  String get errorTopicFileNameUnsafe =>
-      'يجب أن يكون اسم ملف الموضوع مقطع مسار واحدًا آمنًا.';
+  String get errorTopicFileNameUnsafe => 'يجب أن يكون اسم ملف الموضوع مقطع مسار واحدًا آمنًا.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -2457,8 +2306,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorTopicFileNameInvalid =>
-      'يجب أن يحتوي اسم ملف الموضوع على أحرف وأرقام وشرطات سفلية وواصلات فقط.';
+  String get errorTopicFileNameInvalid => 'يجب أن يحتوي اسم ملف الموضوع على أحرف وأرقام وشرطات سفلية وواصلات فقط.';
 
   @override
   String errorUnknown(String code) {
@@ -2471,8 +2319,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceScanSkipped =>
-      'تم اكتشاف مساحة عمل كبيرة. تم تخطي بعض الملفات للحفاظ على استجابة التطبيق.';
+  String get diagnosticWorkspaceScanSkipped => 'تم اكتشاف مساحة عمل كبيرة. تم تخطي بعض الملفات للحفاظ على استجابة التطبيق.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
@@ -2480,8 +2327,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceFileTooLarge =>
-      'يتجاوز الملف حد التحليل التلقائي في الإصدار التجريبي.';
+  String get diagnosticWorkspaceFileTooLarge => 'يتجاوز الملف حد التحليل التلقائي في الإصدار التجريبي.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -2489,8 +2335,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownAttributeMalformed =>
-      'كتلة سمات عنوان Writerside غير سليمة.';
+  String get diagnosticMarkdownAttributeMalformed => 'كتلة سمات عنوان Writerside غير سليمة.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -2498,16 +2343,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'تُعامل عناوين H1 الإضافية في المستوى الأعلى كفصول.';
+  String get diagnosticWritersideTopicH1ConvertedToChapter => 'تُعامل عناوين H1 الإضافية في المستوى الأعلى كفصول.';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'لا يحتوي موضوع Writerside Markdown على عنوان H1 أو عنوان في البيانات التمهيدية.';
+  String get diagnosticWritersideMarkdownTopicMissingTitle => 'لا يحتوي موضوع Writerside Markdown على عنوان H1 أو عنوان في البيانات التمهيدية.';
 
   @override
-  String get diagnosticWritersideXmlTopicMissingTitle =>
-      'موضوع XML يفتقد عنوانًا.';
+  String get diagnosticWritersideXmlTopicMissingTitle => 'موضوع XML يفتقد عنوانًا.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -2515,8 +2357,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownFrontMatterMalformed =>
-      'البيانات التمهيدية غير مغلقة.';
+  String get diagnosticMarkdownFrontMatterMalformed => 'البيانات التمهيدية غير مغلقة.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'عنصر HTML غير آمن.';
@@ -2547,16 +2388,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot =>
-      'يجب أن يكون جذر writerside.cfg هو <ihp>.';
+  String get diagnosticWritersideConfigInvalidRoot => 'يجب أن يكون جذر writerside.cfg هو <ihp>.';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'إعلان snippets يفتقد السمة src.';
+  String get diagnosticWritersideConfigMissingSnippetsSrc => 'إعلان snippets يفتقد السمة src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'إعلان instance-groups يفتقد السمة src.';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'إعلان instance-groups يفتقد السمة src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -2564,20 +2402,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'إعلان instance يفتقد السمة src.';
+  String get diagnosticWritersideConfigMissingInstanceSrc => 'إعلان instance يفتقد السمة src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance =>
-      'لا يسجل writerside.cfg أي مثيل.';
+  String get diagnosticWritersideConfigMissingInstance => 'لا يسجل writerside.cfg أي مثيل.';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot =>
-      'يجب أن يكون جذر ملف .tree هو <instance-profile>.';
+  String get diagnosticWritersideTreeInvalidRoot => 'يجب أن يكون جذر ملف .tree هو <instance-profile>.';
 
   @override
-  String get diagnosticWritersideTreeMissingId =>
-      'ملف تعريف المثيل يفتقد السمة id.';
+  String get diagnosticWritersideTreeMissingId => 'ملف تعريف المثيل يفتقد السمة id.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
@@ -2585,8 +2419,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTreeMissingStartPage =>
-      'المثيل غير المخصص للمكتبة يفتقد start-page.';
+  String get diagnosticWritersideTreeMissingStartPage => 'المثيل غير المخصص للمكتبة يفتقد start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2599,8 +2432,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration =>
-      'يجب أن يحتوي إعلان المتغير على اسم وقيمة.';
+  String get diagnosticWritersideVariableMalformedDeclaration => 'يجب أن يحتوي إعلان المتغير على اسم وقيمة.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -2621,12 +2453,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicInvalidRoot =>
-      'يجب أن يكون جذر ملف .topic هو <topic>.';
+  String get diagnosticWritersideTopicInvalidRoot => 'يجب أن يكون جذر ملف .topic هو <topic>.';
 
   @override
-  String get diagnosticWritersideTopicMissingRootId =>
-      'موضوع XML يفتقد معرّف الجذر.';
+  String get diagnosticWritersideTopicMissingRootId => 'موضوع XML يفتقد معرّف الجذر.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
@@ -2639,31 +2469,23 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicAnchorMissingHref =>
-      '<a> يفتقد السمة href.';
+  String get diagnosticWritersideTopicAnchorMissingHref => '<a> يفتقد السمة href.';
 
   @override
-  String get diagnosticWritersideConfigMissing =>
-      'يتطلب وضع Writerside ملف writerside.cfg.';
+  String get diagnosticWritersideConfigMissing => 'يتطلب وضع Writerside ملف writerside.cfg.';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
     return 'دليل تكوين البناء المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
     return 'دليل مواصفات API المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
     return 'دليل المقتطفات المحدد مفقود: ⁨$relativePath⁩';
   }
 
@@ -2678,9 +2500,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(
-    String relativePath,
-  ) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
     return 'ملف مجموعات المثيلات المحدد مفقود: ⁨$relativePath⁩';
   }
 
@@ -2695,9 +2515,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(
-    String relativePath,
-  ) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
     return 'دليل المواضيع الافتراضي مفقود: ⁨$relativePath⁩';
   }
 
@@ -2717,21 +2535,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(
-    String instanceId,
-    String webFileName,
-    String topic,
-  ) {
+  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
     return 'ينشر المثيل \"$instanceId\" اسم ملف ويب غير صالح \"$webFileName\" للموضوع \"$topic\".';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(
-    String instanceId,
-    String webFileName,
-    String firstTopic,
-    String secondTopic,
-  ) {
+  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
     return 'ينشر المثيل \"$instanceId\" الموضوعين \"$firstTopic\" و\"$secondTopic\" باسم \"$webFileName\".';
   }
 
@@ -2756,16 +2565,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(
-    String anchor,
-    String targetName,
-  ) {
+  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
     return 'المُرسى \"⁨$anchor⁩\" غير موجود في \"⁨$targetName⁩\".';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom =>
-      '<include> يفتقد السمة from.';
+  String get diagnosticWritersideIncludeMissingFrom => '<include> يفتقد السمة from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2773,10 +2578,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(
-    String elementId,
-    String from,
-  ) {
+  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
     return 'عنصر التضمين \"⁨$elementId⁩\" غير موجود في \"⁨$from⁩\".';
   }
 
@@ -2820,16 +2622,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(reason, {
-      'other':
-          'ثبّت Git أو اضبط BusyMark لاستخدام ملف Git تنفيذي متاح. ⁨$reason⁩',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      reason,
+      {
+        'other': 'ثبّت Git أو اضبط BusyMark لاستخدام ملف Git تنفيذي متاح. ⁨$reason⁩',
+      },
+    );
     return '$_temp0';
   }
 
   @override
-  String get gitOperationsRequireTrust =>
-      'تتطلب عمليات Git الوثوق بمساحة العمل.';
+  String get gitOperationsRequireTrust => 'تتطلب عمليات Git الوثوق بمساحة العمل.';
 
   @override
   String get gitManageBranches => 'إدارة الفروع';
@@ -2838,8 +2641,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitTrustRequiredTitle => 'الوثوق بمساحة العمل هذه لاستخدام Git؟';
 
   @override
-  String get gitTrustRequiredMessage =>
-      'يمكن لـ BusyMark فحص بيانات وصفية محدودة للمستودع دون منحه الثقة. يتيح منح الثقة عمليات Git لهذا المستودع التي قد تشغّل الخطافات وعوامل التصفية ومساعدات بيانات الاعتماد وأدوات التوقيع المضبوطة فيه.';
+  String get gitTrustRequiredMessage => 'يمكن لـ BusyMark فحص بيانات وصفية محدودة للمستودع دون منحه الثقة. يتيح منح الثقة عمليات Git لهذا المستودع التي قد تشغّل الخطافات وعوامل التصفية ومساعدات بيانات الاعتماد وأدوات التوقيع المضبوطة فيه.';
 
   @override
   String get gitTrustWorkspace => 'الوثوق بمساحة العمل';
@@ -2955,8 +2757,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitCommitSelectedFiles => 'الملفات المحددة';
 
   @override
-  String get gitCommitNoSelectedFiles =>
-      'جهّز ملفًا واحدًا على الأقل قبل إنشاء الالتزام.';
+  String get gitCommitNoSelectedFiles => 'جهّز ملفًا واحدًا على الأقل قبل إنشاء الالتزام.';
 
   @override
   String gitStagedFileCount(int count) {
@@ -3003,8 +2804,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitNoDiff => 'لا يوجد فرق لعرضه';
 
   @override
-  String get gitBinaryFile =>
-      'ملف ثنائي. لا يعرض BusyMark رقع الملفات الثنائية.';
+  String get gitBinaryFile => 'ملف ثنائي. لا يعرض BusyMark رقع الملفات الثنائية.';
 
   @override
   String gitBinaryFileInfo(int size) {
@@ -3012,8 +2812,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUnsavedChangesBanner =>
-      'لا تُضمّن تغييرات المحرر غير المحفوظة حتى يتم حفظها.';
+  String get gitUnsavedChangesBanner => 'لا تُضمّن تغييرات المحرر غير المحفوظة حتى يتم حفظها.';
 
   @override
   String get gitConfirmDiscardTitle => 'تجاهل تغييرات Git؟';
@@ -3023,10 +2822,8 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملفات المتعقبة المحددة إلى HEAD.',
-      one:
-          'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملف المتعقب المحدد إلى HEAD.',
+      other: 'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملفات المتعقبة المحددة إلى HEAD.',
+      one: 'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملف المتعقب المحدد إلى HEAD.',
     );
     return '$_temp0';
   }
@@ -3067,8 +2864,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitConfirmSwitchBranchMessage =>
-      'سيعيد BusyMark تحميل مساحة العمل من القرص بعد أن يبدّل Git الفروع.';
+  String get gitConfirmSwitchBranchMessage => 'سيعيد BusyMark تحميل مساحة العمل من القرص بعد أن يبدّل Git الفروع.';
 
   @override
   String get gitConfirmPushSetUpstreamTitle => 'تعيين فرع منبع؟';
@@ -3085,8 +2881,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitFileHistory => 'تاريخ الملف';
 
   @override
-  String get gitFileHistoryRequiresOpenFile =>
-      'يتطلب سجل الملف فتح ملف Markdown.';
+  String get gitFileHistoryRequiresOpenFile => 'يتطلب سجل الملف فتح ملف Markdown.';
 
   @override
   String get gitLoadMore => 'تحميل المزيد';
@@ -3104,8 +2899,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitConfirmRestoreTitle => 'هل تريد استعادة إصدار الملف هذا؟';
 
   @override
-  String get gitConfirmRestoreMessage =>
-      'سيستبدل BusyMark ملف شجرة العمل الحالي بالإصدار المحدد من الإيداع. سيبقى الملف المستعاد غير مُرحَّل.';
+  String get gitConfirmRestoreMessage => 'سيستبدل BusyMark ملف شجرة العمل الحالي بالإصدار المحدد من الإيداع. سيبقى الملف المستعاد غير مُرحَّل.';
 
   @override
   String get gitCommitActions => 'إجراءات الإيداع';
@@ -3130,29 +2924,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitResetModeSoft => 'Soft';
 
   @override
-  String get gitResetModeSoftDescription =>
-      'نقل الفرع فقط. إبقاء الفهرس وشجرة العمل دون تغيير؛ تظل الاختلافات عن الإيداع المحدد مُرحَّلة.';
+  String get gitResetModeSoftDescription => 'نقل الفرع فقط. إبقاء الفهرس وشجرة العمل دون تغيير؛ تظل الاختلافات عن الإيداع المحدد مُرحَّلة.';
 
   @override
   String get gitResetModeMixed => 'Mixed';
 
   @override
-  String get gitResetModeMixedDescription =>
-      'نقل الفرع وإعادة تعيين الفهرس. إبقاء شجرة العمل دون تغيير، مع ترك الاختلافات غير مُرحَّلة.';
+  String get gitResetModeMixedDescription => 'نقل الفرع وإعادة تعيين الفهرس. إبقاء شجرة العمل دون تغيير، مع ترك الاختلافات غير مُرحَّلة.';
 
   @override
   String get gitResetModeHard => 'Hard';
 
   @override
-  String get gitResetModeHardDescription =>
-      'نقل الفرع وإعادة تعيين الفهرس وشجرة العمل. تُلغى التغييرات المتتبعة؛ وقد تُحذف الملفات غير المتتبعة التي تعيق العملية.';
+  String get gitResetModeHardDescription => 'نقل الفرع وإعادة تعيين الفهرس وشجرة العمل. تُلغى التغييرات المتتبعة؛ وقد تُحذف الملفات غير المتتبعة التي تعيق العملية.';
 
   @override
   String get gitResetModeKeep => 'Keep';
 
   @override
-  String get gitResetModeKeepDescription =>
-      'نقل الفرع وإعادة تعيين الملفات المتتبعة مع الاحتفاظ بالتغييرات المحلية. يتوقف Git إذا تعارضت هذه التغييرات مع إعادة التعيين.';
+  String get gitResetModeKeepDescription => 'نقل الفرع وإعادة تعيين الملفات المتتبعة مع الاحتفاظ بالتغييرات المحلية. يتوقف Git إذا تعارضت هذه التغييرات مع إعادة التعيين.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -3214,38 +3004,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitErrorNoUpstream => 'لم يتم إعداد فرع منبع.';
 
   @override
-  String get gitErrorMultipleRemotes =>
-      'تم إعداد عدة مستودعات بعيدة. اختر فرع منبع خارج هذا الإصدار من BusyMark.';
+  String get gitErrorMultipleRemotes => 'تم إعداد عدة مستودعات بعيدة. اختر فرع منبع خارج هذا الإصدار من BusyMark.';
 
   @override
-  String get gitErrorDirtyWorkspace =>
-      'احفظ تغييرات محرر BusyMark أو تجاهلها قبل تبديل الفروع.';
+  String get gitErrorDirtyWorkspace => 'احفظ تغييرات محرر BusyMark أو تجاهلها قبل تبديل الفروع.';
 
   @override
-  String get gitErrorResetDirtyWorkspace =>
-      'احفظ تغييرات محرر BusyMark أو تجاهلها قبل إعادة تعيين الفرع الحالي.';
+  String get gitErrorResetDirtyWorkspace => 'احفظ تغييرات محرر BusyMark أو تجاهلها قبل إعادة تعيين الفرع الحالي.';
 
   @override
-  String get gitErrorRestoreStagedFile =>
-      'أزل الملف من منطقة التجهيز قبل استعادة إصدار سابق.';
+  String get gitErrorRestoreStagedFile => 'أزل الملف من منطقة التجهيز قبل استعادة إصدار سابق.';
 
   @override
   String get gitErrorResetDetachedHead => 'انتقل إلى فرع قبل إعادة تعيينه.';
 
   @override
-  String get gitErrorDiverged =>
-      'تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.';
+  String get gitErrorDiverged => 'تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.';
 
   @override
-  String get gitErrorAuthorIdentity =>
-      'يحتاج Git إلى اسم المؤلف وعنوان بريده الإلكتروني قبل إنشاء الالتزام.';
+  String get gitErrorAuthorIdentity => 'يحتاج Git إلى اسم المؤلف وعنوان بريده الإلكتروني قبل إنشاء الالتزام.';
 
   @override
   String get gitAuthorIdentityTitle => 'هوية مؤلف Git';
 
   @override
-  String get gitAuthorIdentityMessage =>
-      'أدخل الهوية التي يجب أن يسجلها Git في الالتزامات. سيحفظها BusyMark ويعيد محاولة هذا الالتزام.';
+  String get gitAuthorIdentityMessage => 'أدخل الهوية التي يجب أن يسجلها Git في الالتزامات. سيحفظها BusyMark ويعيد محاولة هذا الالتزام.';
 
   @override
   String get gitAuthorName => 'الاسم';
@@ -3257,8 +3040,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitAuthorIdentityGlobal => 'استخدامها لجميع المستودعات';
 
   @override
-  String get gitAuthorIdentityGlobalDescription =>
-      'عند التثبيت كحزمة Snap، ينطبق هذا على المستودعات المفتوحة في BusyMark.';
+  String get gitAuthorIdentityGlobalDescription => 'عند التثبيت كحزمة Snap، ينطبق هذا على المستودعات المفتوحة في BusyMark.';
 
   @override
   String get gitSaveIdentityAndCommit => 'حفظ وإنشاء الالتزام';
@@ -3282,29 +3064,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get syntaxReferenceMarkdownBlocks => 'كتل Markdown';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription =>
-      'بنى الكتل المدعومة في مصدر Markdown والمعاينة.';
+  String get syntaxReferenceMarkdownBlocksDescription => 'بنى الكتل المدعومة في مصدر Markdown والمعاينة.';
 
   @override
   String get syntaxReferenceInlineFormatting => 'Markdown داخل السطر';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription =>
-      'تنسيق يمكن استخدامه داخل الفقرات وعناصر القوائم وخلايا الجداول.';
+  String get syntaxReferenceInlineFormattingDescription => 'تنسيق يمكن استخدامه داخل الفقرات وعناصر القوائم وخلايا الجداول.';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => 'كتل HTML الخام';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription =>
-      'وسوم HTML الكتلية الآمنة التي تعرضها ودجات معاينة BusyMark.';
+  String get syntaxReferenceRawHtmlBlocksDescription => 'وسوم HTML الكتلية الآمنة التي تعرضها ودجات معاينة BusyMark.';
 
   @override
   String get syntaxReferenceRawHtmlInline => 'وسوم HTML داخل السطر';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription =>
-      'وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.';
+  String get syntaxReferenceRawHtmlInlineDescription => 'وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.';
 
   @override
   String get syntaxReferenceHeadings => 'العناوين';
@@ -3343,24 +3121,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'وسوم نصية دلالية';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription =>
-      'يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.';
+  String get syntaxReferenceSanitizedPreviewDescription => 'يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription =>
-      'يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.';
+  String get syntaxReferenceSourcePreservedDescription => 'يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription =>
-      'تعرض علامات Markdown داخل HTML الخام كنص حرفي.';
+  String get syntaxReferenceMarkdownInsideHtmlDescription => 'تعرض علامات Markdown داخل HTML الخام كنص حرفي.';
 
   @override
-  String get syntaxReferenceBlockedContentDescription =>
-      'يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.';
+  String get syntaxReferenceBlockedContentDescription => 'يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription =>
-      'تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.';
+  String get syntaxReferenceSafeUrlsDescription => 'تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.';
 
   @override
   String get syntaxReferenceCategory => 'الفئة';
@@ -3390,35 +3163,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get syntaxReferenceOfficialDocumentation => 'الوثائق الرسمية';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdown =>
-      'Markdown في Writerside فقط';
+  String get syntaxReferenceScopeWritersideMarkdown => 'Markdown في Writerside فقط';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
-      'Markdown وXML في Writerside فقط';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml => 'Markdown وXML في Writerside فقط';
 
   @override
-  String get syntaxReferenceMarkdownDescription =>
-      'أشكال Markdown الأساسية التي يستطيع BusyMark كتابتها ومعاينتها.';
+  String get syntaxReferenceMarkdownDescription => 'أشكال Markdown الأساسية التي يستطيع BusyMark كتابتها ومعاينتها.';
 
   @override
   String get syntaxReferenceParagraphExample => 'فقرة نصية.';
 
   @override
-  String get syntaxReferenceTableLimitation =>
-      'تستخدم الجداول صيغة الأنابيب في GitHub Flavored Markdown.';
+  String get syntaxReferenceTableLimitation => 'تستخدم الجداول صيغة الأنابيب في GitHub Flavored Markdown.';
 
   @override
-  String get syntaxReferenceHardBreakIdentifiers =>
-      'مسافتان في نهاية السطر، \\, <br>';
+  String get syntaxReferenceHardBreakIdentifiers => 'مسافتان في نهاية السطر، \\, <br>';
 
   @override
-  String get syntaxReferenceHtmlDescription =>
-      'يقبل BusyMark مجموعة محدودة وآمنة من HTML الخام في مصدر Markdown.';
+  String get syntaxReferenceHtmlDescription => 'يقبل BusyMark مجموعة محدودة وآمنة من HTML الخام في مصدر Markdown.';
 
   @override
-  String get syntaxReferenceDiagramsDescription =>
-      'تعمل كتل Mermaid وPlantUML وD2 وOpenAPI المسيّجة في مصدر Markdown. لا تتأثر معرّفات السياج بحالة الأحرف، ويحافظ BusyMark على التهجئة الأصلية.';
+  String get syntaxReferenceDiagramsDescription => 'تعمل كتل Mermaid وPlantUML وD2 وOpenAPI المسيّجة في مصدر Markdown. لا تتأثر معرّفات السياج بحالة الأحرف، ويحافظ BusyMark على التهجئة الأصلية.';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -3433,34 +3199,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation =>
-      'استخدم محتوى YAML أو JSON داخل سياج. لا يعامل BusyMark مستند YAML أو JSON كاملاً عشوائياً على أنه مرجع OpenAPI.';
+  String get syntaxReferenceOpenApiLimitation => 'استخدم محتوى YAML أو JSON داخل سياج. لا يعامل BusyMark مستند YAML أو JSON كاملاً عشوائياً على أنه مرجع OpenAPI.';
 
   @override
-  String get syntaxReferenceSemanticDiagramBlocks =>
-      'كتل شيفرة دلالية للمخططات';
+  String get syntaxReferenceSemanticDiagramBlocks => 'كتل شيفرة دلالية للمخططات';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation =>
-      'تدعم صيغتا code-block وsrc الدلاليتان Mermaid وPlantUML وD2، لا OpenAPI، وتعملان داخل مشاريع Writerside فقط.';
+  String get syntaxReferenceSemanticDiagramLimitation => 'تدعم صيغتا code-block وsrc الدلاليتان Mermaid وPlantUML وD2، لا OpenAPI، وتعملان داخل مشاريع Writerside فقط.';
 
   @override
   String get syntaxReferenceReferencedDiagramSource => 'مصدر مخطط مُشار إليه';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation =>
-      'يجب أن تكون المسارات نسبية وأن تبقى داخل مشروع Writerside المفتوح؛ صيغة السياج مع src خاصة بـMarkdown في Writerside.';
+  String get syntaxReferenceReferencedDiagramLimitation => 'يجب أن تكون المسارات نسبية وأن تبقى داخل مشروع Writerside المفتوح؛ صيغة السياج مع src خاصة بـMarkdown في Writerside.';
 
   @override
-  String get syntaxReferenceMathematicsDescription =>
-      'يدعم BusyMark تعبيرات TeX، وليس مستندات TeX أو LaTeX الكاملة.';
+  String get syntaxReferenceMathematicsDescription => 'يدعم BusyMark تعبيرات TeX، وليس مستندات TeX أو LaTeX الكاملة.';
 
   @override
   String get syntaxReferenceInlineMath => 'رياضيات مضمنة';
 
   @override
-  String get syntaxReferenceGithubMath =>
-      'رياضيات GitHub بعلامة الدولار والفاصلة العليا المائلة';
+  String get syntaxReferenceGithubMath => 'رياضيات GitHub بعلامة الدولار والفاصلة العليا المائلة';
 
   @override
   String get syntaxReferenceDisplayMath => 'رياضيات معروضة';
@@ -3472,40 +3232,34 @@ class AppLocalizationsAr extends AppLocalizations {
   String get syntaxReferenceTexFence => 'سياج tex';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation =>
-      'لا يتعرّف BusyMark على ⁨\\(...\\)⁩ أو ⁨\\[...\\]⁩ كمحددات رياضيات في Markdown.';
+  String get syntaxReferenceMathDelimitersLimitation => 'لا يتعرّف BusyMark على ⁨\\(...\\)⁩ أو ⁨\\[...\\]⁩ كمحددات رياضيات في Markdown.';
 
   @override
-  String get syntaxReferenceTexFenceLimitation =>
-      'خارج وضع Writerside، يبقى سياج tex كتلة شيفرة عادية.';
+  String get syntaxReferenceTexFenceLimitation => 'خارج وضع Writerside، يبقى سياج tex كتلة شيفرة عادية.';
 
   @override
   String get syntaxReferenceWritersideMathElement => 'عنصر math في Writerside';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation =>
-      'عنصر math صيغة دلالية في Writerside، وليس HTML MathML خاماً مسموحاً به.';
+  String get syntaxReferenceWritersideMathElementLimitation => 'عنصر math صيغة دلالية في Writerside، وليس HTML MathML خاماً مسموحاً به.';
 
   @override
   String get syntaxReferenceSemanticTexBlock => 'كتلة شيفرة TeX دلالية';
 
   @override
-  String get syntaxReferenceWritersideDescription =>
-      'لا تُفسَّر هذه الامتدادات المحددة إلا داخل مشاريع Writerside المفتوحة.';
+  String get syntaxReferenceWritersideDescription => 'لا تُفسَّر هذه الامتدادات المحددة إلا داخل مشاريع Writerside المفتوحة.';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => 'اقتباس كتلي للتنبيه';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation =>
-      'يكون الاقتباس الكتلي العادي تلميحاً في Markdown ضمن Writerside؛ ويبقى اقتباساً عادياً في Markdown العادي.';
+  String get syntaxReferenceAdmonitionLimitation => 'يكون الاقتباس الكتلي العادي تلميحاً في Markdown ضمن Writerside؛ ويبقى اقتباساً عادياً في Markdown العادي.';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => 'تنبيهات دلالية';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation =>
-      'لا يفسر Markdown العادي عناصر Writerside الدلالية هذه.';
+  String get syntaxReferenceSemanticMarkupLimitation => 'لا يفسر Markdown العادي عناصر Writerside الدلالية هذه.';
 
   @override
   String get syntaxReferenceCollapsibleHeading => 'عنوان قابل للطي';
@@ -3517,30 +3271,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get syntaxReferenceSemanticCollapsibles => 'محتوى دلالي قابل للطي';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation =>
-      'يدعم BusyMark صيغ chapter وprocedure وcode-block وقائمة التعريفات القابلة للطي، وليس فهرس Writerside كاملاً.';
+  String get syntaxReferenceSemanticCollapsiblesLimitation => 'يدعم BusyMark صيغ chapter وprocedure وcode-block وقائمة التعريفات القابلة للطي، وليس فهرس Writerside كاملاً.';
 
   @override
-  String get syntaxReferenceSemanticCodeBlocks =>
-      'كتل شيفرة دلالية للرياضيات والمخططات';
+  String get syntaxReferenceSemanticCodeBlocks => 'كتل شيفرة دلالية للرياضيات والمخططات';
 
   @override
   String get syntaxReferenceVideo => 'فيديو Writerside';
 
   @override
-  String get syntaxReferenceVideoLimitation =>
-      'يستخدم الفيديو المحلي صورة preview-src محلية؛ ويجب أن تكون المصادر المستضافة عناوين HTTPS مدعومة من YouTube أو Vimeo.';
+  String get syntaxReferenceVideoLimitation => 'يستخدم الفيديو المحلي صورة preview-src محلية؛ ويجب أن تكون المصادر المستضافة عناوين HTTPS مدعومة من YouTube أو Vimeo.';
 
   @override
   String get exportAsPdf => 'تصدير بصيغة PDF';
 
   @override
-  String get pdfExportDescription =>
-      'اختر تخطيط الصفحة لإنشاء ملف PDF متقن ومستقل.';
+  String get pdfExportDescription => 'اختر تخطيط الصفحة لإنشاء ملف PDF متقن ومستقل.';
 
   @override
-  String get pdfRemoteImagesNote =>
-      'لا تُنزّل الصور البعيدة أثناء التصدير. تُضمّن الصور المحلية عند توفرها.';
+  String get pdfRemoteImagesNote => 'لا تُنزّل الصور البعيدة أثناء التصدير. تُضمّن الصور المحلية عند توفرها.';
 
   @override
   String get pdfPageSize => 'حجم الصفحة';
@@ -3604,16 +3353,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get pdfExportUnavailable =>
-      'مكوّن تصدير PDF مفقود. أعد تثبيت BusyMark ثم حاول مجددًا.';
+  String get pdfExportUnavailable => 'مكوّن تصدير PDF مفقود. أعد تثبيت BusyMark ثم حاول مجددًا.';
 
   @override
-  String get pdfExportTimedOut =>
-      'استغرق تصدير PDF وقتًا طويلًا جدًا وتم إيقافه.';
+  String get pdfExportTimedOut => 'استغرق تصدير PDF وقتًا طويلًا جدًا وتم إيقافه.';
 
   @override
-  String get pdfExportFailed =>
-      'تعذر على BusyMark تصدير هذا المستند بصيغة PDF.';
+  String get pdfExportFailed => 'تعذر على BusyMark تصدير هذا المستند بصيغة PDF.';
 
   @override
   String get visualizationRendering => 'جارٍ التصيير…';
@@ -3678,8 +3424,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get shortcutExportPdfDescription =>
-      'تصدير المستند النشط أو وحدة Writerside بصيغة PDF.';
+  String get shortcutExportPdfDescription => 'تصدير المستند النشط أو وحدة Writerside بصيغة PDF.';
 
   @override
   String get instances => 'المثيلات';
@@ -3718,8 +3463,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chooseMarkdownFolder => 'اختيار مجلد Markdown';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired =>
-      'اختر مجلدًا يحتوي على ملفات Markdown.';
+  String get errorWritersideInstanceImportSourceRequired => 'اختر مجلدًا يحتوي على ملفات Markdown.';
 
   @override
   String get instanceAppearance => 'المظهر';
@@ -3754,15 +3498,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get allowSearchEngineIndexing => 'السماح بفهرسة محركات البحث';
 
   @override
-  String get allowSearchEngineIndexingDescription =>
-      'السماح لمحركات البحث الخارجية بفهرسة هذا الناتج.';
+  String get allowSearchEngineIndexingDescription => 'السماح لمحركات البحث الخارجية بفهرسة هذا الناتج.';
 
   @override
   String get offlineArtifact => 'حزمة دون اتصال';
 
   @override
-  String get offlineArtifactDescription =>
-      'ضمّن الموارد بحيث تكون الوثائق المنشأة مكتفية ذاتيًا.';
+  String get offlineArtifactDescription => 'ضمّن الموارد بحيث تكون الوثائق المنشأة مكتفية ذاتيًا.';
 
   @override
   String get instanceOutputSettings => 'إعدادات الناتج';
@@ -3782,19 +3524,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get noMarkdownFilesFound =>
-      'لم يُعثر على ملفات Markdown في هذا الدليل.';
+  String get noMarkdownFilesFound => 'لم يُعثر على ملفات Markdown في هذا الدليل.';
 
   @override
   String get copyReferencedMedia => 'نسخ الوسائط المشار إليها';
 
   @override
-  String get copyReferencedMediaDescription =>
-      'انسخ الصور ومقاطع الفيديو المحلية التي تشير إليها الملفات المحددة مع الحفاظ على المسارات النسبية.';
+  String get copyReferencedMediaDescription => 'انسخ الصور ومقاطع الفيديو المحلية التي تشير إليها الملفات المحددة مع الحفاظ على المسارات النسبية.';
 
   @override
-  String get instanceIdRenameWarningTitle =>
-      'هل تريد إعادة تسمية معرّف المثيل؟';
+  String get instanceIdRenameWarningTitle => 'هل تريد إعادة تسمية معرّف المثيل؟';
 
   @override
   String instanceIdRenameWarning(String oldId, String newId) {
@@ -3805,8 +3544,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get renameAndUpdateReferences => 'إعادة التسمية وتحديث المراجع';
 
   @override
-  String get tocLibraryDescription =>
-      'تخزّن مكتبة جدول المحتويات أقسامًا قابلة لإعادة الاستخدام ولا تنشئ ناتجًا خاصًا بها.';
+  String get tocLibraryDescription => 'تخزّن مكتبة جدول المحتويات أقسامًا قابلة لإعادة الاستخدام ولا تنشئ ناتجًا خاصًا بها.';
 
   @override
   String get defaultTocLibraryName => 'جدول محتويات مشترك';
@@ -3854,8 +3592,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired =>
-      'حدّد ملف Markdown واحدًا على الأقل لاستيراده.';
+  String get errorWritersideInstanceImportSelectionRequired => 'حدّد ملف Markdown واحدًا على الأقل لاستيراده.';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -3868,8 +3605,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceFilesChanged =>
-      'تغيّرت ملفات المثيل على القرص. راجعها وحاول مرة أخرى.';
+  String get errorWritersideInstanceFilesChanged => 'تغيّرت ملفات المثيل على القرص. راجعها وحاول مرة أخرى.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
@@ -3877,20 +3613,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceLibraryImport =>
-      'لا يمكن لمكتبة جدول المحتويات استيراد موضوعات Markdown.';
+  String get errorWritersideInstanceLibraryImport => 'لا يمكن لمكتبة جدول المحتويات استيراد موضوعات Markdown.';
 
   @override
-  String get errorWritersideInstanceWebPathInvalid =>
-      'يجب أن يكون مسار الويب سطرًا واحدًا.';
+  String get errorWritersideInstanceWebPathInvalid => 'يجب أن يكون مسار الويب سطرًا واحدًا.';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid =>
-      'إعداد مثيل Writerside غير صالح. صحّح تشخيصاته وحاول مرة أخرى.';
+  String get errorWritersideInstanceConfigurationInvalid => 'إعداد مثيل Writerside غير صالح. صحّح تشخيصاته وحاول مرة أخرى.';
 
   @override
-  String get errorWritersideInstanceTemporaryFile =>
-      'تعذّر على BusyMark تجهيز تغييرات المثيل بأمان.';
+  String get errorWritersideInstanceTemporaryFile => 'تعذّر على BusyMark تجهيز تغييرات المثيل بأمان.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
@@ -3903,36 +3635,27 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot =>
-      'يجب أن يكون العنصر الجذر في ⁨buildprofiles.xml⁩ هو ⁨<buildprofiles>⁩.';
+  String get diagnosticWritersideBuildProfilesInvalidRoot => 'يجب أن يكون العنصر الجذر في ⁨buildprofiles.xml⁩ هو ⁨<buildprofiles>⁩.';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(
-    String name,
-    String value,
-  ) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
     return 'يجب أن تكون قيمة ⁨$name⁩ «⁨$value⁩» إما ⁨true⁩ أو ⁨false⁩.';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance =>
-      'يجب أن يحدد عنصر ⁨<build-profile>⁩ معرّف مثيل.';
+  String get diagnosticWritersideBuildProfileMissingInstance => 'يجب أن يحدد عنصر ⁨<build-profile>⁩ معرّف مثيل.';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude =>
-      'يجب أن يحدد عنصر ⁨<include>⁩ في الشجرة كلًا من ⁨from⁩ و⁨element-id⁩.';
+  String get diagnosticWritersideTreeInvalidInclude => 'يجب أن يحدد عنصر ⁨<include>⁩ في الشجرة كلًا من ⁨from⁩ و⁨element-id⁩.';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId =>
-      'يجب أن يحدد عنصر ⁨<snippet>⁩ في الشجرة قيمة ⁨id⁩.';
+  String get diagnosticWritersideTreeMissingSnippetId => 'يجب أن يحدد عنصر ⁨<snippet>⁩ في الشجرة قيمة ⁨id⁩.';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
-      'يجب أن يحدد مرجع جدول المحتويات العابر للمثيلات كلًا من ⁨ref⁩ و⁨in⁩.';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference => 'يجب أن يحدد مرجع جدول المحتويات العابر للمثيلات كلًا من ⁨ref⁩ و⁨in⁩.';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets =>
-      'لا يمكن لعنصر جدول محتويات استهداف أكثر من موضوع أو مرجع أو رابط أو إعادة توجيه واحدة.';
+  String get diagnosticWritersideTreeConflictingTargets => 'لا يمكن لعنصر جدول محتويات استهداف أكثر من موضوع أو مرجع أو رابط أو إعادة توجيه واحدة.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3940,12 +3663,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      'يجب أن يكون العنصر الجذر في ملف مجموعات المثيلات هو ⁨<instance-groups>⁩.';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot => 'يجب أن يكون العنصر الجذر في ملف مجموعات المثيلات هو ⁨<instance-groups>⁩.';
 
   @override
-  String get diagnosticWritersideInstanceGroupInvalid =>
-      'يجب أن تحدد مجموعة المثيلات معرّفًا غير فارغ وقائمة مثيلات.';
+  String get diagnosticWritersideInstanceGroupInvalid => 'يجب أن تحدد مجموعة المثيلات معرّفًا غير فارغ وقائمة مثيلات.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
@@ -3953,19 +3674,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(
-    String source,
-    String id,
-    String origin,
-  ) {
+  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
     return 'ينتمي تضمين جدول المحتويات «⁨$source#$id⁩» إلى الوحدة الخارجية «⁨$origin⁩» ولا يمكن توسيعه في مساحة العمل هذه.';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(
-    String source,
-    String id,
-  ) {
+  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
     return 'عنصر الشجرة «⁨$id⁩» غير موجود في الشجرة المسجلة «⁨$source⁩».';
   }
 
@@ -3985,10 +3699,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(
-    String topic,
-    String instance,
-  ) {
+  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
     return 'الموضوع «⁨$topic⁩» غير موجود في المثيل المشار إليه «⁨$instance⁩».';
   }
 
@@ -4017,8 +3728,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiDisabled => 'معطّل';
 
   @override
-  String get aiExplicitEditingDescription =>
-      'لا يبدأ التحرير بالذكاء الاصطناعي إلا بإجراء صريح. لا يرسل BusyMark إلا السياق المعروض إلى المزوّد المحدد، ولا يطبّق أي اقتراح من دون مراجعته.';
+  String get aiExplicitEditingDescription => 'لا يبدأ التحرير بالذكاء الاصطناعي إلا بإجراء صريح. لا يرسل BusyMark إلا السياق المعروض إلى المزوّد المحدد، ولا يطبّق أي اقتراح من دون مراجعته.';
 
   @override
   String get aiProvider => 'موفّر الذكاء الاصطناعي';
@@ -4053,12 +3763,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiNoModels => 'لم يتم تحديد نموذج.';
 
   @override
-  String get aiConnectionFailed =>
-      'تعذّر على BusyMark التحقق من إنشاء النص بالذكاء الاصطناعي.';
+  String get aiConnectionFailed => 'تعذّر على BusyMark التحقق من إنشاء النص بالذكاء الاصطناعي.';
 
   @override
-  String get aiConfigureFirst =>
-      'فعّل مزوّد ذكاء اصطناعي وتحقق من نموذج في الإعدادات ← الذكاء الاصطناعي.';
+  String get aiConfigureFirst => 'فعّل مزوّد ذكاء اصطناعي وتحقق من نموذج في الإعدادات ← الذكاء الاصطناعي.';
 
   @override
   String get aiEditWithAi => 'تحرير باستخدام الذكاء الاصطناعي';
@@ -4144,12 +3852,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get aiStaleProposal =>
-      'تغيّر المستند أثناء إنشاء هذا الاقتراح. شغّل الإجراء مرة أخرى.';
+  String get aiStaleProposal => 'تغيّر المستند أثناء إنشاء هذا الاقتراح. شغّل الإجراء مرة أخرى.';
 
   @override
-  String get gitAiStagedChangesChanged =>
-      'تغيّرت التغييرات المُرحَّلة أثناء إنشاء رسالة الالتزام هذه. شغّل الإجراء مرة أخرى.';
+  String get gitAiStagedChangesChanged => 'تغيّرت التغييرات المُرحَّلة أثناء إنشاء رسالة الالتزام هذه. شغّل الإجراء مرة أخرى.';
 
   @override
   String get aiViewContext => 'عرض السياق المُرسل';
@@ -4167,8 +3873,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiApiKey => 'مفتاح API';
 
   @override
-  String get aiApiKeyStoredHint =>
-      'يوجد مفتاح محفوظ في مخزن بيانات الاعتماد في النظام';
+  String get aiApiKeyStoredHint => 'يوجد مفتاح محفوظ في مخزن بيانات الاعتماد في النظام';
 
   @override
   String get aiApiKeyEnterHint => 'أدخل مفتاح API للمزوّد';
@@ -4183,8 +3888,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiRemoveApiKey => 'إزالة مفتاح API المحفوظ';
 
   @override
-  String get aiCredentialSaved =>
-      'حُفظ مفتاح API في مخزن بيانات الاعتماد في النظام.';
+  String get aiCredentialSaved => 'حُفظ مفتاح API في مخزن بيانات الاعتماد في النظام.';
 
   @override
   String get aiCredentialRemoved => 'أُزيل مفتاح API المحفوظ.';
@@ -4220,8 +3924,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get aiCloudConsentMessage =>
-      'لا يُرسل إلا المحتوى المعروض في كل مربع حوار لمراجعة الذكاء الاصطناعي. الطلبات عديمة الحالة، وتتطلب الاقتراحات مراجعة، ويُحفظ مفتاح API في مخزن بيانات الاعتماد في نظام Linux.';
+  String get aiCloudConsentMessage => 'لا يُرسل إلا المحتوى المعروض في كل مربع حوار لمراجعة الذكاء الاصطناعي. الطلبات عديمة الحالة، وتتطلب الاقتراحات مراجعة، ويُحفظ مفتاح API في مخزن بيانات الاعتماد في نظام Linux.';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -4257,8 +3960,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownLinkEmptyText =>
-      'نص الرابط فارغ؛ أدخل اسمًا ميسّرًا يصف الغرض منه.';
+  String get diagnosticMarkdownLinkEmptyText => 'نص الرابط فارغ؛ أدخل اسمًا ميسّرًا يصف الغرض منه.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {
@@ -4266,8 +3968,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownTableEmptyHeader =>
-      'يجب أن تعرّف رؤوس الجدول أعمدتها؛ أكمل كل رأس فارغ.';
+  String get diagnosticMarkdownTableEmptyHeader => 'يجب أن تعرّف رؤوس الجدول أعمدتها؛ أكمل كل رأس فارغ.';
 
   @override
   String get mathRenderFailed => 'تعذر عرض التعبير الرياضي.';
@@ -4285,19 +3986,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get findUsages => 'البحث عن الاستخدامات';
 
   @override
-  String get cannotRenameSymbol =>
-      'لا يمكن إعادة تسمية الرمز بأمان. تحقق من الاسم وحدّث المرجع قبل المحاولة مجددًا.';
+  String get cannotRenameSymbol => 'لا يمكن إعادة تسمية الرمز بأمان. تحقق من الاسم وحدّث المرجع قبل المحاولة مجددًا.';
 
   @override
-  String get renameTopicFileInstead =>
-      'تُشتق معرّفات الموضوعات من أسماء ملفاتها. استخدم «إعادة تسمية ملف الموضوع» في جدول المحتويات أو الشريط الجانبي للملفات.';
+  String get renameTopicFileInstead => 'تُشتق معرّفات الموضوعات من أسماء ملفاتها. استخدم «إعادة تسمية ملف الموضوع» في جدول المحتويات أو الشريط الجانبي للملفات.';
 
   @override
   String get keyboardLayout => 'تخطيط لوحة المفاتيح';
 
   @override
-  String get diagnosticWritersideUnsupported =>
-      'يُعرض المحتوى غير المدعوم أو المشوّه كنص مصدر.';
+  String get diagnosticWritersideUnsupported => 'يُعرض المحتوى غير المدعوم أو المشوّه كنص مصدر.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
@@ -4310,17 +4008,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideSchema(
-    String element,
-    String attribute,
-    String reason,
-  ) {
+  String diagnosticWritersideSchema(String element, String attribute, String reason) {
     return 'ترميز Writerside غير صالح: $element، $attribute. $reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt =>
-      'استخدم <llms-txt>true</llms-txt> أو <llms-txt>false</llms-txt>؛ لم يعد single-file مدعومًا.';
+  String get diagnosticWritersideLlmsTxt => 'استخدم <llms-txt>true</llms-txt> أو <llms-txt>false</llms-txt>؛ لم يعد single-file مدعومًا.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -4343,19 +4036,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get htmlExportFailed => 'فشل تصدير HTML';
 
   @override
-  String get htmlKeepAssetsTogether =>
-      'عند نسخ التصدير، احتفظ بملف HTML ومجلد الموارد المرافق له معًا.';
+  String get htmlKeepAssetsTogether => 'عند نسخ التصدير، احتفظ بملف HTML ومجلد الموارد المرافق له معًا.';
 
   @override
-  String get htmlInstanceDescription =>
-      'صدّر نسخة واحدة على هيئة صفحات مترابطة تعمل دون اتصال. اختر اسمًا لمجلد إخراج مخصص.';
+  String get htmlInstanceDescription => 'صدّر نسخة واحدة على هيئة صفحات مترابطة تعمل دون اتصال. اختر اسمًا لمجلد إخراج مخصص.';
 
   @override
   String get htmlInstance => 'النسخة';
 
   @override
-  String get htmlOwnedDirectoryOnly =>
-      'يمكن استبدال مجلد أنشأه تصدير HTML في BusyMark فقط. ستُحفظ الملفات المعدّلة أو غير المرتبطة.';
+  String get htmlOwnedDirectoryOnly => 'يمكن استبدال مجلد أنشأه تصدير HTML في BusyMark فقط. ستُحفظ الملفات المعدّلة أو غير المرتبطة.';
 
   @override
   String get showInFolder => 'إظهار في المجلد';
@@ -4477,30 +4167,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get exportRemoveCss => 'إزالة ورقة الأنماط المخصصة';
 
   @override
-  String get exportCssNote =>
-      'اختر ملف CSS اختياريًا بترميز UTF-8 (حتى 256 KiB). تُرفض عمليات الاستيراد وعناوين الموارد وCSS القابل للتنفيذ أو المحتوي على محارف هروب. تُطبق الأنماط بعد أنماط BusyMark. لا تُجلب موارد بعيدة.';
+  String get exportCssNote => 'اختر ملف CSS اختياريًا بترميز UTF-8 (حتى 256 KiB). تُرفض عمليات الاستيراد وعناوين الموارد وCSS القابل للتنفيذ أو المحتوي على محارف هروب. تُطبق الأنماط بعد أنماط BusyMark. لا تُجلب موارد بعيدة.';
 
   @override
-  String get exportSitePackagingNote =>
-      'يحتفظ Writerside بصفحات مواضيع منفصلة ومترابطة. يضمّن وضع الملف الواحد الموارد في كل صفحة.';
+  String get exportSitePackagingNote => 'يحتفظ Writerside بصفحات مواضيع منفصلة ومترابطة. يضمّن وضع الملف الواحد الموارد في كل صفحة.';
 
   @override
-  String get exportInvalidGeometry =>
-      'اترك عرضًا وارتفاعًا للمحتوى لا يقلان عن 20 مم بعد الهوامش.';
+  String get exportInvalidGeometry => 'اترك عرضًا وارتفاعًا للمحتوى لا يقلان عن 20 مم بعد الهوامش.';
 
   @override
   String get exportInvalidColor => 'أدخل لونًا بصيغة #RRGGBB.';
 
   @override
-  String get exportInvalidCss =>
-      'اختر ملف .css مقروءًا بترميز UTF-8 حتى 256 KiB، دون استيراد أو عناوين موارد أو HTML أو CSS قابل للتنفيذ أو يحتوي على محارف هروب.';
+  String get exportInvalidCss => 'اختر ملف .css مقروءًا بترميز UTF-8 حتى 256 KiB، دون استيراد أو عناوين موارد أو HTML أو CSS قابل للتنفيذ أو يحتوي على محارف هروب.';
 
   @override
   String get clipboardHistory => 'سجل النسخ واللصق';
 
   @override
-  String get clipboardHistoryDescription =>
-      'افتح سجل النسخ واللصق الخاص بالجلسة.';
+  String get clipboardHistoryDescription => 'افتح سجل النسخ واللصق الخاص بالجلسة.';
 
   @override
   String get clipboardCurrent => 'النسخة واللصق الحالية';
@@ -4523,12 +4208,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clipboardDisabled => 'مجموعة سجل النسخ واللصق معطلة في الإعدادات.';
 
   @override
-  String get clipboardUnavailable =>
-      'محتوى النسخة واللصق الحالي غير متاح أو غير مدعوم.';
+  String get clipboardUnavailable => 'محتوى النسخة واللصق الحالي غير متاح أو غير مدعوم.';
 
   @override
-  String get clipboardTooLarge =>
-      'هذا العنصر في النسخة واللصق كبير جدًا بحيث لا يمكن الاحتفاظ به.';
+  String get clipboardTooLarge => 'هذا العنصر في النسخة واللصق كبير جدًا بحيث لا يمكن الاحتفاظ به.';
 
   @override
   String get clipboardPastePlainText => 'الصق كنص عادي';
@@ -4557,22 +4240,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get localHistoryEllipsis => 'سجل محلي…';
 
   @override
-  String get localHistoryDescription =>
-      'اعرض النسخ والمراجعات المحلية المحفوظة والآلية للمستند الحالي.';
+  String get localHistoryDescription => 'اعرض النسخ والمراجعات المحلية المحفوظة والآلية للمستند الحالي.';
 
   @override
   String get findLocalHistoryEllipsis => 'البحث في التاريخ المحلي…';
 
   @override
-  String get findLocalHistoryDescription =>
-      'البحث في مستندات التاريخ المحلي ومحتوى الإصدارات.';
+  String get findLocalHistoryDescription => 'البحث في مستندات التاريخ المحلي ومحتوى الإصدارات.';
 
   @override
   String get localHistoryNoDocuments => 'لا توجد مستندات لديها تاريخ محلي.';
 
   @override
-  String get localHistoryNoRevisions =>
-      'هذا المستند ليس لديه إصدارات في التاريخ المحلي.';
+  String get localHistoryNoRevisions => 'هذا المستند ليس لديه إصدارات في التاريخ المحلي.';
 
   @override
   String get localHistorySelectedRevision => 'الإصدار المحدد';
@@ -4599,12 +4279,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get localHistoryRestoreChange => 'استعادة التغيير';
 
   @override
-  String get localHistoryRestoreUnavailable =>
-      'لا يمكن استعادة هذا التغيير لأن المقارنة لم تعد حديثة.';
+  String get localHistoryRestoreUnavailable => 'لا يمكن استعادة هذا التغيير لأن المقارنة لم تعد حديثة.';
 
   @override
-  String get localHistoryComparisonSimplified =>
-      'تم تبسيط هذا المقارنة الكبير. لا يمكن استعادة التغييرات الفردية.';
+  String get localHistoryComparisonSimplified => 'تم تبسيط هذا المقارنة الكبير. لا يمكن استعادة التغييرات الفردية.';
 
   @override
   String localHistoryOlderChange(String text) {
@@ -4635,12 +4313,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get localHistoryClearAllTitle => 'هل تريد مسح السجل المحلي؟';
 
   @override
-  String get localHistoryClearConfirmation =>
-      'هذا يزيل بشكل دائم النسخ المحفوظة. لا يمكن التراجع عن هذه العملية.';
+  String get localHistoryClearConfirmation => 'هذا يزيل بشكل دائم النسخ المحفوظة. لا يمكن التراجع عن هذه العملية.';
 
   @override
-  String get localHistoryWarningIndexRebuilt =>
-      'تم تلف فهرس السجل المحلي وإعادة بنائه من النسخ السليمة.';
+  String get localHistoryWarningIndexRebuilt => 'تم تلف فهرس السجل المحلي وإعادة بنائه من النسخ السليمة.';
 
   @override
   String localHistoryWarningUnsupportedFormat(String version) {
@@ -4653,8 +4329,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled =>
-      'تم تعطيل التسجيل أو تم استبعاد هذا المسار. قم بتفعيل التسجيل مرة أخرى قبل الاستعادة.';
+  String get localHistoryWarningRecordingDisabled => 'تم تعطيل التسجيل أو تم استبعاد هذا المسار. قم بتفعيل التسجيل مرة أخرى قبل الاستعادة.';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -4667,8 +4342,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRevisionMissing =>
-      'النسخة المختارة مفقودة أو تالفة.';
+  String get localHistoryWarningRevisionMissing => 'النسخة المختارة مفقودة أو تالفة.';
 
   @override
   String localHistoryWarningRevisionRead(String detail) {
@@ -4716,15 +4390,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsClipboardHistoryTitle => 'جمع سجل الحافظة';
 
   @override
-  String get settingsClipboardHistoryDescription =>
-      'احتفظ بالمحتوى المنسوخ والمُلصق بنجاح لهذه الجلسة فقط في BusyMark.';
+  String get settingsClipboardHistoryDescription => 'احتفظ بالمحتوى المنسوخ والمُلصق بنجاح لهذه الجلسة فقط في BusyMark.';
 
   @override
   String get settingsLocalHistoryTitle => 'تسجيل سجل محلي';
 
   @override
-  String get settingsLocalHistoryDescription =>
-      'حفظ إصدارات المستند على هذا الجهاز للتعافي والمقارنة.';
+  String get settingsLocalHistoryDescription => 'حفظ إصدارات المستند على هذا الجهاز للتعافي والمقارنة.';
 
   @override
   String get settingsHistoryCheckpoint => 'فترة التحقق التلقائي';
@@ -4820,12 +4492,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get spellingCheckFailed => 'فشل التدقيق الإملائي';
 
   @override
-  String get spellingSettingsLoadFailed =>
-      'تعذّر تحميل إعدادات التدقيق الإملائي';
+  String get spellingSettingsLoadFailed => 'تعذّر تحميل إعدادات التدقيق الإملائي';
 
   @override
-  String get retrySpellingSettings =>
-      'إعادة محاولة تحميل إعدادات التدقيق الإملائي';
+  String get retrySpellingSettings => 'إعادة محاولة تحميل إعدادات التدقيق الإملائي';
 
   @override
   String get spellingCheckIncomplete => 'التدقيق الإملائي غير مكتمل';
@@ -4867,8 +4537,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get spellingDictionaryValidating => 'جارٍ التحقق من القاموس…';
 
   @override
-  String get spellingDictionaryInstallFailed =>
-      'فشل تثبيت القاموس — حدده لإعادة المحاولة';
+  String get spellingDictionaryInstallFailed => 'فشل تثبيت القاموس — حدده لإعادة المحاولة';
 
   @override
   String spellingDictionaryInstallPrompt(String dictionary, String size) {
@@ -4887,8 +4556,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get spellingDictionaryRecoveryConflict =>
-      'تم تغيير قاموس التدقيق الإملائي خارجيًا. تم الاحتفاظ بنسخة استرداد.';
+  String get spellingDictionaryRecoveryConflict => 'تم تغيير قاموس التدقيق الإملائي خارجيًا. تم الاحتفاظ بنسخة استرداد.';
 
   @override
   String get windowMinimize => 'تصغير';
@@ -4957,19 +4625,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nextcloudDeleteNote => 'حذف الملاحظة؟';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable =>
-      'الاستبدال في مساحة العمل غير متاح لملاحظات Nextcloud. استخدم الاستبدال داخل كل ملاحظة.';
+  String get nextcloudWorkspaceReplaceUnavailable => 'الاستبدال في مساحة العمل غير متاح لملاحظات Nextcloud. استخدم الاستبدال داخل كل ملاحظة.';
 
   @override
   String get nextcloudSaveLocalCopy => 'حفظ نسخة محلية…';
 
   @override
-  String get nextcloudDisconnectWarning =>
-      'تؤدي إزالة الحساب إلى حذف الملاحظات المخزنة مؤقتًا والتغييرات المعلقة من هذا الجهاز. زامن أولًا للاحتفاظ بالعمل على الخادم.';
+  String get nextcloudDisconnectWarning => 'تؤدي إزالة الحساب إلى حذف الملاحظات المخزنة مؤقتًا والتغييرات المعلقة من هذا الجهاز. زامن أولًا للاحتفاظ بالعمل على الخادم.';
 
   @override
-  String get nextcloudAttachmentRetryWarning =>
-      'قد تترك إعادة المحاولة مرفقًا غير مستخدم على الخادم إذا نجح التحميل السابق.';
+  String get nextcloudAttachmentRetryWarning => 'قد تترك إعادة المحاولة مرفقًا غير مستخدم على الخادم إذا نجح التحميل السابق.';
 
   @override
   String get nextcloudAttachmentReference => 'مرجع المرفق على الخادم';
@@ -4978,26 +4643,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nextcloudAddAttachment => 'إضافة مرفق…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning =>
-      'سيؤدي حذف المرفق إلى جعل روابطه في الملاحظة غير متاحة. يمكن استعادة البيانات المحتفَظ بها من السجل المحلي.';
+  String get nextcloudDeleteAttachmentWarning => 'سيؤدي حذف المرفق إلى جعل روابطه في الملاحظة غير متاحة. يمكن استعادة البيانات المحتفَظ بها من السجل المحلي.';
 
   @override
-  String get nextcloudChooseConflictingAttributes =>
-      'اختر قيمة لكل سمة متعارضة.';
+  String get nextcloudChooseConflictingAttributes => 'اختر قيمة لكل سمة متعارضة.';
 
   @override
   String get nextcloudUseServerNote => 'استخدام هذه الملاحظة على الخادم';
 
   @override
-  String get nextcloudUseServerNoteExplanation =>
-      'يربط هذه المسودة بالملاحظة المحددة على الخادم، ثم يزامن التغييرات المحلية المحفوظة. تطابق الطلب لا يؤكد من أنشأ الملاحظة.';
+  String get nextcloudUseServerNoteExplanation => 'يربط هذه المسودة بالملاحظة المحددة على الخادم، ثم يزامن التغييرات المحلية المحفوظة. تطابق الطلب لا يؤكد من أنشأ الملاحظة.';
 
   @override
   String get nextcloudExactCandidate => 'تطابق تام مع الطلب؛ الهوية غير مؤكدة.';
 
   @override
-  String get nextcloudPossibleCandidate =>
-      'تطابق محتمل بعد تنقية الطلب؛ الهوية غير مؤكدة.';
+  String get nextcloudPossibleCandidate => 'تطابق محتمل بعد تنقية الطلب؛ الهوية غير مؤكدة.';
 
   @override
   String get nextcloudSelectCandidate => 'اختر ملاحظة على الخادم لمراجعتها';
@@ -5006,8 +4667,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nextcloudCreateSeparate => 'إنشاء ملاحظة منفصلة';
 
   @override
-  String get nextcloudCreateSeparateWarning =>
-      'قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة.';
+  String get nextcloudCreateSeparateWarning => 'قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة.';
 
   @override
   String get wsSemanticFormats => 'تنسيق دلالي';
@@ -5118,15 +4778,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nextcloudFileSuffix => 'لاحقة ملفات الملاحظات الجديدة';
 
   @override
-  String get nextcloudServerSettingsExplanation =>
-      'تؤثر إعدادات Notes هذه على العملاء الآخرين. تغيير المسار لا ينقل الملفات؛ وتغيير اللاحقة لا يعيد تسمية الملاحظات الحالية.';
+  String get nextcloudServerSettingsExplanation => 'تؤثر إعدادات Notes هذه على العملاء الآخرين. تغيير المسار لا ينقل الملفات؛ وتغيير اللاحقة لا يعيد تسمية الملاحظات الحالية.';
 
   @override
   String get nextcloudSettingsSaved => 'حُفظت إعدادات الخادم';
 
   @override
-  String get nextcloudSettingsNormalized =>
-      'حُفظت القيم بعد توحيدها على الخادم';
+  String get nextcloudSettingsNormalized => 'حُفظت القيم بعد توحيدها على الخادم';
 
   @override
   String get nextcloudPendingUpload => 'رفع المرفق قيد الانتظار';
@@ -5188,15 +4846,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesIndexing => 'جارٍ فهرسة الملاحظات…';
 
   @override
-  String get notesSearchHelp =>
-      'تُجمع الكلمات باستخدام AND. استخدم \"عبارات مقتبسة\" و title: و category:.';
+  String get notesSearchHelp => 'تُجمع الكلمات باستخدام AND. استخدم \"عبارات مقتبسة\" و title: و category:.';
 
   @override
   String get notesSourceLocation => 'الموضع في المصدر';
 
   @override
-  String get notesRecoveryHelp =>
-      'الملاحظات المحلية المحتفظ بها والسجل المحلي فقط. سلة المحذوفات وسجل الخادم غير متاحين.';
+  String get notesRecoveryHelp => 'الملاحظات المحلية المحتفظ بها والسجل المحلي فقط. سلة المحذوفات وسجل الخادم غير متاحين.';
 
   @override
   String get notesImport => 'استيراد ملاحظات';
@@ -5217,8 +4873,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesSelected => 'الملاحظات المحددة';
 
   @override
-  String get notesNoHistory =>
-      'لا توجد مراجعات محفوظة. قد يكون السجل معطلاً أو منتهياً أو ممسوحاً.';
+  String get notesNoHistory => 'لا توجد مراجعات محفوظة. قد يكون السجل معطلاً أو منتهياً أو ممسوحاً.';
 
   @override
   String get notesTextAvailable => 'النص متاح محليًا';
@@ -5284,8 +4939,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get referenceUnsupported => 'غير مدعوم';
 
   @override
-  String get referenceNoPortableId =>
-      'ليس لهذا الهدف عنوان URL محمول ومُتحقَّق منه للملاحظة.';
+  String get referenceNoPortableId => 'ليس لهذا الهدف عنوان URL محمول ومُتحقَّق منه للملاحظة.';
 
   @override
   String get wsIncludeLines => 'تضمين الأسطر';
@@ -5303,8 +4957,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsPropertiesProtected => 'هذا العنصر محمي. حرر مصدره.';
 
   @override
-  String get wsPropertiesConflict =>
-      'تغير المستند أو العنصر. تراجع عن المسودة وحدد العنصر مجدداً.';
+  String get wsPropertiesConflict => 'تغير المستند أو العنصر. تراجع عن المسودة وحدد العنصر مجدداً.';
 
   @override
   String get wsPropertiesUnresolved => 'لا يمكن حل المرجع حالياً.';
@@ -5334,8 +4987,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsHeight => 'الارتفاع';
 
   @override
-  String get wsPropertiesInactive =>
-      'لا تؤثر هذه الخاصية إلا عند تفعيل الطي المنشور.';
+  String get wsPropertiesInactive => 'لا تؤثر هذه الخاصية إلا عند تفعيل الطي المنشور.';
 
   @override
   String get wsNavigationAll => 'كل العناصر ذات العناوين';
@@ -5356,19 +5008,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsWideLayout => 'عريض';
 
   @override
-  String get wsCodeSourceConflict =>
-      'انقل أو أزل الشفرة المكتوبة في هذه الكتلة قبل تعيين src. يرفض Writerside كتلة شفرة غير فارغة لها مرجع مصدر.';
+  String get wsCodeSourceConflict => 'انقل أو أزل الشفرة المكتوبة في هذه الكتلة قبل تعيين src. يرفض Writerside كتلة شفرة غير فارغة لها مرجع مصدر.';
 
   @override
   String get wsInherited => 'وراثة من القائمة';
 
   @override
-  String get wsExternalImageSize =>
-      'لا يحدد Writerside أبعاد الصور الخارجية بشكل موثوق. يمكنك فحص الأبعاد الحالية وإزالتها.';
+  String get wsExternalImageSize => 'لا يحدد Writerside أبعاد الصور الخارجية بشكل موثوق. يمكنك فحص الأبعاد الحالية وإزالتها.';
 
   @override
-  String get wsPropertiesNotSerialized =>
-      'لم يُطبّق هذا التغيير على المصدر. تم الاحتفاظ بالمسودة.';
+  String get wsPropertiesNotSerialized => 'لم يُطبّق هذا التغيير على المصدر. تم الاحتفاظ بالمسودة.';
 
   @override
   String get wsListItem => 'عنصر قائمة';
@@ -5505,8 +5154,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get wsModuleCapsIgnored =>
-      'يتجاهل الباني المثبّت قواعد <caps> للوحدة. استخدم سمة caps محلية أو default-property.';
+  String get wsModuleCapsIgnored => 'يتجاهل الباني المثبّت قواعد <caps> للوحدة. استخدم سمة caps محلية أو default-property.';
 
   @override
   String get wsInsertElements => 'إدراج عناصر';
@@ -5518,8 +5166,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsSemanticText => 'نص دلالي';
 
   @override
-  String get wsPropertiesUnavailable =>
-      'العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.';
+  String get wsPropertiesUnavailable => 'العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.';
 
   @override
   String get searchDocumentsCategory => 'المستندات';
@@ -5624,26 +5271,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutRestoreAll => 'استعادة جميع الإعدادات الافتراضية';
 
   @override
-  String get shortcutRestoreAllQuestion =>
-      'هل تريد استعادة الاختصارات الافتراضية لجميع الإجراءات؟ ستُزال التعيينات المخصصة.';
+  String get shortcutRestoreAllQuestion => 'هل تريد استعادة الاختصارات الافتراضية لجميع الإجراءات؟ ستُزال التعيينات المخصصة.';
 
   @override
-  String get shortcutSaveFailed =>
-      'الاختصارات مفعّلة ولكن تعذر حفظها. أعد المحاولة للاحتفاظ بها بعد إعادة التشغيل.';
+  String get shortcutSaveFailed => 'الاختصارات مفعّلة ولكن تعذر حفظها. أعد المحاولة للاحتفاظ بها بعد إعادة التشغيل.';
 
   @override
   String get shortcutRetry => 'إعادة محاولة الحفظ';
 
   @override
-  String get shortcutChanged =>
-      'تغيرت التعيينات. راجع الاختصارات الحالية وحاول مجددًا.';
+  String get shortcutChanged => 'تغيرت التعيينات. راجع الاختصارات الحالية وحاول مجددًا.';
 
   @override
   String get shortcutInvalid => 'لا يمكن تعيين هذه المجموعة في هذا السياق.';
 
   @override
-  String get shortcutSystemWarning =>
-      'قد يستخدم سطح المكتب هذه المجموعة. لا يستطيع BusyMark تجاوز اختصارات النظام.';
+  String get shortcutSystemWarning => 'قد يستخدم سطح المكتب هذه المجموعة. لا يستطيع BusyMark تجاوز اختصارات النظام.';
 
   @override
   String get shortcutConflicts => 'يتعارض هذا الاختصار مع الإجراءات التالية:';
@@ -5685,8 +5328,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutFixed => 'يتولاه المحرر؛ غير قابل للتخصيص.';
 
   @override
-  String get shortcutDefaultConflict =>
-      'يتعارض الاختصار الافتراضي مع تعيين مخصص.';
+  String get shortcutDefaultConflict => 'يتعارض الاختصار الافتراضي مع تعيين مخصص.';
 
   @override
   String get shortcutCurrentBinding => 'الاختصار الحالي';
@@ -5731,16 +5373,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesOfflineKeep => 'إتاحة دون اتصال';
 
   @override
-  String get notesOfflineRetentionHelp =>
-      'إزالة هذا المتطلب تبقي المحتوى المخزن مؤقتًا. قد يظل متطلب الفئة أو الحساب يحتفظ بالملاحظة.';
+  String get notesOfflineRetentionHelp => 'إزالة هذا المتطلب تبقي المحتوى المخزن مؤقتًا. قد يظل متطلب الفئة أو الحساب يحتفظ بالملاحظة.';
 
   @override
-  String get notesOfflineBroader =>
-      'تُحتفظ بهذه الملاحظة أيضًا بسبب متطلب الفئة أو الحساب.';
+  String get notesOfflineBroader => 'تُحتفظ بهذه الملاحظة أيضًا بسبب متطلب الفئة أو الحساب.';
 
   @override
-  String get notesOfflineExternal =>
-      'تتطلب الوسائط الخارجية اتصالًا. يحتفظ BusyMark بنص الملاحظة والمرفقات المُدارة فقط.';
+  String get notesOfflineExternal => 'تتطلب الوسائط الخارجية اتصالًا. يحتفظ BusyMark بنص الملاحظة والمرفقات المُدارة فقط.';
 
   @override
   String get notesEmptyAll => 'لا توجد ملاحظات بعد. أنشئ ملاحظة للبدء.';
@@ -5761,8 +5400,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesLoadFailed => 'Nextcloud Notes · فشل. إعادة المحاولة';
 
   @override
-  String get notesOperationFailed =>
-      'تعذر إكمال العملية. المسودة محفوظة. راجع الحفظ والتعارضات ثم أعد المحاولة.';
+  String get notesOperationFailed => 'تعذر إكمال العملية. المسودة محفوظة. راجع الحفظ والتعارضات ثم أعد المحاولة.';
 
   @override
   String get notesInspectionFailed => 'المرفقات · فشل. إعادة المحاولة';
@@ -5780,47 +5418,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesRemovingConnection => 'جارٍ إزالة الحساب المحلي…';
 
   @override
-  String get notesRemovedWarning =>
-      'أُزيل حساب Nextcloud المحلي. لم يُؤكد إبطال كلمة مرور التطبيق. احذف كلمة مرور BusyMark من إعدادات أمان Nextcloud.';
+  String get notesRemovedWarning => 'أُزيل حساب Nextcloud المحلي. لم يُؤكد إبطال كلمة مرور التطبيق. احذف كلمة مرور BusyMark من إعدادات أمان Nextcloud.';
 
   @override
-  String get notesBuffersNotSaved =>
-      'تعذر حفظ جميع الملاحظات المفتوحة محليًا. راجع الحفظ والتعارضات أو التسوية في مساحة العمل. قد تظل التغييرات المحلية بحاجة إلى المزامنة مع Nextcloud.';
+  String get notesBuffersNotSaved => 'تعذر حفظ جميع الملاحظات المفتوحة محليًا. راجع الحفظ والتعارضات أو التسوية في مساحة العمل. قد تظل التغييرات المحلية بحاجة إلى المزامنة مع Nextcloud.';
 
   @override
-  String get notesSettingsLeave =>
-      'حفظ تغييرات إعدادات Nextcloud قبل المغادرة؟';
+  String get notesSettingsLeave => 'حفظ تغييرات إعدادات Nextcloud قبل المغادرة؟';
 
   @override
-  String get notesSettingsLeaveHelp =>
-      'إعدادات Notes على الخادم · تغييرات غير محفوظة';
+  String get notesSettingsLeaveHelp => 'إعدادات Notes على الخادم · تغييرات غير محفوظة';
 
   @override
   String get notesSettingsReload => 'إعادة تحميل إعدادات الخادم…';
 
   @override
-  String get notesSettingsReloadHelp =>
-      'تحل إعدادات Nextcloud الحالية محل المسودة عند إعادة التحميل. أتريد تجاهل المسودة وإعادة التحميل؟';
+  String get notesSettingsReloadHelp => 'تحل إعدادات Nextcloud الحالية محل المسودة عند إعادة التحميل. أتريد تجاهل المسودة وإعادة التحميل؟';
 
   @override
-  String get notesSettingsRefreshFailed =>
-      'قَبِل Nextcloud الإعدادات، لكن تعذر تحديث الملاحظات. القيم المعروضة هي ما أكده الخادم. أعد التحديث من الملاحظات.';
+  String get notesSettingsRefreshFailed => 'قَبِل Nextcloud الإعدادات، لكن تعذر تحديث الملاحظات. القيم المعروضة هي ما أكده الخادم. أعد التحديث من الملاحظات.';
 
   @override
-  String get notesUnavailable =>
-      'غير متصل · النص متاح محليًا · محفوظ محليًا · المزامنة معلقة';
+  String get notesUnavailable => 'غير متصل · النص متاح محليًا · محفوظ محليًا · المزامنة معلقة';
 
   @override
-  String get notesStorageFull =>
-      'مساحة Nextcloud ممتلئة. أفرغ مساحة على الخادم ثم أعد المحاولة.';
+  String get notesStorageFull => 'مساحة Nextcloud ممتلئة. أفرغ مساحة على الخادم ثم أعد المحاولة.';
 
   @override
-  String get notesRejected =>
-      'رفض Nextcloud هذا التغيير. راجع الملاحظة واحفظ نسخة محلية قبل إعادة المحاولة.';
+  String get notesRejected => 'رفض Nextcloud هذا التغيير. راجع الملاحظة واحفظ نسخة محلية قبل إعادة المحاولة.';
 
   @override
-  String get notesThrottled =>
-      'طلب Nextcloud الانتظار. تُستأنف المزامنة بعد انتهاء مهلة إعادة المحاولة.';
+  String get notesThrottled => 'طلب Nextcloud الانتظار. تُستأنف المزامنة بعد انتهاء مهلة إعادة المحاولة.';
 
   @override
   String get notesRecoveryRequired => 'تعارضات · مقارنة';
@@ -5829,8 +5457,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesScanning => 'جارٍ فحص الملفات…';
 
   @override
-  String get notesCancelling =>
-      'جارٍ الإلغاء… في انتظار انتهاء العملية الحالية.';
+  String get notesCancelling => 'جارٍ الإلغاء… في انتظار انتهاء العملية الحالية.';
 
   @override
   String get notesCancelled => 'أُلغي';
@@ -5842,8 +5469,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesTransferFailed => 'فشل. إعادة المحاولة';
 
   @override
-  String get notesImportPartialHelp =>
-      'قد تكون العناصر السابقة محفوظة محليًا بالفعل. استأنف هذا الاستيراد للمتابعة دون تكرارها.';
+  String get notesImportPartialHelp => 'قد تكون العناصر السابقة محفوظة محليًا بالفعل. استأنف هذا الاستيراد للمتابعة دون تكرارها.';
 
   @override
   String get notesNotStarted => 'لم يبدأ';
@@ -5852,8 +5478,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesCreated => 'أُنشئ';
 
   @override
-  String get notesRemoteDeleteUnavailable =>
-      'عنوان الخادم · غير مدعوم · حذف · المرفقات';
+  String get notesRemoteDeleteUnavailable => 'عنوان الخادم · غير مدعوم · حذف · المرفقات';
 
   @override
   String get notesCurrentText => 'النص المحلي المحفوظ حاليًا';
@@ -5868,12 +5493,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesSort => 'ترتيب الملاحظات';
 
   @override
-  String get notesPathRelative =>
-      'مسار مجلد الملاحظات نسبي إلى مساحة تخزين Nextcloud الخاصة بك.';
+  String get notesPathRelative => 'مسار مجلد الملاحظات نسبي إلى مساحة تخزين Nextcloud الخاصة بك.';
 
   @override
-  String get notesSettingsStale =>
-      'تغيرت الإعدادات في Nextcloud. أعد تحميل قيم الخادم وراجعها قبل استبدال المسودة.';
+  String get notesSettingsStale => 'تغيرت الإعدادات في Nextcloud. أعد تحميل قيم الخادم وراجعها قبل استبدال المسودة.';
 
   @override
   String get notesDownloadsPaused => 'التنزيلات متوقفة مؤقتًا';
@@ -5882,20 +5505,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notesExportNotPublished => 'لم يُنشر أي تصدير.';
 
   @override
-  String get notesKeyringUnavailable =>
-      'افتح قفل سلسلة مفاتيح سطح المكتب وأعد المحاولة.';
+  String get notesKeyringUnavailable => 'افتح قفل سلسلة مفاتيح سطح المكتب وأعد المحاولة.';
 
   @override
-  String get notesConnectFailed =>
-      'تعذر الاتصال بملاحظات Nextcloud. تحقق من عنوان الخادم وأعد المحاولة.';
+  String get notesConnectFailed => 'تعذر الاتصال بملاحظات Nextcloud. تحقق من عنوان الخادم وأعد المحاولة.';
 
   @override
-  String get notesAccountMismatch =>
-      'سجل الدخول إلى حساب Nextcloud نفسه. أزل هذا الحساب أولًا للاتصال بحساب مختلف.';
+  String get notesAccountMismatch => 'سجل الدخول إلى حساب Nextcloud نفسه. أزل هذا الحساب أولًا للاتصال بحساب مختلف.';
 
   @override
-  String get notesLocalRemovalFailed =>
-      'تعذر تنظيف الحساب المحلي. احتُفظ بالحساب لتتمكن من إعادة محاولة إزالته.';
+  String get notesLocalRemovalFailed => 'تعذر تنظيف الحساب المحلي. احتُفظ بالحساب لتتمكن من إعادة محاولة إزالته.';
 
   @override
   String get notesTransferring => 'جارٍ نقل الملاحظات…';
@@ -5918,8 +5537,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage =>
-      'يحتوي اسم الملف على بايتات ليست بترميز UTF-8. تظل مراجعة Git والإضافة إلى الفهرس متاحتين؛ يتطلب محرر المستندات اسم ملف بترميز UTF-8.';
+  String get gitNonUtf8FilenameMessage => 'يحتوي اسم الملف على بايتات ليست بترميز UTF-8. تظل مراجعة Git والإضافة إلى الفهرس متاحتين؛ يتطلب محرر المستندات اسم ملف بترميز UTF-8.';
 
   @override
   String get gitUiMergeInProgress => 'دمج في التقدم';
@@ -5937,8 +5555,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiPatchApplicationInProgress => 'تطبيق التصحيح قيد التقدم';
 
   @override
-  String get gitUiSquashMergeResultAwaitingCommit =>
-      'نتيجة دمج الاسكواش في انتظار الالتزام';
+  String get gitUiSquashMergeResultAwaitingCommit => 'نتيجة دمج الاسكواش في انتظار الالتزام';
 
   @override
   String get gitUiUnresolvedIndexConflicts => 'تضارب الفهرس غير المحلول';
@@ -5968,12 +5585,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStashedUntrackedFiles => 'الملفات غير المتعقبة';
 
   @override
-  String get gitUiInspectStashedUntrackedFiles =>
-      'افحص الملفات غير المتعقبة المخبأة...';
+  String get gitUiInspectStashedUntrackedFiles => 'افحص الملفات غير المتعقبة المخبأة...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
-      'إعادة حالة خبأ / مؤشر عند تطبيق';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => 'إعادة حالة خبأ / مؤشر عند تطبيق';
 
   @override
   String get gitUiApplyAndRetain => 'تطبيق والاحتفاظ بها';
@@ -5991,8 +5606,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiBranchFromStash => 'إنشاء فرع من المحفوظ مؤقتًا';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
-      'قم بإنشاء / التبديل إلى فرع في قاعدة المخبأ الأصلية ، ثم قم بتطبيقه. يتم الاحتفاظ بالخبأ الأصلي للحذف الصريح لاحقًا.';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => 'قم بإنشاء / التبديل إلى فرع في قاعدة المخبأ الأصلية ، ثم قم بتطبيقه. يتم الاحتفاظ بالخبأ الأصلي للحذف الصريح لاحقًا.';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -6000,16 +5614,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
-      'يتم الاحتفاظ بالمخزون الأصلي في حالة تطبيق النزاعات.';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => 'يتم الاحتفاظ بالمخزون الأصلي في حالة تطبيق النزاعات.';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
-      'يحذف هذا الخبيئة المدخلة. لا يتم تطبيق تغييراته.';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => 'يحذف هذا الخبيئة المدخلة. لا يتم تطبيق تغييراته.';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
-      'حل تعارضات الملفات غير المدمجة. لا توجد في Git أوامر متابعة أو إحباط للحفظ المؤقت؛ وتبقى النسخة الأصلية المحفوظة مؤقتًا.';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => 'حل تعارضات الملفات غير المدمجة. لا توجد في Git أوامر متابعة أو إحباط للحفظ المؤقت؛ وتبقى النسخة الأصلية المحفوظة مؤقتًا.';
 
   @override
   String get gitUiStashNameMessage => 'اسم / رسالة stash';
@@ -6018,31 +5629,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStashContentAndResultingIndex => 'محتوى Stash والفهرس الناتج';
 
   @override
-  String get gitUiStashTrackedWorkingAndStagedChanges =>
-      'تتبع ستاش العمل والتغييرات المنظمة';
+  String get gitUiStashTrackedWorkingAndStagedChanges => 'تتبع ستاش العمل والتغييرات المنظمة';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
-      'حفظ التغييرات مؤقتًا مع إبقاء تغييرات الفهرس في مكانها (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => 'حفظ التغييرات مؤقتًا مع إبقاء تغييرات الفهرس في مكانها (--keep-index)';
 
   @override
-  String get gitUiStashOnlyStagedChangesStaged =>
-      'حفظ تغييرات الفهرس فقط مؤقتًا (--staged)';
+  String get gitUiStashOnlyStagedChangesStaged => 'حفظ تغييرات الفهرس فقط مؤقتًا (--staged)';
 
   @override
   String get gitUiIncludeUntrackedFiles => 'تضمين الملفات غير المتعقبة';
 
   @override
-  String get gitUiAllEligiblePathsInThisRepository =>
-      'كل المسارات المؤهلة في هذا المستودع';
+  String get gitUiAllEligiblePathsInThisRepository => 'كل المسارات المؤهلة في هذا المستودع';
 
   @override
-  String get gitUiNoEligibleChangesForTheseStashOptions =>
-      'لا توجد تغييرات مؤهلة لخيارات المخبأ هذه.';
+  String get gitUiNoEligibleChangesForTheseStashOptions => 'لا توجد تغييرات مؤهلة لخيارات المخبأ هذه.';
 
   @override
-  String get gitUiSelectAtLeastOneEligiblePath =>
-      'حدد مسارًا واحدًا على الأقل مؤهلًا.';
+  String get gitUiSelectAtLeastOneEligiblePath => 'حدد مسارًا واحدًا على الأقل مؤهلًا.';
 
   @override
   String get gitUiCreateStash2 => 'حفظ التغييرات مؤقتًا';
@@ -6051,8 +5656,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiCreateWorktree => 'أنشئ شجرة عمل...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
-      'أنشئ إيداعًا قبل إنشاء شجرة عمل عند HEAD.';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => 'أنشئ إيداعًا قبل إنشاء شجرة عمل عند HEAD.';
 
   @override
   String get gitUiDetachedHEAD => 'HEAD منفصل';
@@ -6091,8 +5695,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRemoveCleanWorktree => 'أزل شجرة العمل النظيفة...';
 
   @override
-  String get gitUiReviewRemovalIncludingLocalChanges =>
-      'مراجعة الإزالة بما في ذلك التغييرات المحلية ...';
+  String get gitUiReviewRemovalIncludingLocalChanges => 'مراجعة الإزالة بما في ذلك التغييرات المحلية ...';
 
   @override
   String get gitUiNewWorktreeFolderName => 'اسم مجلد شجرة العمل الجديد';
@@ -6101,12 +5704,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiNewWorktreeBranch => 'فرع شجرة العمل الجديد';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
     return 'إنشاء $arg0 / $arg1 مع فرع محلي جديد في $arg2 ($arg3).';
   }
 
@@ -6117,25 +5715,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRemoveWorktree => 'إزالة شجرة العمل؟';
 
   @override
-  String
-  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
-      'تجاهل صراحة جميع التغييرات المحلية المتعقبة / غير المتتبعة في شجرة العمل هذه. تظل أشجار العمل المغلقة / قيد الاستخدام محمية.';
+  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => 'تجاهل صراحة جميع التغييرات المحلية المتعقبة / غير المتتبعة في شجرة العمل هذه. تظل أشجار العمل المغلقة / قيد الاستخدام محمية.';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
-      'يرفض Git الإزالة إذا كانت هناك تغييرات محلية أو ملفات غير متتبعة أو قفل.';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'يرفض Git الإزالة إذا كانت هناك تغييرات محلية أو ملفات غير متتبعة أو قفل.';
 
   @override
-  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
-      'تجاهل محتويات شجرة العمل المحلية وإزالتها';
+  String get gitUiDiscardLocalWorktreeContentsAndRemove => 'تجاهل محتويات شجرة العمل المحلية وإزالتها';
 
   @override
   String get gitUiRemoveCleanWorktree2 => 'أزل شجرة العمل النظيفة';
 
   @override
-  String
-  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
-      'تكرر صراحة في الوحدات الفرعية المتداخلة للتحديثات / التزامن';
+  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => 'تكرر صراحة في الوحدات الفرعية المتداخلة للتحديثات / التزامن';
 
   @override
   String get gitUiNoRecordedSubmodules => 'لا توجد وحدات فرعية مسجلة';
@@ -6164,8 +5756,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiInitializeConfiguration => 'تهيئة التهيئة';
 
   @override
-  String get gitUiUpdateToParentSRecordedCommit =>
-      'تحديث إلى التزام الوالدين المسجل ...';
+  String get gitUiUpdateToParentSRecordedCommit => 'تحديث إلى التزام الوالدين المسجل ...';
 
   @override
   String get gitUiFollowConfiguredRemoteBranch => 'اتبع تكوين الفرع البعيد...';
@@ -6174,12 +5765,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiSynchronizeConfiguredURLs => 'زامِن عناوين URL المُهيّأة...';
 
   @override
-  String get gitUiStageCurrentSubmodulePointerInParent =>
-      'المرحلة الحالية مؤشر الوحدة الفرعية في الأصل';
+  String get gitUiStageCurrentSubmodulePointerInParent => 'المرحلة الحالية مؤشر الوحدة الفرعية في الأصل';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
-      'الأم و submodule يرتكب ، يدفع ، وحالة قذرة تبقى منفصلة. التصفح لا يقوم بتهيئة أو تحديثها.';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => 'الأم و submodule يرتكب ، يدفع ، وحالة قذرة تبقى منفصلة. التصفح لا يقوم بتهيئة أو تحديثها.';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -6187,17 +5776,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
     return 'تهيئة حسب الحاجة وتحقق من بالضبط $arg0. التكرار: $arg1.';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
-    String arg0,
-  ) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
     return 'تطبيق عملية تكوين الوحدة الفرعية التي تمت مراجعتها. التكرار: $arg0.';
   }
 
@@ -6205,8 +5789,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiApplySubmoduleOperation => 'تطبيق عملية submodule';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
-      'افحص مراجعة مسجلة أو أنشئ فرع استرداد. لا يسترد Reflog محتوى تعسفيًا غير محفوظ أو غير متتبع.';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => 'افحص مراجعة مسجلة أو أنشئ فرع استرداد. لا يسترد Reflog محتوى تعسفيًا غير محفوظ أو غير متتبع.';
 
   @override
   String get gitUiSelectAReflogEntry => 'اختر إدخال reflog';
@@ -6243,17 +5826,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
-      'يجب أن يمتلك تأريخ نص Git حقله القابل للتحرير.';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'يجب أن يمتلك تأريخ نص Git حقله القابل للتحرير.';
 
   @override
-  String get gitUiEditHEADIndexWorkingTree =>
-      'تحرير HEAD | الفهرس | شجرة العمل…';
+  String get gitUiEditHEADIndexWorkingTree => 'تحرير HEAD | الفهرس | شجرة العمل…';
 
   @override
-  String
-  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
-      'تغير الفهرس أو محتوى العمل الذي تمت مراجعته. انعش هذه المقارنة قبل التدريج.';
+  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => 'تغير الفهرس أو محتوى العمل الذي تمت مراجعته. انعش هذه المقارنة قبل التدريج.';
 
   @override
   String get gitUiRefreshComparison => 'تحديث المقارنة';
@@ -6310,12 +5889,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStagingActions2 => 'إجراءات الفهرس…';
 
   @override
-  String get gitUiUnstageSelectedChangedLines =>
-      'إزالة الأسطر المعدلة المحددة من الفهرس';
+  String get gitUiUnstageSelectedChangedLines => 'إزالة الأسطر المعدلة المحددة من الفهرس';
 
   @override
-  String get gitUiStageSelectedChangedLines =>
-      'إضافة الأسطر المعدلة المحددة إلى الفهرس';
+  String get gitUiStageSelectedChangedLines => 'إضافة الأسطر المعدلة المحددة إلى الفهرس';
 
   @override
   String get gitUiUnstageWholeFile => 'إزالة الملف كاملًا من الفهرس';
@@ -6324,47 +5901,34 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStageWholeFile => 'إضافة الملف كاملًا إلى الفهرس';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
-    String arg0,
-  ) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
     return '$arg0 الخطوط التي تم تغييرها فقط مخفية  إظهار التغييرات الدقيقة';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
-    String arg0,
-  ) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
     return 'تم تحديد $arg0 من الأسطر المعدّلة.';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
-      'مقارنة للقراءة فقط · انسخ النص أو عدّل إعدادات العرض.';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => 'مقارنة للقراءة فقط · انسخ النص أو عدّل إعدادات العرض.';
 
   @override
   String get gitUiNoFinalNewline => ' · لا يوجد سطر جديد نهائي';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0  $arg1  $arg2 بايت $arg3';
   }
 
   @override
-  String get gitUiTextComparisonIsUnavailableForTheseContents =>
-      'مقارنة النص غير متوفرة لهذه المحتويات.';
+  String get gitUiTextComparisonIsUnavailableForTheseContents => 'مقارنة النص غير متوفرة لهذه المحتويات.';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
-      'هذه المقارنة تتجاوز الحد الأقصى لمراجعة النص. لم يتم الإعلان عن المحتويات متطابقة.';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => 'هذه المقارنة تتجاوز الحد الأقصى لمراجعة النص. لم يتم الإعلان عن المحتويات متطابقة.';
 
   @override
-  String get gitUiTheComparedContentsAreIdentical =>
-      'المحتويات المقارنة متطابقة.';
+  String get gitUiTheComparedContentsAreIdentical => 'المحتويات المقارنة متطابقة.';
 
   @override
   String get gitUiUnstage => 'انستاج';
@@ -6424,8 +5988,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiReloadIndexReview => 'إعادة تحميل مراجعة الفهرس؟';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
-      'أعد تحميل إصدارات HEAD والفهرس والعمل الحالية. سيحل هذا محل مسودة محرر الفهرس غير المحفوظة.';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => 'أعد تحميل إصدارات HEAD والفهرس والعمل الحالية. سيحل هذا محل مسودة محرر الفهرس غير المحفوظة.';
 
   @override
   String get gitUiReplaceDraftAndReload => 'يستعاض عن المشروع ويعاد تحميله';
@@ -6434,22 +5997,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiReloadVersions => 'أعد تحميل الإصدارات...';
 
   @override
-  String get gitUiWriteEditedResultToThisIndexEntry =>
-      'اكتب النتيجة المحررة إلى إدخال الفهرس هذا';
+  String get gitUiWriteEditedResultToThisIndexEntry => 'اكتب النتيجة المحررة إلى إدخال الفهرس هذا';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
-      'ملفات العمل تبقى على القرص. راجع الفهرس المحرر قبل التقديم.';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => 'ملفات العمل تبقى على القرص. راجع الفهرس المحرر قبل التقديم.';
 
   @override
-  String get gitUiReviewIndexTextFormatChanges =>
-      'مراجعة التغييرات في تنسيق نص الفهرس';
+  String get gitUiReviewIndexTextFormatChanges => 'مراجعة التغييرات في تنسيق نص الفهرس';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
     return 'قم بتحديث إدخال الفهرس الذي تمت مراجعته فقط لـ $arg0. $arg1';
   }
 
@@ -6457,8 +6014,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiWriteReviewedIndexResult => 'اكتب نتيجة الفهرس المُراجعة';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
-      'تم تغيير النتيجة المحررة أثناء مراجعة التنسيق. راجعها مرة أخرى.';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => 'تم تغيير النتيجة المحررة أثناء مراجعة التنسيق. راجعها مرة أخرى.';
 
   @override
   String get gitUiSynchronizeScrolling => 'زامِن التمرير';
@@ -6470,8 +6026,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiEditableIndexContent => 'محتوى الفهرس القابل للتحرير';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
-      'المراجعة المطلوبة خارج المرشحات الحالية. إعادة تعيين المرشحات للكشف عنها.';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => 'المراجعة المطلوبة خارج المرشحات الحالية. إعادة تعيين المرشحات للكشف عنها.';
 
   @override
   String get gitUiFilterLog => 'سجل الفلتر';
@@ -6538,8 +6093,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCompareTwoSelectedRevisions =>
-      'قارن بين اثنين من المراجعات المختارة...';
+  String get gitUiCompareTwoSelectedRevisions => 'قارن بين اثنين من المراجعات المختارة...';
 
   @override
   String get gitUiToggleBranchesPane => 'بدّل جزء الفروع';
@@ -6579,8 +6133,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiTags => 'الوسوم';
 
   @override
-  String get gitUiNoCommitsMatchTheCurrentFilters =>
-      'لا توجد التزامات تطابق المرشحات الحالية.';
+  String get gitUiNoCommitsMatchTheCurrentFilters => 'لا توجد التزامات تطابق المرشحات الحالية.';
 
   @override
   String get gitUiObjectID => 'معرّف الكائن';
@@ -6633,12 +6186,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
-      'الحدود الضحلة / الجزئية: الكائن الأصلي غير متوفر.';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => 'الحدود الضحلة / الجزئية: الكائن الأصلي غير متوفر.';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
-      'الأم خارج هذه الصفحة أو الحدود الضحلة.';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => 'الأم خارج هذه الصفحة أو الحدود الضحلة.';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -6667,8 +6218,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRevertCommit => 'تراجع الالتزام';
 
   @override
-  String get gitUiInteractiveRebaseAfterThisBoundary =>
-      'قاعدة تفاعلية بعد هذه الحدود';
+  String get gitUiInteractiveRebaseAfterThisBoundary => 'قاعدة تفاعلية بعد هذه الحدود';
 
   @override
   String get gitUiResetCurrentBranch => 'إعادة ضبط الفرع الحالي';
@@ -6677,21 +6227,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiGoToCommitReference2 => 'انتقل إلى الالتزام / المرجع';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
-      'أدخل معرف التزام أو مرجع للكشف في السجل.';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog => 'أدخل معرف التزام أو مرجع للكشف في السجل.';
 
   @override
-  String get gitUiTheRequestedRevisionIsUnavailable =>
-      'والتنقيح المطلوب غير متاح.';
+  String get gitUiTheRequestedRevisionIsUnavailable => 'والتنقيح المطلوب غير متاح.';
 
   @override
-  String
-  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
-      'البيانات الوصفية للمستودع للقراءة فقط. التفتيش الفرع والمقارنة لا تزال متاحة.';
+  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => 'البيانات الوصفية للمستودع للقراءة فقط. التفتيش الفرع والمقارنة لا تزال متاحة.';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
-      'ملفات العمل غير متوفرة أو للقراءة فقط. تبديل فرع ودمج غير متوفرة.';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => 'ملفات العمل غير متوفرة أو للقراءة فقط. تبديل فرع ودمج غير متوفرة.';
 
   @override
   String get gitUiSearchBranchesAndTags => 'البحث في الفروع والوسوم';
@@ -6795,10 +6340,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
     return '$arg0 الهدف $arg1 الحذف المحلي فقط. تم رفض فرع غير مدمج.';
   }
 
@@ -6830,8 +6372,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiMergePolicy => 'سياسة الدمج';
 
   @override
-  String get gitUiFastForwardWhenPossible =>
-      'سريع إلى الأمام عندما يكون ذلك ممكنا';
+  String get gitUiFastForwardWhenPossible => 'سريع إلى الأمام عندما يكون ذلك ممكنا';
 
   @override
   String get gitUiAlwaysCreateAMergeCommit => 'دائما إنشاء التزام دمج';
@@ -6843,20 +6384,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiSquashIntoStagedChanges => 'الاسكواش في التغييرات على مراحل';
 
   @override
-  String get gitUiStopBeforeCreatingTheMergeCommit =>
-      'توقف قبل إنشاء التزام الدمج';
+  String get gitUiStopBeforeCreatingTheMergeCommit => 'توقف قبل إنشاء التزام الدمج';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
-      'التقديم السريع معطّل حتى لا يتحرك HEAD قبل المراجعة.';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => 'التقديم السريع معطّل حتى لا يتحرك HEAD قبل المراجعة.';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
-      'يترك تغييرات منظمة لالتزام منفصل ؛ هذا ليس دمج مستمر.';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => 'يترك تغييرات منظمة لالتزام منفصل ؛ هذا ليس دمج مستمر.';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
-      'ولا تزال النزاعات متاحة في حيز العمل المشترك لحلها.';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => 'ولا تزال النزاعات متاحة في حيز العمل المشترك لحلها.';
 
   @override
   String get gitUiAddRemote => 'أضف جهاز التحكم عن بعد...';
@@ -6890,16 +6427,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiNewRemoteName => 'اسم جديد عن بعد';
 
   @override
-  String get gitUiRepositoryURLOrLocalSource =>
-      'عنوان URL للمستودع أو المصدر المحلي';
+  String get gitUiRepositoryURLOrLocalSource => 'عنوان URL للمستودع أو المصدر المحلي';
 
   @override
-  String get gitUiEnterTheExactReviewedDestinationToRemove =>
-      'أدخل الوجهة التي تمت مراجعتها بالضبط لإزالتها.';
+  String get gitUiEnterTheExactReviewedDestinationToRemove => 'أدخل الوجهة التي تمت مراجعتها بالضبط لإزالتها.';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
-      'يتم توفير وثائق التفويض من قبل المساعدين تكوين أو موجه خاص.';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => 'يتم توفير وثائق التفويض من قبل المساعدين تكوين أو موجه خاص.';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -6907,9 +6441,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
-      'يزيل التكوين عن بعد المحلية وتتبع المراجع. فإنه لا حذف مستودع الخادم.';
+  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => 'يزيل التكوين عن بعد المحلية وتتبع المراجع. فإنه لا حذف مستودع الخادم.';
 
   @override
   String get gitUiRemoveRemote2 => 'أزل بعيدًا';
@@ -6924,12 +6456,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiAmendLastCommit => 'تعديل آخر إيداع';
 
   @override
-  String get gitUiConfiguredHooksAndSigningAreRespected =>
-      'يتم احترام السنانير المكونة والتوقيع.';
+  String get gitUiConfiguredHooksAndSigningAreRespected => 'يتم احترام السنانير المكونة والتوقيع.';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
-      'يعيد كتابة إيداع HEAD المحدد. التتبع البعيد لا يثبت أنه لم يُنشر.';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => 'يعيد كتابة إيداع HEAD المحدد. التتبع البعيد لا يثبت أنه لم يُنشر.';
 
   @override
   String get gitUiRepository => 'المستودع';
@@ -6946,21 +6476,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRepositoryActions => 'إجراءات المستودع';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
     return 'تتبع مخزّن مؤقتًا · $upstream · متقدم $ahead · متأخر $behind';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
-      'مستودع عارية  لا شجرة العمل. فتح سجل لفحص تاريخها.';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => 'مستودع عارية  لا شجرة العمل. فتح سجل لفحص تاريخها.';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
-      'مستودع للقراءة فقط  التدريج والالتزامات غير متوفرة.';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => 'مستودع للقراءة فقط  التدريج والالتزامات غير متوفرة.';
 
   @override
   String get gitUiRepositoryStatusUnavailable => 'حالة المستودع غير متوفرة';
@@ -6986,12 +6510,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRecentCommitMessages => 'رسائل الالتزام الأخيرة...';
 
   @override
-  String get gitUiUseConfiguredCommitTemplate =>
-      'استخدم قالب الالتزام المُهيّأ...';
+  String get gitUiUseConfiguredCommitTemplate => 'استخدم قالب الالتزام المُهيّأ...';
 
   @override
-  String get gitUiAuthorIdentityAndConfiguredHooks =>
-      'هوية المؤلف وخطافات تكوين...';
+  String get gitUiAuthorIdentityAndConfiguredHooks => 'هوية المؤلف وخطافات تكوين...';
 
   @override
   String get gitUiDraftMessage => 'مسودة الرسالة...';
@@ -7025,8 +6547,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiCommitAndPush => 'إيداع ودفع…';
 
   @override
-  String get gitUiNoReadableCommitTemplateIsConfigured =>
-      'لم يتم تكوين قالب التزام قابل للقراءة.';
+  String get gitUiNoReadableCommitTemplateIsConfigured => 'لم يتم تكوين قالب التزام قابل للقراءة.';
 
   @override
   String get gitUiCommitIdentityAndHooks => 'إلتزم بالهوية والخطافات';
@@ -7038,8 +6559,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiReplaceMessageDraft => 'استبدل مسودة الرسالة؟';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
-      'استبدال رسالة الالتزام الحالية بالرسالة المحددة؟';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => 'استبدال رسالة الالتزام الحالية بالرسالة المحددة؟';
 
   @override
   String get gitUiReplaceDraft => 'يستعاض عن مشروع';
@@ -7050,9 +6570,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
-    String arg0,
-  ) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
     return 'الالتزام المحلي $arg0 موجود. سجل المراجعة قبل محاولة ارتكاب آخر. تم الاحتفاظ بمسودة الرسالة.';
   }
 
@@ -7079,8 +6597,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
-      'سطر الإقرار بيان داخل الرسالة وهو منفصل عن التوقيع التشفيري. تُحفظ الهوية في إعدادات هذا المستودع فقط، وتبقى المسودة محفوظة.';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage => 'سطر الإقرار بيان داخل الرسالة وهو منفصل عن التوقيع التشفيري. تُحفظ الهوية في إعدادات هذا المستودع فقط، وتبقى المسودة محفوظة.';
 
   @override
   String get gitUiSaveRepositoryIdentity => 'احفظ هوية المستودع';
@@ -7156,10 +6673,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
     return '$arg0 بايت  $arg1 يستبدل محتوى العمل بالفهرس ، أو يحذف هذا الملف غير المتتبع. يتم الاحتفاظ بالمحتوى المرحلي. يجب مراجعة مستندات المضيف غير المحفوظة أولاً.';
   }
 
@@ -7175,8 +6689,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
-      'هذا يزيل المرجع على كل وجهة دفع فعلية مدرجة أدناه. يتم الاحتفاظ بالفروع / العلامات المحلية. يتم إصلاح النصائح المتوقعة من خلال هذا الاستعراض.';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => 'هذا يزيل المرجع على كل وجهة دفع فعلية مدرجة أدناه. يتم الاحتفاظ بالفروع / العلامات المحلية. يتم إصلاح النصائح المتوقعة من خلال هذا الاستعراض.';
 
   @override
   String get gitUiReferenceDoesNotExist => 'المرجعية غير موجودة';
@@ -7195,8 +6708,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
-      'ستتم إزالة نصائح الوجهة المحددة الموضحة أعلاه. أي طرف عن بعد تغيير توقف العملية لمراجعة أخرى.';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => 'ستتم إزالة نصائح الوجهة المحددة الموضحة أعلاه. أي طرف عن بعد تغيير توقف العملية لمراجعة أخرى.';
 
   @override
   String get gitUiReviewAndDeleteFromRemote => 'مراجعة وحذف من بعيد...';
@@ -7216,15 +6728,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
-      'تلتزم الوجهة التي لا تتوفر محليًا. أحضر تلك الوجهة التي راجعت قبل مراجعة التاريخ الصادر.';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => 'تلتزم الوجهة التي لا تتوفر محليًا. أحضر تلك الوجهة التي راجعت قبل مراجعة التاريخ الصادر.';
 
   @override
   String get gitUiFetchReviewedDestination => 'جلب وجهة مراجعة';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
-      'اختيار وجهة ومراجعة الالتزامات الصادرة.';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => 'اختيار وجهة ومراجعة الالتزامات الصادرة.';
 
   @override
   String get gitUiNoOutgoingCommits => 'لا توجد التزامات صادرة';
@@ -7233,8 +6743,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiSelectAnOutgoingCommit => 'اختر التزامًا صادرًا';
 
   @override
-  String get gitUiLoadMoreOutgoingCommits =>
-      'تحميل المزيد من الالتزامات الصادرة';
+  String get gitUiLoadMoreOutgoingCommits => 'تحميل المزيد من الالتزامات الصادرة';
 
   @override
   String get gitUiSetThisDestinationAsUpstream => 'عيّن هذه الوجهة كمنبع';
@@ -7256,12 +6765,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
-      'اكتمل الدفع. الالتزام المحلي لا يزال متاحًا في السجل.';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => 'اكتمل الدفع. الالتزام المحلي لا يزال متاحًا في السجل.';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
-      'يتطلب الدفع القسري تطابق أطراف مراجع الوجهة تمامًا مع ما عُرض في هذه المراجعة.';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => 'يتطلب الدفع القسري تطابق أطراف مراجع الوجهة تمامًا مع ما عُرض في هذه المراجعة.';
 
   @override
   String get gitUiForceWithReviewedLease => 'قوة مع مراجعة الإيجار...';
@@ -7270,8 +6777,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiPush => 'دفع';
 
   @override
-  String get gitUiForcePushWithReviewedLeases =>
-      'دفع القوة مع عقود الإيجار المراجعة؟';
+  String get gitUiForcePushWithReviewedLeases => 'دفع القوة مع عقود الإيجار المراجعة؟';
 
   @override
   String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
@@ -7279,16 +6785,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
-      'قد يكون آخرون يستخدمون هذا السجل بالفعل. الجلب في الخلفية لا يجدّد شرط الحماية هذا.';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => 'قد يكون آخرون يستخدمون هذا السجل بالفعل. الجلب في الخلفية لا يجدّد شرط الحماية هذا.';
 
   @override
   String get gitUiForceWithLease => 'القوة مع الإيجار';
 
   @override
-  String
-  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
-      'النتيجة البعيدة غير مؤكدة. راجع الوجهات مرة أخرى قبل دفعة أخرى.';
+  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => 'النتيجة البعيدة غير مؤكدة. راجع الوجهات مرة أخرى قبل دفعة أخرى.';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -7299,13 +6802,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRemoteToFetch => 'عن بعد لجلب';
 
   @override
-  String get gitUiPruneDeletedRemoteTrackingBranches =>
-      'Prune حذف فروع التتبع عن بعد';
+  String get gitUiPruneDeletedRemoteTrackingBranches => 'Prune حذف فروع التتبع عن بعد';
 
   @override
-  String
-  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
-      'جلب تحديثات معلومات التتبع عن بعد دون استبدال ملفات العمل.';
+  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => 'جلب تحديثات معلومات التتبع عن بعد دون استبدال ملفات العمل.';
 
   @override
   String get gitUiFetch => 'جلب';
@@ -7326,46 +6826,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRebase => 'إعادة تأسيس';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
-      'توقف إذا كانت الوجهة لا يمكن أن تسرع إلى الأمام؛ لا دمج أو إعادة قاعدة.';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => 'توقف إذا كانت الوجهة لا يمكن أن تسرع إلى الأمام؛ لا دمج أو إعادة قاعدة.';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
-      'دمج مع التزام دمج، بما في ذلك عندما سريع إلى الأمام هو ممكن.';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => 'دمج مع التزام دمج، بما في ذلك عندما سريع إلى الأمام هو ممكن.';
 
   @override
-  String get gitUiMergeAllowFastForwardWhenPossible =>
-      'ادمج؛ اسمح بسرعة إلى الأمام عندما يكون ذلك ممكنًا.';
+  String get gitUiMergeAllowFastForwardWhenPossible => 'ادمج؛ اسمح بسرعة إلى الأمام عندما يكون ذلك ممكنًا.';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
-      'إعادة قاعدة التاريخ المحلي مع الحفاظ على الدمج المحلي.';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => 'إعادة قاعدة التاريخ المحلي مع الحفاظ على الدمج المحلي.';
 
   @override
-  String get gitUiRebaseLocalCommitsAsALinearHistory =>
-      'إعادة قاعدة المحلية يرتكب كتاريخ خطي.';
+  String get gitUiRebaseLocalCommitsAsALinearHistory => 'إعادة قاعدة المحلية يرتكب كتاريخ خطي.';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
-      'تم تكوين Git لإعادة قاعدة تفاعلية. حدد استراتيجية سحب صراحة هنا ، أو قم بجلب وفتح إعادة قاعدة ... لمراجعة خطة.';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'تم تكوين Git لإعادة قاعدة تفاعلية. حدد استراتيجية سحب صراحة هنا ، أو قم بجلب وفتح إعادة قاعدة ... لمراجعة خطة.';
 
   @override
-  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
-      'استخدم rebase العادي المُراجع لهذا السحب';
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull => 'استخدم rebase العادي المُراجع لهذا السحب';
 
   @override
   String get gitUiOptions => 'الخيارات';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
-      'دائما إنشاء التزام دمج (لا سريع إلى الأمام)';
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward => 'دائما إنشاء التزام دمج (لا سريع إلى الأمام)';
 
   @override
   String get gitUiPreserveLocalMergeCommits => 'الحفاظ على الدمج المحلي';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
-      'قد تمنع التغييرات المحلية السحب. قم بمراجعتها / الالتزام بها أو قم بإنشاء خبأ بشكل صريح.';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => 'قد تمنع التغييرات المحلية السحب. قم بمراجعتها / الالتزام بها أو قم بإنشاء خبأ بشكل صريح.';
 
   @override
   String get gitUiStashes => 'التغييرات المحفوظة مؤقتًا';
@@ -7377,8 +6868,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiPullWithSelectedStrategy => 'سحب مع استراتيجية مختارة';
 
   @override
-  String get gitUiRepositoryURLOrLocalGitSource =>
-      'عنوان URL للمستودع أو مصدر Git محلي';
+  String get gitUiRepositoryURLOrLocalGitSource => 'عنوان URL للمستودع أو مصدر Git محلي';
 
   @override
   String get gitUiHttpsSSHOrLocalPath => 'HTTPS أو SSH أو المسار المحلي';
@@ -7393,23 +6883,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiChoose => 'اختر...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
-      'يخلق جيت البيانات الوصفية فقط. الملفات الموجودة ليست على مراحل أو ارتكبت.';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => 'يخلق جيت البيانات الوصفية فقط. الملفات الموجودة ليست على مراحل أو ارتكبت.';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
-      'يجب ألا تكون الوجهة النهائية موجودة أو أن تكون فارغة. لن تُستبدل بيانات المستخدم الموجودة مطلقًا.';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => 'يجب ألا تكون الوجهة النهائية موجودة أو أن تكون فارغة. لن تُستبدل بيانات المستخدم الموجودة مطلقًا.';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
-      'الفرع الأولي  استخدامات فارغة سياسة Git الفعالة';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => 'الفرع الأولي  استخدامات فارغة سياسة Git الفعالة';
 
   @override
   String get gitUiSelectedBranchOptional => 'فرع محدد  اختياري';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
-      'تهيئة/تحديث الوحدات الفرعية بشكل صريح';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => 'تهيئة/تحديث الوحدات الفرعية بشكل صريح';
 
   @override
   String get gitUiPreparingGitOperation => 'إعداد عملية GIT...';
@@ -7418,12 +6904,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiThisAttemptCreated => 'هذه المحاولة التي تم إنشاؤها';
 
   @override
-  String get gitUiTheDestinationExistedBeforeThisAttempt =>
-      'كانت الوجهة موجودة قبل هذه المحاولة:';
+  String get gitUiTheDestinationExistedBeforeThisAttempt => 'كانت الوجهة موجودة قبل هذه المحاولة:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
-      'يبقى الدليل للتفتيش. مراجعته قبل محاولة استنساخ أخرى.';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => 'يبقى الدليل للتفتيش. مراجعته قبل محاولة استنساخ أخرى.';
 
   @override
   String get gitUiNoDestinationDirectoryRemains => 'لا يوجد دليل للوجهة.';
@@ -7459,12 +6943,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiUseUpstreamAsNewBase => 'استخدم المنبع كقاعدة جديدة';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
-      'اختر فرعًا صالحًا أو علامة أو التزام من السجل.';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog => 'اختر فرعًا صالحًا أو علامة أو التزام من السجل.';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
-      'لا يمكن تطبيق squash أو fixup على أول إيداع محتفظ به في كتلة فرع، لعدم وجود إيداع سابق لدمجه معه.';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => 'لا يمكن تطبيق squash أو fixup على أول إيداع محتفظ به في كتلة فرع، لعدم وجود إيداع سابق لدمجه معه.';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -7472,16 +6954,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiRewordWillRequestANewMessage =>
-      '[الرسالة سوف تطلب رسالة جديدة]\n';
+  String get gitUiRewordWillRequestANewMessage => '[الرسالة سوف تطلب رسالة جديدة]\n';
 
   @override
   String get gitUiPlannedCommitMessages => 'رسائل الالتزام المخطط لها';
 
   @override
-  String
-  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
-      'معاينة الرسالة الأصلية / المجمعة  Git يطلب رسائل إعادة الصياغة / الاسكواش النهائية';
+  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => 'معاينة الرسالة الأصلية / المجمعة  Git يطلب رسائل إعادة الصياغة / الاسكواش النهائية';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -7497,9 +6976,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiDetachedHEAD2 => 'HEAD منفصل';
 
   @override
-  String
-  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
-      'إعادة التأسيس تعيد كتابة هويات الإيداعات. معلومات تتبع الفروع البعيدة لا تثبت أن السجل لم يُنشر من قبل.';
+  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => 'إعادة التأسيس تعيد كتابة هويات الإيداعات. معلومات تتبع الفروع البعيدة لا تثبت أن السجل لم يُنشر من قبل.';
 
   @override
   String get gitUiIncludeRootCommits => 'تضمين الإيداعات الجذرية';
@@ -7525,14 +7002,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
-      'يشمل جميع الالتزامات الجذرية التي يمكن الوصول إليها من هذا الفرع.';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => 'يشمل جميع الالتزامات الجذرية التي يمكن الوصول إليها من هذا الفرع.';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
-    String boundary,
-    String base,
-  ) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
     return 'ستُعاد تطبيق الإيداعات بعد $boundary على $base؛ الإيداع الحدّي نفسه غير مشمول.';
   }
 
@@ -7540,12 +7013,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRoot => 'الجذر';
 
   @override
-  String get gitUiGitBranchLabelResetMergeStructure =>
-      'Git branch/label/إعادة تعيين/دمج هيكل';
+  String get gitUiGitBranchLabelResetMergeStructure => 'Git branch/label/إعادة تعيين/دمج هيكل';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
-      'اختر وضعًا واضحًا أو وضعًا قديمًا للجذر ، ثم قم بإعداد الخطة.';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => 'اختر وضعًا واضحًا أو وضعًا قديمًا للجذر ، ثم قم بإعداد الخطة.';
 
   @override
   String get gitUiMoveUp => 'نقل لأعلى';
@@ -7562,16 +7033,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectACommitForDetailsAndChangedFiles =>
-      'حدد التزامًا للحصول على التفاصيل والملفات التي تم تغييرها';
+  String get gitUiSelectACommitForDetailsAndChangedFiles => 'حدد التزامًا للحصول على التفاصيل والملفات التي تم تغييرها';
 
   @override
-  String get gitUiPreviewCombinedCommitMessages =>
-      'معاينة رسائل الإلتزام مجتمعة...';
+  String get gitUiPreviewCombinedCommitMessages => 'معاينة رسائل الإلتزام مجتمعة...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
-      'Alt/ ينقل الالتزام المحدد. لن يتم تحديث مراجع الفروع غير المرتبطة تلقائيًا.';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt/ ينقل الالتزام المحدد. لن يتم تحديث مراجع الفروع غير المرتبطة تلقائيًا.';
 
   @override
   String get gitUiCancelPlan => 'ألغِ الخطة';
@@ -7580,10 +7048,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStartReviewedRebase => 'بدء إعادة التأسيس التي تمت مراجعتها؟';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
     return 'أعد كتابة الالتزامات المخططة لـ $arg0 على $arg1. تظل الالتزامات المنسدلة ملحوظة بشكل واضح في هذه الخطة حتى تبدأ.';
   }
 
@@ -7597,49 +7062,36 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStoppedForEditingAmend => ' · توقف للتحرير / التعديل';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
-      'هذه هي إدخالات الفهرس غير مندمجة ، ربما من تطبيق خبأ. Git لا يوجد لديه متابعة خبأ أو أمر إجهاض.';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => 'هذه هي إدخالات الفهرس غير مندمجة ، ربما من تطبيق خبأ. Git لا يوجد لديه متابعة خبأ أو أمر إجهاض.';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
-      'تحرير ملفات العمل، مرحلة وتعديل الالتزام الحالي، ثم الاستمرار في هذه القاعدة.';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => 'تحرير ملفات العمل، مرحلة وتعديل الالتزام الحالي، ثم الاستمرار في هذه القاعدة.';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
     return '$arg0$arg1 · مراحل الفهرس غير المدمجة $arg2';
   }
 
   @override
-  String get gitUiTheIndexHasNoUnresolvedEntries =>
-      'المؤشر لا يوجد لديه إدخالات لم تحل.';
+  String get gitUiTheIndexHasNoUnresolvedEntries => 'المؤشر لا يوجد لديه إدخالات لم تحل.';
 
   @override
-  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
-      'حافظ على الالتزام الحالي كالتزام فارغ';
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => 'حافظ على الالتزام الحالي كالتزام فارغ';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
-      'الفهرس الحقيقي لا يحتوي على تغييرات مرحلية. إنشاء التزام فارغ صريح ، ثم الاستمرار في التسلسل إذا كان لا يزال نشطًا.';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => 'الفهرس الحقيقي لا يحتوي على تغييرات مرحلية. إنشاء التزام فارغ صريح ، ثم الاستمرار في التسلسل إذا كان لا يزال نشطًا.';
 
   @override
   String get gitUiKeepEmptyCommit => 'حافظ على الالتزام الفارغ...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
-      'سيحاول Git العودة إلى بداية العملية. لا يضمن استعادة المحتوى السابق خارج الفهرس أو غير المتتبع أو غير المحفوظ.';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'سيحاول Git العودة إلى بداية العملية. لا يضمن استعادة المحتوى السابق خارج الفهرس أو غير المتتبع أو غير المحفوظ.';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
-      'تخطي الالتزام الحالي والاستمرار في الالتزام المخطط التالي.';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => 'تخطي الالتزام الحالي والاستمرار في الالتزام المخطط التالي.';
 
   @override
-  String
-  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
-      'ننسى مسك الدفاتر هذه العملية مع الاحتفاظ الملفات والفهرس الحالي.';
+  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => 'ننسى مسك الدفاتر هذه العملية مع الاحتفاظ الملفات والفهرس الحالي.';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -7650,8 +7102,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiReloadConflictVersions => 'إعادة تحميل إصدارات الصراع؟';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
-      'استبدل مسودة النتيجة غير المحفوظة بملف العمل الحالي. يتم الاحتفاظ بمحتوى العمل المحفوظ.';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => 'استبدل مسودة النتيجة غير المحفوظة بملف العمل الحالي. يتم الاحتفاظ بمحتوى العمل المحفوظ.';
 
   @override
   String get gitUiLoadingConflictVersions => 'جاري تحميل إصدارات التعارض...';
@@ -7666,8 +7117,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiBaseRight => 'قاعدة  يمين';
 
   @override
-  String get gitUiNoBaseEntryForThisConflict =>
-      'لا يوجد مدخل أساسي لهذا النزاع';
+  String get gitUiNoBaseEntryForThisConflict => 'لا يوجد مدخل أساسي لهذا النزاع';
 
   @override
   String get gitUiAcceptEntireLeftFile => 'اقبل الملف الأيسر بالكامل...';
@@ -7685,18 +7135,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiManualResolution => 'القرار اليدوي';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(
-    String arg0,
-    String arg1,
-    String arg2,
-  ) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
     return 'منطقة $arg0 / $arg1  $arg2 استعرض';
   }
 
   @override
-  String
-  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
-      'تجاوزت محاذاة المصدر الحد الأقصى لمقارنة النص ؛ تظل أجزاء المصدر متاحة للمراجعة اليدوية.';
+  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => 'تجاوزت محاذاة المصدر الحد الأقصى لمقارنة النص ؛ تظل أجزاء المصدر متاحة للمراجعة اليدوية.';
 
   @override
   String get gitUiAcceptLeftRegion => 'قبول المنطقة اليسرى';
@@ -7705,16 +7149,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiAcceptRightRegion => 'قبول المنطقة الصحيحة';
 
   @override
-  String get gitUiKeepManualResultForRegion =>
-      'حافظ على النتيجة اليدوية للمنطقة';
+  String get gitUiKeepManualResultForRegion => 'حافظ على النتيجة اليدوية للمنطقة';
 
   @override
-  String get gitUiApplyGitSNonConflictingChanges =>
-      'تطبيق التغييرات غيت غير متضاربة؟';
+  String get gitUiApplyGitSNonConflictingChanges => 'تطبيق التغييرات غيت غير متضاربة؟';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
-      'استبدل مسودة النتيجة الحالية بمعاينة دمج Git. هذا يتجاهل تعديلات النتائج اليدوية غير المحفوظة ؛ ملف العمل لم يتغير حتى حفظ.';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => 'استبدل مسودة النتيجة الحالية بمعاينة دمج Git. هذا يتجاهل تعديلات النتائج اليدوية غير المحفوظة ؛ ملف العمل لم يتغير حتى حفظ.';
 
   @override
   String get gitUiUseMergePreview => 'استخدم معاينة الدمج';
@@ -7738,41 +7179,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStage3 => 'المرحلة 3';
 
   @override
-  String
-  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
-      'إصدارات التعارض غير متوفرة. تحديث لمراجعة حالتها الحالية.';
+  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => 'إصدارات التعارض غير متوفرة. تحديث لمراجعة حالتها الحالية.';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
-      'النتيجة محفوظة على القرص. الفهرس لا يزال يحدد ما إذا كان هذا الملف قد تم حله.';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => 'النتيجة محفوظة على القرص. الفهرس لا يزال يحدد ما إذا كان هذا الملف قد تم حله.';
 
   @override
   String get gitUiSaveResultDraft => 'حفظ مسودة النتيجة';
 
   @override
-  String get gitUiApplyResultAndStageResolution =>
-      'تطبيق النتيجة وإضافة الحل إلى الفهرس';
+  String get gitUiApplyResultAndStageResolution => 'تطبيق النتيجة وإضافة الحل إلى الفهرس';
 
   @override
-  String get gitUiResultEditableUTF8WorkingContent =>
-      'نتيجة  محتوى العمل UTF-8 قابل للتحرير';
+  String get gitUiResultEditableUTF8WorkingContent => 'نتيجة  محتوى العمل UTF-8 قابل للتحرير';
 
   @override
   String get gitUiEditableConflictResult => 'نتيجة النزاع القابلة للتحرير';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return 'اليسار: $arg0 · $arg1\nاليمين: $arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
-      'اختر المحتوى أو الحذف أو وحدة فرعية تلتزم صراحة. لا يتم فك تشفير أي بيانات ثنائية كنص قابل للتحرير.';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => 'اختر المحتوى أو الحذف أو وحدة فرعية تلتزم صراحة. لا يتم فك تشفير أي بيانات ثنائية كنص قابل للتحرير.';
 
   @override
   String get gitUiUseEntireLeftContent => 'استخدم المحتوى الأيسر بالكامل...';
@@ -7784,12 +7214,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiDeleteThisPath => 'احذف هذا المسار...';
 
   @override
-  String get gitUiResolvedSubmoduleCommit =>
-      'الالتزام بالوحدات الفرعية التي تم حلها';
+  String get gitUiResolvedSubmoduleCommit => 'الالتزام بالوحدات الفرعية التي تم حلها';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
-      'مرحلة هذه gitlink بالضبط في الوالد. هذا لا تحقق من أو ارتكاب submodule.';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => 'مرحلة هذه gitlink بالضبط في الوالد. هذا لا تحقق من أو ارتكاب submodule.';
 
   @override
   String get gitUiSetResolvedGitlink => 'ضبط حلّ gitlink.';
@@ -7800,8 +7228,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
-      'تم تحرير النتيجة. احتفظ بالنتيجة اليدوية أو حدد منطقة أخرى دون تغيير.';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => 'تم تحرير النتيجة. احتفظ بالنتيجة اليدوية أو حدد منطقة أخرى دون تغيير.';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -7809,13 +7236,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
-      'المرحلة التي تم اختيارها gitlink ارتكاب في الوالد. لا يتم استبدال الخروج وحدة فرعية وملفاتها.';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => 'المرحلة التي تم اختيارها gitlink ارتكاب في الوالد. لا يتم استبدال الخروج وحدة فرعية وملفاتها.';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
-    String arg0,
-  ) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
     return 'يستبدل مسار العمل بأكمله $arg0 ويمرر القرار. سيتم التخلص من محتوى العمل الحالي وأي مسودة نتيجة غير محفوظة.';
   }
 
@@ -7826,10 +7250,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiStageThisConflictResolution => 'مرحلة حل النزاع؟';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
     return 'استخدم النتيجة المحررة بالكامل كـ $arg0. يسجل Git المسار الذي تم حله عند إعداده. راجع كل المحتوى المقصود أولاً.$arg1';
   }
 
@@ -7837,16 +7258,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiApplyAndStage => 'تطبيق وإضافة إلى الفهرس';
 
   @override
-  String get gitUiReviewResultTextFormatChanges =>
-      'مراجعة التغييرات في تنسيق نص النتيجة';
+  String get gitUiReviewResultTextFormatChanges => 'مراجعة التغييرات في تنسيق نص النتيجة';
 
   @override
   String get gitUiSaveReviewedResult => 'احفظ نتيجة المراجعة';
 
   @override
-  String
-  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
-      'إمكانية الوصول إلى جدول Native Git غير متوفرة. أعد المحاولة بعد إعادة توصيل التطبيق.';
+  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => 'إمكانية الوصول إلى جدول Native Git غير متوفرة. أعد المحاولة بعد إعادة توصيل التطبيق.';
 
   @override
   String get gitUiSans => 'دونس';
@@ -7899,14 +7317,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
-      'يتم قراءة المستودع الذي تمت مراجعته فقط لهذه العملية. يبقى التاريخ وفحص المحتوى متاحين.';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => 'يتم قراءة المستودع الذي تمت مراجعته فقط لهذه العملية. يبقى التاريخ وفحص المحتوى متاحين.';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
     return 'عاد Git $arg0. لم يتمكن التطبيق من تحديث مستنداته: $arg1';
   }
 
@@ -7917,8 +7331,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiCurrentBranch => 'الفرع الحالي';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
-      'لا توجد فروع أو علامات مطابقة. حدد التزام في السجل.';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => 'لا توجد فروع أو علامات مطابقة. حدد التزام في السجل.';
 
   @override
   String get gitUiBranches => 'الفروع';
@@ -7966,8 +7379,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRebase2 => 'إعادة تأسيس…';
 
   @override
-  String get gitUiConflictsAndCurrentOperation =>
-      'النزاعات والعمليات الحالية..';
+  String get gitUiConflictsAndCurrentOperation => 'النزاعات والعمليات الحالية..';
 
   @override
   String get gitUiStashes2 => 'التغييرات المحفوظة مؤقتًا…';
@@ -7991,8 +7403,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiWaitingForRepositoryStatus => 'في انتظار حالة المستودع';
 
   @override
-  String get gitUiRepositoryStatusUnavailableRefresh =>
-      'حالة المستودع غير متوفرة؛ تحديث';
+  String get gitUiRepositoryStatusUnavailableRefresh => 'حالة المستودع غير متوفرة؛ تحديث';
 
   @override
   String get gitUiManageRemotes2 => 'إدارة المستودعات البعيدة';
@@ -8033,62 +7444,46 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
-      'تم تغيير المستودع. تحديث ومراجعة قبل المحاولة مرة أخرى.';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => 'تم تغيير المستودع. تحديث ومراجعة قبل المحاولة مرة أخرى.';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
-      'عملية أخرى تحمل المستودع أو قفل الفهرس. انتظر ، ثم قم بالتحديث.';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => 'عملية أخرى تحمل المستودع أو قفل الفهرس. انتظر ، ثم قم بالتحديث.';
 
   @override
-  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
-      'مطلوب الثقة مستودع لهذه العملية.';
+  String get gitUiRepositoryTrustIsRequiredForThisOperation => 'مطلوب الثقة مستودع لهذه العملية.';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
-      'خدمة Git غير متصلة. أعد الاتصال والتوفيق بين المستودع.';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'خدمة Git غير متصلة. أعد الاتصال والتوفيق بين المستودع.';
 
   @override
-  String
-  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
-      'لا يمكن أن يدعم Git القابل للتنفيذ المثبت هذه العملية. راجع متطلبات وقت التشغيل أدناه.';
+  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => 'لا يمكن أن يدعم Git القابل للتنفيذ المثبت هذه العملية. راجع متطلبات وقت التشغيل أدناه.';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
-      'هذا المستودع قابل للقراءة فقط للعملية المطلوبة. المراجعة والتاريخ متوفران.';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => 'هذا المستودع قابل للقراءة فقط للعملية المطلوبة. المراجعة والتاريخ متوفران.';
 
   @override
-  String
-  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
-      'العملية تحتاج إلى المصالحة. راجع المستودع الناتج أو الحالة البعيدة قبل تكرارها.';
+  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => 'العملية تحتاج إلى المصالحة. راجع المستودع الناتج أو الحالة البعيدة قبل تكرارها.';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
-      'فشلت مصادقة Git. راجع مساعد بيانات الاعتماد أو افتح حلقة المفاتيح التي تم تكوينها.';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'فشلت مصادقة Git. راجع مساعد بيانات الاعتماد أو افتح حلقة المفاتيح التي تم تكوينها.';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
-      'فشل التحقق من مضيف SSH. راجع هوية المضيف من خلال أدوات SSH التي تم تكوينها.';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'فشل التحقق من مضيف SSH. راجع هوية المضيف من خلال أدوات SSH التي تم تكوينها.';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
-      'فشل تسجيل الدخول أو تم إلغاؤه. راجع مفتاح التوقيع والوكيل وأداة التوقيع المهيأة.';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => 'فشل تسجيل الدخول أو تم إلغاؤه. راجع مفتاح التوقيع والوكيل وأداة التوقيع المهيأة.';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
-      'تعيين اسم مؤلف مستودع والبريد الإلكتروني، ثم العودة إلى مشروع الرسالة المحفوظة.';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => 'تعيين اسم مؤلف مستودع والبريد الإلكتروني، ثم العودة إلى مشروع الرسالة المحفوظة.';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
-      'رفض Git التحديث الذي تمت مراجعته. قم بتحديث ومراجعة الوجهة الفعلية قبل المحاولة مرة أخرى.';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'رفض Git التحديث الذي تمت مراجعته. قم بتحديث ومراجعة الوجهة الفعلية قبل المحاولة مرة أخرى.';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
-      'العمل أو التغييرات على مراحل منع هذه العملية. مراجعة, ارتكاب أو خبأ صراحة لهم.';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => 'العمل أو التغييرات على مراحل منع هذه العملية. مراجعة, ارتكاب أو خبأ صراحة لهم.';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
-      'كائن Git المطلوب غير متوفر. راجع حدود المستودع الضحلة أو الجزئية واجلبها صراحة إذا لزم الأمر.';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => 'كائن Git المطلوب غير متوفر. راجع حدود المستودع الضحلة أو الجزئية واجلبها صراحة إذا لزم الأمر.';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -8113,8 +7508,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
-      'إنشاء فرع محلي دون التحقق من ذلك.';
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut => 'إنشاء فرع محلي دون التحقق من ذلك.';
 
   @override
   String gitUiTagArg0(String arg0) {
@@ -8154,26 +7548,19 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String
-  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
-      'ينقل HEAD/الفرع الحالي. لا يستعيد reflog أي محتوى غير متتبع أو غير محفوظ بشكل عام.';
+  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => 'ينقل HEAD/الفرع الحالي. لا يستعيد reflog أي محتوى غير متتبع أو غير محفوظ بشكل عام.';
 
   @override
-  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
-      'نقل HEAD مع إبقاء الفهرس وملفات العمل.';
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles => 'نقل HEAD مع إبقاء الفهرس وملفات العمل.';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
-      'نقل HEAD واستبدال الفهرس مع إبقاء ملفات العمل.';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => 'نقل HEAD واستبدال الفهرس مع إبقاء ملفات العمل.';
 
   @override
-  String
-  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
-      'استبدال HEAD والفهرس وملفات العمل المتتبعة؛ قد تُستبدل الملفات غير المتتبعة التي تعيق العملية.';
+  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => 'استبدال HEAD والفهرس وملفات العمل المتتبعة؛ قد تُستبدل الملفات غير المتتبعة التي تعيق العملية.';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
-      'استبدال HEAD والفهرس والملفات المؤهلة؛ تُرفض العملية إن كانت ستفقد تغييرات محلية.';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => 'استبدال HEAD والفهرس والملفات المؤهلة؛ تُرفض العملية إن كانت ستفقد تغييرات محلية.';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -8181,10 +7568,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
-    String arg0,
-    String arg1,
-  ) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
     return '$arg0  $arg1 راجع تأثيرات الوضع المحدد قبل التقديم.';
   }
 
@@ -8220,8 +7604,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiTagMessage => 'رسالة الوسوم';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
-      'ينشئ العلامة محليًا. نشر العلامات المحددة صراحة في مراجعة الدفع.';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => 'ينشئ العلامة محليًا. نشر العلامات المحددة صراحة في مراجعة الدفع.';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -8232,15 +7615,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiNextChangedFilePage => 'التالي تغيير صفحة الملف';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
-      'لقطة مستودع للقراءة فقط. فتح ملف لا يتحقق أبدا من هذا التنقيح.';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => 'لقطة مستودع للقراءة فقط. فتح ملف لا يتحقق أبدا من هذا التنقيح.';
 
   @override
   String get gitUiOpenReadOnlyVersion => 'افتح النسخة للقراءة فقط';
 
   @override
-  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
-      'استعد هذا المسار... في انتظار حالة المستودع';
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus => 'استعد هذا المسار... في انتظار حالة المستودع';
 
   @override
   String get gitUiRestoreThisPath => 'استعادة هذا المسار...';
@@ -8256,9 +7637,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
-    String arg0,
-  ) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
     return 'استبدل مسار العمل هذا بالمراجعة $arg0. يتم الاحتفاظ بالمحتوى الموجود.';
   }
 
@@ -8282,8 +7661,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiOpenReadOnlyHistoricalFile =>
-      'افتح الملف التاريخي للقراءة فقط';
+  String get gitUiOpenReadOnlyHistoricalFile => 'افتح الملف التاريخي للقراءة فقط';
 
   @override
   String get gitUiCompareToCurrentFile => 'قارن إلى الحالي ملفّ';
@@ -8305,12 +7683,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiBoundary => ' · الحدود';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(
-    String arg0,
-    String arg1,
-    String arg2,
-    String arg3,
-  ) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
     return '$arg0  $arg1\nالسطر الأصلي $arg2$arg3';
   }
 
@@ -8341,16 +7714,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiRemoveFromReviewedSequence => 'إزالة من استعراض تسلسل';
 
   @override
-  String get gitUiApplyChangesWithoutCreatingCommits =>
-      'تطبيق التغييرات دون إنشاء التزامات';
+  String get gitUiApplyChangesWithoutCreatingCommits => 'تطبيق التغييرات دون إنشاء التزامات';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
-      'استخدم هذا الأصل الرئيسي الصريح للدمج';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits => 'استخدم هذا الأصل الرئيسي الصريح للدمج';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
-      'الالتزامات الفارغة أو المطبقة بالفعل قد توقف Git لقرار تخطي أو استمرار صريح.';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => 'الالتزامات الفارغة أو المطبقة بالفعل قد توقف Git لقرار تخطي أو استمرار صريح.';
 
   @override
   String get gitUiRevertInReviewedOrder => 'عكس في ترتيب المراجعة';
@@ -8540,11 +7910,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String gitUiRebaseStepSemantics(
-    String position,
-    String action,
-    String subject,
-  ) {
+  String gitUiRebaseStepSemantics(String position, String action, String subject) {
     return '$position, $action, $subject';
   }
 
@@ -8555,12 +7921,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiUtf8NoBom => 'UTF-8 بدون علامة ترتيب البايت (BOM)';
 
   @override
-  String get gitUiAddsBom =>
-      'يضيف هذا التعديل علامة ترتيب بايت UTF-8 (BOM) في بداية الملف.';
+  String get gitUiAddsBom => 'يضيف هذا التعديل علامة ترتيب بايت UTF-8 (BOM) في بداية الملف.';
 
   @override
-  String get gitUiRemovesBom =>
-      'يزيل هذا التعديل علامة ترتيب البايت UTF-8 (BOM) من بداية الملف.';
+  String get gitUiRemovesBom => 'يزيل هذا التعديل علامة ترتيب البايت UTF-8 (BOM) من بداية الملف.';
 
   @override
   String get gitUiNoLineTerminators => 'لا يوجد خط terminators';
@@ -8637,8 +8001,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
-      'تنطبق عمليات Git على هذا المستودع بأكمله وقد تنفذ أدوات الخطافات والمرشحات والاعتمادات والتوقيعات التي تم تكوينها.';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'تنطبق عمليات Git على هذا المستودع بأكمله وقد تنفذ أدوات الخطافات والمرشحات والاعتمادات والتوقيعات التي تم تكوينها.';
 
   @override
   String get gitHostContentUnavailable => 'المحتوى غير متوفر';
@@ -8705,23 +8068,19 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiDiscardUnsavedIndexDraft =>
-      'هل تريد تجاهل مسودة الفهرس غير المحفوظة؟';
+  String get gitUiDiscardUnsavedIndexDraft => 'هل تريد تجاهل مسودة الفهرس غير المحفوظة؟';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
-      'إغلاق محرر الفهرس يتجاهل مسودته فقط. يبقى الفهرس وملف العمل دون تغيير.';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => 'إغلاق محرر الفهرس يتجاهل مسودته فقط. يبقى الفهرس وملف العمل دون تغيير.';
 
   @override
   String get gitUiDiscardIndexDraft => 'تجاهل مسودة الفهرس';
 
   @override
-  String get gitUiDiscardUnsavedConflictDraft =>
-      'هل تريد تجاهل نتيجة حل التعارض غير المحفوظة؟';
+  String get gitUiDiscardUnsavedConflictDraft => 'هل تريد تجاهل نتيجة حل التعارض غير المحفوظة؟';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
-      'يؤدي إغلاق محرر التعارض إلى تجاهل مسودة النتيجة غير المحفوظة فقط. يظل محتوى العمل المحفوظ والفهرس دون تغيير.';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => 'يؤدي إغلاق محرر التعارض إلى تجاهل مسودة النتيجة غير المحفوظة فقط. يظل محتوى العمل المحفوظ والفهرس دون تغيير.';
 
   @override
   String get gitUiDiscardConflictDraft => 'تجاهل مسودة التعارض';
@@ -8746,8 +8105,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiRevealRevisionWithoutFilters =>
-      'عرض المراجعة دون عوامل تصفية';
+  String get gitUiRevealRevisionWithoutFilters => 'عرض المراجعة دون عوامل تصفية';
 
   @override
   String get gitUiRestoreHistoryFilters => 'استعادة عوامل تصفية السجل';
@@ -8767,12 +8125,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiChangedLine => 'سطر متغير';
 
   @override
-  String get gitUiCopyHeadRegionIntoIndexDraft =>
-      'نسخ منطقة HEAD إلى مسودة الفهرس';
+  String get gitUiCopyHeadRegionIntoIndexDraft => 'نسخ منطقة HEAD إلى مسودة الفهرس';
 
   @override
-  String get gitUiCopyWorkingRegionIntoIndexDraft =>
-      'نسخ منطقة العمل إلى مسودة الفهرس';
+  String get gitUiCopyWorkingRegionIntoIndexDraft => 'نسخ منطقة العمل إلى مسودة الفهرس';
 
   @override
   String get gitUiUpdatingConflictRegions => 'جارٍ تحديث مناطق التعارض';
@@ -8789,24 +8145,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiIgnoreRightRegion => 'تجاهل الاقتراح الأيمن';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved =>
-      'تمت كتابة المسودة المُرسلة إلى الفهرس. ما زال النص الأحدث في هذا المحرر. أعد تحميل الإصدارات الحالية ومراجعتها قبل تطبيقه.';
+  String get gitUiIndexAppliedNewerDraftPreserved => 'تمت كتابة المسودة المُرسلة إلى الفهرس. ما زال النص الأحدث في هذا المحرر. أعد تحميل الإصدارات الحالية ومراجعتها قبل تطبيقه.';
 
   @override
-  String get gitUiNewerConflictDraftRetained =>
-      'تم حفظ النتيجة المُرسلة. ما زالت مسودة النتيجة الأحدث غير محفوظة.';
+  String get gitUiNewerConflictDraftRetained => 'تم حفظ النتيجة المُرسلة. ما زالت مسودة النتيجة الأحدث غير محفوظة.';
 
   @override
-  String get gitUiNoFileHistoryForThisPathAndRevision =>
-      'لا يتوفر سجل ملفات لهذا المسار وهذه المراجعة.';
+  String get gitUiNoFileHistoryForThisPathAndRevision => 'لا يتوفر سجل ملفات لهذا المسار وهذه المراجعة.';
 
   @override
-  String get gitUiReviewSavedIndexAndKeepDraft =>
-      'راجع الفهرس المحفوظ واحتفظ بالمسودة';
+  String get gitUiReviewSavedIndexAndKeepDraft => 'راجع الفهرس المحفوظ واحتفظ بالمسودة';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply =>
-      'تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها.';
+  String get gitUiIndexSourcesChangedSinceApply => 'تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها.';
 
   @override
   String get gitUiReviewSavedMessage => 'مراجعة الرسالة المحفوظة';
@@ -8821,16 +8172,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiUseSavedMessage => 'استخدام الرسالة المحفوظة';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow =>
-      'تغيرت هذه الرسالة في نافذة أخرى. راجع الرسالة المحفوظة قبل استبدالها.';
+  String get gitUiCommitDraftChangedInAnotherWindow => 'تغيرت هذه الرسالة في نافذة أخرى. راجع الرسالة المحفوظة قبل استبدالها.';
 
   @override
-  String get gitUiDiscardUnsavedCommitMessages =>
-      'تجاهل رسائل الالتزام غير المحفوظة؟';
+  String get gitUiDiscardUnsavedCommitMessages => 'تجاهل رسائل الالتزام غير المحفوظة؟';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
-      'الرسائل التي تعذر حفظها ما زالت في هذه النافذة. يترك تجاهلها النسخ المحفوظة دون تغيير.';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => 'الرسائل التي تعذر حفظها ما زالت في هذه النافذة. يترك تجاهلها النسخ المحفوظة دون تغيير.';
 
   @override
   String get gitUiDiscardCommitMessages => 'تجاهل الرسائل';
@@ -8842,19 +8190,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiNoCommitsYet => 'لا توجد إيداعات بعد';
 
   @override
-  String get gitUiNativeMenuUnavailable =>
-      'خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى.';
+  String get gitUiNativeMenuUnavailable => 'خدمة القوائم الأصلية غير متاحة. حاول مرة أخرى.';
 
   @override
-  String get gitWorkspaceRootRequired =>
-      'افتح جذر شجرة عمل المستودع لاستخدام Git في مساحة العمل هذه.';
+  String get gitWorkspaceRootRequired => 'افتح جذر شجرة عمل المستودع لاستخدام Git في مساحة العمل هذه.';
 
   @override
-  String gitLocalTrackingDescription(
-    String upstream,
-    String ahead,
-    String behind,
-  ) {
+  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
     return '$upstream · متقدم بـ $ahead، ومتأخر بـ $behind. معلومات تتبع بعيدة معروفة محليًا؛ ليست فحصًا مباشرًا للخادم.';
   }
 
