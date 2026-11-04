@@ -14,109 +14,141 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesNewFromRetainedText => 'Nytt notat fra bevart tekst';
 
   @override
-  String get notesAccountThrottled => 'Nextcloud ba om en pause. Vent før du starter innloggingen på nytt.';
+  String get notesAccountThrottled =>
+      'Nextcloud ba om en pause. Vent før du starter innloggingen på nytt.';
 
   @override
-  String get notesSettingsRefreshing => 'Oppdaterer Notes etter bekreftet innstillingsendring';
+  String get notesSettingsRefreshing =>
+      'Oppdaterer Notes etter bekreftet innstillingsendring';
 
   @override
-  String get notesExportOperationFailed => 'Eksporten mislyktes før publisering. Kontroller kilde og mål, og eksporter igjen.';
+  String get notesExportOperationFailed =>
+      'Eksporten mislyktes før publisering. Kontroller kilde og mål, og eksporter igjen.';
 
   @override
-  String get notesRecoveryCreatedNotOpened => 'Den gjenopprettede notaten er lagret, men kunne ikke åpnes. Avklar ventende redigerings- eller egenskapsendringer, og åpne denne eksisterende notaten.';
+  String get notesRecoveryCreatedNotOpened =>
+      'Den gjenopprettede notaten er lagret, men kunne ikke åpnes. Avklar ventende redigerings- eller egenskapsendringer, og åpne denne eksisterende notaten.';
 
   @override
-  String get notesSettingsPendingNotes => 'Ventende notater, konflikter eller usikre opprettelser blokkerer endringen. Synkroniser eller gjennomgå dem i Notes, og prøv det bevarte innstillingsutkastet igjen.';
+  String get notesSettingsPendingNotes =>
+      'Ventende notater, konflikter eller usikre opprettelser blokkerer endringen. Synkroniser eller gjennomgå dem i Notes, og prøv det bevarte innstillingsutkastet igjen.';
 
   @override
-  String get notesSettingsPendingAttachments => 'Ventende vedleggsoperasjoner blokkerer endringen. Gjennomgå vedlegg i Notes, og prøv det bevarte innstillingsutkastet igjen.';
+  String get notesSettingsPendingAttachments =>
+      'Ventende vedleggsoperasjoner blokkerer endringen. Gjennomgå vedlegg i Notes, og prøv det bevarte innstillingsutkastet igjen.';
 
   @override
-  String get notesAccountServerAddress => 'Bruk Nextclouds kanoniske HTTPS-adresse og start innloggingen på nytt. Adressen eller videresendingen kunne ikke bekreftes.';
+  String get notesAccountServerAddress =>
+      'Bruk Nextclouds kanoniske HTTPS-adresse og start innloggingen på nytt. Adressen eller videresendingen kunne ikke bekreftes.';
 
   @override
-  String get notesAccountUnsupported => 'Notes er utilgjengelig eller API-et støttes ikke. Aktiver Nextcloud Notes med API-hovedversjon 1, underversjon 4 eller nyere.';
+  String get notesAccountUnsupported =>
+      'Notes er utilgjengelig eller API-et støttes ikke. Aktiver Nextcloud Notes med API-hovedversjon 1, underversjon 4 eller nyere.';
 
   @override
-  String get notesAccountAuthorizeAgain => 'Nextcloud avviste påloggingsinformasjonen. Godkjenn kontoen på nytt eller koble til igjen.';
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud avviste påloggingsinformasjonen. Godkjenn kontoen på nytt eller koble til igjen.';
 
   @override
-  String get notesAccountCheckForbidden => 'Nextcloud nektet kontroll av Notes-funksjoner. Be administratoren tillate den, og prøv igjen.';
+  String get notesAccountCheckForbidden =>
+      'Nextcloud nektet kontroll av Notes-funksjoner. Be administratoren tillate den, og prøv igjen.';
 
   @override
-  String get notesAccountMalformed => 'Nextcloud-svaret kunne ikke bekreftes. Kontroller serverinstallasjonen og logg inn igjen.';
+  String get notesAccountMalformed =>
+      'Nextcloud-svaret kunne ikke bekreftes. Kontroller serverinstallasjonen og logg inn igjen.';
 
   @override
-  String get notesAccountTimedOut => 'Innloggingen ble tidsavbrutt. Start igjen og fullfør godkjenningen i nettleseren.';
+  String get notesAccountTimedOut =>
+      'Innloggingen ble tidsavbrutt. Start igjen og fullfør godkjenningen i nettleseren.';
 
   @override
-  String get notesAccountBrowserUnavailable => 'Systemnettleseren kunne ikke åpnes. Kontroller standardnettleseren og logg inn igjen.';
+  String get notesAccountBrowserUnavailable =>
+      'Systemnettleseren kunne ikke åpnes. Kontroller standardnettleseren og logg inn igjen.';
 
   @override
-  String get notesAccountNetwork => 'Nextcloud kunne ikke nås. Kontroller tilkobling og server, og logg inn igjen.';
+  String get notesAccountNetwork =>
+      'Nextcloud kunne ikke nås. Kontroller tilkobling og server, og logg inn igjen.';
 
   @override
-  String get notesAccountRejected => 'Nextcloud avviste funksjonsforespørselen. Kontroller tilgang med administratoren og prøv igjen.';
+  String get notesAccountRejected =>
+      'Nextcloud avviste funksjonsforespørselen. Kontroller tilgang med administratoren og prøv igjen.';
 
   @override
-  String get notesAccountFailed => 'Kontooppsettet kunne ikke fullføres. Prøv å logge inn igjen.';
+  String get notesAccountFailed =>
+      'Kontooppsettet kunne ikke fullføres. Prøv å logge inn igjen.';
 
   @override
-  String get notesTransferSourceChanged => 'Kilden ble endret etter gjennomgang. Gjennomgå gjeldende fil eller lag et nytt øyeblikksbilde før nytt forsøk.';
+  String get notesTransferSourceChanged =>
+      'Kilden ble endret etter gjennomgang. Gjennomgå gjeldende fil eller lag et nytt øyeblikksbilde før nytt forsøk.';
 
   @override
-  String get notesTransferUnreadable => 'Kilden kunne ikke leses. Kontroller tilgang til fil eller mappe, og gjennomgå igjen.';
+  String get notesTransferUnreadable =>
+      'Kilden kunne ikke leses. Kontroller tilgang til fil eller mappe, og gjennomgå igjen.';
 
   @override
-  String get notesTransferInvalidSnapshot => 'Øyeblikksbildet er ugyldig eller ustøttet. Velg et gyldig BusyMark Notes-bilde eller en Markdown-kilde.';
+  String get notesTransferInvalidSnapshot =>
+      'Øyeblikksbildet er ugyldig eller ustøttet. Velg et gyldig BusyMark Notes-bilde eller en Markdown-kilde.';
 
   @override
-  String get notesTransferMediaLimit => 'Medier overskrider importgrensen. Reduser mediene for berørt element og gjennomgå igjen.';
+  String get notesTransferMediaLimit =>
+      'Medier overskrider importgrensen. Reduser mediene for berørt element og gjennomgå igjen.';
 
   @override
-  String get notesTransferUnsafeSource => 'Kilden inneholder en utrygg sti. Velg filer i kildemappen og gjennomgå igjen.';
+  String get notesTransferUnsafeSource =>
+      'Kilden inneholder en utrygg sti. Velg filer i kildemappen og gjennomgå igjen.';
 
   @override
-  String get notesTransferDestination => 'Eksporten kunne ikke skrives. Kontroller tilgang og ledig plass på målet, og eksporter igjen.';
+  String get notesTransferDestination =>
+      'Eksporten kunne ikke skrives. Kontroller tilgang og ledig plass på målet, og eksporter igjen.';
 
   @override
-  String get notesTransferOperationFailed => 'Overføringen kunne ikke fullføres. Gjennomgå berørte elementer og prøv igjen. Tidligere importerte elementer er lagret.';
+  String get notesTransferOperationFailed =>
+      'Overføringen kunne ikke fullføres. Gjennomgå berørte elementer og prøv igjen. Tidligere importerte elementer er lagret.';
 
   @override
-  String get notesExportPublishedWithOmissions => 'Eksport tilgjengelig med utelatelser';
+  String get notesExportPublishedWithOmissions =>
+      'Eksport tilgjengelig med utelatelser';
 
   @override
   String get notesBatchUnchanged => 'De ønskede verdiene var allerede angitt.';
 
   @override
-  String get notesBatchReadOnly => 'Notaten er skrivebeskyttet. Beskyttede egenskaper kan ikke endres; Favoritt er fortsatt tillatt.';
+  String get notesBatchReadOnly =>
+      'Notaten er skrivebeskyttet. Beskyttede egenskaper kan ikke endres; Favoritt er fortsatt tillatt.';
 
   @override
-  String get notesBatchReviewChanged => 'Notaten ble endret etter gjennomgang. Gjennomgå gjeldende tilstand før handlingen gjentas.';
+  String get notesBatchReviewChanged =>
+      'Notaten ble endret etter gjennomgang. Gjennomgå gjeldende tilstand før handlingen gjentas.';
 
   @override
-  String get notesBatchMissing => 'Notaten er ikke lenger tilgjengelig. Oppdater listen og gjennomgå målene igjen.';
+  String get notesBatchMissing =>
+      'Notaten er ikke lenger tilgjengelig. Oppdater listen og gjennomgå målene igjen.';
 
   @override
-  String get notesBatchStorage => 'Lokal lagring mislyktes. Kontroller lagringsplassen og prøv dette elementet igjen; vellykkede elementer er lagret.';
+  String get notesBatchStorage =>
+      'Lokal lagring mislyktes. Kontroller lagringsplassen og prøv dette elementet igjen; vellykkede elementer er lagret.';
 
   @override
-  String get notesRemoteReviewChanged => 'Servernotaten ble endret. Fletteutkastet er bevart. Gjennomgå den oppdaterte sammenligningen og velg løsning på nytt.';
+  String get notesRemoteReviewChanged =>
+      'Servernotaten ble endret. Fletteutkastet er bevart. Gjennomgå den oppdaterte sammenligningen og velg løsning på nytt.';
 
   @override
   String get notesReviewRemote => 'Jeg har gjennomgått gjeldende serverversjon';
 
   @override
-  String get wsModuleCapsNotPublished => 'Modulens bokstavstil publiseres ikke.';
+  String get wsModuleCapsNotPublished =>
+      'Modulens bokstavstil publiseres ikke.';
 
   @override
-  String get wsTitleOverridesAction => 'Titler for instans og innholdsfortegnelse…';
+  String get wsTitleOverridesAction =>
+      'Titler for instans og innholdsfortegnelse…';
 
   @override
   String get wsHeadingNotPublished => 'Publiseres ikke av denne byggeren.';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation => 'Den fastlåste byggeren publiserer ikke instanstitler i Markdown-emner. Eksisterende markering bevares; se kilden.';
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Den fastlåste byggeren publiserer ikke instanstitler i Markdown-emner. Eksisterende markering bevares; se kilden.';
 
   @override
   String get wsTopicIdentity => 'Emne-ID';
@@ -143,22 +175,26 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wsSettingsPresent => 'Eksplisitte innstillinger finnes';
 
   @override
-  String get wsTitleOverrideExplanation => 'Overstyrer publisert tittel; overskriftsteksten beholdes.';
+  String get wsTitleOverrideExplanation =>
+      'Overstyrer publisert tittel; overskriftsteksten beholdes.';
 
   @override
   String get wsIgnoreVariables => 'Behandle variabeltekst bokstavelig';
 
   @override
-  String get wsIgnoreVariablesExplanation => 'Når aktivert erstattes ikke tekst som ligner variabler.';
+  String get wsIgnoreVariablesExplanation =>
+      'Når aktivert erstattes ikke tekst som ligner variabler.';
 
   @override
   String get wsInstanceSelection => 'Hjelpeinstanser';
 
   @override
-  String get wsInstanceExplanation => 'Velg hjelpeutgaver med navn, grupper, lister, unntak eller uttrykk.';
+  String get wsInstanceExplanation =>
+      'Velg hjelpeutgaver med navn, grupper, lister, unntak eller uttrykk.';
 
   @override
-  String get wsFilterExplanation => 'Filtrer gjenbrukbart innhold etter kriterier; dette velger ikke en hjelpeinstans.';
+  String get wsFilterExplanation =>
+      'Filtrer gjenbrukbart innhold etter kriterier; dette velger ikke en hjelpeinstans.';
 
   @override
   String get wsContextHelp => 'Konteksthjelp-ID';
@@ -173,22 +209,28 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wsLastModified => 'Sist endret';
 
   @override
-  String get wsMissingTopicHeading => 'Ingen H1 for emnet. Legg den til i kilden.';
+  String get wsMissingTopicHeading =>
+      'Ingen H1 for emnet. Legg den til i kilden.';
 
   @override
-  String get wsMultipleTopicHeadings => 'Den første H1 bestemmer emnetittelen. Senere H1 er egne overskrifter.';
+  String get wsMultipleTopicHeadings =>
+      'Den første H1 bestemmer emnetittelen. Senere H1 er egne overskrifter.';
 
   @override
-  String get wsTopicIdentityMismatch => 'Rotens id avviker fra filnavnets emne-ID. Bruk Gi emnefil nytt navn eller se kilden.';
+  String get wsTopicIdentityMismatch =>
+      'Rotens id avviker fra filnavnets emne-ID. Bruk Gi emnefil nytt navn eller se kilden.';
 
   @override
-  String get wsUnsupportedProperties => 'Ustøttede attributter bevares. Se dem i kilden.';
+  String get wsUnsupportedProperties =>
+      'Ustøttede attributter bevares. Se dem i kilden.';
 
   @override
-  String get wsGeneratedAnchor => 'Generert anker; en verdi oppretter en overstyring.';
+  String get wsGeneratedAnchor =>
+      'Generert anker; en verdi oppretter en overstyring.';
 
   @override
-  String get wsHeadingBuilderLimitation => 'Den fastlåste byggeren publiserer ikke H1-attributter. De tilhører overskriften, ikke XML-roten.';
+  String get wsHeadingBuilderLimitation =>
+      'Den fastlåste byggeren publiserer ikke H1-attributter. De tilhører overskriften, ikke XML-roten.';
 
   @override
   String get closeOtherTabs => 'Lukk andre faner';
@@ -245,16 +287,20 @@ class AppLocalizationsNb extends AppLocalizations {
   String get tocTemplateExtension => 'Filtype:';
 
   @override
-  String get tocTemplateLoadError => 'Kunne ikke laste maler. Eksisterende maler er ikke endret.';
+  String get tocTemplateLoadError =>
+      'Kunne ikke laste maler. Eksisterende maler er ikke endret.';
 
   @override
-  String get tocTemplateSaveError => 'Kunne ikke lagre maler. Endringene dine er fortsatt tilgjengelige her.';
+  String get tocTemplateSaveError =>
+      'Kunne ikke lagre maler. Endringene dine er fortsatt tilgjengelige her.';
 
   @override
-  String get tocTemplateConflict => 'Malene ble endret i et annet vindu. Avbryt og åpne redigereren på nytt.';
+  String get tocTemplateConflict =>
+      'Malene ble endret i et annet vindu. Avbryt og åpne redigereren på nytt.';
 
   @override
-  String get tocTemplateDuplicateName => 'En mal med dette navnet og denne filtypen finnes allerede.';
+  String get tocTemplateDuplicateName =>
+      'En mal med dette navnet og denne filtypen finnes allerede.';
 
   @override
   String get tocTemplateFormat => 'Format:';
@@ -271,13 +317,15 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get tocRemoveElementsRetainFiles => 'Kildefilene som er knyttet til disse innholdsfortegnelseselementene, blir ikke slettet.';
+  String get tocRemoveElementsRetainFiles =>
+      'Kildefilene som er knyttet til disse innholdsfortegnelseselementene, blir ikke slettet.';
 
   @override
   String get tocOk => 'OK';
 
   @override
-  String get tocSelectExistingTopic => 'Velg emne som skal legges til i gjeldende instans';
+  String get tocSelectExistingTopic =>
+      'Velg emne som skal legges til i gjeldende instans';
 
   @override
   String get tocGroupName => 'Gruppenavn';
@@ -322,7 +370,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get tocCopyTopicTitleUnavailable => 'Emnetittel';
 
   @override
-  String get tocCopyElementIdUnavailable => 'ID for innholdsfortegnelseselement';
+  String get tocCopyElementIdUnavailable =>
+      'ID for innholdsfortegnelseselement';
 
   @override
   String get tocEditTitleAction => 'Rediger tittel...';
@@ -383,10 +432,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get tocOnlyTitleField => 'Tittel kun for innholdsfortegnelsen:';
 
   @override
-  String get tocInstanceTitleExplanation => 'Brukes bare for den gjeldende instansen. Arves som standard fra emnetittelen.';
+  String get tocInstanceTitleExplanation =>
+      'Brukes bare for den gjeldende instansen. Arves som standard fra emnetittelen.';
 
   @override
-  String get tocOnlyTitleExplanation => 'Brukes bare i innholdsfortegnelsen. Arves som standard fra emnetittelen eller den instansspesifikke tittelen hvis den er angitt. Titler er forklart';
+  String get tocOnlyTitleExplanation =>
+      'Brukes bare i innholdsfortegnelsen. Arves som standard fra emnetittelen eller den instansspesifikke tittelen hvis den er angitt. Titler er forklart';
 
   @override
   String get tocTitleDocumentationLink => 'her';
@@ -416,7 +467,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get pdfIncludeTitlePage => 'Ta med tittelside';
 
   @override
-  String get pdfTitlePageNote => 'Denne siden har ingen topptekst, bunntekst eller synlig sidetall.';
+  String get pdfTitlePageNote =>
+      'Denne siden har ingen topptekst, bunntekst eller synlig sidetall.';
 
   @override
   String get pdfTitlePageTitle => 'Tittel';
@@ -437,16 +489,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get pdfTitlePageDate => 'Dato';
 
   @override
-  String get pdfTitlePageTitleRequired => 'Skriv inn en tittel for tittelsiden.';
+  String get pdfTitlePageTitleRequired =>
+      'Skriv inn en tittel for tittelsiden.';
 
   @override
-  String get pdfTocSectionNote => 'Starter på en egen side og kan gå over flere sider.';
+  String get pdfTocSectionNote =>
+      'Starter på en egen side og kan gå over flere sider.';
 
   @override
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'Redigerer for Markdown-filer og Writerside-kompatible dokumentasjonsprosjekter.';
+  String get appSubtitle =>
+      'Redigerer for Markdown-filer og Writerside-kompatible dokumentasjonsprosjekter.';
 
   @override
   String get aboutBusyMark => 'Om BusyMark';
@@ -482,7 +537,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get feedbackCategoryFeature => 'Funksjonsønske';
 
   @override
-  String get feedbackCategoryPrivacySecurity => 'Bekymring om personvern eller sikkerhet';
+  String get feedbackCategoryPrivacySecurity =>
+      'Bekymring om personvern eller sikkerhet';
 
   @override
   String get feedbackCategoryUsability => 'Bekymring om brukervennlighet';
@@ -503,7 +559,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get feedbackIncludeTechnicalDetails => 'Ta med tekniske detaljer';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure => 'Når dette er aktivert, legges bare Linux-operativsystemversjonen og BusyMark-programmets lokalinnstilling til. Ingen logger, filer, kontodata eller annen diagnostikk legges ved.';
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Når dette er aktivert, legges bare Linux-operativsystemversjonen og BusyMark-programmets lokalinnstilling til. Ingen logger, filer, kontodata eller annen diagnostikk legges ved.';
 
   @override
   String get feedbackSubmit => 'Send';
@@ -515,28 +572,36 @@ class AppLocalizationsNb extends AppLocalizations {
   String get feedbackCategoryRequired => 'Velg en kategori.';
 
   @override
-  String get feedbackSubjectLength => 'Emnet må inneholde mellom 3 og 120 tegn.';
+  String get feedbackSubjectLength =>
+      'Emnet må inneholde mellom 3 og 120 tegn.';
 
   @override
-  String get feedbackMessageLength => 'Meldingen må inneholde mellom 10 og 5000 tegn.';
+  String get feedbackMessageLength =>
+      'Meldingen må inneholde mellom 10 og 5000 tegn.';
 
   @override
-  String get feedbackReplyEmailInvalid => 'Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.';
+  String get feedbackReplyEmailInvalid =>
+      'Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.';
 
   @override
-  String get feedbackConnectionFailure => 'BusyMark kunne ikke koble til. Kontroller internettforbindelsen og prøv igjen.';
+  String get feedbackConnectionFailure =>
+      'BusyMark kunne ikke koble til. Kontroller internettforbindelsen og prøv igjen.';
 
   @override
-  String get feedbackTimeoutFailure => 'Forespørselen ble tidsavbrutt. Prøv igjen.';
+  String get feedbackTimeoutFailure =>
+      'Forespørselen ble tidsavbrutt. Prøv igjen.';
 
   @override
-  String get feedbackRateLimitedFailure => 'Det ble sendt for mange rapporter fra denne forbindelsen. Vent og prøv igjen.';
+  String get feedbackRateLimitedFailure =>
+      'Det ble sendt for mange rapporter fra denne forbindelsen. Vent og prøv igjen.';
 
   @override
-  String get feedbackRejectedFailure => 'Serveren avviste rapporten. Kontroller skjemafeltene og prøv igjen.';
+  String get feedbackRejectedFailure =>
+      'Serveren avviste rapporten. Kontroller skjemafeltene og prøv igjen.';
 
   @override
-  String get feedbackServerFailure => 'Serveren kunne ikke ta imot rapporten. Prøv igjen senere.';
+  String get feedbackServerFailure =>
+      'Serveren kunne ikke ta imot rapporten. Prøv igjen senere.';
 
   @override
   String feedbackSuccess(String id) {
@@ -580,7 +645,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get copyPlainText => 'Kopier som ren tekst';
 
   @override
-  String get clipboardCopyFailed => 'Utvalget kunne ikke kopieres til utklippstavlen.';
+  String get clipboardCopyFailed =>
+      'Utvalget kunne ikke kopieres til utklippstavlen.';
 
   @override
   String get copyName => 'Kopier navn';
@@ -648,7 +714,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get keyboardShortcuts => 'Tastatursnarveier';
 
   @override
-  String get commandUnavailableInContext => 'Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.';
+  String get commandUnavailableInContext =>
+      'Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.';
 
   @override
   String get lightTheme => 'Lys';
@@ -828,16 +895,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get markdownFileExtensions => '.md eller .markdown';
 
   @override
-  String get openFolderOrWritersideProject => 'Åpne mappe eller Writerside-prosjekt';
+  String get openFolderOrWritersideProject =>
+      'Åpne mappe eller Writerside-prosjekt';
 
   @override
-  String get markdownFolderOrWritersideProject => 'Markdown-mappe eller Writerside-kompatibelt prosjekt';
+  String get markdownFolderOrWritersideProject =>
+      'Markdown-mappe eller Writerside-kompatibelt prosjekt';
 
   @override
   String get noOpenFile => 'Ingen åpen fil';
 
   @override
-  String get shortcutDeleteTreeItemDescription => 'Slett det valgte elementet i Filer, eller fjern det valgte emnet fra innholdsfortegnelsen';
+  String get shortcutDeleteTreeItemDescription =>
+      'Slett det valgte elementet i Filer, eller fjern det valgte emnet fra innholdsfortegnelsen';
 
   @override
   String get shortcutGroupGeneral => 'Generelt';
@@ -846,10 +916,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutNewDocument => 'Opprett';
 
   @override
-  String get shortcutNewDocumentDescription => 'Opprett en Markdown-fil eller et Writerside-prosjekt';
+  String get shortcutNewDocumentDescription =>
+      'Opprett en Markdown-fil eller et Writerside-prosjekt';
 
   @override
-  String get shortcutOpenDescription => 'Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt';
+  String get shortcutOpenDescription =>
+      'Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt';
 
   @override
   String get shortcutSaveDescription => 'Lagre gjeldende dokument';
@@ -858,7 +930,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutSearchDescription => 'Søk i gjeldende arbeidsområde';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'Tilpass programmets hurtigtaster';
+  String get shortcutKeyboardShortcutsDescription =>
+      'Tilpass programmets hurtigtaster';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Åpne syntaksreferansen';
@@ -894,7 +967,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutGroupTextEditing => 'Tekstredigering';
 
   @override
-  String get shortcutSelectAllDescription => 'Velg all tekst i kildemodus; trykk to ganger i redigeringsmodus for å velge alle blokker';
+  String get shortcutSelectAllDescription =>
+      'Velg all tekst i kildemodus; trykk to ganger i redigeringsmodus for å velge alle blokker';
 
   @override
   String get shortcutCutDescription => 'Klipp ut den valgte teksten';
@@ -906,52 +980,62 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutPasteDescription => 'Lim inn fra utklippstavlen';
 
   @override
-  String get shortcutPastePlainTextDescription => 'Lim inn utklippstavletekst uten formatering';
+  String get shortcutPastePlainTextDescription =>
+      'Lim inn utklippstavletekst uten formatering';
 
   @override
   String get shortcutUndoDescription => 'Angre siste redigering';
 
   @override
-  String get shortcutRedoDescription => 'Gjør om den siste angrede redigeringen';
+  String get shortcutRedoDescription =>
+      'Gjør om den siste angrede redigeringen';
 
   @override
   String get shortcutInsertIndentation => 'Sett inn innrykk';
 
   @override
-  String get shortcutInsertIndentationDescription => 'Sett inn innrykk ved markøren';
+  String get shortcutInsertIndentationDescription =>
+      'Sett inn innrykk ved markøren';
 
   @override
   String get shortcutOutdentSource => 'Reduser innrykk i kilden';
 
   @override
-  String get shortcutOutdentSourceDescription => 'Fjern ett innrykksnivå i kildemodus';
+  String get shortcutOutdentSourceDescription =>
+      'Fjern ett innrykksnivå i kildemodus';
 
   @override
   String get shortcutEscape => 'Lukk søk eller fjern blokkmarkering';
 
   @override
-  String get shortcutEscapeDescription => 'Lukk arbeidsområdesøket eller fjern en blokkmarkering i redigeringsmodus';
+  String get shortcutEscapeDescription =>
+      'Lukk arbeidsområdesøket eller fjern en blokkmarkering i redigeringsmodus';
 
   @override
   String get shortcutGroupFormatting => 'Formatering';
 
   @override
-  String get shortcutBoldDescription => 'Slå fet skrift av/på for den valgte teksten';
+  String get shortcutBoldDescription =>
+      'Slå fet skrift av/på for den valgte teksten';
 
   @override
-  String get shortcutItalicDescription => 'Slå kursiv av/på for den valgte teksten';
+  String get shortcutItalicDescription =>
+      'Slå kursiv av/på for den valgte teksten';
 
   @override
-  String get shortcutUnderlineDescription => 'Slå understreking av/på for den valgte teksten';
+  String get shortcutUnderlineDescription =>
+      'Slå understreking av/på for den valgte teksten';
 
   @override
   String get shortcutLinkDescription => 'Sett inn eller rediger en lenke';
 
   @override
-  String get shortcutInlineCodeDescription => 'Slå inline-kode av/på for den valgte teksten';
+  String get shortcutInlineCodeDescription =>
+      'Slå inline-kode av/på for den valgte teksten';
 
   @override
-  String get shortcutStrikethroughDescription => 'Slå gjennomstreking av/på for den valgte teksten';
+  String get shortcutStrikethroughDescription =>
+      'Slå gjennomstreking av/på for den valgte teksten';
 
   @override
   String get shortcutGroupBlocks => 'Blokker';
@@ -960,22 +1044,28 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutParagraphDescription => 'Sett gjeldende blokk til avsnitt';
 
   @override
-  String get shortcutHeading1Description => 'Sett gjeldende blokk til overskrift 1';
+  String get shortcutHeading1Description =>
+      'Sett gjeldende blokk til overskrift 1';
 
   @override
-  String get shortcutHeading2Description => 'Sett gjeldende blokk til overskrift 2';
+  String get shortcutHeading2Description =>
+      'Sett gjeldende blokk til overskrift 2';
 
   @override
-  String get shortcutHeading3Description => 'Sett gjeldende blokk til overskrift 3';
+  String get shortcutHeading3Description =>
+      'Sett gjeldende blokk til overskrift 3';
 
   @override
-  String get shortcutHeading4Description => 'Sett gjeldende blokk til overskrift 4';
+  String get shortcutHeading4Description =>
+      'Sett gjeldende blokk til overskrift 4';
 
   @override
-  String get shortcutHeading5Description => 'Sett gjeldende blokk til overskrift 5';
+  String get shortcutHeading5Description =>
+      'Sett gjeldende blokk til overskrift 5';
 
   @override
-  String get shortcutHeading6Description => 'Sett gjeldende blokk til overskrift 6';
+  String get shortcutHeading6Description =>
+      'Sett gjeldende blokk til overskrift 6';
 
   @override
   String get shortcutGroupLists => 'Lister';
@@ -1008,13 +1098,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get createMarkdownFile => 'Opprett Markdown-fil';
 
   @override
-  String get createMarkdownFileDescription => 'Opprett et ulagret lokalt Markdown-dokument';
+  String get createMarkdownFileDescription =>
+      'Opprett et ulagret lokalt Markdown-dokument';
 
   @override
   String get createWritersideProject => 'Opprett Writerside-prosjekt';
 
   @override
-  String get createWritersideProjectDescription => 'Opprett et lokalt Writerside-kompatibelt prosjekt';
+  String get createWritersideProjectDescription =>
+      'Opprett et lokalt Writerside-kompatibelt prosjekt';
 
   @override
   String get defaultProjectName => 'Dokumentasjon';
@@ -1053,13 +1145,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get useSingleSafeDirectoryName => 'Bruk ett enkelt, trygt mappenavn.';
 
   @override
-  String get useLowercaseIdentifier => 'Bruk en identifikator med små bokstaver, tall, understrek eller bindestrek.';
+  String get useLowercaseIdentifier =>
+      'Bruk en identifikator med små bokstaver, tall, understrek eller bindestrek.';
 
   @override
   String get startTopicTitleRequired => 'Tittel på startemne er påkrevd.';
 
   @override
-  String get createWritersideProjectFailed => 'Kunne ikke opprette Writerside-prosjektet.';
+  String get createWritersideProjectFailed =>
+      'Kunne ikke opprette Writerside-prosjektet.';
 
   @override
   String get settingsTitle => 'Innstillinger for BusyMark';
@@ -1068,13 +1162,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get autoSave => 'Automatisk lagring';
 
   @override
-  String get autoSaveDescription => 'Lagre filendringer automatisk etter en kort pause i redigeringen.';
+  String get autoSaveDescription =>
+      'Lagre filendringer automatisk etter en kort pause i redigeringen.';
 
   @override
   String get wordWrap => 'Tekstbryting';
 
   @override
-  String get wordWrapDescription => 'Bryt lange linjer så de passer til redigeringsbredden i stedet for å rulle vannrett.';
+  String get wordWrapDescription =>
+      'Bryt lange linjer så de passer til redigeringsbredden i stedet for å rulle vannrett.';
 
   @override
   String get editorFontSize => 'Skriftstørrelse i redigereren';
@@ -1089,13 +1185,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get editingButtonsPosition => 'Plassering av redigeringsknapper';
 
   @override
-  String get editingButtonsPositionDescription => 'Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.';
+  String get editingButtonsPositionDescription =>
+      'Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.';
 
   @override
   String get editingButtonsDirection => 'Retning for redigeringsknapper';
 
   @override
-  String get editingButtonsDirectionDescription => 'Velg om de flytende WYSIWYG-redigeringsknappene skal ordnes vannrett eller loddrett.';
+  String get editingButtonsDirectionDescription =>
+      'Velg om de flytende WYSIWYG-redigeringsknappene skal ordnes vannrett eller loddrett.';
 
   @override
   String get horizontal => 'Vannrett';
@@ -1110,19 +1208,23 @@ class AppLocalizationsNb extends AppLocalizations {
   String get allowRemoteImages => 'Last inn eksterne bilder';
 
   @override
-  String get allowRemoteImagesDescription => 'Tillat at bilder i Markdown-forhåndsvisningen og redigereren lastes inn fra HTTP- og HTTPS-adresser.';
+  String get allowRemoteImagesDescription =>
+      'Tillat at bilder i Markdown-forhåndsvisningen og redigereren lastes inn fra HTTP- og HTTPS-adresser.';
 
   @override
-  String get clearRemoteImagePermissions => 'Tøm tillatelser for eksterne bilder';
+  String get clearRemoteImagePermissions =>
+      'Tøm tillatelser for eksterne bilder';
 
   @override
-  String get clearRemoteImagePermissionsDescription => 'Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.';
+  String get clearRemoteImagePermissionsDescription =>
+      'Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.';
 
   @override
   String get clearGitWorkspaceTrust => 'Tøm klarerte Git-arbeidsområder';
 
   @override
-  String get clearGitWorkspaceTrustDescription => 'Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.';
+  String get clearGitWorkspaceTrustDescription =>
+      'Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.';
 
   @override
   String get settingsEditingButtonsSectionTitle => 'Redigeringsknapper';
@@ -1131,7 +1233,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get spellingDictionaries => 'Stavekontrollordbøker';
 
   @override
-  String get spellingDictionariesDescription => 'Installer og administrer stavekontrollordbøker';
+  String get spellingDictionariesDescription =>
+      'Installer og administrer stavekontrollordbøker';
 
   @override
   String get settingsDictionariesSectionTitle => 'Ordbøker';
@@ -1149,30 +1252,37 @@ class AppLocalizationsNb extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Vindu';
 
   @override
-  String get settingsReopenWorkspaceOnStartupTitle => 'Åpne forrige arbeidsområde ved oppstart';
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Åpne forrige arbeidsområde ved oppstart';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription => 'Åpne arbeidsområdet og fanene fra forrige økt når BusyMark starter.';
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Åpne arbeidsområdet og fanene fra forrige økt når BusyMark starter.';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesTitle => 'Bekreft lukking ved ulagrede endringer';
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Bekreft lukking ved ulagrede endringer';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription => 'Spør før BusyMark lukkes når dokumenter har ulagrede endringer.';
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Spør før BusyMark lukkes når dokumenter har ulagrede endringer.';
 
   @override
   String get closeUnsavedChangesTitle => 'Ulagrede endringer';
 
   @override
-  String get closeUnsavedChangesSingleMessage => 'Dette dokumentet har ulagrede endringer. Lagre endringene før BusyMark lukkes?';
+  String get closeUnsavedChangesSingleMessage =>
+      'Dette dokumentet har ulagrede endringer. Lagre endringene før BusyMark lukkes?';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count dokumenter har ulagrede endringer. Lagre endringene før BusyMark lukkes?',
-      one: '1 dokument har ulagrede endringer. Lagre endringene før BusyMark lukkes?',
+      other:
+          '$count dokumenter har ulagrede endringer. Lagre endringene før BusyMark lukkes?',
+      one:
+          '1 dokument har ulagrede endringer. Lagre endringene før BusyMark lukkes?',
       zero: 'Lagre endringene før BusyMark lukkes?',
     );
     return '$_temp0';
@@ -1203,7 +1313,8 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter.',
+      other:
+          '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter.',
       one: '1 dokument har ulagrede endringer. Lagre det før du fortsetter.',
     );
     return '$_temp0';
@@ -1213,7 +1324,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get fileChangedOnDisk => 'Fil endret på disken';
 
   @override
-  String get fileChangedOnDiskMessage => 'Denne filen er endret på disken siden du åpnet den. Vil du overskrive den?';
+  String get fileChangedOnDiskMessage =>
+      'Denne filen er endret på disken siden du åpnet den. Vil du overskrive den?';
 
   @override
   String get untitledMarkdownFileName => 'Uten tittel.md';
@@ -1264,7 +1376,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get videoPreview => 'Videoforhåndsvisning';
 
   @override
-  String get diagnosticWritersideVideoMissingSource => 'Videoen mangler src-attributtet.';
+  String get diagnosticWritersideVideoMissingSource =>
+      'Videoen mangler src-attributtet.';
 
   @override
   String diagnosticWritersideVideoUnsupportedSource(String source) {
@@ -1294,7 +1407,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get htmlContentDefault => 'HTML-innhold';
 
   @override
-  String get shortcutHtmlBlockDescription => 'Sett inn eller rediger en HTML-blokk';
+  String get shortcutHtmlBlockDescription =>
+      'Sett inn eller rediger en HTML-blokk';
 
   @override
   String get renderedHtml => 'Gjengitt HTML';
@@ -1455,16 +1569,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get remoteImageBlocked => 'Eksternt bilde blokkert';
 
   @override
-  String get remoteImageBlockedTooltip => 'Velg om BusyMark kan laste inn eksterne bilder.';
+  String get remoteImageBlockedTooltip =>
+      'Velg om BusyMark kan laste inn eksterne bilder.';
 
   @override
   String get remoteImagesBlockedTitle => 'Eksterne bilder er blokkert';
 
   @override
-  String get remoteImagesBlockedMessage => 'Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.';
+  String get remoteImagesBlockedMessage =>
+      'Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Last inn for dette arbeidsområdet';
+  String get loadRemoteImagesForWorkspace =>
+      'Last inn for dette arbeidsområdet';
 
   @override
   String get alwaysLoadRemoteImages => 'Last alltid inn eksterne bilder';
@@ -1632,7 +1749,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get topicIsHomePageRemovalWarning => 'Dette emnet er startsiden for denne instansen. Velg en annen startside før du fjerner det fra innholdsfortegnelsen.';
+  String get topicIsHomePageRemovalWarning =>
+      'Dette emnet er startsiden for denne instansen. Velg en annen startside før du fjerner det fra innholdsfortegnelsen.';
 
   @override
   String get newHomePage => 'Ny startside';
@@ -1641,10 +1759,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get chooseHomePage => 'Velg en startside';
 
   @override
-  String get noHomePageReplacement => 'Legg til eller koble et annet egnet emne til denne instansen før du fjerner startsiden.';
+  String get noHomePageReplacement =>
+      'Legg til eller koble et annet egnet emne til denne instansen før du fjerner startsiden.';
 
   @override
-  String get topicIsStartPageRemovalWarning => 'Dette emnet er startsiden for en instans. Angi en annen startside før du sletter kildefilen.';
+  String get topicIsStartPageRemovalWarning =>
+      'Dette emnet er startsiden for en instans. Angi en annen startside før du sletter kildefilen.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1652,10 +1772,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get noBreakingTopicUsages => 'Fant ingen referanser som ville slutte å fungere.';
+  String get noBreakingTopicUsages =>
+      'Fant ingen referanser som ville slutte å fungere.';
 
   @override
-  String get topicUsagesFound => 'BusyMark fant følgende referanser til dette emnet.';
+  String get topicUsagesFound =>
+      'BusyMark fant følgende referanser til dette emnet.';
 
   @override
   String get topicUsageTocElements => 'Elementer i innholdsfortegnelsen';
@@ -1687,22 +1809,26 @@ class AppLocalizationsNb extends AppLocalizations {
   String get updateUsagesAutomatically => 'Oppdater bruk automatisk';
 
   @override
-  String get updateUsagesAutomaticallyDescription => 'Fjern referanser i innholdsfortegnelsen og inkluderinger, og behold lenketeksten.';
+  String get updateUsagesAutomaticallyDescription =>
+      'Fjern referanser i innholdsfortegnelsen og inkluderinger, og behold lenketeksten.';
 
   @override
-  String get manualUsageUpdatesRequired => 'Noe bruk må endres manuelt før denne refaktoreringen.';
+  String get manualUsageUpdatesRequired =>
+      'Noe bruk må endres manuelt før denne refaktoreringen.';
 
   @override
   String get setRedirectTo => 'Omdiriger til:';
 
   @override
-  String get noRedirectDescription => 'Ikke omdiriger den gamle publiserte siden.';
+  String get noRedirectDescription =>
+      'Ikke omdiriger den gamle publiserte siden.';
 
   @override
   String get redirectTarget => 'Mål for omdirigering';
 
   @override
-  String get remainingUsagesBlockRemoval => 'Se gjennom og oppdater gjenværende bruk før du fortsetter, eller slå på automatiske oppdateringer når de er tilgjengelige.';
+  String get remainingUsagesBlockRemoval =>
+      'Se gjennom og oppdater gjenværende bruk før du fortsetter, eller slå på automatiske oppdateringer når de er tilgjengelige.';
 
   @override
   String usagesOfTopic(String topic) {
@@ -1796,13 +1922,15 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get useIdentifierCharacters => 'Bruk bokstaver, tall, understrek eller bindestrek før filendelsen.';
+  String get useIdentifierCharacters =>
+      'Bruk bokstaver, tall, understrek eller bindestrek før filendelsen.';
 
   @override
   String get topicIdAlreadyExists => 'Emne-ID-en finnes allerede.';
 
   @override
-  String get createWritersideTopicFailed => 'Kunne ikke opprette Writerside-emne.';
+  String get createWritersideTopicFailed =>
+      'Kunne ikke opprette Writerside-emne.';
 
   @override
   String get noOutline => 'Ingen disposisjon';
@@ -1889,7 +2017,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get normalizeLineEndings => 'Normaliser linjeslutt';
 
   @override
-  String get mixedLineEndingsSavePrompt => 'Dette dokumentet inneholder blandede linjeslutt. Velg et format.';
+  String get mixedLineEndingsSavePrompt =>
+      'Dette dokumentet inneholder blandede linjeslutt. Velg et format.';
 
   @override
   String workspaceReplaceMixedLineEndings(String fileName) {
@@ -1897,31 +2026,40 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get workspaceReplaceIssueOversized => 'En for stor fil ble hoppet over.';
+  String get workspaceReplaceIssueOversized =>
+      'En for stor fil ble hoppet over.';
 
   @override
-  String get workspaceReplaceIssueUnreadable => 'En fil som ikke kunne leses, ble hoppet over.';
+  String get workspaceReplaceIssueUnreadable =>
+      'En fil som ikke kunne leses, ble hoppet over.';
 
   @override
-  String get workspaceReplaceIssueInvalidUtf8 => 'En fil som ikke er gyldig UTF-8, ble hoppet over.';
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'En fil som ikke er gyldig UTF-8, ble hoppet over.';
 
   @override
-  String get workspaceReplaceIssueTruncated => 'Erstatningsforhåndsvisningen ble avkortet.';
+  String get workspaceReplaceIssueTruncated =>
+      'Erstatningsforhåndsvisningen ble avkortet.';
 
   @override
-  String get workspaceReplaceIssueFileChanged => 'En fil som ble endret etter forhåndsvisningen, ble hoppet over.';
+  String get workspaceReplaceIssueFileChanged =>
+      'En fil som ble endret etter forhåndsvisningen, ble hoppet over.';
 
   @override
-  String get workspaceReplaceIssueBufferChanged => 'En redigeringsbuffer som ble endret etter forhåndsvisningen, ble hoppet over.';
+  String get workspaceReplaceIssueBufferChanged =>
+      'En redigeringsbuffer som ble endret etter forhåndsvisningen, ble hoppet over.';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired => 'Velg LF- eller CRLF-normalisering før du erstatter.';
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Velg LF- eller CRLF-normalisering før du erstatter.';
 
   @override
-  String get workspaceReplaceIssuePartialConflict => 'Tilbakerullingen ble stoppet fordi filen ble endret samtidig. Noen erstatninger kan fortsatt være utført; forskjøvet innhold ble bevart på banen nedenfor.';
+  String get workspaceReplaceIssuePartialConflict =>
+      'Tilbakerullingen ble stoppet fordi filen ble endret samtidig. Noen erstatninger kan fortsatt være utført; forskjøvet innhold ble bevart på banen nedenfor.';
 
   @override
-  String get workspaceReplaceIssueApplyFailed => 'Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.';
+  String get workspaceReplaceIssueApplyFailed =>
+      'Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.';
 
   @override
   String externalChangesTitle(String fileName) {
@@ -1932,7 +2070,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get externalFileDeleted => 'Denne filen ble slettet fra disken.';
 
   @override
-  String get externalFileChanged => 'Denne filen ble endret på disken mens du har ulagrede endringer.';
+  String get externalFileChanged =>
+      'Denne filen ble endret på disken mens du har ulagrede endringer.';
 
   @override
   String recoveredDocumentReview(String fileName) {
@@ -1952,16 +2091,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get saveAs => 'Lagre som';
 
   @override
-  String get workspaceSearchIncomplete => 'Bare noen av resultatene vises. Vis flere eller avgrens søket.';
+  String get workspaceSearchIncomplete =>
+      'Bare noen av resultatene vises. Vis flere eller avgrens søket.';
 
   @override
   String get workspaceSearchShowMore => 'Vis flere resultater';
 
   @override
-  String get workspaceSearchSkippedFiles => 'Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:';
+  String get workspaceSearchSkippedFiles =>
+      'Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:';
 
   @override
-  String get sourceLargeFileFeaturesPaused => 'Stor fil: utheving og folding er satt på pause';
+  String get sourceLargeFileFeaturesPaused =>
+      'Stor fil: utheving og folding er satt på pause';
 
   @override
   String get nothingToRead => 'Ingenting å lese';
@@ -2010,7 +2152,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get cannotOpenFileTypeInEditor => 'Kan ikke åpne denne filtypen i redigereren';
+  String get cannotOpenFileTypeInEditor =>
+      'Kan ikke åpne denne filtypen i redigereren';
 
   @override
   String anchorNotFound(String anchor) {
@@ -2081,10 +2224,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrorChooseWhereToSaveMarkdown => 'Velg hvor du vil lagre denne Markdown-filen.';
+  String get workspaceErrorChooseWhereToSaveMarkdown =>
+      'Velg hvor du vil lagre denne Markdown-filen.';
 
   @override
-  String get workspaceErrorSaveBlockedFileChangedOnDisk => 'Lagring blokkert: filen er endret på disken.';
+  String get workspaceErrorSaveBlockedFileChangedOnDisk =>
+      'Lagring blokkert: filen er endret på disken.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -2106,8 +2251,10 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Gjenopprettet $count ulagrede dokumenter. Gå gjennom hvert ett før du lagrer eller forkaster det.',
-      one: 'Gjenopprettet 1 ulagret dokument. Gå gjennom det før du lagrer eller forkaster det.',
+      other:
+          'Gjenopprettet $count ulagrede dokumenter. Gå gjennom hvert ett før du lagrer eller forkaster det.',
+      one:
+          'Gjenopprettet 1 ulagret dokument. Gå gjennom det før du lagrer eller forkaster det.',
     );
     return '$_temp0';
   }
@@ -2117,8 +2264,10 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count skadede gjenopprettingsposter kunne ikke gjenopprettes. Gyldige gjenopprettingsposter er fortsatt tilgjengelige.',
-      one: 'Kunne ikke gjenopprette 1 skadet gjenopprettingspost. Den opprinnelige gjenopprettingsfilen er bevart for gjennomgang.',
+      other:
+          '$count skadede gjenopprettingsposter kunne ikke gjenopprettes. Gyldige gjenopprettingsposter er fortsatt tilgjengelige.',
+      one:
+          'Kunne ikke gjenopprette 1 skadet gjenopprettingspost. Den opprinnelige gjenopprettingsfilen er bevart for gjennomgang.',
     );
     return '$_temp0';
   }
@@ -2168,13 +2317,16 @@ class AppLocalizationsNb extends AppLocalizations {
   String get errorFileNameUnsafe => 'Filnavnet må være ett trygt stisegment.';
 
   @override
-  String get errorFileOperationInvalidTarget => 'Kan ikke flytte en mappe inn i seg selv.';
+  String get errorFileOperationInvalidTarget =>
+      'Kan ikke flytte en mappe inn i seg selv.';
 
   @override
-  String get errorFileOperationOutsideRoot => 'Filoperasjonen må holde seg i arbeidsområdet.';
+  String get errorFileOperationOutsideRoot =>
+      'Filoperasjonen må holde seg i arbeidsområdet.';
 
   @override
-  String get errorFileOperationRoot => 'Roten til arbeidsområdet kan ikke endres fra filtreet.';
+  String get errorFileOperationRoot =>
+      'Roten til arbeidsområdet kan ikke endres fra filtreet.';
 
   @override
   String get errorProjectNameRequired => 'Prosjektnavn er påkrevd.';
@@ -2183,13 +2335,16 @@ class AppLocalizationsNb extends AppLocalizations {
   String get errorDirectoryNameRequired => 'Mappenavn er påkrevd.';
 
   @override
-  String get errorDirectoryNameUnsafe => 'Mappenavnet må være ett enkelt, trygt stisegment.';
+  String get errorDirectoryNameUnsafe =>
+      'Mappenavnet må være ett enkelt, trygt stisegment.';
 
   @override
-  String get errorInstanceIdInvalid => 'Instans-ID-en må starte med en liten bokstav og bare inneholde små bokstaver, tall, understrek og bindestrek.';
+  String get errorInstanceIdInvalid =>
+      'Instans-ID-en må starte med en liten bokstav og bare inneholde små bokstaver, tall, understrek og bindestrek.';
 
   @override
-  String get errorTopicFileInvalid => 'Emnefilnavnet må være et Markdown-filnavn uten stiskilletegn.';
+  String get errorTopicFileInvalid =>
+      'Emnefilnavnet må være et Markdown-filnavn uten stiskilletegn.';
 
   @override
   String get errorTopicTitleRequired => 'Emnetittel er påkrevd.';
@@ -2200,10 +2355,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideModuleNotOpen => 'En Writerside-modul må være åpen for å opprette et emne.';
+  String get errorWritersideModuleNotOpen =>
+      'En Writerside-modul må være åpen for å opprette et emne.';
 
   @override
-  String get errorWritersideInstanceTreeMissing => 'Writerside-modulen har ikke noe instanstre.';
+  String get errorWritersideInstanceTreeMissing =>
+      'Writerside-modulen har ikke noe instanstre.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2226,10 +2383,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideTocNodeMissing => 'Den valgte oppføringen i innholdsfortegnelsen finnes ikke lenger.';
+  String get errorWritersideTocNodeMissing =>
+      'Den valgte oppføringen i innholdsfortegnelsen finnes ikke lenger.';
 
   @override
-  String get errorWritersideTocInvalidMove => 'En oppføring i innholdsfortegnelsen kan ikke flyttes under seg selv eller en av sine underoppføringer.';
+  String get errorWritersideTocInvalidMove =>
+      'En oppføring i innholdsfortegnelsen kan ikke flyttes under seg selv eller en av sine underoppføringer.';
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
@@ -2237,16 +2396,20 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideSafeDeleteRequired => 'Bruk trygg sletting for Writerside-emnefiler.';
+  String get errorWritersideSafeDeleteRequired =>
+      'Bruk trygg sletting for Writerside-emnefiler.';
 
   @override
-  String get errorWritersideTopicUsageScanFailed => 'Kunne ikke fullføre søket etter emnebruk. Ingen filer ble endret.';
+  String get errorWritersideTopicUsageScanFailed =>
+      'Kunne ikke fullføre søket etter emnebruk. Ingen filer ble endret.';
 
   @override
-  String get errorWritersideTopicUsagesRemain => 'Noen forekomster av emnet krever fortsatt oppfølging. Se gjennom dem før du fortsetter.';
+  String get errorWritersideTopicUsagesRemain =>
+      'Noen forekomster av emnet krever fortsatt oppfølging. Se gjennom dem før du fortsetter.';
 
   @override
-  String get errorWritersideRedirectInvalid => 'Det valgte målet for videresending er ikke lenger gyldig. Velg det på nytt.';
+  String get errorWritersideRedirectInvalid =>
+      'Det valgte målet for videresending er ikke lenger gyldig. Velg det på nytt.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
@@ -2254,21 +2417,29 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
     return 'Navneendringen kan ikke oppdatere alle prosjektreferanser trygt fordi $count emnefil(er) i modulen $module ikke ble analysert: $paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty => 'Writerside-prosjektfiler har ulagrede endringer. Løs dem og klargjør en ny forhåndsvisning av navneendringen.';
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside-prosjektfiler har ulagrede endringer. Løs dem og klargjør en ny forhåndsvisning av navneendringen.';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged => 'Modulsettet i Writerside-prosjektet er endret. Klargjør en ny forhåndsvisning av navneendringen før refaktorering.';
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Modulsettet i Writerside-prosjektet er endret. Klargjør en ny forhåndsvisning av navneendringen før refaktorering.';
 
   @override
-  String get errorTopicsRootUnsafe => 'Emneroten må være en sikker relativ mappe.';
+  String get errorTopicsRootUnsafe =>
+      'Emneroten må være en sikker relativ mappe.';
 
   @override
-  String get errorTopicFileNameUnsafe => 'Emnefilnavnet må være ett enkelt, trygt stisegment.';
+  String get errorTopicFileNameUnsafe =>
+      'Emnefilnavnet må være ett enkelt, trygt stisegment.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -2276,7 +2447,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get errorTopicFileNameInvalid => 'Emnefilnavnet kan bare inneholde bokstaver, tall, understrek og bindestrek.';
+  String get errorTopicFileNameInvalid =>
+      'Emnefilnavnet kan bare inneholde bokstaver, tall, understrek og bindestrek.';
 
   @override
   String errorUnknown(String code) {
@@ -2289,7 +2461,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceScanSkipped => 'Stort arbeidsområde oppdaget. Noen filer ble hoppet over for at appen fortsatt skal svare raskt.';
+  String get diagnosticWorkspaceScanSkipped =>
+      'Stort arbeidsområde oppdaget. Noen filer ble hoppet over for at appen fortsatt skal svare raskt.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
@@ -2297,7 +2470,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceFileTooLarge => 'Filen er større enn betagrensen for automatisk analyse.';
+  String get diagnosticWorkspaceFileTooLarge =>
+      'Filen er større enn betagrensen for automatisk analyse.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -2305,7 +2479,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownAttributeMalformed => 'Feil format på Writerside-attributtblokken i overskriften.';
+  String get diagnosticMarkdownAttributeMalformed =>
+      'Feil format på Writerside-attributtblokken i overskriften.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -2313,13 +2488,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter => 'Ytterligere H1-overskrifter på toppnivå behandles som kapitler.';
+  String get diagnosticWritersideTopicH1ConvertedToChapter =>
+      'Ytterligere H1-overskrifter på toppnivå behandles som kapitler.';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle => 'Writerside Markdown-emnet har ingen H1-overskrift eller front matter-tittel.';
+  String get diagnosticWritersideMarkdownTopicMissingTitle =>
+      'Writerside Markdown-emnet har ingen H1-overskrift eller front matter-tittel.';
 
   @override
-  String get diagnosticWritersideXmlTopicMissingTitle => 'XML-emnet mangler tittel.';
+  String get diagnosticWritersideXmlTopicMissingTitle =>
+      'XML-emnet mangler tittel.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -2327,7 +2505,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownFrontMatterMalformed => 'Front matter er ikke lukket.';
+  String get diagnosticMarkdownFrontMatterMalformed =>
+      'Front matter er ikke lukket.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Usikkert HTML-element.';
@@ -2358,13 +2537,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot => 'writerside.cfg-roten må være <ihp>.';
+  String get diagnosticWritersideConfigInvalidRoot =>
+      'writerside.cfg-roten må være <ihp>.';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc => 'snippets-deklarasjon mangler src.';
+  String get diagnosticWritersideConfigMissingSnippetsSrc =>
+      'snippets-deklarasjon mangler src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'instance-groups-deklarasjon mangler src.';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
+      'instance-groups-deklarasjon mangler src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -2372,13 +2554,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc => 'instance-deklarasjon mangler src.';
+  String get diagnosticWritersideConfigMissingInstanceSrc =>
+      'instance-deklarasjon mangler src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance => 'writerside.cfg registrerer ingen instans.';
+  String get diagnosticWritersideConfigMissingInstance =>
+      'writerside.cfg registrerer ingen instans.';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot => '.tree-roten må være <instance-profile>.';
+  String get diagnosticWritersideTreeInvalidRoot =>
+      '.tree-roten må være <instance-profile>.';
 
   @override
   String get diagnosticWritersideTreeMissingId => 'Instansprofilen mangler id.';
@@ -2389,7 +2574,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTreeMissingStartPage => 'Instans som ikke er et bibliotek, mangler start-page.';
+  String get diagnosticWritersideTreeMissingStartPage =>
+      'Instans som ikke er et bibliotek, mangler start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2402,7 +2588,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration => 'Variabeldeklarasjonen må ha navn og verdi.';
+  String get diagnosticWritersideVariableMalformedDeclaration =>
+      'Variabeldeklarasjonen må ha navn og verdi.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -2423,10 +2610,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicInvalidRoot => '.topic-roten må være <topic>.';
+  String get diagnosticWritersideTopicInvalidRoot =>
+      '.topic-roten må være <topic>.';
 
   @override
-  String get diagnosticWritersideTopicMissingRootId => 'XML-emnet mangler rot-ID.';
+  String get diagnosticWritersideTopicMissingRootId =>
+      'XML-emnet mangler rot-ID.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
@@ -2439,23 +2628,31 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicAnchorMissingHref => '<a> mangler href-attributt.';
+  String get diagnosticWritersideTopicAnchorMissingHref =>
+      '<a> mangler href-attributt.';
 
   @override
-  String get diagnosticWritersideConfigMissing => 'Writerside-modus krever writerside.cfg.';
+  String get diagnosticWritersideConfigMissing =>
+      'Writerside-modus krever writerside.cfg.';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(
+    String relativePath,
+  ) {
     return 'Konfigurert mappe for byggekonfigurasjon mangler: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
+    String relativePath,
+  ) {
     return 'Konfigurert mappe for API-spesifikasjoner mangler: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(
+    String relativePath,
+  ) {
     return 'Konfigurert snippets-mappe mangler: $relativePath';
   }
 
@@ -2470,7 +2667,9 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(
+    String relativePath,
+  ) {
     return 'Konfigurert instance-groups-fil mangler: $relativePath';
   }
 
@@ -2485,7 +2684,9 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(
+    String relativePath,
+  ) {
     return 'Standard emnemappe mangler: $relativePath';
   }
 
@@ -2505,12 +2706,21 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
     return 'Instansen \"$instanceId\" publiserer det ugyldige nettfilnavnet \"$webFileName\" for emnet \"$topic\".';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
     return 'Instansen \"$instanceId\" publiserer både \"$firstTopic\" og \"$secondTopic\" som \"$webFileName\".';
   }
 
@@ -2535,12 +2745,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
+  String diagnosticWritersideAnchorUnresolved(
+    String anchor,
+    String targetName,
+  ) {
     return 'Ankeret «$anchor» finnes ikke i «$targetName».';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include> mangler from-attributt.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      '<include> mangler from-attributt.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2548,7 +2762,10 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
+  String diagnosticWritersideIncludeElementMissing(
+    String elementId,
+    String from,
+  ) {
     return 'Include-elementet «$elementId» finnes ikke i «$from».';
   }
 
@@ -2592,26 +2809,27 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(
-      reason,
-      {
-        'other': 'Installer Git, eller konfigurer BusyMark til å bruke en tilgjengelig Git-programfil. $reason',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'other':
+          'Installer Git, eller konfigurer BusyMark til å bruke en tilgjengelig Git-programfil. $reason',
+    });
     return '$_temp0';
   }
 
   @override
-  String get gitOperationsRequireTrust => 'Git-operasjoner krever at du stoler på arbeidsområdet.';
+  String get gitOperationsRequireTrust =>
+      'Git-operasjoner krever at du stoler på arbeidsområdet.';
 
   @override
   String get gitManageBranches => 'Administrer grener';
 
   @override
-  String get gitTrustRequiredTitle => 'Vil du stole på dette arbeidsområdet for Git?';
+  String get gitTrustRequiredTitle =>
+      'Vil du stole på dette arbeidsområdet for Git?';
 
   @override
-  String get gitTrustRequiredMessage => 'BusyMark kan undersøke begrensede metadata fra depotet uten tillit. Når du gir tillit, aktiveres Git-operasjoner for dette depotet som kan kjøre konfigurerte kroker, filtre, legitimasjonshjelpere og signeringsverktøy.';
+  String get gitTrustRequiredMessage =>
+      'BusyMark kan undersøke begrensede metadata fra depotet uten tillit. Når du gir tillit, aktiveres Git-operasjoner for dette depotet som kan kjøre konfigurerte kroker, filtre, legitimasjonshjelpere og signeringsverktøy.';
 
   @override
   String get gitTrustWorkspace => 'Stol på arbeidsområdet';
@@ -2620,7 +2838,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitNotRepositoryTitle => 'Ikke et Git-repositorium';
 
   @override
-  String get gitNotRepositoryMessage => 'Dette arbeidsområdet er ikke i et Git-repositorium.';
+  String get gitNotRepositoryMessage =>
+      'Dette arbeidsområdet er ikke i et Git-repositorium.';
 
   @override
   String get gitInitializeRepository => 'Initialiser repositorium';
@@ -2719,7 +2938,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitCommitSelectedFiles => 'Valgte filer';
 
   @override
-  String get gitCommitNoSelectedFiles => 'Legg minst én fil i indeksen før du oppretter en commit.';
+  String get gitCommitNoSelectedFiles =>
+      'Legg minst én fil i indeksen før du oppretter en commit.';
 
   @override
   String gitStagedFileCount(int count) {
@@ -2771,7 +2991,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUnsavedChangesBanner => 'Ulagrede endringer i redigereren tas ikke med før de er lagret.';
+  String get gitUnsavedChangesBanner =>
+      'Ulagrede endringer i redigereren tas ikke med før de er lagret.';
 
   @override
   String get gitConfirmDiscardTitle => 'Forkaste Git-endringer?';
@@ -2781,8 +3002,10 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Alle indekserte og ikke-indekserte endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
-      one: 'Alle indekserte og ikke-indekserte endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
+      other:
+          'Alle indekserte og ikke-indekserte endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
+      one:
+          'Alle indekserte og ikke-indekserte endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
     );
     return '$_temp0';
   }
@@ -2803,7 +3026,8 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'De valgte filene gjenopprettes eller slettes ut fra Git-statusen.',
+      other:
+          'De valgte filene gjenopprettes eller slettes ut fra Git-statusen.',
       one: 'Den valgte filen gjenopprettes eller slettes ut fra Git-statusen.',
     );
     return '$_temp0';
@@ -2815,7 +3039,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitConfirmSwitchBranchMessage => 'BusyMark laster arbeidsområdet på nytt fra disken etter at Git har byttet gren.';
+  String get gitConfirmSwitchBranchMessage =>
+      'BusyMark laster arbeidsområdet på nytt fra disken etter at Git har byttet gren.';
 
   @override
   String get gitConfirmPushSetUpstreamTitle => 'Angi upstream-gren?';
@@ -2832,7 +3057,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitFileHistory => 'Filhistorie';
 
   @override
-  String get gitFileHistoryRequiresOpenFile => 'Filhistorikk krever en åpen Markdown-fil.';
+  String get gitFileHistoryRequiresOpenFile =>
+      'Filhistorikk krever en åpen Markdown-fil.';
 
   @override
   String get gitLoadMore => 'Last inn flere';
@@ -2850,7 +3076,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitConfirmRestoreTitle => 'Gjenopprette denne filversjonen?';
 
   @override
-  String get gitConfirmRestoreMessage => 'BusyMark erstatter den gjeldende filen i arbeidstreet med den valgte innsjekkede versjonen. Den gjenopprettede filen forblir uindeksert.';
+  String get gitConfirmRestoreMessage =>
+      'BusyMark erstatter den gjeldende filen i arbeidstreet med den valgte innsjekkede versjonen. Den gjenopprettede filen forblir uindeksert.';
 
   @override
   String get gitCommitActions => 'Handlinger for innsjekking';
@@ -2875,25 +3102,29 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitResetModeSoft => 'Soft';
 
   @override
-  String get gitResetModeSoftDescription => 'Flytt bare grenen. Behold indeksen og arbeidstreet uendret; forskjeller fra den valgte innsjekkingen forblir indeksert.';
+  String get gitResetModeSoftDescription =>
+      'Flytt bare grenen. Behold indeksen og arbeidstreet uendret; forskjeller fra den valgte innsjekkingen forblir indeksert.';
 
   @override
   String get gitResetModeMixed => 'Mixed';
 
   @override
-  String get gitResetModeMixedDescription => 'Flytt grenen og tilbakestill indeksen. Behold arbeidstreet uendret, slik at forskjellene blir uindekserte.';
+  String get gitResetModeMixedDescription =>
+      'Flytt grenen og tilbakestill indeksen. Behold arbeidstreet uendret, slik at forskjellene blir uindekserte.';
 
   @override
   String get gitResetModeHard => 'Hard';
 
   @override
-  String get gitResetModeHardDescription => 'Flytt grenen og tilbakestill indeksen og arbeidstreet. Sporede endringer forkastes; usporede filer som blokkerer operasjonen, kan bli slettet.';
+  String get gitResetModeHardDescription =>
+      'Flytt grenen og tilbakestill indeksen og arbeidstreet. Sporede endringer forkastes; usporede filer som blokkerer operasjonen, kan bli slettet.';
 
   @override
   String get gitResetModeKeep => 'Keep';
 
   @override
-  String get gitResetModeKeepDescription => 'Flytt grenen og tilbakestill sporede filer, men behold lokale endringer. Git avbryter hvis endringene kommer i konflikt med tilbakestillingen.';
+  String get gitResetModeKeepDescription =>
+      'Flytt grenen og tilbakestill sporede filer, men behold lokale endringer. Git avbryter hvis endringene kommer i konflikt med tilbakestillingen.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -2940,7 +3171,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitErrorUnavailable => 'Git er ikke tilgjengelig.';
 
   @override
-  String get gitErrorNotRepository => 'Dette arbeidsområdet er ikke et Git-repositorium.';
+  String get gitErrorNotRepository =>
+      'Dette arbeidsområdet er ikke et Git-repositorium.';
 
   @override
   String get gitErrorUnsafePath => 'BusyMark blokkerte en usikker Git-sti.';
@@ -2955,31 +3187,39 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitErrorNoUpstream => 'Ingen upstream-gren er konfigurert.';
 
   @override
-  String get gitErrorMultipleRemotes => 'Flere remoter er konfigurert. Velg en upstream utenfor denne versjonen av BusyMark.';
+  String get gitErrorMultipleRemotes =>
+      'Flere remoter er konfigurert. Velg en upstream utenfor denne versjonen av BusyMark.';
 
   @override
-  String get gitErrorDirtyWorkspace => 'Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.';
+  String get gitErrorDirtyWorkspace =>
+      'Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.';
 
   @override
-  String get gitErrorResetDirtyWorkspace => 'Lagre eller forkast endringer i BusyMark-redigereren før du tilbakestiller gjeldende gren.';
+  String get gitErrorResetDirtyWorkspace =>
+      'Lagre eller forkast endringer i BusyMark-redigereren før du tilbakestiller gjeldende gren.';
 
   @override
-  String get gitErrorRestoreStagedFile => 'Fjern filen fra indeksen før du gjenoppretter en tidligere versjon.';
+  String get gitErrorRestoreStagedFile =>
+      'Fjern filen fra indeksen før du gjenoppretter en tidligere versjon.';
 
   @override
-  String get gitErrorResetDetachedHead => 'Bytt til en gren før du tilbakestiller den.';
+  String get gitErrorResetDetachedHead =>
+      'Bytt til en gren før du tilbakestiller den.';
 
   @override
-  String get gitErrorDiverged => 'Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.';
+  String get gitErrorDiverged =>
+      'Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.';
 
   @override
-  String get gitErrorAuthorIdentity => 'Git trenger forfatternavn og e-postadresse før endringer kan lagres.';
+  String get gitErrorAuthorIdentity =>
+      'Git trenger forfatternavn og e-postadresse før endringer kan lagres.';
 
   @override
   String get gitAuthorIdentityTitle => 'Git-forfatteridentitet';
 
   @override
-  String get gitAuthorIdentityMessage => 'Skriv inn identiteten Git skal registrere på endringer. BusyMark lagrer den og prøver denne endringen på nytt.';
+  String get gitAuthorIdentityMessage =>
+      'Skriv inn identiteten Git skal registrere på endringer. BusyMark lagrer den og prøver denne endringen på nytt.';
 
   @override
   String get gitAuthorName => 'Navn';
@@ -2991,7 +3231,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitAuthorIdentityGlobal => 'Bruk for alle kodelagre';
 
   @override
-  String get gitAuthorIdentityGlobalDescription => 'Når appen er installert som en Snap, gjelder dette kodelagre som åpnes i BusyMark.';
+  String get gitAuthorIdentityGlobalDescription =>
+      'Når appen er installert som en Snap, gjelder dette kodelagre som åpnes i BusyMark.';
 
   @override
   String get gitSaveIdentityAndCommit => 'Lagre og utfør commit';
@@ -3015,25 +3256,29 @@ class AppLocalizationsNb extends AppLocalizations {
   String get syntaxReferenceMarkdownBlocks => 'Markdown-blokker';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription => 'Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.';
+  String get syntaxReferenceMarkdownBlocksDescription =>
+      'Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.';
 
   @override
   String get syntaxReferenceInlineFormatting => 'Inline-Markdown';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription => 'Formatering i avsnitt, listeelementer og tabellceller.';
+  String get syntaxReferenceInlineFormattingDescription =>
+      'Formatering i avsnitt, listeelementer og tabellceller.';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => 'Rå HTML-blokker';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription => 'Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.';
+  String get syntaxReferenceRawHtmlBlocksDescription =>
+      'Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.';
 
   @override
   String get syntaxReferenceRawHtmlInline => 'Rå HTML-inline-tagger';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription => 'Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.';
+  String get syntaxReferenceRawHtmlInlineDescription =>
+      'Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.';
 
   @override
   String get syntaxReferenceHeadings => 'Overskrifter';
@@ -3072,19 +3317,24 @@ class AppLocalizationsNb extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Semantiske teksttagger';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription => 'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.';
+  String get syntaxReferenceSanitizedPreviewDescription =>
+      'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription => 'Uendret rå HTML lagres nøyaktig som kildetekst.';
+  String get syntaxReferenceSourcePreservedDescription =>
+      'Uendret rå HTML lagres nøyaktig som kildetekst.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription => 'Markdown-markører inni rå HTML vises som bokstavelig tekst.';
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
+      'Markdown-markører inni rå HTML vises som bokstavelig tekst.';
 
   @override
-  String get syntaxReferenceBlockedContentDescription => 'Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.';
+  String get syntaxReferenceBlockedContentDescription =>
+      'Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription => 'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.';
 
   @override
   String get syntaxReferenceCategory => 'Kategori';
@@ -3114,28 +3364,35 @@ class AppLocalizationsNb extends AppLocalizations {
   String get syntaxReferenceOfficialDocumentation => 'Offisiell dokumentasjon';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdown => 'Bare Writerside Markdown';
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Bare Writerside Markdown';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml => 'Bare Writerside Markdown og Writerside XML';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Bare Writerside Markdown og Writerside XML';
 
   @override
-  String get syntaxReferenceMarkdownDescription => 'De viktigste Markdown-formene BusyMark kan skrive og forhåndsvise.';
+  String get syntaxReferenceMarkdownDescription =>
+      'De viktigste Markdown-formene BusyMark kan skrive og forhåndsvise.';
 
   @override
   String get syntaxReferenceParagraphExample => 'Et tekstavsnitt.';
 
   @override
-  String get syntaxReferenceTableLimitation => 'Tabeller bruker pipe-syntaksen fra GitHub Flavored Markdown.';
+  String get syntaxReferenceTableLimitation =>
+      'Tabeller bruker pipe-syntaksen fra GitHub Flavored Markdown.';
 
   @override
-  String get syntaxReferenceHardBreakIdentifiers => 'to mellomrom på slutten av linjen, \\, <br>';
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'to mellomrom på slutten av linjen, \\, <br>';
 
   @override
-  String get syntaxReferenceHtmlDescription => 'BusyMark godtar et avgrenset, trygt delsett av rå HTML i Markdown-kilden.';
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark godtar et avgrenset, trygt delsett av rå HTML i Markdown-kilden.';
 
   @override
-  String get syntaxReferenceDiagramsDescription => 'Inngjerdede Mermaid-, PlantUML-, D2- og OpenAPI-blokker fungerer i Markdown-kilde. Blokkidentifikatorer skiller ikke mellom store og små bokstaver, og BusyMark bevarer den opprinnelige skrivemåten.';
+  String get syntaxReferenceDiagramsDescription =>
+      'Inngjerdede Mermaid-, PlantUML-, D2- og OpenAPI-blokker fungerer i Markdown-kilde. Blokkidentifikatorer skiller ikke mellom store og små bokstaver, og BusyMark bevarer den opprinnelige skrivemåten.';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -3150,28 +3407,34 @@ class AppLocalizationsNb extends AppLocalizations {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation => 'Bruk inngjerdet YAML- eller JSON-innhold. BusyMark behandler ikke et vilkårlig helt YAML- eller JSON-dokument som en OpenAPI-referanse.';
+  String get syntaxReferenceOpenApiLimitation =>
+      'Bruk inngjerdet YAML- eller JSON-innhold. BusyMark behandler ikke et vilkårlig helt YAML- eller JSON-dokument som en OpenAPI-referanse.';
 
   @override
-  String get syntaxReferenceSemanticDiagramBlocks => 'Semantiske kodeblokker for diagrammer';
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Semantiske kodeblokker for diagrammer';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation => 'Semantiske code-block- og src-former støtter Mermaid, PlantUML og D2, ikke OpenAPI, og bare i Writerside-prosjekter.';
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Semantiske code-block- og src-former støtter Mermaid, PlantUML og D2, ikke OpenAPI, og bare i Writerside-prosjekter.';
 
   @override
   String get syntaxReferenceReferencedDiagramSource => 'Referert diagramkilde';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation => 'Stier må være relative og forbli i det åpne Writerside-prosjektet; inngjerdet form med src gjelder bare Writerside Markdown.';
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Stier må være relative og forbli i det åpne Writerside-prosjektet; inngjerdet form med src gjelder bare Writerside Markdown.';
 
   @override
-  String get syntaxReferenceMathematicsDescription => 'BusyMark støtter TeX-uttrykk, ikke komplette TeX- eller LaTeX-dokumenter.';
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark støtter TeX-uttrykk, ikke komplette TeX- eller LaTeX-dokumenter.';
 
   @override
   String get syntaxReferenceInlineMath => 'Matematikk i linjen';
 
   @override
-  String get syntaxReferenceGithubMath => 'GitHub-matematikk med dollartegn og grav aksent';
+  String get syntaxReferenceGithubMath =>
+      'GitHub-matematikk med dollartegn og grav aksent';
 
   @override
   String get syntaxReferenceDisplayMath => 'Matematikk som blokk';
@@ -3183,34 +3446,40 @@ class AppLocalizationsNb extends AppLocalizations {
   String get syntaxReferenceTexFence => 'tex-blokk';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation => 'BusyMark gjenkjenner ikke \\(...\\) eller \\[...\\] som matematikkskilletegn i Markdown.';
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark gjenkjenner ikke \\(...\\) eller \\[...\\] som matematikkskilletegn i Markdown.';
 
   @override
-  String get syntaxReferenceTexFenceLimitation => 'Utenfor Writerside-modus forblir en tex-blokk en vanlig kodeblokk.';
+  String get syntaxReferenceTexFenceLimitation =>
+      'Utenfor Writerside-modus forblir en tex-blokk en vanlig kodeblokk.';
 
   @override
   String get syntaxReferenceWritersideMathElement => 'Writerside-math-element';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation => 'math-elementet er semantisk Writerside-syntaks, ikke tillatt rå HTML MathML.';
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math-elementet er semantisk Writerside-syntaks, ikke tillatt rå HTML MathML.';
 
   @override
   String get syntaxReferenceSemanticTexBlock => 'Semantisk TeX-kodeblokk';
 
   @override
-  String get syntaxReferenceWritersideDescription => 'Disse målrettede utvidelsene tolkes bare i åpne Writerside-prosjekter.';
+  String get syntaxReferenceWritersideDescription =>
+      'Disse målrettede utvidelsene tolkes bare i åpne Writerside-prosjekter.';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => 'Merknadssitat';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation => 'Et vanlig blokksitat er et tips i Writerside Markdown; i vanlig Markdown forblir det et ordinært sitat.';
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Et vanlig blokksitat er et tips i Writerside Markdown; i vanlig Markdown forblir det et ordinært sitat.';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => 'Semantiske merknader';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation => 'Vanlig Markdown tolker ikke disse semantiske Writerside-elementene.';
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Vanlig Markdown tolker ikke disse semantiske Writerside-elementene.';
 
   @override
   String get syntaxReferenceCollapsibleHeading => 'Sammenleggbar overskrift';
@@ -3219,28 +3488,34 @@ class AppLocalizationsNb extends AppLocalizations {
   String get syntaxReferenceCollapsibleCode => 'Sammenleggbar kodeblokk';
 
   @override
-  String get syntaxReferenceSemanticCollapsibles => 'Semantisk sammenleggbart innhold';
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Semantisk sammenleggbart innhold';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation => 'BusyMark støtter sammenleggbare chapter-, procedure-, code-block- og definisjonslisteformer, ikke hele Writerside-katalogen.';
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark støtter sammenleggbare chapter-, procedure-, code-block- og definisjonslisteformer, ikke hele Writerside-katalogen.';
 
   @override
-  String get syntaxReferenceSemanticCodeBlocks => 'Semantiske kodeblokker for matematikk og diagrammer';
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Semantiske kodeblokker for matematikk og diagrammer';
 
   @override
   String get syntaxReferenceVideo => 'Writerside-video';
 
   @override
-  String get syntaxReferenceVideoLimitation => 'Lokal video bruker et lokalt preview-src-bilde; vertsbaserte kilder må være støttede HTTPS-adresser fra YouTube eller Vimeo.';
+  String get syntaxReferenceVideoLimitation =>
+      'Lokal video bruker et lokalt preview-src-bilde; vertsbaserte kilder må være støttede HTTPS-adresser fra YouTube eller Vimeo.';
 
   @override
   String get exportAsPdf => 'Eksporter som PDF';
 
   @override
-  String get pdfExportDescription => 'Velg sideoppsett for en gjennomarbeidet, selvstendig PDF.';
+  String get pdfExportDescription =>
+      'Velg sideoppsett for en gjennomarbeidet, selvstendig PDF.';
 
   @override
-  String get pdfRemoteImagesNote => 'Eksterne bilder lastes ikke ned under eksport. Lokale bilder tas med når de er tilgjengelige.';
+  String get pdfRemoteImagesNote =>
+      'Eksterne bilder lastes ikke ned under eksport. Lokale bilder tas med når de er tilgjengelige.';
 
   @override
   String get pdfPageSize => 'Sidestørrelse';
@@ -3304,13 +3579,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get pdfExportUnavailable => 'PDF-eksportkomponenten mangler. Installer BusyMark på nytt og prøv igjen.';
+  String get pdfExportUnavailable =>
+      'PDF-eksportkomponenten mangler. Installer BusyMark på nytt og prøv igjen.';
 
   @override
-  String get pdfExportTimedOut => 'PDF-eksporten tok for lang tid og ble stoppet.';
+  String get pdfExportTimedOut =>
+      'PDF-eksporten tok for lang tid og ble stoppet.';
 
   @override
-  String get pdfExportFailed => 'BusyMark kunne ikke eksportere dette dokumentet som PDF.';
+  String get pdfExportFailed =>
+      'BusyMark kunne ikke eksportere dette dokumentet som PDF.';
 
   @override
   String get visualizationRendering => 'Gjengir…';
@@ -3364,7 +3642,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get visualizationSearchOperations => 'Søk i operasjoner';
 
   @override
-  String get visualizationRenderFailed => 'Denne visualiseringen kunne ikke gjengis.';
+  String get visualizationRenderFailed =>
+      'Denne visualiseringen kunne ikke gjengis.';
 
   @override
   String get visualizationRetry => 'Prøv igjen';
@@ -3375,7 +3654,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get shortcutExportPdfDescription => 'Eksporter det aktive dokumentet eller Writerside-modulen som PDF.';
+  String get shortcutExportPdfDescription =>
+      'Eksporter det aktive dokumentet eller Writerside-modulen som PDF.';
 
   @override
   String get instances => 'Instanser';
@@ -3414,7 +3694,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get chooseMarkdownFolder => 'Velg Markdown-mappe';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired => 'Velg en mappe som inneholder Markdown-filer.';
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Velg en mappe som inneholder Markdown-filer.';
 
   @override
   String get instanceAppearance => 'Utseende';
@@ -3449,13 +3730,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get allowSearchEngineIndexing => 'Tillat indeksering i søkemotorer';
 
   @override
-  String get allowSearchEngineIndexingDescription => 'Tillat eksterne søkemotorer å indeksere denne utdataen.';
+  String get allowSearchEngineIndexingDescription =>
+      'Tillat eksterne søkemotorer å indeksere denne utdataen.';
 
   @override
   String get offlineArtifact => 'Frakoblet artefakt';
 
   @override
-  String get offlineArtifactDescription => 'Pakk ressursene slik at den bygde dokumentasjonen er selvstendig.';
+  String get offlineArtifactDescription =>
+      'Pakk ressursene slik at den bygde dokumentasjonen er selvstendig.';
 
   @override
   String get instanceOutputSettings => 'Utdatainnstillinger';
@@ -3475,13 +3758,15 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get noMarkdownFilesFound => 'Ingen Markdown-filer ble funnet i denne mappen.';
+  String get noMarkdownFilesFound =>
+      'Ingen Markdown-filer ble funnet i denne mappen.';
 
   @override
   String get copyReferencedMedia => 'Kopier refererte medier';
 
   @override
-  String get copyReferencedMediaDescription => 'Kopier lokale bilder og videoer som de valgte filene refererer til, og behold relative stier.';
+  String get copyReferencedMediaDescription =>
+      'Kopier lokale bilder og videoer som de valgte filene refererer til, og behold relative stier.';
 
   @override
   String get instanceIdRenameWarningTitle => 'Gi instans-ID-en nytt navn?';
@@ -3495,7 +3780,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get renameAndUpdateReferences => 'Gi nytt navn og oppdater referanser';
 
   @override
-  String get tocLibraryDescription => 'Et innholdsfortegnelsesbibliotek lagrer gjenbrukbare deler og produserer ikke egne utdata.';
+  String get tocLibraryDescription =>
+      'Et innholdsfortegnelsesbibliotek lagrer gjenbrukbare deler og produserer ikke egne utdata.';
 
   @override
   String get defaultTocLibraryName => 'Delt innholdsfortegnelse';
@@ -3543,7 +3829,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired => 'Velg minst én Markdown-fil som skal importeres.';
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Velg minst én Markdown-fil som skal importeres.';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -3556,7 +3843,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceFilesChanged => 'Instansfilene er endret på disken. Se gjennom dem og prøv igjen.';
+  String get errorWritersideInstanceFilesChanged =>
+      'Instansfilene er endret på disken. Se gjennom dem og prøv igjen.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
@@ -3564,16 +3852,20 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceLibraryImport => 'Et innholdsfortegnelsesbibliotek kan ikke importere Markdown-emner.';
+  String get errorWritersideInstanceLibraryImport =>
+      'Et innholdsfortegnelsesbibliotek kan ikke importere Markdown-emner.';
 
   @override
-  String get errorWritersideInstanceWebPathInvalid => 'Nettstien må være på én linje.';
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Nettstien må være på én linje.';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid => 'Writerside-instanskonfigurasjonen er ugyldig. Rett diagnostikken og prøv igjen.';
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Writerside-instanskonfigurasjonen er ugyldig. Rett diagnostikken og prøv igjen.';
 
   @override
-  String get errorWritersideInstanceTemporaryFile => 'BusyMark kunne ikke klargjøre instansendringene på en trygg måte.';
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark kunne ikke klargjøre instansendringene på en trygg måte.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
@@ -3586,27 +3878,36 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot => 'buildprofiles.xml må ha et <buildprofiles>-rotelement.';
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'buildprofiles.xml må ha et <buildprofiles>-rotelement.';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
     return 'Verdien $name «$value» må være true eller false.';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance => 'Et <build-profile>-element må angi en instans-ID.';
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Et <build-profile>-element må angi en instans-ID.';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude => 'En <include> i treet må angi både from og element-id.';
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'En <include> i treet må angi både from og element-id.';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId => 'En <snippet> i treet må angi en id.';
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'En <snippet> i treet må angi en id.';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference => 'En innholdsfortegnelsesreferanse mellom instanser må angi både ref og in.';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'En innholdsfortegnelsesreferanse mellom instanser må angi både ref og in.';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets => 'Et innholdsfortegnelseselement kan ikke peke til mer enn ett emne, én referanse, én lenke eller én omadressering.';
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Et innholdsfortegnelseselement kan ikke peke til mer enn ett emne, én referanse, én lenke eller én omadressering.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3614,10 +3915,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot => 'Instansgruppefilen må ha et <instance-groups>-rotelement.';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Instansgruppefilen må ha et <instance-groups>-rotelement.';
 
   @override
-  String get diagnosticWritersideInstanceGroupInvalid => 'En instansgruppe må angi en ikke-tom id og instansliste.';
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'En instansgruppe må angi en ikke-tom id og instansliste.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
@@ -3625,12 +3928,19 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
     return 'Innholdsfortegnelsesinkluderingen «$source#$id» tilhører den eksterne modulen «$origin» og kan ikke utvides i dette arbeidsområdet.';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
     return 'Treelementet «$id» finnes ikke i det registrerte treet «$source».';
   }
 
@@ -3650,7 +3960,10 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
     return 'Emnet «$topic» finnes ikke i den refererte instansen «$instance».';
   }
 
@@ -3679,7 +3992,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiDisabled => 'Deaktivert';
 
   @override
-  String get aiExplicitEditingDescription => 'KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.';
+  String get aiExplicitEditingDescription =>
+      'KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.';
 
   @override
   String get aiProvider => 'KI-leverandør';
@@ -3714,10 +4028,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiNoModels => 'Ingen modell er valgt.';
 
   @override
-  String get aiConnectionFailed => 'BusyMark kunne ikke bekrefte KI-tekstgenerering.';
+  String get aiConnectionFailed =>
+      'BusyMark kunne ikke bekrefte KI-tekstgenerering.';
 
   @override
-  String get aiConfigureFirst => 'Aktiver en KI-leverandør og bekreft en modell under Innstillinger → KI.';
+  String get aiConfigureFirst =>
+      'Aktiver en KI-leverandør og bekreft en modell under Innstillinger → KI.';
 
   @override
   String get aiEditWithAi => 'Rediger med KI';
@@ -3793,10 +4109,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get aiStaleProposal => 'Dokumentet ble endret mens forslaget ble generert. Kjør handlingen på nytt.';
+  String get aiStaleProposal =>
+      'Dokumentet ble endret mens forslaget ble generert. Kjør handlingen på nytt.';
 
   @override
-  String get gitAiStagedChangesChanged => 'De indekserte endringene ble endret mens denne commit-meldingen ble generert. Kjør handlingen på nytt.';
+  String get gitAiStagedChangesChanged =>
+      'De indekserte endringene ble endret mens denne commit-meldingen ble generert. Kjør handlingen på nytt.';
 
   @override
   String get aiViewContext => 'Vis sendt kontekst';
@@ -3814,7 +4132,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiApiKey => 'API-nøkkel';
 
   @override
-  String get aiApiKeyStoredHint => 'En nøkkel er lagret i systemets legitimasjonslager';
+  String get aiApiKeyStoredHint =>
+      'En nøkkel er lagret i systemets legitimasjonslager';
 
   @override
   String get aiApiKeyEnterHint => 'Skriv inn en API-nøkkel for leverandøren';
@@ -3829,7 +4148,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiRemoveApiKey => 'Fjern lagret API-nøkkel';
 
   @override
-  String get aiCredentialSaved => 'API-nøkkelen ble lagret i systemets legitimasjonslager.';
+  String get aiCredentialSaved =>
+      'API-nøkkelen ble lagret i systemets legitimasjonslager.';
 
   @override
   String get aiCredentialRemoved => 'Den lagrede API-nøkkelen ble fjernet.';
@@ -3865,7 +4185,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get aiCloudConsentMessage => 'Bare innholdet som vises i hver KI-gjennomgangsdialog, sendes. Forespørsler er tilstandsløse, forslag krever gjennomgang, og API-nøkkelen lagres i legitimasjonslageret til Linux.';
+  String get aiCloudConsentMessage =>
+      'Bare innholdet som vises i hver KI-gjennomgangsdialog, sendes. Forespørsler er tilstandsløse, forslag krever gjennomgang, og API-nøkkelen lagres i legitimasjonslageret til Linux.';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -3878,10 +4199,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get aiColdStartObserved => 'En kaldstart av den lokale modellen ble oppdaget.';
+  String get aiColdStartObserved =>
+      'En kaldstart av den lokale modellen ble oppdaget.';
 
   @override
-  String get aiNoCompatibleModels => 'Ingen kompatibel tekstgenereringsmodell er tilgjengelig.';
+  String get aiNoCompatibleModels =>
+      'Ingen kompatibel tekstgenereringsmodell er tilgjengelig.';
 
   @override
   String get aiEnableProvider => 'Aktiver en KI-leverandør først.';
@@ -3901,7 +4224,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownLinkEmptyText => 'Lenketeksten er tom. Oppgi et tilgjengelig navn som beskriver formålet.';
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Lenketeksten er tom. Oppgi et tilgjengelig navn som beskriver formålet.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {
@@ -3909,10 +4233,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownTableEmptyHeader => 'Tabelloverskrifter må identifisere kolonnene. Fyll ut alle tomme overskrifter.';
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Tabelloverskrifter må identifisere kolonnene. Fyll ut alle tomme overskrifter.';
 
   @override
-  String get mathRenderFailed => 'Det matematiske uttrykket kunne ikke gjengis.';
+  String get mathRenderFailed =>
+      'Det matematiske uttrykket kunne ikke gjengis.';
 
   @override
   String get inlineMath => 'Integrert matematikk';
@@ -3927,16 +4253,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get findUsages => 'Finn bruk';
 
   @override
-  String get cannotRenameSymbol => 'Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.';
+  String get cannotRenameSymbol =>
+      'Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.';
 
   @override
-  String get renameTopicFileInstead => 'Emne-ID-er kommer fra filnavnene. Bruk Gi nytt navn til emnefil i innholdsfortegnelsen eller sidepanelet Filer.';
+  String get renameTopicFileInstead =>
+      'Emne-ID-er kommer fra filnavnene. Bruk Gi nytt navn til emnefil i innholdsfortegnelsen eller sidepanelet Filer.';
 
   @override
   String get keyboardLayout => 'Tastaturoppsett';
 
   @override
-  String get diagnosticWritersideUnsupported => 'Innhold som ikke støttes eller er feilformet, vises som kildekode.';
+  String get diagnosticWritersideUnsupported =>
+      'Innhold som ikke støttes eller er feilformet, vises som kildekode.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
@@ -3949,12 +4278,17 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideSchema(String element, String attribute, String reason) {
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
     return 'Ugyldig Writerside-markering: $element, $attribute. $reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt => 'Bruk <llms-txt>true</llms-txt> eller <llms-txt>false</llms-txt>; single-file støttes ikke lenger.';
+  String get diagnosticWritersideLlmsTxt =>
+      'Bruk <llms-txt>true</llms-txt> eller <llms-txt>false</llms-txt>; single-file støttes ikke lenger.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -3977,16 +4311,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get htmlExportFailed => 'HTML-eksport mislyktes';
 
   @override
-  String get htmlKeepAssetsTogether => 'Hold HTML-filen og den tilhørende ressursmappen sammen når du kopierer eksporten.';
+  String get htmlKeepAssetsTogether =>
+      'Hold HTML-filen og den tilhørende ressursmappen sammen når du kopierer eksporten.';
 
   @override
-  String get htmlInstanceDescription => 'Eksporter én instans som lenkede frakoblede sider. Velg et navn for en egen utdatamappe.';
+  String get htmlInstanceDescription =>
+      'Eksporter én instans som lenkede frakoblede sider. Velg et navn for en egen utdatamappe.';
 
   @override
   String get htmlInstance => 'Instans';
 
   @override
-  String get htmlOwnedDirectoryOnly => 'Bare en mappe opprettet av BusyMarks HTML-eksport kan erstattes. Endrede eller uvedkommende filer beholdes.';
+  String get htmlOwnedDirectoryOnly =>
+      'Bare en mappe opprettet av BusyMarks HTML-eksport kan erstattes. Endrede eller uvedkommende filer beholdes.';
 
   @override
   String get showInFolder => 'Vis i mappe';
@@ -4108,31 +4445,37 @@ class AppLocalizationsNb extends AppLocalizations {
   String get exportRemoveCss => 'Fjern egendefinert stilark';
 
   @override
-  String get exportCssNote => 'Velg en valgfri UTF-8-CSS-fil (opptil 256 KiB). Importer, ressurs-URL-er og kjørbar eller escaped CSS avvises. Stilene følger BusyMarks stilark. Eksterne ressurser hentes aldri.';
+  String get exportCssNote =>
+      'Velg en valgfri UTF-8-CSS-fil (opptil 256 KiB). Importer, ressurs-URL-er og kjørbar eller escaped CSS avvises. Stilene følger BusyMarks stilark. Eksterne ressurser hentes aldri.';
 
   @override
-  String get exportSitePackagingNote => 'Writerside beholder separate, lenkede emnesider. Enkeltfilmodus bygger ressursene inn i hver side.';
+  String get exportSitePackagingNote =>
+      'Writerside beholder separate, lenkede emnesider. Enkeltfilmodus bygger ressursene inn i hver side.';
 
   @override
-  String get exportInvalidGeometry => 'La minst 20 mm innholdsbredde og -høyde stå igjen etter margene.';
+  String get exportInvalidGeometry =>
+      'La minst 20 mm innholdsbredde og -høyde stå igjen etter margene.';
 
   @override
   String get exportInvalidColor => 'Skriv inn en farge som #RRGGBB.';
 
   @override
-  String get exportInvalidCss => 'Velg en lesbar UTF-8 .css-fil opptil 256 KiB uten importer, ressurs-URL-er, HTML eller kjørbar eller escaped CSS.';
+  String get exportInvalidCss =>
+      'Velg en lesbar UTF-8 .css-fil opptil 256 KiB uten importer, ressurs-URL-er, HTML eller kjørbar eller escaped CSS.';
 
   @override
   String get clipboardHistory => 'Utklippshistorie';
 
   @override
-  String get clipboardHistoryDescription => 'Åpne historien for utklippet som er lokal for sesjonen.';
+  String get clipboardHistoryDescription =>
+      'Åpne historien for utklippet som er lokal for sesjonen.';
 
   @override
   String get clipboardCurrent => 'Nåværende utklipp';
 
   @override
-  String get clipboardCurrentExternal => 'Nåværende utklipp fra en annen applikasjon';
+  String get clipboardCurrentExternal =>
+      'Nåværende utklipp fra en annen applikasjon';
 
   @override
   String clipboardDestination(String name) {
@@ -4146,13 +4489,16 @@ class AppLocalizationsNb extends AppLocalizations {
   String get clipboardNoItems => 'Utklippshistorien er tom.';
 
   @override
-  String get clipboardDisabled => 'Samlingen \"Utklippshistorie\" er deaktivert i Innstillinger.';
+  String get clipboardDisabled =>
+      'Samlingen \"Utklippshistorie\" er deaktivert i Innstillinger.';
 
   @override
-  String get clipboardUnavailable => 'Innholdet i det nåværende utklippet er ikke tilgjengelig eller støttet.';
+  String get clipboardUnavailable =>
+      'Innholdet i det nåværende utklippet er ikke tilgjengelig eller støttet.';
 
   @override
-  String get clipboardTooLarge => 'Denne utklippsteksten er for stor til å lagre.';
+  String get clipboardTooLarge =>
+      'Denne utklippsteksten er for stor til å lagre.';
 
   @override
   String get clipboardPastePlainText => 'Lim inn som ren tekst';
@@ -4181,19 +4527,23 @@ class AppLocalizationsNb extends AppLocalizations {
   String get localHistoryEllipsis => 'Lokal historie…';
 
   @override
-  String get localHistoryDescription => 'Vis lagrede og automatiserte lokale versjoner for det nåværende dokumentet.';
+  String get localHistoryDescription =>
+      'Vis lagrede og automatiserte lokale versjoner for det nåværende dokumentet.';
 
   @override
   String get findLocalHistoryEllipsis => 'Finn i Lokal Historikk…';
 
   @override
-  String get findLocalHistoryDescription => 'Søk etter dokumenter og innhold i Lokal Historikk.';
+  String get findLocalHistoryDescription =>
+      'Søk etter dokumenter og innhold i Lokal Historikk.';
 
   @override
-  String get localHistoryNoDocuments => 'Ingen dokumenter har Lokal Historikk ennå.';
+  String get localHistoryNoDocuments =>
+      'Ingen dokumenter har Lokal Historikk ennå.';
 
   @override
-  String get localHistoryNoRevisions => 'Dette dokumentet har ingen revisjoner i Lokal Historikk.';
+  String get localHistoryNoRevisions =>
+      'Dette dokumentet har ingen revisjoner i Lokal Historikk.';
 
   @override
   String get localHistorySelectedRevision => 'Valgt revisjon';
@@ -4211,7 +4561,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get localHistoryRestoreRevision => 'Gjenopprett Versjon';
 
   @override
-  String get localHistoryRestoreOriginalLocation => 'Gjenopprett til Opprinnelig Sted';
+  String get localHistoryRestoreOriginalLocation =>
+      'Gjenopprett til Opprinnelig Sted';
 
   @override
   String get localHistoryRestoreNewLocation => 'Gjenopprett til Nytt Sted…';
@@ -4220,10 +4571,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get localHistoryRestoreChange => 'Gjenopprett Endring';
 
   @override
-  String get localHistoryRestoreUnavailable => 'Denne endringen kan ikke gjenopprettes fordi sammenligningen er ikke lenger aktuell.';
+  String get localHistoryRestoreUnavailable =>
+      'Denne endringen kan ikke gjenopprettes fordi sammenligningen er ikke lenger aktuell.';
 
   @override
-  String get localHistoryComparisonSimplified => 'Denne store sammenligningen er forenklet. Gjenopprett individuelle endringer er ikke tilgjengelig.';
+  String get localHistoryComparisonSimplified =>
+      'Denne store sammenligningen er forenklet. Gjenopprett individuelle endringer er ikke tilgjengelig.';
 
   @override
   String localHistoryOlderChange(String text) {
@@ -4242,7 +4595,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get localHistoryUntitled => 'Uten tittel';
 
   @override
-  String get localHistoryClearDocument => 'Tøm historikken for dette dokumentet';
+  String get localHistoryClearDocument =>
+      'Tøm historikken for dette dokumentet';
 
   @override
   String get localHistoryClearAll => 'Tøm all lokal historikk';
@@ -4254,10 +4608,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get localHistoryClearAllTitle => 'Tøm all lokal historikk?';
 
   @override
-  String get localHistoryClearConfirmation => 'Dette sletter permanent lagrede versjoner. Denne handlingen kan ikke angres.';
+  String get localHistoryClearConfirmation =>
+      'Dette sletter permanent lagrede versjoner. Denne handlingen kan ikke angres.';
 
   @override
-  String get localHistoryWarningIndexRebuilt => 'Lokal historikk indeksen ble skadet og gjenopprettet fra intakte versjoner.';
+  String get localHistoryWarningIndexRebuilt =>
+      'Lokal historikk indeksen ble skadet og gjenopprettet fra intakte versjoner.';
 
   @override
   String localHistoryWarningUnsupportedFormat(String version) {
@@ -4270,7 +4626,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled => 'Opptak er deaktivert eller denne stien er utelatt. Aktiver opptak før gjenoppretting.';
+  String get localHistoryWarningRecordingDisabled =>
+      'Opptak er deaktivert eller denne stien er utelatt. Aktiver opptak før gjenoppretting.';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -4283,7 +4640,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRevisionMissing => 'Den valgte versjonen mangler eller er skadet.';
+  String get localHistoryWarningRevisionMissing =>
+      'Den valgte versjonen mangler eller er skadet.';
 
   @override
   String localHistoryWarningRevisionRead(String detail) {
@@ -4328,16 +4686,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get settingsHistory => 'Historikk';
 
   @override
-  String get settingsClipboardHistoryTitle => 'Samle Historikk fra utklippstavlen';
+  String get settingsClipboardHistoryTitle =>
+      'Samle Historikk fra utklippstavlen';
 
   @override
-  String get settingsClipboardHistoryDescription => 'Behold kopiert og vellykket limt innhold kun for denne BusyMark-sesjonen.';
+  String get settingsClipboardHistoryDescription =>
+      'Behold kopiert og vellykket limt innhold kun for denne BusyMark-sesjonen.';
 
   @override
   String get settingsLocalHistoryTitle => 'Lag lokal historikk';
 
   @override
-  String get settingsLocalHistoryDescription => 'Lagre dokumentversjoner på denne enheten for gjenoppretting og sammenligning.';
+  String get settingsLocalHistoryDescription =>
+      'Lagre dokumentversjoner på denne enheten for gjenoppretting og sammenligning.';
 
   @override
   String get settingsHistoryCheckpoint => 'Automatisk sjekkpunktintervall';
@@ -4433,10 +4794,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get spellingCheckFailed => 'Stavekontrollen mislyktes';
 
   @override
-  String get spellingSettingsLoadFailed => 'Kunne ikke laste inn innstillinger for stavekontroll';
+  String get spellingSettingsLoadFailed =>
+      'Kunne ikke laste inn innstillinger for stavekontroll';
 
   @override
-  String get retrySpellingSettings => 'Prøv å laste inn innstillinger for stavekontroll på nytt';
+  String get retrySpellingSettings =>
+      'Prøv å laste inn innstillinger for stavekontroll på nytt';
 
   @override
   String get spellingCheckIncomplete => 'Stavekontrollen er ufullstendig';
@@ -4467,7 +4830,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get cancelSpellingDictionaryInstall => 'Avbryt nedlasting av ordliste';
 
   @override
-  String get retrySpellingDictionaryInstall => 'Prøv å installere ordlisten på nytt';
+  String get retrySpellingDictionaryInstall =>
+      'Prøv å installere ordlisten på nytt';
 
   @override
   String spellingDictionaryDownloading(String size) {
@@ -4478,7 +4842,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get spellingDictionaryValidating => 'Validerer ordliste…';
 
   @override
-  String get spellingDictionaryInstallFailed => 'Installasjonen mislyktes — velg for å prøve på nytt';
+  String get spellingDictionaryInstallFailed =>
+      'Installasjonen mislyktes — velg for å prøve på nytt';
 
   @override
   String spellingDictionaryInstallPrompt(String dictionary, String size) {
@@ -4497,7 +4862,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get spellingDictionaryRecoveryConflict => 'Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart.';
+  String get spellingDictionaryRecoveryConflict =>
+      'Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart.';
 
   @override
   String get windowMinimize => 'Minimer';
@@ -4533,7 +4899,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get nextcloudNewNote => 'Nytt notat';
 
   @override
-  String get nextcloudSavedLocally => 'Lagret lokalt · venter på synkronisering';
+  String get nextcloudSavedLocally =>
+      'Lagret lokalt · venter på synkronisering';
 
   @override
   String get nextcloudSyncing => 'Synkroniserer';
@@ -4551,7 +4918,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get nextcloudReconnectRequired => 'Ny tilkobling kreves';
 
   @override
-  String get nextcloudCreationUncertain => 'Resultatet av opprettelsen er usikkert';
+  String get nextcloudCreationUncertain =>
+      'Resultatet av opprettelsen er usikkert';
 
   @override
   String get nextcloudReadOnly => 'Skrivebeskyttet';
@@ -4566,16 +4934,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get nextcloudDeleteNote => 'Slette notatet?';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable => 'Erstatning i arbeidsområdet er utilgjengelig for Nextcloud Notes. Erstatt i hvert enkelt notat.';
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Erstatning i arbeidsområdet er utilgjengelig for Nextcloud Notes. Erstatt i hvert enkelt notat.';
 
   @override
   String get nextcloudSaveLocalCopy => 'Lagre lokal kopi…';
 
   @override
-  String get nextcloudDisconnectWarning => 'Fjerning av kontoen sletter mellomlagrede notater og ventende endringer fra denne enheten. Synkroniser først for å beholde arbeidet på serveren.';
+  String get nextcloudDisconnectWarning =>
+      'Fjerning av kontoen sletter mellomlagrede notater og ventende endringer fra denne enheten. Synkroniser først for å beholde arbeidet på serveren.';
 
   @override
-  String get nextcloudAttachmentRetryWarning => 'Hvis forrige opplasting lyktes, kan et nytt forsøk etterlate et ubrukt vedlegg på serveren.';
+  String get nextcloudAttachmentRetryWarning =>
+      'Hvis forrige opplasting lyktes, kan et nytt forsøk etterlate et ubrukt vedlegg på serveren.';
 
   @override
   String get nextcloudAttachmentReference => 'Vedleggsreferanse på serveren';
@@ -4584,31 +4955,38 @@ class AppLocalizationsNb extends AppLocalizations {
   String get nextcloudAddAttachment => 'Legg til vedlegg…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning => 'Når du sletter dette vedlegget, blir lenkene til det i notatet utilgjengelige. Lagrede data kan gjenopprettes fra lokal historikk.';
+  String get nextcloudDeleteAttachmentWarning =>
+      'Når du sletter dette vedlegget, blir lenkene til det i notatet utilgjengelige. Lagrede data kan gjenopprettes fra lokal historikk.';
 
   @override
-  String get nextcloudChooseConflictingAttributes => 'Velg hver motstridende egenskap.';
+  String get nextcloudChooseConflictingAttributes =>
+      'Velg hver motstridende egenskap.';
 
   @override
   String get nextcloudUseServerNote => 'Bruk dette servernotatet';
 
   @override
-  String get nextcloudUseServerNoteExplanation => 'Knytter dette utkastet til det valgte servernotatet og synkroniserer deretter beholdte lokale endringer. En samsvarende forespørsel bekrefter ikke hvem som opprettet notatet.';
+  String get nextcloudUseServerNoteExplanation =>
+      'Knytter dette utkastet til det valgte servernotatet og synkroniserer deretter beholdte lokale endringer. En samsvarende forespørsel bekrefter ikke hvem som opprettet notatet.';
 
   @override
-  String get nextcloudExactCandidate => 'Nøyaktig samsvar med forespørselen; identiteten er ubekreftet.';
+  String get nextcloudExactCandidate =>
+      'Nøyaktig samsvar med forespørselen; identiteten er ubekreftet.';
 
   @override
-  String get nextcloudPossibleCandidate => 'Mulig samsvar etter normalisering; identiteten er ubekreftet.';
+  String get nextcloudPossibleCandidate =>
+      'Mulig samsvar etter normalisering; identiteten er ubekreftet.';
 
   @override
-  String get nextcloudSelectCandidate => 'Velg et servernotat som skal gjennomgås';
+  String get nextcloudSelectCandidate =>
+      'Velg et servernotat som skal gjennomgås';
 
   @override
   String get nextcloudCreateSeparate => 'Opprett et separat notat';
 
   @override
-  String get nextcloudCreateSeparateWarning => 'Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes.';
+  String get nextcloudCreateSeparateWarning =>
+      'Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes.';
 
   @override
   String get wsSemanticFormats => 'Semantisk formatering';
@@ -4719,13 +5097,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get nextcloudFileSuffix => 'Filendelse for nye notater';
 
   @override
-  String get nextcloudServerSettingsExplanation => 'Disse Notes-innstillingene påvirker andre klienter. Endring av stien flytter ikke filer; endring av filendelsen gir ikke eksisterende notater nye navn.';
+  String get nextcloudServerSettingsExplanation =>
+      'Disse Notes-innstillingene påvirker andre klienter. Endring av stien flytter ikke filer; endring av filendelsen gir ikke eksisterende notater nye navn.';
 
   @override
   String get nextcloudSettingsSaved => 'Serverinnstillinger lagret';
 
   @override
-  String get nextcloudSettingsNormalized => 'Lagret med verdier normalisert av serveren';
+  String get nextcloudSettingsNormalized =>
+      'Lagret med verdier normalisert av serveren';
 
   @override
   String get nextcloudPendingUpload => 'Vedlegg venter på opplasting';
@@ -4787,13 +5167,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesIndexing => 'Indekserer notater…';
 
   @override
-  String get notesSearchHelp => 'Ord bruker OG. Bruk \"siterte fraser\", title: og category:.';
+  String get notesSearchHelp =>
+      'Ord bruker OG. Bruk \"siterte fraser\", title: og category:.';
 
   @override
   String get notesSourceLocation => 'Kildeplassering';
 
   @override
-  String get notesRecoveryHelp => 'Kun beholdte lokale notater og lokal historikk. Serverens papirkurv og historikk er utilgjengelige.';
+  String get notesRecoveryHelp =>
+      'Kun beholdte lokale notater og lokal historikk. Serverens papirkurv og historikk er utilgjengelige.';
 
   @override
   String get notesImport => 'Importer notater';
@@ -4814,7 +5196,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesSelected => 'Valgte notater';
 
   @override
-  String get notesNoHistory => 'Ingen beholdte revisjoner. Historikken kan være deaktivert, utløpt eller slettet.';
+  String get notesNoHistory =>
+      'Ingen beholdte revisjoner. Historikken kan være deaktivert, utløpt eller slettet.';
 
   @override
   String get notesTextAvailable => 'Tekst tilgjengelig lokalt';
@@ -4841,7 +5224,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesImportResume => 'Fortsett avbrutt import';
 
   @override
-  String get notesImportAlreadyImported => 'Allerede importert i denne operasjonen';
+  String get notesImportAlreadyImported =>
+      'Allerede importert i denne operasjonen';
 
   @override
   String get references => 'Referanser';
@@ -4880,7 +5264,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get referenceUnsupported => 'Ikke støttet';
 
   @override
-  String get referenceNoPortableId => 'Dette målet har ingen bekreftet portabel notatadresse.';
+  String get referenceNoPortableId =>
+      'Dette målet har ingen bekreftet portabel notatadresse.';
 
   @override
   String get wsIncludeLines => 'Inkluder linjer';
@@ -4892,13 +5277,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wsEmphasizeLines => 'Fremhev viste linjer';
 
   @override
-  String get wsPropertiesReadOnly => 'Egenskapene er skrivebeskyttet i denne visningen.';
+  String get wsPropertiesReadOnly =>
+      'Egenskapene er skrivebeskyttet i denne visningen.';
 
   @override
   String get wsPropertiesProtected => 'Elementet er beskyttet. Rediger kilden.';
 
   @override
-  String get wsPropertiesConflict => 'Dokument eller element endret. Tilbakestill utkastet og velg på nytt.';
+  String get wsPropertiesConflict =>
+      'Dokument eller element endret. Tilbakestill utkastet og velg på nytt.';
 
   @override
   String get wsPropertiesUnresolved => 'Referansen kan ikke løses nå.';
@@ -4928,7 +5315,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wsHeight => 'Høyde';
 
   @override
-  String get wsPropertiesInactive => 'Egenskapen virker bare med publisert sammenfolding.';
+  String get wsPropertiesInactive =>
+      'Egenskapen virker bare med publisert sammenfolding.';
 
   @override
   String get wsNavigationAll => 'Alle elementer med tittel';
@@ -4949,16 +5337,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wsWideLayout => 'Bred';
 
   @override
-  String get wsCodeSourceConflict => 'Flytt eller fjern koden skrevet i denne blokken før du setter src. Writerside avviser en ikke-tom kodeblokk med en kildereferanse.';
+  String get wsCodeSourceConflict =>
+      'Flytt eller fjern koden skrevet i denne blokken før du setter src. Writerside avviser en ikke-tom kodeblokk med en kildereferanse.';
 
   @override
   String get wsInherited => 'Arv fra listen';
 
   @override
-  String get wsExternalImageSize => 'Writerside endrer ikke størrelsen på eksterne bilder pålitelig. Eksisterende mål kan ses og fjernes.';
+  String get wsExternalImageSize =>
+      'Writerside endrer ikke størrelsen på eksterne bilder pålitelig. Eksisterende mål kan ses og fjernes.';
 
   @override
-  String get wsPropertiesNotSerialized => 'Denne endringen ble ikke skrevet til kilden. Utkastet er beholdt.';
+  String get wsPropertiesNotSerialized =>
+      'Denne endringen ble ikke skrevet til kilden. Utkastet er beholdt.';
 
   @override
   String get wsListItem => 'Listeelement';
@@ -5095,7 +5486,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get wsModuleCapsIgnored => 'Den fastsatte byggeren ignorerer modulens <caps>-regler. Bruk et lokalt caps-attributt eller default-property.';
+  String get wsModuleCapsIgnored =>
+      'Den fastsatte byggeren ignorerer modulens <caps>-regler. Bruk et lokalt caps-attributt eller default-property.';
 
   @override
   String get wsInsertElements => 'Sett inn elementer';
@@ -5107,7 +5499,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wsSemanticText => 'Semantisk tekst';
 
   @override
-  String get wsPropertiesUnavailable => 'Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.';
+  String get wsPropertiesUnavailable =>
+      'Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.';
 
   @override
   String get searchDocumentsCategory => 'Dokumenter';
@@ -5212,25 +5605,31 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutRestoreAll => 'Gjenopprett alle standarder';
 
   @override
-  String get shortcutRestoreAllQuestion => 'Gjenopprette standardhurtigtaster for alle handlinger? Egne tilordninger fjernes.';
+  String get shortcutRestoreAllQuestion =>
+      'Gjenopprette standardhurtigtaster for alle handlinger? Egne tilordninger fjernes.';
 
   @override
-  String get shortcutSaveFailed => 'Hurtigtastene er aktive, men kunne ikke lagres. Prøv igjen for å beholde dem etter omstart.';
+  String get shortcutSaveFailed =>
+      'Hurtigtastene er aktive, men kunne ikke lagres. Prøv igjen for å beholde dem etter omstart.';
 
   @override
   String get shortcutRetry => 'Prøv lagring igjen';
 
   @override
-  String get shortcutChanged => 'Tilordningene er endret. Se gjennom gjeldende hurtigtaster og prøv igjen.';
+  String get shortcutChanged =>
+      'Tilordningene er endret. Se gjennom gjeldende hurtigtaster og prøv igjen.';
 
   @override
-  String get shortcutInvalid => 'Denne kombinasjonen kan ikke tilordnes i denne sammenhengen.';
+  String get shortcutInvalid =>
+      'Denne kombinasjonen kan ikke tilordnes i denne sammenhengen.';
 
   @override
-  String get shortcutSystemWarning => 'Skrivebordet kan bruke denne kombinasjonen. BusyMark kan ikke overstyre systemhurtigtaster.';
+  String get shortcutSystemWarning =>
+      'Skrivebordet kan bruke denne kombinasjonen. BusyMark kan ikke overstyre systemhurtigtaster.';
 
   @override
-  String get shortcutConflicts => 'Denne hurtigtasten overlapper disse handlingene:';
+  String get shortcutConflicts =>
+      'Denne hurtigtasten overlapper disse handlingene:';
 
   @override
   String get shortcutRemove => 'Fjern tilordning';
@@ -5269,7 +5668,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutFixed => 'Håndteres av redigereren; kan ikke tilpasses.';
 
   @override
-  String get shortcutDefaultConflict => 'Standardhurtigtasten er i konflikt med en egendefinert tilordning.';
+  String get shortcutDefaultConflict =>
+      'Standardhurtigtasten er i konflikt med en egendefinert tilordning.';
 
   @override
   String get shortcutCurrentBinding => 'Gjeldende hurtigtast';
@@ -5299,10 +5699,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesOfflineCategory => 'Gjør tilgjengelig frakoblet · Kategori';
 
   @override
-  String get notesOfflineRemoveAll => 'Fjern frakoblet oppbevaring · Alle notater';
+  String get notesOfflineRemoveAll =>
+      'Fjern frakoblet oppbevaring · Alle notater';
 
   @override
-  String get notesOfflineRemoveCategory => 'Fjern frakoblet oppbevaring · Kategori';
+  String get notesOfflineRemoveCategory =>
+      'Fjern frakoblet oppbevaring · Kategori';
 
   @override
   String get notesOfflinePause => 'Sett nedlastinger på pause';
@@ -5314,16 +5716,20 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesOfflineKeep => 'Gjør tilgjengelig frakoblet';
 
   @override
-  String get notesOfflineRetentionHelp => 'Å fjerne dette kravet beholder eksisterende hurtigbuffer. Et kategori- eller kontokrav kan fortsatt beholde notatet.';
+  String get notesOfflineRetentionHelp =>
+      'Å fjerne dette kravet beholder eksisterende hurtigbuffer. Et kategori- eller kontokrav kan fortsatt beholde notatet.';
 
   @override
-  String get notesOfflineBroader => 'Notatet beholdes også av et kategori- eller kontokrav.';
+  String get notesOfflineBroader =>
+      'Notatet beholdes også av et kategori- eller kontokrav.';
 
   @override
-  String get notesOfflineExternal => 'Eksterne medier krever en tilkobling. BusyMark beholder bare notattekst og administrerte vedlegg.';
+  String get notesOfflineExternal =>
+      'Eksterne medier krever en tilkobling. BusyMark beholder bare notattekst og administrerte vedlegg.';
 
   @override
-  String get notesEmptyAll => 'Ingen notater ennå. Opprett et notat for å begynne.';
+  String get notesEmptyAll =>
+      'Ingen notater ennå. Opprett et notat for å begynne.';
 
   @override
   String get notesEmptyFavorites => 'Ingen favorittnotater.';
@@ -5341,7 +5747,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesLoadFailed => 'Nextcloud Notes · Mislyktes. Prøv igjen';
 
   @override
-  String get notesOperationFailed => 'Handlingen kunne ikke fullføres. Utkastet er beholdt. Kontroller lagring og konflikter, og prøv igjen.';
+  String get notesOperationFailed =>
+      'Handlingen kunne ikke fullføres. Utkastet er beholdt. Kontroller lagring og konflikter, og prøv igjen.';
 
   @override
   String get notesInspectionFailed => 'Vedlegg · Mislyktes. Prøv igjen';
@@ -5359,37 +5766,47 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesRemovingConnection => 'Fjerner den lokale kontoen…';
 
   @override
-  String get notesRemovedWarning => 'Den lokale Nextcloud-kontoen er fjernet. Tilbakekalling av app-passordet er ikke bekreftet. Fjern BusyMarks passord i sikkerhetsinnstillingene i Nextcloud.';
+  String get notesRemovedWarning =>
+      'Den lokale Nextcloud-kontoen er fjernet. Tilbakekalling av app-passordet er ikke bekreftet. Fjern BusyMarks passord i sikkerhetsinnstillingene i Nextcloud.';
 
   @override
-  String get notesBuffersNotSaved => 'Ikke alle åpne notater kunne lagres lokalt. Kontroller lagring, konflikter eller normalisering i arbeidsområdet. Lokale endringer må kanskje fortsatt synkroniseres med Nextcloud.';
+  String get notesBuffersNotSaved =>
+      'Ikke alle åpne notater kunne lagres lokalt. Kontroller lagring, konflikter eller normalisering i arbeidsområdet. Lokale endringer må kanskje fortsatt synkroniseres med Nextcloud.';
 
   @override
-  String get notesSettingsLeave => 'Lagre endringer i Nextcloud-innstillinger før du går videre?';
+  String get notesSettingsLeave =>
+      'Lagre endringer i Nextcloud-innstillinger før du går videre?';
 
   @override
-  String get notesSettingsLeaveHelp => 'Notes-innstillinger på serveren · Ulagrede endringer';
+  String get notesSettingsLeaveHelp =>
+      'Notes-innstillinger på serveren · Ulagrede endringer';
 
   @override
   String get notesSettingsReload => 'Last inn serverinnstillinger på nytt…';
 
   @override
-  String get notesSettingsReloadHelp => 'Ny innlasting erstatter utkastet med gjeldende Nextcloud-innstillinger. Forkaste utkastet og laste inn på nytt?';
+  String get notesSettingsReloadHelp =>
+      'Ny innlasting erstatter utkastet med gjeldende Nextcloud-innstillinger. Forkaste utkastet og laste inn på nytt?';
 
   @override
-  String get notesSettingsRefreshFailed => 'Nextcloud godtok innstillingene, men oppdatering av notatene mislyktes. Verdiene som vises er bekreftet av serveren. Prøv å oppdatere fra Notater igjen.';
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud godtok innstillingene, men oppdatering av notatene mislyktes. Verdiene som vises er bekreftet av serveren. Prøv å oppdatere fra Notater igjen.';
 
   @override
-  String get notesUnavailable => 'Frakoblet · Tekst tilgjengelig lokalt · Lagret lokalt · venter på synkronisering';
+  String get notesUnavailable =>
+      'Frakoblet · Tekst tilgjengelig lokalt · Lagret lokalt · venter på synkronisering';
 
   @override
-  String get notesStorageFull => 'Nextcloud-lagringen er full. Frigjør plass på serveren og prøv igjen.';
+  String get notesStorageFull =>
+      'Nextcloud-lagringen er full. Frigjør plass på serveren og prøv igjen.';
 
   @override
-  String get notesRejected => 'Nextcloud avviste endringen. Kontroller notatet og lagre en lokal kopi før du prøver igjen.';
+  String get notesRejected =>
+      'Nextcloud avviste endringen. Kontroller notatet og lagre en lokal kopi før du prøver igjen.';
 
   @override
-  String get notesThrottled => 'Nextcloud ba om en pause. Synkroniseringen fortsetter etter ventefristen.';
+  String get notesThrottled =>
+      'Nextcloud ba om en pause. Synkroniseringen fortsetter etter ventefristen.';
 
   @override
   String get notesRecoveryRequired => 'Konflikter · Sammenlign';
@@ -5398,7 +5815,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesScanning => 'Skanner filer…';
 
   @override
-  String get notesCancelling => 'Avbryter… Venter på at gjeldende handling avsluttes.';
+  String get notesCancelling =>
+      'Avbryter… Venter på at gjeldende handling avsluttes.';
 
   @override
   String get notesCancelled => 'Avbrutt';
@@ -5410,7 +5828,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesTransferFailed => 'Mislyktes. Prøv igjen';
 
   @override
-  String get notesImportPartialHelp => 'Tidligere elementer kan allerede være lagret lokalt. Fortsett denne importen for å unngå duplikater.';
+  String get notesImportPartialHelp =>
+      'Tidligere elementer kan allerede være lagret lokalt. Fortsett denne importen for å unngå duplikater.';
 
   @override
   String get notesNotStarted => 'Ikke startet';
@@ -5419,7 +5838,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesCreated => 'Opprettet';
 
   @override
-  String get notesRemoteDeleteUnavailable => 'Serveradresse · Ikke støttet · Slett · Vedlegg';
+  String get notesRemoteDeleteUnavailable =>
+      'Serveradresse · Ikke støttet · Slett · Vedlegg';
 
   @override
   String get notesCurrentText => 'Gjeldende beholdte tekst';
@@ -5428,16 +5848,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesRecovering => 'Gjenoppretter som et nytt notat…';
 
   @override
-  String get notesReadOnlyHelp => 'Skrivebeskyttet · Favoritter · Lagre lokal kopi…';
+  String get notesReadOnlyHelp =>
+      'Skrivebeskyttet · Favoritter · Lagre lokal kopi…';
 
   @override
   String get notesSort => 'Sorter notater';
 
   @override
-  String get notesPathRelative => 'Notatmappens sti er relativ til Nextcloud-lagringen din.';
+  String get notesPathRelative =>
+      'Notatmappens sti er relativ til Nextcloud-lagringen din.';
 
   @override
-  String get notesSettingsStale => 'Innstillingene er endret i Nextcloud. Last inn og kontroller serververdiene før du erstatter utkastet.';
+  String get notesSettingsStale =>
+      'Innstillingene er endret i Nextcloud. Last inn og kontroller serververdiene før du erstatter utkastet.';
 
   @override
   String get notesDownloadsPaused => 'Nedlastinger satt på pause';
@@ -5446,16 +5869,20 @@ class AppLocalizationsNb extends AppLocalizations {
   String get notesExportNotPublished => 'Ingen eksport ble publisert.';
 
   @override
-  String get notesKeyringUnavailable => 'Lås opp skrivebordets nøkkelring og prøv igjen.';
+  String get notesKeyringUnavailable =>
+      'Lås opp skrivebordets nøkkelring og prøv igjen.';
 
   @override
-  String get notesConnectFailed => 'Kunne ikke koble til Nextcloud Notes. Kontroller serveradressen og prøv igjen.';
+  String get notesConnectFailed =>
+      'Kunne ikke koble til Nextcloud Notes. Kontroller serveradressen og prøv igjen.';
 
   @override
-  String get notesAccountMismatch => 'Logg inn på samme Nextcloud-konto. Fjern denne kontoen først for å koble til en annen.';
+  String get notesAccountMismatch =>
+      'Logg inn på samme Nextcloud-konto. Fjern denne kontoen først for å koble til en annen.';
 
   @override
-  String get notesLocalRemovalFailed => 'Lokal kontoopprydding mislyktes. Kontoen beholdes slik at du kan prøve å fjerne den igjen.';
+  String get notesLocalRemovalFailed =>
+      'Lokal kontoopprydding mislyktes. Kontoen beholdes slik at du kan prøve å fjerne den igjen.';
 
   @override
   String get notesTransferring => 'Overfører notater…';
@@ -5478,7 +5905,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage => 'Filnavnet inneholder byte som ikke er UTF-8. Git-gjennomgang og mellomlagring er fortsatt tilgjengelig; dokumentredigereren krever et UTF-8-filnavn.';
+  String get gitNonUtf8FilenameMessage =>
+      'Filnavnet inneholder byte som ikke er UTF-8. Git-gjennomgang og mellomlagring er fortsatt tilgjengelig; dokumentredigereren krever et UTF-8-filnavn.';
 
   @override
   String get gitUiMergeInProgress => 'Fletting pågår';
@@ -5496,7 +5924,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiPatchApplicationInProgress => 'Oppdateringsprogram pågår';
 
   @override
-  String get gitUiSquashMergeResultAwaitingCommit => 'Resultat av sammenslåing av Krusj i påvente av innmelding';
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Resultat av sammenslåing av Krusj i påvente av innmelding';
 
   @override
   String get gitUiUnresolvedIndexConflicts => 'Uløste indekskonflikter';
@@ -5520,16 +5949,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiNoStashes => 'Ingen lagre';
 
   @override
-  String get gitUiSelectAStashToInspectItsChanges => 'Velg et lager som skal undersøkes for endringene';
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Velg et lager som skal undersøkes for endringene';
 
   @override
   String get gitUiStashedUntrackedFiles => 'Stashed usporede filer';
 
   @override
-  String get gitUiInspectStashedUntrackedFiles => 'Undersøk om filer som ikke er sporet ...';
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Undersøk om filer som ikke er sporet ...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => 'Angi igjen lagerets trinnvise/indekstilstand ved anvendelse';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Angi igjen lagerets trinnvise/indekstilstand ved anvendelse';
 
   @override
   String get gitUiApplyAndRetain => 'Bruk og behold';
@@ -5547,7 +5979,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiBranchFromStash => 'Opprett gren fra stash';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => 'Opprett/ bytt til en gren ved den opprinnelige basen i lageret, og bruk den. Det opprinnelige lageret beholdes for eksplisitt senere sletting.';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Opprett/ bytt til en gren ved den opprinnelige basen i lageret, og bruk den. Det opprinnelige lageret beholdes for eksplisitt senere sletting.';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -5555,40 +5988,50 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => 'Det opprinnelige lageret beholdes hvis det tas i bruk konflikter.';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Det opprinnelige lageret beholdes hvis det tas i bruk konflikter.';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => 'Sletter denne lageroppføringa. Endringene blir ikke tatt i bruk.';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Sletter denne lageroppføringa. Endringene blir ikke tatt i bruk.';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => 'Løs de uflettede filene. Git har ingen kommando for å fortsette eller avbryte en stash; den opprinnelige stashen beholdes.';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Løs de uflettede filene. Git har ingen kommando for å fortsette eller avbryte en stash; den opprinnelige stashen beholdes.';
 
   @override
   String get gitUiStashNameMessage => 'Stash-navn/melding';
 
   @override
-  String get gitUiStashContentAndResultingIndex => 'Stash-innhold og resultatindeks';
+  String get gitUiStashContentAndResultingIndex =>
+      'Stash-innhold og resultatindeks';
 
   @override
-  String get gitUiStashTrackedWorkingAndStagedChanges => 'Stopp arbeidende og trinnvise endringer';
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Stopp arbeidende og trinnvise endringer';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => 'Stash endringer og la indeksinnholdet bli stående (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Stash endringer og la indeksinnholdet bli stående (--keep-index)';
 
   @override
-  String get gitUiStashOnlyStagedChangesStaged => 'Stash bare endringene i indeksen (--staged)';
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Stash bare endringene i indeksen (--staged)';
 
   @override
   String get gitUiIncludeUntrackedFiles => 'Ta med usporede filer';
 
   @override
-  String get gitUiAllEligiblePathsInThisRepository => 'Alle relevante stier i dette arkivet';
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Alle relevante stier i dette arkivet';
 
   @override
-  String get gitUiNoEligibleChangesForTheseStashOptions => 'Ingen relevante endringer for disse lagre- valgene.';
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Ingen relevante endringer for disse lagre- valgene.';
 
   @override
-  String get gitUiSelectAtLeastOneEligiblePath => 'Velg minst én sti som skal velges.';
+  String get gitUiSelectAtLeastOneEligiblePath =>
+      'Velg minst én sti som skal velges.';
 
   @override
   String get gitUiCreateStash2 => 'Opprett stash';
@@ -5597,7 +6040,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCreateWorktree => 'Lag arbeidstre ...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => 'Opprett en commit før du oppretter et arbeidstre ved HEAD.';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'Opprett en commit før du oppretter et arbeidstre ved HEAD.';
 
   @override
   String get gitUiDetachedHEAD => 'Frakoblet HEAD';
@@ -5636,7 +6080,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRemoveCleanWorktree => 'Fjern rent arbeidstre ...';
 
   @override
-  String get gitUiReviewRemovalIncludingLocalChanges => 'Gjennomgå fjerning med lokale endringer ...';
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Gjennomgå fjerning med lokale endringer ...';
 
   @override
   String get gitUiNewWorktreeFolderName => 'Nytt mappenavn i arbeidstreet';
@@ -5645,7 +6090,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiNewWorktreeBranch => 'Ny gren i arbeidstreet';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return 'Opprett $arg0/$arg1 med en ny lokal gren ved $arg2 ($arg3).';
   }
 
@@ -5656,19 +6106,25 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRemoveWorktree => 'Fjerne arbeidstre?';
 
   @override
-  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => 'Uttrykkelig forkast alle lokale endringer som er sporet/ ikke sporet i dette arbeidstreet. Låste/ i bruk vil fortsatt være beskyttet.';
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Uttrykkelig forkast alle lokale endringer som er sporet/ ikke sporet i dette arbeidstreet. Låste/ i bruk vil fortsatt være beskyttet.';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'Git nekter å fjerne filer hvis det er lokale endringer, filer som ikke er sporet, eller en lås.';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git nekter å fjerne filer hvis det er lokale endringer, filer som ikke er sporet, eller en lås.';
 
   @override
-  String get gitUiDiscardLocalWorktreeContentsAndRemove => 'Forkast lokalt innhold i arbeidstreet og fjern';
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Forkast lokalt innhold i arbeidstreet og fjern';
 
   @override
   String get gitUiRemoveCleanWorktree2 => 'Fjern rent arbeidstre';
 
   @override
-  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => 'Gjentas uttrykkelig i nestede undermoduler for oppdateringer/synkronisering';
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Gjentas uttrykkelig i nestede undermoduler for oppdateringer/synkronisering';
 
   @override
   String get gitUiNoRecordedSubmodules => 'Ingen registrerte undermoduler';
@@ -5697,19 +6153,24 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiInitializeConfiguration => 'Klargjør oppsett';
 
   @override
-  String get gitUiUpdateToParentSRecordedCommit => 'Oppdater til foreldrens registrerte innlevering ...';
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Oppdater til foreldrens registrerte innlevering ...';
 
   @override
-  String get gitUiFollowConfiguredRemoteBranch => 'Følg oppsatte fjerngrener ...';
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Følg oppsatte fjerngrener ...';
 
   @override
-  String get gitUiSynchronizeConfiguredURLs => 'Synkroniser oppsatte URL- er ...';
+  String get gitUiSynchronizeConfiguredURLs =>
+      'Synkroniser oppsatte URL- er ...';
 
   @override
-  String get gitUiStageCurrentSubmodulePointerInParent => 'Den gjeldende undermodulpekeren i trinnet i forelderen';
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Den gjeldende undermodulpekeren i trinnet i forelderen';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => 'Forelder - og undermodulen sender inn, skyver, og skitten tilstand forblir atskilt. Nettlesing klargjør eller oppdaterer dem ikke.';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Forelder - og undermodulen sender inn, skyver, og skitten tilstand forblir atskilt. Nettlesing klargjør eller oppdaterer dem ikke.';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -5717,12 +6178,17 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
     return 'Klargjør om nødvendig og sjekk nøyaktig $arg0. Rekursiv: $arg1.';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
     return 'Bruk den gjennomgangsoperasjonen for oppsett av undermoduler. Rekursiv: $arg0.';
   }
 
@@ -5730,7 +6196,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiApplySubmoduleOperation => 'Utfør undermodul- operasjon';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => 'Undersøker en registrert revisjon eller oppretter en gjenvinningsgren. Reflog gjenvinner ikke vilkårlig ulagret innhold.';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Undersøker en registrert revisjon eller oppretter en gjenvinningsgren. Reflog gjenvinner ikke vilkårlig ulagret innhold.';
 
   @override
   String get gitUiSelectAReflogEntry => 'Velg en reflog- oppføring';
@@ -5753,7 +6220,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCreateRecoveryBranch => 'Opprett gjenopprettingsgren ...';
 
   @override
-  String get gitUiReadOnlyRecoverySnapshot => 'Skjermbilde med skrivebeskyttet gjenoppretting';
+  String get gitUiReadOnlyRecoverySnapshot =>
+      'Skjermbilde med skrivebeskyttet gjenoppretting';
 
   @override
   String get gitUiInspectSnapshot => 'Inspiser skjermbildet ...';
@@ -5767,13 +6235,17 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'En Git- teksthistorie må ha sitt redigerbare felt.';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'En Git- teksthistorie må ha sitt redigerbare felt.';
 
   @override
-  String get gitUiEditHEADIndexWorkingTree => 'Rediger HEAD | Indeks | Arbeidstre…';
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Rediger HEAD | Indeks | Arbeidstre…';
 
   @override
-  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => 'Indeksen eller arbeidsinnholdet som ble gjennomgått ble endret. Oppdater denne sammenlikningen før mellomlagring.';
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Indeksen eller arbeidsinnholdet som ble gjennomgått ble endret. Oppdater denne sammenlikningen før mellomlagring.';
 
   @override
   String get gitUiRefreshComparison => 'Frisk opp sammenlikning';
@@ -5830,7 +6302,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiStagingActions2 => 'Indekshandlinger…';
 
   @override
-  String get gitUiUnstageSelectedChangedLines => 'Fjern valgte endrede linjer fra indeks';
+  String get gitUiUnstageSelectedChangedLines =>
+      'Fjern valgte endrede linjer fra indeks';
 
   @override
   String get gitUiStageSelectedChangedLines => 'Klargjør valgte endrede linjer';
@@ -5842,34 +6315,47 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiStageWholeFile => 'Klargjør hele filen';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
     return '$arg0- tomrom bare endrede linjer skjult · Vis nøyaktige endringer';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
     return '$arg0 endrede linjer valgt.';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => 'Skrivebeskyttet sammenligning · Kopier tekst eller juster visningen.';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Skrivebeskyttet sammenligning · Kopier tekst eller juster visningen.';
 
   @override
   String get gitUiNoFinalNewline => ' · ingen endelig linjeskift';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return '$arg0 · $arg1 · $arg2 byte$arg3';
   }
 
   @override
-  String get gitUiTextComparisonIsUnavailableForTheseContents => 'Sammenlikning av tekst er ikke tilgjengelig for dette innholdet.';
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'Sammenlikning av tekst er ikke tilgjengelig for dette innholdet.';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => 'Denne sammenlikningen overskrider grensen for tekstgjennomgåelse. Innholdet er ikke erklært identisk.';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Denne sammenlikningen overskrider grensen for tekstgjennomgåelse. Innholdet er ikke erklært identisk.';
 
   @override
-  String get gitUiTheComparedContentsAreIdentical => 'Sammenlignet innhold er identisk.';
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Sammenlignet innhold er identisk.';
 
   @override
   String get gitUiUnstage => 'Ufaset';
@@ -5900,7 +6386,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiWritingReviewedIndexResult => 'Skriver gjennomgått indeksresultat';
+  String get gitUiWritingReviewedIndexResult =>
+      'Skriver gjennomgått indeksresultat';
 
   @override
   String get gitUiHead => 'HEAD';
@@ -5929,7 +6416,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiReloadIndexReview => 'Laste indeksen på nytt på nytt?';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => 'Last inn gjeldende HEAD-, indeks- og arbeidsversjoner på nytt. Dette erstatter det ulagrede utkastet i indeksredigeringen.';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Last inn gjeldende HEAD-, indeks- og arbeidsversjoner på nytt. Dette erstatter det ulagrede utkastet i indeksredigeringen.';
 
   @override
   String get gitUiReplaceDraftAndReload => 'Erstatt kladd og last på nytt';
@@ -5938,24 +6426,32 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiReloadVersions => 'Last inn på nytt versjoner ...';
 
   @override
-  String get gitUiWriteEditedResultToThisIndexEntry => 'Skriv redigert resultat til denne indeksoppføringa';
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Skriv redigert resultat til denne indeksoppføringa';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => 'Arbeidsfiler blir værende på disken. Gjennomgå den redigerte indeksen før du søker.';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Arbeidsfiler blir værende på disken. Gjennomgå den redigerte indeksen før du søker.';
 
   @override
-  String get gitUiReviewIndexTextFormatChanges => 'Gjennomgå endringer i tekstformat i indeksen';
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Gjennomgå endringer i tekstformat i indeksen';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
     return 'Oppdater bare den reviderte indeksoppføringa for $arg0. $arg1';
   }
 
   @override
-  String get gitUiWriteReviewedIndexResult => 'Skriv gjennomgått indeksresultat';
+  String get gitUiWriteReviewedIndexResult =>
+      'Skriv gjennomgått indeksresultat';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => 'Resultatet er endret under gjennomgangen av formatet. Se over det igjen.';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Resultatet er endret under gjennomgangen av formatet. Se over det igjen.';
 
   @override
   String get gitUiSynchronizeScrolling => 'Synkroniser rulling';
@@ -5967,7 +6463,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiEditableIndexContent => 'Redigerbart innhold i indeksen';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => 'Den etterspurte revisjonen er utenfor gjeldende filtre. Tilbakestill filtrene til å vise den.';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Den etterspurte revisjonen er utenfor gjeldende filtre. Tilbakestill filtrene til å vise den.';
 
   @override
   String get gitUiFilterLog => 'Filterlogg';
@@ -6034,7 +6531,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiCompareTwoSelectedRevisions => 'Sammenlikne to markerte revisjoner ...';
+  String get gitUiCompareTwoSelectedRevisions =>
+      'Sammenlikne to markerte revisjoner ...';
 
   @override
   String get gitUiToggleBranchesPane => 'Slå grener av/ på';
@@ -6074,7 +6572,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiTags => 'Tagger';
 
   @override
-  String get gitUiNoCommitsMatchTheCurrentFilters => 'Ingen innsending stemmer med gjeldende filtre.';
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Ingen innsending stemmer med gjeldende filtre.';
 
   @override
   String get gitUiObjectID => 'Objekt- ID';
@@ -6127,10 +6626,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => 'Grense for hele/ deler: et overliggende objekt er ikke tilgjengelig.';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Grense for hele/ deler: et overliggende objekt er ikke tilgjengelig.';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => 'Forelderen er utenfor denne siden eller en grunn grense.';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Forelderen er utenfor denne siden eller en grunn grense.';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -6159,7 +6660,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRevertCommit => 'Tilbakestill innsending';
 
   @override
-  String get gitUiInteractiveRebaseAfterThisBoundary => 'Interaktiv rebase etter denne grensen';
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Interaktiv rebase etter denne grensen';
 
   @override
   String get gitUiResetCurrentBranch => 'Tilbakestill gjeldende gren';
@@ -6168,16 +6670,21 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiGoToCommitReference2 => 'Gå til inn-/referanse';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog => 'Oppgi en innsendings- ID eller referanse som viser i logg.';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Oppgi en innsendings- ID eller referanse som viser i logg.';
 
   @override
-  String get gitUiTheRequestedRevisionIsUnavailable => 'Den etterspurte revisjonen er ikke tilgjengelig.';
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Den etterspurte revisjonen er ikke tilgjengelig.';
 
   @override
-  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => 'Metadata fra arkivet er skrivebeskyttet. Det finnes fortsatt inspeksjon og sammenlikning av avdelinger.';
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Metadata fra arkivet er skrivebeskyttet. Det finnes fortsatt inspeksjon og sammenlikning av avdelinger.';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => 'Arbeidsfiler er ikke tilgjengelig eller skrivebeskyttet. Det er ikke mulig å bytte gren og flette.';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Arbeidsfiler er ikke tilgjengelig eller skrivebeskyttet. Det er ikke mulig å bytte gren og flette.';
 
   @override
   String get gitUiSearchBranchesAndTags => 'Søk i grener og tagger';
@@ -6219,7 +6726,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCompareToCurrentHEAD => 'Sammenlign med gjeldende HEAD';
 
   @override
-  String get gitUiMergeIntoCurrentBranch => 'Flett sammen til gjeldende gren ...';
+  String get gitUiMergeIntoCurrentBranch =>
+      'Flett sammen til gjeldende gren ...';
 
   @override
   String get gitUiRename => 'Endre navn ...';
@@ -6281,7 +6789,10 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 Target $arg1 Lokal sletting bare. En gren som ikke er samlet blir nektet.';
   }
 
@@ -6299,7 +6810,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiDeleteUnmergedLocalBranch => 'Slett den lokale grenen som ikke er flettet sammen';
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Slett den lokale grenen som ikke er flettet sammen';
 
   @override
   String gitUiDestinationArg0Arg1(String arg0, String arg1) {
@@ -6325,16 +6837,20 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiSquashIntoStagedChanges => 'Squash inn i trinnvise endringer';
 
   @override
-  String get gitUiStopBeforeCreatingTheMergeCommit => 'Stopp før det opprettes en flettingsinnsending';
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Stopp før det opprettes en flettingsinnsending';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => 'Spoling fremover er deaktivert slik at HEAD ikke flyttes før gjennomgangen.';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'Spoling fremover er deaktivert slik at HEAD ikke flyttes før gjennomgangen.';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => 'Legger igjen iscenesatte endringer for en egen innsending. Dette er ikke en fortsatt fletting.';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Legger igjen iscenesatte endringer for en egen innsending. Dette er ikke en fortsatt fletting.';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => 'Konflikter er fortsatt tilgjengelige på det felles arbeidsområdet for oppløsning.';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Konflikter er fortsatt tilgjengelige på det felles arbeidsområdet for oppløsning.';
 
   @override
   String get gitUiAddRemote => 'Legg til fjernstyring ...';
@@ -6371,10 +6887,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRepositoryURLOrLocalSource => 'Arkiv- URL eller lokal kilde';
 
   @override
-  String get gitUiEnterTheExactReviewedDestinationToRemove => 'Oppgi nøyaktig gjennomgått mål som skal fjernes. @ info: whatsthis';
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Oppgi nøyaktig gjennomgått mål som skal fjernes. @ info: whatsthis';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => 'Påloggingsinformasjon leveres av oppsatte hjelpeprogrammer eller en privat forespørsel.';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Påloggingsinformasjon leveres av oppsatte hjelpeprogrammer eller en privat forespørsel.';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -6382,13 +6900,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => 'Fjerner lokale nettverksoppsett og sporingsreferanser. Det sletter ikke tjenerlageret.';
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Fjerner lokale nettverksoppsett og sporingsreferanser. Det sletter ikke tjenerlageret.';
 
   @override
   String get gitUiRemoveRemote2 => 'Fjern fjernstyring';
 
   @override
-  String get gitUiCommitScopeEntireRepository => 'Innlever inn område: hele arkivet';
+  String get gitUiCommitScopeEntireRepository =>
+      'Innlever inn område: hele arkivet';
 
   @override
   String get gitUiCachedTracking => 'Mellomlagret sporing';
@@ -6397,10 +6918,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiAmendLastCommit => 'Endre siste commit';
 
   @override
-  String get gitUiConfiguredHooksAndSigningAreRespected => 'Konfigurerte kroker og signeringer respekteres.';
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Konfigurerte kroker og signeringer respekteres.';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => 'Skriver om den valgte HEAD-commiten. Ekstern sporing beviser ikke at den er upublisert.';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Skriver om den valgte HEAD-commiten. Ekstern sporing beviser ikke at den er upublisert.';
 
   @override
   String get gitUiRepository => 'Kodelager';
@@ -6417,18 +6940,25 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRepositoryActions => 'Kodelagerhandlinger';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
     return 'Mellomlagret sporing · $upstream · $ahead foran · $behind bak';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => 'Bare lager · ingen arbeidstre. Åpne logg for å undersøke historien.';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Bare lager · ingen arbeidstre. Åpne logg for å undersøke historien.';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => 'Arkiv med skrivebeskyttet fil · mellomlagring og innsendinger er ikke tilgjengelig.';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Arkiv med skrivebeskyttet fil · mellomlagring og innsendinger er ikke tilgjengelig.';
 
   @override
-  String get gitUiRepositoryStatusUnavailable => 'Lagerstatus ikke tilgjengelig';
+  String get gitUiRepositoryStatusUnavailable =>
+      'Lagerstatus ikke tilgjengelig';
 
   @override
   String gitUiAmendRevision(String revision) {
@@ -6439,10 +6969,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiAddSignOffTrailer => 'Legg til godkjenningslinje';
 
   @override
-  String get gitUiUseConfiguredSigningPolicy => 'Bruk oppsett signeringspraksis';
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Bruk oppsett signeringspraksis';
 
   @override
-  String get gitUiCryptographicallySignThisCommit => 'Kryptografisk signering av denne innmeldingen';
+  String get gitUiCryptographicallySignThisCommit =>
+      'Kryptografisk signering av denne innmeldingen';
 
   @override
   String get gitUiDoNotSignThisCommit => 'Ikke signer denne innsendingen';
@@ -6451,10 +6983,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRecentCommitMessages => 'Nylig innsendte meldinger ...';
 
   @override
-  String get gitUiUseConfiguredCommitTemplate => 'Bruk den oppsatte innsendingsmalen ...';
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Bruk den oppsatte innsendingsmalen ...';
 
   @override
-  String get gitUiAuthorIdentityAndConfiguredHooks => 'Forfatteridentitet og oppsatte kroker ...';
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Forfatteridentitet og oppsatte kroker ...';
 
   @override
   String get gitUiDraftMessage => 'Kladd melding ...';
@@ -6488,7 +7022,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCommitAndPush => 'Commit og push…';
 
   @override
-  String get gitUiNoReadableCommitTemplateIsConfigured => 'Det er ikke satt opp en lesbar innmeldingsmal.';
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Det er ikke satt opp en lesbar innmeldingsmal.';
 
   @override
   String get gitUiCommitIdentityAndHooks => 'Meld inn identitet og kroker';
@@ -6500,7 +7035,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiReplaceMessageDraft => 'Erstatte kladd?';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => 'Erstatte den eksisterende sende- meldinga med den valgte meldinga?';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Erstatte den eksisterende sende- meldinga med den valgte meldinga?';
 
   @override
   String get gitUiReplaceDraft => 'Erstatt kladd';
@@ -6511,7 +7047,9 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
     return 'Lokalt innmeldingsmelding for $arg0 finnes. Gjennomgå logg før det forsøkes en annen innsending. Kladdet er blitt beholdt.';
   }
 
@@ -6538,7 +7076,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage => 'En godkjenningslinje er en erklæring i meldingen, atskilt fra en kryptografisk signatur. Identiteten lagres bare i dette kodelagerets lokale innstillinger; utkastet beholdes.';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'En godkjenningslinje er en erklæring i meldingen, atskilt fra en kryptografisk signatur. Identiteten lagres bare i dette kodelagerets lokale innstillinger; utkastet beholdes.';
 
   @override
   String get gitUiSaveRepositoryIdentity => 'Lagre arkiv- identitet';
@@ -6614,7 +7153,10 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 bytes · $arg1 Erstatter innhold som virker med indeksen, eller sletter denne usporede fila. Innholdet i et trinn blir beholdt. Ulagrede vertsdokumenter må gjennomgås først.';
   }
 
@@ -6630,7 +7172,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => 'Dette fjerner referansen for hvert faktiske skyvemål oppført nedenfor. Lokale grener/ merker beholdes. Forventede tips er fastsatt i denne gjennomgangen.';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Dette fjerner referansen for hvert faktiske skyvemål oppført nedenfor. Lokale grener/ merker beholdes. Forventede tips er fastsatt i denne gjennomgangen.';
 
   @override
   String get gitUiReferenceDoesNotExist => 'referansen finnes ikke';
@@ -6649,10 +7192,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => 'De eksakte tipsene over blir fjernet. Alle endrede fjerntips stopper operasjonen for en ny gjennomgang.';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'De eksakte tipsene over blir fjernet. Alle endrede fjerntips stopper operasjonen for en ny gjennomgang.';
 
   @override
-  String get gitUiReviewAndDeleteFromRemote => 'Gjennomgå og slett fra fjernstyring ...';
+  String get gitUiReviewAndDeleteFromRemote =>
+      'Gjennomgå og slett fra fjernstyring ...';
 
   @override
   String get gitUiDestinationReference => 'Bestemmelsessted';
@@ -6669,13 +7214,15 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => 'Et mål har sendt inn som ikke er tilgjengelig lokalt. Hent det reviderte målet før du gjennomgår utgående historie.';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Et mål har sendt inn som ikke er tilgjengelig lokalt. Hent det reviderte målet før du gjennomgår utgående historie.';
 
   @override
   String get gitUiFetchReviewedDestination => 'Hent gjennomsøkt mål';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => 'Velg et mål og gjennomgå utgående innmeldinger.';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Velg et mål og gjennomgå utgående innmeldinger.';
 
   @override
   String get gitUiNoOutgoingCommits => 'Ingen utgående innmeldinger';
@@ -6684,13 +7231,16 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiSelectAnOutgoingCommit => 'Velg en utgående innmelding';
 
   @override
-  String get gitUiLoadMoreOutgoingCommits => 'Last inn flere utgående innmeldinger';
+  String get gitUiLoadMoreOutgoingCommits =>
+      'Last inn flere utgående innmeldinger';
 
   @override
-  String get gitUiSetThisDestinationAsUpstream => 'Sett dette målet som oppstrøms';
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Sett dette målet som oppstrøms';
 
   @override
-  String get gitUiChooseExactTagsToPublish => 'Velg nøyaktige etiketter å publisere';
+  String get gitUiChooseExactTagsToPublish =>
+      'Velg nøyaktige etiketter å publisere';
 
   @override
   String get gitUiTagsNone => 'Merker: ingen';
@@ -6706,19 +7256,23 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => 'Push ferdig. Den lokale innmeldingen er fortsatt tilgjengelig i Logg.';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Push ferdig. Den lokale innmeldingen er fortsatt tilgjengelig i Logg.';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => 'Tvungen push krever nøyaktig de målrevisjonene som er vist i denne gjennomgangen.';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Tvungen push krever nøyaktig de målrevisjonene som er vist i denne gjennomgangen.';
 
   @override
-  String get gitUiForceWithReviewedLease => 'Kraft med gjennomgått leieavtale ...';
+  String get gitUiForceWithReviewedLease =>
+      'Kraft med gjennomgått leieavtale ...';
 
   @override
   String get gitUiPush => 'Push';
 
   @override
-  String get gitUiForcePushWithReviewedLeases => 'Tvinge på med reviderte leieavtaler?';
+  String get gitUiForcePushWithReviewedLeases =>
+      'Tvinge på med reviderte leieavtaler?';
 
   @override
   String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
@@ -6726,13 +7280,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => 'Andre kan allerede bruke denne historikken. Henting i bakgrunnen fornyer ikke denne sikkerhetsbetingelsen.';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Andre kan allerede bruke denne historikken. Henting i bakgrunnen fornyer ikke denne sikkerhetsbetingelsen.';
 
   @override
   String get gitUiForceWithLease => 'Kraft med leieavtale';
 
   @override
-  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => 'Resultatet er usikkert. Gjennomgå mål igjen før et annet trykk.';
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Resultatet er usikkert. Gjennomgå mål igjen før et annet trykk.';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -6743,10 +7300,13 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRemoteToFetch => 'Nettverkstjener som skal hentes';
 
   @override
-  String get gitUiPruneDeletedRemoteTrackingBranches => 'Fjernsorterte, slettede fjernsporende grener';
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Fjernsorterte, slettede fjernsporende grener';
 
   @override
-  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => 'Hent oppdateringsinformasjon fra nettverket uten å erstatte filer.';
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Hent oppdateringsinformasjon fra nettverket uten å erstatte filer.';
 
   @override
   String get gitUiFetch => 'Hent';
@@ -6767,37 +7327,47 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRebase => 'Rebase';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => 'Stopp hvis målet ikke kan gå forover, aldri slå sammen eller gjenopprett.';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Stopp hvis målet ikke kan gå forover, aldri slå sammen eller gjenopprett.';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => 'Flett sammen med en fletting, herunder når fort forover er mulig.';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Flett sammen med en fletting, herunder når fort forover er mulig.';
 
   @override
-  String get gitUiMergeAllowFastForwardWhenPossible => 'Flett sammen, tillat forover dersom mulig.';
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Flett sammen, tillat forover dersom mulig.';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => 'Start lokal historie på nytt samtidig som lokal fletting lagres.';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Start lokal historie på nytt samtidig som lokal fletting lagres.';
 
   @override
-  String get gitUiRebaseLocalCommitsAsALinearHistory => 'Lokalt innlegg på nytt som en lineær historie.';
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Lokalt innlegg på nytt som en lineær historie.';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'Git er satt opp for interaktiv rebase. Velg en dra- strategi her, eller åpne og åpne Rebase ... for å gjennomgå en plan.';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git er satt opp for interaktiv rebase. Velg en dra- strategi her, eller åpne og åpne Rebase ... for å gjennomgå en plan.';
 
   @override
-  String get gitUiUseReviewedOrdinaryRebaseForThisPull => 'Bruk gjennomgått ordinær rebase for dette trekket';
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Bruk gjennomgått ordinær rebase for dette trekket';
 
   @override
   String get gitUiOptions => 'Valg';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommitNoFastForward => 'Lag alltid en fletting (ingen forover)';
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Lag alltid en fletting (ingen forover)';
 
   @override
-  String get gitUiPreserveLocalMergeCommits => 'Bevar lokale fletteinnføyninger';
+  String get gitUiPreserveLocalMergeCommits =>
+      'Bevar lokale fletteinnføyninger';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => 'Lokale endringer kan hindre trekk. Gjennomgå/ta med dem, eller lag et lager uttrykkelig.';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Lokale endringer kan hindre trekk. Gjennomgå/ta med dem, eller lag et lager uttrykkelig.';
 
   @override
   String get gitUiStashes => 'Stasher';
@@ -6809,7 +7379,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiPullWithSelectedStrategy => 'Dra med valgt strategi';
 
   @override
-  String get gitUiRepositoryURLOrLocalGitSource => 'Arkiv- URL eller lokal Git- kilde';
+  String get gitUiRepositoryURLOrLocalGitSource =>
+      'Arkiv- URL eller lokal Git- kilde';
 
   @override
   String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH eller lokal sti';
@@ -6824,19 +7395,23 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiChoose => 'Velg ...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => 'Lager bare Git- metadata. Eksisterende filer er ikke i e- post eller er i e- post.';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Lager bare Git- metadata. Eksisterende filer er ikke i e- post eller er i e- post.';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => 'Målmappen må ikke finnes eller må være tom. Eksisterende brukerdata overskrives aldri.';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Målmappen må ikke finnes eller må være tom. Eksisterende brukerdata overskrives aldri.';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => 'Filialen som ble valgt først · blank bruker effektiv Git- praksis';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Filialen som ble valgt først · blank bruker effektiv Git- praksis';
 
   @override
   String get gitUiSelectedBranchOptional => 'Valgt gren · valgfritt';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => 'Rekursivt innledende/ajourførte undermoduler';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Rekursivt innledende/ajourførte undermoduler';
 
   @override
   String get gitUiPreparingGitOperation => 'Forbereder Git- operasjonen ...';
@@ -6845,10 +7420,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiThisAttemptCreated => 'Dette forsøket opprettet';
 
   @override
-  String get gitUiTheDestinationExistedBeforeThisAttempt => 'Målet eksisterte før dette forsøket:';
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Målet eksisterte før dette forsøket:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => 'Mappa blir stående for inspeksjon. Se gjennom den før et annet kloneforsøk.';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Mappa blir stående for inspeksjon. Se gjennom den før et annet kloneforsøk.';
 
   @override
   String get gitUiNoDestinationDirectoryRemains => 'Ingen målmappe gjenstår.';
@@ -6884,10 +7461,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiUseUpstreamAsNewBase => 'Bruk oppstrøms som ny base';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog => 'Velg en gyldig gren, tagg eller send fra logg.';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Velg en gyldig gren, tagg eller send fra logg.';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => 'Første beholdte commit i en grenblokk kan ikke være squash eller fixup: den har ingen foregående målcommit.';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Første beholdte commit i en grenblokk kan ikke være squash eller fixup: den har ingen foregående målcommit.';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -6895,13 +7474,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiRewordWillRequestANewMessage => '[Åpne ord vil be om en ny melding]\n';
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Åpne ord vil be om en ny melding]\n';
 
   @override
   String get gitUiPlannedCommitMessages => 'Planlagte meldinger';
 
   @override
-  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => 'Forhåndsvisning av original/sammensatt melding · Git ber om de siste om ord/forhåndsmeldinger';
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Forhåndsvisning av original/sammensatt melding · Git ber om de siste om ord/forhåndsmeldinger';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -6917,7 +7499,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiDetachedHEAD2 => 'Frakoblet HEAD';
 
   @override
-  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => 'Rebase skriver om commit-identiteter. Sporingsdata for eksterne grener beviser ikke at historikken aldri er publisert.';
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Rebase skriver om commit-identiteter. Sporingsdata for eksterne grener beviser ikke at historikken aldri er publisert.';
 
   @override
   String get gitUiIncludeRootCommits => 'Ta med rotcommiter';
@@ -6943,10 +7527,14 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => 'Omfatter alle rot- innsendinger som kan nås fra denne grenen.';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Omfatter alle rot- innsendinger som kan nås fra denne grenen.';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
     return 'Commiter etter $boundary brukes på nytt oppå $base; selve grensecommiten er utelatt.';
   }
 
@@ -6954,10 +7542,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRoot => 'Rot';
 
   @override
-  String get gitUiGitBranchLabelResetMergeStructure => 'Git gren/etikett/gjenoppbygging/flettingsstruktur';
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Git gren/etikett/gjenoppbygging/flettingsstruktur';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => 'Velg en eksplisitt gammel grense eller rotmodus, og forbered planen.';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Velg en eksplisitt gammel grense eller rotmodus, og forbered planen.';
 
   @override
   String get gitUiMoveUp => 'Flytt opp';
@@ -6974,13 +7564,16 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectACommitForDetailsAndChangedFiles => 'Velg en innsending for detaljer og endrede filer';
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Velg en innsending for detaljer og endrede filer';
 
   @override
-  String get gitUiPreviewCombinedCommitMessages => 'Forhåndsvis kombinerte meldinger ...';
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Forhåndsvis kombinerte meldinger ...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt+↑/↓ flytter den valgte innmeldinga. Ikke- relaterte grenreferanser blir ikke oppdatert automatisk.';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+↑/↓ flytter den valgte innmeldinga. Ikke- relaterte grenreferanser blir ikke oppdatert automatisk.';
 
   @override
   String get gitUiCancelPlan => 'Avbryt plan';
@@ -6989,7 +7582,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiStartReviewedRebase => 'Starte gjennomgått rebase?';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
     return 'Omskriving av $arg0 planlagte innsendinger på $arg1. Nedfelte innsendinger er fortsatt synlig markert i denne planen til du starter.';
   }
 
@@ -7003,36 +7599,49 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiStoppedForEditingAmend => ' · stoppet for redigering/endring';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => 'Dette er indeksoppføringer som ikke er flettet sammen, muligens fra et lagerprogram. Git har ingen lagerinnstillinger, eller avbryt kommandoen.';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Dette er indeksoppføringer som ikke er flettet sammen, muligens fra et lagerprogram. Git har ingen lagerinnstillinger, eller avbryt kommandoen.';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => 'Rediger arbeidsfilene, etappe og endre gjeldende e- post, og fortsett så med denne ny base.';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Rediger arbeidsfilene, etappe og endre gjeldende e- post, og fortsett så med denne ny base.';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
     return '$arg0$arg1 · uflettede indekstrinn $arg2';
   }
 
   @override
-  String get gitUiTheIndexHasNoUnresolvedEntries => 'Indeksen har ingen uløste oppføringer.';
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Indeksen har ingen uløste oppføringer.';
 
   @override
-  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => 'Behold denne innmeldinga som en tom innsending';
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Behold denne innmeldinga som en tom innsending';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => 'Den virkelige indeksen har ingen trinnvise endringer. Lag en eksplisitt tom inntasting, fortsett så sekvenseren hvis den fortsatt er aktiv.';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Den virkelige indeksen har ingen trinnvise endringer. Lag en eksplisitt tom inntasting, fortsett så sekvenseren hvis den fortsatt er aktiv.';
 
   @override
   String get gitUiKeepEmptyCommit => 'Behold tom innsending ...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'Git prøver å gå tilbake til operasjonens start. Det garanteres ikke at tidligere innhold utenfor indeksen, usporede filer eller ulagrede endringer kan gjenopprettes.';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git prøver å gå tilbake til operasjonens start. Det garanteres ikke at tidligere innhold utenfor indeksen, usporede filer eller ulagrede endringer kan gjenopprettes.';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => 'Hopp over den aktuelle forpliktelsen og fortsett med den neste planlagte forpliktelsen.';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Hopp over den aktuelle forpliktelsen og fortsett med den neste planlagte forpliktelsen.';
 
   @override
-  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => 'Gløym denne operasjonens bokføring samtidig som gjeldende filer og innholdsfortegnelse beholdes.';
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Gløym denne operasjonens bokføring samtidig som gjeldende filer og innholdsfortegnelse beholdes.';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -7040,10 +7649,12 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiReloadConflictVersions => 'Laste inn konfliktversjoner på nytt?';
+  String get gitUiReloadConflictVersions =>
+      'Laste inn konfliktversjoner på nytt?';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => 'Erstatt kladden til det ulagrede resultatet med gjeldende arbeidsfil. Lagret arbeidsinnhold beholdes.';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Erstatt kladden til det ulagrede resultatet med gjeldende arbeidsfil. Lagret arbeidsinnhold beholdes.';
 
   @override
   String get gitUiLoadingConflictVersions => 'Laster konfliktversjoner ...';
@@ -7058,7 +7669,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiBaseRight => 'Basis → høyre';
 
   @override
-  String get gitUiNoBaseEntryForThisConflict => 'Ingen grunnoppføring for denne konflikten';
+  String get gitUiNoBaseEntryForThisConflict =>
+      'Ingen grunnoppføring for denne konflikten';
 
   @override
   String get gitUiAcceptEntireLeftFile => 'Godta hele fila til venstre ...';
@@ -7076,12 +7688,18 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiManualResolution => 'Manuell oppløsning';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
     return 'Regionen $arg0/$arg1 · $arg2 gjennomgått';
   }
 
   @override
-  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => 'Kildejusteringen gikk over sammenligningsgrensen for tekst; kilderutene er fortsatt tilgjengelige for manuell gjennomgang.';
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Kildejusteringen gikk over sammenligningsgrensen for tekst; kilderutene er fortsatt tilgjengelige for manuell gjennomgang.';
 
   @override
   String get gitUiAcceptLeftRegion => 'Godta venstre område';
@@ -7090,19 +7708,23 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiAcceptRightRegion => 'Godta høyre region';
 
   @override
-  String get gitUiKeepManualResultForRegion => 'Behold manuelt resultat for regionen';
+  String get gitUiKeepManualResultForRegion =>
+      'Behold manuelt resultat for regionen';
 
   @override
-  String get gitUiApplyGitSNonConflictingChanges => 'Bruk Git sine ikke- konvekse endringer?';
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Bruk Git sine ikke- konvekse endringer?';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => 'Bytt ut kladden for gjeldende resultat med Git sin fletteforhåndsvisning. Dette forkaster manuelle endringer for ulagrede resultater, fila er uendret til Lagre.';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Bytt ut kladden for gjeldende resultat med Git sin fletteforhåndsvisning. Dette forkaster manuelle endringer for ulagrede resultater, fila er uendret til Lagre.';
 
   @override
   String get gitUiUseMergePreview => 'Bruk forhåndsvisning av fletting';
 
   @override
-  String get gitUiApplyNonConflictingChanges => 'Bruk ikke- sammenflettende endringer ...';
+  String get gitUiApplyNonConflictingChanges =>
+      'Bruk ikke- sammenflettende endringer ...';
 
   @override
   String get gitUiLeftSource => 'Venstre kilde';
@@ -7120,30 +7742,41 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiStage3 => 'Fase 3';
 
   @override
-  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => 'Konfliktversjoner er ikke tilgjengelig. Oppdater for å gjennomgå deres nåværende tilstand.';
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Konfliktversjoner er ikke tilgjengelig. Oppdater for å gjennomgå deres nåværende tilstand.';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => 'Resultatet lagret til disk. Indeksen avgjør fremdeles om denne fila er løst.';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Resultatet lagret til disk. Indeksen avgjør fremdeles om denne fila er løst.';
 
   @override
   String get gitUiSaveResultDraft => 'Lagre resultatutkast';
 
   @override
-  String get gitUiApplyResultAndStageResolution => 'Bruk resultat og klargjør løsningen';
+  String get gitUiApplyResultAndStageResolution =>
+      'Bruk resultat og klargjør løsningen';
 
   @override
-  String get gitUiResultEditableUTF8WorkingContent => 'Resultat · innhold som kan redigeres i UTF-8';
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Resultat · innhold som kan redigeres i UTF-8';
 
   @override
   String get gitUiEditableConflictResult => 'Redigerbart konfliktresultat';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return 'Venstre: $arg0 · $arg1\nHøyre: $arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => 'Velg innhold, sletting eller en undermodul som uttrykkelig sender inn. Ingen binærdata er dekodet som redigerbar tekst.';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'Velg innhold, sletting eller en undermodul som uttrykkelig sender inn. Ingen binærdata er dekodet som redigerbar tekst.';
 
   @override
   String get gitUiUseEntireLeftContent => 'Bruk hele innholdet til venstre ...';
@@ -7158,7 +7791,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiResolvedSubmoduleCommit => 'Løst inn- delmodul';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => 'Stage denne eksakte gitlinken i forelderen. Dette sjekker ikke ut eller sender inn undermodulen.';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Stage denne eksakte gitlinken i forelderen. Dette sjekker ikke ut eller sender inn undermodulen.';
 
   @override
   String get gitUiSetResolvedGitlink => 'Sett oppløst gitlink ...';
@@ -7169,7 +7803,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => 'Resultatet ble redigert. Behold det manuelle resultatet eller velg et annet uendret område.';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Resultatet ble redigert. Behold det manuelle resultatet eller velg et annet uendret område.';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -7177,10 +7812,13 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => 'Iscenelegg den valgte gitlinken i forelderen. Sjekk ut undermodulen og dens filer blir ikke erstattet.';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Iscenelegg den valgte gitlinken i forelderen. Sjekk ut undermodulen og dens filer blir ikke erstattet.';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
     return 'Erstatter hele arbeidsstien $arg0 og iscenesetter beslutningen. Gjeldende arbeidsinnhold og eventuelt ulagret resultatutkast blir forkastet.';
   }
 
@@ -7188,10 +7826,14 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiApplyEntireFileDecision => 'Bruk hele filavgjørelsen';
 
   @override
-  String get gitUiStageThisConflictResolution => 'Iscenesett denne konfliktløsningen?';
+  String get gitUiStageThisConflictResolution =>
+      'Iscenesett denne konfliktløsningen?';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
     return 'Bruk hele det redigerte resultatet som $arg0. Git registrerer stien løst når den er i etappe. Se gjennom alt planlagt innhold først. $arg1';
   }
 
@@ -7199,13 +7841,16 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiApplyAndStage => 'Bruk og klargjør';
 
   @override
-  String get gitUiReviewResultTextFormatChanges => 'Se gjennom endringer i tekstformat på resultatet';
+  String get gitUiReviewResultTextFormatChanges =>
+      'Se gjennom endringer i tekstformat på resultatet';
 
   @override
   String get gitUiSaveReviewedResult => 'Lagre gjennomgått resultat';
 
   @override
-  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => 'Tilgjengelighet for det innebygde Git- tabellen er ikke tilgjengelig. Prøv igjen etter at programmet er koblet til igjen.';
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Tilgjengelighet for det innebygde Git- tabellen er ikke tilgjengelig. Prøv igjen etter at programmet er koblet til igjen.';
 
   @override
   String get gitUiSans => 'Sansfrance. kgm';
@@ -7258,10 +7903,14 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => 'Det undersøkte arkivet er skrivebeskyttet for denne operasjonen. Historikk og innholdsinspeksjon er fortsatt tilgjengelig.';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Det undersøkte arkivet er skrivebeskyttet for denne operasjonen. Historikk og innholdsinspeksjon er fortsatt tilgjengelig.';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
     return 'Git returnerte $arg0. Programmet kunne ikke friske opp sine dokumenter: $arg1';
   }
 
@@ -7272,7 +7921,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCurrentBranch => 'Gjeldende gren';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => 'Ingen grener eller tagger som passer. Velg en innsending i logg.';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Ingen grener eller tagger som passer. Velg en innsending i logg.';
 
   @override
   String get gitUiBranches => 'Grener';
@@ -7320,7 +7970,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRebase2 => 'Rebase…';
 
   @override
-  String get gitUiConflictsAndCurrentOperation => 'Konflikter og gjeldende handling ...';
+  String get gitUiConflictsAndCurrentOperation =>
+      'Konflikter og gjeldende handling ...';
 
   @override
   String get gitUiStashes2 => 'Stasher…';
@@ -7338,13 +7989,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCloneRepository => 'Klon kodelager…';
 
   @override
-  String get gitUiRevokeRepositoryTrust => 'Trekk tilbake tillit til kodelageret';
+  String get gitUiRevokeRepositoryTrust =>
+      'Trekk tilbake tillit til kodelageret';
 
   @override
   String get gitUiWaitingForRepositoryStatus => 'Venter på lagerstatus';
 
   @override
-  String get gitUiRepositoryStatusUnavailableRefresh => 'Lagerstatus ikke tilgjengelig, oppfrisk';
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Lagerstatus ikke tilgjengelig, oppfrisk';
 
   @override
   String get gitUiManageRemotes2 => 'Administrer eksterne lagre';
@@ -7385,46 +8038,62 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => 'Lageret er endret. Frisk opp og se over før det forsøkes igjen.';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Lageret er endret. Frisk opp og se over før det forsøkes igjen.';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => 'En annen handling holder arkivet eller indeksen låst. Vent, og oppfrisk så.';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'En annen handling holder arkivet eller indeksen låst. Vent, og oppfrisk så.';
 
   @override
-  String get gitUiRepositoryTrustIsRequiredForThisOperation => 'Denne handlinga må ha tillit til lageret.';
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Denne handlinga må ha tillit til lageret.';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'Git- tjenesten ble frakoblet. Koble til og avstemme arkivet på nytt.';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git- tjenesten ble frakoblet. Koble til og avstemme arkivet på nytt.';
 
   @override
-  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => 'Den installerte Git- programmet kan ikke støtte denne operasjonen. Se gjennom kjøretiden nedenfor.';
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Den installerte Git- programmet kan ikke støtte denne operasjonen. Se gjennom kjøretiden nedenfor.';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => 'Dette arkivet er skrivebeskyttet for den etterspurte operasjonen. Gjennomgang og historie er fortsatt tilgjengelig.';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Dette arkivet er skrivebeskyttet for den etterspurte operasjonen. Gjennomgang og historie er fortsatt tilgjengelig.';
 
   @override
-  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => 'Operasjonen trenger avstemming. Se over arkivet eller fjernstatusen før du gjentar det.';
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Operasjonen trenger avstemming. Se over arkivet eller fjernstatusen før du gjentar det.';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'Git- autentisering mislyktes. Sjekk referansehjelperen eller lås opp den oppsatte nøkkelringen.';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git- autentisering mislyktes. Sjekk referansehjelperen eller lås opp den oppsatte nøkkelringen.';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'SSH- vertsverifisering mislyktes. Sjekk vertsidentiteten gjennom de SSH- verktøyene du har satt opp.';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH- vertsverifisering mislyktes. Sjekk vertsidentiteten gjennom de SSH- verktøyene du har satt opp.';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => 'Signering mislyktes eller ble avbrutt. Gjennomgå signeringsnøkkelen, agenten og det oppsette signeringsverktøyet.';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Signering mislyktes eller ble avbrutt. Gjennomgå signeringsnøkkelen, agenten og det oppsette signeringsverktøyet.';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => 'Oppgi navn og e- post for et fillager, og gå så tilbake til kladden for bevart melding.';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Oppgi navn og e- post for et fillager, og gå så tilbake til kladden for bevart melding.';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'Git avviste den reviderte oppdateringen. Frisk opp og se over det faktiske målet før du forsøker igjen.';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git avviste den reviderte oppdateringen. Frisk opp og se over det faktiske målet før du forsøker igjen.';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => 'Arbeidende eller trinnvise endringer hindrer denne operasjonen. Gjennomgå, oppgi eller uttrykkelig lagre dem.';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Arbeidende eller trinnvise endringer hindrer denne operasjonen. Gjennomgå, oppgi eller uttrykkelig lagre dem.';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => 'Et nødvendig Git- objekt er ikke tilgjengelig. Se gjennom grunne eller delvise grenser og hent uttrykkelig om nødvendig.';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Et nødvendig Git- objekt er ikke tilgjengelig. Se gjennom grunne eller delvise grenser og hent uttrykkelig om nødvendig.';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -7449,7 +8118,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiCreatesALocalBranchWithoutCheckingItOut => 'Lager en lokal gren uten å sjekke den ut.';
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Lager en lokal gren uten å sjekke den ut.';
 
   @override
   String gitUiTagArg0(String arg0) {
@@ -7468,7 +8138,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRevertCommits => 'Tilbakestill innsendinger';
 
   @override
-  String get gitUiCompareToFullRevisionID => 'Sammenlikne med fullstendig revisjons- ID';
+  String get gitUiCompareToFullRevisionID =>
+      'Sammenlikne med fullstendig revisjons- ID';
 
   @override
   String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
@@ -7476,7 +8147,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiEnterAFullValidObjectID => 'Oppgi en fullstendig gyldig objekt- ID.';
+  String get gitUiEnterAFullValidObjectID =>
+      'Oppgi en fullstendig gyldig objekt- ID.';
 
   @override
   String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
@@ -7489,19 +8161,26 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => 'Flytter HEAD/gjeldende gren. Reflog gjenoppretter ikke vilkårlig usporet eller ulagret innhold.';
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'Flytter HEAD/gjeldende gren. Reflog gjenoppretter ikke vilkårlig usporet eller ulagret innhold.';
 
   @override
-  String get gitUiMoveHEADKeepIndexAndWorkingFiles => 'Flytt HEAD; behold indeks og arbeidsfiler.';
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'Flytt HEAD; behold indeks og arbeidsfiler.';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => 'Flytt HEAD og erstatt indeksen; behold arbeidsfilene.';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'Flytt HEAD og erstatt indeksen; behold arbeidsfilene.';
 
   @override
-  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => 'Erstatt HEAD, indeks og sporede arbeidsfiler; usporede filer som er i veien, kan overskrives.';
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'Erstatt HEAD, indeks og sporede arbeidsfiler; usporede filer som er i veien, kan overskrives.';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => 'Erstatt HEAD, indeks og aktuelle filer; avvis hvis lokale endringer ville gå tapt.';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'Erstatt HEAD, indeks og aktuelle filer; avvis hvis lokale endringer ville gå tapt.';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -7509,7 +8188,10 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 → $arg1 Gjennomgå effektene av valgt modus før anvendelse.';
   }
 
@@ -7545,7 +8227,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiTagMessage => 'Tagg- melding';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => 'Lager taggen lokalt. Publiser valgte tagger uttrykkelig i Push- gjennomgang.';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Lager taggen lokalt. Publiser valgte tagger uttrykkelig i Push- gjennomgang.';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -7556,13 +8239,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiNextChangedFilePage => 'Neste endrede fil- side';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => 'Skjermbilde av arkivet som bare kan leses. Å åpne en fil sjekker aldri denne revisjonen.';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Skjermbilde av arkivet som bare kan leses. Å åpne en fil sjekker aldri denne revisjonen.';
 
   @override
   String get gitUiOpenReadOnlyVersion => 'Åpne skrivebeskyttet versjon';
 
   @override
-  String get gitUiRestoreThisPathWaitingForRepositoryStatus => 'Gjenopprett denne stien ... · Venter på lagerstatus';
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Gjenopprett denne stien ... · Venter på lagerstatus';
 
   @override
   String get gitUiRestoreThisPath => 'Gjenopprett denne stien ...';
@@ -7578,7 +8263,9 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
     return 'Erstatt denne arbeidsstien med revisjon $arg0. Innhold som finnes fra før beholdes.';
   }
 
@@ -7624,7 +8311,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiBoundary => ' · grense';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return '$arg0  $arg1\nOpprinnelig linje $arg2$arg3';
   }
 
@@ -7655,19 +8347,23 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiRemoveFromReviewedSequence => 'Fjern fra gjennomgått sekvens';
 
   @override
-  String get gitUiApplyChangesWithoutCreatingCommits => 'Bruk endringene uten å lage innsendinger';
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Bruk endringene uten å lage innsendinger';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits => 'Bruk denne uttrykkelige forelderlinja for fletting av innsendinger';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Bruk denne uttrykkelige forelderlinja for fletting av innsendinger';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => 'Tomme eller allerede anvendte innsendinger kan stoppe Git for en uttrykkelig over- eller videreføringsbeslutning.';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Tomme eller allerede anvendte innsendinger kan stoppe Git for en uttrykkelig over- eller videreføringsbeslutning.';
 
   @override
   String get gitUiRevertInReviewedOrder => 'Tilbakestill i revidert rekkefølge';
 
   @override
-  String get gitUiCherryPickInReviewedOrder => 'Cherry-pick i revidert rekkefølge';
+  String get gitUiCherryPickInReviewedOrder =>
+      'Cherry-pick i revidert rekkefølge';
 
   @override
   String get gitUiReturnToFiles => 'Gå tilbake til filer';
@@ -7682,7 +8378,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiBackToCommit => 'Tilbake til innlevering';
 
   @override
-  String get gitUiSelectAChangeToReview => 'Velg en endring som skal gjennomgås';
+  String get gitUiSelectAChangeToReview =>
+      'Velg en endring som skal gjennomgås';
 
   @override
   String get gitUiLoadingBranch => 'Laster gren ...';
@@ -7851,7 +8548,11 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String gitUiRebaseStepSemantics(String position, String action, String subject) {
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
     return '$position, $action, $subject';
   }
 
@@ -7862,10 +8563,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiUtf8NoBom => 'UTF- 8 uten byterekkefølgemerke (BOM)';
 
   @override
-  String get gitUiAddsBom => 'Denne redigeringen legger til et UTF- 8 byte- rekkefølgemerke (BOM) ved begynnelsen av fila.';
+  String get gitUiAddsBom =>
+      'Denne redigeringen legger til et UTF- 8 byte- rekkefølgemerke (BOM) ved begynnelsen av fila.';
 
   @override
-  String get gitUiRemovesBom => 'Dette redigeringa fjerner UTF- 8 byterekkefølge- merket (BOM) fra filas begynnelse.';
+  String get gitUiRemovesBom =>
+      'Dette redigeringa fjerner UTF- 8 byterekkefølge- merket (BOM) fra filas begynnelse.';
 
   @override
   String get gitUiNoLineTerminators => 'Ingen linjeterminatorer';
@@ -7891,7 +8594,8 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiGitFailure => 'Git- operasjonen mislyktes. Se gjennom diagnoseen nedenfor.';
+  String get gitUiGitFailure =>
+      'Git- operasjonen mislyktes. Se gjennom diagnoseen nedenfor.';
 
   @override
   String get gitUiAbortInline => 'Avbryt operasjon';
@@ -7942,7 +8646,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'Git- operasjoner gjelder hele dette arkivet og kan utføre dets oppsatte kroker, filtre, referanse- og signeringsverktøy.';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git- operasjoner gjelder hele dette arkivet og kan utføre dets oppsatte kroker, filtre, referanse- og signeringsverktøy.';
 
   @override
   String get gitHostContentUnavailable => 'Innhold ikke tilgjengelig';
@@ -8001,7 +8706,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiAddAddConflict => 'Tillagt på begge sider';
 
   @override
-  String get gitUiModifyDeleteConflict => 'Endret/slettet eller omnavngitt/slettet';
+  String get gitUiModifyDeleteConflict =>
+      'Endret/slettet eller omnavngitt/slettet';
 
   @override
   String gitUiConflictIdentity(String path, String kind) {
@@ -8012,16 +8718,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiDiscardUnsavedIndexDraft => 'Forkaste ulagret indeksutkast?';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => 'Når indeksredigereren lukkes, forkastes bare utkastet. Indeksen og arbeidsfilen endres ikke.';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Når indeksredigereren lukkes, forkastes bare utkastet. Indeksen og arbeidsfilen endres ikke.';
 
   @override
   String get gitUiDiscardIndexDraft => 'Forkast indeksutkast';
 
   @override
-  String get gitUiDiscardUnsavedConflictDraft => 'Forkaste ulagret konfliktresultat?';
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Forkaste ulagret konfliktresultat?';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => 'Når konfliktredigeringen lukkes, forkastes bare det ulagrede resultatutkastet. Lagret arbeidsinnhold og indeksen forblir uendret.';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Når konfliktredigeringen lukkes, forkastes bare det ulagrede resultatutkastet. Lagret arbeidsinnhold og indeksen forblir uendret.';
 
   @override
   String get gitUiDiscardConflictDraft => 'Forkast konfliktutkast';
@@ -8066,10 +8775,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiChangedLine => 'Endret linje';
 
   @override
-  String get gitUiCopyHeadRegionIntoIndexDraft => 'Kopier HEAD-området til indeksutkastet';
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Kopier HEAD-området til indeksutkastet';
 
   @override
-  String get gitUiCopyWorkingRegionIntoIndexDraft => 'Kopier arbeidsområdet til indeksutkastet';
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Kopier arbeidsområdet til indeksutkastet';
 
   @override
   String get gitUiUpdatingConflictRegions => 'Oppdaterer konfliktområder';
@@ -8086,19 +8797,24 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiIgnoreRightRegion => 'Ignorer høyre forslag';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved => 'Det innsendte utkastet ble skrevet til indeksen. Nyere tekst er fortsatt i denne redigeringen. Last inn og gjennomgå gjeldende versjoner før du bruker den.';
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Det innsendte utkastet ble skrevet til indeksen. Nyere tekst er fortsatt i denne redigeringen. Last inn og gjennomgå gjeldende versjoner før du bruker den.';
 
   @override
-  String get gitUiNewerConflictDraftRetained => 'Det innsendte resultatet ble lagret. Det nyere resultatutkastet ditt er fortsatt ulagret.';
+  String get gitUiNewerConflictDraftRetained =>
+      'Det innsendte resultatet ble lagret. Det nyere resultatutkastet ditt er fortsatt ulagret.';
 
   @override
-  String get gitUiNoFileHistoryForThisPathAndRevision => 'Ingen filhistorikk er tilgjengelig for denne stien og revisjonen.';
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Ingen filhistorikk er tilgjengelig for denne stien og revisjonen.';
 
   @override
-  String get gitUiReviewSavedIndexAndKeepDraft => 'Se gjennom lagret indeks og behold utkastet';
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Se gjennom lagret indeks og behold utkastet';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply => 'Den lagrede indeksen eller kildene har endret seg. Det nyere utkastet beholdes; se gjennom disse endringene separat før du bruker det.';
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Den lagrede indeksen eller kildene har endret seg. Det nyere utkastet beholdes; se gjennom disse endringene separat før du bruker det.';
 
   @override
   String get gitUiReviewSavedMessage => 'Se gjennom lagret melding';
@@ -8113,13 +8829,16 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiUseSavedMessage => 'Bruk lagret melding';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow => 'Denne meldingen ble endret i et annet vindu. Se gjennom den lagrede meldingen før du erstatter den.';
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Denne meldingen ble endret i et annet vindu. Se gjennom den lagrede meldingen før du erstatter den.';
 
   @override
-  String get gitUiDiscardUnsavedCommitMessages => 'Forkaste ulagrede commit-meldinger?';
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Forkaste ulagrede commit-meldinger?';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => 'Meldinger som ikke kunne lagres, er fortsatt i dette vinduet. Forkasting endrer ikke de lagrede versjonene.';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Meldinger som ikke kunne lagres, er fortsatt i dette vinduet. Forkasting endrer ikke de lagrede versjonene.';
 
   @override
   String get gitUiDiscardCommitMessages => 'Forkast meldinger';
@@ -8131,13 +8850,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiNoCommitsYet => 'Ingen innsendelser ennå';
 
   @override
-  String get gitUiNativeMenuUnavailable => 'Den innebygde menytjenesten er utilgjengelig. Prøv igjen.';
+  String get gitUiNativeMenuUnavailable =>
+      'Den innebygde menytjenesten er utilgjengelig. Prøv igjen.';
 
   @override
-  String get gitWorkspaceRootRequired => 'Åpne roten til arbeidsområdet i depotet for å bruke Git i dette arbeidsområdet.';
+  String get gitWorkspaceRootRequired =>
+      'Åpne roten til arbeidsområdet i depotet for å bruke Git i dette arbeidsområdet.';
 
   @override
-  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
     return '$upstream · $ahead foran, $behind bak. Lokalt kjent informasjon om fjernsporing; ingen direktesjekk av serveren.';
   }
 

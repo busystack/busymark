@@ -14,94 +14,123 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesNewFromRetainedText => 'Saklanan metinden yeni not';
 
   @override
-  String get notesAccountThrottled => 'Nextcloud beklemenizi istedi. Yeniden oturum açmadan önce bekleyin.';
+  String get notesAccountThrottled =>
+      'Nextcloud beklemenizi istedi. Yeniden oturum açmadan önce bekleyin.';
 
   @override
-  String get notesSettingsRefreshing => 'Onaylanan ayar güncellemesinden sonra Notes yenileniyor';
+  String get notesSettingsRefreshing =>
+      'Onaylanan ayar güncellemesinden sonra Notes yenileniyor';
 
   @override
-  String get notesExportOperationFailed => 'Dışa aktarma yayımlanmadan başarısız oldu. Kaynağı ve hedefi denetleyip yeniden deneyin.';
+  String get notesExportOperationFailed =>
+      'Dışa aktarma yayımlanmadan başarısız oldu. Kaynağı ve hedefi denetleyip yeniden deneyin.';
 
   @override
-  String get notesRecoveryCreatedNotOpened => 'Kurtarılan not kaydedildi ancak açılamadı. Bekleyen düzenleyici veya özellik değişikliklerini çözün ve bu mevcut notu açın.';
+  String get notesRecoveryCreatedNotOpened =>
+      'Kurtarılan not kaydedildi ancak açılamadı. Bekleyen düzenleyici veya özellik değişikliklerini çözün ve bu mevcut notu açın.';
 
   @override
-  String get notesSettingsPendingNotes => 'Bekleyen notlar, çakışmalar veya belirsiz oluşturmalar bu değişikliği engelliyor. Notes içinde eşitleyin ya da inceleyin, ardından korunan ayar taslağını yeniden kaydedin.';
+  String get notesSettingsPendingNotes =>
+      'Bekleyen notlar, çakışmalar veya belirsiz oluşturmalar bu değişikliği engelliyor. Notes içinde eşitleyin ya da inceleyin, ardından korunan ayar taslağını yeniden kaydedin.';
 
   @override
-  String get notesSettingsPendingAttachments => 'Bekleyen ek işlemleri değişikliği engelliyor. Notes içinde ekleri inceleyip korunan ayar taslağını yeniden kaydedin.';
+  String get notesSettingsPendingAttachments =>
+      'Bekleyen ek işlemleri değişikliği engelliyor. Notes içinde ekleri inceleyip korunan ayar taslağını yeniden kaydedin.';
 
   @override
-  String get notesAccountServerAddress => 'Nextcloud’un kurallı HTTPS adresini kullanıp yeniden oturum açın. Adres veya yönlendirme doğrulanamadı.';
+  String get notesAccountServerAddress =>
+      'Nextcloud’un kurallı HTTPS adresini kullanıp yeniden oturum açın. Adres veya yönlendirme doğrulanamadı.';
 
   @override
-  String get notesAccountUnsupported => 'Notes kullanılamıyor veya API desteklenmiyor. Ana API sürümü 1, alt sürümü en az 4 olan Nextcloud Notes’u etkinleştirin.';
+  String get notesAccountUnsupported =>
+      'Notes kullanılamıyor veya API desteklenmiyor. Ana API sürümü 1, alt sürümü en az 4 olan Nextcloud Notes’u etkinleştirin.';
 
   @override
-  String get notesAccountAuthorizeAgain => 'Nextcloud kimlik bilgilerini reddetti. Hesabı yeniden yetkilendirin veya bağlayın.';
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud kimlik bilgilerini reddetti. Hesabı yeniden yetkilendirin veya bağlayın.';
 
   @override
-  String get notesAccountCheckForbidden => 'Nextcloud, Notes yetenek denetimini engelledi. Yöneticiden izin isteyip yeniden deneyin.';
+  String get notesAccountCheckForbidden =>
+      'Nextcloud, Notes yetenek denetimini engelledi. Yöneticiden izin isteyip yeniden deneyin.';
 
   @override
-  String get notesAccountMalformed => 'Nextcloud yanıtı doğrulanamadı. Sunucu kurulumunu denetleyip yeniden oturum açın.';
+  String get notesAccountMalformed =>
+      'Nextcloud yanıtı doğrulanamadı. Sunucu kurulumunu denetleyip yeniden oturum açın.';
 
   @override
-  String get notesAccountTimedOut => 'Oturum açma zaman aşımına uğradı. Yeniden başlatıp tarayıcıda yetkilendirmeyi tamamlayın.';
+  String get notesAccountTimedOut =>
+      'Oturum açma zaman aşımına uğradı. Yeniden başlatıp tarayıcıda yetkilendirmeyi tamamlayın.';
 
   @override
-  String get notesAccountBrowserUnavailable => 'Sistem tarayıcısı açılamadı. Varsayılan tarayıcıyı denetleyip yeniden oturum açın.';
+  String get notesAccountBrowserUnavailable =>
+      'Sistem tarayıcısı açılamadı. Varsayılan tarayıcıyı denetleyip yeniden oturum açın.';
 
   @override
-  String get notesAccountNetwork => 'Nextcloud’a ulaşılamadı. Bağlantıyı ve sunucuyu denetleyip yeniden oturum açın.';
+  String get notesAccountNetwork =>
+      'Nextcloud’a ulaşılamadı. Bağlantıyı ve sunucuyu denetleyip yeniden oturum açın.';
 
   @override
-  String get notesAccountRejected => 'Nextcloud yetenek isteğini reddetti. Erişimi yöneticiyle denetleyip yeniden deneyin.';
+  String get notesAccountRejected =>
+      'Nextcloud yetenek isteğini reddetti. Erişimi yöneticiyle denetleyip yeniden deneyin.';
 
   @override
-  String get notesAccountFailed => 'Hesap kurulumu tamamlanamadı. Yeniden oturum açmayı deneyin.';
+  String get notesAccountFailed =>
+      'Hesap kurulumu tamamlanamadı. Yeniden oturum açmayı deneyin.';
 
   @override
-  String get notesTransferSourceChanged => 'Kaynak incelemeden sonra değişti. Yeniden denemeden önce güncel dosyayı inceleyin veya yeni bir anlık görüntü alın.';
+  String get notesTransferSourceChanged =>
+      'Kaynak incelemeden sonra değişti. Yeniden denemeden önce güncel dosyayı inceleyin veya yeni bir anlık görüntü alın.';
 
   @override
-  String get notesTransferUnreadable => 'Kaynak okunamadı. Dosya veya klasör erişimini denetleyip yeniden inceleyin.';
+  String get notesTransferUnreadable =>
+      'Kaynak okunamadı. Dosya veya klasör erişimini denetleyip yeniden inceleyin.';
 
   @override
-  String get notesTransferInvalidSnapshot => 'Anlık görüntü geçersiz veya desteklenmiyor. Geçerli bir BusyMark Notes görüntüsü veya Markdown kaynağı seçin.';
+  String get notesTransferInvalidSnapshot =>
+      'Anlık görüntü geçersiz veya desteklenmiyor. Geçerli bir BusyMark Notes görüntüsü veya Markdown kaynağı seçin.';
 
   @override
-  String get notesTransferMediaLimit => 'Medya içe aktarma boyut sınırını aşıyor. İlgili öğenin medyasını küçültüp yeniden inceleyin.';
+  String get notesTransferMediaLimit =>
+      'Medya içe aktarma boyut sınırını aşıyor. İlgili öğenin medyasını küçültüp yeniden inceleyin.';
 
   @override
-  String get notesTransferUnsafeSource => 'Kaynak güvensiz bir yol içeriyor. Kaynak klasörü içindeki dosyaları seçip yeniden inceleyin.';
+  String get notesTransferUnsafeSource =>
+      'Kaynak güvensiz bir yol içeriyor. Kaynak klasörü içindeki dosyaları seçip yeniden inceleyin.';
 
   @override
-  String get notesTransferDestination => 'Dışa aktarma yazılamadı. Hedef erişimini ve boş alanı denetleyip yeniden deneyin.';
+  String get notesTransferDestination =>
+      'Dışa aktarma yazılamadı. Hedef erişimini ve boş alanı denetleyip yeniden deneyin.';
 
   @override
-  String get notesTransferOperationFailed => 'Aktarım tamamlanamadı. İlgili öğeleri inceleyip yeniden deneyin. Önceden içe aktarılan öğeler kayıtlı kalır.';
+  String get notesTransferOperationFailed =>
+      'Aktarım tamamlanamadı. İlgili öğeleri inceleyip yeniden deneyin. Önceden içe aktarılan öğeler kayıtlı kalır.';
 
   @override
-  String get notesExportPublishedWithOmissions => 'Eksikleri olan dışa aktarma kullanılabilir';
+  String get notesExportPublishedWithOmissions =>
+      'Eksikleri olan dışa aktarma kullanılabilir';
 
   @override
   String get notesBatchUnchanged => 'İstenen değerler zaten ayarlanmıştı.';
 
   @override
-  String get notesBatchReadOnly => 'Bu not salt okunurdur. Korunan özellikler değiştirilemez; Favori yine değiştirilebilir.';
+  String get notesBatchReadOnly =>
+      'Bu not salt okunurdur. Korunan özellikler değiştirilemez; Favori yine değiştirilebilir.';
 
   @override
-  String get notesBatchReviewChanged => 'Bu not incelemeden sonra değişti. İşlemi yeniden uygulamadan önce güncel durumunu inceleyin.';
+  String get notesBatchReviewChanged =>
+      'Bu not incelemeden sonra değişti. İşlemi yeniden uygulamadan önce güncel durumunu inceleyin.';
 
   @override
-  String get notesBatchMissing => 'Bu not artık kullanılamıyor. Listeyi yenileyip hedefleri yeniden inceleyin.';
+  String get notesBatchMissing =>
+      'Bu not artık kullanılamıyor. Listeyi yenileyip hedefleri yeniden inceleyin.';
 
   @override
-  String get notesBatchStorage => 'Yerel kayıt başarısız oldu. Depolamayı denetleyip bu öğeyi yeniden deneyin; başarılı öğeler kayıtlı kalır.';
+  String get notesBatchStorage =>
+      'Yerel kayıt başarısız oldu. Depolamayı denetleyip bu öğeyi yeniden deneyin; başarılı öğeler kayıtlı kalır.';
 
   @override
-  String get notesRemoteReviewChanged => 'Sunucu notu değişti. Birleştirme taslağınız korunuyor. Güncel karşılaştırmayı inceleyip çözümü yeniden seçin.';
+  String get notesRemoteReviewChanged =>
+      'Sunucu notu değişti. Birleştirme taslağınız korunuyor. Güncel karşılaştırmayı inceleyip çözümü yeniden seçin.';
 
   @override
   String get notesReviewRemote => 'Güncel sunucu sürümünü inceledim';
@@ -116,7 +145,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsHeadingNotPublished => 'Bu oluşturucu tarafından yayımlanmaz.';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation => 'Sabitlenmiş derleyici Markdown konularında örnek başlıklarını yayımlamaz. Mevcut işaretleme korunur; Kaynakta inceleyin.';
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Sabitlenmiş derleyici Markdown konularında örnek başlıklarını yayımlamaz. Mevcut işaretleme korunur; Kaynakta inceleyin.';
 
   @override
   String get wsTopicIdentity => 'Konu kimliği';
@@ -143,22 +173,26 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsSettingsPresent => 'Yazılmış ayarlar mevcut';
 
   @override
-  String get wsTitleOverrideExplanation => 'Yayımlanan başlığı geçersiz kılar; başlık metni değişmez.';
+  String get wsTitleOverrideExplanation =>
+      'Yayımlanan başlığı geçersiz kılar; başlık metni değişmez.';
 
   @override
   String get wsIgnoreVariables => 'Değişkenleri düz metin olarak işle';
 
   @override
-  String get wsIgnoreVariablesExplanation => 'Etkinleştirildiğinde değişken benzeri metin değiştirilmez.';
+  String get wsIgnoreVariablesExplanation =>
+      'Etkinleştirildiğinde değişken benzeri metin değiştirilmez.';
 
   @override
   String get wsInstanceSelection => 'Yardım örnekleri';
 
   @override
-  String get wsInstanceExplanation => 'Yardım çıktılarını adlar, gruplar, listeler, dışlamalar veya ifadelerle seçin.';
+  String get wsInstanceExplanation =>
+      'Yardım çıktılarını adlar, gruplar, listeler, dışlamalar veya ifadelerle seçin.';
 
   @override
-  String get wsFilterExplanation => 'Yeniden kullanılan içeriği ölçütlerle süzer; yardım örneği seçmez.';
+  String get wsFilterExplanation =>
+      'Yeniden kullanılan içeriği ölçütlerle süzer; yardım örneği seçmez.';
 
   @override
   String get wsContextHelp => 'Bağlam yardımı kimliği';
@@ -176,19 +210,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsMissingTopicHeading => 'Konu H1 başlığı yok. Kaynakta ekleyin.';
 
   @override
-  String get wsMultipleTopicHeadings => 'İlk H1 konu başlığını belirler. Sonraki H1’ler ayrı başlıklardır.';
+  String get wsMultipleTopicHeadings =>
+      'İlk H1 konu başlığını belirler. Sonraki H1’ler ayrı başlıklardır.';
 
   @override
-  String get wsTopicIdentityMismatch => 'Kök id, dosya adından türetilen konu kimliğinden farklı. Konu dosyasını yeniden adlandırın veya kaynağı inceleyin.';
+  String get wsTopicIdentityMismatch =>
+      'Kök id, dosya adından türetilen konu kimliğinden farklı. Konu dosyasını yeniden adlandırın veya kaynağı inceleyin.';
 
   @override
-  String get wsUnsupportedProperties => 'Desteklenmeyen öznitelikler korunur. Kaynakta inceleyin.';
+  String get wsUnsupportedProperties =>
+      'Desteklenmeyen öznitelikler korunur. Kaynakta inceleyin.';
 
   @override
-  String get wsGeneratedAnchor => 'Oluşturulmuş çapa; bir değer geçersiz kılma oluşturur.';
+  String get wsGeneratedAnchor =>
+      'Oluşturulmuş çapa; bir değer geçersiz kılma oluşturur.';
 
   @override
-  String get wsHeadingBuilderLimitation => 'Sabitlenmiş derleyici H1 özniteliklerini yayımlamaz. XML köküne değil başlığa aittirler.';
+  String get wsHeadingBuilderLimitation =>
+      'Sabitlenmiş derleyici H1 özniteliklerini yayımlamaz. XML köküne değil başlığa aittirler.';
 
   @override
   String get closeOtherTabs => 'Diğer sekmeleri kapat';
@@ -245,16 +284,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tocTemplateExtension => 'Uzantı:';
 
   @override
-  String get tocTemplateLoadError => 'Şablonlar yüklenemedi. Mevcut şablonlar değiştirilmedi.';
+  String get tocTemplateLoadError =>
+      'Şablonlar yüklenemedi. Mevcut şablonlar değiştirilmedi.';
 
   @override
-  String get tocTemplateSaveError => 'Şablonlar kaydedilemedi. Düzenlemeleriniz burada duruyor.';
+  String get tocTemplateSaveError =>
+      'Şablonlar kaydedilemedi. Düzenlemeleriniz burada duruyor.';
 
   @override
-  String get tocTemplateConflict => 'Şablonlar başka bir pencerede değiştirildi. İptal edip düzenleyiciyi yeniden açın.';
+  String get tocTemplateConflict =>
+      'Şablonlar başka bir pencerede değiştirildi. İptal edip düzenleyiciyi yeniden açın.';
 
   @override
-  String get tocTemplateDuplicateName => 'Bu ada ve uzantıya sahip bir şablon zaten var.';
+  String get tocTemplateDuplicateName =>
+      'Bu ada ve uzantıya sahip bir şablon zaten var.';
 
   @override
   String get tocTemplateFormat => 'Biçim:';
@@ -271,7 +314,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get tocRemoveElementsRetainFiles => 'Bu içindekiler öğeleriyle ilişkili kaynak dosyalar silinmeyecek.';
+  String get tocRemoveElementsRetainFiles =>
+      'Bu içindekiler öğeleriyle ilişkili kaynak dosyalar silinmeyecek.';
 
   @override
   String get tocOk => 'Tamam';
@@ -383,10 +427,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tocOnlyTitleField => 'Yalnızca içindekiler başlığı:';
 
   @override
-  String get tocInstanceTitleExplanation => 'Yalnızca geçerli örnek için kullanılır. Varsayılan olarak konu başlığından devralınır.';
+  String get tocInstanceTitleExplanation =>
+      'Yalnızca geçerli örnek için kullanılır. Varsayılan olarak konu başlığından devralınır.';
 
   @override
-  String get tocOnlyTitleExplanation => 'Yalnızca içindekilerde kullanılır. Varsayılan olarak konu başlığından veya ayarlanmışsa örneğe özgü başlıktan devralınır. Başlıklar hakkında açıklama:';
+  String get tocOnlyTitleExplanation =>
+      'Yalnızca içindekilerde kullanılır. Varsayılan olarak konu başlığından veya ayarlanmışsa örneğe özgü başlıktan devralınır. Başlıklar hakkında açıklama:';
 
   @override
   String get tocTitleDocumentationLink => 'burada';
@@ -416,7 +462,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pdfIncludeTitlePage => 'Başlık sayfası ekle';
 
   @override
-  String get pdfTitlePageNote => 'Bu sayfada üstbilgi, altbilgi veya görünür sayfa numarası bulunmaz.';
+  String get pdfTitlePageNote =>
+      'Bu sayfada üstbilgi, altbilgi veya görünür sayfa numarası bulunmaz.';
 
   @override
   String get pdfTitlePageTitle => 'Başlık';
@@ -437,16 +484,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pdfTitlePageDate => 'Tarih';
 
   @override
-  String get pdfTitlePageTitleRequired => 'Başlık sayfası için bir başlık girin.';
+  String get pdfTitlePageTitleRequired =>
+      'Başlık sayfası için bir başlık girin.';
 
   @override
-  String get pdfTocSectionNote => 'Ayrı bir sayfada başlar ve birden fazla sayfa sürebilir.';
+  String get pdfTocSectionNote =>
+      'Ayrı bir sayfada başlar ve birden fazla sayfa sürebilir.';
 
   @override
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'Markdown dosyaları ve Writerside uyumlu dokümantasyon projeleri için düzenleyici.';
+  String get appSubtitle =>
+      'Markdown dosyaları ve Writerside uyumlu dokümantasyon projeleri için düzenleyici.';
 
   @override
   String get aboutBusyMark => 'BusyMark Hakkında';
@@ -482,7 +532,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedbackCategoryFeature => 'Özellik isteği';
 
   @override
-  String get feedbackCategoryPrivacySecurity => 'Gizlilik veya güvenlik endişesi';
+  String get feedbackCategoryPrivacySecurity =>
+      'Gizlilik veya güvenlik endişesi';
 
   @override
   String get feedbackCategoryUsability => 'Kullanılabilirlik endişesi';
@@ -503,7 +554,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedbackIncludeTechnicalDetails => 'Teknik ayrıntıları ekleyin';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure => 'Etkinleştirildiğinde bu, yalnızca Linux işletim sistemi sürümünüzü ve BusyMark uygulama yerel ayarını ekler. Hiçbir günlük, dosya, hesap verisi veya başka tanılama eklenmez.';
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Etkinleştirildiğinde bu, yalnızca Linux işletim sistemi sürümünüzü ve BusyMark uygulama yerel ayarını ekler. Hiçbir günlük, dosya, hesap verisi veya başka tanılama eklenmez.';
 
   @override
   String get feedbackSubmit => 'Gönder';
@@ -515,28 +567,36 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedbackCategoryRequired => 'Bir kategori seçin.';
 
   @override
-  String get feedbackSubjectLength => 'Konu 3 ila 120 karakter arasında olmalıdır.';
+  String get feedbackSubjectLength =>
+      'Konu 3 ila 120 karakter arasında olmalıdır.';
 
   @override
-  String get feedbackMessageLength => 'Mesaj 10 ila 5.000 karakter arasında olmalıdır.';
+  String get feedbackMessageLength =>
+      'Mesaj 10 ila 5.000 karakter arasında olmalıdır.';
 
   @override
-  String get feedbackReplyEmailInvalid => 'Geçerli bir e-posta adresi girin veya bu alanı boş bırakın.';
+  String get feedbackReplyEmailInvalid =>
+      'Geçerli bir e-posta adresi girin veya bu alanı boş bırakın.';
 
   @override
-  String get feedbackConnectionFailure => 'BusyMark bağlanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+  String get feedbackConnectionFailure =>
+      'BusyMark bağlanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.';
 
   @override
-  String get feedbackTimeoutFailure => 'İstek zaman aşımına uğradı. Tekrar deneyin.';
+  String get feedbackTimeoutFailure =>
+      'İstek zaman aşımına uğradı. Tekrar deneyin.';
 
   @override
-  String get feedbackRateLimitedFailure => 'Bu bağlantıdan çok fazla rapor gönderildi. Bekleyin ve tekrar deneyin.';
+  String get feedbackRateLimitedFailure =>
+      'Bu bağlantıdan çok fazla rapor gönderildi. Bekleyin ve tekrar deneyin.';
 
   @override
-  String get feedbackRejectedFailure => 'Sunucu bu raporu reddetti. Form alanlarını kontrol edip tekrar deneyin.';
+  String get feedbackRejectedFailure =>
+      'Sunucu bu raporu reddetti. Form alanlarını kontrol edip tekrar deneyin.';
 
   @override
-  String get feedbackServerFailure => 'Sunucu raporu kabul edemedi. Daha sonra tekrar deneyin.';
+  String get feedbackServerFailure =>
+      'Sunucu raporu kabul edemedi. Daha sonra tekrar deneyin.';
 
   @override
   String feedbackSuccess(String id) {
@@ -648,7 +708,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get keyboardShortcuts => 'Klavye Kısayolları';
 
   @override
-  String get commandUnavailableInContext => 'Mevcut düzenleyici bağlamında kullanılamıyor';
+  String get commandUnavailableInContext =>
+      'Mevcut düzenleyici bağlamında kullanılamıyor';
 
   @override
   String get lightTheme => 'Açık';
@@ -828,16 +889,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get markdownFileExtensions => '.md veya .markdown';
 
   @override
-  String get openFolderOrWritersideProject => 'Klasör veya Writerside projesi aç';
+  String get openFolderOrWritersideProject =>
+      'Klasör veya Writerside projesi aç';
 
   @override
-  String get markdownFolderOrWritersideProject => 'Markdown klasörü veya Writerside uyumlu proje';
+  String get markdownFolderOrWritersideProject =>
+      'Markdown klasörü veya Writerside uyumlu proje';
 
   @override
   String get noOpenFile => 'Açık dosya yok';
 
   @override
-  String get shortcutDeleteTreeItemDescription => 'Seçilen Dosyalar öğesini silin veya seçilen konuyu içindekiler tablosundan kaldırın';
+  String get shortcutDeleteTreeItemDescription =>
+      'Seçilen Dosyalar öğesini silin veya seçilen konuyu içindekiler tablosundan kaldırın';
 
   @override
   String get shortcutGroupGeneral => 'Genel';
@@ -846,10 +910,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutNewDocument => 'Oluştur';
 
   @override
-  String get shortcutNewDocumentDescription => 'Markdown dosyası veya Writerside projesi oluştur';
+  String get shortcutNewDocumentDescription =>
+      'Markdown dosyası veya Writerside projesi oluştur';
 
   @override
-  String get shortcutOpenDescription => 'Markdown dosyasını, klasörünü veya Writerside projesini açın';
+  String get shortcutOpenDescription =>
+      'Markdown dosyasını, klasörünü veya Writerside projesini açın';
 
   @override
   String get shortcutSaveDescription => 'Geçerli belgeyi kaydet';
@@ -858,7 +924,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutSearchDescription => 'Mevcut çalışma alanında arama yapın';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'Uygulama klavye kısayollarını özelleştir';
+  String get shortcutKeyboardShortcutsDescription =>
+      'Uygulama klavye kısayollarını özelleştir';
 
   @override
   String get shortcutSyntaxReferenceDescription => 'Sözdizimi başvurusunu aç';
@@ -894,7 +961,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutGroupTextEditing => 'Metin Düzenleme';
 
   @override
-  String get shortcutSelectAllDescription => 'Kaynak modunda tüm metni seçin; Editör modunda her bloğu seçmek için iki kez basın';
+  String get shortcutSelectAllDescription =>
+      'Kaynak modunda tüm metni seçin; Editör modunda her bloğu seçmek için iki kez basın';
 
   @override
   String get shortcutCutDescription => 'Seçilen metni kes';
@@ -906,31 +974,36 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutPasteDescription => 'Panodan yapıştır';
 
   @override
-  String get shortcutPastePlainTextDescription => 'Panodan biçimlendirme olmadan yapıştır';
+  String get shortcutPastePlainTextDescription =>
+      'Panodan biçimlendirme olmadan yapıştır';
 
   @override
   String get shortcutUndoDescription => 'Son düzenlemeyi geri al';
 
   @override
-  String get shortcutRedoDescription => 'Geri alınan son düzenlemeyi yeniden yap';
+  String get shortcutRedoDescription =>
+      'Geri alınan son düzenlemeyi yeniden yap';
 
   @override
   String get shortcutInsertIndentation => 'Girinti ekle';
 
   @override
-  String get shortcutInsertIndentationDescription => 'İmlecin bulunduğu yere girinti ekle';
+  String get shortcutInsertIndentationDescription =>
+      'İmlecin bulunduğu yere girinti ekle';
 
   @override
   String get shortcutOutdentSource => 'Kaynakta girintiyi azalt';
 
   @override
-  String get shortcutOutdentSourceDescription => 'Kaynak modunda bir girinti düzeyini kaldırın';
+  String get shortcutOutdentSourceDescription =>
+      'Kaynak modunda bir girinti düzeyini kaldırın';
 
   @override
   String get shortcutEscape => 'Aramayı kapat veya blok seçimini temizle';
 
   @override
-  String get shortcutEscapeDescription => 'Editör modunda çalışma alanı aramasını kapatın veya bir blok seçimini temizleyin';
+  String get shortcutEscapeDescription =>
+      'Editör modunda çalışma alanı aramasını kapatın veya bir blok seçimini temizleyin';
 
   @override
   String get shortcutGroupFormatting => 'Biçimlendirme';
@@ -939,19 +1012,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutBoldDescription => 'Seçili metinde kalın yazıya geçiş yap';
 
   @override
-  String get shortcutItalicDescription => 'Seçilen metinde italik özelliğini aç/kapat';
+  String get shortcutItalicDescription =>
+      'Seçilen metinde italik özelliğini aç/kapat';
 
   @override
-  String get shortcutUnderlineDescription => 'Seçili metnin altını çizmeyi aç/kapat';
+  String get shortcutUnderlineDescription =>
+      'Seçili metnin altını çizmeyi aç/kapat';
 
   @override
   String get shortcutLinkDescription => 'Bağlantı ekleme veya düzenleme';
 
   @override
-  String get shortcutInlineCodeDescription => 'Seçilen metinde satır içi kodu değiştir';
+  String get shortcutInlineCodeDescription =>
+      'Seçilen metinde satır içi kodu değiştir';
 
   @override
-  String get shortcutStrikethroughDescription => 'Seçili metnin üstü çizili özelliğini aç/kapat';
+  String get shortcutStrikethroughDescription =>
+      'Seçili metnin üstü çizili özelliğini aç/kapat';
 
   @override
   String get shortcutGroupBlocks => 'Bloklar';
@@ -960,22 +1037,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutParagraphDescription => 'Geçerli bloğu paragrafa ayarla';
 
   @override
-  String get shortcutHeading1Description => 'Geçerli bloğu Başlık 1 olarak ayarlayın';
+  String get shortcutHeading1Description =>
+      'Geçerli bloğu Başlık 1 olarak ayarlayın';
 
   @override
-  String get shortcutHeading2Description => 'Geçerli bloğu Başlık 2\'ye ayarlayın';
+  String get shortcutHeading2Description =>
+      'Geçerli bloğu Başlık 2\'ye ayarlayın';
 
   @override
-  String get shortcutHeading3Description => 'Geçerli bloğu Başlık 3\'e ayarlayın';
+  String get shortcutHeading3Description =>
+      'Geçerli bloğu Başlık 3\'e ayarlayın';
 
   @override
-  String get shortcutHeading4Description => 'Geçerli bloğu Başlık 4\'e ayarlayın';
+  String get shortcutHeading4Description =>
+      'Geçerli bloğu Başlık 4\'e ayarlayın';
 
   @override
-  String get shortcutHeading5Description => 'Geçerli bloğu Başlık 5\'e ayarlayın';
+  String get shortcutHeading5Description =>
+      'Geçerli bloğu Başlık 5\'e ayarlayın';
 
   @override
-  String get shortcutHeading6Description => 'Geçerli bloğu Başlık 6\'ya ayarlayın';
+  String get shortcutHeading6Description =>
+      'Geçerli bloğu Başlık 6\'ya ayarlayın';
 
   @override
   String get shortcutGroupLists => 'Listeler';
@@ -984,19 +1067,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get numberedList => 'Numaralı liste';
 
   @override
-  String get shortcutNumberedListDescription => 'Numaralı liste formatını değiştir';
+  String get shortcutNumberedListDescription =>
+      'Numaralı liste formatını değiştir';
 
   @override
   String get bulletedList => 'Madde işaretli liste';
 
   @override
-  String get shortcutBulletedListDescription => 'Madde işaretli liste biçimlendirmesini değiştir';
+  String get shortcutBulletedListDescription =>
+      'Madde işaretli liste biçimlendirmesini değiştir';
 
   @override
   String get checklist => 'Kontrol listesi';
 
   @override
-  String get shortcutChecklistDescription => 'Denetim listesi biçimlendirmesini değiştir';
+  String get shortcutChecklistDescription =>
+      'Denetim listesi biçimlendirmesini değiştir';
 
   @override
   String get shortcutGroupSidebar => 'Kenar çubuğu';
@@ -1008,13 +1094,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get createMarkdownFile => 'Markdown dosyası oluştur';
 
   @override
-  String get createMarkdownFileDescription => 'Kaydedilmemiş bir yerel Markdown belgesi başlatın';
+  String get createMarkdownFileDescription =>
+      'Kaydedilmemiş bir yerel Markdown belgesi başlatın';
 
   @override
   String get createWritersideProject => 'Writerside projesi oluştur';
 
   @override
-  String get createWritersideProjectDescription => 'Yerel, Writerside uyumlu bir proje başlat';
+  String get createWritersideProjectDescription =>
+      'Yerel, Writerside uyumlu bir proje başlat';
 
   @override
   String get defaultProjectName => 'Dokümantasyon';
@@ -1050,16 +1138,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get directoryNameRequired => 'Klasör adı gerekli.';
 
   @override
-  String get useSingleSafeDirectoryName => 'Tek bir güvenli klasör adı kullanın.';
+  String get useSingleSafeDirectoryName =>
+      'Tek bir güvenli klasör adı kullanın.';
 
   @override
-  String get useLowercaseIdentifier => 'Harfler, sayılar, alt çizgiler veya kısa çizgiler içeren küçük harfli bir tanımlayıcı kullanın.';
+  String get useLowercaseIdentifier =>
+      'Harfler, sayılar, alt çizgiler veya kısa çizgiler içeren küçük harfli bir tanımlayıcı kullanın.';
 
   @override
   String get startTopicTitleRequired => 'Başlangıç konusu başlığı gerekli.';
 
   @override
-  String get createWritersideProjectFailed => 'Writerside projesi oluşturulamadı.';
+  String get createWritersideProjectFailed =>
+      'Writerside projesi oluşturulamadı.';
 
   @override
   String get settingsTitle => 'BusyMark Ayarları';
@@ -1068,13 +1159,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get autoSave => 'Otomatik Kaydet';
 
   @override
-  String get autoSaveDescription => 'Kısa bir bekleme gecikmesinden sonra dosya değişikliklerini otomatik olarak kaydedin.';
+  String get autoSaveDescription =>
+      'Kısa bir bekleme gecikmesinden sonra dosya değişikliklerini otomatik olarak kaydedin.';
 
   @override
   String get wordWrap => 'Satır kaydırma';
 
   @override
-  String get wordWrapDescription => 'Uzun satırları yatay kaydırmak yerine düzenleyici genişliğine sığacak şekilde kaydırın.';
+  String get wordWrapDescription =>
+      'Uzun satırları yatay kaydırmak yerine düzenleyici genişliğine sığacak şekilde kaydırın.';
 
   @override
   String get editorFontSize => 'Düzenleyici yazı tipi boyutu';
@@ -1089,13 +1182,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editingButtonsPosition => 'Düzenleme düğmelerinin konumu';
 
   @override
-  String get editingButtonsPositionDescription => 'Kayan WYSIWYG düzenleme düğmelerinin nerede görüneceğini seçin.';
+  String get editingButtonsPositionDescription =>
+      'Kayan WYSIWYG düzenleme düğmelerinin nerede görüneceğini seçin.';
 
   @override
   String get editingButtonsDirection => 'Düzenleme düğmelerinin yönü';
 
   @override
-  String get editingButtonsDirectionDescription => 'Kayan WYSIWYG düzenleme düğmelerinin yatay mı yoksa dikey mi düzenleneceğini seçin.';
+  String get editingButtonsDirectionDescription =>
+      'Kayan WYSIWYG düzenleme düğmelerinin yatay mı yoksa dikey mi düzenleneceğini seçin.';
 
   @override
   String get horizontal => 'Yatay';
@@ -1110,19 +1205,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get allowRemoteImages => 'Harici görselleri yükle';
 
   @override
-  String get allowRemoteImagesDescription => 'Markdown önizleme ve düzenleme görsellerinin http ve https URL\'lerinden yüklenmesine izin verin.';
+  String get allowRemoteImagesDescription =>
+      'Markdown önizleme ve düzenleme görsellerinin http ve https URL\'lerinden yüklenmesine izin verin.';
 
   @override
   String get clearRemoteImagePermissions => 'Harici görsel izinlerini temizle';
 
   @override
-  String get clearRemoteImagePermissionsDescription => 'Harici görsellerin yüklenmesine izin verilen çalışma alanlarını unutun.';
+  String get clearRemoteImagePermissionsDescription =>
+      'Harici görsellerin yüklenmesine izin verilen çalışma alanlarını unutun.';
 
   @override
-  String get clearGitWorkspaceTrust => 'Güvenilir Git çalışma alanlarını temizleyin';
+  String get clearGitWorkspaceTrust =>
+      'Güvenilir Git çalışma alanlarını temizleyin';
 
   @override
-  String get clearGitWorkspaceTrustDescription => 'Daha önce güvenilen çalışma alanları için Git özelliklerini etkinleştirmeden önce sorun.';
+  String get clearGitWorkspaceTrustDescription =>
+      'Daha önce güvenilen çalışma alanları için Git özelliklerini etkinleştirmeden önce sorun.';
 
   @override
   String get settingsEditingButtonsSectionTitle => 'Düzenleme düğmeleri';
@@ -1131,7 +1230,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get spellingDictionaries => 'Yazım sözlükleri';
 
   @override
-  String get spellingDictionariesDescription => 'Yazım sözlüklerini kurun ve yönetin';
+  String get spellingDictionariesDescription =>
+      'Yazım sözlüklerini kurun ve yönetin';
 
   @override
   String get settingsDictionariesSectionTitle => 'Sözlükler';
@@ -1149,30 +1249,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Pencere';
 
   @override
-  String get settingsReopenWorkspaceOnStartupTitle => 'Başlangıçta önceki çalışma alanını yeniden aç';
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Başlangıçta önceki çalışma alanını yeniden aç';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription => 'BusyMark başladığında önceki oturumdaki çalışma alanını ve sekmeleri açın.';
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'BusyMark başladığında önceki oturumdaki çalışma alanını ve sekmeleri açın.';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesTitle => 'Kaydedilmemiş değişikliklerle kapatmadan önce onaylayın';
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Kaydedilmemiş değişikliklerle kapatmadan önce onaylayın';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription => 'Belgelerde kaydedilmemiş değişiklikler olduğunda BusyMark\'ı kapatmadan önce sorun.';
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Belgelerde kaydedilmemiş değişiklikler olduğunda BusyMark\'ı kapatmadan önce sorun.';
 
   @override
   String get closeUnsavedChangesTitle => 'Kaydedilmemiş değişiklikler';
 
   @override
-  String get closeUnsavedChangesSingleMessage => 'Bu belgede kaydedilmemiş değişiklikler var. BusyMark\'ı kapatmadan önce değişiklikler kaydedilsin mi?';
+  String get closeUnsavedChangesSingleMessage =>
+      'Bu belgede kaydedilmemiş değişiklikler var. BusyMark\'ı kapatmadan önce değişiklikler kaydedilsin mi?';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count belgede kaydedilmemiş değişiklik var. BusyMark kapatılmadan önce değişiklikler kaydedilsin mi?',
-      one: '1 belgede kaydedilmemiş değişiklik var. BusyMark kapatılmadan önce değişiklikler kaydedilsin mi?',
+      other:
+          '$count belgede kaydedilmemiş değişiklik var. BusyMark kapatılmadan önce değişiklikler kaydedilsin mi?',
+      one:
+          '1 belgede kaydedilmemiş değişiklik var. BusyMark kapatılmadan önce değişiklikler kaydedilsin mi?',
       zero: 'BusyMark kapatılmadan önce değişiklikler kaydedilsin mi?',
     );
     return '$_temp0';
@@ -1203,8 +1310,10 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count belgede kaydedilmemiş değişiklik var. Devam etmeden önce kaydedilsin mi?',
-      one: '1 belgede kaydedilmemiş değişiklik var. Devam etmeden önce kaydedilsin mi?',
+      other:
+          '$count belgede kaydedilmemiş değişiklik var. Devam etmeden önce kaydedilsin mi?',
+      one:
+          '1 belgede kaydedilmemiş değişiklik var. Devam etmeden önce kaydedilsin mi?',
     );
     return '$_temp0';
   }
@@ -1213,7 +1322,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fileChangedOnDisk => 'Diskteki dosya değiştirildi';
 
   @override
-  String get fileChangedOnDiskMessage => 'Bu dosya, siz onu açtığınızdan beri diskte değişti. Üzerine yazılsın mı?';
+  String get fileChangedOnDiskMessage =>
+      'Bu dosya, siz onu açtığınızdan beri diskte değişti. Üzerine yazılsın mı?';
 
   @override
   String get untitledMarkdownFileName => 'İsimsiz.md';
@@ -1264,7 +1374,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get videoPreview => 'Video önizlemesi';
 
   @override
-  String get diagnosticWritersideVideoMissingSource => 'Videonun src özelliği eksik.';
+  String get diagnosticWritersideVideoMissingSource =>
+      'Videonun src özelliği eksik.';
 
   @override
   String diagnosticWritersideVideoUnsupportedSource(String source) {
@@ -1455,13 +1566,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get remoteImageBlocked => 'Harici görsel engellendi';
 
   @override
-  String get remoteImageBlockedTooltip => 'BusyMark\'ın harici görselleri yükleyip yükleyemeyeceğini seçin.';
+  String get remoteImageBlockedTooltip =>
+      'BusyMark\'ın harici görselleri yükleyip yükleyemeyeceğini seçin.';
 
   @override
   String get remoteImagesBlockedTitle => 'Harici görseller engellendi';
 
   @override
-  String get remoteImagesBlockedMessage => 'Bu belge internetteki görsellere başvuruyor. Bunları yüklemek ağ bilgilerini görselin barındırıldığı sunucuya açığa çıkarabilir.';
+  String get remoteImagesBlockedMessage =>
+      'Bu belge internetteki görsellere başvuruyor. Bunları yüklemek ağ bilgilerini görselin barındırıldığı sunucuya açığa çıkarabilir.';
 
   @override
   String get loadRemoteImagesForWorkspace => 'Bu çalışma alanı için yükleme';
@@ -1632,7 +1745,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get topicIsHomePageRemovalWarning => 'Bu konu bu örneğin ana sayfasıdır. İçindekilerden kaldırmadan önce başka bir ana sayfa seçin.';
+  String get topicIsHomePageRemovalWarning =>
+      'Bu konu bu örneğin ana sayfasıdır. İçindekilerden kaldırmadan önce başka bir ana sayfa seçin.';
 
   @override
   String get newHomePage => 'Yeni ana sayfa';
@@ -1641,10 +1755,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chooseHomePage => 'Ana sayfa seçin';
 
   @override
-  String get noHomePageReplacement => 'Ana sayfasını kaldırmadan önce bu örneğe başka bir uygun konu ekleyin veya bağlayın.';
+  String get noHomePageReplacement =>
+      'Ana sayfasını kaldırmadan önce bu örneğe başka bir uygun konu ekleyin veya bağlayın.';
 
   @override
-  String get topicIsStartPageRemovalWarning => 'Bu konu bir örneğin ana sayfasıdır. Kaynak dosyasını silmeden önce başka bir ana sayfa atayın.';
+  String get topicIsStartPageRemovalWarning =>
+      'Bu konu bir örneğin ana sayfasıdır. Kaynak dosyasını silmeden önce başka bir ana sayfa atayın.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1655,7 +1771,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noBreakingTopicUsages => 'Bozulacak referans bulunamadı.';
 
   @override
-  String get topicUsagesFound => 'BusyMark bu konuya yönelik aşağıdaki referansları buldu.';
+  String get topicUsagesFound =>
+      'BusyMark bu konuya yönelik aşağıdaki referansları buldu.';
 
   @override
   String get topicUsageTocElements => 'İçindekiler öğeleri';
@@ -1687,10 +1804,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get updateUsagesAutomatically => 'Kullanımları otomatik güncelle';
 
   @override
-  String get updateUsagesAutomaticallyDescription => 'TOC başvurularını ve include öğelerini kaldırın, bağlantı metnini koruyun.';
+  String get updateUsagesAutomaticallyDescription =>
+      'TOC başvurularını ve include öğelerini kaldırın, bağlantı metnini koruyun.';
 
   @override
-  String get manualUsageUpdatesRequired => 'Bazı kullanımlar bu yeniden düzenleme işleminden önce el ile değişiklik yapılmasını gerektirir.';
+  String get manualUsageUpdatesRequired =>
+      'Bazı kullanımlar bu yeniden düzenleme işleminden önce el ile değişiklik yapılmasını gerektirir.';
 
   @override
   String get setRedirectTo => 'Yönlendirme hedefi:';
@@ -1702,7 +1821,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get redirectTarget => 'Yönlendirme hedefi';
 
   @override
-  String get remainingUsagesBlockRemoval => 'Devam etmeden önce kalan kullanımları inceleyin ve güncelleyin veya mümkün olduğunda otomatik güncellemeleri etkinleştirin.';
+  String get remainingUsagesBlockRemoval =>
+      'Devam etmeden önce kalan kullanımları inceleyin ve güncelleyin veya mümkün olduğunda otomatik güncellemeleri etkinleştirin.';
 
   @override
   String usagesOfTopic(String topic) {
@@ -1796,7 +1916,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get useIdentifierCharacters => 'Uzantının önünde harf, rakam, alt çizgi veya kısa çizgi kullanın.';
+  String get useIdentifierCharacters =>
+      'Uzantının önünde harf, rakam, alt çizgi veya kısa çizgi kullanın.';
 
   @override
   String get topicIdAlreadyExists => 'Konu kimliği zaten mevcut.';
@@ -1889,7 +2010,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get normalizeLineEndings => 'Satır sonlarını normalleştir';
 
   @override
-  String get mixedLineEndingsSavePrompt => 'Bu belge karışık satır sonları içeriyor. Bir format seçin.';
+  String get mixedLineEndingsSavePrompt =>
+      'Bu belge karışık satır sonları içeriyor. Bir format seçin.';
 
   @override
   String workspaceReplaceMixedLineEndings(String fileName) {
@@ -1897,31 +2019,38 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workspaceReplaceIssueOversized => 'Büyük boyutlu bir dosya atlandı.';
+  String get workspaceReplaceIssueOversized =>
+      'Büyük boyutlu bir dosya atlandı.';
 
   @override
   String get workspaceReplaceIssueUnreadable => 'Okunamayan bir dosya atlandı.';
 
   @override
-  String get workspaceReplaceIssueInvalidUtf8 => 'Geçerli UTF-8 olmayan bir dosya atlandı.';
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Geçerli UTF-8 olmayan bir dosya atlandı.';
 
   @override
   String get workspaceReplaceIssueTruncated => 'Değiştirme önizlemesi kesildi.';
 
   @override
-  String get workspaceReplaceIssueFileChanged => 'Önizlemeden sonra değişen bir dosya atlandı.';
+  String get workspaceReplaceIssueFileChanged =>
+      'Önizlemeden sonra değişen bir dosya atlandı.';
 
   @override
-  String get workspaceReplaceIssueBufferChanged => 'Önizlemeden sonra değişen düzenleyici arabelleği atlandı.';
+  String get workspaceReplaceIssueBufferChanged =>
+      'Önizlemeden sonra değişen düzenleyici arabelleği atlandı.';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired => 'Değiştirmeden önce LF veya CRLF normalizasyonunu seçin.';
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Değiştirmeden önce LF veya CRLF normalizasyonunu seçin.';
 
   @override
-  String get workspaceReplaceIssuePartialConflict => 'Dosya aynı anda değiştiği için geri alma durduruldu. Bazı değişiklikler kalabilir; yeri değiştirilen içerik aşağıdaki yolda korundu.';
+  String get workspaceReplaceIssuePartialConflict =>
+      'Dosya aynı anda değiştiği için geri alma durduruldu. Bazı değişiklikler kalabilir; yeri değiştirilen içerik aşağıdaki yolda korundu.';
 
   @override
-  String get workspaceReplaceIssueApplyFailed => 'İncelenen değiştirme işlemi gerçekleştirilemedi; hiçbir dosya değiştirilmedi.';
+  String get workspaceReplaceIssueApplyFailed =>
+      'İncelenen değiştirme işlemi gerçekleştirilemedi; hiçbir dosya değiştirilmedi.';
 
   @override
   String externalChangesTitle(String fileName) {
@@ -1932,7 +2061,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get externalFileDeleted => 'Bu dosya diskte silindi.';
 
   @override
-  String get externalFileChanged => 'Kaydedilmemiş düzenlemeleriniz varken bu dosya diskte değişti.';
+  String get externalFileChanged =>
+      'Kaydedilmemiş düzenlemeleriniz varken bu dosya diskte değişti.';
 
   @override
   String recoveredDocumentReview(String fileName) {
@@ -1952,16 +2082,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get saveAs => 'Farklı Kaydet';
 
   @override
-  String get workspaceSearchIncomplete => 'Sonuçların yalnızca bir kısmı gösteriliyor. Daha fazlasını gösterin veya aramayı daraltın.';
+  String get workspaceSearchIncomplete =>
+      'Sonuçların yalnızca bir kısmı gösteriliyor. Daha fazlasını gösterin veya aramayı daraltın.';
 
   @override
   String get workspaceSearchShowMore => 'Daha fazla sonuç göster';
 
   @override
-  String get workspaceSearchSkippedFiles => 'Arama eksik. Bu dosyalar 1 MiB boyutunu aşıyor veya okunamadı:';
+  String get workspaceSearchSkippedFiles =>
+      'Arama eksik. Bu dosyalar 1 MiB boyutunu aşıyor veya okunamadı:';
 
   @override
-  String get sourceLargeFileFeaturesPaused => 'Büyük dosya: vurgulama ve katlama duraklatıldı';
+  String get sourceLargeFileFeaturesPaused =>
+      'Büyük dosya: vurgulama ve katlama duraklatıldı';
 
   @override
   String get nothingToRead => 'Okunacak bir şey yok';
@@ -2010,7 +2143,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cannotOpenFileTypeInEditor => 'Bu dosya türü düzenleyicide açılamıyor';
+  String get cannotOpenFileTypeInEditor =>
+      'Bu dosya türü düzenleyicide açılamıyor';
 
   @override
   String anchorNotFound(String anchor) {
@@ -2035,7 +2169,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get documentKindMarkdownFile => 'Markdown dosyası';
 
   @override
-  String get documentKindWritersideMarkdownTopic => 'Writerside Markdown konusu';
+  String get documentKindWritersideMarkdownTopic =>
+      'Writerside Markdown konusu';
 
   @override
   String get documentKindWritersideXmlTopic => 'Writerside XML konusu';
@@ -2081,10 +2216,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrorChooseWhereToSaveMarkdown => 'Bu Markdown dosyasının nereye kaydedileceğini seçin.';
+  String get workspaceErrorChooseWhereToSaveMarkdown =>
+      'Bu Markdown dosyasının nereye kaydedileceğini seçin.';
 
   @override
-  String get workspaceErrorSaveBlockedFileChangedOnDisk => 'Kaydetme engellendi: diskteki dosya değiştirildi.';
+  String get workspaceErrorSaveBlockedFileChangedOnDisk =>
+      'Kaydetme engellendi: diskteki dosya değiştirildi.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -2106,8 +2243,10 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count kaydedilmemiş belge kurtarıldı. Kaydetmeden veya silmeden önce her birini inceleyin.',
-      one: '1 kaydedilmemiş belge kurtarıldı. Kaydetmeden veya silmeden önce inceleyin.',
+      other:
+          '$count kaydedilmemiş belge kurtarıldı. Kaydetmeden veya silmeden önce her birini inceleyin.',
+      one:
+          '1 kaydedilmemiş belge kurtarıldı. Kaydetmeden veya silmeden önce inceleyin.',
     );
     return '$_temp0';
   }
@@ -2117,8 +2256,10 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count hasarlı kurtarma kaydı geri yüklenemedi. Geçerli kurtarma kayıtları kullanılabilir durumda.',
-      one: 'Hasarlı bir kurtarma kaydı geri yüklenemedi. Özgün kurtarma dosyası incelenmek üzere korundu.',
+      other:
+          '$count hasarlı kurtarma kaydı geri yüklenemedi. Geçerli kurtarma kayıtları kullanılabilir durumda.',
+      one:
+          'Hasarlı bir kurtarma kaydı geri yüklenemedi. Özgün kurtarma dosyası incelenmek üzere korundu.',
     );
     return '$_temp0';
   }
@@ -2165,16 +2306,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorFileNameRequired => 'Dosya adı gerekli.';
 
   @override
-  String get errorFileNameUnsafe => 'Dosya adı tek bir güvenli yol bölümü olmalıdır.';
+  String get errorFileNameUnsafe =>
+      'Dosya adı tek bir güvenli yol bölümü olmalıdır.';
 
   @override
-  String get errorFileOperationInvalidTarget => 'Bir klasör kendi içine taşınamaz.';
+  String get errorFileOperationInvalidTarget =>
+      'Bir klasör kendi içine taşınamaz.';
 
   @override
-  String get errorFileOperationOutsideRoot => 'Dosya işlemi çalışma alanının içinde kalmalıdır.';
+  String get errorFileOperationOutsideRoot =>
+      'Dosya işlemi çalışma alanının içinde kalmalıdır.';
 
   @override
-  String get errorFileOperationRoot => 'Çalışma alanı kökü dosya ağacından değiştirilemez.';
+  String get errorFileOperationRoot =>
+      'Çalışma alanı kökü dosya ağacından değiştirilemez.';
 
   @override
   String get errorProjectNameRequired => 'Proje adı gerekli.';
@@ -2183,13 +2328,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorDirectoryNameRequired => 'Klasör adı gerekli.';
 
   @override
-  String get errorDirectoryNameUnsafe => 'Klasör adı tek bir güvenli yol bölümü olmalıdır.';
+  String get errorDirectoryNameUnsafe =>
+      'Klasör adı tek bir güvenli yol bölümü olmalıdır.';
 
   @override
-  String get errorInstanceIdInvalid => 'Örnek kimliği küçük harfle başlamalı ve yalnızca küçük harfler, sayılar, alt çizgiler ve kısa çizgiler içermelidir.';
+  String get errorInstanceIdInvalid =>
+      'Örnek kimliği küçük harfle başlamalı ve yalnızca küçük harfler, sayılar, alt çizgiler ve kısa çizgiler içermelidir.';
 
   @override
-  String get errorTopicFileInvalid => 'Konu dosyası adı, yol ayırıcıları olmayan bir Markdown dosya adı olmalıdır.';
+  String get errorTopicFileInvalid =>
+      'Konu dosyası adı, yol ayırıcıları olmayan bir Markdown dosya adı olmalıdır.';
 
   @override
   String get errorTopicTitleRequired => 'Konu başlığı zorunludur.';
@@ -2200,10 +2348,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideModuleNotOpen => 'Konu oluşturmak için Writerside modülünün açık olması gerekir.';
+  String get errorWritersideModuleNotOpen =>
+      'Konu oluşturmak için Writerside modülünün açık olması gerekir.';
 
   @override
-  String get errorWritersideInstanceTreeMissing => 'Writerside modülünün örnek ağacı yoktur.';
+  String get errorWritersideInstanceTreeMissing =>
+      'Writerside modülünün örnek ağacı yoktur.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2226,10 +2376,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideTocNodeMissing => 'Seçilen TOC girişi artık mevcut değil.';
+  String get errorWritersideTocNodeMissing =>
+      'Seçilen TOC girişi artık mevcut değil.';
 
   @override
-  String get errorWritersideTocInvalidMove => 'Bir TOC girişi kendisine veya alt öğelerinden birine taşınamaz.';
+  String get errorWritersideTocInvalidMove =>
+      'Bir TOC girişi kendisine veya alt öğelerinden birine taşınamaz.';
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
@@ -2237,16 +2389,20 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideSafeDeleteRequired => 'Writerside konu dosyaları için Güvenli Silme\'yi kullanın.';
+  String get errorWritersideSafeDeleteRequired =>
+      'Writerside konu dosyaları için Güvenli Silme\'yi kullanın.';
 
   @override
-  String get errorWritersideTopicUsageScanFailed => 'Konu kullanımı taraması tamamlanamadı. Hiçbir dosya değiştirilmedi.';
+  String get errorWritersideTopicUsageScanFailed =>
+      'Konu kullanımı taraması tamamlanamadı. Hiçbir dosya değiştirilmedi.';
 
   @override
-  String get errorWritersideTopicUsagesRemain => 'Bazı konu kullanımları hâlâ dikkat gerektiriyor. Devam etmeden önce bunları inceleyin.';
+  String get errorWritersideTopicUsagesRemain =>
+      'Bazı konu kullanımları hâlâ dikkat gerektiriyor. Devam etmeden önce bunları inceleyin.';
 
   @override
-  String get errorWritersideRedirectInvalid => 'Seçilen yönlendirme hedefi artık geçerli değil. Tekrar seçin.';
+  String get errorWritersideRedirectInvalid =>
+      'Seçilen yönlendirme hedefi artık geçerli değil. Tekrar seçin.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
@@ -2254,21 +2410,29 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
     return 'Yeniden adlandırma, $module modülündeki $count konu dosyası ayrıştırılmadığından tüm proje başvurularını güvenle güncelleyemiyor: $paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty => 'Writerside proje dosyalarında kaydedilmemiş değişiklikler var. Bunları çözün ve yeni bir yeniden adlandırma önizlemesi hazırlayın.';
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside proje dosyalarında kaydedilmemiş değişiklikler var. Bunları çözün ve yeni bir yeniden adlandırma önizlemesi hazırlayın.';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged => 'Writerside projesinin modül kümesi değişti. Yeniden düzenlemeden önce yeni bir yeniden adlandırma önizlemesi hazırlayın.';
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside projesinin modül kümesi değişti. Yeniden düzenlemeden önce yeni bir yeniden adlandırma önizlemesi hazırlayın.';
 
   @override
-  String get errorTopicsRootUnsafe => 'Konu kökü güvenli bir göreli dizin olmalıdır.';
+  String get errorTopicsRootUnsafe =>
+      'Konu kökü güvenli bir göreli dizin olmalıdır.';
 
   @override
-  String get errorTopicFileNameUnsafe => 'Konu dosyası adı tek bir güvenli yol bölümü olmalıdır.';
+  String get errorTopicFileNameUnsafe =>
+      'Konu dosyası adı tek bir güvenli yol bölümü olmalıdır.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -2276,7 +2440,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorTopicFileNameInvalid => 'Konu dosyası adı yalnızca harf, rakam, alt çizgi ve kısa çizgi içermelidir.';
+  String get errorTopicFileNameInvalid =>
+      'Konu dosyası adı yalnızca harf, rakam, alt çizgi ve kısa çizgi içermelidir.';
 
   @override
   String errorUnknown(String code) {
@@ -2289,7 +2454,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceScanSkipped => 'Büyük çalışma alanı algılandı. Uygulamanın duyarlı kalması için bazı dosyalar atlandı.';
+  String get diagnosticWorkspaceScanSkipped =>
+      'Büyük çalışma alanı algılandı. Uygulamanın duyarlı kalması için bazı dosyalar atlandı.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
@@ -2297,7 +2463,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceFileTooLarge => 'Dosya beta otomatik ayrıştırma sınırından daha büyük.';
+  String get diagnosticWorkspaceFileTooLarge =>
+      'Dosya beta otomatik ayrıştırma sınırından daha büyük.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -2305,7 +2472,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownAttributeMalformed => 'Biçimi bozuk Writerside başlık öznitelik bloğu.';
+  String get diagnosticMarkdownAttributeMalformed =>
+      'Biçimi bozuk Writerside başlık öznitelik bloğu.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -2313,13 +2481,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter => 'Ek üst düzey H1 başlıkları bölümler olarak ele alınır.';
+  String get diagnosticWritersideTopicH1ConvertedToChapter =>
+      'Ek üst düzey H1 başlıkları bölümler olarak ele alınır.';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle => 'Writerside Markdown konusunun H1 veya frontmatter başlığı yok.';
+  String get diagnosticWritersideMarkdownTopicMissingTitle =>
+      'Writerside Markdown konusunun H1 veya frontmatter başlığı yok.';
 
   @override
-  String get diagnosticWritersideXmlTopicMissingTitle => 'XML konusunun başlığı eksik.';
+  String get diagnosticWritersideXmlTopicMissingTitle =>
+      'XML konusunun başlığı eksik.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -2327,7 +2498,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownFrontMatterMalformed => 'Frontmatter kapatılmamış.';
+  String get diagnosticMarkdownFrontMatterMalformed =>
+      'Frontmatter kapatılmamış.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Güvenli olmayan HTML öğesi.';
@@ -2358,13 +2530,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot => 'writerside.cfg kökü <ihp> olmalıdır.';
+  String get diagnosticWritersideConfigInvalidRoot =>
+      'writerside.cfg kökü <ihp> olmalıdır.';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc => 'snippet bildiriminde src eksik.';
+  String get diagnosticWritersideConfigMissingSnippetsSrc =>
+      'snippet bildiriminde src eksik.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'instance-groups bildiriminde src eksik.';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
+      'instance-groups bildiriminde src eksik.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -2372,16 +2547,20 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc => 'Instance bildiriminde src eksik.';
+  String get diagnosticWritersideConfigMissingInstanceSrc =>
+      'Instance bildiriminde src eksik.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance => 'writerside.cfg bir instance kaydetmiyor.';
+  String get diagnosticWritersideConfigMissingInstance =>
+      'writerside.cfg bir instance kaydetmiyor.';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot => '.tree kökü <instance-profile> olmalıdır.';
+  String get diagnosticWritersideTreeInvalidRoot =>
+      '.tree kökü <instance-profile> olmalıdır.';
 
   @override
-  String get diagnosticWritersideTreeMissingId => 'Instance profilinde kimlik eksik.';
+  String get diagnosticWritersideTreeMissingId =>
+      'Instance profilinde kimlik eksik.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
@@ -2389,7 +2568,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTreeMissingStartPage => 'Kütüphane olmayan örnek start-page içermiyor.';
+  String get diagnosticWritersideTreeMissingStartPage =>
+      'Kütüphane olmayan örnek start-page içermiyor.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2402,7 +2582,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration => 'Değişken bildiriminin adı ve değeri olmalıdır.';
+  String get diagnosticWritersideVariableMalformedDeclaration =>
+      'Değişken bildiriminin adı ve değeri olmalıdır.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -2410,7 +2591,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideCategoryMissingId => 'Kategorinin kimliği eksik.';
+  String get diagnosticWritersideCategoryMissingId =>
+      'Kategorinin kimliği eksik.';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
@@ -2423,10 +2605,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicInvalidRoot => '.topic kökü <topic> olmalıdır.';
+  String get diagnosticWritersideTopicInvalidRoot =>
+      '.topic kökü <topic> olmalıdır.';
 
   @override
-  String get diagnosticWritersideTopicMissingRootId => 'XML konusunun kök kimliği eksik.';
+  String get diagnosticWritersideTopicMissingRootId =>
+      'XML konusunun kök kimliği eksik.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
@@ -2439,23 +2623,31 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicAnchorMissingHref => '<a>\'da href eksik.';
+  String get diagnosticWritersideTopicAnchorMissingHref =>
+      '<a>\'da href eksik.';
 
   @override
-  String get diagnosticWritersideConfigMissing => 'Writerside modu için writerside.cfg gereklidir.';
+  String get diagnosticWritersideConfigMissing =>
+      'Writerside modu için writerside.cfg gereklidir.';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(
+    String relativePath,
+  ) {
     return 'Yapılandırılmış yapı yapılandırma dizini eksik: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
+    String relativePath,
+  ) {
     return 'Yapılandırılmış API spesifikasyonları dizini eksik: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(
+    String relativePath,
+  ) {
     return 'Yapılandırılmış snippet dizini eksik: $relativePath';
   }
 
@@ -2470,7 +2662,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(
+    String relativePath,
+  ) {
     return 'Yapılandırılmış instance grupları dosyası eksik: $relativePath';
   }
 
@@ -2485,7 +2679,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(
+    String relativePath,
+  ) {
     return 'Varsayılan konu dizini eksik: $relativePath';
   }
 
@@ -2505,12 +2701,21 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
     return '\"$instanceId\" örneği, \"$topic\" konusu için geçersiz \"$webFileName\" web dosyası adını yayımlıyor.';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
     return '\"$instanceId\" örneği hem \"$firstTopic\" hem de \"$secondTopic\" konusunu \"$webFileName\" olarak yayımlıyor.';
   }
 
@@ -2535,12 +2740,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
+  String diagnosticWritersideAnchorUnresolved(
+    String anchor,
+    String targetName,
+  ) {
     return '\"$anchor\" çapası \"$targetName\"te mevcut değil.';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include> öğesinde from niteliği eksik.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      '<include> öğesinde from niteliği eksik.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2548,7 +2757,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
+  String diagnosticWritersideIncludeElementMissing(
+    String elementId,
+    String from,
+  ) {
     return '\"$elementId\" dahil etme öğesi \"$from\"te mevcut değil.';
   }
 
@@ -2592,26 +2804,27 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(
-      reason,
-      {
-        'other': 'Git\'i yükleyin veya BusyMark\'i kullanılabilir bir Git çalıştırılabilir dosyası kullanacak şekilde yapılandırın. $reason',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'other':
+          'Git\'i yükleyin veya BusyMark\'i kullanılabilir bir Git çalıştırılabilir dosyası kullanacak şekilde yapılandırın. $reason',
+    });
     return '$_temp0';
   }
 
   @override
-  String get gitOperationsRequireTrust => 'Git işlemleri çalışma alanına güvenilmesini gerektirir.';
+  String get gitOperationsRequireTrust =>
+      'Git işlemleri çalışma alanına güvenilmesini gerektirir.';
 
   @override
   String get gitManageBranches => 'Dalları yönet';
 
   @override
-  String get gitTrustRequiredTitle => 'Git için bu çalışma alanına güveniyor musunuz?';
+  String get gitTrustRequiredTitle =>
+      'Git için bu çalışma alanına güveniyor musunuz?';
 
   @override
-  String get gitTrustRequiredMessage => 'BusyMark, güven verilmeden de sınırlı depo meta verilerini inceleyebilir. Güven vermek, bu depo için yapılandırılmış kancaları, filtreleri, kimlik bilgisi yardımcılarını ve imzalama araçlarını çalıştırabilecek Git işlemlerini etkinleştirir.';
+  String get gitTrustRequiredMessage =>
+      'BusyMark, güven verilmeden de sınırlı depo meta verilerini inceleyebilir. Güven vermek, bu depo için yapılandırılmış kancaları, filtreleri, kimlik bilgisi yardımcılarını ve imzalama araçlarını çalıştırabilecek Git işlemlerini etkinleştirir.';
 
   @override
   String get gitTrustWorkspace => 'Çalışma alanına güven';
@@ -2620,7 +2833,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitNotRepositoryTitle => 'Git deposu değil';
 
   @override
-  String get gitNotRepositoryMessage => 'Bu çalışma alanı Git deposunun içinde değil.';
+  String get gitNotRepositoryMessage =>
+      'Bu çalışma alanı Git deposunun içinde değil.';
 
   @override
   String get gitInitializeRepository => 'Git deposunu başlat';
@@ -2719,7 +2933,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitCommitSelectedFiles => 'Seçili dosyalar';
 
   @override
-  String get gitCommitNoSelectedFiles => 'Commit etmeden önce en az bir dosyayı stage edin.';
+  String get gitCommitNoSelectedFiles =>
+      'Commit etmeden önce en az bir dosyayı stage edin.';
 
   @override
   String gitStagedFileCount(int count) {
@@ -2771,7 +2986,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUnsavedChangesBanner => 'Kaydedilmemiş düzenleyici değişiklikleri kaydedilene kadar dahil edilmez.';
+  String get gitUnsavedChangesBanner =>
+      'Kaydedilmemiş düzenleyici değişiklikleri kaydedilene kadar dahil edilmez.';
 
   @override
   String get gitConfirmDiscardTitle => 'Git değişikliklerinden vazgeçilsin mi?';
@@ -2781,8 +2997,10 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Seçili izlenen dosyalardaki tüm stage edilmiş ve stage edilmemiş değişiklikler HEAD sürümüne geri yüklenecek.',
-      one: 'Seçili izlenen dosyadaki tüm stage edilmiş ve stage edilmemiş değişiklikler HEAD sürümüne geri yüklenecek.',
+      other:
+          'Seçili izlenen dosyalardaki tüm stage edilmiş ve stage edilmemiş değişiklikler HEAD sürümüne geri yüklenecek.',
+      one:
+          'Seçili izlenen dosyadaki tüm stage edilmiş ve stage edilmemiş değişiklikler HEAD sürümüne geri yüklenecek.',
     );
     return '$_temp0';
   }
@@ -2803,7 +3021,8 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Seçili dosyalar Git durumlarına göre geri yüklenecek veya silinecek.',
+      other:
+          'Seçili dosyalar Git durumlarına göre geri yüklenecek veya silinecek.',
       one: 'Seçili dosya Git durumuna göre geri yüklenecek veya silinecek.',
     );
     return '$_temp0';
@@ -2815,7 +3034,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitConfirmSwitchBranchMessage => 'Git başka bir dala geçtikten sonra BusyMark çalışma alanını diskten yeniden yükleyecek.';
+  String get gitConfirmSwitchBranchMessage =>
+      'Git başka bir dala geçtikten sonra BusyMark çalışma alanını diskten yeniden yükleyecek.';
 
   @override
   String get gitConfirmPushSetUpstreamTitle => 'Upstream dalı ayarlansın mı?';
@@ -2832,7 +3052,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitFileHistory => 'Dosya Geçmişi';
 
   @override
-  String get gitFileHistoryRequiresOpenFile => 'Dosya Geçmişi açık bir Markdown dosyası gerektirir.';
+  String get gitFileHistoryRequiresOpenFile =>
+      'Dosya Geçmişi açık bir Markdown dosyası gerektirir.';
 
   @override
   String get gitLoadMore => 'Daha Fazla Yükle';
@@ -2850,7 +3071,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitConfirmRestoreTitle => 'Bu dosya sürümü geri yüklensin mi?';
 
   @override
-  String get gitConfirmRestoreMessage => 'BusyMark mevcut çalışma ağacı dosyasını seçili commit sürümüyle değiştirir. Geri yüklenen dosya stage edilmemiş durumda kalır.';
+  String get gitConfirmRestoreMessage =>
+      'BusyMark mevcut çalışma ağacı dosyasını seçili commit sürümüyle değiştirir. Geri yüklenen dosya stage edilmemiş durumda kalır.';
 
   @override
   String get gitCommitActions => 'Commit işlemleri';
@@ -2875,25 +3097,29 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitResetModeSoft => 'Soft';
 
   @override
-  String get gitResetModeSoftDescription => 'Yalnızca dalı taşıyın. Dizini ve çalışma ağacını değiştirmeyin; seçili commit ile arasındaki farklar stage edilmiş olarak kalır.';
+  String get gitResetModeSoftDescription =>
+      'Yalnızca dalı taşıyın. Dizini ve çalışma ağacını değiştirmeyin; seçili commit ile arasındaki farklar stage edilmiş olarak kalır.';
 
   @override
   String get gitResetModeMixed => 'Mixed';
 
   @override
-  String get gitResetModeMixedDescription => 'Dalı taşıyın ve dizini sıfırlayın. Çalışma ağacını değiştirmeyin; farkları stage edilmemiş durumda bırakın.';
+  String get gitResetModeMixedDescription =>
+      'Dalı taşıyın ve dizini sıfırlayın. Çalışma ağacını değiştirmeyin; farkları stage edilmemiş durumda bırakın.';
 
   @override
   String get gitResetModeHard => 'Hard';
 
   @override
-  String get gitResetModeHardDescription => 'Dalı taşıyın ve dizini ve çalışma ağacını sıfırlayın. İzlenen değişiklikler atılır; yolu engelleyen izlenmeyen dosyalar silinebilir.';
+  String get gitResetModeHardDescription =>
+      'Dalı taşıyın ve dizini ve çalışma ağacını sıfırlayın. İzlenen değişiklikler atılır; yolu engelleyen izlenmeyen dosyalar silinebilir.';
 
   @override
   String get gitResetModeKeep => 'Keep';
 
   @override
-  String get gitResetModeKeepDescription => 'Yerel değişiklikleri koruyarak dalı taşıyın ve izlenen dosyaları sıfırlayın. Bu değişiklikler sıfırlamayla çakışırsa Git işlemi iptal eder.';
+  String get gitResetModeKeepDescription =>
+      'Yerel değişiklikleri koruyarak dalı taşıyın ve izlenen dosyaları sıfırlayın. Bu değişiklikler sıfırlamayla çakışırsa Git işlemi iptal eder.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -2943,7 +3169,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitErrorNotRepository => 'Bu çalışma alanı bir Git deposu değil.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark güvenli olmayan bir Git yolunu engelledi.';
+  String get gitErrorUnsafePath =>
+      'BusyMark güvenli olmayan bir Git yolunu engelledi.';
 
   @override
   String get gitErrorInvalidBranchName => 'Geçerli bir dal adı girin.';
@@ -2955,31 +3182,38 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitErrorNoUpstream => 'Upstream dalı yapılandırılmamış.';
 
   @override
-  String get gitErrorMultipleRemotes => 'Birden fazla remote yapılandırılmış. Bu BusyMark sürümünün dışında bir upstream seçin.';
+  String get gitErrorMultipleRemotes =>
+      'Birden fazla remote yapılandırılmış. Bu BusyMark sürümünün dışında bir upstream seçin.';
 
   @override
-  String get gitErrorDirtyWorkspace => 'Dal değiştirmeden önce BusyMark düzenleyici değişikliklerini kaydedin veya göz ardı edin.';
+  String get gitErrorDirtyWorkspace =>
+      'Dal değiştirmeden önce BusyMark düzenleyici değişikliklerini kaydedin veya göz ardı edin.';
 
   @override
-  String get gitErrorResetDirtyWorkspace => 'Geçerli dalı sıfırlamadan önce BusyMark düzenleyici değişikliklerini kaydedin veya yok sayın.';
+  String get gitErrorResetDirtyWorkspace =>
+      'Geçerli dalı sıfırlamadan önce BusyMark düzenleyici değişikliklerini kaydedin veya yok sayın.';
 
   @override
-  String get gitErrorRestoreStagedFile => 'Geçmiş bir sürümü geri yüklemeden önce bu dosyayı staging\'den çıkarın.';
+  String get gitErrorRestoreStagedFile =>
+      'Geçmiş bir sürümü geri yüklemeden önce bu dosyayı staging\'den çıkarın.';
 
   @override
   String get gitErrorResetDetachedHead => 'Sıfırlamadan önce bir dala geçin.';
 
   @override
-  String get gitErrorDiverged => 'Dallar birbirinden ayrılmış. Birleştirme veya yeniden temellendirme işlemini bu BusyMark sürümünün dışında çözün.';
+  String get gitErrorDiverged =>
+      'Dallar birbirinden ayrılmış. Birleştirme veya yeniden temellendirme işlemini bu BusyMark sürümünün dışında çözün.';
 
   @override
-  String get gitErrorAuthorIdentity => 'Git\'in commit atabilmesi için bir yazar adına ve e-posta adresine ihtiyacı var.';
+  String get gitErrorAuthorIdentity =>
+      'Git\'in commit atabilmesi için bir yazar adına ve e-posta adresine ihtiyacı var.';
 
   @override
   String get gitAuthorIdentityTitle => 'Git yazar kimliği';
 
   @override
-  String get gitAuthorIdentityMessage => 'Git\'in commit\'lerde kullanacağı kimliği girin. BusyMark bu kimliği kaydedecek ve commit\'i yeniden deneyecek.';
+  String get gitAuthorIdentityMessage =>
+      'Git\'in commit\'lerde kullanacağı kimliği girin. BusyMark bu kimliği kaydedecek ve commit\'i yeniden deneyecek.';
 
   @override
   String get gitAuthorName => 'İsim';
@@ -2991,7 +3225,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitAuthorIdentityGlobal => 'Tüm depolar için kullanın';
 
   @override
-  String get gitAuthorIdentityGlobalDescription => 'BusyMark Snap olarak kurulduysa bu ayar BusyMark\'ta açılan tüm depolar için geçerlidir.';
+  String get gitAuthorIdentityGlobalDescription =>
+      'BusyMark Snap olarak kurulduysa bu ayar BusyMark\'ta açılan tüm depolar için geçerlidir.';
 
   @override
   String get gitSaveIdentityAndCommit => 'Kimliği kaydet ve commit et';
@@ -3015,25 +3250,29 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syntaxReferenceMarkdownBlocks => 'Markdown blokları';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription => 'Markdown kaynağında ve önizlemesinde desteklenen blok yapıları.';
+  String get syntaxReferenceMarkdownBlocksDescription =>
+      'Markdown kaynağında ve önizlemesinde desteklenen blok yapıları.';
 
   @override
   String get syntaxReferenceInlineFormatting => 'Satır içi biçimlendirme';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription => 'Paragrafların, liste öğelerinin ve tablo hücrelerinin içinde görünebilecek biçimlendirme.';
+  String get syntaxReferenceInlineFormattingDescription =>
+      'Paragrafların, liste öğelerinin ve tablo hücrelerinin içinde görünebilecek biçimlendirme.';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => 'Ham HTML Blokları';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription => 'BusyMark önizleme widget\'ları aracılığıyla oluşturulan güvenli blok düzeyinde HTML etiketleri.';
+  String get syntaxReferenceRawHtmlBlocksDescription =>
+      'BusyMark önizleme widget\'ları aracılığıyla oluşturulan güvenli blok düzeyinde HTML etiketleri.';
 
   @override
   String get syntaxReferenceRawHtmlInline => 'Ham HTML Satır İçi Etiketleri';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription => 'Gerçek etiketler gösterilmeden oluşturulan güvenli satır içi HTML etiketleri.';
+  String get syntaxReferenceRawHtmlInlineDescription =>
+      'Gerçek etiketler gösterilmeden oluşturulan güvenli satır içi HTML etiketleri.';
 
   @override
   String get syntaxReferenceHeadings => 'Başlıklar';
@@ -3069,22 +3308,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syntaxReferenceHtmlInlineCodeTags => 'Satır içi kod etiketleri';
 
   @override
-  String get syntaxReferenceHtmlNeutralInlineTags => 'Anlamsal metin etiketleri';
+  String get syntaxReferenceHtmlNeutralInlineTags =>
+      'Anlamsal metin etiketleri';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription => 'İzin verilen HTML, tarayıcıda oluşturulmaz, BusyMark önizleme bloklarına dönüştürülür.';
+  String get syntaxReferenceSanitizedPreviewDescription =>
+      'İzin verilen HTML, tarayıcıda oluşturulmaz, BusyMark önizleme bloklarına dönüştürülür.';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription => 'Düzenlenmemiş ham HTML, tam olarak kaynak metin olarak kaydedilir.';
+  String get syntaxReferenceSourcePreservedDescription =>
+      'Düzenlenmemiş ham HTML, tam olarak kaynak metin olarak kaydedilir.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription => 'Ham HTML içindeki Markdown işaretleri düz metin olarak görüntülenir.';
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
+      'Ham HTML içindeki Markdown işaretleri düz metin olarak görüntülenir.';
 
   @override
-  String get syntaxReferenceBlockedContentDescription => 'Komut dosyaları, stiller, çerçeveler, formlar, SVG, MathML, olaylar ve güvenli olmayan özellikler engellenir.';
+  String get syntaxReferenceBlockedContentDescription =>
+      'Komut dosyaları, stiller, çerçeveler, formlar, SVG, MathML, olaylar ve güvenli olmayan özellikler engellenir.';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription => 'Bağlantılar http, https, mailto, tel, göreli ve parça URL\'lerine izin verir; güvenli olmayan şemalar engellenir.';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'Bağlantılar http, https, mailto, tel, göreli ve parça URL\'lerine izin verir; güvenli olmayan şemalar engellenir.';
 
   @override
   String get syntaxReferenceCategory => 'Kategori';
@@ -3114,28 +3359,35 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syntaxReferenceOfficialDocumentation => 'Resmî belgeler';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdown => 'Yalnızca Writerside Markdown';
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Yalnızca Writerside Markdown';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml => 'Yalnızca Writerside Markdown ve Writerside XML';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Yalnızca Writerside Markdown ve Writerside XML';
 
   @override
-  String get syntaxReferenceMarkdownDescription => 'BusyMark\'ın yazabildiği ve önizleyebildiği temel Markdown biçimleri.';
+  String get syntaxReferenceMarkdownDescription =>
+      'BusyMark\'ın yazabildiği ve önizleyebildiği temel Markdown biçimleri.';
 
   @override
   String get syntaxReferenceParagraphExample => 'Bir metin paragrafı.';
 
   @override
-  String get syntaxReferenceTableLimitation => 'Tablolar GitHub Flavored Markdown dikey çizgi sözdizimini kullanır.';
+  String get syntaxReferenceTableLimitation =>
+      'Tablolar GitHub Flavored Markdown dikey çizgi sözdizimini kullanır.';
 
   @override
-  String get syntaxReferenceHardBreakIdentifiers => 'satır sonunda iki boşluk, \\, <br>';
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'satır sonunda iki boşluk, \\, <br>';
 
   @override
-  String get syntaxReferenceHtmlDescription => 'BusyMark, Markdown kaynağında sınırlı ve güvenli bir ham HTML alt kümesini kabul eder.';
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark, Markdown kaynağında sınırlı ve güvenli bir ham HTML alt kümesini kabul eder.';
 
   @override
-  String get syntaxReferenceDiagramsDescription => 'Çitle çevrili Mermaid, PlantUML, D2 ve OpenAPI blokları Markdown kaynağında çalışır. Çit tanımlayıcıları büyük/küçük harfe duyarlı değildir ve BusyMark özgün yazımı korur.';
+  String get syntaxReferenceDiagramsDescription =>
+      'Çitle çevrili Mermaid, PlantUML, D2 ve OpenAPI blokları Markdown kaynağında çalışır. Çit tanımlayıcıları büyük/küçük harfe duyarlı değildir ve BusyMark özgün yazımı korur.';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -3150,28 +3402,35 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation => 'Çitle çevrili YAML veya JSON içeriği kullanın. BusyMark rastgele bir tam YAML ya da JSON belgesini OpenAPI başvurusu olarak değerlendirmez.';
+  String get syntaxReferenceOpenApiLimitation =>
+      'Çitle çevrili YAML veya JSON içeriği kullanın. BusyMark rastgele bir tam YAML ya da JSON belgesini OpenAPI başvurusu olarak değerlendirmez.';
 
   @override
-  String get syntaxReferenceSemanticDiagramBlocks => 'Anlamsal diyagram kod blokları';
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Anlamsal diyagram kod blokları';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation => 'Anlamsal code-block ve src biçimleri Mermaid, PlantUML ve D2\'yi destekler; OpenAPI\'yi desteklemez ve yalnızca Writerside projelerinde çalışır.';
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Anlamsal code-block ve src biçimleri Mermaid, PlantUML ve D2\'yi destekler; OpenAPI\'yi desteklemez ve yalnızca Writerside projelerinde çalışır.';
 
   @override
-  String get syntaxReferenceReferencedDiagramSource => 'Başvurulan diyagram kaynağı';
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Başvurulan diyagram kaynağı';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation => 'Yollar göreli olmalı ve açılan Writerside projesinin içinde kalmalıdır; çit ve src biçimi yalnızca Writerside Markdown içindir.';
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Yollar göreli olmalı ve açılan Writerside projesinin içinde kalmalıdır; çit ve src biçimi yalnızca Writerside Markdown içindir.';
 
   @override
-  String get syntaxReferenceMathematicsDescription => 'BusyMark TeX ifadelerini destekler; tam TeX veya LaTeX belgelerini desteklemez.';
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark TeX ifadelerini destekler; tam TeX veya LaTeX belgelerini desteklemez.';
 
   @override
   String get syntaxReferenceInlineMath => 'Satır içi matematik';
 
   @override
-  String get syntaxReferenceGithubMath => 'Dolar ve ters tırnaklı GitHub matematiği';
+  String get syntaxReferenceGithubMath =>
+      'Dolar ve ters tırnaklı GitHub matematiği';
 
   @override
   String get syntaxReferenceDisplayMath => 'Blok matematiği';
@@ -3183,34 +3442,40 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syntaxReferenceTexFence => 'tex çiti';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation => 'BusyMark \\(...\\) veya \\[...\\] dizilerini Markdown matematik sınırlayıcıları olarak tanımaz.';
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark \\(...\\) veya \\[...\\] dizilerini Markdown matematik sınırlayıcıları olarak tanımaz.';
 
   @override
-  String get syntaxReferenceTexFenceLimitation => 'Writerside modu dışında tex çiti normal bir kod bloğu olarak kalır.';
+  String get syntaxReferenceTexFenceLimitation =>
+      'Writerside modu dışında tex çiti normal bir kod bloğu olarak kalır.';
 
   @override
   String get syntaxReferenceWritersideMathElement => 'Writerside math öğesi';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation => 'math öğesi anlamsal Writerside sözdizimidir; izin verilen ham HTML MathML değildir.';
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math öğesi anlamsal Writerside sözdizimidir; izin verilen ham HTML MathML değildir.';
 
   @override
   String get syntaxReferenceSemanticTexBlock => 'Anlamsal TeX kod bloğu';
 
   @override
-  String get syntaxReferenceWritersideDescription => 'Bu odaklı uzantılar yalnızca açılmış Writerside projelerinde yorumlanır.';
+  String get syntaxReferenceWritersideDescription =>
+      'Bu odaklı uzantılar yalnızca açılmış Writerside projelerinde yorumlanır.';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => 'Uyarı blok alıntısı';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation => 'Düz blok alıntısı Writerside Markdown\'da ipucudur; normal Markdown\'da sıradan alıntı olarak kalır.';
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Düz blok alıntısı Writerside Markdown\'da ipucudur; normal Markdown\'da sıradan alıntı olarak kalır.';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => 'Anlamsal uyarılar';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation => 'Normal Markdown bu anlamsal Writerside öğelerini yorumlamaz.';
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Normal Markdown bu anlamsal Writerside öğelerini yorumlamaz.';
 
   @override
   String get syntaxReferenceCollapsibleHeading => 'Daraltılabilir başlık';
@@ -3219,28 +3484,34 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syntaxReferenceCollapsibleCode => 'Daraltılabilir kod çiti';
 
   @override
-  String get syntaxReferenceSemanticCollapsibles => 'Anlamsal daraltılabilir içerik';
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Anlamsal daraltılabilir içerik';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation => 'BusyMark daraltılabilir chapter, procedure, code-block ve tanım listesi biçimlerini destekler; Writerside kataloğunun tamamını desteklemez.';
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark daraltılabilir chapter, procedure, code-block ve tanım listesi biçimlerini destekler; Writerside kataloğunun tamamını desteklemez.';
 
   @override
-  String get syntaxReferenceSemanticCodeBlocks => 'Matematik ve diyagramlar için anlamsal kod blokları';
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Matematik ve diyagramlar için anlamsal kod blokları';
 
   @override
   String get syntaxReferenceVideo => 'Writerside videosu';
 
   @override
-  String get syntaxReferenceVideoLimitation => 'Yerel video yerel bir preview-src görseli kullanır; barındırılan kaynaklar desteklenen HTTPS YouTube veya Vimeo adresleri olmalıdır.';
+  String get syntaxReferenceVideoLimitation =>
+      'Yerel video yerel bir preview-src görseli kullanır; barındırılan kaynaklar desteklenen HTTPS YouTube veya Vimeo adresleri olmalıdır.';
 
   @override
   String get exportAsPdf => 'PDF olarak dışa aktar';
 
   @override
-  String get pdfExportDescription => 'Kendi başına kullanılabilen, düzenli bir PDF için sayfa düzenini seçin.';
+  String get pdfExportDescription =>
+      'Kendi başına kullanılabilen, düzenli bir PDF için sayfa düzenini seçin.';
 
   @override
-  String get pdfRemoteImagesNote => 'Dışa aktarma sırasında harici görseller indirilmez. Varsa yerel görseller eklenir.';
+  String get pdfRemoteImagesNote =>
+      'Dışa aktarma sırasında harici görseller indirilmez. Varsa yerel görseller eklenir.';
 
   @override
   String get pdfPageSize => 'Sayfa boyutu';
@@ -3304,13 +3575,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get pdfExportUnavailable => 'PDF dışa aktarma bileşeni eksik. BusyMark\'ı yeniden yükleyin ve tekrar deneyin.';
+  String get pdfExportUnavailable =>
+      'PDF dışa aktarma bileşeni eksik. BusyMark\'ı yeniden yükleyin ve tekrar deneyin.';
 
   @override
-  String get pdfExportTimedOut => 'PDF dışa aktarımı çok uzun sürdü ve durduruldu.';
+  String get pdfExportTimedOut =>
+      'PDF dışa aktarımı çok uzun sürdü ve durduruldu.';
 
   @override
-  String get pdfExportFailed => 'BusyMark bu belgeyi PDF olarak dışa aktaramadı.';
+  String get pdfExportFailed =>
+      'BusyMark bu belgeyi PDF olarak dışa aktaramadı.';
 
   @override
   String get visualizationRendering => 'Oluşturuluyor…';
@@ -3375,7 +3649,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get shortcutExportPdfDescription => 'Etkin belgeyi veya Writerside modülünü PDF olarak dışa aktarın.';
+  String get shortcutExportPdfDescription =>
+      'Etkin belgeyi veya Writerside modülünü PDF olarak dışa aktarın.';
 
   @override
   String get instances => 'Örnekler';
@@ -3414,7 +3689,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chooseMarkdownFolder => 'Markdown klasörünü seçin';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired => 'Markdown dosyalarını içeren bir klasör seçin.';
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Markdown dosyalarını içeren bir klasör seçin.';
 
   @override
   String get instanceAppearance => 'Görünüm';
@@ -3446,16 +3722,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get instanceStatusDeprecated => 'Kullanımdan kaldırıldı';
 
   @override
-  String get allowSearchEngineIndexing => 'Arama motoru dizine eklenmesine izin ver';
+  String get allowSearchEngineIndexing =>
+      'Arama motoru dizine eklenmesine izin ver';
 
   @override
-  String get allowSearchEngineIndexingDescription => 'Harici arama motorlarının bu çıktıyı dizine eklemesine izin verin.';
+  String get allowSearchEngineIndexingDescription =>
+      'Harici arama motorlarının bu çıktıyı dizine eklemesine izin verin.';
 
   @override
   String get offlineArtifact => 'Çevrimdışı artefakt';
 
   @override
-  String get offlineArtifactDescription => 'Kaynakları, yerleşik belgelerin bağımsız olmasını sağlayacak şekilde paketleyin.';
+  String get offlineArtifactDescription =>
+      'Kaynakları, yerleşik belgelerin bağımsız olmasını sağlayacak şekilde paketleyin.';
 
   @override
   String get instanceOutputSettings => 'Çıktı ayarları';
@@ -3481,10 +3760,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get copyReferencedMedia => 'Başvurulan medyayı kopyala';
 
   @override
-  String get copyReferencedMediaDescription => 'Göreli yolları koruyarak, seçilen dosyaların referans verdiği yerel görüntüleri ve videoları kopyalayın.';
+  String get copyReferencedMediaDescription =>
+      'Göreli yolları koruyarak, seçilen dosyaların referans verdiği yerel görüntüleri ve videoları kopyalayın.';
 
   @override
-  String get instanceIdRenameWarningTitle => 'Örnek kimliği yeniden adlandırılsın mı?';
+  String get instanceIdRenameWarningTitle =>
+      'Örnek kimliği yeniden adlandırılsın mı?';
 
   @override
   String instanceIdRenameWarning(String oldId, String newId) {
@@ -3492,10 +3773,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get renameAndUpdateReferences => 'Referansları yeniden adlandırın ve güncelleyin';
+  String get renameAndUpdateReferences =>
+      'Referansları yeniden adlandırın ve güncelleyin';
 
   @override
-  String get tocLibraryDescription => 'Bir TOC kütüphanesi yeniden kullanılabilir bölümleri saklar ve kendi çıktısını üretmez.';
+  String get tocLibraryDescription =>
+      'Bir TOC kütüphanesi yeniden kullanılabilir bölümleri saklar ve kendi çıktısını üretmez.';
 
   @override
   String get defaultTocLibraryName => 'Paylaşılan İçindekiler';
@@ -3543,7 +3826,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired => 'İçe aktarılacak en az bir Markdown dosyası seçin.';
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'İçe aktarılacak en az bir Markdown dosyası seçin.';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -3556,7 +3840,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceFilesChanged => 'Örnek dosyalar diskte değiştirildi. Bunları inceleyin ve tekrar deneyin.';
+  String get errorWritersideInstanceFilesChanged =>
+      'Örnek dosyalar diskte değiştirildi. Bunları inceleyin ve tekrar deneyin.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
@@ -3564,16 +3849,20 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceLibraryImport => 'İçindekiler kitaplığı Markdown konularını içe aktaramaz.';
+  String get errorWritersideInstanceLibraryImport =>
+      'İçindekiler kitaplığı Markdown konularını içe aktaramaz.';
 
   @override
-  String get errorWritersideInstanceWebPathInvalid => 'Web yolu tek bir segmentten oluşmalıdır.';
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Web yolu tek bir segmentten oluşmalıdır.';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid => 'Writerside örnek yapılandırması geçersiz. Teşhislerini düzeltip tekrar deneyin.';
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Writerside örnek yapılandırması geçersiz. Teşhislerini düzeltip tekrar deneyin.';
 
   @override
-  String get errorWritersideInstanceTemporaryFile => 'BusyMark örnek değişikliklerini güvenli bir şekilde gerçekleştiremedi.';
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark örnek değişikliklerini güvenli bir şekilde gerçekleştiremedi.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
@@ -3586,27 +3875,36 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot => 'buildprofiles.xml bir <buildprofiles> kök öğesine sahip olmalıdır.';
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'buildprofiles.xml bir <buildprofiles> kök öğesine sahip olmalıdır.';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
     return '$name değeri “$value” true veya false olmalıdır.';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance => 'Bir <build-profile> öğesi bir örnek kimliği belirtmelidir.';
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Bir <build-profile> öğesi bir örnek kimliği belirtmelidir.';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude => 'Bir ağaç <include>, hem from hem de element-id belirtmelidir.';
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'Bir ağaç <include>, hem from hem de element-id belirtmelidir.';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId => 'Bir ağaç <snippet>\'i bir kimlik belirtmelidir.';
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'Bir ağaç <snippet>\'i bir kimlik belirtmelidir.';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference => 'Çapraz örnek TOC referansı hem ref hem de in\'i belirtmelidir.';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'Çapraz örnek TOC referansı hem ref hem de in\'i belirtmelidir.';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets => 'Bir TOC öğesi birden fazla konuyu, referansı, bağlantıyı veya yönlendirmeyi hedefleyemez.';
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Bir TOC öğesi birden fazla konuyu, referansı, bağlantıyı veya yönlendirmeyi hedefleyemez.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3614,10 +3912,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot => 'Örnek grupları dosyasında bir <instance-groups> kök öğesi bulunmalıdır.';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Örnek grupları dosyasında bir <instance-groups> kök öğesi bulunmalıdır.';
 
   @override
-  String get diagnosticWritersideInstanceGroupInvalid => 'Bir örnek grubunun boş olmayan bir kimlik ve örnek listesi belirtmesi gerekir.';
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'Bir örnek grubunun boş olmayan bir kimlik ve örnek listesi belirtmesi gerekir.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
@@ -3625,12 +3925,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
     return 'TOC include “$source#$id”, harici “$origin” modülüne aittir ve bu çalışma alanında genişletilemez.';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
     return '\"$id\" ağaç öğesi kayıtlı \"$source\" ağacında mevcut değil.';
   }
 
@@ -3650,7 +3957,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
     return '“$topic” konusu başvurulan “$instance” örneğinde değil.';
   }
 
@@ -3679,7 +3989,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiDisabled => 'Devre dışı';
 
   @override
-  String get aiExplicitEditingDescription => 'AI düzenleme açıkça kullanıcının isteğiyle başlatılır. BusyMark yalnızca seçili sağlayıcı için gösterilen bağlamı gönderir ve bir öneriyi hiçbiri onaylama olmadan uygulamaz.';
+  String get aiExplicitEditingDescription =>
+      'AI düzenleme açıkça kullanıcının isteğiyle başlatılır. BusyMark yalnızca seçili sağlayıcı için gösterilen bağlamı gönderir ve bir öneriyi hiçbiri onaylama olmadan uygulamaz.';
 
   @override
   String get aiProvider => 'AI sağlayıcısı';
@@ -3714,10 +4025,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiNoModels => 'Hiçbir model seçilmedi.';
 
   @override
-  String get aiConnectionFailed => 'BusyMark, AI metin oluşturma işlemini doğrulayamadı.';
+  String get aiConnectionFailed =>
+      'BusyMark, AI metin oluşturma işlemini doğrulayamadı.';
 
   @override
-  String get aiConfigureFirst => 'Bir AI sağlayıcısını etkinleştirin ve Ayarlar → AI bölümünde bir modeli doğrulayın.';
+  String get aiConfigureFirst =>
+      'Bir AI sağlayıcısını etkinleştirin ve Ayarlar → AI bölümünde bir modeli doğrulayın.';
 
   @override
   String get aiEditWithAi => 'AI ile düzenle';
@@ -3793,10 +4106,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiStaleProposal => 'Bu teklif oluşturulurken belge değiştirildi. Eylemi yeniden çalıştırın.';
+  String get aiStaleProposal =>
+      'Bu teklif oluşturulurken belge değiştirildi. Eylemi yeniden çalıştırın.';
 
   @override
-  String get gitAiStagedChangesChanged => 'Bu commit mesajı oluşturulurken stage edilmiş değişiklikler değişti. İşlemi yeniden çalıştırın.';
+  String get gitAiStagedChangesChanged =>
+      'Bu commit mesajı oluşturulurken stage edilmiş değişiklikler değişti. İşlemi yeniden çalıştırın.';
 
   @override
   String get aiViewContext => 'Gönderilen bağlamı görüntüle';
@@ -3814,7 +4129,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiApiKey => 'API anahtarı';
 
   @override
-  String get aiApiKeyStoredHint => 'Sistemin kimlik bilgileri deposunda bir anahtar saklanır';
+  String get aiApiKeyStoredHint =>
+      'Sistemin kimlik bilgileri deposunda bir anahtar saklanır';
 
   @override
   String get aiApiKeyEnterHint => 'Sağlayıcının API anahtarını girin';
@@ -3829,7 +4145,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiRemoveApiKey => 'Kaydedilen API anahtarını kaldır';
 
   @override
-  String get aiCredentialSaved => 'API anahtarı sistem kimlik bilgileri deposuna kaydedildi.';
+  String get aiCredentialSaved =>
+      'API anahtarı sistem kimlik bilgileri deposuna kaydedildi.';
 
   @override
   String get aiCredentialRemoved => 'Kaydedilen API anahtarı kaldırıldı.';
@@ -3865,7 +4182,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiCloudConsentMessage => 'Yalnızca her AI inceleme iletişim kutusunda gösterilen içerik gönderilir. İstekler durum bilgisine sahip değildir, tekliflerin incelenmesi gerekir ve API anahtarı Linux sisteminin kimlik bilgileri deposunda saklanır.';
+  String get aiCloudConsentMessage =>
+      'Yalnızca her AI inceleme iletişim kutusunda gösterilen içerik gönderilir. İstekler durum bilgisine sahip değildir, tekliflerin incelenmesi gerekir ve API anahtarı Linux sisteminin kimlik bilgileri deposunda saklanır.';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -3878,10 +4196,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiColdStartObserved => 'Yerel model için soğuk başlangıç gözlemlendi.';
+  String get aiColdStartObserved =>
+      'Yerel model için soğuk başlangıç gözlemlendi.';
 
   @override
-  String get aiNoCompatibleModels => 'Uyumlu bir metin oluşturma modeli mevcut değil.';
+  String get aiNoCompatibleModels =>
+      'Uyumlu bir metin oluşturma modeli mevcut değil.';
 
   @override
   String get aiEnableProvider => 'Önce bir AI sağlayıcısını etkinleştirin.';
@@ -3901,7 +4221,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownLinkEmptyText => 'Bağlantı metni boş; amacını açıklayan erişilebilir bir ad sağlayın.';
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Bağlantı metni boş; amacını açıklayan erişilebilir bir ad sağlayın.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {
@@ -3909,7 +4230,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownTableEmptyHeader => 'Tablo başlığı hücreleri sütunlarını tanımlamalıdır; her boş başlığı tamamlayın.';
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Tablo başlığı hücreleri sütunlarını tanımlamalıdır; her boş başlığı tamamlayın.';
 
   @override
   String get mathRenderFailed => 'Matematiksel ifade işlenemedi.';
@@ -3927,16 +4249,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get findUsages => 'Kullanımları bul';
 
   @override
-  String get cannotRenameSymbol => 'Simge güvenle yeniden adlandırılamıyor. Yeniden denemeden önce adı kontrol edin ve başvuruyu yenileyin.';
+  String get cannotRenameSymbol =>
+      'Simge güvenle yeniden adlandırılamıyor. Yeniden denemeden önce adı kontrol edin ve başvuruyu yenileyin.';
 
   @override
-  String get renameTopicFileInstead => 'Konu kimlikleri dosya adlarından gelir. İçindekiler tablosunda veya Dosyalar kenar çubuğunda Konu Dosyasını Yeniden Adlandır\'ı kullanın.';
+  String get renameTopicFileInstead =>
+      'Konu kimlikleri dosya adlarından gelir. İçindekiler tablosunda veya Dosyalar kenar çubuğunda Konu Dosyasını Yeniden Adlandır\'ı kullanın.';
 
   @override
   String get keyboardLayout => 'Klavye düzeni';
 
   @override
-  String get diagnosticWritersideUnsupported => 'Desteklenmeyen veya hatalı içerik kaynak olarak gösterilir.';
+  String get diagnosticWritersideUnsupported =>
+      'Desteklenmeyen veya hatalı içerik kaynak olarak gösterilir.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
@@ -3949,12 +4274,17 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideSchema(String element, String attribute, String reason) {
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
     return 'Geçersiz Writerside işaretlemesi: $element, $attribute. $reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt => '<llms-txt>true</llms-txt> veya <llms-txt>false</llms-txt> kullanın; single-file artık desteklenmiyor.';
+  String get diagnosticWritersideLlmsTxt =>
+      '<llms-txt>true</llms-txt> veya <llms-txt>false</llms-txt> kullanın; single-file artık desteklenmiyor.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -3977,16 +4307,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get htmlExportFailed => 'HTML dışa aktarılamadı';
 
   @override
-  String get htmlKeepAssetsTogether => 'Bu dışa aktarımı kopyalarken HTML dosyasını ve ilgili kaynak klasörünü bir arada tutun.';
+  String get htmlKeepAssetsTogether =>
+      'Bu dışa aktarımı kopyalarken HTML dosyasını ve ilgili kaynak klasörünü bir arada tutun.';
 
   @override
-  String get htmlInstanceDescription => 'Bir örneği bağlantılı çevrimdışı sayfalar olarak dışa aktarın. Ayrı bir çıktı klasörü için ad seçin.';
+  String get htmlInstanceDescription =>
+      'Bir örneği bağlantılı çevrimdışı sayfalar olarak dışa aktarın. Ayrı bir çıktı klasörü için ad seçin.';
 
   @override
   String get htmlInstance => 'Örnek';
 
   @override
-  String get htmlOwnedDirectoryOnly => 'Yalnızca BusyMark HTML dışa aktarımıyla oluşturulan bir klasör değiştirilebilir. Değiştirilmiş veya ilgisiz dosyalar korunur.';
+  String get htmlOwnedDirectoryOnly =>
+      'Yalnızca BusyMark HTML dışa aktarımıyla oluşturulan bir klasör değiştirilebilir. Değiştirilmiş veya ilgisiz dosyalar korunur.';
 
   @override
   String get showInFolder => 'Klasörde Göster';
@@ -4108,31 +4441,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportRemoveCss => 'Özel stil sayfasını kaldır';
 
   @override
-  String get exportCssNote => 'İsteğe bağlı UTF-8 CSS dosyası seçin (en fazla 256 KiB). İçe aktarımlar, kaynak URL’leri ve çalıştırılabilir veya kaçışlı CSS reddedilir. Stiller BusyMark CSS’inden sonra uygulanır. Uzak kaynaklar indirilmez.';
+  String get exportCssNote =>
+      'İsteğe bağlı UTF-8 CSS dosyası seçin (en fazla 256 KiB). İçe aktarımlar, kaynak URL’leri ve çalıştırılabilir veya kaçışlı CSS reddedilir. Stiller BusyMark CSS’inden sonra uygulanır. Uzak kaynaklar indirilmez.';
 
   @override
-  String get exportSitePackagingNote => 'Writerside ayrı bağlantılı konu sayfalarını korur. Tek dosya modu kaynakları her sayfaya gömer.';
+  String get exportSitePackagingNote =>
+      'Writerside ayrı bağlantılı konu sayfalarını korur. Tek dosya modu kaynakları her sayfaya gömer.';
 
   @override
-  String get exportInvalidGeometry => 'Kenar boşluklarından sonra en az 20 mm içerik genişliği ve yüksekliği bırakın.';
+  String get exportInvalidGeometry =>
+      'Kenar boşluklarından sonra en az 20 mm içerik genişliği ve yüksekliği bırakın.';
 
   @override
   String get exportInvalidColor => '#RRGGBB biçiminde bir renk girin.';
 
   @override
-  String get exportInvalidCss => 'İçe aktarım, kaynak URL’si, HTML, çalıştırılabilir veya kaçışlı CSS içermeyen, okunabilir UTF-8 .css dosyası seçin (en fazla 256 KiB).';
+  String get exportInvalidCss =>
+      'İçe aktarım, kaynak URL’si, HTML, çalıştırılabilir veya kaçışlı CSS içermeyen, okunabilir UTF-8 .css dosyası seçin (en fazla 256 KiB).';
 
   @override
   String get clipboardHistory => 'Kopyalama Geçmişi';
 
   @override
-  String get clipboardHistoryDescription => 'Oturuma özgü kopyalama geçmişini aç.';
+  String get clipboardHistoryDescription =>
+      'Oturuma özgü kopyalama geçmişini aç.';
 
   @override
   String get clipboardCurrent => 'Mevcut kopyalama';
 
   @override
-  String get clipboardCurrentExternal => 'Başka bir uygulamadan mevcut kopyalama';
+  String get clipboardCurrentExternal =>
+      'Başka bir uygulamadan mevcut kopyalama';
 
   @override
   String clipboardDestination(String name) {
@@ -4140,19 +4479,23 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get clipboardSessionOnly => 'Sadece bu BusyMark oturumu için saklanır.';
+  String get clipboardSessionOnly =>
+      'Sadece bu BusyMark oturumu için saklanır.';
 
   @override
   String get clipboardNoItems => 'Kopyalama geçmişi boş.';
 
   @override
-  String get clipboardDisabled => 'Kopyalama Geçmişi koleksiyonu Ayarlar\'da devre dışıdır.';
+  String get clipboardDisabled =>
+      'Kopyalama Geçmişi koleksiyonu Ayarlar\'da devre dışıdır.';
 
   @override
-  String get clipboardUnavailable => 'Mevcut kopyalama içeriği mevcut değil veya desteklenmiyor.';
+  String get clipboardUnavailable =>
+      'Mevcut kopyalama içeriği mevcut değil veya desteklenmiyor.';
 
   @override
-  String get clipboardTooLarge => 'Bu kopyalanmış öğe, saklamak için çok büyüktür.';
+  String get clipboardTooLarge =>
+      'Bu kopyalanmış öğe, saklamak için çok büyüktür.';
 
   @override
   String get clipboardPastePlainText => 'Temiz Metin Olarak Yapıştır';
@@ -4181,19 +4524,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get localHistoryEllipsis => 'Yerel Geçmiş…';
 
   @override
-  String get localHistoryDescription => 'Mevcut belge için kaydedilmiş ve otomatik yerel sürümleri göster.';
+  String get localHistoryDescription =>
+      'Mevcut belge için kaydedilmiş ve otomatik yerel sürümleri göster.';
 
   @override
   String get findLocalHistoryEllipsis => 'Yerel Geçmişte Bul...';
 
   @override
-  String get findLocalHistoryDescription => 'Yerel Geçmişte belgeleri ve revizyon içeriğini arayın.';
+  String get findLocalHistoryDescription =>
+      'Yerel Geçmişte belgeleri ve revizyon içeriğini arayın.';
 
   @override
-  String get localHistoryNoDocuments => 'Henüz herhangi bir belge Yerel Geçmişe sahip değil.';
+  String get localHistoryNoDocuments =>
+      'Henüz herhangi bir belge Yerel Geçmişe sahip değil.';
 
   @override
-  String get localHistoryNoRevisions => 'Bu belge Yerel Geçmiş revizyonlarına sahip değil.';
+  String get localHistoryNoRevisions =>
+      'Bu belge Yerel Geçmiş revizyonlarına sahip değil.';
 
   @override
   String get localHistorySelectedRevision => 'Seçilen revizyon';
@@ -4211,7 +4558,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get localHistoryRestoreRevision => 'Versiyonu Geri Yükle';
 
   @override
-  String get localHistoryRestoreOriginalLocation => 'Orijinal Konuma Geri Yükle';
+  String get localHistoryRestoreOriginalLocation =>
+      'Orijinal Konuma Geri Yükle';
 
   @override
   String get localHistoryRestoreNewLocation => 'Yeni Konuma Geri Yükle…';
@@ -4220,10 +4568,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get localHistoryRestoreChange => 'Değişikliği Geri Yükle';
 
   @override
-  String get localHistoryRestoreUnavailable => 'Bu değişiklik geri alınamaz çünkü karşılaştırma artık geçerli değil.';
+  String get localHistoryRestoreUnavailable =>
+      'Bu değişiklik geri alınamaz çünkü karşılaştırma artık geçerli değil.';
 
   @override
-  String get localHistoryComparisonSimplified => 'Bu büyük karşılaştırma basitleştirildi. Tek tek değişiklikleri geri yüklemek mümkün değil.';
+  String get localHistoryComparisonSimplified =>
+      'Bu büyük karşılaştırma basitleştirildi. Tek tek değişiklikleri geri yüklemek mümkün değil.';
 
   @override
   String localHistoryOlderChange(String text) {
@@ -4248,16 +4598,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get localHistoryClearAll => 'Tüm Yerel Geçmişi Temizle';
 
   @override
-  String get localHistoryClearDocumentTitle => 'Doküman Geçmişini Temizlemek İstemiyor Musunuz?';
+  String get localHistoryClearDocumentTitle =>
+      'Doküman Geçmişini Temizlemek İstemiyor Musunuz?';
 
   @override
-  String get localHistoryClearAllTitle => 'Tüm Yerel Geçmişi Temizlemek İstemiyor Musunuz?';
+  String get localHistoryClearAllTitle =>
+      'Tüm Yerel Geçmişi Temizlemek İstemiyor Musunuz?';
 
   @override
-  String get localHistoryClearConfirmation => 'Bu, kaydedilen tüm sürümleri kalıcı olarak kaldırır. Bu işlem geri alınamaz.';
+  String get localHistoryClearConfirmation =>
+      'Bu, kaydedilen tüm sürümleri kalıcı olarak kaldırır. Bu işlem geri alınamaz.';
 
   @override
-  String get localHistoryWarningIndexRebuilt => 'Yerel Geçmiş indeksi, sağlam sürümlerden yeniden oluşturuldu.';
+  String get localHistoryWarningIndexRebuilt =>
+      'Yerel Geçmiş indeksi, sağlam sürümlerden yeniden oluşturuldu.';
 
   @override
   String localHistoryWarningUnsupportedFormat(String version) {
@@ -4270,7 +4624,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled => 'Kayıt devre dışı bırakılmış veya bu yol hariç tutulmuş. Geri yükleme yapmadan önce tekrar etkinleştirin.';
+  String get localHistoryWarningRecordingDisabled =>
+      'Kayıt devre dışı bırakılmış veya bu yol hariç tutulmuş. Geri yükleme yapmadan önce tekrar etkinleştirin.';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -4283,7 +4638,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRevisionMissing => 'Seçilen sürüm eksik veya bozulmuş.';
+  String get localHistoryWarningRevisionMissing =>
+      'Seçilen sürüm eksik veya bozulmuş.';
 
   @override
   String localHistoryWarningRevisionRead(String detail) {
@@ -4307,7 +4663,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get localHistoryReasonSaved => 'Kaydedildi';
 
   @override
-  String get localHistoryReasonAutomaticCheckpoint => 'Otomatik kontrol noktası';
+  String get localHistoryReasonAutomaticCheckpoint =>
+      'Otomatik kontrol noktası';
 
   @override
   String get localHistoryReasonBeforeReload => 'Yenilemeden önce';
@@ -4331,13 +4688,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsClipboardHistoryTitle => 'Geçmişi Kopyala';
 
   @override
-  String get settingsClipboardHistoryDescription => 'Bu BusyMark oturumu için kopyalanan ve başarıyla yapıştırılan içeriği sakla.';
+  String get settingsClipboardHistoryDescription =>
+      'Bu BusyMark oturumu için kopyalanan ve başarıyla yapıştırılan içeriği sakla.';
 
   @override
   String get settingsLocalHistoryTitle => 'Yerel Geçmişi Kaydet';
 
   @override
-  String get settingsLocalHistoryDescription => 'Belgeleri kurtarma ve karşılaştırma için bu cihazda değişiklikleri sakla.';
+  String get settingsLocalHistoryDescription =>
+      'Belgeleri kurtarma ve karşılaştırma için bu cihazda değişiklikleri sakla.';
 
   @override
   String get settingsHistoryCheckpoint => 'Otomatik kontrol noktası aralığı';
@@ -4433,7 +4792,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get spellingCheckFailed => 'Yazım denetimi başarısız oldu';
 
   @override
-  String get spellingSettingsLoadFailed => 'Yazım denetimi ayarları yüklenemedi';
+  String get spellingSettingsLoadFailed =>
+      'Yazım denetimi ayarları yüklenemedi';
 
   @override
   String get retrySpellingSettings => 'Yazım denetimi ayarlarını yeniden yükle';
@@ -4467,7 +4827,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cancelSpellingDictionaryInstall => 'Sözlük indirmesini iptal et';
 
   @override
-  String get retrySpellingDictionaryInstall => 'Sözlük yüklemesini yeniden dene';
+  String get retrySpellingDictionaryInstall =>
+      'Sözlük yüklemesini yeniden dene';
 
   @override
   String spellingDictionaryDownloading(String size) {
@@ -4478,7 +4839,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get spellingDictionaryValidating => 'Sözlük doğrulanıyor…';
 
   @override
-  String get spellingDictionaryInstallFailed => 'Sözlük yüklenemedi — yeniden denemek için seçin';
+  String get spellingDictionaryInstallFailed =>
+      'Sözlük yüklenemedi — yeniden denemek için seçin';
 
   @override
   String spellingDictionaryInstallPrompt(String dictionary, String size) {
@@ -4497,7 +4859,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get spellingDictionaryRecoveryConflict => 'Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu.';
+  String get spellingDictionaryRecoveryConflict =>
+      'Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu.';
 
   @override
   String get windowMinimize => 'Simge durumuna küçült';
@@ -4524,7 +4887,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextcloudServer => 'Sunucu adresi';
 
   @override
-  String get nextcloudSignInBrowser => 'Tarayıcınızda oturum açmayı tamamlayın.';
+  String get nextcloudSignInBrowser =>
+      'Tarayıcınızda oturum açmayı tamamlayın.';
 
   @override
   String get nextcloudFavorites => 'Sık kullanılanlar';
@@ -4566,16 +4930,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextcloudDeleteNote => 'Not silinsin mi?';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable => 'Nextcloud Notes için çalışma alanında değiştirme kullanılamaz. Her not içinde değiştirin.';
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Nextcloud Notes için çalışma alanında değiştirme kullanılamaz. Her not içinde değiştirin.';
 
   @override
   String get nextcloudSaveLocalCopy => 'Yerel kopyayı kaydet…';
 
   @override
-  String get nextcloudDisconnectWarning => 'Bu hesabı kaldırmak önbellekteki notları ve bekleyen değişiklikleri bu cihazdan siler. Çalışmayı sunucuda tutmak için önce eşitleyin.';
+  String get nextcloudDisconnectWarning =>
+      'Bu hesabı kaldırmak önbellekteki notları ve bekleyen değişiklikleri bu cihazdan siler. Çalışmayı sunucuda tutmak için önce eşitleyin.';
 
   @override
-  String get nextcloudAttachmentRetryWarning => 'Önceki yükleme başarılı olduysa yeniden denemek sunucuda kullanılmayan bir ek bırakabilir.';
+  String get nextcloudAttachmentRetryWarning =>
+      'Önceki yükleme başarılı olduysa yeniden denemek sunucuda kullanılmayan bir ek bırakabilir.';
 
   @override
   String get nextcloudAttachmentReference => 'Sunucudaki ek başvurusu';
@@ -4584,22 +4951,27 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextcloudAddAttachment => 'Ek ekle…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning => 'Bu eki silmek, nottaki bağlantılarını kullanılamaz hale getirir. Saklanan veriler yerel geçmişten kurtarılabilir.';
+  String get nextcloudDeleteAttachmentWarning =>
+      'Bu eki silmek, nottaki bağlantılarını kullanılamaz hale getirir. Saklanan veriler yerel geçmişten kurtarılabilir.';
 
   @override
-  String get nextcloudChooseConflictingAttributes => 'Çakışan her öznitelik için bir değer seçin.';
+  String get nextcloudChooseConflictingAttributes =>
+      'Çakışan her öznitelik için bir değer seçin.';
 
   @override
   String get nextcloudUseServerNote => 'Bu sunucu notunu kullan';
 
   @override
-  String get nextcloudUseServerNoteExplanation => 'Bu taslağı seçilen sunucu notuna bağlar, ardından korunan yerel değişiklikleri eşitler. Eşleşen bir istek, notu kimin oluşturduğunu doğrulamaz.';
+  String get nextcloudUseServerNoteExplanation =>
+      'Bu taslağı seçilen sunucu notuna bağlar, ardından korunan yerel değişiklikleri eşitler. Eşleşen bir istek, notu kimin oluşturduğunu doğrulamaz.';
 
   @override
-  String get nextcloudExactCandidate => 'İstekle tam eşleşme; kimlik doğrulanmadı.';
+  String get nextcloudExactCandidate =>
+      'İstekle tam eşleşme; kimlik doğrulanmadı.';
 
   @override
-  String get nextcloudPossibleCandidate => 'Düzenlenmiş istekle olası eşleşme; kimlik doğrulanmadı.';
+  String get nextcloudPossibleCandidate =>
+      'Düzenlenmiş istekle olası eşleşme; kimlik doğrulanmadı.';
 
   @override
   String get nextcloudSelectCandidate => 'İncelemek için bir sunucu notu seçin';
@@ -4608,7 +4980,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextcloudCreateSeparate => 'Ayrı bir not oluştur';
 
   @override
-  String get nextcloudCreateSeparateWarning => 'İlk istek sunucuda zaten bir not oluşturmuş olabilir. Bu işlem korunan yerel çalışmanızla ayrı bir not oluşturur. Olası kopyalar silinmez.';
+  String get nextcloudCreateSeparateWarning =>
+      'İlk istek sunucuda zaten bir not oluşturmuş olabilir. Bu işlem korunan yerel çalışmanızla ayrı bir not oluşturur. Olası kopyalar silinmez.';
 
   @override
   String get wsSemanticFormats => 'Anlamsal biçimlendirme';
@@ -4719,13 +5092,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextcloudFileSuffix => 'Yeni notların dosya uzantısı';
 
   @override
-  String get nextcloudServerSettingsExplanation => 'Bu sunucu Notes ayarları diğer istemcileri de etkiler. Yolun değiştirilmesi dosyaları taşımaz; uzantının değiştirilmesi mevcut notları yeniden adlandırmaz.';
+  String get nextcloudServerSettingsExplanation =>
+      'Bu sunucu Notes ayarları diğer istemcileri de etkiler. Yolun değiştirilmesi dosyaları taşımaz; uzantının değiştirilmesi mevcut notları yeniden adlandırmaz.';
 
   @override
   String get nextcloudSettingsSaved => 'Sunucu ayarları kaydedildi';
 
   @override
-  String get nextcloudSettingsNormalized => 'Sunucunun normalleştirdiği değerlerle kaydedildi';
+  String get nextcloudSettingsNormalized =>
+      'Sunucunun normalleştirdiği değerlerle kaydedildi';
 
   @override
   String get nextcloudPendingUpload => 'Ek yüklemesi bekliyor';
@@ -4787,13 +5162,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesIndexing => 'Notlar dizine ekleniyor…';
 
   @override
-  String get notesSearchHelp => 'Terimler VE ile birleştirilir. \"Alıntı ifadeler\", title: ve category: kullanın.';
+  String get notesSearchHelp =>
+      'Terimler VE ile birleştirilir. \"Alıntı ifadeler\", title: ve category: kullanın.';
 
   @override
   String get notesSourceLocation => 'Kaynak konumu';
 
   @override
-  String get notesRecoveryHelp => 'Yalnızca saklanan yerel notlar ve yerel geçmiş. Sunucu çöp kutusu ve geçmişi kullanılamaz.';
+  String get notesRecoveryHelp =>
+      'Yalnızca saklanan yerel notlar ve yerel geçmiş. Sunucu çöp kutusu ve geçmişi kullanılamaz.';
 
   @override
   String get notesImport => 'Notları içe aktar';
@@ -4814,7 +5191,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesSelected => 'Seçilen notlar';
 
   @override
-  String get notesNoHistory => 'Saklanan sürüm yok. Geçmiş kapalı, süresi dolmuş veya temizlenmiş olabilir.';
+  String get notesNoHistory =>
+      'Saklanan sürüm yok. Geçmiş kapalı, süresi dolmuş veya temizlenmiş olabilir.';
 
   @override
   String get notesTextAvailable => 'Metin yerel olarak kullanılabilir';
@@ -4880,7 +5258,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get referenceUnsupported => 'Desteklenmiyor';
 
   @override
-  String get referenceNoPortableId => 'Bu hedefin doğrulanmış taşınabilir not URL’si yok.';
+  String get referenceNoPortableId =>
+      'Bu hedefin doğrulanmış taşınabilir not URL’si yok.';
 
   @override
   String get wsIncludeLines => 'Satırları dahil et';
@@ -4898,7 +5277,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsPropertiesProtected => 'Bu öğe korunuyor. Kaynağını düzenleyin.';
 
   @override
-  String get wsPropertiesConflict => 'Belge veya öğe değişti. Taslağı geri alın ve yeniden seçin.';
+  String get wsPropertiesConflict =>
+      'Belge veya öğe değişti. Taslağı geri alın ve yeniden seçin.';
 
   @override
   String get wsPropertiesUnresolved => 'Başvuru şu anda çözümlenemiyor.';
@@ -4928,7 +5308,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsHeight => 'Yükseklik';
 
   @override
-  String get wsPropertiesInactive => 'Bu özellik yalnızca yayımlanan daraltma etkinken geçerlidir.';
+  String get wsPropertiesInactive =>
+      'Bu özellik yalnızca yayımlanan daraltma etkinken geçerlidir.';
 
   @override
   String get wsNavigationAll => 'Başlıklı tüm öğeler';
@@ -4949,16 +5330,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsWideLayout => 'Geniş';
 
   @override
-  String get wsCodeSourceConflict => 'src ayarlamadan önce bu blokta yazılan kodu taşıyın veya kaldırın. Writerside, kaynak başvurusu olan boş olmayan kod bloğunu reddeder.';
+  String get wsCodeSourceConflict =>
+      'src ayarlamadan önce bu blokta yazılan kodu taşıyın veya kaldırın. Writerside, kaynak başvurusu olan boş olmayan kod bloğunu reddeder.';
 
   @override
   String get wsInherited => 'Listeden devral';
 
   @override
-  String get wsExternalImageSize => 'Writerside dış görüntülerin boyutunu güvenilir biçimde ayarlamaz. Mevcut boyutlar incelenebilir ve kaldırılabilir.';
+  String get wsExternalImageSize =>
+      'Writerside dış görüntülerin boyutunu güvenilir biçimde ayarlamaz. Mevcut boyutlar incelenebilir ve kaldırılabilir.';
 
   @override
-  String get wsPropertiesNotSerialized => 'Bu değişiklik kaynağa uygulanmadı. Taslak korundu.';
+  String get wsPropertiesNotSerialized =>
+      'Bu değişiklik kaynağa uygulanmadı. Taslak korundu.';
 
   @override
   String get wsListItem => 'Liste öğesi';
@@ -5095,7 +5479,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get wsModuleCapsIgnored => 'Sabitlenmiş derleyici modülün <caps> kurallarını yok sayar. Yerel caps özniteliği veya default-property kullanın.';
+  String get wsModuleCapsIgnored =>
+      'Sabitlenmiş derleyici modülün <caps> kurallarını yok sayar. Yerel caps özniteliği veya default-property kullanın.';
 
   @override
   String get wsInsertElements => 'Öğe ekle';
@@ -5107,7 +5492,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsSemanticText => 'Anlamsal metin';
 
   @override
-  String get wsPropertiesUnavailable => 'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
+  String get wsPropertiesUnavailable =>
+      'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
 
   @override
   String get searchDocumentsCategory => 'Belgeler';
@@ -5212,22 +5598,26 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutRestoreAll => 'Tüm varsayılanları geri yükle';
 
   @override
-  String get shortcutRestoreAllQuestion => 'Tüm eylemlerin varsayılan kısayolları geri yüklensin mi? Özel atamalar kaldırılacak.';
+  String get shortcutRestoreAllQuestion =>
+      'Tüm eylemlerin varsayılan kısayolları geri yüklensin mi? Özel atamalar kaldırılacak.';
 
   @override
-  String get shortcutSaveFailed => 'Kısayollar etkin ancak kaydedilemedi. Yeniden başlatmadan sonra korumak için tekrar kaydedin.';
+  String get shortcutSaveFailed =>
+      'Kısayollar etkin ancak kaydedilemedi. Yeniden başlatmadan sonra korumak için tekrar kaydedin.';
 
   @override
   String get shortcutRetry => 'Kaydetmeyi yeniden dene';
 
   @override
-  String get shortcutChanged => 'Atamalar değişti. Geçerli kısayolları gözden geçirip yeniden deneyin.';
+  String get shortcutChanged =>
+      'Atamalar değişti. Geçerli kısayolları gözden geçirip yeniden deneyin.';
 
   @override
   String get shortcutInvalid => 'Bu birleşim bu bağlamda atanamaz.';
 
   @override
-  String get shortcutSystemWarning => 'Masaüstünüz bu birleşimi kullanıyor olabilir. BusyMark sistem kısayollarını geçersiz kılamaz.';
+  String get shortcutSystemWarning =>
+      'Masaüstünüz bu birleşimi kullanıyor olabilir. BusyMark sistem kısayollarını geçersiz kılamaz.';
 
   @override
   String get shortcutConflicts => 'Bu kısayol şu eylemlerle çakışıyor:';
@@ -5266,10 +5656,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchHeadingsCommand => 'Başlıklarda Ara';
 
   @override
-  String get shortcutFixed => 'Düzenleyici tarafından yönetilir; yapılandırılamaz.';
+  String get shortcutFixed =>
+      'Düzenleyici tarafından yönetilir; yapılandırılamaz.';
 
   @override
-  String get shortcutDefaultConflict => 'Varsayılan kısayol özel bir atamayla çakışıyor.';
+  String get shortcutDefaultConflict =>
+      'Varsayılan kısayol özel bir atamayla çakışıyor.';
 
   @override
   String get shortcutCurrentBinding => 'Geçerli kısayol';
@@ -5299,10 +5691,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesOfflineCategory => 'Çevrimdışı kullanılabilir yap · Kategori';
 
   @override
-  String get notesOfflineRemoveAll => 'Çevrimdışı saklamayı kaldır · Tüm notlar';
+  String get notesOfflineRemoveAll =>
+      'Çevrimdışı saklamayı kaldır · Tüm notlar';
 
   @override
-  String get notesOfflineRemoveCategory => 'Çevrimdışı saklamayı kaldır · Kategori';
+  String get notesOfflineRemoveCategory =>
+      'Çevrimdışı saklamayı kaldır · Kategori';
 
   @override
   String get notesOfflinePause => 'İndirmeleri Duraklat';
@@ -5314,13 +5708,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesOfflineKeep => 'Çevrimdışı kullanılabilir yap';
 
   @override
-  String get notesOfflineRetentionHelp => 'Bu gereksinimin kaldırılması mevcut önbelleği silmez. Kategori veya hesap gereksinimi notu tutmaya devam edebilir.';
+  String get notesOfflineRetentionHelp =>
+      'Bu gereksinimin kaldırılması mevcut önbelleği silmez. Kategori veya hesap gereksinimi notu tutmaya devam edebilir.';
 
   @override
-  String get notesOfflineBroader => 'Bu not bir kategori veya hesap gereksinimi nedeniyle de tutuluyor.';
+  String get notesOfflineBroader =>
+      'Bu not bir kategori veya hesap gereksinimi nedeniyle de tutuluyor.';
 
   @override
-  String get notesOfflineExternal => 'Harici medya bağlantı gerektirir. BusyMark yalnızca not metnini ve yönetilen ekleri tutar.';
+  String get notesOfflineExternal =>
+      'Harici medya bağlantı gerektirir. BusyMark yalnızca not metnini ve yönetilen ekleri tutar.';
 
   @override
   String get notesEmptyAll => 'Henüz not yok. Başlamak için bir not oluşturun.';
@@ -5341,7 +5738,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesLoadFailed => 'Nextcloud Notes · Başarısız. Yeniden dene';
 
   @override
-  String get notesOperationFailed => 'İşlem tamamlanamadı. Taslağınız korunuyor. Kaydetmeyi ve çakışmaları inceleyip yeniden deneyin.';
+  String get notesOperationFailed =>
+      'İşlem tamamlanamadı. Taslağınız korunuyor. Kaydetmeyi ve çakışmaları inceleyip yeniden deneyin.';
 
   @override
   String get notesInspectionFailed => 'Ekler · Başarısız. Yeniden dene';
@@ -5353,43 +5751,54 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesVerifyingConnection => 'Notlar erişimi doğrulanıyor…';
 
   @override
-  String get notesCancellingConnection => 'Oturum açma iptal ediliyor ve temizleniyor…';
+  String get notesCancellingConnection =>
+      'Oturum açma iptal ediliyor ve temizleniyor…';
 
   @override
   String get notesRemovingConnection => 'Yerel hesap kaldırılıyor…';
 
   @override
-  String get notesRemovedWarning => 'Yerel Nextcloud hesabı kaldırıldı. Uygulama parolasının iptali doğrulanamadı. Nextcloud Güvenlik ayarlarından BusyMark uygulama parolasını kaldırın.';
+  String get notesRemovedWarning =>
+      'Yerel Nextcloud hesabı kaldırıldı. Uygulama parolasının iptali doğrulanamadı. Nextcloud Güvenlik ayarlarından BusyMark uygulama parolasını kaldırın.';
 
   @override
-  String get notesBuffersNotSaved => 'Tüm açık notlar yerel olarak kaydedilemedi. Çalışma alanında kaydetmeyi, çakışmaları veya normalleştirmeyi inceleyin. Yerel değişikliklerin hâlâ Nextcloud ile eşitlenmesi gerekebilir.';
+  String get notesBuffersNotSaved =>
+      'Tüm açık notlar yerel olarak kaydedilemedi. Çalışma alanında kaydetmeyi, çakışmaları veya normalleştirmeyi inceleyin. Yerel değişikliklerin hâlâ Nextcloud ile eşitlenmesi gerekebilir.';
 
   @override
-  String get notesSettingsLeave => 'Ayrılmadan önce Nextcloud ayarlarındaki değişiklikler kaydedilsin mi?';
+  String get notesSettingsLeave =>
+      'Ayrılmadan önce Nextcloud ayarlarındaki değişiklikler kaydedilsin mi?';
 
   @override
-  String get notesSettingsLeaveHelp => 'Sunucu Notes ayarları · Kaydedilmemiş değişiklikler';
+  String get notesSettingsLeaveHelp =>
+      'Sunucu Notes ayarları · Kaydedilmemiş değişiklikler';
 
   @override
   String get notesSettingsReload => 'Sunucu Ayarlarını Yeniden Yükle…';
 
   @override
-  String get notesSettingsReloadHelp => 'Yeniden yükleme, taslağınızı geçerli Nextcloud ayarlarıyla değiştirir. Taslak atılıp yeniden yüklensin mi?';
+  String get notesSettingsReloadHelp =>
+      'Yeniden yükleme, taslağınızı geçerli Nextcloud ayarlarıyla değiştirir. Taslak atılıp yeniden yüklensin mi?';
 
   @override
-  String get notesSettingsRefreshFailed => 'Nextcloud ayarları kabul etti ancak notları yenileme başarısız oldu. Gösterilen değerler sunucunun onayladığı değerlerdir. Notlar üzerinden yenilemeyi yeniden deneyin.';
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud ayarları kabul etti ancak notları yenileme başarısız oldu. Gösterilen değerler sunucunun onayladığı değerlerdir. Notlar üzerinden yenilemeyi yeniden deneyin.';
 
   @override
-  String get notesUnavailable => 'Çevrimdışı · Metin yerel olarak kullanılabilir · Yerel kaydedildi · eşitleme bekliyor';
+  String get notesUnavailable =>
+      'Çevrimdışı · Metin yerel olarak kullanılabilir · Yerel kaydedildi · eşitleme bekliyor';
 
   @override
-  String get notesStorageFull => 'Nextcloud depolaması dolu. Sunucuda yer açıp yeniden deneyin.';
+  String get notesStorageFull =>
+      'Nextcloud depolaması dolu. Sunucuda yer açıp yeniden deneyin.';
 
   @override
-  String get notesRejected => 'Nextcloud bu değişikliği reddetti. Yeniden denemeden önce notu inceleyin ve yerel bir kopya kaydedin.';
+  String get notesRejected =>
+      'Nextcloud bu değişikliği reddetti. Yeniden denemeden önce notu inceleyin ve yerel bir kopya kaydedin.';
 
   @override
-  String get notesThrottled => 'Nextcloud beklemenizi istedi. Eşitleme, yeniden deneme süresi dolunca devam eder.';
+  String get notesThrottled =>
+      'Nextcloud beklemenizi istedi. Eşitleme, yeniden deneme süresi dolunca devam eder.';
 
   @override
   String get notesRecoveryRequired => 'Çatışmalar · Karşılaştır';
@@ -5398,7 +5807,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesScanning => 'Dosyalar taranıyor…';
 
   @override
-  String get notesCancelling => 'İptal ediliyor… Geçerli işlemin bitmesi bekleniyor.';
+  String get notesCancelling =>
+      'İptal ediliyor… Geçerli işlemin bitmesi bekleniyor.';
 
   @override
   String get notesCancelled => 'İptal edildi';
@@ -5410,7 +5820,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesTransferFailed => 'Başarısız. Yeniden dene';
 
   @override
-  String get notesImportPartialHelp => 'Önceki öğeler zaten yerel olarak kaydedilmiş olabilir. Kopya oluşturmadan devam etmek için bu içe aktarmayı sürdürün.';
+  String get notesImportPartialHelp =>
+      'Önceki öğeler zaten yerel olarak kaydedilmiş olabilir. Kopya oluşturmadan devam etmek için bu içe aktarmayı sürdürün.';
 
   @override
   String get notesNotStarted => 'Başlatılmadı';
@@ -5419,7 +5830,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesCreated => 'Oluşturuldu';
 
   @override
-  String get notesRemoteDeleteUnavailable => 'Sunucu adresi · Desteklenmiyor · Sil · Ekler';
+  String get notesRemoteDeleteUnavailable =>
+      'Sunucu adresi · Desteklenmiyor · Sil · Ekler';
 
   @override
   String get notesCurrentText => 'Şu anda saklanan metin';
@@ -5428,16 +5840,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesRecovering => 'Yeni bir not olarak kurtarılıyor…';
 
   @override
-  String get notesReadOnlyHelp => 'Salt okunur · Sık kullanılanlar · Yerel kopyayı kaydet…';
+  String get notesReadOnlyHelp =>
+      'Salt okunur · Sık kullanılanlar · Yerel kopyayı kaydet…';
 
   @override
   String get notesSort => 'Notları sırala';
 
   @override
-  String get notesPathRelative => 'Not klasörü yolu Nextcloud depolamanıza görelidir.';
+  String get notesPathRelative =>
+      'Not klasörü yolu Nextcloud depolamanıza görelidir.';
 
   @override
-  String get notesSettingsStale => 'Nextcloud ayarları değişti. Taslağı değiştirmeden önce sunucu değerlerini yeniden yükleyip inceleyin.';
+  String get notesSettingsStale =>
+      'Nextcloud ayarları değişti. Taslağı değiştirmeden önce sunucu değerlerini yeniden yükleyip inceleyin.';
 
   @override
   String get notesDownloadsPaused => 'İndirmeler duraklatıldı';
@@ -5446,16 +5861,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notesExportNotPublished => 'Hiçbir dışa aktarım yayımlanmadı.';
 
   @override
-  String get notesKeyringUnavailable => 'Masaüstü anahtarlığının kilidini açıp yeniden deneyin.';
+  String get notesKeyringUnavailable =>
+      'Masaüstü anahtarlığının kilidini açıp yeniden deneyin.';
 
   @override
-  String get notesConnectFailed => 'Nextcloud Notes bağlantısı kurulamadı. Sunucu adresini denetleyip yeniden deneyin.';
+  String get notesConnectFailed =>
+      'Nextcloud Notes bağlantısı kurulamadı. Sunucu adresini denetleyip yeniden deneyin.';
 
   @override
-  String get notesAccountMismatch => 'Aynı Nextcloud hesabında oturum açın. Başka bir hesap bağlamak için önce bunu kaldırın.';
+  String get notesAccountMismatch =>
+      'Aynı Nextcloud hesabında oturum açın. Başka bir hesap bağlamak için önce bunu kaldırın.';
 
   @override
-  String get notesLocalRemovalFailed => 'Yerel hesap temizliği başarısız oldu. Kaldırmayı yeniden deneyebilmeniz için hesap korundu.';
+  String get notesLocalRemovalFailed =>
+      'Yerel hesap temizliği başarısız oldu. Kaldırmayı yeniden deneyebilmeniz için hesap korundu.';
 
   @override
   String get notesTransferring => 'Notlar aktarılıyor…';
@@ -5478,7 +5897,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage => 'Bu dosya adı UTF-8 olmayan baytlar içeriyor. Git inceleme ve hazırlama kullanılabilir; belge düzenleyicisi UTF-8 dosya adı gerektirir.';
+  String get gitNonUtf8FilenameMessage =>
+      'Bu dosya adı UTF-8 olmayan baytlar içeriyor. Git inceleme ve hazırlama kullanılabilir; belge düzenleyicisi UTF-8 dosya adı gerektirir.';
 
   @override
   String get gitUiMergeInProgress => 'ilerlemeye katılmak';
@@ -5496,7 +5916,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiPatchApplicationInProgress => 'Patch uygulaması ilerliyor';
 
   @override
-  String get gitUiSquashMergeResultAwaitingCommit => 'Squash Mide Sonuçları Komiteyi Bekliyor';
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'Squash Mide Sonuçları Komiteyi Bekliyor';
 
   @override
   String get gitUiUnresolvedIndexConflicts => 'Çözülmemiş Endeks Çatışmaları';
@@ -5520,16 +5941,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiNoStashes => 'Stash yok';
 
   @override
-  String get gitUiSelectAStashToInspectItsChanges => 'Değişiklikleri kontrol etmek için bir stash seçin';
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Değişiklikleri kontrol etmek için bir stash seçin';
 
   @override
   String get gitUiStashedUntrackedFiles => 'Çekilmemiş dosyalar';
 
   @override
-  String get gitUiInspectStashedUntrackedFiles => 'Soruşturma dosyalarını incelemeye başladı...';
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Soruşturma dosyalarını incelemeye başladı...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => 'Stash\'in staged/index durumunu yeniden ayarlayın';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Stash\'in staged/index durumunu yeniden ayarlayın';
 
   @override
   String get gitUiApplyAndRetain => 'Uygulama ve tutma';
@@ -5547,7 +5971,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiBranchFromStash => 'Saklanan değişikliklerden dal oluştur';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => 'Orijinal basın üzerinde bir dal oluşturun / anahtarlayın, sonra uygulayın. Orijinal basın daha sonra açık bir şekilde silinmesi için saklanır.';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Orijinal basın üzerinde bir dal oluşturun / anahtarlayın, sonra uygulayın. Orijinal basın daha sonra açık bir şekilde silinmesi için saklanır.';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -5555,37 +5980,46 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => 'Orijinal çubuk, çatışmaların uygulanması durumunda saklanır.';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Orijinal çubuk, çatışmaların uygulanması durumunda saklanır.';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => 'Bu yazıyı kaldırın. değişiklikler uygulanmaz.';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Bu yazıyı kaldırın. değişiklikler uygulanmaz.';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => 'Birleştirilmemiş dosyaları çözün. Git\'te stash için devam veya iptal komutu yoktur; özgün stash kaydı korunur.';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Birleştirilmemiş dosyaları çözün. Git\'te stash için devam veya iptal komutu yoktur; özgün stash kaydı korunur.';
 
   @override
   String get gitUiStashNameMessage => 'İsim / Mesaj';
 
   @override
-  String get gitUiStashContentAndResultingIndex => 'Stash İçeriği ve Sonuç Endeksi';
+  String get gitUiStashContentAndResultingIndex =>
+      'Stash İçeriği ve Sonuç Endeksi';
 
   @override
-  String get gitUiStashTrackedWorkingAndStagedChanges => 'Stash çalışmayı izledi ve aşamalı değişiklikler';
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Stash çalışmayı izledi ve aşamalı değişiklikler';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => 'Değişiklikleri sakla, indeksteki değişiklikleri yerinde bırak (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Değişiklikleri sakla, indeksteki değişiklikleri yerinde bırak (--keep-index)';
 
   @override
-  String get gitUiStashOnlyStagedChangesStaged => 'Yalnızca indeksteki değişiklikleri sakla (--staged)';
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Yalnızca indeksteki değişiklikleri sakla (--staged)';
 
   @override
   String get gitUiIncludeUntrackedFiles => 'izinsiz dosyaları içerir';
 
   @override
-  String get gitUiAllEligiblePathsInThisRepository => 'Bu depolama alanında tüm uygun yollar';
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Bu depolama alanında tüm uygun yollar';
 
   @override
-  String get gitUiNoEligibleChangesForTheseStashOptions => 'Bu stash seçenekleri için uygun değişiklikler yoktur.';
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Bu stash seçenekleri için uygun değişiklikler yoktur.';
 
   @override
   String get gitUiSelectAtLeastOneEligiblePath => 'En az bir uygun yolu seçin.';
@@ -5597,7 +6031,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCreateWorktree => 'Çalışma alanı oluşturmak...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => 'HEAD üzerinde çalışma ağacı oluşturmadan önce bir commit oluşturun.';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'HEAD üzerinde çalışma ağacı oluşturmadan önce bir commit oluşturun.';
 
   @override
   String get gitUiDetachedHEAD => 'Ayrık HEAD';
@@ -5636,7 +6071,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRemoveCleanWorktree => 'Temiz çalışma alanını kaldırın...';
 
   @override
-  String get gitUiReviewRemovalIncludingLocalChanges => 'Yerel değişiklikler de dahil olmak üzere inceleme kaldırma ...';
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Yerel değişiklikler de dahil olmak üzere inceleme kaldırma ...';
 
   @override
   String get gitUiNewWorktreeFolderName => 'Yeni çalışma dosyası adı';
@@ -5645,7 +6081,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiNewWorktreeBranch => 'Yeni Çalışma Şubesi';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return '$arg2 ($arg3) yeni bir yerel şubesi ile $arg0/$arg1 oluşturun.';
   }
 
@@ -5656,19 +6097,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRemoveWorktree => 'Çalışma ortadan kaldırılır mı?';
 
   @override
-  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => 'Bu çalışma alanında yerel olarak izlenmemiş / izlenmemiş tüm değişiklikleri açıkça ortadan kaldırın.';
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Bu çalışma alanında yerel olarak izlenmemiş / izlenmemiş tüm değişiklikleri açıkça ortadan kaldırın.';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'Git, yerel değişiklikler, izlenmemiş dosyalar veya bir kilit varsa kaldırmayı reddeder.';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git, yerel değişiklikler, izlenmemiş dosyalar veya bir kilit varsa kaldırmayı reddeder.';
 
   @override
-  String get gitUiDiscardLocalWorktreeContentsAndRemove => 'Yerel çalışma içeriğini ortadan kaldırın ve kaldırın';
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Yerel çalışma içeriğini ortadan kaldırın ve kaldırın';
 
   @override
   String get gitUiRemoveCleanWorktree2 => 'Temiz Çalışma Çerçevesi';
 
   @override
-  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => 'Güncelleştirmeler / senkronizasyon için net alt modüllere açıkça geri dönün';
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Güncelleştirmeler / senkronizasyon için net alt modüllere açıkça geri dönün';
 
   @override
   String get gitUiNoRecordedSubmodules => 'kayıtlı alt modüller yok';
@@ -5697,19 +6144,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiInitializeConfiguration => 'Konfigürasyon başlangıç';
 
   @override
-  String get gitUiUpdateToParentSRecordedCommit => 'Anasayfa GÜNCELLEMELER İLGİLİ HABER Ebeveynlerin Kayıtlı...';
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Anasayfa GÜNCELLEMELER İLGİLİ HABER Ebeveynlerin Kayıtlı...';
 
   @override
-  String get gitUiFollowConfiguredRemoteBranch => 'Uzaktan yapılandırılmış şubeleri takip edin...';
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Uzaktan yapılandırılmış şubeleri takip edin...';
 
   @override
   String get gitUiSynchronizeConfiguredURLs => 'Sinkronize edilmiş URL’ler...';
 
   @override
-  String get gitUiStageCurrentSubmodulePointerInParent => 'Mevcut alt modül göstergesi anne içinde';
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Mevcut alt modül göstergesi anne içinde';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => 'Ebeveyn ve alt modül eylemleri, baskıları ve kirli durum ayrı kalır. tarama onları başlatmaz veya güncelleştirmez.';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Ebeveyn ve alt modül eylemleri, baskıları ve kirli durum ayrı kalır. tarama onları başlatmaz veya güncelleştirmez.';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -5717,12 +6168,17 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
     return 'İhtiyaç duyulduğunda başlatın ve tam olarak $arg0. Recursive: $arg1.';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
     return 'Yorumlanan alt modül yapılandırma işlemi uygulayın. Recursive: $arg0.';
   }
 
@@ -5730,7 +6186,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiApplySubmoduleOperation => 'Submodüel İşlemleri';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => 'Kayıtlı bir incelemeyi kontrol edin veya bir kurtarma şubesi oluşturun. Reflog, özgürce kaybolmamış veya izlenmemiş içeriği geri getirmez.';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Kayıtlı bir incelemeyi kontrol edin veya bir kurtarma şubesi oluşturun. Reflog, özgürce kaybolmamış veya izlenmemiş içeriği geri getirmez.';
 
   @override
   String get gitUiSelectAReflogEntry => 'Reflog girişini seçin';
@@ -5767,13 +6224,17 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'Bir Git metin geçmişi kendi düzenlenebilir alanına sahip olmalıdır.';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Bir Git metin geçmişi kendi düzenlenebilir alanına sahip olmalıdır.';
 
   @override
-  String get gitUiEditHEADIndexWorkingTree => 'Düzenle HEAD | İndeks | Çalışma ağacı…';
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Düzenle HEAD | İndeks | Çalışma ağacı…';
 
   @override
-  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => 'Değerlendirilmiş endeks veya çalışma içeriği değiştirildi. bu karşılaştırmayı sıralamadan önce yenileme.';
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Değerlendirilmiş endeks veya çalışma içeriği değiştirildi. bu karşılaştırmayı sıralamadan önce yenileme.';
 
   @override
   String get gitUiRefreshComparison => 'Soğutma Karşılaştırması';
@@ -5830,10 +6291,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiStagingActions2 => 'İndeks işlemleri…';
 
   @override
-  String get gitUiUnstageSelectedChangedLines => 'Seçili değişen satırları indeksten çıkar';
+  String get gitUiUnstageSelectedChangedLines =>
+      'Seçili değişen satırları indeksten çıkar';
 
   @override
-  String get gitUiStageSelectedChangedLines => 'Seçili değişen satırları indekse ekle';
+  String get gitUiStageSelectedChangedLines =>
+      'Seçili değişen satırları indekse ekle';
 
   @override
   String get gitUiUnstageWholeFile => 'Tüm dosyayı indeksten çıkar';
@@ -5842,34 +6305,47 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiStageWholeFile => 'Tüm dosyayı indekse ekle';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
     return '$arg0 whitespace-only changed lines hidden · Tam değişiklikleri göster';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
     return '$arg0 değiştirilmiş satır seçildi.';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => 'Salt okunur karşılaştırma · Metni kopyalayın veya görünümü ayarlayın.';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Salt okunur karşılaştırma · Metni kopyalayın veya görünümü ayarlayın.';
 
   @override
   String get gitUiNoFinalNewline => ' · • Son haber yok';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return '$arg0 · $arg1 · $arg2 bayt$arg3';
   }
 
   @override
-  String get gitUiTextComparisonIsUnavailableForTheseContents => 'Bu içerikler için metin karşılaştırması mevcut değildir.';
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'Bu içerikler için metin karşılaştırması mevcut değildir.';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => 'Bu karşılaştırma, sınırlı metin inceleme sınırını aşmaktadır. içerikler aynı olarak ilan edilmemiştir.';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Bu karşılaştırma, sınırlı metin inceleme sınırını aşmaktadır. içerikler aynı olarak ilan edilmemiştir.';
 
   @override
-  String get gitUiTheComparedContentsAreIdentical => 'Karşılaştırılmış içerikler aynıdır.';
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Karşılaştırılmış içerikler aynıdır.';
 
   @override
   String get gitUiUnstage => 'Sınavı';
@@ -5886,7 +6362,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiContext => 'Konteyner';
 
   @override
-  String get gitUiExpandUnchangedContext => 'Değişmemiş bir bağlamı genişletmek';
+  String get gitUiExpandUnchangedContext =>
+      'Değişmemiş bir bağlamı genişletmek';
 
   @override
   String get gitUiUnstageThisHunk => 'Bu parçayı indeksten çıkar';
@@ -5900,7 +6377,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiWritingReviewedIndexResult => 'Değerlendirilmiş Endeks Sonuçları';
+  String get gitUiWritingReviewedIndexResult =>
+      'Değerlendirilmiş Endeks Sonuçları';
 
   @override
   String get gitUiHead => 'HEAD';
@@ -5929,33 +6407,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiReloadIndexReview => 'Reload Index İncelemesi?';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => 'Geçerli HEAD, indeks ve çalışma sürümlerini yeniden yükleyin. Bu, indeks düzenleyicisindeki kaydedilmemiş taslağı değiştirir.';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Geçerli HEAD, indeks ve çalışma sürümlerini yeniden yükleyin. Bu, indeks düzenleyicisindeki kaydedilmemiş taslağı değiştirir.';
 
   @override
-  String get gitUiReplaceDraftAndReload => 'Tasarım değiştirmek ve yeniden yüklemek';
+  String get gitUiReplaceDraftAndReload =>
+      'Tasarım değiştirmek ve yeniden yüklemek';
 
   @override
   String get gitUiReloadVersions => 'Reload versiyonu...';
 
   @override
-  String get gitUiWriteEditedResultToThisIndexEntry => 'Bu indekslere düzenlenmiş sonuçları yazın';
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Bu indekslere düzenlenmiş sonuçları yazın';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => 'Çalışma dosyaları diskte kalır. uygulama yapmadan önce düzenlenmiş endeksi inceleyin.';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Çalışma dosyaları diskte kalır. uygulama yapmadan önce düzenlenmiş endeksi inceleyin.';
 
   @override
-  String get gitUiReviewIndexTextFormatChanges => 'Etiket Arşivi: index text format değişiklikleri';
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Etiket Arşivi: index text format değişiklikleri';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
     return 'Sadece $arg0 için incelenen endeks girişini güncelleme. $arg1';
   }
 
   @override
-  String get gitUiWriteReviewedIndexResult => 'Değerlendirilmiş Index Sonuçları';
+  String get gitUiWriteReviewedIndexResult =>
+      'Değerlendirilmiş Index Sonuçları';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => 'Format incelemesi sırasında düzenlenmiş sonuç değişti. yeniden incelemek.';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Format incelemesi sırasında düzenlenmiş sonuç değişti. yeniden incelemek.';
 
   @override
   String get gitUiSynchronizeScrolling => 'Sinkronizasyon Scrolling';
@@ -5967,7 +6455,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiEditableIndexContent => 'Endeksi içeriği';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => 'Gerekli inceleme mevcut filtrelerin dışındadır. filtreyi yeniden ayarlayın.';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Gerekli inceleme mevcut filtrelerin dışındadır. filtreyi yeniden ayarlayın.';
 
   @override
   String get gitUiFilterLog => 'Filtreler Log';
@@ -6034,7 +6523,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCompareTwoSelectedRevisions => 'İki seçilmiş incelemeyi karşılaştırın...';
+  String get gitUiCompareTwoSelectedRevisions =>
+      'İki seçilmiş incelemeyi karşılaştırın...';
 
   @override
   String get gitUiToggleBranchesPane => 'Birlikte Şubeler Pan';
@@ -6074,7 +6564,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiTags => 'Etiketler';
 
   @override
-  String get gitUiNoCommitsMatchTheCurrentFilters => 'Şimdiki filtre ile eşleşen hiçbir komite yoktur.';
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Şimdiki filtre ile eşleşen hiçbir komite yoktur.';
 
   @override
   String get gitUiObjectID => 'Objektif ID';
@@ -6127,10 +6618,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => 'Shallow/partal limit: Bir ana nesne mevcut değildir.';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Shallow/partal limit: Bir ana nesne mevcut değildir.';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => 'Bu sayfanın dışındadır ya da bir sınır sınırı.';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Bu sayfanın dışındadır ya da bir sınır sınırı.';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -6159,7 +6652,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRevertCommit => 'Geri Dönüş';
 
   @override
-  String get gitUiInteractiveRebaseAfterThisBoundary => 'Bu sınırdan sonra etkileşimli düşüş';
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Bu sınırdan sonra etkileşimli düşüş';
 
   @override
   String get gitUiResetCurrentBranch => 'Geçerli dalı sıfırla';
@@ -6168,16 +6662,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiGoToCommitReference2 => 'Konuşma / Referans';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog => 'Log\'da ortaya çıkarmak için bir komite kimliği veya referans girin.';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Log\'da ortaya çıkarmak için bir komite kimliği veya referans girin.';
 
   @override
-  String get gitUiTheRequestedRevisionIsUnavailable => 'Talep edilen inceleme mevcut değildir.';
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Talep edilen inceleme mevcut değildir.';
 
   @override
-  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => 'Repository metadata sadece okunur. şubelerin incelenmesi ve karşılaştırması mevcuttur.';
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Repository metadata sadece okunur. şubelerin incelenmesi ve karşılaştırması mevcuttur.';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => 'Çalışma dosyaları mevcut değildir veya sadece okunabilir. şubeleri değiştirmek ve birleştirmek mevcut değildir.';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Çalışma dosyaları mevcut değildir veya sadece okunabilir. şubeleri değiştirmek ve birleştirmek mevcut değildir.';
 
   @override
   String get gitUiSearchBranchesAndTags => 'Dal ve etiket ara';
@@ -6213,7 +6712,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiOpenOccupiedWorktree => 'Açık işgalci';
 
   @override
-  String get gitUiCreateLocalTrackingBranch => 'Yerel izleme şubesi oluşturmak...';
+  String get gitUiCreateLocalTrackingBranch =>
+      'Yerel izleme şubesi oluşturmak...';
 
   @override
   String get gitUiCompareToCurrentHEAD => 'Geçerli HEAD ile karşılaştır';
@@ -6281,7 +6781,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 Target $arg1 Yerel kaldırma sadece.';
   }
 
@@ -6299,7 +6802,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiDeleteUnmergedLocalBranch => 'Kırılmamış yerel şubeleri silin';
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Kırılmamış yerel şubeleri silin';
 
   @override
   String gitUiDestinationArg0Arg1(String arg0, String arg1) {
@@ -6316,7 +6820,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiFastForwardWhenPossible => 'Mümkün olduğunda hızlı ilerleme';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommit => 'Her zaman bir ortaklık oluşturun';
+  String get gitUiAlwaysCreateAMergeCommit =>
+      'Her zaman bir ortaklık oluşturun';
 
   @override
   String get gitUiFastForwardOnly => 'Sadece hızlı ilerleme';
@@ -6325,16 +6830,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiSquashIntoStagedChanges => 'Gelişmiş Değişimlere Çıkış';
 
   @override
-  String get gitUiStopBeforeCreatingTheMergeCommit => 'Birleşme komitesi oluşturmadan önce durun';
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Birleşme komitesi oluşturmadan önce durun';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => 'İncelemeden önce HEAD\'in taşınmaması için hızlı ilerleme devre dışıdır.';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'İncelemeden önce HEAD\'in taşınmaması için hızlı ilerleme devre dışıdır.';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => 'Ayrı bir taahhüt için aşamalı değişiklikler bırakın; bu sürekli bir birleşme değildir.';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Ayrı bir taahhüt için aşamalı değişiklikler bırakın; bu sürekli bir birleşme değildir.';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => 'Çatışmalar ortak çözüm çalışma alanında mevcut kalır.';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Çatışmalar ortak çözüm çalışma alanında mevcut kalır.';
 
   @override
   String get gitUiAddRemote => 'Uzaktan...';
@@ -6371,10 +6880,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRepositoryURLOrLocalSource => 'URL veya yerel kaynağı';
 
   @override
-  String get gitUiEnterTheExactReviewedDestinationToRemove => 'Tam olarak gözden geçirilen hedefe girin kaldırmak için.';
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Tam olarak gözden geçirilen hedefe girin kaldırmak için.';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => 'Sertifikalar konfigürasyonlu yardımcılar veya özel bir prompt tarafından sağlanır.';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Sertifikalar konfigürasyonlu yardımcılar veya özel bir prompt tarafından sağlanır.';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -6382,13 +6893,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => 'Yerel uzaktan yapılandırma ve izleme referansları kaldırır. sunucu depolama alanını kaldırmaz.';
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Yerel uzaktan yapılandırma ve izleme referansları kaldırır. sunucu depolama alanını kaldırmaz.';
 
   @override
   String get gitUiRemoveRemote2 => 'uzaktan kaldırma';
 
   @override
-  String get gitUiCommitScopeEntireRepository => 'Etiket Arşivi: tüm depolama alanı';
+  String get gitUiCommitScopeEntireRepository =>
+      'Etiket Arşivi: tüm depolama alanı';
 
   @override
   String get gitUiCachedTracking => 'gizli izleme';
@@ -6397,10 +6911,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiAmendLastCommit => 'Son commiti değiştir';
 
   @override
-  String get gitUiConfiguredHooksAndSigningAreRespected => 'Yapılandırılmış çubuklar ve imza saygılıdır.';
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Yapılandırılmış çubuklar ve imza saygılıdır.';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => 'Seçili HEAD commit\'ini yeniden yazar. Uzak izleme, yayımlanmamış olduğunu kanıtlayamaz.';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Seçili HEAD commit\'ini yeniden yazar. Uzak izleme, yayımlanmamış olduğunu kanıtlayamaz.';
 
   @override
   String get gitUiRepository => 'Depo';
@@ -6417,18 +6933,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRepositoryActions => 'Depo işlemleri';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
     return 'Önbellekteki izleme · $upstream · $ahead ileride · $behind geride';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => 'Sadece depolama alanı · iş ağaçları yok. tarihini kontrol etmek için Kayıt açın.';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Sadece depolama alanı · iş ağaçları yok. tarihini kontrol etmek için Kayıt açın.';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => 'Sadece okuma depolama alanı · staging ve komitler mevcut değildir.';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Sadece okuma depolama alanı · staging ve komitler mevcut değildir.';
 
   @override
-  String get gitUiRepositoryStatusUnavailable => 'Depolama Durumu Kullanılamıyor';
+  String get gitUiRepositoryStatusUnavailable =>
+      'Depolama Durumu Kullanılamıyor';
 
   @override
   String gitUiAmendRevision(String revision) {
@@ -6439,10 +6962,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiAddSignOffTrailer => 'Onay satırı ekle';
 
   @override
-  String get gitUiUseConfiguredSigningPolicy => 'Konfigüratlı imza politikası kullanın';
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Konfigüratlı imza politikası kullanın';
 
   @override
-  String get gitUiCryptographicallySignThisCommit => 'Bu komiteyi kripto olarak imzalamak';
+  String get gitUiCryptographicallySignThisCommit =>
+      'Bu komiteyi kripto olarak imzalamak';
 
   @override
   String get gitUiDoNotSignThisCommit => 'Bu sözleşmeyi imzalamayın';
@@ -6451,10 +6976,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRecentCommitMessages => 'Son mesajlar...';
 
   @override
-  String get gitUiUseConfiguredCommitTemplate => 'Şablonu kullanarak yapılandırılmış komite...';
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Şablonu kullanarak yapılandırılmış komite...';
 
   @override
-  String get gitUiAuthorIdentityAndConfiguredHooks => 'Yazarın kimliği ve konfigürat hooks...';
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Yazarın kimliği ve konfigürat hooks...';
 
   @override
   String get gitUiDraftMessage => 'Mesaj Tasarımı...';
@@ -6488,7 +7015,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCommitAndPush => 'Commit oluştur ve gönder…';
 
   @override
-  String get gitUiNoReadableCommitTemplateIsConfigured => 'Okunabilir komut şablonu ayarlanmamıştır.';
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Okunabilir komut şablonu ayarlanmamıştır.';
 
   @override
   String get gitUiCommitIdentityAndHooks => 'Komite kimliği ve hooks';
@@ -6500,7 +7028,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiReplaceMessageDraft => 'Mesaj Tasarımı Değiştirmek?';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => 'Mevcut komite mesajını seçilmiş mesajla değiştirmek mi?';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Mevcut komite mesajını seçilmiş mesajla değiştirmek mi?';
 
   @override
   String get gitUiReplaceDraft => 'Tasarım Değiştirme';
@@ -6511,7 +7040,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
     return 'Yerel komite $arg0 mevcuttur. başka bir komite denemeden önce kaydolun. mesaj taslağı korunmuştur.';
   }
 
@@ -6538,7 +7069,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage => 'Onay satırı iletideki bir beyandır; kriptografik imzadan ayrıdır. Kimlik yalnızca bu deponun yerel yapılandırmasına kaydedilir; taslak korunur.';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'Onay satırı iletideki bir beyandır; kriptografik imzadan ayrıdır. Kimlik yalnızca bu deponun yerel yapılandırmasına kaydedilir; taslak korunur.';
 
   @override
   String get gitUiSaveRepositoryIdentity => 'Depolama kimliğini kaydetmek';
@@ -6614,7 +7146,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 bytes · $arg1 iş içeriğini endeksle değiştirir veya bu izinsiz dosyayı silir.';
   }
 
@@ -6630,7 +7165,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => 'Bu, aşağıda listelenen her gerçek push destinasyonu için referans kaldırır. yerel şubeler / etiketler korunur. beklenen ipuçları bu inceleme ile belirlenir.';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Bu, aşağıda listelenen her gerçek push destinasyonu için referans kaldırır. yerel şubeler / etiketler korunur. beklenen ipuçları bu inceleme ile belirlenir.';
 
   @override
   String get gitUiReferenceDoesNotExist => 'Referans yok';
@@ -6649,7 +7185,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => 'Yukarıda belirtilen doğru hedef ipuçları kaldırılacaktır. herhangi bir değiştirilmiş uzaktan ipuçları başka bir inceleme için işlemi durdurur.';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'Yukarıda belirtilen doğru hedef ipuçları kaldırılacaktır. herhangi bir değiştirilmiş uzaktan ipuçları başka bir inceleme için işlemi durdurur.';
 
   @override
   String get gitUiReviewAndDeleteFromRemote => 'Yorum ve uzaktan silin...';
@@ -6669,13 +7206,15 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => 'Bir varış noktası yerel olarak mevcut olmayan eylemler vardır. Fetch varış tarihi incelemeden önce varış noktası inceledi.';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'Bir varış noktası yerel olarak mevcut olmayan eylemler vardır. Fetch varış tarihi incelemeden önce varış noktası inceledi.';
 
   @override
   String get gitUiFetchReviewedDestination => 'FETCH YÖNETİM YÖNETİMİ';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => 'Bir hedef seçin ve çıkış görevlerini inceleyin.';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Bir hedef seçin ve çıkış görevlerini inceleyin.';
 
   @override
   String get gitUiNoOutgoingCommits => 'Hiçbir çıkış sözleri';
@@ -6687,10 +7226,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiLoadMoreOutgoingCommits => 'Daha Fazla Yükümlülükler';
 
   @override
-  String get gitUiSetThisDestinationAsUpstream => 'Bu hedefi upstream olarak ayarlayın';
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Bu hedefi upstream olarak ayarlayın';
 
   @override
-  String get gitUiChooseExactTagsToPublish => 'Yayınlamak için doğru etiketleri seçin';
+  String get gitUiChooseExactTagsToPublish =>
+      'Yayınlamak için doğru etiketleri seçin';
 
   @override
   String get gitUiTagsNone => 'Etiket: hiç';
@@ -6706,10 +7247,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => 'Push tamamlandı. yerel komutlar Log\'da mevcut kalır.';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Push tamamlandı. yerel komutlar Log\'da mevcut kalır.';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => 'Zorlamalı gönderim için hedef referans uçları bu incelemede gösterilenlerle tam eşleşmelidir.';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Zorlamalı gönderim için hedef referans uçları bu incelemede gösterilenlerle tam eşleşmelidir.';
 
   @override
   String get gitUiForceWithReviewedLease => 'Değerlendirilmiş kiralık...';
@@ -6718,7 +7261,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiPush => 'Gönder';
 
   @override
-  String get gitUiForcePushWithReviewedLeases => 'Geri dönüştürülmüş kiralama ile güç basıncı?';
+  String get gitUiForcePushWithReviewedLeases =>
+      'Geri dönüştürülmüş kiralama ile güç basıncı?';
 
   @override
   String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
@@ -6726,13 +7270,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => 'Başkaları bu geçmişi kullanıyor olabilir. Arka planda veri getirmek bu güvenlik koşulunu yenilemez.';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Başkaları bu geçmişi kullanıyor olabilir. Arka planda veri getirmek bu güvenlik koşulunu yenilemez.';
 
   @override
   String get gitUiForceWithLease => 'Kiralık Güç';
 
   @override
-  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => 'Uzaktan sonuç belirsizdir. başka bir baskı öncesinde tekrar hedefleri inceleyin.';
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Uzaktan sonuç belirsizdir. başka bir baskı öncesinde tekrar hedefleri inceleyin.';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -6743,10 +7290,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRemoteToFetch => 'FETCH için uzaktan';
 
   @override
-  String get gitUiPruneDeletedRemoteTrackingBranches => 'Remote Tracking Şubeleri Kaldırıldı';
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Remote Tracking Şubeleri Kaldırıldı';
 
   @override
-  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => 'Fetch, çalışma dosyalarını değiştirmeden uzaktan izleme bilgileri güncelleştirir.';
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Fetch, çalışma dosyalarını değiştirmeden uzaktan izleme bilgileri güncelleştirir.';
 
   @override
   String get gitUiFetch => 'Getir';
@@ -6767,37 +7317,46 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRebase => 'Yeniden temellendir';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => 'Hedef hızla ilerleyemezse durdurun; asla birleşme veya düşme.';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Hedef hızla ilerleyemezse durdurun; asla birleşme veya düşme.';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => 'Birleşme komplo ile birleşin, hatta hızlı ilerleme mümkün olduğunda.';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Birleşme komplo ile birleşin, hatta hızlı ilerleme mümkün olduğunda.';
 
   @override
-  String get gitUiMergeAllowFastForwardWhenPossible => 'Mümkün olduğunda hızlı ilerlemeye izin verin.';
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Mümkün olduğunda hızlı ilerlemeye izin verin.';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => 'Yerel birleşme eylemlerini korurken yerel tarihini yeniden canlandırın.';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Yerel birleşme eylemlerini korurken yerel tarihini yeniden canlandırın.';
 
   @override
-  String get gitUiRebaseLocalCommitsAsALinearHistory => 'Yerel eylemleri lineer bir tarih olarak ele alalım.';
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Yerel eylemleri lineer bir tarih olarak ele alalım.';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'Burada açıkça bir çekme stratejisi seçin veya bir planı incelemek için bir çekme stratejisi açın.';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Burada açıkça bir çekme stratejisi seçin veya bir planı incelemek için bir çekme stratejisi açın.';
 
   @override
-  String get gitUiUseReviewedOrdinaryRebaseForThisPull => 'Bu çekim için incelenen sıradan basın kullanın';
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Bu çekim için incelenen sıradan basın kullanın';
 
   @override
   String get gitUiOptions => 'Seçenekler';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommitNoFastForward => 'Her zaman bir kombinasyon komitesi oluşturun (hızlı ilerleme yok)';
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Her zaman bir kombinasyon komitesi oluşturun (hızlı ilerleme yok)';
 
   @override
   String get gitUiPreserveLocalMergeCommits => 'Yerel Birleşme Sözleşmeleri';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => 'Yerel değişiklikler çekmeyi engelleyebilir. inceleme / sipariş verin veya açıkça bir çubuk oluşturun.';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Yerel değişiklikler çekmeyi engelleyebilir. inceleme / sipariş verin veya açıkça bir çubuk oluşturun.';
 
   @override
   String get gitUiStashes => 'Saklanan değişiklikler';
@@ -6806,7 +7365,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCreateOrReviewStash => 'Stash oluşturmak veya incelemek...';
 
   @override
-  String get gitUiPullWithSelectedStrategy => 'Seçilmiş strateji ile karıştırın';
+  String get gitUiPullWithSelectedStrategy =>
+      'Seçilmiş strateji ile karıştırın';
 
   @override
   String get gitUiRepositoryURLOrLocalGitSource => 'URL veya yerel Git kaynağı';
@@ -6824,19 +7384,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiChoose => 'Seçin...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => 'Yalnızca metadata oluşturur. mevcut dosyaları çizilmez veya yapıştırılmaz.';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Yalnızca metadata oluşturur. mevcut dosyaları çizilmez veya yapıştırılmaz.';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => 'Son hedef mevcut olmamalı veya boş olmalıdır. Kullanıcının mevcut verilerinin üzerine asla yazılmaz.';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Son hedef mevcut olmamalı veya boş olmalıdır. Kullanıcının mevcut verilerinin üzerine asla yazılmaz.';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => 'Başlangıç şubesi · beyaz etkili Git politikası kullanır';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Başlangıç şubesi · beyaz etkili Git politikası kullanır';
 
   @override
   String get gitUiSelectedBranchOptional => 'Seçilmiş Şubeler · Seçmeli';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => 'Açıklama / güncelleştirme submodüllerini tekrar tekrar';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Açıklama / güncelleştirme submodüllerini tekrar tekrar';
 
   @override
   String get gitUiPreparingGitOperation => 'Git operasyonu için hazırlık...';
@@ -6845,10 +7409,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiThisAttemptCreated => 'Bu girişim yaratılmış';
 
   @override
-  String get gitUiTheDestinationExistedBeforeThisAttempt => 'Bu denemeden önce var olan hedef:';
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Bu denemeden önce var olan hedef:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => 'Klavye muayene için kalır. başka bir klon denemesi öncesinde inceleme.';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Klavye muayene için kalır. başka bir klon denemesi öncesinde inceleme.';
 
   @override
   String get gitUiNoDestinationDirectoryRemains => 'Amaç adresi kalmadı.';
@@ -6881,13 +7447,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiChooseBranchTagOrCommit => 'Dal, etiket veya commit seç…';
 
   @override
-  String get gitUiUseUpstreamAsNewBase => 'Upstream\'i yeni bir temel olarak kullanın';
+  String get gitUiUseUpstreamAsNewBase =>
+      'Upstream\'i yeni bir temel olarak kullanın';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog => 'Geçerli bir şubesi seçin, etiketle veya Log\'dan bağlayın.';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Geçerli bir şubesi seçin, etiketle veya Log\'dan bağlayın.';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => 'Dal bloğunda tutulan ilk commit squash veya fixup olamaz; öncesinde hedef commit yoktur.';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Dal bloğunda tutulan ilk commit squash veya fixup olamaz; öncesinde hedef commit yoktur.';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -6895,13 +7464,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiRewordWillRequestANewMessage => '[Reword yeni bir mesaj isteyecektir]\n';
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Reword yeni bir mesaj isteyecektir]\n';
 
   @override
   String get gitUiPlannedCommitMessages => 'Planlanan Mesajlar';
 
   @override
-  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => 'Orijinal/kombin mesaj önizlemesi · Git son reword/squash mesajları isteyin';
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Orijinal/kombin mesaj önizlemesi · Git son reword/squash mesajları isteyin';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -6917,7 +7489,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiDetachedHEAD2 => 'Ayrık HEAD';
 
   @override
-  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => 'Yeniden temellendirme commit kimliklerini değiştirir. Uzak dal izleme bilgileri, geçmişin hiç yayımlanmadığını kanıtlamaz.';
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Yeniden temellendirme commit kimliklerini değiştirir. Uzak dal izleme bilgileri, geçmişin hiç yayımlanmadığını kanıtlamaz.';
 
   @override
   String get gitUiIncludeRootCommits => 'Kök commitleri dahil et';
@@ -6943,10 +7517,14 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => 'Bu şubeden elde edilebilecek tüm kök komiteleri içerir.';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Bu şubeden elde edilebilecek tüm kök komiteleri içerir.';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
     return '$boundary sonrasındaki commitler $base üzerine yeniden uygulanır; sınır commiti dahil edilmez.';
   }
 
@@ -6954,10 +7532,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRoot => 'kökü';
 
   @override
-  String get gitUiGitBranchLabelResetMergeStructure => 'Git şubesi / etiket / yeniden ayar / karıştırma yapısı';
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Git şubesi / etiket / yeniden ayar / karıştırma yapısı';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => 'Açıkça eski sınır veya kök modunu seçin, sonra planı hazırlayın.';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Açıkça eski sınır veya kök modunu seçin, sonra planı hazırlayın.';
 
   @override
   String get gitUiMoveUp => 'Yukarı taşı';
@@ -6974,13 +7554,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectACommitForDetailsAndChangedFiles => 'Detaylar için bir komite seçin ve dosyaları değiştirin';
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Detaylar için bir komite seçin ve dosyaları değiştirin';
 
   @override
-  String get gitUiPreviewCombinedCommitMessages => 'Önceki Önceki yazı: Combined Commit Messages...';
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Önceki Önceki yazı: Combined Commit Messages...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt+ ↑/↓ seçilen komutu hareket eder. Bağlantısız şubelerin referansları otomatik olarak güncellenmez.';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+ ↑/↓ seçilen komutu hareket eder. Bağlantısız şubelerin referansları otomatik olarak güncellenmez.';
 
   @override
   String get gitUiCancelPlan => 'Planı iptal';
@@ -6989,7 +7572,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiStartReviewedRebase => 'İncelenen rebase başlatılsın mı?';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 üzerinde planlanan komutları yeniden yazın $arg1. Dökülen komutlar, başlangıç yapana kadar bu planta görünür bir şekilde işaretlenir.';
   }
 
@@ -7000,39 +7586,53 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiNoContinuingGitOperation => 'Git operasyonu devam etmiyor';
 
   @override
-  String get gitUiStoppedForEditingAmend => ' · düzenleme / değişiklik için durduruldu';
+  String get gitUiStoppedForEditingAmend =>
+      ' · düzenleme / değişiklik için durduruldu';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => 'Bunlar bir stash uygulamasından, muhtemelen bir indeksleme girişidir. Git\'in hiçbir stash devamı veya kürtaj komutu yoktur.';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Bunlar bir stash uygulamasından, muhtemelen bir indeksleme girişidir. Git\'in hiçbir stash devamı veya kürtaj komutu yoktur.';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => 'Çalışma dosyalarını düzenleyin, aşamayı ve mevcut yükümlülüğünü değiştirin, sonra bu yükümlülüğü devam edin.';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Çalışma dosyalarını düzenleyin, aşamayı ve mevcut yükümlülüğünü değiştirin, sonra bu yükümlülüğü devam edin.';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
     return '$arg0$arg1 · birleştirilmemiş indeks aşamaları $arg2';
   }
 
   @override
-  String get gitUiTheIndexHasNoUnresolvedEntries => 'Endeksi çözülmemiş girişlere sahip değildir.';
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Endeksi çözülmemiş girişlere sahip değildir.';
 
   @override
-  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => 'Mevcut taahhütü boş bir taahhüt olarak tutun';
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Mevcut taahhütü boş bir taahhüt olarak tutun';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => 'Gerçek endeksin aşamalı değişiklikleri yoktur. açık bir boş komplo oluşturun, eğer aktif kalırsa sekencer\'ı devam edin.';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Gerçek endeksin aşamalı değişiklikleri yoktur. açık bir boş komplo oluşturun, eğer aktif kalırsa sekencer\'ı devam edin.';
 
   @override
   String get gitUiKeepEmptyCommit => 'Boş tutun...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'Git işlemin başlangıcına dönmeyi dener. Önceden var olan indeks dışı değişikliklerin, izlenmeyen ve kaydedilmemiş içeriğin kurtarılması garanti edilmez.';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git işlemin başlangıcına dönmeyi dener. Önceden var olan indeks dışı değişikliklerin, izlenmeyen ve kaydedilmemiş içeriğin kurtarılması garanti edilmez.';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => 'Mevcut komployu atlayın ve bir sonraki planlanan komplo ile devam edin.';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Mevcut komployu atlayın ve bir sonraki planlanan komplo ile devam edin.';
 
   @override
-  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => 'Mevcut dosyaları ve indeksleri korurken bu operasyonun kitap tutmayı unutun.';
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Mevcut dosyaları ve indeksleri korurken bu operasyonun kitap tutmayı unutun.';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -7043,7 +7643,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiReloadConflictVersions => 'Çatışma versiyonları?';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => 'Kurtarılmamış Sonuç taslağını mevcut çalışma dosyası ile değiştirin.';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Kurtarılmamış Sonuç taslağını mevcut çalışma dosyası ile değiştirin.';
 
   @override
   String get gitUiLoadingConflictVersions => 'Çatışma versiyonları...';
@@ -7064,7 +7665,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiAcceptEntireLeftFile => 'Tüm sol dosyayı kabul edin...';
 
   @override
-  String get gitUiAcceptEntireRightFile => 'Sağdaki dosyanın tamamını kabul et…';
+  String get gitUiAcceptEntireRightFile =>
+      'Sağdaki dosyanın tamamını kabul et…';
 
   @override
   String get gitUiPreviousConflictRegion => 'Önceki İçerikSaldırı Bölgesi';
@@ -7076,12 +7678,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiManualResolution => 'Manual Çözüm';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
     return 'Bölge $arg0/$arg1 · $arg2 incelenmiş';
   }
 
   @override
-  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => 'Kaynak uyumluluğu metin karşılaştırma sınırını aştı; kaynak panoları manuel inceleme için kullanılabilir kalır.';
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Kaynak uyumluluğu metin karşılaştırma sınırını aştı; kaynak panoları manuel inceleme için kullanılabilir kalır.';
 
   @override
   String get gitUiAcceptLeftRegion => 'Sol bölgeyi kabul et';
@@ -7093,16 +7701,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiKeepManualResultForRegion => 'Bölge için manuel sonuç tutun';
 
   @override
-  String get gitUiApplyGitSNonConflictingChanges => 'Git’in çatışmaz değişikliklerini uygulayacak mı?';
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Git’in çatışmaz değişikliklerini uygulayacak mı?';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => 'Geçerli sonuç taslağını Git\'in birleşme önizlemesi ile değiştirin. bu kaydedilmemiş manuel sonuç düzenlemelerini ortadan kaldırır; çalışma dosyası kaydedene kadar değişmez.';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Geçerli sonuç taslağını Git\'in birleşme önizlemesi ile değiştirin. bu kaydedilmemiş manuel sonuç düzenlemelerini ortadan kaldırır; çalışma dosyası kaydedene kadar değişmez.';
 
   @override
   String get gitUiUseMergePreview => 'Birleşme Önizlemesi';
 
   @override
-  String get gitUiApplyNonConflictingChanges => 'Karşıt olmayan değişiklikler...';
+  String get gitUiApplyNonConflictingChanges =>
+      'Karşıt olmayan değişiklikler...';
 
   @override
   String get gitUiLeftSource => 'sol kaynağı';
@@ -7120,30 +7731,41 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiStage3 => '3 aşaması';
 
   @override
-  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => 'Çatışma versiyonları mevcut değildir. mevcut durumunu gözden geçirmek için yenileme.';
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Çatışma versiyonları mevcut değildir. mevcut durumunu gözden geçirmek için yenileme.';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => 'Sonuç diske kaydedildi. endeks hala bu dosyanın çözüldüğünü belirler.';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Sonuç diske kaydedildi. endeks hala bu dosyanın çözüldüğünü belirler.';
 
   @override
   String get gitUiSaveResultDraft => 'Sonuç taslağını kaydet';
 
   @override
-  String get gitUiApplyResultAndStageResolution => 'Sonucu uygula ve çözümü indekse ekle';
+  String get gitUiApplyResultAndStageResolution =>
+      'Sonucu uygula ve çözümü indekse ekle';
 
   @override
-  String get gitUiResultEditableUTF8WorkingContent => 'Sonuç · düzenlenebilir UTF-8 çalışma içeriği';
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Sonuç · düzenlenebilir UTF-8 çalışma içeriği';
 
   @override
   String get gitUiEditableConflictResult => 'Saldırı sonuçları';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return 'Sol: $arg0 · $arg1\nSağ: $arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => 'İçeriği seçin, silin, ya da bir alt modül açıkça taahhüt. hiçbir ikili veri düzenlenebilir metin olarak dekore edilmez.';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'İçeriği seçin, silin, ya da bir alt modül açıkça taahhüt. hiçbir ikili veri düzenlenebilir metin olarak dekore edilmez.';
 
   @override
   String get gitUiUseEntireLeftContent => 'Tüm sol içeriği kullanın...';
@@ -7158,7 +7780,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiResolvedSubmoduleCommit => 'Çözülen alt modül';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => 'Bu doğru gitlink\'i ebeveynin içine koyun. bu, alt modülü kontrol etmez veya taahhüt etmez.';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Bu doğru gitlink\'i ebeveynin içine koyun. bu, alt modülü kontrol etmez veya taahhüt etmez.';
 
   @override
   String get gitUiSetResolvedGitlink => 'Çözülen gitlink...';
@@ -7169,7 +7792,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => 'Sonuç düzenlenmiştir. manuel sonucu tutun veya değişmemiş bir bölge seçin.';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Sonuç düzenlenmiştir. manuel sonucu tutun veya değişmemiş bir bölge seçin.';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -7177,10 +7801,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => 'Seçilen gitlink\'i ana bölümde yerleştirin. alt modül kontrolü ve dosyaları değiştirilmez.';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Seçilen gitlink\'i ana bölümde yerleştirin. alt modül kontrolü ve dosyaları değiştirilmez.';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
     return '$arg0 tüm çalışma yolu değiştirir ve kararın aşamasıdır. mevcut çalışma içeriği ve kayıp sonuç taslağı kaldırılacaktır.';
   }
 
@@ -7188,10 +7815,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiApplyEntireFileDecision => 'Tüm dosya kararını uygulayın';
 
   @override
-  String get gitUiStageThisConflictResolution => 'Bu anlaşmazlık çözümü için mi?';
+  String get gitUiStageThisConflictResolution =>
+      'Bu anlaşmazlık çözümü için mi?';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
     return 'Tüm düzenlenmiş Sonuçları $arg0 olarak kullanın. $arg1 ilk olarak tüm amaçlı içeriği inceleyin.';
   }
 
@@ -7199,13 +7830,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiApplyAndStage => 'Uygula ve indekse ekle';
 
   @override
-  String get gitUiReviewResultTextFormatChanges => 'Sonuçları incelemek metin biçimi değişiklikleri';
+  String get gitUiReviewResultTextFormatChanges =>
+      'Sonuçları incelemek metin biçimi değişiklikleri';
 
   @override
   String get gitUiSaveReviewedResult => 'Değerlendirilmiş sonuçları kaydedin';
 
   @override
-  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => 'Native Git tablosu erişilebilirliği mevcut değildir. uygulama yeniden bağlandıktan sonra geri çekilme.';
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Native Git tablosu erişilebilirliği mevcut değildir. uygulama yeniden bağlandıktan sonra geri çekilme.';
 
   @override
   String get gitUiSans => 'olmadan';
@@ -7258,10 +7892,14 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => 'Değerlendirilmiş depolama alanı sadece bu işlem için okunabilir. tarih ve içerik denetimi mevcuttur.';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Değerlendirilmiş depolama alanı sadece bu işlem için okunabilir. tarih ve içerik denetimi mevcuttur.';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
     return 'Git $arg0\'i iade etti. uygulama belgelerini yenilemezdi: $arg1';
   }
 
@@ -7272,7 +7910,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCurrentBranch => 'Geçerli dal';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => 'Hiçbir şubesi veya etiket eşleşmiyor.Log\'da bir komite seçin.';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Hiçbir şubesi veya etiket eşleşmiyor.Log\'da bir komite seçin.';
 
   @override
   String get gitUiBranches => 'Dallar';
@@ -7320,7 +7959,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRebase2 => 'Yeniden temellendir…';
 
   @override
-  String get gitUiConflictsAndCurrentOperation => 'Çatışmalar ve mevcut operasyonlar...';
+  String get gitUiConflictsAndCurrentOperation =>
+      'Çatışmalar ve mevcut operasyonlar...';
 
   @override
   String get gitUiStashes2 => 'Saklanan değişiklikler…';
@@ -7344,7 +7984,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiWaitingForRepositoryStatus => 'Depozito Durumu için bekleyin';
 
   @override
-  String get gitUiRepositoryStatusUnavailableRefresh => 'Depolama durumu mevcut değildir; yenileme';
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Depolama durumu mevcut değildir; yenileme';
 
   @override
   String get gitUiManageRemotes2 => 'Uzak depoları yönet';
@@ -7385,46 +8026,62 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => 'Repository değiştirildi. yeniden denemeden önce yenileme ve inceleme.';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Repository değiştirildi. yeniden denemeden önce yenileme ve inceleme.';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => 'Bir başka işlem depolama alanı veya indeksleme kilidi tutar. bekle, sonra yenileme.';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'Bir başka işlem depolama alanı veya indeksleme kilidi tutar. bekle, sonra yenileme.';
 
   @override
-  String get gitUiRepositoryTrustIsRequiredForThisOperation => 'Bu operasyon için depolama güveni gereklidir.';
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Bu operasyon için depolama güveni gereklidir.';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'Git hizmetinin bağlantısı kesildi. depolama alanını yeniden bağlayın ve uyandırın.';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Git hizmetinin bağlantısı kesildi. depolama alanını yeniden bağlayın ve uyandırın.';
 
   @override
-  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => 'Yüklü Git executable bu işlemi desteklemez. çalışma süresi gereksinimlerini aşağıda inceleyin.';
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Yüklü Git executable bu işlemi desteklemez. çalışma süresi gereksinimlerini aşağıda inceleyin.';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => 'Bu depolama alanı yalnızca istediğiniz işlem için okunur. inceleme ve geçmişi mevcuttur.';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Bu depolama alanı yalnızca istediğiniz işlem için okunur. inceleme ve geçmişi mevcuttur.';
 
   @override
-  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => 'Operasyonun uzlaşmaya ihtiyacı vardır. sonuçlanan depolama alanını veya uzaktan durumunu tekrarlamadan önce inceleyin.';
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Operasyonun uzlaşmaya ihtiyacı vardır. sonuçlanan depolama alanını veya uzaktan durumunu tekrarlamadan önce inceleyin.';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'Git kimlik doğrulama başarısız oldu. kimlik doğrulama yardımcısını inceleyin veya yapılandırılmış keyring\'i açın.';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Git kimlik doğrulama başarısız oldu. kimlik doğrulama yardımcısını inceleyin veya yapılandırılmış keyring\'i açın.';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'SSH ev sahibi doğrulama başarısız oldu. yapılandırılmış SSH araçları aracılığıyla ev sahibi kimliğini inceleyin.';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'SSH ev sahibi doğrulama başarısız oldu. yapılandırılmış SSH araçları aracılığıyla ev sahibi kimliğini inceleyin.';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => 'Kayıt anahtarı, aracı ve yapılandırılmış imza aracını inceleyin.';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Kayıt anahtarı, aracı ve yapılandırılmış imza aracını inceleyin.';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => 'Bir depolama alanı yazar adı ve e-posta ayarlayın, sonra kaydedilen mesaj taslağına geri dönün.';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Bir depolama alanı yazar adı ve e-posta ayarlayın, sonra kaydedilen mesaj taslağına geri dönün.';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'Git, incelenen güncelleştirmeyi reddetti. yeniden denemeden önce gerçek hedefi yenileme ve inceleme.';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git, incelenen güncelleştirmeyi reddetti. yeniden denemeden önce gerçek hedefi yenileme ve inceleme.';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => 'Bu işleyişi engelleyen çalışma veya aşamalı değişiklikler. inceleme, taahhüt veya açıkça bunları durdur.';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Bu işleyişi engelleyen çalışma veya aşamalı değişiklikler. inceleme, taahhüt veya açıkça bunları durdur.';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => 'Gerekli bir Git nesne mevcut değildir. derin veya kısmi depolama sınırlarını inceleyin ve gerekirse açıkça yapıştırın.';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Gerekli bir Git nesne mevcut değildir. derin veya kısmi depolama sınırlarını inceleyin ve gerekirse açıkça yapıştırın.';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -7449,7 +8106,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCreatesALocalBranchWithoutCheckingItOut => 'Yerel bir şubesi oluşturur, onu kontrol etmeden.';
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Yerel bir şubesi oluşturur, onu kontrol etmeden.';
 
   @override
   String gitUiTagArg0(String arg0) {
@@ -7468,7 +8126,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiRevertCommits => 'Yükümlülükler';
 
   @override
-  String get gitUiCompareToFullRevisionID => 'Tam Değerlendirme ID ile karşılaştırın';
+  String get gitUiCompareToFullRevisionID =>
+      'Tam Değerlendirme ID ile karşılaştırın';
 
   @override
   String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
@@ -7476,7 +8135,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiEnterAFullValidObjectID => 'Tam bir geçerli nesne kimliği girin.';
+  String get gitUiEnterAFullValidObjectID =>
+      'Tam bir geçerli nesne kimliği girin.';
 
   @override
   String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
@@ -7489,19 +8149,26 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => 'HEAD\'i/geçerli dalı taşır. Reflog, rastgele izlenmeyen veya kaydedilmemiş içeriği kurtarmaz.';
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'HEAD\'i/geçerli dalı taşır. Reflog, rastgele izlenmeyen veya kaydedilmemiş içeriği kurtarmaz.';
 
   @override
-  String get gitUiMoveHEADKeepIndexAndWorkingFiles => 'HEAD\'i taşı; indeksi ve çalışma dosyalarını koru.';
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'HEAD\'i taşı; indeksi ve çalışma dosyalarını koru.';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => 'HEAD\'i taşı ve indeksi değiştir; çalışma dosyalarını koru.';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'HEAD\'i taşı ve indeksi değiştir; çalışma dosyalarını koru.';
 
   @override
-  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => 'HEAD\'i, indeksi ve izlenen çalışma dosyalarını değiştir; engel olan izlenmeyen dosyaların üzerine yazılabilir.';
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'HEAD\'i, indeksi ve izlenen çalışma dosyalarını değiştir; engel olan izlenmeyen dosyaların üzerine yazılabilir.';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => 'HEAD\'i, indeksi ve uygun dosyaları değiştir; yerel değişiklikler kaybolacaksa reddet.';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'HEAD\'i, indeksi ve uygun dosyaları değiştir; yerel değişiklikler kaybolacaksa reddet.';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -7509,7 +8176,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 → $arg1 Uygulamadan önce seçilen modun etkilerini inceleyin.';
   }
 
@@ -7545,7 +8215,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiTagMessage => 'Tag Mesajı';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => 'Etiketi yerel olarak oluşturun. seçilmiş etiketleri açıkça Push incelemesinde yayınlayın.';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Etiketi yerel olarak oluşturun. seçilmiş etiketleri açıkça Push incelemesinde yayınlayın.';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -7556,13 +8227,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiNextChangedFilePage => 'Sonraki Değiştirilmiş Dosya Sayfası';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => 'Bir dosyayı açmak bu revizyonu asla kontrol etmez.';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Bir dosyayı açmak bu revizyonu asla kontrol etmez.';
 
   @override
   String get gitUiOpenReadOnlyVersion => 'Açık sadece okuma versiyonu';
 
   @override
-  String get gitUiRestoreThisPathWaitingForRepositoryStatus => 'Bu yolu geri getirin... · Depolama durumu için bekleyin';
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Bu yolu geri getirin... · Depolama durumu için bekleyin';
 
   @override
   String get gitUiRestoreThisPath => 'Bu yolun geri dönüşü...';
@@ -7578,7 +8251,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
     return 'Bu çalışma yolu $arg0 ile değiştirin. mevcut aşamalı içerik korunur.';
   }
 
@@ -7624,7 +8299,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiBoundary => ' · Sınır';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return '$arg0  $arg1\nÖzgün satır $arg2$arg3';
   }
 
@@ -7652,16 +8332,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiMoveLater => 'Daha sonra hareket';
 
   @override
-  String get gitUiRemoveFromReviewedSequence => 'Değerlendirilmiş Sürümden Kaldır';
+  String get gitUiRemoveFromReviewedSequence =>
+      'Değerlendirilmiş Sürümden Kaldır';
 
   @override
-  String get gitUiApplyChangesWithoutCreatingCommits => 'Değişiklikler yapmadan uygulayın';
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Değişiklikler yapmadan uygulayın';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits => 'Bu açık ana sözcük ebeveynleri birleştirme sözleşmeleri için kullanın';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Bu açık ana sözcük ebeveynleri birleştirme sözleşmeleri için kullanın';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => 'Boş veya zaten uygulanmış emirler açık bir geçiş veya devam karar için Git\'i durdurabilir.';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Boş veya zaten uygulanmış emirler açık bir geçiş veya devam karar için Git\'i durdurabilir.';
 
   @override
   String get gitUiRevertInReviewedOrder => 'Değerlendirilmiş sırada dönüş';
@@ -7851,7 +8535,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String gitUiRebaseStepSemantics(String position, String action, String subject) {
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
     return '$position, $action, $subject';
   }
 
@@ -7862,10 +8550,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiUtf8NoBom => 'UTF-8 byte sipariş işareti olmadan (BOM)';
 
   @override
-  String get gitUiAddsBom => 'Bu düzen dosyanın başlangıcında bir UTF-8 byte sipariş işareti (BOM) eklenir.';
+  String get gitUiAddsBom =>
+      'Bu düzen dosyanın başlangıcında bir UTF-8 byte sipariş işareti (BOM) eklenir.';
 
   @override
-  String get gitUiRemovesBom => 'Bu düzenleme, dosyanın başlangıcından UTF-8 byte sipariş işareti (BOM) kaldırır.';
+  String get gitUiRemovesBom =>
+      'Bu düzenleme, dosyanın başlangıcından UTF-8 byte sipariş işareti (BOM) kaldırır.';
 
   @override
   String get gitUiNoLineTerminators => 'Terminatörler yok';
@@ -7891,7 +8581,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiGitFailure => 'Git ameliyatı başarısız oldu. aşağıdaki teşhisleri inceleyin.';
+  String get gitUiGitFailure =>
+      'Git ameliyatı başarısız oldu. aşağıdaki teşhisleri inceleyin.';
 
   @override
   String get gitUiAbortInline => 'İşlemi iptal et';
@@ -7942,7 +8633,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'Git işlemleri tüm bu depolama alanı için geçerlidir ve yapılandırılmış çubukları, filtreleri, kimlik doğrulama ve imza araçlarını çalıştırabilir.';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Git işlemleri tüm bu depolama alanı için geçerlidir ve yapılandırılmış çubukları, filtreleri, kimlik doğrulama ve imza araçlarını çalıştırabilir.';
 
   @override
   String get gitHostContentUnavailable => 'Kullanılamayan içerik';
@@ -8001,7 +8693,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiAddAddConflict => 'Her iki tarafta da eklendi';
 
   @override
-  String get gitUiModifyDeleteConflict => 'Değiştirilmiş / Kaldırılmış veya Değiştirilmiş / Kaldırılmış';
+  String get gitUiModifyDeleteConflict =>
+      'Değiştirilmiş / Kaldırılmış veya Değiştirilmiş / Kaldırılmış';
 
   @override
   String gitUiConflictIdentity(String path, String kind) {
@@ -8009,19 +8702,23 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiDiscardUnsavedIndexDraft => 'Kaydedilmemiş dizin taslağı atılsın mı?';
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Kaydedilmemiş dizin taslağı atılsın mı?';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => 'Dizin düzenleyicisini kapatmak yalnızca taslağı atar. Dizin ve çalışma dosyası değişmez.';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Dizin düzenleyicisini kapatmak yalnızca taslağı atar. Dizin ve çalışma dosyası değişmez.';
 
   @override
   String get gitUiDiscardIndexDraft => 'Dizin taslağını at';
 
   @override
-  String get gitUiDiscardUnsavedConflictDraft => 'Kaydedilmemiş çakışma sonucu atılsın mı?';
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Kaydedilmemiş çakışma sonucu atılsın mı?';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => 'Çakışma düzenleyicisini kapatmak yalnızca kaydedilmemiş sonuç taslağını atar. Kaydedilmiş çalışma içeriği ve indeks değişmez.';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Çakışma düzenleyicisini kapatmak yalnızca kaydedilmemiş sonuç taslağını atar. Kaydedilmiş çalışma içeriği ve indeks değişmez.';
 
   @override
   String get gitUiDiscardConflictDraft => 'Çakışma taslağını at';
@@ -8066,10 +8763,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiChangedLine => 'Değişen satır';
 
   @override
-  String get gitUiCopyHeadRegionIntoIndexDraft => 'HEAD bölgesini indeks taslağına kopyala';
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'HEAD bölgesini indeks taslağına kopyala';
 
   @override
-  String get gitUiCopyWorkingRegionIntoIndexDraft => 'Çalışma bölgesini indeks taslağına kopyala';
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Çalışma bölgesini indeks taslağına kopyala';
 
   @override
   String get gitUiUpdatingConflictRegions => 'Çakışma bölgeleri güncelleniyor';
@@ -8086,19 +8785,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiIgnoreRightRegion => 'Sağdaki öneriyi yok say';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved => 'Gönderilen taslak indekse yazıldı. Daha yeni metin hâlâ bu düzenleyicide. Uygulamadan önce geçerli sürümleri yeniden yükleyip inceleyin.';
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Gönderilen taslak indekse yazıldı. Daha yeni metin hâlâ bu düzenleyicide. Uygulamadan önce geçerli sürümleri yeniden yükleyip inceleyin.';
 
   @override
-  String get gitUiNewerConflictDraftRetained => 'Gönderilen sonuç kaydedildi. Daha yeni sonuç taslağınız hâlâ kaydedilmedi.';
+  String get gitUiNewerConflictDraftRetained =>
+      'Gönderilen sonuç kaydedildi. Daha yeni sonuç taslağınız hâlâ kaydedilmedi.';
 
   @override
-  String get gitUiNoFileHistoryForThisPathAndRevision => 'Bu yol ve revizyon için dosya geçmişi bulunmuyor.';
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Bu yol ve revizyon için dosya geçmişi bulunmuyor.';
 
   @override
-  String get gitUiReviewSavedIndexAndKeepDraft => 'Kaydedilen indeksi incele ve taslağı koru';
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Kaydedilen indeksi incele ve taslağı koru';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply => 'Kaydedilen indeks veya kaynakları değişti. Daha yeni taslak korunuyor; uygulamadan önce bu değişiklikleri ayrı olarak inceleyin.';
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Kaydedilen indeks veya kaynakları değişti. Daha yeni taslak korunuyor; uygulamadan önce bu değişiklikleri ayrı olarak inceleyin.';
 
   @override
   String get gitUiReviewSavedMessage => 'Kaydedilmiş iletiyi incele';
@@ -8113,13 +8817,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiUseSavedMessage => 'Kaydedilmiş iletiyi kullan';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow => 'Bu ileti başka bir pencerede değiştirildi. Değiştirmeden önce kaydedilmiş iletiyi inceleyin.';
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Bu ileti başka bir pencerede değiştirildi. Değiştirmeden önce kaydedilmiş iletiyi inceleyin.';
 
   @override
-  String get gitUiDiscardUnsavedCommitMessages => 'Kaydedilmemiş commit iletileri atılsın mı?';
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Kaydedilmemiş commit iletileri atılsın mı?';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => 'Kaydedilemeyen iletiler hâlâ bu pencerede. Bunları atmak kaydedilmiş sürümleri değiştirmez.';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Kaydedilemeyen iletiler hâlâ bu pencerede. Bunları atmak kaydedilmiş sürümleri değiştirmez.';
 
   @override
   String get gitUiDiscardCommitMessages => 'İletileri at';
@@ -8131,13 +8838,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiNoCommitsYet => 'Henüz commit yok';
 
   @override
-  String get gitUiNativeMenuUnavailable => 'Yerel menü hizmeti kullanılamıyor. Yeniden deneyin.';
+  String get gitUiNativeMenuUnavailable =>
+      'Yerel menü hizmeti kullanılamıyor. Yeniden deneyin.';
 
   @override
-  String get gitWorkspaceRootRequired => 'Bu çalışma alanında Git kullanmak için deponun çalışma ağacı kökünü açın.';
+  String get gitWorkspaceRootRequired =>
+      'Bu çalışma alanında Git kullanmak için deponun çalışma ağacı kökünü açın.';
 
   @override
-  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
     return '$upstream · $ahead ileride, $behind geride. Yerel olarak bilinen uzak izleme bilgisi; canlı sunucu denetimi değildir.';
   }
 
@@ -8151,7 +8864,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiUnstageSelectedLines => 'Seçili satırları indeksten çıkar';
 
   @override
-  String get gitUiEditIndexInThreeWayView => 'İndeksi Üç Yönlü Görünümde Düzenle…';
+  String get gitUiEditIndexInThreeWayView =>
+      'İndeksi Üç Yönlü Görünümde Düzenle…';
 
   @override
   String get gitUiViewCommitDetails => 'Commit ayrıntılarını görüntüle…';

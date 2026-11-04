@@ -14,100 +14,130 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesNewFromRetainedText => 'Нова нотатка зі збереженого тексту';
 
   @override
-  String get notesAccountThrottled => 'Nextcloud попросив зачекати. Зачекайте перед повторним входом.';
+  String get notesAccountThrottled =>
+      'Nextcloud попросив зачекати. Зачекайте перед повторним входом.';
 
   @override
-  String get notesSettingsRefreshing => 'Оновлення Notes після підтвердження налаштувань';
+  String get notesSettingsRefreshing =>
+      'Оновлення Notes після підтвердження налаштувань';
 
   @override
-  String get notesExportOperationFailed => 'Експорт не опубліковано. Перевірте джерело та призначення й повторіть.';
+  String get notesExportOperationFailed =>
+      'Експорт не опубліковано. Перевірте джерело та призначення й повторіть.';
 
   @override
-  String get notesRecoveryCreatedNotOpened => 'Відновлену нотатку збережено, але не відкрито. Завершіть зміни редактора або властивостей і відкрийте цю наявну нотатку.';
+  String get notesRecoveryCreatedNotOpened =>
+      'Відновлену нотатку збережено, але не відкрито. Завершіть зміни редактора або властивостей і відкрийте цю наявну нотатку.';
 
   @override
-  String get notesSettingsPendingNotes => 'Зміні заважають очікувані нотатки, конфлікти або непевні створення. Синхронізуйте чи перевірте їх у Notes і повторіть збереження чернетки налаштувань.';
+  String get notesSettingsPendingNotes =>
+      'Зміні заважають очікувані нотатки, конфлікти або непевні створення. Синхронізуйте чи перевірте їх у Notes і повторіть збереження чернетки налаштувань.';
 
   @override
-  String get notesSettingsPendingAttachments => 'Зміні заважають операції з вкладеннями. Перевірте їх у Notes і повторіть збереження збереженої чернетки.';
+  String get notesSettingsPendingAttachments =>
+      'Зміні заважають операції з вкладеннями. Перевірте їх у Notes і повторіть збереження збереженої чернетки.';
 
   @override
-  String get notesAccountServerAddress => 'Використайте канонічну HTTPS-адресу Nextcloud та ввійдіть знову. Адресу або перенаправлення не вдалося перевірити.';
+  String get notesAccountServerAddress =>
+      'Використайте канонічну HTTPS-адресу Nextcloud та ввійдіть знову. Адресу або перенаправлення не вдалося перевірити.';
 
   @override
-  String get notesAccountUnsupported => 'Notes недоступний або API не підтримується. Увімкніть Nextcloud Notes з основною версією API 1, додатковою 4 або новішою.';
+  String get notesAccountUnsupported =>
+      'Notes недоступний або API не підтримується. Увімкніть Nextcloud Notes з основною версією API 1, додатковою 4 або новішою.';
 
   @override
-  String get notesAccountAuthorizeAgain => 'Nextcloud відхилив облікові дані. Повторно авторизуйте або підключіть обліковий запис.';
+  String get notesAccountAuthorizeAgain =>
+      'Nextcloud відхилив облікові дані. Повторно авторизуйте або підключіть обліковий запис.';
 
   @override
-  String get notesAccountCheckForbidden => 'Nextcloud заборонив перевірку можливостей Notes. Попросіть адміністратора дозволити її й повторіть.';
+  String get notesAccountCheckForbidden =>
+      'Nextcloud заборонив перевірку можливостей Notes. Попросіть адміністратора дозволити її й повторіть.';
 
   @override
-  String get notesAccountMalformed => 'Не вдалося перевірити відповідь Nextcloud. Перевірте встановлення сервера та ввійдіть знову.';
+  String get notesAccountMalformed =>
+      'Не вдалося перевірити відповідь Nextcloud. Перевірте встановлення сервера та ввійдіть знову.';
 
   @override
-  String get notesAccountTimedOut => 'Час входу минув. Почніть знову та завершіть авторизацію в браузері.';
+  String get notesAccountTimedOut =>
+      'Час входу минув. Почніть знову та завершіть авторизацію в браузері.';
 
   @override
-  String get notesAccountBrowserUnavailable => 'Системний браузер не відкрився. Перевірте типовий браузер і ввійдіть знову.';
+  String get notesAccountBrowserUnavailable =>
+      'Системний браузер не відкрився. Перевірте типовий браузер і ввійдіть знову.';
 
   @override
-  String get notesAccountNetwork => 'Nextcloud недоступний. Перевірте з’єднання та сервер і ввійдіть знову.';
+  String get notesAccountNetwork =>
+      'Nextcloud недоступний. Перевірте з’єднання та сервер і ввійдіть знову.';
 
   @override
-  String get notesAccountRejected => 'Nextcloud відхилив запит можливостей. Перевірте доступ з адміністратором і повторіть.';
+  String get notesAccountRejected =>
+      'Nextcloud відхилив запит можливостей. Перевірте доступ з адміністратором і повторіть.';
 
   @override
-  String get notesAccountFailed => 'Налаштування облікового запису не завершено. Повторіть вхід.';
+  String get notesAccountFailed =>
+      'Налаштування облікового запису не завершено. Повторіть вхід.';
 
   @override
-  String get notesTransferSourceChanged => 'Джерело змінилося після перевірки. Перевірте поточний файл або створіть новий знімок.';
+  String get notesTransferSourceChanged =>
+      'Джерело змінилося після перевірки. Перевірте поточний файл або створіть новий знімок.';
 
   @override
-  String get notesTransferUnreadable => 'Не вдалося прочитати джерело. Перевірте доступ до файлу чи теки й перевірте знову.';
+  String get notesTransferUnreadable =>
+      'Не вдалося прочитати джерело. Перевірте доступ до файлу чи теки й перевірте знову.';
 
   @override
-  String get notesTransferInvalidSnapshot => 'Знімок недійсний або не підтримується. Виберіть коректний знімок BusyMark Notes або джерело Markdown.';
+  String get notesTransferInvalidSnapshot =>
+      'Знімок недійсний або не підтримується. Виберіть коректний знімок BusyMark Notes або джерело Markdown.';
 
   @override
-  String get notesTransferMediaLimit => 'Медіа перевищують ліміт імпорту. Зменште медіа відповідного елемента й перевірте знову.';
+  String get notesTransferMediaLimit =>
+      'Медіа перевищують ліміт імпорту. Зменште медіа відповідного елемента й перевірте знову.';
 
   @override
-  String get notesTransferUnsafeSource => 'Джерело містить небезпечний шлях. Виберіть файли в межах вихідної теки та перевірте знову.';
+  String get notesTransferUnsafeSource =>
+      'Джерело містить небезпечний шлях. Виберіть файли в межах вихідної теки та перевірте знову.';
 
   @override
-  String get notesTransferDestination => 'Не вдалося записати експорт. Перевірте доступ і вільне місце в призначенні й повторіть.';
+  String get notesTransferDestination =>
+      'Не вдалося записати експорт. Перевірте доступ і вільне місце в призначенні й повторіть.';
 
   @override
-  String get notesTransferOperationFailed => 'Передавання не завершено. Перевірте відповідні елементи й повторіть. Раніше імпортовані елементи збережено.';
+  String get notesTransferOperationFailed =>
+      'Передавання не завершено. Перевірте відповідні елементи й повторіть. Раніше імпортовані елементи збережено.';
 
   @override
-  String get notesExportPublishedWithOmissions => 'Експорт доступний із пропусками';
+  String get notesExportPublishedWithOmissions =>
+      'Експорт доступний із пропусками';
 
   @override
   String get notesBatchUnchanged => 'Запитані значення вже встановлено.';
 
   @override
-  String get notesBatchReadOnly => 'Нотатка лише для читання. Захищені властивості змінювати не можна; обране змінювати можна.';
+  String get notesBatchReadOnly =>
+      'Нотатка лише для читання. Захищені властивості змінювати не можна; обране змінювати можна.';
 
   @override
-  String get notesBatchReviewChanged => 'Нотатка змінилася після перевірки. Перевірте поточний стан перед повторенням дії.';
+  String get notesBatchReviewChanged =>
+      'Нотатка змінилася після перевірки. Перевірте поточний стан перед повторенням дії.';
 
   @override
-  String get notesBatchMissing => 'Нотатка більше недоступна. Оновіть список і перевірте вибрані елементи.';
+  String get notesBatchMissing =>
+      'Нотатка більше недоступна. Оновіть список і перевірте вибрані елементи.';
 
   @override
-  String get notesBatchStorage => 'Локальне збереження не вдалося. Перевірте сховище й повторіть цей елемент; успішні елементи збережено.';
+  String get notesBatchStorage =>
+      'Локальне збереження не вдалося. Перевірте сховище й повторіть цей елемент; успішні елементи збережено.';
 
   @override
-  String get notesRemoteReviewChanged => 'Нотатка сервера змінилася. Чернетку злиття збережено. Перевірте нове порівняння й виберіть рішення знову.';
+  String get notesRemoteReviewChanged =>
+      'Нотатка сервера змінилася. Чернетку злиття збережено. Перевірте нове порівняння й виберіть рішення знову.';
 
   @override
   String get notesReviewRemote => 'Я перевірив поточну версію сервера';
 
   @override
-  String get wsModuleCapsNotPublished => 'Правило регістру модуля не публікується.';
+  String get wsModuleCapsNotPublished =>
+      'Правило регістру модуля не публікується.';
 
   @override
   String get wsTitleOverridesAction => 'Заголовки екземпляра та змісту…';
@@ -116,7 +146,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsHeadingNotPublished => 'Не публікується цим збирачем.';
 
   @override
-  String get wsMarkdownInstanceTitleLimitation => 'Закріплений builder не публікує заголовки примірників у темах Markdown. Розмітку збережено; перевірте джерело.';
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Закріплений builder не публікує заголовки примірників у темах Markdown. Розмітку збережено; перевірте джерело.';
 
   @override
   String get wsTopicIdentity => 'ID теми';
@@ -143,22 +174,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsSettingsPresent => 'Є явні налаштування';
 
   @override
-  String get wsTitleOverrideExplanation => 'Перевизначає опублікований заголовок; текст заголовка не змінюється.';
+  String get wsTitleOverrideExplanation =>
+      'Перевизначає опублікований заголовок; текст заголовка не змінюється.';
 
   @override
   String get wsIgnoreVariables => 'Вважати змінні буквальним текстом';
 
   @override
-  String get wsIgnoreVariablesExplanation => 'Якщо ввімкнено, текст, схожий на змінні, не підставляється.';
+  String get wsIgnoreVariablesExplanation =>
+      'Якщо ввімкнено, текст, схожий на змінні, не підставляється.';
 
   @override
   String get wsInstanceSelection => 'Примірники довідки';
 
   @override
-  String get wsInstanceExplanation => 'Виберіть випуски за іменами, групами, списками, винятками або виразами.';
+  String get wsInstanceExplanation =>
+      'Виберіть випуски за іменами, групами, списками, винятками або виразами.';
 
   @override
-  String get wsFilterExplanation => 'Фільтрує повторно використовуваний вміст за критеріями; не вибирає примірник довідки.';
+  String get wsFilterExplanation =>
+      'Фільтрує повторно використовуваний вміст за критеріями; не вибирає примірник довідки.';
 
   @override
   String get wsContextHelp => 'ID контекстної довідки';
@@ -173,22 +208,28 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsLastModified => 'Остання зміна';
 
   @override
-  String get wsMissingTopicHeading => 'H1 теми відсутній. Додайте його у джерелі.';
+  String get wsMissingTopicHeading =>
+      'H1 теми відсутній. Додайте його у джерелі.';
 
   @override
-  String get wsMultipleTopicHeadings => 'Перший H1 визначає заголовок теми. Решта H1 є окремими заголовками.';
+  String get wsMultipleTopicHeadings =>
+      'Перший H1 визначає заголовок теми. Решта H1 є окремими заголовками.';
 
   @override
-  String get wsTopicIdentityMismatch => 'Кореневий id відрізняється від ID імені файлу. Перейменуйте файл теми або перевірте джерело.';
+  String get wsTopicIdentityMismatch =>
+      'Кореневий id відрізняється від ID імені файлу. Перейменуйте файл теми або перевірте джерело.';
 
   @override
-  String get wsUnsupportedProperties => 'Непідтримувані атрибути збережено. Перевірте їх у джерелі.';
+  String get wsUnsupportedProperties =>
+      'Непідтримувані атрибути збережено. Перевірте їх у джерелі.';
 
   @override
-  String get wsGeneratedAnchor => 'Згенерований якір; значення створює перевизначення.';
+  String get wsGeneratedAnchor =>
+      'Згенерований якір; значення створює перевизначення.';
 
   @override
-  String get wsHeadingBuilderLimitation => 'Закріплений builder не публікує атрибути H1. Вони належать заголовку, а не кореню XML.';
+  String get wsHeadingBuilderLimitation =>
+      'Закріплений builder не публікує атрибути H1. Вони належать заголовку, а не кореню XML.';
 
   @override
   String get closeOtherTabs => 'Закрити інші вкладки';
@@ -245,16 +286,20 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tocTemplateExtension => 'Розширення:';
 
   @override
-  String get tocTemplateLoadError => 'Не вдалося завантажити шаблони. Наявні шаблони не змінено.';
+  String get tocTemplateLoadError =>
+      'Не вдалося завантажити шаблони. Наявні шаблони не змінено.';
 
   @override
-  String get tocTemplateSaveError => 'Не вдалося зберегти шаблони. Ваші зміни залишилися в редакторі.';
+  String get tocTemplateSaveError =>
+      'Не вдалося зберегти шаблони. Ваші зміни залишилися в редакторі.';
 
   @override
-  String get tocTemplateConflict => 'Шаблони змінено в іншому вікні. Скасуйте та знову відкрийте редактор.';
+  String get tocTemplateConflict =>
+      'Шаблони змінено в іншому вікні. Скасуйте та знову відкрийте редактор.';
 
   @override
-  String get tocTemplateDuplicateName => 'Шаблон із такою назвою та розширенням уже існує.';
+  String get tocTemplateDuplicateName =>
+      'Шаблон із такою назвою та розширенням уже існує.';
 
   @override
   String get tocTemplateFormat => 'Формат:';
@@ -271,13 +316,15 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get tocRemoveElementsRetainFiles => 'Вихідні файли, пов’язані з цими елементами змісту, не буде видалено.';
+  String get tocRemoveElementsRetainFiles =>
+      'Вихідні файли, пов’язані з цими елементами змісту, не буде видалено.';
 
   @override
   String get tocOk => 'OK';
 
   @override
-  String get tocSelectExistingTopic => 'Виберіть тему для додавання до поточного екземпляра';
+  String get tocSelectExistingTopic =>
+      'Виберіть тему для додавання до поточного екземпляра';
 
   @override
   String get tocGroupName => 'Назва групи';
@@ -383,10 +430,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tocOnlyTitleField => 'Заголовок лише для змісту:';
 
   @override
-  String get tocInstanceTitleExplanation => 'Використовується лише для поточного екземпляра. За замовчуванням успадковується від заголовка теми.';
+  String get tocInstanceTitleExplanation =>
+      'Використовується лише для поточного екземпляра. За замовчуванням успадковується від заголовка теми.';
 
   @override
-  String get tocOnlyTitleExplanation => 'Використовується лише у змісті. За замовчуванням успадковується від заголовка теми або заголовка екземпляра, якщо його задано. Пояснення заголовків наведено';
+  String get tocOnlyTitleExplanation =>
+      'Використовується лише у змісті. За замовчуванням успадковується від заголовка теми або заголовка екземпляра, якщо його задано. Пояснення заголовків наведено';
 
   @override
   String get tocTitleDocumentationLink => 'тут';
@@ -416,7 +465,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pdfIncludeTitlePage => 'Додати титульну сторінку';
 
   @override
-  String get pdfTitlePageNote => 'На цій сторінці немає колонтитулів і видимого номера сторінки.';
+  String get pdfTitlePageNote =>
+      'На цій сторінці немає колонтитулів і видимого номера сторінки.';
 
   @override
   String get pdfTitlePageTitle => 'Заголовок';
@@ -437,16 +487,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pdfTitlePageDate => 'Дата';
 
   @override
-  String get pdfTitlePageTitleRequired => 'Введіть заголовок титульної сторінки.';
+  String get pdfTitlePageTitleRequired =>
+      'Введіть заголовок титульної сторінки.';
 
   @override
-  String get pdfTocSectionNote => 'Починається з окремої сторінки й може займати кілька сторінок.';
+  String get pdfTocSectionNote =>
+      'Починається з окремої сторінки й може займати кілька сторінок.';
 
   @override
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'Редактор файлів Markdown і проєктів документації, сумісних із Writerside.';
+  String get appSubtitle =>
+      'Редактор файлів Markdown і проєктів документації, сумісних із Writerside.';
 
   @override
   String get aboutBusyMark => 'Про BusyMark';
@@ -482,7 +535,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get feedbackCategoryFeature => 'Запит на функцію';
 
   @override
-  String get feedbackCategoryPrivacySecurity => 'Проблема конфіденційності або безпеки';
+  String get feedbackCategoryPrivacySecurity =>
+      'Проблема конфіденційності або безпеки';
 
   @override
   String get feedbackCategoryUsability => 'Проблема зручності використання';
@@ -503,7 +557,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get feedbackIncludeTechnicalDetails => 'Додати технічні відомості';
 
   @override
-  String get feedbackTechnicalDetailsDisclosure => 'Якщо цей параметр увімкнено, додаються лише версія операційної системи Linux і мова та регіон програми BusyMark. Журнали, файли, дані облікового запису й інші діагностичні відомості не додаються.';
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Якщо цей параметр увімкнено, додаються лише версія операційної системи Linux і мова та регіон програми BusyMark. Журнали, файли, дані облікового запису й інші діагностичні відомості не додаються.';
 
   @override
   String get feedbackSubmit => 'Надіслати';
@@ -518,25 +573,32 @@ class AppLocalizationsUk extends AppLocalizations {
   String get feedbackSubjectLength => 'Тема має містити від 3 до 120 символів.';
 
   @override
-  String get feedbackMessageLength => 'Повідомлення має містити від 10 до 5000 символів.';
+  String get feedbackMessageLength =>
+      'Повідомлення має містити від 10 до 5000 символів.';
 
   @override
-  String get feedbackReplyEmailInvalid => 'Введіть дійсну адресу електронної пошти або залиште поле порожнім.';
+  String get feedbackReplyEmailInvalid =>
+      'Введіть дійсну адресу електронної пошти або залиште поле порожнім.';
 
   @override
-  String get feedbackConnectionFailure => 'BusyMark не вдалося підключитися. Перевірте інтернет-з’єднання та повторіть спробу.';
+  String get feedbackConnectionFailure =>
+      'BusyMark не вдалося підключитися. Перевірте інтернет-з’єднання та повторіть спробу.';
 
   @override
-  String get feedbackTimeoutFailure => 'Час очікування запиту минув. Повторіть спробу.';
+  String get feedbackTimeoutFailure =>
+      'Час очікування запиту минув. Повторіть спробу.';
 
   @override
-  String get feedbackRateLimitedFailure => 'Із цього з’єднання надіслано забагато звітів. Зачекайте та повторіть спробу.';
+  String get feedbackRateLimitedFailure =>
+      'Із цього з’єднання надіслано забагато звітів. Зачекайте та повторіть спробу.';
 
   @override
-  String get feedbackRejectedFailure => 'Сервер відхилив повідомлення. Перевірте поля форми та повторіть спробу.';
+  String get feedbackRejectedFailure =>
+      'Сервер відхилив повідомлення. Перевірте поля форми та повторіть спробу.';
 
   @override
-  String get feedbackServerFailure => 'Сервер не зміг прийняти звіт. Повторіть спробу пізніше.';
+  String get feedbackServerFailure =>
+      'Сервер не зміг прийняти звіт. Повторіть спробу пізніше.';
 
   @override
   String feedbackSuccess(String id) {
@@ -580,7 +642,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copyPlainText => 'Копіювати як звичайний текст';
 
   @override
-  String get clipboardCopyFailed => 'Не вдалося скопіювати виділений фрагмент до буфера обміну.';
+  String get clipboardCopyFailed =>
+      'Не вдалося скопіювати виділений фрагмент до буфера обміну.';
 
   @override
   String get copyName => 'Копіювати назву';
@@ -648,7 +711,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get keyboardShortcuts => 'Комбінації клавіш';
 
   @override
-  String get commandUnavailableInContext => 'Ця команда недоступна в поточному контексті.';
+  String get commandUnavailableInContext =>
+      'Ця команда недоступна в поточному контексті.';
 
   @override
   String get lightTheme => 'Світла';
@@ -828,16 +892,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get markdownFileExtensions => '.md або .markdown';
 
   @override
-  String get openFolderOrWritersideProject => 'Відкрити папку або проєкт Writerside';
+  String get openFolderOrWritersideProject =>
+      'Відкрити папку або проєкт Writerside';
 
   @override
-  String get markdownFolderOrWritersideProject => 'Папка Markdown або проєкт, сумісний із Writerside';
+  String get markdownFolderOrWritersideProject =>
+      'Папка Markdown або проєкт, сумісний із Writerside';
 
   @override
   String get noOpenFile => 'Немає відкритого файлу';
 
   @override
-  String get shortcutDeleteTreeItemDescription => 'Видалити вибраний елемент у розділі «Файли» або вилучити вибрану тему зі змісту';
+  String get shortcutDeleteTreeItemDescription =>
+      'Видалити вибраний елемент у розділі «Файли» або вилучити вибрану тему зі змісту';
 
   @override
   String get shortcutGroupGeneral => 'Загальні';
@@ -846,22 +913,27 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutNewDocument => 'Створити';
 
   @override
-  String get shortcutNewDocumentDescription => 'Створити файл Markdown або проєкт Writerside';
+  String get shortcutNewDocumentDescription =>
+      'Створити файл Markdown або проєкт Writerside';
 
   @override
-  String get shortcutOpenDescription => 'Відкрити файл Markdown, папку або проєкт Writerside';
+  String get shortcutOpenDescription =>
+      'Відкрити файл Markdown, папку або проєкт Writerside';
 
   @override
   String get shortcutSaveDescription => 'Зберегти поточний документ';
 
   @override
-  String get shortcutSearchDescription => 'Шукати в поточному робочому просторі';
+  String get shortcutSearchDescription =>
+      'Шукати в поточному робочому просторі';
 
   @override
-  String get shortcutKeyboardShortcutsDescription => 'Налаштувати сполучення клавіш застосунку';
+  String get shortcutKeyboardShortcutsDescription =>
+      'Налаштувати сполучення клавіш застосунку';
 
   @override
-  String get shortcutSyntaxReferenceDescription => 'Відкрити довідник із синтаксису';
+  String get shortcutSyntaxReferenceDescription =>
+      'Відкрити довідник із синтаксису';
 
   @override
   String get shortcutSettingsDescription => 'Відкрити налаштування BusyMark';
@@ -870,13 +942,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutNextTab => 'Наступна вкладка';
 
   @override
-  String get shortcutNextTabDescription => 'Перейти до наступної відкритої вкладки';
+  String get shortcutNextTabDescription =>
+      'Перейти до наступної відкритої вкладки';
 
   @override
   String get shortcutPreviousTab => 'Попередня вкладка';
 
   @override
-  String get shortcutPreviousTabDescription => 'Перейти до попередньої відкритої вкладки';
+  String get shortcutPreviousTabDescription =>
+      'Перейти до попередньої відкритої вкладки';
 
   @override
   String get shortcutCloseTab => 'Закрити вкладку';
@@ -894,7 +968,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutGroupTextEditing => 'Редагування тексту';
 
   @override
-  String get shortcutSelectAllDescription => 'У режимі вихідного тексту виділити весь текст; у режимі редактора натиснути двічі, щоб виділити всі блоки';
+  String get shortcutSelectAllDescription =>
+      'У режимі вихідного тексту виділити весь текст; у режимі редактора натиснути двічі, щоб виділити всі блоки';
 
   @override
   String get shortcutCutDescription => 'Вирізати виділений текст';
@@ -906,7 +981,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutPasteDescription => 'Вставити з буфера обміну';
 
   @override
-  String get shortcutPastePlainTextDescription => 'Вставити текст із буфера обміну без форматування';
+  String get shortcutPastePlainTextDescription =>
+      'Вставити текст із буфера обміну без форматування';
 
   @override
   String get shortcutUndoDescription => 'Скасувати останню зміну';
@@ -918,40 +994,48 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutInsertIndentation => 'Вставити відступ';
 
   @override
-  String get shortcutInsertIndentationDescription => 'Вставити відступ у позицію курсора';
+  String get shortcutInsertIndentationDescription =>
+      'Вставити відступ у позицію курсора';
 
   @override
   String get shortcutOutdentSource => 'Зменшити відступ у вихідному тексті';
 
   @override
-  String get shortcutOutdentSourceDescription => 'Прибрати один рівень відступу в режимі вихідного тексту';
+  String get shortcutOutdentSourceDescription =>
+      'Прибрати один рівень відступу в режимі вихідного тексту';
 
   @override
   String get shortcutEscape => 'Закрити пошук або зняти виділення блоків';
 
   @override
-  String get shortcutEscapeDescription => 'Закрити пошук у робочому просторі або зняти виділення блоків у режимі редактора';
+  String get shortcutEscapeDescription =>
+      'Закрити пошук у робочому просторі або зняти виділення блоків у режимі редактора';
 
   @override
   String get shortcutGroupFormatting => 'Форматування';
 
   @override
-  String get shortcutBoldDescription => 'Увімкнути або вимкнути жирний шрифт для виділеного тексту';
+  String get shortcutBoldDescription =>
+      'Увімкнути або вимкнути жирний шрифт для виділеного тексту';
 
   @override
-  String get shortcutItalicDescription => 'Увімкнути або вимкнути курсив для виділеного тексту';
+  String get shortcutItalicDescription =>
+      'Увімкнути або вимкнути курсив для виділеного тексту';
 
   @override
-  String get shortcutUnderlineDescription => 'Увімкнути або вимкнути підкреслення для виділеного тексту';
+  String get shortcutUnderlineDescription =>
+      'Увімкнути або вимкнути підкреслення для виділеного тексту';
 
   @override
   String get shortcutLinkDescription => 'Вставити або відредагувати посилання';
 
   @override
-  String get shortcutInlineCodeDescription => 'Увімкнути або вимкнути вбудований код для виділеного тексту';
+  String get shortcutInlineCodeDescription =>
+      'Увімкнути або вимкнути вбудований код для виділеного тексту';
 
   @override
-  String get shortcutStrikethroughDescription => 'Увімкнути або вимкнути закреслення для виділеного тексту';
+  String get shortcutStrikethroughDescription =>
+      'Увімкнути або вимкнути закреслення для виділеного тексту';
 
   @override
   String get shortcutGroupBlocks => 'Блоки';
@@ -960,22 +1044,28 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutParagraphDescription => 'Зробити поточний блок абзацом';
 
   @override
-  String get shortcutHeading1Description => 'Зробити поточний блок заголовком 1';
+  String get shortcutHeading1Description =>
+      'Зробити поточний блок заголовком 1';
 
   @override
-  String get shortcutHeading2Description => 'Зробити поточний блок заголовком 2';
+  String get shortcutHeading2Description =>
+      'Зробити поточний блок заголовком 2';
 
   @override
-  String get shortcutHeading3Description => 'Зробити поточний блок заголовком 3';
+  String get shortcutHeading3Description =>
+      'Зробити поточний блок заголовком 3';
 
   @override
-  String get shortcutHeading4Description => 'Зробити поточний блок заголовком 4';
+  String get shortcutHeading4Description =>
+      'Зробити поточний блок заголовком 4';
 
   @override
-  String get shortcutHeading5Description => 'Зробити поточний блок заголовком 5';
+  String get shortcutHeading5Description =>
+      'Зробити поточний блок заголовком 5';
 
   @override
-  String get shortcutHeading6Description => 'Зробити поточний блок заголовком 6';
+  String get shortcutHeading6Description =>
+      'Зробити поточний блок заголовком 6';
 
   @override
   String get shortcutGroupLists => 'Списки';
@@ -984,19 +1074,22 @@ class AppLocalizationsUk extends AppLocalizations {
   String get numberedList => 'Нумерований список';
 
   @override
-  String get shortcutNumberedListDescription => 'Увімкнути або вимкнути форматування нумерованого списку';
+  String get shortcutNumberedListDescription =>
+      'Увімкнути або вимкнути форматування нумерованого списку';
 
   @override
   String get bulletedList => 'Маркований список';
 
   @override
-  String get shortcutBulletedListDescription => 'Увімкнути або вимкнути форматування маркованого списку';
+  String get shortcutBulletedListDescription =>
+      'Увімкнути або вимкнути форматування маркованого списку';
 
   @override
   String get checklist => 'Контрольний список';
 
   @override
-  String get shortcutChecklistDescription => 'Увімкнути або вимкнути форматування контрольного списку';
+  String get shortcutChecklistDescription =>
+      'Увімкнути або вимкнути форматування контрольного списку';
 
   @override
   String get shortcutGroupSidebar => 'Бічна панель';
@@ -1008,13 +1101,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get createMarkdownFile => 'Створити файл Markdown';
 
   @override
-  String get createMarkdownFileDescription => 'Створити незбережений локальний документ Markdown';
+  String get createMarkdownFileDescription =>
+      'Створити незбережений локальний документ Markdown';
 
   @override
   String get createWritersideProject => 'Створити проєкт Writerside';
 
   @override
-  String get createWritersideProjectDescription => 'Створити локальний проєкт, сумісний із Writerside';
+  String get createWritersideProjectDescription =>
+      'Створити локальний проєкт, сумісний із Writerside';
 
   @override
   String get defaultProjectName => 'Документація';
@@ -1050,16 +1145,20 @@ class AppLocalizationsUk extends AppLocalizations {
   String get directoryNameRequired => 'Потрібно вказати назву каталогу.';
 
   @override
-  String get useSingleSafeDirectoryName => 'Використовуйте одну допустиму назву каталогу.';
+  String get useSingleSafeDirectoryName =>
+      'Використовуйте одну допустиму назву каталогу.';
 
   @override
-  String get useLowercaseIdentifier => 'Використовуйте ідентифікатор у нижньому регістрі з літерами, цифрами, знаками підкреслення або дефісами.';
+  String get useLowercaseIdentifier =>
+      'Використовуйте ідентифікатор у нижньому регістрі з літерами, цифрами, знаками підкреслення або дефісами.';
 
   @override
-  String get startTopicTitleRequired => 'Потрібно вказати назву початкової теми.';
+  String get startTopicTitleRequired =>
+      'Потрібно вказати назву початкової теми.';
 
   @override
-  String get createWritersideProjectFailed => 'Не вдалося створити проєкт Writerside.';
+  String get createWritersideProjectFailed =>
+      'Не вдалося створити проєкт Writerside.';
 
   @override
   String get settingsTitle => 'Налаштування BusyMark';
@@ -1068,13 +1167,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get autoSave => 'Автозбереження';
 
   @override
-  String get autoSaveDescription => 'Автоматично зберігати зміни у файлах після короткої паузи в редагуванні.';
+  String get autoSaveDescription =>
+      'Автоматично зберігати зміни у файлах після короткої паузи в редагуванні.';
 
   @override
   String get wordWrap => 'Перенесення рядків';
 
   @override
-  String get wordWrapDescription => 'Переносити довгі рядки за шириною редактора замість горизонтального прокручування.';
+  String get wordWrapDescription =>
+      'Переносити довгі рядки за шириною редактора замість горизонтального прокручування.';
 
   @override
   String get editorFontSize => 'Розмір шрифту редактора';
@@ -1089,13 +1190,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get editingButtonsPosition => 'Розташування кнопок редагування';
 
   @override
-  String get editingButtonsPositionDescription => 'Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.';
+  String get editingButtonsPositionDescription =>
+      'Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.';
 
   @override
   String get editingButtonsDirection => 'Орієнтація кнопок редагування';
 
   @override
-  String get editingButtonsDirectionDescription => 'Виберіть, як розташувати плаваючі кнопки редагування WYSIWYG: горизонтально чи вертикально.';
+  String get editingButtonsDirectionDescription =>
+      'Виберіть, як розташувати плаваючі кнопки редагування WYSIWYG: горизонтально чи вертикально.';
 
   @override
   String get horizontal => 'Горизонтально';
@@ -1110,19 +1213,24 @@ class AppLocalizationsUk extends AppLocalizations {
   String get allowRemoteImages => 'Завантажувати віддалені зображення';
 
   @override
-  String get allowRemoteImagesDescription => 'Дозволяти завантаження зображень у попередньому перегляді Markdown і редакторі з URL-адрес http та https.';
+  String get allowRemoteImagesDescription =>
+      'Дозволяти завантаження зображень у попередньому перегляді Markdown і редакторі з URL-адрес http та https.';
 
   @override
-  String get clearRemoteImagePermissions => 'Очистити дозволи для віддалених зображень';
+  String get clearRemoteImagePermissions =>
+      'Очистити дозволи для віддалених зображень';
 
   @override
-  String get clearRemoteImagePermissionsDescription => 'Забути робочі області, яким було дозволено завантажувати віддалені зображення.';
+  String get clearRemoteImagePermissionsDescription =>
+      'Забути робочі області, яким було дозволено завантажувати віддалені зображення.';
 
   @override
-  String get clearGitWorkspaceTrust => 'Очистити список довірених робочих областей Git';
+  String get clearGitWorkspaceTrust =>
+      'Очистити список довірених робочих областей Git';
 
   @override
-  String get clearGitWorkspaceTrustDescription => 'Запитувати перед увімкненням функцій Git для раніше довірених робочих областей.';
+  String get clearGitWorkspaceTrustDescription =>
+      'Запитувати перед увімкненням функцій Git для раніше довірених робочих областей.';
 
   @override
   String get settingsEditingButtonsSectionTitle => 'Кнопки редагування';
@@ -1131,7 +1239,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get spellingDictionaries => 'Орфографічні словники';
 
   @override
-  String get spellingDictionariesDescription => 'Установлення й керування орфографічними словниками';
+  String get spellingDictionariesDescription =>
+      'Установлення й керування орфографічними словниками';
 
   @override
   String get settingsDictionariesSectionTitle => 'Словники';
@@ -1149,32 +1258,41 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Вікно';
 
   @override
-  String get settingsReopenWorkspaceOnStartupTitle => 'Відкривати попередній робочий простір під час запуску';
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Відкривати попередній робочий простір під час запуску';
 
   @override
-  String get settingsReopenWorkspaceOnStartupDescription => 'Відкривати робочий простір і вкладки попереднього сеансу під час запуску BusyMark.';
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Відкривати робочий простір і вкладки попереднього сеансу під час запуску BusyMark.';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesTitle => 'Підтверджувати закриття за наявності незбережених змін';
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Підтверджувати закриття за наявності незбережених змін';
 
   @override
-  String get settingsConfirmCloseWithUnsavedChangesDescription => 'Запитувати перед закриттям BusyMark, якщо документи мають незбережені зміни.';
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Запитувати перед закриттям BusyMark, якщо документи мають незбережені зміни.';
 
   @override
   String get closeUnsavedChangesTitle => 'Незбережені зміни';
 
   @override
-  String get closeUnsavedChangesSingleMessage => 'Цей документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?';
+  String get closeUnsavedChangesSingleMessage =>
+      'Цей документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count документа має незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
-      many: '$count документів мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
-      few: '$count документи мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
-      one: '$count документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      other:
+          '$count документа має незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      many:
+          '$count документів мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      few:
+          '$count документи мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      one:
+          '$count документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
       zero: 'Зберегти зміни перед закриттям BusyMark?',
     );
     return '$_temp0';
@@ -1205,10 +1323,14 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count документа має незбережені зміни. Зберегти кожен перед продовженням?',
-      many: '$count документів мають незбережені зміни. Зберегти кожен перед продовженням?',
-      few: '$count документи мають незбережені зміни. Зберегти кожен перед продовженням?',
-      one: '$count документ має незбережені зміни. Зберегти кожен перед продовженням?',
+      other:
+          '$count документа має незбережені зміни. Зберегти кожен перед продовженням?',
+      many:
+          '$count документів мають незбережені зміни. Зберегти кожен перед продовженням?',
+      few:
+          '$count документи мають незбережені зміни. Зберегти кожен перед продовженням?',
+      one:
+          '$count документ має незбережені зміни. Зберегти кожен перед продовженням?',
     );
     return '$_temp0';
   }
@@ -1217,7 +1339,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fileChangedOnDisk => 'Файл змінено на диску';
 
   @override
-  String get fileChangedOnDiskMessage => 'Цей файл змінився на диску з моменту відкриття. Перезаписати?';
+  String get fileChangedOnDiskMessage =>
+      'Цей файл змінився на диску з моменту відкриття. Перезаписати?';
 
   @override
   String get untitledMarkdownFileName => 'Без назви.md';
@@ -1268,7 +1391,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get videoPreview => 'Попередній перегляд відео';
 
   @override
-  String get diagnosticWritersideVideoMissingSource => 'У відео відсутній атрибут src.';
+  String get diagnosticWritersideVideoMissingSource =>
+      'У відео відсутній атрибут src.';
 
   @override
   String diagnosticWritersideVideoUnsupportedSource(String source) {
@@ -1298,7 +1422,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get htmlContentDefault => 'Вміст HTML';
 
   @override
-  String get shortcutHtmlBlockDescription => 'Вставити або редагувати блок HTML';
+  String get shortcutHtmlBlockDescription =>
+      'Вставити або редагувати блок HTML';
 
   @override
   String get renderedHtml => 'Відтворений HTML';
@@ -1459,19 +1584,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String get remoteImageBlocked => 'Віддалене зображення заблоковано';
 
   @override
-  String get remoteImageBlockedTooltip => 'Виберіть, чи може BusyMark завантажувати віддалені зображення.';
+  String get remoteImageBlockedTooltip =>
+      'Виберіть, чи може BusyMark завантажувати віддалені зображення.';
 
   @override
   String get remoteImagesBlockedTitle => 'Віддалені зображення заблоковано';
 
   @override
-  String get remoteImagesBlockedMessage => 'Цей документ посилається на зображення з інтернету. Їх завантаження може розкрити відомості про вашу мережу серверам, на яких розміщено зображення.';
+  String get remoteImagesBlockedMessage =>
+      'Цей документ посилається на зображення з інтернету. Їх завантаження може розкрити відомості про вашу мережу серверам, на яких розміщено зображення.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Завантажити для цієї робочої області';
+  String get loadRemoteImagesForWorkspace =>
+      'Завантажити для цієї робочої області';
 
   @override
-  String get alwaysLoadRemoteImages => 'Завжди завантажувати віддалені зображення';
+  String get alwaysLoadRemoteImages =>
+      'Завжди завантажувати віддалені зображення';
 
   @override
   String get hideSidebar => 'Приховати бічну панель';
@@ -1642,7 +1771,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get topicIsHomePageRemovalWarning => 'Ця тема є домашньою сторінкою цього екземпляра. Виберіть іншу домашню сторінку, перш ніж видалити її зі змісту.';
+  String get topicIsHomePageRemovalWarning =>
+      'Ця тема є домашньою сторінкою цього екземпляра. Виберіть іншу домашню сторінку, перш ніж видалити її зі змісту.';
 
   @override
   String get newHomePage => 'Нова домашня сторінка';
@@ -1651,10 +1781,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get chooseHomePage => 'Вибрати домашню сторінку';
 
   @override
-  String get noHomePageReplacement => 'Додайте або прив’яжіть іншу придатну тему до цього екземпляра перед видаленням його домашньої сторінки.';
+  String get noHomePageReplacement =>
+      'Додайте або прив’яжіть іншу придатну тему до цього екземпляра перед видаленням його домашньої сторінки.';
 
   @override
-  String get topicIsStartPageRemovalWarning => 'Ця тема є домашньою сторінкою екземпляра. Призначте іншу домашню сторінку перед видаленням її вихідного файлу.';
+  String get topicIsStartPageRemovalWarning =>
+      'Ця тема є домашньою сторінкою екземпляра. Призначте іншу домашню сторінку перед видаленням її вихідного файлу.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1662,10 +1794,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get noBreakingTopicUsages => 'Посилань, які перестали б працювати, не знайдено.';
+  String get noBreakingTopicUsages =>
+      'Посилань, які перестали б працювати, не знайдено.';
 
   @override
-  String get topicUsagesFound => 'BusyMark знайшов наведені нижче посилання на цю тему.';
+  String get topicUsagesFound =>
+      'BusyMark знайшов наведені нижче посилання на цю тему.';
 
   @override
   String get topicUsageTocElements => 'Елементи змісту';
@@ -1699,22 +1833,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get updateUsagesAutomatically => 'Оновити використання автоматично';
 
   @override
-  String get updateUsagesAutomaticallyDescription => 'Вилучити посилання зі змісту й включення та зберегти текст посилань.';
+  String get updateUsagesAutomaticallyDescription =>
+      'Вилучити посилання зі змісту й включення та зберегти текст посилань.';
 
   @override
-  String get manualUsageUpdatesRequired => 'Деякі використання потрібно змінити вручну перед цим рефакторингом.';
+  String get manualUsageUpdatesRequired =>
+      'Деякі використання потрібно змінити вручну перед цим рефакторингом.';
 
   @override
   String get setRedirectTo => 'Переспрямувати на:';
 
   @override
-  String get noRedirectDescription => 'Не переспрямовувати стару опубліковану сторінку.';
+  String get noRedirectDescription =>
+      'Не переспрямовувати стару опубліковану сторінку.';
 
   @override
   String get redirectTarget => 'Ціль переспрямування';
 
   @override
-  String get remainingUsagesBlockRemoval => 'Перегляньте й оновіть решту використань, перш ніж продовжити, або ввімкніть автоматичне оновлення, якщо воно доступне.';
+  String get remainingUsagesBlockRemoval =>
+      'Перегляньте й оновіть решту використань, перш ніж продовжити, або ввімкніть автоматичне оновлення, якщо воно доступне.';
 
   @override
   String usagesOfTopic(String topic) {
@@ -1800,7 +1938,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get useSingleSafeFileName => 'Використовуйте одну допустиму назву файлу.';
+  String get useSingleSafeFileName =>
+      'Використовуйте одну допустиму назву файлу.';
 
   @override
   String useExpectedExtension(String extension) {
@@ -1808,13 +1947,15 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get useIdentifierCharacters => 'Використовуйте літери, цифри, знаки підкреслення або дефіси перед розширенням.';
+  String get useIdentifierCharacters =>
+      'Використовуйте літери, цифри, знаки підкреслення або дефіси перед розширенням.';
 
   @override
   String get topicIdAlreadyExists => 'Ідентифікатор теми вже існує.';
 
   @override
-  String get createWritersideTopicFailed => 'Не вдалося створити тему Writerside.';
+  String get createWritersideTopicFailed =>
+      'Не вдалося створити тему Writerside.';
 
   @override
   String get noOutline => 'Немає структури';
@@ -1901,7 +2042,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get normalizeLineEndings => 'Нормалізувати закінчення рядків';
 
   @override
-  String get mixedLineEndingsSavePrompt => 'У документі використовуються змішані закінчення рядків. Виберіть формат.';
+  String get mixedLineEndingsSavePrompt =>
+      'У документі використовуються змішані закінчення рядків. Виберіть формат.';
 
   @override
   String workspaceReplaceMixedLineEndings(String fileName) {
@@ -1912,28 +2054,36 @@ class AppLocalizationsUk extends AppLocalizations {
   String get workspaceReplaceIssueOversized => 'Завеликий файл пропущено.';
 
   @override
-  String get workspaceReplaceIssueUnreadable => 'Файл, який не вдалося прочитати, пропущено.';
+  String get workspaceReplaceIssueUnreadable =>
+      'Файл, який не вдалося прочитати, пропущено.';
 
   @override
-  String get workspaceReplaceIssueInvalidUtf8 => 'Файл із неприпустимим UTF-8 пропущено.';
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Файл із неприпустимим UTF-8 пропущено.';
 
   @override
-  String get workspaceReplaceIssueTruncated => 'Попередній перегляд замін було скорочено.';
+  String get workspaceReplaceIssueTruncated =>
+      'Попередній перегляд замін було скорочено.';
 
   @override
-  String get workspaceReplaceIssueFileChanged => 'Файл, змінений після попереднього перегляду, пропущено.';
+  String get workspaceReplaceIssueFileChanged =>
+      'Файл, змінений після попереднього перегляду, пропущено.';
 
   @override
-  String get workspaceReplaceIssueBufferChanged => 'Буфер редактора, змінений після попереднього перегляду, пропущено.';
+  String get workspaceReplaceIssueBufferChanged =>
+      'Буфер редактора, змінений після попереднього перегляду, пропущено.';
 
   @override
-  String get workspaceReplaceIssueNormalizationRequired => 'Перед заміною виберіть нормалізацію LF або CRLF.';
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Перед заміною виберіть нормалізацію LF або CRLF.';
 
   @override
-  String get workspaceReplaceIssuePartialConflict => 'Відкат зупинено, оскільки файл було одночасно змінено. Деякі заміни могли залишитися; витіснений вміст збережено за шляхом нижче.';
+  String get workspaceReplaceIssuePartialConflict =>
+      'Відкат зупинено, оскільки файл було одночасно змінено. Деякі заміни могли залишитися; витіснений вміст збережено за шляхом нижче.';
 
   @override
-  String get workspaceReplaceIssueApplyFailed => 'Заміни не застосовано, оскільки перевірений набір не вдалося безпечно зберегти.';
+  String get workspaceReplaceIssueApplyFailed =>
+      'Заміни не застосовано, оскільки перевірений набір не вдалося безпечно зберегти.';
 
   @override
   String externalChangesTitle(String fileName) {
@@ -1944,7 +2094,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get externalFileDeleted => 'Цей файл було видалено з диска.';
 
   @override
-  String get externalFileChanged => 'Цей файл змінився на диску, поки у вас були незбережені зміни.';
+  String get externalFileChanged =>
+      'Цей файл змінився на диску, поки у вас були незбережені зміни.';
 
   @override
   String recoveredDocumentReview(String fileName) {
@@ -1964,16 +2115,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get saveAs => 'Зберегти як';
 
   @override
-  String get workspaceSearchIncomplete => 'Показано лише частину результатів. Покажіть більше або звузьте пошук.';
+  String get workspaceSearchIncomplete =>
+      'Показано лише частину результатів. Покажіть більше або звузьте пошук.';
 
   @override
   String get workspaceSearchShowMore => 'Показати більше результатів';
 
   @override
-  String get workspaceSearchSkippedFiles => 'Пошук неповний. Ці файли перевищують 1 MiB або їх не вдалося прочитати:';
+  String get workspaceSearchSkippedFiles =>
+      'Пошук неповний. Ці файли перевищують 1 MiB або їх не вдалося прочитати:';
 
   @override
-  String get sourceLargeFileFeaturesPaused => 'Великий файл: підсвічування та згортання призупинено';
+  String get sourceLargeFileFeaturesPaused =>
+      'Великий файл: підсвічування та згортання призупинено';
 
   @override
   String get nothingToRead => 'Немає вмісту для читання';
@@ -2022,7 +2176,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get cannotOpenFileTypeInEditor => 'Файл цього типу неможливо відкрити в редакторі';
+  String get cannotOpenFileTypeInEditor =>
+      'Файл цього типу неможливо відкрити в редакторі';
 
   @override
   String anchorNotFound(String anchor) {
@@ -2093,10 +2248,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrorChooseWhereToSaveMarkdown => 'Виберіть, де зберегти цей файл Markdown.';
+  String get workspaceErrorChooseWhereToSaveMarkdown =>
+      'Виберіть, де зберегти цей файл Markdown.';
 
   @override
-  String get workspaceErrorSaveBlockedFileChangedOnDisk => 'Збереження заблоковано: файл змінено на диску.';
+  String get workspaceErrorSaveBlockedFileChangedOnDisk =>
+      'Збереження заблоковано: файл змінено на диску.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -2118,10 +2275,14 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Відновлено $count незбереженого документа. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
-      many: 'Відновлено $count незбережених документів. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
-      few: 'Відновлено $count незбережені документи. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
-      one: 'Відновлено $count незбережений документ. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
+      other:
+          'Відновлено $count незбереженого документа. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
+      many:
+          'Відновлено $count незбережених документів. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
+      few:
+          'Відновлено $count незбережені документи. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
+      one:
+          'Відновлено $count незбережений документ. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
     );
     return '$_temp0';
   }
@@ -2131,10 +2292,14 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Не вдалося відновити $count пошкодженого запису відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
-      many: 'Не вдалося відновити $count пошкоджених записів відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
-      few: 'Не вдалося відновити $count пошкоджені записи відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
-      one: 'Не вдалося відновити $count пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
+      other:
+          'Не вдалося відновити $count пошкодженого запису відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
+      many:
+          'Не вдалося відновити $count пошкоджених записів відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
+      few:
+          'Не вдалося відновити $count пошкоджені записи відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
+      one:
+          'Не вдалося відновити $count пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
     );
     return '$_temp0';
   }
@@ -2160,7 +2325,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorParentDirectoryRequired => 'Потрібно вказати батьківський каталог.';
+  String get errorParentDirectoryRequired =>
+      'Потрібно вказати батьківський каталог.';
 
   @override
   String errorParentDirectoryMissing(String path) {
@@ -2181,16 +2347,20 @@ class AppLocalizationsUk extends AppLocalizations {
   String get errorFileNameRequired => 'Потрібна назва файлу.';
 
   @override
-  String get errorFileNameUnsafe => 'Назва файлу має бути одним безпечним сегментом шляху.';
+  String get errorFileNameUnsafe =>
+      'Назва файлу має бути одним безпечним сегментом шляху.';
 
   @override
-  String get errorFileOperationInvalidTarget => 'Не можна перемістити папку всередину самої себе.';
+  String get errorFileOperationInvalidTarget =>
+      'Не можна перемістити папку всередину самої себе.';
 
   @override
-  String get errorFileOperationOutsideRoot => 'Файлова операція має виконуватися в межах робочої області.';
+  String get errorFileOperationOutsideRoot =>
+      'Файлова операція має виконуватися в межах робочої області.';
 
   @override
-  String get errorFileOperationRoot => 'Корінь робочої області не можна змінити з дерева файлів.';
+  String get errorFileOperationRoot =>
+      'Корінь робочої області не можна змінити з дерева файлів.';
 
   @override
   String get errorProjectNameRequired => 'Потрібно вказати назву проєкту.';
@@ -2199,13 +2369,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get errorDirectoryNameRequired => 'Потрібно вказати назву каталогу.';
 
   @override
-  String get errorDirectoryNameUnsafe => 'Назва каталогу має бути одним допустимим сегментом шляху.';
+  String get errorDirectoryNameUnsafe =>
+      'Назва каталогу має бути одним допустимим сегментом шляху.';
 
   @override
-  String get errorInstanceIdInvalid => 'Ідентифікатор екземпляра має починатися з малої літери та містити лише малі літери, цифри, знаки підкреслення та дефіси.';
+  String get errorInstanceIdInvalid =>
+      'Ідентифікатор екземпляра має починатися з малої літери та містити лише малі літери, цифри, знаки підкреслення та дефіси.';
 
   @override
-  String get errorTopicFileInvalid => 'Назва файлу теми має бути назвою файлу Markdown без роздільників шляху.';
+  String get errorTopicFileInvalid =>
+      'Назва файлу теми має бути назвою файлу Markdown без роздільників шляху.';
 
   @override
   String get errorTopicTitleRequired => 'Необхідно вказати назву теми.';
@@ -2216,10 +2389,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideModuleNotOpen => 'Щоб створити тему, модуль Writerside має бути відкритим.';
+  String get errorWritersideModuleNotOpen =>
+      'Щоб створити тему, модуль Writerside має бути відкритим.';
 
   @override
-  String get errorWritersideInstanceTreeMissing => 'У модулі Writerside немає дерева екземпляра.';
+  String get errorWritersideInstanceTreeMissing =>
+      'У модулі Writerside немає дерева екземпляра.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2242,10 +2417,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideTocNodeMissing => 'Вибраного запису змісту більше не існує.';
+  String get errorWritersideTocNodeMissing =>
+      'Вибраного запису змісту більше не існує.';
 
   @override
-  String get errorWritersideTocInvalidMove => 'Запис змісту не можна перемістити в нього самого чи в один із його дочірніх елементів.';
+  String get errorWritersideTocInvalidMove =>
+      'Запис змісту не можна перемістити в нього самого чи в один із його дочірніх елементів.';
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
@@ -2253,16 +2430,20 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideSafeDeleteRequired => 'Використовуйте безпечне видалення для файлів тем Writerside.';
+  String get errorWritersideSafeDeleteRequired =>
+      'Використовуйте безпечне видалення для файлів тем Writerside.';
 
   @override
-  String get errorWritersideTopicUsageScanFailed => 'Не вдалося завершити пошук використань теми. Жоден файл не змінено.';
+  String get errorWritersideTopicUsageScanFailed =>
+      'Не вдалося завершити пошук використань теми. Жоден файл не змінено.';
 
   @override
-  String get errorWritersideTopicUsagesRemain => 'Деякі використання теми все ще потребують уваги. Перегляньте їх, перш ніж продовжити.';
+  String get errorWritersideTopicUsagesRemain =>
+      'Деякі використання теми все ще потребують уваги. Перегляньте їх, перш ніж продовжити.';
 
   @override
-  String get errorWritersideRedirectInvalid => 'Вибрана ціль переспрямування більше не дійсна. Виберіть її знову.';
+  String get errorWritersideRedirectInvalid =>
+      'Вибрана ціль переспрямування більше не дійсна. Виберіть її знову.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
@@ -2270,21 +2451,29 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths) {
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
     return 'Перейменування не може безпечно оновити всі посилання проєкту, оскільки в модулі $module не розібрано файлів тем: $count. Файли: $paths';
   }
 
   @override
-  String get errorWritersideTopicRenameProjectBuffersDirty => 'У файлах проєкту Writerside є незбережені зміни. Розв’яжіть їх і підготуйте новий попередній перегляд перейменування.';
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'У файлах проєкту Writerside є незбережені зміни. Розв’яжіть їх і підготуйте новий попередній перегляд перейменування.';
 
   @override
-  String get errorWritersideTopicRenameProjectInventoryChanged => 'Набір модулів проєкту Writerside змінився. Перед рефакторингом підготуйте новий попередній перегляд перейменування.';
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Набір модулів проєкту Writerside змінився. Перед рефакторингом підготуйте новий попередній перегляд перейменування.';
 
   @override
-  String get errorTopicsRootUnsafe => 'Кореневий каталог тем має бути допустимим відносним каталогом.';
+  String get errorTopicsRootUnsafe =>
+      'Кореневий каталог тем має бути допустимим відносним каталогом.';
 
   @override
-  String get errorTopicFileNameUnsafe => 'Назва файлу теми має бути одним допустимим сегментом шляху.';
+  String get errorTopicFileNameUnsafe =>
+      'Назва файлу теми має бути одним допустимим сегментом шляху.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -2292,7 +2481,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorTopicFileNameInvalid => 'Назва файлу теми має містити лише літери, цифри, знаки підкреслення та дефіси.';
+  String get errorTopicFileNameInvalid =>
+      'Назва файлу теми має містити лише літери, цифри, знаки підкреслення та дефіси.';
 
   @override
   String errorUnknown(String code) {
@@ -2305,7 +2495,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceScanSkipped => 'Виявлено велику робочу область. Деякі файли пропущено, щоб програма продовжувала швидко реагувати.';
+  String get diagnosticWorkspaceScanSkipped =>
+      'Виявлено велику робочу область. Деякі файли пропущено, щоб програма продовжувала швидко реагувати.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
@@ -2313,7 +2504,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceFileTooLarge => 'Файл перевищує обмеження бета-версії для автоматичного аналізу.';
+  String get diagnosticWorkspaceFileTooLarge =>
+      'Файл перевищує обмеження бета-версії для автоматичного аналізу.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -2321,7 +2513,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownAttributeMalformed => 'Некоректний блок атрибутів заголовка Writerside.';
+  String get diagnosticMarkdownAttributeMalformed =>
+      'Некоректний блок атрибутів заголовка Writerside.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -2329,13 +2522,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicH1ConvertedToChapter => 'Додаткові заголовки H1 верхнього рівня розглядаються як розділи.';
+  String get diagnosticWritersideTopicH1ConvertedToChapter =>
+      'Додаткові заголовки H1 верхнього рівня розглядаються як розділи.';
 
   @override
-  String get diagnosticWritersideMarkdownTopicMissingTitle => 'Markdown-тема Writerside не має заголовка H1 або заголовка у front matter.';
+  String get diagnosticWritersideMarkdownTopicMissingTitle =>
+      'Markdown-тема Writerside не має заголовка H1 або заголовка у front matter.';
 
   @override
-  String get diagnosticWritersideXmlTopicMissingTitle => 'XML-тема не має заголовка.';
+  String get diagnosticWritersideXmlTopicMissingTitle =>
+      'XML-тема не має заголовка.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -2343,7 +2539,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownFrontMatterMalformed => 'Блок front matter не закрито.';
+  String get diagnosticMarkdownFrontMatterMalformed =>
+      'Блок front matter не закрито.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Небезпечний HTML-елемент.';
@@ -2374,13 +2571,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigInvalidRoot => 'Кореневим елементом writerside.cfg має бути <ihp>.';
+  String get diagnosticWritersideConfigInvalidRoot =>
+      'Кореневим елементом writerside.cfg має бути <ihp>.';
 
   @override
-  String get diagnosticWritersideConfigMissingSnippetsSrc => 'В оголошенні snippets відсутній атрибут src.';
+  String get diagnosticWritersideConfigMissingSnippetsSrc =>
+      'В оголошенні snippets відсутній атрибут src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceGroupsSrc => 'В оголошенні instance-groups відсутній атрибут src.';
+  String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
+      'В оголошенні instance-groups відсутній атрибут src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -2388,16 +2588,20 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideConfigMissingInstanceSrc => 'В оголошенні instance відсутній атрибут src.';
+  String get diagnosticWritersideConfigMissingInstanceSrc =>
+      'В оголошенні instance відсутній атрибут src.';
 
   @override
-  String get diagnosticWritersideConfigMissingInstance => 'writerside.cfg не реєструє жодного екземпляра.';
+  String get diagnosticWritersideConfigMissingInstance =>
+      'writerside.cfg не реєструє жодного екземпляра.';
 
   @override
-  String get diagnosticWritersideTreeInvalidRoot => 'Кореневим елементом .tree має бути <instance-profile>.';
+  String get diagnosticWritersideTreeInvalidRoot =>
+      'Кореневим елементом .tree має бути <instance-profile>.';
 
   @override
-  String get diagnosticWritersideTreeMissingId => 'У профілі екземпляра відсутній id.';
+  String get diagnosticWritersideTreeMissingId =>
+      'У профілі екземпляра відсутній id.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
@@ -2405,7 +2609,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTreeMissingStartPage => 'В екземплярі, який не є бібліотекою, відсутній атрибут start-page.';
+  String get diagnosticWritersideTreeMissingStartPage =>
+      'В екземплярі, який не є бібліотекою, відсутній атрибут start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2418,7 +2623,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideVariableMalformedDeclaration => 'Оголошення змінної має містити ім’я та значення.';
+  String get diagnosticWritersideVariableMalformedDeclaration =>
+      'Оголошення змінної має містити ім’я та значення.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
@@ -2426,7 +2632,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideCategoryMissingId => 'У категорії відсутній id.';
+  String get diagnosticWritersideCategoryMissingId =>
+      'У категорії відсутній id.';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
@@ -2439,10 +2646,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicInvalidRoot => 'Кореневим елементом .topic має бути <topic>.';
+  String get diagnosticWritersideTopicInvalidRoot =>
+      'Кореневим елементом .topic має бути <topic>.';
 
   @override
-  String get diagnosticWritersideTopicMissingRootId => 'В XML-темі відсутній ідентифікатор кореневого елемента.';
+  String get diagnosticWritersideTopicMissingRootId =>
+      'В XML-темі відсутній ідентифікатор кореневого елемента.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
@@ -2455,23 +2664,31 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicAnchorMissingHref => 'В елементі <a> відсутній атрибут href.';
+  String get diagnosticWritersideTopicAnchorMissingHref =>
+      'В елементі <a> відсутній атрибут href.';
 
   @override
-  String get diagnosticWritersideConfigMissing => 'Режим Writerside потребує writerside.cfg.';
+  String get diagnosticWritersideConfigMissing =>
+      'Режим Writerside потребує writerside.cfg.';
 
   @override
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(
+    String relativePath,
+  ) {
     return 'Вказаний каталог конфігурації збірки відсутній: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
+    String relativePath,
+  ) {
     return 'Вказаний каталог специфікацій API відсутній: $relativePath';
   }
 
   @override
-  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath) {
+  String diagnosticWritersideConfigMissingSnippetsDirectory(
+    String relativePath,
+  ) {
     return 'Вказаний каталог snippets відсутній: $relativePath';
   }
 
@@ -2486,7 +2703,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath) {
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(
+    String relativePath,
+  ) {
     return 'Вказаний файл груп екземплярів відсутній: $relativePath';
   }
 
@@ -2501,7 +2720,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideDefaultTopicsDirectoryMissing(String relativePath) {
+  String diagnosticWritersideDefaultTopicsDirectoryMissing(
+    String relativePath,
+  ) {
     return 'Каталог тем за замовчуванням відсутній: $relativePath';
   }
 
@@ -2521,12 +2742,21 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic) {
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
     return 'Екземпляр \"$instanceId\" публікує неприпустиме ім’я вебфайлу \"$webFileName\" для теми \"$topic\".';
   }
 
   @override
-  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic) {
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
     return 'Екземпляр \"$instanceId\" публікує теми \"$firstTopic\" і \"$secondTopic\" під одним іменем \"$webFileName\".';
   }
 
@@ -2551,12 +2781,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideAnchorUnresolved(String anchor, String targetName) {
+  String diagnosticWritersideAnchorUnresolved(
+    String anchor,
+    String targetName,
+  ) {
     return 'Якір «$anchor» не існує в «$targetName».';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => 'В елементі <include> відсутній атрибут from.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      'В елементі <include> відсутній атрибут from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2564,7 +2798,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideIncludeElementMissing(String elementId, String from) {
+  String diagnosticWritersideIncludeElementMissing(
+    String elementId,
+    String from,
+  ) {
     return 'Елемент include «$elementId» не існує в «$from».';
   }
 
@@ -2608,26 +2845,27 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String gitUnavailableMessage(String reason) {
-    String _temp0 = intl.Intl.selectLogic(
-      reason,
-      {
-        'other': 'Установіть Git або налаштуйте BusyMark на використання доступного виконуваного файлу Git. $reason',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'other':
+          'Установіть Git або налаштуйте BusyMark на використання доступного виконуваного файлу Git. $reason',
+    });
     return '$_temp0';
   }
 
   @override
-  String get gitOperationsRequireTrust => 'Операції Git потребують довіри до робочої області.';
+  String get gitOperationsRequireTrust =>
+      'Операції Git потребують довіри до робочої області.';
 
   @override
   String get gitManageBranches => 'Керування гілками';
 
   @override
-  String get gitTrustRequiredTitle => 'Довіряти цій робочій області під час роботи з Git?';
+  String get gitTrustRequiredTitle =>
+      'Довіряти цій робочій області під час роботи з Git?';
 
   @override
-  String get gitTrustRequiredMessage => 'BusyMark може перевіряти обмежені метадані сховища без довіри. Надання довіри вмикає операції Git для цього сховища, які можуть запускати налаштовані хуки, фільтри, помічники облікових даних та засоби підписування.';
+  String get gitTrustRequiredMessage =>
+      'BusyMark може перевіряти обмежені метадані сховища без довіри. Надання довіри вмикає операції Git для цього сховища, які можуть запускати налаштовані хуки, фільтри, помічники облікових даних та засоби підписування.';
 
   @override
   String get gitTrustWorkspace => 'Довіряти робочій області';
@@ -2636,7 +2874,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitNotRepositoryTitle => 'Це не репозиторій Git';
 
   @override
-  String get gitNotRepositoryMessage => 'Ця робоча область не належить до репозиторію Git.';
+  String get gitNotRepositoryMessage =>
+      'Ця робоча область не належить до репозиторію Git.';
 
   @override
   String get gitInitializeRepository => 'Ініціалізувати репозиторій';
@@ -2739,7 +2978,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitCommitSelectedFiles => 'Вибрані файли';
 
   @override
-  String get gitCommitNoSelectedFiles => 'Перед створенням коміту додайте до індексу принаймні один файл.';
+  String get gitCommitNoSelectedFiles =>
+      'Перед створенням коміту додайте до індексу принаймні один файл.';
 
   @override
   String gitStagedFileCount(int count) {
@@ -2785,7 +3025,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitNoDiff => 'Немає різниці для показу';
 
   @override
-  String get gitBinaryFile => 'Двійковий файл. BusyMark не відображає двійкові патчі.';
+  String get gitBinaryFile =>
+      'Двійковий файл. BusyMark не відображає двійкові патчі.';
 
   @override
   String gitBinaryFileInfo(int size) {
@@ -2793,7 +3034,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUnsavedChangesBanner => 'Незбережені зміни в редакторі не буде враховано, доки ви їх не збережете.';
+  String get gitUnsavedChangesBanner =>
+      'Незбережені зміни в редакторі не буде враховано, доки ви їх не збережете.';
 
   @override
   String get gitConfirmDiscardTitle => 'Відкинути зміни Git?';
@@ -2803,10 +3045,14 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
-      many: 'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
-      few: 'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
-      one: 'Усі індексовані та неіндексовані зміни в $count вибраному файлі з відстеженням буде скасовано, а вміст буде відновлено до стану HEAD.',
+      other:
+          'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+      many:
+          'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+      few:
+          'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+      one:
+          'Усі індексовані та неіндексовані зміни в $count вибраному файлі з відстеженням буде скасовано, а вміст буде відновлено до стану HEAD.',
     );
     return '$_temp0';
   }
@@ -2829,10 +3075,14 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count вибраного файла буде відновлено або видалено залежно від його статусу Git.',
-      many: '$count вибраних файлів буде відновлено або видалено залежно від їхнього статусу Git.',
-      few: '$count вибрані файли буде відновлено або видалено залежно від їхнього статусу Git.',
-      one: '$count вибраний файл буде відновлено або видалено залежно від статусу Git.',
+      other:
+          '$count вибраного файла буде відновлено або видалено залежно від його статусу Git.',
+      many:
+          '$count вибраних файлів буде відновлено або видалено залежно від їхнього статусу Git.',
+      few:
+          '$count вибрані файли буде відновлено або видалено залежно від їхнього статусу Git.',
+      one:
+          '$count вибраний файл буде відновлено або видалено залежно від статусу Git.',
     );
     return '$_temp0';
   }
@@ -2843,7 +3093,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitConfirmSwitchBranchMessage => 'BusyMark перезавантажить робочу область із диска після перемикання гілки в Git.';
+  String get gitConfirmSwitchBranchMessage =>
+      'BusyMark перезавантажить робочу область із диска після перемикання гілки в Git.';
 
   @override
   String get gitConfirmPushSetUpstreamTitle => 'Налаштувати upstream-гілку?';
@@ -2860,7 +3111,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitFileHistory => 'Історія файлу';
 
   @override
-  String get gitFileHistoryRequiresOpenFile => 'Для історії файлу потрібен відкритий файл Markdown.';
+  String get gitFileHistoryRequiresOpenFile =>
+      'Для історії файлу потрібен відкритий файл Markdown.';
 
   @override
   String get gitLoadMore => 'Завантажити ще';
@@ -2878,7 +3130,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitConfirmRestoreTitle => 'Відновити цю версію файлу?';
 
   @override
-  String get gitConfirmRestoreMessage => 'BusyMark замінить поточний файл робочого дерева вибраною версією з коміту. Відновлений файл залишиться неіндексованим.';
+  String get gitConfirmRestoreMessage =>
+      'BusyMark замінить поточний файл робочого дерева вибраною версією з коміту. Відновлений файл залишиться неіндексованим.';
 
   @override
   String get gitCommitActions => 'Дії з комітом';
@@ -2903,25 +3156,29 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitResetModeSoft => 'Soft';
 
   @override
-  String get gitResetModeSoftDescription => 'Перемістити лише гілку. Залишити індекс і робоче дерево без змін; відмінності від вибраного коміту залишаться індексованими.';
+  String get gitResetModeSoftDescription =>
+      'Перемістити лише гілку. Залишити індекс і робоче дерево без змін; відмінності від вибраного коміту залишаться індексованими.';
 
   @override
   String get gitResetModeMixed => 'Mixed';
 
   @override
-  String get gitResetModeMixedDescription => 'Перемістити гілку й скинути індекс. Залишити робоче дерево без змін, а відмінності — неіндексованими.';
+  String get gitResetModeMixedDescription =>
+      'Перемістити гілку й скинути індекс. Залишити робоче дерево без змін, а відмінності — неіндексованими.';
 
   @override
   String get gitResetModeHard => 'Hard';
 
   @override
-  String get gitResetModeHardDescription => 'Перемістити гілку й скинути індекс і робоче дерево. Відстежувані зміни буде відкинуто; не відстежувані файли, що заважають операції, може бути видалено.';
+  String get gitResetModeHardDescription =>
+      'Перемістити гілку й скинути індекс і робоче дерево. Відстежувані зміни буде відкинуто; не відстежувані файли, що заважають операції, може бути видалено.';
 
   @override
   String get gitResetModeKeep => 'Keep';
 
   @override
-  String get gitResetModeKeepDescription => 'Перемістити гілку й скинути відстежувані файли, зберігши локальні зміни. Git перерве операцію, якщо ці зміни конфліктують зі скиданням.';
+  String get gitResetModeKeepDescription =>
+      'Перемістити гілку й скинути відстежувані файли, зберігши локальні зміни. Git перерве операцію, якщо ці зміни конфліктують зі скиданням.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -2968,7 +3225,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitErrorUnavailable => 'Git недоступний.';
 
   @override
-  String get gitErrorNotRepository => 'Ця робоча область не є репозиторієм Git.';
+  String get gitErrorNotRepository =>
+      'Ця робоча область не є репозиторієм Git.';
 
   @override
   String get gitErrorUnsafePath => 'BusyMark заблокував небезпечний шлях Git.';
@@ -2983,31 +3241,39 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitErrorNoUpstream => 'Upstream-гілку не налаштовано.';
 
   @override
-  String get gitErrorMultipleRemotes => 'Налаштовано кілька віддалених репозиторіїв. Ця версія BusyMark не дає змоги вибрати upstream-гілку; налаштуйте її поза програмою.';
+  String get gitErrorMultipleRemotes =>
+      'Налаштовано кілька віддалених репозиторіїв. Ця версія BusyMark не дає змоги вибрати upstream-гілку; налаштуйте її поза програмою.';
 
   @override
-  String get gitErrorDirtyWorkspace => 'Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.';
+  String get gitErrorDirtyWorkspace =>
+      'Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.';
 
   @override
-  String get gitErrorResetDirtyWorkspace => 'Збережіть або відкиньте зміни в редакторі BusyMark перед скиданням поточної гілки.';
+  String get gitErrorResetDirtyWorkspace =>
+      'Збережіть або відкиньте зміни в редакторі BusyMark перед скиданням поточної гілки.';
 
   @override
-  String get gitErrorRestoreStagedFile => 'Приберіть файл з індексу перед відновленням попередньої версії.';
+  String get gitErrorRestoreStagedFile =>
+      'Приберіть файл з індексу перед відновленням попередньої версії.';
 
   @override
-  String get gitErrorResetDetachedHead => 'Перейдіть на гілку перед її скиданням.';
+  String get gitErrorResetDetachedHead =>
+      'Перейдіть на гілку перед її скиданням.';
 
   @override
-  String get gitErrorDiverged => 'Гілка розійшлася з upstream-гілкою. Виконайте злиття або rebase поза цією версією BusyMark.';
+  String get gitErrorDiverged =>
+      'Гілка розійшлася з upstream-гілкою. Виконайте злиття або rebase поза цією версією BusyMark.';
 
   @override
-  String get gitErrorAuthorIdentity => 'Перед створенням коміту Git потребує ім’я та адресу електронної пошти автора.';
+  String get gitErrorAuthorIdentity =>
+      'Перед створенням коміту Git потребує ім’я та адресу електронної пошти автора.';
 
   @override
   String get gitAuthorIdentityTitle => 'Дані автора Git';
 
   @override
-  String get gitAuthorIdentityMessage => 'Введіть дані, які Git має записувати в комітах. BusyMark збереже їх і повторить цей коміт.';
+  String get gitAuthorIdentityMessage =>
+      'Введіть дані, які Git має записувати в комітах. BusyMark збереже їх і повторить цей коміт.';
 
   @override
   String get gitAuthorName => 'Ім’я';
@@ -3019,7 +3285,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitAuthorIdentityGlobal => 'Використовувати для всіх репозиторіїв';
 
   @override
-  String get gitAuthorIdentityGlobalDescription => 'Під час установлення через Snap це стосується репозиторіїв, відкритих у BusyMark.';
+  String get gitAuthorIdentityGlobalDescription =>
+      'Під час установлення через Snap це стосується репозиторіїв, відкритих у BusyMark.';
 
   @override
   String get gitSaveIdentityAndCommit => 'Зберегти й створити коміт';
@@ -3043,25 +3310,29 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syntaxReferenceMarkdownBlocks => 'Блоки Markdown';
 
   @override
-  String get syntaxReferenceMarkdownBlocksDescription => 'Блокові структури, що підтримуються у вихідному Markdown і попередньому перегляді.';
+  String get syntaxReferenceMarkdownBlocksDescription =>
+      'Блокові структури, що підтримуються у вихідному Markdown і попередньому перегляді.';
 
   @override
   String get syntaxReferenceInlineFormatting => 'Вбудований Markdown';
 
   @override
-  String get syntaxReferenceInlineFormattingDescription => 'Форматування всередині абзаців, елементів списків і комірок таблиць.';
+  String get syntaxReferenceInlineFormattingDescription =>
+      'Форматування всередині абзаців, елементів списків і комірок таблиць.';
 
   @override
   String get syntaxReferenceRawHtmlBlocks => 'Блоки необробленого HTML';
 
   @override
-  String get syntaxReferenceRawHtmlBlocksDescription => 'Безпечні блокові HTML-теги, що відображаються через віджети перегляду BusyMark.';
+  String get syntaxReferenceRawHtmlBlocksDescription =>
+      'Безпечні блокові HTML-теги, що відображаються через віджети перегляду BusyMark.';
 
   @override
   String get syntaxReferenceRawHtmlInline => 'Вбудовані HTML-теги';
 
   @override
-  String get syntaxReferenceRawHtmlInlineDescription => 'Безпечні вбудовані HTML-теги відображаються без показу самих тегів.';
+  String get syntaxReferenceRawHtmlInlineDescription =>
+      'Безпечні вбудовані HTML-теги відображаються без показу самих тегів.';
 
   @override
   String get syntaxReferenceHeadings => 'Заголовки';
@@ -3100,19 +3371,24 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Семантичні текстові теги';
 
   @override
-  String get syntaxReferenceSanitizedPreviewDescription => 'Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.';
+  String get syntaxReferenceSanitizedPreviewDescription =>
+      'Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.';
 
   @override
-  String get syntaxReferenceSourcePreservedDescription => 'Незмінений необроблений HTML зберігається точно як вихідний текст.';
+  String get syntaxReferenceSourcePreservedDescription =>
+      'Незмінений необроблений HTML зберігається точно як вихідний текст.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtmlDescription => 'Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.';
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
+      'Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.';
 
   @override
-  String get syntaxReferenceBlockedContentDescription => 'Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.';
+  String get syntaxReferenceBlockedContentDescription =>
+      'Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.';
 
   @override
-  String get syntaxReferenceSafeUrlsDescription => 'Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.';
 
   @override
   String get syntaxReferenceCategory => 'Категорія';
@@ -3142,28 +3418,35 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syntaxReferenceOfficialDocumentation => 'Офіційна документація';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdown => 'Лише Markdown Writerside';
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Лише Markdown Writerside';
 
   @override
-  String get syntaxReferenceScopeWritersideMarkdownAndXml => 'Лише Markdown Writerside і XML Writerside';
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Лише Markdown Writerside і XML Writerside';
 
   @override
-  String get syntaxReferenceMarkdownDescription => 'Основні форми Markdown, які BusyMark дає змогу створювати й переглядати.';
+  String get syntaxReferenceMarkdownDescription =>
+      'Основні форми Markdown, які BusyMark дає змогу створювати й переглядати.';
 
   @override
   String get syntaxReferenceParagraphExample => 'Абзац тексту.';
 
   @override
-  String get syntaxReferenceTableLimitation => 'Таблиці використовують синтаксис із вертикальними рисками GitHub Flavored Markdown.';
+  String get syntaxReferenceTableLimitation =>
+      'Таблиці використовують синтаксис із вертикальними рисками GitHub Flavored Markdown.';
 
   @override
-  String get syntaxReferenceHardBreakIdentifiers => 'два пробіли в кінці рядка, \\, <br>';
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'два пробіли в кінці рядка, \\, <br>';
 
   @override
-  String get syntaxReferenceHtmlDescription => 'BusyMark приймає обмежену безпечну підмножину необробленого HTML у вихідному тексті Markdown.';
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark приймає обмежену безпечну підмножину необробленого HTML у вихідному тексті Markdown.';
 
   @override
-  String get syntaxReferenceDiagramsDescription => 'Огороджені блоки Mermaid, PlantUML, D2 й OpenAPI працюють у вихідному тексті Markdown. Регістр ідентифікаторів не враховується, а BusyMark зберігає початкове написання.';
+  String get syntaxReferenceDiagramsDescription =>
+      'Огороджені блоки Mermaid, PlantUML, D2 й OpenAPI працюють у вихідному тексті Markdown. Регістр ідентифікаторів не враховується, а BusyMark зберігає початкове написання.';
 
   @override
   String get syntaxReferenceMermaid => 'Mermaid';
@@ -3178,28 +3461,35 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syntaxReferenceOpenApi => 'OpenAPI';
 
   @override
-  String get syntaxReferenceOpenApiLimitation => 'Використовуйте огороджений вміст YAML або JSON. BusyMark не вважає довільний цілий документ YAML або JSON довідником OpenAPI.';
+  String get syntaxReferenceOpenApiLimitation =>
+      'Використовуйте огороджений вміст YAML або JSON. BusyMark не вважає довільний цілий документ YAML або JSON довідником OpenAPI.';
 
   @override
-  String get syntaxReferenceSemanticDiagramBlocks => 'Семантичні блоки коду діаграм';
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Семантичні блоки коду діаграм';
 
   @override
-  String get syntaxReferenceSemanticDiagramLimitation => 'Семантичні форми code-block і src підтримують Mermaid, PlantUML і D2, але не OpenAPI, і лише в проєктах Writerside.';
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Семантичні форми code-block і src підтримують Mermaid, PlantUML і D2, але не OpenAPI, і лише в проєктах Writerside.';
 
   @override
-  String get syntaxReferenceReferencedDiagramSource => 'Посилання на джерело діаграми';
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Посилання на джерело діаграми';
 
   @override
-  String get syntaxReferenceReferencedDiagramLimitation => 'Шляхи мають бути відносними й залишатися у відкритому проєкті Writerside; огороджена форма з src працює лише в Markdown Writerside.';
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Шляхи мають бути відносними й залишатися у відкритому проєкті Writerside; огороджена форма з src працює лише в Markdown Writerside.';
 
   @override
-  String get syntaxReferenceMathematicsDescription => 'BusyMark підтримує вирази TeX, але не повні документи TeX або LaTeX.';
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark підтримує вирази TeX, але не повні документи TeX або LaTeX.';
 
   @override
   String get syntaxReferenceInlineMath => 'Вбудована формула';
 
   @override
-  String get syntaxReferenceGithubMath => 'Формула GitHub із доларом і зворотною лапкою';
+  String get syntaxReferenceGithubMath =>
+      'Формула GitHub із доларом і зворотною лапкою';
 
   @override
   String get syntaxReferenceDisplayMath => 'Викладна формула';
@@ -3211,34 +3501,40 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syntaxReferenceTexFence => 'Огороджений блок tex';
 
   @override
-  String get syntaxReferenceMathDelimitersLimitation => 'BusyMark не розпізнає \\(...\\) і \\[...\\] як математичні роздільники Markdown.';
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark не розпізнає \\(...\\) і \\[...\\] як математичні роздільники Markdown.';
 
   @override
-  String get syntaxReferenceTexFenceLimitation => 'Поза режимом Writerside блок tex залишається звичайним блоком коду.';
+  String get syntaxReferenceTexFenceLimitation =>
+      'Поза режимом Writerside блок tex залишається звичайним блоком коду.';
 
   @override
   String get syntaxReferenceWritersideMathElement => 'Елемент math Writerside';
 
   @override
-  String get syntaxReferenceWritersideMathElementLimitation => 'Елемент math — це семантичний синтаксис Writerside, а не дозволений необроблений HTML MathML.';
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'Елемент math — це семантичний синтаксис Writerside, а не дозволений необроблений HTML MathML.';
 
   @override
   String get syntaxReferenceSemanticTexBlock => 'Семантичний блок коду TeX';
 
   @override
-  String get syntaxReferenceWritersideDescription => 'Ці окремі розширення інтерпретуються лише у відкритих проєктах Writerside.';
+  String get syntaxReferenceWritersideDescription =>
+      'Ці окремі розширення інтерпретуються лише у відкритих проєктах Writerside.';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => 'Цитата-примітка';
 
   @override
-  String get syntaxReferenceAdmonitionLimitation => 'Звичайна блокова цитата стає порадою в Markdown Writerside, а у звичайному Markdown залишається цитатою.';
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Звичайна блокова цитата стає порадою в Markdown Writerside, а у звичайному Markdown залишається цитатою.';
 
   @override
   String get syntaxReferenceSemanticAdmonitions => 'Семантичні примітки';
 
   @override
-  String get syntaxReferenceSemanticMarkupLimitation => 'Звичайний Markdown не інтерпретує ці семантичні елементи Writerside.';
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Звичайний Markdown не інтерпретує ці семантичні елементи Writerside.';
 
   @override
   String get syntaxReferenceCollapsibleHeading => 'Згортаний заголовок';
@@ -3247,28 +3543,34 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syntaxReferenceCollapsibleCode => 'Згортаний блок коду';
 
   @override
-  String get syntaxReferenceSemanticCollapsibles => 'Семантичний згортаний вміст';
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Семантичний згортаний вміст';
 
   @override
-  String get syntaxReferenceSemanticCollapsiblesLimitation => 'BusyMark підтримує згортані форми chapter, procedure, code-block і списку визначень, але не весь каталог Writerside.';
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark підтримує згортані форми chapter, procedure, code-block і списку визначень, але не весь каталог Writerside.';
 
   @override
-  String get syntaxReferenceSemanticCodeBlocks => 'Семантичні блоки коду для формул і діаграм';
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Семантичні блоки коду для формул і діаграм';
 
   @override
   String get syntaxReferenceVideo => 'Відео Writerside';
 
   @override
-  String get syntaxReferenceVideoLimitation => 'Локальне відео використовує локальне зображення preview-src; розміщені відео повинні мати підтримувані HTTPS-адреси YouTube або Vimeo.';
+  String get syntaxReferenceVideoLimitation =>
+      'Локальне відео використовує локальне зображення preview-src; розміщені відео повинні мати підтримувані HTTPS-адреси YouTube або Vimeo.';
 
   @override
   String get exportAsPdf => 'Експортувати як PDF';
 
   @override
-  String get pdfExportDescription => 'Виберіть макет сторінки для охайного автономного PDF-файлу.';
+  String get pdfExportDescription =>
+      'Виберіть макет сторінки для охайного автономного PDF-файлу.';
 
   @override
-  String get pdfRemoteImagesNote => 'Віддалені зображення під час експорту не завантажуються. Доступні локальні зображення буде додано.';
+  String get pdfRemoteImagesNote =>
+      'Віддалені зображення під час експорту не завантажуються. Доступні локальні зображення буде додано.';
 
   @override
   String get pdfPageSize => 'Розмір сторінки';
@@ -3334,19 +3636,23 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get pdfExportUnavailable => 'Компонент експорту PDF відсутній. Перевстановіть BusyMark і повторіть спробу.';
+  String get pdfExportUnavailable =>
+      'Компонент експорту PDF відсутній. Перевстановіть BusyMark і повторіть спробу.';
 
   @override
-  String get pdfExportTimedOut => 'Експорт PDF тривав надто довго й був зупинений.';
+  String get pdfExportTimedOut =>
+      'Експорт PDF тривав надто довго й був зупинений.';
 
   @override
-  String get pdfExportFailed => 'BusyMark не вдалося експортувати цей документ як PDF.';
+  String get pdfExportFailed =>
+      'BusyMark не вдалося експортувати цей документ як PDF.';
 
   @override
   String get visualizationRendering => 'Візуалізація…';
 
   @override
-  String get visualizationStale => 'Відображається останній коректний результат';
+  String get visualizationStale =>
+      'Відображається останній коректний результат';
 
   @override
   String get visualizationShowSource => 'Показати вихідний код';
@@ -3394,7 +3700,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get visualizationSearchOperations => 'Пошук операцій';
 
   @override
-  String get visualizationRenderFailed => 'Не вдалося відобразити цю візуалізацію.';
+  String get visualizationRenderFailed =>
+      'Не вдалося відобразити цю візуалізацію.';
 
   @override
   String get visualizationRetry => 'Повторити';
@@ -3405,7 +3712,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get shortcutExportPdfDescription => 'Експортувати активний документ або модуль Writerside як PDF.';
+  String get shortcutExportPdfDescription =>
+      'Експортувати активний документ або модуль Writerside як PDF.';
 
   @override
   String get instances => 'Екземпляри';
@@ -3444,7 +3752,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get chooseMarkdownFolder => 'Вибрати папку Markdown';
 
   @override
-  String get errorWritersideInstanceImportSourceRequired => 'Виберіть папку, що містить файли Markdown.';
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Виберіть папку, що містить файли Markdown.';
 
   @override
   String get instanceAppearance => 'Вигляд';
@@ -3476,16 +3785,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get instanceStatusDeprecated => 'Застарілий';
 
   @override
-  String get allowSearchEngineIndexing => 'Дозволити індексацію пошуковими системами';
+  String get allowSearchEngineIndexing =>
+      'Дозволити індексацію пошуковими системами';
 
   @override
-  String get allowSearchEngineIndexingDescription => 'Дозволити зовнішнім пошуковим системам індексувати цей результат.';
+  String get allowSearchEngineIndexingDescription =>
+      'Дозволити зовнішнім пошуковим системам індексувати цей результат.';
 
   @override
   String get offlineArtifact => 'Пакунок для автономної роботи';
 
   @override
-  String get offlineArtifactDescription => 'Додати ресурси, щоб зібрана документація була самодостатньою.';
+  String get offlineArtifactDescription =>
+      'Додати ресурси, щоб зібрана документація була самодостатньою.';
 
   @override
   String get instanceOutputSettings => 'Налаштування результату';
@@ -3505,16 +3817,19 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get noMarkdownFilesFound => 'У цьому каталозі файлів Markdown не знайдено.';
+  String get noMarkdownFilesFound =>
+      'У цьому каталозі файлів Markdown не знайдено.';
 
   @override
   String get copyReferencedMedia => 'Копіювати використані медіафайли';
 
   @override
-  String get copyReferencedMediaDescription => 'Копіювати локальні зображення й відео, на які посилаються вибрані файли, зі збереженням відносних шляхів.';
+  String get copyReferencedMediaDescription =>
+      'Копіювати локальні зображення й відео, на які посилаються вибрані файли, зі збереженням відносних шляхів.';
 
   @override
-  String get instanceIdRenameWarningTitle => 'Перейменувати ідентифікатор екземпляра?';
+  String get instanceIdRenameWarningTitle =>
+      'Перейменувати ідентифікатор екземпляра?';
 
   @override
   String instanceIdRenameWarning(String oldId, String newId) {
@@ -3525,7 +3840,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get renameAndUpdateReferences => 'Перейменувати й оновити посилання';
 
   @override
-  String get tocLibraryDescription => 'Бібліотека змісту зберігає повторно використовувані розділи й не створює власного результату.';
+  String get tocLibraryDescription =>
+      'Бібліотека змісту зберігає повторно використовувані розділи й не створює власного результату.';
 
   @override
   String get defaultTocLibraryName => 'Спільний зміст';
@@ -3573,7 +3889,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceImportSelectionRequired => 'Виберіть принаймні один файл Markdown для імпорту.';
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Виберіть принаймні один файл Markdown для імпорту.';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
@@ -3586,7 +3903,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceFilesChanged => 'Файли екземпляра змінилися на диску. Перегляньте їх і повторіть спробу.';
+  String get errorWritersideInstanceFilesChanged =>
+      'Файли екземпляра змінилися на диску. Перегляньте їх і повторіть спробу.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
@@ -3594,16 +3912,20 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorWritersideInstanceLibraryImport => 'Бібліотека змісту не може імпортувати теми Markdown.';
+  String get errorWritersideInstanceLibraryImport =>
+      'Бібліотека змісту не може імпортувати теми Markdown.';
 
   @override
-  String get errorWritersideInstanceWebPathInvalid => 'Вебшлях має складатися з одного рядка.';
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Вебшлях має складатися з одного рядка.';
 
   @override
-  String get errorWritersideInstanceConfigurationInvalid => 'Конфігурація екземпляра Writerside некоректна. Виправте її діагностичні повідомлення й повторіть спробу.';
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Конфігурація екземпляра Writerside некоректна. Виправте її діагностичні повідомлення й повторіть спробу.';
 
   @override
-  String get errorWritersideInstanceTemporaryFile => 'BusyMark не вдалося безпечно підготувати зміни екземпляра.';
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark не вдалося безпечно підготувати зміни екземпляра.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
@@ -3616,27 +3938,36 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideBuildProfilesInvalidRoot => 'Кореневим елементом buildprofiles.xml має бути <buildprofiles>.';
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'Кореневим елементом buildprofiles.xml має бути <buildprofiles>.';
 
   @override
-  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value) {
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
     return 'Значення $name «$value» має бути true або false.';
   }
 
   @override
-  String get diagnosticWritersideBuildProfileMissingInstance => 'Елемент <build-profile> має вказувати ідентифікатор екземпляра.';
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Елемент <build-profile> має вказувати ідентифікатор екземпляра.';
 
   @override
-  String get diagnosticWritersideTreeInvalidInclude => 'Елемент дерева <include> має вказувати й from, і element-id.';
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'Елемент дерева <include> має вказувати й from, і element-id.';
 
   @override
-  String get diagnosticWritersideTreeMissingSnippetId => 'Елемент дерева <snippet> має вказувати id.';
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'Елемент дерева <snippet> має вказувати id.';
 
   @override
-  String get diagnosticWritersideTreeInvalidCrossInstanceReference => 'Міжекземплярне посилання змісту має вказувати й ref, і in.';
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'Міжекземплярне посилання змісту має вказувати й ref, і in.';
 
   @override
-  String get diagnosticWritersideTreeConflictingTargets => 'Елемент змісту не може одночасно посилатися на кілька тем, посилань, адрес або перенаправлень.';
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Елемент змісту не може одночасно посилатися на кілька тем, посилань, адрес або перенаправлень.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3644,10 +3975,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideInstanceGroupsInvalidRoot => 'Кореневим елементом файлу груп екземплярів має бути <instance-groups>.';
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Кореневим елементом файлу груп екземплярів має бути <instance-groups>.';
 
   @override
-  String get diagnosticWritersideInstanceGroupInvalid => 'Група екземплярів має вказувати непорожній ідентифікатор і список екземплярів.';
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'Група екземплярів має вказувати непорожній ідентифікатор і список екземплярів.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
@@ -3655,12 +3988,19 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin) {
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
     return 'Включення змісту «$source#$id» належить зовнішньому модулю «$origin» і не може бути розгорнуте в цій робочій області.';
   }
 
   @override
-  String diagnosticWritersideTreeIncludeElementMissing(String source, String id) {
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
     return 'Елемент дерева «$id» відсутній у зареєстрованому дереві «$source».';
   }
 
@@ -3680,7 +4020,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideReferenceTopicMissing(String topic, String instance) {
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
     return 'Теми «$topic» немає у вказаному екземплярі «$instance».';
   }
 
@@ -3709,7 +4052,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiDisabled => 'Вимкнено';
 
   @override
-  String get aiExplicitEditingDescription => 'Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.';
+  String get aiExplicitEditingDescription =>
+      'Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.';
 
   @override
   String get aiProvider => 'Постачальник ШІ';
@@ -3744,10 +4088,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiNoModels => 'Модель не вибрана.';
 
   @override
-  String get aiConnectionFailed => 'BusyMark не вдалося перевірити генерування тексту за допомогою ШІ.';
+  String get aiConnectionFailed =>
+      'BusyMark не вдалося перевірити генерування тексту за допомогою ШІ.';
 
   @override
-  String get aiConfigureFirst => 'Увімкніть постачальника ШІ та перевірте модель у розділі «Налаштування → ШІ».';
+  String get aiConfigureFirst =>
+      'Увімкніть постачальника ШІ та перевірте модель у розділі «Налаштування → ШІ».';
 
   @override
   String get aiEditWithAi => 'Редагувати за допомогою ШІ';
@@ -3823,10 +4169,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get aiStaleProposal => 'Документ змінився під час створення цієї пропозиції. Запустіть дію ще раз.';
+  String get aiStaleProposal =>
+      'Документ змінився під час створення цієї пропозиції. Запустіть дію ще раз.';
 
   @override
-  String get gitAiStagedChangesChanged => 'Індексовані зміни змінилися під час створення цього повідомлення коміту. Запустіть дію ще раз.';
+  String get gitAiStagedChangesChanged =>
+      'Індексовані зміни змінилися під час створення цього повідомлення коміту. Запустіть дію ще раз.';
 
   @override
   String get aiViewContext => 'Показати надісланий контекст';
@@ -3844,7 +4192,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiApiKey => 'Ключ API';
 
   @override
-  String get aiApiKeyStoredHint => 'Ключ збережено в системному сховищі облікових даних';
+  String get aiApiKeyStoredHint =>
+      'Ключ збережено в системному сховищі облікових даних';
 
   @override
   String get aiApiKeyEnterHint => 'Введіть ключ API постачальника';
@@ -3859,7 +4208,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiRemoveApiKey => 'Видалити збережений ключ API';
 
   @override
-  String get aiCredentialSaved => 'Ключ API збережено в системному сховищі облікових даних.';
+  String get aiCredentialSaved =>
+      'Ключ API збережено в системному сховищі облікових даних.';
 
   @override
   String get aiCredentialRemoved => 'Збережений ключ API видалено.';
@@ -3895,7 +4245,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get aiCloudConsentMessage => 'Надсилається лише вміст, показаний у кожному діалозі перевірки ШІ. Запити не зберігають стан, пропозиції потребують перевірки, а ключ API зберігається в системному сховищі облікових даних Linux.';
+  String get aiCloudConsentMessage =>
+      'Надсилається лише вміст, показаний у кожному діалозі перевірки ШІ. Запити не зберігають стан, пропозиції потребують перевірки, а ключ API зберігається в системному сховищі облікових даних Linux.';
 
   @override
   String aiCloudConsentRequired(String provider) {
@@ -3908,10 +4259,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get aiColdStartObserved => 'Виявлено холодний запуск локальної моделі.';
+  String get aiColdStartObserved =>
+      'Виявлено холодний запуск локальної моделі.';
 
   @override
-  String get aiNoCompatibleModels => 'Немає доступної сумісної моделі генерування тексту.';
+  String get aiNoCompatibleModels =>
+      'Немає доступної сумісної моделі генерування тексту.';
 
   @override
   String get aiEnableProvider => 'Спочатку ввімкніть постачальника ШІ.';
@@ -3931,7 +4284,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownLinkEmptyText => 'Текст посилання порожній; укажіть доступну назву, що описує його призначення.';
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Текст посилання порожній; укажіть доступну назву, що описує його призначення.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {
@@ -3939,7 +4293,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownTableEmptyHeader => 'Заголовки таблиці мають позначати стовпці; заповніть кожен порожній заголовок.';
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Заголовки таблиці мають позначати стовпці; заповніть кожен порожній заголовок.';
 
   @override
   String get mathRenderFailed => 'Не вдалося відобразити математичний вираз.';
@@ -3957,16 +4312,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get findUsages => 'Знайти використання';
 
   @override
-  String get cannotRenameSymbol => 'Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.';
+  String get cannotRenameSymbol =>
+      'Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.';
 
   @override
-  String get renameTopicFileInstead => 'ID тем визначаються іменами їхніх файлів. Скористайтеся командою «Перейменувати файл теми» у змісті або на бічній панелі «Файли».';
+  String get renameTopicFileInstead =>
+      'ID тем визначаються іменами їхніх файлів. Скористайтеся командою «Перейменувати файл теми» у змісті або на бічній панелі «Файли».';
 
   @override
   String get keyboardLayout => 'Розкладка клавіатури';
 
   @override
-  String get diagnosticWritersideUnsupported => 'Непідтримуваний або некоректний вміст показано як джерело.';
+  String get diagnosticWritersideUnsupported =>
+      'Непідтримуваний або некоректний вміст показано як джерело.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
@@ -3979,12 +4337,17 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diagnosticWritersideSchema(String element, String attribute, String reason) {
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
     return 'Некоректна розмітка Writerside: $element, $attribute. $reason';
   }
 
   @override
-  String get diagnosticWritersideLlmsTxt => 'Використовуйте <llms-txt>true</llms-txt> або <llms-txt>false</llms-txt>; single-file більше не підтримується.';
+  String get diagnosticWritersideLlmsTxt =>
+      'Використовуйте <llms-txt>true</llms-txt> або <llms-txt>false</llms-txt>; single-file більше не підтримується.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
@@ -4007,16 +4370,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get htmlExportFailed => 'Не вдалося експортувати HTML';
 
   @override
-  String get htmlKeepAssetsTogether => 'Під час копіювання зберігайте файл HTML разом із папкою його ресурсів.';
+  String get htmlKeepAssetsTogether =>
+      'Під час копіювання зберігайте файл HTML разом із папкою його ресурсів.';
 
   @override
-  String get htmlInstanceDescription => 'Експортуйте один екземпляр як пов’язані автономні сторінки. Виберіть назву окремої вихідної папки.';
+  String get htmlInstanceDescription =>
+      'Експортуйте один екземпляр як пов’язані автономні сторінки. Виберіть назву окремої вихідної папки.';
 
   @override
   String get htmlInstance => 'Екземпляр';
 
   @override
-  String get htmlOwnedDirectoryOnly => 'Можна замінити лише папку, створену експортом HTML BusyMark. Змінені та сторонні файли буде збережено.';
+  String get htmlOwnedDirectoryOnly =>
+      'Можна замінити лише папку, створену експортом HTML BusyMark. Змінені та сторонні файли буде збережено.';
 
   @override
   String get showInFolder => 'Показати в папці';
@@ -4138,25 +4504,30 @@ class AppLocalizationsUk extends AppLocalizations {
   String get exportRemoveCss => 'Вилучити власний файл стилів';
 
   @override
-  String get exportCssNote => 'Виберіть необов’язковий файл CSS у UTF-8 (до 256 КіБ). Імпорти, URL ресурсів, виконуваний CSS і escape-послідовності заборонені. Стилі застосовуються після стилів BusyMark. Віддалені ресурси не завантажуються.';
+  String get exportCssNote =>
+      'Виберіть необов’язковий файл CSS у UTF-8 (до 256 КіБ). Імпорти, URL ресурсів, виконуваний CSS і escape-послідовності заборонені. Стилі застосовуються після стилів BusyMark. Віддалені ресурси не завантажуються.';
 
   @override
-  String get exportSitePackagingNote => 'Writerside зберігає окремі пов’язані сторінки тем. Режим одного файлу вбудовує ресурси в кожну сторінку.';
+  String get exportSitePackagingNote =>
+      'Writerside зберігає окремі пов’язані сторінки тем. Режим одного файлу вбудовує ресурси в кожну сторінку.';
 
   @override
-  String get exportInvalidGeometry => 'Після віднімання полів залиште щонайменше 20 мм ширини й висоти вмісту.';
+  String get exportInvalidGeometry =>
+      'Після віднімання полів залиште щонайменше 20 мм ширини й висоти вмісту.';
 
   @override
   String get exportInvalidColor => 'Введіть колір у форматі #RRGGBB.';
 
   @override
-  String get exportInvalidCss => 'Виберіть читабельний файл .css у UTF-8 до 256 КіБ без імпортів, URL ресурсів, HTML, виконуваного CSS і escape-послідовностей.';
+  String get exportInvalidCss =>
+      'Виберіть читабельний файл .css у UTF-8 до 256 КіБ без імпортів, URL ресурсів, HTML, виконуваного CSS і escape-послідовностей.';
 
   @override
   String get clipboardHistory => 'Історія Вирізання';
 
   @override
-  String get clipboardHistoryDescription => 'Відкрити історію вирізання, прив\'язану до сесії.';
+  String get clipboardHistoryDescription =>
+      'Відкрити історію вирізання, прив\'язану до сесії.';
 
   @override
   String get clipboardCurrent => 'Поточне вирізання';
@@ -4170,19 +4541,23 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get clipboardSessionOnly => 'Зберігається лише для цієї сесії BusyMark.';
+  String get clipboardSessionOnly =>
+      'Зберігається лише для цієї сесії BusyMark.';
 
   @override
   String get clipboardNoItems => 'Історія вирізання порожня.';
 
   @override
-  String get clipboardDisabled => 'Збірка \"Історія Вирізання\" вимкнена в Налаштуваннях.';
+  String get clipboardDisabled =>
+      'Збірка \"Історія Вирізання\" вимкнена в Налаштуваннях.';
 
   @override
-  String get clipboardUnavailable => 'Поточний вміст вирізання недоступний або не підтримується.';
+  String get clipboardUnavailable =>
+      'Поточний вміст вирізання недоступний або не підтримується.';
 
   @override
-  String get clipboardTooLarge => 'Цей елемент буфера обміну занадто великий для зберігання.';
+  String get clipboardTooLarge =>
+      'Цей елемент буфера обміну занадто великий для зберігання.';
 
   @override
   String get clipboardPastePlainText => 'Вставити як звичайний текст';
@@ -4211,19 +4586,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String get localHistoryEllipsis => 'Локальна історія…';
 
   @override
-  String get localHistoryDescription => 'Показати збережені та автоматичні локальні версії для поточної документа.';
+  String get localHistoryDescription =>
+      'Показати збережені та автоматичні локальні версії для поточної документа.';
 
   @override
   String get findLocalHistoryEllipsis => 'Знайти в локальній історії…';
 
   @override
-  String get findLocalHistoryDescription => 'Пошук документів та вмісту версій у локальній історії.';
+  String get findLocalHistoryDescription =>
+      'Пошук документів та вмісту версій у локальній історії.';
 
   @override
-  String get localHistoryNoDocuments => 'Жоден документ поки не має локальної історії.';
+  String get localHistoryNoDocuments =>
+      'Жоден документ поки не має локальної історії.';
 
   @override
-  String get localHistoryNoRevisions => 'Цей документ не має версій локальної історії.';
+  String get localHistoryNoRevisions =>
+      'Цей документ не має версій локальної історії.';
 
   @override
   String get localHistorySelectedRevision => 'Обрана версія';
@@ -4241,7 +4620,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get localHistoryRestoreRevision => 'Відновити версію';
 
   @override
-  String get localHistoryRestoreOriginalLocation => 'Відновити до початкової локації';
+  String get localHistoryRestoreOriginalLocation =>
+      'Відновити до початкової локації';
 
   @override
   String get localHistoryRestoreNewLocation => 'Відновити до нової локації…';
@@ -4250,10 +4630,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get localHistoryRestoreChange => 'Відновити зміни';
 
   @override
-  String get localHistoryRestoreUnavailable => 'Ці зміни не можуть бути відновлені, оскільки порівняння більше не актуальне.';
+  String get localHistoryRestoreUnavailable =>
+      'Ці зміни не можуть бути відновлені, оскільки порівняння більше не актуальне.';
 
   @override
-  String get localHistoryComparisonSimplified => 'Це велике порівняння спрощено. Відновлення окремих змін недоступне.';
+  String get localHistoryComparisonSimplified =>
+      'Це велике порівняння спрощено. Відновлення окремих змін недоступне.';
 
   @override
   String localHistoryOlderChange(String text) {
@@ -4284,10 +4666,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get localHistoryClearAllTitle => 'Очистити всю локальну історію?';
 
   @override
-  String get localHistoryClearConfirmation => 'Це постійно видаляє збережені версії. Цю дію неможливо скасувати.';
+  String get localHistoryClearConfirmation =>
+      'Це постійно видаляє збережені версії. Цю дію неможливо скасувати.';
 
   @override
-  String get localHistoryWarningIndexRebuilt => 'Індекс локальної історії пошкоджено та відновлено з цілих версій.';
+  String get localHistoryWarningIndexRebuilt =>
+      'Індекс локальної історії пошкоджено та відновлено з цілих версій.';
 
   @override
   String localHistoryWarningUnsupportedFormat(String version) {
@@ -4300,7 +4684,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRecordingDisabled => 'Запис вимкнено або цей шлях виключено. Увімкніть запис перед відновленням.';
+  String get localHistoryWarningRecordingDisabled =>
+      'Запис вимкнено або цей шлях виключено. Увімкніть запис перед відновленням.';
 
   @override
   String localHistoryWarningPathChange(String detail) {
@@ -4313,7 +4698,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get localHistoryWarningRevisionMissing => 'Вибрана версія відсутня або пошкоджена.';
+  String get localHistoryWarningRevisionMissing =>
+      'Вибрана версія відсутня або пошкоджена.';
 
   @override
   String localHistoryWarningRevisionRead(String detail) {
@@ -4337,7 +4723,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get localHistoryReasonSaved => 'Збережено';
 
   @override
-  String get localHistoryReasonAutomaticCheckpoint => 'Автоматичний контрольний пункт';
+  String get localHistoryReasonAutomaticCheckpoint =>
+      'Автоматичний контрольний пункт';
 
   @override
   String get localHistoryReasonBeforeReload => 'Перед перезавантаженням';
@@ -4358,19 +4745,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsHistory => 'Історія';
 
   @override
-  String get settingsClipboardHistoryTitle => 'Зберегти історію, скопійовану в буфер обміну';
+  String get settingsClipboardHistoryTitle =>
+      'Зберегти історію, скопійовану в буфер обміну';
 
   @override
-  String get settingsClipboardHistoryDescription => 'Зберігати лише скопійований та успішно вставлений вміст для цієї сесії BusyMark.';
+  String get settingsClipboardHistoryDescription =>
+      'Зберігати лише скопійований та успішно вставлений вміст для цієї сесії BusyMark.';
 
   @override
   String get settingsLocalHistoryTitle => 'Записувати локальну історію';
 
   @override
-  String get settingsLocalHistoryDescription => 'Зберігати версії документа на цьому пристрої для відновлення та порівняння.';
+  String get settingsLocalHistoryDescription =>
+      'Зберігати версії документа на цьому пристрої для відновлення та порівняння.';
 
   @override
-  String get settingsHistoryCheckpoint => 'Автоматичний інтервал збереження контрольної точки';
+  String get settingsHistoryCheckpoint =>
+      'Автоматичний інтервал збереження контрольної точки';
 
   @override
   String get settingsHistoryRetention => 'Тривалість зберігання';
@@ -4382,7 +4773,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsHistoryExcludedPaths => 'Виключені шляхи';
 
   @override
-  String get settingsHistoryExcludedPathsHint => 'Один абсолютний шлях на рядок';
+  String get settingsHistoryExcludedPathsHint =>
+      'Один абсолютний шлях на рядок';
 
   @override
   String settingsSecondsValue(int value) {
@@ -4436,7 +4828,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get addProjectSpellingWord => 'Додати до словника проєкту';
 
   @override
-  String get inheritSpellingLanguage => 'Використовувати мову проєкту або програми';
+  String get inheritSpellingLanguage =>
+      'Використовувати мову проєкту або програми';
 
   @override
   String get disableDocumentSpelling => 'Не перевіряти правопис';
@@ -4463,10 +4856,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get spellingCheckFailed => 'Не вдалося перевірити правопис';
 
   @override
-  String get spellingSettingsLoadFailed => 'Не вдалося завантажити налаштування перевірки правопису';
+  String get spellingSettingsLoadFailed =>
+      'Не вдалося завантажити налаштування перевірки правопису';
 
   @override
-  String get retrySpellingSettings => 'Повторити завантаження налаштувань перевірки правопису';
+  String get retrySpellingSettings =>
+      'Повторити завантаження налаштувань перевірки правопису';
 
   @override
   String get spellingCheckIncomplete => 'Перевірку правопису не завершено';
@@ -4494,10 +4889,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get removeSpellingDictionary => 'Видалити словник';
 
   @override
-  String get cancelSpellingDictionaryInstall => 'Скасувати завантаження словника';
+  String get cancelSpellingDictionaryInstall =>
+      'Скасувати завантаження словника';
 
   @override
-  String get retrySpellingDictionaryInstall => 'Повторити встановлення словника';
+  String get retrySpellingDictionaryInstall =>
+      'Повторити встановлення словника';
 
   @override
   String spellingDictionaryDownloading(String size) {
@@ -4508,7 +4905,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get spellingDictionaryValidating => 'Перевірка словника…';
 
   @override
-  String get spellingDictionaryInstallFailed => 'Не вдалося встановити словник — виберіть, щоб повторити';
+  String get spellingDictionaryInstallFailed =>
+      'Не вдалося встановити словник — виберіть, щоб повторити';
 
   @override
   String spellingDictionaryInstallPrompt(String dictionary, String size) {
@@ -4527,7 +4925,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get spellingDictionaryRecoveryConflict => 'Орфографічний словник було змінено ззовні. Копію для відновлення збережено.';
+  String get spellingDictionaryRecoveryConflict =>
+      'Орфографічний словник було змінено ззовні. Копію для відновлення збережено.';
 
   @override
   String get windowMinimize => 'Згорнути';
@@ -4563,7 +4962,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get nextcloudNewNote => 'Нова нотатка';
 
   @override
-  String get nextcloudSavedLocally => 'Збережено локально · очікує синхронізації';
+  String get nextcloudSavedLocally =>
+      'Збережено локально · очікує синхронізації';
 
   @override
   String get nextcloudSyncing => 'Синхронізація';
@@ -4596,49 +4996,60 @@ class AppLocalizationsUk extends AppLocalizations {
   String get nextcloudDeleteNote => 'Видалити нотатку?';
 
   @override
-  String get nextcloudWorkspaceReplaceUnavailable => 'Заміна в робочій області недоступна для Nextcloud Notes. Виконуйте заміну в кожній нотатці.';
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Заміна в робочій області недоступна для Nextcloud Notes. Виконуйте заміну в кожній нотатці.';
 
   @override
   String get nextcloudSaveLocalCopy => 'Зберегти локальну копію…';
 
   @override
-  String get nextcloudDisconnectWarning => 'Видалення облікового запису видалить кеш нотаток і зміни, що очікують, із цього пристрою. Спочатку синхронізуйте їх, щоб зберегти роботу на сервері.';
+  String get nextcloudDisconnectWarning =>
+      'Видалення облікового запису видалить кеш нотаток і зміни, що очікують, із цього пристрою. Спочатку синхронізуйте їх, щоб зберегти роботу на сервері.';
 
   @override
-  String get nextcloudAttachmentRetryWarning => 'Якщо попереднє завантаження було успішним, повторна спроба може залишити невикористане вкладення на сервері.';
+  String get nextcloudAttachmentRetryWarning =>
+      'Якщо попереднє завантаження було успішним, повторна спроба може залишити невикористане вкладення на сервері.';
 
   @override
-  String get nextcloudAttachmentReference => 'Посилання на вкладення на сервері';
+  String get nextcloudAttachmentReference =>
+      'Посилання на вкладення на сервері';
 
   @override
   String get nextcloudAddAttachment => 'Додати вкладення…';
 
   @override
-  String get nextcloudDeleteAttachmentWarning => 'Після видалення цього вкладення посилання на нього в нотатці стануть недоступними. Збережені дані можна відновити з локальної історії.';
+  String get nextcloudDeleteAttachmentWarning =>
+      'Після видалення цього вкладення посилання на нього в нотатці стануть недоступними. Збережені дані можна відновити з локальної історії.';
 
   @override
-  String get nextcloudChooseConflictingAttributes => 'Виберіть значення кожного конфліктного атрибута.';
+  String get nextcloudChooseConflictingAttributes =>
+      'Виберіть значення кожного конфліктного атрибута.';
 
   @override
   String get nextcloudUseServerNote => 'Використати цю нотатку на сервері';
 
   @override
-  String get nextcloudUseServerNoteExplanation => 'Пов’язує цю чернетку з вибраною нотаткою на сервері, а потім синхронізує збережені локальні зміни. Збіг запиту не підтверджує, хто створив нотатку.';
+  String get nextcloudUseServerNoteExplanation =>
+      'Пов’язує цю чернетку з вибраною нотаткою на сервері, а потім синхронізує збережені локальні зміни. Збіг запиту не підтверджує, хто створив нотатку.';
 
   @override
-  String get nextcloudExactCandidate => 'Точний збіг із запитом; тотожність не підтверджено.';
+  String get nextcloudExactCandidate =>
+      'Точний збіг із запитом; тотожність не підтверджено.';
 
   @override
-  String get nextcloudPossibleCandidate => 'Можливий збіг після нормалізації; тотожність не підтверджено.';
+  String get nextcloudPossibleCandidate =>
+      'Можливий збіг після нормалізації; тотожність не підтверджено.';
 
   @override
-  String get nextcloudSelectCandidate => 'Виберіть нотатку на сервері для перегляду';
+  String get nextcloudSelectCandidate =>
+      'Виберіть нотатку на сервері для перегляду';
 
   @override
   String get nextcloudCreateSeparate => 'Створити окрему нотатку';
 
   @override
-  String get nextcloudCreateSeparateWarning => 'Перший запит міг уже створити нотатку на сервері. Буде створено окрему нотатку зі збереженою локальною роботою. Ймовірні дублікати не буде видалено.';
+  String get nextcloudCreateSeparateWarning =>
+      'Перший запит міг уже створити нотатку на сервері. Буде створено окрему нотатку зі збереженою локальною роботою. Ймовірні дублікати не буде видалено.';
 
   @override
   String get wsSemanticFormats => 'Семантичне форматування';
@@ -4749,13 +5160,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get nextcloudFileSuffix => 'Розширення нових нотаток';
 
   @override
-  String get nextcloudServerSettingsExplanation => 'Ці налаштування Notes впливають на інші клієнти. Зміна шляху не переміщує файли; зміна розширення не перейменовує наявні нотатки.';
+  String get nextcloudServerSettingsExplanation =>
+      'Ці налаштування Notes впливають на інші клієнти. Зміна шляху не переміщує файли; зміна розширення не перейменовує наявні нотатки.';
 
   @override
   String get nextcloudSettingsSaved => 'Налаштування сервера збережено';
 
   @override
-  String get nextcloudSettingsNormalized => 'Збережено зі значеннями, нормалізованими сервером';
+  String get nextcloudSettingsNormalized =>
+      'Збережено зі значеннями, нормалізованими сервером';
 
   @override
   String get nextcloudPendingUpload => 'Вкладення очікує завантаження';
@@ -4817,13 +5230,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesIndexing => 'Індексація нотаток…';
 
   @override
-  String get notesSearchHelp => 'Терміни поєднуються І. Використовуйте \"фрази в лапках\", title: та category:.';
+  String get notesSearchHelp =>
+      'Терміни поєднуються І. Використовуйте \"фрази в лапках\", title: та category:.';
 
   @override
   String get notesSourceLocation => 'Місце в джерелі';
 
   @override
-  String get notesRecoveryHelp => 'Лише збережені локальні нотатки та локальна історія. Кошик та історія сервера недоступні.';
+  String get notesRecoveryHelp =>
+      'Лише збережені локальні нотатки та локальна історія. Кошик та історія сервера недоступні.';
 
   @override
   String get notesImport => 'Імпорт нотаток';
@@ -4844,7 +5259,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesSelected => 'Вибрані нотатки';
 
   @override
-  String get notesNoHistory => 'Немає збережених версій. Історію може бути вимкнено, прострочено або очищено.';
+  String get notesNoHistory =>
+      'Немає збережених версій. Історію може бути вимкнено, прострочено або очищено.';
 
   @override
   String get notesTextAvailable => 'Текст доступний локально';
@@ -4910,7 +5326,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get referenceUnsupported => 'Не підтримується';
 
   @override
-  String get referenceNoPortableId => 'Ця ціль не має перевіреної переносної URL-адреси нотатки.';
+  String get referenceNoPortableId =>
+      'Ця ціль не має перевіреної переносної URL-адреси нотатки.';
 
   @override
   String get wsIncludeLines => 'Включити рядки';
@@ -4922,13 +5339,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsEmphasizeLines => 'Виділити показані рядки';
 
   @override
-  String get wsPropertiesReadOnly => 'У цьому режимі властивості доступні лише для читання.';
+  String get wsPropertiesReadOnly =>
+      'У цьому режимі властивості доступні лише для читання.';
 
   @override
   String get wsPropertiesProtected => 'Елемент захищено. Змініть його джерело.';
 
   @override
-  String get wsPropertiesConflict => 'Документ або елемент змінився. Скасуйте чернетку й виберіть знову.';
+  String get wsPropertiesConflict =>
+      'Документ або елемент змінився. Скасуйте чернетку й виберіть знову.';
 
   @override
   String get wsPropertiesUnresolved => 'Наразі неможливо розв’язати посилання.';
@@ -4958,7 +5377,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsHeight => 'Висота';
 
   @override
-  String get wsPropertiesInactive => 'Властивість діє лише зі згортанням у публікації.';
+  String get wsPropertiesInactive =>
+      'Властивість діє лише зі згортанням у публікації.';
 
   @override
   String get wsNavigationAll => 'Усі елементи із заголовками';
@@ -4979,16 +5399,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsWideLayout => 'Широкий';
 
   @override
-  String get wsCodeSourceConflict => 'Перемістіть або видаліть код, написаний у цьому блоці, перш ніж задати src. Writerside відхиляє непорожній блок коду з посиланням на джерело.';
+  String get wsCodeSourceConflict =>
+      'Перемістіть або видаліть код, написаний у цьому блоці, перш ніж задати src. Writerside відхиляє непорожній блок коду з посиланням на джерело.';
 
   @override
   String get wsInherited => 'Успадкувати зі списку';
 
   @override
-  String get wsExternalImageSize => 'Writerside ненадійно задає розміри зовнішніх зображень. Наявні розміри можна переглянути та видалити.';
+  String get wsExternalImageSize =>
+      'Writerside ненадійно задає розміри зовнішніх зображень. Наявні розміри можна переглянути та видалити.';
 
   @override
-  String get wsPropertiesNotSerialized => 'Цю зміну не записано у вихідний текст. Чернетку збережено.';
+  String get wsPropertiesNotSerialized =>
+      'Цю зміну не записано у вихідний текст. Чернетку збережено.';
 
   @override
   String get wsListItem => 'Елемент списку';
@@ -5125,7 +5548,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get wsModuleCapsIgnored => 'Закріплений збирач ігнорує правила <caps> модуля. Використовуйте локальний атрибут caps або default-property.';
+  String get wsModuleCapsIgnored =>
+      'Закріплений збирач ігнорує правила <caps> модуля. Використовуйте локальний атрибут caps або default-property.';
 
   @override
   String get wsInsertElements => 'Вставити елементи';
@@ -5137,7 +5561,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsSemanticText => 'Семантичний текст';
 
   @override
-  String get wsPropertiesUnavailable => 'Елемент, що перевіряється, недоступний. Виберіть елемент для продовження.';
+  String get wsPropertiesUnavailable =>
+      'Елемент, що перевіряється, недоступний. Виберіть елемент для продовження.';
 
   @override
   String get searchDocumentsCategory => 'Документи';
@@ -5242,22 +5667,27 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutRestoreAll => 'Відновити всі типові значення';
 
   @override
-  String get shortcutRestoreAllQuestion => 'Відновити типові сполучення всіх дій? Власні призначення буде видалено.';
+  String get shortcutRestoreAllQuestion =>
+      'Відновити типові сполучення всіх дій? Власні призначення буде видалено.';
 
   @override
-  String get shortcutSaveFailed => 'Сполучення діють, але їх не збережено. Повторіть збереження, щоб залишити їх після перезапуску.';
+  String get shortcutSaveFailed =>
+      'Сполучення діють, але їх не збережено. Повторіть збереження, щоб залишити їх після перезапуску.';
 
   @override
   String get shortcutRetry => 'Повторити збереження';
 
   @override
-  String get shortcutChanged => 'Призначення змінилися. Перевірте поточні сполучення та повторіть спробу.';
+  String get shortcutChanged =>
+      'Призначення змінилися. Перевірте поточні сполучення та повторіть спробу.';
 
   @override
-  String get shortcutInvalid => 'Це сполучення не можна призначити в цьому контексті.';
+  String get shortcutInvalid =>
+      'Це сполучення не можна призначити в цьому контексті.';
 
   @override
-  String get shortcutSystemWarning => 'Це сполучення може використовуватися стільницею. BusyMark не може перевизначати системні сполучення.';
+  String get shortcutSystemWarning =>
+      'Це сполучення може використовуватися стільницею. BusyMark не може перевизначати системні сполучення.';
 
   @override
   String get shortcutConflicts => 'Це сполучення конфліктує з такими діями:';
@@ -5299,7 +5729,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutFixed => 'Керується редактором; налаштування недоступне.';
 
   @override
-  String get shortcutDefaultConflict => 'Типове сполучення конфліктує з користувацьким призначенням.';
+  String get shortcutDefaultConflict =>
+      'Типове сполучення конфліктує з користувацьким призначенням.';
 
   @override
   String get shortcutCurrentBinding => 'Поточне сполучення';
@@ -5326,13 +5757,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesOfflineAll => 'Зберегти для роботи без мережі · Усі нотатки';
 
   @override
-  String get notesOfflineCategory => 'Зберегти для роботи без мережі · Категорія';
+  String get notesOfflineCategory =>
+      'Зберегти для роботи без мережі · Категорія';
 
   @override
-  String get notesOfflineRemoveAll => 'Вилучити збереження без мережі · Усі нотатки';
+  String get notesOfflineRemoveAll =>
+      'Вилучити збереження без мережі · Усі нотатки';
 
   @override
-  String get notesOfflineRemoveCategory => 'Вилучити збереження без мережі · Категорія';
+  String get notesOfflineRemoveCategory =>
+      'Вилучити збереження без мережі · Категорія';
 
   @override
   String get notesOfflinePause => 'Призупинити завантаження';
@@ -5344,13 +5778,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesOfflineKeep => 'Зберегти для роботи без мережі';
 
   @override
-  String get notesOfflineRetentionHelp => 'Видалення вимоги не видаляє вміст кешу. Вимога категорії чи облікового запису може й надалі зберігати нотатку.';
+  String get notesOfflineRetentionHelp =>
+      'Видалення вимоги не видаляє вміст кешу. Вимога категорії чи облікового запису може й надалі зберігати нотатку.';
 
   @override
-  String get notesOfflineBroader => 'Ця нотатка також зберігається за вимогою категорії чи облікового запису.';
+  String get notesOfflineBroader =>
+      'Ця нотатка також зберігається за вимогою категорії чи облікового запису.';
 
   @override
-  String get notesOfflineExternal => 'Зовнішні медіа потребують з’єднання. BusyMark зберігає лише текст і керовані вкладення.';
+  String get notesOfflineExternal =>
+      'Зовнішні медіа потребують з’єднання. BusyMark зберігає лише текст і керовані вкладення.';
 
   @override
   String get notesEmptyAll => 'Нотаток ще немає. Створіть першу.';
@@ -5371,7 +5808,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesLoadFailed => 'Nextcloud Notes · Помилка. Повторити';
 
   @override
-  String get notesOperationFailed => 'Не вдалося завершити операцію. Чернетку збережено. Перевірте збереження та конфлікти й повторіть спробу.';
+  String get notesOperationFailed =>
+      'Не вдалося завершити операцію. Чернетку збережено. Перевірте збереження та конфлікти й повторіть спробу.';
 
   @override
   String get notesInspectionFailed => 'Вкладення · Помилка. Повторити';
@@ -5386,40 +5824,51 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesCancellingConnection => 'Скасування входу та очищення…';
 
   @override
-  String get notesRemovingConnection => 'Видалення локального облікового запису…';
+  String get notesRemovingConnection =>
+      'Видалення локального облікового запису…';
 
   @override
-  String get notesRemovedWarning => 'Локальний обліковий запис Nextcloud видалено. Відкликання пароля застосунку не підтверджено. Видаліть пароль BusyMark у налаштуваннях безпеки Nextcloud.';
+  String get notesRemovedWarning =>
+      'Локальний обліковий запис Nextcloud видалено. Відкликання пароля застосунку не підтверджено. Видаліть пароль BusyMark у налаштуваннях безпеки Nextcloud.';
 
   @override
-  String get notesBuffersNotSaved => 'Не вдалося зберегти всі відкриті нотатки локально. Перевірте збереження, конфлікти чи нормалізацію в робочому просторі. Локальні зміни можуть ще потребувати синхронізації з Nextcloud.';
+  String get notesBuffersNotSaved =>
+      'Не вдалося зберегти всі відкриті нотатки локально. Перевірте збереження, конфлікти чи нормалізацію в робочому просторі. Локальні зміни можуть ще потребувати синхронізації з Nextcloud.';
 
   @override
-  String get notesSettingsLeave => 'Зберегти зміни налаштувань Nextcloud перед виходом?';
+  String get notesSettingsLeave =>
+      'Зберегти зміни налаштувань Nextcloud перед виходом?';
 
   @override
-  String get notesSettingsLeaveHelp => 'Налаштування Notes на сервері · Незбережені зміни';
+  String get notesSettingsLeaveHelp =>
+      'Налаштування Notes на сервері · Незбережені зміни';
 
   @override
   String get notesSettingsReload => 'Перезавантажити налаштування сервера…';
 
   @override
-  String get notesSettingsReloadHelp => 'Перезавантаження замінить чернетку поточними налаштуваннями Nextcloud. Відкинути чернетку й перезавантажити?';
+  String get notesSettingsReloadHelp =>
+      'Перезавантаження замінить чернетку поточними налаштуваннями Nextcloud. Відкинути чернетку й перезавантажити?';
 
   @override
-  String get notesSettingsRefreshFailed => 'Nextcloud прийняв налаштування, але оновлення нотаток не вдалося. Показано значення, підтверджені сервером. Повторіть оновлення з Нотаток.';
+  String get notesSettingsRefreshFailed =>
+      'Nextcloud прийняв налаштування, але оновлення нотаток не вдалося. Показано значення, підтверджені сервером. Повторіть оновлення з Нотаток.';
 
   @override
-  String get notesUnavailable => 'Немає мережі · Текст доступний локально · Збережено локально · очікує синхронізації';
+  String get notesUnavailable =>
+      'Немає мережі · Текст доступний локально · Збережено локально · очікує синхронізації';
 
   @override
-  String get notesStorageFull => 'Сховище Nextcloud заповнене. Звільніть місце на сервері та повторіть спробу.';
+  String get notesStorageFull =>
+      'Сховище Nextcloud заповнене. Звільніть місце на сервері та повторіть спробу.';
 
   @override
-  String get notesRejected => 'Nextcloud відхилив цю зміну. Перевірте нотатку та збережіть локальну копію перед повторенням.';
+  String get notesRejected =>
+      'Nextcloud відхилив цю зміну. Перевірте нотатку та збережіть локальну копію перед повторенням.';
 
   @override
-  String get notesThrottled => 'Nextcloud попросив зачекати. Синхронізація продовжиться після зазначеного терміну.';
+  String get notesThrottled =>
+      'Nextcloud попросив зачекати. Синхронізація продовжиться після зазначеного терміну.';
 
   @override
   String get notesRecoveryRequired => 'Конфлікти · Порівняти';
@@ -5428,7 +5877,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesScanning => 'Сканування файлів…';
 
   @override
-  String get notesCancelling => 'Скасування… Очікування завершення поточної операції.';
+  String get notesCancelling =>
+      'Скасування… Очікування завершення поточної операції.';
 
   @override
   String get notesCancelled => 'Скасовано';
@@ -5440,7 +5890,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesTransferFailed => 'Помилка. Повторити';
 
   @override
-  String get notesImportPartialHelp => 'Попередні елементи можуть уже бути збережені локально. Відновіть цей імпорт, щоб уникнути дублікатів.';
+  String get notesImportPartialHelp =>
+      'Попередні елементи можуть уже бути збережені локально. Відновіть цей імпорт, щоб уникнути дублікатів.';
 
   @override
   String get notesNotStarted => 'Не розпочато';
@@ -5449,7 +5900,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesCreated => 'Створено';
 
   @override
-  String get notesRemoteDeleteUnavailable => 'Адреса сервера · Не підтримується · Видалити · Вкладення';
+  String get notesRemoteDeleteUnavailable =>
+      'Адреса сервера · Не підтримується · Видалити · Вкладення';
 
   @override
   String get notesCurrentText => 'Поточний збережений текст';
@@ -5458,16 +5910,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesRecovering => 'Відновлення як нової нотатки…';
 
   @override
-  String get notesReadOnlyHelp => 'Лише читання · Обране · Зберегти локальну копію…';
+  String get notesReadOnlyHelp =>
+      'Лише читання · Обране · Зберегти локальну копію…';
 
   @override
   String get notesSort => 'Сортування нотаток';
 
   @override
-  String get notesPathRelative => 'Шлях папки нотаток задається відносно вашого сховища Nextcloud.';
+  String get notesPathRelative =>
+      'Шлях папки нотаток задається відносно вашого сховища Nextcloud.';
 
   @override
-  String get notesSettingsStale => 'Налаштування на Nextcloud змінилися. Перезавантажте й перевірте значення сервера перед заміною чернетки.';
+  String get notesSettingsStale =>
+      'Налаштування на Nextcloud змінилися. Перезавантажте й перевірте значення сервера перед заміною чернетки.';
 
   @override
   String get notesDownloadsPaused => 'Завантаження призупинено';
@@ -5476,16 +5931,20 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesExportNotPublished => 'Експорт не опубліковано.';
 
   @override
-  String get notesKeyringUnavailable => 'Розблокуйте системну в’язку ключів і повторіть спробу.';
+  String get notesKeyringUnavailable =>
+      'Розблокуйте системну в’язку ключів і повторіть спробу.';
 
   @override
-  String get notesConnectFailed => 'Не вдалося підключитися до Nextcloud Notes. Перевірте адресу сервера та повторіть спробу.';
+  String get notesConnectFailed =>
+      'Не вдалося підключитися до Nextcloud Notes. Перевірте адресу сервера та повторіть спробу.';
 
   @override
-  String get notesAccountMismatch => 'Увійдіть до того самого облікового запису Nextcloud. Щоб підключити інший, спершу видаліть цей.';
+  String get notesAccountMismatch =>
+      'Увійдіть до того самого облікового запису Nextcloud. Щоб підключити інший, спершу видаліть цей.';
 
   @override
-  String get notesLocalRemovalFailed => 'Не вдалося очистити локальні дані. Обліковий запис збережено для повторного видалення.';
+  String get notesLocalRemovalFailed =>
+      'Не вдалося очистити локальні дані. Обліковий запис збережено для повторного видалення.';
 
   @override
   String get notesTransferring => 'Передавання нотаток…';
@@ -5494,10 +5953,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get notesTechnicalDetails => 'Технічні відомості';
 
   @override
-  String get notesPauseRequirement => 'Призупинити вимогу автономного зберігання';
+  String get notesPauseRequirement =>
+      'Призупинити вимогу автономного зберігання';
 
   @override
-  String get notesResumeRequirement => 'Відновити вимогу автономного зберігання';
+  String get notesResumeRequirement =>
+      'Відновити вимогу автономного зберігання';
 
   @override
   String get gitReturnToDocument => 'Повернутися до документа';
@@ -5508,7 +5969,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitNonUtf8FilenameMessage => 'Назва файлу містить байти не в UTF-8. Перегляд та індексування Git доступні; редактор документів потребує назву файлу в UTF-8.';
+  String get gitNonUtf8FilenameMessage =>
+      'Назва файлу містить байти не в UTF-8. Перегляд та індексування Git доступні; редактор документів потребує назву файлу в UTF-8.';
 
   @override
   String get gitUiMergeInProgress => 'Триває об\' єднання';
@@ -5526,7 +5988,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiPatchApplicationInProgress => 'Програма для латання';
 
   @override
-  String get gitUiSquashMergeResultAwaitingCommit => 'З\' єднання результату очікування на внеску';
+  String get gitUiSquashMergeResultAwaitingCommit =>
+      'З\' єднання результату очікування на внеску';
 
   @override
   String get gitUiUnresolvedIndexConflicts => 'Невирішені конфлікти індексу';
@@ -5550,16 +6013,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiNoStashes => 'Без заставки';
 
   @override
-  String get gitUiSelectAStashToInspectItsChanges => 'Оберіть сховище для перевірки його змін';
+  String get gitUiSelectAStashToInspectItsChanges =>
+      'Оберіть сховище для перевірки його змін';
 
   @override
   String get gitUiStashedUntrackedFiles => 'Затримуються файли без стеження';
 
   @override
-  String get gitUiInspectStashedUntrackedFiles => 'Перевірка схованих файлів без стеження...';
+  String get gitUiInspectStashedUntrackedFiles =>
+      'Перевірка схованих файлів без стеження...';
 
   @override
-  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying => 'Перезапустити стан у фазі/index під час застосування';
+  String get gitUiReinstateTheStashSStagedIndexStateWhenApplying =>
+      'Перезапустити стан у фазі/index під час застосування';
 
   @override
   String get gitUiApplyAndRetain => 'Застосувати і зберегти';
@@ -5577,7 +6043,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiBranchFromStash => 'Створити гілку з відкладеного';
 
   @override
-  String get gitUiCreateSwitchToABranchAtTheStashSOriginal => 'Створіть/ сміка у гілці на початку рядка, а потім змініть її. Початковий сховище зберігатиметься для явного пізнішого вилучення.';
+  String get gitUiCreateSwitchToABranchAtTheStashSOriginal =>
+      'Створіть/ сміка у гілці на початку рядка, а потім змініть її. Початковий сховище зберігатиметься для явного пізнішого вилучення.';
 
   @override
   String gitUiArg0ThisStash(String arg0) {
@@ -5585,13 +6052,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts => 'Початковий сховок зберігатиметься, якщо буде застосовано конфлікти.';
+  String get gitUiTheOriginalStashIsRetainedIfApplyingConflicts =>
+      'Початковий сховок зберігатиметься, якщо буде застосовано конфлікти.';
 
   @override
-  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied => 'Вилучає цей запис сховання. Зміни у ньому не застосовуються.';
+  String get gitUiDeletesThisStashEntryItsChangesAreNotApplied =>
+      'Вилучає цей запис сховання. Зміни у ньому не застосовуються.';
 
   @override
-  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr => 'Розв\'яжіть конфлікти незлитих файлів. Git не має команд продовження чи переривання stash; початковий запис stash залишається.';
+  String get gitUiResolveTheUnmergedFilesGitHasNoStashContinueOr =>
+      'Розв\'яжіть конфлікти незлитих файлів. Git не має команд продовження чи переривання stash; початковий запис stash залишається.';
 
   @override
   String get gitUiStashNameMessage => 'Назва/ повідомлення застарілої назви';
@@ -5600,25 +6070,31 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiStashContentAndResultingIndex => 'Вміст і індекс';
 
   @override
-  String get gitUiStashTrackedWorkingAndStagedChanges => 'Застарілі зміни у робочому стані';
+  String get gitUiStashTrackedWorkingAndStagedChanges =>
+      'Застарілі зміни у робочому стані';
 
   @override
-  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex => 'Відкласти зміни, залишивши вміст індексу на місці (--keep-index)';
+  String get gitUiStashChangesLeaveStagedChangesInPlaceKeepIndex =>
+      'Відкласти зміни, залишивши вміст індексу на місці (--keep-index)';
 
   @override
-  String get gitUiStashOnlyStagedChangesStaged => 'Відкласти лише зміни з індексу (--staged)';
+  String get gitUiStashOnlyStagedChangesStaged =>
+      'Відкласти лише зміни з індексу (--staged)';
 
   @override
   String get gitUiIncludeUntrackedFiles => 'Включити недосліджені файли';
 
   @override
-  String get gitUiAllEligiblePathsInThisRepository => 'Всі відповідні шляхи у цьому сховищі';
+  String get gitUiAllEligiblePathsInThisRepository =>
+      'Всі відповідні шляхи у цьому сховищі';
 
   @override
-  String get gitUiNoEligibleChangesForTheseStashOptions => 'Для цих параметрів приховування не передбачено відповідних змін.';
+  String get gitUiNoEligibleChangesForTheseStashOptions =>
+      'Для цих параметрів приховування не передбачено відповідних змін.';
 
   @override
-  String get gitUiSelectAtLeastOneEligiblePath => 'Виберіть принаймні один відповідний шлях.';
+  String get gitUiSelectAtLeastOneEligiblePath =>
+      'Виберіть принаймні один відповідний шлях.';
 
   @override
   String get gitUiCreateStash2 => 'Відкласти зміни';
@@ -5627,7 +6103,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCreateWorktree => 'Створити робоче дерево...';
 
   @override
-  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD => 'Створіть коміт перед створенням робочого дерева на HEAD.';
+  String get gitUiCreateACommitBeforeCreatingAWorktreeAtHEAD =>
+      'Створіть коміт перед створенням робочого дерева на HEAD.';
 
   @override
   String get gitUiDetachedHEAD => 'Від\'єднаний HEAD';
@@ -5666,7 +6143,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRemoveCleanWorktree => 'Вилучити чисте робоче дерево...';
 
   @override
-  String get gitUiReviewRemovalIncludingLocalChanges => 'Перегляд вилучення разом з локальними змінами...';
+  String get gitUiReviewRemovalIncludingLocalChanges =>
+      'Перегляд вилучення разом з локальними змінами...';
 
   @override
   String get gitUiNewWorktreeFolderName => 'Назва нової теки робочого дерева';
@@ -5675,7 +6153,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiNewWorktreeBranch => 'Нова гілка робочого дерева';
 
   @override
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return 'Створіть $arg0/ $arg1 з новою локальною гілкою на $arg2 ($arg3).';
   }
 
@@ -5686,19 +6169,25 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRemoveWorktree => 'Вилучити робоче дерево?';
 
   @override
-  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree => 'Вимикається відкидання всіх локальних змін у цьому робочому дереві, за якими слідує/ не стежить. Заблоковані/ використовуються робочі дерева залишаються захищеними.';
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree =>
+      'Вимикається відкидання всіх локальних змін у цьому робочому дереві, за якими слідує/ не стежить. Заблоковані/ використовуються робочі дерева залишаються захищеними.';
 
   @override
-  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles => 'Git відмовляється вилучати, якщо існують локальні зміни, файли без стеження або блокування.';
+  String get gitUiGitRefusesRemovalIfThereAreLocalChangesUntrackedFiles =>
+      'Git відмовляється вилучати, якщо існують локальні зміни, файли без стеження або блокування.';
 
   @override
-  String get gitUiDiscardLocalWorktreeContentsAndRemove => 'Відкинути вміст локального робочого дерева і вилучити';
+  String get gitUiDiscardLocalWorktreeContentsAndRemove =>
+      'Відкинути вміст локального робочого дерева і вилучити';
 
   @override
   String get gitUiRemoveCleanWorktree2 => 'Вилучити чисте робоче дерево';
 
   @override
-  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization => 'Явно повторне прокляття у вкладені підмодулі для оновлень/синхронізації';
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization =>
+      'Явно повторне прокляття у вкладені підмодулі для оновлень/синхронізації';
 
   @override
   String get gitUiNoRecordedSubmodules => 'Немає записаних підмодулів';
@@ -5727,19 +6216,24 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiInitializeConfiguration => 'Ініціалізувати налаштування';
 
   @override
-  String get gitUiUpdateToParentSRecordedCommit => 'Оновлення до батьківської команди, записаної у записі команди +...';
+  String get gitUiUpdateToParentSRecordedCommit =>
+      'Оновлення до батьківської команди, записаної у записі команди +...';
 
   @override
-  String get gitUiFollowConfiguredRemoteBranch => 'Відслідкувати налаштовану віддалену гілку...';
+  String get gitUiFollowConfiguredRemoteBranch =>
+      'Відслідкувати налаштовану віддалену гілку...';
 
   @override
-  String get gitUiSynchronizeConfiguredURLs => 'Синхронізувати налаштовані адреси URL...';
+  String get gitUiSynchronizeConfiguredURLs =>
+      'Синхронізувати налаштовані адреси URL...';
 
   @override
-  String get gitUiStageCurrentSubmodulePointerInParent => 'Сектор поточного підмодулювного вказівника у батьківському полі';
+  String get gitUiStageCurrentSubmodulePointerInParent =>
+      'Сектор поточного підмодулювного вказівника у батьківському полі';
 
   @override
-  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate => 'Батьківські і підмодульні входи, поштовхи і брудний стан залишаються окремими. Перегляд не започатковує або не оновлює їх.';
+  String get gitUiParentAndSubmoduleCommitsPushesAndDirtyStateRemainSeparate =>
+      'Батьківські і підмодульні входи, поштовхи і брудний стан залишаються окремими. Перегляд не започатковує або не оновлює їх.';
 
   @override
   String gitUiFetchAndCheckOutTheConfiguredRemoteBranchSCommit(String arg0) {
@@ -5747,12 +6241,17 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1) {
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  ) {
     return 'За потреби ініціалізувати і перевірити точно $arg0. Рекурсивно: $arg1.';
   }
 
   @override
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0) {
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  ) {
     return 'Застосувати рекурсивну дію з налаштування підмодуль. Рекурсивно: $arg0.';
   }
 
@@ -5760,7 +6259,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiApplySubmoduleOperation => 'Застосувати дію підмодуля';
 
   @override
-  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog => 'Перевірка записаної модифікації або створення гілки відновлення. Рефлог не відновить довільного незбереженого або невідстеженого вмісту.';
+  String get gitUiInspectARecordedRevisionOrCreateARecoveryBranchReflog =>
+      'Перевірка записаної модифікації або створення гілки відновлення. Рефлог не відновить довільного незбереженого або невідстеженого вмісту.';
 
   @override
   String get gitUiSelectAReflogEntry => 'Виберіть запис спростування';
@@ -5797,13 +6297,17 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiAGitTextHistoryMustOwnItsEditableField => 'Історія тексту Git повинна мати своє поле для редагування.';
+  String get gitUiAGitTextHistoryMustOwnItsEditableField =>
+      'Історія тексту Git повинна мати своє поле для редагування.';
 
   @override
-  String get gitUiEditHEADIndexWorkingTree => 'Редагувати HEAD | Індекс | Робоче дерево…';
+  String get gitUiEditHEADIndexWorkingTree =>
+      'Редагувати HEAD | Індекс | Робоче дерево…';
 
   @override
-  String get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison => 'Змінено індекс або робочий текст. Оновити це порівняння перед застою.';
+  String
+  get gitUiTheReviewedIndexOrWorkingContentChangedRefreshThisComparison =>
+      'Змінено індекс або робочий текст. Оновити це порівняння перед застою.';
 
   @override
   String get gitUiRefreshComparison => 'Оновити порівняння';
@@ -5860,10 +6364,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiStagingActions2 => 'Дії з індексом…';
 
   @override
-  String get gitUiUnstageSelectedChangedLines => 'Вилучити вибрані змінені рядки з індексу';
+  String get gitUiUnstageSelectedChangedLines =>
+      'Вилучити вибрані змінені рядки з індексу';
 
   @override
-  String get gitUiStageSelectedChangedLines => 'Додати вибрані змінені рядки до індексу';
+  String get gitUiStageSelectedChangedLines =>
+      'Додати вибрані змінені рядки до індексу';
 
   @override
   String get gitUiUnstageWholeFile => 'Вилучити весь файл з індексу';
@@ -5872,34 +6378,47 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiStageWholeFile => 'Додати весь файл до індексу';
 
   @override
-  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(String arg0) {
+  String gitUiArg0WhitespaceOnlyChangedLinesHiddenShowExactChanges(
+    String arg0,
+  ) {
     return '$arg0 лише змінені рядки сховані · Показати точні зміни';
   }
 
   @override
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0) {
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  ) {
     return 'Вибрано змінених рядків: $arg0.';
   }
 
   @override
-  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings => 'Порівняння лише для читання · Копіюйте текст або змінюйте відображення.';
+  String get gitUiReadOnlyComparisonCopyTextOrAdjustDisplaySettings =>
+      'Порівняння лише для читання · Копіюйте текст або змінюйте відображення.';
 
   @override
   String get gitUiNoFinalNewline => ' · / не знайдено останнього нового рядка';
 
   @override
-  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return '$arg0 / $arg1 / $arg2 байтів $arg3';
   }
 
   @override
-  String get gitUiTextComparisonIsUnavailableForTheseContents => 'Для цього вмісту порівняння тексту неможливе.';
+  String get gitUiTextComparisonIsUnavailableForTheseContents =>
+      'Для цього вмісту порівняння тексту неможливе.';
 
   @override
-  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents => 'Це порівняння перевищує обмежену межу рецензування тексту. Вміст не було оголошено ідентичним.';
+  String get gitUiThisComparisonExceedsTheBoundedTextReviewLimitTheContents =>
+      'Це порівняння перевищує обмежену межу рецензування тексту. Вміст не було оголошено ідентичним.';
 
   @override
-  String get gitUiTheComparedContentsAreIdentical => 'Вміст порівняння ідентичний.';
+  String get gitUiTheComparedContentsAreIdentical =>
+      'Вміст порівняння ідентичний.';
 
   @override
   String get gitUiUnstage => 'Роз\' єднати';
@@ -5930,7 +6449,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiWritingReviewedIndexResult => 'Запис результатів аналізу індексу';
+  String get gitUiWritingReviewedIndexResult =>
+      'Запис результатів аналізу індексу';
 
   @override
   String get gitUiHead => 'HEAD';
@@ -5947,7 +6467,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiIndexEditableUTF8Blob => 'Індекс · придатний для редагування UTF- 8';
+  String get gitUiIndexEditableUTF8Blob =>
+      'Індекс · придатний для редагування UTF- 8';
 
   @override
   String get gitUiUndo => 'Скасувати';
@@ -5959,33 +6480,43 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiReloadIndexReview => 'Перезавантажити рецензування індексу?';
 
   @override
-  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces => 'Повторно завантажити поточні версії HEAD, індексу та робочих файлів. Незбережену чернетку редактора індексу буде замінено.';
+  String get gitUiReloadTheCurrentHEADIndexAndWorkingVersionsThisReplaces =>
+      'Повторно завантажити поточні версії HEAD, індексу та робочих файлів. Незбережену чернетку редактора індексу буде замінено.';
 
   @override
-  String get gitUiReplaceDraftAndReload => 'Замінити чернетку і перезавантаження';
+  String get gitUiReplaceDraftAndReload =>
+      'Замінити чернетку і перезавантаження';
 
   @override
   String get gitUiReloadVersions => 'Перезавантажити версії...';
 
   @override
-  String get gitUiWriteEditedResultToThisIndexEntry => 'Записувати змінений результат до цього запису індексу';
+  String get gitUiWriteEditedResultToThisIndexEntry =>
+      'Записувати змінений результат до цього запису індексу';
 
   @override
-  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore => 'Робочі файли залишаються на диску. Перегляньте змінений індекс перед застосуванням.';
+  String get gitUiWorkingFilesRemainOnDiskReviewTheEditedIndexBefore =>
+      'Робочі файли залишаються на диску. Перегляньте змінений індекс перед застосуванням.';
 
   @override
-  String get gitUiReviewIndexTextFormatChanges => 'Перегляд змін формату індексу';
+  String get gitUiReviewIndexTextFormatChanges =>
+      'Перегляд змін формату індексу';
 
   @override
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1) {
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  ) {
     return 'Оновлювати лише елемент індексу для $arg0. $arg1';
   }
 
   @override
-  String get gitUiWriteReviewedIndexResult => 'Записувати переглянутий результат індексу';
+  String get gitUiWriteReviewedIndexResult =>
+      'Записувати переглянутий результат індексу';
 
   @override
-  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain => 'Під час рецензування формату результат змінено. Перегляньте його ще раз.';
+  String get gitUiTheEditedResultChangedDuringFormatReviewReviewItAgain =>
+      'Під час рецензування формату результат змінено. Перегляньте його ще раз.';
 
   @override
   String get gitUiSynchronizeScrolling => 'Синхронізувати прокручування';
@@ -5994,10 +6525,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiReadOnlyRevisionContent => 'Вміст лише для читання';
 
   @override
-  String get gitUiEditableIndexContent => 'З можливістю редагування вмісту індексу';
+  String get gitUiEditableIndexContent =>
+      'З можливістю редагування вмісту індексу';
 
   @override
-  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters => 'Запитана модифікація знаходиться поза поточними фільтрами. Скинути фільтри, щоб їх було відкрито.';
+  String get gitUiTheRequestedRevisionIsOutsideTheCurrentFiltersResetFilters =>
+      'Запитана модифікація знаходиться поза поточними фільтрами. Скинути фільтри, щоб їх було відкрито.';
 
   @override
   String get gitUiFilterLog => 'Журнал фільтрів';
@@ -6064,7 +6597,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiCompareTwoSelectedRevisions => 'Порівняти дві вибрані модифікації...';
+  String get gitUiCompareTwoSelectedRevisions =>
+      'Порівняти дві вибрані модифікації...';
 
   @override
   String get gitUiToggleBranchesPane => 'Перемикач панелі гілок';
@@ -6104,7 +6638,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiTags => 'Теги';
 
   @override
-  String get gitUiNoCommitsMatchTheCurrentFilters => 'Немає внесків, що відповідають поточним фільтрам.';
+  String get gitUiNoCommitsMatchTheCurrentFilters =>
+      'Немає внесків, що відповідають поточним фільтрам.';
 
   @override
   String get gitUiObjectID => 'ІД об\' єкта';
@@ -6157,10 +6692,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable => 'Обмежена/ частна границя: батьківський об\' єкт недоступний.';
+  String get gitUiShallowPartialBoundaryAParentObjectIsUnavailable =>
+      'Обмежена/ частна границя: батьківський об\' єкт недоступний.';
 
   @override
-  String get gitUiParentIsOutsideThisPageOrAShallowBoundary => 'Батьки знаходяться поза цією сторінкою або неглибокою межею.';
+  String get gitUiParentIsOutsideThisPageOrAShallowBoundary =>
+      'Батьки знаходяться поза цією сторінкою або неглибокою межею.';
 
   @override
   String gitUiParentArg0(String arg0) {
@@ -6189,7 +6726,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRevertCommit => 'Повернути внеску';
 
   @override
-  String get gitUiInteractiveRebaseAfterThisBoundary => 'Інтерактивне переосновування після цієї межі';
+  String get gitUiInteractiveRebaseAfterThisBoundary =>
+      'Інтерактивне переосновування після цієї межі';
 
   @override
   String get gitUiResetCurrentBranch => 'Скинути поточну гілку';
@@ -6198,16 +6736,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiGoToCommitReference2 => 'Перейти до внеску/ пріоритету';
 
   @override
-  String get gitUiEnterACommitIDOrReferenceToRevealInLog => 'Введіть ідентифікатор або посилання на відкриття у журналі.';
+  String get gitUiEnterACommitIDOrReferenceToRevealInLog =>
+      'Введіть ідентифікатор або посилання на відкриття у журналі.';
 
   @override
-  String get gitUiTheRequestedRevisionIsUnavailable => 'Запитана модифікація недоступна.';
+  String get gitUiTheRequestedRevisionIsUnavailable =>
+      'Запитана модифікація недоступна.';
 
   @override
-  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain => 'Метадані сховища призначено лише для читання. Перевірка гілки і порівняння залишаються доступними.';
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain =>
+      'Метадані сховища призначено лише для читання. Перевірка гілки і порівняння залишаються доступними.';
 
   @override
-  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd => 'Робочі файли недоступні або лише для читання. Перемикання і об\' єднання гілок неможливе.';
+  String get gitUiWorkingFilesAreUnavailableOrReadOnlyBranchSwitchingAnd =>
+      'Робочі файли недоступні або лише для читання. Перемикання і об\' єднання гілок неможливе.';
 
   @override
   String get gitUiSearchBranchesAndTags => 'Пошук гілок і тегів';
@@ -6243,7 +6786,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiOpenOccupiedWorktree => 'Відкрито зайнятого робочого дерева';
 
   @override
-  String get gitUiCreateLocalTrackingBranch => 'Створити локальну гілку стеження...';
+  String get gitUiCreateLocalTrackingBranch =>
+      'Створити локальну гілку стеження...';
 
   @override
   String get gitUiCompareToCurrentHEAD => 'Порівняти з поточним HEAD';
@@ -6311,7 +6855,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1) {
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  ) {
     return 'Ціль $arg0 $arg1 лише локальне вилучення. Необ\' єднану гілку заборонено.';
   }
 
@@ -6329,7 +6876,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiDeleteUnmergedLocalBranch => 'Вилучити необ\' єднану локальну гілку';
+  String get gitUiDeleteUnmergedLocalBranch =>
+      'Вилучити необ\' єднану локальну гілку';
 
   @override
   String gitUiDestinationArg0Arg1(String arg0, String arg1) {
@@ -6346,25 +6894,31 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiFastForwardWhenPossible => 'Перемотати швидко, якщо можливо';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommit => 'Завжди створювати внесок до об\' єднання';
+  String get gitUiAlwaysCreateAMergeCommit =>
+      'Завжди створювати внесок до об\' єднання';
 
   @override
   String get gitUiFastForwardOnly => 'Лише швидкий перемотування вперед';
 
   @override
-  String get gitUiSquashIntoStagedChanges => 'Перемішування у зміни, що відбуваються';
+  String get gitUiSquashIntoStagedChanges =>
+      'Перемішування у зміни, що відбуваються';
 
   @override
-  String get gitUiStopBeforeCreatingTheMergeCommit => 'Зупинитись перед створенням процесу об\' єднання';
+  String get gitUiStopBeforeCreatingTheMergeCommit =>
+      'Зупинитись перед створенням процесу об\' єднання';
 
   @override
-  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview => 'Швидке перемотування вимкнено, щоб HEAD не перемістився до перевірки.';
+  String get gitUiFastForwardIsDisabledSoHEADCannotMoveBeforeReview =>
+      'Швидке перемотування вимкнено, щоб HEAD не перемістився до перевірки.';
 
   @override
-  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot => 'Залишає зареєстровані зміни для окремого внеску; це не є продовженням об\' єднання.';
+  String get gitUiLeavesStagedChangesForASeparateCommitThisIsNot =>
+      'Залишає зареєстровані зміни для окремого внеску; це не є продовженням об\' єднання.';
 
   @override
-  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace => 'Конфлікти залишаються у робочому просторі спільної роздільної здатності.';
+  String get gitUiConflictsRemainAvailableInTheSharedResolutionWorkspace =>
+      'Конфлікти залишаються у робочому просторі спільної роздільної здатності.';
 
   @override
   String get gitUiAddRemote => 'Додати віддалений...';
@@ -6398,13 +6952,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiNewRemoteName => 'Нова віддалена назва';
 
   @override
-  String get gitUiRepositoryURLOrLocalSource => 'Адреса URL сховища або локальне джерело';
+  String get gitUiRepositoryURLOrLocalSource =>
+      'Адреса URL сховища або локальне джерело';
 
   @override
-  String get gitUiEnterTheExactReviewedDestinationToRemove => 'Введіть точне переглянуте місце призначення, яке слід вилучити.';
+  String get gitUiEnterTheExactReviewedDestinationToRemove =>
+      'Введіть точне переглянуте місце призначення, яке слід вилучити.';
 
   @override
-  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt => 'Реєстрації надано налаштованими допоміжними засобами або особистим запрошенням.';
+  String get gitUiCredentialsAreSuppliedByConfiguredHelpersOrAPrivatePrompt =>
+      'Реєстрації надано налаштованими допоміжними засобами або особистим запрошенням.';
 
   @override
   String gitUiRemoveRemoteArg0(String arg0) {
@@ -6412,13 +6969,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot => 'Вилучає локальне віддалене налаштування і стеження за посиланнями. Сховище сервера не буде вилучено.';
+  String
+  get gitUiRemovesLocalRemoteConfigurationAndTrackingReferencesItDoesNot =>
+      'Вилучає локальне віддалене налаштування і стеження за посиланнями. Сховище сервера не буде вилучено.';
 
   @override
   String get gitUiRemoveRemote2 => 'Вилучити віддалений';
 
   @override
-  String get gitUiCommitScopeEntireRepository => 'Область передання: ціле сховище';
+  String get gitUiCommitScopeEntireRepository =>
+      'Область передання: ціле сховище';
 
   @override
   String get gitUiCachedTracking => 'Кешоване стеження';
@@ -6427,10 +6987,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiAmendLastCommit => 'Змінити останній коміт';
 
   @override
-  String get gitUiConfiguredHooksAndSigningAreRespected => 'Вшановано налаштовані гачки і підписання.';
+  String get gitUiConfiguredHooksAndSigningAreRespected =>
+      'Вшановано налаштовані гачки і підписання.';
 
   @override
-  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt => 'Перезаписує вибраний коміт HEAD. Відстеження віддалених гілок не доводить, що він не опублікований.';
+  String get gitUiRewritesTheSelectedHEADCommitRemoteTrackingCannotProveIt =>
+      'Перезаписує вибраний коміт HEAD. Відстеження віддалених гілок не доводить, що він не опублікований.';
 
   @override
   String get gitUiRepository => 'Репозиторій';
@@ -6447,15 +7009,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRepositoryActions => 'Дії з репозиторієм';
 
   @override
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind) {
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
     return 'Кеш відстеження · $upstream · попереду: $ahead · позаду: $behind';
   }
 
   @override
-  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts => 'Сховище bre · немає робочого дерева. Відкрити журнал для перевірки його журналу.';
+  String get gitUiBareRepositoryNoWorkingTreeOpenLogToInspectIts =>
+      'Сховище bre · немає робочого дерева. Відкрити журнал для перевірки його журналу.';
 
   @override
-  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable => 'Сховище лише для читання · зафіксовування і внески недоступні.';
+  String get gitUiReadOnlyRepositoryStagingAndCommitsAreUnavailable =>
+      'Сховище лише для читання · зафіксовування і внески недоступні.';
 
   @override
   String get gitUiRepositoryStatusUnavailable => 'Стан сховища недоступний';
@@ -6469,22 +7037,27 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiAddSignOffTrailer => 'Додати рядок підтвердження';
 
   @override
-  String get gitUiUseConfiguredSigningPolicy => 'Використовувати налаштовані правила підписування';
+  String get gitUiUseConfiguredSigningPolicy =>
+      'Використовувати налаштовані правила підписування';
 
   @override
-  String get gitUiCryptographicallySignThisCommit => 'Криптографія позначення цього внеску';
+  String get gitUiCryptographicallySignThisCommit =>
+      'Криптографія позначення цього внеску';
 
   @override
   String get gitUiDoNotSignThisCommit => 'Не підписувати цей внесок';
 
   @override
-  String get gitUiRecentCommitMessages => 'Нещодавні повідомлення для надсилання...';
+  String get gitUiRecentCommitMessages =>
+      'Нещодавні повідомлення для надсилання...';
 
   @override
-  String get gitUiUseConfiguredCommitTemplate => 'Використовувати налаштований шаблон передачі...';
+  String get gitUiUseConfiguredCommitTemplate =>
+      'Використовувати налаштований шаблон передачі...';
 
   @override
-  String get gitUiAuthorIdentityAndConfiguredHooks => 'Профіль автора і налаштовані гачки...';
+  String get gitUiAuthorIdentityAndConfiguredHooks =>
+      'Профіль автора і налаштовані гачки...';
 
   @override
   String get gitUiDraftMessage => 'Чернеткове повідомлення...';
@@ -6518,7 +7091,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCommitAndPush => 'Створити коміт і надіслати…';
 
   @override
-  String get gitUiNoReadableCommitTemplateIsConfigured => 'Не налаштовано придатний для читання шаблон внеску.';
+  String get gitUiNoReadableCommitTemplateIsConfigured =>
+      'Не налаштовано придатний для читання шаблон внеску.';
 
   @override
   String get gitUiCommitIdentityAndHooks => 'Передавати особу і гачки';
@@ -6530,7 +7104,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiReplaceMessageDraft => 'Замінити чернетку повідомлення?';
 
   @override
-  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage => 'Замінити існуюче повідомлення про внеску вибраним повідомленням?';
+  String get gitUiReplaceTheExistingCommitMessageWithTheSelectedMessage =>
+      'Замінити існуюче повідомлення про внеску вибраним повідомленням?';
 
   @override
   String get gitUiReplaceDraft => 'Замінити чернетку';
@@ -6541,7 +7116,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0) {
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  ) {
     return 'Локальний внесок до $arg0 існує. Переглянути журнал перед тим, як спробувати внести інший внесок. Обробку повідомлення було збережено.';
   }
 
@@ -6568,7 +7145,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiASignOffTrailerIsAStatementInTheMessage => 'Рядок підтвердження в повідомленні відрізняється від криптографічного підпису. Дані автора зберігаються лише в локальній конфігурації репозиторію; чернетка зберігається.';
+  String get gitUiASignOffTrailerIsAStatementInTheMessage =>
+      'Рядок підтвердження в повідомленні відрізняється від криптографічного підпису. Дані автора зберігаються лише в локальній конфігурації репозиторію; чернетка зберігається.';
 
   @override
   String get gitUiSaveRepositoryIdentity => 'Зберегти профіль сховища';
@@ -6644,7 +7222,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1) {
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 байтів * $arg1 Замінює робочий вміст індексом або вилучає цей файл, у якому немає доріжки. Затриманий вміст зберігається. Перш за все слід переглянути збережені документи вузлів.';
   }
 
@@ -6660,7 +7241,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed => 'Ця дія вилучає посилання на всі поточні призначення для пересування на місце, перелічені нижче. У програмі зберігаються локальні гілки/ мітки. Очікувані підказки буде виправлено за допомогою цього рецензування.';
+  String get gitUiThisRemovesTheReferenceOnEveryActualPushDestinationListed =>
+      'Ця дія вилучає посилання на всі поточні призначення для пересування на місце, перелічені нижче. У програмі зберігаються локальні гілки/ мітки. Очікувані підказки буде виправлено за допомогою цього рецензування.';
 
   @override
   String get gitUiReferenceDoesNotExist => 'Посилання не існує';
@@ -6679,10 +7261,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny => 'Точні підказки призначення, показані вище, буде вилучено. Будь- яка змінена віддалена підказка зупиняє операцію для наступного повторення.';
+  String get gitUiTheExactDestinationTipsShownAboveWillBeRemovedAny =>
+      'Точні підказки призначення, показані вище, буде вилучено. Будь- яка змінена віддалена підказка зупиняє операцію для наступного повторення.';
 
   @override
-  String get gitUiReviewAndDeleteFromRemote => 'Перегляд і вилучення з віддаленого...';
+  String get gitUiReviewAndDeleteFromRemote =>
+      'Перегляд і вилучення з віддаленого...';
 
   @override
   String get gitUiDestinationReference => 'Посилання на призначення';
@@ -6699,13 +7283,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat => 'У місці призначення є внески, які не доступні локально. Ознайомтеся з призначенням, перш ніж переглядати вихідний журнал.';
+  String get gitUiADestinationHasCommitsThatAreUnavailableLocallyFetchThat =>
+      'У місці призначення є внески, які не доступні локально. Ознайомтеся з призначенням, перш ніж переглядати вихідний журнал.';
 
   @override
-  String get gitUiFetchReviewedDestination => 'Отримати переглянуте призначення';
+  String get gitUiFetchReviewedDestination =>
+      'Отримати переглянуте призначення';
 
   @override
-  String get gitUiChooseADestinationAndReviewTheOutgoingCommits => 'Оберіть місце призначення і перегляньте вихідні внески.';
+  String get gitUiChooseADestinationAndReviewTheOutgoingCommits =>
+      'Оберіть місце призначення і перегляньте вихідні внески.';
 
   @override
   String get gitUiNoOutgoingCommits => 'Без вихідних внесків';
@@ -6717,10 +7304,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiLoadMoreOutgoingCommits => 'Завантажити більш вихідні внески';
 
   @override
-  String get gitUiSetThisDestinationAsUpstream => 'Встановити це місце як вгору за течією';
+  String get gitUiSetThisDestinationAsUpstream =>
+      'Встановити це місце як вгору за течією';
 
   @override
-  String get gitUiChooseExactTagsToPublish => 'Виберіть точні мітки для оприлюднення';
+  String get gitUiChooseExactTagsToPublish =>
+      'Виберіть точні мітки для оприлюднення';
 
   @override
   String get gitUiTagsNone => 'Мітки: немає';
@@ -6736,10 +7325,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog => 'Натисніть кнопку. Внесок локально не завершено у Log.';
+  String get gitUiPushCompletedTheLocalCommitRemainsAvailableInLog =>
+      'Натисніть кнопку. Внесок локально не завершено у Log.';
 
   @override
-  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview => 'Примусове надсилання вимагає точного збігу вершин цільових посилань із показаними під час перевірки.';
+  String get gitUiForceRequiresTheExactDestinationTipsShownInThisReview =>
+      'Примусове надсилання вимагає точного збігу вершин цільових посилань із показаними під час перевірки.';
 
   @override
   String get gitUiForceWithReviewedLease => 'Сила с прослушенной арендой...';
@@ -6748,7 +7339,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiPush => 'Надіслати';
 
   @override
-  String get gitUiForcePushWithReviewedLeases => 'Примусово штовхати рецензовані оренди?';
+  String get gitUiForcePushWithReviewedLeases =>
+      'Примусово штовхати рецензовані оренди?';
 
   @override
   String gitUiRewriteArg0OnlyIfEveryRemoteDestinationStillHasThe(String arg0) {
@@ -6756,13 +7348,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch => 'Інші користувачі вже можуть використовувати цю історію. Фонове отримання не оновить цю умову безпечного перезапису.';
+  String get gitUiOtherPeopleMayAlreadyUseThisHistoryABackgroundFetch =>
+      'Інші користувачі вже можуть використовувати цю історію. Фонове отримання не оновить цю умову безпечного перезапису.';
 
   @override
   String get gitUiForceWithLease => 'Примусово орендувати';
 
   @override
-  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother => 'Віддалений результат не є певним. Перегляньте місця призначення ще раз перед наступним перетягуванням.';
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother =>
+      'Віддалений результат не є певним. Перегляньте місця призначення ще раз перед наступним перетягуванням.';
 
   @override
   String gitUiParentArg0Arg1(String arg0, String arg1) {
@@ -6773,10 +7368,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRemoteToFetch => 'Віддалений для звантаження';
 
   @override
-  String get gitUiPruneDeletedRemoteTrackingBranches => 'Вилучити вилучені гілки з віддаленими композиціями';
+  String get gitUiPruneDeletedRemoteTrackingBranches =>
+      'Вилучити вилучені гілки з віддаленими композиціями';
 
   @override
-  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles => 'Отримувати оновлення даних з віддаленого стеження без заміни робочих файлів.';
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles =>
+      'Отримувати оновлення даних з віддаленого стеження без заміни робочих файлів.';
 
   @override
   String get gitUiFetch => 'Отримати';
@@ -6797,37 +7395,47 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRebase => 'Перебазувати';
 
   @override
-  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr => 'Зупинка, якщо призначення не може пришвидшити перемотування, ніколи не об\' єднувати або не відновлювати.';
+  String get gitUiStopIfTheDestinationCannotFastForwardNeverMergeOr =>
+      'Зупинка, якщо призначення не може пришвидшити перемотування, ніколи не об\' єднувати або не відновлювати.';
 
   @override
-  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs => 'Об\' єднати з внеском об\' єднання, зокрема, якщо можливо пришвидшити виконання дії.';
+  String get gitUiMergeWithAMergeCommitIncludingWhenFastForwardIs =>
+      'Об\' єднати з внеском об\' єднання, зокрема, якщо можливо пришвидшити виконання дії.';
 
   @override
-  String get gitUiMergeAllowFastForwardWhenPossible => 'Об\' єднання; за можливості дозволяє пришвидшити виконання дій.';
+  String get gitUiMergeAllowFastForwardWhenPossible =>
+      'Об\' єднання; за можливості дозволяє пришвидшити виконання дій.';
 
   @override
-  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits => 'Повторно створити локальний журнал під час збереження локального об\' єднання.';
+  String get gitUiRebaseLocalHistoryWhilePreservingLocalMergeCommits =>
+      'Повторно створити локальний журнал під час збереження локального об\' єднання.';
 
   @override
-  String get gitUiRebaseLocalCommitsAsALinearHistory => 'Перезапустити локальні документи як лінійну.';
+  String get gitUiRebaseLocalCommitsAsALinearHistory =>
+      'Перезапустити локальні документи як лінійну.';
 
   @override
-  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy => 'Git налаштовано на інтерактивну реbase. Виберіть стратегію перетягування явно тут або звантажте і відкрийте rebase... для перегляду плану.';
+  String get gitUiGitIsConfiguredForInteractiveRebaseSelectAPullStrategy =>
+      'Git налаштовано на інтерактивну реbase. Виберіть стратегію перетягування явно тут або звантажте і відкрийте rebase... для перегляду плану.';
 
   @override
-  String get gitUiUseReviewedOrdinaryRebaseForThisPull => 'Використовувати рецензовану звичайну повторну базу для цього перетягування';
+  String get gitUiUseReviewedOrdinaryRebaseForThisPull =>
+      'Використовувати рецензовану звичайну повторну базу для цього перетягування';
 
   @override
   String get gitUiOptions => 'Параметри';
 
   @override
-  String get gitUiAlwaysCreateAMergeCommitNoFastForward => 'Завжди створювати внесення об\' єднання (без перемотування вперед)';
+  String get gitUiAlwaysCreateAMergeCommitNoFastForward =>
+      'Завжди створювати внесення об\' єднання (без перемотування вперед)';
 
   @override
-  String get gitUiPreserveLocalMergeCommits => 'Зберігати локальне об\' єднання';
+  String get gitUiPreserveLocalMergeCommits =>
+      'Зберігати локальне об\' єднання';
 
   @override
-  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly => 'Локальні зміни можуть заборонити перетягування. Рецензування/ задання цих змін або явно створення замаху.';
+  String get gitUiLocalChangesMayPreventPullReviewCommitThemOrExplicitly =>
+      'Локальні зміни можуть заборонити перетягування. Рецензування/ задання цих змін або явно створення замаху.';
 
   @override
   String get gitUiStashes => 'Відкладені зміни';
@@ -6839,7 +7447,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiPullWithSelectedStrategy => 'Тягнути з обраною стратегією';
 
   @override
-  String get gitUiRepositoryURLOrLocalGitSource => 'Адреса URL сховища або локальне джерело Git';
+  String get gitUiRepositoryURLOrLocalGitSource =>
+      'Адреса URL сховища або локальне джерело Git';
 
   @override
   String get gitUiHttpsSSHOrLocalPath => 'HTTPS, SSH або локальний шлях';
@@ -6854,19 +7463,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiChoose => 'Вибрати...';
 
   @override
-  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr => 'Створює лише метадані Git. Існуючі файли не було створено або виконано.';
+  String get gitUiCreatesGitMetadataOnlyExistingFilesAreNotStagedOr =>
+      'Створює лише метадані Git. Існуючі файли не було створено або виконано.';
 
   @override
-  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser => 'Кінцева тека має бути відсутньою або порожньою. Наявні дані користувача ніколи не перезаписуються.';
+  String get gitUiTheFinalDestinationMustBeAbsentOrEmptyExistingUser =>
+      'Кінцева тека має бути відсутньою або порожньою. Наявні дані користувача ніколи не перезаписуються.';
 
   @override
-  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy => 'Початкова гілка · порожнє використовує ефективну політику Git';
+  String get gitUiInitialBranchBlankUsesEffectiveGitPolicy =>
+      'Початкова гілка · порожнє використовує ефективну політику Git';
 
   @override
   String get gitUiSelectedBranchOptional => 'Вибрана гілка · необов\' язкова';
 
   @override
-  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively => 'Рекурсивно ініціалізувати/надати підмодулі';
+  String get gitUiExplicitlyInitializeUpdateSubmodulesRecursively =>
+      'Рекурсивно ініціалізувати/надати підмодулі';
 
   @override
   String get gitUiPreparingGitOperation => 'Підготовка дії Git...';
@@ -6875,13 +7488,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiThisAttemptCreated => 'Цю спробу створеноError message';
 
   @override
-  String get gitUiTheDestinationExistedBeforeThisAttempt => 'Місце призначення існувало до такої спроби:';
+  String get gitUiTheDestinationExistedBeforeThisAttempt =>
+      'Місце призначення існувало до такої спроби:';
 
   @override
-  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone => 'Каталог залишається для перевірки. Перегляньте його перед іншою спробою клонування.';
+  String get gitUiTheDirectoryRemainsForInspectionReviewItBeforeAnotherClone =>
+      'Каталог залишається для перевірки. Перегляньте його перед іншою спробою клонування.';
 
   @override
-  String get gitUiNoDestinationDirectoryRemains => 'Не залишилося каталогу призначення.';
+  String get gitUiNoDestinationDirectoryRemains =>
+      'Не залишилося каталогу призначення.';
 
   @override
   String get gitUiCancelProcess => 'Скасувати процес';
@@ -6911,13 +7527,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiChooseBranchTagOrCommit => 'Вибрати гілку, тег або коміт…';
 
   @override
-  String get gitUiUseUpstreamAsNewBase => 'Використовувати вгору по стрічці як нову базу';
+  String get gitUiUseUpstreamAsNewBase =>
+      'Використовувати вгору по стрічці як нову базу';
 
   @override
-  String get gitUiChooseAValidBranchTagOrCommitFromLog => 'Оберіть чинну гілку, мітку або внеску з журналу.';
+  String get gitUiChooseAValidBranchTagOrCommitFromLog =>
+      'Оберіть чинну гілку, мітку або внеску з журналу.';
 
   @override
-  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash => 'Перший збережений коміт блоку гілки не може використовувати squash або fixup: перед ним немає цільового коміту.';
+  String get gitUiTheFirstRetainedCommitInABranchBlockCannotSquash =>
+      'Перший збережений коміт блоку гілки не може використовувати squash або fixup: перед ним немає цільового коміту.';
 
   @override
   String gitUiBranchBlockArg0(String arg0) {
@@ -6925,13 +7544,17 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiRewordWillRequestANewMessage => '[Реєслово запитає про нове повідомлення]\n';
+  String get gitUiRewordWillRequestANewMessage =>
+      '[Реєслово запитає про нове повідомлення]\n';
 
   @override
-  String get gitUiPlannedCommitMessages => 'Заплановані повідомлення про внеску';
+  String get gitUiPlannedCommitMessages =>
+      'Заплановані повідомлення про внеску';
 
   @override
-  String get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash => 'Попередній/комбінований перегляд повідомлення · Git надсилає запит на остаточні повторні повідомлення';
+  String
+  get gitUiOriginalCombinedMessagePreviewGitRequestsTheFinalRewordSquash =>
+      'Попередній/комбінований перегляд повідомлення · Git надсилає запит на остаточні повторні повідомлення';
 
   @override
   String gitUiResultArg0Arg1(String arg0, String arg1) {
@@ -6947,7 +7570,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiDetachedHEAD2 => 'Від\'єднаний HEAD';
 
   @override
-  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory => 'Перебазування змінює ідентифікатори комітів. Дані відстеження віддалених гілок не доводять, що історія ніколи не публікувалася.';
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory =>
+      'Перебазування змінює ідентифікатори комітів. Дані відстеження віддалених гілок не доводять, що історія ніколи не публікувалася.';
 
   @override
   String get gitUiIncludeRootCommits => 'Включити кореневі коміти';
@@ -6973,10 +7598,14 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiIncludesAllRootCommitsReachableFromThisBranch => 'Включає всі внески до кореневої копії, які можна отримати з цієї гілки.';
+  String get gitUiIncludesAllRootCommitsReachableFromThisBranch =>
+      'Включає всі внески до кореневої копії, які можна отримати з цієї гілки.';
 
   @override
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base) {
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  ) {
     return 'Коміти після $boundary буде повторно застосовано поверх $base; сам граничний коміт виключено.';
   }
 
@@ -6984,10 +7613,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRoot => 'Корінь';
 
   @override
-  String get gitUiGitBranchLabelResetMergeStructure => 'Структура Git branch/ label/reset/ mergeName';
+  String get gitUiGitBranchLabelResetMergeStructure =>
+      'Структура Git branch/ label/reset/ mergeName';
 
   @override
-  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare => 'Оберіть чітко старий режим границі або режиму адміністратора, а потім підготуйте план.';
+  String get gitUiChooseAnExplicitOldBoundaryOrRootModeThenPrepare =>
+      'Оберіть чітко старий режим границі або режиму адміністратора, а потім підготуйте план.';
 
   @override
   String get gitUiMoveUp => 'Угору';
@@ -7004,13 +7635,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectACommitForDetailsAndChangedFiles => 'Оберіть внеску для подробиць та змінених файлів';
+  String get gitUiSelectACommitForDetailsAndChangedFiles =>
+      'Оберіть внеску для подробиць та змінених файлів';
 
   @override
-  String get gitUiPreviewCombinedCommitMessages => 'Перегляд комбінованих повідомлень надсилання...';
+  String get gitUiPreviewCombinedCommitMessages =>
+      'Перегляд комбінованих повідомлень надсилання...';
 
   @override
-  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot => 'Alt+↑/ ↓ пересуває вибраний внесок. Не пов\' язані гілки не буде автоматично оновлено.';
+  String get gitUiAltMovesTheSelectedCommitUnrelatedBranchReferencesWillNot =>
+      'Alt+↑/ ↓ пересуває вибраний внесок. Не пов\' язані гілки не буде автоматично оновлено.';
 
   @override
   String get gitUiCancelPlan => 'Скасувати план';
@@ -7019,7 +7653,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiStartReviewedRebase => 'Почати перевірене перебазування?';
 
   @override
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1) {
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  ) {
     return 'Переписування $arg0 запланованих внесків на $arg1. Викинути внески залишаться видимими у цьому плані до початку.';
   }
 
@@ -7030,39 +7667,53 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiNoContinuingGitOperation => 'Немає продовженої дії Git';
 
   @override
-  String get gitUiStoppedForEditingAmend => ' · зупинено для редагування/ amend';
+  String get gitUiStoppedForEditingAmend =>
+      ' · зупинено для редагування/ amend';
 
   @override
-  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication => 'Ці записи не об\' єднані, можливо, за допомогою програми, що заховається. У Git не залишилося жодного сховища або команди перервано.';
+  String get gitUiTheseAreUnmergedIndexEntriesPossiblyFromAStashApplication =>
+      'Ці записи не об\' єднані, можливо, за допомогою програми, що заховається. У Git не залишилося жодного сховища або команди перервано.';
 
   @override
-  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit => 'Змінити робочі файли, сцену і змінити поточний внесок, а потім продовжити повторну базу даних.';
+  String get gitUiEditTheWorkingFilesStageAndAmendTheCurrentCommit =>
+      'Змінити робочі файли, сцену і змінити поточний внесок, а потім продовжити повторну базу даних.';
 
   @override
-  String gitUiArg0Arg1UnmergedStagesArg2(String arg0, String arg1, String arg2) {
+  String gitUiArg0Arg1UnmergedStagesArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
     return '$arg0$arg1 · незлиті стадії індексу $arg2';
   }
 
   @override
-  String get gitUiTheIndexHasNoUnresolvedEntries => 'Індекс не має невирішених записів.';
+  String get gitUiTheIndexHasNoUnresolvedEntries =>
+      'Індекс не має невирішених записів.';
 
   @override
-  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit => 'Залишити поточний внесок порожнім';
+  String get gitUiKeepTheCurrentCommitAsAnEmptyCommit =>
+      'Залишити поточний внесок порожнім';
 
   @override
-  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit => 'Справжній індекс не має змін, які було внесено до гри. Створіть явні порожні внески, а потім продовжіть послідовник, якщо він залишиться активним.';
+  String get gitUiTheRealIndexHasNoStagedChangesCreateAnExplicit =>
+      'Справжній індекс не має змін, які було внесено до гри. Створіть явні порожні внески, а потім продовжіть послідовник, якщо він залишиться активним.';
 
   @override
   String get gitUiKeepEmptyCommit => 'Залишити порожній внесок...';
 
   @override
-  String get gitUiGitWillTryToReturnToTheOperationSStarting => 'Git спробує повернутися до початку операції. Відновлення попередніх змін поза індексом, невідстежуваних і незбережених даних не гарантується.';
+  String get gitUiGitWillTryToReturnToTheOperationSStarting =>
+      'Git спробує повернутися до початку операції. Відновлення попередніх змін поза індексом, невідстежуваних і незбережених даних не гарантується.';
 
   @override
-  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned => 'Пропустити поточний внесок і продовжити виконання наступного запланованого внеску.';
+  String get gitUiSkipTheCurrentCommitAndContinueWithTheNextPlanned =>
+      'Пропустити поточний внесок і продовжити виконання наступного запланованого внеску.';
 
   @override
-  String get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles => 'Прибрати службовий стан цієї операції, зберігши поточні файли та індекс.';
+  String
+  get gitUiForgetThisOperationSBookkeepingWhileRetainingTheCurrentFiles =>
+      'Прибрати службовий стан цієї операції, зберігши поточні файли та індекс.';
 
   @override
   String gitUiContinueArg0(String arg0) {
@@ -7070,13 +7721,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiReloadConflictVersions => 'Перезавантажити версії конфліктів?';
+  String get gitUiReloadConflictVersions =>
+      'Перезавантажити версії конфліктів?';
 
   @override
-  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile => 'Замінити незбережений чернеток результатів на поточний робочий файл. Збережений робочий вміст зберігається.';
+  String get gitUiReplaceTheUnsavedResultDraftWithTheCurrentWorkingFile =>
+      'Замінити незбережений чернеток результатів на поточний робочий файл. Збережений робочий вміст зберігається.';
 
   @override
-  String get gitUiLoadingConflictVersions => 'Завантаження версій конфліктів...';
+  String get gitUiLoadingConflictVersions =>
+      'Завантаження версій конфліктів...';
 
   @override
   String get gitUiLoadingConflict => 'Завантаження конфлікту';
@@ -7088,7 +7742,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiBaseRight => 'База → праворуч';
 
   @override
-  String get gitUiNoBaseEntryForThisConflict => 'Немає базового запису для цього конфлікту';
+  String get gitUiNoBaseEntryForThisConflict =>
+      'Немає базового запису для цього конфлікту';
 
   @override
   String get gitUiAcceptEntireLeftFile => 'Прийняти весь лівий файл...';
@@ -7106,12 +7761,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiManualResolution => 'Роздільна здатність вручну';
 
   @override
-  String gitUiRegionArg0Arg1Arg2Reviewed(String arg0, String arg1, String arg2) {
+  String gitUiRegionArg0Arg1Arg2Reviewed(
+    String arg0,
+    String arg1,
+    String arg2,
+  ) {
     return 'Регіон $arg0/ $arg1 · $arg2 вивчений';
   }
 
   @override
-  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain => 'Вирівнювання джерела перевищило обмеження на порівняння тексту, панелі вихідних кодів залишаються доступними для перевірки вручну.';
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain =>
+      'Вирівнювання джерела перевищило обмеження на порівняння тексту, панелі вихідних кодів залишаються доступними для перевірки вручну.';
 
   @override
   String get gitUiAcceptLeftRegion => 'Прийняти ліву ділянку';
@@ -7120,19 +7781,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiAcceptRightRegion => 'Прийняти правий регіон';
 
   @override
-  String get gitUiKeepManualResultForRegion => 'Зберігати вручну результат для регіону';
+  String get gitUiKeepManualResultForRegion =>
+      'Зберігати вручну результат для регіону';
 
   @override
-  String get gitUiApplyGitSNonConflictingChanges => 'Застосувати зміни, які не суперечать одна одній?';
+  String get gitUiApplyGitSNonConflictingChanges =>
+      'Застосувати зміни, які не суперечать одна одній?';
 
   @override
-  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview => 'Замінити поточну чернетку результату попереднім переглядом злиття Git. Незбережені ручні зміни буде відкинуто; робочий файл не зміниться до збереження.';
+  String get gitUiReplaceTheCurrentResultDraftWithGitSMergePreview =>
+      'Замінити поточну чернетку результату попереднім переглядом злиття Git. Незбережені ручні зміни буде відкинуто; робочий файл не зміниться до збереження.';
 
   @override
   String get gitUiUseMergePreview => 'Перегляд об\' єднання';
 
   @override
-  String get gitUiApplyNonConflictingChanges => 'Застосувати неконфліктні зміни...';
+  String get gitUiApplyNonConflictingChanges =>
+      'Застосувати неконфліктні зміни...';
 
   @override
   String get gitUiLeftSource => 'Ліве джерело';
@@ -7150,33 +7815,45 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiStage3 => 'Крок No3';
 
   @override
-  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState => 'Конфліктні версії недоступні. Оновити, щоб переглянути їх поточний стан.';
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState =>
+      'Конфліктні версії недоступні. Оновити, щоб переглянути їх поточний стан.';
 
   @override
-  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis => 'Результат збережено на диск. Індекс все ще визначає чи буде визначено цей файл.';
+  String get gitUiResultSavedToDiskTheIndexStillDeterminesWhetherThis =>
+      'Результат збережено на диск. Індекс все ще визначає чи буде визначено цей файл.';
 
   @override
   String get gitUiSaveResultDraft => 'Зберегти чернетку результату';
 
   @override
-  String get gitUiApplyResultAndStageResolution => 'Застосувати результат і додати розв\'язання до індексу';
+  String get gitUiApplyResultAndStageResolution =>
+      'Застосувати результат і додати розв\'язання до індексу';
 
   @override
-  String get gitUiResultEditableUTF8WorkingContent => 'Результат · придатний для редагування вміст UTF- 8';
+  String get gitUiResultEditableUTF8WorkingContent =>
+      'Результат · придатний для редагування вміст UTF- 8';
 
   @override
   String get gitUiEditableConflictResult => 'Змінний результат конфлікту';
 
   @override
-  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return 'Ліворуч: $arg0 · $arg1\nПраворуч: $arg2 · $arg3';
   }
 
   @override
-  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary => 'Виберіть вміст, вилучення або підмодуль явного надсилання. Не буде розшифровано двійкові дані як придатний для редагування текст.';
+  String get gitUiChooseContentDeletionOrASubmoduleCommitExplicitlyNoBinary =>
+      'Виберіть вміст, вилучення або підмодуль явного надсилання. Не буде розшифровано двійкові дані як придатний для редагування текст.';
 
   @override
-  String get gitUiUseEntireLeftContent => 'Використовувати весь вміст ліворуч...';
+  String get gitUiUseEntireLeftContent =>
+      'Використовувати весь вміст ліворуч...';
 
   @override
   String get gitUiUseEntireRightContent => 'Використати весь правий вміст…';
@@ -7188,7 +7865,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiResolvedSubmoduleCommit => 'Вирішене внесення підмодулю';
 
   @override
-  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot => 'Крокувати з точним gitlink у батьківському елементі. Ця дія не перевіряє або не надсилає підмодуль.';
+  String get gitUiStageThisExactGitlinkInTheParentThisDoesNot =>
+      'Крокувати з точним gitlink у батьківському елементі. Ця дія не перевіряє або не надсилає підмодуль.';
 
   @override
   String get gitUiSetResolvedGitlink => 'Встановити розв\' язане gitlink...';
@@ -7199,7 +7877,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect => 'Результат було змінено. Тримайте результат вручну або виберіть іншу незамінну область.';
+  String get gitUiTheResultWasEditedKeepTheManualResultOrSelect =>
+      'Результат було змінено. Тримайте результат вручну або виберіть іншу незамінну область.';
 
   @override
   String gitUiApplyArg0Resolution(String arg0) {
@@ -7207,10 +7886,13 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule => 'Крок виконання обраного пункту gitlink внеску до батьківського елемента. Звантаження підмодулів і файли з ним не буде замінено.';
+  String get gitUiStageTheChosenGitlinkCommitInTheParentTheSubmodule =>
+      'Крок виконання обраного пункту gitlink внеску до батьківського елемента. Звантаження підмодулів і файли з ним не буде замінено.';
 
   @override
-  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(String arg0) {
+  String gitUiReplacesTheEntireWorkingPathArg0AndStagesTheDecision(
+    String arg0,
+  ) {
     return 'Заміняє весь робочий шлях $arg0 і робить кроками рішення. Поточний робочий вміст і всі незбережені чернетки результатів буде відкинуто.';
   }
 
@@ -7218,10 +7900,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiApplyEntireFileDecision => 'Застосувати ціле рішення файла';
 
   @override
-  String get gitUiStageThisConflictResolution => 'Стати причиною вирішення конфлікту?';
+  String get gitUiStageThisConflictResolution =>
+      'Стати причиною вирішення конфлікту?';
 
   @override
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1) {
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  ) {
     return 'Використовувати весь змінений результат як $arg0. Git записує шлях, який визначено, якщо його було встановлено. Спочатку перегляньте всі потрібні дані. $arg1';
   }
 
@@ -7229,13 +7915,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiApplyAndStage => 'Застосувати й додати до індексу';
 
   @override
-  String get gitUiReviewResultTextFormatChanges => 'Перегляд змін формату тексту результату';
+  String get gitUiReviewResultTextFormatChanges =>
+      'Перегляд змін формату тексту результату';
 
   @override
   String get gitUiSaveReviewedResult => 'Зберегти переглянутий результат';
 
   @override
-  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe => 'Доступність таблиці Git недоступна. Спробуйте повторно повторно з\' єднатися з програмою.';
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe =>
+      'Доступність таблиці Git недоступна. Спробуйте повторно повторно з\' єднатися з програмою.';
 
   @override
   String get gitUiSans => 'Санcameroon_ departments. kgm';
@@ -7262,7 +7951,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCancelPrompt => 'Скасувати запрошення';
 
   @override
-  String get gitUiUseMessageAndContinue => 'Використовувати повідомлення і продовжувати';
+  String get gitUiUseMessageAndContinue =>
+      'Використовувати повідомлення і продовжувати';
 
   @override
   String get gitUiRespondPrivately => 'Відповісти приватно';
@@ -7288,10 +7978,14 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory => 'Переглянуте сховище призначено лише для цієї операції. Історія і перевірка вмісту залишаються доступними.';
+  String get gitUiTheReviewedRepositoryIsReadOnlyForThisOperationHistory =>
+      'Переглянуте сховище призначено лише для цієї операції. Історія і перевірка вмісту залишаються доступними.';
 
   @override
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1) {
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  ) {
     return 'Git повернула $arg0. Програма не змогла оновити свої документи: $arg1';
   }
 
@@ -7302,7 +7996,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCurrentBranch => 'Поточна гілка';
 
   @override
-  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog => 'Немає відповідних гілок або теґів. Виберіть внесок у журнал.';
+  String get gitUiNoMatchingBranchesOrTagsSelectACommitInLog =>
+      'Немає відповідних гілок або теґів. Виберіть внесок у журнал.';
 
   @override
   String get gitUiBranches => 'Гілки';
@@ -7350,7 +8045,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRebase2 => 'Перебазувати…';
 
   @override
-  String get gitUiConflictsAndCurrentOperation => 'Конфлікти і поточна операція...';
+  String get gitUiConflictsAndCurrentOperation =>
+      'Конфлікти і поточна операція...';
 
   @override
   String get gitUiStashes2 => 'Відкладені зміни…';
@@ -7371,10 +8067,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRevokeRepositoryTrust => 'Відкликати довіру до репозиторію';
 
   @override
-  String get gitUiWaitingForRepositoryStatus => 'Очікування на стан сховищаThe role of the transaction, in present tense';
+  String get gitUiWaitingForRepositoryStatus =>
+      'Очікування на стан сховищаThe role of the transaction, in present tense';
 
   @override
-  String get gitUiRepositoryStatusUnavailableRefresh => 'Стан сховища недоступний; оновлення';
+  String get gitUiRepositoryStatusUnavailableRefresh =>
+      'Стан сховища недоступний; оновлення';
 
   @override
   String get gitUiManageRemotes2 => 'Керування віддаленими репозиторіями';
@@ -7415,46 +8113,62 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain => 'Сховище змінено. Оновити і переглянути, перш ніж знову спробувати.';
+  String get gitUiRepositoryChangedRefreshAndReviewBeforeTryingAgain =>
+      'Сховище змінено. Оновити і переглянути, перш ніж знову спробувати.';
 
   @override
-  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen => 'Інша операція тримає сховище або блокування індексу.';
+  String get gitUiAnotherOperationHoldsTheRepositoryOrIndexLockWaitThen =>
+      'Інша операція тримає сховище або блокування індексу.';
 
   @override
-  String get gitUiRepositoryTrustIsRequiredForThisOperation => 'Для виконання цієї дії потрібна довіра до сховища.';
+  String get gitUiRepositoryTrustIsRequiredForThisOperation =>
+      'Для виконання цієї дії потрібна довіра до сховища.';
 
   @override
-  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository => 'Службу Git від\' єднано. Повторно з\' єднайте і узгодьте сховище.';
+  String get gitUiTheGitServiceDisconnectedReconnectAndReconcileTheRepository =>
+      'Службу Git від\' єднано. Повторно з\' єднайте і узгодьте сховище.';
 
   @override
-  String get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts => 'Встановлений виконуваний файл Git не може підтримувати цю дію. Перегляньте вимоги до його виконання, наведені нижче.';
+  String
+  get gitUiTheInstalledGitExecutableCannotSupportThisOperationReviewIts =>
+      'Встановлений виконуваний файл Git не може підтримувати цю дію. Перегляньте вимоги до його виконання, наведені нижче.';
 
   @override
-  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview => 'Це сховище призначено лише для читання. Рецензування і журнал залишаються доступними.';
+  String get gitUiThisRepositoryIsReadOnlyForTheRequestedOperationReview =>
+      'Це сховище призначено лише для читання. Рецензування і журнал залишаються доступними.';
 
   @override
-  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote => 'Операції потребує узгодження. Перегляньте результат сховища або віддалений стан перед повторенням.';
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote =>
+      'Операції потребує узгодження. Перегляньте результат сховища або віддалений стан перед повторенням.';
 
   @override
-  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe => 'Спроба розпізнавання Git зазнала невдачі. Перегляньте помічника реєстрації або розблокуйте налаштоване сховище ключів.';
+  String get gitUiGitAuthenticationFailedReviewTheCredentialHelperOrUnlockThe =>
+      'Спроба розпізнавання Git зазнала невдачі. Перегляньте помічника реєстрації або розблокуйте налаштоване сховище ключів.';
 
   @override
-  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour => 'Помилка перевірки вузла SSH. Перегляньте профіль вузла за допомогою налаштованих вами інструментів SSH.';
+  String get gitUiSshHostVerificationFailedReviewTheHostIdentityThroughYour =>
+      'Помилка перевірки вузла SSH. Перегляньте профіль вузла за допомогою налаштованих вами інструментів SSH.';
 
   @override
-  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey => 'Помилка підписування, або програму було скасовано. Перегляньте ключ підпису, агент і налаштовано інструмент для підписування.';
+  String get gitUiCommitSigningFailedOrWasCancelledReviewTheSigningKey =>
+      'Помилка підписування, або програму було скасовано. Перегляньте ключ підпису, агент і налаштовано інструмент для підписування.';
 
   @override
-  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo => 'Вкажіть ім\' я автора сховища і його адресу електронної пошти, а потім поверніть до створення створеного вами списку повідомлень.';
+  String get gitUiSetARepositoryAuthorNameAndEmailThenReturnTo =>
+      'Вкажіть ім\' я автора сховища і його адресу електронної пошти, а потім поверніть до створення створеного вами списку повідомлень.';
 
   @override
-  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual => 'Git відхилив рецензування оновлення. Перш ніж спробувати виконати спробу, оновлюйте і перегляньте місце призначення.';
+  String get gitUiGitRejectedTheReviewedUpdateRefreshAndReviewTheActual =>
+      'Git відхилив рецензування оновлення. Перш ніж спробувати виконати спробу, оновлюйте і перегляньте місце призначення.';
 
   @override
-  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr => 'Робочі або зміни, що стосуються сцени, перешкоджають цій операції. Рецензування, внесення або явно занотовування цих дій.';
+  String get gitUiWorkingOrStagedChangesPreventThisOperationReviewCommitOr =>
+      'Робочі або зміни, що стосуються сцени, перешкоджають цій операції. Рецензування, внесення або явно занотовування цих дій.';
 
   @override
-  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial => 'Потрібний об\' єкт Git недоступний. Перегляньте неглибокі або часткові межі і, за потреби, звантажте явно.';
+  String get gitUiARequiredGitObjectIsUnavailableReviewShallowOrPartial =>
+      'Потрібний об\' єкт Git недоступний. Перегляньте неглибокі або часткові межі і, за потреби, звантажте явно.';
 
   @override
   String gitUiGitOperationFailedArg0(String arg0) {
@@ -7479,7 +8193,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiCreatesALocalBranchWithoutCheckingItOut => 'Створює локальну гілку без перевірки.';
+  String get gitUiCreatesALocalBranchWithoutCheckingItOut =>
+      'Створює локальну гілку без перевірки.';
 
   @override
   String gitUiTagArg0(String arg0) {
@@ -7498,7 +8213,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiRevertCommits => 'Повернути внески';
 
   @override
-  String get gitUiCompareToFullRevisionID => 'Порівняти з повним ідентифікатором модифікації';
+  String get gitUiCompareToFullRevisionID =>
+      'Порівняти з повним ідентифікатором модифікації';
 
   @override
   String gitUiTreeComparisonDirectionArg0TheRevisionEnteredHere(String arg0) {
@@ -7506,7 +8222,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiEnterAFullValidObjectID => 'Введіть повний чинний ідентифікатор об\' єкта.';
+  String get gitUiEnterAFullValidObjectID =>
+      'Введіть повний чинний ідентифікатор об\' єкта.';
 
   @override
   String gitUiArg0Arg1TreeComparison(String arg0, String arg1) {
@@ -7519,19 +8236,26 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked => 'Переміщує HEAD/поточну гілку. Reflog не відновлює довільний невідстежуваний або незбережений вміст.';
+  String
+  get gitUiMovesHEADCurrentBranchReflogDoesNotRecoverArbitraryUntracked =>
+      'Переміщує HEAD/поточну гілку. Reflog не відновлює довільний невідстежуваний або незбережений вміст.';
 
   @override
-  String get gitUiMoveHEADKeepIndexAndWorkingFiles => 'Перемістити HEAD; зберегти індекс і робочі файли.';
+  String get gitUiMoveHEADKeepIndexAndWorkingFiles =>
+      'Перемістити HEAD; зберегти індекс і робочі файли.';
 
   @override
-  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles => 'Перемістити HEAD і замінити індекс; зберегти робочі файли.';
+  String get gitUiMoveHEADAndReplaceIndexKeepWorkingFiles =>
+      'Перемістити HEAD і замінити індекс; зберегти робочі файли.';
 
   @override
-  String get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing => 'Замінити HEAD, індекс і відстежувані робочі файли; не відстежувані файли, що заважають, можуть бути перезаписані.';
+  String
+  get gitUiReplaceHEADIndexAndTrackedWorkingFilesMayOverwriteObstructing =>
+      'Замінити HEAD, індекс і відстежувані робочі файли; не відстежувані файли, що заважають, можуть бути перезаписані.';
 
   @override
-  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges => 'Замінити HEAD, індекс і відповідні файли; відмовити, якщо локальні зміни буде втрачено.';
+  String get gitUiReplaceHEADIndexAndEligibleFilesRefuseIfLocalChanges =>
+      'Замінити HEAD, індекс і відповідні файли; відмовити, якщо локальні зміни буде втрачено.';
 
   @override
   String gitUiResetWithArg0(String arg0) {
@@ -7539,7 +8263,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1) {
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  ) {
     return '$arg0 → $arg1 Review вибраний режим має певні функції перед застосуванням.';
   }
 
@@ -7575,7 +8302,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiTagMessage => 'Повідомлення мітки';
 
   @override
-  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush => 'Створює локальну мітку. Оприлюднити вибрані мітки явно у перегляді Push.';
+  String get gitUiCreatesTheTagLocallyPublishSelectedTagsExplicitlyInPush =>
+      'Створює локальну мітку. Оприлюднити вибрані мітки явно у перегляді Push.';
 
   @override
   String gitUiCompleteTreesArg0Arg1(String arg0, String arg1) {
@@ -7586,13 +8314,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiNextChangedFilePage => 'Наступна змінена сторінка';
 
   @override
-  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut => 'Знімок сховища лише для читання. Відкриття файла ніколи не перевіряє цю модифікацію.';
+  String get gitUiReadOnlyRepositorySnapshotOpeningAFileNeverChecksOut =>
+      'Знімок сховища лише для читання. Відкриття файла ніколи не перевіряє цю модифікацію.';
 
   @override
   String get gitUiOpenReadOnlyVersion => 'Відкрити версію лише для читання';
 
   @override
-  String get gitUiRestoreThisPathWaitingForRepositoryStatus => 'Відновити цей шлях... * Очікування стану сховища';
+  String get gitUiRestoreThisPathWaitingForRepositoryStatus =>
+      'Відновити цей шлях... * Очікування стану сховища';
 
   @override
   String get gitUiRestoreThisPath => 'Відновити цей шлях...';
@@ -7608,7 +8338,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0) {
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  ) {
     return 'Замінити цей робочий шлях на модифікацію $arg0. Існуючий графічний вміст зберігається.';
   }
 
@@ -7632,7 +8364,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiOpenReadOnlyHistoricalFile => 'Відкрити тільки історичний файл';
+  String get gitUiOpenReadOnlyHistoricalFile =>
+      'Відкрити тільки історичний файл';
 
   @override
   String get gitUiCompareToCurrentFile => 'Порівняти з поточним файлом';
@@ -7654,7 +8387,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiBoundary => ' · границя';
 
   @override
-  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3) {
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  ) {
     return '$arg0  $arg1\nПочатковий рядок $arg2$arg3';
   }
 
@@ -7682,22 +8420,27 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiMoveLater => 'Пересунути пізніше';
 
   @override
-  String get gitUiRemoveFromReviewedSequence => 'Вилучити з переглянутої послідовності';
+  String get gitUiRemoveFromReviewedSequence =>
+      'Вилучити з переглянутої послідовності';
 
   @override
-  String get gitUiApplyChangesWithoutCreatingCommits => 'Застосувати зміни без створення внесків';
+  String get gitUiApplyChangesWithoutCreatingCommits =>
+      'Застосувати зміни без створення внесків';
 
   @override
-  String get gitUiUseThisExplicitMainlineParentForMergeCommits => 'Використовувати цей явний головний рядок для внесення в дію';
+  String get gitUiUseThisExplicitMainlineParentForMergeCommits =>
+      'Використовувати цей явний головний рядок для внесення в дію';
 
   @override
-  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn => 'Порожні або вже застосовані внески можуть зупинити Git для явного пропускання або продовження рішення.';
+  String get gitUiEmptyOrAlreadyAppliedCommitsMayStopGitForAn =>
+      'Порожні або вже застосовані внески можуть зупинити Git для явного пропускання або продовження рішення.';
 
   @override
   String get gitUiRevertInReviewedOrder => 'Повернути у порядку повторення';
 
   @override
-  String get gitUiCherryPickInReviewedOrder => 'Вибір за Черево-браних під час перевірки порядку';
+  String get gitUiCherryPickInReviewedOrder =>
+      'Вибір за Черево-браних під час перевірки порядку';
 
   @override
   String get gitUiReturnToFiles => 'Повернутися до файлів';
@@ -7852,7 +8595,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCancelledPhase => 'Скасовано';
 
   @override
-  String get gitUiUncertainPhase => 'Для отримання результату потрібне узгодження';
+  String get gitUiUncertainPhase =>
+      'Для отримання результату потрібне узгодження';
 
   @override
   String gitUiStageVersion(String stage) {
@@ -7863,7 +8607,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiGitMergePreview => 'Перегляд об\' єднання Git';
 
   @override
-  String get gitUiNormalizedWorking => 'Деревина, що працює · Git нормалізовано';
+  String get gitUiNormalizedWorking =>
+      'Деревина, що працює · Git нормалізовано';
 
   @override
   String gitUiPercentValue(String value) {
@@ -7881,7 +8626,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String gitUiRebaseStepSemantics(String position, String action, String subject) {
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  ) {
     return '$position, $action, $subject';
   }
 
@@ -7892,10 +8641,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiUtf8NoBom => 'UTF- 8 без позначки у порядку байтів (BOM)';
 
   @override
-  String get gitUiAddsBom => 'За допомогою цього пункту меню можна додати позначку у форматі UTF- 8 для байтів (BOM) на початку файла.';
+  String get gitUiAddsBom =>
+      'За допомогою цього пункту меню можна додати позначку у форматі UTF- 8 для байтів (BOM) на початку файла.';
 
   @override
-  String get gitUiRemovesBom => 'За допомогою цього пункту меню можна вилучити позначку у форматі UTF- 8 байтів (BOM) з початку файла.';
+  String get gitUiRemovesBom =>
+      'За допомогою цього пункту меню можна вилучити позначку у форматі UTF- 8 байтів (BOM) з початку файла.';
 
   @override
   String get gitUiNoLineTerminators => 'Без строкацій рядка';
@@ -7921,7 +8672,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiGitFailure => 'Спроба виконання операції Git зазнала невдачі. Проаналізуйте діагностику нижче.';
+  String get gitUiGitFailure =>
+      'Спроба виконання операції Git зазнала невдачі. Проаналізуйте діагностику нижче.';
 
   @override
   String get gitUiAbortInline => 'Перервати';
@@ -7972,7 +8724,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitHostGit => 'Git';
 
   @override
-  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay => 'Дії з Git застосовуються до всього цього сховища і можуть виконувати свої налаштовані гачки, фільтри, ідентифікатори і інструменти підписування.';
+  String get gitHostGitOperationsApplyToThisEntireRepositoryAndMay =>
+      'Дії з Git застосовуються до всього цього сховища і можуть виконувати свої налаштовані гачки, фільтри, ідентифікатори і інструменти підписування.';
 
   @override
   String get gitHostContentUnavailable => 'Вміст недоступний';
@@ -8031,7 +8784,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiAddAddConflict => 'Додано з обох сторін';
 
   @override
-  String get gitUiModifyDeleteConflict => 'Змінено/ вилучено або перейменовано/ вилучено';
+  String get gitUiModifyDeleteConflict =>
+      'Змінено/ вилучено або перейменовано/ вилучено';
 
   @override
   String gitUiConflictIdentity(String path, String kind) {
@@ -8039,19 +8793,23 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiDiscardUnsavedIndexDraft => 'Відкинути незбережену чернетку індексу?';
+  String get gitUiDiscardUnsavedIndexDraft =>
+      'Відкинути незбережену чернетку індексу?';
 
   @override
-  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft => 'Закриття редактора індексу відкине лише чернетку. Індекс і робочий файл залишаться без змін.';
+  String get gitUiClosingTheIndexEditorDiscardsOnlyItsDraft =>
+      'Закриття редактора індексу відкине лише чернетку. Індекс і робочий файл залишаться без змін.';
 
   @override
   String get gitUiDiscardIndexDraft => 'Відкинути чернетку індексу';
 
   @override
-  String get gitUiDiscardUnsavedConflictDraft => 'Відкинути незбережений результат розв’язання конфлікту?';
+  String get gitUiDiscardUnsavedConflictDraft =>
+      'Відкинути незбережений результат розв’язання конфлікту?';
 
   @override
-  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft => 'Закриття редактора конфліктів відкидає лише незбережену чернетку результату. Збережений робочий вміст та індекс залишаються без змін.';
+  String get gitUiClosingTheConflictEditorDiscardsOnlyItsDraft =>
+      'Закриття редактора конфліктів відкидає лише незбережену чернетку результату. Збережений робочий вміст та індекс залишаються без змін.';
 
   @override
   String get gitUiDiscardConflictDraft => 'Відкинути чернетку конфлікту';
@@ -8076,7 +8834,8 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiRevealRevisionWithoutFilters => 'Показати ревізію без фільтрів';
+  String get gitUiRevealRevisionWithoutFilters =>
+      'Показати ревізію без фільтрів';
 
   @override
   String get gitUiRestoreHistoryFilters => 'Відновити фільтри історії';
@@ -8096,10 +8855,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiChangedLine => 'Змінений рядок';
 
   @override
-  String get gitUiCopyHeadRegionIntoIndexDraft => 'Копіювати область HEAD до чернетки індексу';
+  String get gitUiCopyHeadRegionIntoIndexDraft =>
+      'Копіювати область HEAD до чернетки індексу';
 
   @override
-  String get gitUiCopyWorkingRegionIntoIndexDraft => 'Копіювати робочу область до чернетки індексу';
+  String get gitUiCopyWorkingRegionIntoIndexDraft =>
+      'Копіювати робочу область до чернетки індексу';
 
   @override
   String get gitUiUpdatingConflictRegions => 'Оновлення областей конфлікту';
@@ -8116,19 +8877,24 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiIgnoreRightRegion => 'Ігнорувати праву пропозицію';
 
   @override
-  String get gitUiIndexAppliedNewerDraftPreserved => 'Надіслану чернетку записано до індексу. Новіший текст залишається в цьому редакторі. Перш ніж застосувати його, перезавантажте й перевірте поточні версії.';
+  String get gitUiIndexAppliedNewerDraftPreserved =>
+      'Надіслану чернетку записано до індексу. Новіший текст залишається в цьому редакторі. Перш ніж застосувати його, перезавантажте й перевірте поточні версії.';
 
   @override
-  String get gitUiNewerConflictDraftRetained => 'Надісланий результат збережено. Новішу чернетку результату ще не збережено.';
+  String get gitUiNewerConflictDraftRetained =>
+      'Надісланий результат збережено. Новішу чернетку результату ще не збережено.';
 
   @override
-  String get gitUiNoFileHistoryForThisPathAndRevision => 'Історія файлу для цього шляху та ревізії недоступна.';
+  String get gitUiNoFileHistoryForThisPathAndRevision =>
+      'Історія файлу для цього шляху та ревізії недоступна.';
 
   @override
-  String get gitUiReviewSavedIndexAndKeepDraft => 'Переглянути збережений індекс і зберегти чернетку';
+  String get gitUiReviewSavedIndexAndKeepDraft =>
+      'Переглянути збережений індекс і зберегти чернетку';
 
   @override
-  String get gitUiIndexSourcesChangedSinceApply => 'Збережений індекс або його джерела змінилися. Новішу чернетку збережено; перед її застосуванням перегляньте ці зміни окремо.';
+  String get gitUiIndexSourcesChangedSinceApply =>
+      'Збережений індекс або його джерела змінилися. Новішу чернетку збережено; перед її застосуванням перегляньте ці зміни окремо.';
 
   @override
   String get gitUiReviewSavedMessage => 'Переглянути збережене повідомлення';
@@ -8143,13 +8909,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiUseSavedMessage => 'Використати збережене повідомлення';
 
   @override
-  String get gitUiCommitDraftChangedInAnotherWindow => 'Це повідомлення змінено в іншому вікні. Перегляньте збережене повідомлення перед заміною.';
+  String get gitUiCommitDraftChangedInAnotherWindow =>
+      'Це повідомлення змінено в іншому вікні. Перегляньте збережене повідомлення перед заміною.';
 
   @override
-  String get gitUiDiscardUnsavedCommitMessages => 'Відкинути незбережені повідомлення комітів?';
+  String get gitUiDiscardUnsavedCommitMessages =>
+      'Відкинути незбережені повідомлення комітів?';
 
   @override
-  String get gitUiMessagesCouldNotBeSavedStayInThisWindow => 'Повідомлення, які не вдалося зберегти, залишилися в цьому вікні. Їх відкидання не змінить збережені версії.';
+  String get gitUiMessagesCouldNotBeSavedStayInThisWindow =>
+      'Повідомлення, які не вдалося зберегти, залишилися в цьому вікні. Їх відкидання не змінить збережені версії.';
 
   @override
   String get gitUiDiscardCommitMessages => 'Відкинути повідомлення';
@@ -8161,13 +8930,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiNoCommitsYet => 'Комітів ще немає';
 
   @override
-  String get gitUiNativeMenuUnavailable => 'Служба системних меню недоступна. Спробуйте ще раз.';
+  String get gitUiNativeMenuUnavailable =>
+      'Служба системних меню недоступна. Спробуйте ще раз.';
 
   @override
-  String get gitWorkspaceRootRequired => 'Відкрийте корінь робочого дерева репозиторію, щоб використовувати Git у цьому робочому просторі.';
+  String get gitWorkspaceRootRequired =>
+      'Відкрийте корінь робочого дерева репозиторію, щоб використовувати Git у цьому робочому просторі.';
 
   @override
-  String gitLocalTrackingDescription(String upstream, String ahead, String behind) {
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  ) {
     return '$upstream · попереду на $ahead, позаду на $behind. Локально відомі дані віддаленого відстеження; без перевірки сервера наживо.';
   }
 
@@ -8181,7 +8956,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiUnstageSelectedLines => 'Вилучити вибрані рядки з індексу';
 
   @override
-  String get gitUiEditIndexInThreeWayView => 'Редагувати індекс у тристоронньому вигляді…';
+  String get gitUiEditIndexInThreeWayView =>
+      'Редагувати індекс у тристоронньому вигляді…';
 
   @override
   String get gitUiViewCommitDetails => 'Переглянути відомості про коміт…';

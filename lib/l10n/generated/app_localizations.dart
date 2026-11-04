@@ -82,7 +82,8 @@ import 'app_localizations_zh.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -90,7 +91,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -102,12 +104,13 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
@@ -133,7 +136,7 @@ abstract class AppLocalizations {
     Locale('uk'),
     Locale('vi'),
     Locale('zh'),
-    Locale('zh', 'CN')
+    Locale('zh', 'CN'),
   ];
 
   /// No description provided for @notesNewFromRetainedText.
@@ -4238,7 +4241,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Rename cannot safely update every project reference because {count} topic file(s) in module {module} were not parsed: {paths}'**
-  String errorWritersideTopicRenameIncompleteProjectIndex(String module, String count, String paths);
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  );
 
   /// Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer.
   ///
@@ -4532,19 +4539,25 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Configured build config directory is missing: {relativePath}'**
-  String diagnosticWritersideConfigMissingBuildConfigDirectory(String relativePath);
+  String diagnosticWritersideConfigMissingBuildConfigDirectory(
+    String relativePath,
+  );
 
   /// Writerside module diagnostic for a missing API specifications directory.
   ///
   /// In en, this message translates to:
   /// **'Configured API specifications directory is missing: {relativePath}'**
-  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(String relativePath);
+  String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
+    String relativePath,
+  );
 
   /// Writerside module diagnostic for a missing snippets directory.
   ///
   /// In en, this message translates to:
   /// **'Configured snippets directory is missing: {relativePath}'**
-  String diagnosticWritersideConfigMissingSnippetsDirectory(String relativePath);
+  String diagnosticWritersideConfigMissingSnippetsDirectory(
+    String relativePath,
+  );
 
   /// Writerside module diagnostic for a missing variables file.
   ///
@@ -4562,7 +4575,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Configured instance groups file is missing: {relativePath}'**
-  String diagnosticWritersideConfigMissingInstanceGroupsFile(String relativePath);
+  String diagnosticWritersideConfigMissingInstanceGroupsFile(
+    String relativePath,
+  );
 
   /// Writerside module diagnostic for a missing registered instance tree.
   ///
@@ -4604,13 +4619,22 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Instance \"{instanceId}\" publishes invalid web filename \"{webFileName}\" for topic \"{topic}\".'**
-  String diagnosticWritersideWebFileNameInvalid(String instanceId, String webFileName, String topic);
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  );
 
   /// Per-instance Writerside web filename collision diagnostic.
   ///
   /// In en, this message translates to:
   /// **'Instance \"{instanceId}\" publishes both \"{firstTopic}\" and \"{secondTopic}\" as \"{webFileName}\".'**
-  String diagnosticWritersideWebFileNameCollision(String instanceId, String webFileName, String firstTopic, String secondTopic);
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  );
 
   /// Writerside module diagnostic for a TOC reference to a missing topic.
   ///
@@ -4658,7 +4682,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Include element \"{elementId}\" does not exist in \"{from}\".'**
-  String diagnosticWritersideIncludeElementMissing(String elementId, String from);
+  String diagnosticWritersideIncludeElementMissing(
+    String elementId,
+    String from,
+  );
 
   /// Writerside module diagnostic for an unresolved seealso category.
   ///
@@ -6512,7 +6539,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'The {name} value “{value}” must be true or false.'**
-  String diagnosticWritersideBuildProfilesInvalidBoolean(String name, String value);
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  );
 
   /// Diagnostic for a Writerside build profile without an instance attribute.
   ///
@@ -6572,13 +6602,20 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'TOC include “{source}#{id}” belongs to external module “{origin}” and cannot be expanded in this workspace.'**
-  String diagnosticWritersideExternalTreeInclude(String source, String id, String origin);
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  );
 
   /// Diagnostic for a missing reusable tree element.
   ///
   /// In en, this message translates to:
   /// **'Tree element “{id}” does not exist in registered tree “{source}”.'**
-  String diagnosticWritersideTreeIncludeElementMissing(String source, String id);
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  );
 
   /// Diagnostic for a circular Writerside tree include.
   ///
@@ -6602,7 +6639,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Topic “{topic}” is not in referenced instance “{instance}”.'**
-  String diagnosticWritersideReferenceTopicMissing(String topic, String instance);
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  );
 
   /// Button label that downloads a required component.
   ///
@@ -7148,7 +7188,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Invalid Writerside markup: {element}, {attribute}. {reason}'**
-  String diagnosticWritersideSchema(String element, String attribute, String reason);
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  );
 
   /// No description provided for @diagnosticWritersideLlmsTxt.
   ///
@@ -10412,7 +10456,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Create {arg0}/{arg1} with a new local branch at {arg2} ({arg3}).'**
-  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(String arg0, String arg1, String arg2, String arg3);
+  String gitUiCreateArg0Arg1WithANewLocalBranchAtArg2(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
 
   /// Shared Git interface: Destination folder name
   ///
@@ -10430,7 +10479,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Explicitly discard all local tracked/untracked changes in this worktree. Locked/in-use worktrees remain protected.'**
-  String get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree;
+  String
+  get gitUiExplicitlyDiscardAllLocalTrackedUntrackedChangesInThisWorktree;
 
   /// Shared Git interface: Git refuses removal if there are local changes, untracked files, or a lock.
   ///
@@ -10454,7 +10504,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Explicitly recurse into nested submodules for updates/synchronization'**
-  String get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization;
+  String
+  get gitUiExplicitlyRecurseIntoNestedSubmodulesForUpdatesSynchronization;
 
   /// Shared Git interface: No recorded submodules
   ///
@@ -10544,13 +10595,18 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Initialize as needed and check out exactly {arg0}. Recursive: {arg1}.'**
-  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(String arg0, String arg1);
+  String gitUiInitializeAsNeededAndCheckOutExactlyArg0RecursiveArg1(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Apply the reviewed submodule configuration operation. Recursive: {arg0}.
   ///
   /// In en, this message translates to:
   /// **'Apply the reviewed submodule configuration operation. Recursive: {arg0}.'**
-  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(String arg0);
+  String gitUiApplyTheReviewedSubmoduleConfigurationOperationRecursiveArg0(
+    String arg0,
+  );
 
   /// Shared Git interface: Apply submodule operation
   ///
@@ -10784,7 +10840,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{arg0} changed lines selected.'**
-  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(String arg0);
+  String gitUiArg0ChangedLinesSelectedDisplaySettingsNeverAlterTheStaged(
+    String arg0,
+  );
 
   /// Shared Git interface: Read-only comparison · Copy text or adjust display settings.
   ///
@@ -10802,7 +10860,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{arg0} · {arg1} · {arg2} bytes{arg3}'**
-  String gitUiArg0Arg1Arg2BytesArg3(String arg0, String arg1, String arg2, String arg3);
+  String gitUiArg0Arg1Arg2BytesArg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
 
   /// Shared Git interface: Text comparison is unavailable for these contents.
   ///
@@ -10964,7 +11027,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Update only the reviewed index entry for {arg0}.\n\n{arg1}'**
-  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(String arg0, String arg1);
+  String gitUiUpdateOnlyTheReviewedIndexEntryForArg0Arg1(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Write reviewed index result
   ///
@@ -11378,7 +11444,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Repository metadata is read-only. Branch inspection and comparison remain available.'**
-  String get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain;
+  String
+  get gitUiRepositoryMetadataIsReadOnlyBranchInspectionAndComparisonRemain;
 
   /// Shared Git interface: Working files are unavailable or read-only. Branch switching and merging are unavailable.
   ///
@@ -11552,7 +11619,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{arg0}\nTarget {arg1}\nLocal deletion only. An unmerged branch is refused.'**
-  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(String arg0, String arg1);
+  String gitUiArg0TargetArg1LocalDeletionOnlyAnUnmergedBranchIs(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Delete
   ///
@@ -11792,7 +11862,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Cached tracking · {upstream} · {ahead} ahead · {behind} behind'**
-  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(String upstream, String ahead, String behind);
+  String gitUiCachedTrackingUpstreamAheadAheadBehindBehind(
+    String upstream,
+    String ahead,
+    String behind,
+  );
 
   /// Shared Git interface: Bare repository · no working tree. Open Log to inspect its history.
   ///
@@ -11960,7 +12034,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Local commit {arg0} exists. Review Log before attempting another commit. The message draft has been retained.'**
-  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(String arg0);
+  String gitUiLocalCommitArg0ExistsReviewLogBeforeAttemptingAnotherCommit(
+    String arg0,
+  );
 
   /// Shared Git interface: Commit author name
   ///
@@ -12146,7 +12222,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{arg0} bytes · {arg1}\nReplaces working content with the index, or deletes this untracked file. Staged content is retained. Unsaved host documents must be reviewed first.'**
-  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(String arg0, String arg1);
+  String gitUiArg0BytesArg1ReplacesWorkingContentWithTheIndexOr(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Delete untracked file
   ///
@@ -12350,7 +12429,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'The remote outcome is uncertain. Review destinations again before another push.'**
-  String get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother;
+  String
+  get gitUiTheRemoteOutcomeIsUncertainReviewDestinationsAgainBeforeAnother;
 
   /// Shared Git interface: Parent {arg0} · {arg1}
   ///
@@ -12374,7 +12454,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Fetch updates remote-tracking information without replacing working files.'**
-  String get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles;
+  String
+  get gitUiFetchUpdatesRemoteTrackingInformationWithoutReplacingWorkingFiles;
 
   /// Shared Git interface: Fetch
   ///
@@ -12704,7 +12785,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Rebase rewrites commit identities. Remote-tracking information cannot prove history has never been published.'**
-  String get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory;
+  String
+  get gitUiRebaseRewritesCommitIdentitiesRemoteTrackingInformationCannotProveHistory;
 
   /// Shared Git interface: Include root commits
   ///
@@ -12758,7 +12840,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Commits after {boundary} will be replayed onto {base}; the boundary itself is excluded.'**
-  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(String boundary, String base);
+  String gitUiCommitsAfterBoundaryWillBeReplayedOntoBaseTheBoundary(
+    String boundary,
+    String base,
+  );
 
   /// Shared Git interface: Root
   ///
@@ -12836,7 +12921,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Rewrite {arg0} planned commits on {arg1}. Dropped commits remain visibly marked in this plan until you start.'**
-  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(String arg0, String arg1);
+  String gitUiRewriteArg0PlannedCommitsOnArg1DroppedCommitsRemainVisibly(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Start rebase
   ///
@@ -13004,7 +13092,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Source alignment exceeded the text comparison limit; source panes remain available for manual review.'**
-  String get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain;
+  String
+  get gitUiSourceAlignmentExceededTheTextComparisonLimitSourcePanesRemain;
 
   /// Shared Git interface: Accept left region
   ///
@@ -13082,7 +13171,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Conflict versions are unavailable. Refresh to review their current state.'**
-  String get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState;
+  String
+  get gitUiConflictVersionsAreUnavailableRefreshToReviewTheirCurrentState;
 
   /// Shared Git interface: Result saved to disk. The index still determines whether this file is resolved.
   ///
@@ -13118,7 +13208,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Left: {arg0} · {arg1}\nRight: {arg2} · {arg3}'**
-  String gitUiLeftArg0Arg1RightArg2Arg3(String arg0, String arg1, String arg2, String arg3);
+  String gitUiLeftArg0Arg1RightArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
 
   /// Shared Git interface: Choose content, deletion, or a submodule commit explicitly. No binary data is decoded as editable text.
   ///
@@ -13208,7 +13303,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Use the entire edited Result as {arg0}. Git records the path resolved when it is staged. Review all intended content first.{arg1}'**
-  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(String arg0, String arg1);
+  String gitUiUseTheEntireEditedResultAsArg0GitRecordsThe(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Apply and stage
   ///
@@ -13232,7 +13330,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Native Git table accessibility is unavailable. Retry after reconnecting the application.'**
-  String get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe;
+  String
+  get gitUiNativeGitTableAccessibilityIsUnavailableRetryAfterReconnectingThe;
 
   /// Shared Git interface: Sans
   ///
@@ -13328,7 +13427,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Git returned {arg0}. The application could not refresh its documents: {arg1}'**
-  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(String arg0, String arg1);
+  String gitUiGitReturnedArg0TheApplicationCouldNotRefreshItsDocuments(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Select commit in Log…
   ///
@@ -13580,7 +13682,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'The operation needs reconciliation. Review the resulting repository or remote state before repeating it.'**
-  String get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote;
+  String
+  get gitUiTheOperationNeedsReconciliationReviewTheResultingRepositoryOrRemote;
 
   /// Shared Git interface: Git authentication failed. Review the credential helper or unlock the configured keyring.
   ///
@@ -13760,7 +13863,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{arg0} → {arg1}\nReview the selected mode’s effects before applying.'**
-  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(String arg0, String arg1);
+  String gitUiArg0Arg1ReviewTheSelectedModeSEffectsBeforeApplying(
+    String arg0,
+    String arg1,
+  );
 
   /// Shared Git interface: Reset {arg0}
   ///
@@ -13874,7 +13980,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Replace this working path with revision {arg0}. Existing staged content is retained.'**
-  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(String arg0);
+  String gitUiReplaceThisWorkingPathWithRevisionArg0ExistingStagedContent(
+    String arg0,
+  );
 
   /// Shared Git interface: Restore working file
   ///
@@ -13946,7 +14054,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{arg0}  {arg1}\nOriginal line {arg2}{arg3}'**
-  String gitUiArg0Arg1OriginalLineArg2Arg3(String arg0, String arg1, String arg2, String arg3);
+  String gitUiArg0Arg1OriginalLineArg2Arg3(
+    String arg0,
+    String arg1,
+    String arg2,
+    String arg3,
+  );
 
   /// Shared Git interface: Previous lines
   ///
@@ -14372,7 +14485,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{position}, {action}, {subject}'**
-  String gitUiRebaseStepSemantics(String position, String action, String subject);
+  String gitUiRebaseStepSemantics(
+    String position,
+    String action,
+    String subject,
+  );
 
   /// Shared Git interface: UTF-8 with byte-order mark (BOM)
   ///
@@ -14888,7 +15005,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{upstream} · {ahead} ahead, {behind} behind. Locally known remote-tracking information; not a live server check.'**
-  String gitLocalTrackingDescription(String upstream, String ahead, String behind);
+  String gitLocalTrackingDescription(
+    String upstream,
+    String ahead,
+    String behind,
+  );
 
   /// Shared Git interface: Committer
   ///
@@ -14945,7 +15066,8 @@ abstract class AppLocalizations {
   String get gitUiCopyCommitMessage;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -14954,59 +15076,105 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['ar', 'de', 'en', 'es', 'et', 'fa', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'nb', 'nl', 'pl', 'pt', 'ru', 'tr', 'uk', 'vi', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'ar',
+    'de',
+    'en',
+    'es',
+    'et',
+    'fa',
+    'fr',
+    'hi',
+    'id',
+    'it',
+    'ja',
+    'ko',
+    'nb',
+    'nl',
+    'pl',
+    'pt',
+    'ru',
+    'tr',
+    'uk',
+    'vi',
+    'zh',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
   // Lookup logic when language+country codes are specified.
   switch (locale.languageCode) {
-    case 'pt': {
-  switch (locale.countryCode) {
-    case 'BR': return AppLocalizationsPtBr();
-   }
-  break;
-   }
-    case 'zh': {
-  switch (locale.countryCode) {
-    case 'CN': return AppLocalizationsZhCn();
-   }
-  break;
-   }
+    case 'pt':
+      {
+        switch (locale.countryCode) {
+          case 'BR':
+            return AppLocalizationsPtBr();
+        }
+        break;
+      }
+    case 'zh':
+      {
+        switch (locale.countryCode) {
+          case 'CN':
+            return AppLocalizationsZhCn();
+        }
+        break;
+      }
   }
 
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'ar': return AppLocalizationsAr();
-    case 'de': return AppLocalizationsDe();
-    case 'en': return AppLocalizationsEn();
-    case 'es': return AppLocalizationsEs();
-    case 'et': return AppLocalizationsEt();
-    case 'fa': return AppLocalizationsFa();
-    case 'fr': return AppLocalizationsFr();
-    case 'hi': return AppLocalizationsHi();
-    case 'id': return AppLocalizationsId();
-    case 'it': return AppLocalizationsIt();
-    case 'ja': return AppLocalizationsJa();
-    case 'ko': return AppLocalizationsKo();
-    case 'nb': return AppLocalizationsNb();
-    case 'nl': return AppLocalizationsNl();
-    case 'pl': return AppLocalizationsPl();
-    case 'pt': return AppLocalizationsPt();
-    case 'ru': return AppLocalizationsRu();
-    case 'tr': return AppLocalizationsTr();
-    case 'uk': return AppLocalizationsUk();
-    case 'vi': return AppLocalizationsVi();
-    case 'zh': return AppLocalizationsZh();
+    case 'ar':
+      return AppLocalizationsAr();
+    case 'de':
+      return AppLocalizationsDe();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'et':
+      return AppLocalizationsEt();
+    case 'fa':
+      return AppLocalizationsFa();
+    case 'fr':
+      return AppLocalizationsFr();
+    case 'hi':
+      return AppLocalizationsHi();
+    case 'id':
+      return AppLocalizationsId();
+    case 'it':
+      return AppLocalizationsIt();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'ko':
+      return AppLocalizationsKo();
+    case 'nb':
+      return AppLocalizationsNb();
+    case 'nl':
+      return AppLocalizationsNl();
+    case 'pl':
+      return AppLocalizationsPl();
+    case 'pt':
+      return AppLocalizationsPt();
+    case 'ru':
+      return AppLocalizationsRu();
+    case 'tr':
+      return AppLocalizationsTr();
+    case 'uk':
+      return AppLocalizationsUk();
+    case 'vi':
+      return AppLocalizationsVi();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
+    'that was used.',
   );
 }
