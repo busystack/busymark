@@ -177,7 +177,7 @@ class DesktopRun:
             picture = self.checkpoint()
             area = picture.crop((50, 150, self.width-50, 635))
             busy = any(sum(1 for x in range(50, self.width-50, 4)
-                           if (lambda c: c[0] > 180 and c[1] < 140 and c[2] < 100)(picture.getpixel((x, y)))) > 20
+                           if (lambda c: c[0] > 180 and c[1] < 140 and c[2] < 100)(picture.getpixel((x, y)))) > self.width / 8
                        for y in range(150, 220))
             signature = area.tobytes()
             if not busy and signature == previous:

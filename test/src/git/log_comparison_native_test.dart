@@ -310,10 +310,13 @@ void main() {
       final headerBounds = tester.getRect(
         find.byKey(const ValueKey('git-commit-header')),
       );
-      expect(tester.getRect(actions).right, closeTo(headerBounds.right, 1));
+      expect(
+        tester.getRect(actions).right,
+        closeTo(headerBounds.right - BusyMarkSpacing.sm, 1),
+      );
       expect(
         tester.getRect(actions).center.dy,
-        closeTo(headerBounds.center.dy, 1),
+        closeTo(tester.getRect(header).center.dy, 1),
       );
       expect(
         find.descendant(of: header, matching: find.byType(git.GitButton)),
@@ -323,7 +326,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         entries!.where((e) => (e as Map)['label'] == 'Select another commit…'),
-        hasLength(1),
+        isEmpty,
       );
       expect(find.byKey(const ValueKey('git-commit-actions')), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -691,8 +694,19 @@ void main() {
           final labels = menus.last
               .where((e) => (e as Map)['separator'] != true)
               .map((e) => (e as Map)['label']);
+          expect(
+            labels,
+            isNot(
+              contains(
+                session!.host.message(git.GitMessages.selectAnotherCommit),
+              ),
+            ),
+          );
+          expect(
+            find.byKey(const ValueKey('git-select-another-commit')),
+            findsOneWidget,
+          );
           for (final message in [
-            git.GitMessages.selectAnotherCommit,
             git.GitMessages.createBranch2,
             git.GitMessages.createTag,
             git.GitMessages.compareRevisions,

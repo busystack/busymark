@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:yaru/yaru.dart';
+import 'package:intl/intl.dart' as intl;
 
 import '../platform/native_menu_service.dart';
 import '../platform/gtk_header_icon_service.dart';
@@ -2945,7 +2946,7 @@ class BusyMarkSidebarSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return Material(
+    return ColoredBox(
       color: colors.sidebar,
       child: DecoratedBox(
         position: DecorationPosition.foreground,
@@ -4442,6 +4443,7 @@ class BusyMarkDialogTitleBar extends StatelessWidget {
     super.key,
     this.title,
     this.centerTitle = true,
+    this.leading,
     this.closeSemanticLabel,
     this.closable = true,
     this.showDividerInHighContrast = true,
@@ -4449,6 +4451,7 @@ class BusyMarkDialogTitleBar extends StatelessWidget {
 
   final Widget? title;
   final bool centerTitle;
+  final Widget? leading;
   final String? closeSemanticLabel;
   final bool closable;
   final bool showDividerInHighContrast;
@@ -4469,6 +4472,7 @@ class BusyMarkDialogTitleBar extends StatelessWidget {
         ),
       ),
       child: YaruDialogTitleBar(
+        leading: leading,
         title: title,
         centerTitle: centerTitle,
         isClosable: closable,
@@ -4621,7 +4625,12 @@ class BusyMarkGitDialogShell extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           header ??
-              BusyMarkDialogTitleBar(title: Text(title), closable: closable),
+              (git.GitDialogBody.ownsHeader(body)
+                  ? const SizedBox.shrink()
+                  : BusyMarkDialogTitleBar(
+                      title: Text(title),
+                      closable: closable,
+                    )),
           if (expanded && body != null)
             Expanded(child: body!)
           else
@@ -5912,11 +5921,6 @@ double busyMarkGitSidebarMinimumWidth(BuildContext context) {
   );
 }
 
-double _busyMarkGitStatusExtent(BuildContext context) => math.max(
-  BusyMarkSizes.sidebarTreeControl,
-  MediaQuery.textScalerOf(context).scale(BusyMarkSizes.sidebarTreeControl),
-);
-
 /// Git's required native adapter. Every construction here maps to this host's
 /// existing approved design controls; feature code cannot select a fallback.
 final class BusyMarkGitPresentation implements git.GitPresentation {
@@ -5976,7 +5980,9 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
     DateTime? end,
   }) => git.GitHostScope.of(context)!.present<(DateTime, DateTime)>(
     context,
-    git.GitMessages.dateFilter,
+    git
+        .gitString(context, git.GitMessages.dateFilter)
+        .replaceFirst(RegExp(r'(?:…|\.{3})$'), ''),
     _BusyMarkGitDateRange(start: start, end: end),
   );
   @override
@@ -6200,7 +6206,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       BusyMarkSizes.sidebarTreeDepthBase +
       depth * BusyMarkSizes.sidebarTreeDepthIndent +
       BusyMarkSizes.sidebarTreeControl +
-      _busyMarkGitStatusExtent(context) +
+      BusyMarkSizes.sidebarTreeControl +
       BusyMarkSpacing.xs +
       BusyMarkSpacing.sm;
   @override
@@ -6212,7 +6218,7 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
       child: BusyMarkSidebarTreeRow(
         title: control.title,
-        leadingExtent: _busyMarkGitStatusExtent(context),
+        leadingExtent: BusyMarkSizes.sidebarTreeControl,
         titleStyle: control.group ? busyMarkSectionHeaderStyle(context) : null,
         depth: control.depth,
         selected: control.selected,
@@ -6233,6 +6239,54 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
       ),
     );
   }
+
+  @override
+  Widget logHeader(BuildContext context, git.GitLogHeader control) => Padding(
+    padding: const EdgeInsetsDirectional.fromSTEB(
+      BusyMarkSpacing.mdPlus,
+      0,
+      BusyMarkSpacing.sm,
+      BusyMarkSpacing.sm,
+    ),
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: BusyMarkSizes.iconButton),
+      child: Row(
+        children: [
+          Expanded(child: control.subject),
+          const SizedBox(width: BusyMarkSpacing.sm),
+          control.choose,
+          const SizedBox(width: BusyMarkSpacing.sm),
+          control.actions,
+        ],
+      ),
+    ),
+  );
+
+  @override
+  Widget historyLayout(BuildContext context, git.GitHistoryLayout control) =>
+      _BusyMarkGitHistoryLayout(control: control);
+
+  @override
+  Widget referenceRow(BuildContext context, git.GitReferenceRow control) =>
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BusyMarkSidebarTreeRow(
+            title: control.title,
+            depth: control.depth,
+            leading: control.leading,
+            selected: control.selected,
+            hasChildren: control.expanded != null,
+            expanded: control.expanded ?? false,
+            onToggle: control.onToggle,
+            onTap: control.onTap,
+            onSecondaryTapUp: control.onSecondaryTapUp,
+            tooltip: control.title,
+          ),
+          if (control.expanded ?? false) ...control.children,
+        ],
+      );
 
   @override
   Widget expander(BuildContext context, git.GitExpander control) {
@@ -6405,9 +6459,23 @@ class _BusyMarkGitDateRange extends StatefulWidget {
 }
 
 class _BusyMarkGitDateRangeState extends State<_BusyMarkGitDateRange> {
-  late DateTime? _start = widget.start, _end = widget.end;
-  late final _startEntry = YaruDateTimeEntryController(dateTime: widget.start);
-  late final _endEntry = YaruDateTimeEntryController(dateTime: widget.end);
+  final _startEntry = TextEditingController(),
+      _endEntry = TextEditingController();
+  bool _initialized = false, _submitted = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
+    final labels = MaterialLocalizations.of(context);
+    _startEntry.text = widget.start == null
+        ? ''
+        : labels.formatCompactDate(widget.start!);
+    _endEntry.text = widget.end == null
+        ? ''
+        : labels.formatCompactDate(widget.end!);
+  }
+
   @override
   void dispose() {
     _startEntry.dispose();
@@ -6418,40 +6486,149 @@ class _BusyMarkGitDateRangeState extends State<_BusyMarkGitDateRange> {
   @override
   Widget build(BuildContext context) {
     final labels = MaterialLocalizations.of(context);
-    final valid = _start != null && _end != null && !_end!.isBefore(_start!);
+    // CLDR date patterns can contain invisible direction marks. Keep them in
+    // formatted values, but do not require users to type formatting controls.
+    // The field order and separators still come from this locale's formatter.
+    final directionMarks = RegExp('[\u061c\u200e\u200f\u2066-\u2069]');
+    final localeFormat = intl.DateFormat.yMd(
+      Localizations.localeOf(context).toString(),
+    );
+    final pattern = localeFormat.pattern!.replaceAll(directionMarks, '');
+    final parser = intl.DateFormat(pattern, localeFormat.locale)
+      ..useNativeDigits = false;
+    final zero = localeFormat.localeZeroCodeUnit;
+    DateTime? parse(String input) {
+      if (input.isEmpty) return null;
+      try {
+        final text = input
+            .replaceAll(directionMarks, '')
+            .runes
+            .map(
+              (digit) => digit >= zero && digit < zero + 10
+                  ? 0x30 + digit - zero
+                  : digit,
+            );
+        return parser.parseStrict(String.fromCharCodes(text));
+      } on FormatException {
+        return null;
+      }
+    }
+
+    final hint = pattern.replaceAllMapped(
+      RegExp(r'd+|M+|y+'),
+      (match) => switch (match[0]![0]) {
+        'd' => 'dd',
+        'M' => 'mm',
+        _ => 'yyyy',
+      },
+    );
+    final start = parse(_startEntry.text);
+    final end = parse(_endEntry.text);
+    final last = DateUtils.dateOnly(
+      DateTime.now().add(const Duration(days: 1)),
+    );
+    bool acceptable(DateTime? value) =>
+        value != null &&
+        !value.isBefore(DateTime(1970)) &&
+        !value.isAfter(last);
+    final valid =
+        acceptable(start) && acceptable(end) && !end!.isBefore(start!);
+    final invalidRange = start != null && end != null && end.isBefore(start);
+    void save() {
+      if (!valid || _submitted || ModalRoute.of(context)?.isCurrent != true) {
+        return;
+      }
+      _submitted = true;
+      git.gitCompleteSurface(context, (start, end));
+    }
+
+    Widget field(
+      String key,
+      String label,
+      TextEditingController entry,
+      DateTime? value,
+    ) => Column(
+      key: ValueKey(key),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label),
+        const SizedBox(height: BusyMarkSpacing.xs),
+        Semantics(
+          label: label,
+          child: BusyMarkGitTextEntry(
+            controller: entry,
+            label: '',
+            hintText: hint,
+            dense: true,
+            contextMenuBuilder: (menuContext, editable) =>
+                git.GitTextContextMenu(
+                  host: git.GitHostScope.of(context)!,
+                  items: editable.contextMenuButtonItems,
+                  position: editable.contextMenuAnchors.primaryAnchor,
+                  close: editable.hideToolbar,
+                ),
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => save(),
+            trailing: entry.text.isEmpty
+                ? const SizedBox.square(dimension: BusyMarkSizes.iconButton)
+                : BusyMarkHeaderIconButton(
+                    key: ValueKey('$key-clear'),
+                    focusBorderRadius: BusyMarkRadius.headerButton,
+                    tooltip: labels.deleteButtonTooltip,
+                    icon: BusyMarkGlyphs.clear,
+                    onPressed: () => setState(entry.clear),
+                  ),
+          ),
+        ),
+        if (entry.text.isNotEmpty && !acceptable(value)) ...[
+          const SizedBox(height: BusyMarkSpacing.xs),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              value == null
+                  ? labels.invalidDateFormatLabel
+                  : labels.dateOutOfRangeLabel,
+              style: TextStyle(color: YaruColors.of(context).error),
+            ),
+          ),
+        ],
+      ],
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(labels.dateRangeStartLabel),
-        YaruDateTimeEntry(
-          includeTime: false,
-          controller: _startEntry,
-          firstDateTime: DateTime(1970),
-          lastDateTime: DateTime.now().add(const Duration(days: 1)),
-          onChanged: (value) => setState(() => _start = value),
-        ),
-        Text(labels.dateRangeEndLabel),
-        YaruDateTimeEntry(
-          includeTime: false,
-          controller: _endEntry,
-          firstDateTime: DateTime(1970),
-          lastDateTime: DateTime.now().add(const Duration(days: 1)),
-          onChanged: (value) => setState(() => _end = value),
-        ),
-        Wrap(
-          alignment: WrapAlignment.end,
+        field('git-date-start', labels.dateRangeStartLabel, _startEntry, start),
+        const SizedBox(height: BusyMarkSpacing.lg),
+        field('git-date-end', labels.dateRangeEndLabel, _endEntry, end),
+        if (invalidRange) ...[
+          const SizedBox(height: BusyMarkSpacing.sm),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              labels.invalidDateRangeLabel,
+              style: TextStyle(color: YaruColors.of(context).error),
+            ),
+          ),
+        ],
+        const SizedBox(height: BusyMarkSpacing.lg),
+        OverflowBar(
+          alignment: MainAxisAlignment.end,
+          overflowAlignment: OverflowBarAlignment.end,
+          spacing: BusyMarkSpacing.sm,
+          overflowSpacing: BusyMarkSpacing.sm,
           children: [
             BusyMarkGitActionButton(
+              compact: true,
               role: BusyMarkGitActionRole.standard,
               onPressed: () => git.gitCompleteSurface(context),
               child: Text(labels.cancelButtonLabel),
             ),
             BusyMarkGitActionButton(
+              compact: true,
               role: BusyMarkGitActionRole.suggested,
-              onPressed: valid
-                  ? () => git.gitCompleteSurface(context, (_start!, _end!))
-                  : null,
+              onPressed: valid ? save : null,
               child: Text(labels.saveButtonLabel),
             ),
           ],
@@ -6459,6 +6636,177 @@ class _BusyMarkGitDateRangeState extends State<_BusyMarkGitDateRange> {
       ],
     );
   }
+}
+
+class _BusyMarkGitHistoryLayout extends StatefulWidget {
+  const _BusyMarkGitHistoryLayout({required this.control});
+  final git.GitHistoryLayout control;
+  @override
+  State<_BusyMarkGitHistoryLayout> createState() =>
+      _BusyMarkGitHistoryLayoutState();
+}
+
+class _BusyMarkGitHistoryLayoutState extends State<_BusyMarkGitHistoryLayout> {
+  bool _overlayVisible = false;
+  git.GitHistoryLayout get control => widget.control;
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, bounds) {
+      final sidebarWidth = (bounds.maxWidth * control.sidebarFraction)
+          .clamp(
+            BusyMarkSizes.sidebarWidth,
+            math.max(BusyMarkSizes.sidebarWidth, bounds.maxWidth * .4),
+          )
+          .toDouble();
+      final wide =
+          bounds.maxWidth >=
+          sidebarWidth + math.max(560, control.minimumHistoryWidth);
+      final visible = wide ? control.sidebarVisible : _overlayVisible;
+      void toggle() {
+        if (wide) {
+          control.onToggle();
+        } else {
+          setState(() => _overlayVisible = !_overlayVisible);
+        }
+      }
+
+      void resize(double delta) =>
+          control.onResize((sidebarWidth + delta) / bounds.maxWidth);
+      final sidebar = BusyMarkSidebarSurface(
+        key: const ValueKey('git-history-reference-sidebar'),
+        child: Padding(
+          padding: BusyMarkInsets.sidebarList,
+          child: control.sidebar,
+        ),
+      );
+      final history = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          control.toolbar,
+          Expanded(child: control.main),
+          if (control.footer != null)
+            Padding(
+              key: const ValueKey('git-history-footer'),
+              padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+              child: control.footer!,
+            ),
+        ],
+      );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BusyMarkDialogTitleBar(
+            key: const ValueKey('git-history-header'),
+            title: const git.GitLabel(
+              git.GitMessages.log,
+              key: ValueKey('git-history-title'),
+            ),
+            leading: Padding(
+              padding: const EdgeInsetsDirectional.only(
+                start: BusyMarkSpacing.headerInset,
+              ),
+              child: Semantics(
+                toggled: visible,
+                child: BusyMarkHeaderIconButton(
+                  key: const ValueKey('git-history-sidebar-toggle'),
+                  tooltip: visible
+                      ? context.l10n.hideSidebar
+                      : context.l10n.showSidebar,
+                  icon: BusyMarkGlyphs.sidebar,
+                  selected: visible,
+                  focusBorderRadius: BusyMarkRadius.headerButton,
+                  onPressed: toggle,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Row(
+                    children: [
+                      SizedBox(width: wide && visible ? sidebarWidth : 0),
+                      Expanded(
+                        child: ExcludeFocus(
+                          excluding: !wide && visible,
+                          child: history,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PositionedDirectional(
+                  start: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: math.min(sidebarWidth, bounds.maxWidth),
+                child: Offstage(
+                  offstage: !visible,
+                  child: ExcludeFocus(excluding: !visible, child: sidebar),
+                ),
+                ),
+                if (wide && visible)
+                  PositionedDirectional(
+                    start: sidebarWidth - BusyMarkSpacing.xs,
+                    top: 0,
+                    bottom: 0,
+                    width: BusyMarkSpacing.sm,
+                    child: Semantics(
+                      label: git.gitString(
+                        context,
+                        git.GitMessages.resizeGitPanes,
+                      ),
+                      slider: true,
+                      onIncrease: () => resize(BusyMarkSpacing.xl),
+                      onDecrease: () => resize(-BusyMarkSpacing.xl),
+                      child: Focus(
+                        onKeyEvent: (_, event) {
+                          if (event is! KeyDownEvent &&
+                              event is! KeyRepeatEvent) {
+                            return KeyEventResult.ignored;
+                          }
+                          final rtl =
+                              Directionality.of(context) == TextDirection.rtl;
+                          if (event.logicalKey ==
+                                  LogicalKeyboardKey.arrowRight ||
+                              event.logicalKey ==
+                                  LogicalKeyboardKey.arrowLeft) {
+                            resize(
+                              (event.logicalKey == LogicalKeyboardKey.arrowRight
+                                      ? 1
+                                      : -1) *
+                                  (rtl ? -1 : 1) *
+                                  BusyMarkSpacing.xl,
+                            );
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.resizeColumn,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onHorizontalDragUpdate: (event) => resize(
+                              event.delta.dx *
+                                  (Directionality.of(context) ==
+                                          TextDirection.rtl
+                                      ? -1
+                                      : 1),
+                            ),
+                            child: const SizedBox.expand(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 Widget _busyMarkExistingTextMenu(

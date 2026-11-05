@@ -216,10 +216,10 @@ def main():
                 (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
             elif kind == 'text':
                 for char in command['value']:
-                    symbol = 'period' if char == '.' else char
+                    symbol = {'.': 'period', '/': 'slash'}.get(char, char)
                     code = x.XKeysymToKeycode(desktop.display, x.XStringToKeysym(symbol.encode()))
-                    if not code or not char.isascii() or not (char.islower() or char == '.'):
-                        raise ValueError('Text command only accepts lowercase ASCII search queries and periods')
+                    if not code or not char.isascii() or not (char.islower() or char.isdigit() or char in './'):
+                        raise ValueError('Text command only accepts ASCII search queries and numeric dates')
                     for state in [1, 0]:
                         xtest.XTestFakeKeyEvent(desktop.display, code, state, 10)
             elif kind == 'wait':

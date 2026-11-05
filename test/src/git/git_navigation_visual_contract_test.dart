@@ -94,6 +94,19 @@ Future<git.GitSession> mountGitVisualContract(
   Size size = const Size(1000, 800),
   Brightness brightness = Brightness.light,
 }) async {
+  // The real Yaru titlebar paints in widget tests; only its OS-window channel
+  // is provisioned here. Shipping acceptance exercises the actual GTK service.
+  final messenger = tester.binding.defaultBinaryMessenger;
+  messenger.setMockMethodCallHandler(
+    const MethodChannel('yaru_window'),
+    (call) async => call.method == 'state'
+        ? <String, Object>{'active': true, 'closable': true}
+        : null,
+  );
+  messenger.setMockMethodCallHandler(
+    const MethodChannel('yaru_window/events'),
+    (_) async => null,
+  );
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -114,6 +127,12 @@ Future<git.GitSession> mountGitVisualContract(
         ),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(scale)),
+          child: child!,
+        ),
         home: Scaffold(
           body: MediaQuery(
             data: MediaQueryData(
@@ -348,10 +367,15 @@ void main() {
       if (tester.widget<git.GitActionRow>(header).onTap != null) {
         defects.add('clickable selected subject');
       }
-      if ((headerBounds.center.dy - tester.getCenter(actions).dy).abs() > 1) {
+      if ((tester.getCenter(header).dy - tester.getCenter(actions).dy).abs() >
+          1) {
         defects.add('Actions outside information header');
       }
-      if ((headerBounds.right - tester.getRect(actions).right).abs() > 1) {
+      if ((headerBounds.right -
+                  BusyMarkSpacing.sm -
+                  tester.getRect(actions).right)
+              .abs() >
+          1) {
         defects.add('Actions not aligned to end');
       }
       if (find.text('aaaaaaaaaa').evaluate().length != 1) {
@@ -360,10 +384,9 @@ void main() {
       await tester.tap(actions);
       await tester.pumpAndSettle();
       if (entries
-              .where((e) => (e as Map)['label'] == 'Select another commit…')
-              .length !=
-          1) {
-        defects.add('missing Select another commit menu item');
+          .where((e) => (e as Map)['label'] == 'Select another commit…')
+          .isNotEmpty) {
+        defects.add('duplicate Select another commit menu item');
       }
       expect(defects, isEmpty);
       expect(tester.takeException(), isNull);
