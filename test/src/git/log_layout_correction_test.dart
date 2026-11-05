@@ -249,6 +249,12 @@ void main() {
               await tester.tap(toggle);
               await tester.pumpAndSettle();
               expect(tester.getSize(sidebar).width, closeTo(referenceWidth, 1));
+              expect(
+                tester.getRect(sidebar).overlaps(tester.getRect(historyButton)),
+                isFalse,
+                reason:
+                    'The temporary reference pane must not cover the confirmation footer',
+              );
               final input = tester.widget<EditableText>(
                 find
                     .descendant(

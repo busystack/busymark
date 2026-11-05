@@ -6679,17 +6679,19 @@ class _BusyMarkGitHistoryLayoutState extends State<_BusyMarkGitHistoryLayout> {
           child: control.sidebar,
         ),
       );
+      final footer = control.footer == null
+          ? null
+          : Padding(
+              key: const ValueKey('git-history-footer'),
+              padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+              child: control.footer!,
+            );
       final history = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           control.toolbar,
           Expanded(child: control.main),
-          if (control.footer != null)
-            Padding(
-              key: const ValueKey('git-history-footer'),
-              padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-              child: control.footer!,
-            ),
+          if (wide && footer != null) footer,
         ],
       );
       return Column(
@@ -6741,10 +6743,10 @@ class _BusyMarkGitHistoryLayoutState extends State<_BusyMarkGitHistoryLayout> {
                   top: 0,
                   bottom: 0,
                   width: math.min(sidebarWidth, bounds.maxWidth),
-                child: Offstage(
-                  offstage: !visible,
-                  child: ExcludeFocus(excluding: !visible, child: sidebar),
-                ),
+                  child: Offstage(
+                    offstage: !visible,
+                    child: ExcludeFocus(excluding: !visible, child: sidebar),
+                  ),
                 ),
                 if (wide && visible)
                   PositionedDirectional(
@@ -6803,6 +6805,7 @@ class _BusyMarkGitHistoryLayoutState extends State<_BusyMarkGitHistoryLayout> {
               ],
             ),
           ),
+          if (!wide && footer != null) footer,
         ],
       );
     },
