@@ -195,3 +195,55 @@ Select a case with `--case=light-ja-1.5`. The driver requires a sealed matching
 source receipt and official engine; it retains every attempt separately.
 `assemble_native_matrix.py` is retained beside the evidence JSON. Native runs
 require a desktop/socket-permitted environment, without application hooks.
+
+
+## Git control remediation follow-up — 2026-11-05
+
+The baseline was BusyMark `e3e7ea6fcd06514fa26ff1d6d93d2e5a966c7baf`,
+shared UI `32a1933e74076a6f1da61de7fcaeb596de5d2025`, and unchanged engine
+`7d8e55d8034aeb85cddac1c0f498b0f3cc33105b`. Both consumer UI archives matched
+SHA-256 `18319cd3e6b89cf1d573764e62ddb98c5cc14a401189fe69fa9f4eb9361a9347`.
+No checkout was reset. BusyFiles' existing generated-catalog formatting is
+preserved separately from the new localization entries.
+
+Shared UI `428dac3c6dac2070536e26313948746fc88f1cb0` defines view Actions,
+entry-context and choice/display-menu roles. The host maps the view role once to
+BusyMark's three horizontal bars; per-entry context artwork remains separate.
+Required native metrics measure the actual toolbar buttons. Inline diff actions
+and toolbar text controls request their own compact semantics. The host supplies
+the Actions caption, preserving BusyFiles' repository wording. No operation,
+index, commit/amend, editor guard or comparison-tab semantics changed.
+
+BusyMark retains the approved native shape and state palettes with desktop
+vertical button insets, leaving Commit and Commit and Push on one row. Compact
+Log metadata/headings share host insets and parent metadata has no second row
+inset. The existing Files-tree primitive still owns historical rows. History
+now composes the reference surface and main content through their own headers;
+the divider reaches the modal top and the toggle moves to the main header when
+hidden. The narrow overlay keeps the padded footer outside its covered area.
+
+The full shared suite passed 418 tests. The BusyMark Git/core-workspace run
+passed 421 tests and differed only in six expected golden surfaces, which were
+updated after inspecting populated native views. The follow-up golden/sidebar/
+headerbar suite passed 41 checks. The actual host comparison suite passed 39
+checks; modal coverage passed 58. Source analysis and the resolved native host
+boundary passed. Both ordinary debug and Linux release builds succeeded with
+unmodified official Flutter 3.47.5, Dart 3.13.4 and locked Yaru 10.2.0.
+
+Native framebuffer evidence is under `build/git-remediation-20261105/` and
+includes the trusted populated Commit area, actual-index staging comparison,
+compact inline hunk/context controls, checked comparison menu, three-bar Actions,
+Branches, the aligned Log inspector and corrected history pane composition.
+Source/payload receipts bind the captures to the builds. Rejected blank or
+incomplete framebuffer attempts and prior golden differences are preserved and
+do not count as acceptance. Cross-application release/platform qualification is
+reported separately; a BusyMark image alone does not establish BusyFiles support.
+
+
+An additional rendered review found that the old `menuVertical` catalog entry
+uses GTK's three-bar native artwork but Yaru's vertical-dot font glyph. Git's
+semantic Actions mapping now explicitly requests `BusyMarkGlyphs.mainMenu`
+(`YaruIcons.menu`, verified as three horizontal paths in installed Yaru 10.2.0)
+and the same GTK `open-menu-symbolic` artwork. The dedicated regression rejects
+both Yaru dot glyphs even without a GTK catalog; all 11 explicit-icon/golden
+checks pass. No contextual icon mapping was globally replaced.

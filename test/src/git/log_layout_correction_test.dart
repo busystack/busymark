@@ -110,7 +110,9 @@ void main() {
           final modal = find.byKey(
             const ValueKey('git-history-sidebar-toggle'),
           );
-          final modalHeader = find.byKey(const ValueKey('git-history-header'));
+          final modalHeader = find.byKey(
+            const ValueKey('git-history-sidebar-header'),
+          );
           expect(
             tester.getSize(modal),
             tester.getSize(main),
@@ -296,7 +298,30 @@ void main() {
                 sideBounds.right - searchBounds.right,
                 greaterThanOrEqualTo(BusyMarkSpacing.sm),
               );
-              expect(sideBounds.top, closeTo(tester.getRect(header).bottom, 1));
+              expect(sideBounds.top, closeTo(tester.getRect(header).top, 1));
+              final sidebarHeader = find.byKey(
+                const ValueKey('git-history-sidebar-header'),
+              );
+              expect(
+                tester.getRect(sidebarHeader).height,
+                tester.getRect(header).height,
+              );
+              expect(
+                searchBounds.top,
+                greaterThanOrEqualTo(tester.getRect(sidebarHeader).bottom),
+              );
+              if (width > 1000) {
+                final rtl = locale == 'ar';
+                expect(
+                  rtl ? sideBounds.left : sideBounds.right,
+                  closeTo(
+                    rtl
+                        ? tester.getRect(header).right
+                        : tester.getRect(header).left,
+                    1,
+                  ),
+                );
+              }
               final groups = find.descendant(
                 of: sidebar,
                 matching: find.byType(git.GitReferenceRow),

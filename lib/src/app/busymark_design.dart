@@ -4906,8 +4906,10 @@ class BusyMarkGitActionButtonState extends State<BusyMarkGitActionButton> {
             horizontal: BusyMarkSpacing.md,
             vertical: BusyMarkSpacing.xs,
           )
-        : style?.padding?.resolve(states) ??
-              const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.lg);
+        : const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.lg,
+            vertical: BusyMarkSpacing.sm,
+          );
     final minimum =
         style?.minimumSize?.resolve(states) ??
         const Size(kYaruButtonHeight, kYaruButtonHeight);
@@ -5987,11 +5989,24 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
     _BusyMarkGitDateRange(start: start, end: end),
   );
   @override
+  String repositoryActionsLabel(BuildContext context) =>
+      context.l10n.gitUiActions;
+  @override
+  git.GitToolbarMetrics toolbarMetrics(BuildContext context) =>
+      const git.GitToolbarMetrics(
+        iconExtent: BusyMarkSizes.iconButton,
+        gap: BusyMarkSpacing.xs,
+        textInsets: BusyMarkSpacing.md * 2,
+        modeAdornment: BusyMarkSpacing.sm + BusyMarkSizes.iconSm,
+      );
+  @override
   Widget button(BuildContext context, git.GitButton control) =>
       BusyMarkGitActionButton(
         compact: control.compact,
         role: switch (control.variant) {
-          git.GitActionStyle.inline => BusyMarkGitActionRole.inline,
+          git.GitActionStyle.inline ||
+          git.GitActionStyle.toolbar ||
+          git.GitActionStyle.diffInline => BusyMarkGitActionRole.inline,
           git.GitActionStyle.standard => BusyMarkGitActionRole.standard,
           git.GitActionStyle.suggested => BusyMarkGitActionRole.suggested,
         },
@@ -6241,6 +6256,14 @@ final class BusyMarkGitPresentation implements git.GitPresentation {
     );
   }
 
+  @override
+  EdgeInsetsGeometry logContentInsets(BuildContext context) =>
+      const EdgeInsetsDirectional.fromSTEB(
+        BusyMarkSpacing.mdPlus,
+        BusyMarkSpacing.sm,
+        BusyMarkSpacing.sm,
+        BusyMarkSpacing.sm,
+      );
   @override
   Widget logHeader(BuildContext context, git.GitLogHeader control) => Padding(
     padding: const EdgeInsetsDirectional.fromSTEB(
@@ -6673,11 +6696,44 @@ class _BusyMarkGitHistoryLayoutState extends State<_BusyMarkGitHistoryLayout> {
 
       void resize(double delta) =>
           control.onResize((sidebarWidth + delta) / bounds.maxWidth);
+      final toggleControl = Padding(
+        padding: const EdgeInsetsDirectional.only(
+          start: BusyMarkSpacing.headerInset,
+        ),
+        child: Semantics(
+          toggled: visible,
+          child: BusyMarkLinuxHeaderIconButton(
+            key: const ValueKey('git-history-sidebar-toggle'),
+            tooltip: visible
+                ? context.l10n.hideSidebar
+                : context.l10n.showSidebar,
+            icon: BusyMarkGlyphs.sidebar,
+            nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
+            selected: visible,
+            onPressed: toggle,
+          ),
+        ),
+      );
       final sidebar = BusyMarkSidebarSurface(
         key: const ValueKey('git-history-reference-sidebar'),
-        child: Padding(
-          padding: BusyMarkInsets.sidebarList,
-          child: control.sidebar,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              key: const ValueKey('git-history-sidebar-header'),
+              height: BusyMarkSizes.toolbarHeight,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: visible ? toggleControl : const SizedBox.shrink(),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: BusyMarkInsets.sidebarList,
+                child: control.sidebar,
+              ),
+            ),
+          ],
         ),
       );
       final footer = control.footer == null
@@ -6690,42 +6746,26 @@ class _BusyMarkGitHistoryLayoutState extends State<_BusyMarkGitHistoryLayout> {
       final history = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          control.toolbar,
-          Expanded(child: control.main),
-          if (wide && footer != null) footer,
-        ],
-      );
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
           BusyMarkDialogTitleBar(
             key: const ValueKey('git-history-header'),
             title: const git.GitLabel(
               git.GitMessages.log,
               key: ValueKey('git-history-title'),
             ),
-            leading: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  start: BusyMarkSpacing.headerInset,
-                ),
-                child: Semantics(
-                  toggled: visible,
-                  child: BusyMarkLinuxHeaderIconButton(
-                    key: const ValueKey('git-history-sidebar-toggle'),
-                    tooltip: visible
-                        ? context.l10n.hideSidebar
-                        : context.l10n.showSidebar,
-                    icon: BusyMarkGlyphs.sidebar,
-                    nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
-                    selected: visible,
-                    onPressed: toggle,
+            leading: visible
+                ? null
+                : Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: toggleControl,
                   ),
-                ),
-              ),
-            ),
           ),
+          control.toolbar,
+          Expanded(child: control.main),
+          if (wide && footer != null) footer,
+        ],
+      );
+      return Column(
+        children: [
           Expanded(
             child: Stack(
               children: [

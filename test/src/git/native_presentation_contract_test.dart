@@ -362,7 +362,7 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         await tester.pumpAndSettle();
         final before = client.statusReads;
-        await tester.tap(find.byTooltip('Repository actions'));
+        await tester.tap(find.byTooltip('Actions'));
         await tester.pumpAndSettle();
         expect(entries, isNotNull);
         // The native service serializes indices, labels and enabled state. Labels

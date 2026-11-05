@@ -630,6 +630,31 @@ Future<bool> _ensureGitTrust(
   return current();
 }
 
+const busyMarkGitIcons = <shared.GitGlyph, IconData>{
+  shared.GitGlyph.back: BusyMarkGlyphs.gitPrevious,
+  shared.GitGlyph.branch: BusyMarkGlyphs.branch,
+  shared.GitGlyph.history: BusyMarkGlyphs.history,
+  shared.GitGlyph.refresh: BusyMarkGlyphs.refresh,
+  shared.GitGlyph.copy: BusyMarkGlyphs.copy,
+  shared.GitGlyph.options: BusyMarkGlyphs.settings,
+  shared.GitGlyph.moreHorizontal: BusyMarkGlyphs.menuHorizontal,
+  shared.GitGlyph.more: BusyMarkGlyphs.menuVertical,
+  shared.GitGlyph.actions: BusyMarkGlyphs.mainMenu,
+  shared.GitGlyph.expand: BusyMarkGlyphs.downArrow,
+  shared.GitGlyph.previous: BusyMarkGlyphs.gitPrevious,
+  shared.GitGlyph.next: BusyMarkGlyphs.gitNext,
+  shared.GitGlyph.up: BusyMarkGlyphs.upArrow,
+  shared.GitGlyph.down: BusyMarkGlyphs.downArrow,
+  shared.GitGlyph.search: BusyMarkGlyphs.search,
+  shared.GitGlyph.add: BusyMarkGlyphs.add,
+  shared.GitGlyph.remove: BusyMarkGlyphs.thematicBreak,
+  shared.GitGlyph.check: BusyMarkGlyphs.check,
+  shared.GitGlyph.tag: BusyMarkGlyphs.tag,
+  shared.GitGlyph.error: BusyMarkGlyphs.error,
+  shared.GitGlyph.warning: BusyMarkGlyphs.warning,
+  shared.GitGlyph.close: BusyMarkGlyphs.windowClose,
+};
+
 shared.GitHost busyMarkGitHost(
   BuildContext context,
   WidgetRef ref,
@@ -645,29 +670,7 @@ shared.GitHost busyMarkGitHost(
     spacing: BusyMarkSpacing.sm,
     minimumRowHeight:
         BusyMarkSizes.sidebarTreeRowHeight + BusyMarkStroke.hairline * 2,
-    icons: const {
-      shared.GitGlyph.back: BusyMarkGlyphs.gitPrevious,
-      shared.GitGlyph.branch: BusyMarkGlyphs.branch,
-      shared.GitGlyph.history: BusyMarkGlyphs.history,
-      shared.GitGlyph.refresh: BusyMarkGlyphs.refresh,
-      shared.GitGlyph.copy: BusyMarkGlyphs.copy,
-      shared.GitGlyph.options: BusyMarkGlyphs.settings,
-      shared.GitGlyph.moreHorizontal: BusyMarkGlyphs.menuHorizontal,
-      shared.GitGlyph.more: BusyMarkGlyphs.menuVertical,
-      shared.GitGlyph.expand: BusyMarkGlyphs.downArrow,
-      shared.GitGlyph.previous: BusyMarkGlyphs.gitPrevious,
-      shared.GitGlyph.next: BusyMarkGlyphs.gitNext,
-      shared.GitGlyph.up: BusyMarkGlyphs.upArrow,
-      shared.GitGlyph.down: BusyMarkGlyphs.downArrow,
-      shared.GitGlyph.search: BusyMarkGlyphs.search,
-      shared.GitGlyph.add: BusyMarkGlyphs.add,
-      shared.GitGlyph.remove: BusyMarkGlyphs.thematicBreak,
-      shared.GitGlyph.check: BusyMarkGlyphs.check,
-      shared.GitGlyph.tag: BusyMarkGlyphs.tag,
-      shared.GitGlyph.error: BusyMarkGlyphs.error,
-      shared.GitGlyph.warning: BusyMarkGlyphs.warning,
-      shared.GitGlyph.close: BusyMarkGlyphs.windowClose,
-    },
+    icons: busyMarkGitIcons,
     presentMenu: busyMarkPresentGitMenu,
     localize: (message, values) {
       final current = rootNavigatorKey.currentContext;

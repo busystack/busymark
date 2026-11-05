@@ -70,7 +70,8 @@ BusyMarkLinuxHeaderIcon? _nativeHeaderIcon(IconData glyph) => switch (glyph) {
   BusyMarkGlyphs.sidebar => BusyMarkLinuxHeaderIcon.sidebar,
   BusyMarkGlyphs.search => BusyMarkLinuxHeaderIcon.search,
   BusyMarkGlyphs.clear => BusyMarkLinuxHeaderIcon.searchClear,
-  BusyMarkGlyphs.menuVertical => BusyMarkLinuxHeaderIcon.mainMenu,
+  BusyMarkGlyphs.menuVertical ||
+  BusyMarkGlyphs.mainMenu => BusyMarkLinuxHeaderIcon.mainMenu,
   BusyMarkGlyphs.diagnostics => BusyMarkLinuxHeaderIcon.validate,
   BusyMarkGlyphs.editorView => BusyMarkLinuxHeaderIcon.viewEditor,
   BusyMarkGlyphs.sourceView => BusyMarkLinuxHeaderIcon.viewSource,
