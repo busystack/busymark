@@ -1,5 +1,6 @@
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
+import 'package:busymark/src/app/linux/linux_header_style.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
 import 'package:busystack_git_flutter/src/historical_change_tree.dart'
     show GitHistoricalChangeTree;
@@ -57,6 +58,126 @@ void main() {
       greaterThanOrEqualTo(BusyMarkSpacing.lg),
     );
   });
+  for (final locale in ['en', 'ar']) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        'modal toggle matches main header geometry and states $locale $brightness',
+        (tester) async {
+          var mainToggleClicks = 0;
+          await mountGitVisualContract(
+            tester,
+            (session) => Column(
+              children: [
+                BusyMarkLinuxHeaderLayout(
+                  key: const ValueKey('main-header-reference'),
+                  leading: BusyMarkLinuxHeaderControlGroup(
+                    children: [
+                      BusyMarkLinuxHeaderIconButton(
+                        key: const ValueKey('main-toggle-reference'),
+                        tooltip: 'Main sidebar',
+                        icon: BusyMarkGlyphs.sidebar,
+                        selected: true,
+                        onPressed: () => mainToggleClicks++,
+                      ),
+                    ],
+                  ),
+                  title: const Text('Main'),
+                  trailing: const SizedBox.shrink(),
+                ),
+                Expanded(
+                  child: Align(
+                    alignment: AlignmentDirectional.topStart,
+                    child: SizedBox(
+                      width: 300,
+                      child: git.GitLogView(session: session, inspector: true),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            locale: Locale(locale),
+            brightness: brightness,
+            size: const Size(1400, 900),
+          );
+          final main = find.byKey(const ValueKey('main-toggle-reference'));
+          final mainHeader = find.byKey(
+            const ValueKey('main-header-reference'),
+          );
+          await tester.tap(
+            find.byKey(const ValueKey('git-select-another-commit')),
+          );
+          await tester.pumpAndSettle();
+          final modal = find.byKey(
+            const ValueKey('git-history-sidebar-toggle'),
+          );
+          final modalHeader = find.byKey(const ValueKey('git-history-header'));
+          expect(
+            tester.getSize(modal),
+            tester.getSize(main),
+            reason:
+                'The dialog leading slot must not stretch the native header action',
+          );
+          double startInset(Finder button, Finder header) => locale == 'ar'
+              ? tester.getRect(header).right - tester.getRect(button).right
+              : tester.getRect(button).left - tester.getRect(header).left;
+          expect(startInset(modal, modalHeader), startInset(main, mainHeader));
+          BusyMarkHeaderIconButton control(Finder parent) =>
+              tester.widget<BusyMarkHeaderIconButton>(
+                find.descendant(
+                  of: parent,
+                  matching: find.byType(BusyMarkHeaderIconButton),
+                ),
+              );
+          final expected = control(main), actual = control(modal);
+          expect(actual.focusBorderRadius, expected.focusBorderRadius);
+          expect(actual.foregroundColor, expected.foregroundColor);
+          for (final states in [
+            <WidgetState>{},
+            {WidgetState.hovered},
+            {WidgetState.pressed},
+            {WidgetState.selected},
+            {WidgetState.selected, WidgetState.hovered},
+            {WidgetState.selected, WidgetState.pressed},
+            {WidgetState.disabled},
+          ]) {
+            expect(
+              actual.backgroundColor?.resolve(states),
+              expected.backgroundColor?.resolve(states),
+            );
+            expect(
+              actual.overlayColor?.resolve(states),
+              expected.overlayColor?.resolve(states),
+            );
+          }
+          await tester.tap(modal);
+          await tester.pumpAndSettle();
+          expect(
+            find.byKey(const ValueKey('git-history-reference-sidebar')),
+            findsNothing,
+          );
+          expect(mainToggleClicks, 0);
+          await tester.tap(find.byType(EditableText).first);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          expect(
+            FocusManager.instance.primaryFocus?.context
+                ?.findAncestorWidgetOfExactType<BusyMarkLinuxHeaderIconButton>()
+                ?.key,
+            const ValueKey('git-history-sidebar-toggle'),
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.space);
+          await tester.pumpAndSettle();
+          expect(
+            find.byKey(const ValueKey('git-history-reference-sidebar')),
+            findsOneWidget,
+          );
+          expect(mainToggleClicks, 0);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
   testWidgets(
     'history references use flat Files disclosures beneath modal header',
     (tester) async {

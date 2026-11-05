@@ -16,6 +16,7 @@ import '../platform/gtk_header_icon_service.dart';
 import 'busymark_glyphs.dart';
 import 'path_label.dart';
 import 'localization.dart';
+import 'linux/linux_header_style.dart' show BusyMarkLinuxHeaderIconButton;
 
 /// Resolve an explicit six-digit RGB color chosen in a document/export control.
 /// This does not inherit the application's theme accent.
@@ -6703,21 +6704,24 @@ class _BusyMarkGitHistoryLayoutState extends State<_BusyMarkGitHistoryLayout> {
               git.GitMessages.log,
               key: ValueKey('git-history-title'),
             ),
-            leading: Padding(
-              padding: const EdgeInsetsDirectional.only(
-                start: BusyMarkSpacing.headerInset,
-              ),
-              child: Semantics(
-                toggled: visible,
-                child: BusyMarkHeaderIconButton(
-                  key: const ValueKey('git-history-sidebar-toggle'),
-                  tooltip: visible
-                      ? context.l10n.hideSidebar
-                      : context.l10n.showSidebar,
-                  icon: BusyMarkGlyphs.sidebar,
-                  selected: visible,
-                  focusBorderRadius: BusyMarkRadius.headerButton,
-                  onPressed: toggle,
+            leading: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(
+                  start: BusyMarkSpacing.headerInset,
+                ),
+                child: Semantics(
+                  toggled: visible,
+                  child: BusyMarkLinuxHeaderIconButton(
+                    key: const ValueKey('git-history-sidebar-toggle'),
+                    tooltip: visible
+                        ? context.l10n.hideSidebar
+                        : context.l10n.showSidebar,
+                    icon: BusyMarkGlyphs.sidebar,
+                    nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
+                    selected: visible,
+                    onPressed: toggle,
+                  ),
                 ),
               ),
             ),
