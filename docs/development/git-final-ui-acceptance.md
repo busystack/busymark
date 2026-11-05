@@ -1,126 +1,197 @@
-# Git final UI correction — acceptance remains incomplete
+# Git Log native navigation correction — final Linux acceptance
 
-2026-11-03. Source changes are committed locally. This is not native graphical
-acceptance. No screenshots or failing-before/passing-after widget results were
-obtained in this restricted session. Do not treat constructor/audit or build
-success as approval of layout, text contrast or interaction.
+2026-11-05. The corrected application is built at
+`build/linux/x64/release/bundle/busymark`. The final source passed **186 BusyMark
+host tests**, **416 shared Git tests**, **21 BusyFiles adapter tests**, and the
+native presentation audits. The shipping release passed **16/16 full native
+cases and 16/16 narrow Date Filter cases**, with actual images inspected.
 
-The initial working trees were clean: BusyMark
-`d2247556ed1c34ee50c0169c00387dad4a5ceb99`, shared UI
-`ff95462ef1149bfab9506a284e33109f72954e6f`, BusyFiles
-`ff5d09c903a3952ff1c6fc56f4bc130df21eb9ac`, engine
-`7d8e55d8034aeb85cddac1c0f498b0f3cc33105b`. Parent and repository AGENTS.md
-policies were read. These revisions were preserved; no reset was performed.
-Original copies of all eight requested source files are retained with the logs
-under `build/git-final-ui/before-source`.
+Evidence is in `build/git-verification/2026-11-05-navigation/`.
+The [native matrix receipt](../../build/git-verification/2026-11-05-navigation/native-matrix.json)
+indexes source/payload-bound runs and image SHA-256 values. Earlier matrices are
+retained as superseded evidence; only the final build's hashes count.
 
-## Root causes and source corrections
+## Verified baseline
 
-- BusyMark's adapter discarded `isDense`, prefix icons, content insets, label
-  alignment and vertical alignment. Its native entry always stacked the label
-  above the editor. The adapter now forwards those requests; compact entries use
-  an inline hint and persistent semantic label. Prefix/suffix widgets occupy
-  logical start/end slots. Controllers, selection, composing/undo state and
-  native editing callbacks retain their owners. Focus uses the public Yaru border.
-- Both adapters ignored row density. BusyMark now applies its sidebar metrics;
-  BusyFiles uses its existing sidebar YaruMasterTile geometry for dense rows.
-  Trailing actions are siblings outside the row activation surface. Selected and
-  enabled semantics are explicit. Requested check-row insets reach both hosts.
-- The old history command Wrap mixed filters and operations across uncontrolled
-  rows. One measured row now shows compact message/author/path fields and date
-  where they fit, or the native Filters menu at reduced widths/enlarged text.
-  Secondary navigation and multi-commit operations remain in that menu. Selection
-  and history generation bind deferred multi-commit actions.
-- History-reference menus inherited the vertical default. Those rows now request
-  `moreHorizontal`, resolved to the same native artwork as historical file menus.
-  Other default menu glyphs are unchanged. Local/Remote/Tags hierarchy remains.
-- The selector exposed a Commit Details button that embedded `_detailPane()` at
-  height 500 with `expanded: true`. That obsolete route is removed. Commit context
-  menus retain compact View Commit Details, exact copying, branch/tag creation,
-  comparison, snapshots, cherry-pick, revert, rebase and reset operations.
-- Both hosts supplied opaque semantic foregrounds as diff backgrounds. They now
-  supply translucent treatments derived from existing Yaru/host semantic colors.
-  Shared line backgrounds reduce the word treatment's opacity, and index/conflict
-  highlighting consumes host opacity instead of overwriting it. Search uses the
-  existing host accent; active matches retain bold/underline. Existing markers,
-  staging/conflict labels, text selection and comparison endpoints are preserved.
-- The contract audit also found discarded choice expansion and progress stroke
-  requests. Both hosts now map them to supported native/Yaru properties. The full
-  mapping and explicit native label/underline equivalents are documented in the
-  shared package's `docs/native-presentation.md`.
+The clean starting checkouts were BusyMark `a1e4fcfc5e201d1ee2b59f9c6d1270ebee493e52`
+on `feature/git-package`, shared UI `494d024d54ef74d83658725d77f4c5ab73a31d74`
+on `main`, and BusyFiles `be11c0219378775229a51382e6be8759417298ce` on
+`Release/v0.0.1`. The engine was clean at
+`7d8e55d8034aeb85cddac1c0f498b0f3cc33105b`. Applicable parent/repository
+AGENTS.md files, manifests, archives, lockfiles and Files/sidebar components
+were inspected. No repository was reset; unrelated DAV work was preserved.
 
-BusyMark feedback continues through BusyMarkToastOverlay. BusyFiles Git uses
-`busyFilesMessage`, the same in-window message wrapper as its non-Git browser and
-recovery flows. Its daemon desktop-notification service has background-operation
-and activation semantics, not this short-message contract. Existing feedback
-semantics were retained, and a rendered wrapper regression was added. There is
-no Git-only notification constructor or new fallback.
+Flutter **3.47.5**, Dart **3.13.4**, pinned Yaru **10.2.0**, Intl **0.20.3** and
+all application dependency versions remain unchanged. No SDK, GTK, Yaru, Git,
+engine or build-tool source was patched. GNOME/Flutter official guidance and the
+installed pinned APIs were consulted; references and API findings are maintained
+in the shared package's `docs/native-presentation.md`.
 
-## Verification actually obtained
+## Causes, files and final behavior
 
-| Check | Result |
+- Shared `lib/src/log_view.dart` previously put the reference splitter under a
+  toolbar spanning both panes, with the sidebar toggle among filters. References
+  lacked a common inset and used general `GitExpander`/`YaruExpandable` rounded
+  disclosures. The view now requests a real host-owned header/sidebar/main
+  layout and explicit reference tree rows.
+- Shared `lib/src/presentation.dart` requires `GitLogHeader`,
+  `GitHistoryLayout` (including toolbar and footer), and `GitReferenceRow`
+  presentation, plus a marker for bodies owning their header. BusyMark's
+  `lib/src/app/busymark_design.dart` supplies the approved native components.
+  BusyFiles' `apps/busyfiles_ui/lib/src/app/busyfiles_design.dart` implements the
+  contract with its existing expander, toolbar, splitter and compact dialog.
+  General expanders, including Rebase/repository flows, remain unchanged.
+- The inspector retains selected commit, compact metadata, then Changed Files.
+  Its neutral subject is noninteractive, truncates and exposes its full value.
+  **Select another commit** sits immediately before **Commit Actions**, with
+  Files header insets, 34px targets and the native 8px spacing token. The
+  duplicate menu route was removed; commit-specific operations remain.
+- Historical change rows use the Files tree's fixed 18px icon/status slot,
+  native outer padding, 14px hierarchy step, selection extent and context
+  regions. A status marker adds no extra indentation. Grouping, context menus,
+  parent-aware comparisons and independent immutable comparison tabs remain.
+- The history modal uses the approved dialog titlebar, independently centered
+  Log title, close action and its own sidebar state. The toggle reuses the
+  **actual main-window native control**. An Align prevents AppBar's leading slot
+  stretching it from 34×34 to 50×46; its start inset, colors, hit target and
+  focus behavior match a rendered main header. It never calls the main sidebar
+  toggle. Search, reference selection, expansion and pane width survive hiding.
+- Search, All References and the Local/Remote/Tags tree share native sidebar
+  insets. Groups use flat Files disclosures with accessible expansion and
+  RTL/keyboard behavior. Branch rows retain current-branch identity and
+  pointer/keyboard context menus without permanent Actions buttons. Selection
+  filters history; it does not check out a branch.
+- Filters/navigation remain in the main area. The tested graph, parent
+  relationships, columns, object identities, pagination and operations remain.
+  Narrow layouts expose the same reference pane temporarily over a readable
+  table; its toggle stays in the header.
+- The selection action is a real fixed footer outside the scrolling table,
+  padded with the approved 16px token. At narrow widths the footer sits below
+  the overlay's bounds, keeping the entire affirmative button visible even at
+  enlarged text. RTL placement, validation, Enter, Escape and single completion
+  remain.
+- The old date composition doubled external labels with Yaru's implicit entry
+  label and omitted spacing. Pinned Yaru exposes no public label override for
+  that arrangement. The corrected compact dialog uses the existing approved
+  BusyMark text-entry composition: one localized label above each native input,
+  4px label spacing, 16px field/footer spacing, and native Cancel/Save actions
+  separated by 8px. Empty/populated inputs reserve the same clear-action slot.
+  Locale patterns and strict parsing accept native/ASCII digits, including
+  Arabic without typing invisible direction controls. Validation is localized,
+  Save requires a valid range, Cancel preserves filters, and inclusive End
+  display/exclusive query bounds are unchanged.
+
+Trust/authentication, hooks/signing, staging, commit transactions, branch
+management, merges/rebases, stashes/worktrees/recovery, editor guards, Local
+History, keyboard editing/IME, complete metadata and existing navigation safety
+were preserved. The Git engine and source audit allowlists are unchanged.
+
+## Regression evidence
+
+| Check | Result / log |
 | --- | --- |
-| Complete shared lib/test analysis | Passed |
-| Complete BusyMark lib/test analysis | Passed |
-| Complete BusyFiles UI lib/test analysis | Passed; final density adjustment also analyzed |
-| Shared resolved native-construction audit and self-tests | Passed |
-| BusyMark complete adapter/dialog roots | Passed |
-| BusyMark mixed-workspace audit and self-tests | Passed |
-| BusyFiles Git source native audit | Passed |
-| Materialized pinned Git sources, both consumers and complete BusyMark roots | Passed |
-| Both host localization catalog/adapter checks | Passed |
-| Engine real-repository regression subset | 14 passed: discovery, staging/partial index, byte identity, stale review, missing paths and safe historical restoration |
-| Official Flutter workflow regressions | 28 passed |
-| Approved SDK tracked source and artifact verification | Passed: Flutter 3.47.5/Dart 3.13.4, 1,171 artifact inputs |
-| Available publisher archives vs resolved hosted sources | No mismatches: 32 shared, 71 BusyMark, 73 BusyFiles packages; complete graph attestation remains incomplete because other archives are unavailable |
-| Linux release builds | Both built during this session; final-source build receipts/logs retained |
-| BusyMark shared-source dependency check | Passed |
-| BusyFiles complete source-dependency check | Blocked by pre-existing DAV checkout/pin mismatch |
-| Widget/rendered, shared real-repository widget and native keyboard checks | Blocked before test loading by local-socket denial |
-| Actual final-source BusyMark graphical launch | Failed: GTK cannot open display :0 |
-| Private Xvfb graphical session | Failed: sandbox denies listening sockets |
-| Actual native screenshots | None |
+| Four strengthened tests on original source | Failed: missing selector, rounded disclosures, 0px footer inset, duplicate Enter Date; `failing-before.log` |
+| Hidden pane focus before correction | Failed; `hidden-focus-before.log` |
+| Narrow overlay covering footer before correction | Failed actual overlap assertion; `overlay-footer-failing-before.log` |
+| Modal versus actual main-header toggle before correction | Failed 50×46 versus 34×34; `header-toggle-failing-before.log` |
+| Main-header geometry/state/keyboard comparison after correction | Four LTR/RTL light/dark tests passed; `header-reference-passing-after.log` |
+| Final six BusyMark host suites, including 58 layout tests | **186 passed**; `final-host-acceptance-current.log` |
+| Tabs, dismissal, localization and root eligibility | **16 passed**; `host-safety-provisioned.log` |
+| Entire shared Git widget suite | **416 passed**; `git-suite-final-stable.log` |
+| BusyFiles real adapter/surface suite | **21 passed**; `busyfiles-shipping.log` |
+| Shared/changed host analysis | Passed; `git-analysis-final.log`, `final-source-analysis.log`, `busyfiles-analysis.log` |
+| Complete host native audit and adversarial self-test | Passed; `final-busymark-chain-audit.log`, `native-presentation-selftest-accepted.log` |
+| Exact final archives materialized with consumer hosts | Passed; `materialized-final-busymark-audit.log`, `materialized-final-busyfiles-audit.log` |
+| Official release build and sealed source/payload receipt | Passed; `final-shipping-build.log`, `build/linux/x64/release/git-native-source.json` |
+| BusyMark source dependency gate | Passed |
 
-The new consumer assertions measure field and row density; require prefix/suffix
-widgets; preserve composed editing values; exercise read-only/disabled fields,
-directional padding and separate trailing actions; inspect actual line/word
-rendering; and require light/dark text contrast and distinct search/selection
-colors. Shared regressions reject the obsolete selector route, inspect its
-initial selected row, retain confirmation/cancellation assertions and historical
-context operations, and require the branch contextual glyph. The pre-existing
-Material enforcement was neither weakened nor allowlisted. These tests analyze,
-but their runtime assertions have not executed here.
+Tests render the actual adapter and native components, measure painted bounds
+and compare the main-window control directly. Only widget-test OS-window
+channels are provisioned; no substitute host controls were used. Native runs use
+the actual GTK service. Golden changes followed geometry correction and native
+image inspection. No tests or native-construction rules were weakened.
 
-The initial rendered regression attempts and final regression attempts both
-failed before any test loaded: `Failed to create server socket`, OS error 1,
-127.0.0.1. Escalation was automatically rejected because this session disables
-sandbox escalation. Therefore there is no valid failing-before/passing-after
-rendered claim. Both the original and corrected implementations still require
-execution in a permitted test environment.
+## Native graphical acceptance
 
-## Source identities and remaining acceptance
+The final release ran on private GTK/X11 desktops using real Git repositories
+and native pointer/keyboard input. All 16 combinations of English, German,
+Japanese and Arabic RTL × light/dark × text scale 1.0/1.5 passed. Each covers
+1290×730 and 600×730 windows, header hover/pressed/focus, sidebar open/closed/
+reopened, narrow reference overlay, a different commit before Cancel and
+confirmed selection, plus empty/focused/invalid/corrected/saved/reopened dates.
+All 16 include narrow date captures. English normal-text runs additionally
+cover search, local/remote selection, all group disclosures, pointer/keyboard
+menus, state restoration and two independent historical comparison tabs.
 
-Both consumers pin shared UI `d1978b27d4e482bbdc40f3e6c6ebf65fc3423ff5`.
-Their identical source archive SHA-256 is
-`b885014e3a6d9f75d4b6b00654b3824b5e66aa7d5334943441ba8db80562c954`;
-its validated source-tree digest is
-`a0f7773a438cbd3d7a3cd0eadca567ae2b3214215610a087ff1aaa128190e2bb`.
-The engine pin remains `7d8e55d8034aeb85cddac1c0f498b0f3cc33105b` in both.
-Exact application commits and executable hashes are in the retained delivery
-receipt. No changes were pushed and no artifacts were published or installed.
+Each accepted receipt verifies final compiled-source and payload hashes, the
+mapped official engine, natural exit and unchanged worktree/HEAD/branch/refs.
+Actual images and contact sheets were inspected directly. A separate dated
+repository visibly filters **10 commits to the expected four November 4–5
+commits**, including both End-date commits; saved values reopen and Cancel
+preserves the filter. See
+[native query evidence](../../build/git-verification/2026-11-05-navigation/native-date-query/visual-result.json).
 
-BusyFiles' unrelated existing DAV checkout is
-`75bdc14ff793a2cf41c0632500dbdfd32d1910a2`, while its manifest requires
-`18f636f3227e3df8c1406bafd85b45e7f12cf8bd`. Its unrelated modified IDE cache was
-preserved. The complete dependency gate remains failed; validating Git archives
-independently does not waive that failure.
+## Commits, archives and limitations
 
-Acceptance still requires executing the new regressions against original and
-corrected implementations; the broader widget/localization/native/real-repository
-widget suites; complete dependency attestation; and the entire requested native
-screenshot/interaction matrix. That matrix includes both themes, normal/enlarged
-text, narrow/normal windows, keyboard focus, full history/filter/reference views,
-long subjects/multiple refs, confirm/cancel, both comparison modes, added/deleted
-and mixed/partially staged changes, text selection/search, and the approved Commit
-sidebar. The genuinely absent historical-file pane is intentionally unchanged.
-No visual-quality or native-input approval is claimed.
+BusyMark implementation commits:
+`9d8ebcdc69b1e54d656b79bdbdabfc0f45e3da5a`,
+`bba795a33ec664b34470d35a968c2826a48a73f8`,
+`4a5580f014c90de1df8ae3344e42f6a2643fe8c8`.
+The final evidence/tooling commit is recorded in the
+[delivery receipt](../../build/git-verification/2026-11-05-navigation/delivery-receipt.json).
+
+Shared UI commits:
+`826725c71154ff3728778d71cf516c3281dd4354`,
+`32a1933e74076a6f1da61de7fcaeb596de5d2025`.
+BusyFiles adapter/pin commits:
+`5ab1f0a01d452052fda710bc786e39804a4f9650`,
+`28ecff88669e075a044c080b4f8b3844e2768cbd`.
+
+Both consumers pin shared UI **32a1933e74076a6f1da61de7fcaeb596de5d2025**.
+Identical archive SHA-256:
+`18319cd3e6b89cf1d573764e62ddb98c5cc14a401189fe69fa9f4eb9361a9347`;
+tree SHA-256:
+`1792282ab59233c63f14ea20fd69a1e9ed23fc4a9f83c396fd1501b42ae9488f`.
+Engine pin **7d8e55d8034aeb85cddac1c0f498b0f3cc33105b** and its archive remain
+unchanged. Nothing was pushed, published or installed system-wide.
+
+Acceptance is Linux/X11 only. Other native platforms and compositor fractional
+scaling were unavailable; DPR 1.25 was verified in actual-host widget tests only.
+Earlier private-Xvfb attempts had frame-size timeouts, failed shutdown or
+interruption; they are retained and excluded. Final accepted runs passed the
+same strict gates. A plain official Flutter Hello World probe resized/exited
+normally, so no upstream cause or engine fix is asserted. No renderer or
+dependency workaround was added. AT-SPI geometry can time out here; bounds claims
+use measured host layouts and inspected real images.
+
+BusyFiles' complete dependency gate still rejects the pre-existing DAV checkout
+`75bdc14ff793a2cf41c0632500dbdfd32d1910a2` against its manifest pin
+`18f636f3227e3df8c1406bafd85b45e7f12cf8bd`; the unrelated modified IDE cache
+was preserved. Its independent Git archive/adapter checks pass. See
+`busyfiles-dependency-gate.log`.
+
+## Reviewed image samples and reproduction
+
+- [Inspector: root and nested files](../../build/git-verification/2026-11-05-navigation/native-header-verified/light-en-1.0/inspector-root-and-nested-files.png).
+- [History open](../../build/git-verification/2026-11-05-navigation/native-header-verified/light-en-1.0/history-sidebar-open.png).
+- [Sidebar hidden](../../build/git-verification/2026-11-05-navigation/native-header-verified/light-en-1.0/history-sidebar-closed.png).
+- [Search and selection restored](../../build/git-verification/2026-11-05-navigation/native-header-verified/light-en-1.0/filtered-sidebar-restored.png).
+- [Native branch context menu](../../build/git-verification/2026-11-05-navigation/native-header-verified/light-en-1.0/reference-context-menu.png).
+- [Different commit with independent tabs preserved](../../build/git-verification/2026-11-05-navigation/native-header-verified/light-en-1.0/confirmed-selection-by-keyboard.png).
+- [Enlarged German narrow overlay and complete footer](../../build/git-verification/2026-11-05-navigation/native-header-verified/dark-de-1.5/history-narrow-reference-overlay.png).
+- [Invalid German range and disabled Save](../../build/git-verification/2026-11-05-navigation/native-header-verified/dark-de-1.0/date-invalid-range.png).
+- [Japanese narrow dates](../../build/git-verification/2026-11-05-navigation/native-header-verified/light-ja-1.5/date-narrow-reopened-values.png).
+- [All 16 narrow Date Filter layouts](../../build/git-verification/2026-11-05-navigation/native-header-verified/final-narrow-dates-all16.png).
+
+Reproduce with the approved SDK and packaged Git helper. Run the six test files
+listed in `final-host-acceptance-current.log`. Native verification uses:
+
+```sh
+/usr/bin/python3 tools/git_log_navigation_native_smoke.py \
+  build/linux/x64/release/bundle/busymark <fresh-evidence-directory>
+```
+
+Select a case with `--case=light-ja-1.5`. The driver requires a sealed matching
+source receipt and official engine; it retains every attempt separately.
+`assemble_native_matrix.py` is retained beside the evidence JSON. Native runs
+require a desktop/socket-permitted environment, without application hooks.

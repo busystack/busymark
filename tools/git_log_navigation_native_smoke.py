@@ -27,6 +27,30 @@ def main():
         subprocess.run(['git', '-C', str(repository), 'add', '.'], check=True)
         subprocess.run(['git', '-C', str(repository), 'commit', '-m',
                         'Review root and grouped historical files with native navigation'], check=True)
+    def repository_state():
+        return {name: subprocess.check_output(
+            ['git', '-C', str(repository), *arguments], text=True)
+            for name, arguments in {
+                'head': ['rev-parse', '--verify', 'HEAD'],
+                'branch': ['symbolic-ref', '--quiet', 'HEAD'],
+                'references': ['show-ref'],
+                'status': ['status', '--porcelain=v1'],
+            }.items()}
+
+    baseline_file = output / 'repository-baseline.json'
+    if not baseline_file.exists():
+        baseline_file.write_text(json.dumps(repository_state(), indent=2))
+    baseline = json.loads(baseline_file.read_text())
+
+    def record_identity(target):
+        current = repository_state()
+        path = target / 'receipt.json'
+        receipt = json.loads(path.read_text())
+        receipt['repositoryIdentityUnchanged'] = current == baseline
+        receipt['repositoryIdentity'] = current
+        path.write_text(json.dumps(receipt, indent=2))
+        if current != baseline:
+            raise RuntimeError(f'Repository HEAD/branch/refs/status changed: {target}')
     cases = [(theme, locale, scale) for theme in ['light', 'dark']
              for locale in ['en', 'de', 'ja', 'ar'] for scale in [1.0, 1.5]]
     if '--quick' in sys.argv:
@@ -38,6 +62,8 @@ def main():
             cases = [case for case in cases if '-'.join(map(str, case)) == argument.split('=', 1)[1]]
     failures = []
     for theme, locale, scale in cases:
+        if repository_state() != baseline:
+            raise RuntimeError('Native fixture identity differs from its baseline')
         target = output / f'{theme}-{locale}-{scale}'
         if target.exists():
             target = output / f'{theme}-{locale}-{scale}-retry-{time.time_ns()}'
@@ -77,13 +103,13 @@ def main():
             d.wait_graph()
             d.wait_history()
 
-        if '--dates-only' in sys.argv:
+        if '--dates-only' in sys.argv or '--narrow-only' in sys.argv:
             selector()
         else:
             selector()
             d.capture('history-sidebar-open')
             # The modal surface uses the application's documented 40px outer inset.
-            toggle_x = d.width-76 if rtl else 76
+            toggle_x = d.width-68 if rtl else 68
             d.send('move', x=toggle_x, y=78)
             d.capture('header-toggle-hover')
             d.send('press', x=toggle_x, y=78)
@@ -96,6 +122,11 @@ def main():
             d.key('space')
             d.send('move', x=700, y=500)
             d.capture('history-sidebar-reopened')
+            if '--header-only' in sys.argv:
+                d.key('Escape')
+                d.close()
+                record_identity(target)
+                continue
             if locale == 'en' and scale == 1.0:
                 search_x = 170 if not rtl else d.width-170
                 d.send('click', x=search_x, y=120)
@@ -143,16 +174,18 @@ def main():
             d.send('resize', width=600, height=730)
             d.send('wait', seconds=2)
             d.capture('history-narrow-table')
-            d.send('click', x=524 if rtl else 76, y=78)
+            d.send('click', x=532 if rtl else 68, y=78)
             d.capture('history-narrow-reference-overlay')
-            d.send('click', x=524 if rtl else 76, y=78)
+            d.send('click', x=532 if rtl else 68, y=78)
             d.capture('history-narrow-overlay-closed')
             d.send('resize', width=d.width, height=d.height)
             d.send('wait', seconds=2)
+            d.send('click', x=700, y=360)
+            d.capture('different-candidate-before-cancel')
             d.key('Escape')
             d.capture('canceled-selection')
             selector()
-            d.send('click', x=700, y=240)
+            d.send('click', x=700, y=360)
             d.key('Return')
             d.capture('confirmed-selection-by-keyboard')
             selector()
@@ -173,6 +206,7 @@ def main():
                 d.close()
             except RuntimeError as error:
                 failures.append({'case': target.name, 'failure': str(error)})
+            record_identity(target)
             continue
         # Clear through the real editing controls, even if a reviewed range
         # was restored with workspace state. The empty capture must be empty.
@@ -221,14 +255,18 @@ def main():
         d.key('Escape')
         d.capture('date-cancel-preserves-filter')
         d.key('Escape')
+        d.capture('final-inspector-idle')
         try:
             d.close()
         except RuntimeError as error:
             failures.append({'case': target.name, 'failure': str(error)})
             print(f'Native lifecycle check failed: {target.name}: {error}', flush=True)
-    (output / ('lifecycle-failures-' + '-'.join(sorted({case[1] for case in cases})) + '.json')).write_text(json.dumps(failures, indent=2))
+        record_identity(target)
+    summary = output / ('lifecycle-failures-' + '-'.join(sorted({case[1] for case in cases}))
+                        + f'-{time.time_ns()}.json')
+    summary.write_text(json.dumps(failures, indent=2))
     if failures:
-        raise RuntimeError('Native lifecycle failures remain; inspect lifecycle-failures.json')
+        raise RuntimeError(f'Native lifecycle failures remain; inspect {summary}')
     print('Native inputs complete. Inspect the captures and receipts.', flush=True)
 
 
