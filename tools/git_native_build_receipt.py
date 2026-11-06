@@ -24,18 +24,22 @@ def sources(workspace=None, host="busymark"):
         root = workspace / name
         digest = hashlib.sha256()
         files = set()
+        production_files = set()
         components = [root]
         if name == 'busyfiles':
             components.extend(p for folder in ['apps', 'packages']
                               for p in (root / folder).iterdir() if p.is_dir())
         for component in components:
             for folder in ['lib', 'bin', 'linux', 'native']:
-                files.update(p for p in (component / folder).rglob('*') if p.is_file()
-                             and not any(x in p.parts for x in ['.git', '.dart_tool', 'build', '.symlinks', 'ephemeral', '__pycache__']))
+                production_files.update(p for p in (component / folder).rglob('*') if p.is_file()
+                             and not any(x in p.relative_to(component).parts for x in ['.git', '.dart_tool', 'build', '.symlinks', 'ephemeral', '__pycache__']))
             files.update(p for p in [component / 'pubspec.yaml', component / 'pubspec.lock'] if p.exists())
+        if not production_files:
+            raise RuntimeError('No production source found for ' + name)
+        files.update(production_files)
         for path in sorted(files):
             digest.update(str(path.relative_to(root)).encode() + b'\0' + path.read_bytes())
-        identity = {'sha256': digest.hexdigest(), 'revision': 'materialized source archive', 'state': ''}
+        identity = {'sha256': digest.hexdigest(), 'hashVersion': 2, 'productionFileCount': len(production_files), 'revision': 'materialized source archive', 'state': ''}
         if (root / '.git').exists():
             revision = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'], capture_output=True, text=True)
             state = subprocess.run(['git', '-C', str(root), 'status', '--short'], capture_output=True, text=True)
@@ -65,6 +69,8 @@ def verify(receipt, binary, workspace=None):
         raise RuntimeError('Binary payload differs from the sealed build receipt')
     current = sources(workspace or receipt.get('workspace'), receipt.get("host", "busymark"))
     for name, source in receipt['sources'].items():
+        if source.get('hashVersion') != 2:
+            raise RuntimeError('Obsolete source hash format; capture and build again: ' + name)
         if source['sha256'] != current[name]['sha256']:
             raise RuntimeError(f'{name} source changed since the recorded build')
 

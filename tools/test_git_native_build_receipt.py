@@ -28,6 +28,33 @@ class NativeBuildReceiptTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
                 verify(receipt, binary, root)
 
+    def test_workspace_inside_build_still_binds_all_production_sources(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / 'build' / 'isolated-workspace'
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                (root/name/'lib').mkdir(parents=True)
+                (root/name/'lib/source.dart').write_text('original source')
+                (root/name/'pubspec.yaml').write_text('name: '+name)
+            binary = root/'bundle/busymark'
+            binary.parent.mkdir()
+            binary.write_bytes(b'owned test payload')
+            receipt = {'sealed': True, 'sources': sources(root), 'payloads': payloads(binary)}
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                source = root/name/'lib/source.dart'
+                source.write_text('changed production source')
+                with self.assertRaisesRegex(RuntimeError, 'source changed'):
+                    verify(receipt, binary, root)
+                source.write_text('original source')
+            verify(receipt, binary, root)
+
+    def test_manifest_only_workspace_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root/'busymark').mkdir()
+            (root/'busymark/pubspec.yaml').write_text('name: busymark')
+            with self.assertRaisesRegex(RuntimeError, 'No production source'):
+                sources(root)
+
     def test_busyfiles_receipt_binds_ui_daemon_and_ipc_source(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
