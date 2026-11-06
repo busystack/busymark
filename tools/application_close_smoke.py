@@ -192,6 +192,8 @@ class Desktop:
                     normal = bool(n.value and f.value == 32 and self.atom('_NET_WM_WINDOW_TYPE_NORMAL') in C.cast(data, C.POINTER(C.c_ulong))[:n.value])
                     if data:
                         self.x.XFree(data)
+                if not normal:
+                    continue
                 w = self.GdkX11.X11Window.foreign_new_for_display(self.Gdk.Display.get_default(), xid)
                 attributes = WindowAttributes()
                 if normal and w and self.x.XGetWindowAttributes(self.display, xid, C.byref(attributes)) and (not require_mapped or attributes.map_state == 2):
