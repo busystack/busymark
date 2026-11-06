@@ -247,3 +247,8 @@ semantic Actions mapping now explicitly requests `BusyMarkGlyphs.mainMenu`
 and the same GTK `open-menu-symbolic` artwork. The dedicated regression rejects
 both Yaru dot glyphs even without a GTK catalog; all 11 explicit-icon/golden
 checks pass. No contextual icon mapping was globally replaced.
+
+The permanent presentation gate also runs the cross-consumer source/archive
+check and the complete resolved BusyFiles adapter chain. The latter now renders
+through its own native Widgets/Yaru control foundations; it receives no BusyMark
+layout or styling. Both consumer gates enforce their host roots.
