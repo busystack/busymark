@@ -8960,4 +8960,20 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Wybierz inny commit…';
+
+  @override
+  String get gitUiGitLog => 'Dziennik Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Operacje Git wymagają zaufania do obszaru roboczego.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Zaufaj obszarowi roboczemu';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Zamknij pozostałe karty';
+
+  @override
+  String get gitUiCloseAllTabs => 'Zamknij wszystkie karty';
 }

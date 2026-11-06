@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Private X11 desktop for inspecting the shipping BusyMark executable.
+"""Private X11 desktop for inspecting either shipping BusyStack Git host.
 
 JSON commands on stdin: capture/name, click/x/y/button, key/names, resize/w/h,
 move/x/y, close. Images include GTK menus on this owned display.
@@ -67,8 +67,12 @@ def capture(desktop, path, window):
 
 def main():
     binary, output, repository = map(Path, sys.argv[1:4])
-    build_receipt = binary.resolve().parent.parent / 'git-native-source.json'
+    build_receipt = Path(os.environ.get('BUSYSTACK_NATIVE_RECEIPT',
+                         str(binary.resolve().parent.parent / 'git-native-source.json')))
     compiled = json.loads(build_receipt.read_text())
+    native_host = compiled.get('host', 'busymark')
+    if native_host not in {'busymark', 'busyfiles'}:
+        raise RuntimeError('Unsupported native acceptance host')
     verify(compiled, binary.resolve())
     output.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
@@ -76,6 +80,25 @@ def main():
         directory = output / key.lower()
         directory.mkdir(exist_ok=True, mode=0o700)
         env[key] = str(directory.resolve())
+    import tempfile
+    private_runtime = tempfile.TemporaryDirectory(prefix='bsg-native-')
+    def cleanup_runtime():
+        # Only these mounts can have been created beneath this invocation's
+        # private runtime. Activated portal/GVfs services may outlive the UI.
+        # Unmount them through the supported owner interface before removing
+        # the directory; never touch the user's desktop mounts.
+        for name in ['doc', 'gvfs']:
+            mount = Path(private_runtime.name) / name
+            if os.path.ismount(mount):
+                subprocess.run(['fusermount3', '--unmount', str(mount)], check=True)
+        private_runtime.cleanup()
+    env['XDG_RUNTIME_DIR'] = private_runtime.name
+    env.pop('GNOME_KEYRING_CONTROL', None)
+    env.pop('SSH_AUTH_SOCK', None)
+    if native_host == 'busyfiles':
+        for suffix in ['CONFIG_HOME', 'DATA_HOME', 'CACHE_HOME', 'STATE_HOME', 'RUNTIME_DIR']:
+            env['BUSYFILES_XDG_' + suffix] = env['XDG_' + suffix]
+        env['BUSYFILES_DAEMON_SOCKET'] = private_runtime.name + '/daemon.sock'
     xvfb = subprocess.Popen(['Xvfb', '-displayfd', '1', '-screen', '0', '1600x1100x24', '-nolisten', 'tcp'], stdout=subprocess.PIPE, stderr=(output / 'xvfb.log').open('w'))
     env['DISPLAY'] = ':' + xvfb.stdout.readline().decode().strip()
     env['GDK_BACKEND'] = 'x11'
@@ -83,18 +106,105 @@ def main():
     env.pop('WAYLAND_DISPLAY', None)
     if not env.get('DBUS_SESSION_BUS_ADDRESS', '').startswith('unix:path=/tmp/'):
         raise RuntimeError('Run inside a dedicated dbus-run-session')
+    control = Path(private_runtime.name) / 'keyring'
+    control.mkdir(mode=0o700)
+    env['GNOME_KEYRING_CONTROL'] = str(control)
+    os.environ.pop('SSH_AUTH_SOCK', None)
+    os.environ.pop('GNOME_KEYRING_CONTROL', None)
     os.environ.update(env)
+    # Activated services must receive the private paths before the first GTK or
+    # GSettings call can start them. Use a disposable Secret Service in both
+    # hosts so the desktop portal cannot attach to a personal keyring.
+    subprocess.run(['dbus-update-activation-environment', 'DISPLAY', 'GDK_BACKEND', 'GSETTINGS_BACKEND',
+                    'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME', 'XDG_RUNTIME_DIR',
+                    'GNOME_KEYRING_CONTROL'], env=env, check=True)
+    keyring_env = dict(env)
+    keyring_env.pop('HOME', None)
+    keyring_env.pop('GNOME_KEYRING_CONTROL', None)
+    subprocess.run(['gnome-keyring-daemon', '--unlock', '--components=secrets',
+                    '--control-directory='+str(control)], input='\n', text=True,
+                   env=keyring_env, stdout=(output/'keyring.log').open('w'), check=True)
     # Supported desktop configuration, scoped to this disposable profile and bus.
     # The official Flutter settings portal reads this same GNOME preference.
     text_scale = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0
     subprocess.run(['gsettings', 'set', 'org.gnome.desktop.interface', 'text-scaling-factor', str(text_scale)], env=env, check=True)
+    requested_theme = os.environ.get('BUSYSTACK_NATIVE_THEME')
+    if requested_theme is not None:
+        if requested_theme not in {'light', 'dark'}: raise ValueError('Expected light or dark native theme')
+        subprocess.run(['gsettings', 'set', 'org.gnome.desktop.interface', 'color-scheme',
+                        'prefer-dark' if requested_theme == 'dark' else 'default'], env=env, check=True)
+        subprocess.run(['gsettings', 'set', 'org.gnome.desktop.interface', 'gtk-theme',
+                        'Yaru-dark' if requested_theme == 'dark' else 'Yaru'], env=env, check=True)
+        env['GTK_THEME'] = 'Yaru-dark' if requested_theme == 'dark' else 'Yaru'
+
     subprocess.run(['dbus-update-activation-environment', 'DISPLAY', 'GDK_BACKEND', 'GSETTINGS_BACKEND',
                     'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME', 'XDG_RUNTIME_DIR'], env=env, check=True)
     desktop = Desktop()
     desktop.Gdk.init([])
-    process = subprocess.Popen([str(binary.resolve()), str(repository.resolve())], env=env, stdout=(output / 'application.log').open('w'), stderr=subprocess.STDOUT)
+    daemon = None
+    daemon_launch = None
+    daemon_log = None
+    def start_daemon():
+        launched = subprocess.Popen(*daemon_launch[0], **daemon_launch[1])
+        for _ in range(600):
+            if Path(env['BUSYFILES_DAEMON_SOCKET']).exists(): return launched
+            if launched.poll() is not None:
+                raise RuntimeError('Owned daemon exited before readiness; inspect daemon.log')
+            time.sleep(.1)
+        launched.terminate()
+        launched.wait(timeout=15)
+        raise RuntimeError('Owned daemon readiness timed out; inspect daemon.log')
+    try:
+        if native_host == 'busyfiles':
+            # Official development bundles and the installed DEB have explicit
+            # different system-service paths. Never substitute a system Git or
+            # a development daemon for a requested installed acceptance run.
+            installed = binary.resolve().parent.name == 'busyfiles' and binary.resolve().parent.parent.name == 'lib'
+            prefix = binary.resolve().parent.parent.parent
+            helper_dir = prefix / 'libexec/busyfiles' if installed else binary.parent / 'libexec/busyfiles'
+            gio_library = prefix / 'lib/libbusyfiles_gio.so.0' if installed else binary.parent / 'lib/libbusyfiles_gio.so.0'
+            for artifact in [gio_library, helper_dir / 'busystack-git-helper', binary.parent / 'libexec/git-runtime/bin/git']:
+                if not artifact.is_file():
+                    raise RuntimeError('Required product runtime artifact is missing: ' + str(artifact))
+            if installed:
+                # Exercise the daemon's actual installed discovery paths.
+                # Explicit development paths would conceal a packaging defect.
+                env.pop('BUSYFILES_GIO_LIBRARY', None)
+                env.pop('BUSYSTACK_GIT_EXECUTABLE', None)
+                env.pop('BUSYSTACK_GIT_HELPER_PATH', None)
+                env.pop('SNAP', None)
+            else:
+                env['BUSYFILES_GIO_LIBRARY'] = str(gio_library.resolve())
+                env['BUSYSTACK_GIT_EXECUTABLE'] = str(binary.parent / 'libexec/git-runtime/bin/git')
+                env['BUSYSTACK_GIT_HELPER_PATH'] = str(helper_dir / 'busystack-git-helper')
+            workspace = Path(compiled.get('workspace', Path(__file__).resolve().parents[2]))
+            daemon_binary = Path(os.environ.get('BUSYSTACK_NATIVE_DAEMON', str(helper_dir/'busyfilesd' if installed else binary.parent/'busyfilesd')))
+            daemon_log = (output/'daemon.log').open('w')
+            if daemon_binary.is_file():
+                arguments = [str(daemon_binary.resolve()), '--socket-path', env['BUSYFILES_DAEMON_SOCKET']]
+                daemon_identity = {'mode': 'packaged executable', 'path': str(daemon_binary.resolve()),
+                                   'sha256': hashlib.sha256(daemon_binary.read_bytes()).hexdigest()}
+            else:
+                if installed or os.environ.get('BUSYSTACK_NATIVE_REQUIRE_INSTALLED') == '1':
+                    raise RuntimeError('Installed acceptance requires the actual packaged daemon')
+                sdk = Path(subprocess.check_output(['which', 'flutter'], text=True).strip()).resolve().parent.parent
+                arguments = [str(sdk/'bin/cache/dart-sdk/bin/dart'), 'run', 'apps/busyfilesd/bin/busyfilesd.dart',
+                             '--socket-path', env['BUSYFILES_DAEMON_SOCKET']]
+                daemon_identity = {'mode': 'development source through official Dart', 'source': str(workspace/'busyfiles')}
+            daemon_launch = ([arguments], {'cwd': str(workspace/'busyfiles'), 'env': env,
+                              'stdout': daemon_log, 'stderr': subprocess.STDOUT})
+            daemon = start_daemon()
+            daemon_identity['pid'] = daemon.pid
+        process = subprocess.Popen([str(binary.resolve()), str(repository.resolve())], env=env,
+                                   stdout=(output / 'application.log').open('w'), stderr=subprocess.STDOUT)
+    except BaseException:
+        if daemon is not None and daemon.poll() is None:
+            daemon.terminate(); daemon.wait(timeout=15)
+        desktop.dispose(); xvfb.terminate(); xvfb.wait(timeout=10)
+        cleanup_runtime()
+        raise
     def git(*arguments):
-        return subprocess.check_output(['git', '-C', str(repository), *arguments], text=True)
+        return subprocess.check_output([str(binary.parent / 'libexec/git-runtime/bin/git'), '-C', str(repository), *arguments], text=True)
     initial_repository = {'status': git('status', '--porcelain=v1'), 'references': git('show-ref')}
     receipt = {'backend': 'X11/Xvfb', 'display': env['DISPLAY'], 'displaySize': [1600, 1100], 'textScale': text_scale,
                'repository': str(repository.resolve()),
@@ -102,16 +212,10 @@ def main():
                'compiledSources': compiled, 'sources': {}}
     payloads = [binary.parent / 'data/flutter_assets/kernel_blob.bin', binary.parent / 'lib/libapp.so']
     receipt['applicationPayloads'] = {str(p.relative_to(binary.parent)): hashlib.sha256(p.read_bytes()).hexdigest() for p in payloads if p.exists()}
-    for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
-        source = Path(__file__).resolve().parents[2] / name
-        source_hash = hashlib.sha256()
-        for path in sorted((source / 'lib').rglob('*.dart')):
-            source_hash.update(str(path.relative_to(source)).encode() + b'\0' + path.read_bytes())
-        receipt['sources'][name] = {
-            'dartSourceSHA256': source_hash.hexdigest(),
-            'revision': subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip(),
-            'state': subprocess.check_output(['git', '-C', str(source), 'status', '--short'], text=True),
-        }
+    receipt['sources'] = compiled['sources']
+    receipt['host'] = native_host
+    if requested_theme is not None: receipt['theme'] = requested_theme
+    if daemon is not None: receipt['daemon'] = daemon_identity
     settings = output / 'xdg_data_home/io.busystack.busymark/settings.json'
     if settings.exists():
         config = json.loads(settings.read_text())
@@ -146,7 +250,7 @@ def main():
         if len(mapped) != 1:
             raise RuntimeError('Expected exactly one mapped official Flutter engine')
         engine = Path(mapped.pop())
-        mode = 'linux-x64-release' if 'release' in binary.parts else 'linux-x64'
+        mode = 'linux-x64' if (binary.parent/'data/flutter_assets/kernel_blob.bin').exists() else 'linux-x64-release'
         sdk = Path(subprocess.check_output(['which', 'flutter'], text=True).strip()).resolve().parent.parent
         expected_engine = sdk / 'bin/cache/artifacts/engine' / mode / 'libflutter_linux_gtk.so'
         actual_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
@@ -199,12 +303,8 @@ def main():
                 x.XResizeWindow(desktop.display, window.get_xid(), command['width'], command['height'])
             elif kind == 'capture':
                 time.sleep(1)
-                # Request an ordinary native exposure before reading the frame.
-                # This private Xvfb desktop has no compositing window manager.
-                x.XClearArea.argtypes = [C.c_void_p, C.c_ulong, C.c_int, C.c_int, C.c_uint, C.c_uint, C.c_int]
-                x.XClearArea(desktop.display, window.get_xid(), 0, 0, 0, 0, 1)
-                x.XFlush(desktop.display)
-                time.sleep(.5)
+                # Read-only observation: do not clear or repaint the target.
+                # Keep strict incomplete/blank frame rejection below.
                 # A resize can reach X11 before GTK has supplied the new GL
                 # frame. Wait for a complete real framebuffer; never save the
                 # cleared intermediate surface as acceptance evidence.
@@ -218,6 +318,23 @@ def main():
                         time.sleep(1)
                 receipt['captures'].append({'name': command['name'], 'windowSize': geometry(desktop, window), 'scale': window.get_scale_factor()})
                 (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
+            elif kind in {'daemonStop', 'daemonRestart'}:
+                if daemon is None or daemon.poll() is not None:
+                    raise ValueError('This host has no running owned daemon')
+                previous = daemon.pid
+                daemon.terminate(); daemon.wait(timeout=15)
+                if Path(env['BUSYFILES_DAEMON_SOCKET']).exists():
+                    raise RuntimeError('Owned daemon left a stale socket after normal shutdown')
+                receipt.setdefault('daemonStops', []).append(previous)
+                if kind == 'daemonRestart':
+                    daemon = start_daemon()
+                    receipt.setdefault('daemonRestarts', []).append({'previousPID': previous, 'newPID': daemon.pid})
+            elif kind == 'daemonStart':
+                if daemon is None or daemon.poll() is None:
+                    raise ValueError('An owned stopped daemon is required')
+                previous = daemon.pid
+                daemon = start_daemon()
+                receipt.setdefault('daemonRestarts', []).append({'previousPID': previous, 'newPID': daemon.pid})
             elif kind == 'text':
                 for char in command['value']:
                     symbol = {'.': 'period', '/': 'slash'}.get(char, char)
@@ -245,6 +362,7 @@ def main():
             process.terminate()
             process.wait(timeout=10)
             receipt['naturalExit'] = False
+        verify(compiled, binary.resolve())
         receipt['repositoryUnchanged'] = initial_repository == {'status': git('status', '--porcelain=v1'), 'references': git('show-ref')}
         (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
     finally:
@@ -257,9 +375,22 @@ def main():
             except subprocess.TimeoutExpired:
                 process.terminate()
                 process.wait(timeout=10)
+        if daemon is not None:
+            if daemon.poll() is None: daemon.terminate()
+            receipt['daemonExitCode'] = daemon.wait(timeout=15)
+            (output/'receipt.json').write_text(json.dumps(receipt, indent=2))
+        if daemon_log is not None: daemon_log.close()
         desktop.dispose()
         xvfb.terminate()
         xvfb.wait(timeout=10)
+        try:
+            cleanup_runtime()
+        except BaseException:
+            receipt['runtimeCleanup'] = False
+            (output/'receipt.json').write_text(json.dumps(receipt, indent=2))
+            raise
+        receipt['runtimeCleanup'] = True
+        (output/'receipt.json').write_text(json.dumps(receipt, indent=2))
 
 
 if __name__ == '__main__':

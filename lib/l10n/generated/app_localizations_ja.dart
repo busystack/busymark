@@ -8646,4 +8646,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => '別のコミットを選択…';
+
+  @override
+  String get gitUiGitLog => 'Gitログ';
+
+  @override
+  String get gitUiOperationsRequireTrust => 'Git 操作にはワークスペースの信頼が必要です。';
+
+  @override
+  String get gitUiTrustWorkspace => 'ワークスペースを信頼';
+
+  @override
+  String get gitUiCloseOtherTabs => '他のタブを閉じる';
+
+  @override
+  String get gitUiCloseAllTabs => 'すべてのタブを閉じる';
 }

@@ -2807,10 +2807,10 @@ void main() {
       ),
     );
 
-    final surface = tester.widget<Material>(
+    final surface = tester.widget<ColoredBox>(
       find.descendant(
         of: find.byType(BusyMarkSidebarSurface),
-        matching: find.byType(Material),
+        matching: find.byType(ColoredBox),
       ),
     );
     final box = tester.widget<DecoratedBox>(

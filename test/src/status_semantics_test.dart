@@ -1,11 +1,10 @@
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
+import 'package:busymark/src/git/application/shared_git_integration.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
-import 'package:busymark/src/git/application/git_controller.dart';
-import 'package:busymark/src/git/domain/git_models.dart';
-import 'package:busymark/src/git/presentation/git_sidebar_tab.dart';
 import 'package:busymark/src/workspace/presentation/welcome_screen.dart';
 import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -87,115 +86,73 @@ void main() {
     }
   });
 
-  testWidgets('Git failures use window-level toasts', (tester) async {
-    await tester.pumpWidget(_testApp(_gitSidebar()));
-    final controller = _gitController(tester);
+  testWidgets(
+    'shared Git failures retain diagnostics and copy in the native surface',
+    (tester) async {
+      await tester.pumpWidget(_testApp(const _GitHostProbe(failed: true)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Diagnostics'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Author identity unknown'), findsOneWidget);
+      expect(find.text('Copy diagnostics'), findsOneWidget);
+      expect(find.byType(BusyMarkStatusBox), findsNothing);
+    },
+  );
 
-    controller.reportFailure(
-      const GitFailure(
-        code: GitFailureCode.commandFailed,
-        userMessageKey: 'unused',
-        rawMessage: 'Author identity unknown',
-        commandName: 'commit',
-      ),
-    );
+  testWidgets('Git host notifications use window-level toasts', (tester) async {
+    await tester.pumpWidget(_testApp(const _GitHostProbe()));
+    await tester.tap(find.text('Notify'));
     await tester.pumpAndSettle(const Duration(milliseconds: 200));
-
-    expect(find.textContaining('Git command failed.'), findsOneWidget);
-    expect(find.textContaining('Author identity unknown'), findsOneWidget);
-    expect(
-      find.text(AppLocalizations.of(_gitContext(tester)).copy),
-      findsOneWidget,
-    );
-    expect(find.byType(BusyMarkStatusBox), findsNothing);
-  });
-
-  testWidgets('successful Git operations use window-level toasts', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(_gitSidebar()));
-    _gitController(tester).reportSuccess('Done');
-    await tester.pumpAndSettle(const Duration(milliseconds: 200));
-
     expect(find.text('Done'), findsOneWidget);
     expect(find.byType(BusyMarkStatusBox), findsNothing);
   });
 }
 
-Widget _gitSidebar() {
-  const repository = GitRepositoryInfo(
-    rootPath: '/repo',
-    gitDirPath: '/repo/.git',
-  );
-  final state = GitState(
-    availability: const GitAvailability(
-      available: true,
-      executablePath: '/usr/bin/git',
-      version: '2.50.0',
-    ),
-    repositoryInfo: repository,
-    statusSnapshot: const GitStatusSnapshot(
-      repositoryInfo: repository,
-      files: [],
-    ),
-  );
-  return ProviderScope(
-    overrides: [
-      gitControllerProvider.overrideWith(() => _PresetGitController(state)),
-    ],
-    child: GitSidebarTab(
-      workspace: Workspace(
+class _GitHostProbe extends ConsumerWidget {
+  const _GitHostProbe({this.failed = false});
+  final bool failed;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final host = busyMarkGitHost(
+      context,
+      ref,
+      Workspace(
         id: '/repo',
         rootPath: '/repo',
         kind: WorkspaceKind.markdownFolder,
-        openedAt: DateTime(2026),
+        openedAt: DateTime.utc(2026),
         files: const [],
         diagnostics: const [],
       ),
-      onOpenFile: (_) {},
-      onConfirmDiscard: (_) async => true,
-      onAfterWorkspaceFilesChanged: () async {},
-      onConfirmSwitchBranch: (_) async => true,
-      onConfirmPushSetUpstream: () async => true,
-    ),
-  );
+      isMounted: () => context.mounted,
+    );
+    return shared.GitHostScope(
+      host: host,
+      child: failed
+          ? const shared.GitFailurePanel(
+              error: shared.GitException(
+                shared.GitErrorCode.authorIdentity,
+                diagnostic: 'Author identity unknown',
+              ),
+            )
+          : shared.GitButton(
+              onPressed: () => host.notify('Done'),
+              child: const Text('Notify'),
+            ),
+    );
+  }
 }
 
 Widget _testApp(Widget child) {
-  return MaterialApp(
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    theme: buildBusyMarkTheme(
-      brightness: Brightness.light,
-      accentColor: busyMarkDefaultAccentColor,
+  return ProviderScope(
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: buildBusyMarkTheme(
+        brightness: Brightness.light,
+        accentColor: busyMarkDefaultAccentColor,
+      ),
+      home: BusyMarkToastOverlay(child: Scaffold(body: child)),
     ),
-    home: BusyMarkToastOverlay(child: Scaffold(body: child)),
   );
-}
-
-BuildContext _gitContext(WidgetTester tester) =>
-    tester.element(find.byType(GitSidebarTab));
-
-_PresetGitController _gitController(WidgetTester tester) {
-  return ProviderScope.containerOf(
-        _gitContext(tester),
-      ).read(gitControllerProvider.notifier)
-      as _PresetGitController;
-}
-
-class _PresetGitController extends GitController {
-  _PresetGitController(this.initialState);
-
-  final GitState initialState;
-
-  @override
-  GitState build() => initialState;
-
-  void reportFailure(GitFailure failure) {
-    state = state.copyWith(lastError: failure, lastOperationMessage: null);
-  }
-
-  void reportSuccess(String message) {
-    state = state.copyWith(lastError: null, lastOperationMessage: message);
-  }
 }

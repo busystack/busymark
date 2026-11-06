@@ -8904,4 +8904,20 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'انتخاب یک کامیت دیگر…';
+
+  @override
+  String get gitUiGitLog => 'تاریخچهٔ Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'عملیات Git به اعتماد به فضای کاری نیاز دارد.';
+
+  @override
+  String get gitUiTrustWorkspace => 'اعتماد به فضای کاری';
+
+  @override
+  String get gitUiCloseOtherTabs => 'بستن زبانه‌های دیگر';
+
+  @override
+  String get gitUiCloseAllTabs => 'بستن همهٔ زبانه‌ها';
 }

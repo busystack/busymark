@@ -1132,7 +1132,9 @@ void main() {
   testWidgets(
     'shared Git fetch reconciliation leaves authoring buffers and workspace scans alone',
     (tester) async {
-      final service = _IdentityWorkspaceService();
+      final root = Directory.systemTemp.createTempSync('git-fetch-authoring-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = _IdentityWorkspaceService(rootPath: root.path);
       final metadata = _PendingGitGateway();
       addTearDown(metadata.release);
       late WidgetRef widgetRef;
@@ -1188,12 +1190,14 @@ void main() {
         isMounted: () => hostContext.mounted,
       );
       expect(
-        await host.prepareMutation(
-          repository,
-          const shared.FetchRemote(
-            'origin',
-            expectedHead: null,
-            expectedIndex: 'reviewed',
+        await tester.runAsync(
+          () => host.prepareMutation(
+            repository,
+            const shared.FetchRemote(
+              'origin',
+              expectedHead: null,
+              expectedIndex: 'reviewed',
+            ),
           ),
         ),
         isTrue,
@@ -1230,22 +1234,26 @@ void main() {
       // disk reconciliation. Protect the draft before preparing that operation.
       controller.updateActiveText(draft.lastSavedText);
       expect(
-        await host.prepareMutation(
-          repository,
-          const shared.BranchMutation(
-            shared.BranchAction.switchBranch,
-            'incoming',
-            expectedHead: null,
-            expectedIndex: 'reviewed',
+        await tester.runAsync(
+          () => host.prepareMutation(
+            repository,
+            const shared.BranchMutation(
+              shared.BranchAction.switchBranch,
+              'incoming',
+              expectedHead: null,
+              expectedIndex: 'reviewed',
+            ),
           ),
         ),
         isTrue,
       );
-      await host.afterMutation!(
-        repository,
-        const shared.GitOutcome(
-          phase: shared.GitOperationPhase.failed,
-          snapshot: null,
+      await tester.runAsync(
+        () => host.afterMutation!(
+          repository,
+          const shared.GitOutcome(
+            phase: shared.GitOperationPhase.failed,
+            snapshot: null,
+          ),
         ),
       );
       expect(service.openPathCalls, before + 1);
@@ -1256,7 +1264,9 @@ void main() {
   testWidgets(
     'shared Git branch switching reviews every affected dirty document and cancellation preserves them',
     (tester) async {
-      final service = _IdentityWorkspaceService();
+      final root = Directory.systemTemp.createTempSync('git-branch-authoring-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = _IdentityWorkspaceService(rootPath: root.path);
       late WidgetRef widgetRef;
       bool? allowed;
       await tester.pumpWidget(
@@ -1324,6 +1334,10 @@ void main() {
       await controller.openActiveFile(service.secondPath);
       controller.updateActiveText('# Unsaved B\n');
       await tester.tap(find.text('Switch reviewed branch'));
+      for (var step = 0; step < 4; step++) {
+        await tester.runAsync(() => FileSystemEntity.type(root.path));
+        await tester.pump();
+      }
       await tester.pumpAndSettle();
       expect(find.text('a.md'), findsOneWidget);
       expect(find.text('b.md'), findsOneWidget);

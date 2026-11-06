@@ -8643,4 +8643,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => '다른 커밋 선택…';
+
+  @override
+  String get gitUiGitLog => 'Git 로그';
+
+  @override
+  String get gitUiOperationsRequireTrust => 'Git 작업에는 작업 공간 신뢰가 필요합니다.';
+
+  @override
+  String get gitUiTrustWorkspace => '작업공간 신뢰';
+
+  @override
+  String get gitUiCloseOtherTabs => '다른 탭 닫기';
+
+  @override
+  String get gitUiCloseAllTabs => '모든 탭 닫기';
 }

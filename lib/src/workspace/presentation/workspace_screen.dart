@@ -543,10 +543,12 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     final canExportHtml = canExportWorkspaceHtml(state);
     final allocation = ref.watch(_sidebarAllocationProvider);
     final request = ref.watch(_sidebarShortcutRequestProvider);
-    final commitVisible =
+    final gitVisible =
         request == _SidebarTab.git ||
-        allocation == (workspace.id, workspace.openedAt, _SidebarTab.git);
-    final sidebarWidth = commitVisible && !searchState.active
+        request == _SidebarTab.gitLog ||
+        allocation == (workspace.id, workspace.openedAt, _SidebarTab.git) ||
+        allocation == (workspace.id, workspace.openedAt, _SidebarTab.gitLog);
+    final sidebarWidth = gitVisible && !searchState.active
         ? busyMarkGitSidebarMinimumWidth(context)
         : BusyMarkSizes.sidebarWidth;
     final sidebar = SizedBox(
@@ -664,7 +666,7 @@ class _WorkspaceScreenContents extends ConsumerWidget {
     }
     final comparison = sharedGitTabs.active?.comparison;
     final title = comparison != null
-        ? '${comparison.path.display} · ${shared.gitVersionLabel(context, comparison.left)} → ${shared.gitVersionLabel(context, comparison.right)}'
+        ? sharedGitTabs.active!.title(context)
         : state.isDirty
         ? '*${_activeFileName(context, workspace, state.activeBuffer)}'
         : _activeFileName(context, workspace, state.activeBuffer);
@@ -729,7 +731,8 @@ class _WorkspaceScreenContents extends ConsumerWidget {
                     sidebarWidth: sidebarWidth,
                     sidebarHeader: const BusyMarkLinuxBrandHeader(),
                     sidebarBody: sidebar,
-                    sidebarAvailable: sidebarAvailable || searchState.active,
+                    sidebarAvailable:
+                        sidebarAvailable || gitVisible || searchState.active,
                     sidebarOverlay: searchState.active && !sidebarAvailable,
                     sidebarExpanded: sidebarVisible,
                     sidebarTransitionGeneration: ref.watch(
@@ -1580,7 +1583,22 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                         (selectedTab != _SidebarTab.git &&
                             selectedTab != _SidebarTab.gitLog),
                     child: BusyMarkSharedGitSidebar(
-                      onShowLog: () => _selectTab(_SidebarTab.gitLog, tabs),
+                      onSelectView: (view) => _selectTab(
+                        view == shared.GitSidebarView.log
+                            ? _SidebarTab.gitLog
+                            : _SidebarTab.git,
+                        tabs,
+                      ),
+                      destinations: [
+                        for (final tab in tabs)
+                          if (tab != _SidebarTab.git &&
+                              tab != _SidebarTab.gitLog)
+                            shared.GitSidebarDestination(
+                              id: tab.name,
+                              label: _sidebarTabLabel(context, tab),
+                              onSelect: () => _selectTab(tab, tabs),
+                            ),
+                      ],
                       workspace: widget.workspace,
                       log: selectedTab == _SidebarTab.gitLog,
                       active:
@@ -2467,6 +2485,10 @@ class _SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (selectedTab == _SidebarTab.git || selectedTab == _SidebarTab.gitLog) {
+      return const SizedBox.shrink();
+    }
+
     final colors = BusyMarkSurfaceColors.of(context);
     final path = _workspacePath(workspace);
     final activeDocumentPath =
@@ -3630,25 +3652,16 @@ class _WritersideTopicRenameSidebarState
                     key: const ValueKey('topic-rename-affected-files'),
                     primary: false,
                     itemCount: files.length,
-                    itemBuilder: (context, index) => ListTile(
-                      dense: true,
+                    itemBuilder: (context, index) => BusyMarkSidebarRecordRow(
+                      compact: true,
                       selected: index == _selected,
-                      leading: Icon(
-                        index == 0
-                            ? BusyMarkGlyphs.edit
-                            : BusyMarkGlyphs.document,
-                        size: BusyMarkSizes.iconSm,
-                      ),
-                      title: Text(
-                        index == 0
-                            ? '${p.basename(widget.plan.oldTopicPath)} → ${p.basename(widget.plan.newTopicPath)}'
-                            : p.basename(files[index].path),
-                      ),
-                      subtitle: Text(
-                        files[index].path,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      icon: index == 0
+                          ? BusyMarkGlyphs.edit
+                          : BusyMarkGlyphs.document,
+                      title: index == 0
+                          ? '${p.basename(widget.plan.oldTopicPath)} → ${p.basename(widget.plan.newTopicPath)}'
+                          : p.basename(files[index].path),
+                      subtitle: files[index].path,
                       onTap: () => setState(() => _selected = index),
                     ),
                   ),
@@ -9609,8 +9622,7 @@ class _EditorTabStrip extends ConsumerWidget {
     return switch (entry.kind) {
       WorkspaceTabKind.file =>
         entry.untitledName ?? _relativeDocumentPath(workspace, entry.path),
-      WorkspaceTabKind.gitDiff =>
-        '${entry.path} · ${shared.gitVersionLabel(context, entry.review!.comparison.left)} → ${shared.gitVersionLabel(context, entry.review!.comparison.right)}',
+      WorkspaceTabKind.gitDiff => entry.review!.title(context),
       WorkspaceTabKind.localHistory =>
         '${context.l10n.localHistory}: ${entry.path}',
     };

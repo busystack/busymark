@@ -8974,4 +8974,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Seleccionar otro commit…';
+
+  @override
+  String get gitUiGitLog => 'Registro de Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Las operaciones de Git requieren confiar en el espacio de trabajo.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Confiar en el espacio de trabajo';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Cerrar las otras pestañas';
+
+  @override
+  String get gitUiCloseAllTabs => 'Cerrar todas las pestañas';
 }

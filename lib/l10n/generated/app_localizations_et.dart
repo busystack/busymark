@@ -8894,4 +8894,20 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Vali teine sissekanne…';
+
+  @override
+  String get gitUiGitLog => 'Git logi';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Giti toimingud nõuavad tööruumi usaldamist.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Usalda tööruumi';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Sulge teised vahelehed';
+
+  @override
+  String get gitUiCloseAllTabs => 'Sule kõik vahelehed';
 }

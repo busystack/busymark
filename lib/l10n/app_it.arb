@@ -4555,5 +4555,13 @@
   "gitUiCommitHash": "Hash del commit",
   "gitUiCommitReferences": "Riferimenti",
   "gitUiCopyCommitMessage": "Copia messaggio del commit",
-  "gitUiSelectAnotherCommit": "Seleziona un altro commit…"
+  "gitUiSelectAnotherCommit": "Seleziona un altro commit…",
+  "gitUiGitLog": "Registro Git",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Le operazioni Git richiedono di considerare attendibile lo spazio di lavoro.",
+  "gitUiTrustWorkspace": "Considera attendibile l’area di lavoro",
+  "gitUiCloseOtherTabs": "Chiudi le altre schede",
+  "gitUiCloseAllTabs": "Chiudi tutte le schede"
 }

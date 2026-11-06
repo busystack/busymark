@@ -6085,5 +6085,13 @@
   "gitUiCommitHash": "Mã băm commit",
   "gitUiCommitReferences": "Tham chiếu",
   "gitUiCopyCommitMessage": "Sao chép thông điệp commit",
-  "gitUiSelectAnotherCommit": "Chọn commit khác…"
+  "gitUiSelectAnotherCommit": "Chọn commit khác…",
+  "gitUiGitLog": "Bản ghi Git",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Các thao tác Git yêu cầu tin cậy không gian làm việc.",
+  "gitUiTrustWorkspace": "Tin cậy không gian làm việc",
+  "gitUiCloseOtherTabs": "Đóng các thẻ khác",
+  "gitUiCloseAllTabs": "Đóng tất cả các thẻ"
 }

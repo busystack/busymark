@@ -4555,5 +4555,13 @@
   "gitUiCommitHash": "Commit-Hash",
   "gitUiCommitReferences": "Referenzen",
   "gitUiCopyCommitMessage": "Commit-Nachricht kopieren",
-  "gitUiSelectAnotherCommit": "Anderen Commit auswählen…"
+  "gitUiSelectAnotherCommit": "Anderen Commit auswählen…",
+  "gitUiGitLog": "Git-Protokoll",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Git-Operationen erfordern Vertrauen in den Arbeitsbereich.",
+  "gitUiTrustWorkspace": "Diesem Arbeitsbereich vertrauen",
+  "gitUiCloseOtherTabs": "Andere Tabs schließen",
+  "gitUiCloseAllTabs": "Alle Tabs schließen"
 }

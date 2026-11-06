@@ -1534,6 +1534,7 @@ void main() {
   testWidgets(
     'pointer and keyboard multiselection preserves reviewed context targets after resorting',
     (tester) async {
+      final menu = NativeMenuProbe(tester);
       late NextcloudNote alpha, beta, gamma;
       await tester.runAsync(() async {
         final account = repository.accountById(accountId)!;
@@ -1588,7 +1589,7 @@ void main() {
         ),
       );
       await settleStorage(tester);
-      await tester.tap(find.text('Move to category'));
+      await menu.activate('Move to category');
       await settleStorage(tester);
       final review = find.byType(BusyMarkDialogShell);
       expect(review, findsOneWidget);
@@ -1616,8 +1617,9 @@ void main() {
   );
 
   testWidgets(
-    'overflow keyboard sessions capture their own note, including the first opening',
+    'context keyboard sessions capture their own note, including the first opening',
     (tester) async {
+      final menu = NativeMenuProbe(tester);
       late NextcloudNote alpha, beta;
       await tester.runAsync(() async {
         final account = repository.accountById(accountId)!;
@@ -1627,43 +1629,47 @@ void main() {
         beta = await repository.create(accountId, title: 'Beta');
       });
       await pump(tester);
-      Finder button(NextcloudNote note) => find.descendant(
+      Finder row(NextcloudNote note) =>
+          find.byKey(ValueKey('nextcloud-note-${note.localId}'));
+      Finder surface(NextcloudNote note) => find.descendant(
         of: find.byKey(ValueKey('nextcloud-note-${note.localId}')),
-        matching: find.byType(BusyMarkCompactIconButton),
+        matching: find.byType(BusyMarkSidebarRowSurface),
       );
       Future<void> keyboardOpen(NextcloudNote note) async {
         final focus = tester
-            .widget<BusyMarkCompactIconButton>(button(note))
+            .widget<BusyMarkSidebarRowSurface>(surface(note))
             .focusNode!;
         for (var i = 0; i < 40 && !focus.hasPrimaryFocus; i++) {
           await tester.sendKeyEvent(LogicalKeyboardKey.tab);
           await tester.pump();
         }
         expect(focus.hasPrimaryFocus, isTrue);
-        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
         await tester.pumpAndSettle();
       }
 
       await keyboardOpen(beta);
-      await tester.tap(find.text('Favorites').last);
+      await menu.activate('Favorites');
       await settleStorage(tester);
       expect(repository.noteById(beta.localId)!.favorite, isTrue);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
-      await tester.tap(button(alpha));
+      await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
       await tester.pumpAndSettle();
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      menu.close();
       await tester.pumpAndSettle();
       await keyboardOpen(beta);
-      await tester.tap(find.text('Remove favorite'));
+      await menu.activate('Remove favorite');
       await settleStorage(tester);
       expect(repository.noteById(beta.localId)!.favorite, isFalse);
       expect(repository.noteById(alpha.localId)!.favorite, isFalse);
-      await tester.tap(button(alpha));
+      await tester.tap(row(alpha), buttons: kSecondaryMouseButton);
       await tester.pumpAndSettle();
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      menu.close();
       await tester.pumpAndSettle();
       await keyboardOpen(beta);
-      await tester.tap(find.text('Note Properties'));
+      await menu.activate('Note Properties');
       await settleStorage(tester);
       final field = find.descendant(
         of: find.byType(BusyMarkGroupedTextEntry).first,

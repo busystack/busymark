@@ -6085,5 +6085,13 @@
   "gitUiCommitHash": "コミットハッシュ",
   "gitUiCommitReferences": "参照",
   "gitUiCopyCommitMessage": "コミットメッセージをコピー",
-  "gitUiSelectAnotherCommit": "別のコミットを選択…"
+  "gitUiSelectAnotherCommit": "別のコミットを選択…",
+  "gitUiGitLog": "Gitログ",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Git 操作にはワークスペースの信頼が必要です。",
+  "gitUiTrustWorkspace": "ワークスペースを信頼",
+  "gitUiCloseOtherTabs": "他のタブを閉じる",
+  "gitUiCloseAllTabs": "すべてのタブを閉じる"
 }

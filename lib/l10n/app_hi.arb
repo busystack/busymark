@@ -4555,5 +4555,13 @@
   "gitUiCommitHash": "कमिट हैश",
   "gitUiCommitReferences": "संदर्भ",
   "gitUiCopyCommitMessage": "कमिट संदेश कॉपी करें",
-  "gitUiSelectAnotherCommit": "दूसरा कमिट चुनें…"
+  "gitUiSelectAnotherCommit": "दूसरा कमिट चुनें…",
+  "gitUiGitLog": "Git लॉग",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Git कार्रवाइयों के लिए कार्यस्थान पर भरोसा करना आवश्यक है।",
+  "gitUiTrustWorkspace": "कार्यस्थान पर भरोसा करें",
+  "gitUiCloseOtherTabs": "अन्य टैब बंद करें",
+  "gitUiCloseAllTabs": "सभी टैब बंद करें"
 }

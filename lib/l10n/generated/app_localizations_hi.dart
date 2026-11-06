@@ -8879,4 +8879,20 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'दूसरा कमिट चुनें…';
+
+  @override
+  String get gitUiGitLog => 'Git लॉग';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Git कार्रवाइयों के लिए कार्यस्थान पर भरोसा करना आवश्यक है।';
+
+  @override
+  String get gitUiTrustWorkspace => 'कार्यस्थान पर भरोसा करें';
+
+  @override
+  String get gitUiCloseOtherTabs => 'अन्य टैब बंद करें';
+
+  @override
+  String get gitUiCloseAllTabs => 'सभी टैब बंद करें';
 }

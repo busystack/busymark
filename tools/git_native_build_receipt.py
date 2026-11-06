@@ -15,24 +15,43 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def sources(workspace=None):
-    workspace = workspace or Path(__file__).resolve().parents[2]
+def sources(workspace=None, host="busymark"):
+    if host not in {'busymark', 'busyfiles'}:
+        raise ValueError('Unsupported native acceptance host')
+    workspace = Path(workspace) if workspace is not None else Path(__file__).resolve().parents[2]
     result = {}
-    for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+    for name in [host, 'busystack_git_flutter', 'busystack_git']:
         root = workspace / name
         digest = hashlib.sha256()
         files = set()
-        for folder in ['lib', 'linux', 'native']:
-            files.update(p for p in (root / folder).rglob('*') if p.is_file()
-                         and not any(x in p.parts for x in ['.git', '.dart_tool', 'build', '.symlinks', 'ephemeral']))
-        files.update(p for p in [root / 'pubspec.yaml', root / 'pubspec.lock'] if p.exists())
+        components = [root]
+        if name == 'busyfiles':
+            components.extend(p for folder in ['apps', 'packages']
+                              for p in (root / folder).iterdir() if p.is_dir())
+        for component in components:
+            for folder in ['lib', 'bin', 'linux', 'native']:
+                files.update(p for p in (component / folder).rglob('*') if p.is_file()
+                             and not any(x in p.parts for x in ['.git', '.dart_tool', 'build', '.symlinks', 'ephemeral', '__pycache__']))
+            files.update(p for p in [component / 'pubspec.yaml', component / 'pubspec.lock'] if p.exists())
         for path in sorted(files):
             digest.update(str(path.relative_to(root)).encode() + b'\0' + path.read_bytes())
-        revision = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'], capture_output=True, text=True)
-        state = subprocess.run(['git', '-C', str(root), 'status', '--short'], capture_output=True, text=True)
-        result[name] = {'sha256': digest.hexdigest(),
-                        'revision': revision.stdout.strip() if revision.returncode == 0 else 'materialized source archive',
-                        'state': state.stdout if state.returncode == 0 else ''}
+        identity = {'sha256': digest.hexdigest(), 'revision': 'materialized source archive', 'state': ''}
+        if (root / '.git').exists():
+            revision = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'], capture_output=True, text=True)
+            state = subprocess.run(['git', '-C', str(root), 'status', '--short'], capture_output=True, text=True)
+            if revision.returncode != 0 or state.returncode != 0:
+                raise RuntimeError('Cannot observe owned repository identity: ' + name)
+            identity.update(revision=revision.stdout.strip(), state=state.stdout)
+        else:
+            for consumer in ['busymark', 'busyfiles', 'busystack_git_flutter']:
+                manifest = workspace / consumer / 'tool/shared_dependencies.json'
+                if manifest.exists():
+                    for dependency in json.loads(manifest.read_text()).get('dependencies', []):
+                        if dependency['name'] == name:
+                            identity['pinnedRevision'] = dependency['revision']
+                            identity['archiveSHA256'] = dependency['sha256']
+                            identity['archiveTreeSHA256'] = dependency['tree_sha256']
+        result[name] = identity
     return result
 
 
@@ -44,7 +63,7 @@ def payloads(binary):
 def verify(receipt, binary, workspace=None):
     if not receipt.get('sealed') or receipt['payloads'] != payloads(binary):
         raise RuntimeError('Binary payload differs from the sealed build receipt')
-    current = sources(workspace)
+    current = sources(workspace or receipt.get('workspace'), receipt.get("host", "busymark"))
     for name, source in receipt['sources'].items():
         if source['sha256'] != current[name]['sha256']:
             raise RuntimeError(f'{name} source changed since the recorded build')
@@ -52,12 +71,14 @@ def verify(receipt, binary, workspace=None):
 
 def main():
     command, target = sys.argv[1], Path(sys.argv[2])
+    host = 'busyfiles' if '--host=busyfiles' in sys.argv else 'busymark'
+    workspace = next((Path(arg.split('=', 1)[1]).resolve() for arg in sys.argv if arg.startswith('--workspace=')), Path(__file__).resolve().parents[2])
     if command == 'capture':
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps({'sources': sources(), 'sealed': False}, indent=2))
+        target.write_text(json.dumps({'host': host, 'workspace': str(workspace), 'sources': sources(workspace, host=host), 'sealed': False}, indent=2))
     elif command == 'seal':
         receipt = json.loads(target.read_text())
-        current = sources()
+        current = sources(receipt.get('workspace'), host=receipt.get('host', 'busymark'))
         if any(source['sha256'] != current[name]['sha256'] for name, source in receipt['sources'].items()):
             raise RuntimeError('Source changed while Flutter was building')
         receipt.update(sealed=True, payloads=payloads(Path(sys.argv[3]).resolve()))

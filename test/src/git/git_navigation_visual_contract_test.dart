@@ -302,7 +302,8 @@ void main() {
         }
         if (action.height > 40) defects.add('oversized toolbar button');
         final colors = BusyMarkSurfaceColors.of(tester.element(create));
-        if (_buttonPaint(tester, create) != colors.control) {
+        if (_buttonPaint(tester, create) !=
+            colors.foreground.withValues(alpha: .10)) {
           defects.add('New branch lacks native push surface');
         }
         final label = find.descendant(

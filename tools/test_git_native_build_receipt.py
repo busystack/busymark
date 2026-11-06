@@ -28,6 +28,31 @@ class NativeBuildReceiptTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
                 verify(receipt, binary, root)
 
+    def test_busyfiles_receipt_binds_ui_daemon_and_ipc_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for folder in ['busyfiles/apps/busyfiles_ui/lib', 'busyfiles/apps/busyfilesd/bin',
+                           'busyfiles/packages/busyfiles_ipc/lib', 'busystack_git_flutter/lib', 'busystack_git/lib']:
+                path = root / folder
+                path.mkdir(parents=True)
+                (path / 'source.dart').write_text('original production source')
+            binary = root / 'bundle/busyfiles'
+            binary.parent.mkdir()
+            binary.write_bytes(b'owned test payload')
+            receipt = {'host': 'busyfiles', 'sealed': True,
+                       'sources': sources(root, host='busyfiles'), 'payloads': payloads(binary)}
+            verify(receipt, binary, root)
+            tests = root/'busyfiles/apps/busyfiles_ui/test'
+            tests.mkdir()
+            (tests/'fixture.dart').write_text('test-only change')
+            verify(receipt, binary, root)
+            for source in ['busyfiles/apps/busyfilesd/bin/source.dart', 'busyfiles/packages/busyfiles_ipc/lib/source.dart']:
+                file = root/source
+                file.write_text('changed production source')
+                with self.assertRaisesRegex(RuntimeError, 'busyfiles source changed'):
+                    verify(receipt, binary, root)
+                file.write_text('original production source')
+
 
 if __name__ == '__main__':
     unittest.main()

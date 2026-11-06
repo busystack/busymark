@@ -8,7 +8,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib', 'linux', 'test'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
       File('README.md'),
@@ -157,7 +157,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib', 'test'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
     ];
@@ -191,7 +191,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib', 'linux'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
     ];
@@ -229,7 +229,7 @@ void main() {
     final files = <File>[
       for (final path in ['lib'])
         ...Directory(path)
-            .listSync(recursive: true)
+            .listSync(recursive: true, followLinks: false)
             .whereType<File>()
             .where((file) => _isText(file.path)),
     ];
@@ -990,7 +990,7 @@ void main() {
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
     final gitSidebar = File(
-      'lib/src/git/presentation/git_sidebar_tab.dart',
+      'lib/src/git/application/shared_git_integration.dart',
     ).readAsStringSync();
     final outlineMenu = RegExp(
       r'enum _OutlineDocumentAction[\s\S]*?'
@@ -1155,70 +1155,38 @@ void main() {
     expect(gitSidebar, isNot(contains('git_branches_view.dart')));
   });
 
-  test('Git changes view uses an integrated commit panel', () {
-    final gitChanges = File(
-      'lib/src/git/presentation/git_changes_view.dart',
+  test('Git screens and controls have one shared owner', () {
+    final integration = File(
+      'lib/src/git/application/shared_git_integration.dart',
     ).readAsStringSync();
-    final gitFileStatusColors = File(
-      'lib/src/git/presentation/git_file_status_colors.dart',
+    final feature = File(
+      '../busystack_git_flutter/lib/src/feature.dart',
     ).readAsStringSync();
-    final commitPanel = RegExp(
-      r'class _CommitPanel[\s\S]*?class GitCommitActions',
-    ).firstMatch(gitChanges)!.group(0)!;
-
-    expect(gitChanges, contains('class _CommitPanel'));
-    expect(gitChanges, contains('context.l10n.gitCommitMessage'));
-    expect(gitChanges, contains('BusyMarkCheckbox('));
-    expect(gitChanges, isNot(contains('_CommitSelectionCheckbox')));
-    expect(gitChanges, isNot(contains('YaruCheckbox(')));
-    expect(
-      File('lib/src/app/busymark_design.dart').readAsStringSync(),
-      contains('YaruCheckbox('),
-    );
-    expect(gitChanges, contains('context.l10n.gitSelectForCommit'));
-    expect(gitChanges, contains('context.l10n.gitRemoveFromCommit'));
-    expect(gitChanges, contains('context.l10n.gitStagedFileCount'));
-    expect(gitChanges, contains('context.l10n.gitUnsavedChangesBanner'));
-    expect(gitChanges, contains('stagedFiles: snapshot.stagedFiles'));
-    expect(gitChanges, isNot(contains('gitCommitSelectedFiles')));
-    expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
-    expect(gitChanges, contains('busyMarkVcsFileColorForChangeStatus(status)'));
-    expect(gitFileStatusColors, contains('BusyMarkVcsFileColor.modified'));
-    expect(gitChanges, contains('BusyMarkPushButton.suggested('));
-    expect(gitChanges, isNot(contains('BusyMarkDialogButton(')));
-    expect(gitChanges, isNot(contains('context.l10n.git${'Include'}InCommit')));
-    expect(
-      gitChanges,
-      isNot(contains('context.l10n.git${'Exclude'}FromCommit')),
-    );
-    expect(gitChanges, isNot(contains('context.l10n.git${'Not'}Included')));
-    expect(gitChanges, isNot(contains('_FileAction.${'include'}')));
-    expect(gitChanges, isNot(contains('_FileAction.${'exclude'}')));
-    expect(gitChanges, isNot(contains('FilledButton.icon')));
-    expect(gitChanges, isNot(contains('showDialog<void>')));
-    expect(gitChanges, isNot(contains('GitCommitDialog')));
-    expect(commitPanel, contains('BusyMarkGroupedList('));
-    expect(commitPanel, contains('BusyMarkGroupedTextEntry('));
-    expect(commitPanel, contains('context.l10n.gitCommitMessage'));
-    expect(commitPanel, contains('BusyMarkPushButton.standard('));
-    expect(commitPanel, contains('context.l10n.aiDraftWithAi'));
-    expect(commitPanel, isNot(contains('BusyMarkPushButton.standardIcon(')));
-    expect(commitPanel, isNot(contains('BusyMarkGlyphs.ai')));
-    expect(commitPanel, contains('BusyMarkPushButton.suggested('));
-    expect(commitPanel, contains('BusyMarkStatusBox('));
-    expect(commitPanel, isNot(contains('TextField(')));
-    expect(commitPanel, isNot(contains('TextFormField(')));
-    expect(commitPanel, isNot(contains('BusyMarkCompactIconButton(')));
-    expect(commitPanel, isNot(contains('BusyMarkHeaderIconButton(')));
-  });
-
-  test('Git sidebar actions use the shared semantic button adapter', () {
-    final gitSidebar = File(
-      'lib/src/git/presentation/git_sidebar_tab.dart',
+    final commit = File(
+      '../busystack_git_flutter/lib/src/commit_view.dart',
     ).readAsStringSync();
-
-    expect(gitSidebar, contains('BusyMarkPushButton.standard('));
-    expect(gitSidebar, isNot(contains('FilledButton(')));
+    final native = File(
+      '../busystack_git_flutter/lib/src/linux_native.dart',
+    ).readAsStringSync();
+    expect(integration, contains('shared.GitFeatureSidebar('));
+    expect(integration, contains('shared.GitReviewSurface('));
+    expect(feature, contains('GitCommitView('));
+    expect(feature, contains('GitLogView('));
+    expect(commit, contains('GitMessages.commitAndPush'));
+    expect(commit, contains('GitMessages.amendLastCommit'));
+    expect(native, contains('NativeGitTextEntry('));
+    expect(native, contains('NativeGitCheckbox('));
+    for (final retired in [
+      'git_sidebar_tab.dart',
+      'git_changes_view.dart',
+      'git_history_view.dart',
+      'git_author_identity_dialog.dart',
+    ]) {
+      expect(File('lib/src/git/presentation/$retired').existsSync(), isFalse);
+    }
+    expect(integration, isNot(contains('shared.GitCommitView(')));
+    expect(integration, isNot(contains('shared.GitLogView(')));
+    expect(integration, isNot(contains('shared.GitDiffView(')));
   });
 
   test('settings selectors delegate to the shared native menu', () {
@@ -1987,7 +1955,9 @@ void main() {
       File(
         'lib/src/workspace/presentation/workspace_screen.dart',
       ).readAsStringSync(),
-      File('lib/src/git/presentation/git_history_view.dart').readAsStringSync(),
+      File(
+        '../busystack_git_flutter/lib/src/historical_change_tree.dart',
+      ).readAsStringSync(),
       File('lib/src/editor/wysiwyg/wysiwyg_editor.dart').readAsStringSync(),
     ];
 

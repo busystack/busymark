@@ -11,6 +11,7 @@ class SharedGitReadFixture
   final GitState state;
   final GitState? fileHistoryState;
   int statusReads = 0, watchSubscriptions = 0;
+  String get snapshotToken => 'shell-fixture';
   shared.RepositoryId? get repository {
     final info = state.repositoryInfo;
     return info == null
@@ -63,7 +64,7 @@ class SharedGitReadFixture
     statusReads++;
     return shared.GitSnapshot(
       repository: repository,
-      token: 'shell-fixture',
+      token: snapshotToken,
       indexToken: 'shell-fixture-index',
       head:
           commits.firstOrNull?.oid ??

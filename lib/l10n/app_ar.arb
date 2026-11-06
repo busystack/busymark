@@ -4555,5 +4555,13 @@
   "gitUiCommitHash": "تجزئة الإيداع",
   "gitUiCommitReferences": "المراجع",
   "gitUiCopyCommitMessage": "نسخ رسالة الإيداع",
-  "gitUiSelectAnotherCommit": "اختيار التزام آخر…"
+  "gitUiSelectAnotherCommit": "اختيار التزام آخر…",
+  "gitUiGitLog": "Git سجل",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "تتطلب عمليات Git الوثوق بمساحة العمل.",
+  "gitUiTrustWorkspace": "الوثوق بمساحة العمل",
+  "gitUiCloseOtherTabs": "إغلاق علامات التبويب الأخرى",
+  "gitUiCloseAllTabs": "إغلاق كل علامات التبويب"
 }

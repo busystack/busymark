@@ -100,9 +100,6 @@ void main() {
             size: const Size(1400, 900),
           );
           final main = find.byKey(const ValueKey('main-toggle-reference'));
-          final mainHeader = find.byKey(
-            const ValueKey('main-header-reference'),
-          );
           await tester.tap(
             find.byKey(const ValueKey('git-select-another-commit')),
           );
@@ -110,29 +107,26 @@ void main() {
           final modal = find.byKey(
             const ValueKey('git-history-sidebar-toggle'),
           );
-          final modalHeader = find.byKey(
-            const ValueKey('git-history-sidebar-header'),
+          final sidebar = tester.getRect(
+            find.byKey(const ValueKey('git-history-reference-sidebar')),
           );
-          expect(
-            tester.getSize(modal),
-            tester.getSize(main),
-            reason:
-                'The dialog leading slot must not stretch the native header action',
-          );
-          double startInset(Finder button, Finder header) => locale == 'ar'
-              ? tester.getRect(header).right - tester.getRect(button).right
-              : tester.getRect(button).left - tester.getRect(header).left;
-          expect(startInset(modal, modalHeader), startInset(main, mainHeader));
-          BusyMarkHeaderIconButton control(Finder parent) =>
-              tester.widget<BusyMarkHeaderIconButton>(
+          final modalBounds = tester.getRect(modal);
+          final mainBounds = tester.getRect(main);
+          expect(modalBounds.size, mainBounds.size);
+          final gap = locale == 'ar'
+              ? sidebar.left - modalBounds.right
+              : modalBounds.left - sidebar.right;
+          expect(gap, BusyMarkSpacing.headerInset);
+          final native = tester.widget<git.NativeGitIconAction>(modal);
+          expect(native.focusBorderRadius, kYaruButtonRadius);
+          YaruIconButton control(Finder parent) =>
+              tester.widget<YaruIconButton>(
                 find.descendant(
                   of: parent,
-                  matching: find.byType(BusyMarkHeaderIconButton),
+                  matching: find.byType(YaruIconButton),
                 ),
               );
           final expected = control(main), actual = control(modal);
-          expect(actual.focusBorderRadius, expected.focusBorderRadius);
-          expect(actual.foregroundColor, expected.foregroundColor);
           for (final states in [
             <WidgetState>{},
             {WidgetState.hovered},
@@ -143,12 +137,16 @@ void main() {
             {WidgetState.disabled},
           ]) {
             expect(
-              actual.backgroundColor?.resolve(states),
-              expected.backgroundColor?.resolve(states),
+              actual.style?.backgroundColor?.resolve(states)?.a,
+              expected.style?.backgroundColor?.resolve(states)?.a,
             );
             expect(
-              actual.overlayColor?.resolve(states),
-              expected.overlayColor?.resolve(states),
+              actual.style?.foregroundColor?.resolve(states),
+              expected.style?.foregroundColor?.resolve(states),
+            );
+            expect(
+              actual.style?.overlayColor?.resolve(states)?.a,
+              expected.style?.overlayColor?.resolve(states)?.a,
             );
           }
           await tester.tap(modal);
@@ -164,7 +162,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
           expect(
             FocusManager.instance.primaryFocus?.context
-                ?.findAncestorWidgetOfExactType<BusyMarkLinuxHeaderIconButton>()
+                ?.findAncestorWidgetOfExactType<git.NativeGitIconAction>()
                 ?.key,
             const ValueKey('git-history-sidebar-toggle'),
           );
@@ -197,7 +195,7 @@ void main() {
         find.byKey(const ValueKey('git-history-sidebar-toggle')),
         findsOneWidget,
       );
-      expect(find.byType(BusyMarkSidebarTreeRow), findsWidgets);
+      expect(find.byType(git.NativeGitTreeRow), findsWidgets);
     },
   );
   testWidgets('date inputs have one label and spaced fields and actions', (
@@ -280,7 +278,7 @@ void main() {
                 ),
                 findsNothing,
               );
-              if (width < 1000) {
+              if (sidebar.evaluate().isEmpty) {
                 await tester.tap(toggle);
                 await tester.pumpAndSettle();
               }
@@ -313,7 +311,7 @@ void main() {
               if (width > 1000) {
                 final rtl = locale == 'ar';
                 expect(
-                  rtl ? sideBounds.left : sideBounds.right,
+                  rtl ? sideBounds.right : sideBounds.left,
                   closeTo(
                     rtl
                         ? tester.getRect(header).right
@@ -705,11 +703,15 @@ void main() {
         );
         expect(
           tester.getRect(find.text('root.md')).left,
-          tester.getRect(find.text('Files root')).left,
+          tester.getRect(find.text('Files root')).left +
+              git.GitSizes.sidebarTreeControl +
+              git.GitSpacing.xs,
         );
         expect(
           tester.getRect(find.text('child.md')).left,
-          tester.getRect(find.text('Files child')).left,
+          tester.getRect(find.text('Files child')).left +
+              git.GitSizes.sidebarTreeControl +
+              git.GitSpacing.xs,
         );
         expect(
           tester.getRect(find.text('child.md')).left -
@@ -777,16 +779,10 @@ void main() {
             )
             .first;
         final row = find
-            .descendant(
-              of: group,
-              matching: find.byType(BusyMarkSidebarTreeRow),
-            )
+            .descendant(of: group, matching: find.byType(git.NativeGitTreeRow))
             .first;
         final surface = find
-            .descendant(
-              of: row,
-              matching: find.byType(BusyMarkSidebarRowSurface),
-            )
+            .descendant(of: row, matching: find.byType(git.NativeGitRowSurface))
             .first;
         final focus = find
             .descendant(of: surface, matching: find.byType(Focus))

@@ -1310,6 +1310,11 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.commitReferences => gitUiCommitReferences,
     GitMessages.copyCommitMessage => gitUiCopyCommitMessage,
     GitMessages.selectAnotherCommit => gitUiSelectAnotherCommit,
+    GitMessages.gitLog => gitUiGitLog,
+    GitMessages.operationsRequireTrust => gitUiOperationsRequireTrust,
+    GitMessages.trustWorkspace => gitUiTrustWorkspace,
+    GitMessages.closeOtherTabs => gitUiCloseOtherTabs,
+    GitMessages.closeAllTabs => gitUiCloseAllTabs,
     _ => message,
   };
 }

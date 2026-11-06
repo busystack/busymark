@@ -297,6 +297,23 @@ class BusyMarkGitPresentation {
         throw StateError('Native adapter alias enforcement failed');
       }
     }
+    for (final forbidden in [true, false]) {
+      adapterFile.writeAsStringSync('''
+import 'lib/src/app/busymark_design.dart' as native;
+typedef Hidden = native.BusyMarkCompactIconButton;
+class SharedRenderer {
+  Object iconAction() => Object();
+  Object button() => ${forbidden ? 'Hidden.new' : 'Object()'};
+  Object checkbox() => Object();
+  Object changeRow() => Object();
+}
+class BusyMarkGitPresentation extends SharedRenderer {}
+''');
+      final errors = await auditNativeAdapter(adapterFile);
+      if (errors.isNotEmpty != forbidden) {
+        throw StateError('Inherited native adapter alias enforcement failed');
+      }
+    }
     stdout.writeln('Resolved workspace Git scope audit self-tests passed.');
   } finally {
     temp.deleteSync(recursive: true);
@@ -322,18 +339,33 @@ Future<Map<int, String>> auditNativeAdapter(File file) async {
         .where((c) => c.namePart.typeName.lexeme == 'BusyMarkGitPresentation')
         .single;
     const requiredMethods = {'iconAction', 'button', 'checkbox', 'changeRow'};
+    final element = adapter.declaredFragment?.element;
+    final resolvedMethods = {
+      if (element != null) ...element.methods.map((m) => m.name),
+      if (element != null)
+        for (final type in element.allSupertypes)
+          ...type.element.methods.map((m) => m.name),
+    };
     final methods = adapter.body.members
         .whereType<MethodDeclaration>()
         .where((m) => requiredMethods.contains(m.name.lexeme))
         .toList();
-    if (methods.length != requiredMethods.length) {
+    if (!resolvedMethods.containsAll(requiredMethods)) {
       throw StateError(
-        'Native Git control mappings moved; update the adapter audit',
+        'Native Git control mappings are incomplete after resolving inheritance',
       );
     }
     final visitor = _NativeReferences();
     for (final method in methods) {
       method.accept(visitor);
+    }
+    // Follow the actual inherited shared renderer, including its helpers and
+    // aliases. A const-only host bridge must never make this audit vacuous.
+    final chain = await shared.auditFirstPartyPresentationChain(path, [
+      'BusyMarkGitPresentation',
+    ]);
+    for (var i = 0; i < chain.length; i++) {
+      visitor.violations[-i - 1] = '${chain[i]}';
     }
     return visitor.violations;
   } finally {

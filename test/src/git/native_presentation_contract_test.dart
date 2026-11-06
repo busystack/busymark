@@ -301,7 +301,6 @@ void main() {
                 height: 900,
                 child: git.GitCommitView(
                   session: session!,
-                  layout: git.GitCommitLayout.sidebar,
                   branchActionLabel: AppLocalizations.of(
                     context,
                   ).gitManageBranches,
@@ -353,7 +352,7 @@ void main() {
         await tester.tap(branch);
         await tester.pumpAndSettle();
         expect(find.byType(git.GitBranchesView), findsOneWidget);
-        expect(find.byType(BusyMarkGitDialogShell), findsOneWidget);
+        expect(find.byType(git.GitNativeDialog), findsOneWidget);
         expect(find.text('Local branches'), findsOneWidget);
         expect(find.text('Remote branches'), findsOneWidget);
         expect(find.text('Tags'), findsOneWidget);
@@ -601,9 +600,9 @@ void main() {
         expect(find.byType(YaruCircularProgressIndicator), findsOneWidget);
         expect(find.byType(YaruLinearProgressIndicator), findsOneWidget);
         expect(find.byType(BusyMarkCompactIconButton), findsNothing);
-        expect(find.byType(BusyMarkHeaderIconButton), findsOneWidget);
+        expect(find.byType(git.NativeGitIconAction), findsOneWidget);
         final iconFinder = find.descendant(
-          of: find.byType(BusyMarkHeaderIconButton),
+          of: find.byType(git.NativeGitIconAction),
           matching: find.byType(YaruIconButton),
         );
         expect(iconFinder, findsOneWidget);
@@ -632,10 +631,7 @@ void main() {
         await tester.tap(primaryAction);
         await tester.pump();
         expect(primaryCalls, 1);
-        expect(
-          FocusManager.instance.primaryFocus?.debugLabel,
-          'BusyMark Git action',
-        );
+        expect(FocusManager.instance.primaryFocus?.debugLabel, 'Git action');
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pump();
         expect(primaryCalls, 2);
@@ -703,7 +699,6 @@ void main() {
                     height: 1200,
                     child: git.GitCommitView(
                       session: session!,
-                      layout: git.GitCommitLayout.sidebar,
                       onReview: (_) {},
                       onLog: () {},
                       onBranches: () {},
@@ -754,7 +749,8 @@ void main() {
           expect(
             find.byWidgetPredicate(
               (widget) =>
-                  widget is Semantics && widget.properties.tooltip == repo.root,
+                  widget is Semantics &&
+                  widget.properties.tooltip == l10n.gitUiBranches,
             ),
             findsOneWidget,
           );
@@ -801,14 +797,14 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          final rows = find.byType(BusyMarkSidebarTreeRow);
+          final rows = find.byType(git.NativeGitTreeRow);
           expect(rows, findsNWidgets(3));
-          expect(find.byType(BusyMarkHeaderIconButton), findsNothing);
+          expect(find.byType(git.NativeGitIconAction), findsNothing);
           expect(find.byType(BusyMarkCompactIconButton), findsNothing);
           for (var i = 0; i < 3; i++) {
             final surface = find.descendant(
               of: rows.at(i),
-              matching: find.byType(BusyMarkSidebarRowSurface),
+              matching: find.byType(git.NativeGitRowSurface),
             );
             expect(
               tester.getRect(surface).left,
@@ -862,7 +858,7 @@ void main() {
           );
           await mouse.moveTo(tester.getCenter(find.text('Tree 2')));
           await tester.pump();
-          expect(find.byType(BusyMarkHeaderIconButton), findsNothing);
+          expect(find.byType(git.NativeGitIconAction), findsNothing);
           expect(find.byType(BusyMarkCompactIconButton), findsNothing);
           await mouse.removePointer();
           expect(tester.takeException(), isNull);

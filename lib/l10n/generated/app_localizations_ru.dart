@@ -8968,4 +8968,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Выбрать другой коммит…';
+
+  @override
+  String get gitUiGitLog => 'Журнал Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Для операций Git необходимо доверять рабочей области.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Доверять рабочей области';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Закрыть другие вкладки';
+
+  @override
+  String get gitUiCloseAllTabs => 'Закрыть все вкладки';
 }

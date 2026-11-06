@@ -8895,4 +8895,20 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Velg en annen commit…';
+
+  @override
+  String get gitUiGitLog => 'Git- logg';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Git-operasjoner krever at du stoler på arbeidsområdet.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Stol på arbeidsområdet';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Lukk andre faner';
+
+  @override
+  String get gitUiCloseAllTabs => 'Lukk alle faner';
 }

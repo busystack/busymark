@@ -4581,5 +4581,13 @@
   "gitUiCommitHash": "Хеш коммита",
   "gitUiCommitReferences": "Ссылки",
   "gitUiCopyCommitMessage": "Копировать сообщение коммита",
-  "gitUiSelectAnotherCommit": "Выбрать другой коммит…"
+  "gitUiSelectAnotherCommit": "Выбрать другой коммит…",
+  "gitUiGitLog": "Журнал Git",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Для операций Git необходимо доверять рабочей области.",
+  "gitUiTrustWorkspace": "Доверять рабочей области",
+  "gitUiCloseOtherTabs": "Закрыть другие вкладки",
+  "gitUiCloseAllTabs": "Закрыть все вкладки"
 }

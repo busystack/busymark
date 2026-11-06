@@ -6085,5 +6085,13 @@
   "gitUiCommitHash": "Hash commit",
   "gitUiCommitReferences": "Referensi",
   "gitUiCopyCommitMessage": "Salin pesan commit",
-  "gitUiSelectAnotherCommit": "Pilih commit lain…"
+  "gitUiSelectAnotherCommit": "Pilih commit lain…",
+  "gitUiGitLog": "Log Git",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Operasi Git memerlukan kepercayaan pada ruang kerja.",
+  "gitUiTrustWorkspace": "Percayai ruang kerja",
+  "gitUiCloseOtherTabs": "Tutup tab lainnya",
+  "gitUiCloseAllTabs": "Tutup semua tab"
 }

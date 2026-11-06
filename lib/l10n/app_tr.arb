@@ -6085,5 +6085,13 @@
   "gitUiCommitHash": "Commit karması",
   "gitUiCommitReferences": "Başvurular",
   "gitUiCopyCommitMessage": "Commit mesajını kopyala",
-  "gitUiSelectAnotherCommit": "Başka bir commit seç…"
+  "gitUiSelectAnotherCommit": "Başka bir commit seç…",
+  "gitUiGitLog": "Git geçmişi",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Git işlemleri çalışma alanına güvenilmesini gerektirir.",
+  "gitUiTrustWorkspace": "Çalışma alanına güven",
+  "gitUiCloseOtherTabs": "Diğer sekmeleri kapat",
+  "gitUiCloseAllTabs": "Tüm sekmeleri kapat"
 }

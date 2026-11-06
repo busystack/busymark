@@ -2573,8 +2573,8 @@ void main() {
       expect(
         find.byWidgetPredicate(
           (widget) =>
-              widget is Tooltip &&
-              widget.message?.contains(
+              widget is BusyMarkSidebarRecordRow &&
+              widget.tooltip?.contains(
                     l10n.localHistoryReasonAutomaticCheckpoint,
                   ) ==
                   true,

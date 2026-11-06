@@ -2,7 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 python3 tools/checkout_shared_dependencies.py --check
-python3 ../busystack_git_flutter/tool/check_consumer_consistency.py
+python3 ../busystack_git_flutter/tool/test_consumer_consistency.py
+python3 ../busystack_git_flutter/tool/check_consumer_consistency.py --consumer "$PWD"
 (cd ../busystack_git_flutter && dart run tool/test_native_presentation_audit.dart && dart run tool/check_native_presentation.dart lib/src ../busymark/lib/src/git --host-source ../busymark/lib/src/app/busymark_design.dart --host-root BusyMarkGitPresentation --host-root BusyMarkGitDialogShell)
 (cd ../busystack_git_flutter && dart run tool/check_native_presentation.dart lib/src ../busyfiles/apps/busyfiles_ui/lib/src/features/browser/git_workspace.dart --host-source ../busyfiles/apps/busyfiles_ui/lib/src/app/busyfiles_design.dart --host-root BusyFilesGitPresentation --host-root BusyFilesDialog && dart run tool/check_native_presentation.dart --host-source ../busyfiles/apps/busyfiles_ui/lib/src/app/busyfiles_dialogs.dart --host-root _BusyFilesDialogRoute)
 

@@ -172,12 +172,8 @@ void main() {
   Future<void> chooseHome(WidgetTester tester) async {
     await tester.tap(find.text('Choose a Home Page'));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.widgetWithText(
-        BusyMarkPopupMenuItem<WritersideHomePageReplacement>,
-        'guides/install.md',
-      ),
-    );
+    expect(nativeMenus.contains('guides/install.md'), isTrue);
+    await nativeMenus.activate('guides/install.md');
     await tester.pumpAndSettle();
   }
 

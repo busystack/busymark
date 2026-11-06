@@ -2260,7 +2260,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    _expectNeutralSidebarToggle(
+    await _expectNeutralSidebarToggle(
       tester,
       '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
@@ -2276,7 +2276,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    _expectNeutralSidebarToggle(
+    await _expectNeutralSidebarToggle(
       tester,
       '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: false,
@@ -2291,7 +2291,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    _expectNeutralSidebarToggle(
+    await _expectNeutralSidebarToggle(
       tester,
       '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
@@ -5702,7 +5702,7 @@ code
         }
 
         Iterable<Object> popupMenuItem(String label) =>
-            nativeMenus.matching(label);
+            nativeMenus.matching(label, includeShortcut: false);
 
         await openPopup(find.byTooltip(l10n.sidebarViewMenu));
         await nativeMenus.activate(l10n.files);
@@ -5742,8 +5742,11 @@ code
         await nativeMenus.activate(l10n.tocRefactorMenu);
         await tester.pumpAndSettle();
         expect(popupMenuItem(l10n.tocSafeDelete), hasLength(1));
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         await openPopup(find.byTooltip(l10n.sidebarViewMenu));
@@ -5765,17 +5768,18 @@ code
           ),
           findsNothing,
         );
-        final instanceSelectorSurface = find.descendant(
-          of: instanceSelectorTrigger,
-          matching: find.byType(BusyMarkSidebarRowSurface),
+        final instanceSelectorSurface = find.byWidgetPredicate(
+          (widget) =>
+              widget is BusyMarkSidebarRowSurface &&
+              widget.key ==
+                  const ValueKey('writerside-instance-selector-trigger'),
         );
         expect(instanceSelectorSurface, findsOneWidget);
         expect(
-          find.descendant(
-            of: instanceSelectorTrigger,
-            matching: find.byType(InkWell),
-          ),
-          findsNothing,
+          tester
+              .widget<BusyMarkSidebarRowSurface>(instanceSelectorSurface)
+              .onTap,
+          isNotNull,
         );
         final instanceDecoration =
             tester
@@ -5783,7 +5787,13 @@ code
                       find
                           .descendant(
                             of: instanceSelectorSurface,
-                            matching: find.byType(DecoratedBox),
+                            matching: find.byWidgetPredicate(
+                              (w) =>
+                                  w is DecoratedBox &&
+                                  w.decoration is BoxDecoration &&
+                                  (w.decoration as BoxDecoration).border ==
+                                      null,
+                            ),
                           )
                           .first,
                     )
@@ -5804,8 +5814,8 @@ code
         );
         expect(firstTocRowSurface, findsOneWidget);
         expect(
-          find.descendant(of: firstTocRow, matching: find.byType(InkWell)),
-          findsNothing,
+          tester.widget<BusyMarkSidebarRowSurface>(firstTocRowSurface).onTap,
+          isNotNull,
         );
         final tocDecoration =
             tester
@@ -5813,7 +5823,13 @@ code
                       find
                           .descendant(
                             of: firstTocRowSurface,
-                            matching: find.byType(DecoratedBox),
+                            matching: find.byWidgetPredicate(
+                              (w) =>
+                                  w is DecoratedBox &&
+                                  w.decoration is BoxDecoration &&
+                                  (w.decoration as BoxDecoration).border ==
+                                      null,
+                            ),
                           )
                           .first,
                     )
@@ -6007,8 +6023,11 @@ code
         await nativeMenus.activate(l10n.emptyInstance);
         await tester.pumpAndSettle();
         expect(nativeMenus.matching(l10n.markdownFiles), hasLength(1));
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
         expect(nativeMenus.matching(l10n.instanceAppearance), hasLength(1));
         await nativeMenus.activate(l10n.cancel);
@@ -6017,8 +6036,11 @@ code
         await openPopup(find.byTooltip(l10n.newTopic));
         await nativeMenus.activate(l10n.tocEmptyMdTopic);
         await tester.pumpAndSettle();
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         expect(find.byType(BusyMarkModalEditorScaffold), findsNothing);
@@ -6142,8 +6164,11 @@ code
           isFalse,
         );
         expect(tester.widget<BusyMarkGroupedTextEntry>(title).enabled, isFalse);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pump();
         expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
         final count = controller.createTopicCount;
@@ -6285,8 +6310,11 @@ code
         expect(popupMenuItem(l10n.safeDeleteTopicFile), isEmpty);
         expect(popupMenuItem(l10n.delete), isEmpty);
         expect(popupMenuItem('Preview Topic'), isEmpty);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
@@ -6294,8 +6322,11 @@ code
         expect(popupMenuItem(l10n.openInFiles), hasLength(1));
         expect(popupMenuItem(l10n.addToGit), isEmpty);
         expect(popupMenuItem(l10n.fileHistory), hasLength(1));
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
@@ -6362,8 +6393,11 @@ code
           reason: 'Ancestor cannot enter its descendant',
         );
         await openPopup(find.text('Target'), buttons: kSecondaryButton);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await nativeMenus.activate('Loose');
@@ -6393,8 +6427,11 @@ code
           WritersideTopicCreatePlacement.child,
         );
         await openPopup(find.text('Target'), buttons: kSecondaryButton);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
         await nativeMenus.activate('Loose');
@@ -6415,8 +6452,11 @@ code
         expect(controller.dragRequest!.referencePath, [0]);
         expect(controller.dragRequest!.beforeReference, isTrue);
         await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -6441,8 +6481,11 @@ code
         expect(popupMenuItem(l10n.safeDeleteTopicFile), isEmpty);
         expect(nativeMenus.matching(l10n.newSiblingTopic), isEmpty);
         expect(nativeMenus.matching(l10n.copyName), isEmpty);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -6462,8 +6505,11 @@ code
         await openPopup(find.text('Target'), buttons: kSecondaryButton);
         expect(nativeMenus.matching(l10n.aiRefineWithAi), hasLength(1));
         expect(nativeMenus.matching(l10n.newSiblingTopic), isEmpty);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
@@ -6478,8 +6524,11 @@ code
         expect(nativeMenus.contains(l10n.pasteAfterTopic), isTrue);
         expect(nativeMenus.enabled(l10n.pasteAfterTopic), isTrue);
 
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
         File(
           p.join(root.path, 'topics', 'inserted.md'),
@@ -6504,8 +6553,11 @@ code
         expect(nativeMenus.contains(l10n.pasteAfterTopic), isTrue);
         expect(nativeMenus.enabled(l10n.pasteAfterTopic), isFalse);
 
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
         await openPopup(find.text('Loose'), buttons: kSecondaryButton);
         expect(nativeMenus.contains(l10n.cut), isTrue);
@@ -6565,8 +6617,11 @@ code
         expect(nativeMenus.matching(l10n.editInstance), hasLength(1));
         expect(nativeMenus.matching(l10n.openTocFile), hasLength(1));
         expect(nativeMenus.contains(l10n.export), isFalse);
-        nativeMenus.close();
-        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        if (nativeMenus.isOpen) {
+          nativeMenus.close();
+        } else {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        }
         await tester.pumpAndSettle();
 
         await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -7374,7 +7429,7 @@ code
                 sharedClient.repository!,
                 comparison: comparison,
                 reviewedFiles: comparisons,
-                reviewToken: 'tab-test',
+                reviewToken: sharedClient.snapshotToken,
               ),
             );
       }
@@ -7383,7 +7438,7 @@ code
         () => find
             .descendant(
               of: find.byType(shared.GitDiffView),
-              matching: find.byType(SelectionArea),
+              matching: find.byType(SelectableRegion),
             )
             .evaluate()
             .isNotEmpty,
@@ -7537,7 +7592,7 @@ code
           await tester.tap(find.text(l10n.gitTrustWorkspace));
           await pumpUntil(
             tester,
-            () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+            () => find.byType(shared.GitNativeDialog).evaluate().isNotEmpty,
             operation: 'hold explicit trust confirmation',
           );
           await tester.pumpAndSettle();
@@ -7604,22 +7659,30 @@ code
         operation: 'exclusive Commit trust screen',
       );
       expect(find.byType(shared.GitCommitView), findsNothing);
-      expect(find.byTooltip('Repository actions'), findsNothing);
+      expect(find.byTooltip('Actions'), findsNothing);
       expect(find.text(l10n.gitTrustRequiredMessage), findsNothing);
       expect(find.text('Commit and Push…'), findsNothing);
-      final trustText = tester.element(find.text(l10n.gitTrustWorkspace));
-      final trustFocus = Focus.of(trustText);
+      final trustFocus = tester
+          .widget<FocusableActionDetector>(
+            find
+                .ancestor(
+                  of: find.text(l10n.gitTrustWorkspace),
+                  matching: find.byType(FocusableActionDetector),
+                )
+                .first,
+          )
+          .focusNode!;
       trustFocus.requestFocus();
       await tester.pump();
       expect(trustFocus.hasFocus, isTrue);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await pumpUntil(
         tester,
-        () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+        () => find.byType(shared.GitNativeDialog).evaluate().isNotEmpty,
         operation: 'native trust confirmation',
       );
       await tester.pumpAndSettle();
-      final dialog = find.byType(BusyMarkDialogShell);
+      final dialog = find.byType(shared.GitNativeDialog);
       expect(
         find.descendant(of: dialog, matching: find.textContaining(root)),
         findsOneWidget,
@@ -7648,7 +7711,7 @@ code
       await tester.tap(find.text(l10n.gitTrustWorkspace));
       await pumpUntil(
         tester,
-        () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+        () => find.byType(shared.GitNativeDialog).evaluate().isNotEmpty,
         operation: 'native trust confirmation',
       );
       await tester.pumpAndSettle();
@@ -7661,7 +7724,7 @@ code
       final commit = find.byType(shared.GitCommitView);
       final session = tester.widget<shared.GitCommitView>(commit).session;
       await tester.enterText(
-        find.descendant(of: commit, matching: find.byType(TextField)),
+        find.descendant(of: commit, matching: find.byType(EditableText)),
         'Retained trust draft',
       );
       await tester.pump();
@@ -7801,7 +7864,7 @@ code
       await tester.pumpAndSettle();
       final commit = find.byType(shared.GitCommitView);
       await tester.enterText(
-        find.descendant(of: commit, matching: find.byType(TextField)),
+        find.descendant(of: commit, matching: find.byType(EditableText)),
         'Independent commit draft',
       );
       final commitSession = tester.widget<shared.GitCommitView>(commit).session;
@@ -7817,7 +7880,7 @@ code
         () => find
             .descendant(
               of: find.byType(shared.GitDiffView),
-              matching: find.byType(SelectionArea),
+              matching: find.byType(SelectableRegion),
             )
             .evaluate()
             .isNotEmpty,
@@ -7842,7 +7905,7 @@ code
         () => find
             .descendant(
               of: find.byType(shared.GitDiffView),
-              matching: find.byType(SelectionArea),
+              matching: find.byType(SelectableRegion),
             )
             .evaluate()
             .isNotEmpty,
@@ -7891,7 +7954,7 @@ code
         () => find
             .descendant(
               of: find.byType(shared.GitDiffView),
-              matching: find.byType(SelectionArea),
+              matching: find.byType(SelectableRegion),
             )
             .evaluate()
             .isNotEmpty,
@@ -8034,7 +8097,7 @@ code
       final review = find.byType(shared.GitDiffView);
       final comparisonText = find.descendant(
         of: review,
-        matching: find.byType(SelectionArea),
+        matching: find.byType(SelectableRegion),
       );
       await pumpUntil(
         tester,
@@ -8052,17 +8115,17 @@ code
       expect(find.byKey(const ValueKey('shared-search-query')), findsNothing);
       final query = find.descendant(
         of: review,
-        matching: find.byType(TextField),
+        matching: find.byType(EditableText),
       );
       expect(query, findsOneWidget);
-      expect(tester.widget<TextField>(query).focusNode!.hasFocus, isTrue);
+      expect(tester.widget<EditableText>(query).focusNode.hasFocus, isTrue);
       await tester.enterText(query, 'needle');
       await pumpUntil(
         tester,
         () => find.text('1 of 1 matches').evaluate().isNotEmpty,
         operation: 'finish background Git comparison search',
       );
-      expect(tester.widget<TextField>(query).controller!.text, 'needle');
+      expect(tester.widget<EditableText>(query).controller.text, 'needle');
       expect(container.read(searchSessionProvider).query, isEmpty);
       expect(
         container.read(workspaceControllerProvider).activeBuffer!.text,
@@ -8180,7 +8243,7 @@ code
               SharedGitReview(
                 repository,
                 comparison: comparison,
-                reviewToken: 'history-tab-activation',
+                reviewToken: h.sharedClient.snapshotToken,
               ),
             );
         await pumpUntil(
@@ -8188,7 +8251,7 @@ code
           () => find
               .descendant(
                 of: find.byType(shared.GitDiffView),
-                matching: find.byType(SelectionArea),
+                matching: find.byType(SelectableRegion),
               )
               .evaluate()
               .isNotEmpty,
@@ -9455,12 +9518,23 @@ code
       );
       await pumpUntil(
         tester,
-        () => find.byType(shared.GitDiffView).evaluate().isNotEmpty,
+        () => find.byType(shared.GitFileHistoryView).evaluate().isNotEmpty,
         operation: 'open parent-aware file history',
       );
-      final parentComparison = tester
-          .widget<shared.GitDiffView>(find.byType(shared.GitDiffView))
-          .comparison;
+      await tester.tap(
+        find.widgetWithText(
+          shared.GitButton,
+          shared.GitMessages.compareToParent,
+        ),
+      );
+      await pumpUntil(
+        tester,
+        () => _comparisonTabs(container).entries.length == 1,
+        operation: 'open parent comparison in an ordinary content tab',
+      );
+      final parentReview = _comparisonTabs(container).active!;
+      final parentComparison = parentReview.comparison;
+      expect(find.byType(shared.GitFileHistoryView), findsNothing);
       final entry = historyState.fileHistory.entries.single;
       expect(
         parentComparison.left.revision!.value,
@@ -9468,41 +9542,86 @@ code
       );
       expect(parentComparison.right.revision!.value, entry.commit.fullHash);
       expect(parentComparison.leftPath!.utf8Path, entry.pathInParent);
+      await tester.pump();
+      await pumpUntil(
+        tester,
+        () => find
+            .descendant(
+              of: find.byType(shared.GitDiffView, skipOffstage: false),
+              matching: find.byType(shared.GitLoading, skipOffstage: false),
+              skipOffstage: false,
+            )
+            .evaluate()
+            .isEmpty,
+        operation:
+            'finish captured parent comparison before the next native navigation',
+      );
+      await _chooseNativeSidebar(tester, l10n.files);
+      await pumpUntil(
+        tester,
+        () =>
+            fileRow.evaluate().isNotEmpty &&
+            find
+                .descendant(
+                  of: find.byType(shared.GitDiffView),
+                  matching: find.byType(shared.GitLoading),
+                )
+                .evaluate()
+                .isEmpty,
+        operation: 'retain the comparison while restoring Files navigation',
+      );
+      await _chooseNativeGitMenu(
+        tester,
+        fileRow,
+        l10n.fileHistory,
+        buttons: kSecondaryButton,
+      );
+      await pumpUntil(
+        tester,
+        () => find.byType(shared.GitFileHistoryView).evaluate().isNotEmpty,
+        operation:
+            'reopen historical selection without retargeting the first tab',
+      );
       final row = find.ancestor(
         of: find.text(entry.commit.subject),
         matching: find.byType(shared.GitActionRow),
       );
       await _chooseNativeGitMenu(
         tester,
-        find.descendant(of: row, matching: find.byType(shared.GitMenuButton)),
+        row,
         shared.GitMessages.compareToCurrentFile,
+        buttons: kSecondaryButton,
       );
       await pumpUntil(
         tester,
-        () => find.byType(shared.GitDiffView).evaluate().length == 2,
+        () => _comparisonTabs(container).entries.length == 2,
         operation:
             'compare selected historical revision to saved current content',
       );
-      final currentComparison = tester
-          .widgetList<shared.GitDiffView>(find.byType(shared.GitDiffView))
-          .last
-          .comparison;
+      final currentReview = _comparisonTabs(container).active!;
+      final currentComparison = currentReview.comparison;
+      expect(currentReview.id, isNot(parentReview.id));
+      expect(_comparisonTabs(container).entries.first, same(parentReview));
+      expect(find.byType(shared.GitFileHistoryView), findsNothing);
       expect(currentComparison.left.revision!.value, entry.commit.fullHash);
       expect(currentComparison.leftPath!.utf8Path, entry.pathAtCommit);
       expect(currentComparison.right.kind, shared.ContentKind.workingTree);
+      await tester.pump();
       await pumpUntil(
         tester,
         () => find
             .descendant(
-              of: find.byType(shared.GitDiffView),
-              matching: find.byType(shared.GitLoading),
+              of: find.byType(shared.GitDiffView, skipOffstage: false),
+              matching: find.byType(shared.GitLoading, skipOffstage: false),
+              skipOffstage: false,
             )
             .evaluate()
             .isEmpty,
         operation: 'finish both captured historical comparisons',
       );
-      await tester.binding.handlePopRoute();
+      await tester.tap(find.byKey(ValueKey('gitDiff:${parentReview.id}')));
       await tester.pumpAndSettle();
+      expect(_comparisonTabs(container).active, same(parentReview));
       expect(
         tester
             .widget<shared.GitDiffView>(find.byType(shared.GitDiffView))
@@ -9525,7 +9644,7 @@ code
         findsOneWidget,
       );
       await tester.enterText(
-        find.descendant(of: diff, matching: find.byType(TextField)),
+        find.descendant(of: diff, matching: find.byType(EditableText)),
         'needle',
       );
       await pumpUntil(
@@ -9596,21 +9715,24 @@ code
     }
     await tester.pumpAndSettle();
 
+    final nativeMenus = NativeMenuProbe(tester);
     await tester.tap(
       find.text('README.md').first,
       buttons: kSecondaryMouseButton,
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.addToGit), findsOneWidget);
-    expect(find.text(l10n.fileHistory), findsOneWidget);
+    expect(nativeMenus.contains(l10n.addToGit), isTrue);
+    expect(nativeMenus.enabled(l10n.addToGit), isFalse);
+    expect(nativeMenus.contains(l10n.fileHistory), isTrue);
+    expect(nativeMenus.enabled(l10n.fileHistory), isFalse);
 
-    await tester.tap(find.text(l10n.fileHistory));
+    nativeMenus.close();
     await tester.pumpAndSettle();
 
     expect(gitController.loadedFileHistoryPath, isNull);
     expect(gitController.stagedPaths, isEmpty);
-    expect(find.text(l10n.fileHistory), findsOneWidget);
+    expect(nativeMenus.isOpen, isFalse);
   });
 
   for (final hiddenState in ['Log', 'collapsed']) {
@@ -9701,7 +9823,7 @@ code
         );
         final input = find.descendant(
           of: find.byType(shared.GitCommitView),
-          matching: find.byType(TextField),
+          matching: find.byType(EditableText),
         );
         await tester.enterText(input, 'local unsaved B');
         var saved = false;
@@ -9940,7 +10062,7 @@ code
         await tester.enterText(
           find.descendant(
             of: find.byType(shared.GitCommitView),
-            matching: find.byType(TextField),
+            matching: find.byType(EditableText),
           ),
           'pending local B',
         );
@@ -10191,7 +10313,7 @@ code
         await tester.enterText(
           find.descendant(
             of: find.byType(shared.GitCommitView),
-            matching: find.byType(TextField),
+            matching: find.byType(EditableText),
           ),
           'pending local B',
         );
@@ -10389,7 +10511,7 @@ code
       ),
       findsOneWidget,
     );
-    _expectNeutralSidebarToggle(
+    await _expectNeutralSidebarToggle(
       tester,
       '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
@@ -10422,7 +10544,7 @@ code
       l10n.search,
       l10n.mainMenu,
     ]) {
-      _expectNeutralHeaderControl(tester, tooltip, selected: false);
+      await _expectNeutralHeaderControl(tester, tooltip, selected: false);
     }
     expect(
       tester.widget<IconButton>(_headerIconButton(l10n.viewMode)).tooltip,
@@ -10430,7 +10552,7 @@ code
     );
     await tester.tap(_headerIconButton(l10n.viewMode));
     await tester.pumpAndSettle();
-    _expectNeutralHeaderControl(tester, l10n.viewMode, selected: true);
+    await _expectNeutralHeaderControl(tester, l10n.viewMode, selected: true);
     final viewItems = tester
         .widgetList<BusyMarkPopupMenuItem<DocumentViewModePreference>>(
           find.byType(BusyMarkPopupMenuItem<DocumentViewModePreference>),
@@ -10453,7 +10575,7 @@ code
     await tester.pumpAndSettle();
     await tester.tap(_headerIconButton(l10n.mainMenu));
     await tester.pumpAndSettle();
-    _expectNeutralHeaderControl(tester, l10n.mainMenu, selected: true);
+    await _expectNeutralHeaderControl(tester, l10n.mainMenu, selected: true);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
@@ -10469,7 +10591,7 @@ code
       ),
       findsOneWidget,
     );
-    _expectNeutralSidebarToggle(
+    await _expectNeutralSidebarToggle(
       tester,
       '${l10n.showSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: false,
@@ -10479,7 +10601,7 @@ code
     await tester.pumpAndSettle();
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     expect(tester.state(find.byKey(sidebarKey)), same(sidebarState));
-    _expectNeutralSidebarToggle(
+    await _expectNeutralSidebarToggle(
       tester,
       '${l10n.hideSidebar} (${BusyMarkSidebarShortcuts.toggleSidebar.label})',
       selected: true,
@@ -10543,10 +10665,15 @@ code
     await setDocumentViewMode(DocumentViewModePreference.preview);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
-    expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is shared.GitTooltip && w.message == temp.path,
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(shared.GitCommitView), findsOneWidget);
     expect(find.text('Commit scope: entire repository'), findsNothing);
-    expect(find.byTooltip('Repository actions'), findsOneWidget);
+    expect(find.byTooltip('Actions'), findsOneWidget);
     final commitView = find.byType(shared.GitCommitView);
     final commitWidget = tester.widget<shared.GitCommitView>(commitView);
     expect(commitWidget.session.host.spacing, BusyMarkSpacing.sm);
@@ -10563,11 +10690,11 @@ code
     expect(gitController.branchLoadCount, 0);
     final messageField = find.descendant(
       of: commitView,
-      matching: find.byType(TextField),
+      matching: find.byType(EditableText),
     );
     expect(messageField, findsOneWidget);
-    expect(tester.widget<TextField>(messageField).maxLines, isNull);
-    expect(tester.widget<TextField>(messageField).expands, isTrue);
+    expect(tester.widget<EditableText>(messageField).maxLines, isNull);
+    expect(tester.widget<EditableText>(messageField).expands, isTrue);
     await tester.enterText(messageField, 'Preserved shell draft');
     await tester.pump();
     expect(commitWidget.session.draft, 'Preserved shell draft');
@@ -10575,13 +10702,16 @@ code
       expect(
         tester
             .widget<shared.GitButton>(
-              find.widgetWithText(shared.GitButton, label),
+              find.descendant(
+                of: commitView,
+                matching: find.widgetWithText(shared.GitButton, label),
+              ),
             )
             .onPressed,
         isNull,
       );
     }
-    expect(find.byType(BusyMarkCheckbox), findsOneWidget);
+    expect(find.byType(shared.NativeGitCheckbox), findsOneWidget);
     final logAction = find.descendant(
       of: commitView,
       matching: find.byTooltip('Log'),
@@ -10593,6 +10723,12 @@ code
     await _chooseNativeSidebar(tester, l10n.gitHostGitLog);
     await tester.pumpAndSettle();
     expect(find.byType(shared.GitLogView), findsOneWidget);
+    final gitSidebar = find.byType(shared.GitFeatureSidebar);
+    expect(
+      tester.getSize(gitSidebar).width,
+      busyMarkGitSidebarMinimumWidth(tester.element(gitSidebar)),
+      reason: 'Commit and Log consume the same shared sidebar allocation.',
+    );
     expect(
       tester.widget<shared.GitLogView>(find.byType(shared.GitLogView)).session,
       same(commitWidget.session),
@@ -10613,32 +10749,43 @@ code
     expect(find.text('Subject / references'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('git-selected-commit')));
     await tester.pumpAndSettle();
+    expect(find.byType(shared.GitLogView), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('git-select-another-commit')));
+    await tester.pumpAndSettle();
     expect(find.byType(shared.GitLogView), findsNWidgets(2));
     expect(find.text('Subject / references'), findsOneWidget);
-    // A compact Log exposes navigation as a named icon; a wider Log uses its
-    // text button. Exercise the command instead of requiring one presentation.
-    final navigationLabel = find.text('Go to commit/reference…');
-    final navigationAction = navigationLabel.evaluate().isEmpty
-        ? find.byTooltip('Go to commit/reference…')
-        : navigationLabel;
+    final navigationMenus = NativeMenuProbe(tester);
+    final navigationAction = find.descendant(
+      of: find.byKey(const ValueKey('git-history-toolbar')),
+      matching: find.byType(shared.GitMenuButton),
+    );
     expect(navigationAction, findsOneWidget);
-    await tester.ensureVisible(navigationAction);
     await tester.tap(navigationAction);
     await tester.pumpAndSettle();
-    final navigationField = find.byWidgetPredicate(
-      (widget) =>
-          widget is TextField &&
-          widget.decoration?.labelText == 'Go to commit/reference',
+    expect(navigationMenus.contains(shared.GitMessages.resetFilters), isTrue);
+    await navigationMenus.choose(shared.GitMessages.goToCommitReference);
+    final navigationField = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) =>
+            widget is shared.NativeGitTextEntry &&
+            widget.label.startsWith('Go to commit/reference'),
+      ),
+      matching: find.byType(EditableText),
     );
     expect(navigationField, findsOneWidget);
-    expect(tester.widget<TextField>(navigationField).readOnly, isFalse);
+    expect(tester.widget<EditableText>(navigationField).readOnly, isFalse);
     await tester.enterText(navigationField, 'HEAD');
     await tester.tap(find.widgetWithText(shared.GitButton, 'Cancel'));
     await tester.pumpAndSettle();
     expect(navigationField, findsNothing);
     expect(find.byType(shared.GitLogView), findsNWidgets(2));
     expect(commitWidget.session.draft, 'Preserved shell draft');
-    expect(find.text('Reset filters'), findsOneWidget);
+    expect(
+      navigationMenus.entries.any(
+        (e) => e['label'] == shared.GitMessages.resetFilters,
+      ),
+      isTrue,
+    );
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(shared.GitLogView), findsOneWidget);
@@ -10666,9 +10813,9 @@ code
       await tester.pumpAndSettle();
       selectedCommitFocused =
           FocusManager.instance.primaryFocus?.context
-              ?.findAncestorWidgetOfExactType<shared.GitButton>()
+              ?.findAncestorWidgetOfExactType<shared.GitIconButton>()
               ?.key ==
-          const ValueKey('git-selected-commit');
+          const ValueKey('git-select-another-commit');
     }
     expect(selectedCommitFocused, isTrue);
     expect(
@@ -10691,7 +10838,12 @@ code
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.byType(shared.GitCommitView), findsOneWidget);
     expect(find.text('Preserved shell draft'), findsOneWidget);
-    expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is shared.GitTooltip && w.message == temp.path,
+      ),
+      findsOneWidget,
+    );
     expect(find.text(l10n.gitReturnToDocument), findsNothing);
     expect(find.byType(shared.GitLogView), findsNothing);
     expect(container.read(gitControllerProvider).selectedView, GitView.changes);
@@ -11408,15 +11560,20 @@ code
         );
         expect(
           tester.getRect(commit).top,
-          greaterThanOrEqualTo(tester.getBottomLeft(primaryRow).dy),
+          greaterThanOrEqualTo(
+            tester.getBottomLeft(find.byType(shared.GitFeatureHeader)).dy,
+          ),
         );
         expect(
           tester.getRect(commit).bottom,
           lessThanOrEqualTo(tester.view.physicalSize.height),
         );
-        expect(find.byTooltip('Repository actions'), findsOneWidget);
+        expect(find.byTooltip('Actions'), findsOneWidget);
         expect(find.text('Commit scope: entire repository'), findsNothing);
-        expect(find.text('Commit'), findsOneWidget);
+        expect(
+          find.descendant(of: commit, matching: find.text('Commit')),
+          findsOneWidget,
+        );
         expect(find.text(l10n.gitCommitMessage), findsOneWidget);
         continue;
       }
@@ -11964,10 +12121,9 @@ code
     );
     await tester.pumpAndSettle();
     final ar = AppLocalizationsAr();
-    await tester.tap(find.byTooltip(ar.sidebarViewMenu));
+    await _chooseNativeSidebar(tester, ar.toc);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(ar.toc));
-    await tester.pumpAndSettle();
+    final nativeMenus = NativeMenuProbe(tester);
 
     const href = 'https://example.com/docs';
     final hrefRow = find.textContaining(href);
@@ -11978,9 +12134,7 @@ code
 
     await tester.tap(hrefRow, buttons: kSecondaryButton);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text(ar.copyName));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(ar.copyName));
+    await nativeMenus.choose(ar.copyName);
     await tester.pumpAndSettle();
 
     expect(clipboardText, href);
@@ -11997,9 +12151,9 @@ code
         buttons: kSecondaryButton,
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text(ar.tocCopySpecial));
+      await nativeMenus.activate(ar.tocCopySpecial);
       await tester.pumpAndSettle();
-      await tester.tap(find.text(label));
+      await nativeMenus.choose(label);
       await tester.pumpAndSettle();
       expect(clipboardText, expected);
       expect(clipboardText, isNot(contains(RegExp('[\u2066-\u2069]'))));
@@ -12101,13 +12255,12 @@ code
     );
     await tester.pumpAndSettle();
     final en = AppLocalizationsEn();
-    await tester.tap(find.byTooltip(en.sidebarViewMenu));
+    await _chooseNativeSidebar(tester, en.toc);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(en.toc));
-    await tester.pumpAndSettle();
+    final nativeMenus = NativeMenuProbe(tester);
     await tester.tap(find.text('Shared saved'), buttons: kSecondaryButton);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(en.copy));
+    await nativeMenus.choose(en.copy);
     await tester.pumpAndSettle();
     expect(clipboardText, '# Shared unsaved\n');
   });
@@ -12182,21 +12335,16 @@ code
     );
     await tester.pumpAndSettle();
     final en = AppLocalizationsEn();
-    await tester.tap(find.byTooltip(en.sidebarViewMenu));
+    await _chooseNativeSidebar(tester, en.toc);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(en.toc));
-    await tester.pumpAndSettle();
+    final nativeMenus = NativeMenuProbe(tester);
     await tester.tap(find.text('Topic A'), buttons: kSecondaryButton);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text(en.cut));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(en.cut));
+    await nativeMenus.choose(en.cut);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Topic B').first, buttons: kSecondaryButton);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text(en.pasteAfterTopic));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(en.pasteAfterTopic));
+    await nativeMenus.choose(en.pasteAfterTopic);
     await tester.pumpAndSettle();
     expect(find.text(en.unsavedChanges), findsOneWidget);
     expect(find.textContaining('guide.tree'), findsWidgets);
@@ -15945,12 +16093,8 @@ Gamma body.
 
     Finder headingRow(String heading) =>
         find.descendant(of: outlineTree, matching: find.text(heading));
-    Finder menuItem(String label) => find.byWidgetPredicate(
-      (widget) =>
-          widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
-    );
-    BusyMarkPopupMenuItem<Object?> popupItem(String label) =>
-        tester.widget<BusyMarkPopupMenuItem<Object?>>(menuItem(label));
+    final nativeMenus = NativeMenuProbe(tester);
+    Iterable<Object> menuItem(String label) => nativeMenus.matching(label);
 
     Future<void> openMenu(String heading) async {
       await tester.tap(headingRow(heading), buttons: kSecondaryButton);
@@ -15992,20 +16136,20 @@ Gamma body.
       l10n.moveSectionDown,
       l10n.delete,
     ]) {
-      expect(menuItem(label), findsOneWidget);
+      expect(menuItem(label), hasLength(1));
     }
-    expect(popupItem(l10n.promoteSection).enabled, isTrue);
-    expect(popupItem(l10n.demoteSection).enabled, isTrue);
-    expect(popupItem(l10n.moveSectionUp).enabled, isFalse);
-    expect(popupItem(l10n.moveSectionDown).enabled, isTrue);
+    expect(nativeMenus.enabled(l10n.promoteSection), isTrue);
+    expect(nativeMenus.enabled(l10n.demoteSection), isTrue);
+    expect(nativeMenus.enabled(l10n.moveSectionUp), isFalse);
+    expect(nativeMenus.enabled(l10n.moveSectionDown), isTrue);
 
-    await tester.tap(find.text(l10n.copy));
+    await nativeMenus.choose(l10n.copy);
     await tester.pumpAndSettle();
     expect(clipboardText, alphaSection);
     expect(container.read(workspaceControllerProvider).activeText, source);
 
     await openMenu('Alpha');
-    await tester.tap(find.text(l10n.promoteSection));
+    await nativeMenus.choose(l10n.promoteSection);
     final promoted = source
         .replaceFirst('### Alpha', '## Alpha')
         .replaceFirst('#### Alpha child', '### Alpha child');
@@ -16013,7 +16157,7 @@ Gamma body.
 
     await resetSource();
     await openMenu('Alpha');
-    await tester.tap(find.text(l10n.demoteSection));
+    await nativeMenus.choose(l10n.demoteSection);
     final demoted = source
         .replaceFirst('### Alpha', '#### Alpha')
         .replaceFirst('#### Alpha child', '##### Alpha child');
@@ -16021,7 +16165,7 @@ Gamma body.
 
     await resetSource();
     await openMenu('Alpha');
-    await tester.tap(find.text(l10n.moveSectionDown));
+    await nativeMenus.choose(l10n.moveSectionDown);
     final movedDown = source.replaceFirst(
       '$alphaSection$betaSection',
       '$betaSection$alphaSection',
@@ -16030,15 +16174,15 @@ Gamma body.
 
     await resetSource();
     await openMenu('Beta');
-    expect(popupItem(l10n.moveSectionUp).enabled, isTrue);
-    expect(popupItem(l10n.moveSectionDown).enabled, isTrue);
-    await tester.tap(find.text(l10n.cut));
+    expect(nativeMenus.enabled(l10n.moveSectionUp), isTrue);
+    expect(nativeMenus.enabled(l10n.moveSectionDown), isTrue);
+    await nativeMenus.choose(l10n.cut);
     await expectSource(source.replaceFirst(betaSection, ''));
     expect(clipboardText, betaSection);
 
     await resetSource();
     await openMenu('Beta');
-    await tester.tap(find.text(l10n.delete));
+    await nativeMenus.choose(l10n.delete);
     await tester.pumpAndSettle();
     expect(find.text(l10n.confirmDeleteSectionTitle), findsOneWidget);
     expect(find.text(l10n.confirmDeleteSectionMessage('Beta')), findsOneWidget);
@@ -16052,17 +16196,17 @@ Gamma body.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
     await openMenu('Gamma');
-    expect(menuItem(l10n.copy), findsOneWidget);
-    expect(menuItem(l10n.cut), findsOneWidget);
-    expect(menuItem(l10n.aiRefineWithAi), findsOneWidget);
-    expect(menuItem(l10n.delete), findsOneWidget);
-    expect(menuItem(l10n.promoteSection), findsNothing);
-    await tester.tap(find.text(l10n.copy));
+    expect(menuItem(l10n.copy), hasLength(1));
+    expect(menuItem(l10n.cut), hasLength(1));
+    expect(menuItem(l10n.aiRefineWithAi), hasLength(1));
+    expect(menuItem(l10n.delete), hasLength(1));
+    expect(menuItem(l10n.promoteSection), isEmpty);
+    await nativeMenus.choose(l10n.copy);
     await tester.pumpAndSettle();
     expect(clipboardText, '$alphaSection$gammaSection');
 
     await openMenu('Gamma');
-    await tester.tap(find.text(l10n.cut));
+    await nativeMenus.choose(l10n.cut);
     await expectSource(
       source.replaceFirst(alphaSection, '').replaceFirst(gammaSection, ''),
     );
@@ -16075,7 +16219,7 @@ Gamma body.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     await tester.pump();
     await openMenu('Gamma');
-    await tester.tap(find.text(l10n.delete));
+    await nativeMenus.choose(l10n.delete);
     await tester.pumpAndSettle();
     expect(find.text(l10n.confirmDeleteSectionTitle), findsOneWidget);
     await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
@@ -16253,14 +16397,20 @@ Gamma body.
     Finder outlineRow(int index) =>
         find.byKey(ValueKey('workspace-sidebar-outline-row-$index'));
     Color outlineRowColor(int index) {
-      final material = find.descendant(
-        of: outlineRow(index),
-        matching: find.byWidgetPredicate(
-          (widget) => widget is Material && widget.type == MaterialType.canvas,
-        ),
-      );
-      expect(material, findsOneWidget);
-      return tester.widget<Material>(material).color ?? Colors.transparent;
+      final box = find
+          .descendant(
+            of: outlineRow(index),
+            matching: find.byWidgetPredicate(
+              (w) =>
+                  w is DecoratedBox &&
+                  w.decoration is BoxDecoration &&
+                  (w.decoration as BoxDecoration).border == null,
+            ),
+          )
+          .first;
+      final decoration =
+          tester.widget<DecoratedBox>(box).decoration as BoxDecoration;
+      return decoration.color ?? Colors.transparent;
     }
 
     void expectSelectedOutlineRow(int selectedIndex) {
@@ -17110,7 +17260,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final recentRow = find
         .ancestor(
           of: recentLabel,
-          matching: find.byType(BusyMarkSidebarRecordRow),
+          matching: find.byWidgetPredicate(
+            (w) => w is BusyMarkSidebarRecordRow,
+          ),
         )
         .first;
     final nativeMenus = NativeMenuProbe(tester);
@@ -18493,13 +18645,14 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
       expect(find.byKey(const ValueKey('search-category')), findsNothing);
       // Section operations remain on the normal complete tree, outside search.
+      final nativeMenus = NativeMenuProbe(tester);
       await tester.tap(
         find.byKey(const ValueKey('workspace-sidebar-outline-row-2')),
         buttons: kSecondaryButton,
       );
       await tester.pumpAndSettle();
-      expect(find.text(l10n.moveSectionUp), findsOneWidget);
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      expect(nativeMenus.contains(l10n.moveSectionUp), isTrue);
+      nativeMenus.close();
       await tester.pumpAndSettle();
       expect(container.read(workspaceControllerProvider).activeText, text);
       await tester.pumpWidget(const SizedBox());
@@ -18986,7 +19139,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     expect(headerButton(l10n.back), findsNothing);
     expect(headerButton(l10n.validate), findsNothing);
     expect(headerButton(l10n.viewMode), findsNothing);
-    _expectNeutralHeaderControl(tester, l10n.search, selected: true);
+    await _expectNeutralHeaderControl(tester, l10n.search, selected: true);
 
     await tester.tap(headerButton(l10n.search));
     await tester.pumpAndSettle();
@@ -20642,44 +20795,60 @@ _taskMarkerVisual(WidgetTester tester, {required bool checked}) {
   );
 }
 
-void _expectNeutralSidebarToggle(
+Future<void> _expectNeutralSidebarToggle(
   WidgetTester tester,
   String tooltip, {
   required bool selected,
-}) {
-  _expectNeutralHeaderControl(tester, tooltip, selected: selected);
-}
+}) => _expectNeutralHeaderControl(tester, tooltip, selected: selected);
 
-void _expectNeutralHeaderControl(
+Future<void> _expectNeutralHeaderControl(
   WidgetTester tester,
   String tooltip, {
   required bool selected,
-}) {
+}) async {
   final finder = _headerIconButton(tooltip);
   expect(finder, findsOneWidget);
   final button = tester.widget<IconButton>(finder);
   final context = tester.element(finder);
   final colors = BusyMarkSurfaceColors.of(context);
-  final states = selected
-      ? const <WidgetState>{WidgetState.selected}
-      : const <WidgetState>{};
-  final foreground = button.style?.foregroundColor?.resolve(states);
-
+  Color? paintedForeground() => tester
+      .widget<BusyMarkGtkHeaderIcon>(
+        find.descendant(
+          of: finder,
+          matching: find.byType(BusyMarkGtkHeaderIcon),
+        ),
+      )
+      .color;
   expect(button.isSelected, selected);
-  expect(foreground, colors.foreground);
-  expect(foreground, isNot(Theme.of(context).colorScheme.primary));
-  for (final interaction in [WidgetState.hovered, WidgetState.pressed]) {
-    expect(
-      button.style?.foregroundColor?.resolve({...states, interaction}),
-      foreground,
-    );
-  }
+  expect(paintedForeground(), colors.foreground);
+  final surface = tester.widget<PhysicalShape>(
+    find.ancestor(of: finder, matching: find.byType(PhysicalShape)).first,
+  );
   expect(
-    button.style?.backgroundColor?.resolve(states),
+    surface.color,
     selected
         ? colors.foreground.withValues(alpha: colors.foreground.a * .10)
         : Colors.transparent,
   );
+  final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+  await mouse.addPointer(location: Offset.zero);
+  await mouse.moveTo(tester.getCenter(finder));
+  await tester.pump();
+  expect(
+    paintedForeground(),
+    colors.foreground,
+    reason: 'hovered native glyph',
+  );
+  await mouse.down(tester.getCenter(finder));
+  await tester.pump();
+  expect(
+    paintedForeground(),
+    colors.foreground,
+    reason: 'pressed native glyph',
+  );
+  await mouse.cancel();
+  await mouse.removePointer();
+  await tester.pump();
 }
 
 Finder _headerIconButton(String tooltip) => find.byWidgetPredicate(
@@ -22987,7 +23156,12 @@ Future<void> _chooseNativeSidebar(WidgetTester tester, String label) async {
     return index;
   });
   try {
-    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-view-menu')));
+    final gitSelector = find.byType(shared.GitSidebarSelector);
+    await tester.tap(
+      gitSelector.evaluate().isNotEmpty
+          ? gitSelector
+          : find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+    );
     await tester.pump();
     expect(selected, isTrue);
   } finally {

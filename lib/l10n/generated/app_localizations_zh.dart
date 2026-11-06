@@ -8511,6 +8511,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => '选择其他提交…';
+
+  @override
+  String get gitUiGitLog => 'Git 日志';
+
+  @override
+  String get gitUiOperationsRequireTrust => 'Git 操作需要信任工作区。';
+
+  @override
+  String get gitUiTrustWorkspace => '信任工作区';
+
+  @override
+  String get gitUiCloseOtherTabs => '关闭其他标签页';
+
+  @override
+  String get gitUiCloseAllTabs => '关闭所有标签页';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -17018,4 +17033,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiSelectAnotherCommit => '选择其他提交…';
+
+  @override
+  String get gitUiGitLog => 'Git 日志';
+
+  @override
+  String get gitUiOperationsRequireTrust => 'Git 操作需要信任工作区。';
+
+  @override
+  String get gitUiTrustWorkspace => '信任工作区';
+
+  @override
+  String get gitUiCloseOtherTabs => '关闭其他标签页';
+
+  @override
+  String get gitUiCloseAllTabs => '关闭所有标签页';
 }

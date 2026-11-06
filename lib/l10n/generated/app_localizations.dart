@@ -15070,6 +15070,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select another commit…'**
   String get gitUiSelectAnotherCommit;
+
+  /// Shared Git interface: Git Log
+  ///
+  /// In en, this message translates to:
+  /// **'Git Log'**
+  String get gitUiGitLog;
+
+  /// Shared Git interface: Git operations require workspace trust.
+  ///
+  /// In en, this message translates to:
+  /// **'Git operations require workspace trust.'**
+  String get gitUiOperationsRequireTrust;
+
+  /// Shared Git interface: Trust workspace
+  ///
+  /// In en, this message translates to:
+  /// **'Trust workspace'**
+  String get gitUiTrustWorkspace;
+
+  /// Shared Git interface: Close other tabs
+  ///
+  /// In en, this message translates to:
+  /// **'Close other tabs'**
+  String get gitUiCloseOtherTabs;
+
+  /// Shared Git interface: Close all tabs
+  ///
+  /// In en, this message translates to:
+  /// **'Close all tabs'**
+  String get gitUiCloseAllTabs;
 }
 
 class _AppLocalizationsDelegate

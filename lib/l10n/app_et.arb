@@ -5015,5 +5015,13 @@
   "gitUiCommitHash": "Kinnituse räsi",
   "gitUiCommitReferences": "Viited",
   "gitUiCopyCommitMessage": "Kopeeri kinnituse sõnum",
-  "gitUiSelectAnotherCommit": "Vali teine sissekanne…"
+  "gitUiSelectAnotherCommit": "Vali teine sissekanne…",
+  "gitUiGitLog": "Git logi",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Giti toimingud nõuavad tööruumi usaldamist.",
+  "gitUiTrustWorkspace": "Usalda tööruumi",
+  "gitUiCloseOtherTabs": "Sulge teised vahelehed",
+  "gitUiCloseAllTabs": "Sule kõik vahelehed"
 }

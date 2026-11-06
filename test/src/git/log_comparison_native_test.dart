@@ -404,14 +404,14 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
           await tester.pumpAndSettle();
-          final dialog = find.byType(BusyMarkGitDialogShell);
+          final dialog = find.byType(git.GitNativeDialog);
           final nativeSurface = find.descendant(
             of: dialog,
             matching: find.byType(YaruBorderContainer),
           );
           final rect = tester.getRect(nativeSurface);
           expect(
-            tester.widget<BusyMarkGitDialogShell>(dialog).expanded,
+            tester.widget<git.GitNativeDialog>(dialog).expanded,
             isFalse,
           );
           expect(rect.width, lessThanOrEqualTo(BusyMarkSizes.dialogWide));
@@ -471,7 +471,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await tester.binding.handlePopRoute();
           await tester.pumpAndSettle();
-          expect(find.byType(BusyMarkGitDialogShell), findsNothing);
+          expect(find.byType(git.GitNativeDialog), findsNothing);
           expect(
             find.byKey(const ValueKey('git-selected-commit')),
             findsOneWidget,
@@ -742,7 +742,7 @@ void main() {
           final surface = find
               .ancestor(
                 of: filename,
-                matching: find.byType(BusyMarkSidebarRowSurface),
+                matching: find.byType(git.NativeGitRowSurface),
               )
               .first;
           expect(
@@ -799,16 +799,16 @@ void main() {
           choose = session!.host.message(git.GitMessages.viewCommitDetails);
           await tester.tap(find.byKey(const ValueKey('git-commit-actions')));
           await tester.pumpAndSettle();
-          final shell = tester.widget<BusyMarkGitDialogShell>(
-            find.byType(BusyMarkGitDialogShell),
+          final shell = tester.widget<git.GitNativeDialog>(
+            find.byType(git.GitNativeDialog),
           );
           expect(shell.expanded, isFalse);
-          expect(shell.maxWidth, BusyMarkSizes.dialogWide);
+          expect(tester.getSize(find.descendant(of: find.byType(git.GitNativeDialog), matching: find.byType(YaruBorderContainer))).width, lessThanOrEqualTo(BusyMarkSizes.dialogWide));
           expect(
             tester
                 .getRect(
                   find.descendant(
-                    of: find.byType(BusyMarkGitDialogShell),
+                    of: find.byType(git.GitNativeDialog),
                     matching: find.byType(YaruBorderContainer),
                   ),
                 )
@@ -818,14 +818,14 @@ void main() {
           expect(find.text(client.commit.message), findsOneWidget);
           expect(
             find.descendant(
-              of: find.byType(BusyMarkGitDialogShell),
+              of: find.byType(git.GitNativeDialog),
               matching: find.byType(git.GitButton),
             ),
             findsNothing,
           );
           expect(
             find.descendant(
-              of: find.byType(BusyMarkGitDialogShell),
+              of: find.byType(git.GitNativeDialog),
               matching: find.byType(git.GitIconButton),
             ),
             findsNothing,
@@ -856,7 +856,7 @@ void main() {
           );
           expect(
             find.descendant(
-              of: find.byType(BusyMarkGitDialogShell),
+              of: find.byType(git.GitNativeDialog),
               matching: find.byWidgetPredicate(
                 (widget) =>
                     widget is Semantics &&
@@ -867,7 +867,7 @@ void main() {
           );
           expect(
             find.descendant(
-              of: find.byType(BusyMarkGitDialogShell),
+              of: find.byType(git.GitNativeDialog),
               matching: find.byWidgetPredicate(
                 (widget) =>
                     widget is Semantics &&

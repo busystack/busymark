@@ -8972,6 +8972,22 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Selecionar outro commit…';
+
+  @override
+  String get gitUiGitLog => 'Histórico do Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'As operações Git requerem confiança na área de trabalho.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Confiar no espaço de trabalho';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Fechar os outros separadores';
+
+  @override
+  String get gitUiCloseAllTabs => 'Fechar todas as abas';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17935,4 +17951,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitUiSelectAnotherCommit => 'Selecionar outro commit…';
+
+  @override
+  String get gitUiGitLog => 'Histórico do Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'As operações Git exigem confiança no espaço de trabalho.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Confiar no espaço de trabalho';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Fechar as outras abas';
+
+  @override
+  String get gitUiCloseAllTabs => 'Fechar todas as abas';
 }

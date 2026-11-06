@@ -6085,5 +6085,13 @@
   "gitUiCommitHash": "커밋 해시",
   "gitUiCommitReferences": "참조",
   "gitUiCopyCommitMessage": "커밋 메시지 복사",
-  "gitUiSelectAnotherCommit": "다른 커밋 선택…"
+  "gitUiSelectAnotherCommit": "다른 커밋 선택…",
+  "gitUiGitLog": "Git 로그",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Git 작업에는 작업 공간 신뢰가 필요합니다.",
+  "gitUiTrustWorkspace": "작업공간 신뢰",
+  "gitUiCloseOtherTabs": "다른 탭 닫기",
+  "gitUiCloseAllTabs": "모든 탭 닫기"
 }

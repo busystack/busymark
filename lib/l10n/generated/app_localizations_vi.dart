@@ -8875,4 +8875,20 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Chọn commit khác…';
+
+  @override
+  String get gitUiGitLog => 'Bản ghi Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Các thao tác Git yêu cầu tin cậy không gian làm việc.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Tin cậy không gian làm việc';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Đóng các thẻ khác';
+
+  @override
+  String get gitUiCloseAllTabs => 'Đóng tất cả các thẻ';
 }

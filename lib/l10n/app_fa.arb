@@ -4597,5 +4597,13 @@
   "gitUiCommitHash": "هش کامیت",
   "gitUiCommitReferences": "ارجاع‌ها",
   "gitUiCopyCommitMessage": "کپی پیام کامیت",
-  "gitUiSelectAnotherCommit": "انتخاب یک کامیت دیگر…"
+  "gitUiSelectAnotherCommit": "انتخاب یک کامیت دیگر…",
+  "gitUiGitLog": "تاریخچهٔ Git",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "عملیات Git به اعتماد به فضای کاری نیاز دارد.",
+  "gitUiTrustWorkspace": "اعتماد به فضای کاری",
+  "gitUiCloseOtherTabs": "بستن زبانه‌های دیگر",
+  "gitUiCloseAllTabs": "بستن همهٔ زبانه‌ها"
 }

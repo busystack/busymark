@@ -6085,5 +6085,13 @@
   "gitUiCommitHash": "提交哈希",
   "gitUiCommitReferences": "引用",
   "gitUiCopyCommitMessage": "复制提交说明",
-  "gitUiSelectAnotherCommit": "选择其他提交…"
+  "gitUiSelectAnotherCommit": "选择其他提交…",
+  "gitUiGitLog": "Git 日志",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Git 操作需要信任工作区。",
+  "gitUiTrustWorkspace": "信任工作区",
+  "gitUiCloseOtherTabs": "关闭其他标签页",
+  "gitUiCloseAllTabs": "关闭所有标签页"
 }

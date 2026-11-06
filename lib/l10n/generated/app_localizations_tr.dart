@@ -8884,4 +8884,20 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Başka bir commit seç…';
+
+  @override
+  String get gitUiGitLog => 'Git geçmişi';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Git işlemleri çalışma alanına güvenilmesini gerektirir.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Çalışma alanına güven';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Diğer sekmeleri kapat';
+
+  @override
+  String get gitUiCloseAllTabs => 'Tüm sekmeleri kapat';
 }

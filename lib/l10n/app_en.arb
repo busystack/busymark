@@ -7399,5 +7399,25 @@
   "gitUiSelectAnotherCommit": "Select another commit…",
   "@gitUiSelectAnotherCommit": {
     "description": "Shared Git interface: Select another commit…"
+  },
+  "gitUiGitLog": "Git Log",
+  "@gitUiGitLog": {
+    "description": "Shared Git interface: Git Log"
+  },
+  "gitUiOperationsRequireTrust": "Git operations require workspace trust.",
+  "gitUiTrustWorkspace": "Trust workspace",
+  "@gitUiOperationsRequireTrust": {
+    "description": "Shared Git interface: Git operations require workspace trust."
+  },
+  "@gitUiTrustWorkspace": {
+    "description": "Shared Git interface: Trust workspace"
+  },
+  "gitUiCloseOtherTabs": "Close other tabs",
+  "gitUiCloseAllTabs": "Close all tabs",
+  "@gitUiCloseOtherTabs": {
+    "description": "Shared Git interface: Close other tabs"
+  },
+  "@gitUiCloseAllTabs": {
+    "description": "Shared Git interface: Close all tabs"
   }
 }

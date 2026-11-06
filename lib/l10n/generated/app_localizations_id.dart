@@ -8897,4 +8897,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Pilih commit lain…';
+
+  @override
+  String get gitUiGitLog => 'Log Git';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Operasi Git memerlukan kepercayaan pada ruang kerja.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Percayai ruang kerja';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Tutup tab lainnya';
+
+  @override
+  String get gitUiCloseAllTabs => 'Tutup semua tab';
 }

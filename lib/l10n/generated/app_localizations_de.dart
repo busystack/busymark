@@ -8979,4 +8979,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'Anderen Commit auswählen…';
+
+  @override
+  String get gitUiGitLog => 'Git-Protokoll';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'Git-Operationen erfordern Vertrauen in den Arbeitsbereich.';
+
+  @override
+  String get gitUiTrustWorkspace => 'Diesem Arbeitsbereich vertrauen';
+
+  @override
+  String get gitUiCloseOtherTabs => 'Andere Tabs schließen';
+
+  @override
+  String get gitUiCloseAllTabs => 'Alle Tabs schließen';
 }

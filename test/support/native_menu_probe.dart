@@ -46,8 +46,12 @@ class NativeMenuProbe {
   }
 
   bool get isOpen => _reply != null;
-  Iterable<Object> matching(String label) => isOpen
-      ? _scope.where((e) => e['label'] == label || e['shortcut'] == label)
+  Iterable<Object> matching(String label, {bool includeShortcut = true}) =>
+      isOpen
+      ? _scope.where(
+          (e) =>
+              e['label'] == label || includeShortcut && e['shortcut'] == label,
+        )
       : find.text(label).evaluate();
   Future<void> activate(String label) async {
     if (!isOpen) {

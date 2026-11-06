@@ -8887,4 +8887,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitUiSelectAnotherCommit => 'اختيار التزام آخر…';
+
+  @override
+  String get gitUiGitLog => 'Git سجل';
+
+  @override
+  String get gitUiOperationsRequireTrust =>
+      'تتطلب عمليات Git الوثوق بمساحة العمل.';
+
+  @override
+  String get gitUiTrustWorkspace => 'الوثوق بمساحة العمل';
+
+  @override
+  String get gitUiCloseOtherTabs => 'إغلاق علامات التبويب الأخرى';
+
+  @override
+  String get gitUiCloseAllTabs => 'إغلاق كل علامات التبويب';
 }
