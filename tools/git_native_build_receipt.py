@@ -60,8 +60,10 @@ def sources(workspace=None, host="busymark"):
 
 
 def payloads(binary):
-    candidates = [binary, binary.parent / 'data/flutter_assets/kernel_blob.bin', binary.parent / 'lib/libapp.so']
-    return {str(p.relative_to(binary.parent)): sha(p) for p in candidates if p.is_file()}
+    candidates = {binary}
+    for folder in ['data', 'lib', 'libexec', 'share']:
+        candidates.update(p for p in (binary.parent/folder).rglob('*') if p.is_file())
+    return {str(p.relative_to(binary.parent)): sha(p) for p in sorted(candidates) if p.is_file()}
 
 
 def verify(receipt, binary, workspace=None):

@@ -14,7 +14,16 @@ class NativeBuildReceiptTest(unittest.TestCase):
             binary = root / 'bundle/busymark'
             binary.parent.mkdir()
             binary.write_bytes(b'owned test payload')
+            extras = [binary.parent/'lib/libnative.so', binary.parent/'data/flutter_assets/font.ttf']
+            for extra in extras:
+                extra.parent.mkdir(parents=True, exist_ok=True)
+                extra.write_bytes(b'original native or font payload')
             receipt = {'sealed': True, 'sources': sources(root), 'payloads': payloads(binary)}
+            for extra in extras:
+                extra.write_bytes(b'changed native or font payload')
+                with self.assertRaisesRegex(RuntimeError, 'Binary payload differs'):
+                    verify(receipt, binary, root)
+                extra.write_bytes(b'original native or font payload')
             verify(receipt, binary, root)
             source = root / 'busystack_git_flutter/lib/source.dart'
             source.write_text('changed presentation')
