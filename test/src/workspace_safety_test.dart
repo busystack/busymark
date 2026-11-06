@@ -1030,15 +1030,6 @@ void main() {
     );
     addTearDown(() => root.deleteSync(recursive: true));
     final service = _IdentityWorkspaceService(rootPath: root.path);
-    Future<void> flushCanonicalIdentity() async {
-      // Each path-identity step completes in the real I/O zone; pumping then
-      // lets the guarded production future schedule its next checked step.
-      for (var step = 0; step < 4; step++) {
-        await tester.runAsync(() => FileSystemEntity.type(root.path));
-        await tester.pump();
-      }
-    }
-
     late WidgetRef widgetRef;
     late BuildContext hostContext;
     bool? approved;
@@ -1099,7 +1090,17 @@ void main() {
           find.widgetWithText(TextButton, 'Prepare reviewed plan'),
         )
         .onPressed!();
-    await flushCanonicalIdentity();
+    // Unrelated filesystem requests are not a barrier for the production
+    // canonical-path checks. Wait for their observable dialog result while
+    // servicing both real I/O and Flutter's fake clock.
+    await pumpUntil(
+      tester,
+      () => find
+          .byKey(const ValueKey('busy-mark-git-trust-confirm'))
+          .evaluate()
+          .isNotEmpty,
+      operation: 'Canonical Git trust dialog',
+    );
     await tester.pump(const Duration(milliseconds: 500));
     expect(approved, isNull);
     expect(find.text(l10n.gitTrustRequiredTitle), findsOneWidget);
@@ -1112,7 +1113,11 @@ void main() {
     // retires the old accessibility node. Only this trust surface may close.
     accept();
     accept();
-    await flushCanonicalIdentity();
+    await pumpUntil(
+      tester,
+      () => approved != null,
+      operation: 'Duplicate Git trust approval and persistence',
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump();
     expect(approved, isTrue);
