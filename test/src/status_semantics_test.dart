@@ -4,7 +4,6 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/system_accent.dart';
-import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/workspace/presentation/welcome_screen.dart';
 import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -99,13 +98,18 @@ void main() {
     },
   );
 
-  testWidgets('Git host notifications use window-level toasts', (tester) async {
-    await tester.pumpWidget(_testApp(const _GitHostProbe()));
-    await tester.tap(find.text('Notify'));
-    await tester.pumpAndSettle(const Duration(milliseconds: 200));
-    expect(find.text('Done'), findsOneWidget);
-    expect(find.byType(BusyMarkStatusBox), findsNothing);
-  });
+  testWidgets(
+    'Git host notifications use the shared native surface without a host toast',
+    (tester) async {
+      await tester.pumpWidget(_testApp(const _GitHostProbe()));
+      await tester.tap(find.text('Notify'));
+      await tester.pumpAndSettle(const Duration(milliseconds: 200));
+      expect(find.text('Done'), findsOneWidget);
+      expect(find.byType(shared.NativeGitNotificationSurface), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.byType(BusyMarkStatusBox), findsNothing);
+    },
+  );
 }
 
 class _GitHostProbe extends ConsumerWidget {
@@ -152,7 +156,7 @@ Widget _testApp(Widget child) {
         brightness: Brightness.light,
         accentColor: busyMarkDefaultAccentColor,
       ),
-      home: BusyMarkToastOverlay(child: Scaffold(body: child)),
+      home: Scaffold(body: child),
     ),
   );
 }

@@ -28,6 +28,24 @@ class XImage(C.Structure):
         ('green_mask', C.c_ulong), ('blue_mask', C.c_ulong)]]
 
 
+def require_installed_busyfiles(binary, compiled, env):
+    """An installed acceptance request must use the actual system package paths."""
+    if Path(binary).resolve() != Path('/usr/lib/busyfiles/busyfiles'):
+        raise RuntimeError('Installed acceptance requires /usr/lib/busyfiles/busyfiles')
+    if compiled.get('provenance', {}).get('installedRoot') != '/':
+        raise RuntimeError('Installed acceptance requires a system-root package receipt')
+    if env.get('LD_LIBRARY_PATH') or env.get('BUSYSTACK_NATIVE_DAEMON'):
+        raise RuntimeError('Installed acceptance cannot override native library or daemon paths')
+
+
+def configure_native_text_dpi(env, text_scale):
+    # GSettings feeds Flutter's settings portal. GTK's X11 menus additionally
+    # consume Xft DPI; an isolated Xvfb has no desktop XSettings publisher.
+    # Publish the supported X11 resource so both native and Flutter text scale.
+    subprocess.run(['xrdb', '-merge'], input=f'Xft.dpi: {96 * text_scale:g}\n',
+                   text=True, env=env, check=True)
+
+
 def geometry(desktop, window):
     attributes = WindowAttributes()
     if not desktop.x.XGetWindowAttributes(desktop.display, window.get_xid(), C.byref(attributes)):
@@ -99,7 +117,7 @@ def main():
         for suffix in ['CONFIG_HOME', 'DATA_HOME', 'CACHE_HOME', 'STATE_HOME', 'RUNTIME_DIR']:
             env['BUSYFILES_XDG_' + suffix] = env['XDG_' + suffix]
         env['BUSYFILES_DAEMON_SOCKET'] = private_runtime.name + '/daemon.sock'
-    xvfb = subprocess.Popen(['Xvfb', '-displayfd', '1', '-screen', '0', '1600x1100x24', '-nolisten', 'tcp'], stdout=subprocess.PIPE, stderr=(output / 'xvfb.log').open('w'))
+    xvfb = subprocess.Popen(['Xvfb', '-displayfd', '1', '-noreset', '-screen', '0', '1600x1100x24', '-nolisten', 'tcp'], stdout=subprocess.PIPE, stderr=(output / 'xvfb.log').open('w'))
     env['DISPLAY'] = ':' + xvfb.stdout.readline().decode().strip()
     env['GDK_BACKEND'] = 'x11'
     env['GSETTINGS_BACKEND'] = 'keyfile'
@@ -128,6 +146,7 @@ def main():
     # The official Flutter settings portal reads this same GNOME preference.
     text_scale = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0
     subprocess.run(['gsettings', 'set', 'org.gnome.desktop.interface', 'text-scaling-factor', str(text_scale)], env=env, check=True)
+    configure_native_text_dpi(env, text_scale)
     requested_theme = os.environ.get('BUSYSTACK_NATIVE_THEME')
     if requested_theme is not None:
         if requested_theme not in {'light', 'dark'}: raise ValueError('Expected light or dark native theme')
@@ -141,6 +160,16 @@ def main():
                     'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME', 'XDG_RUNTIME_DIR'], env=env, check=True)
     desktop = Desktop()
     desktop.Gdk.init([])
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi.repository import Gtk
+    gtk_settings = Gtk.Settings.get_default()
+    gtk_metrics = {key: gtk_settings.get_property(key) for key in
+                   ['gtk-font-name', 'gtk-xft-dpi', 'gtk-theme-name']}
+    if abs(gtk_metrics['gtk-xft-dpi'] / 1024 - 96 * text_scale) > .1:
+        desktop.dispose(); xvfb.terminate(); xvfb.wait(timeout=10)
+        cleanup_runtime()
+        raise RuntimeError('Native GTK text DPI differs from the requested acceptance scale')
     daemon = None
     daemon_launch = None
     daemon_log = None
@@ -156,6 +185,8 @@ def main():
         raise RuntimeError('Owned daemon readiness timed out; inspect daemon.log')
     try:
         if native_host == 'busyfiles':
+            if os.environ.get('BUSYSTACK_NATIVE_REQUIRE_INSTALLED') == '1':
+                require_installed_busyfiles(binary, compiled, env)
             # Official development bundles and the installed DEB have explicit
             # different system-service paths. Never substitute a system Git or
             # a development daemon for a requested installed acceptance run.
@@ -205,11 +236,32 @@ def main():
         raise
     def git(*arguments):
         return subprocess.check_output([str(binary.parent / 'libexec/git-runtime/bin/git'), '-C', str(repository), *arguments], text=True)
-    initial_repository = {'status': git('status', '--porcelain=v1'), 'references': git('show-ref')}
+    plain_directory = env.get('BUSYSTACK_NATIVE_PLAIN_DIRECTORY') == '1'
+    def fixture_state():
+        if not plain_directory:
+            return {'status': git('status', '--porcelain=v1'), 'references': git('show-ref')}
+        probe = subprocess.run([str(binary.parent/'libexec/git-runtime/bin/git'), '-C', str(repository),
+                                'rev-parse', '--git-dir'], capture_output=True, text=True,
+                               env=dict(env, LC_ALL='C'))
+        if probe.returncode != 128 or 'not a git repository' not in probe.stderr:
+            raise RuntimeError('Plain-directory acceptance requires a real non-repository fixture')
+        return {'kind': 'plain directory', 'files': {
+            str(p.relative_to(repository)): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(repository.rglob('*')) if p.is_file()}}
+    initial_repository = fixture_state()
     receipt = {'backend': 'X11/Xvfb', 'display': env['DISPLAY'], 'displaySize': [1600, 1100], 'textScale': text_scale,
                'repository': str(repository.resolve()),
                'binarySHA256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'captures': [],
                'compiledSources': compiled, 'sources': {}}
+    receipt['nativeLibrarySearchPath'] = env.get('LD_LIBRARY_PATH', '')
+    if native_host == 'busyfiles':
+        receipt['runtimeLayout'] = (
+            'system-installed DEB' if binary.resolve() == Path('/usr/lib/busyfiles/busyfiles')
+            and compiled.get('provenance', {}).get('installedRoot') == '/'
+            else 'relocated DEB payload' if installed else 'development bundle'
+        )
+    receipt['gtkTextMetrics'] = gtk_metrics
+    receipt['fixtureKind'] = 'plain directory' if plain_directory else 'Git repository'
     payloads = [binary.parent / 'data/flutter_assets/kernel_blob.bin', binary.parent / 'lib/libapp.so']
     receipt['applicationPayloads'] = {str(p.relative_to(binary.parent)): hashlib.sha256(p.read_bytes()).hexdigest() for p in payloads if p.exists()}
     receipt['sources'] = compiled['sources']
@@ -363,7 +415,7 @@ def main():
             process.wait(timeout=10)
             receipt['naturalExit'] = False
         verify(compiled, binary.resolve())
-        receipt['repositoryUnchanged'] = initial_repository == {'status': git('status', '--porcelain=v1'), 'references': git('show-ref')}
+        receipt['repositoryUnchanged'] = initial_repository == fixture_state()
         (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
     finally:
         if process.poll() is None:

@@ -656,6 +656,7 @@ void main() {
         final host = tester
             .widget<git.GitHostScope>(find.byType(git.GitHostScope).first)
             .host;
+        await exerciseNativeGitNotification(tester, host: host);
         await exerciseNativeGitSurfaces(
           tester,
           host: host,

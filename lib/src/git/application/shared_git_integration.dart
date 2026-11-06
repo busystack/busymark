@@ -1,4 +1,3 @@
-import '../../app/busymark_toast.dart';
 import '../../platform/native_menu_service.dart';
 export 'shared_git_tabs.dart';
 import 'shared_git_tabs.dart';
@@ -30,6 +29,9 @@ import 'git_controller.dart';
 import 'git_workspace_eligibility.dart';
 import '../data/git_shared_gateway.dart';
 import '../domain/git_models.dart' show GitStatusSnapshot;
+
+// Git feedback has one shared renderer. This bridge owns only host lifetime.
+const busyMarkGitNotify = shared.showGitNotification;
 
 typedef BusyMarkGitClientFactory =
     shared.GitClient Function({
@@ -342,7 +344,7 @@ Future<void> showBusyMarkSharedGitAction(
     session = await BusyMarkGitWorkspaceScope._of(context).open();
   } on GitWorkspaceRootRequired {
     if (context.mounted) {
-      BusyMarkToastOverlay.show(
+      busyMarkGitNotify(
         context,
         message: context.l10n.gitWorkspaceRootRequired,
       );
@@ -715,7 +717,7 @@ shared.GitHost busyMarkGitHost(
       }
       final relative = path.utf8Path;
       if (relative == null) {
-        BusyMarkToastOverlay.show(
+        busyMarkGitNotify(
           context,
           message: context.l10n.gitNonUtf8FilenameMessage,
         );
@@ -847,7 +849,7 @@ shared.GitHost busyMarkGitHost(
     },
     notify: (message) {
       if (isMounted()) {
-        BusyMarkToastOverlay.show(context, message: message);
+        busyMarkGitNotify(context, message: message);
       }
     },
     drafts: drafts,
@@ -1207,7 +1209,7 @@ Future<String?> busyMarkPresentGitTabMenu(
     ], position: position);
   } on shared.GitException {
     if (context.mounted) {
-      BusyMarkToastOverlay.show(
+      busyMarkGitNotify(
         context,
         message: context.l10n.gitUiNativeMenuUnavailable,
       );

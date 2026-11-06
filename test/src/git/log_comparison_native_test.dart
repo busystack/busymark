@@ -410,10 +410,7 @@ void main() {
             matching: find.byType(YaruBorderContainer),
           );
           final rect = tester.getRect(nativeSurface);
-          expect(
-            tester.widget<git.GitNativeDialog>(dialog).expanded,
-            isFalse,
-          );
+          expect(tester.widget<git.GitNativeDialog>(dialog).expanded, isFalse);
           expect(rect.width, lessThanOrEqualTo(BusyMarkSizes.dialogWide));
           expect(rect.left, greaterThanOrEqualTo(0));
           expect(rect.right, lessThanOrEqualTo(viewport.width));
@@ -803,7 +800,17 @@ void main() {
             find.byType(git.GitNativeDialog),
           );
           expect(shell.expanded, isFalse);
-          expect(tester.getSize(find.descendant(of: find.byType(git.GitNativeDialog), matching: find.byType(YaruBorderContainer))).width, lessThanOrEqualTo(BusyMarkSizes.dialogWide));
+          expect(
+            tester
+                .getSize(
+                  find.descendant(
+                    of: find.byType(git.GitNativeDialog),
+                    matching: find.byType(YaruBorderContainer),
+                  ),
+                )
+                .width,
+            lessThanOrEqualTo(BusyMarkSizes.dialogWide),
+          );
           expect(
             tester
                 .getRect(

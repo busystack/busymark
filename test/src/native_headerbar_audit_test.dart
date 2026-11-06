@@ -534,74 +534,70 @@ void main() {
     expect(respondIndex, greaterThan(detachIndex));
     expect(freeIndex, greaterThan(respondIndex));
   });
-  test(
-    'Snap packaging hooks consolidate resources and keep required fixes',
-    () {
-      final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
-      final exclusions = File(
-        'snap/gnome-46-2404-prime-exclusions.amd64',
-      ).readAsLinesSync();
+  test('Snap packaging hooks consolidate resources and keep required fixes', () {
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final exclusions = File(
+      'snap/gnome-46-2404-prime-exclusions.amd64',
+    ).readAsLinesSync();
 
-      expect(snapcraft, contains('missing audited GNOME runtime duplicate'));
-      expect(snapcraft, contains('gnome-46-2404-prime-exclusions.amd64'));
-      expect(exclusions, contains(contains('revision 153')));
-      expect(
-        exclusions,
-        contains('usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstisomp4.so'),
-      );
-      for (final runtimeLibrary in {
-        'libgdk-3.so.0',
-        'libgtk-3.so.0',
-        'libpango-1.0.so.0',
-        'libpangocairo-1.0.so.0',
-        'libpangoft2-1.0.so.0',
-        'libX11.so.6',
-        'libXdamage.so.1',
-        'libXext.so.6',
-        'libXfixes.so.3',
-        'libxcb-shm.so.0',
-        'libxcb.so.1',
-        'libwayland-client.so.0',
-        'libwayland-cursor.so.0',
-        'libwayland-egl.so.1',
-      }) {
-        expect(
-          exclusions,
-          contains('usr/lib/x86_64-linux-gnu/$runtimeLibrary'),
-        );
-      }
-      expect(exclusions, isNot(contains(contains('libgstlibav.so'))));
-      expect(exclusions, isNot(contains(contains('libgstvideoparsersbad.so'))));
-      expect(exclusions.where((line) => line.contains('*')), isEmpty);
-      expect(snapcraft, contains(r'cmp -s "$bundled_font" "$staged_font"'));
-      expect(snapcraft, contains('ln -s ../../usr/share/fonts/truetype/noto'));
-      expect(
-        snapcraft,
-        contains(r'ln -s "../../usr/share/$resource_kind/$resource_name"'),
-      );
-      expect(
-        snapcraft,
-        contains(r'LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu/lapack:$SNAP/usr/lib/x86_64-linux-gnu/blas:$LD_LIBRARY_PATH'),
-      );
-      expect(snapcraft, contains('caca/libgl_plugin.so.0.0.0'));
-      expect(
-        snapcraft,
-        contains(
-          r'rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*',
-        ),
-      );
-      expect(
-        snapcraft,
-        isNot(contains('libflutter_secure_storage_linux_plugin.so')),
-      );
-      final workflow = File(
-        '.github/workflows/flutter-linux-native.yml',
-      ).readAsStringSync();
-      expect(workflow, contains(r'graphics_lib="$SNAP/gpu-2404/usr/lib/'));
-      expect(workflow, contains('libwayland-egl.so.1'));
-      expect(workflow, contains('usr/share/doc/fonts-noto-core/copyright'));
-    },
-  );
+    expect(snapcraft, contains('missing audited GNOME runtime duplicate'));
+    expect(snapcraft, contains('gnome-46-2404-prime-exclusions.amd64'));
+    expect(exclusions, contains(contains('revision 153')));
+    expect(
+      exclusions,
+      contains('usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstisomp4.so'),
+    );
+    for (final runtimeLibrary in {
+      'libgdk-3.so.0',
+      'libgtk-3.so.0',
+      'libpango-1.0.so.0',
+      'libpangocairo-1.0.so.0',
+      'libpangoft2-1.0.so.0',
+      'libX11.so.6',
+      'libXdamage.so.1',
+      'libXext.so.6',
+      'libXfixes.so.3',
+      'libxcb-shm.so.0',
+      'libxcb.so.1',
+      'libwayland-client.so.0',
+      'libwayland-cursor.so.0',
+      'libwayland-egl.so.1',
+    }) {
+      expect(exclusions, contains('usr/lib/x86_64-linux-gnu/$runtimeLibrary'));
+    }
+    expect(exclusions, isNot(contains(contains('libgstlibav.so'))));
+    expect(exclusions, isNot(contains(contains('libgstvideoparsersbad.so'))));
+    expect(exclusions.where((line) => line.contains('*')), isEmpty);
+    expect(snapcraft, contains(r'cmp -s "$bundled_font" "$staged_font"'));
+    expect(snapcraft, contains('ln -s ../../usr/share/fonts/truetype/noto'));
+    expect(
+      snapcraft,
+      contains(r'ln -s "../../usr/share/$resource_kind/$resource_name"'),
+    );
+    expect(
+      snapcraft,
+      contains(
+        r'LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu/lapack:$SNAP/usr/lib/x86_64-linux-gnu/blas:$LD_LIBRARY_PATH',
+      ),
+    );
+    expect(snapcraft, contains('caca/libgl_plugin.so.0.0.0'));
+    expect(
+      snapcraft,
+      contains(
+        r'rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*',
+      ),
+    );
+    expect(
+      snapcraft,
+      isNot(contains('libflutter_secure_storage_linux_plugin.so')),
+    );
+    final workflow = File(
+      '.github/workflows/flutter-linux-native.yml',
+    ).readAsStringSync();
+    expect(workflow, contains(r'graphics_lib="$SNAP/gpu-2404/usr/lib/'));
+    expect(workflow, contains('libwayland-egl.so.1'));
+    expect(workflow, contains('usr/share/doc/fonts-noto-core/copyright'));
+  });
   test('native GTK theme follows brightness without replacing a valid user theme', () {
     final configuration = File(
       'lib/src/app/linux/linux_window_host.dart',

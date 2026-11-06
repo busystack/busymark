@@ -1,10 +1,30 @@
 import tempfile
 from pathlib import Path
 import unittest
-from tools.git_native_build_receipt import payloads, sources, verify
+from tools.git_native_build_receipt import payloads, sha, sources, verify
 
 
 class NativeBuildReceiptTest(unittest.TestCase):
+    def test_packaged_daemon_outside_ui_bundle_must_still_match(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name in ['busymark', 'busystack_git_flutter', 'busystack_git']:
+                (root/name/'lib').mkdir(parents=True)
+                (root/name/'lib/source.dart').write_text('original source')
+            binary = root/'usr/lib/busyfiles/busyfiles'
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b'owned UI payload')
+            daemon = root/'usr/libexec/busyfiles/busyfilesd'
+            daemon.parent.mkdir(parents=True)
+            daemon.write_bytes(b'producer-bound daemon')
+            receipt = {'sealed': True, 'sources': sources(root),
+                       'payloads': payloads(binary),
+                       'externalPayloads': {str(daemon): sha(daemon)}}
+            verify(receipt, binary, root)
+            daemon.write_bytes(b'changed daemon')
+            with self.assertRaisesRegex(RuntimeError, 'External package payload differs'):
+                verify(receipt, binary, root)
+
     def test_seal_rejects_changed_compiled_source_or_binary(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -69,6 +69,10 @@ def payloads(binary):
 def verify(receipt, binary, workspace=None):
     if not receipt.get('sealed') or receipt['payloads'] != payloads(binary):
         raise RuntimeError('Binary payload differs from the sealed build receipt')
+    for name, expected in receipt.get('externalPayloads', {}).items():
+        path = Path(name)
+        if not path.is_absolute() or not path.is_file() or sha(path) != expected:
+            raise RuntimeError('External package payload differs: ' + name)
     current = sources(workspace or receipt.get('workspace'), receipt.get("host", "busymark"))
     for name, source in receipt['sources'].items():
         if source.get('hashVersion') != 2:
