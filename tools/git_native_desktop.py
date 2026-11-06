@@ -57,6 +57,22 @@ def owned_accessible_nodes(desktop, pid):
     return result
 
 
+def seed_private_preferences(env, values):
+    """Use normal product preferences in this invocation's disposable profile."""
+    if (not isinstance(values, dict) or set(values) - {'autoSave', 'localeTag', 'themeModePreference'}
+            or ('autoSave' in values and not isinstance(values['autoSave'], bool))
+            or ('localeTag' in values and not isinstance(values['localeTag'], str))
+            or ('themeModePreference' in values and values['themeModePreference'] not in {'system', 'light', 'dark'})):
+        raise ValueError('Only ordinary locale, theme and autosave preferences may be seeded')
+    target = Path(env['XDG_DATA_HOME']) / 'io.busystack.busymark/settings.json'
+    if target.exists():
+        raise RuntimeError('Refusing to overwrite existing application preferences')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open('x') as output:
+        json.dump(values, output)
+    return target
+
+
 def native_launch_arguments(binary, repository, env, snap_app=None):
     binary, repository = Path(binary).resolve(), Path(repository).resolve()
     if snap_app is None:
@@ -221,6 +237,13 @@ def main():
                 subprocess.run(['fusermount3', '--unmount', str(mount)], check=True)
         private_runtime.cleanup()
     env['XDG_RUNTIME_DIR'] = private_runtime.name
+    seeded_preferences = None
+    if env.get('BUSYSTACK_NATIVE_APP_SETTINGS'):
+        if native_host != 'busymark':
+            cleanup_runtime()
+            raise ValueError('BusyMark preferences cannot be applied to another host')
+        seeded_preferences = json.loads(Path(env['BUSYSTACK_NATIVE_APP_SETTINGS']).read_text())
+        seed_private_preferences(env, seeded_preferences)
     env.pop('GNOME_KEYRING_CONTROL', None)
     env.pop('SSH_AUTH_SOCK', None)
     if native_host == 'busyfiles':
@@ -365,6 +388,8 @@ def main():
     receipt['accessibilityEnvironment'] = {key: env[key] for key in ['NO_AT_BRIDGE', 'GTK_MODULES']}
     receipt['launchArguments'] = launch_arguments
     receipt['isolatedProfile'] = str(profile)
+    if seeded_preferences is not None:
+        receipt['seededOrdinaryPreferences'] = seeded_preferences
     receipt['snapApp'] = snap_app
     if native_host == 'busyfiles':
         receipt['runtimeLayout'] = (
@@ -380,7 +405,7 @@ def main():
     receipt['host'] = native_host
     if requested_theme is not None: receipt['theme'] = requested_theme
     if daemon is not None: receipt['daemon'] = daemon_identity
-    settings = output / 'xdg_data_home/io.busystack.busymark/settings.json'
+    settings = Path(env['XDG_DATA_HOME']) / 'io.busystack.busymark/settings.json'
     if settings.exists():
         config = json.loads(settings.read_text())
         receipt['locale'] = config.get('localeTag')

@@ -9,10 +9,23 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from application_close_smoke import Desktop
-from git_native_desktop import configure_native_text_dpi, geometry, require_installed_busyfiles, owned_accessible_nodes, native_launch_arguments, git_fixture_state
+from git_native_desktop import configure_native_text_dpi, geometry, require_installed_busyfiles, owned_accessible_nodes, native_launch_arguments, git_fixture_state, seed_private_preferences
 
 
 class NativeGeometryTest(unittest.TestCase):
+    def test_private_preferences_cannot_seed_trust_or_overwrite_existing_profile(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            env = {'XDG_DATA_HOME': temporary}
+            values = {'autoSave': False, 'localeTag': 'ar', 'themeModePreference': 'dark'}
+            target = seed_private_preferences(env, values)
+            self.assertEqual(json.loads(target.read_text()), values)
+            with self.assertRaisesRegex(RuntimeError, 'overwrite existing'):
+                seed_private_preferences(env, values)
+            for invalid in [{'trustedGitWorkspaceRoots': ['/tmp/repo']}, {'autoSave': 'false'},
+                            {'localeTag': []}, {'themeModePreference': 'invalid'}]:
+                with self.assertRaisesRegex(ValueError, 'ordinary locale'):
+                    seed_private_preferences(env, invalid)
+
     def test_native_evidence_detects_changed_bytes_even_when_status_is_unchanged(self):
         executable = Path(os.environ.get('BUSYSTACK_TEST_GIT_256', str(
             Path(__file__).resolve().parents[1]/'build/linux/x64/debug/bundle/libexec/git-runtime/bin/git')))

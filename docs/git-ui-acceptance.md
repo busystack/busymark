@@ -30,6 +30,12 @@ The final report must identify each actual source revision, archive/tree hash,
 compiled production hash and installed payload. Source-only and relocated-package
 runs cannot stand in for installed acceptance.
 
+`tools/git_native_snap_receipt.py` checks every sealed Flutter-bundle file in
+the development Snap root, compares the complete root with the actual packed
+SquashFS, and then requires the installed Snap mount to match that filesystem.
+Symlinks are bound by their targets without following external package paths.
+This qualifies a local development repack, not a clean Snapcraft release.
+
 The native harness reads status, refs, raw index and Git-visible file bytes
 before startup and after exit. It captures real X11 pixels, verifies the mapped
 official engine, keeps accessibility enabled and restricts AT-SPI inspection to

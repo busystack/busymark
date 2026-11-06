@@ -148,7 +148,7 @@ jobs:
 
       - name: Test native artifact and full-corpus qualification
         if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
-        run: python3 -m unittest tools/test_git_native_build_receipt.py tools/test_verify_flutter_test_corpus.py
+        run: python3 -m unittest tools/test_git_native_build_receipt.py tools/test_git_native_snap_receipt.py tools/test_verify_flutter_test_corpus.py
 
       - name: Test production GTK accent lookup and observer
         if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}
@@ -366,6 +366,7 @@ jobs:
             tools/test_run_owned_fixture.py \
             tools/test_official_flutter_workflow.py \
             tools/test_git_native_build_receipt.py \
+            tools/test_git_native_snap_receipt.py \
             tools/test_git_native_geometry.py \
             tools/test_visualization_dependency_policy.py
 
