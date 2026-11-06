@@ -17,6 +17,8 @@ Options:
   --no-install         Pack and verify the snap without replacing the installed snap.
   --no-run             Install the snap but do not run it.
   --skip-tests         Skip flutter analyze/test.
+  --test-corpus-receipt FILE
+                       Verify a completed full test corpus for these exact inputs.
   --output FILE        Write the packed snap to FILE.
   --root DIR           Use DIR as the temporary snap root.
   --scaffold DIR       Use DIR instead of /snap/<snap-name>/current.
@@ -189,6 +191,7 @@ VERSION_ARG=""
 INSTALL_AFTER_BUILD="${INSTALL_AFTER_BUILD:-1}"
 RUN_AFTER_INSTALL="${RUN_AFTER_INSTALL:-1}"
 SKIP_TESTS="${SKIP_TESTS:-0}"
+TEST_CORPUS_RECEIPT=""
 BUNDLE_GIT="${BUNDLE_GIT:-1}"
 declare -a DART_DEFINE_ARGS=()
 declare -a DART_DEFINE_FILE_ARGS=()
@@ -208,6 +211,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-tests)
       SKIP_TESTS=1
+      ;;
+    --test-corpus-receipt)
+      [[ $# -ge 2 ]] || fail "--test-corpus-receipt requires a value"
+      TEST_CORPUS_RECEIPT="$2"
+      shift
       ;;
     --output)
       [[ $# -ge 2 ]] || fail "--output requires a value"
@@ -320,13 +328,21 @@ echo "Root:     $SNAP_ROOT"
 echo "Output:   $OUT"
 echo "Defines:  $((${#DART_DEFINE_ARGS[@]} + ${#DART_DEFINE_FILE_ARGS[@]})) build-time entries"
 
+if [[ -n "$TEST_CORPUS_RECEIPT" && "$SKIP_TESTS" == 1 ]]; then
+  fail "A completed-corpus receipt cannot be combined with skipped verification"
+fi
+
 echo "== Resolve locked dependencies =="
 "$FLUTTER_BIN" pub get --enforce-lockfile
 
 if [[ "$SKIP_TESTS" != "1" ]]; then
   echo "== Validate source =="
   "$FLUTTER_BIN" analyze --no-pub
-  "$FLUTTER_BIN" test --no-pub --reporter=compact
+  if [[ -n "$TEST_CORPUS_RECEIPT" ]]; then
+    python3 tools/verify_flutter_test_corpus.py "$TEST_CORPUS_RECEIPT" "$FLUTTER_BIN"
+  else
+    "$FLUTTER_BIN" test --no-pub --reporter=compact
+  fi
 else
   echo "== Validate source =="
   echo "Skipping tests because SKIP_TESTS=1"

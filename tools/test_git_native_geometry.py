@@ -9,10 +9,73 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from application_close_smoke import Desktop
-from git_native_desktop import configure_native_text_dpi, geometry, require_installed_busyfiles
+from git_native_desktop import configure_native_text_dpi, geometry, require_installed_busyfiles, owned_accessible_nodes, native_launch_arguments, git_fixture_state
 
 
 class NativeGeometryTest(unittest.TestCase):
+    def test_native_evidence_detects_changed_bytes_even_when_status_is_unchanged(self):
+        executable = Path(os.environ.get('BUSYSTACK_TEST_GIT_256', str(
+            Path(__file__).resolve().parents[1]/'build/linux/x64/debug/bundle/libexec/git-runtime/bin/git')))
+        self.assertTrue(executable.is_file(), 'Build the approved controlled Git runtime first')
+        with tempfile.TemporaryDirectory(prefix='bsg-native-bytes-') as temporary:
+            repo = Path(temporary)
+            env = dict(os.environ, GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null')
+            def run(*args):
+                subprocess.run([str(executable), '-C', str(repo), *args], env=env,
+                               check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            run('init', '-b', 'main')
+            (repo/'tracked.md').write_text('base')
+            run('add', '.')
+            run('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+                '-c', 'commit.gpgSign=false', 'commit', '-m', 'Fixture')
+            (repo/'tracked.md').write_text('first dirty bytes')
+            first = git_fixture_state(executable, repo)
+            (repo/'tracked.md').write_text('different dirty bytes')
+            second = git_fixture_state(executable, repo)
+            self.assertEqual(first['status'], second['status'])
+            self.assertEqual(first['indexSHA256'], second['indexSHA256'])
+            self.assertNotEqual(first['gitVisibleWorkingFiles'], second['gitVisibleWorkingFiles'])
+            run('add', '.')
+            third = git_fixture_state(executable, repo)
+            self.assertNotEqual(second['indexSHA256'], third['indexSHA256'])
+
+    def test_snap_launch_preserves_confinement_and_passes_profile_values_as_argv(self):
+        binary = Path('/snap/busymark/99999/busymark')
+        env = {'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-bsg-native-owned',
+               'XDG_DATA_HOME': '/tmp/owned data',
+               'XDG_CONFIG_HOME': '/tmp/owned config/$(must-remain-literal)',
+               'XDG_RUNTIME_DIR': '/tmp/owned runtime'}
+        command = native_launch_arguments(binary, Path('/tmp/fixture'), env, 'busymark')
+        self.assertEqual(command[:4], ['snap', 'run', '--shell', 'busymark'])
+        self.assertIn('XDG_CONFIG_HOME='+env['XDG_CONFIG_HOME'], command)
+        self.assertNotIn(env['XDG_CONFIG_HOME'], command[5])
+        self.assertEqual(command[-2:], [str(binary), '/tmp/fixture'])
+        for candidate, app, address in [
+            (Path('/tmp/extracted/busymark'), 'busymark', env['DBUS_SESSION_BUS_ADDRESS']),
+            (binary, 'other-app', env['DBUS_SESSION_BUS_ADDRESS']),
+            (binary, 'busymark', 'unix:path=/run/user/1000/bus'),
+        ]:
+            with self.assertRaises(RuntimeError):
+                native_launch_arguments(candidate, Path('/tmp/fixture'),
+                                        dict(env, DBUS_SESSION_BUS_ADDRESS=address), app)
+
+    def test_accessibility_inspection_never_reads_another_applications_tree(self):
+        class Peer:
+            def __init__(self, pid, children=()):
+                self.pid, self.children = pid, children
+            def get_process_id(self): return self.pid
+            def get_child_count(self):
+                if self.pid == 2: raise AssertionError('Inspected unrelated application')
+                return len(self.children)
+            def get_child_at_index(self, index): return self.children[index]
+            def clear_cache(self):
+                if self.pid == 2: raise AssertionError('Inspected unrelated application')
+        owned = Peer(1, [Peer(1)])
+        root = Peer(0, [Peer(2), owned])
+        self.assertEqual(owned_accessible_nodes(root, 1), [owned, owned.children[0]])
+        with self.assertRaisesRegex(RuntimeError, 'no AT-SPI'):
+            owned_accessible_nodes(root, 3)
+
     def test_installed_acceptance_rejects_relocated_payload_or_runtime_overrides(self):
         binary = Path('/usr/lib/busyfiles/busyfiles')
         receipt = {'provenance': {'installedRoot': '/'}}

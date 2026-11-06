@@ -38,6 +38,99 @@ def require_installed_busyfiles(binary, compiled, env):
         raise RuntimeError('Installed acceptance cannot override native library or daemon paths')
 
 
+def owned_accessible_nodes(desktop, pid):
+    """Inspect only accessibility peers belonging to the launched application."""
+    roots = [desktop.get_child_at_index(i) for i in range(desktop.get_child_count())]
+    pending = [(node, 0) for node in roots if node.get_process_id() == pid]
+    result = []
+    while pending:
+        node, depth = pending.pop()
+        if len(result) >= 5000:
+            raise RuntimeError('Owned accessibility tree exceeded the inspection bound')
+        node.clear_cache()
+        result.append(node)
+        if depth < 30:
+            pending.extend((node.get_child_at_index(i), depth + 1)
+                           for i in range(min(node.get_child_count(), 500)))
+    if not result:
+        raise RuntimeError('Owned application has no AT-SPI accessibility peer')
+    return result
+
+
+def native_launch_arguments(binary, repository, env, snap_app=None):
+    binary, repository = Path(binary).resolve(), Path(repository).resolve()
+    if snap_app is None:
+        return [str(binary), str(repository)]
+    if snap_app != 'busymark' or not binary.is_relative_to('/snap/busymark') or binary.name != 'busymark':
+        raise RuntimeError('Snap acceptance requires the installed BusyMark payload')
+    if not env.get('DBUS_SESSION_BUS_ADDRESS', '').startswith('unix:abstract=/tmp/dbus-bsg-native-'):
+        raise RuntimeError('Snap acceptance requires the owned private abstract session bus')
+    # snap run --shell retains confinement and executes the normal command-chain.
+    # Set only the isolated profile/display after its metadata XDG overrides.
+    # Values are argv entries, never interpolated into shell source.
+    keys = ['XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME',
+            'XDG_RUNTIME_DIR', 'DISPLAY', 'DBUS_SESSION_BUS_ADDRESS', 'GDK_BACKEND',
+            'GSETTINGS_BACKEND', 'GTK_THEME', 'NO_AT_BRIDGE', 'GTK_MODULES',
+            'GNOME_KEYRING_CONTROL']
+    values = [key+'='+env[key] for key in keys if key in env]
+    values.append('BUSYMARK_SPELLING_INSTALL_ROOT='+str(Path(env['XDG_DATA_HOME'])/'spelling'))
+    return ['snap', 'run', '--shell', 'busymark', '-c',
+            'exec env -u WAYLAND_DISPLAY -u SSH_AUTH_SOCK -u BUSYSTACK_GIT_EXECUTABLE -u BUSYSTACK_GIT_HELPER_PATH -- "$@"', 'busystack-native-acceptance',
+            *values, str(binary), str(repository)]
+
+
+def git_fixture_state(executable, repository):
+    """Read exact Git-visible bytes without refreshing or changing the index."""
+    env = dict(os.environ, GIT_OPTIONAL_LOCKS='0')
+    for key in ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE']:
+        env.pop(key, None)
+    prefix = [str(executable), '--no-optional-locks', '-C', str(repository)]
+    def read(*args):
+        return subprocess.check_output(prefix+list(args), env=env)
+    refs = subprocess.run(prefix+['show-ref'], env=env, capture_output=True)
+    if refs.returncode not in [0, 1]:
+        refs.check_returncode()
+    index = Path(os.fsdecode(read('rev-parse', '--path-format=absolute', '--git-path', 'index')).strip())
+    files = {}
+    paths = read('ls-files', '--cached', '--others', '--exclude-standard', '-z')
+    for raw in sorted(set(p for p in paths.split(b'\0') if p)):
+        name = os.fsdecode(raw)
+        path = Path(repository)/name
+        if path.is_symlink():
+            data, kind = os.fsencode(os.readlink(path)), 'symlink'
+        elif path.is_file():
+            data, kind = path.read_bytes(), 'file'
+        else:
+            files[name] = {'kind': 'directory/gitlink' if path.is_dir() else 'absent'}
+            continue
+        files[name] = {'kind': kind, 'sha256': hashlib.sha256(data).hexdigest(),
+                       'mode': oct(path.lstat().st_mode & 0o7777)}
+    return {'status': read('status', '--porcelain=v1').decode(),
+            'references': refs.stdout.decode(),
+            'indexSHA256': hashlib.sha256(index.read_bytes()).hexdigest() if index.is_file() else None,
+            'gitVisibleWorkingFiles': files}
+
+
+def plain_directory_state(executable, repository):
+    env = dict(os.environ, LC_ALL='C', GIT_OPTIONAL_LOCKS='0')
+    for key in ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE']:
+        env.pop(key, None)
+    probe = subprocess.run([str(executable), '--no-optional-locks', '-C', str(repository),
+                            'rev-parse', '--git-dir'], capture_output=True, text=True, env=env)
+    if probe.returncode != 128 or 'not a git repository' not in probe.stderr:
+        raise RuntimeError('Plain-directory acceptance requires a real non-repository fixture')
+    files = {}
+    for path in sorted(Path(repository).rglob('*')):
+        if path.is_symlink():
+            data = os.fsencode(os.readlink(path))
+        elif path.is_file():
+            data = path.read_bytes()
+        else:
+            continue
+        files[str(path.relative_to(repository))] = hashlib.sha256(data).hexdigest()
+    return {'kind': 'plain directory', 'files': files}
+
+
 def configure_native_text_dpi(env, text_scale):
     # GSettings feeds Flutter's settings portal. GTK's X11 menus additionally
     # consume Xft DPI; an isolated Xvfb has no desktop XSettings publisher.
@@ -92,19 +185,36 @@ def main():
     if native_host not in {'busymark', 'busyfiles'}:
         raise RuntimeError('Unsupported native acceptance host')
     verify(compiled, binary.resolve())
+    # Establish the read-only baseline before starting any native resources or
+    # the application. A failed fixture check therefore cannot leak processes.
+    plain_directory = os.environ.get('BUSYSTACK_NATIVE_PLAIN_DIRECTORY') == '1'
+    state_reader = plain_directory_state if plain_directory else git_fixture_state
+    def fixture_state():
+        return state_reader(binary.parent/'libexec/git-runtime/bin/git', repository)
+    initial_repository = fixture_state()
     output.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
+    snap_app = env.get('BUSYSTACK_NATIVE_SNAP_APP')
+    import tempfile
+    if snap_app is not None:
+        if snap_app != 'busymark' or native_host != 'busymark':
+            raise RuntimeError('Unsupported installed Snap host')
+        parent = Path.home() / 'snap/busymark/common'
+        parent.mkdir(parents=True, exist_ok=True)
+        private_runtime = tempfile.TemporaryDirectory(prefix='bsg-native-', dir=parent)
+        profile = Path(private_runtime.name)
+        for key in ['BASH_ENV', 'ENV', 'BUSYSTACK_GIT_EXECUTABLE', 'BUSYSTACK_GIT_HELPER_PATH']:
+            env.pop(key, None)
+    else:
+        private_runtime = tempfile.TemporaryDirectory(prefix='bsg-native-')
+        profile = output
     for key in ['XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME', 'XDG_RUNTIME_DIR']:
-        directory = output / key.lower()
+        directory = profile / key.lower()
         directory.mkdir(exist_ok=True, mode=0o700)
         env[key] = str(directory.resolve())
-    import tempfile
-    private_runtime = tempfile.TemporaryDirectory(prefix='bsg-native-')
     def cleanup_runtime():
-        # Only these mounts can have been created beneath this invocation's
-        # private runtime. Activated portal/GVfs services may outlive the UI.
-        # Unmount them through the supported owner interface before removing
-        # the directory; never touch the user's desktop mounts.
+        # Unmount only this invocation's own portal/GVfs mounts, then discard
+        # its private profile. Never remove another Snap profile or user mount.
         for name in ['doc', 'gvfs']:
             mount = Path(private_runtime.name) / name
             if os.path.ismount(mount):
@@ -120,9 +230,13 @@ def main():
     xvfb = subprocess.Popen(['Xvfb', '-displayfd', '1', '-noreset', '-screen', '0', '1600x1100x24', '-nolisten', 'tcp'], stdout=subprocess.PIPE, stderr=(output / 'xvfb.log').open('w'))
     env['DISPLAY'] = ':' + xvfb.stdout.readline().decode().strip()
     env['GDK_BACKEND'] = 'x11'
+    # Actual Git accessibility acceptance uses the supported GTK bridge on this
+    # private bus. Never disable accessibility to obtain a screenshot pass.
+    env['NO_AT_BRIDGE'] = '0'
+    env['GTK_MODULES'] = 'gail:atk-bridge'
     env['GSETTINGS_BACKEND'] = 'keyfile'
     env.pop('WAYLAND_DISPLAY', None)
-    if not env.get('DBUS_SESSION_BUS_ADDRESS', '').startswith('unix:path=/tmp/'):
+    if not env.get('DBUS_SESSION_BUS_ADDRESS', '').startswith(('unix:path=/tmp/', 'unix:abstract=/tmp/dbus-bsg-native-')):
         raise RuntimeError('Run inside a dedicated dbus-run-session')
     control = Path(private_runtime.name) / 'keyring'
     control.mkdir(mode=0o700)
@@ -226,7 +340,16 @@ def main():
                               'stdout': daemon_log, 'stderr': subprocess.STDOUT})
             daemon = start_daemon()
             daemon_identity['pid'] = daemon.pid
-        process = subprocess.Popen([str(binary.resolve()), str(repository.resolve())], env=env,
+        launch_arguments = native_launch_arguments(binary, repository, env, snap_app)
+        launch_environment = env
+        if snap_app is not None:
+            desktop_bus = env.get('BUSYSTACK_NATIVE_SNAP_LAUNCH_BUS', '')
+            desktop_runtime = env.get('BUSYSTACK_NATIVE_SNAP_LAUNCH_RUNTIME', '')
+            if not desktop_bus.startswith('unix:path=/run/user/') or not desktop_runtime.startswith('/run/user/'):
+                raise RuntimeError('Snap launcher requires the actual desktop session for its systemd scope')
+            launch_environment = dict(env, DBUS_SESSION_BUS_ADDRESS=desktop_bus,
+                                      XDG_RUNTIME_DIR=desktop_runtime)
+        process = subprocess.Popen(launch_arguments, env=launch_environment,
                                    stdout=(output / 'application.log').open('w'), stderr=subprocess.STDOUT)
     except BaseException:
         if daemon is not None and daemon.poll() is None:
@@ -234,26 +357,15 @@ def main():
         desktop.dispose(); xvfb.terminate(); xvfb.wait(timeout=10)
         cleanup_runtime()
         raise
-    def git(*arguments):
-        return subprocess.check_output([str(binary.parent / 'libexec/git-runtime/bin/git'), '-C', str(repository), *arguments], text=True)
-    plain_directory = env.get('BUSYSTACK_NATIVE_PLAIN_DIRECTORY') == '1'
-    def fixture_state():
-        if not plain_directory:
-            return {'status': git('status', '--porcelain=v1'), 'references': git('show-ref')}
-        probe = subprocess.run([str(binary.parent/'libexec/git-runtime/bin/git'), '-C', str(repository),
-                                'rev-parse', '--git-dir'], capture_output=True, text=True,
-                               env=dict(env, LC_ALL='C'))
-        if probe.returncode != 128 or 'not a git repository' not in probe.stderr:
-            raise RuntimeError('Plain-directory acceptance requires a real non-repository fixture')
-        return {'kind': 'plain directory', 'files': {
-            str(p.relative_to(repository)): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted(repository.rglob('*')) if p.is_file()}}
-    initial_repository = fixture_state()
     receipt = {'backend': 'X11/Xvfb', 'display': env['DISPLAY'], 'displaySize': [1600, 1100], 'textScale': text_scale,
                'repository': str(repository.resolve()),
                'binarySHA256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'captures': [],
                'compiledSources': compiled, 'sources': {}}
     receipt['nativeLibrarySearchPath'] = env.get('LD_LIBRARY_PATH', '')
+    receipt['accessibilityEnvironment'] = {key: env[key] for key in ['NO_AT_BRIDGE', 'GTK_MODULES']}
+    receipt['launchArguments'] = launch_arguments
+    receipt['isolatedProfile'] = str(profile)
+    receipt['snapApp'] = snap_app
     if native_host == 'busyfiles':
         receipt['runtimeLayout'] = (
             'system-installed DEB' if binary.resolve() == Path('/usr/lib/busyfiles/busyfiles')
@@ -310,6 +422,25 @@ def main():
         receipt['engine'] = {'mapped': str(engine), 'sha256': actual_hash, 'officialSDKArtifact': str(expected_engine), 'matches': actual_hash == expected_hash}
         if actual_hash != expected_hash:
             raise RuntimeError('Mapped engine does not match the official SDK artifact')
+        if snap_app is not None:
+            actual_executable = Path('/proc') / str(process.pid) / 'exe'
+            if actual_executable.resolve() != binary.resolve():
+                raise RuntimeError('Installed Snap launcher executed a different payload')
+            label = (Path('/proc') / str(process.pid) / 'attr/current').read_text().strip()
+            receipt['confinementLabel'] = label
+            if label != 'snap.busymark.busymark (enforce)':
+                raise RuntimeError('Installed Snap acceptance requires its enforced confinement')
+            fields = {}
+            for entry in (Path('/proc') / str(process.pid) / 'environ').read_bytes().split(b'\0'):
+                key, _, value = entry.partition(b'=')
+                if key.decode(errors='replace') in ['XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME', 'XDG_RUNTIME_DIR', 'DISPLAY', 'DBUS_SESSION_BUS_ADDRESS']:
+                    fields[key.decode()] = value.decode()
+            for key, value in fields.items():
+                if value != env[key]:
+                    raise RuntimeError('Installed Snap did not retain the isolated profile/display: '+key)
+            if len(fields) != 7:
+                raise RuntimeError('Cannot verify the installed Snap profile/display')
+            receipt['verifiedApplicationProfile'] = fields
         setting = subprocess.run(['gdbus', 'call', '--session', '--dest', 'org.freedesktop.portal.Desktop',
             '--object-path', '/org/freedesktop/portal/desktop', '--method', 'org.freedesktop.portal.Settings.Read',
             'org.gnome.desktop.interface', 'text-scaling-factor'], env=env, capture_output=True, text=True, timeout=10)
@@ -370,6 +501,38 @@ def main():
                         time.sleep(1)
                 receipt['captures'].append({'name': command['name'], 'windowSize': geometry(desktop, window), 'scale': window.get_scale_factor()})
                 (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
+            elif kind in {'accessibility', 'activateAccessible'}:
+                gi.require_version('Atspi', '2.0')
+                from gi.repository import Atspi
+                Atspi.set_timeout(5000, 10000)
+                nodes = owned_accessible_nodes(Atspi.get_desktop(0), process.pid)
+                rows = []
+                matches = []
+                for node in nodes:
+                    states = node.get_state_set()
+                    visible = states.contains(Atspi.StateType.SHOWING) and states.contains(Atspi.StateType.VISIBLE)
+                    name = node.get_name()
+                    role = Atspi.role_get_name(node.get_role())
+                    enabled = states.contains(Atspi.StateType.ENABLED)
+                    row = {'name': name, 'role': role, 'showing': visible, 'enabled': enabled,
+                           'focused': states.contains(Atspi.StateType.FOCUSED),
+                           'selected': states.contains(Atspi.StateType.SELECTED),
+                           'checked': states.contains(Atspi.StateType.CHECKED)}
+                    if visible and name:
+                        rows.append(row)
+                    if visible and enabled and name == command.get('name') and (
+                            command.get('role') is None or role == command['role']):
+                        matches.append(node)
+                if kind == 'accessibility':
+                    target = output / (command['name'] + '-accessibility.json')
+                    target.write_text(json.dumps({'pid': process.pid, 'nodes': rows}, indent=2)+'\n')
+                    print(json.dumps({'accessibility': str(target), 'visibleNamedNodes': len(rows)}), flush=True)
+                else:
+                    if len(matches) != 1:
+                        raise RuntimeError('Accessible action must resolve exactly one owned visible enabled node')
+                    actions = matches[0].get_action_iface()
+                    if actions is None or actions.get_n_actions() < 1 or not actions.do_action(0):
+                        raise RuntimeError('Owned accessible action was not accepted')
             elif kind in {'daemonStop', 'daemonRestart'}:
                 if daemon is None or daemon.poll() is not None:
                     raise ValueError('This host has no running owned daemon')

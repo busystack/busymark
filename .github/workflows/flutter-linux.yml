@@ -140,11 +140,15 @@ jobs:
             --host-source ../busymark/lib/src/app/busymark_design.dart \
             --host-root BusyMarkGitPresentation \
             --host-root BusyMarkGitDialogShell
-          (cd ../busymark/tools/git_ui_audit && dart pub get --offline --enforce-lockfile && dart run bin/check.dart --self-test && dart run bin/check.dart)
+          (cd ../busymark/tools/git_ui_audit && dart pub get --offline --enforce-lockfile && dart run bin/check.dart --self-test && dart run bin/check.dart && dart run bin/check_sidebar.dart --self-test && dart run bin/check_sidebar.dart)
           flutter test
           cmake -S linux/native -B "$RUNNER_TEMP/git-accessibility" -G Ninja
           cmake --build "$RUNNER_TEMP/git-accessibility"
           dbus-run-session -- xvfb-run -a ctest --test-dir "$RUNNER_TEMP/git-accessibility" --output-on-failure
+
+      - name: Test native artifact and full-corpus qualification
+        if: ${{ !cancelled() && steps.flutter-packages.outcome == 'success' }}
+        run: python3 -m unittest tools/test_git_native_build_receipt.py tools/test_verify_flutter_test_corpus.py
 
       - name: Test production GTK accent lookup and observer
         if: ${{ !cancelled() && steps.linux-dependencies.outcome == 'success' }}

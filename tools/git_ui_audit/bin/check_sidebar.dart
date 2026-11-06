@@ -305,11 +305,13 @@ Future<void> main(List<String> args) async {
       '${shared.path}/lib/src/$file.dart',
   ];
   final errors = <String>[];
+  // Non-Git row geometry does not own deferred application feedback. Every
+  // Git root and GitHost.notify retain the full rendering/service audit.
   final chain = await native.auditFirstPartyPresentationChain(design, [
     'BusyMarkSidebarTreeRow',
     'BusyMarkSidebarRecordRow',
     'BusyMarkSidebarRowSurface',
-  ]);
+  ], scope: native.FirstPartyPresentationScope.sidebarGeometry);
   errors.addAll(chain.map((v) => '$v'));
   final collection = AnalysisContextCollection(includedPaths: paths);
   try {

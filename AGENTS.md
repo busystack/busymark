@@ -27,3 +27,8 @@ Git workflow notifications are shared presentation: both hosts forward localized
 messages and lifetime guards to `showGitNotification`; do not build a host-owned
 Git toast/snackbar. The resolved native audit follows `GitHost.notify` into
 helpers and stateful rendering, with adversarial callback ownership tests.
+
+Artifact qualification and private installed-app acceptance are documented in
+`docs/git-ui-acceptance.md`. A completed full-corpus receipt may be verified by
+the local packaging helper; never accept changed inputs, missing/filtered tests,
+skipped/failed cases or changed logs. This does not waive any native gate.
