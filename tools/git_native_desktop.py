@@ -185,6 +185,10 @@ def main():
                 elif kind != 'move':
                     for state in ([1, 0] if kind == 'click' else [1] if kind == 'press' else [0]):
                         xtest.XTestFakeButtonEvent(desktop.display, command.get('button', 1), state, 0)
+                        if kind == 'click' and state == 1:
+                            # Give GTK distinct native press/release events.
+                            x.XFlush(desktop.display)
+                            time.sleep(.08)
             elif kind == 'key':
                 codes = [x.XKeysymToKeycode(desktop.display, x.XStringToKeysym(s.encode())) for s in command['names']]
                 if not all(codes):
