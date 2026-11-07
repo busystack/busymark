@@ -260,6 +260,11 @@ void main() {
     );
   }
   historyPresentationContract(
+    referenceAction: (focus, onPressed) => BusyMarkPushButton.standard(
+      focusNode: focus,
+      onPressed: onPressed,
+      child: const Text('Approved secondary'),
+    ),
     mount: (tester, child, brightness) async {
       await tester.pumpWidget(
         _nativeGitHarness(
