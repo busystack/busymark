@@ -1,5 +1,12 @@
 # Sidebar consistency: interaction inventory and acceptance
 
+The 2026-11-06 one-Git-UI decision supersedes the earlier host-specific Git
+presentation choices recorded here. Both hosts now use the shared Git sidebar,
+review, contextual rows and native notification surfaces. See the current
+[ownership/action map](../../../busystack_git_flutter/docs/one-git-ui.md) and
+[artifact-bound acceptance](../git-ui-acceptance.md). The historical baseline and
+the unrelated Files/TOC/Outline/history contracts below remain relevant.
+
 The 2026-11-03 baseline is BusyMark d6e9668, shared Git UI d1978b2,
 BusyFiles f6108c3 and engine 7d8e55d. All four working trees were clean.
 Original affected sources are retained under build/sidebar-ui/before.
@@ -26,9 +33,9 @@ contract must be preserved. Only redundant entry action triggers are removed.
 The historical Git modal retains graph, filters, reference navigation, explicit
 confirmation/cancellation and contextual Git operations. Its previous dense-field,
 prefix, palette and obsolete-details corrections are present in this baseline;
-entry action placement is the remaining shared-host difference to correct.
-BusyFiles keeps its existing row actions, daemon boundary and navigation. A
-required host presentation policy will express its native difference explicitly.
+entry action placement was a shared-host difference in that historical baseline.
+The current shared presentation requires contextual entry actions in both hosts.
+BusyFiles retains its authenticated daemon boundary and browser navigation.
 
 ## Official guidance consulted
 
@@ -75,13 +82,13 @@ selected record; arrow/Enter/Delete routing remains owned by the collection.
 | TOC | Files disclosure spacing and indentation; no topic trigger; original instance selector and all reviewed multi-topic/reordering actions preserved |
 | Outline | Same tree surface and geometry, heading badge/navigation preserved; no heading trigger; document Actions remains |
 | Commit | Files outer inset and depth geometry; no group/directory/file plus/minus controls; existing staging actions remain contextual; compact neutral branch context opens full Branches modal |
-| Git Log | Files geometry from depth zero; no historical-file or reference entry trigger; neutral commit subject/hash context opens full selector; parent controls use secondary metadata rows |
+| Git Log | Shared Files geometry from depth zero; no historical-file or reference entry trigger; informational neutral subject, dedicated graph selector beside Actions; parent controls use secondary metadata rows |
 | Local History | Compact single-line timestamps or genuine secondary event text, shared row interactions; date headings, document context and view Actions preserved |
 | Clipboard History | Shared compact record surface with bounded useful preview/metadata; no trigger; same exact contextual operations, double activation and collection keyboard behavior |
 
-Shared Git's required `entryActionPlacement` makes the host difference explicit.
-BusyFiles retains trailing native controls; BusyMark uses native entry context
-menus. Both hosts forward secondary activation and reject it for disabled rows.
+Shared Git's required `entryActionPlacement` is contextual in both hosts.
+The common Linux presenter owns row geometry and interaction; hosts bridge their
+native menu services. Both forward secondary activation and reject it for disabled rows.
 Commit's deferred menu action now rechecks session/snapshot/index identity before
 using its reviewed targets. No Git engine source or operation is removed.
 
@@ -89,10 +96,10 @@ The earlier Git selector/diff changes are present at this task's baseline:
 dense fields/adornments, compact reference rows, measured filter toolbar,
 explicit selection/cancellation, removal of the expanded details route, and
 semantic translucent line/word treatments. They remain subject to graphical
-acceptance. BusyFiles' Git feedback uses its established `busyFilesMessage`
-in-window control, as do its non-Git browser flows. Its daemon's background
-operation notifications have different semantics; neither mechanism is replaced.
-BusyMark feedback continues using BusyMarkToastOverlay.
+acceptance. Both hosts forward Git feedback to the shared `showGitNotification`
+surface, including its queue and lifetime guards. BusyFiles' non-Git browser
+messages and daemon background-operation notifications remain host-owned.
+BusyMark's non-Git feedback retains BusyMarkToastOverlay.
 
 ## Regression protection and evidence
 
