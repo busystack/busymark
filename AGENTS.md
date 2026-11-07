@@ -32,3 +32,7 @@ Artifact qualification and private installed-app acceptance are documented in
 `docs/git-ui-acceptance.md`. A completed full-corpus receipt may be verified by
 the local packaging helper; never accept changed inputs, missing/filtered tests,
 skipped/failed cases or changed logs. This does not waive any native gate.
+
+Closing the last authoring document activates a surviving captured Git
+comparison when no document, Local History view or comparison is active.
+Never select or retarget a comparison created during the close confirmation.

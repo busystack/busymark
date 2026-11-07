@@ -109,3 +109,9 @@ present. A kernel asset alone cannot identify an AOT bundle as debug. Missing
 application artifacts fail closed. This classification never replaces the
 mapped-library hash check against the exact official SDK artifact or the
 sealed whole-payload verification.
+
+Closing the last authoring document must leave an existing comparison visible
+when it is the only remaining content. The host tab coordinator activates a
+captured surviving review only when all remaining tabs are inactive comparisons
+and their identities still match the close request. Cancel preserves the dirty
+document; a newly selected comparison during confirmation stays selected.

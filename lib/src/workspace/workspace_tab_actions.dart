@@ -270,6 +270,22 @@ Future<bool> _closeTabs(
       }
       git.deactivateDiffFile();
     }
+    final remaining = _tabs(ref, ref.read(workspaceControllerProvider));
+    if (remaining.isNotEmpty &&
+        remaining.every(
+          (tab) => tab.kind == WorkspaceTabKind.gitDiff && !tab.active,
+        ) &&
+        remaining.every(
+          (tab) => tabs.any(
+            (captured) =>
+                captured.key == tab.key &&
+                identical(captured.review, tab.review),
+          ),
+        )) {
+      ref
+          .read(sharedGitReviewProvider.notifier)
+          .activate(workspace.id, remaining.first.comparisonId!);
+    }
     return true;
   } finally {
     _closing[controller] = false;

@@ -1516,6 +1516,86 @@ void main() {
     return (ref: ref, controller: controller, result: () => result);
   }
 
+  for (final openDuringConfirmation in [false, true]) {
+    testWidgets(
+      'closing the last document activates its surviving shared comparison; newer=$openDuringConfirmation',
+      (tester) async {
+        final service = _IdentityWorkspaceService();
+        final targets = <String>{};
+        final h = await closeHarness(
+          tester,
+          service,
+          targets,
+          operation: 'one',
+        );
+        var state = h.ref.read(workspaceControllerProvider);
+        final first = state.activeBufferId!;
+        await h.controller.closeDocumentBuffer(
+          state.documentBuffers.singleWhere((b) => b.id != first).id,
+        );
+        state = h.ref.read(workspaceControllerProvider);
+        final workspace = state.workspace!;
+        final review = SharedGitReview(
+          shared.RepositoryId(
+            root: service.rootPath,
+            gitDir: '${service.rootPath}/.git',
+            commonDir: '${service.rootPath}/.git',
+            objectFormat: 'sha1',
+          ),
+          comparison: shared.GitComparison(
+            shared.RepoPath.text('comparison.md'),
+            const shared.ContentVersion.index(),
+            const shared.ContentVersion.working(),
+          ),
+        );
+        final tabs = h.ref.read(sharedGitReviewProvider.notifier);
+        tabs.open(workspace.id, review);
+        tabs.deactivate(workspace.id);
+        h.controller.updateActiveText('# Unsaved document\n');
+        targets.add(first);
+
+        await tester.tap(find.text('Close targets'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.cancel));
+        await tester.pumpAndSettle();
+        expect(h.result(), isFalse);
+        expect(h.ref.read(workspaceControllerProvider).activeBufferId, first);
+        expect(
+          h.ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+          isTrue,
+        );
+        expect(h.ref.read(sharedGitReviewProvider)[workspace.id]!.entries, [
+          review,
+        ]);
+
+        await tester.tap(find.text('Close targets'));
+        await tester.pumpAndSettle();
+        SharedGitReview? newer;
+        if (openDuringConfirmation) {
+          newer = SharedGitReview(
+            review.repository,
+            comparison: shared.GitComparison(
+              shared.RepoPath.text('newer-comparison.md'),
+              const shared.ContentVersion.index(),
+              const shared.ContentVersion.working(),
+            ),
+          );
+          tabs.open(workspace.id, newer);
+        }
+        await tester.tap(find.text(l10n.discard));
+        await tester.pumpAndSettle();
+        expect(h.result(), isTrue);
+        expect(
+          h.ref.read(workspaceControllerProvider).documentBuffers,
+          isEmpty,
+        );
+        final remaining = h.ref.read(sharedGitReviewProvider)[workspace.id]!;
+        expect(remaining.entries, [review, if (newer != null) newer]);
+        expect(remaining.active, same(newer ?? review));
+      },
+    );
+  }
+
   for (final choice in ['Cancel', 'Save', 'Discard']) {
     testWidgets(
       'ID scoped confirmation combines dirty targets and excludes retained draft on $choice',
