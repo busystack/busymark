@@ -657,10 +657,24 @@ void main() {
           tester.widget<BusyMarkGitActionButton>(disabledAction).onPressed,
           isNull,
         );
+        final focusBeforePointer = FocusManager.instance.primaryFocus;
         await tester.tap(primaryAction);
         await tester.pump();
         expect(primaryCalls, 1);
-        expect(FocusManager.instance.primaryFocus?.debugLabel, 'Git action');
+        expect(FocusManager.instance.primaryFocus, same(focusBeforePointer));
+        final primaryFocus = tester
+            .widget<FocusableActionDetector>(
+              find.descendant(
+                of: primaryAction,
+                matching: find.byType(FocusableActionDetector),
+              ),
+            )
+            .focusNode!;
+        for (var step = 0; step < 20 && !primaryFocus.hasFocus; step++) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pump();
+        }
+        expect(primaryFocus.hasFocus, isTrue);
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pump();
         expect(primaryCalls, 2);
