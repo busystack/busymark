@@ -66,6 +66,18 @@ def payloads(binary):
     return {str(p.relative_to(binary.parent)): sha(p) for p in sorted(candidates) if p.is_file()}
 
 
+def engine_artifact(binary):
+    # The pinned public FlDartProject contract identifies AOT applications by
+    # lib/libapp.so. A release asset directory may also contain kernel_blob.bin;
+    # its presence does not turn the AOT application into a JIT application.
+    # The caller still hashes the mapped engine against this exact SDK flavor.
+    if (binary.parent/'lib/libapp.so').is_file():
+        return 'linux-x64-release'
+    if (binary.parent/'data/flutter_assets/kernel_blob.bin').is_file():
+        return 'linux-x64'
+    raise RuntimeError('Missing producer-bound Flutter application artifacts')
+
+
 def verify(receipt, binary, workspace=None):
     if not receipt.get('sealed') or receipt['payloads'] != payloads(binary):
         raise RuntimeError('Binary payload differs from the sealed build receipt')

@@ -102,3 +102,10 @@ and rejects the retired host Git menu orchestration. Its adversarial checks
 include aliased shared imports, missing mounts and a revived host menu. Audit
 updates must follow the current ownership boundary rather than demand deleted
 host rendering functions.
+
+Native SDK flavor verification follows the pinned public FlDartProject AOT
+library contract (`lib/libapp.so`), then the JIT kernel when no AOT library is
+present. A kernel asset alone cannot identify an AOT bundle as debug. Missing
+application artifacts fail closed. This classification never replaces the
+mapped-library hash check against the exact official SDK artifact or the
+sealed whole-payload verification.

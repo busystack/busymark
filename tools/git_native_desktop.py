@@ -15,7 +15,7 @@ import time
 from PIL import Image
 
 from application_close_smoke import Desktop, WindowAttributes
-from git_native_build_receipt import verify
+from git_native_build_receipt import engine_artifact, verify
 
 
 class XImage(C.Structure):
@@ -439,7 +439,7 @@ def main():
         if len(mapped) != 1:
             raise RuntimeError('Expected exactly one mapped official Flutter engine')
         engine = Path(mapped.pop())
-        mode = 'linux-x64' if (binary.parent/'data/flutter_assets/kernel_blob.bin').exists() else 'linux-x64-release'
+        mode = engine_artifact(binary)
         sdk = Path(subprocess.check_output(['which', 'flutter'], text=True).strip()).resolve().parent.parent
         expected_engine = sdk / 'bin/cache/artifacts/engine' / mode / 'libflutter_linux_gtk.so'
         actual_hash = hashlib.sha256(engine.read_bytes()).hexdigest()

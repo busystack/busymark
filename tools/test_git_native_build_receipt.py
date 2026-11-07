@@ -1,10 +1,40 @@
 import tempfile
 from pathlib import Path
 import unittest
-from tools.git_native_build_receipt import payloads, sha, sources, verify
+from tools.git_native_build_receipt import engine_artifact, payloads, sha, sources, verify
 
 
 class NativeBuildReceiptTest(unittest.TestCase):
+    def test_aot_library_selects_release_even_with_kernel_asset(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary)/'busymark'
+            for relative in ['lib/libapp.so', 'data/flutter_assets/kernel_blob.bin']:
+                path = binary.parent/relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b'producer-bound app artifact')
+            self.assertEqual(engine_artifact(binary), 'linux-x64-release')
+
+    def test_kernel_without_aot_selects_official_debug_artifact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary)/'busymark'
+            path = binary.parent/'data/flutter_assets/kernel_blob.bin'
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b'producer-bound JIT application')
+            self.assertEqual(engine_artifact(binary), 'linux-x64')
+
+    def test_aot_without_kernel_selects_official_release_artifact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary)/'busymark'
+            path = binary.parent/'lib/libapp.so'
+            path.parent.mkdir()
+            path.write_bytes(b'producer-bound AOT application')
+            self.assertEqual(engine_artifact(binary), 'linux-x64-release')
+
+    def test_missing_application_artifacts_cannot_claim_release_mode(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(RuntimeError, 'application artifacts'):
+                engine_artifact(Path(temporary)/'busymark')
+
     def test_packaged_daemon_outside_ui_bundle_must_still_match(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -34,7 +64,7 @@ class NativeBuildReceiptTest(unittest.TestCase):
             binary = root / 'bundle/busymark'
             binary.parent.mkdir()
             binary.write_bytes(b'owned test payload')
-            extras = [binary.parent/'lib/libnative.so', binary.parent/'data/flutter_assets/font.ttf']
+            extras = [binary.parent/'lib/libnative.so', binary.parent/'lib/libflutter_linux_gtk.so', binary.parent/'data/flutter_assets/font.ttf']
             for extra in extras:
                 extra.parent.mkdir(parents=True, exist_ok=True)
                 extra.write_bytes(b'original native or font payload')
