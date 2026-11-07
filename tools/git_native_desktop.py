@@ -556,6 +556,10 @@ def main():
                     if len(matches) != 1:
                         raise RuntimeError('Accessible action must resolve exactly one owned visible enabled node')
                     actions = matches[0].get_action_iface()
+                    count = actions.get_n_actions() if actions is not None else 0
+                    print(json.dumps({'accessibleAction': command['name'],
+                                      'availableActions': [actions.get_action_name(i)
+                                                           for i in range(count)]}), flush=True)
                     if actions is None or actions.get_n_actions() < 1 or not actions.do_action(0):
                         raise RuntimeError('Owned accessible action was not accepted')
             elif kind in {'daemonStop', 'daemonRestart'}:
