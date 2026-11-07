@@ -539,7 +539,8 @@ def main():
                     name = node.get_name()
                     role = Atspi.role_get_name(node.get_role())
                     enabled = states.contains(Atspi.StateType.ENABLED)
-                    row = {'name': name, 'role': role, 'showing': visible, 'enabled': enabled,
+                    row = {'name': name, 'description': node.get_description(),
+                           'role': role, 'showing': visible, 'enabled': enabled,
                            'focused': states.contains(Atspi.StateType.FOCUSED),
                            'selected': states.contains(Atspi.StateType.SELECTED),
                            'checked': states.contains(Atspi.StateType.CHECKED)}
