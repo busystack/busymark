@@ -1123,134 +1123,6 @@ void _clearGitDetailSelection(WidgetRef ref) {
   }
 }
 
-Future<List<PopupMenuEntry<_GitMenuAction>>> _loadWorkspaceGitMenuItems(
-  BuildContext context,
-  WidgetRef ref,
-  GitRepositoryInfo repository,
-) async {
-  final controller = ref.read(gitControllerProvider.notifier);
-  final branches = await controller.loadBranches();
-  if (!context.mounted) {
-    return const [];
-  }
-  final latestState = ref.read(gitControllerProvider);
-  final latestRepository = latestState.repositoryInfo ?? repository;
-  return _sidebarGitMenuItems(
-    context,
-    latestRepository,
-    branches,
-    selectedView: latestState.selectedView,
-  );
-}
-
-Future<void> _performWorkspaceGitAction(
-  BuildContext context,
-  WidgetRef ref,
-  _GitMenuAction action,
-) async {
-  if (!context.mounted) return;
-  switch (action) {
-    case _SelectGitViewMenuAction(:final view):
-      if (view == GitView.changes) {
-        final workspace = ref.read(workspaceControllerProvider).workspace;
-        if (workspace != null) {
-          ref.read(sharedGitReviewProvider.notifier).deactivate(workspace.id);
-        }
-        await ref
-            .read(gitControllerProvider.notifier)
-            .selectView(GitView.changes);
-      } else if (view == GitView.projectHistory) {
-        ref
-            .read(_sidebarShortcutRequestProvider.notifier)
-            .select(_SidebarTab.gitLog);
-      } else {
-        await showBusyMarkSharedGitAction(
-          context,
-          ref,
-          'fileHistory',
-          absolutePath: ref
-              .read(workspaceControllerProvider)
-              .workspace
-              ?.activeFilePath,
-        );
-      }
-    case _SwitchBranchMenuAction():
-    case _CreateBranchMenuAction():
-      await showBusyMarkSharedGitAction(context, ref, 'branches');
-    case _FetchBranchMenuAction():
-      await showBusyMarkSharedGitAction(context, ref, 'fetch');
-    case _PullBranchMenuAction():
-      await showBusyMarkSharedGitAction(context, ref, 'pull');
-    case _PushBranchMenuAction():
-      await showBusyMarkSharedGitAction(context, ref, 'push');
-  }
-}
-
-List<PopupMenuEntry<_GitMenuAction>> _sidebarGitMenuItems(
-  BuildContext context,
-  GitRepositoryInfo repository,
-  List<GitBranch> branches, {
-  required GitView selectedView,
-}) {
-  return [
-    BusyMarkPopupMenuItem(
-      value: const _SelectGitViewMenuAction(GitView.changes),
-      label: context.l10n.gitChanges,
-      icon: BusyMarkGlyphs.checklist,
-      checked: selectedView == GitView.changes,
-      trailingCheck: true,
-    ),
-    BusyMarkPopupMenuItem(
-      value: const _SelectGitViewMenuAction(GitView.projectHistory),
-      label: context.l10n.gitProjectHistory,
-      icon: BusyMarkGlyphs.history,
-      checked: selectedView == GitView.projectHistory,
-      trailingCheck: true,
-    ),
-    BusyMarkPopupMenuItem(
-      value: const _SelectGitViewMenuAction(GitView.fileHistory),
-      label: context.l10n.gitFileHistory,
-      icon: BusyMarkGlyphs.documentHistory,
-      checked: selectedView == GitView.fileHistory,
-      trailingCheck: true,
-    ),
-    const BusyMarkNativeMenuSeparator<_GitMenuAction>(),
-    BusyMarkPopupMenuItem(
-      value: const _FetchBranchMenuAction(),
-      label: context.l10n.gitFetch,
-      icon: BusyMarkGlyphs.refresh,
-      enabled: repository.hasRemote,
-    ),
-    BusyMarkPopupMenuItem(
-      value: const _PullBranchMenuAction(),
-      label: context.l10n.gitPull,
-      icon: BusyMarkGlyphs.pull,
-      enabled: repository.upstreamBranch != null,
-    ),
-    BusyMarkPopupMenuItem(
-      value: const _PushBranchMenuAction(),
-      label: context.l10n.gitPush,
-      icon: BusyMarkGlyphs.push,
-      enabled: repository.hasRemote,
-    ),
-    const BusyMarkNativeMenuSeparator<_GitMenuAction>(),
-    BusyMarkPopupMenuItem(
-      value: const _CreateBranchMenuAction(),
-      label: context.l10n.gitNewBranch,
-      icon: BusyMarkGlyphs.add,
-    ),
-    const BusyMarkNativeMenuSeparator<_GitMenuAction>(),
-    for (final branch in branches)
-      BusyMarkPopupMenuItem(
-        value: _SwitchBranchMenuAction(branch.name),
-        label: busyMarkLtrIsolateFor(context, branch.name),
-        icon: BusyMarkGlyphs.branch,
-        checked: branch.current,
-        trailingCheck: true,
-      ),
-  ];
-}
-
 Future<void> _showWorkspacePathMenu(
   BuildContext context, {
   required String name,
@@ -1389,38 +1261,6 @@ Future<_PathMenuAction?> _showSidebarPathMenu(
   );
 }
 
-sealed class _GitMenuAction {
-  const _GitMenuAction();
-}
-
-final class _SelectGitViewMenuAction extends _GitMenuAction {
-  const _SelectGitViewMenuAction(this.view);
-
-  final GitView view;
-}
-
-final class _SwitchBranchMenuAction extends _GitMenuAction {
-  const _SwitchBranchMenuAction(this.branchName);
-
-  final String branchName;
-}
-
-final class _CreateBranchMenuAction extends _GitMenuAction {
-  const _CreateBranchMenuAction();
-}
-
-final class _FetchBranchMenuAction extends _GitMenuAction {
-  const _FetchBranchMenuAction();
-}
-
-final class _PullBranchMenuAction extends _GitMenuAction {
-  const _PullBranchMenuAction();
-}
-
-final class _PushBranchMenuAction extends _GitMenuAction {
-  const _PushBranchMenuAction();
-}
-
 class _Sidebar extends ConsumerStatefulWidget {
   const _Sidebar({
     super.key,
@@ -1505,10 +1345,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         _replacementCancellation?.cancel();
       }
     });
-    final gitState = ref.watch(gitControllerProvider);
-    final repositoryInfo = gitState.attachedWorkspace?.id == widget.workspace.id
-        ? gitState.repositoryInfo
-        : null;
     ref.listen(referencePanelRequestProvider, (_, next) {
       _selectTab(_SidebarTab.references, tabs);
     });
@@ -1533,15 +1369,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
               workspace: widget.workspace,
               tabs: tabs,
               selectedTab: selectedTab,
-              repositoryInfo: selectedTab == _SidebarTab.git
-                  ? null
-                  : repositoryInfo,
               showTabMenu: tabs.length > 1,
               onSelectTab: (tab) => _selectTab(tab, tabs),
-              loadGitMenuItems: (menuContext, repository) =>
-                  _loadWorkspaceGitMenuItems(menuContext, ref, repository),
-              onGitAction: (menuContext, action) =>
-                  _performWorkspaceGitAction(menuContext, ref, action),
               onRefineActiveDocument: () =>
                   unawaited(_refineActiveDocumentWithAi(context)),
             ),
@@ -2431,46 +2260,21 @@ String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
   return id == null ? null : commands[id]?.shortcut?.label;
 }
 
-String? _gitBranchLabel(BuildContext context, GitRepositoryInfo? repository) {
-  if (repository == null) {
-    return null;
-  }
-  final branch = repository.currentBranch;
-  if (branch != null) {
-    return busyMarkLtrIsolateFor(context, branch);
-  }
-  final commit = repository.detachedHeadCommit;
-  return commit == null
-      ? context.l10n.gitDetachedHead
-      : context.l10n.gitDetachedHeadAt(commit);
-}
-
 class _SidebarHeader extends ConsumerWidget {
   const _SidebarHeader({
     required this.workspace,
     required this.tabs,
     required this.selectedTab,
-    required this.repositoryInfo,
     required this.showTabMenu,
     required this.onSelectTab,
-    required this.loadGitMenuItems,
-    required this.onGitAction,
     required this.onRefineActiveDocument,
   });
 
   final Workspace workspace;
   final List<_SidebarTab> tabs;
   final _SidebarTab? selectedTab;
-  final GitRepositoryInfo? repositoryInfo;
   final bool showTabMenu;
   final ValueChanged<_SidebarTab> onSelectTab;
-  final Future<List<PopupMenuEntry<_GitMenuAction>>> Function(
-    BuildContext context,
-    GitRepositoryInfo repository,
-  )
-  loadGitMenuItems;
-  final Future<void> Function(BuildContext context, _GitMenuAction action)
-  onGitAction;
   final VoidCallback onRefineActiveDocument;
 
   @override
@@ -2490,16 +2294,9 @@ class _SidebarHeader extends ConsumerWidget {
     final activeDocumentFile = hasActiveDocumentPath
         ? _documentFileForPath(workspace, activeDocumentPath)
         : null;
-    final repository = repositoryInfo;
-    final branchLabel = _gitBranchLabel(context, repositoryInfo);
     final detailsStyle = Theme.of(
       context,
     ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
-    final accentColor = Theme.of(context).colorScheme.primary;
-    final branchStyle = detailsStyle?.copyWith(
-      color: accentColor,
-      fontWeight: FontWeight.w700,
-    );
     final direction = Directionality.of(context);
     final tabMenuItems = <BusyMarkPopupMenuItem<_SidebarTab>>[
       for (final tab in tabs)
@@ -2688,44 +2485,6 @@ class _SidebarHeader extends ConsumerWidget {
               ),
             ),
           ],
-          if (selectedTab == _SidebarTab.git &&
-              repository != null &&
-              branchLabel != null &&
-              branchLabel.trim().isNotEmpty) ...[
-            const SizedBox(height: BusyMarkSpacing.sm),
-            _SidebarHeaderRow(
-              key: const ValueKey('workspace-sidebar-first-content'),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _SidebarHeaderLine(
-                      icon: WorkspaceGlyphs.branch,
-                      text: branchLabel,
-                      style: branchStyle,
-                      inlineTrailing: _branchSyncIndicators(
-                        context,
-                        repository,
-                        branchStyle,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_GitMenuAction>.native(
-                    key: const ValueKey('workspace-sidebar-branch-menu'),
-                    tooltip: context.l10n.gitActions,
-                    icon: BusyMarkGlyphs.menuVertical,
-                    transparent: true,
-                    borderRadius: BusyMarkRadius.nativeHeaderButton,
-                    highlightWhenOpen: false,
-                    itemBuilder: (menuContext) =>
-                        loadGitMenuItems(menuContext, repository),
-                    onSelected: (action) =>
-                        unawaited(onGitAction(context, action)),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -2769,29 +2528,6 @@ class _SidebarHeader extends ConsumerWidget {
   }
 }
 
-List<Widget> _branchSyncIndicators(
-  BuildContext context,
-  GitRepositoryInfo repository,
-  TextStyle? style,
-) {
-  return [
-    if (repository.behindCount > 0)
-      _BranchSyncIndicator(
-        direction: _BranchSyncDirection.incoming,
-        count: repository.behindCount,
-        tooltip: context.l10n.gitBehindCount(repository.behindCount),
-        style: style,
-      ),
-    if (repository.aheadCount > 0)
-      _BranchSyncIndicator(
-        direction: _BranchSyncDirection.outgoing,
-        count: repository.aheadCount,
-        tooltip: context.l10n.gitAheadCount(repository.aheadCount),
-        style: style,
-      ),
-  ];
-}
-
 typedef _SidebarHeaderSecondaryTapHandler =
     Future<void> Function(BuildContext context, TapUpDetails details);
 
@@ -2816,7 +2552,6 @@ class _SidebarHeaderLine extends StatelessWidget {
     required this.text,
     required this.style,
     this.leadingEllipsis = false,
-    this.inlineTrailing = const [],
     this.tooltip,
     this.onSecondaryTapUp,
   });
@@ -2825,7 +2560,6 @@ class _SidebarHeaderLine extends StatelessWidget {
   final String text;
   final TextStyle? style;
   final bool leadingEllipsis;
-  final List<Widget> inlineTrailing;
   final String? tooltip;
   final _SidebarHeaderSecondaryTapHandler? onSecondaryTapUp;
 
@@ -2856,15 +2590,7 @@ class _SidebarHeaderLine extends StatelessWidget {
         ),
         const SizedBox(width: BusyMarkSpacing.sm),
         Expanded(
-          child: Row(
-            children: [
-              Flexible(child: text),
-              for (final trailing in inlineTrailing) ...[
-                const SizedBox(width: BusyMarkSpacing.sm),
-                trailing,
-              ],
-            ],
-          ),
+          child: Row(children: [Flexible(child: text)]),
         ),
       ],
     );
@@ -2884,128 +2610,6 @@ class _SidebarHeaderLine extends StatelessWidget {
     return tooltip == null
         ? clickable
         : Tooltip(message: tooltip, child: clickable);
-  }
-}
-
-enum _BranchSyncDirection { incoming, outgoing }
-
-class _BranchSyncIndicator extends StatelessWidget {
-  const _BranchSyncIndicator({
-    required this.direction,
-    required this.count,
-    required this.tooltip,
-    required this.style,
-  });
-
-  final _BranchSyncDirection direction;
-  final int count;
-  final String tooltip;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final effectiveStyle =
-        style ??
-        Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: colors.mutedForeground,
-          fontWeight: FontWeight.w700,
-        );
-    final color = effectiveStyle?.color ?? colors.mutedForeground;
-    final textScale = MediaQuery.textScalerOf(context);
-    final iconSize = textScale.scale(
-      effectiveStyle?.fontSize ?? BusyMarkSizes.iconSm,
-    );
-    return Tooltip(
-      message: tooltip,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _BoldVerticalArrowIcon(
-            direction: direction,
-            size: iconSize,
-            color: color,
-          ),
-          const SizedBox(width: BusyMarkSpacing.xxs),
-          Text('$count', style: effectiveStyle),
-        ],
-      ),
-    );
-  }
-}
-
-class _BoldVerticalArrowIcon extends StatelessWidget {
-  const _BoldVerticalArrowIcon({
-    required this.direction,
-    required this.size,
-    required this.color,
-  });
-
-  final _BranchSyncDirection direction;
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: size,
-      child: CustomPaint(
-        painter: _BoldVerticalArrowIconPainter(direction, color),
-      ),
-    );
-  }
-}
-
-class _BoldVerticalArrowIconPainter extends CustomPainter {
-  const _BoldVerticalArrowIconPainter(this.direction, this.color);
-
-  final _BranchSyncDirection direction;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final scale = size.shortestSide / BusyMarkSizes.iconSm;
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.15 * scale
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final centerX = size.width * 0.5;
-    final topY = size.height * 0.25;
-    final bottomY = size.height * 0.75;
-    final head = size.width * 0.18;
-    switch (direction) {
-      case _BranchSyncDirection.incoming:
-        canvas.drawLine(Offset(centerX, topY), Offset(centerX, bottomY), paint);
-        canvas.drawLine(
-          Offset(centerX, bottomY),
-          Offset(centerX - head, bottomY - head),
-          paint,
-        );
-        canvas.drawLine(
-          Offset(centerX, bottomY),
-          Offset(centerX + head, bottomY - head),
-          paint,
-        );
-      case _BranchSyncDirection.outgoing:
-        canvas.drawLine(Offset(centerX, bottomY), Offset(centerX, topY), paint);
-        canvas.drawLine(
-          Offset(centerX, topY),
-          Offset(centerX - head, topY + head),
-          paint,
-        );
-        canvas.drawLine(
-          Offset(centerX, topY),
-          Offset(centerX + head, topY + head),
-          paint,
-        );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BoldVerticalArrowIconPainter oldDelegate) {
-    return direction != oldDelegate.direction || color != oldDelegate.color;
   }
 }
 

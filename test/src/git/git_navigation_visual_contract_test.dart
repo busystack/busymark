@@ -1,3 +1,4 @@
+import 'dart:io';
 // Geometry and painted-treatment gates for the actual shared views and host.
 // This file also runs against the previous sources in an isolated checkout.
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -187,6 +188,33 @@ Color? _buttonPaint(WidgetTester tester, Finder button) => tester
     .firstOrNull;
 
 void main() {
+  test(
+    'workspace identity header owns navigation without Git data or workflows',
+    () {
+      final source = File(
+        'lib/src/workspace/presentation/workspace_screen.dart',
+      ).readAsStringSync();
+      final header = source.substring(
+        source.indexOf('class _SidebarHeader extends'),
+        source.indexOf('class _SidebarHeaderRow extends'),
+      );
+      for (final dependency in [
+        'GitRepositoryInfo',
+        'GitView',
+        'GitSession',
+        'GitFeatureController',
+        'gitControllerProvider',
+      ]) {
+        expect(
+          header,
+          isNot(contains(dependency)),
+          reason:
+              'The ordinary workspace header cannot own Git data or a second workflow selector.',
+        );
+      }
+    },
+  );
+
   setUpAll(loadGitVisualFonts);
   testWidgets(
     'history filter retains its editor and composing focus when toolbar wraps',

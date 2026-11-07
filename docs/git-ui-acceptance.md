@@ -89,3 +89,10 @@ must not be presented as the rectangle's established cause.
 
 No application push, publication, release or upstream modification is authorized
 by local verification or artifact production.
+
+The ordinary workspace header accepts workspace/document identity and typed
+application sidebar navigation. It has no repository model, Git view state,
+branch loader or workflow callback. Its source ownership regression rejects
+those dependencies even in unreachable code; Commit, Log and Branches remain
+shared feature content. Files contextual Git actions and VCS decorations retain
+their existing host adapters.
