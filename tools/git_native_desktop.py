@@ -193,7 +193,7 @@ def capture(desktop, path, window):
 
 
 def main():
-    binary, output, repository = map(Path, sys.argv[1:4])
+    binary, output, repository = (Path(value).resolve() for value in sys.argv[1:4])
     build_receipt = Path(os.environ.get('BUSYSTACK_NATIVE_RECEIPT',
                          str(binary.resolve().parent.parent / 'git-native-source.json')))
     compiled = json.loads(build_receipt.read_text())
@@ -543,6 +543,11 @@ def main():
                            'focused': states.contains(Atspi.StateType.FOCUSED),
                            'selected': states.contains(Atspi.StateType.SELECTED),
                            'checked': states.contains(Atspi.StateType.CHECKED)}
+                    if visible and (component := node.get_component_iface()) is not None:
+                        bounds = component.get_extents(Atspi.CoordType.SCREEN)
+                        _, origin_x, origin_y = window.get_origin()
+                        row['bounds'] = [bounds.x - origin_x, bounds.y - origin_y,
+                                         bounds.width, bounds.height]
                     if visible and name:
                         rows.append(row)
                     if visible and enabled and name == command.get('name') and (
