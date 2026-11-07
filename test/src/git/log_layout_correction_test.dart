@@ -160,6 +160,42 @@ void main() {
           await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
           await tester.sendKeyEvent(LogicalKeyboardKey.tab);
           await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.pump();
+          // The shared modal Close action now participates in native keyboard
+          // traversal. Verify that named action before continuing to the
+          // leading sidebar toggle; it must not be an unnamed focus stop.
+          final closeLabel = MaterialLocalizations.of(
+            tester.element(modal),
+          ).closeButtonTooltip;
+          Future<void> expectFocusedClose() async {
+            final semantics = tester.ensureSemantics();
+            try {
+              await tester.pump();
+              expect(
+                tester.getSemantics(find.bySemanticsLabel(closeLabel)),
+                matchesSemantics(
+                  label: closeLabel,
+                  textDirection: locale == 'ar'
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+                  isButton: true,
+                  hasEnabledState: true,
+                  isEnabled: true,
+                  isFocusable: true,
+                  isFocused: true,
+                  hasFocusAction: true,
+                  hasTapAction: true,
+                ),
+              );
+            } finally {
+              semantics.dispose();
+            }
+          }
+
+          await expectFocusedClose();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
           expect(
             FocusManager.instance.primaryFocus?.context
                 ?.findAncestorWidgetOfExactType<git.NativeGitIconAction>()
@@ -170,6 +206,16 @@ void main() {
           await tester.pumpAndSettle();
           expect(
             find.byKey(const ValueKey('git-history-reference-sidebar')),
+            findsOneWidget,
+          );
+          expect(mainToggleClicks, 0);
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await expectFocusedClose();
+          await tester.sendKeyEvent(LogicalKeyboardKey.space);
+          await tester.pumpAndSettle();
+          expect(modal, findsNothing);
+          expect(
+            find.byKey(const ValueKey('git-select-another-commit')),
             findsOneWidget,
           );
           expect(mainToggleClicks, 0);
