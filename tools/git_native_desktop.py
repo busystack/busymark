@@ -543,11 +543,6 @@ def main():
                            'focused': states.contains(Atspi.StateType.FOCUSED),
                            'selected': states.contains(Atspi.StateType.SELECTED),
                            'checked': states.contains(Atspi.StateType.CHECKED)}
-                    if visible and (component := node.get_component_iface()) is not None:
-                        bounds = component.get_extents(Atspi.CoordType.SCREEN)
-                        _, origin_x, origin_y = window.get_origin()
-                        row['bounds'] = [bounds.x - origin_x, bounds.y - origin_y,
-                                         bounds.width, bounds.height]
                     if visible and name:
                         rows.append(row)
                     if visible and enabled and name == command.get('name') and (
