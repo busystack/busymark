@@ -985,12 +985,21 @@ void main() {
     expect(popupItem, isNot(contains('InkWell(')));
   });
 
-  test('Git actions use the shared workspace-header popup', () {
+  test('Git header delegates to shared workflows', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
     final gitSidebar = File(
       'lib/src/git/application/shared_git_integration.dart',
+    ).readAsStringSync();
+    final sharedFeature = File(
+      '../busystack_git_flutter/lib/src/feature.dart',
+    ).readAsStringSync();
+    final sharedWorkflow = File(
+      '../busystack_git_flutter/lib/src/workflow_ui.dart',
+    ).readAsStringSync();
+    final sharedCommit = File(
+      '../busystack_git_flutter/lib/src/commit_view.dart',
     ).readAsStringSync();
     final outlineMenu = RegExp(
       r'enum _OutlineDocumentAction[\s\S]*?'
@@ -1003,36 +1012,32 @@ void main() {
     final outlineActions = '$outlineMenu\n$outlineHeader';
 
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    for (final retired in [
+      'BusyMarkHeaderPopupMenuButton<_GitMenuAction>',
+      '_loadWorkspaceGitMenuItems',
+      '_sidebarGitMenuItems',
+      '_performWorkspaceGitAction',
+      '_SelectGitViewMenuAction',
+      "ValueKey('workspace-sidebar-branch-menu')",
+      'controller.loadBranches()',
+    ]) {
+      expect(workspace, isNot(contains(retired)));
+    }
+    expect(workspace, contains('selectedTab == _SidebarTab.gitLog'));
+    expect(sharedFeature, contains('GitCommitView('));
     expect(
-      workspace,
-      contains('BusyMarkHeaderPopupMenuButton<_GitMenuAction>'),
+      sharedFeature,
+      contains('GitWorkflowUi(context, session).branches()'),
     );
-    expect(workspace, contains('_loadWorkspaceGitMenuItems'));
-    expect(workspace, contains('_sidebarGitMenuItems'));
-    expect(workspace, contains('_performWorkspaceGitAction'));
-    expect(workspace, contains('controller.loadBranches()'));
-    expect(workspace, contains('_SelectGitViewMenuAction(GitView.changes)'));
-    expect(
-      workspace,
-      contains('_SelectGitViewMenuAction(GitView.projectHistory)'),
-    );
-    expect(
-      workspace,
-      contains('_SelectGitViewMenuAction(GitView.fileHistory)'),
-    );
-    expect(workspace, contains('checked: selectedView == GitView.changes'));
-    expect(workspace, contains('trailingCheck: true'));
-    expect(workspace, contains('label: context.l10n.gitNewBranch'));
-    expect(workspace, contains('label: context.l10n.gitFetch'));
-    expect(workspace, contains('label: context.l10n.gitPull'));
-    expect(workspace, contains('label: context.l10n.gitPush'));
-    expect(workspace, contains('value: const _FetchBranchMenuAction()'));
-    expect(workspace, contains('value: const _PullBranchMenuAction()'));
-    expect(workspace, contains('value: const _PushBranchMenuAction()'));
-    expect(workspace, contains('enabled: repository.upstreamBranch != null'));
-    expect(workspace, contains('enabled: repository.hasRemote'));
-    expect(workspace, contains('tooltip: context.l10n.gitActions'));
-    expect(workspace, contains("ValueKey('workspace-sidebar-branch-menu')"));
+    expect(sharedFeature, contains('GitWorkflowUi(anchor, session).more('));
+    for (final action in [
+      "'fetch': GitMessages.fetch2",
+      "'pull': GitMessages.pull",
+      "'push': GitMessages.push2",
+    ]) {
+      expect(sharedWorkflow, contains(action));
+    }
+    expect(sharedWorkflow, contains('GitFetchView(session: session)'));
     expect(workspace, isNot(contains('_showWorkspaceBranchMenu')));
     expect(workspace, isNot(contains('_showSidebarBranchMenu')));
     expect(workspace, isNot(contains('_sidebarMenuLeft')));
@@ -1043,8 +1048,8 @@ void main() {
     expect(
       RegExp(
         r"ValueKey\('workspace-sidebar-first-content'\)",
-      ).allMatches(workspace).length,
-      greaterThanOrEqualTo(4),
+      ).allMatches(outlineHeader).length,
+      2,
     );
     expect(workspace, contains('text: _workspaceDisplayName(context'));
     expect(workspace, contains("ValueKey('workspace-sidebar-outline-tree')"));
@@ -1123,16 +1128,20 @@ void main() {
     expect(outlineActions, isNot(contains('onExport()')));
     expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
-    expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
+    expect(sharedCommit, contains('GitGlyph.branch'));
     expect(workspace, isNot(contains('boldLeadingIcon')));
     expect(workspace, isNot(contains('_BoldBranchIcon')));
     expect(workspace, isNot(contains('_BoldBranchIconPainter')));
-    expect(workspace, contains('inlineTrailing: _branchSyncIndicators'));
-    expect(workspace, contains('repository.behindCount > 0'));
-    expect(workspace, contains('context.l10n.gitBehindCount'));
-    expect(workspace, contains('repository.aheadCount > 0'));
-    expect(workspace, contains('context.l10n.gitAheadCount'));
-    expect(workspace, contains('class _BranchSyncIndicator'));
+    expect(workspace, isNot(contains('_branchSyncIndicators')));
+    expect(workspace, isNot(contains('class _BranchSyncIndicator')));
+    for (final metadata in [
+      'snapshot.upstream',
+      'snapshot.ahead',
+      'snapshot.behind',
+      'snapshot.trackingCountsKnown',
+    ]) {
+      expect(sharedCommit, contains(metadata));
+    }
     expect(gitSidebar, isNot(contains('_RepositoryStrip')));
     expect(
       gitSidebar,
