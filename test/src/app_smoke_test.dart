@@ -10665,11 +10665,16 @@ code
     await setDocumentViewMode(DocumentViewModePreference.preview);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
+    expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+      findsOneWidget,
+    );
     expect(
       find.byWidgetPredicate(
         (w) => w is shared.GitTooltip && w.message == temp.path,
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.byType(shared.GitCommitView), findsOneWidget);
     expect(find.text('Commit scope: entire repository'), findsNothing);
@@ -10838,11 +10843,16 @@ code
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.byType(shared.GitCommitView), findsOneWidget);
     expect(find.text('Preserved shell draft'), findsOneWidget);
+    expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+      findsOneWidget,
+    );
     expect(
       find.byWidgetPredicate(
         (w) => w is shared.GitTooltip && w.message == temp.path,
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.text(l10n.gitReturnToDocument), findsNothing);
     expect(find.byType(shared.GitLogView), findsNothing);
