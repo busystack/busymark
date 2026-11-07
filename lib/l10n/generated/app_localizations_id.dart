@@ -8915,44 +8915,44 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiCloseAllTabs => 'Tutup semua tab';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => 'Tidak berubah';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => 'Ditambahkan';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => 'Diubah';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => 'Dihapus';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => 'Diubah namanya';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => 'Disalin';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => 'Berkonflik';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => 'Diabaikan';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => 'Jenis diubah';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status, di staging';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status, belum di staging';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '$status dalam commit ini';
   }
 }

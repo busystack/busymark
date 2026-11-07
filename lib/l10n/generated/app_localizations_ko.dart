@@ -8660,44 +8660,44 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gitUiCloseAllTabs => '모든 탭 닫기';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => '변경 없음';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => '추가됨';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => '수정됨';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => '삭제됨';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => '이름 변경됨';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => '복사됨';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => '충돌 있음';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => '무시됨';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => '유형 변경됨';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status, 스테이징됨';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status, 스테이징되지 않음';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '이 커밋에서 $status';
   }
 }

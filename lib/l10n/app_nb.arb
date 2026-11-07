@@ -4563,5 +4563,17 @@
   "gitUiOperationsRequireTrust": "Git-operasjoner krever at du stoler på arbeidsområdet.",
   "gitUiTrustWorkspace": "Stol på arbeidsområdet",
   "gitUiCloseOtherTabs": "Lukk andre faner",
-  "gitUiCloseAllTabs": "Lukk alle faner"
+  "gitUiCloseAllTabs": "Lukk alle faner",
+  "gitUiFileUnchanged": "Uendret",
+  "gitUiFileAdded": "Lagt til",
+  "gitUiFileModified": "Endret",
+  "gitUiFileDeleted": "Slettet",
+  "gitUiFileRenamed": "Omdøpt",
+  "gitUiFileCopied": "Kopiert",
+  "gitUiFileConflicted": "I konflikt",
+  "gitUiFileIgnored": "Ignorert",
+  "gitUiFileTypeChanged": "Type endret",
+  "gitUiFileStatusStaged": "{status}, i indeksen",
+  "gitUiFileStatusUnstaged": "{status}, utenfor indeksen",
+  "gitUiFileStatusHistorical": "{status} i denne committen"
 }

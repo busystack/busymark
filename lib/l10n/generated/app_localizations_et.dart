@@ -8912,44 +8912,44 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCloseAllTabs => 'Sule kõik vahelehed';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => 'Muutmata';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => 'Lisatud';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => 'Muudetud';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => 'Kustutatud';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => 'Ümber nimetatud';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => 'Kopeeritud';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => 'Konfliktis';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => 'Eiratud';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => 'Tüüp muudetud';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status, indeksis';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status, indeksisse lisamata';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '$status selles commit’is';
   }
 }

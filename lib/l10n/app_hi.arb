@@ -4563,5 +4563,17 @@
   "gitUiOperationsRequireTrust": "Git कार्रवाइयों के लिए कार्यस्थान पर भरोसा करना आवश्यक है।",
   "gitUiTrustWorkspace": "कार्यस्थान पर भरोसा करें",
   "gitUiCloseOtherTabs": "अन्य टैब बंद करें",
-  "gitUiCloseAllTabs": "सभी टैब बंद करें"
+  "gitUiCloseAllTabs": "सभी टैब बंद करें",
+  "gitUiFileUnchanged": "अपरिवर्तित",
+  "gitUiFileAdded": "जोड़ा गया",
+  "gitUiFileModified": "संशोधित",
+  "gitUiFileDeleted": "हटाया गया",
+  "gitUiFileRenamed": "नाम बदला गया",
+  "gitUiFileCopied": "प्रतिलिपि बनाई गई",
+  "gitUiFileConflicted": "विरोधग्रस्त",
+  "gitUiFileIgnored": "अनदेखा किया गया",
+  "gitUiFileTypeChanged": "प्रकार बदला गया",
+  "gitUiFileStatusStaged": "{status}, स्टेज किया गया",
+  "gitUiFileStatusUnstaged": "{status}, स्टेज नहीं किया गया",
+  "gitUiFileStatusHistorical": "इस कमिट में {status}"
 }

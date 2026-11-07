@@ -8990,45 +8990,45 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitUiCloseAllTabs => 'Fechar todas as abas';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => 'Sem alterações';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => 'Adicionado';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => 'Modificado';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => 'Eliminado';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => 'Renomeado';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => 'Copiado';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => 'Em conflito';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => 'Ignorado';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => 'Tipo alterado';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status, no índice';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status, fora do índice';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '$status neste commit';
   }
 }
 
@@ -18009,4 +18009,46 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitUiCloseAllTabs => 'Fechar todas as abas';
+
+  @override
+  String get gitUiFileUnchanged => 'Sem alterações';
+
+  @override
+  String get gitUiFileAdded => 'Adicionado';
+
+  @override
+  String get gitUiFileModified => 'Modificado';
+
+  @override
+  String get gitUiFileDeleted => 'Excluído';
+
+  @override
+  String get gitUiFileRenamed => 'Renomeado';
+
+  @override
+  String get gitUiFileCopied => 'Copiado';
+
+  @override
+  String get gitUiFileConflicted => 'Em conflito';
+
+  @override
+  String get gitUiFileIgnored => 'Ignorado';
+
+  @override
+  String get gitUiFileTypeChanged => 'Tipo alterado';
+
+  @override
+  String gitUiFileStatusStaged(String status) {
+    return '$status, no índice';
+  }
+
+  @override
+  String gitUiFileStatusUnstaged(String status) {
+    return '$status, fora do índice';
+  }
+
+  @override
+  String gitUiFileStatusHistorical(String status) {
+    return '$status neste commit';
+  }
 }

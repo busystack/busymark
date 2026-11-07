@@ -4589,5 +4589,17 @@
   "gitUiOperationsRequireTrust": "Operacje Git wymagają zaufania do obszaru roboczego.",
   "gitUiTrustWorkspace": "Zaufaj obszarowi roboczemu",
   "gitUiCloseOtherTabs": "Zamknij pozostałe karty",
-  "gitUiCloseAllTabs": "Zamknij wszystkie karty"
+  "gitUiCloseAllTabs": "Zamknij wszystkie karty",
+  "gitUiFileUnchanged": "Bez zmian",
+  "gitUiFileAdded": "Dodano",
+  "gitUiFileModified": "Zmieniono",
+  "gitUiFileDeleted": "Usunięto",
+  "gitUiFileRenamed": "Zmieniono nazwę",
+  "gitUiFileCopied": "Skopiowano",
+  "gitUiFileConflicted": "Konflikt",
+  "gitUiFileIgnored": "Zignorowano",
+  "gitUiFileTypeChanged": "Zmieniono typ",
+  "gitUiFileStatusStaged": "{status}, w indeksie",
+  "gitUiFileStatusUnstaged": "{status}, poza indeksem",
+  "gitUiFileStatusHistorical": "{status} w tym commicie"
 }

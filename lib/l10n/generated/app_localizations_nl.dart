@@ -8977,44 +8977,44 @@ class AppLocalizationsNl extends AppLocalizations {
   String get gitUiCloseAllTabs => 'Alle tabbladen sluiten';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => 'Ongewijzigd';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => 'Toegevoegd';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => 'Gewijzigd';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => 'Verwijderd';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => 'Hernoemd';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => 'Gekopieerd';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => 'Conflict';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => 'Genegeerd';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => 'Type gewijzigd';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status, in de index';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status, buiten de index';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '$status in deze commit';
   }
 }

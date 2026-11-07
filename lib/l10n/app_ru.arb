@@ -4589,5 +4589,17 @@
   "gitUiOperationsRequireTrust": "Для операций Git необходимо доверять рабочей области.",
   "gitUiTrustWorkspace": "Доверять рабочей области",
   "gitUiCloseOtherTabs": "Закрыть другие вкладки",
-  "gitUiCloseAllTabs": "Закрыть все вкладки"
+  "gitUiCloseAllTabs": "Закрыть все вкладки",
+  "gitUiFileUnchanged": "Без изменений",
+  "gitUiFileAdded": "Добавлен",
+  "gitUiFileModified": "Изменён",
+  "gitUiFileDeleted": "Удалён",
+  "gitUiFileRenamed": "Переименован",
+  "gitUiFileCopied": "Скопирован",
+  "gitUiFileConflicted": "Конфликт",
+  "gitUiFileIgnored": "Игнорируется",
+  "gitUiFileTypeChanged": "Тип изменён",
+  "gitUiFileStatusStaged": "{status}, в индексе",
+  "gitUiFileStatusUnstaged": "{status}, вне индекса",
+  "gitUiFileStatusHistorical": "{status} в этом коммите"
 }

@@ -6093,5 +6093,17 @@
   "gitUiOperationsRequireTrust": "Operasi Git memerlukan kepercayaan pada ruang kerja.",
   "gitUiTrustWorkspace": "Percayai ruang kerja",
   "gitUiCloseOtherTabs": "Tutup tab lainnya",
-  "gitUiCloseAllTabs": "Tutup semua tab"
+  "gitUiCloseAllTabs": "Tutup semua tab",
+  "gitUiFileUnchanged": "Tidak berubah",
+  "gitUiFileAdded": "Ditambahkan",
+  "gitUiFileModified": "Diubah",
+  "gitUiFileDeleted": "Dihapus",
+  "gitUiFileRenamed": "Diubah namanya",
+  "gitUiFileCopied": "Disalin",
+  "gitUiFileConflicted": "Berkonflik",
+  "gitUiFileIgnored": "Diabaikan",
+  "gitUiFileTypeChanged": "Jenis diubah",
+  "gitUiFileStatusStaged": "{status}, di staging",
+  "gitUiFileStatusUnstaged": "{status}, belum di staging",
+  "gitUiFileStatusHistorical": "{status} dalam commit ini"
 }

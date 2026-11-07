@@ -8893,44 +8893,44 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCloseAllTabs => 'Đóng tất cả các thẻ';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => 'Không thay đổi';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => 'Đã thêm';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => 'Đã sửa đổi';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => 'Đã xóa';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => 'Đã đổi tên';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => 'Đã sao chép';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => 'Có xung đột';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => 'Đã bỏ qua';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => 'Đã đổi loại';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status, đã đưa vào vùng đệm';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status, chưa đưa vào vùng đệm';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '$status trong commit này';
   }
 }

@@ -8922,44 +8922,44 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiCloseAllTabs => 'بستن همهٔ زبانه‌ها';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => 'بدون تغییر';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => 'افزوده‌شده';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => 'تغییریافته';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => 'حذف‌شده';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => 'تغییرنام‌یافته';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => 'کپی‌شده';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => 'دارای تعارض';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => 'نادیده‌گرفته‌شده';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => 'نوع تغییر کرده';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status، در نمایه';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status، خارج از نمایه';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '$status در این کامیت';
   }
 }

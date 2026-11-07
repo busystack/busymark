@@ -6093,5 +6093,17 @@
   "gitUiOperationsRequireTrust": "Git-bewerkingen vereisen vertrouwen in de werkruimte.",
   "gitUiTrustWorkspace": "Werkruimte vertrouwen",
   "gitUiCloseOtherTabs": "Andere tabbladen sluiten",
-  "gitUiCloseAllTabs": "Alle tabbladen sluiten"
+  "gitUiCloseAllTabs": "Alle tabbladen sluiten",
+  "gitUiFileUnchanged": "Ongewijzigd",
+  "gitUiFileAdded": "Toegevoegd",
+  "gitUiFileModified": "Gewijzigd",
+  "gitUiFileDeleted": "Verwijderd",
+  "gitUiFileRenamed": "Hernoemd",
+  "gitUiFileCopied": "Gekopieerd",
+  "gitUiFileConflicted": "Conflict",
+  "gitUiFileIgnored": "Genegeerd",
+  "gitUiFileTypeChanged": "Type gewijzigd",
+  "gitUiFileStatusStaged": "{status}, in de index",
+  "gitUiFileStatusUnstaged": "{status}, buiten de index",
+  "gitUiFileStatusHistorical": "{status} in deze commit"
 }

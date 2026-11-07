@@ -4605,5 +4605,17 @@
   "gitUiOperationsRequireTrust": "عملیات Git به اعتماد به فضای کاری نیاز دارد.",
   "gitUiTrustWorkspace": "اعتماد به فضای کاری",
   "gitUiCloseOtherTabs": "بستن زبانه‌های دیگر",
-  "gitUiCloseAllTabs": "بستن همهٔ زبانه‌ها"
+  "gitUiCloseAllTabs": "بستن همهٔ زبانه‌ها",
+  "gitUiFileUnchanged": "بدون تغییر",
+  "gitUiFileAdded": "افزوده‌شده",
+  "gitUiFileModified": "تغییریافته",
+  "gitUiFileDeleted": "حذف‌شده",
+  "gitUiFileRenamed": "تغییرنام‌یافته",
+  "gitUiFileCopied": "کپی‌شده",
+  "gitUiFileConflicted": "دارای تعارض",
+  "gitUiFileIgnored": "نادیده‌گرفته‌شده",
+  "gitUiFileTypeChanged": "نوع تغییر کرده",
+  "gitUiFileStatusStaged": "{status}، در نمایه",
+  "gitUiFileStatusUnstaged": "{status}، خارج از نمایه",
+  "gitUiFileStatusHistorical": "{status} در این کامیت"
 }

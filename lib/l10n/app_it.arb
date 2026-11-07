@@ -4563,5 +4563,17 @@
   "gitUiOperationsRequireTrust": "Le operazioni Git richiedono di considerare attendibile lo spazio di lavoro.",
   "gitUiTrustWorkspace": "Considera attendibile l’area di lavoro",
   "gitUiCloseOtherTabs": "Chiudi le altre schede",
-  "gitUiCloseAllTabs": "Chiudi tutte le schede"
+  "gitUiCloseAllTabs": "Chiudi tutte le schede",
+  "gitUiFileUnchanged": "Invariato",
+  "gitUiFileAdded": "Aggiunto",
+  "gitUiFileModified": "Modificato",
+  "gitUiFileDeleted": "Eliminato",
+  "gitUiFileRenamed": "Rinominato",
+  "gitUiFileCopied": "Copiato",
+  "gitUiFileConflicted": "In conflitto",
+  "gitUiFileIgnored": "Ignorato",
+  "gitUiFileTypeChanged": "Tipo modificato",
+  "gitUiFileStatusStaged": "{status}, nell’indice",
+  "gitUiFileStatusUnstaged": "{status}, fuori dall’indice",
+  "gitUiFileStatusHistorical": "{status} in questo commit"
 }

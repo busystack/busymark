@@ -6093,5 +6093,17 @@
   "gitUiOperationsRequireTrust": "Git 작업에는 작업 공간 신뢰가 필요합니다.",
   "gitUiTrustWorkspace": "작업공간 신뢰",
   "gitUiCloseOtherTabs": "다른 탭 닫기",
-  "gitUiCloseAllTabs": "모든 탭 닫기"
+  "gitUiCloseAllTabs": "모든 탭 닫기",
+  "gitUiFileUnchanged": "변경 없음",
+  "gitUiFileAdded": "추가됨",
+  "gitUiFileModified": "수정됨",
+  "gitUiFileDeleted": "삭제됨",
+  "gitUiFileRenamed": "이름 변경됨",
+  "gitUiFileCopied": "복사됨",
+  "gitUiFileConflicted": "충돌 있음",
+  "gitUiFileIgnored": "무시됨",
+  "gitUiFileTypeChanged": "유형 변경됨",
+  "gitUiFileStatusStaged": "{status}, 스테이징됨",
+  "gitUiFileStatusUnstaged": "{status}, 스테이징되지 않음",
+  "gitUiFileStatusHistorical": "이 커밋에서 {status}"
 }

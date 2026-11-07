@@ -6105,5 +6105,17 @@
   "gitUiOperationsRequireTrust": "Git 操作需要信任工作区。",
   "gitUiTrustWorkspace": "信任工作区",
   "gitUiCloseOtherTabs": "关闭其他标签页",
-  "gitUiCloseAllTabs": "关闭所有标签页"
+  "gitUiCloseAllTabs": "关闭所有标签页",
+  "gitUiFileUnchanged": "未更改",
+  "gitUiFileAdded": "已添加",
+  "gitUiFileModified": "已修改",
+  "gitUiFileDeleted": "已删除",
+  "gitUiFileRenamed": "已重命名",
+  "gitUiFileCopied": "已复制",
+  "gitUiFileConflicted": "存在冲突",
+  "gitUiFileIgnored": "已忽略",
+  "gitUiFileTypeChanged": "类型已更改",
+  "gitUiFileStatusStaged": "{status}，已暂存",
+  "gitUiFileStatusUnstaged": "{status}，未暂存",
+  "gitUiFileStatusHistorical": "在此提交中{status}"
 }

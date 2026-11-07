@@ -6093,5 +6093,17 @@
   "gitUiOperationsRequireTrust": "Git işlemleri çalışma alanına güvenilmesini gerektirir.",
   "gitUiTrustWorkspace": "Çalışma alanına güven",
   "gitUiCloseOtherTabs": "Diğer sekmeleri kapat",
-  "gitUiCloseAllTabs": "Tüm sekmeleri kapat"
+  "gitUiCloseAllTabs": "Tüm sekmeleri kapat",
+  "gitUiFileUnchanged": "Değişmedi",
+  "gitUiFileAdded": "Eklendi",
+  "gitUiFileModified": "Değiştirildi",
+  "gitUiFileDeleted": "Silindi",
+  "gitUiFileRenamed": "Yeniden adlandırıldı",
+  "gitUiFileCopied": "Kopyalandı",
+  "gitUiFileConflicted": "Çakışmalı",
+  "gitUiFileIgnored": "Yok sayıldı",
+  "gitUiFileTypeChanged": "Türü değiştirildi",
+  "gitUiFileStatusStaged": "{status}, hazırlama alanında",
+  "gitUiFileStatusUnstaged": "{status}, hazırlama alanında değil",
+  "gitUiFileStatusHistorical": "Bu commit’te {status}"
 }

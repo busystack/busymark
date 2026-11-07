@@ -4589,5 +4589,17 @@
   "gitUiOperationsRequireTrust": "Операції Git потребують довіри до робочої області.",
   "gitUiTrustWorkspace": "Довіряти робочій області",
   "gitUiCloseOtherTabs": "Закрити інші вкладки",
-  "gitUiCloseAllTabs": "Закрити всі вкладки"
+  "gitUiCloseAllTabs": "Закрити всі вкладки",
+  "gitUiFileUnchanged": "Без змін",
+  "gitUiFileAdded": "Додано",
+  "gitUiFileModified": "Змінено",
+  "gitUiFileDeleted": "Видалено",
+  "gitUiFileRenamed": "Перейменовано",
+  "gitUiFileCopied": "Скопійовано",
+  "gitUiFileConflicted": "Конфлікт",
+  "gitUiFileIgnored": "Ігнорується",
+  "gitUiFileTypeChanged": "Тип змінено",
+  "gitUiFileStatusStaged": "{status}, в індексі",
+  "gitUiFileStatusUnstaged": "{status}, поза індексом",
+  "gitUiFileStatusHistorical": "{status} у цьому коміті"
 }

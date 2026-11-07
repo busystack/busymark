@@ -8528,45 +8528,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiCloseAllTabs => '关闭所有标签页';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => '未更改';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => '已添加';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => '已修改';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => '已删除';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => '已重命名';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => '已复制';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => '存在冲突';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => '已忽略';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => '类型已更改';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status，已暂存';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status，未暂存';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return '在此提交中$status';
   }
 }
 
@@ -17090,4 +17090,46 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get gitUiCloseAllTabs => '关闭所有标签页';
+
+  @override
+  String get gitUiFileUnchanged => '未更改';
+
+  @override
+  String get gitUiFileAdded => '已添加';
+
+  @override
+  String get gitUiFileModified => '已修改';
+
+  @override
+  String get gitUiFileDeleted => '已删除';
+
+  @override
+  String get gitUiFileRenamed => '已重命名';
+
+  @override
+  String get gitUiFileCopied => '已复制';
+
+  @override
+  String get gitUiFileConflicted => '存在冲突';
+
+  @override
+  String get gitUiFileIgnored => '已忽略';
+
+  @override
+  String get gitUiFileTypeChanged => '类型已更改';
+
+  @override
+  String gitUiFileStatusStaged(String status) {
+    return '$status，已暂存';
+  }
+
+  @override
+  String gitUiFileStatusUnstaged(String status) {
+    return '$status，未暂存';
+  }
+
+  @override
+  String gitUiFileStatusHistorical(String status) {
+    return '在此提交中$status';
+  }
 }

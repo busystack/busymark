@@ -6093,5 +6093,17 @@
   "gitUiOperationsRequireTrust": "Các thao tác Git yêu cầu tin cậy không gian làm việc.",
   "gitUiTrustWorkspace": "Tin cậy không gian làm việc",
   "gitUiCloseOtherTabs": "Đóng các thẻ khác",
-  "gitUiCloseAllTabs": "Đóng tất cả các thẻ"
+  "gitUiCloseAllTabs": "Đóng tất cả các thẻ",
+  "gitUiFileUnchanged": "Không thay đổi",
+  "gitUiFileAdded": "Đã thêm",
+  "gitUiFileModified": "Đã sửa đổi",
+  "gitUiFileDeleted": "Đã xóa",
+  "gitUiFileRenamed": "Đã đổi tên",
+  "gitUiFileCopied": "Đã sao chép",
+  "gitUiFileConflicted": "Có xung đột",
+  "gitUiFileIgnored": "Đã bỏ qua",
+  "gitUiFileTypeChanged": "Đã đổi loại",
+  "gitUiFileStatusStaged": "{status}, đã đưa vào vùng đệm",
+  "gitUiFileStatusUnstaged": "{status}, chưa đưa vào vùng đệm",
+  "gitUiFileStatusHistorical": "{status} trong commit này"
 }

@@ -4563,5 +4563,17 @@
   "gitUiOperationsRequireTrust": "As operações Git requerem confiança na área de trabalho.",
   "gitUiTrustWorkspace": "Confiar no espaço de trabalho",
   "gitUiCloseOtherTabs": "Fechar os outros separadores",
-  "gitUiCloseAllTabs": "Fechar todas as abas"
+  "gitUiCloseAllTabs": "Fechar todas as abas",
+  "gitUiFileUnchanged": "Sem alterações",
+  "gitUiFileAdded": "Adicionado",
+  "gitUiFileModified": "Modificado",
+  "gitUiFileDeleted": "Eliminado",
+  "gitUiFileRenamed": "Renomeado",
+  "gitUiFileCopied": "Copiado",
+  "gitUiFileConflicted": "Em conflito",
+  "gitUiFileIgnored": "Ignorado",
+  "gitUiFileTypeChanged": "Tipo alterado",
+  "gitUiFileStatusStaged": "{status}, no índice",
+  "gitUiFileStatusUnstaged": "{status}, fora do índice",
+  "gitUiFileStatusHistorical": "{status} neste commit"
 }

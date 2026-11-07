@@ -8897,44 +8897,44 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitUiCloseAllTabs => 'सभी टैब बंद करें';
 
   @override
-  String get gitUiFileUnchanged => 'Unchanged';
+  String get gitUiFileUnchanged => 'अपरिवर्तित';
 
   @override
-  String get gitUiFileAdded => 'Added';
+  String get gitUiFileAdded => 'जोड़ा गया';
 
   @override
-  String get gitUiFileModified => 'Modified';
+  String get gitUiFileModified => 'संशोधित';
 
   @override
-  String get gitUiFileDeleted => 'Deleted';
+  String get gitUiFileDeleted => 'हटाया गया';
 
   @override
-  String get gitUiFileRenamed => 'Renamed';
+  String get gitUiFileRenamed => 'नाम बदला गया';
 
   @override
-  String get gitUiFileCopied => 'Copied';
+  String get gitUiFileCopied => 'प्रतिलिपि बनाई गई';
 
   @override
-  String get gitUiFileConflicted => 'Conflicted';
+  String get gitUiFileConflicted => 'विरोधग्रस्त';
 
   @override
-  String get gitUiFileIgnored => 'Ignored';
+  String get gitUiFileIgnored => 'अनदेखा किया गया';
 
   @override
-  String get gitUiFileTypeChanged => 'Type changed';
+  String get gitUiFileTypeChanged => 'प्रकार बदला गया';
 
   @override
   String gitUiFileStatusStaged(String status) {
-    return '$status, staged';
+    return '$status, स्टेज किया गया';
   }
 
   @override
   String gitUiFileStatusUnstaged(String status) {
-    return '$status, unstaged';
+    return '$status, स्टेज नहीं किया गया';
   }
 
   @override
   String gitUiFileStatusHistorical(String status) {
-    return '$status in this commit';
+    return 'इस कमिट में $status';
   }
 }
