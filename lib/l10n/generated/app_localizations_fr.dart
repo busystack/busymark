@@ -7084,7 +7084,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitAndPush => 'Valider et pousser…';
+  String get gitUiCommitAndPush => 'Valider et pousser';
 
   @override
   String get gitUiNoReadableCommitTemplateIsConfigured =>
@@ -8999,4 +8999,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gitUiCloseAllTabs => 'Fermer tous les onglets';
+
+  @override
+  String get gitUiFileUnchanged => 'Unchanged';
+
+  @override
+  String get gitUiFileAdded => 'Added';
+
+  @override
+  String get gitUiFileModified => 'Modified';
+
+  @override
+  String get gitUiFileDeleted => 'Deleted';
+
+  @override
+  String get gitUiFileRenamed => 'Renamed';
+
+  @override
+  String get gitUiFileCopied => 'Copied';
+
+  @override
+  String get gitUiFileConflicted => 'Conflicted';
+
+  @override
+  String get gitUiFileIgnored => 'Ignored';
+
+  @override
+  String get gitUiFileTypeChanged => 'Type changed';
+
+  @override
+  String gitUiFileStatusStaged(String status) {
+    return '$status, staged';
+  }
+
+  @override
+  String gitUiFileStatusUnstaged(String status) {
+    return '$status, unstaged';
+  }
+
+  @override
+  String gitUiFileStatusHistorical(String status) {
+    return '$status in this commit';
+  }
 }

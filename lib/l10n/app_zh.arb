@@ -5594,7 +5594,7 @@
   "gitUiCancel": "取消",
   "gitUiAmendStaged": "修订阶段",
   "gitUiCommitStagedCount": "提交已暂存的更改（{count}）",
-  "gitUiCommitAndPush": "提交并推送…",
+  "gitUiCommitAndPush": "提交并推送",
   "gitUiNoReadableCommitTemplateIsConfigured": "没有配置可读化的承诺模板 。",
   "gitUiCommitIdentityAndHooks": "提交身份和钩子",
   "gitUiRecentMessages": "最近的消息",

@@ -4078,7 +4078,7 @@
   "gitUiCancel": "Отмена",
   "gitUiAmendStaged": "Внести поправки",
   "gitUiCommitStagedCount": "Создать коммит из индекса ({count})",
-  "gitUiCommitAndPush": "Создать коммит и отправить…",
+  "gitUiCommitAndPush": "Создать коммит и отправить",
   "gitUiNoReadableCommitTemplateIsConfigured": "Нет считываемого шаблона обязательств.",
   "gitUiCommitIdentityAndHooks": "Выявление личности и крючки",
   "gitUiRecentMessages": "Последние сообщения",

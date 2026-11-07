@@ -699,7 +699,7 @@ void main() {
   }
   for (final scale in [1.0, 2.0]) {
     testWidgets(
-      'historical root and child status slots match Files at $scale',
+      'historical root and child filenames match Files without a status column at $scale',
       (tester) async {
         await mountGitVisualContract(
           tester,
@@ -749,26 +749,21 @@ void main() {
         );
         expect(
           tester.getRect(find.text('root.md')).left,
-          tester.getRect(find.text('Files root')).left +
-              git.GitSizes.sidebarTreeControl +
-              git.GitSpacing.xs,
+          tester.getRect(find.text('Files root')).left,
         );
         expect(
           tester.getRect(find.text('child.md')).left,
-          tester.getRect(find.text('Files child')).left +
-              git.GitSizes.sidebarTreeControl +
-              git.GitSpacing.xs,
+          tester.getRect(find.text('Files child')).left,
         );
         expect(
           tester.getRect(find.text('child.md')).left -
               tester.getRect(find.text('root.md')).left,
           BusyMarkSizes.sidebarTreeDepthIndent,
         );
-        final statuses = find.text('M');
+        expect(find.text('M'), findsNothing);
         expect(
-          tester.getRect(statuses.last).left -
-              tester.getRect(statuses.first).left,
-          -BusyMarkSizes.sidebarTreeDepthIndent,
+          tester.widget<Text>(find.text('root.md')).style!.color,
+          tester.widget<Text>(find.text('child.md')).style!.color,
         );
         expect(tester.takeException(), isNull);
       },

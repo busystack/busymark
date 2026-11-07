@@ -4078,7 +4078,7 @@
   "gitUiCancel": "Скасувати",
   "gitUiAmendStaged": "Amed gamed",
   "gitUiCommitStagedCount": "Створити коміт з індексу ({count})",
-  "gitUiCommitAndPush": "Створити коміт і надіслати…",
+  "gitUiCommitAndPush": "Створити коміт і надіслати",
   "gitUiNoReadableCommitTemplateIsConfigured": "Не налаштовано придатний для читання шаблон внеску.",
   "gitUiCommitIdentityAndHooks": "Передавати особу і гачки",
   "gitUiRecentMessages": "Нещодавні повідомлення",

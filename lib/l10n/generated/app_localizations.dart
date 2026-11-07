@@ -11982,10 +11982,10 @@ abstract class AppLocalizations {
   /// **'Commit staged ({count})'**
   String gitUiCommitStagedCount(String count);
 
-  /// Shared Git interface: Commit and Push…
+  /// Shared Git interface: Commit and Push
   ///
   /// In en, this message translates to:
-  /// **'Commit and Push…'**
+  /// **'Commit and Push'**
   String get gitUiCommitAndPush;
 
   /// Shared Git interface: No readable commit template is configured.
@@ -15100,6 +15100,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close all tabs'**
   String get gitUiCloseAllTabs;
+
+  /// Shared Git interface: Unchanged
+  ///
+  /// In en, this message translates to:
+  /// **'Unchanged'**
+  String get gitUiFileUnchanged;
+
+  /// Shared Git interface: Added
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get gitUiFileAdded;
+
+  /// Shared Git interface: Modified
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get gitUiFileModified;
+
+  /// Shared Git interface: Deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get gitUiFileDeleted;
+
+  /// Shared Git interface: Renamed
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed'**
+  String get gitUiFileRenamed;
+
+  /// Shared Git interface: Copied
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get gitUiFileCopied;
+
+  /// Shared Git interface: Conflicted
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicted'**
+  String get gitUiFileConflicted;
+
+  /// Shared Git interface: Ignored
+  ///
+  /// In en, this message translates to:
+  /// **'Ignored'**
+  String get gitUiFileIgnored;
+
+  /// Shared Git interface: Type changed
+  ///
+  /// In en, this message translates to:
+  /// **'Type changed'**
+  String get gitUiFileTypeChanged;
+
+  /// Shared Git interface: {status}, staged
+  ///
+  /// In en, this message translates to:
+  /// **'{status}, staged'**
+  String gitUiFileStatusStaged(String status);
+
+  /// Shared Git interface: {status}, unstaged
+  ///
+  /// In en, this message translates to:
+  /// **'{status}, unstaged'**
+  String gitUiFileStatusUnstaged(String status);
+
+  /// Shared Git interface: {status} in this commit
+  ///
+  /// In en, this message translates to:
+  /// **'{status} in this commit'**
+  String gitUiFileStatusHistorical(String status);
 }
 
 class _AppLocalizationsDelegate

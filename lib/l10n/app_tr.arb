@@ -5582,7 +5582,7 @@
   "gitUiCancel": "İptal",
   "gitUiAmendStaged": "Değişiklik Yapıldı",
   "gitUiCommitStagedCount": "İndeksteki değişiklikleri commitle ({count})",
-  "gitUiCommitAndPush": "Commit oluştur ve gönder…",
+  "gitUiCommitAndPush": "Commit oluştur ve gönder",
   "gitUiNoReadableCommitTemplateIsConfigured": "Okunabilir komut şablonu ayarlanmamıştır.",
   "gitUiCommitIdentityAndHooks": "Komite kimliği ve hooks",
   "gitUiRecentMessages": "Son mesajlar",

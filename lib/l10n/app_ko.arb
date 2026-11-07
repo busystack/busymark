@@ -5582,7 +5582,7 @@
   "gitUiCancel": "취소",
   "gitUiAmendStaged": "스테이징된 내용으로 수정",
   "gitUiCommitStagedCount": "스테이징된 내용 커밋({count})",
-  "gitUiCommitAndPush": "커밋 후 푸시…",
+  "gitUiCommitAndPush": "커밋 후 푸시",
   "gitUiNoReadableCommitTemplateIsConfigured": "읽을 수 있는 커밋 템플릿이 구성되어 있지 않습니다.",
   "gitUiCommitIdentityAndHooks": "커밋 신원 및 훅",
   "gitUiRecentMessages": "최근 메시지",

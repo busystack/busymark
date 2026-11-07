@@ -7661,7 +7661,7 @@ code
       expect(find.byType(shared.GitCommitView), findsNothing);
       expect(find.byTooltip('Actions'), findsNothing);
       expect(find.text(l10n.gitTrustRequiredMessage), findsNothing);
-      expect(find.text('Commit and Push…'), findsNothing);
+      expect(find.text('Commit and Push'), findsNothing);
       final trustFocus = tester
           .widget<FocusableActionDetector>(
             find
@@ -7738,7 +7738,7 @@ code
           .revokeGitWorkspaceTrust(root);
       await tester.pumpAndSettle();
       expect(find.byType(shared.GitCommitView), findsNothing);
-      expect(find.text('Commit and Push…'), findsNothing);
+      expect(find.text('Commit and Push'), findsNothing);
       final mutations = fixture.sharedClient.statusReads;
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
@@ -10698,7 +10698,7 @@ code
     await tester.enterText(messageField, 'Preserved shell draft');
     await tester.pump();
     expect(commitWidget.session.draft, 'Preserved shell draft');
-    for (final label in ['Commit', 'Commit and Push…']) {
+    for (final label in ['Commit', 'Commit and Push']) {
       expect(
         tester
             .widget<shared.GitButton>(
@@ -11561,7 +11561,11 @@ code
         expect(
           tester.getRect(commit).top,
           greaterThanOrEqualTo(
-            tester.getBottomLeft(find.byType(shared.GitFeatureHeader)).dy,
+            tester
+                .getBottomLeft(
+                  find.byKey(const ValueKey('workspace-sidebar-primary-row')),
+                )
+                .dy,
           ),
         );
         expect(
@@ -23156,12 +23160,7 @@ Future<void> _chooseNativeSidebar(WidgetTester tester, String label) async {
     return index;
   });
   try {
-    final gitSelector = find.byType(shared.GitSidebarSelector);
-    await tester.tap(
-      gitSelector.evaluate().isNotEmpty
-          ? gitSelector
-          : find.byKey(const ValueKey('workspace-sidebar-view-menu')),
-    );
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-view-menu')));
     await tester.pump();
     expect(selected, isTrue);
   } finally {

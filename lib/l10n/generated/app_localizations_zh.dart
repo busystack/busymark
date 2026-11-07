@@ -6690,7 +6690,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitAndPush => '提交并推送…';
+  String get gitUiCommitAndPush => '提交并推送';
 
   @override
   String get gitUiNoReadableCommitTemplateIsConfigured => '没有配置可读化的承诺模板 。';
@@ -8526,6 +8526,48 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gitUiCloseAllTabs => '关闭所有标签页';
+
+  @override
+  String get gitUiFileUnchanged => 'Unchanged';
+
+  @override
+  String get gitUiFileAdded => 'Added';
+
+  @override
+  String get gitUiFileModified => 'Modified';
+
+  @override
+  String get gitUiFileDeleted => 'Deleted';
+
+  @override
+  String get gitUiFileRenamed => 'Renamed';
+
+  @override
+  String get gitUiFileCopied => 'Copied';
+
+  @override
+  String get gitUiFileConflicted => 'Conflicted';
+
+  @override
+  String get gitUiFileIgnored => 'Ignored';
+
+  @override
+  String get gitUiFileTypeChanged => 'Type changed';
+
+  @override
+  String gitUiFileStatusStaged(String status) {
+    return '$status, staged';
+  }
+
+  @override
+  String gitUiFileStatusUnstaged(String status) {
+    return '$status, unstaged';
+  }
+
+  @override
+  String gitUiFileStatusHistorical(String status) {
+    return '$status in this commit';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -15212,7 +15254,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiCommitAndPush => '提交并推送…';
+  String get gitUiCommitAndPush => '提交并推送';
 
   @override
   String get gitUiNoReadableCommitTemplateIsConfigured => '没有配置可读化的承诺模板 。';

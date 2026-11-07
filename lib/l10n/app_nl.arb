@@ -5582,7 +5582,7 @@
   "gitUiCancel": "Annuleren",
   "gitUiAmendStaged": "Gefaseerd wijzigen",
   "gitUiCommitStagedCount": "Index committen ({count})",
-  "gitUiCommitAndPush": "Committen en pushen…",
+  "gitUiCommitAndPush": "Committen en pushen",
   "gitUiNoReadableCommitTemplateIsConfigured": "Er is geen leesbaar commit-sjabloon geconfigureerd.",
   "gitUiCommitIdentityAndHooks": "Identiteit en haken committen",
   "gitUiRecentMessages": "Recente berichten",

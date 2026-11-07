@@ -60,7 +60,9 @@
   "wsGeneratedAnchor": "自動生成アンカー。値の入力で上書きします。",
   "wsHeadingBuilderLimitation": "固定バージョンのビルダーは H1 属性を公開しません。属性の所有者は見出しであり、XML ルートではありません。",
   "closeOtherTabs": "他のタブを閉じる",
-  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
+  "@closeOtherTabs": {
+    "description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."
+  },
   "tocTopicFromTemplate": "テンプレートからトピック...",
   "tocSaveAsTemplate": "テンプレートとして保存",
   "tocTemplateDialog": "テンプレートからトピックを作成",
@@ -2584,9 +2586,15 @@
   "@errorWritersideTopicRenameIncompleteProjectIndex": {
     "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
     "placeholders": {
-      "module": {"type": "String"},
-      "count": {"type": "String"},
-      "paths": {"type": "String"}
+      "module": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "paths": {
+        "type": "String"
+      }
     }
   },
   "errorWritersideTopicRenameProjectBuffersDirty": "Writerside プロジェクトファイルに未保存の変更があります。変更を解決して、新しい名前変更プレビューを準備してください。",
@@ -5031,9 +5039,13 @@
   "nextcloudPendingUpload": "添付ファイルのアップロード待ち",
   "nextcloudServerCheck": "前回のサーバー確認: {time}",
   "nextcloudSettingsLoading": "サーバー設定を読み込み中",
-  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "@nextcloudSettingsLoading": {
+    "description": "Accessible progress label while reading server Notes settings."
+  },
   "nextcloudSettingsSaving": "サーバー設定を保存中",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "@nextcloudSettingsSaving": {
+    "description": "Accessible progress label while writing server Notes settings."
+  },
   "nextcloudPreviousLocalEdit": "以前のローカル編集",
   "nextcloudUsePreviousEdit": "以前の編集を使用",
   "quickOpen": "クイックオープン",
@@ -5582,7 +5594,7 @@
   "gitUiCancel": "キャンセル",
   "gitUiAmendStaged": "ステージ済み内容で修正",
   "gitUiCommitStagedCount": "ステージ済み内容をコミット（{count}）",
-  "gitUiCommitAndPush": "コミットしてプッシュ…",
+  "gitUiCommitAndPush": "コミットしてプッシュ",
   "gitUiNoReadableCommitTemplateIsConfigured": "読み取り可能なコミットテンプレートが設定されていません。",
   "gitUiCommitIdentityAndHooks": "コミット作成者情報とフック",
   "gitUiRecentMessages": "最近のメッセージ",
@@ -6061,8 +6073,8 @@
   "gitUiIndexAppliedNewerDraftPreserved": "送信した下書きをインデックスに書き込みました。新しいテキストはこのエディターに残っています。適用する前に現在のバージョンを再読み込みして確認してください。",
   "gitUiNewerConflictDraftRetained": "送信した結果は保存されました。新しい結果の下書きはまだ保存されていません。",
   "gitUiNoFileHistoryForThisPathAndRevision": "このパスとリビジョンのファイル履歴はありません。",
-"gitUiReviewSavedIndexAndKeepDraft": "保存したインデックスを確認して下書きを保持",
-"gitUiIndexSourcesChangedSinceApply": "保存したインデックスまたはその比較元が変更されています。新しい下書きは保持されています。適用する前に、これらの変更を個別に確認してください。",
+  "gitUiReviewSavedIndexAndKeepDraft": "保存したインデックスを確認して下書きを保持",
+  "gitUiIndexSourcesChangedSinceApply": "保存したインデックスまたはその比較元が変更されています。新しい下書きは保持されています。適用する前に、これらの変更を個別に確認してください。",
   "gitUiReviewSavedMessage": "保存済みメッセージを確認",
   "gitUiSavedMessage": "保存済みメッセージ",
   "gitUiKeepThisMessage": "このメッセージを保持",
@@ -6093,5 +6105,17 @@
   "gitUiOperationsRequireTrust": "Git 操作にはワークスペースの信頼が必要です。",
   "gitUiTrustWorkspace": "ワークスペースを信頼",
   "gitUiCloseOtherTabs": "他のタブを閉じる",
-  "gitUiCloseAllTabs": "すべてのタブを閉じる"
+  "gitUiCloseAllTabs": "すべてのタブを閉じる",
+  "gitUiFileUnchanged": "変更なし",
+  "gitUiFileAdded": "追加",
+  "gitUiFileModified": "変更",
+  "gitUiFileDeleted": "削除",
+  "gitUiFileRenamed": "名前変更",
+  "gitUiFileCopied": "コピー",
+  "gitUiFileConflicted": "競合",
+  "gitUiFileIgnored": "無視",
+  "gitUiFileTypeChanged": "種類を変更",
+  "gitUiFileStatusStaged": "{status}、ステージ済み",
+  "gitUiFileStatusUnstaged": "{status}、未ステージ",
+  "gitUiFileStatusHistorical": "このコミットで{status}"
 }

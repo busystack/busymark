@@ -5582,7 +5582,7 @@
   "gitUiCancel": "Batal",
   "gitUiAmendStaged": "Amend dipentaskan",
   "gitUiCommitStagedCount": "Commit perubahan di indeks ({count})",
-  "gitUiCommitAndPush": "Commit dan push…",
+  "gitUiCommitAndPush": "Commit dan push",
   "gitUiNoReadableCommitTemplateIsConfigured": "Tidak ada templat commit yang dapat dibaca yang dikonfigurasi.",
   "gitUiCommitIdentityAndHooks": "Commit identitas dan kait",
   "gitUiRecentMessages": "Pesan baru-baru Ini",

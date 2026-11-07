@@ -4078,7 +4078,7 @@
   "gitUiCancel": "Anuluj",
   "gitUiAmendStaged": "Zmiana wprowadzona",
   "gitUiCommitStagedCount": "Zatwierdź zmiany z indeksu ({count})",
-  "gitUiCommitAndPush": "Zatwierdź i wyślij…",
+  "gitUiCommitAndPush": "Zatwierdź i wyślij",
   "gitUiNoReadableCommitTemplateIsConfigured": "Nie skonfigurowano żadnego czytelnego szablonu popełnienia zobowiązania.",
   "gitUiCommitIdentityAndHooks": "Tożsamość i haki",
   "gitUiRecentMessages": "Ostatnie wiadomości",

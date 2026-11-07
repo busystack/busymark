@@ -4094,7 +4094,7 @@
   "gitUiCancel": "لغو",
   "gitUiAmendStaged": "تغییرات در مرحله",
   "gitUiCommitStagedCount": "ثبت تغییرات آماده‌شده ({count})",
-  "gitUiCommitAndPush": "ثبت و ارسال…",
+  "gitUiCommitAndPush": "ثبت و ارسال",
   "gitUiNoReadableCommitTemplateIsConfigured": "هیچ قالبی برای خواندن تنظیم نشده است.",
   "gitUiCommitIdentityAndHooks": "تعهد به هویت و هاکس",
   "gitUiRecentMessages": "پیام های اخیر",

@@ -1315,6 +1315,24 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.trustWorkspace => gitUiTrustWorkspace,
     GitMessages.closeOtherTabs => gitUiCloseOtherTabs,
     GitMessages.closeAllTabs => gitUiCloseAllTabs,
+    GitMessages.fileUnchanged => gitUiFileUnchanged,
+    GitMessages.fileAdded => gitUiFileAdded,
+    GitMessages.fileModified => gitUiFileModified,
+    GitMessages.fileDeleted => gitUiFileDeleted,
+    GitMessages.fileRenamed => gitUiFileRenamed,
+    GitMessages.fileCopied => gitUiFileCopied,
+    GitMessages.fileConflicted => gitUiFileConflicted,
+    GitMessages.fileIgnored => gitUiFileIgnored,
+    GitMessages.fileTypeChanged => gitUiFileTypeChanged,
+    GitMessages.fileStatusStaged => gitUiFileStatusStaged(
+      (values['status'] ?? '').toString(),
+    ),
+    GitMessages.fileStatusUnstaged => gitUiFileStatusUnstaged(
+      (values['status'] ?? '').toString(),
+    ),
+    GitMessages.fileStatusHistorical => gitUiFileStatusHistorical(
+      (values['status'] ?? '').toString(),
+    ),
     _ => message,
   };
 }

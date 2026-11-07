@@ -1589,16 +1589,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                             : _SidebarTab.git,
                         tabs,
                       ),
-                      destinations: [
-                        for (final tab in tabs)
-                          if (tab != _SidebarTab.git &&
-                              tab != _SidebarTab.gitLog)
-                            shared.GitSidebarDestination(
-                              id: tab.name,
-                              label: _sidebarTabLabel(context, tab),
-                              onSelect: () => _selectTab(tab, tabs),
-                            ),
-                      ],
                       workspace: widget.workspace,
                       log: selectedTab == _SidebarTab.gitLog,
                       active:
@@ -2485,10 +2475,6 @@ class _SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (selectedTab == _SidebarTab.git || selectedTab == _SidebarTab.gitLog) {
-      return const SizedBox.shrink();
-    }
-
     final colors = BusyMarkSurfaceColors.of(context);
     final path = _workspacePath(workspace);
     final activeDocumentPath =
@@ -4102,9 +4088,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         if (relativePath == null) {
           return;
         }
-        await ref.read(gitControllerProvider.notifier).stageFiles([
-          relativePath,
-        ]);
+        await stageBusyMarkFiles(context, ref, [relativePath]);
       case _FileTreeAction.copyName:
         await _copyToClipboard(name);
       case _FileTreeAction.copyPath:

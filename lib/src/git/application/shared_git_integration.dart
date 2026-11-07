@@ -250,6 +250,20 @@ class _BusyMarkGitWorkspaceScopeState
       workspace,
       repository,
       current: current,
+      stage: (paths, unstage) async {
+        if (!mounted || generation != _generation || session.isDisposed) return;
+        final reviewed = session.snapshot;
+        if (reviewed == null) {
+          throw const shared.GitException(shared.GitErrorCode.disconnected);
+        }
+        final result = await session.stagePaths(
+          paths.map(shared.RepoPath.text).toList(),
+          reviewed: reviewed,
+          unstage: unstage,
+        );
+        if (result?.error case final error?) throw error;
+        await controller.refreshFromSharedSnapshot();
+      },
       refresh: () async {
         await session.refresh();
         if (session.failure case final failure?) throw failure;
@@ -264,10 +278,9 @@ class _BusyMarkGitWorkspaceScopeState
     }
     shared.GitSnapshot? observed;
     void changed() {
-      if (!mounted ||
-          generation != _generation ||
-          session.snapshot == null ||
-          identical(observed, session.snapshot)) {
+      if (!mounted || generation != _generation) return;
+      controller.projectSharedOperation(workspace, repository, session.running);
+      if (session.snapshot == null || identical(observed, session.snapshot)) {
         return;
       }
       observed = session.snapshot;
@@ -329,6 +342,32 @@ class _BusyMarkGitAttachmentScope extends InheritedWidget {
   @override
   bool updateShouldNotify(_BusyMarkGitAttachmentScope oldWidget) =>
       owner != oldWidget.owner;
+}
+
+/// Files is an entry point into the same worktree session, including before
+/// Commit has ever been visited. It never creates another operation owner.
+Future<void> stageBusyMarkFiles(
+  BuildContext context,
+  WidgetRef ref,
+  List<String> paths,
+) async {
+  if (!context.mounted) return;
+  try {
+    final session = await BusyMarkGitWorkspaceScope._of(context).open();
+    if (!context.mounted || session == null || session.isDisposed) return;
+    final controller = ref.read(gitControllerProvider.notifier);
+    await controller.refreshFromSharedSnapshot();
+    if (context.mounted && !session.isDisposed) {
+      await controller.stageFiles(paths);
+    }
+  } on GitWorkspaceRootRequired {
+    if (context.mounted) {
+      busyMarkGitNotify(
+        context,
+        message: context.l10n.gitWorkspaceRootRequired,
+      );
+    }
+  }
 }
 
 Future<void> showBusyMarkSharedGitAction(
@@ -896,9 +935,7 @@ class BusyMarkSharedGitSidebar extends ConsumerStatefulWidget {
     required this.onSelectView,
     this.log = false,
     this.active = true,
-    this.destinations = const [],
   });
-  final List<shared.GitSidebarDestination> destinations;
   final bool log, active;
   final ValueChanged<shared.GitSidebarView> onSelectView;
   final Workspace workspace;
@@ -1065,7 +1102,6 @@ class _BusyMarkSharedGitSidebarState
       session,
       shared.GitFeatureSidebar(
         controller: session.feature,
-        destinations: widget.destinations,
         view: widget.log
             ? shared.GitSidebarView.log
             : shared.GitSidebarView.commit,

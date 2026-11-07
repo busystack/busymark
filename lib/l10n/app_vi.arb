@@ -5582,7 +5582,7 @@
   "gitUiCancel": "Hủy",
   "gitUiAmendStaged": "Đã chỉnh sửa",
   "gitUiCommitStagedCount": "Commit nội dung trong chỉ mục ({count})",
-  "gitUiCommitAndPush": "Commit rồi đẩy lên…",
+  "gitUiCommitAndPush": "Commit rồi đẩy lên",
   "gitUiNoReadableCommitTemplateIsConfigured": "Không có mẫu nhập có khả năng đọc.",
   "gitUiCommitIdentityAndHooks": "Tạo danh tính và móc",
   "gitUiRecentMessages": "Tin nhắn gần đây",

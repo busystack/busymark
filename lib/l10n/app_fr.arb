@@ -4052,7 +4052,7 @@
   "gitUiCancel": "Annuler",
   "gitUiAmendStaged": "Modifier par étape",
   "gitUiCommitStagedCount": "Commiter l’index ({count})",
-  "gitUiCommitAndPush": "Valider et pousser…",
+  "gitUiCommitAndPush": "Valider et pousser",
   "gitUiNoReadableCommitTemplateIsConfigured": "Aucun modèle de commit lisible n'est configuré.",
   "gitUiCommitIdentityAndHooks": "Commettre l'identité et les crochets",
   "gitUiRecentMessages": "Messages récents",

@@ -4052,7 +4052,7 @@
   "gitUiCancel": "Avbryt",
   "gitUiAmendStaged": "Endret trinnvis",
   "gitUiCommitStagedCount": "Commit endringer i indeksen ({count})",
-  "gitUiCommitAndPush": "Commit og push…",
+  "gitUiCommitAndPush": "Commit og push",
   "gitUiNoReadableCommitTemplateIsConfigured": "Det er ikke satt opp en lesbar innmeldingsmal.",
   "gitUiCommitIdentityAndHooks": "Meld inn identitet og kroker",
   "gitUiRecentMessages": "Nylige meldinger",

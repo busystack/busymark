@@ -60,7 +60,9 @@
   "wsGeneratedAnchor": "مرساة مولّدة؛ إدخال قيمة ينشئ تجاوزًا.",
   "wsHeadingBuilderLimitation": "لا ينشر الباني المثبّت سمات H1. تخص العنوان وليس جذر XML.",
   "closeOtherTabs": "إغلاق علامات التبويب الأخرى",
-  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
+  "@closeOtherTabs": {
+    "description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."
+  },
   "tocTopicFromTemplate": "موضوع من قالب...",
   "tocSaveAsTemplate": "حفظ كقالب",
   "tocTemplateDialog": "إنشاء موضوع من قالب",
@@ -1936,9 +1938,15 @@
   "@errorWritersideTopicRenameIncompleteProjectIndex": {
     "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
     "placeholders": {
-      "module": {"type": "String"},
-      "count": {"type": "String"},
-      "paths": {"type": "String"}
+      "module": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "paths": {
+        "type": "String"
+      }
     }
   },
   "errorWritersideTopicRenameProjectBuffersDirty": "تحتوي ملفات مشروع Writerside على تغييرات غير محفوظة. عالجها وأنشئ معاينة جديدة لإعادة التسمية.",
@@ -3501,9 +3509,13 @@
   "nextcloudPendingUpload": "رفع المرفق قيد الانتظار",
   "nextcloudServerCheck": "آخر فحص للخادم: {time}",
   "nextcloudSettingsLoading": "جارٍ تحميل إعدادات الخادم",
-  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "@nextcloudSettingsLoading": {
+    "description": "Accessible progress label while reading server Notes settings."
+  },
   "nextcloudSettingsSaving": "جارٍ حفظ إعدادات الخادم",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "@nextcloudSettingsSaving": {
+    "description": "Accessible progress label while writing server Notes settings."
+  },
   "nextcloudPreviousLocalEdit": "التعديل المحلي السابق",
   "nextcloudUsePreviousEdit": "استخدام التعديل السابق",
   "quickOpen": "فتح سريع",
@@ -4052,7 +4064,7 @@
   "gitUiCancel": "إلغاء",
   "gitUiAmendStaged": "عدّل على مراحل",
   "gitUiCommitStagedCount": "إيداع محتوى الفهرس ({count})",
-  "gitUiCommitAndPush": "إيداع ودفع…",
+  "gitUiCommitAndPush": "إيداع ودفع",
   "gitUiNoReadableCommitTemplateIsConfigured": "لم يتم تكوين قالب التزام قابل للقراءة.",
   "gitUiCommitIdentityAndHooks": "إلتزم بالهوية والخطافات",
   "gitUiRecentMessages": "الرسائل الأخيرة",
@@ -4531,8 +4543,8 @@
   "gitUiIndexAppliedNewerDraftPreserved": "تمت كتابة المسودة المُرسلة إلى الفهرس. ما زال النص الأحدث في هذا المحرر. أعد تحميل الإصدارات الحالية ومراجعتها قبل تطبيقه.",
   "gitUiNewerConflictDraftRetained": "تم حفظ النتيجة المُرسلة. ما زالت مسودة النتيجة الأحدث غير محفوظة.",
   "gitUiNoFileHistoryForThisPathAndRevision": "لا يتوفر سجل ملفات لهذا المسار وهذه المراجعة.",
-"gitUiReviewSavedIndexAndKeepDraft": "راجع الفهرس المحفوظ واحتفظ بالمسودة",
-"gitUiIndexSourcesChangedSinceApply": "تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها.",
+  "gitUiReviewSavedIndexAndKeepDraft": "راجع الفهرس المحفوظ واحتفظ بالمسودة",
+  "gitUiIndexSourcesChangedSinceApply": "تغيّر الفهرس المحفوظ أو مصادره. تم الاحتفاظ بالمسودة الأحدث؛ راجع هذه التغييرات بشكل منفصل قبل تطبيقها.",
   "gitUiReviewSavedMessage": "مراجعة الرسالة المحفوظة",
   "gitUiSavedMessage": "الرسالة المحفوظة",
   "gitUiKeepThisMessage": "الاحتفاظ بهذه الرسالة",
@@ -4563,5 +4575,17 @@
   "gitUiOperationsRequireTrust": "تتطلب عمليات Git الوثوق بمساحة العمل.",
   "gitUiTrustWorkspace": "الوثوق بمساحة العمل",
   "gitUiCloseOtherTabs": "إغلاق علامات التبويب الأخرى",
-  "gitUiCloseAllTabs": "إغلاق كل علامات التبويب"
+  "gitUiCloseAllTabs": "إغلاق كل علامات التبويب",
+  "gitUiFileUnchanged": "دون تغيير",
+  "gitUiFileAdded": "مضاف",
+  "gitUiFileModified": "معدّل",
+  "gitUiFileDeleted": "محذوف",
+  "gitUiFileRenamed": "أُعيدت تسميته",
+  "gitUiFileCopied": "منسوخ",
+  "gitUiFileConflicted": "متعارض",
+  "gitUiFileIgnored": "متجاهَل",
+  "gitUiFileTypeChanged": "تغيّر النوع",
+  "gitUiFileStatusStaged": "{status}، في منطقة التجهيز",
+  "gitUiFileStatusUnstaged": "{status}، غير مجهّز",
+  "gitUiFileStatusHistorical": "{status} في هذا الالتزام"
 }

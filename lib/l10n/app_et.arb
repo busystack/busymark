@@ -4512,7 +4512,7 @@
   "gitUiCancel": "Loobu",
   "gitUiAmendStaged": "Muuta astmeliselt",
   "gitUiCommitStagedCount": "Kommiti indeksis olev ({count})",
-  "gitUiCommitAndPush": "Tee sissekanne ja lükka…",
+  "gitUiCommitAndPush": "Tee sissekanne ja lükka",
   "gitUiNoReadableCommitTemplateIsConfigured": "Lugematu sissekande mall ei ole seadistatud.",
   "gitUiCommitIdentityAndHooks": "Sisselogimise identiteet ja konksud",
   "gitUiRecentMessages": "Viimased kirjad",

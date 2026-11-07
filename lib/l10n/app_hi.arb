@@ -4052,7 +4052,7 @@
   "gitUiCancel": "रद्द करें",
   "gitUiAmendStaged": "आमीन- स्टेज्ड",
   "gitUiCommitStagedCount": "स्टेज की गई सामग्री कमिट करें ({count})",
-  "gitUiCommitAndPush": "कमिट करके पुश करें…",
+  "gitUiCommitAndPush": "कमिट करके पुश करें",
   "gitUiNoReadableCommitTemplateIsConfigured": "कोई पढ़ने योग्य टैम्प्लेट कॉन्फ़िगर्ड नहीं है.",
   "gitUiCommitIdentityAndHooks": "कमिट पहचान तथा विकृतियाँ",
   "gitUiRecentMessages": "नवीनतम संदेश",

@@ -4852,9 +4852,9 @@
       }
     }
   },
-  "gitUiCommitAndPush": "Commit and Push…",
+  "gitUiCommitAndPush": "Commit and Push",
   "@gitUiCommitAndPush": {
-    "description": "Shared Git interface: Commit and Push…"
+    "description": "Shared Git interface: Commit and Push"
   },
   "gitUiNoReadableCommitTemplateIsConfigured": "No readable commit template is configured.",
   "@gitUiNoReadableCommitTemplateIsConfigured": {
@@ -7419,5 +7419,68 @@
   },
   "@gitUiCloseAllTabs": {
     "description": "Shared Git interface: Close all tabs"
+  },
+  "gitUiFileUnchanged": "Unchanged",
+  "@gitUiFileUnchanged": {
+    "description": "Shared Git interface: Unchanged"
+  },
+  "gitUiFileAdded": "Added",
+  "@gitUiFileAdded": {
+    "description": "Shared Git interface: Added"
+  },
+  "gitUiFileModified": "Modified",
+  "@gitUiFileModified": {
+    "description": "Shared Git interface: Modified"
+  },
+  "gitUiFileDeleted": "Deleted",
+  "@gitUiFileDeleted": {
+    "description": "Shared Git interface: Deleted"
+  },
+  "gitUiFileRenamed": "Renamed",
+  "@gitUiFileRenamed": {
+    "description": "Shared Git interface: Renamed"
+  },
+  "gitUiFileCopied": "Copied",
+  "@gitUiFileCopied": {
+    "description": "Shared Git interface: Copied"
+  },
+  "gitUiFileConflicted": "Conflicted",
+  "@gitUiFileConflicted": {
+    "description": "Shared Git interface: Conflicted"
+  },
+  "gitUiFileIgnored": "Ignored",
+  "@gitUiFileIgnored": {
+    "description": "Shared Git interface: Ignored"
+  },
+  "gitUiFileTypeChanged": "Type changed",
+  "@gitUiFileTypeChanged": {
+    "description": "Shared Git interface: Type changed"
+  },
+  "gitUiFileStatusStaged": "{status}, staged",
+  "@gitUiFileStatusStaged": {
+    "description": "Shared Git interface: {status}, staged",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiFileStatusUnstaged": "{status}, unstaged",
+  "@gitUiFileStatusUnstaged": {
+    "description": "Shared Git interface: {status}, unstaged",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "gitUiFileStatusHistorical": "{status} in this commit",
+  "@gitUiFileStatusHistorical": {
+    "description": "Shared Git interface: {status} in this commit",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
   }
 }

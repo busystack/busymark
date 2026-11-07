@@ -4052,7 +4052,7 @@
   "gitUiCancel": "Cancelar",
   "gitUiAmendStaged": "Modifíquese por etapas",
   "gitUiCommitStagedCount": "Confirmar lo preparado ({count})",
-  "gitUiCommitAndPush": "Confirmar y enviar…",
+  "gitUiCommitAndPush": "Confirmar y enviar",
   "gitUiNoReadableCommitTemplateIsConfigured": "No se configura ninguna plantilla de confirmación legible.",
   "gitUiCommitIdentityAndHooks": "Cometer identidad y ganchos",
   "gitUiRecentMessages": "Mensajes recientes",

@@ -339,6 +339,7 @@ class GitController extends Notifier<GitState> {
     String workspacePath,
     Future<GitStatusSnapshot> Function() refresh,
     Future<GitStatusSnapshot?> Function() current,
+    Future<void> Function(List<String>, bool) stage,
   })?
   _sharedStatusSource;
 
@@ -349,6 +350,7 @@ class GitController extends Notifier<GitState> {
     shared.RepositoryId repository, {
     required Future<GitStatusSnapshot> Function() refresh,
     required Future<GitStatusSnapshot?> Function() current,
+    required Future<void> Function(List<String>, bool) stage,
   }) {
     if (workspace.isRemote ||
         state.attachedWorkspace?.id != workspace.id ||
@@ -363,8 +365,23 @@ class GitController extends Notifier<GitState> {
       workspacePath: workspace.rootPath,
       refresh: refresh,
       current: current,
+      stage: stage,
     );
     return true;
+  }
+
+  void projectSharedOperation(
+    Workspace workspace,
+    shared.RepositoryId repository,
+    bool running,
+  ) {
+    if (_sharedStatusSource?.repository != repository ||
+        state.attachedWorkspace?.id != workspace.id) {
+      return;
+    }
+    if (state.isRunningOperation != running) {
+      state = state.copyWith(isRunningOperation: running);
+    }
   }
 
   Future<void> refreshFromSharedSnapshot({bool refresh = false}) async {
@@ -1233,18 +1250,35 @@ class GitController extends Notifier<GitState> {
     }
   }
 
-  Future<void> stageFiles(List<String> repoRelativePaths) {
-    return _runPathOperation(
-      repoRelativePaths,
-      (repository, paths) => _gateway.stage(repository, paths),
-    );
-  }
+  Future<void> stageFiles(List<String> paths) =>
+      _stageThroughSession(paths, false);
+  Future<void> unstageFiles(List<String> paths) =>
+      _stageThroughSession(paths, true);
 
-  Future<void> unstageFiles(List<String> repoRelativePaths) {
-    return _runPathOperation(
-      repoRelativePaths,
-      (repository, paths) => _gateway.unstage(repository, paths),
-    );
+  Future<void> _stageThroughSession(List<String> paths, bool unstage) async {
+    final operation = _captureRepositoryOperation(),
+        source = _sharedStatusSource;
+    if (operation == null) return;
+    final failure = _validation.validateRepoRelativePaths(paths);
+    if (failure != null) {
+      state = state.copyWith(lastError: failure);
+      return;
+    }
+    if (source == null ||
+        source.repository.key != _sharedAssociation?.repository.key) {
+      _setFailure(
+        const shared.GitException(shared.GitErrorCode.disconnected),
+        commandName: 'git',
+      );
+      return;
+    }
+    try {
+      await source.stage(List.unmodifiable(paths), unstage);
+    } on Object catch (error) {
+      if (_isCurrentRepositoryOperation(operation)) {
+        _setFailure(error, commandName: 'git');
+      }
+    }
   }
 
   Future<void> rollbackFiles(List<String> repoRelativePaths) {

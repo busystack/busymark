@@ -60,7 +60,9 @@
   "wsGeneratedAnchor": "Generierter Anker; ein eingegebener Wert erstellt eine Überschreibung.",
   "wsHeadingBuilderLimitation": "Der festgelegte Builder veröffentlicht keine H1-Attribute. Sie gehören zur Überschrift, nicht zur XML-Root.",
   "closeOtherTabs": "Andere Tabs schließen",
-  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
+  "@closeOtherTabs": {
+    "description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."
+  },
   "tocTopicFromTemplate": "Thema aus Vorlage...",
   "tocSaveAsTemplate": "Als Vorlage speichern",
   "tocTemplateDialog": "Thema aus Vorlage erstellen",
@@ -1936,9 +1938,15 @@
   "@errorWritersideTopicRenameIncompleteProjectIndex": {
     "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
     "placeholders": {
-      "module": {"type": "String"},
-      "count": {"type": "String"},
-      "paths": {"type": "String"}
+      "module": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "paths": {
+        "type": "String"
+      }
     }
   },
   "errorWritersideTopicRenameProjectBuffersDirty": "Writerside-Projektdateien enthalten ungespeicherte Änderungen. Beheben Sie diese und erstellen Sie eine neue Umbenennungsvorschau.",
@@ -3501,9 +3509,13 @@
   "nextcloudPendingUpload": "Anhang wartet auf Upload",
   "nextcloudServerCheck": "Letzte Serverprüfung: {time}",
   "nextcloudSettingsLoading": "Servereinstellungen werden geladen",
-  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "@nextcloudSettingsLoading": {
+    "description": "Accessible progress label while reading server Notes settings."
+  },
   "nextcloudSettingsSaving": "Servereinstellungen werden gespeichert",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "@nextcloudSettingsSaving": {
+    "description": "Accessible progress label while writing server Notes settings."
+  },
   "nextcloudPreviousLocalEdit": "Vorherige lokale Änderung",
   "nextcloudUsePreviousEdit": "Vorherige Änderung verwenden",
   "quickOpen": "Schnell öffnen",
@@ -4052,7 +4064,7 @@
   "gitUiCancel": "Abbrechen",
   "gitUiAmendStaged": "Änderung",
   "gitUiCommitStagedCount": "Gestagtes committen ({count})",
-  "gitUiCommitAndPush": "Commit und Push…",
+  "gitUiCommitAndPush": "Commit und Push",
   "gitUiNoReadableCommitTemplateIsConfigured": "Es ist keine lesbare Commit-Vorlage konfiguriert.",
   "gitUiCommitIdentityAndHooks": "Identität und Haken einbinden",
   "gitUiRecentMessages": "Aktuelle Meldungen",
@@ -4531,8 +4543,8 @@
   "gitUiIndexAppliedNewerDraftPreserved": "Der eingereichte Entwurf wurde in den Index geschrieben. Neuerer Text befindet sich weiterhin in diesem Editor. Laden Sie die aktuellen Versionen neu und prüfen Sie sie vor dem Anwenden.",
   "gitUiNewerConflictDraftRetained": "Das eingereichte Ergebnis wurde gespeichert. Ihr neuerer Ergebnisentwurf ist weiterhin ungespeichert.",
   "gitUiNoFileHistoryForThisPathAndRevision": "Für diesen Pfad und diese Revision ist kein Dateiverlauf verfügbar.",
-"gitUiReviewSavedIndexAndKeepDraft": "Gespeicherten Index prüfen und Entwurf behalten",
-"gitUiIndexSourcesChangedSinceApply": "Der gespeicherte Index oder seine Quellen wurden geändert. Der neuere Entwurf bleibt erhalten; prüfen Sie diese Änderungen vor dem Anwenden gesondert.",
+  "gitUiReviewSavedIndexAndKeepDraft": "Gespeicherten Index prüfen und Entwurf behalten",
+  "gitUiIndexSourcesChangedSinceApply": "Der gespeicherte Index oder seine Quellen wurden geändert. Der neuere Entwurf bleibt erhalten; prüfen Sie diese Änderungen vor dem Anwenden gesondert.",
   "gitUiReviewSavedMessage": "Gespeicherte Nachricht prüfen",
   "gitUiSavedMessage": "Gespeicherte Nachricht",
   "gitUiKeepThisMessage": "Diese Nachricht behalten",
@@ -4563,5 +4575,17 @@
   "gitUiOperationsRequireTrust": "Git-Operationen erfordern Vertrauen in den Arbeitsbereich.",
   "gitUiTrustWorkspace": "Diesem Arbeitsbereich vertrauen",
   "gitUiCloseOtherTabs": "Andere Tabs schließen",
-  "gitUiCloseAllTabs": "Alle Tabs schließen"
+  "gitUiCloseAllTabs": "Alle Tabs schließen",
+  "gitUiFileUnchanged": "Unverändert",
+  "gitUiFileAdded": "Hinzugefügt",
+  "gitUiFileModified": "Geändert",
+  "gitUiFileDeleted": "Gelöscht",
+  "gitUiFileRenamed": "Umbenannt",
+  "gitUiFileCopied": "Kopiert",
+  "gitUiFileConflicted": "Konflikt",
+  "gitUiFileIgnored": "Ignoriert",
+  "gitUiFileTypeChanged": "Typ geändert",
+  "gitUiFileStatusStaged": "{status}, bereitgestellt",
+  "gitUiFileStatusUnstaged": "{status}, nicht bereitgestellt",
+  "gitUiFileStatusHistorical": "{status} in diesem Commit"
 }

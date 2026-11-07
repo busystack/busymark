@@ -53,6 +53,7 @@ void main() {
         controller.bindSharedStatusSource(
           workspace,
           repository,
+          stage: (_, _) async => throw StateError('Unexpected staging'),
           refresh: () async {
             refreshes++;
             return latest;
@@ -154,6 +155,7 @@ void main() {
         controller.bindSharedStatusSource(
           workspace,
           repository,
+          stage: (_, _) async => throw StateError('Unexpected staging'),
           refresh: () => waiting.future,
           current: () => waiting.future,
         ),
@@ -205,6 +207,7 @@ void main() {
       controller.bindSharedStatusSource(
         workspace,
         repository,
+        stage: (_, _) async => throw StateError('Unexpected staging'),
         refresh: () async => status,
         current: () async => status,
       ),
@@ -493,55 +496,84 @@ void main() {
     );
   }, skip: Platform.isWindows);
 
-  test('stage and unstage update state', () async {
-    final gateway = _FakeGitGateway();
-    final container = _container(gateway);
-    final controller = container.read(gitControllerProvider.notifier);
-    controller.attachWorkspace(_workspace());
-    await controller.refresh();
-
-    await controller.stageFiles(['README.md']);
-    expect(
-      container
-          .read(gitControllerProvider)
-          .statusSnapshot
-          ?.stagedFiles
-          .single
-          .repoRelativePath,
-      'README.md',
-    );
-
-    await controller.unstageFiles(['README.md']);
-    expect(
-      container
-          .read(gitControllerProvider)
-          .statusSnapshot
-          ?.unstagedFiles
-          .single
-          .repoRelativePath,
-      'README.md',
-    );
-  });
-
   test(
-    'loads only the selected change comparison and reconciles after stage',
+    'Files Stage cannot fall back to a gateway without a canonical session',
     () async {
       final gateway = _FakeGitGateway();
       final container = _container(gateway);
       final controller = container.read(gitControllerProvider.notifier);
       controller.attachWorkspace(_workspace());
       await controller.refresh();
+      await controller.stageFiles(['README.md']);
+      await controller.unstageFiles(['README.md']);
+      expect(gateway.staged, isFalse);
+      expect(container.read(gitControllerProvider).lastError, isNotNull);
+    },
+  );
 
+  test(
+    'Files Stage and Unstage project the captured session result and reconcile comparison selection',
+    () async {
+      final folder = await Directory.systemTemp.createTemp(
+        'files-session-adapter-',
+      );
+      addTearDown(() => folder.delete(recursive: true));
+      final root = await folder.resolveSymbolicLinks();
+      final repository = shared.RepositoryId(
+        root: root,
+        gitDir: '$root/.git',
+        commonDir: '$root/.git',
+        objectFormat: 'sha1',
+      );
+      final gateway = _AssociatedGitGateway(repository);
+      final container = _container(gateway);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(root);
+      final controller = container.read(gitControllerProvider.notifier);
+      final workspace = _workspace(id: root, rootPath: root);
+      controller.attachWorkspace(workspace);
+      await controller.associateSharedRepository(workspace, repository);
+      var staged = false;
+      final requests = <(List<String>, bool)>[];
+      Future<GitStatusSnapshot> current() async => GitStatusSnapshot(
+        repositoryInfo: GitRepositoryInfo(
+          rootPath: root,
+          gitDirPath: repository.gitDir,
+          identityKey: repository.key,
+          currentBranch: 'main',
+        ),
+        files: [gateway._file(staged: staged, unstaged: !staged)],
+      );
+      controller.bindSharedStatusSource(
+        workspace,
+        repository,
+        current: current,
+        refresh: current,
+        stage: (paths, unstage) async {
+          requests.add((paths, unstage));
+          staged = !unstage;
+          await controller.refreshFromSharedSnapshot();
+        },
+      );
+      await controller.refreshFromSharedSnapshot();
       await controller.selectChange(
         const GitChangeSelection(
           path: 'README.md',
           comparison: GitComparisonType.unstaged,
         ),
       );
-      expect(gateway.diffRequests, [('README.md', false)]);
-
+      final scansBeforeStaging = gateway.statusCalls;
       await controller.stageFiles(['README.md']);
-
+      expect(
+        container
+            .read(gitControllerProvider)
+            .statusSnapshot!
+            .stagedFiles
+            .single
+            .repoRelativePath,
+        'README.md',
+      );
       expect(
         container.read(gitControllerProvider).selectedChange,
         const GitChangeSelection(
@@ -549,8 +581,19 @@ void main() {
           comparison: GitComparisonType.staged,
         ),
       );
-      expect(gateway.diffRequests.last, ('README.md', true));
-      expect(gateway.diffRequests.where((request) => request.$2), hasLength(1));
+      await controller.unstageFiles(['README.md']);
+      expect(
+        container
+            .read(gitControllerProvider)
+            .statusSnapshot!
+            .unstagedFiles
+            .single
+            .repoRelativePath,
+        'README.md',
+      );
+      expect(requests.map((r) => r.$2), [false, true]);
+      expect(gateway.stageCalls, 0);
+      expect(gateway.statusCalls, scansBeforeStaging);
     },
   );
 

@@ -7087,7 +7087,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitAndPush => 'Criar commit e enviar…';
+  String get gitUiCommitAndPush => 'Criar commit e enviar';
 
   @override
   String get gitUiNoReadableCommitTemplateIsConfigured =>
@@ -8988,6 +8988,48 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitUiCloseAllTabs => 'Fechar todas as abas';
+
+  @override
+  String get gitUiFileUnchanged => 'Unchanged';
+
+  @override
+  String get gitUiFileAdded => 'Added';
+
+  @override
+  String get gitUiFileModified => 'Modified';
+
+  @override
+  String get gitUiFileDeleted => 'Deleted';
+
+  @override
+  String get gitUiFileRenamed => 'Renamed';
+
+  @override
+  String get gitUiFileCopied => 'Copied';
+
+  @override
+  String get gitUiFileConflicted => 'Conflicted';
+
+  @override
+  String get gitUiFileIgnored => 'Ignored';
+
+  @override
+  String get gitUiFileTypeChanged => 'Type changed';
+
+  @override
+  String gitUiFileStatusStaged(String status) {
+    return '$status, staged';
+  }
+
+  @override
+  String gitUiFileStatusUnstaged(String status) {
+    return '$status, unstaged';
+  }
+
+  @override
+  String gitUiFileStatusHistorical(String status) {
+    return '$status in this commit';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -16067,7 +16109,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
-  String get gitUiCommitAndPush => 'Criar commit e enviar…';
+  String get gitUiCommitAndPush => 'Criar commit e enviar';
 
   @override
   String get gitUiNoReadableCommitTemplateIsConfigured =>

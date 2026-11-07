@@ -1,3 +1,4 @@
+import '../../../../busystack_git_flutter/test/support/filename_presentation_contract.dart';
 import '../../../../busystack_git_flutter/test/support/history_presentation_contract.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
@@ -20,6 +21,29 @@ import 'package:yaru/yaru.dart';
 import 'package:busymark/src/app/busymark_search_field.dart';
 
 void main() {
+  for (final brightness in Brightness.values) {
+    for (final scale in [1.0, 1.5, 2.0]) {
+      for (final locale in ['en', 'de', 'ja', 'ar']) {
+        testWidgets(
+          'shared filename status rendering $brightness $scale $locale',
+          (tester) async {
+            await filenamePresentationContract(
+              tester,
+              mount: (child) => tester.pumpWidget(
+                _nativeGitHarness(
+                  brightness: brightness,
+                  scale: scale,
+                  locale: Locale(locale),
+                  builder: (_, _) => child,
+                ),
+              ),
+            );
+          },
+        );
+      }
+    }
+  }
+
   for (final brightness in Brightness.values) {
     testWidgets(
       'Git selection paints the approved search-entry theme $brightness',
@@ -778,6 +802,19 @@ void main() {
                 child: Column(
                   children: [
                     for (final depth in [0, 1, 2])
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: BusyMarkSpacing.sm,
+                        ),
+                        child: BusyMarkSidebarTreeRow(
+                          title: 'Files $depth',
+                          depth: depth,
+                          icon: YaruIcons.document,
+                          hasChildren: depth < 2,
+                          expanded: true,
+                        ),
+                      ),
+                    for (final depth in [0, 1, 2])
                       SizedBox(
                         height: host.rowHeight(context),
                         child: git.GitChangeRow(
@@ -785,7 +822,9 @@ void main() {
                           depth: depth,
                           group: depth == 0,
                           expanded: depth < 2 ? true : null,
-                          status: depth == 2 ? 'M' : null,
+                          status: depth == 2
+                              ? git.GitFileStatus.modified
+                              : null,
                           onPointerDown: (_) {},
                           onTap: () => opened++,
                           onToggle: () => toggled++,
@@ -803,6 +842,12 @@ void main() {
           expect(find.byType(git.NativeGitIconAction), findsNothing);
           expect(find.byType(BusyMarkCompactIconButton), findsNothing);
           for (var i = 0; i < 3; i++) {
+            final reference = tester.getRect(find.text('Files $i'));
+            final actual = tester.getRect(find.text('Tree $i'));
+            expect(
+              locale == 'ar' ? actual.right : actual.left,
+              closeTo(locale == 'ar' ? reference.right : reference.left, .01),
+            );
             final surface = find.descendant(
               of: rows.at(i),
               matching: find.byType(git.NativeGitRowSurface),
@@ -826,14 +871,10 @@ void main() {
               );
             }
           }
-          final marker = find.descendant(
-            of: rows.last,
-            matching: find.text('M'),
-          );
-          expect(tester.getSize(marker).width, greaterThan(0));
+          expect(find.text('M'), findsNothing);
           expect(
-            tester.getSize(marker).height,
-            lessThanOrEqualTo(tester.getRect(rows.last).height),
+            tester.widget<Text>(find.text('Tree 2')).style!.color,
+            isNotNull,
           );
           await tester.tap(find.text('Tree 2'), buttons: kSecondaryMouseButton);
           await tester.pump();

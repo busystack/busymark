@@ -7022,7 +7022,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitAndPush => 'إيداع ودفع…';
+  String get gitUiCommitAndPush => 'إيداع ودفع';
 
   @override
   String get gitUiNoReadableCommitTemplateIsConfigured =>
@@ -8903,4 +8903,46 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitUiCloseAllTabs => 'إغلاق كل علامات التبويب';
+
+  @override
+  String get gitUiFileUnchanged => 'دون تغيير';
+
+  @override
+  String get gitUiFileAdded => 'مضاف';
+
+  @override
+  String get gitUiFileModified => 'معدّل';
+
+  @override
+  String get gitUiFileDeleted => 'محذوف';
+
+  @override
+  String get gitUiFileRenamed => 'أُعيدت تسميته';
+
+  @override
+  String get gitUiFileCopied => 'منسوخ';
+
+  @override
+  String get gitUiFileConflicted => 'متعارض';
+
+  @override
+  String get gitUiFileIgnored => 'متجاهَل';
+
+  @override
+  String get gitUiFileTypeChanged => 'تغيّر النوع';
+
+  @override
+  String gitUiFileStatusStaged(String status) {
+    return '$status، في منطقة التجهيز';
+  }
+
+  @override
+  String gitUiFileStatusUnstaged(String status) {
+    return '$status، غير مجهّز';
+  }
+
+  @override
+  String gitUiFileStatusHistorical(String status) {
+    return '$status في هذا الالتزام';
+  }
 }

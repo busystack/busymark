@@ -6808,7 +6808,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get gitUiCommitAndPush => 'コミットしてプッシュ…';
+  String get gitUiCommitAndPush => 'コミットしてプッシュ';
 
   @override
   String get gitUiNoReadableCommitTemplateIsConfigured =>
@@ -8661,4 +8661,46 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gitUiCloseAllTabs => 'すべてのタブを閉じる';
+
+  @override
+  String get gitUiFileUnchanged => '変更なし';
+
+  @override
+  String get gitUiFileAdded => '追加';
+
+  @override
+  String get gitUiFileModified => '変更';
+
+  @override
+  String get gitUiFileDeleted => '削除';
+
+  @override
+  String get gitUiFileRenamed => '名前変更';
+
+  @override
+  String get gitUiFileCopied => 'コピー';
+
+  @override
+  String get gitUiFileConflicted => '競合';
+
+  @override
+  String get gitUiFileIgnored => '無視';
+
+  @override
+  String get gitUiFileTypeChanged => '種類を変更';
+
+  @override
+  String gitUiFileStatusStaged(String status) {
+    return '$status、ステージ済み';
+  }
+
+  @override
+  String gitUiFileStatusUnstaged(String status) {
+    return '$status、未ステージ';
+  }
+
+  @override
+  String gitUiFileStatusHistorical(String status) {
+    return 'このコミットで$status';
+  }
 }
