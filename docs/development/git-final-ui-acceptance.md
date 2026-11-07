@@ -252,3 +252,79 @@ The permanent presentation gate also runs the cross-consumer source/archive
 check and the complete resolved BusyFiles adapter chain. The latter now renders
 through its own native Widgets/Yaru control foundations; it receives no BusyMark
 layout or styling. Both consumer gates enforce their host roots.
+
+## Shared UI corrections — 2026-11-07
+
+The corrected runtime sources are BusyMark
+`821feccf9eb12adf7bcca0d7ef27579cdffb25ee`, BusyFiles
+`e00880f2d2aa961f76c9766add22bb18f61fb1bb`, and shared UI
+`da81787aa6294feb344c93274b15dc9dda055404`. The engine remains
+`7d8e55d8034aeb85cddac1c0f498b0f3cc33105b`. Later documentation-only
+commits do not identify the compiled runtime. Both consumers contain the same
+shared archive, SHA-256
+`4269a7c8b3a691dd7c5b62ad123ea10fd92acfe1353d762078d4ed8f545df06a`,
+with extracted tree SHA-256
+`78b5c684e7f224d3f0c8052281fe5641d1112fc14b3c99564886c48fe684f26b`.
+Official Flutter 3.47.5, Dart 3.13.4 and third-party pins remain unchanged.
+
+Each host's ordinary sidebar navigation selects Commit or Git Log. BusyMark
+keeps its workspace header; BusyFiles restores its mounted browser state.
+The shared trees use semantic filename status styles, normal icons, conditional
+leading slots and the Files hierarchy grid. Actual Files and Git labels begin
+at 65, 79 and 93 pixels for root, child and deeper entries; selection begins at
+13 pixels. Full localized status remains accessible without letter columns.
+The footer captions, neutral Log subject, separate graph-selection action,
+modal toggle/focus/tooltip lifecycle and required dismissal contract are shared.
+Files staging uses the canonical GitSession boundary. Document, index-draft,
+comparison identity, trust and native notification ownership guards remain.
+
+The final BusyMark corpus passed 5,699 cases across all 242 files, shared UI
+passed 464, and production-pinned BusyFiles UI passed 743, with zero skips or
+failures in these corpora. The completed-corpus verifier rechecked unchanged
+inputs and original logs. Engine tests passed 142 against unchanged engine
+source. Analysis, affected formatting, localization, real-repository tests,
+resolved native audits and adversarial ownership/archive checks passed.
+Daemon/package suites passed 721/546 cases; their existing 7/17 conditional
+external cases remain unqualified and are recorded separately.
+
+Final-source applications were built, installed and inspected on Ubuntu 26.04:
+the supported BusyFiles DEB and a qualified BusyMark development Snap repack.
+The latter is not a clean Snapcraft release. Verification binds all 277 installed
+BusyFiles files and all 43,430 BusyMark package entries to their sealed payloads.
+Both map the same official release engine. Ordinary BusyMark debug startup and
+its actual document/Git interactions were also verified against final source.
+
+Private evidence is organized under `build/git-corrections-20261107/`:
+
+- `final-verification-index-da81787.json` records results and qualifications.
+- `final-runtime-artifacts-da81787.json` gives exact package locations and hashes.
+- `final-native-inspection-da81787.json` binds inspected originals to receipts.
+- `final-native-matched-sidebar-pixels-da81787.json` records identical normal
+  Commit/Log interiors; enlarged comparisons retain measured antialias differences.
+- `final-native-modal-exact-parity-da81787.json` records identical enlarged
+  history interiors with references shown and hidden at matched usable bounds.
+- `final-installed-native-da81787/` contains both applications' original captures,
+  commands, accessibility records, lifecycle receipts and expected-index proofs.
+
+Native checks cover English, German, Japanese and Arabic RTL in BusyMark,
+BusyFiles' English scope, both themes, normal/narrow windows and actual GTK/Xft
+text scales 1, 1.5 and 2. Date pointer/keyboard focus, filtering, candidate identity,
+reference resizing, menus, independent comparisons and guarded closing were
+inspected. Both installed apps also ran together: Files staging, other-app
+unstaging, controlled terminal staging and shared unstaging preserved refs,
+working files, unrelated index flags and the final original index contents.
+Comparisons invalidated safely and refreshed only through explicit consent.
+
+Failed driver attempts and rejected no-menu frames remain identified separately.
+The private paired driver separates the unchanged 15-second native application
+exit deadline from post-exit source/payload verification and bus cleanup. It does
+not alter the shipping harness or waive a native gate.
+
+The exact final package still fails the independent official-SDK-only Wayland
+lifecycle probe with SIGSEGV 139 before production application cases. This failed
+gate remains binding. Existing upstream accessibility qualifications remain;
+Windows and native fractional-display checks are unrun. GTK/Xft text scaling is
+not fractional-monitor acceptance. The originally reported Add .idea rectangle
+remains unverified; the separate tooltip regression does not establish its cause.
+Dedicated performance acceptance remains deferred. No upstream software was
+modified, and no push, tag, publication or release was performed.
