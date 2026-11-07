@@ -1466,7 +1466,11 @@ void main() {
     expect(workspace, contains('renameWorkspaceEntity('));
     expect(workspace, contains('moveWorkspaceEntity('));
     expect(workspace, contains('deleteWorkspaceEntity('));
-    expect(workspace, contains('stageFiles(['));
+    expect(
+      workspace,
+      contains('stageBusyMarkFiles(context, ref, [relativePath])'),
+    );
+    expect(workspace, isNot(contains('stageFiles([')));
     expect(workspace, contains('label: context.l10n.copyName'));
     expect(workspace, contains('label: context.l10n.copyPath'));
     expect(workspace, contains('label: context.l10n.openInFiles'));
@@ -1479,6 +1483,24 @@ void main() {
     final gitIntegration = File(
       'lib/src/git/application/shared_git_integration.dart',
     ).readAsStringSync();
+    expect(
+      gitIntegration,
+      contains('final result = await session.stagePaths('),
+    );
+    expect(gitIntegration, contains('reviewed: reviewed'));
+    expect(gitIntegration, contains('controller.refreshFromSharedSnapshot()'));
+    final gitController = File(
+      'lib/src/git/application/git_controller.dart',
+    ).readAsStringSync();
+    final stagingAdapter = gitController.substring(
+      gitController.indexOf('Future<void> stageFiles('),
+      gitController.indexOf('Future<void> rollbackFiles('),
+    );
+    expect(
+      stagingAdapter,
+      contains('source.stage(List.unmodifiable(paths), unstage)'),
+    );
+    expect(stagingAdapter, isNot(contains('_gateway.')));
     expect(gitIntegration, contains("case 'fileHistory':"));
     expect(gitIntegration, contains('shared.GitFileHistoryView('));
     expect(gitIntegration, contains('path: shared.RepoPath.text'));
