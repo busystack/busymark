@@ -96,3 +96,9 @@ branch loader or workflow callback. Its source ownership regression rejects
 those dependencies even in unreachable code; Commit, Log and Branches remain
 shared feature content. Files contextual Git actions and VCS decorations retain
 their existing host adapters.
+
+The resolved workspace audit requires both live shared sidebar/review mounts
+and rejects the retired host Git menu orchestration. Its adversarial checks
+include aliased shared imports, missing mounts and a revived host menu. Audit
+updates must follow the current ownership boundary rather than demand deleted
+host rendering functions.

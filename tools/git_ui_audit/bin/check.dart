@@ -48,6 +48,23 @@ bool _gitCondition(Expression expression) => switch (expression) {
 class _GitScopes extends RecursiveAstVisitor<void> {
   final roots = <AstNode>[];
   final functions = <String>{};
+  final sharedMounts = <String>{};
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final constructor = node.constructorName.element;
+    if (constructor?.library.uri.toString() ==
+            'package:busymark/src/git/application/shared_git_integration.dart' &&
+        const {
+          'BusyMarkSharedGitSidebar',
+          'BusyMarkSharedGitReview',
+        }.contains(constructor?.enclosingElement.name)) {
+      sharedMounts.add(constructor!.enclosingElement.name!);
+      roots.add(node);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
     if (node.name.lexeme.toLowerCase().contains('git')) {
@@ -172,11 +189,17 @@ Future<Map<int, String>> audit(File file, {bool production = false}) async {
     unit.unit.accept(scopes);
     if (scopes.roots.isEmpty ||
         production &&
-            !scopes.functions.containsAll({
-              '_loadWorkspaceGitMenuItems',
-              '_sidebarGitMenuItems',
-              '_performWorkspaceGitAction',
-            })) {
+            (!scopes.sharedMounts.containsAll({
+                  'BusyMarkSharedGitSidebar',
+                  'BusyMarkSharedGitReview',
+                }) ||
+                scopes.functions.any(
+                  const {
+                    '_loadWorkspaceGitMenuItems',
+                    '_sidebarGitMenuItems',
+                    '_performWorkspaceGitAction',
+                  }.contains,
+                ))) {
       throw StateError('Git workspace scopes moved; update the required audit');
     }
     final visitor = _NativeReferences();
@@ -190,9 +213,7 @@ Future<Map<int, String>> audit(File file, {bool production = false}) async {
 }
 
 Future<void> selfTest(Directory mark) async {
-  final configFile = File(
-    '${mark.parent.path}/busystack_git_flutter/.dart_tool/package_config.json',
-  );
+  final configFile = File('${mark.path}/.dart_tool/package_config.json');
   final config = jsonDecode(configFile.readAsStringSync()) as Map;
   for (final package in config['packages'] as List) {
     package['rootUri'] = configFile.uri.resolve(package['rootUri']).toString();
@@ -263,6 +284,30 @@ class BusyMarkCompactIconButton { const BusyMarkCompactIconButton(); }
       final file = File('${temp.path}/case_$i.dart')..writeAsStringSync(source);
       if ((await audit(file)).isEmpty != allowed) {
         throw StateError('Workspace audit misclassified fixture $i');
+      }
+    }
+    const mounts = '''
+import 'package:busymark/src/git/application/shared_git_integration.dart' as shared;
+Object mountGit(dynamic workspace, dynamic review) => [
+ shared.BusyMarkSharedGitSidebar(workspace: workspace, onSelectView: (_) {}),
+ shared.BusyMarkSharedGitReview(workspace: workspace, review: review),
+];
+''';
+    for (final (source, allowed) in [
+      (mounts, true),
+      ('Object makeGit() => 1;', false),
+      ('$mounts\nvoid _sidebarGitMenuItems() {}', false),
+    ]) {
+      final file = File('${temp.path}/required_mounts.dart')
+        ..writeAsStringSync(source);
+      var accepted = false;
+      try {
+        accepted = (await audit(file, production: true)).isEmpty;
+      } on StateError {
+        // Missing shared mounts and revived host navigation must fail closed.
+      }
+      if (accepted != allowed) {
+        throw StateError('Required shared workspace mount self-test failed');
       }
     }
     for (final source in [
