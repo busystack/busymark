@@ -17,14 +17,29 @@ Iterable<Color> borders(WidgetTester tester) => tester
     .map((b) => b.top.color);
 
 void main() {
-  test('only common native primitive constructs an upstream focus border', () {
+  test('each design boundary owns exactly one upstream focus-border primitive', () {
+    const owners = {
+      'lib/src/app/busymark_focus.dart': 'BusyMarkFocusIndicator',
+      '../busystack_git_flutter/lib/src/native_primitives.dart':
+          'NativeFocusIndicator',
+    };
+    final construction = RegExp(r'\bYaruFocusBorder(?:\.\w+)?\s*\(');
+    for (final entry in owners.entries) {
+      final source = File(entry.key).readAsStringSync();
+      expect(construction.allMatches(source), hasLength(1), reason: entry.key);
+      expect(source, contains('class ${entry.value}'));
+    }
+    expect(
+      File('lib/src/app/busymark_focus.dart').readAsStringSync(),
+      isNot(contains("import 'package:busystack_git_flutter/")),
+    );
     for (final root in ['lib', '../busystack_git_flutter/lib']) {
       for (final file
           in Directory(root)
               .listSync(recursive: true)
               .whereType<File>()
               .where((f) => f.path.endsWith('.dart'))) {
-        if (file.path.endsWith('/native_primitives.dart')) continue;
+        if (owners.containsKey(file.path)) continue;
         if (!file.path.endsWith('/busymark_design.dart') &&
             !file.path.endsWith('/linux_native.dart')) {
           expect(
@@ -33,14 +48,11 @@ void main() {
             ).hasMatch(file.readAsStringSync()),
             isFalse,
             reason:
-                '${file.path}: focus-capable controls must use the existing design boundary',
+                '${file.path}: focus-capable controls must use their design boundary',
           );
         }
-
         expect(
-          RegExp(
-            r'\bYaruFocusBorder(?:\.\w+)?\s*\(',
-          ).hasMatch(file.readAsStringSync()),
+          construction.hasMatch(file.readAsStringSync()),
           isFalse,
           reason: file.path,
         );

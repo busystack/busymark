@@ -100,6 +100,21 @@ class NavigableFixtureWorkspace extends FixtureWorkspace {
   }
 }
 
+class UntitledFixtureWorkspace extends FixtureWorkspace {
+  @override
+  WorkspaceState build() => super.build().copyWith(
+    documentBuffers: [
+      DocumentBuffer(
+        id: 'source',
+        untitledName: 'Untitled',
+        text: '',
+        lastSavedText: '',
+        dirty: false,
+      ),
+    ],
+  );
+}
+
 void main() {
   final index = ReferenceIndex(
     root: '/workspace',
@@ -146,6 +161,32 @@ void main() {
     await tester.tap(find.text('Incoming'));
     await tester.pumpAndSettle();
     expect(find.text('Target'), findsNothing);
+  });
+  testWidgets('an active untitled document has an accurate empty state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          referenceIndexProvider.overrideWith(() => FixtureIndex(index)),
+          workspaceControllerProvider.overrideWith(
+            UntitledFixtureWorkspace.new,
+          ),
+          refactoringRecoveryProvider.overrideWith((_) async => []),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: ReferencesPanel()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final context = tester.element(find.byType(ReferencesPanel));
+    final l10n = AppLocalizations.of(context)!;
+    expect(find.text(l10n.referenceNoResults), findsOneWidget);
+    expect(find.text(l10n.referenceNoActiveDocument), findsNothing);
+    expect(find.text('Untitled'), findsOneWidget);
   });
   testWidgets(
     'stale source occurrence refreshes without selecting unrelated text',

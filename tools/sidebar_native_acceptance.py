@@ -55,7 +55,7 @@ def wait_state(desktop, predicate, name):
     raise RuntimeError('Native state did not arrive: '+name)
 
 
-def choose(desktop, index, rtl, expected):
+def choose(desktop, index, rtl, expected, title=None):
     # Wait for the real native menu before sending keyboard input. Popup
     # construction is asynchronous and a busy compiler must not race it.
     desktop.send('click', x=desktop.sidebar_menu_x(rtl), y=82)
@@ -68,7 +68,7 @@ def choose(desktop, index, rtl, expected):
     for _ in range(index): desktop.key('Down')
     desktop.key('Return')
     wait_state(desktop, lambda rows: not any(n['role']=='check menu item' for n in rows)
-               and any(n['name']==expected and n['role']=='panel' for n in rows), '_view-ready')
+               and any(n['name'].split('\n',1)[0]==(title or expected) and n['role']=='panel' for n in rows), '_view-ready')
     desktop.last_view=expected
     desktop.send('move', x=desktop.width//2, y=500)
     desktop.send('wait', seconds=1)
@@ -86,6 +86,7 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
     rtl = locale == 'ar'
     catalog=json.loads(Path(f'lib/l10n/app_{locale}.arb').read_text())
     labels=[catalog[k] for k in ['files','toc','outline','gitCommit','gitHostGitLog','localHistory','clipboardHistory','references']]
+    titles=labels.copy();titles[3]=catalog['gitUiCommit'];titles[4]=catalog['gitUiGitLog']
     try:
         # Normal product navigation opens a real source buffer.
         desktop.key('Control_L', 'p')
@@ -107,7 +108,7 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
         desktop.send('wait', seconds=1)
         selector = None
         for index, name in enumerate(['files', 'toc', 'outline', 'commit', 'git-log', 'local-history', 'clipboard', 'references']):
-            choose(desktop, index, rtl, labels[index])
+            choose(desktop, index, rtl, labels[index], titles[index])
             desktop.capture(name)
             desktop.send('accessibility', name=name)
             picture = Image.open(output/(name+'.png')).convert('RGB')

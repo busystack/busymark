@@ -461,7 +461,7 @@ class _ReferencesPanelState extends ConsumerState<ReferencesPanel>
                     Padding(
                       padding: const EdgeInsets.all(BusyMarkSpacing.md),
                       child: Text(
-                        identity == null
+                        buffer == null
                             ? context.l10n.referenceNoActiveDocument
                             : context.l10n.referenceNoResults,
                       ),

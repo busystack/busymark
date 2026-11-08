@@ -1,5 +1,6 @@
 import '../support/native_menu_probe.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_native_controls.dart';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -119,7 +120,7 @@ void main() {
     );
     await _settle(tester);
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
-    await tester.tap(find.byTooltip('Sidebar view'));
+    await tester.tap(find.byTooltip('Sidebar View'));
     await tester.pumpAndSettle();
     await nativeMenus.activate('Table of Contents');
     await tester.pumpAndSettle();
@@ -566,7 +567,7 @@ void main() {
       until: () => find.text('Unsaved changes').evaluate().isNotEmpty,
     );
     await tester.runAsync(
-      () => tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Save')),
+      () => tester.tap(find.widgetWithText(BusyMarkNativeDialogButton, 'Save')),
     );
     await _settle(tester, until: () => homeSelector().evaluate().isNotEmpty);
     expect(

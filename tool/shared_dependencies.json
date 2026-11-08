@@ -15,7 +15,7 @@
       "name": "busystack_git_flutter",
       "path": "../busystack_git_flutter",
       "archive": "tool/source-dependencies/busystack_git_flutter.tar.gz",
-      "sha256": "69e5326a1369c12670b5a3bca5ec04d208a5426f86af3aebd499bd788689a809",
+      "sha256": "60143cc624d906ff24888d0f2802e0414b45d1d78f3cbe03fe89b49371388bf9",
       "tree_sha256": "50edf9e0aa60ffb5c9fcd751c6e75831fa281846e71d3e7ae51705bd2c3f6a75",
       "repository": "https://github.com/busystack/busystack_git_flutter.git",
       "revision": "67d7bb49501196e3907d9ba331dee69d067df362"
