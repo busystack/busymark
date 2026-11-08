@@ -598,7 +598,6 @@ class _ReferenceScopeSelectorState extends State<_ReferenceScopeSelector> {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: widget.label,
     button: true,
     expanded: _session != null,
     child: BusyMarkSidebarRowSurface(

@@ -152,8 +152,13 @@ void main() {
   testWidgets('panel shows scope, outgoing status and incoming switch', (
     tester,
   ) async {
+    final semantics = tester.ensureSemantics();
     await tester.pumpWidget(app(const ReferencesPanel()));
     await tester.pumpAndSettle();
+    expect(
+      tester.getSemantics(find.byKey(const ValueKey('references-scope'))).label,
+      'Scope: Whole document',
+    );
     expect(find.text('source.md'), findsOneWidget);
     expect(find.text('/workspace'), findsNothing);
     expect(find.text('Target'), findsOneWidget);
@@ -161,6 +166,7 @@ void main() {
     await tester.tap(find.text('Incoming'));
     await tester.pumpAndSettle();
     expect(find.text('Target'), findsNothing);
+    semantics.dispose();
   });
   testWidgets('an active untitled document has an accurate empty state', (
     tester,

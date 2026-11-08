@@ -567,7 +567,7 @@ void main() {
       until: () => find.text('Unsaved changes').evaluate().isNotEmpty,
     );
     await tester.runAsync(
-      () => tester.tap(find.widgetWithText(BusyMarkNativeDialogButton, 'Save')),
+      () => tester.tap(find.widgetWithText(BusyMarkNativeActionButton, 'Save')),
     );
     await _settle(tester, until: () => homeSelector().evaluate().isNotEmpty);
     expect(
