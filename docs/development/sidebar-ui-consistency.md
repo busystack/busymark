@@ -25,6 +25,9 @@ Source/Target location actions are contextual; stale-revision navigation,
 workspace identity and recovery/save guards remain authoritative. Native record
 menus dismiss their tooltips while retaining focus. Full metadata remains in
 accessible labels/tooltips without empty module/origin separators.
+The native direction bar uses body-medium labels and compact public theme
+padding. Its width and height follow measured localized text, so enlarged
+German labels remain complete and double-size text keeps indicator clearance.
 
 `tools/git_ui_audit/bin/check_design_boundary.dart` resolves all ordinary host
 libraries, typedefs, import aliases, re-exports and helpers. Exact mounting/tab

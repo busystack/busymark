@@ -21,6 +21,44 @@ import 'reference_index.dart';
 import 'markdown_move_ui.dart';
 import 'dart:io';
 import 'dart:async';
+import 'dart:math' as math;
+
+({double width, double height}) _referenceDirectionExtent(
+  BuildContext context,
+) {
+  var width = 0.0, height = 0.0;
+  for (final label in [
+    context.l10n.referenceIncoming,
+    context.l10n.referenceOutgoing,
+  ]) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.localeOf(context),
+      maxLines: 1,
+    )..layout();
+    width = math.max(width, painter.width);
+    height = math.max(height, painter.height);
+    painter.dispose();
+  }
+  return (
+    // Two equal choices, native label padding and the surrounding sidebar
+    // insets. The extra inset also accommodates Yaru's own bar padding.
+    width: math.max(
+      BusyMarkSizes.sidebarWidth,
+      width * 2 + BusyMarkSpacing.sm * 4 + BusyMarkSpacing.md * 3,
+    ),
+    // Preserve room for the native bar's padding and indicator slot.
+    height: math.max(kYaruTitleBarItemHeight + 10, height + BusyMarkSpacing.md),
+  );
+}
+
+double referenceSidebarMinimumWidth(BuildContext context) =>
+    _referenceDirectionExtent(context).width;
 
 Future<LinkDestination?> showReferenceLinkChooser(
   BuildContext context, {
@@ -376,16 +414,26 @@ class _ReferencesPanelState extends ConsumerState<ReferencesPanel>
           ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.md),
-          child: YaruTabBar(
-            tabController: _direction,
-            tabs: [
-              YaruTab(label: context.l10n.referenceIncoming),
-              YaruTab(label: context.l10n.referenceOutgoing),
-            ],
-            onTap: (index) => setState(() {
-              _incoming = index == 0;
-              _limit = 100;
-            }),
+          child: TabBarTheme(
+            data: TabBarTheme.of(context).copyWith(
+              labelPadding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+              ),
+              labelStyle: Theme.of(context).textTheme.bodyMedium,
+              unselectedLabelStyle: Theme.of(context).textTheme.bodyMedium,
+            ),
+            child: YaruTabBar(
+              height: _referenceDirectionExtent(context).height,
+              tabController: _direction,
+              tabs: [
+                YaruTab(label: context.l10n.referenceIncoming),
+                YaruTab(label: context.l10n.referenceOutgoing),
+              ],
+              onTap: (index) => setState(() {
+                _incoming = index == 0;
+                _limit = 100;
+              }),
+            ),
           ),
         ),
         Expanded(

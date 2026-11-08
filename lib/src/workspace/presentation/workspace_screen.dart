@@ -549,8 +549,14 @@ class _WorkspaceScreenContents extends ConsumerWidget {
         request == _SidebarTab.gitLog ||
         allocation == (workspace.id, workspace.openedAt, _SidebarTab.git) ||
         allocation == (workspace.id, workspace.openedAt, _SidebarTab.gitLog);
+    final referencesVisible =
+        request == _SidebarTab.references ||
+        allocation ==
+            (workspace.id, workspace.openedAt, _SidebarTab.references);
     final sidebarWidth = gitVisible && !searchState.active
         ? busyMarkGitSidebarMinimumWidth(context)
+        : referencesVisible && !searchState.active
+        ? referenceSidebarMinimumWidth(context)
         : BusyMarkSizes.sidebarWidth;
     final sidebar = SizedBox(
       width: sidebarWidth,

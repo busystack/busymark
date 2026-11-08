@@ -2,6 +2,8 @@ import 'dart:ui' show SemanticsAction, Tristate;
 
 import 'package:busymark/src/editor/link_destination.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/references/reference_controller.dart';
@@ -12,6 +14,7 @@ import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/gestures.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import '../../support/native_menu_probe.dart';
@@ -151,6 +154,61 @@ void main() {
       home: Scaffold(body: home),
     ),
   );
+  for (final locale in ['en', 'de', 'ja', 'ar']) {
+    for (final scale in [1.0, 1.5, 2.0]) {
+      testWidgets('native direction labels fit $locale at $scale', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              referenceIndexProvider.overrideWith(() => FixtureIndex(index)),
+              workspaceControllerProvider.overrideWith(FixtureWorkspace.new),
+              refactoringRecoveryProvider.overrideWith((_) async => []),
+            ],
+            child: MaterialApp(
+              locale: Locale(locale),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              theme: buildBusyMarkTheme(
+                brightness: Brightness.light,
+                accentColor: busyMarkDefaultAccentColor,
+              ),
+              home: Scaffold(
+                body: MediaQuery(
+                  data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+                  child: Builder(
+                    builder: (context) => SizedBox(
+                      width: referenceSidebarMinimumWidth(context),
+                      child: const ReferencesPanel(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final context = tester.element(find.byType(ReferencesPanel));
+        final l10n = AppLocalizations.of(context);
+        for (final label in [l10n.referenceIncoming, l10n.referenceOutgoing]) {
+          final paragraph = tester.renderObject<RenderParagraph>(
+            find.text(label),
+          );
+          expect(
+            paragraph.getMaxIntrinsicWidth(double.infinity),
+            lessThanOrEqualTo(paragraph.size.width + .1),
+            reason: 'Direction names must remain complete',
+          );
+          expect(
+            paragraph.getMinIntrinsicHeight(paragraph.size.width),
+            lessThanOrEqualTo(paragraph.size.height + .1),
+          );
+        }
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
   testWidgets('panel shows scope, outgoing status and incoming switch', (
     tester,
   ) async {
