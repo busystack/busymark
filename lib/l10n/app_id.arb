@@ -6106,5 +6106,5 @@
   "gitUiFileStatusStaged": "{status}, di staging",
   "gitUiFileStatusUnstaged": "{status}, belum di staging",
   "gitUiFileStatusHistorical": "{status} dalam commit ini",
-  "gitUiSelectAnotherBranch": "Select another branch"
+  "gitUiSelectAnotherBranch": "Pilih cabang lain"
 }

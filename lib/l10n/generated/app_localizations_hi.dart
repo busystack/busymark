@@ -8939,5 +8939,5 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Select another branch';
+  String get gitUiSelectAnotherBranch => 'दूसरी शाखा चुनें';
 }

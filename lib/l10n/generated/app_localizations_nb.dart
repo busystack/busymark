@@ -8955,5 +8955,5 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Select another branch';
+  String get gitUiSelectAnotherBranch => 'Velg en annen gren';
 }

@@ -4576,5 +4576,5 @@
   "gitUiFileStatusStaged": "{status}, i indeksen",
   "gitUiFileStatusUnstaged": "{status}, utenfor indeksen",
   "gitUiFileStatusHistorical": "{status} i denne committen",
-  "gitUiSelectAnotherBranch": "Select another branch"
+  "gitUiSelectAnotherBranch": "Velg en annen gren"
 }

@@ -8957,5 +8957,5 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Select another branch';
+  String get gitUiSelectAnotherBranch => 'Pilih cabang lain';
 }

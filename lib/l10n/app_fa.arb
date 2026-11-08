@@ -4618,5 +4618,5 @@
   "gitUiFileStatusStaged": "{status}، در نمایه",
   "gitUiFileStatusUnstaged": "{status}، خارج از نمایه",
   "gitUiFileStatusHistorical": "{status} در این کامیت",
-  "gitUiSelectAnotherBranch": "Select another branch"
+  "gitUiSelectAnotherBranch": "انتخاب یک شاخهٔ دیگر"
 }

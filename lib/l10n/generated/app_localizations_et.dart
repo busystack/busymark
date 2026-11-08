@@ -8954,5 +8954,5 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Select another branch';
+  String get gitUiSelectAnotherBranch => 'Vali teine haru';
 }
