@@ -5372,52 +5372,55 @@ class BusyMarkSidebarHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: padding,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: BusyMarkSizes.iconButton,
-            ),
-            child: Row(
-              children: [
-                if (leading != null) ...[
-                  IconTheme.merge(
-                    data: const IconThemeData(size: BusyMarkSizes.iconSm),
-                    child: leading!,
-                  ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                ],
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-                for (final action in actions) ...[
-                  const SizedBox(width: BusyMarkSpacing.xs),
-                  action,
-                ],
-              ],
-            ),
-          ),
-          if (contextLine != null) ...[
-            const SizedBox(height: BusyMarkSpacing.xs),
-            DefaultTextStyle.merge(
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+    return Semantics(
+      container: true,
+      child: Padding(
+        padding: padding,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: BusyMarkSizes.iconButton,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              child: contextLine!,
+              child: Row(
+                children: [
+                  if (leading != null) ...[
+                    IconTheme.merge(
+                      data: const IconThemeData(size: BusyMarkSizes.iconSm),
+                      child: leading!,
+                    ),
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                  ],
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                  for (final action in actions) ...[
+                    const SizedBox(width: BusyMarkSpacing.xs),
+                    action,
+                  ],
+                ],
+              ),
             ),
+            if (contextLine != null) ...[
+              const SizedBox(height: BusyMarkSpacing.xs),
+              DefaultTextStyle.merge(
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                child: contextLine!,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

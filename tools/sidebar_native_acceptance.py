@@ -58,6 +58,9 @@ def wait_state(desktop, predicate, name):
 def choose(desktop, index, rtl, expected, title=None):
     # Wait for the real native menu before sending keyboard input. Popup
     # construction is asynchronous and a busy compiler must not race it.
+    before = desktop.checkpoint()
+    title_bounds = (desktop.width-220, 110, desktop.width-10, 174) if rtl else (10, 110, 220, 174)
+    previous_title = before.crop(title_bounds).tobytes()
     desktop.send('click', x=desktop.sidebar_menu_x(rtl), y=82)
     menu=wait_state(desktop, lambda rows: len([n for n in rows if n['role']=='check menu item'])==8,
                '_view-menu-open')
@@ -71,7 +74,16 @@ def choose(desktop, index, rtl, expected, title=None):
                and any(n['name'].split('\n',1)[0]==(title or expected) and n['role']=='panel' for n in rows), '_view-ready')
     desktop.last_view=expected
     desktop.send('move', x=desktop.width//2, y=500)
-    desktop.send('wait', seconds=1)
+    # AT-SPI can publish the new semantic tree before the compositor has
+    # presented its frame. Require changed, stable title pixels as well.
+    previous = None
+    for attempt in range(40):
+        rendered = desktop.checkpoint().crop(title_bounds).tobytes()
+        if rendered == previous and (checked == [expected] or rendered != previous_title):
+            return
+        previous = rendered
+        desktop.send('wait', seconds=.25)
+    raise RuntimeError('The selected view did not present a stable native title frame')
 
 
 def run(binary, output, root, theme, locale, scale, narrow, baseline):

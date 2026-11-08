@@ -44,6 +44,39 @@ Border paintedBorder(WidgetTester tester, Finder row) => tester
     .single;
 
 void main() {
+  testWidgets('informational header stays separate from neighboring actions', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                const BusyMarkSidebarHeader(
+                  title: 'Git Log',
+                  contextLine: Text('Selected subject'),
+                ),
+                Semantics(
+                  button: true,
+                  onTap: () {},
+                  child: const Text('Commit details'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(find.byType(BusyMarkSidebarHeader)),
+        matchesSemantics(label: 'Git Log\nSelected subject', isButton: false),
+      );
+    } finally {
+      semantics.dispose();
+    }
+  });
   for (final brightness in Brightness.values) {
     for (final locale in ['en', 'de', 'ja', 'ar']) {
       for (final scale in [1.0, 1.5]) {
