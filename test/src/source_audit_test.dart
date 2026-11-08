@@ -872,6 +872,10 @@ void main() {
     expect(workspace, contains('BusyMarkPopupMenuItem('));
     expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
     expect(workspace, contains('icon: BusyMarkGlyphs.sidebarViews'));
+    expect(
+      File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
+      contains('sidebarViews = YaruIcons.app_grid'),
+    );
     expect(workspace, isNot(contains('icon: selectedTabMenuItem.icon')));
     expect(workspace, contains('transparent: true'));
     expect(

@@ -1074,7 +1074,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutGroupSidebar => 'الشريط الجانبي';
 
   @override
-  String get sidebarViewMenu => 'عرض الشريط الجانبي';
+  String get sidebarViewMenu => 'اختيار عرض الشريط الجانبي';
 
   @override
   String get createMarkdownFile => 'إنشاء ملف Markdown';

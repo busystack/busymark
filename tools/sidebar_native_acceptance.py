@@ -129,8 +129,8 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
             if name == 'git-log':
                 wait_state(desktop, lambda rows: any(n['role']=='panel' and n['name'].startswith(titles[index]+'\nConfirm native sidebar reference navigation') for n in rows), '_commit-context-ready')
             if name == 'references':
-                scope = catalog['referenceScope']+': '+catalog['referenceWholeDocument']
-                wait_state(desktop, lambda rows: any(n['role']=='button' and n['name']==scope and n['enabled'] for n in rows), '_reference-data-ready')
+                wait_state(desktop, lambda rows: all(any(n['name'].startswith(catalog[key]+' (') for n in rows)
+                    for key in ['referenceIncoming', 'referenceOutgoing']), '_reference-data-ready')
                 # Loading controls may have just been replaced by the result
                 # rows. Wait for the body frame, independently of its title.
                 previous = None
@@ -151,7 +151,7 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
             if not baseline and trigger != selector:
                 raise RuntimeError('Sidebar View trigger pixels changed for '+name)
             if name == 'references':
-                desktop.send('click', x=desktop.width-120 if rtl else 120, y=315 if scale>1 else 270, button=3)
+                desktop.send('click', x=desktop.width-120 if rtl else 120, y=350 if scale>1 else 300, button=3)
                 expected_actions = {catalog['referenceSourceLocation'], catalog['referenceTargetLocation']}
                 wait_state(desktop, lambda rows: expected_actions.issubset({n['name'] for n in rows if n['role']=='menu item'}), '_reference-menu-ready')
                 desktop.capture('references-context')

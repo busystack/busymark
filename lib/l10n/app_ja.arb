@@ -928,7 +928,7 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
-  "sidebarViewMenu": "サイドバーの表示",
+  "sidebarViewMenu": "サイドバーの表示を選択",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
   },

@@ -2092,7 +2092,7 @@ abstract class AppLocalizations {
   /// Tooltip for the sidebar view selector button.
   ///
   /// In en, this message translates to:
-  /// **'Sidebar View'**
+  /// **'Select sidebar view'**
   String get sidebarViewMenu;
 
   /// Welcome screen action for creating a Markdown file.

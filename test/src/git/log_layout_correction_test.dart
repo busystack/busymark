@@ -128,6 +128,7 @@ void main() {
                 ),
               );
           final expected = control(main), actual = control(modal);
+          expect(actual.isSelected, expected.isSelected);
           for (final states in [
             <WidgetState>{},
             {WidgetState.hovered},
@@ -156,6 +157,7 @@ void main() {
             find.byKey(const ValueKey('git-history-reference-sidebar')),
             findsNothing,
           );
+          expect(control(modal).isSelected, isFalse);
           expect(mainToggleClicks, 0);
           await tester.tap(find.byType(EditableText).first);
           await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);

@@ -1042,7 +1042,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shortcutGroupSidebar => 'サイドバー';
 
   @override
-  String get sidebarViewMenu => 'サイドバーの表示';
+  String get sidebarViewMenu => 'サイドバーの表示を選択';
 
   @override
   String get createMarkdownFile => 'Markdown ファイルを作成';

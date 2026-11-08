@@ -1,5 +1,3 @@
-import 'dart:ui' show SemanticsAction, Tristate;
-
 import 'package:busymark/src/editor/link_destination.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -193,7 +191,7 @@ void main() {
         final l10n = AppLocalizations.of(context);
         for (final label in [l10n.referenceIncoming, l10n.referenceOutgoing]) {
           final paragraph = tester.renderObject<RenderParagraph>(
-            find.text(label),
+            find.textContaining('$label ('),
           );
           expect(
             paragraph.getMaxIntrinsicWidth(double.infinity),
@@ -209,27 +207,67 @@ void main() {
       });
     }
   }
-  testWidgets('panel shows scope, outgoing status and incoming switch', (
+  testWidgets('both counted directions coexist and collapse independently', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(app(const ReferencesPanel()));
     await tester.pumpAndSettle();
-    final scope = tester.getSemantics(
-      find.byKey(const ValueKey('references-scope')),
-    );
-    expect(scope.label, 'Scope: Whole document');
-    expect(scope.getSemanticsData().flagsCollection.isEnabled, Tristate.isTrue);
-    expect(scope.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+    expect(find.byTooltip('Actions'), findsOneWidget);
+    expect(find.text('Incoming (0)'), findsOneWidget);
+    expect(find.text('Outgoing (1)'), findsOneWidget);
+    expect(find.byType(YaruTabBar), findsNothing);
+    expect(find.byKey(const ValueKey('references-scope')), findsNothing);
     expect(find.text('source.md'), findsOneWidget);
     expect(find.text('/workspace'), findsNothing);
     expect(find.text('Target'), findsOneWidget);
     expect(find.textContaining('Resolved'), findsOneWidget);
-    await tester.tap(find.text('Incoming'));
+    await tester.tap(find.byKey(const ValueKey('references-section-false')));
     await tester.pumpAndSettle();
     expect(find.text('Target'), findsNothing);
     semantics.dispose();
   });
+  testWidgets(
+    'one direction can load or fail while the other retains results',
+    (tester) async {
+      for (final incoming in <AsyncValue<ReferencePanelResults>>[
+        const AsyncLoading(),
+        AsyncError(StateError('incoming failure'), StackTrace.empty),
+      ]) {
+        await tester.pumpWidget(
+          ProviderScope(
+            key: UniqueKey(),
+            overrides: [
+              referenceIndexProvider.overrideWith(() => FixtureIndex(index)),
+              workspaceControllerProvider.overrideWith(FixtureWorkspace.new),
+              refactoringRecoveryProvider.overrideWith((_) async => []),
+              referencePanelResultsProvider((
+                identity: '/workspace/source.md',
+                incoming: true,
+                anchor: null,
+                count: 100,
+              )).overrideWith((_) => incoming),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const Scaffold(body: ReferencesPanel()),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(find.text('Outgoing (1)'), findsOneWidget);
+        expect(find.text('Target'), findsOneWidget);
+        expect(find.text('Incoming (0)'), findsNothing);
+        if (incoming.isLoading) {
+          expect(find.byType(YaruCircularProgressIndicator), findsOneWidget);
+        } else {
+          expect(find.textContaining('incoming failure'), findsOneWidget);
+          expect(find.text('Retry'), findsOneWidget);
+        }
+      }
+    },
+  );
   testWidgets('an active untitled document has an accurate empty state', (
     tester,
   ) async {
@@ -252,7 +290,7 @@ void main() {
     await tester.pumpAndSettle();
     final context = tester.element(find.byType(ReferencesPanel));
     final l10n = AppLocalizations.of(context);
-    expect(find.text(l10n.referenceNoResults), findsOneWidget);
+    expect(find.text(l10n.referenceNoResults), findsNWidgets(2));
     expect(find.text(l10n.referenceNoActiveDocument), findsNothing);
     expect(find.text('Untitled'), findsOneWidget);
   });
@@ -357,14 +395,14 @@ void main() {
           .activeBuffer!
           .text;
       expect(find.text('source.md'), findsOneWidget);
-      expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsNWidgets(2));
+      expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsNWidgets(3));
       expect(find.byType(SegmentedButton<bool>), findsNothing);
       expect(find.byType(DropdownButton<String>), findsNothing);
       expect(find.byType(ListTile), findsNothing);
       expect(find.byType(PopupMenuButton<bool>), findsNothing);
       expect(find.byType(TextButton), findsNothing);
       final menu = NativeMenuProbe(tester);
-      await tester.tap(find.byKey(const ValueKey('references-scope')));
+      await tester.tap(find.byKey(const ValueKey('references-actions')));
       await tester.pumpAndSettle();
       expect(
         menu.entries.map((e) => e['label']),
@@ -379,9 +417,9 @@ void main() {
       await menu.activate('One');
       await tester.pumpAndSettle();
       expect(find.text('Scope: One'), findsOneWidget);
-      expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsOneWidget);
+      expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsNWidgets(2));
       expect(find.textContaining('first'), findsOneWidget);
-      await tester.tap(find.text('Incoming'));
+      await tester.tap(find.byKey(const ValueKey('references-section-false')));
       await tester.pumpAndSettle();
       expect(find.textContaining('back'), findsOneWidget);
       expect(
@@ -391,14 +429,11 @@ void main() {
       await controller.openActiveFile('/workspace/target.md');
       await tester.pumpAndSettle();
       expect(find.text('target.md'), findsOneWidget);
-      expect(find.text('Scope: Whole document'), findsOneWidget);
+      expect(find.text('Scope: Whole document'), findsNothing);
       expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsNWidgets(2));
-      // Incoming is retained; querying target's outgoing would return one row.
-      expect(
-        tester.widget<YaruTabBar>(find.byType(YaruTabBar)).tabController!.index,
-        0,
-      );
-      await tester.tap(find.text('Outgoing'));
+      // Collapse Incoming; Outgoing remains independently expanded after navigation.
+      await tester.tap(find.byKey(const ValueKey('references-section-true')));
+      await tester.tap(find.byKey(const ValueKey('references-section-false')));
       await tester.pumpAndSettle();
       expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsOneWidget);
       await tester.tap(find.byType(BusyMarkSidebarRecordRow<bool>));
@@ -438,7 +473,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('References'), findsOneWidget);
-    expect(find.text('No active document'), findsOneWidget);
+    expect(find.text('No active document'), findsNWidgets(2));
     expect(find.text('source.md'), findsNothing);
     expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsNothing);
   });
@@ -464,13 +499,13 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.byType(YaruCircularProgressIndicator), findsOneWidget);
+    expect(find.byType(YaruCircularProgressIndicator), findsNWidgets(2));
     loader.fail();
     await tester.pumpAndSettle();
-    expect(find.textContaining('reference fixture failure'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
+    expect(find.textContaining('reference fixture failure'), findsNWidgets(2));
+    expect(find.text('Retry'), findsNWidgets(2));
     expect(find.byType(TextButton), findsNothing);
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Retry').first);
     await tester.pumpAndSettle();
     expect(loader.retries, 1);
     expect(find.byType(BusyMarkSidebarRecordRow<bool>), findsOneWidget);

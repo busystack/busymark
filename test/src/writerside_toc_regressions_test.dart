@@ -120,7 +120,7 @@ void main() {
     );
     await _settle(tester);
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
-    await tester.tap(find.byTooltip('Sidebar View'));
+    await tester.tap(find.byTooltip('Select sidebar view'));
     await tester.pumpAndSettle();
     await nativeMenus.activate('Table of Contents');
     await tester.pumpAndSettle();

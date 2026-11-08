@@ -1103,7 +1103,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortcutGroupSidebar => 'Seitenleiste';
 
   @override
-  String get sidebarViewMenu => 'Seitenleistenansicht';
+  String get sidebarViewMenu => 'Seitenleistenansicht auswählen';
 
   @override
   String get createMarkdownFile => 'Markdown-Datei erstellen';

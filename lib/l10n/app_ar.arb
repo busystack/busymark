@@ -810,7 +810,7 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
-  "sidebarViewMenu": "عرض الشريط الجانبي",
+  "sidebarViewMenu": "اختيار عرض الشريط الجانبي",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
   },
