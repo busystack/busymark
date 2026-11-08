@@ -37,16 +37,76 @@ under test, outside production source receipts. `check_sidebar.dart` also
 follows both complete References rendering chains through their real native
 controls and recovery dialogs. Git keeps the mandatory full service audit.
 
-Native evidence for this correction is under `build/sidebar-correction`:
-`before-qualified` uses an archived clean source baseline; `after-debug-2`
-contains all eight actual corrected views, owned AT-SPI records, official-engine
-hashes and natural-exit/unchanged-repository receipts. These initial English
-captures are not the full final installed-application matrix. Final qualification
-must retain the independent gates in [git-ui-acceptance.md](../git-ui-acceptance.md).
+Native evidence for this correction is under `build/sidebar-correction`.
+`before-qualified` preserves all eight actual baseline views from archived
+sources. `native-delivery-matrix` contains the final 32 release-bundle cases:
+light/dark, English/German/Japanese/Arabic RTL, 1.0/1.5 text scale and normal/narrow
+windows. Every case covers all eight views and a References context menu, verifies
+the constant selector pixels, mapped official engine, unchanged fixture and
+natural exit. All 16 sheets in `delivery-native-inspection` were inspected;
+`delivery-visual-inspection.json` binds their source and individual receipts.
+Native TOC instance/actions, Branches/history selection, reference scope/direction,
+link chooser, empty/recovery and dirty-document guards have separate captures.
+These release-bundle results do not establish installed-application acceptance.
+The independent gates in [git-ui-acceptance.md](../git-ui-acceptance.md) remain.
 The synchronized semantic-header revision is
 `570fadcdde31507b5b1c2f1f27610f72cb519b37`; the engine remains
 `7d8e55d8034aeb85cddac1c0f498b0f3cc33105b`. Both exact file-only archives
 must also pass fresh materialization, rather than only sibling-tree checks.
+
+The final production correction is `89267a9`; tool-only audit hardening follows
+at `f62dd3c`. General libraries and Git engine/service helpers are audited;
+only the actual Git presentation libraries are exempt. The complete BusyMark
+corpus passed 5,772 cases in all 245 discovered files with zero skips. The strict
+receipt verifies production/test fixtures, complete commands and unchanged logs.
+Shared Git passed 466 tests and BusyFiles passed 743 UI/integration tests.
+Analysis, formatting, localization generation, resolved native audits and their
+adversarial checks passed. Both hosts built Linux debug and release artifacts.
+
+BusyFiles `306323e` also ran its actual final debug UI with the exact daemon
+extracted from its qualified final DEB. Commit, Branches, Log, history selection,
+historical comparison and return to Files were inspected. Trust required the
+normal explicit confirmation. Its receipt records unchanged Git/content,
+official engine, daemon exit 0 and natural application exit. This additional
+development-bundle run does not replace installed DEB acceptance.
+
+The local BusyMark development Snap passed sealed bundle and complete 43,429-entry
+packed-filesystem verification. It is a scaffold-based development repack, not
+a clean Snapcraft release. Final artifacts and checksums are:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `build/sidebar-correction/busymark-sidebar-89267a9.snap` | `2f73e55fd9c6a4e68cc6bdcc642e66479308f2a3f82e83d7ee8dcfab38d72daa` |
+| `../busyfiles/dist/sidebar-semantic-qualified/busyfiles_0.0.1-1_amd64.deb` | `0bf5b490adc1b84486444b8d83d0102ea731bbac1916aafb2b5782420a87fd0b` |
+
+**Acceptance remains open.** Both final installation attempts stopped with
+`sudo: interactive authentication is required`; neither installed application
+matches the final artifacts. System authentication, installed payload receipts
+and actual installed-app inspection remain required. Install the local Snap
+over the existing application without purging its data:
+
+```sh
+sudo dpkg -i /home/albert/busystack/busyfiles/dist/sidebar-semantic-qualified/busyfiles_0.0.1-1_amd64.deb
+sudo snap install --dangerous /home/albert/busystack/busymark/build/sidebar-correction/busymark-sidebar-89267a9.snap
+```
+
+The reviewable post-authentication recipe is
+[`complete_installed_acceptance.sh`](../../build/sidebar-correction/complete_installed_acceptance.sh).
+It checks the complete corpus and artifact hashes, installs through the standard
+system tools, verifies actual installed payloads and runs both native hosts,
+including the full installed BusyMark matrix. The prepared scripts pass syntax
+checks; installation and their installed-host execution remain unperformed.
+
+One separate X11 recovery/empty-state run failed natural exit with
+`g_mutex_clear() called on uninitialised or locked mutex`. The exact repeated
+sequence passed. Both receipts and logs remain under `delivery-native-empty-recovery`
+and `delivery-native-empty-recovery-recheck`. Its cause has not been isolated;
+the passing repeat does not waive the failed lifecycle observation or establish
+an upstream attribution. A further diagnostic with core capture enabled only
+for the private process also exited naturally, so it yielded no crash backtrace.
+Its receipt is `delivery-recovery-core-diagnostic/receipt.json`.
+Existing Wayland, Windows, accessibility-lifetime,
+strict-Snap credential and fractional-scaling limits remain separate.
 
 
 The 2026-11-06 one-Git-UI decision supersedes the earlier host-specific Git

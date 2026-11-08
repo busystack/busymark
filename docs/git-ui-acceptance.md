@@ -1,5 +1,15 @@
 # Shared Git UI acceptance
 
+The 2026-11-08 sidebar correction has final-source evidence in
+[`build/sidebar-correction`](../build/sidebar-correction/), summarized in the
+[sidebar design-system record](development/sidebar-ui-consistency.md).
+Its full 5,772-case BusyMark corpus and 32-case release-bundle graphical matrix
+passed. Both final packages are qualified locally, but administrator
+authentication prevented installation. Installed payload qualification and
+installed-app native acceptance therefore remain open. A separate intermittent
+X11 recovery shutdown failure is retained with its passing repeat and unresolved
+cause. These observations supersede no independent native gate below.
+
 The 2026-11-06 decision requires one Git interface in BusyMark and BusyFiles.
 The maintained [shared ownership and action map](../../busystack_git_flutter/docs/one-git-ui.md)
 and [native contract](../../busystack_git_flutter/docs/native-presentation.md)
