@@ -156,6 +156,21 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
                 wait_state(desktop, lambda rows: expected_actions.issubset({n['name'] for n in rows if n['role']=='menu item'}), '_reference-menu-ready')
                 desktop.capture('references-context')
                 desktop.key('Escape')
+                desktop.send('click', x=desktop.width-18 if rtl else 18, y=192 if scale==1 else 206)
+                desktop.send('move', x=desktop.width//2, y=500)
+                desktop.capture('references-incoming-collapsed')
+                desktop.send('click', x=desktop.width-18 if rtl else 18, y=192 if scale==1 else 206)
+                desktop.send('click', x=desktop.width-276 if rtl else 276, y=130)
+                wait_state(desktop, lambda rows: any(n['name']==catalog['referenceWholeDocument'] and n['role']=='check menu item' for n in rows), '_reference-scope-menu')
+                desktop.capture('references-actions-scope')
+                desktop.key('Home'); desktop.key('Down'); desktop.key('Down'); desktop.key('Return')
+                wait_state(desktop, lambda rows: any(n['name'].startswith(catalog['referenceScope']+': ') for n in rows), '_reference-heading-scope')
+                desktop.send('move', x=desktop.width//2, y=500)
+                desktop.capture('references-heading-scope')
+                desktop.key('Control_L', 'p'); desktop.send('text', value='staged.md'); desktop.key('Return')
+                desktop.send('wait', seconds=2)
+                desktop.capture('references-empty-document')
+
         # Close naturally and retain the existing unchanged-Git validation.
         desktop.close()
     except BaseException:
