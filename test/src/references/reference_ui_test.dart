@@ -189,7 +189,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     final context = tester.element(find.byType(ReferencesPanel));
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     expect(find.text(l10n.referenceNoResults), findsOneWidget);
     expect(find.text(l10n.referenceNoActiveDocument), findsNothing);
     expect(find.text('Untitled'), findsOneWidget);
