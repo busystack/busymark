@@ -414,26 +414,17 @@ class _ReferencesPanelState extends ConsumerState<ReferencesPanel>
           ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.md),
-          child: TabBarTheme(
-            data: TabBarTheme.of(context).copyWith(
-              labelPadding: const EdgeInsets.symmetric(
-                horizontal: BusyMarkSpacing.sm,
-              ),
-              labelStyle: Theme.of(context).textTheme.bodyMedium,
-              unselectedLabelStyle: Theme.of(context).textTheme.bodyMedium,
-            ),
-            child: YaruTabBar(
-              height: _referenceDirectionExtent(context).height,
-              tabController: _direction,
-              tabs: [
-                YaruTab(label: context.l10n.referenceIncoming),
-                YaruTab(label: context.l10n.referenceOutgoing),
-              ],
-              onTap: (index) => setState(() {
-                _incoming = index == 0;
-                _limit = 100;
-              }),
-            ),
+          child: YaruTabBar(
+            height: _referenceDirectionExtent(context).height,
+            tabController: _direction,
+            tabs: [
+              YaruTab(label: context.l10n.referenceIncoming),
+              YaruTab(label: context.l10n.referenceOutgoing),
+            ],
+            onTap: (index) => setState(() {
+              _incoming = index == 0;
+              _limit = 100;
+            }),
           ),
         ),
         Expanded(

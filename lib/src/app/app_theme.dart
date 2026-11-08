@@ -273,8 +273,9 @@ ThemeData buildBusyMarkTheme({
     ),
     tooltipTheme: tooltipTheme,
     tabBarTheme: base.tabBarTheme.copyWith(
-      labelStyle: textTheme.labelLarge,
-      unselectedLabelStyle: textTheme.labelLarge,
+      labelPadding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+      labelStyle: textTheme.bodyMedium,
+      unselectedLabelStyle: textTheme.bodyMedium,
       dividerColor: colors.divider,
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(
