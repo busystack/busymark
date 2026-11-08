@@ -6754,7 +6754,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String gitUiTracksArg0(String arg0) {
-    return 'Spuren $arg0';
+    return 'Verfolgt $arg0';
   }
 
   @override

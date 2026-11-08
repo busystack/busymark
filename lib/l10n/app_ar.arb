@@ -3981,7 +3981,7 @@
   "gitUiNewBranch": "فرع جديد…",
   "gitUiLocalBranches": "الفروع المحلية",
   "gitUiRemoteBranches": "الفروع البعيدة",
-  "gitUiTracksArg0": "المسارات {arg0}",
+  "gitUiTracksArg0": "يتتبّع {arg0}",
   "gitUiCheckedOutAtArg0": "تسجيل المغادرة في {arg0}",
   "gitUiRefreshingBranchMetadata": "تحديث البيانات الوصفية للفرع",
   "gitUiSwitchToArg0": "بدّل إلى {arg0}",

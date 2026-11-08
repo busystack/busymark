@@ -6707,7 +6707,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitUiTracksArg0(String arg0) {
-    return 'المسارات $arg0';
+    return 'يتتبّع $arg0';
   }
 
   @override

@@ -3981,7 +3981,7 @@
   "gitUiNewBranch": "Neuer Branch…",
   "gitUiLocalBranches": "Lokale Branches",
   "gitUiRemoteBranches": "Remote-Branches",
-  "gitUiTracksArg0": "Spuren {arg0}",
+  "gitUiTracksArg0": "Verfolgt {arg0}",
   "gitUiCheckedOutAtArg0": "Ausgecheckt bei {arg0}",
   "gitUiRefreshingBranchMetadata": "Aktualisierung der Metadaten von Zweigen",
   "gitUiSwitchToArg0": "Auf {arg0} wechseln",
