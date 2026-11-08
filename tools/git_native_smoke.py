@@ -343,7 +343,10 @@ class DesktopRun:
     def close(self):
         self.send('close')
         self.process.stdin.close()
-        status = self.process.wait(timeout=30)
+        # Application exit still has the driver's unchanged 15-second bound.
+        # Allow its subsequent complete payload/source/Git hashing to finish
+        # under concurrent build I/O before collecting the verified receipt.
+        status = self.process.wait(timeout=120)
         self.log.close()
         receipt = json.loads((self.output / 'receipt.json').read_text())
         if status or not receipt.get('naturalExit') or not receipt.get('repositoryUnchanged') or not receipt['engine']['matches']:

@@ -14,6 +14,9 @@ horizontal/vertical insets. Context lines contain no icon or selection button.
 Instance/branch/commit selection precedes other actions and uses Yaru selection
 artwork. The workspace view chooser keeps one list icon in every view. TOC
 module selection remains a separate optional control after the common header.
+Each header owns a semantic container: informational context cannot merge into
+an adjacent commit-details action. The native scope selector announces its
+label once, retaining its button and expanded states.
 
 References retains its active-document incoming/outgoing queries and heading
 anchors. It uses the pinned Yaru tab bar, the existing native menu transport,
@@ -37,6 +40,10 @@ contains all eight actual corrected views, owned AT-SPI records, official-engine
 hashes and natural-exit/unchanged-repository receipts. These initial English
 captures are not the full final installed-application matrix. Final qualification
 must retain the independent gates in [git-ui-acceptance.md](../git-ui-acceptance.md).
+The synchronized semantic-header revision is
+`570fadcdde31507b5b1c2f1f27610f72cb519b37`; the engine remains
+`7d8e55d8034aeb85cddac1c0f498b0f3cc33105b`. Both exact file-only archives
+must also pass fresh materialization, rather than only sibling-tree checks.
 
 
 The 2026-11-06 one-Git-UI decision supersedes the earlier host-specific Git

@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction, Tristate;
+
 import 'package:busymark/src/editor/link_destination.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
@@ -155,10 +157,12 @@ void main() {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(app(const ReferencesPanel()));
     await tester.pumpAndSettle();
-    expect(
-      tester.getSemantics(find.byKey(const ValueKey('references-scope'))).label,
-      'Scope: Whole document',
+    final scope = tester.getSemantics(
+      find.byKey(const ValueKey('references-scope')),
     );
+    expect(scope.label, 'Scope: Whole document');
+    expect(scope.getSemanticsData().flagsCollection.isEnabled, Tristate.isTrue);
+    expect(scope.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
     expect(find.text('source.md'), findsOneWidget);
     expect(find.text('/workspace'), findsNothing);
     expect(find.text('Target'), findsOneWidget);
