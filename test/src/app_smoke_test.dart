@@ -1,3 +1,4 @@
+import 'package:busymark/src/references/reference_controller.dart';
 import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import '../support/native_menu_probe.dart';
 import 'package:busymark/src/spellcheck/spelling_catalog.dart';
@@ -11709,7 +11710,12 @@ code
         find.byKey(const ValueKey('workspace-sidebar-view-menu')),
       );
       await tester.pumpAndSettle();
-      await viewMenus.activate(l10n.references);
+      viewMenus.select(l10n.references);
+      await pumpUntil(
+        tester,
+        () => container.read(referenceIndexProvider).hasValue,
+        operation: 'index the actual active document for References',
+      );
       await tester.pumpAndSettle();
       verifyIdentityHeader(l10n.references);
       await tester.tap(

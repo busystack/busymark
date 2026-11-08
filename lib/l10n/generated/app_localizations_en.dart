@@ -1087,7 +1087,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutGroupSidebar => 'Sidebar';
 
   @override
-  String get sidebarViewMenu => 'Sidebar view';
+  String get sidebarViewMenu => 'Sidebar View';
 
   @override
   String get createMarkdownFile => 'Create Markdown File';

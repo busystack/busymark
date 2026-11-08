@@ -28,7 +28,9 @@ def fixture(parent):
     git('config', 'user.email', 'sidebar@example.invalid')
     git('add', '.')
     git('commit', '-m', 'Introduce the Writerside sidebar fixture')
-    git('commit', '--allow-empty', '-m', 'Confirm native sidebar reference navigation')
+    (root / 'topics/review.md').write_text((root / 'topics/review.md').read_text()+'\nHistorical change for the Git Log inspector.\n')
+    git('add', 'topics/review.md')
+    git('commit', '-m', 'Confirm native sidebar reference navigation with a deliberately long subject 日本語 العربية that remains available through details')
     git('branch', 'feature/long-context-日本語-العربية')
     git('update-ref', 'refs/remotes/origin/main', 'HEAD~1')
     git('config', 'branch.main.remote', 'origin')
@@ -40,11 +42,34 @@ def fixture(parent):
     return root
 
 
-def choose(desktop, index, rtl):
+def observe(desktop, name):
+    desktop.send('accessibility', name=name)
+    return json.loads((desktop.output/(name+'-accessibility.json')).read_text())['nodes']
+
+
+def wait_state(desktop, predicate, name):
+    for attempt in range(40):
+        rows=observe(desktop, name)
+        if predicate(rows): return rows
+        desktop.send('wait', seconds=.25)
+    raise RuntimeError('Native state did not arrive: '+name)
+
+
+def choose(desktop, index, rtl, expected):
+    # Wait for the real native menu before sending keyboard input. Popup
+    # construction is asynchronous and a busy compiler must not race it.
     desktop.send('click', x=desktop.sidebar_menu_x(rtl), y=82)
+    menu=wait_state(desktop, lambda rows: len([n for n in rows if n['role']=='check menu item'])==8,
+               '_view-menu-open')
+    checked=[n['name'] for n in menu if n['role']=='check menu item' and n['checked']]
+    if checked != [getattr(desktop, 'last_view', expected)]:
+        raise RuntimeError('Native menu selected-state mismatch: '+repr(checked))
     desktop.key('Home')
     for _ in range(index): desktop.key('Down')
     desktop.key('Return')
+    wait_state(desktop, lambda rows: not any(n['role']=='check menu item' for n in rows)
+               and any(n['name']==expected and n['role']=='panel' for n in rows), '_view-ready')
+    desktop.last_view=expected
     desktop.send('move', x=desktop.width//2, y=500)
     desktop.send('wait', seconds=1)
 
@@ -59,6 +84,8 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
         'documentViewMode': 'source'}, ensure_ascii=False))
     desktop = DesktopRun(binary, output, root, scale)
     rtl = locale == 'ar'
+    catalog=json.loads(Path(f'lib/l10n/app_{locale}.arb').read_text())
+    labels=[catalog[k] for k in ['files','toc','outline','gitCommit','gitHostGitLog','localHistory','clipboardHistory','references']]
     try:
         # Normal product navigation opens a real source buffer.
         desktop.key('Control_L', 'p')
@@ -80,7 +107,7 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
         desktop.send('wait', seconds=1)
         selector = None
         for index, name in enumerate(['files', 'toc', 'outline', 'commit', 'git-log', 'local-history', 'clipboard', 'references']):
-            choose(desktop, index, rtl)
+            choose(desktop, index, rtl, labels[index])
             desktop.capture(name)
             desktop.send('accessibility', name=name)
             picture = Image.open(output/(name+'.png')).convert('RGB')

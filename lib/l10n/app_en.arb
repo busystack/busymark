@@ -632,7 +632,7 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
-  "sidebarViewMenu": "Sidebar view",
+  "sidebarViewMenu": "Sidebar View",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
   },
