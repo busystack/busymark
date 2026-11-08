@@ -59,6 +59,10 @@ const presentationMounts = <String, Set<String>>{
   },
 };
 
+bool isGitPresentationLibrary(String relative) =>
+    relative.startsWith('src/git/presentation/') ||
+    relative.startsWith('src/git/application/shared_git_');
+
 class Boundary extends RecursiveAstVisitor<void> {
   Boundary(this.path);
   final String path;
@@ -110,7 +114,9 @@ Future<List<String>> audit(Directory root, {List<File>? only}) async {
           .where(
             (f) =>
                 f.path.endsWith('.dart') &&
-                !f.path.contains('/lib/src/git/') &&
+                !isGitPresentationLibrary(
+                  f.path.substring('${root.path}/lib/'.length),
+                ) &&
                 !f.path.contains('/l10n/generated/'),
           )
           .toList();
@@ -170,6 +176,18 @@ Future<void> main(List<String> args) async {
         .resolveSymbolicLinksSync(),
   );
   if (args.contains('--self-test')) {
+    // An engine/service helper cannot hide general UI simply by living under
+    // src/git. Only the actual presentation boundary has that ownership.
+    if (isGitPresentationLibrary('src/git/application/engine_helper.dart') ||
+        isGitPresentationLibrary('src/git/renamed_wrapper.dart') ||
+        !isGitPresentationLibrary(
+          'src/git/application/shared_git_presentation.dart',
+        ) ||
+        !isGitPresentationLibrary(
+          'src/git/presentation/git_diff_viewer.dart',
+        )) {
+      throw StateError('Git presentation boundary changed');
+    }
     final folder = Directory('${root.path}/test/design_boundary_fixture');
     if (folder.existsSync()) {
       throw StateError('Fixture destination already exists');
