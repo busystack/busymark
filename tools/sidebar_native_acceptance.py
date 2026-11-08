@@ -36,6 +36,7 @@ def fixture(parent):
     git('config', 'branch.main.remote', 'origin')
     git('config', 'branch.main.merge', 'refs/heads/main')
     git('config', 'remote.origin.url', str(parent/'unused-remote'))
+    git('config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*')
     home.write_text(home.read_text()+'\nUnstaged fixture content.\n')
     (root / 'topics/staged.md').write_text('# Staged document\n')
     git('add', 'topics/staged.md')
@@ -121,6 +122,24 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
         selector = None
         for index, name in enumerate(['files', 'toc', 'outline', 'commit', 'git-log', 'local-history', 'clipboard', 'references']):
             choose(desktop, index, rtl, labels[index], titles[index])
+            if name == 'commit':
+                wait_state(desktop, lambda rows: any(n['role']=='panel' and n['name'].split('\n')[:2]==[titles[index], 'main'] for n in rows), '_branch-context-ready')
+            if name == 'git-log':
+                wait_state(desktop, lambda rows: any(n['role']=='panel' and n['name'].startswith(titles[index]+'\nConfirm native sidebar reference navigation') for n in rows), '_commit-context-ready')
+            if name == 'references':
+                scope = catalog['referenceScope']+': '+catalog['referenceWholeDocument']
+                wait_state(desktop, lambda rows: any(n['role']=='button' and n['name']==scope and n['enabled'] for n in rows), '_reference-data-ready')
+                # Loading controls may have just been replaced by the result
+                # rows. Wait for the body frame, independently of its title.
+                previous = None
+                for attempt in range(40):
+                    bounds = (desktop.width-300, 175, desktop.width, 500) if rtl else (0, 175, 300, 500)
+                    body = desktop.checkpoint().crop(bounds).tobytes()
+                    if body == previous: break
+                    previous = body
+                    desktop.send('wait', seconds=.25)
+                else:
+                    raise RuntimeError('The References result frame did not settle')
             desktop.capture(name)
             desktop.send('accessibility', name=name)
             picture = Image.open(output/(name+'.png')).convert('RGB')
@@ -130,7 +149,9 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
             if not baseline and trigger != selector:
                 raise RuntimeError('Sidebar View trigger pixels changed for '+name)
             if name == 'references':
-                desktop.send('click', x=desktop.width-120 if rtl else 120, y=270, button=3)
+                desktop.send('click', x=desktop.width-120 if rtl else 120, y=315 if scale>1 else 270, button=3)
+                expected_actions = {catalog['referenceSourceLocation'], catalog['referenceTargetLocation']}
+                wait_state(desktop, lambda rows: expected_actions.issubset({n['name'] for n in rows if n['role']=='menu item'}), '_reference-menu-ready')
                 desktop.capture('references-context')
                 desktop.key('Escape')
         # Close naturally and retain the existing unchanged-Git validation.
