@@ -160,7 +160,7 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
                 desktop.send('move', x=desktop.width//2, y=500)
                 desktop.capture('references-incoming-collapsed')
                 desktop.send('click', x=desktop.width-18 if rtl else 18, y=192 if scale==1 else 206)
-                desktop.send('click', x=desktop.width-276 if rtl else 276, y=130)
+                desktop.send('click', x=desktop.sidebar_menu_x(rtl), y=130)
                 wait_state(desktop, lambda rows: any(n['name']==catalog['referenceWholeDocument'] and n['role']=='check menu item' for n in rows), '_reference-scope-menu')
                 desktop.capture('references-actions-scope')
                 desktop.key('Home'); desktop.key('Down'); desktop.key('Down'); desktop.key('Return')
