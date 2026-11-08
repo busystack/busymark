@@ -4567,7 +4567,7 @@
   "gitUiCommitHash": "تجزئة الإيداع",
   "gitUiCommitReferences": "المراجع",
   "gitUiCopyCommitMessage": "نسخ رسالة الإيداع",
-  "gitUiSelectAnotherCommit": "اختيار التزام آخر…",
+  "gitUiSelectAnotherCommit": "اختيار التزام",
   "gitUiGitLog": "Git سجل",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4588,5 +4588,9 @@
   "gitUiFileStatusStaged": "{status}، في منطقة التجهيز",
   "gitUiFileStatusUnstaged": "{status}، غير مجهّز",
   "gitUiFileStatusHistorical": "{status} في هذا الالتزام",
-  "gitUiSelectAnotherBranch": "اختيار فرع آخر"
+  "gitUiSelectAnotherBranch": "اختيار فرع",
+  "selectInstance": "اختيار المثيل",
+  "referenceScope": "النطاق",
+  "referenceNoActiveDocument": "لا يوجد مستند نشط",
+  "referenceNoResults": "لم يتم العثور على مراجع"
 }

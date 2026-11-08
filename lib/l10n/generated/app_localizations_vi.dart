@@ -8874,7 +8874,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Sao chép thông điệp commit';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Chọn commit khác…';
+  String get gitUiSelectAnotherCommit => 'Chọn commit';
 
   @override
   String get gitUiGitLog => 'Bản ghi Git';
@@ -8935,5 +8935,17 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Chọn nhánh khác';
+  String get gitUiSelectAnotherBranch => 'Chọn nhánh';
+
+  @override
+  String get selectInstance => 'Chọn phiên bản';
+
+  @override
+  String get referenceScope => 'Phạm vi';
+
+  @override
+  String get referenceNoActiveDocument => 'Không có tài liệu đang hoạt động';
+
+  @override
+  String get referenceNoResults => 'Không tìm thấy tham chiếu';
 }

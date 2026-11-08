@@ -417,7 +417,7 @@ void main() {
       await tester.tap(actions);
       await tester.pumpAndSettle();
       if (entries
-          .where((e) => (e as Map)['label'] == 'Select another commit…')
+          .where((e) => (e as Map)['label'] == 'Select commit')
           .isNotEmpty) {
         defects.add('duplicate Select another commit menu item');
       }

@@ -8894,7 +8894,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Kopier commit-melding';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Velg en annen commit…';
+  String get gitUiSelectAnotherCommit => 'Velg commit';
 
   @override
   String get gitUiGitLog => 'Git- logg';
@@ -8955,5 +8955,17 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Velg en annen gren';
+  String get gitUiSelectAnotherBranch => 'Velg gren';
+
+  @override
+  String get selectInstance => 'Velg instans';
+
+  @override
+  String get referenceScope => 'Omfang';
+
+  @override
+  String get referenceNoActiveDocument => 'Ingen aktive dokumenter';
+
+  @override
+  String get referenceNoResults => 'Ingen referanser funnet';
 }

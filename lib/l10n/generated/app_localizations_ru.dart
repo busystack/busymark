@@ -8967,7 +8967,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Копировать сообщение коммита';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Выбрать другой коммит…';
+  String get gitUiSelectAnotherCommit => 'Выбрать коммит';
 
   @override
   String get gitUiGitLog => 'Журнал Git';
@@ -9028,5 +9028,17 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Выбрать другую ветку';
+  String get gitUiSelectAnotherBranch => 'Выбрать ветку';
+
+  @override
+  String get selectInstance => 'Выбрать экземпляр';
+
+  @override
+  String get referenceScope => 'Область';
+
+  @override
+  String get referenceNoActiveDocument => 'Нет активного документа';
+
+  @override
+  String get referenceNoResults => 'Ссылки не найдены';
 }

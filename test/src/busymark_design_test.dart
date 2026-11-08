@@ -589,15 +589,15 @@ void main() {
 
   test('sidebar header and list compose the shared vertical gap', () {
     final header = BusyMarkInsets.sidebarHeader.resolve(TextDirection.ltr);
-    final tocLtr = BusyMarkInsets.tocHeader.resolve(TextDirection.ltr);
-    final tocRtl = BusyMarkInsets.tocHeader.resolve(TextDirection.rtl);
+    final tocLtr = BusyMarkInsets.sidebarViewHeader.resolve(TextDirection.ltr);
+    final tocRtl = BusyMarkInsets.sidebarViewHeader.resolve(TextDirection.rtl);
 
     expect(header.bottom + BusyMarkInsets.sidebarList.top, BusyMarkSpacing.sm);
-    expect(tocLtr.top, 0);
-    expect(tocLtr.left, 0);
-    expect(tocLtr.right, 0);
-    expect(tocRtl.left, 0);
-    expect(tocRtl.right, 0);
+    expect(tocLtr.top, BusyMarkSpacing.sm);
+    expect(tocLtr.left, BusyMarkSpacing.md);
+    expect(tocLtr.right, BusyMarkSpacing.md);
+    expect(tocRtl.left, BusyMarkSpacing.md);
+    expect(tocRtl.right, BusyMarkSpacing.md);
   });
 
   testWidgets('header controls delegate geometry and elevation to Yaru', (

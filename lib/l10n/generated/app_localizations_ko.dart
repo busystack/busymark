@@ -8642,7 +8642,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gitUiCopyCommitMessage => '커밋 메시지 복사';
 
   @override
-  String get gitUiSelectAnotherCommit => '다른 커밋 선택…';
+  String get gitUiSelectAnotherCommit => '커밋 선택';
 
   @override
   String get gitUiGitLog => 'Git 로그';
@@ -8702,5 +8702,17 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => '다른 브랜치 선택';
+  String get gitUiSelectAnotherBranch => '브랜치 선택';
+
+  @override
+  String get selectInstance => '인스턴스 선택';
+
+  @override
+  String get referenceScope => '범위';
+
+  @override
+  String get referenceNoActiveDocument => '활성 문서 없음';
+
+  @override
+  String get referenceNoResults => '참조를 찾을 수 없음';
 }

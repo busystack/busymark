@@ -245,6 +245,61 @@ void main() {
   }
 
   testWidgets(
+    'native record menu dismisses its tooltip without losing pointer focus',
+    (tester) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      final reply = Completer<int?>();
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('busymark/native_menus'),
+        (call) async => call.method == 'show' ? reply.future : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('busymark/native_menus'),
+          null,
+        ),
+      );
+      await tester.pumpWidget(
+        harness(
+          BusyMarkSidebarRecordRow<int>(
+            icon: BusyMarkGlyphs.link,
+            title: 'Reference',
+            tooltip: 'Full reference details',
+            focusNode: focus,
+            onTap: () {},
+            menuTooltip: 'Actions',
+            menuItemsBuilder: (_) => [
+              BusyMarkPopupMenuItem(value: 1, label: 'Source location'),
+            ],
+            onMenuSelected: (_) {},
+          ),
+        ),
+      );
+      final row = find.byType(BusyMarkSidebarRecordRow<int>);
+      final pointer = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await pointer.addPointer(location: Offset.zero);
+      await pointer.moveTo(tester.getCenter(row));
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('Full reference details'), findsOneWidget);
+      await pointer.down(tester.getCenter(row));
+      await pointer.up();
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('Full reference details'), findsNothing);
+      expect(focus.hasFocus, isTrue);
+      reply.complete(1);
+      await tester.pumpAndSettle();
+      expect(focus.hasFocus, isTrue);
+      expect(tester.takeException(), isNull);
+      await pointer.removePointer();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.linux),
+  );
+
+  testWidgets(
     'disabled sidebar rows neither activate nor paint hover/pressed feedback',
     (tester) async {
       var invoked = 0;

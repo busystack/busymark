@@ -15065,10 +15065,10 @@ abstract class AppLocalizations {
   /// **'Copy commit message'**
   String get gitUiCopyCommitMessage;
 
-  /// Shared Git interface: Select another commit…
+  /// Shared Git interface: Select commit
   ///
   /// In en, this message translates to:
-  /// **'Select another commit…'**
+  /// **'Select commit'**
   String get gitUiSelectAnotherCommit;
 
   /// Shared Git interface: Git Log
@@ -15173,11 +15173,35 @@ abstract class AppLocalizations {
   /// **'{status} in this commit'**
   String gitUiFileStatusHistorical(String status);
 
-  /// Shared Git interface: Select another branch
+  /// Shared Git interface: Select branch
   ///
   /// In en, this message translates to:
-  /// **'Select another branch'**
+  /// **'Select branch'**
   String get gitUiSelectAnotherBranch;
+
+  /// Native sidebar presentation: Select instance
+  ///
+  /// In en, this message translates to:
+  /// **'Select instance'**
+  String get selectInstance;
+
+  /// Native sidebar presentation: Scope
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get referenceScope;
+
+  /// Native sidebar presentation: No active document
+  ///
+  /// In en, this message translates to:
+  /// **'No active document'**
+  String get referenceNoActiveDocument;
+
+  /// Native sidebar presentation: No references found
+  ///
+  /// In en, this message translates to:
+  /// **'No references found'**
+  String get referenceNoResults;
 }
 
 class _AppLocalizationsDelegate

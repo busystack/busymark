@@ -6097,7 +6097,7 @@
   "gitUiCommitHash": "提交哈希",
   "gitUiCommitReferences": "引用",
   "gitUiCopyCommitMessage": "复制提交说明",
-  "gitUiSelectAnotherCommit": "选择其他提交…",
+  "gitUiSelectAnotherCommit": "选择提交",
   "gitUiGitLog": "Git 日志",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -6118,5 +6118,9 @@
   "gitUiFileStatusStaged": "{status}，已暂存",
   "gitUiFileStatusUnstaged": "{status}，未暂存",
   "gitUiFileStatusHistorical": "在此提交中{status}",
-  "gitUiSelectAnotherBranch": "选择其他分支"
+  "gitUiSelectAnotherBranch": "选择分支",
+  "selectInstance": "选择实例",
+  "referenceScope": "范围",
+  "referenceNoActiveDocument": "没有活动文档",
+  "referenceNoResults": "未找到引用"
 }

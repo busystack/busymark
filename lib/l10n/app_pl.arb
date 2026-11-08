@@ -4581,7 +4581,7 @@
   "gitUiCommitHash": "Hash commita",
   "gitUiCommitReferences": "Referencje",
   "gitUiCopyCommitMessage": "Kopiuj komunikat commita",
-  "gitUiSelectAnotherCommit": "Wybierz inny commit…",
+  "gitUiSelectAnotherCommit": "Wybierz commit",
   "gitUiGitLog": "Dziennik Git",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4602,5 +4602,9 @@
   "gitUiFileStatusStaged": "{status}, w indeksie",
   "gitUiFileStatusUnstaged": "{status}, poza indeksem",
   "gitUiFileStatusHistorical": "{status} w tym commicie",
-  "gitUiSelectAnotherBranch": "Wybierz inną gałąź"
+  "gitUiSelectAnotherBranch": "Wybierz gałąź",
+  "selectInstance": "Wybierz instancję",
+  "referenceScope": "Zakres",
+  "referenceNoActiveDocument": "Brak aktywnego dokumentu",
+  "referenceNoResults": "Nie znaleziono odwołań"
 }

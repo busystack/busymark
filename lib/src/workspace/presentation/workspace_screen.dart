@@ -1,3 +1,4 @@
+import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import '../../editor/document_edit_history.dart';
 import '../../search/search_result_preview.dart';
@@ -2291,9 +2292,6 @@ class _SidebarHeader extends ConsumerWidget {
         : hasActiveDocumentPath
         ? _fileNameFromPath(activeDocumentPath)
         : context.l10n.untitledMarkdownFileName;
-    final activeDocumentFile = hasActiveDocumentPath
-        ? _documentFileForPath(workspace, activeDocumentPath)
-        : null;
     final detailsStyle = Theme.of(
       context,
     ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
@@ -2310,18 +2308,7 @@ class _SidebarHeader extends ConsumerWidget {
           trailingCheck: true,
         ),
     ];
-    final buildTabMenu =
-        selectedTab == _SidebarTab.git || selectedTab == _SidebarTab.gitLog
-        ? BusyMarkHeaderPopupMenuButton<_SidebarTab>.native
-        : const {
-            _SidebarTab.files,
-            _SidebarTab.toc,
-            _SidebarTab.outline,
-            _SidebarTab.localHistory,
-            _SidebarTab.clipboard,
-          }.contains(selectedTab)
-        ? BusyMarkHeaderPopupMenuButton<_SidebarTab>.native
-        : BusyMarkHeaderPopupMenuButton<_SidebarTab>.new;
+    final buildTabMenu = BusyMarkHeaderPopupMenuButton<_SidebarTab>.native;
     final selectedTabMenuItem = selectedTab == null
         ? null
         : tabMenuItems.firstWhere((item) => item.menuValue == selectedTab);
@@ -2354,7 +2341,7 @@ class _SidebarHeader extends ConsumerWidget {
                   buildTabMenu(
                     key: const ValueKey('workspace-sidebar-view-menu'),
                     tooltip: context.l10n.sidebarViewMenu,
-                    icon: selectedTabMenuItem.icon!,
+                    icon: BusyMarkGlyphs.sidebarViews,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
                     highlightWhenOpen: false,
@@ -2370,8 +2357,8 @@ class _SidebarHeader extends ConsumerWidget {
           BusyMarkSidebarHeader(
             key: const ValueKey('workspace-sidebar-first-content'),
             title: context.l10n.files,
+            leading: const Icon(BusyMarkGlyphs.folder),
             contextLine: _SidebarHeaderLine(
-              icon: WorkspaceGlyphs.pathForKind(workspace.kind),
               text: path,
               style: detailsStyle,
               leadingEllipsis: true,
@@ -2409,11 +2396,9 @@ class _SidebarHeader extends ConsumerWidget {
           BusyMarkSidebarHeader(
             key: const ValueKey('workspace-sidebar-first-content'),
             title: context.l10n.outline,
+            leading: Icon(BusyMarkGlyphs.indentFor(direction)),
             contextLine: _SidebarHeaderLine(
               key: const ValueKey('workspace-sidebar-outline-file-label'),
-              icon: _documentKindIcon(
-                activeDocumentFile?.kind ?? DocumentKind.markdown,
-              ),
               text: busyMarkLtrIsolateFor(context, activeDocumentName),
               style: detailsStyle,
               tooltip: hasActiveDocumentPath
@@ -2534,7 +2519,7 @@ class _SidebarHeaderRow extends StatelessWidget {
 class _SidebarHeaderLine extends StatelessWidget {
   const _SidebarHeaderLine({
     super.key,
-    required this.icon,
+    this.icon,
     required this.text,
     required this.style,
     this.leadingEllipsis = false,
@@ -2542,7 +2527,7 @@ class _SidebarHeaderLine extends StatelessWidget {
     this.onSecondaryTapUp,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final String text;
   final TextStyle? style;
   final bool leadingEllipsis;
@@ -2567,14 +2552,16 @@ class _SidebarHeaderLine extends StatelessWidget {
           );
     final line = Row(
       children: [
-        Icon(
-          icon,
-          size: iconSize,
-          color: iconColor,
-          weight: iconWeight,
-          fontWeight: iconFontWeight,
-        ),
-        const SizedBox(width: BusyMarkSpacing.sm),
+        if (icon != null) ...[
+          Icon(
+            icon,
+            size: iconSize,
+            color: iconColor,
+            weight: iconWeight,
+            fontWeight: iconFontWeight,
+          ),
+          const SizedBox(width: BusyMarkSpacing.sm),
+        ],
         Expanded(
           child: Row(children: [Flexible(child: text)]),
         ),
@@ -4153,20 +4140,6 @@ Future<bool> _confirmDeleteFileTreeEntry(
     ),
   );
   return confirmed ?? false;
-}
-
-Offset _sidebarTreeMenuAnchor(BuildContext context) {
-  final renderObject = context.findRenderObject();
-  if (renderObject is! RenderBox || !renderObject.hasSize) {
-    return Offset.zero;
-  }
-  final direction = Directionality.of(context);
-  return renderObject.localToGlobal(
-    Offset(
-      direction == TextDirection.rtl ? 0 : renderObject.size.width,
-      renderObject.size.height,
-    ),
-  );
 }
 
 IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
@@ -7282,65 +7255,28 @@ class _TocHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: BusyMarkInsets.tocHeader,
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (modules.length > 1) ...[
-            Padding(
-              padding: const EdgeInsetsDirectional.only(
-                start: BusyMarkSpacing.sm,
-              ),
-              child: _SidebarHeaderRow(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        modules
-                                .where((module) => module.id == activeModuleId)
-                                .map((module) => module.label)
-                                .firstOrNull ??
-                            modules.first.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textDirection: TextDirection.ltr,
-                        style: busyMarkSectionHeaderStyle(context),
-                      ),
-                    ),
-                    BusyMarkHeaderPopupMenuButton<String>.native(
-                      key: const ValueKey('writerside-module-selector'),
-                      tooltip: context.l10n.workspaceKindWritersideModule,
-                      icon: BusyMarkGlyphs.menuVertical,
-                      transparent: true,
-                      borderRadius: BusyMarkRadius.nativeHeaderButton,
-                      highlightWhenOpen: false,
-                      itemBuilder: (context) => [
-                        for (final module in modules)
-                          BusyMarkPopupMenuItem<String>(
-                            value: module.id,
-                            label: module.label,
-                            icon: BusyMarkGlyphs.folder,
-                          ),
-                      ],
-                      onSelected: onSelectModule,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: BusyMarkSpacing.sm),
-          ],
           BusyMarkSidebarHeader(
             key: const ValueKey('workspace-sidebar-first-content'),
             title: context.l10n.toc,
-            contextLine: _WritersideInstanceSelector(
-              instances: instances,
-              selectedInstance: selectedInstance,
-              instanceColors: instanceColors,
-              onSelected: onSelectInstance,
-              onOpenTocFile: onOpenTocFile,
+            leading: const Icon(BusyMarkGlyphs.orderedList),
+            contextLine: Tooltip(
+              message: selectedInstance.sourceTreePath,
+              child: Text(
+                busyMarkLtrIsolateFor(context, selectedInstance.name),
+              ),
             ),
             actions: [
+              _WritersideInstanceSelector(
+                instances: instances,
+                selectedInstance: selectedInstance,
+                instanceColors: instanceColors,
+                onSelected: onSelectInstance,
+                onOpenTocFile: onOpenTocFile,
+              ),
               BusyMarkHeaderPopupMenuButton<_TocCreationChoice>.native(
                 key: const ValueKey('workspace-sidebar-new-topic-menu'),
                 tooltip: context.l10n.newTopic,
@@ -7376,7 +7312,7 @@ class _TocHeader extends StatelessWidget {
               ),
               BusyMarkHeaderPopupMenuButton<_TocHeaderAction>.native(
                 key: const ValueKey('workspace-sidebar-toc-menu'),
-                tooltip: context.l10n.tocActions,
+                tooltip: context.l10n.actions,
                 icon: BusyMarkGlyphs.menuVertical,
                 transparent: true,
                 borderRadius: BusyMarkRadius.nativeHeaderButton,
@@ -7427,7 +7363,50 @@ class _TocHeader extends StatelessWidget {
               ),
             ],
           ),
-          const Divider(height: BusyMarkSpacing.md),
+          if (modules.length > 1) ...[
+            Padding(
+              padding: const EdgeInsetsDirectional.only(
+                start: BusyMarkSpacing.sm,
+              ),
+              child: _SidebarHeaderRow(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        modules
+                                .where((module) => module.id == activeModuleId)
+                                .map((module) => module.label)
+                                .firstOrNull ??
+                            modules.first.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textDirection: TextDirection.ltr,
+                        style: busyMarkSectionHeaderStyle(context),
+                      ),
+                    ),
+                    BusyMarkHeaderPopupMenuButton<String>.native(
+                      key: const ValueKey('writerside-module-selector'),
+                      tooltip: context.l10n.workspaceKindWritersideModule,
+                      icon: BusyMarkGlyphs.menuVertical,
+                      transparent: true,
+                      borderRadius: BusyMarkRadius.nativeHeaderButton,
+                      highlightWhenOpen: false,
+                      itemBuilder: (context) => [
+                        for (final module in modules)
+                          BusyMarkPopupMenuItem<String>(
+                            value: module.id,
+                            label: module.label,
+                            icon: BusyMarkGlyphs.folder,
+                          ),
+                      ],
+                      onSelected: onSelectModule,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: BusyMarkSpacing.sm),
+          ],
         ],
       ),
     );
@@ -7452,15 +7431,10 @@ class _WritersideInstanceSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedPath = selectedInstance.sourceTreePath;
-    final selectedLabel = busyMarkLtrIsolateFor(context, selectedInstance.name);
-    final selectedColor = writersideInstanceIconColorValue(
-      context,
-      instanceColors[selectedPath] ?? WritersideInstanceIconColor.blue,
-    );
     final selectorEnabled = instances.isNotEmpty;
     return BusyMarkMenuButton<String>.native(
       key: const ValueKey('writerside-instance-selector'),
-      tooltip: context.l10n.instances,
+      tooltip: context.l10n.selectInstance,
       enabled: selectorEnabled,
       items: [
         for (final instance in instances)
@@ -7479,66 +7453,16 @@ class _WritersideInstanceSelector extends StatelessWidget {
       ],
       onSelected: onSelected,
       triggerBuilder: (context, trigger) => trigger.anchor(
-        child: BusyMarkTooltipStyle.wrap(
-          context,
-          message: context.l10n.instances,
-          child: Semantics(
-            expanded: trigger.isOpen,
-            child: BusyMarkSidebarRowSurface(
-              key: const ValueKey('writerside-instance-selector-trigger'),
-              enabled: selectorEnabled,
-              clickable: selectorEnabled,
-              focusNode: trigger.focusNode,
-              onTap: trigger.onPressed,
-              onKeyEvent: (_, event) {
-                if (!isBusyMarkContextMenuKeyEvent(event)) {
-                  return KeyEventResult.ignored;
-                }
-                _showInstanceMenu(context, _sidebarTreeMenuAnchor(context));
-                return KeyEventResult.handled;
-              },
-              onSecondaryTapUp: (details) =>
-                  _showInstanceMenu(context, details.globalPosition),
-              child: Row(
-                children: [
-                  Icon(
-                    BusyMarkGlyphs.tree,
-                    size: BusyMarkSizes.iconSm,
-                    color: selectedColor,
-                  ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      selectedLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                      style: selectorEnabled
-                          ? null
-                          : TextStyle(
-                              color: BusyMarkSurfaceColors.of(
-                                context,
-                              ).disabledForeground,
-                            ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: BusyMarkSizes.iconButton,
-                    child: Center(
-                      child: Icon(
-                        BusyMarkGlyphs.downArrow,
-                        size: BusyMarkSizes.iconSm,
-                        color: selectorEnabled
-                            ? BusyMarkSurfaceColors.of(context).mutedForeground
-                            : BusyMarkSurfaceColors.of(
-                                context,
-                              ).disabledForeground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        child: GestureDetector(
+          onSecondaryTapUp: (details) =>
+              _showInstanceMenu(context, details.globalPosition),
+          child: BusyMarkHeaderIconButton(
+            key: const ValueKey('writerside-instance-selector-trigger'),
+            tooltip: context.l10n.selectInstance,
+            icon: BusyMarkGlyphs.selectContext,
+            transparent: true,
+            focusNode: trigger.focusNode,
+            onPressed: trigger.onPressed,
           ),
         ),
       ),

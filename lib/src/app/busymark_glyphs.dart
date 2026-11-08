@@ -84,6 +84,9 @@ abstract final class BusyMarkGlyphs {
   static const IconData selectAll = YaruIcons.selection;
   static const IconData settings = YaruIcons.settings;
   static const IconData sidebarLocalHistory = YaruIcons.history;
+  // A catalog of destinations; distinct from sidebar visibility and Actions.
+  static const IconData sidebarViews = YaruIcons.unordered_list;
+  static const IconData selectContext = YaruIcons.selection;
   static const IconData sidebar = YaruIcons.sidebar;
   static const IconData startTopic = YaruIcons.document;
   static const IconData strikethrough = YaruIcons.strikethrough;

@@ -1,3 +1,4 @@
+import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import 'dart:convert';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
@@ -329,7 +330,7 @@ void main() {
       await tester.tap(actions);
       await tester.pumpAndSettle();
       expect(
-        entries!.where((e) => (e as Map)['label'] == 'Select another commit…'),
+        entries!.where((e) => (e as Map)['label'] == 'Select commit'),
         isEmpty,
       );
       expect(find.byKey(const ValueKey('git-commit-actions')), findsOneWidget);

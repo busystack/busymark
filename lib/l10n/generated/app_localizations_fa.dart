@@ -8903,7 +8903,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'کپی پیام کامیت';
 
   @override
-  String get gitUiSelectAnotherCommit => 'انتخاب یک کامیت دیگر…';
+  String get gitUiSelectAnotherCommit => 'انتخاب کامیت';
 
   @override
   String get gitUiGitLog => 'تاریخچهٔ Git';
@@ -8964,5 +8964,17 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'انتخاب یک شاخهٔ دیگر';
+  String get gitUiSelectAnotherBranch => 'انتخاب شاخه';
+
+  @override
+  String get selectInstance => 'انتخاب نمونه';
+
+  @override
+  String get referenceScope => 'محدوده';
+
+  @override
+  String get referenceNoActiveDocument => 'سند فعالی وجود ندارد';
+
+  @override
+  String get referenceNoResults => 'ارجاعی یافت نشد';
 }

@@ -4567,7 +4567,7 @@
   "gitUiCommitHash": "Commit-Hash",
   "gitUiCommitReferences": "Referenzen",
   "gitUiCopyCommitMessage": "Commit-Nachricht kopieren",
-  "gitUiSelectAnotherCommit": "Anderen Commit auswählen…",
+  "gitUiSelectAnotherCommit": "Commit auswählen",
   "gitUiGitLog": "Git-Protokoll",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4588,5 +4588,9 @@
   "gitUiFileStatusStaged": "{status}, bereitgestellt",
   "gitUiFileStatusUnstaged": "{status}, nicht bereitgestellt",
   "gitUiFileStatusHistorical": "{status} in diesem Commit",
-  "gitUiSelectAnotherBranch": "Anderen Branch auswählen"
+  "gitUiSelectAnotherBranch": "Branch auswählen",
+  "selectInstance": "Instanz auswählen",
+  "referenceScope": "Bereich",
+  "referenceNoActiveDocument": "Kein aktives Dokument",
+  "referenceNoResults": "Keine Referenzen gefunden"
 }

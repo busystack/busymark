@@ -8975,7 +8975,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Копіювати повідомлення коміту';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Вибрати інший коміт…';
+  String get gitUiSelectAnotherCommit => 'Вибрати коміт';
 
   @override
   String get gitUiGitLog => 'Журнал Git';
@@ -9036,5 +9036,17 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Вибрати іншу гілку';
+  String get gitUiSelectAnotherBranch => 'Вибрати гілку';
+
+  @override
+  String get selectInstance => 'Вибрати екземпляр';
+
+  @override
+  String get referenceScope => 'Область';
+
+  @override
+  String get referenceNoActiveDocument => 'Немає активного документа';
+
+  @override
+  String get referenceNoResults => 'Посилань не знайдено';
 }

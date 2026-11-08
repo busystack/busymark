@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:busystack_git_flutter/busystack_git_flutter.dart'
-    show GitContextMenuKeys;
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
@@ -28,7 +26,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   final _listScrollController = ScrollController();
   final _listFocusNode = FocusNode(debugLabel: 'Clipboard History list');
   final _entryKeys = <String, GlobalKey>{};
-  final _menuKeys = GitContextMenuKeys();
+  final _menuKeys = BusyMarkContextMenuKeys();
   String? _selectedId;
 
   @override
@@ -81,6 +79,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
         children: [
           BusyMarkSidebarHeader(
             title: context.l10n.clipboardHistory,
+            leading: const Icon(BusyMarkGlyphs.paste),
             actions: [
               BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>.native(
                 key: const ValueKey('clipboard-history-actions-menu'),

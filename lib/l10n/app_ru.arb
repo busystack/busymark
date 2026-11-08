@@ -4581,7 +4581,7 @@
   "gitUiCommitHash": "Хеш коммита",
   "gitUiCommitReferences": "Ссылки",
   "gitUiCopyCommitMessage": "Копировать сообщение коммита",
-  "gitUiSelectAnotherCommit": "Выбрать другой коммит…",
+  "gitUiSelectAnotherCommit": "Выбрать коммит",
   "gitUiGitLog": "Журнал Git",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4602,5 +4602,9 @@
   "gitUiFileStatusStaged": "{status}, в индексе",
   "gitUiFileStatusUnstaged": "{status}, вне индекса",
   "gitUiFileStatusHistorical": "{status} в этом коммите",
-  "gitUiSelectAnotherBranch": "Выбрать другую ветку"
+  "gitUiSelectAnotherBranch": "Выбрать ветку",
+  "selectInstance": "Выбрать экземпляр",
+  "referenceScope": "Область",
+  "referenceNoActiveDocument": "Нет активного документа",
+  "referenceNoResults": "Ссылки не найдены"
 }

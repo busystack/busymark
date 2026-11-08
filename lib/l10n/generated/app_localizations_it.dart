@@ -8958,7 +8958,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Copia messaggio del commit';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Seleziona un altro commit…';
+  String get gitUiSelectAnotherCommit => 'Seleziona commit';
 
   @override
   String get gitUiGitLog => 'Registro Git';
@@ -9019,5 +9019,17 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Seleziona un altro ramo';
+  String get gitUiSelectAnotherBranch => 'Seleziona ramo';
+
+  @override
+  String get selectInstance => 'Seleziona istanza';
+
+  @override
+  String get referenceScope => 'Ambito';
+
+  @override
+  String get referenceNoActiveDocument => 'Nessun documento attivo';
+
+  @override
+  String get referenceNoResults => 'Nessun riferimento trovato';
 }

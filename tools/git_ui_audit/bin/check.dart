@@ -425,7 +425,9 @@ Future<void> main(List<String> args) async {
     '${mark.path}/lib/src/workspace/presentation/workspace_screen.dart',
   );
   final violations = await audit(file, production: true);
-  final adapter = File('${mark.path}/lib/src/app/busymark_design.dart');
+  final adapter = File(
+    '${mark.path}/lib/src/git/application/shared_git_presentation.dart',
+  );
   final adapterViolations = await auditNativeAdapter(adapter);
   for (final entry in adapterViolations.entries) {
     stderr.writeln('${adapter.path}:${entry.key}: ${entry.value}');

@@ -1,5 +1,44 @@
 # Sidebar consistency: interaction inventory and acceptance
 
+## Current ownership and header contract (2026-11-08)
+
+BusyMark owns `BusyMarkFocusStyle`, `BusyMarkFocusIndicator`, context-menu key
+handling and `BusyMarkSidebarHeader`. General theme/design code imports no Git
+UI. The canonical Git adapter, dialog aliases and width calculation live in
+`lib/src/git/application/shared_git_presentation.dart`. Git Commit, Log,
+Branches and comparisons remain owned by the shared package.
+
+All eight sidebars use a 16px title icon, body-medium title, 32px native actions,
+4px title-to-context gap, neutral body-small context and 12/8 directional
+horizontal/vertical insets. Context lines contain no icon or selection button.
+Instance/branch/commit selection precedes other actions and uses Yaru selection
+artwork. The workspace view chooser keeps one list icon in every view. TOC
+module selection remains a separate optional control after the common header.
+
+References retains its active-document incoming/outgoing queries and heading
+anchors. It uses the pinned Yaru tab bar, the existing native menu transport,
+BusyMark record rows, native text entry, dialog actions, notices and progress.
+Source/Target location actions are contextual; stale-revision navigation,
+workspace identity and recovery/save guards remain authoritative. Native record
+menus dismiss their tooltips while retaining focus. Full metadata remains in
+accessible labels/tooltips without empty module/origin separators.
+
+`tools/git_ui_audit/bin/check_design_boundary.dart` resolves all ordinary host
+libraries, typedefs, import aliases, re-exports and helpers. Exact mounting/tab
+and lifetime contracts are permitted; general Git UI primitives and renamed
+presentation wrappers are rejected. Its deliberate violating fixtures belong
+under test, outside production source receipts. `check_sidebar.dart` also
+follows both complete References rendering chains through their real native
+controls and recovery dialogs. Git keeps the mandatory full service audit.
+
+Native evidence for this correction is under `build/sidebar-correction`:
+`before-qualified` uses an archived clean source baseline; `after-debug-2`
+contains all eight actual corrected views, owned AT-SPI records, official-engine
+hashes and natural-exit/unchanged-repository receipts. These initial English
+captures are not the full final installed-application matrix. Final qualification
+must retain the independent gates in [git-ui-acceptance.md](../git-ui-acceptance.md).
+
+
 The 2026-11-06 one-Git-UI decision supersedes the earlier host-specific Git
 presentation choices recorded here. Both hosts now use the shared Git sidebar,
 review, contextual rows and native notification surfaces. See the current

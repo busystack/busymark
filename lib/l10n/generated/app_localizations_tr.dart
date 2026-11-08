@@ -8883,7 +8883,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Commit mesajını kopyala';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Başka bir commit seç…';
+  String get gitUiSelectAnotherCommit => 'Commit seç';
 
   @override
   String get gitUiGitLog => 'Git geçmişi';
@@ -8944,5 +8944,17 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Başka bir dal seç';
+  String get gitUiSelectAnotherBranch => 'Dal seç';
+
+  @override
+  String get selectInstance => 'Örnek seç';
+
+  @override
+  String get referenceScope => 'Kapsam';
+
+  @override
+  String get referenceNoActiveDocument => 'Etkin belge yok';
+
+  @override
+  String get referenceNoResults => 'Başvuru bulunamadı';
 }

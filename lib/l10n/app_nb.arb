@@ -4555,7 +4555,7 @@
   "gitUiCommitHash": "Commit-hash",
   "gitUiCommitReferences": "Referanser",
   "gitUiCopyCommitMessage": "Kopier commit-melding",
-  "gitUiSelectAnotherCommit": "Velg en annen commit…",
+  "gitUiSelectAnotherCommit": "Velg commit",
   "gitUiGitLog": "Git- logg",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4576,5 +4576,9 @@
   "gitUiFileStatusStaged": "{status}, i indeksen",
   "gitUiFileStatusUnstaged": "{status}, utenfor indeksen",
   "gitUiFileStatusHistorical": "{status} i denne committen",
-  "gitUiSelectAnotherBranch": "Velg en annen gren"
+  "gitUiSelectAnotherBranch": "Velg gren",
+  "selectInstance": "Velg instans",
+  "referenceScope": "Omfang",
+  "referenceNoActiveDocument": "Ingen aktive dokumenter",
+  "referenceNoResults": "Ingen referanser funnet"
 }

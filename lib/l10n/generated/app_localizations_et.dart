@@ -8893,7 +8893,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Kopeeri kinnituse sõnum';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Vali teine sissekanne…';
+  String get gitUiSelectAnotherCommit => 'Vali sissekanne';
 
   @override
   String get gitUiGitLog => 'Git logi';
@@ -8954,5 +8954,17 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Vali teine haru';
+  String get gitUiSelectAnotherBranch => 'Vali haru';
+
+  @override
+  String get selectInstance => 'Vali eksemplar';
+
+  @override
+  String get referenceScope => 'Ulatus';
+
+  @override
+  String get referenceNoActiveDocument => 'Aktiivne dokument puudub';
+
+  @override
+  String get referenceNoResults => 'Viiteid ei leitud';
 }

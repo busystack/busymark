@@ -4581,7 +4581,7 @@
   "gitUiCommitHash": "Хеш коміту",
   "gitUiCommitReferences": "Посилання",
   "gitUiCopyCommitMessage": "Копіювати повідомлення коміту",
-  "gitUiSelectAnotherCommit": "Вибрати інший коміт…",
+  "gitUiSelectAnotherCommit": "Вибрати коміт",
   "gitUiGitLog": "Журнал Git",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4602,5 +4602,9 @@
   "gitUiFileStatusStaged": "{status}, в індексі",
   "gitUiFileStatusUnstaged": "{status}, поза індексом",
   "gitUiFileStatusHistorical": "{status} у цьому коміті",
-  "gitUiSelectAnotherBranch": "Вибрати іншу гілку"
+  "gitUiSelectAnotherBranch": "Вибрати гілку",
+  "selectInstance": "Вибрати екземпляр",
+  "referenceScope": "Область",
+  "referenceNoActiveDocument": "Немає активного документа",
+  "referenceNoResults": "Посилань не знайдено"
 }

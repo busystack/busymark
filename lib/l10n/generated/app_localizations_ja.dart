@@ -8645,7 +8645,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'コミットメッセージをコピー';
 
   @override
-  String get gitUiSelectAnotherCommit => '別のコミットを選択…';
+  String get gitUiSelectAnotherCommit => 'コミットを選択';
 
   @override
   String get gitUiGitLog => 'Gitログ';
@@ -8705,5 +8705,17 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => '別のブランチを選択';
+  String get gitUiSelectAnotherBranch => 'ブランチを選択';
+
+  @override
+  String get selectInstance => 'インスタンスを選択';
+
+  @override
+  String get referenceScope => '範囲';
+
+  @override
+  String get referenceNoActiveDocument => 'アクティブなドキュメントがありません';
+
+  @override
+  String get referenceNoResults => '参照が見つかりません';
 }

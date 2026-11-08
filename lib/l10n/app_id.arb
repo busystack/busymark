@@ -6085,7 +6085,7 @@
   "gitUiCommitHash": "Hash commit",
   "gitUiCommitReferences": "Referensi",
   "gitUiCopyCommitMessage": "Salin pesan commit",
-  "gitUiSelectAnotherCommit": "Pilih commit lain…",
+  "gitUiSelectAnotherCommit": "Pilih commit",
   "gitUiGitLog": "Log Git",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -6106,5 +6106,9 @@
   "gitUiFileStatusStaged": "{status}, di staging",
   "gitUiFileStatusUnstaged": "{status}, belum di staging",
   "gitUiFileStatusHistorical": "{status} dalam commit ini",
-  "gitUiSelectAnotherBranch": "Pilih cabang lain"
+  "gitUiSelectAnotherBranch": "Pilih cabang",
+  "selectInstance": "Pilih instans",
+  "referenceScope": "Cakupan",
+  "referenceNoActiveDocument": "Tidak ada dokumen aktif",
+  "referenceNoResults": "Tidak ada referensi ditemukan"
 }

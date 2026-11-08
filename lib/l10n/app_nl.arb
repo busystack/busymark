@@ -6085,7 +6085,7 @@
   "gitUiCommitHash": "Commit-hash",
   "gitUiCommitReferences": "Verwijzingen",
   "gitUiCopyCommitMessage": "Commitbericht kopiëren",
-  "gitUiSelectAnotherCommit": "Een andere commit selecteren…",
+  "gitUiSelectAnotherCommit": "Commit selecteren",
   "gitUiGitLog": "Log",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -6106,5 +6106,9 @@
   "gitUiFileStatusStaged": "{status}, in de index",
   "gitUiFileStatusUnstaged": "{status}, buiten de index",
   "gitUiFileStatusHistorical": "{status} in deze commit",
-  "gitUiSelectAnotherBranch": "Andere branch selecteren"
+  "gitUiSelectAnotherBranch": "Branch selecteren",
+  "selectInstance": "Instantie selecteren",
+  "referenceScope": "Bereik",
+  "referenceNoActiveDocument": "Geen actief document",
+  "referenceNoResults": "Geen verwijzingen gevonden"
 }

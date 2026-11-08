@@ -4555,7 +4555,7 @@
   "gitUiCommitHash": "कमिट हैश",
   "gitUiCommitReferences": "संदर्भ",
   "gitUiCopyCommitMessage": "कमिट संदेश कॉपी करें",
-  "gitUiSelectAnotherCommit": "दूसरा कमिट चुनें…",
+  "gitUiSelectAnotherCommit": "कमिट चुनें",
   "gitUiGitLog": "Git लॉग",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4576,5 +4576,9 @@
   "gitUiFileStatusStaged": "{status}, स्टेज किया गया",
   "gitUiFileStatusUnstaged": "{status}, स्टेज नहीं किया गया",
   "gitUiFileStatusHistorical": "इस कमिट में {status}",
-  "gitUiSelectAnotherBranch": "दूसरी शाखा चुनें"
+  "gitUiSelectAnotherBranch": "शाखा चुनें",
+  "selectInstance": "इंस्टेंस चुनें",
+  "referenceScope": "दायरा",
+  "referenceNoActiveDocument": "कोई सक्रिय दस्तावेज़ नहीं",
+  "referenceNoResults": "कोई संदर्भ नहीं मिला"
 }

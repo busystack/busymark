@@ -301,6 +301,7 @@ Future<void> main(List<String> args) async {
     workspace,
     '${mark.path}/lib/src/local_history/local_history_panel.dart',
     '${mark.path}/lib/src/clipboard/clipboard_history_panel.dart',
+    '${mark.path}/lib/src/references/reference_ui.dart',
     for (final file in ['commit_view', 'historical_change_tree', 'log_view'])
       '${shared.path}/lib/src/$file.dart',
   ];
@@ -314,6 +315,12 @@ Future<void> main(List<String> args) async {
     'BusyMarkSidebarHeader',
   ], scope: native.FirstPartyPresentationScope.sidebarGeometry);
   errors.addAll(chain.map((v) => '$v'));
+  final references = await native.auditFirstPartyPresentationChain(
+    '${mark.path}/lib/src/references/reference_ui.dart',
+    ['ReferencesPanel', 'ReferenceLinkChooser'],
+    scope: native.FirstPartyPresentationScope.sidebarGeometry,
+  );
+  errors.addAll(references.map((v) => '$v'));
   final collection = AnalysisContextCollection(includedPaths: paths);
   try {
     for (final path in paths) {
@@ -351,7 +358,7 @@ Future<void> main(List<String> args) async {
     exitCode = 1;
   } else {
     stdout.writeln(
-      'Resolved seven-sidebar presentation and contextual-action boundary passed.',
+      'Resolved sidebar presentation and contextual-action boundary passed.',
     );
   }
 }

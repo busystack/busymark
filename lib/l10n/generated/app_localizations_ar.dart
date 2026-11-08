@@ -8886,7 +8886,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'نسخ رسالة الإيداع';
 
   @override
-  String get gitUiSelectAnotherCommit => 'اختيار التزام آخر…';
+  String get gitUiSelectAnotherCommit => 'اختيار التزام';
 
   @override
   String get gitUiGitLog => 'Git سجل';
@@ -8947,5 +8947,17 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'اختيار فرع آخر';
+  String get gitUiSelectAnotherBranch => 'اختيار فرع';
+
+  @override
+  String get selectInstance => 'اختيار المثيل';
+
+  @override
+  String get referenceScope => 'النطاق';
+
+  @override
+  String get referenceNoActiveDocument => 'لا يوجد مستند نشط';
+
+  @override
+  String get referenceNoResults => 'لم يتم العثور على مراجع';
 }

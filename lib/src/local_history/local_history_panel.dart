@@ -346,14 +346,7 @@ class _LocalHistoryHeader extends StatelessWidget {
     return BusyMarkSidebarHeader(
       key: const ValueKey('local-history-panel-header'),
       title: context.l10n.localHistory,
-      leading: retained
-          ? BusyMarkHeaderIconButton(
-              tooltip: context.l10n.back,
-              icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-              transparent: true,
-              onPressed: onBack,
-            )
-          : null,
+      leading: const Icon(BusyMarkGlyphs.history),
       contextLine: contextTitle == null
           ? null
           : Tooltip(
@@ -366,6 +359,13 @@ class _LocalHistoryHeader extends StatelessWidget {
               ),
             ),
       actions: [
+        if (retained)
+          BusyMarkHeaderIconButton(
+            tooltip: context.l10n.back,
+            icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+            transparent: true,
+            onPressed: onBack,
+          ),
         if (inspectingRetainedDocument && selectedDocument?.deleted == true)
           Text(
             context.l10n.localHistoryDeleted,

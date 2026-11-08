@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:busystack_git_flutter/busystack_git_flutter.dart'
-    show NativeFocusStyle;
 import 'package:flutter/services.dart';
 import 'package:yaru/theme.dart';
 
@@ -47,7 +45,7 @@ ThemeData buildBusyMarkTheme({
     scrim: BusyMarkLinuxPalette.black,
   );
   final textTheme = _busyMarkTextTheme(base.textTheme, colors);
-  final inputDecorationTheme = NativeFocusStyle.inputs(
+  final inputDecorationTheme = BusyMarkFocusStyle.inputs(
     base.inputDecorationTheme,
     colorScheme,
     highContrast: highContrast,

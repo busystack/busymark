@@ -3,12 +3,10 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/path_label.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busystack_git_flutter/busystack_git_flutter.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaru/yaru.dart';
 
 Widget app(
   Widget child, {
@@ -50,9 +48,9 @@ void main() {
     for (final locale in ['en', 'de', 'ja', 'ar']) {
       for (final scale in [1.0, 1.5]) {
         testWidgets(
-          'seven headers share title/context grid $brightness $locale $scale',
+          'eight headers share icon/title/context geometry $brightness $locale $scale',
           (tester) async {
-            tester.view.physicalSize = const Size(800, 1000);
+            tester.view.physicalSize = const Size(800, 1200);
             tester.view.devicePixelRatio = 1;
             addTearDown(tester.view.resetPhysicalSize);
             addTearDown(tester.view.resetDevicePixelRatio);
@@ -64,135 +62,149 @@ void main() {
               'Git Log',
               'Local History',
               'Clipboard History',
+              'References',
+            ];
+            final icons = [
+              BusyMarkGlyphs.folder,
+              BusyMarkGlyphs.orderedList,
+              BusyMarkGlyphs.indentFor(
+                locale == 'ar' ? TextDirection.rtl : TextDirection.ltr,
+              ),
+              BusyMarkGlyphs.branch,
+              BusyMarkGlyphs.history,
+              BusyMarkGlyphs.history,
+              BusyMarkGlyphs.paste,
+              BusyMarkGlyphs.link,
             ];
             final contexts = [
-              '/very/long/directory/path',
+              '/very/long/directory/path/日本語/العربية',
               'Development',
-              'Current document.md',
+              'Current document with long name.md',
               'feature/long-branch-name',
-              'Selected historical subject',
+              'Selected historical subject with a deliberately long name',
               'Current document.md',
+              '',
+              'introduction.md',
             ];
-            await tester.pumpWidget(
-              app(
-                Align(
-                  alignment: AlignmentDirectional.topStart,
-                  child: SizedBox(
-                    width: 240,
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < 7; i++)
-                          BusyMarkSidebarHeader(
-                            key: ValueKey('header-$i'),
-                            title: labels[i],
-                            contextLine: i == 6
-                                ? null
-                                : i == 1
-                                ? BusyMarkSidebarRowSurface(
-                                    enabled: true,
-                                    clickable: true,
-                                    onTap: () {},
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            contexts[i],
-                                            key: ValueKey('context-$i'),
-                                          ),
-                                        ),
-                                      ],
+            for (final width in [240.0, 300.0]) {
+              await tester.pumpWidget(
+                app(
+                  Align(
+                    alignment: AlignmentDirectional.topStart,
+                    child: SizedBox(
+                      width: width,
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < labels.length; i++)
+                            BusyMarkSidebarHeader(
+                              key: ValueKey('header-$i'),
+                              title: labels[i],
+                              leading: Icon(icons[i], key: ValueKey('icon-$i')),
+                              contextLine: i == 6
+                                  ? null
+                                  : Text(
+                                      contexts[i],
+                                      key: ValueKey('context-$i'),
                                     ),
-                                  )
-                                : Text(
-                                    contexts[i],
-                                    key: ValueKey('context-$i'),
+                              actions: [
+                                if ({1, 3, 4}.contains(i))
+                                  SizedBox(
+                                    key: ValueKey('select-$i'),
+                                    width: 34,
+                                    height: 34,
                                   ),
-                            actions: [
-                              SizedBox(
-                                key: ValueKey('action-$i'),
-                                width: 34,
-                                height: 34,
-                              ),
-                            ],
-                          ),
-                      ],
+                                SizedBox(
+                                  key: ValueKey('action-$i'),
+                                  width: 34,
+                                  height: 34,
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
                     ),
                   ),
+                  brightness: brightness,
+                  locale: locale,
+                  scale: scale,
                 ),
-                brightness: brightness,
-                locale: locale,
-                scale: scale,
-              ),
-            );
-            await tester.pumpAndSettle();
-            final rtl = locale == 'ar';
-            double start(Finder f) =>
-                rtl ? tester.getRect(f).right : tester.getRect(f).left;
-            for (var i = 0; i < 7; i++) {
-              final heading = find.text(labels[i]);
-              expect(start(heading), start(find.text(labels.first)));
-              expect(
-                tester.getRect(find.byKey(ValueKey('action-$i'))).right,
-                tester.getRect(find.byKey(const ValueKey('action-0'))).right,
               );
-              expect(
-                tester.getRect(heading).top -
-                    tester.getRect(find.byKey(ValueKey('header-$i'))).top,
-                8,
-              );
-              expect(
-                tester.getRect(find.byKey(ValueKey('action-$i'))).top -
-                    tester.getRect(find.byKey(ValueKey('header-$i'))).top,
-                8,
-              );
-              final text = tester.widget<Text>(heading);
-              expect(text.maxLines, 1);
-              expect(text.overflow, TextOverflow.ellipsis);
-              if (i < 6) {
-                final context = find.byKey(ValueKey('context-$i'));
-                expect(start(context), start(heading));
+              await tester.pumpAndSettle();
+              final rtl = locale == 'ar';
+              double start(Finder f) =>
+                  rtl ? tester.getRect(f).right : tester.getRect(f).left;
+              for (var i = 0; i < labels.length; i++) {
+                final header = find.byKey(ValueKey('header-$i'));
+                final title = find.text(labels[i]);
+                final icon = find.byKey(ValueKey('icon-$i'));
+                final action = find.byKey(ValueKey('action-$i'));
+                expect(start(title), start(find.text(labels.first)));
                 expect(
-                  tester.getRect(context).center.dy -
-                      tester.getRect(heading).bottom,
-                  closeTo(
-                    tester
-                            .getRect(find.byKey(const ValueKey('context-0')))
-                            .center
-                            .dy -
-                        tester.getRect(find.text(labels.first)).bottom,
-                    .01,
-                  ),
-                  reason:
-                      'Interactive instance context and informational context must share the same text center',
+                  start(icon),
+                  start(find.byKey(const ValueKey('icon-0'))),
                 );
-                final contextSlot = find.descendant(
-                  of: find.byKey(ValueKey('header-$i')),
-                  matching: find.byWidgetPredicate(
-                    (w) =>
-                        w is ConstrainedBox &&
-                        w.constraints.minHeight == kYaruTitleBarItemHeight,
-                  ),
-                );
-                expect(contextSlot, findsOneWidget);
+                expect(tester.getSize(icon), const Size.square(16));
+                expect(tester.getCenter(title).dy, tester.getCenter(action).dy);
+                expect(tester.getCenter(icon).dy, tester.getCenter(action).dy);
                 expect(
-                  tester.getTopLeft(contextSlot).dy -
-                      tester.getBottomLeft(heading).dy,
-                  closeTo(2, .01),
+                  tester.getRect(action).top - tester.getRect(header).top,
+                  8,
                 );
-                final style = DefaultTextStyle.of(tester.element(context));
-                expect(style.style.fontSize, lessThan(text.style!.fontSize!));
-                expect(style.maxLines, 1);
-                expect(style.overflow, TextOverflow.ellipsis);
+                expect(
+                  tester.getRect(action).right,
+                  tester.getRect(find.byKey(const ValueKey('action-0'))).right,
+                );
+                final text = tester.widget<Text>(title);
+                expect(text.maxLines, 1);
+                expect(text.overflow, TextOverflow.ellipsis);
+                if (i != 6) {
+                  final context = find.byKey(ValueKey('context-$i'));
+                  expect(start(context), start(icon));
+                  expect(
+                    tester.getRect(context).top - tester.getRect(action).bottom,
+                    4,
+                  );
+                  expect(
+                    tester.getRect(header).bottom -
+                        tester.getRect(context).bottom,
+                    8,
+                  );
+                  final style = DefaultTextStyle.of(tester.element(context));
+                  expect(style.style.fontSize, lessThan(text.style!.fontSize!));
+                  expect(
+                    style.style.color,
+                    Theme.of(
+                      tester.element(context),
+                    ).colorScheme.onSurfaceVariant,
+                  );
+                  expect(style.maxLines, 1);
+                  expect(style.overflow, TextOverflow.ellipsis);
+                  expect(
+                    find.descendant(of: context, matching: find.byType(Icon)),
+                    findsNothing,
+                  );
+                }
+                if ({1, 3, 4}.contains(i)) {
+                  final select = find.byKey(ValueKey('select-$i'));
+                  expect(
+                    rtl
+                        ? tester.getCenter(select).dx >
+                              tester.getCenter(action).dx
+                        : tester.getCenter(select).dx <
+                              tester.getCenter(action).dx,
+                    isTrue,
+                  );
+                }
               }
+              expect(find.byKey(const ValueKey('context-6')), findsNothing);
+              expect(
+                tester.getSize(find.byKey(const ValueKey('header-6'))).height,
+                lessThan(
+                  tester.getSize(find.byKey(const ValueKey('header-0'))).height,
+                ),
+              );
+              expect(tester.takeException(), isNull);
             }
-            expect(find.byKey(const ValueKey('context-6')), findsNothing);
-            expect(
-              tester.getSize(find.byKey(const ValueKey('header-6'))).height,
-              lessThanOrEqualTo(
-                tester.getSize(find.byKey(const ValueKey('header-0'))).height,
-              ),
-            );
-            expect(tester.takeException(), isNull);
           },
         );
         testWidgets(
@@ -336,7 +348,7 @@ void main() {
           final scheme = Theme.of(tester.element(first)).colorScheme;
           expect(
             paintedBorder(tester, first).top.color,
-            NativeFocusStyle.color(scheme, highContrast: contrast),
+            BusyMarkFocusStyle.color(scheme, highContrast: contrast),
           );
           final theme = Theme.of(tester.element(first));
           final surface = Color.alphaBlend(

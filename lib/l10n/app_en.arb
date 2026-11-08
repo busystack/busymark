@@ -7396,9 +7396,9 @@
   "@gitUiCopyCommitMessage": {
     "description": "Shared Git interface: Copy commit message"
   },
-  "gitUiSelectAnotherCommit": "Select another commit…",
+  "gitUiSelectAnotherCommit": "Select commit",
   "@gitUiSelectAnotherCommit": {
-    "description": "Shared Git interface: Select another commit…"
+    "description": "Shared Git interface: Select commit"
   },
   "gitUiGitLog": "Git Log",
   "@gitUiGitLog": {
@@ -7483,6 +7483,22 @@
       }
     }
   },
-  "gitUiSelectAnotherBranch": "Select another branch",
-  "@gitUiSelectAnotherBranch": {"description": "Shared Git interface: Select another branch"}
+  "gitUiSelectAnotherBranch": "Select branch",
+  "@gitUiSelectAnotherBranch": {"description": "Shared Git interface: Select branch"},
+  "selectInstance": "Select instance",
+  "@selectInstance": {
+    "description": "Native sidebar presentation: Select instance"
+  },
+  "referenceScope": "Scope",
+  "@referenceScope": {
+    "description": "Native sidebar presentation: Scope"
+  },
+  "referenceNoActiveDocument": "No active document",
+  "@referenceNoActiveDocument": {
+    "description": "Native sidebar presentation: No active document"
+  },
+  "referenceNoResults": "No references found",
+  "@referenceNoResults": {
+    "description": "Native sidebar presentation: No references found"
+  }
 }

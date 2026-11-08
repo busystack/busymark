@@ -1,3 +1,4 @@
+import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import '../../platform/native_menu_service.dart';
 export 'shared_git_tabs.dart';
 import 'shared_git_tabs.dart';

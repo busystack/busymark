@@ -6097,7 +6097,7 @@
   "gitUiCommitHash": "コミットハッシュ",
   "gitUiCommitReferences": "参照",
   "gitUiCopyCommitMessage": "コミットメッセージをコピー",
-  "gitUiSelectAnotherCommit": "別のコミットを選択…",
+  "gitUiSelectAnotherCommit": "コミットを選択",
   "gitUiGitLog": "Gitログ",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -6118,5 +6118,9 @@
   "gitUiFileStatusStaged": "{status}、ステージ済み",
   "gitUiFileStatusUnstaged": "{status}、未ステージ",
   "gitUiFileStatusHistorical": "このコミットで{status}",
-  "gitUiSelectAnotherBranch": "別のブランチを選択"
+  "gitUiSelectAnotherBranch": "ブランチを選択",
+  "selectInstance": "インスタンスを選択",
+  "referenceScope": "範囲",
+  "referenceNoActiveDocument": "アクティブなドキュメントがありません",
+  "referenceNoResults": "参照が見つかりません"
 }

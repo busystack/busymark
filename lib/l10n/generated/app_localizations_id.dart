@@ -8896,7 +8896,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Salin pesan commit';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Pilih commit lain…';
+  String get gitUiSelectAnotherCommit => 'Pilih commit';
 
   @override
   String get gitUiGitLog => 'Log Git';
@@ -8957,5 +8957,17 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Pilih cabang lain';
+  String get gitUiSelectAnotherBranch => 'Pilih cabang';
+
+  @override
+  String get selectInstance => 'Pilih instans';
+
+  @override
+  String get referenceScope => 'Cakupan';
+
+  @override
+  String get referenceNoActiveDocument => 'Tidak ada dokumen aktif';
+
+  @override
+  String get referenceNoResults => 'Tidak ada referensi ditemukan';
 }

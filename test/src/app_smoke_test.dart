@@ -1,3 +1,4 @@
+import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import '../support/native_menu_probe.dart';
 import 'package:busymark/src/spellcheck/spelling_catalog.dart';
 import 'package:busymark/src/workspace/presentation/welcome_screen.dart';
@@ -5768,38 +5769,13 @@ code
           ),
           findsNothing,
         );
-        final instanceSelectorSurface = find.byWidgetPredicate(
-          (widget) =>
-              widget is BusyMarkSidebarRowSurface &&
-              widget.key ==
-                  const ValueKey('writerside-instance-selector-trigger'),
+        final instanceAction = tester.widget<BusyMarkHeaderIconButton>(
+          instanceSelectorTrigger,
         );
-        expect(instanceSelectorSurface, findsOneWidget);
-        expect(
-          tester
-              .widget<BusyMarkSidebarRowSurface>(instanceSelectorSurface)
-              .onTap,
-          isNotNull,
-        );
-        final instanceDecoration =
-            tester
-                    .widget<DecoratedBox>(
-                      find
-                          .descendant(
-                            of: instanceSelectorSurface,
-                            matching: find.byWidgetPredicate(
-                              (w) =>
-                                  w is DecoratedBox &&
-                                  w.decoration is BoxDecoration &&
-                                  (w.decoration as BoxDecoration).border ==
-                                      null,
-                            ),
-                          )
-                          .first,
-                    )
-                    .decoration
-                as BoxDecoration;
-        expect(instanceDecoration.color, BusyMarkLinuxPalette.transparent);
+        expect(instanceAction.onPressed, isNotNull);
+        expect(instanceAction.tooltip, l10n.selectInstance);
+        expect(instanceAction.icon, BusyMarkGlyphs.selectContext);
+        expect(instanceAction.transparent, isTrue);
         final instanceSelectorRect = tester.getRect(instanceSelectorTrigger);
         final tocHeaderRowRect = tester.getRect(
           find.byKey(const ValueKey('workspace-sidebar-first-content')),
@@ -5817,48 +5793,17 @@ code
           tester.widget<BusyMarkSidebarRowSurface>(firstTocRowSurface).onTap,
           isNotNull,
         );
-        final tocDecoration =
-            tester
-                    .widget<DecoratedBox>(
-                      find
-                          .descendant(
-                            of: firstTocRowSurface,
-                            matching: find.byWidgetPredicate(
-                              (w) =>
-                                  w is DecoratedBox &&
-                                  w.decoration is BoxDecoration &&
-                                  (w.decoration as BoxDecoration).border ==
-                                      null,
-                            ),
-                          )
-                          .first,
-                    )
-                    .decoration
-                as BoxDecoration;
-        expect(instanceDecoration.borderRadius, tocDecoration.borderRadius);
-        final primaryIconRect = tester.getRect(
-          find.descendant(
-            of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
-            matching: find.byType(Icon),
-          ),
+        final titleIcon = find.descendant(
+          of: find.byKey(const ValueKey('workspace-sidebar-first-content')),
+          matching: find.byIcon(BusyMarkGlyphs.orderedList),
         );
-        final instanceIconRect = tester.getRect(
-          find.descendant(
-            of: instanceSelector,
-            matching: find.byIcon(BusyMarkGlyphs.tree),
-          ),
-        );
+        expect(titleIcon, findsOneWidget);
         expect(
           find.descendant(
             of: find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
             matching: find.byIcon(BusyMarkGlyphs.document),
           ),
           findsNothing,
-        );
-        expect(instanceIconRect.left, primaryIconRect.left);
-        expect(
-          tocHeaderRowRect.left + BusyMarkSpacing.md,
-          instanceSelectorRect.left,
         );
         expect(
           firstTocRowRect.left,
@@ -5868,11 +5813,15 @@ code
           tocHeaderRowRect.right - firstTocRowRect.right,
           BusyMarkSpacing.sm,
         );
-        expect(
-          instanceSelectorRect.left,
-          tocHeaderRowRect.left + BusyMarkSpacing.md,
+        final newTopicRect = tester.getRect(
+          find.byKey(const ValueKey('workspace-sidebar-new-topic-menu')),
         );
-        expect(instanceSelectorRect.right, lessThan(tocHeaderRowRect.right));
+        final actionsRect = tester.getRect(
+          find.byKey(const ValueKey('workspace-sidebar-toc-menu')),
+        );
+        expect(instanceSelectorRect.center.dy, newTopicRect.center.dy);
+        expect(instanceSelectorRect.right, lessThan(newTopicRect.left));
+        expect(newTopicRect.right, lessThan(actionsRect.left));
         final primaryMenuRect = tester.getRect(
           find.byTooltip(l10n.sidebarViewMenu),
         );
@@ -5884,7 +5833,7 @@ code
         );
         expect(instanceSelectorRect.height, tocMenuRect.height);
         expect(tocMenuRect.top - tocHeaderRowRect.top, BusyMarkSpacing.sm);
-        expect(instanceSelectorRect.height, firstTocRowRect.height);
+        expect(instanceSelectorRect.height, BusyMarkSizes.iconButton);
         final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
         addTearDown(mouse.removePointer);
         await mouse.addPointer(location: Offset.zero);
@@ -5923,12 +5872,6 @@ code
         await nativeMenus.activate('shared-docs');
         await tester.pump(const Duration(milliseconds: 200));
         expect(controller.selectedWritersideModuleId, 'shared-docs');
-        final guideIcon = tester.widget<Icon>(
-          find.descendant(
-            of: instanceSelector,
-            matching: find.byIcon(BusyMarkGlyphs.tree),
-          ),
-        );
         await openPopup(instanceSelector);
         String instanceLabel(String fragment) =>
             nativeMenus.entries.singleWhere(
@@ -5945,29 +5888,38 @@ code
         final apiOptionColor = nativeMenus.entries.singleWhere(
           (e) => e['label'] == apiInstance,
         )['iconColor'];
-        expect(guideOptionColor, guideIcon.color?.toARGB32());
+        expect(guideOptionColor, isNotNull);
+        expect(
+          nativeMenus.entries.singleWhere(
+            (e) => e['label'] == guideInstance,
+          )['selected'],
+          isTrue,
+        );
         expect(apiOptionColor, isNotNull);
         expect(apiOptionColor, isNot(guideOptionColor));
         await nativeMenus.activate(apiInstance);
         await tester.pump(const Duration(milliseconds: 200));
         expect(controller.selectedWritersideInstanceId, 'api');
-        final apiIcon = tester.widget<Icon>(
-          find.descendant(
-            of: instanceSelector,
-            matching: find.byIcon(BusyMarkGlyphs.tree),
-          ),
-        );
-        expect(guideIcon.color, isNotNull);
-        expect(apiIcon.color, isNotNull);
-        expect(guideIcon.color, isNot(apiIcon.color));
         await openPopup(instanceSelector);
         expect(nativeMenus.matching(guideInstance), hasLength(1));
+        expect(
+          nativeMenus.entries.singleWhere(
+            (e) => e['label'] == apiInstance,
+          )['selected'],
+          isTrue,
+        );
+        expect(
+          nativeMenus.entries.singleWhere(
+            (e) => e['label'] == apiInstance,
+          )['iconColor'],
+          apiOptionColor,
+        );
         await nativeMenus.activate(guideInstance);
         await tester.pump(const Duration(milliseconds: 200));
 
         expect(nativeMenus.matching('Nested entry'), hasLength(1));
         expect(find.byTooltip(l10n.newTopic), findsOneWidget);
-        expect(find.byTooltip(l10n.tocActions), findsOneWidget);
+        expect(find.byTooltip(l10n.actions), findsOneWidget);
         expect(find.byTooltip(l10n.tocSynchronize), findsNothing);
         expect(find.byTooltip(l10n.newChildTopic), findsNothing);
         final tocMenuButton = find.descendant(
@@ -5975,7 +5927,7 @@ code
           matching: find.byType(IconButton),
         );
         expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
-        await openPopup(find.byTooltip(l10n.tocActions));
+        await openPopup(find.byTooltip(l10n.actions));
         expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
         expect(nativeMenus.matching(l10n.newTopic), isEmpty);
         expect(nativeMenus.contains(l10n.tocSynchronize), isTrue);
@@ -6028,7 +5980,7 @@ code
         await nativeMenus.activate(l10n.cancel);
         await tester.pumpAndSettle();
 
-        await openPopup(find.byTooltip(l10n.tocActions));
+        await openPopup(find.byTooltip(l10n.actions));
         await nativeMenus.activate(l10n.newInstance);
         await tester.pumpAndSettle();
         expect(nativeMenus.matching(l10n.createInstance), hasLength(1));
@@ -6623,7 +6575,7 @@ code
         await nativeMenus.activate(l10n.cancel);
         await tester.pumpAndSettle();
 
-        await openPopup(find.byTooltip(l10n.tocActions));
+        await openPopup(find.byTooltip(l10n.actions));
         expect(nativeMenus.matching(l10n.tocSynchronize), hasLength(1));
         expect(nativeMenus.matching(l10n.newInstance), hasLength(1));
         expect(nativeMenus.matching(l10n.newTocLibrary), hasLength(1));
@@ -10645,7 +10597,7 @@ code
             find.byKey(const ValueKey('workspace-sidebar-view-menu')),
           )
           .icon,
-      BusyMarkGlyphs.documentOpen,
+      BusyMarkGlyphs.sidebarViews,
     );
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
@@ -10658,7 +10610,7 @@ code
             find.byKey(const ValueKey('workspace-sidebar-view-menu')),
           )
           .icon,
-      BusyMarkGlyphs.sidebarLocalHistory,
+      BusyMarkGlyphs.sidebarViews,
     );
 
     await pressControlShortcut(LogicalKeyboardKey.digit6);
@@ -10669,7 +10621,7 @@ code
             find.byKey(const ValueKey('workspace-sidebar-view-menu')),
           )
           .icon,
-      BusyMarkGlyphs.copy,
+      BusyMarkGlyphs.sidebarViews,
     );
 
     await container
@@ -11531,7 +11483,7 @@ code
         LogicalKeyboardKey.digit1 => find.byKey(
           const ValueKey('workspace-sidebar-path-menu'),
         ),
-        LogicalKeyboardKey.digit2 => find.byTooltip(l10n.tocActions),
+        LogicalKeyboardKey.digit2 => find.byTooltip(l10n.actions),
         LogicalKeyboardKey.digit3 => find.byKey(
           const ValueKey('workspace-sidebar-outline-tree'),
         ),
@@ -11562,23 +11514,58 @@ code
     double? contextTextCenter;
     void verifyIdentityHeader(String title, {bool hasContext = true}) {
       final header = find.byWidgetPredicate(
-        (w) => w is shared.NativeSidebarHeader && w.title == title,
+        (w) =>
+            w is shared.NativeSidebarHeader && w.title == title ||
+            w is BusyMarkSidebarHeader && w.title == title,
       );
       expect(header, findsOneWidget);
-      final widget = tester.widget<shared.NativeSidebarHeader>(header);
+      final dynamic widget = tester.widget(header);
       expect(widget.contextLine != null, hasContext);
+      final expectedIcon = {
+        l10n.files: BusyMarkGlyphs.folder,
+        l10n.toc: BusyMarkGlyphs.orderedList,
+        l10n.outline: BusyMarkGlyphs.indentFor(TextDirection.ltr),
+        l10n.gitUiCommit: BusyMarkGlyphs.branch,
+        l10n.gitHostGitLog: BusyMarkGlyphs.history,
+        l10n.localHistory: BusyMarkGlyphs.history,
+        l10n.clipboardHistory: BusyMarkGlyphs.paste,
+        l10n.references: BusyMarkGlyphs.link,
+      }[title]!;
+      expect((widget.leading as Icon).icon, expectedIcon);
+      final actions = widget.actions as List<Widget>;
+      for (var i = 1; i < actions.length; i++) {
+        expect(
+          tester.getRect(find.byWidget(actions[i - 1])).right,
+          lessThan(tester.getRect(find.byWidget(actions[i])).left),
+        );
+      }
       final heading = find.descendant(of: header, matching: find.text(title));
       final text = tester.widget<Text>(heading);
       expect(text.maxLines, 1);
       expect(text.overflow, TextOverflow.ellipsis);
       final pos = tester.getTopLeft(heading);
       headerPositions[title] = pos;
+      expect(
+        tester
+            .widget<BusyMarkHeaderPopupMenuButton>(
+              find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+            )
+            .icon,
+        BusyMarkGlyphs.sidebarViews,
+      );
       final guide = headerPositions.values.first;
       expect(pos.dx, closeTo(guide.dx, .01));
       expect(pos.dy, closeTo(guide.dy, .01), reason: title);
       if (hasContext) {
         final contextLine = find.byWidget(widget.contextLine!);
-        expect(tester.getTopLeft(contextLine).dx, closeTo(pos.dx, .01));
+        expect(
+          tester.getTopLeft(contextLine).dx,
+          closeTo(tester.getTopLeft(header).dx + BusyMarkSpacing.md, .01),
+        );
+        expect(
+          find.descendant(of: contextLine, matching: find.byType(Icon)),
+          findsNothing,
+        );
         final label = find
             .descendant(of: contextLine, matching: find.byType(Text))
             .first;
@@ -11716,7 +11703,29 @@ code
       await tester.pumpAndSettle();
       verifyIdentityHeader(l10n.gitHostGitLog);
     }
-    expect(headerPositions, hasLength(7));
+    {
+      final viewMenus = NativeMenuProbe(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+      );
+      await tester.pumpAndSettle();
+      await viewMenus.activate(l10n.references);
+      await tester.pumpAndSettle();
+      verifyIdentityHeader(l10n.references);
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        viewMenus.entries.singleWhere(
+          (e) => e['label'] == l10n.references,
+        )['selected'],
+        isTrue,
+      );
+      viewMenus.close();
+      await tester.pumpAndSettle();
+    }
+    expect(headerPositions, hasLength(8));
 
     await selectView(LogicalKeyboardKey.digit3);
     final outlineFileMenu = find.byKey(

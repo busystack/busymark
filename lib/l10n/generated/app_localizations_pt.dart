@@ -8971,7 +8971,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitUiCopyCommitMessage => 'Copiar mensagem do commit';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Selecionar outro commit…';
+  String get gitUiSelectAnotherCommit => 'Selecionar commit';
 
   @override
   String get gitUiGitLog => 'Histórico do Git';
@@ -9032,7 +9032,19 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Selecionar outro ramo';
+  String get gitUiSelectAnotherBranch => 'Selecionar ramo';
+
+  @override
+  String get selectInstance => 'Selecionar instância';
+
+  @override
+  String get referenceScope => 'Âmbito';
+
+  @override
+  String get referenceNoActiveDocument => 'Nenhum documento ativo';
+
+  @override
+  String get referenceNoResults => 'Nenhuma referência encontrada';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -17995,7 +18007,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get gitUiCopyCommitMessage => 'Copiar mensagem do commit';
 
   @override
-  String get gitUiSelectAnotherCommit => 'Selecionar outro commit…';
+  String get gitUiSelectAnotherCommit => 'Selecionar commit';
 
   @override
   String get gitUiGitLog => 'Histórico do Git';
@@ -18056,5 +18068,17 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => 'Selecionar outro ramo';
+  String get gitUiSelectAnotherBranch => 'Selecionar ramo';
+
+  @override
+  String get selectInstance => 'Selecionar instância';
+
+  @override
+  String get referenceScope => 'Escopo';
+
+  @override
+  String get referenceNoActiveDocument => 'Nenhum documento ativo';
+
+  @override
+  String get referenceNoResults => 'Nenhuma referência encontrada';
 }

@@ -6085,7 +6085,7 @@
   "gitUiCommitHash": "Commit karması",
   "gitUiCommitReferences": "Başvurular",
   "gitUiCopyCommitMessage": "Commit mesajını kopyala",
-  "gitUiSelectAnotherCommit": "Başka bir commit seç…",
+  "gitUiSelectAnotherCommit": "Commit seç",
   "gitUiGitLog": "Git geçmişi",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -6106,5 +6106,9 @@
   "gitUiFileStatusStaged": "{status}, hazırlama alanında",
   "gitUiFileStatusUnstaged": "{status}, hazırlama alanında değil",
   "gitUiFileStatusHistorical": "Bu commit’te {status}",
-  "gitUiSelectAnotherBranch": "Başka bir dal seç"
+  "gitUiSelectAnotherBranch": "Dal seç",
+  "selectInstance": "Örnek seç",
+  "referenceScope": "Kapsam",
+  "referenceNoActiveDocument": "Etkin belge yok",
+  "referenceNoResults": "Başvuru bulunamadı"
 }

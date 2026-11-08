@@ -4555,7 +4555,7 @@
   "gitUiCommitHash": "Hash del commit",
   "gitUiCommitReferences": "Riferimenti",
   "gitUiCopyCommitMessage": "Copia messaggio del commit",
-  "gitUiSelectAnotherCommit": "Seleziona un altro commit…",
+  "gitUiSelectAnotherCommit": "Seleziona commit",
   "gitUiGitLog": "Registro Git",
   "@gitUiGitLog": {
     "description": "Shared Git interface: Git Log"
@@ -4576,5 +4576,9 @@
   "gitUiFileStatusStaged": "{status}, nell’indice",
   "gitUiFileStatusUnstaged": "{status}, fuori dall’indice",
   "gitUiFileStatusHistorical": "{status} in questo commit",
-  "gitUiSelectAnotherBranch": "Seleziona un altro ramo"
+  "gitUiSelectAnotherBranch": "Seleziona ramo",
+  "selectInstance": "Seleziona istanza",
+  "referenceScope": "Ambito",
+  "referenceNoActiveDocument": "Nessun documento attivo",
+  "referenceNoResults": "Nessun riferimento trovato"
 }

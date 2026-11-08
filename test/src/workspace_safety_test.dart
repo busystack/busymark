@@ -1,3 +1,5 @@
+import 'package:busymark/src/app/busymark_native_controls.dart';
+import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -89,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(l10n.unsavedChanges), findsOneWidget);
-      expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
+      expect(find.byType(BusyMarkNativeActionButton), findsNWidgets(3));
       expect(find.byIcon(BusyMarkGlyphs.clear), findsOneWidget);
       expect(find.byIcon(BusyMarkGlyphs.delete), findsOneWidget);
       expect(find.byIcon(BusyMarkGlyphs.save), findsOneWidget);
@@ -241,27 +243,27 @@ void main() {
       await tester.pumpAndSettle();
 
       final discardButton = find.widgetWithText(
-        BusyMarkDialogButton,
+        BusyMarkNativeActionButton,
         l10n.discard,
       );
-      final elevated = tester.widget<ElevatedButton>(
-        find.descendant(
-          of: discardButton,
-          matching: find.byType(ElevatedButton),
+      expect(
+        tester.widget<BusyMarkNativeActionButton>(discardButton).role,
+        BusyMarkNativeActionRole.destructive,
+      );
+      final painted = find.descendant(
+        of: discardButton,
+        matching: find.byWidgetPredicate(
+          (w) => w is DecoratedBox && w.decoration is ShapeDecoration,
         ),
       );
       expect(
-        elevated.style?.foregroundColor?.resolve({}),
-        BusyMarkLinuxPalette.white,
-      );
-      expect(
-        elevated.style?.backgroundColor?.resolve({}),
+        (tester.widget<DecoratedBox>(painted).decoration as ShapeDecoration)
+            .color,
         BusyMarkLinuxPalette.red,
       );
+      final label = find.text(l10n.discard);
       expect(
-        DefaultTextStyle.of(
-          tester.element(find.text(l10n.discard)),
-        ).style.color,
+        DefaultTextStyle.of(tester.element(label)).style.color,
         BusyMarkLinuxPalette.white,
       );
     },

@@ -1,3 +1,4 @@
+import 'package:busymark/src/git/application/shared_git_presentation.dart';
 import '../../../../busystack_git_flutter/test/support/filename_presentation_contract.dart';
 import '../../../../busystack_git_flutter/test/support/history_presentation_contract.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
@@ -358,7 +359,7 @@ void main() {
           findsNothing,
         );
         final choose = find.byKey(const ValueKey('git-select-another-branch'));
-        expect(find.byTooltip('Select another branch'), findsOneWidget);
+        expect(find.byTooltip('Select branch'), findsOneWidget);
         expect(find.byTooltip('Refresh'), findsNothing);
         expect(find.byTooltip(repo.root), findsNothing);
         expect(

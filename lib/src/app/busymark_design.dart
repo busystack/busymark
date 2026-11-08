@@ -1,5 +1,6 @@
 import 'busymark_toast.dart';
-import 'package:busystack_git_flutter/busystack_git_flutter.dart' as git;
+import 'busymark_focus.dart';
+export 'busymark_focus.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -315,17 +316,17 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.md,
     BusyMarkSpacing.sm - BusyMarkSpacing.xxs,
   );
+  static const sidebarViewHeader = EdgeInsetsDirectional.fromSTEB(
+    BusyMarkSpacing.md,
+    BusyMarkSpacing.sm,
+    BusyMarkSpacing.md,
+    BusyMarkSpacing.sm,
+  );
   static const sidebarList = EdgeInsets.fromLTRB(
     BusyMarkSpacing.sm,
     BusyMarkSpacing.xxs,
     BusyMarkSpacing.sm,
     BusyMarkSpacing.smPlus,
-  );
-  static const tocHeader = EdgeInsetsDirectional.fromSTEB(
-    0,
-    0,
-    0,
-    BusyMarkSpacing.sm,
   );
   static const documentCodeBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.sm,
@@ -468,6 +469,7 @@ class _BusyMarkNativeTooltipState extends State<_BusyMarkNativeTooltip> {
 
   void _scheduleShow() {
     _showTimer?.cancel();
+    if (widget.message.isEmpty) return;
     _showTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) _controller.show();
     });
@@ -498,39 +500,44 @@ class _BusyMarkNativeTooltipState extends State<_BusyMarkNativeTooltip> {
       child: MouseRegion(
         onEnter: (_) => _scheduleShow(),
         onExit: (_) => _hide(),
-        child: OverlayPortal(
-          controller: _controller,
-          overlayChildBuilder: (overlayContext) => IgnorePointer(
-            child: CompositedTransformFollower(
-              showWhenUnlinked: false,
-              link: _link,
-              targetAnchor: Alignment.bottomCenter,
-              followerAnchor: Alignment.topCenter,
-              offset: const Offset(0, BusyMarkSpacing.xs),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BusyMarkTooltipStyle.constraints,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: BusyMarkTooltipStyle.background,
-                      borderRadius: BusyMarkTooltipStyle.borderRadius,
-                      border: Border.all(color: BusyMarkTooltipStyle.border),
-                    ),
-                    child: Padding(
-                      padding: BusyMarkTooltipStyle.padding,
-                      child: Text(
-                        widget.message,
-                        style: Theme.of(overlayContext).textTheme.bodySmall
-                            ?.copyWith(color: BusyMarkTooltipStyle.foreground),
+        child: Listener(
+          onPointerDown: (_) => _hide(),
+          child: OverlayPortal(
+            controller: _controller,
+            overlayChildBuilder: (overlayContext) => IgnorePointer(
+              child: CompositedTransformFollower(
+                showWhenUnlinked: false,
+                link: _link,
+                targetAnchor: Alignment.bottomCenter,
+                followerAnchor: Alignment.topCenter,
+                offset: const Offset(0, BusyMarkSpacing.xs),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: BusyMarkTooltipStyle.constraints,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: BusyMarkTooltipStyle.background,
+                        borderRadius: BusyMarkTooltipStyle.borderRadius,
+                        border: Border.all(color: BusyMarkTooltipStyle.border),
+                      ),
+                      child: Padding(
+                        padding: BusyMarkTooltipStyle.padding,
+                        child: Text(
+                          widget.message,
+                          style: Theme.of(overlayContext).textTheme.bodySmall
+                              ?.copyWith(
+                                color: BusyMarkTooltipStyle.foreground,
+                              ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
+            child: CompositedTransformTarget(link: _link, child: widget.child),
           ),
-          child: CompositedTransformTarget(link: _link, child: widget.child),
         ),
       ),
     );
@@ -1150,6 +1157,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.nativeIcon,
+    this.focusNode,
     this.selected = false,
     this.accented = false,
     this.transparent = true,
@@ -1160,9 +1168,10 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     this.backgroundColor,
     this.overlayColor,
     this.borderRadius = BusyMarkRadius.headerButton,
-    this.focusBorderRadius = BusyMarkRadius.pill,
+    this.focusBorderRadius = BusyMarkRadius.headerButton,
   });
 
+  final FocusNode? focusNode;
   final String tooltip;
   final IconData icon;
   final VoidCallback? onPressed;
@@ -1237,6 +1246,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     final foreground =
         style.foregroundColor?.resolve(states) ?? colors.foreground;
     final button = YaruIconButton(
+      focusNode: focusNode,
       isSelected: selected,
       tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
       icon: BusyMarkGtkHeaderIcon(
@@ -1262,7 +1272,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
       child: button,
     );
     final content = YaruTheme.maybeOf(context)?.focusBorders == true
-        ? git.NativeFocusIndicator(
+        ? BusyMarkFocusIndicator(
             borderRadius: BorderRadius.circular(focusBorderRadius),
             child: painted,
           )
@@ -1331,7 +1341,7 @@ class BusyMarkCompactIconButton extends StatelessWidget {
       onPressed: onPressed,
     );
     return YaruTheme.maybeOf(context)?.focusBorders == true
-        ? git.NativeFocusIndicator(
+        ? BusyMarkFocusIndicator(
             borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
             child: button,
           )
@@ -2927,7 +2937,7 @@ class BusyMarkGroupedSurface extends StatelessWidget {
       color: busyMarkGroupedSurfaceColor(context),
       side: focused
           ? BorderSide(
-              color: git.NativeFocusStyle.color(
+              color: BusyMarkFocusStyle.color(
                 Theme.of(context).colorScheme,
                 highContrast: highContrast,
               ),
@@ -3150,7 +3160,7 @@ class _BusyMarkSidebarRecordRowState<T>
   late final FocusNode _rowFocusNode;
   var _contextMenuOpen = false;
   DateTime? _lastTapAt;
-  final _menuKeys = git.GitContextMenuKeys();
+  final _menuKeys = BusyMarkContextMenuKeys();
   NativeMenuSession? _menuSession;
 
   bool get _hasMenu =>
@@ -3351,7 +3361,7 @@ class _BusyMarkSidebarRecordRowState<T>
         ? semanticRow
         : BusyMarkTooltipStyle.wrap(
             context,
-            message: tooltip,
+            message: _contextMenuOpen ? '' : tooltip,
             child: semanticRow,
           );
     final anchored = widget.geometryKey == null
@@ -3994,7 +4004,7 @@ class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
     );
     return (widget.hasFocusBorder ??
             (YaruTheme.maybeOf(context)?.focusBorders != false))
-        ? git.NativeFocusIndicator(child: control)
+        ? BusyMarkFocusIndicator(child: control)
         : control;
   }
 
@@ -4068,7 +4078,7 @@ class BusyMarkSwitchRow extends StatelessWidget {
       onChanged: enabled ? onChanged : null,
       hasFocusBorder: false,
     );
-    return git.NativeFocusIndicator(
+    return BusyMarkFocusIndicator(
       enabled: enabled && YaruTheme.maybeOf(context)?.focusBorders != false,
       child: YaruSwitchListTile(
         hasFocusBorder: false,
@@ -4184,7 +4194,7 @@ class _BusyMarkRadioButtonState<T> extends State<BusyMarkRadioButton<T>> {
     );
     return (widget.hasFocusBorder ??
             (YaruTheme.maybeOf(context)?.focusBorders != false))
-        ? git.NativeFocusIndicator(child: control)
+        ? BusyMarkFocusIndicator(child: control)
         : control;
   }
 
@@ -4268,7 +4278,7 @@ class BusyMarkCheckbox extends StatelessWidget {
           );
     final checkbox = YaruTheme.maybeOf(context)?.focusBorders == false
         ? control
-        : git.NativeFocusIndicator(child: control);
+        : BusyMarkFocusIndicator(child: control);
     final message = tooltip;
     if (message == null || message.isEmpty) {
       return checkbox;
@@ -4640,41 +4650,6 @@ class BusyMarkDialogShell extends StatelessWidget {
   }
 }
 
-/// Git's first-party native dialog surface.
-///
-/// The standard BusyMark dialog remains available to unrelated application
-/// screens. Git presentation uses this Yaru surface so its rendering chain
-/// contains no BusyStack-owned stock Material dialog construction.
-class BusyMarkGitDialogShell extends StatelessWidget {
-  const BusyMarkGitDialogShell({
-    super.key,
-    required this.title,
-    this.children = const [],
-    this.body,
-    this.expanded = false,
-    this.actions = const [],
-  });
-  final String title;
-  final List<Widget> children, actions;
-  final Widget? body;
-  final bool expanded;
-  @override
-  Widget build(BuildContext context) => git.GitNativeDialog(
-    title: title,
-    expanded: expanded,
-    child: actions.isEmpty && children.isEmpty && body != null
-        ? body!
-        : git.GitDialogForm(
-            body: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [if (body != null) body!, ...children],
-            ),
-            actions: actions,
-          ),
-  );
-}
-
 /// Semantic desktop push-button roles backed by real Yaru-themed controls.
 abstract final class BusyMarkPushButton {
   static TextButton flat({
@@ -4778,11 +4753,6 @@ abstract final class BusyMarkPushButton {
 
 // Public host names remain source-compatible for app trust/dialog integration;
 // Git rendering and editing primitives have one shared implementation.
-typedef BusyMarkGitActionRole = git.NativeGitActionRole;
-typedef BusyMarkGitActionButton = git.NativeGitActionButton;
-typedef BusyMarkGitActionButtonState = git.NativeGitActionButtonState;
-typedef BusyMarkGitTextEntry = git.NativeGitTextEntry;
-
 class BusyMarkDialogButton extends StatelessWidget {
   const BusyMarkDialogButton({
     super.key,
@@ -5103,7 +5073,7 @@ class BusyMarkSidebarRowSurfaceState extends State<BusyMarkSidebarRowSurface> {
       ),
     );
     return YaruTheme.maybeOf(context)?.focusBorders != false && widget.clickable
-        ? git.NativeFocusIndicator(
+        ? BusyMarkFocusIndicator(
             borderRadius: radius,
             borderStrokeAlign: BorderSide.strokeAlignInside,
             child: surface,
@@ -5175,7 +5145,7 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
 }
 
 class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
-  final _menuKeys = git.GitContextMenuKeys();
+  final _menuKeys = BusyMarkContextMenuKeys();
 
   @override
   void dispose() {
@@ -5381,23 +5351,6 @@ Offset _busyMarkSidebarTreeMenuAnchor(BuildContext context) {
   );
 }
 
-/// The retained Commit sidebar needs two unabridged native actions. Resolve
-/// the existing button themes and actual localized text rather than shrinking
-/// labels or changing fonts. English at normal scale keeps the usual 300px.
-double busyMarkGitSidebarMinimumWidth(BuildContext context) =>
-    git.gitSidebarMinimumWidth(
-      context,
-      presentation: const BusyMarkGitPresentation(),
-      commitLabel: context.l10n.gitUiCommit,
-      commitAndPushLabel: context.l10n.gitUiCommitAndPush,
-    );
-
-/// Provision the canonical shared Linux Git renderer. Host services and app
-/// chrome stay outside this const-only presentation adapter.
-final class BusyMarkGitPresentation extends git.YaruGitPresentation {
-  const BusyMarkGitPresentation();
-}
-
 Widget _busyMarkExistingTextMenu(
   BuildContext context,
   EditableTextState editable,
@@ -5410,25 +5363,64 @@ class BusyMarkSidebarHeader extends StatelessWidget {
     this.contextLine,
     this.actions = const [],
     this.leading,
-    this.padding = const EdgeInsetsDirectional.fromSTEB(
-      BusyMarkSpacing.md,
-      BusyMarkSpacing.sm,
-      BusyMarkSpacing.md,
-      BusyMarkSpacing.sm,
-    ),
+    this.padding = BusyMarkInsets.sidebarViewHeader,
   });
   final String title;
   final Widget? contextLine, leading;
   final List<Widget> actions;
   final EdgeInsetsGeometry padding;
   @override
-  Widget build(BuildContext context) => git.NativeSidebarHeader(
-    title: title,
-    contextLine: contextLine,
-    actions: actions,
-    leading: leading,
-    padding: padding,
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: padding,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: BusyMarkSizes.iconButton,
+            ),
+            child: Row(
+              children: [
+                if (leading != null) ...[
+                  IconTheme.merge(
+                    data: const IconThemeData(size: BusyMarkSizes.iconSm),
+                    child: leading!,
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ],
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                for (final action in actions) ...[
+                  const SizedBox(width: BusyMarkSpacing.xs),
+                  action,
+                ],
+              ],
+            ),
+          ),
+          if (contextLine != null) ...[
+            const SizedBox(height: BusyMarkSpacing.xs),
+            DefaultTextStyle.merge(
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              child: contextLine!,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 /// Existing Yaru grouped-row geometry with the common first-party focus policy.
@@ -5495,7 +5487,7 @@ class BusyMarkListTile extends StatelessWidget {
     return fieldOwnsBorder && onTap == null ||
             YaruTheme.maybeOf(context)?.focusBorders == false
         ? control
-        : git.NativeFocusIndicator(
+        : BusyMarkFocusIndicator(
             borderRadius: BorderRadius.circular(BusyMarkRadius.md),
             enabled: enabled,
             editing: title is TextField || title is TextFormField,
@@ -5520,7 +5512,7 @@ class BusyMarkMasterTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
-    child: git.NativeFocusIndicator(
+    child: BusyMarkFocusIndicator(
       borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
       enabled: YaruTheme.maybeOf(context)?.focusBorders != false,
       child: YaruMasterTile(
@@ -5553,7 +5545,7 @@ class BusyMarkCheckboxListTile extends StatelessWidget {
   final ShapeBorder? shape;
   final bool tristate;
   @override
-  Widget build(BuildContext context) => git.NativeFocusIndicator(
+  Widget build(BuildContext context) => BusyMarkFocusIndicator(
     enabled:
         YaruTheme.maybeOf(context)?.focusBorders != false && onChanged != null,
     child: YaruCheckboxListTile(

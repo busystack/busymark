@@ -8510,7 +8510,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUiCopyCommitMessage => '复制提交说明';
 
   @override
-  String get gitUiSelectAnotherCommit => '选择其他提交…';
+  String get gitUiSelectAnotherCommit => '选择提交';
 
   @override
   String get gitUiGitLog => 'Git 日志';
@@ -8570,7 +8570,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => '选择其他分支';
+  String get gitUiSelectAnotherBranch => '选择分支';
+
+  @override
+  String get selectInstance => '选择实例';
+
+  @override
+  String get referenceScope => '范围';
+
+  @override
+  String get referenceNoActiveDocument => '没有活动文档';
+
+  @override
+  String get referenceNoResults => '未找到引用';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -17077,7 +17089,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitUiCopyCommitMessage => '复制提交说明';
 
   @override
-  String get gitUiSelectAnotherCommit => '选择其他提交…';
+  String get gitUiSelectAnotherCommit => '选择提交';
 
   @override
   String get gitUiGitLog => 'Git 日志';
@@ -17137,5 +17149,17 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get gitUiSelectAnotherBranch => '选择其他分支';
+  String get gitUiSelectAnotherBranch => '选择分支';
+
+  @override
+  String get selectInstance => '选择实例';
+
+  @override
+  String get referenceScope => '范围';
+
+  @override
+  String get referenceNoActiveDocument => '没有活动文档';
+
+  @override
+  String get referenceNoResults => '未找到引用';
 }
