@@ -362,8 +362,9 @@ void main() {
       expect(theme, contains('BusyMarkSurfaceColors.fromTheme(base)'));
       expect(
         theme,
-        contains('final inputDecorationTheme = NativeFocusStyle.inputs('),
+        contains('final inputDecorationTheme = BusyMarkFocusStyle.inputs('),
       );
+      expect(theme, isNot(contains('package:busystack_git_flutter')));
       expect(theme, isNot(contains('_semanticInputDecorationTheme')));
       expect(theme, isNot(contains('filled: true')));
       expect(theme, isNot(contains('fillColor: colors.control')));
@@ -870,7 +871,8 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
     expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
-    expect(workspace, contains('icon: selectedTabMenuItem.icon!'));
+    expect(workspace, contains('icon: BusyMarkGlyphs.sidebarViews'));
+    expect(workspace, isNot(contains('icon: selectedTabMenuItem.icon')));
     expect(workspace, contains('transparent: true'));
     expect(
       workspace,
@@ -969,7 +971,8 @@ void main() {
     expect(headerIcon, contains('style: style'));
     expect(headerIcon, contains('isSelected: selected'));
     expect(headerIcon, contains('padding: EdgeInsets.zero'));
-    expect(headerIcon, contains('git.NativeFocusIndicator('));
+    expect(headerIcon, contains('BusyMarkFocusIndicator('));
+    expect(headerIcon, isNot(contains('git.NativeFocusIndicator(')));
     expect(headerIcon, contains('YaruTheme.maybeOf(context)?.focusBorders'));
     expect(headerIcon, isNot(contains('final button = IconButton(')));
     expect(headerIcon, isNot(contains('DecoratedBox(')));
@@ -1122,7 +1125,23 @@ void main() {
     expect(outlineActions, isNot(contains('onExport()')));
     expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
-    expect(sharedCommit, contains('GitGlyph.branch'));
+    expect(sharedCommit, contains('GitLogHeader('));
+    expect(sharedCommit, contains('title: GitMessages.commit'));
+    final nativeGitHeader =
+        RegExp(r'Widget logHeader[\s\S]*?Widget historyLayout')
+            .firstMatch(
+              File(
+                '../busystack_git_flutter/lib/src/linux_native.dart',
+              ).readAsStringSync(),
+            )!
+            .group(0)!;
+    expect(nativeGitHeader, contains('NativeSidebarHeader('));
+    expect(
+      nativeGitHeader,
+      contains('control.title == git.GitMessages.commit'),
+    );
+    expect(nativeGitHeader, contains('YaruIcons.share'));
+    expect(nativeGitHeader, contains('YaruIcons.history'));
     expect(workspace, isNot(contains('boldLeadingIcon')));
     expect(workspace, isNot(contains('_BoldBranchIcon')));
     expect(workspace, isNot(contains('_BoldBranchIconPainter')));
@@ -1530,7 +1549,10 @@ void main() {
     );
     expect(tocHeader, contains('class _WritersideInstanceSelector'));
     expect(tocHeader, contains('BusyMarkMenuButton<String>'));
-    expect(tocHeader, contains('BusyMarkSidebarRowSurface'));
+    expect(tocHeader, contains('BusyMarkHeaderIconButton('));
+    expect(tocHeader, contains('tooltip: context.l10n.selectInstance'));
+    expect(tocHeader, contains('icon: BusyMarkGlyphs.selectContext'));
+    expect(tocHeader, isNot(contains('BusyMarkSidebarRowSurface')));
     expect(tocHeader, isNot(contains('BusyMarkPopupSelector<String>')));
     expect(tocHeader, isNot(contains('FilledButton')));
     expect(tocHeader, contains('iconColor: writersideInstanceIconColorValue'));
@@ -1551,7 +1573,8 @@ void main() {
     );
     expect(tocHeader, contains("ValueKey('workspace-sidebar-new-topic-menu')"));
     expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
-    expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
+    expect(tocHeader, contains('tooltip: context.l10n.actions'));
+    expect(tocHeader, isNot(contains('tooltip: context.l10n.tocActions')));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
     expect(tocHeader, contains('highlightWhenOpen: false'));
     expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
