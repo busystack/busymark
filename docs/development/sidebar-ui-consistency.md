@@ -178,3 +178,8 @@ A normal text field with its own themed border does not gain a second row border
 Rendered tests exercise each control family and reject full-accent borders and
 pointer-induced outlines. Direct focus-capable Yaru construction in feature views
 is rejected; approved upstream calls remain confined to the existing design boundary.
+
+The context container uses Yaru's native title-bar item minimum extent. It
+centers both informational text and the Writerside selector's text on the same
+line while retaining the selector's full hit target. The heading-to-container
+gap stays 2 logical pixels. Clipboard History omits the container entirely.

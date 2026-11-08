@@ -7513,13 +7513,13 @@ class _WritersideInstanceSelector extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: selectorEnabled
-                            ? BusyMarkSurfaceColors.of(context).foreground
-                            : BusyMarkSurfaceColors.of(
+                      style: selectorEnabled
+                          ? null
+                          : TextStyle(
+                              color: BusyMarkSurfaceColors.of(
                                 context,
                               ).disabledForeground,
-                      ),
+                            ),
                     ),
                   ),
                   SizedBox(

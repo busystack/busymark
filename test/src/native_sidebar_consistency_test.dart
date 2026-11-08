@@ -8,6 +8,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yaru/yaru.dart';
 
 Widget app(
   Widget child, {
@@ -86,6 +87,22 @@ void main() {
                             title: labels[i],
                             contextLine: i == 6
                                 ? null
+                                : i == 1
+                                ? BusyMarkSidebarRowSurface(
+                                    enabled: true,
+                                    clickable: true,
+                                    onTap: () {},
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            contexts[i],
+                                            key: ValueKey('context-$i'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
                                 : Text(
                                     contexts[i],
                                     key: ValueKey('context-$i'),
@@ -135,7 +152,31 @@ void main() {
                 final context = find.byKey(ValueKey('context-$i'));
                 expect(start(context), start(heading));
                 expect(
-                  tester.getRect(context).top - tester.getRect(heading).bottom,
+                  tester.getRect(context).center.dy -
+                      tester.getRect(heading).bottom,
+                  closeTo(
+                    tester
+                            .getRect(find.byKey(const ValueKey('context-0')))
+                            .center
+                            .dy -
+                        tester.getRect(find.text(labels.first)).bottom,
+                    .01,
+                  ),
+                  reason:
+                      'Interactive instance context and informational context must share the same text center',
+                );
+                final contextSlot = find.descendant(
+                  of: find.byKey(ValueKey('header-$i')),
+                  matching: find.byWidgetPredicate(
+                    (w) =>
+                        w is ConstrainedBox &&
+                        w.constraints.minHeight == kYaruTitleBarItemHeight,
+                  ),
+                );
+                expect(contextSlot, findsOneWidget);
+                expect(
+                  tester.getTopLeft(contextSlot).dy -
+                      tester.getBottomLeft(heading).dy,
                   closeTo(2, .01),
                 );
                 final style = DefaultTextStyle.of(tester.element(context));

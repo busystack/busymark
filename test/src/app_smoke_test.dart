@@ -11559,6 +11559,7 @@ code
     }
 
     final headerPositions = <String, Offset>{};
+    double? contextTextCenter;
     void verifyIdentityHeader(String title, {bool hasContext = true}) {
       final header = find.byWidgetPredicate(
         (w) => w is shared.NativeSidebarHeader && w.title == title,
@@ -11578,6 +11579,17 @@ code
       if (hasContext) {
         final contextLine = find.byWidget(widget.contextLine!);
         expect(tester.getTopLeft(contextLine).dx, closeTo(pos.dx, .01));
+        final label = find
+            .descendant(of: contextLine, matching: find.byType(Text))
+            .first;
+        final center =
+            tester.getCenter(label).dy - tester.getBottomLeft(heading).dy;
+        contextTextCenter ??= center;
+        expect(
+          center,
+          closeTo(contextTextCenter!, .01),
+          reason: '$title context text alignment',
+        );
         expect(
           tester.getTopLeft(contextLine).dy,
           greaterThan(tester.getBottomLeft(heading).dy),
