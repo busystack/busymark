@@ -1,3 +1,4 @@
+import '../platform/native_menu_service.dart';
 import 'package:yaru/yaru.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../app/busymark_native_controls.dart';
@@ -289,7 +290,6 @@ class ReferencesPanel extends ConsumerStatefulWidget {
 }
 
 class _ReferencesPanelState extends ConsumerState<ReferencesPanel> {
-  final _expanded = <bool, bool>{true: true, false: true};
   final _limits = <bool, int>{true: 100, false: 100};
   String? _anchor;
   String? _identity;
@@ -339,6 +339,7 @@ class _ReferencesPanelState extends ConsumerState<ReferencesPanel> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
+    final expanded = ref.watch(referenceSectionExpansionProvider);
     final identity =
         state.activeBuffer?.remoteNote?.localId ?? state.activeBuffer?.filePath;
     if (identity != _identity) {
@@ -386,11 +387,9 @@ class _ReferencesPanelState extends ConsumerState<ReferencesPanel> {
         BusyMarkSidebarHeader(
           title: context.l10n.references,
           actions: [
-            BusyMarkHeaderPopupMenuButton<String>.native(
+            _ReferenceActions(
               key: const ValueKey('references-actions'),
-              tooltip: context.l10n.actions,
-              icon: BusyMarkGlyphs.menuHorizontal,
-              itemBuilder: (_) => [
+              items: [
                 BusyMarkPopupMenuItem(
                   value: '',
                   label: context.l10n.referenceWholeDocument,
@@ -452,16 +451,16 @@ class _ReferencesPanelState extends ConsumerState<ReferencesPanel> {
                       '${incoming ? context.l10n.referenceIncoming : context.l10n.referenceOutgoing}${results[incoming]!.value == null ? '' : ' (${results[incoming]!.value!.total})'}',
                   depth: 0,
                   hasChildren: true,
-                  expanded: _expanded[incoming]!,
+                  expanded: expanded[incoming]!,
                   traverseWithArrows: true,
-                  onToggle: () => setState(
-                    () => _expanded[incoming] = !_expanded[incoming]!,
-                  ),
-                  onTap: () => setState(
-                    () => _expanded[incoming] = !_expanded[incoming]!,
-                  ),
+                  onToggle: () => ref
+                      .read(referenceSectionExpansionProvider.notifier)
+                      .toggle(incoming),
+                  onTap: () => ref
+                      .read(referenceSectionExpansionProvider.notifier)
+                      .toggle(incoming),
                 ),
-                if (_expanded[incoming]!)
+                if (expanded[incoming]!)
                   results[incoming]!.when(
                     loading: () =>
                         const Center(child: YaruCircularProgressIndicator()),
@@ -577,3 +576,53 @@ final refactoringRecoveryProvider = FutureProvider<List<String>>((ref) async {
       .map((f) => f.path)
       .toList();
 });
+
+class _ReferenceActions extends StatefulWidget {
+  const _ReferenceActions({
+    super.key,
+    required this.items,
+    required this.onSelected,
+  });
+  final List<PopupMenuEntry<String>> items;
+  final ValueChanged<String> onSelected;
+  @override
+  State<_ReferenceActions> createState() => _ReferenceActionsState();
+}
+
+class _ReferenceActionsState extends State<_ReferenceActions> {
+  NativeMenuSession? _session;
+  @override
+  void dispose() {
+    final session = _session;
+    if (session != null) unawaited(const NativeMenuService().dismiss(session));
+    super.dispose();
+  }
+
+  Future<void> _open() async {
+    if (_session != null) return;
+    final session = NativeMenuSession();
+    setState(() => _session = session);
+    final selected = await showBusyMarkNativeContextMenu<String>(
+      context,
+      null,
+      items: widget.items,
+      session: session,
+    );
+    if (!mounted || !identical(_session, session)) return;
+    setState(() => _session = null);
+    if (selected != null) widget.onSelected(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) => MergeSemantics(
+    child: Semantics(
+      expanded: _session != null,
+      child: BusyMarkHeaderIconButton(
+        tooltip: context.l10n.actions,
+        icon: BusyMarkGlyphs.menuHorizontal,
+        transparent: true,
+        onPressed: _open,
+      ),
+    ),
+  );
+}

@@ -268,6 +268,52 @@ void main() {
       }
     },
   );
+  testWidgets('disclosures survive leaving and reopening References', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        referenceIndexProvider.overrideWith(() => FixtureIndex(index)),
+        workspaceControllerProvider.overrideWith(FixtureWorkspace.new),
+        refactoringRecoveryProvider.overrideWith((_) async => []),
+      ],
+    );
+    addTearDown(container.dispose);
+    Widget mount(Widget child) => UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: child),
+      ),
+    );
+    await tester.pumpWidget(mount(const ReferencesPanel()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('references-section-false')));
+    await tester.pumpAndSettle();
+    expect(find.text('Target'), findsNothing);
+    await tester.pumpWidget(mount(const SizedBox()));
+    await tester.pumpWidget(mount(const ReferencesPanel()));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<BusyMarkSidebarTreeRow>(
+            find.byKey(const ValueKey('references-section-false')),
+          )
+          .expanded,
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<BusyMarkSidebarTreeRow>(
+            find.byKey(const ValueKey('references-section-true')),
+          )
+          .expanded,
+      isTrue,
+    );
+    expect(find.text('Target'), findsNothing);
+  });
+
   testWidgets('an active untitled document has an accurate empty state', (
     tester,
   ) async {

@@ -229,6 +229,26 @@ class ReferencePanelRequest extends Notifier<int> {
   void request() => state++;
 }
 
+final referenceSectionExpansionProvider =
+    NotifierProvider<ReferenceSectionExpansion, Map<bool, bool>>(
+      ReferenceSectionExpansion.new,
+    );
+
+/// Sidebar disclosure state survives view changes, but belongs to its workspace.
+class ReferenceSectionExpansion extends Notifier<Map<bool, bool>> {
+  @override
+  Map<bool, bool> build() {
+    ref.watch(
+      workspaceControllerProvider.select(
+        (state) => (state.workspace?.id, state.workspace?.openedAt),
+      ),
+    );
+    return const {true: true, false: true};
+  }
+
+  void toggle(bool incoming) => state = {...state, incoming: !state[incoming]!};
+}
+
 Future<List<ParsedReferenceDocument>> parseReferenceBatch(
   List<ReferenceDocument> documents,
 ) => Isolate.run(() => documents.map(ParsedReferenceDocument.new).toList());
