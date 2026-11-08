@@ -294,8 +294,13 @@ void main() {
       final header = find.byKey(const ValueKey('git-selected-commit'));
       expect(
         tester.widget(header),
-        isA<Row>(),
+        isA<git.GitTooltip>(),
         reason: 'The subject is informational context',
+      );
+      expect(
+        find.descendant(of: header, matching: find.byType(Icon)),
+        findsNothing,
+        reason: 'Informational context has no redundant title icon',
       );
       expect(
         find.ancestor(of: header, matching: find.byType(git.GitActionRow)),
@@ -673,7 +678,11 @@ void main() {
             matching: find.byType(BusyMarkGitActionButton),
           );
           expect(nativeSelected, findsNothing);
-          expect(tester.widget(selected), isA<Row>());
+          expect(tester.widget(selected), isA<git.GitTooltip>());
+          expect(
+            find.descendant(of: selected, matching: find.byType(Icon)),
+            findsNothing,
+          );
           expect(
             find.ancestor(
               of: selected,

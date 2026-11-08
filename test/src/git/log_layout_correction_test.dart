@@ -32,7 +32,7 @@ void main() {
       expect(choose, findsOneWidget);
       expect(
         tester.getRect(actions).left - tester.getRect(choose).right,
-        BusyMarkSpacing.sm,
+        BusyMarkSpacing.xs,
       );
       expect(tester.getRect(actions).right, 300 - BusyMarkSpacing.md);
     },

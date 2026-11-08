@@ -5,7 +5,9 @@ Uses the existing sealed-source/official-engine/owned AT-SPI/unchanged-Git gates
 The --baseline option records old presentation without asserting its new icon.
 """
 import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
+import multiprocessing
 import os
 from pathlib import Path
 import shutil
@@ -168,6 +170,8 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--baseline', action='store_true')
     parser.add_argument('--matrix', action='store_true')
+    parser.add_argument('--jobs', type=int, choices=[1, 2, 3], default=1,
+                        help='Independent private fixtures/desktops; default: 1')
     args=parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     parent=Path(tempfile.mkdtemp(prefix='sidebar-fixture-', dir=args.output.resolve()))
@@ -176,11 +180,41 @@ def main():
     if args.matrix:
         cases=[(theme, locale, scale, narrow) for theme in ['light','dark']
                for locale in ['en','de','ja','ar'] for scale in [1.0,1.5] for narrow in [False,True]]
-    (args.output/'fixture.json').write_text(json.dumps({'root':str(root),'cases':cases}, indent=2))
+    tasks = []
     for theme,locale,scale,narrow in cases:
         target=args.output/f'{theme}-{locale}-{scale}-{"narrow" if narrow else "normal"}'
-        print(str(target), flush=True)
-        run(args.binary.resolve(), target.resolve(), root, theme, locale, scale, narrow, args.baseline)
+        case_root = root
+        if args.jobs > 1:
+            isolated = parent / target.name
+            isolated.mkdir()
+            case_root = fixture(isolated)
+        tasks.append((args.binary.resolve(), target.resolve(), case_root,
+                      theme, locale, scale, narrow, args.baseline))
+    (args.output/'fixture.json').write_text(json.dumps({
+        'root':str(root), 'cases':cases, 'jobs':args.jobs,
+        'fixtures':{task[1].name:str(task[2]) for task in tasks}}, indent=2))
+    failures = []
+    if args.jobs == 1:
+        for task in tasks:
+            print(str(task[1]), flush=True)
+            run(*task)
+    else:
+        with ProcessPoolExecutor(max_workers=args.jobs,
+                                 mp_context=multiprocessing.get_context('spawn')) as pool:
+            pending = {pool.submit(run, *task): task[1].name for task in tasks}
+            for future in as_completed(pending):
+                name = pending[future]
+                try:
+                    future.result()
+                    print('Passed: '+name, flush=True)
+                except Exception as error:
+                    failures.append(name)
+                    print('Failed: '+name+': '+repr(error), flush=True)
+    (args.output/'matrix-result.json').write_text(json.dumps({
+        'status':'failed' if failures else 'passed',
+        'cases':len(cases), 'failedCases':failures}, indent=2))
+    if failures:
+        raise RuntimeError('Native matrix cases failed: '+', '.join(failures))
 
 
 if __name__=='__main__': main()
