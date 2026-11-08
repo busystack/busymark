@@ -5035,5 +5035,6 @@
   "gitUiFileTypeChanged": "Tüüp muudetud",
   "gitUiFileStatusStaged": "{status}, indeksis",
   "gitUiFileStatusUnstaged": "{status}, indeksisse lisamata",
-  "gitUiFileStatusHistorical": "{status} selles commit’is"
+  "gitUiFileStatusHistorical": "{status} selles commit’is",
+  "gitUiSelectAnotherBranch": "Select another branch"
 }

@@ -9034,4 +9034,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status у цьому коміті';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Вибрати іншу гілку';
 }

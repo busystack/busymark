@@ -60,6 +60,7 @@ abstract final class BusyMarkSizes {
   // The workspace header also needs room for document actions and window controls.
   static const double workspaceSidebarBreakpoint = sidebarWidth + 480;
   static const double sidebarRowHeight = 36;
+  static const double sidebarComfortableRecordHeight = 54;
   static const double settingsWidth = 760;
   static const double settingsSidebarBreakpoint = sidebarWidth + 520;
   static const double toolbarHeight = kYaruTitleBarHeight;
@@ -309,9 +310,9 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.sm,
   );
   static const sidebarHeader = EdgeInsetsDirectional.fromSTEB(
+    BusyMarkSpacing.md,
     BusyMarkSpacing.mdPlus,
-    BusyMarkSpacing.mdPlus,
-    BusyMarkSpacing.sm,
+    BusyMarkSpacing.md,
     BusyMarkSpacing.sm - BusyMarkSpacing.xxs,
   );
   static const sidebarList = EdgeInsets.fromLTRB(
@@ -1261,7 +1262,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
       child: button,
     );
     final content = YaruTheme.maybeOf(context)?.focusBorders == true
-        ? YaruFocusBorder.primary(
+        ? git.NativeFocusIndicator(
             borderRadius: BorderRadius.circular(focusBorderRadius),
             child: painted,
           )
@@ -1330,7 +1331,7 @@ class BusyMarkCompactIconButton extends StatelessWidget {
       onPressed: onPressed,
     );
     return YaruTheme.maybeOf(context)?.focusBorders == true
-        ? YaruFocusBorder.primary(
+        ? git.NativeFocusIndicator(
             borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
             child: button,
           )
@@ -2740,7 +2741,7 @@ class _BusyMarkGroupedTextEntryState extends State<BusyMarkGroupedTextEntry> {
         ),
       );
     }
-    return YaruListTile.square(title: field, trailing: widget.trailing);
+    return BusyMarkListTile.square(title: field, trailing: widget.trailing);
   }
 
   void _submit() {
@@ -2926,7 +2927,10 @@ class BusyMarkGroupedSurface extends StatelessWidget {
       color: busyMarkGroupedSurfaceColor(context),
       side: focused
           ? BorderSide(
-              color: Theme.of(context).colorScheme.primary,
+              color: git.NativeFocusStyle.color(
+                Theme.of(context).colorScheme,
+                highContrast: highContrast,
+              ),
               width: BusyMarkStroke.focus,
             )
           : highContrast
@@ -3043,7 +3047,7 @@ class BusyMarkSidebarNavigationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return YaruMasterTile(
+    return BusyMarkMasterTile(
       selected: selected,
       leading: IconTheme.merge(
         data: const IconThemeData(size: BusyMarkSizes.iconSm),
@@ -3070,6 +3074,8 @@ class BusyMarkSidebarContextMenuIntent extends Intent {
   const BusyMarkSidebarContextMenuIntent();
 }
 
+enum BusyMarkRecordDensity { standard, compact, comfortable }
+
 class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   const BusyMarkSidebarRecordRow({
     super.key,
@@ -3081,6 +3087,7 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
     this.content,
     this.selected = false,
     this.compact = false,
+    this.density,
     this.focusNode,
     this.geometryKey,
     this.onFocusChange,
@@ -3113,6 +3120,7 @@ class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
   final bool pathSubtitle;
   final Widget? content;
   final bool selected, compact;
+  final BusyMarkRecordDensity? density;
   final FocusNode? focusNode;
 
   /// Optional measured anchor; the public row key remains its resource identity.
@@ -3218,6 +3226,17 @@ class _BusyMarkSidebarRecordRowState<T>
 
   @override
   Widget build(BuildContext context) {
+    final density =
+        widget.density ??
+        (widget.compact
+            ? BusyMarkRecordDensity.compact
+            : BusyMarkRecordDensity.standard);
+    final comfortable = density == BusyMarkRecordDensity.comfortable;
+    final vertical = comfortable
+        ? BusyMarkSpacing.sm
+        : density == BusyMarkRecordDensity.compact
+        ? BusyMarkSpacing.xxs
+        : BusyMarkSpacing.xs;
     final colors = BusyMarkSurfaceColors.of(context);
     final subtitle = widget.subtitle?.trim();
     final customContent = widget.content;
@@ -3265,36 +3284,47 @@ class _BusyMarkSidebarRecordRowState<T>
         onSecondaryTapUp: !_hasMenu
             ? null
             : (details) => unawaited(_showContextMenu(details.globalPosition)),
-        child: Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(
-            BusyMarkSizes.sidebarTreeDepthBase,
-            widget.compact ? BusyMarkSpacing.xxs : BusyMarkSpacing.xs,
-            BusyMarkSpacing.xs,
-            widget.compact ? BusyMarkSpacing.xxs : BusyMarkSpacing.xs,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: comfortable
+                ? BusyMarkSizes.sidebarComfortableRecordHeight
+                : 0,
           ),
-          child: Row(
-            children: [
-              SizedBox.square(
-                dimension: BusyMarkSizes.sidebarTreeControl,
-                child: Icon(
-                  widget.icon,
-                  size: BusyMarkSizes.iconSm,
-                  color: enabled
-                      ? colors.mutedForeground
-                      : colors.disabledForeground,
+          child: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(
+              comfortable
+                  ? BusyMarkSpacing.md
+                  : BusyMarkSizes.sidebarTreeDepthBase,
+              vertical,
+              comfortable ? BusyMarkSpacing.md : BusyMarkSpacing.xs,
+              vertical,
+            ),
+            child: Row(
+              children: [
+                SizedBox.square(
+                  dimension: BusyMarkSizes.sidebarTreeControl,
+                  child: Icon(
+                    widget.icon,
+                    size: BusyMarkSizes.iconSm,
+                    color: enabled
+                        ? colors.mutedForeground
+                        : colors.disabledForeground,
+                  ),
                 ),
-              ),
-              const SizedBox(width: BusyMarkSpacing.sm),
-              Expanded(
-                child: DefaultTextStyle.merge(
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: foreground),
-                  child: content,
+                SizedBox(
+                  width: comfortable ? BusyMarkSpacing.md : BusyMarkSpacing.sm,
                 ),
-              ),
-              if (widget.trailing != null) widget.trailing!,
-            ],
+                Expanded(
+                  child: DefaultTextStyle.merge(
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: foreground),
+                    child: content,
+                  ),
+                ),
+                if (widget.trailing != null) widget.trailing!,
+              ],
+            ),
           ),
         ),
       ),
@@ -3674,7 +3704,7 @@ class BusyMarkComboRow<T> extends StatelessWidget {
                 ),
               ),
             );
-            final row = YaruListTile.square(
+            final row = BusyMarkListTile.square(
               leading: leading == null
                   ? null
                   : ExcludeSemantics(child: leading!),
@@ -3800,7 +3830,7 @@ class _BusyMarkActionRowState extends State<BusyMarkActionRow> {
               ));
     final interactive =
         widget.enabled && (widget.onTap != null || widget.onActivated != null);
-    final row = YaruListTile.square(
+    final row = BusyMarkListTile.square(
       leading: widget.leading,
       title:
           widget.titleWidget ??
@@ -3936,7 +3966,7 @@ class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
       pressed: _pressed,
     );
 
-    return MouseRegion(
+    final control = MouseRegion(
       onEnter: (_) => _setHovered(true),
       onExit: (_) => _setHovered(false),
       child: Listener(
@@ -3957,11 +3987,15 @@ class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
             autofocus: widget.autofocus,
             mouseCursor: widget.mouseCursor,
             onOffShapes: widget.onOffShapes,
-            hasFocusBorder: widget.hasFocusBorder,
+            hasFocusBorder: false,
           ),
         ),
       ),
     );
+    return (widget.hasFocusBorder ??
+            (YaruTheme.maybeOf(context)?.focusBorders != false))
+        ? git.NativeFocusIndicator(child: control)
+        : control;
   }
 
   void _setHovered(bool hovered) {
@@ -4032,22 +4066,27 @@ class BusyMarkSwitchRow extends StatelessWidget {
     final switchControl = BusyMarkSwitch(
       value: value,
       onChanged: enabled ? onChanged : null,
+      hasFocusBorder: false,
     );
-    return YaruSwitchListTile(
-      value: value,
-      onChanged: enabled ? onChanged : null,
-      control: switchControl,
-      secondary: leading,
-      title: Text(title),
-      subtitle: subtitle == null
-          ? null
-          : _busyMarkGroupedRowSubtitle(
-              context,
-              Text(subtitle!),
-              enabled: enabled,
-            ),
-      shape: const RoundedRectangleBorder(),
-      hoverColor: busyMarkRowHoverColor(context),
+    return git.NativeFocusIndicator(
+      enabled: enabled && YaruTheme.maybeOf(context)?.focusBorders != false,
+      child: YaruSwitchListTile(
+        hasFocusBorder: false,
+        value: value,
+        onChanged: enabled ? onChanged : null,
+        control: switchControl,
+        secondary: leading,
+        title: Text(title),
+        subtitle: subtitle == null
+            ? null
+            : _busyMarkGroupedRowSubtitle(
+                context,
+                Text(subtitle!),
+                enabled: enabled,
+              ),
+        shape: const RoundedRectangleBorder(),
+        hoverColor: busyMarkRowHoverColor(context),
+      ),
     );
   }
 }
@@ -4108,7 +4147,7 @@ class _BusyMarkRadioButtonState<T> extends State<BusyMarkRadioButton<T>> {
       pressed: _pressed,
     );
 
-    return MouseRegion(
+    final control = MouseRegion(
       onEnter: (_) => _setHovered(true),
       onExit: (_) => _setHovered(false),
       child: Listener(
@@ -4138,11 +4177,15 @@ class _BusyMarkRadioButtonState<T> extends State<BusyMarkRadioButton<T>> {
             autofocus: widget.autofocus,
             focusNode: widget.focusNode,
             mouseCursor: widget.mouseCursor,
-            hasFocusBorder: widget.hasFocusBorder,
+            hasFocusBorder: false,
           ),
         ),
       ),
     );
+    return (widget.hasFocusBorder ??
+            (YaruTheme.maybeOf(context)?.focusBorders != false))
+        ? git.NativeFocusIndicator(child: control)
+        : control;
   }
 
   void _setHovered(bool hovered) {
@@ -4208,15 +4251,24 @@ class BusyMarkCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget checkbox = label == null
-        ? YaruCheckbox(value: value, tristate: tristate, onChanged: onChanged)
+    final Widget control = label == null
+        ? YaruCheckbox(
+            value: value,
+            tristate: tristate,
+            onChanged: onChanged,
+            hasFocusBorder: false,
+          )
         : YaruCheckButton(
             title: Text(label!),
             value: value,
             tristate: tristate,
             onChanged: onChanged,
             contentPadding: EdgeInsets.zero,
+            hasFocusBorder: false,
           );
+    final checkbox = YaruTheme.maybeOf(context)?.focusBorders == false
+        ? control
+        : git.NativeFocusIndicator(child: control);
     final message = tooltip;
     if (message == null || message.isEmpty) {
       return checkbox;
@@ -5051,7 +5103,7 @@ class BusyMarkSidebarRowSurfaceState extends State<BusyMarkSidebarRowSurface> {
       ),
     );
     return YaruTheme.maybeOf(context)?.focusBorders != false && widget.clickable
-        ? YaruFocusBorder.primary(
+        ? git.NativeFocusIndicator(
             borderRadius: radius,
             borderStrokeAlign: BorderSide.strokeAlignInside,
             child: surface,
@@ -5350,3 +5402,168 @@ Widget _busyMarkExistingTextMenu(
   BuildContext context,
   EditableTextState editable,
 ) => AdaptiveTextSelectionToolbar.editableText(editableTextState: editable);
+
+class BusyMarkSidebarHeader extends StatelessWidget {
+  const BusyMarkSidebarHeader({
+    super.key,
+    required this.title,
+    this.contextLine,
+    this.actions = const [],
+    this.leading,
+    this.padding = const EdgeInsetsDirectional.fromSTEB(
+      BusyMarkSpacing.md,
+      BusyMarkSpacing.sm,
+      BusyMarkSpacing.md,
+      BusyMarkSpacing.sm,
+    ),
+  });
+  final String title;
+  final Widget? contextLine, leading;
+  final List<Widget> actions;
+  final EdgeInsetsGeometry padding;
+  @override
+  Widget build(BuildContext context) => git.NativeSidebarHeader(
+    title: title,
+    contextLine: contextLine,
+    actions: actions,
+    leading: leading,
+    padding: padding,
+  );
+}
+
+/// Existing Yaru grouped-row geometry with the common first-party focus policy.
+/// This is for form/action rows; sidebar records retain their native surface.
+class BusyMarkListTile extends StatelessWidget {
+  const BusyMarkListTile.square({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.focusNode,
+    this.onFocusChange,
+    this.enabled = true,
+    this.autofocus = false,
+    this.hoverColor,
+    this.contentPadding,
+    this.verticalGap = BusyMarkSpacing.sm,
+    this.horizontalGap = BusyMarkSpacing.md,
+    this.centerTitle = false,
+    this.mouseCursor,
+    this.enableFeedback = true,
+    this.customBorder,
+  });
+  final Widget title;
+  final Widget? subtitle, leading, trailing;
+  final VoidCallback? onTap;
+  final FocusNode? focusNode;
+  final ValueChanged<bool>? onFocusChange;
+  final bool enabled, autofocus, centerTitle, enableFeedback;
+  final Color? hoverColor;
+  final EdgeInsetsGeometry? contentPadding;
+  final double verticalGap, horizontalGap;
+  final MouseCursor? mouseCursor;
+  final ShapeBorder? customBorder;
+  @override
+  Widget build(BuildContext context) {
+    final control = YaruListTile.square(
+      title: title,
+      subtitle: subtitle,
+      leading: leading,
+      trailing: trailing,
+      onTap: onTap,
+      focusNode: focusNode,
+      onFocusChange: onFocusChange,
+      enabled: enabled,
+      autofocus: autofocus,
+      hoverColor: hoverColor,
+      contentPadding: contentPadding,
+      verticalGap: verticalGap,
+      horizontalGap: horizontalGap,
+      centerTitle: centerTitle,
+      mouseCursor: mouseCursor,
+      enableFeedback: enableFeedback,
+      customBorder: customBorder,
+      hasFocusBorder: false,
+    );
+    final field = title;
+    final fieldOwnsBorder =
+        field is TextField &&
+        field.decoration != null &&
+        field.decoration!.focusedBorder != InputBorder.none;
+    return fieldOwnsBorder && onTap == null ||
+            YaruTheme.maybeOf(context)?.focusBorders == false
+        ? control
+        : git.NativeFocusIndicator(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            enabled: enabled,
+            editing: title is TextField || title is TextFormField,
+            child: control,
+          );
+  }
+}
+
+class BusyMarkMasterTile extends StatelessWidget {
+  const BusyMarkMasterTile({
+    super.key,
+    required this.title,
+    this.selected,
+    this.leading,
+    this.subtitle,
+    this.trailing,
+    this.onTap,
+  });
+  final Widget? title, leading, subtitle, trailing;
+  final bool? selected;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+    child: git.NativeFocusIndicator(
+      borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+      enabled: YaruTheme.maybeOf(context)?.focusBorders != false,
+      child: YaruMasterTile(
+        title: title,
+        subtitle: subtitle,
+        leading: leading,
+        trailing: trailing,
+        selected: selected,
+        onTap: onTap,
+        padding: EdgeInsets.zero,
+        hasFocusBorder: false,
+      ),
+    ),
+  );
+}
+
+class BusyMarkCheckboxListTile extends StatelessWidget {
+  const BusyMarkCheckboxListTile({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.title,
+    this.subtitle,
+    this.shape,
+    this.tristate = false,
+  });
+  final bool? value;
+  final ValueChanged<bool?>? onChanged;
+  final Widget? title, subtitle;
+  final ShapeBorder? shape;
+  final bool tristate;
+  @override
+  Widget build(BuildContext context) => git.NativeFocusIndicator(
+    enabled:
+        YaruTheme.maybeOf(context)?.focusBorders != false && onChanged != null,
+    child: YaruCheckboxListTile(
+      value: value,
+      onChanged: onChanged,
+      title: title,
+      subtitle: subtitle,
+      shape: shape,
+      tristate: tristate,
+      hasFocusBorder: false,
+    ),
+  );
+}

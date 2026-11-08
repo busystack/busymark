@@ -79,56 +79,43 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              BusyMarkSpacing.md,
-              BusyMarkSpacing.sm,
-              BusyMarkSpacing.md,
-              BusyMarkSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    context.l10n.clipboardHistory,
-                    style: Theme.of(context).textTheme.bodyMedium,
+          BusyMarkSidebarHeader(
+            title: context.l10n.clipboardHistory,
+            actions: [
+              BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>.native(
+                key: const ValueKey('clipboard-history-actions-menu'),
+                tooltip: context.l10n.actions,
+                icon: BusyMarkGlyphs.menuVertical,
+                transparent: true,
+                borderRadius: BusyMarkRadius.nativeHeaderButton,
+                highlightWhenOpen: false,
+                itemBuilder: (context) => [
+                  BusyMarkPopupMenuItem(
+                    value: _ClipboardHistoryAction.refresh,
+                    label: MaterialLocalizations.of(
+                      context,
+                    ).refreshIndicatorSemanticLabel,
+                    icon: BusyMarkGlyphs.refresh,
+                    enabled: !state.refreshing,
                   ),
-                ),
-                BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>.native(
-                  key: const ValueKey('clipboard-history-actions-menu'),
-                  tooltip: context.l10n.actions,
-                  icon: BusyMarkGlyphs.menuVertical,
-                  transparent: true,
-                  borderRadius: BusyMarkRadius.nativeHeaderButton,
-                  highlightWhenOpen: false,
-                  itemBuilder: (context) => [
-                    BusyMarkPopupMenuItem(
-                      value: _ClipboardHistoryAction.refresh,
-                      label: MaterialLocalizations.of(
-                        context,
-                      ).refreshIndicatorSemanticLabel,
-                      icon: BusyMarkGlyphs.refresh,
-                      enabled: !state.refreshing,
-                    ),
-                    const PopupMenuDivider(height: BusyMarkSpacing.sm),
-                    BusyMarkPopupMenuItem(
-                      value: _ClipboardHistoryAction.clear,
-                      label: context.l10n.clipboardClearAll,
-                      icon: BusyMarkGlyphs.clearAll,
-                      enabled: state.entries.isNotEmpty,
-                    ),
-                  ],
-                  onSelected: (action) {
-                    switch (action) {
-                      case _ClipboardHistoryAction.refresh:
-                        unawaited(controller.refreshCurrentClipboard());
-                      case _ClipboardHistoryAction.clear:
-                        controller.clear();
-                    }
-                  },
-                ),
-              ],
-            ),
+                  const PopupMenuDivider(height: BusyMarkSpacing.sm),
+                  BusyMarkPopupMenuItem(
+                    value: _ClipboardHistoryAction.clear,
+                    label: context.l10n.clipboardClearAll,
+                    icon: BusyMarkGlyphs.clearAll,
+                    enabled: state.entries.isNotEmpty,
+                  ),
+                ],
+                onSelected: (action) {
+                  switch (action) {
+                    case _ClipboardHistoryAction.refresh:
+                      unawaited(controller.refreshCurrentClipboard());
+                    case _ClipboardHistoryAction.clear:
+                      controller.clear();
+                  }
+                },
+              ),
+            ],
           ),
           if (!controller.collectionEnabled)
             _PanelNotice(

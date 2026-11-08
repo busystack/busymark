@@ -128,3 +128,53 @@ used. These tests analyze but cannot execute in this session.
 Logs, before sources, exact commands, return codes and build identities are
 retained under `build/sidebar-ui`. The final delivery receipt records commits,
 pins, official SDK verification, test/build results and remaining acceptance.
+
+## Application consistency correction (2026-11-07)
+
+The current correction keeps the approved row surface. Welcome recent resources
+use the comfortable record density: 54 px minimum content extent, 8 px vertical
+and 12 px horizontal padding, existing 18 px icon slot and 12 px label gap.
+The minimum extent and padding follow the pinned YaruListTile.square reference without restoring its
+Material-backed rendering. Compact search, Local History and Clipboard remain
+separate density consumers with their existing information and activation model.
+
+BusyMarkSidebarHeader delegates to the shared NativeSidebarHeader layout used
+by Commit and Git Log. Every view has a body-medium identity and, when meaningful,
+a secondary body-small context. Files retains informational path/context menus;
+Outline retains its document icon/actions; TOC retains Writerside instance and
+module switching plus New Topic/TOC Actions. Clipboard has no fabricated context.
+Git branch and selected-commit labels are informational, with independent
+selection actions immediately before Actions. Log metadata still precedes files.
+
+The defect was full-primary YaruFocusBorder paint coupled to unconditional row
+focus acquisition on pointer activation. Flutter traditional mode includes both
+mouse and keyboard; changing global highlight strategy cannot distinguish them.
+Shared NativeFocusIndicator observes supported input events without consuming
+keys or changing focus requests. Pointer selection and context menus retain focus
+without keyboard emphasis. Subsequent keyboard interaction reveals the focus
+indicator. NativeFocusStyle owns foreground-role 65% opacity, two-pixel Yaru
+outlines, with opaque high-contrast focus; inputs keep an editing-focus border.
+Accent selection, links and affirmative actions retain their original colors.
+
+Official references were consulted: GNOME Sidebars, List & Column Views, Text
+Fields, Buttons, UI Styling and Keyboard; Flutter focus, FocusManager,
+FocusHighlightMode/Strategy, FocusNode, FocusableActionDetector and Actions/
+Shortcuts; and the pinned official Yaru 10.2.0 implementation. No supplied image
+attachments were available in this conversation. Official GNOME guidance and
+the actual pinned row geometry are the available reference evidence.
+
+Native captures and execution logs for this correction are under
+`build/native-consistency/`. A passing source/property check is not native
+acceptance. The final evidence record must distinguish inspected native frames,
+installed application qualification and independent platform limitations.
+
+
+Grouped Yaru rows, navigation tiles, toggles, Git icon actions and native modal
+close controls also delegate focus decoration to NativeFocusIndicator. Public
+`hasFocusBorder: false` transfers only that decoration to the common first-party
+owner; upstream controls, geometry, accessible actions and values remain intact.
+Grouped entry rows keep pointer editing focus; ordinary rows use keyboard emphasis.
+A normal text field with its own themed border does not gain a second row border.
+Rendered tests exercise each control family and reject full-accent borders and
+pointer-induced outlines. Direct focus-capable Yaru construction in feature views
+is rejected; approved upstream calls remain confined to the existing design boundary.

@@ -4587,5 +4587,6 @@
   "gitUiFileTypeChanged": "تغيّر النوع",
   "gitUiFileStatusStaged": "{status}، في منطقة التجهيز",
   "gitUiFileStatusUnstaged": "{status}، غير مجهّز",
-  "gitUiFileStatusHistorical": "{status} في هذا الالتزام"
+  "gitUiFileStatusHistorical": "{status} في هذا الالتزام",
+  "gitUiSelectAnotherBranch": "اختيار فرع آخر"
 }

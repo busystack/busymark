@@ -8933,4 +8933,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status trong commit này';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Select another branch';
 }

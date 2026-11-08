@@ -6105,5 +6105,6 @@
   "gitUiFileTypeChanged": "유형 변경됨",
   "gitUiFileStatusStaged": "{status}, 스테이징됨",
   "gitUiFileStatusUnstaged": "{status}, 스테이징되지 않음",
-  "gitUiFileStatusHistorical": "이 커밋에서 {status}"
+  "gitUiFileStatusHistorical": "이 커밋에서 {status}",
+  "gitUiSelectAnotherBranch": "다른 브랜치 선택"
 }

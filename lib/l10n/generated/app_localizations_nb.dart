@@ -8953,4 +8953,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status i denne committen';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Select another branch';
 }

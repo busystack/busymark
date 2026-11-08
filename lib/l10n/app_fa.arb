@@ -4617,5 +4617,6 @@
   "gitUiFileTypeChanged": "نوع تغییر کرده",
   "gitUiFileStatusStaged": "{status}، در نمایه",
   "gitUiFileStatusUnstaged": "{status}، خارج از نمایه",
-  "gitUiFileStatusHistorical": "{status} در این کامیت"
+  "gitUiFileStatusHistorical": "{status} در این کامیت",
+  "gitUiSelectAnotherBranch": "Select another branch"
 }

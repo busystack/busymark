@@ -242,6 +242,16 @@ class BusyMarkApp extends ConsumerWidget {
         brightness: Brightness.dark,
         accentColor: accent,
       ),
+      highContrastTheme: buildBusyMarkTheme(
+        brightness: Brightness.light,
+        accentColor: accent,
+        highContrast: true,
+      ),
+      highContrastDarkTheme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: accent,
+        highContrast: true,
+      ),
       themeMode: settings.themeMode,
       locale: settings.locale,
       localeListResolutionCallback: resolveBusyMarkLocales,

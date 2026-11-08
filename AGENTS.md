@@ -36,3 +36,14 @@ skipped/failed cases or changed logs. This does not waive any native gate.
 Closing the last authoring document activates a surviving captured Git
 comparison when no document, Local History view or comparison is active.
 Never select or retarget a comparison created during the close confirmation.
+
+Sidebar identity uses BusyMarkSidebarHeader / shared NativeSidebarHeader:
+body-medium view title, secondary body-small context, common directional
+insets/action geometry. Files paths and Git branch/commit contexts are
+informational; Writerside retains its instance selector. Clipboard has no empty
+context line. Preserve all view-level native actions.
+Use the shared NativeFocusIndicator/NativeFocusStyle through existing controls:
+pointer selection retains focus ownership without keyboard emphasis; keyboard
+interaction reveals a restrained semantic outline. Never conceal focus through
+global highlight strategy or remove accent roles. Welcome recent resources use
+an explicit comfortable record density; history and active search remain compact.

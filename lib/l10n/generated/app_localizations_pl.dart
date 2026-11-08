@@ -9018,4 +9018,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status w tym commicie';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Wybierz inną gałąź';
 }

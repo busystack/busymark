@@ -33,7 +33,7 @@ void main() {
         tester.getRect(actions).left - tester.getRect(choose).right,
         BusyMarkSpacing.sm,
       );
-      expect(tester.getRect(actions).right, 300 - BusyMarkSpacing.sm);
+      expect(tester.getRect(actions).right, 300 - BusyMarkSpacing.md);
     },
   );
   testWidgets('history footer has native bottom and end insets', (

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:busystack_git_flutter/busystack_git_flutter.dart'
+    show NativeFocusStyle;
 import 'package:flutter/services.dart';
 import 'package:yaru/theme.dart';
 
@@ -7,6 +9,7 @@ import 'busymark_design.dart';
 ThemeData buildBusyMarkTheme({
   required Brightness brightness,
   required Color accentColor,
+  bool highContrast = false,
 }) {
   final base = switch (brightness) {
     Brightness.light => createYaruLightTheme(primaryColor: accentColor),
@@ -44,7 +47,11 @@ ThemeData buildBusyMarkTheme({
     scrim: BusyMarkLinuxPalette.black,
   );
   final textTheme = _busyMarkTextTheme(base.textTheme, colors);
-  final inputDecorationTheme = base.inputDecorationTheme;
+  final inputDecorationTheme = NativeFocusStyle.inputs(
+    base.inputDecorationTheme,
+    colorScheme,
+    highContrast: highContrast,
+  );
   final outlinedButtonStyle = _semanticButtonStyle(
     base.outlinedButtonTheme.style,
     foreground: colors.foreground,

@@ -8568,6 +8568,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '在此提交中$status';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => '选择其他分支';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -17132,4 +17135,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String gitUiFileStatusHistorical(String status) {
     return '在此提交中$status';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => '选择其他分支';
 }

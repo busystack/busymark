@@ -9030,6 +9030,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status neste commit';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Selecionar outro ramo';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -18051,4 +18054,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String gitUiFileStatusHistorical(String status) {
     return '$status neste commit';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Selecionar outro ramo';
 }

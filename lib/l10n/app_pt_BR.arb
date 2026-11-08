@@ -4575,5 +4575,6 @@
   "gitUiFileTypeChanged": "Tipo alterado",
   "gitUiFileStatusStaged": "{status}, no índice",
   "gitUiFileStatusUnstaged": "{status}, fora do índice",
-  "gitUiFileStatusHistorical": "{status} neste commit"
+  "gitUiFileStatusHistorical": "{status} neste commit",
+  "gitUiSelectAnotherBranch": "Selecionar outro ramo"
 }

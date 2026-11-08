@@ -393,15 +393,19 @@ void main() {
         combinedHeader.evaluate().isEmpty ? header : combinedHeader,
       );
       final defects = <String>[];
-      if (tester.widget<git.GitActionRow>(header).onTap != null) {
+      if (find
+          .ancestor(of: header, matching: find.byType(git.GitActionRow))
+          .evaluate()
+          .isNotEmpty) {
         defects.add('clickable selected subject');
       }
-      if ((tester.getCenter(header).dy - tester.getCenter(actions).dy).abs() >
+      if ((tester.getRect(actions).top - headerBounds.top - BusyMarkSpacing.sm)
+              .abs() >
           1) {
-        defects.add('Actions outside information header');
+        defects.add('Actions outside common header action grid');
       }
       if ((headerBounds.right -
-                  BusyMarkSpacing.sm -
+                  BusyMarkSpacing.md -
                   tester.getRect(actions).right)
               .abs() >
           1) {

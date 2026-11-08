@@ -353,7 +353,9 @@ void main() {
             find.descendant(of: radio, matching: find.byType(YaruToggleButton)),
           )
           .hasFocusBorder,
-      isTrue,
+      isFalse,
+      reason:
+          'BusyMark owns the shared modality-aware indicator around the upstream control',
     );
     expect(
       find.descendant(of: radio, matching: find.byType(YaruFocusBorder)),
@@ -1372,7 +1374,12 @@ void main() {
       );
       expect(
         theme.inputDecorationTheme.focusedBorder,
-        base.inputDecorationTheme.focusedBorder,
+        base.inputDecorationTheme.focusedBorder?.copyWith(
+          borderSide: BorderSide(
+            color: colors.foreground.withValues(alpha: .65),
+            width: BusyMarkStroke.focus,
+          ),
+        ),
       );
       expect(
         theme.inputDecorationTheme.contentPadding,

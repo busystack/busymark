@@ -15172,6 +15172,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{status} in this commit'**
   String gitUiFileStatusHistorical(String status);
+
+  /// Shared Git interface: Select another branch
+  ///
+  /// In en, this message translates to:
+  /// **'Select another branch'**
+  String get gitUiSelectAnotherBranch;
 }
 
 class _AppLocalizationsDelegate

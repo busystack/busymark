@@ -343,55 +343,36 @@ class _LocalHistoryHeader extends StatelessWidget {
         ? context.l10n.searchDocumentsCategory
         : selectedDocument?.displayName;
     final retained = browsingDocuments || inspectingRetainedDocument;
-    return Padding(
+    return BusyMarkSidebarHeader(
       key: const ValueKey('local-history-panel-header'),
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        BusyMarkSpacing.md,
-        BusyMarkSpacing.sm,
-        BusyMarkSpacing.md,
-        BusyMarkSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          if (retained) ...[
-            BusyMarkHeaderIconButton(
+      title: context.l10n.localHistory,
+      leading: retained
+          ? BusyMarkHeaderIconButton(
               tooltip: context.l10n.back,
               icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
               transparent: true,
               onPressed: onBack,
+            )
+          : null,
+      contextLine: contextTitle == null
+          ? null
+          : Tooltip(
+              message: selectedPath ?? contextTitle,
+              child: Text(
+                contextTitle,
+                key: const ValueKey('local-history-document-context'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const SizedBox(width: BusyMarkSpacing.xs),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.localHistory,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                if (contextTitle != null)
-                  Tooltip(
-                    message: selectedPath ?? contextTitle,
-                    child: Text(
-                      contextTitle,
-                      key: const ValueKey('local-history-document-context'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-              ],
-            ),
+      actions: [
+        if (inspectingRetainedDocument && selectedDocument?.deleted == true)
+          Text(
+            context.l10n.localHistoryDeleted,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
-          if (inspectingRetainedDocument && selectedDocument?.deleted == true)
-            Text(
-              context.l10n.localHistoryDeleted,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          actions,
-        ],
-      ),
+        actions,
+      ],
     );
   }
 }

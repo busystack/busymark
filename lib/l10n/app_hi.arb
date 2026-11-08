@@ -4575,5 +4575,6 @@
   "gitUiFileTypeChanged": "प्रकार बदला गया",
   "gitUiFileStatusStaged": "{status}, स्टेज किया गया",
   "gitUiFileStatusUnstaged": "{status}, स्टेज नहीं किया गया",
-  "gitUiFileStatusHistorical": "इस कमिट में {status}"
+  "gitUiFileStatusHistorical": "इस कमिट में {status}",
+  "gitUiSelectAnotherBranch": "Select another branch"
 }

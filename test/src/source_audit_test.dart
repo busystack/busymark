@@ -362,10 +362,7 @@ void main() {
       expect(theme, contains('BusyMarkSurfaceColors.fromTheme(base)'));
       expect(
         theme,
-        contains(
-          'final inputDecorationTheme = '
-          'base.inputDecorationTheme',
-        ),
+        contains('final inputDecorationTheme = NativeFocusStyle.inputs('),
       );
       expect(theme, isNot(contains('_semanticInputDecorationTheme')));
       expect(theme, isNot(contains('filled: true')));
@@ -972,7 +969,7 @@ void main() {
     expect(headerIcon, contains('style: style'));
     expect(headerIcon, contains('isSelected: selected'));
     expect(headerIcon, contains('padding: EdgeInsets.zero'));
-    expect(headerIcon, contains('YaruFocusBorder.primary('));
+    expect(headerIcon, contains('git.NativeFocusIndicator('));
     expect(headerIcon, contains('YaruTheme.maybeOf(context)?.focusBorders'));
     expect(headerIcon, isNot(contains('final button = IconButton(')));
     expect(headerIcon, isNot(contains('DecoratedBox(')));
@@ -1105,10 +1102,7 @@ void main() {
       workspace,
       contains('tooltip: busyMarkLtrIsolateFor(context, path)'),
     );
-    expect(
-      workspace,
-      contains('selectedTab == _SidebarTab.files && path.isNotEmpty'),
-    );
+    expect(workspace, contains('selectedTab == _SidebarTab.files)'));
     expect(workspace, contains('selectedTab == _SidebarTab.outline'));
     expect(
       workspace,
@@ -1270,7 +1264,10 @@ void main() {
     expect(design, contains('class BusyMarkModalEditorScaffold'));
     expect(design, contains('busyMarkGroupedTextFieldDecoration('));
     expect(settings, contains('BusyMarkPopupSelector<String>('));
-    expect(RegExp(r'YaruListTile\.square\(').allMatches(feedback).length, 3);
+    expect(
+      RegExp(r'BusyMarkListTile\.square\(').allMatches(feedback).length,
+      3,
+    );
     expect(feedback, contains('BusyMarkModalEditorScaffold('));
     expect(feedback, contains('BusyMarkComboRow<FeedbackCategory?>('));
     expect(
@@ -1278,7 +1275,7 @@ void main() {
       contains('values: const [null, ...FeedbackCategory.values]'),
     );
     expect(feedback, contains('busyMarkGroupedTextFieldDecoration('));
-    expect(feedback, contains('YaruCheckboxListTile('));
+    expect(feedback, contains('BusyMarkCheckboxListTile('));
     expect(feedback, contains('CallbackShortcuts('));
     expect(feedback, isNot(contains('BusyMarkDialogShell(')));
     expect(feedback, isNot(contains('BusyMarkDialogButton(')));
@@ -1314,11 +1311,13 @@ void main() {
     final entries = RegExp(
       r'class BusyMarkGroupedTextEntry[\s\S]*?class BusyMarkClamp',
     ).firstMatch(design)!.group(0)!;
-    expect(entries, contains('return YaruListTile.square('));
+    expect(entries, contains('return BusyMarkListTile.square('));
     expect(entries, contains('final field = TextFormField('));
     expect(
       entries,
-      contains('YaruListTile.square(title: field, trailing: widget.trailing)'),
+      contains(
+        'BusyMarkListTile.square(title: field, trailing: widget.trailing)',
+      ),
     );
     expect(entries, contains('controller: widget.controller'));
     expect(entries, contains('undoController: widget.undoController'));
@@ -1368,7 +1367,7 @@ void main() {
     expect(templates, contains('BusyMarkSearchField('));
     expect(templates, contains('BusyMarkSidebarSurface('));
     expect(templates, contains('YaruExpandable('));
-    expect(templates, contains('YaruMasterTile('));
+    expect(templates, contains('BusyMarkMasterTile('));
     expect(templates, contains('BusyMarkGroupedTextEntry('));
     expect(templates, contains('BusyMarkActionRow('));
     expect(templates, contains('YaruLinearProgressIndicator('));
@@ -1574,8 +1573,8 @@ void main() {
     expect(tocHeader, isNot(contains('onExport')));
     expect(
       tocHeader,
-      contains(
-        'case _TocHeaderAction.synchronize:\n                        onSynchronize();',
+      matches(
+        RegExp(r'case _TocHeaderAction\.synchronize:\s+onSynchronize\(\);'),
       ),
     );
     expect(

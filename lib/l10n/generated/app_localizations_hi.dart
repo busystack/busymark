@@ -8937,4 +8937,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return 'इस कमिट में $status';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Select another branch';
 }

@@ -2325,12 +2325,12 @@ class _SidebarHeader extends ConsumerWidget {
     final selectedTabMenuItem = selectedTab == null
         ? null
         : tabMenuItems.firstWhere((item) => item.menuValue == selectedTab);
-    return Padding(
-      padding: BusyMarkInsets.sidebarHeader,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _SidebarHeaderRow(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: BusyMarkInsets.sidebarHeader,
+          child: _SidebarHeaderRow(
             key: const ValueKey('workspace-sidebar-primary-row'),
             child: Row(
               children: [
@@ -2365,128 +2365,114 @@ class _SidebarHeader extends ConsumerWidget {
               ],
             ),
           ),
-          if (selectedTab == _SidebarTab.files && path.isNotEmpty) ...[
-            const SizedBox(height: BusyMarkSpacing.sm),
-            _SidebarHeaderRow(
-              key: const ValueKey('workspace-sidebar-first-content'),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _SidebarHeaderLine(
-                      icon: WorkspaceGlyphs.pathForKind(workspace.kind),
-                      text: path,
-                      style: detailsStyle,
-                      leadingEllipsis: true,
-                      tooltip: busyMarkLtrIsolateFor(context, path),
-                      onSecondaryTapUp: workspace.isRemote
-                          ? null
-                          : (lineContext, details) => _showWorkspacePathMenu(
-                              lineContext,
-                              name: _workspaceName(context, workspace),
-                              path: path,
-                              position: details.globalPosition,
-                            ),
+        ),
+        if (selectedTab == _SidebarTab.files)
+          BusyMarkSidebarHeader(
+            key: const ValueKey('workspace-sidebar-first-content'),
+            title: context.l10n.files,
+            contextLine: _SidebarHeaderLine(
+              icon: WorkspaceGlyphs.pathForKind(workspace.kind),
+              text: path,
+              style: detailsStyle,
+              leadingEllipsis: true,
+              tooltip: busyMarkLtrIsolateFor(context, path),
+              onSecondaryTapUp: workspace.isRemote
+                  ? null
+                  : (lineContext, details) => _showWorkspacePathMenu(
+                      lineContext,
+                      name: _workspaceName(context, workspace),
+                      path: path,
+                      position: details.globalPosition,
                     ),
-                  ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_PathMenuAction>.native(
-                    key: const ValueKey('workspace-sidebar-path-menu'),
-                    tooltip: context.l10n.pathActions,
-                    icon: BusyMarkGlyphs.menuVertical,
-                    transparent: true,
-                    borderRadius: BusyMarkRadius.nativeHeaderButton,
-                    highlightWhenOpen: false,
-                    itemBuilder: _sidebarPathMenuItems,
-                    onSelected: (action) => unawaited(
-                      _performWorkspacePathAction(
-                        context,
-                        name: _workspaceName(context, workspace),
-                        path: path,
-                        action: action,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ],
-          if (selectedTab == _SidebarTab.outline) ...[
-            const SizedBox(height: BusyMarkSpacing.sm),
-            _SidebarHeaderRow(
-              key: const ValueKey('workspace-sidebar-first-content'),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _SidebarHeaderLine(
-                      key: const ValueKey(
-                        'workspace-sidebar-outline-file-label',
-                      ),
-                      icon: _documentKindIcon(
-                        activeDocumentFile?.kind ?? DocumentKind.markdown,
-                      ),
-                      text: busyMarkLtrIsolateFor(context, activeDocumentName),
-                      style: detailsStyle,
-                      tooltip: hasActiveDocumentPath
-                          ? busyMarkLtrIsolateFor(context, activeDocumentPath)
-                          : null,
-                      onSecondaryTapUp: workspace.isRemote
-                          ? null
-                          : (lineContext, details) => _showWorkspacePathMenu(
-                              lineContext,
-                              name: activeDocumentName,
-                              path: activeDocumentPath,
-                              position: details.globalPosition,
-                              copyNameLabel: lineContext.l10n.copyFileName,
-                              pathActionsEnabled: hasActiveDocumentPath,
-                            ),
-                    ),
+            actions: [
+              BusyMarkHeaderPopupMenuButton<_PathMenuAction>.native(
+                key: const ValueKey('workspace-sidebar-path-menu'),
+                tooltip: context.l10n.pathActions,
+                icon: BusyMarkGlyphs.menuVertical,
+                transparent: true,
+                borderRadius: BusyMarkRadius.nativeHeaderButton,
+                highlightWhenOpen: false,
+                itemBuilder: _sidebarPathMenuItems,
+                onSelected: (action) => unawaited(
+                  _performWorkspacePathAction(
+                    context,
+                    name: _workspaceName(context, workspace),
+                    path: path,
+                    action: action,
                   ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_OutlineDocumentAction>.native(
-                    key: const ValueKey('workspace-sidebar-outline-file-menu'),
-                    tooltip: context.l10n.actions,
-                    icon: BusyMarkGlyphs.menuVertical,
-                    transparent: true,
-                    borderRadius: BusyMarkRadius.nativeHeaderButton,
-                    highlightWhenOpen: false,
-                    itemBuilder: (menuContext) => _outlineDocumentMenuItems(
-                      menuContext,
+                ),
+              ),
+            ],
+          ),
+        if (selectedTab == _SidebarTab.outline)
+          BusyMarkSidebarHeader(
+            key: const ValueKey('workspace-sidebar-first-content'),
+            title: context.l10n.outline,
+            contextLine: _SidebarHeaderLine(
+              key: const ValueKey('workspace-sidebar-outline-file-label'),
+              icon: _documentKindIcon(
+                activeDocumentFile?.kind ?? DocumentKind.markdown,
+              ),
+              text: busyMarkLtrIsolateFor(context, activeDocumentName),
+              style: detailsStyle,
+              tooltip: hasActiveDocumentPath
+                  ? busyMarkLtrIsolateFor(context, activeDocumentPath)
+                  : null,
+              onSecondaryTapUp: workspace.isRemote
+                  ? null
+                  : (lineContext, details) => _showWorkspacePathMenu(
+                      lineContext,
+                      name: activeDocumentName,
+                      path: activeDocumentPath,
+                      position: details.globalPosition,
+                      copyNameLabel: lineContext.l10n.copyFileName,
                       pathActionsEnabled: hasActiveDocumentPath,
-                      remote: workspace.isRemote,
                     ),
-                    onSelected: (action) {
-                      switch (action) {
-                        case _OutlineDocumentAction.copyName:
-                        case _OutlineDocumentAction.copyPath:
-                        case _OutlineDocumentAction.openInFiles:
-                        case _OutlineDocumentAction.refineWithAi:
-                          unawaited(
-                            _performWorkspacePathAction(
-                              context,
-                              name: activeDocumentName,
-                              path: activeDocumentPath,
-                              action: switch (action) {
-                                _OutlineDocumentAction.copyName =>
-                                  _PathMenuAction.copyName,
-                                _OutlineDocumentAction.copyPath =>
-                                  _PathMenuAction.copyPath,
-                                _OutlineDocumentAction.openInFiles =>
-                                  _PathMenuAction.openInFiles,
-                                _OutlineDocumentAction.refineWithAi =>
-                                  _PathMenuAction.refineWithAi,
-                              },
-                              onRefineWithAi: onRefineActiveDocument,
-                            ),
-                          );
-                      }
-                    },
-                  ),
-                ],
-              ),
             ),
-          ],
-        ],
-      ),
+            actions: [
+              BusyMarkHeaderPopupMenuButton<_OutlineDocumentAction>.native(
+                key: const ValueKey('workspace-sidebar-outline-file-menu'),
+                tooltip: context.l10n.actions,
+                icon: BusyMarkGlyphs.menuVertical,
+                transparent: true,
+                borderRadius: BusyMarkRadius.nativeHeaderButton,
+                highlightWhenOpen: false,
+                itemBuilder: (menuContext) => _outlineDocumentMenuItems(
+                  menuContext,
+                  pathActionsEnabled: hasActiveDocumentPath,
+                  remote: workspace.isRemote,
+                ),
+                onSelected: (action) {
+                  switch (action) {
+                    case _OutlineDocumentAction.copyName:
+                    case _OutlineDocumentAction.copyPath:
+                    case _OutlineDocumentAction.openInFiles:
+                    case _OutlineDocumentAction.refineWithAi:
+                      unawaited(
+                        _performWorkspacePathAction(
+                          context,
+                          name: activeDocumentName,
+                          path: activeDocumentPath,
+                          action: switch (action) {
+                            _OutlineDocumentAction.copyName =>
+                              _PathMenuAction.copyName,
+                            _OutlineDocumentAction.copyPath =>
+                              _PathMenuAction.copyPath,
+                            _OutlineDocumentAction.openInFiles =>
+                              _PathMenuAction.openInFiles,
+                            _OutlineDocumentAction.refineWithAi =>
+                              _PathMenuAction.refineWithAi,
+                          },
+                          onRefineWithAi: onRefineActiveDocument,
+                        ),
+                      );
+                  }
+                },
+              ),
+            ],
+          ),
+      ],
     );
   }
 
@@ -4822,7 +4808,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
             key: _tocViewportKey,
             itemScrollController: _tocScroll,
             itemPositionsListener: _tocPositions,
-            padding: BusyMarkInsets.sidebarList,
+            padding: EdgeInsets.only(bottom: BusyMarkInsets.sidebarList.bottom),
             itemCount: entries.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
@@ -5097,7 +5083,13 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 ),
               );
               if (!entry.canEditStructureIn(instance.sourceTreePath)) {
-                return row;
+                return Padding(
+                  padding: BusyMarkInsets.sidebarList.copyWith(
+                    top: 0,
+                    bottom: 0,
+                  ),
+                  child: row,
+                );
               }
               final dragEntries = _topLevelTocEntries(
                 selected
@@ -5115,81 +5107,91 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 instance.sourceTreePath,
                 dragEntries,
               );
-              return DragTarget<_TocDragPayload>(
-                onWillAcceptWithDetails: (details) {
-                  final accepted = _canDrop(
-                    details.data,
-                    instance.sourceTreePath,
-                    entry,
-                  );
-                  if (accepted) {
-                    _updateTocDrop(context, details.offset, entry, instance);
-                  }
-                  return accepted;
-                },
-                onMove: (details) {
-                  if (_canDrop(details.data, instance.sourceTreePath, entry)) {
-                    _updateTocDrop(context, details.offset, entry, instance);
-                  }
-                },
-                onLeave: (_) => _clearTocDrop(),
-                onAcceptWithDetails: (details) {
-                  final zone = _dropZone;
-                  _clearTocDrop();
-                  unawaited(
-                    _dropTocEntries(context, details.data, entry, zone),
-                  );
-                },
-                builder: (context, candidates, rejected) => DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: _dropPath == key && _dropZone == 0
-                        ? Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.12)
-                        : null,
-                    border: _dropPath != key
-                        ? null
-                        : Border(
-                            top: _dropZone < 0
-                                ? BorderSide(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    width: 2,
-                                  )
-                                : BorderSide.none,
-                            bottom: _dropZone > 0
-                                ? BorderSide(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    width: 2,
-                                  )
-                                : BorderSide.none,
-                          ),
-                  ),
-                  child: payload == null
-                      ? row
-                      : Draggable<_TocDragPayload>(
-                          data: payload,
-                          dragAnchorStrategy: pointerDragAnchorStrategy,
-                          allowedButtonsFilter: (buttons) =>
-                              buttons == kPrimaryMouseButton,
-                          feedback: Material(
-                            elevation: 4,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text(
-                                dragEntries.length == 1
-                                    ? label
-                                    : '${dragEntries.length}',
+              return Padding(
+                padding: BusyMarkInsets.sidebarList.copyWith(top: 0, bottom: 0),
+                child: DragTarget<_TocDragPayload>(
+                  onWillAcceptWithDetails: (details) {
+                    final accepted = _canDrop(
+                      details.data,
+                      instance.sourceTreePath,
+                      entry,
+                    );
+                    if (accepted) {
+                      _updateTocDrop(context, details.offset, entry, instance);
+                    }
+                    return accepted;
+                  },
+                  onMove: (details) {
+                    if (_canDrop(
+                      details.data,
+                      instance.sourceTreePath,
+                      entry,
+                    )) {
+                      _updateTocDrop(context, details.offset, entry, instance);
+                    }
+                  },
+                  onLeave: (_) => _clearTocDrop(),
+                  onAcceptWithDetails: (details) {
+                    final zone = _dropZone;
+                    _clearTocDrop();
+                    unawaited(
+                      _dropTocEntries(context, details.data, entry, zone),
+                    );
+                  },
+                  builder: (context, candidates, rejected) => DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: _dropPath == key && _dropZone == 0
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.12)
+                          : null,
+                      border: _dropPath != key
+                          ? null
+                          : Border(
+                              top: _dropZone < 0
+                                  ? BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      width: 2,
+                                    )
+                                  : BorderSide.none,
+                              bottom: _dropZone > 0
+                                  ? BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      width: 2,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                    ),
+                    child: payload == null
+                        ? row
+                        : Draggable<_TocDragPayload>(
+                            data: payload,
+                            dragAnchorStrategy: pointerDragAnchorStrategy,
+                            allowedButtonsFilter: (buttons) =>
+                                buttons == kPrimaryMouseButton,
+                            feedback: Material(
+                              elevation: 4,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Text(
+                                  dragEntries.length == 1
+                                      ? label
+                                      : '${dragEntries.length}',
+                                ),
                               ),
                             ),
+                            childWhenDragging: Opacity(
+                              opacity: 0.4,
+                              child: row,
+                            ),
+                            onDragEnd: (_) => _clearTocDrop(),
+                            child: row,
                           ),
-                          childWhenDragging: Opacity(opacity: 0.4, child: row),
-                          onDragEnd: (_) => _clearTocDrop(),
-                          child: row,
-                        ),
+                  ),
                 ),
               );
             },
@@ -7328,105 +7330,102 @@ class _TocHeader extends StatelessWidget {
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
           ],
-          _SidebarHeaderRow(
+          BusyMarkSidebarHeader(
             key: const ValueKey('workspace-sidebar-first-content'),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _WritersideInstanceSelector(
-                    instances: instances,
-                    selectedInstance: selectedInstance,
-                    instanceColors: instanceColors,
-                    onSelected: onSelectInstance,
-                    onOpenTocFile: onOpenTocFile,
-                  ),
-                ),
-                BusyMarkHeaderPopupMenuButton<_TocCreationChoice>.native(
-                  key: const ValueKey('workspace-sidebar-new-topic-menu'),
-                  tooltip: context.l10n.newTopic,
-                  icon: BusyMarkGlyphs.add,
-                  itemBuilder: (context) => [
-                    BusyMarkPopupMenuItem(
-                      value: _TocCreationChoice.markdown,
-                      label: context.l10n.tocEmptyMdTopic,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _TocCreationChoice.xml,
-                      label: context.l10n.tocEmptyXmlTopic,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _TocCreationChoice.emptyGroup,
-                      label: context.l10n.tocEmptyGroupAction,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _TocCreationChoice.template,
-                      label: context.l10n.tocTopicFromTemplate,
-                    ),
-                    const PopupMenuDivider(),
-                    BusyMarkPopupMenuItem(
-                      value: _TocCreationChoice.importMarkdown,
-                      label: context.l10n.addLocalMarkdownFiles,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _TocCreationChoice.link,
-                      label: context.l10n.tocLinkTopicFiles,
-                    ),
-                  ],
-                  onSelected: onCreateTopic,
-                ),
-                BusyMarkHeaderPopupMenuButton<_TocHeaderAction>.native(
-                  key: const ValueKey('workspace-sidebar-toc-menu'),
-                  tooltip: context.l10n.tocActions,
-                  icon: BusyMarkGlyphs.menuVertical,
-                  transparent: true,
-                  borderRadius: BusyMarkRadius.nativeHeaderButton,
-                  highlightWhenOpen: false,
-                  itemBuilder: (context) => [
-                    BusyMarkPopupMenuItem(
-                      value: _TocHeaderAction.synchronize,
-                      label: context.l10n.tocSynchronize,
-                      icon: BusyMarkGlyphs.refresh,
-                    ),
-                    const PopupMenuDivider(),
-                    BusyMarkPopupMenuItem(
-                      value: _TocHeaderAction.newInstance,
-                      label: context.l10n.newInstance,
-                      icon: BusyMarkGlyphs.add,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _TocHeaderAction.newLibrary,
-                      label: context.l10n.newTocLibrary,
-                      icon: BusyMarkGlyphs.code,
-                    ),
-                    const PopupMenuDivider(),
-                    BusyMarkPopupMenuItem(
-                      value: _TocHeaderAction.editInstance,
-                      label: context.l10n.editInstance,
-                      icon: BusyMarkGlyphs.edit,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _TocHeaderAction.openTocFile,
-                      label: context.l10n.openTocFile,
-                      icon: BusyMarkGlyphs.documentOpen,
-                    ),
-                  ],
-                  onSelected: (action) {
-                    switch (action) {
-                      case _TocHeaderAction.synchronize:
-                        onSynchronize();
-                      case _TocHeaderAction.newInstance:
-                        onCreateInstance();
-                      case _TocHeaderAction.newLibrary:
-                        onCreateLibrary();
-                      case _TocHeaderAction.editInstance:
-                        onEditInstance();
-                      case _TocHeaderAction.openTocFile:
-                        onOpenTocFile();
-                    }
-                  },
-                ),
-              ],
+            title: context.l10n.toc,
+            contextLine: _WritersideInstanceSelector(
+              instances: instances,
+              selectedInstance: selectedInstance,
+              instanceColors: instanceColors,
+              onSelected: onSelectInstance,
+              onOpenTocFile: onOpenTocFile,
             ),
+            actions: [
+              BusyMarkHeaderPopupMenuButton<_TocCreationChoice>.native(
+                key: const ValueKey('workspace-sidebar-new-topic-menu'),
+                tooltip: context.l10n.newTopic,
+                icon: BusyMarkGlyphs.add,
+                itemBuilder: (context) => [
+                  BusyMarkPopupMenuItem(
+                    value: _TocCreationChoice.markdown,
+                    label: context.l10n.tocEmptyMdTopic,
+                  ),
+                  BusyMarkPopupMenuItem(
+                    value: _TocCreationChoice.xml,
+                    label: context.l10n.tocEmptyXmlTopic,
+                  ),
+                  BusyMarkPopupMenuItem(
+                    value: _TocCreationChoice.emptyGroup,
+                    label: context.l10n.tocEmptyGroupAction,
+                  ),
+                  BusyMarkPopupMenuItem(
+                    value: _TocCreationChoice.template,
+                    label: context.l10n.tocTopicFromTemplate,
+                  ),
+                  const PopupMenuDivider(),
+                  BusyMarkPopupMenuItem(
+                    value: _TocCreationChoice.importMarkdown,
+                    label: context.l10n.addLocalMarkdownFiles,
+                  ),
+                  BusyMarkPopupMenuItem(
+                    value: _TocCreationChoice.link,
+                    label: context.l10n.tocLinkTopicFiles,
+                  ),
+                ],
+                onSelected: onCreateTopic,
+              ),
+              BusyMarkHeaderPopupMenuButton<_TocHeaderAction>.native(
+                key: const ValueKey('workspace-sidebar-toc-menu'),
+                tooltip: context.l10n.tocActions,
+                icon: BusyMarkGlyphs.menuVertical,
+                transparent: true,
+                borderRadius: BusyMarkRadius.nativeHeaderButton,
+                highlightWhenOpen: false,
+                itemBuilder: (context) => [
+                  BusyMarkPopupMenuItem(
+                    value: _TocHeaderAction.synchronize,
+                    label: context.l10n.tocSynchronize,
+                    icon: BusyMarkGlyphs.refresh,
+                  ),
+                  const PopupMenuDivider(),
+                  BusyMarkPopupMenuItem(
+                    value: _TocHeaderAction.newInstance,
+                    label: context.l10n.newInstance,
+                    icon: BusyMarkGlyphs.add,
+                  ),
+                  BusyMarkPopupMenuItem(
+                    value: _TocHeaderAction.newLibrary,
+                    label: context.l10n.newTocLibrary,
+                    icon: BusyMarkGlyphs.code,
+                  ),
+                  const PopupMenuDivider(),
+                  BusyMarkPopupMenuItem(
+                    value: _TocHeaderAction.editInstance,
+                    label: context.l10n.editInstance,
+                    icon: BusyMarkGlyphs.edit,
+                  ),
+                  BusyMarkPopupMenuItem(
+                    value: _TocHeaderAction.openTocFile,
+                    label: context.l10n.openTocFile,
+                    icon: BusyMarkGlyphs.documentOpen,
+                  ),
+                ],
+                onSelected: (action) {
+                  switch (action) {
+                    case _TocHeaderAction.synchronize:
+                      onSynchronize();
+                    case _TocHeaderAction.newInstance:
+                      onCreateInstance();
+                    case _TocHeaderAction.newLibrary:
+                      onCreateLibrary();
+                    case _TocHeaderAction.editInstance:
+                      onEditInstance();
+                    case _TocHeaderAction.openTocFile:
+                      onOpenTocFile();
+                  }
+                },
+              ),
+            ],
           ),
           const Divider(height: BusyMarkSpacing.md),
         ],
@@ -7502,7 +7501,6 @@ class _WritersideInstanceSelector extends StatelessWidget {
                   _showInstanceMenu(context, details.globalPosition),
               child: Row(
                 children: [
-                  const SizedBox(width: BusyMarkSpacing.headerInset),
                   Icon(
                     BusyMarkGlyphs.tree,
                     size: BusyMarkSizes.iconSm,
@@ -7515,7 +7513,7 @@ class _WritersideInstanceSelector extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: selectorEnabled
                             ? BusyMarkSurfaceColors.of(context).foreground
                             : BusyMarkSurfaceColors.of(

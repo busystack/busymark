@@ -1333,6 +1333,7 @@ extension SharedGitLocalizations on AppLocalizations {
     GitMessages.fileStatusHistorical => gitUiFileStatusHistorical(
       (values['status'] ?? '').toString(),
     ),
+    GitMessages.selectAnotherBranch => gitUiSelectAnotherBranch,
     _ => message,
   };
 }

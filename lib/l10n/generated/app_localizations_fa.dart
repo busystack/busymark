@@ -8962,4 +8962,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status در این کامیت';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Select another branch';
 }

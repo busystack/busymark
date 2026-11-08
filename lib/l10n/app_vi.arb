@@ -6105,5 +6105,6 @@
   "gitUiFileTypeChanged": "Đã đổi loại",
   "gitUiFileStatusStaged": "{status}, đã đưa vào vùng đệm",
   "gitUiFileStatusUnstaged": "{status}, chưa đưa vào vùng đệm",
-  "gitUiFileStatusHistorical": "{status} trong commit này"
+  "gitUiFileStatusHistorical": "{status} trong commit này",
+  "gitUiSelectAnotherBranch": "Select another branch"
 }

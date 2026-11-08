@@ -6105,5 +6105,6 @@
   "gitUiFileTypeChanged": "Türü değiştirildi",
   "gitUiFileStatusStaged": "{status}, hazırlama alanında",
   "gitUiFileStatusUnstaged": "{status}, hazırlama alanında değil",
-  "gitUiFileStatusHistorical": "Bu commit’te {status}"
+  "gitUiFileStatusHistorical": "Bu commit’te {status}",
+  "gitUiSelectAnotherBranch": "Başka bir dal seç"
 }

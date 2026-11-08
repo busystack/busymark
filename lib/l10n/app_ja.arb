@@ -6117,5 +6117,6 @@
   "gitUiFileTypeChanged": "種類を変更",
   "gitUiFileStatusStaged": "{status}、ステージ済み",
   "gitUiFileStatusUnstaged": "{status}、未ステージ",
-  "gitUiFileStatusHistorical": "このコミットで{status}"
+  "gitUiFileStatusHistorical": "このコミットで{status}",
+  "gitUiSelectAnotherBranch": "別のブランチを選択"
 }

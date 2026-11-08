@@ -311,6 +311,7 @@ Future<void> main(List<String> args) async {
     'BusyMarkSidebarTreeRow',
     'BusyMarkSidebarRecordRow',
     'BusyMarkSidebarRowSurface',
+    'BusyMarkSidebarHeader',
   ], scope: native.FirstPartyPresentationScope.sidebarGeometry);
   errors.addAll(chain.map((v) => '$v'));
   final collection = AnalysisContextCollection(includedPaths: paths);

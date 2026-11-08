@@ -6117,5 +6117,6 @@
   "gitUiFileTypeChanged": "类型已更改",
   "gitUiFileStatusStaged": "{status}，已暂存",
   "gitUiFileStatusUnstaged": "{status}，未暂存",
-  "gitUiFileStatusHistorical": "在此提交中{status}"
+  "gitUiFileStatusHistorical": "在此提交中{status}",
+  "gitUiSelectAnotherBranch": "选择其他分支"
 }

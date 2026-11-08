@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yaru/yaru.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/localization.dart';
@@ -61,7 +60,7 @@ class _WritersideMarkdownImportDialogState
           title: context.l10n.markdownImportFiles,
           filled: true,
           children: [
-            YaruListTile.square(
+            BusyMarkListTile.square(
               title: Wrap(
                 spacing: BusyMarkSpacing.sm,
                 children: [

@@ -7482,5 +7482,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "gitUiSelectAnotherBranch": "Select another branch",
+  "@gitUiSelectAnotherBranch": {"description": "Shared Git interface: Select another branch"}
 }

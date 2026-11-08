@@ -291,11 +291,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       await _ready(tester);
       final header = find.byKey(const ValueKey('git-selected-commit'));
-      final row = tester.widget<git.GitActionRow>(header);
       expect(
-        row.onTap,
-        isNull,
-        reason: 'The subject is information, not a selector button',
+        tester.widget(header),
+        isA<Row>(),
+        reason: 'The subject is informational context',
+      );
+      expect(
+        find.ancestor(of: header, matching: find.byType(git.GitActionRow)),
+        findsNothing,
+        reason: 'The subject must not regain an activation surface',
       );
       expect(
         tester
@@ -312,11 +316,11 @@ void main() {
       );
       expect(
         tester.getRect(actions).right,
-        closeTo(headerBounds.right - BusyMarkSpacing.sm, 1),
+        closeTo(headerBounds.right - BusyMarkSpacing.md, 1),
       );
       expect(
-        tester.getRect(actions).center.dy,
-        closeTo(tester.getRect(header).center.dy, 1),
+        tester.getRect(actions).top,
+        closeTo(headerBounds.top + BusyMarkSpacing.sm, 1),
       );
       expect(
         find.descendant(of: header, matching: find.byType(git.GitButton)),
@@ -668,7 +672,14 @@ void main() {
             matching: find.byType(BusyMarkGitActionButton),
           );
           expect(nativeSelected, findsNothing);
-          expect(tester.widget<git.GitActionRow>(selected).onTap, isNull);
+          expect(tester.widget(selected), isA<Row>());
+          expect(
+            find.ancestor(
+              of: selected,
+              matching: find.byType(git.GitActionRow),
+            ),
+            findsNothing,
+          );
           expect(
             find.descendant(of: selected, matching: find.byType(TextButton)),
             findsNothing,

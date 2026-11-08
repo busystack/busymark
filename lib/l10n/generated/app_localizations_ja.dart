@@ -8703,4 +8703,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return 'このコミットで$status';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => '別のブランチを選択';
 }

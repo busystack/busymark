@@ -4601,5 +4601,6 @@
   "gitUiFileTypeChanged": "Тип изменён",
   "gitUiFileStatusStaged": "{status}, в индексе",
   "gitUiFileStatusUnstaged": "{status}, вне индекса",
-  "gitUiFileStatusHistorical": "{status} в этом коммите"
+  "gitUiFileStatusHistorical": "{status} в этом коммите",
+  "gitUiSelectAnotherBranch": "Выбрать другую ветку"
 }

@@ -6105,5 +6105,6 @@
   "gitUiFileTypeChanged": "Type gewijzigd",
   "gitUiFileStatusStaged": "{status}, in de index",
   "gitUiFileStatusUnstaged": "{status}, buiten de index",
-  "gitUiFileStatusHistorical": "{status} in deze commit"
+  "gitUiFileStatusHistorical": "{status} in deze commit",
+  "gitUiSelectAnotherBranch": "Andere branch selecteren"
 }

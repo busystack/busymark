@@ -8700,4 +8700,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '이 커밋에서 $status';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => '다른 브랜치 선택';
 }

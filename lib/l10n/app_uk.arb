@@ -4601,5 +4601,6 @@
   "gitUiFileTypeChanged": "Тип змінено",
   "gitUiFileStatusStaged": "{status}, в індексі",
   "gitUiFileStatusUnstaged": "{status}, поза індексом",
-  "gitUiFileStatusHistorical": "{status} у цьому коміті"
+  "gitUiFileStatusHistorical": "{status} у цьому коміті",
+  "gitUiSelectAnotherBranch": "Вибрати іншу гілку"
 }

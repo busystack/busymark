@@ -5856,9 +5856,22 @@ code
           findsNothing,
         );
         expect(instanceIconRect.left, primaryIconRect.left);
-        expect(tocHeaderRowRect.left, firstTocRowRect.left);
-        expect(tocHeaderRowRect.right, firstTocRowRect.right);
-        expect(instanceSelectorRect.left, tocHeaderRowRect.left);
+        expect(
+          tocHeaderRowRect.left + BusyMarkSpacing.md,
+          instanceSelectorRect.left,
+        );
+        expect(
+          firstTocRowRect.left,
+          tocHeaderRowRect.left + BusyMarkSpacing.sm,
+        );
+        expect(
+          tocHeaderRowRect.right - firstTocRowRect.right,
+          BusyMarkSpacing.sm,
+        );
+        expect(
+          instanceSelectorRect.left,
+          tocHeaderRowRect.left + BusyMarkSpacing.md,
+        );
         expect(instanceSelectorRect.right, lessThan(tocHeaderRowRect.right));
         final primaryMenuRect = tester.getRect(
           find.byTooltip(l10n.sidebarViewMenu),
@@ -5870,7 +5883,7 @@ code
           ),
         );
         expect(instanceSelectorRect.height, tocMenuRect.height);
-        expect(instanceSelectorRect.center.dy, tocMenuRect.center.dy);
+        expect(tocMenuRect.top - tocHeaderRowRect.top, BusyMarkSpacing.sm);
         expect(instanceSelectorRect.height, firstTocRowRect.height);
         final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
         addTearDown(mouse.removePointer);
@@ -11396,6 +11409,22 @@ code
     addTearDown(() {
       binding.platformDispatcher.defaultRouteNameTestValue = '/';
     });
+    const clipboardChannel = MethodChannel(richClipboardChannelName);
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      clipboardChannel,
+      (call) async => call.method == 'read'
+          ? <String, Object?>{
+              'text': 'Native sidebar clipboard record',
+              'generation': 1,
+            }
+          : null,
+    );
+    addTearDown(
+      () => binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        clipboardChannel,
+        null,
+      ),
+    );
     final root = Directory('test/fixtures/writerside/basic_project').absolute;
     final workspace = (await tester.runAsync(
       () => const WorkspaceService().openPath(root.path),
@@ -11529,6 +11558,33 @@ code
       return null;
     }
 
+    final headerPositions = <String, Offset>{};
+    void verifyIdentityHeader(String title, {bool hasContext = true}) {
+      final header = find.byWidgetPredicate(
+        (w) => w is shared.NativeSidebarHeader && w.title == title,
+      );
+      expect(header, findsOneWidget);
+      final widget = tester.widget<shared.NativeSidebarHeader>(header);
+      expect(widget.contextLine != null, hasContext);
+      final heading = find.descendant(of: header, matching: find.text(title));
+      final text = tester.widget<Text>(heading);
+      expect(text.maxLines, 1);
+      expect(text.overflow, TextOverflow.ellipsis);
+      final pos = tester.getTopLeft(heading);
+      headerPositions[title] = pos;
+      final guide = headerPositions.values.first;
+      expect(pos.dx, closeTo(guide.dx, .01));
+      expect(pos.dy, closeTo(guide.dy, .01), reason: title);
+      if (hasContext) {
+        final contextLine = find.byWidget(widget.contextLine!);
+        expect(tester.getTopLeft(contextLine).dx, closeTo(pos.dx, .01));
+        expect(
+          tester.getTopLeft(contextLine).dy,
+          greaterThan(tester.getBottomLeft(heading).dy),
+        );
+      }
+    }
+
     final actionMenuGuideRight = tester.getRect(primaryRow).right;
     double? actionMenuRight;
     for (final (key, label, contextRow, expectedDocumentView)
@@ -11561,6 +11617,12 @@ code
       await setDocumentViewMode(expectedDocumentView);
       await selectView(key);
       expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
+      verifyIdentityHeader(switch (key) {
+        LogicalKeyboardKey.digit1 => l10n.files,
+        LogicalKeyboardKey.digit2 => l10n.toc,
+        LogicalKeyboardKey.digit3 => l10n.outline,
+        _ => l10n.gitUiCommit,
+      });
       if (key == LogicalKeyboardKey.digit4) {
         final commit = find.byType(shared.GitCommitView);
         expect(commit, findsOneWidget);
@@ -11586,7 +11648,7 @@ code
         expect(find.text('Commit scope: entire repository'), findsNothing);
         expect(
           find.descendant(of: commit, matching: find.text('Commit')),
-          findsOneWidget,
+          findsNWidgets(2),
         );
         expect(find.text(l10n.gitCommitMessage), findsOneWidget);
         continue;
@@ -11598,7 +11660,7 @@ code
           tester.getBottomLeft(primaryRow).dy;
       expect(
         gap,
-        closeTo(BusyMarkSpacing.sm, 0.01),
+        closeTo(BusyMarkInsets.sidebarHeader.bottom, 0.01),
         reason: '$label sidebar gap',
       );
       final actionMenu = actionMenuMarker(key);
@@ -11624,6 +11686,25 @@ code
         );
       }
     }
+
+    for (final (key, title, context) in [
+      (LogicalKeyboardKey.digit5, l10n.localHistory, true),
+      (LogicalKeyboardKey.digit6, l10n.clipboardHistory, false),
+    ]) {
+      await selectView(key);
+      verifyIdentityHeader(title, hasContext: context);
+    }
+    {
+      final viewMenus = NativeMenuProbe(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+      );
+      await tester.pumpAndSettle();
+      await viewMenus.activate(l10n.gitHostGitLog);
+      await tester.pumpAndSettle();
+      verifyIdentityHeader(l10n.gitHostGitLog);
+    }
+    expect(headerPositions, hasLength(7));
 
     await selectView(LogicalKeyboardKey.digit3);
     final outlineFileMenu = find.byKey(
@@ -11900,8 +11981,8 @@ code
 
     expect(Directionality.of(tester.element(scaffold)), TextDirection.rtl);
     expect(sidebarRect.left, greaterThan(sourceRect.right));
-    expect(resolvedHeaderPadding.right, BusyMarkSpacing.mdPlus);
-    expect(resolvedHeaderPadding.left, BusyMarkSpacing.sm);
+    expect(resolvedHeaderPadding.right, BusyMarkSpacing.md);
+    expect(resolvedHeaderPadding.left, BusyMarkSpacing.md);
   });
 
   testWidgets('workspace sidebar is on the right in Persian', (tester) async {

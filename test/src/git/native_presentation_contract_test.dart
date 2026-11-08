@@ -289,7 +289,7 @@ void main() {
   );
   for (final brightness in Brightness.values) {
     testWidgets(
-      'neutral branch context row opens full modal and repository menu owns Refresh $brightness',
+      'informational branch and separate selector open full modal and repository menu owns Refresh $brightness',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 1000);
         tester.view.devicePixelRatio = 1;
@@ -351,34 +351,31 @@ void main() {
         addTearDown(() => session?.dispose());
         await session!.start();
         await tester.pumpAndSettle();
-        final branch = find.ancestor(
-          of: find.text(client.branch),
-          matching: find.byType(git.GitActionRow),
-        );
+        final branch = find.text(client.branch);
         expect(branch, findsOneWidget);
         expect(
-          find.byWidgetPredicate(
-            (widget) =>
-                widget is Semantics &&
-                widget.properties.tooltip == 'Manage branches',
-          ),
-          findsOneWidget,
+          find.ancestor(of: branch, matching: find.byType(git.GitActionRow)),
+          findsNothing,
         );
+        final choose = find.byKey(const ValueKey('git-select-another-branch'));
+        expect(find.byTooltip('Select another branch'), findsOneWidget);
         expect(find.byTooltip('Refresh'), findsNothing);
         expect(find.byTooltip(repo.root), findsNothing);
-        expect(tester.widget<git.GitActionRow>(branch).dense, isTrue);
         expect(
-          find.descendant(of: branch, matching: find.byType(TextButton)),
+          find.ancestor(of: branch, matching: find.byType(TextButton)),
           findsNothing,
         );
         expect(
-          tester.getRect(branch).height,
+          tester.getRect(choose).height,
           greaterThanOrEqualTo(BusyMarkSizes.iconButton),
         );
+        await tester.tap(branch);
+        await tester.pumpAndSettle();
+        expect(find.byType(git.GitBranchesView), findsNothing);
         final branchText = tester.widget<Text>(find.text(client.branch));
         expect(branchText.maxLines, 1);
         expect(branchText.overflow, TextOverflow.ellipsis);
-        await tester.tap(branch);
+        await tester.tap(choose);
         await tester.pumpAndSettle();
         expect(find.byType(git.GitBranchesView), findsOneWidget);
         expect(find.byType(git.GitNativeDialog), findsOneWidget);
@@ -781,9 +778,13 @@ void main() {
             isTrue,
           );
           for (final label in [l10n.gitUiCommit, l10n.gitUiCommitAndPush]) {
-            final text = tester.widget<Text>(find.text(label));
+            final labelFinder = find.descendant(
+              of: label == l10n.gitUiCommit ? commit : push,
+              matching: find.text(label),
+            );
+            final text = tester.widget<Text>(labelFinder);
             expect(text.overflow, isNull);
-            expect(tester.getSize(find.text(label)).height, lessThan(a.height));
+            expect(tester.getSize(labelFinder).height, lessThan(a.height));
           }
           expect(find.byTooltip(l10n.gitUiLog), findsNothing);
           expect(
@@ -794,7 +795,7 @@ void main() {
             find.byWidgetPredicate(
               (widget) =>
                   widget is Semantics &&
-                  widget.properties.tooltip == l10n.gitUiBranches,
+                  widget.properties.tooltip == l10n.gitUiSelectAnotherBranch,
             ),
             findsOneWidget,
           );

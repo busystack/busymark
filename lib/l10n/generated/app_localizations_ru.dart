@@ -9026,4 +9026,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status в этом коммите';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Выбрать другую ветку';
 }

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:yaru/yaru.dart';
 import 'writerside_property_session.dart';
 
 import '../../app/busymark_design.dart';
@@ -1551,7 +1550,7 @@ class _ResponsivePropertyCombo extends StatelessWidget {
           label: row.title,
           value: row.labelFor(row.selected),
           hint: row.tooltip,
-          child: YaruListTile.square(
+          child: BusyMarkListTile.square(
             title: Text(row.title),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

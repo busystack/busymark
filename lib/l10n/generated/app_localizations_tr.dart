@@ -8942,4 +8942,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return 'Bu commit’te $status';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Başka bir dal seç';
 }

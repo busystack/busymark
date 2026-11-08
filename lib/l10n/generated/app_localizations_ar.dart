@@ -8945,4 +8945,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status في هذا الالتزام';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'اختيار فرع آخر';
 }

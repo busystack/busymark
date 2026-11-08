@@ -9041,4 +9041,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String gitUiFileStatusHistorical(String status) {
     return '$status dans ce commit';
   }
+
+  @override
+  String get gitUiSelectAnotherBranch => 'Sélectionner une autre branche';
 }

@@ -4601,5 +4601,6 @@
   "gitUiFileTypeChanged": "Zmieniono typ",
   "gitUiFileStatusStaged": "{status}, w indeksie",
   "gitUiFileStatusUnstaged": "{status}, poza indeksem",
-  "gitUiFileStatusHistorical": "{status} w tym commicie"
+  "gitUiFileStatusHistorical": "{status} w tym commicie",
+  "gitUiSelectAnotherBranch": "Wybierz inną gałąź"
 }
