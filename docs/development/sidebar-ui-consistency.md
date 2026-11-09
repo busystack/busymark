@@ -2,6 +2,12 @@
 
 ## Final sidebar corrections (2026-11-08)
 
+A subsequent Local History correction uses `BusyMarkGlyphs.mainMenu` for its
+Actions trigger, so both GTK artwork and the catalog glyph show three bars.
+The 190 affected Local History/native header tests and source analysis passed.
+The package/corpus receipts below predate that source change and require fresh
+qualification before they can be used for the updated application.
+
 The four approved corrections are implemented and committed. **Acceptance is
 incomplete:** both qualified packages still require local administrator
 authentication, installed-payload binding and actual installed-app inspection.

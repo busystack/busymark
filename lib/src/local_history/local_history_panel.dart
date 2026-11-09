@@ -106,7 +106,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
           actions: BusyMarkHeaderPopupMenuButton<_HistoryAction>.native(
             key: const ValueKey('local-history-actions-menu'),
             tooltip: context.l10n.actions,
-            icon: BusyMarkGlyphs.menuVertical,
+            icon: BusyMarkGlyphs.mainMenu,
             transparent: true,
             borderRadius: BusyMarkRadius.nativeHeaderButton,
             highlightWhenOpen: false,
