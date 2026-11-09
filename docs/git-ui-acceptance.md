@@ -1,5 +1,15 @@
 # Shared Git UI acceptance
 
+The final four sidebar corrections have evidence in
+[`build/sidebar-final`](../build/sidebar-final/), with causes, source/pin hashes,
+tests, inspected native captures and package checksums in the
+[final correction record](development/sidebar-ui-consistency.md#final-sidebar-corrections-2026-11-08).
+The complete 5,775-case BusyMark corpus, 470 shared tests, 100 BusyFiles Git
+tests and final-source native checks passed. Both packages are qualified, but
+local administrator authentication prevented installation. Installed-payload
+binding and installed-app native acceptance remain open; this is not completed
+acceptance. The older sidebar record below remains historical evidence.
+
 The 2026-11-08 sidebar correction has final-source evidence in
 [`build/sidebar-correction`](../build/sidebar-correction/), summarized in the
 [sidebar design-system record](development/sidebar-ui-consistency.md).

@@ -1,6 +1,119 @@
 # Sidebar consistency: interaction inventory and acceptance
 
-## Current ownership and header contract (2026-11-08)
+## Final sidebar corrections (2026-11-08)
+
+The four approved corrections are implemented and committed. **Acceptance is
+incomplete:** both qualified packages still require local administrator
+authentication, installed-payload binding and actual installed-app inspection.
+The final evidence is in [`build/sidebar-final`](../../build/sidebar-final/);
+`current-work-state.json` and `visual-inspection.json` distinguish qualified
+development-bundle evidence from rejected captures and pending installed gates.
+
+The source-level causes and corrections are:
+
+| Area | Cause | Correction |
+| --- | --- | --- |
+| View selector | The fixed catalog glyph used list artwork. | `BusyMarkGlyphs.sidebarViews` uses existing `YaruIcons.app_grid`, with the localized **Select sidebar view** tooltip/accessible name and unchanged native trigger/menu. |
+| References | A direction tab selected one query; a permanent scope trigger occupied result space. | Both existing direction-keyed queries feed independent hierarchical Incoming/Outgoing sections. Scope choices are checked native Actions menu items; only a heading filter adds muted informational scope text. |
+| Commit | Tracking occupied a separate composition and always printed measured zero counters. | Shared `GitLogHeader.contextDetail` composes title, branch and localized `Tracks origin/main`. Standard title/context spacing is 4px, subordinate context spacing uses `GitSpacing.xxs` (2px), with the same leading inset and standard header-to-content space. Both known-zero counters are omitted; meaningful known divergence remains. |
+| Git Log toggle | The canonical modal action did not receive visibility selection; the upstream button theme also supplied an accent icon color. | Actual modal sidebar visibility drives `NativeGitIconAction.selected`. Its native style explicitly resolves neutral foreground **and icon color**, with filled visible/flat hidden states, native hover/press and restrained keyboard outline. Both hosts use this implementation. |
+
+References continues to use the existing index and generation/revision guards.
+The two requests share active identity and anchor but retain direction and page
+limits separately. Disclosure state survives view remounts and resets for a new
+workspace. Query errors retain Retry independently of the other section;
+loading has no fabricated count. Existing contextual navigation, Link Chooser,
+source/target metadata and dirty-document guards remain. Actual heading-scope
+inspection exposed an existing Writerside Markdown adapter defect: heading-line
+spans excluded their following content. The adapter now delegates Markdown
+section ranges to the existing index's neighboring-heading logic; XML element
+ranges are unchanged. No second index or engine change was introduced.
+
+Tracking remains local snapshot information: unknown counts do not become zero,
+no upstream implies no tracking relationship, and detached/unborn branch
+identity retains its existing semantics. No network refresh was added. Commit
+operations, the footer and modal architecture remain unchanged.
+
+Regression evidence includes six failures against the old shared source in
+`failing-before.log`, followed by passing corrected header/state tests; the
+Markdown scope regression fails with expected 1 / actual 0 in
+`scope-failing-before.log` and passes after correction. The complete BusyMark
+corpus passed **5,775 cases in all 245 files**, zero failures/skips, with its
+receipt independently reverified. The shared suite passed **470** and BusyFiles
+Git tests **100**. Analysis, formatting, localization consistency, resolved native
+audits for both materialized hosts, ownership audits and adversarial checks,
+exact dependency materialization, BusyMark debug/release builds and the BusyFiles
+release/package build passed. Packaging/corpus receipt adversarial tests passed
+25 cases. Earlier failed attempts remain in their original logs.
+
+Actual X11 screenshots were inspected, including:
+
+- The 32-case release-bundle matrix in `frozen-native-matrix`: both themes,
+  English/German/Japanese/Arabic RTL, 1.0/1.5 text and normal/narrow widths.
+  Files/Commit/Log/References show a constant selector; expanded/collapsed
+  References, checked Actions scopes, contextual menus and real heading-filtered
+  results were inspected. A separate run covers all eight view-menu entries.
+- All 16 corrected empty-state cases in `immutable-reference-empty`, asserting
+  the actual `staged.md` identity, both zero counts and both empty notices.
+  The older matrix's incorrectly targeted empty-document frames are rejected.
+- `qualified-reference-states` shows real loading, unavailable and missing
+  destinations. Independent query-error/ready combinations and recovery have
+  widget regression coverage; these native unavailable rows are not claimed as
+  an injected query-failure test.
+- `qualified-native-tracking` shows real local upstream snapshots with measured
+  0/0 and 3/2 divergence. `verified-mark-modal-light-repeat` and
+  `verified-mark-modal-dark-rtl` show populated modal hide/show, hover, press,
+  keyboard focus and narrow restoration, preserving search/reference/filter/
+  candidate state and the main sidebar. BusyFiles parity is in
+  `verified-native-files-light` and `final-native-files-dark`.
+
+Accepted native receipts require natural exit, unchanged repository bytes and
+runtime cleanup. Images are original native captures; inspection sheets contain
+only crops/resizes. An earlier empty-state run overlapped a package rebuild and
+failed sealed-payload validation during file replacement. It is rejected; final
+payloads compare byte-for-byte equal, and the completed empty matrix uses a
+separate immutable bundle. Wrong-target modal/navigation attempts and stale
+empty frames are also explicitly rejected, without rewriting logs.
+
+Shared commits are `15a81c5` and
+`460f1256ae9aa4d85bb1eca929c500bb76c661b9`; BusyFiles consumers are through
+`d6b456192c26794f9db5ef46865bb6684b9d8ea5`. BusyMark implementation commits run
+from `5e4b7c9` through `58990d7`, with reviewed goldens/archive packaging at
+`edcad83` and native harness qualification through `ada1653`. Both consumers pin
+the exact shared revision above, archive SHA-256
+`fd64b765176ecee67bfa2b578c574cc39b28f43478a227e28d7391fc6b6eb951`
+and tree SHA-256
+`564103f0b558943c5668ee1c2664e1befd9d51e66608b24541e1f5ef93907087`.
+The engine remains `7d8e55d8034aeb85cddac1c0f498b0f3cc33105b`.
+
+Compiled production SHA-256 receipts bind BusyMark
+`ee234ae779f989c49119272a59520cfcc8a0903f2334f0f9776626911df60b40`,
+shared UI `c599a9a0ab2a76d569ad2d0415541a14c5a41231175b79920f3748e0c9f0489d`
+and engine `a91a6a6c8464aba7cb9bc910484960e179edfdffb17e9c983b5bac45681a189c`.
+Later host documentation/tool commits do not change those compiled inputs.
+The official unmodified Flutter 3.47.5 / Dart 3.13.4 toolchain and locked
+third-party versions remain intact. No push, tag or publication occurred.
+
+Both final packages are on the mounted build volume identified by
+`packaging-volume.txt`, with qualified complete-payload receipts:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `busymark.snap` (local development repack) | `268448ca956792c33f2930b87e42ee7b7f03d588ea1699790bdff38d12149ea5` |
+| `busyfiles/busyfiles_0.0.1-1_amd64.deb` | `0a5146b260bc199103ec107f9abe5628d42555005d867a0e9f2b3570012ceb97` |
+
+Both standard install attempts stopped at
+`sudo: interactive authentication is required`. No installed application was
+changed. The reviewable checksum-bound
+[`install-qualified-packages.sh`](../../build/sidebar-final/install-qualified-packages.sh)
+uses ordinary `dpkg -i` and `snap refresh --dangerous` without purging application
+data. After local authentication, actual installed payloads and both installed
+native applications still need verification. The historical platform/lifecycle
+observations below remain independent; X11 development-bundle success does not
+waive Wayland, Windows, fractional scaling, accessibility-lifetime or strict-Snap
+credential gates. Full acceptance must not be reported yet.
+
+## Earlier sidebar correction (2026-11-08; superseded above)
 
 BusyMark owns `BusyMarkFocusStyle`, `BusyMarkFocusIndicator`, context-menu key
 handling and `BusyMarkSidebarHeader`. General theme/design code imports no Git
