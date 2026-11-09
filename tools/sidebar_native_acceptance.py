@@ -45,6 +45,11 @@ def fixture(parent):
     return root
 
 
+def native_label(value):
+    # Directional isolation is presentation, not part of a fixture filename.
+    return value.translate(str.maketrans('', '', '\u061c\u200e\u200f\u2066\u2067\u2068\u2069'))
+
+
 def observe(desktop, name):
     desktop.send('accessibility', name=name)
     return json.loads((desktop.output/(name+'-accessibility.json')).read_text())['nodes']
@@ -168,11 +173,12 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
                 desktop.send('move', x=desktop.width//2, y=500)
                 desktop.capture('references-heading-scope')
                 choose(desktop, 0, rtl, labels[0], titles[0])
-                wait_state(desktop, lambda rows: any(n['name']=='staged.md' and n['role']=='panel' for n in rows), '_empty-file-ready')
-                desktop.send('activateAccessible', name='staged.md', role='panel')
+                empty_rows = wait_state(desktop, lambda rows: any(native_label(n['name'])=='staged.md' and n['role']=='panel' and n['enabled'] for n in rows), '_empty-file-ready')
+                empty_name = next(n['name'] for n in empty_rows if native_label(n['name'])=='staged.md' and n['role']=='panel' and n['enabled'])
+                desktop.send('activateAccessible', name=empty_name, role='panel')
                 desktop.send('wait', seconds=.5)
                 choose(desktop, 7, rtl, labels[7], titles[7])
-                wait_state(desktop, lambda rows: any(n['role']=='panel' and n['name'].startswith(titles[7]+'\nstaged.md') for n in rows)
+                wait_state(desktop, lambda rows: any(n['role']=='panel' and native_label(n['name']).startswith(titles[7]+'\nstaged.md') for n in rows)
                     and all(any(n['name']==catalog[key]+' (0)' for n in rows) for key in ['referenceIncoming','referenceOutgoing'])
                     and sum(n['name']==catalog['referenceNoResults'] for n in rows)==2, '_empty-document-ready')
                 desktop.capture('references-empty-document')
