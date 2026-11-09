@@ -7,12 +7,14 @@ import 'package:vm_service/utils.dart';
 
 Future<void> main(List<String> args) async {
   final log = File(args[0]).readAsStringSync();
-  final urls = RegExp(r'http://127\.0\.0\.1:\d+/[A-Za-z0-9_=-]+/')
-      .allMatches(log);
+  final urls = RegExp(
+    r'http://127\.0\.0\.1:\d+/[A-Za-z0-9_=-]+/',
+  ).allMatches(log);
   if (urls.isEmpty) throw StateError('Ordinary debug service not ready');
   final service = await vmServiceConnectUri(
-    convertToWebSocketUrl(serviceProtocolUrl: Uri.parse(urls.last.group(0)!))
-        .toString(),
+    convertToWebSocketUrl(
+      serviceProtocolUrl: Uri.parse(urls.last.group(0)!),
+    ).toString(),
   );
   try {
     final vm = await service.getVM();
@@ -22,8 +24,10 @@ Future<void> main(List<String> args) async {
       (l) => l.uri == 'package:flutter/src/widgets/binding.dart',
     );
     const expressions = {
-      'textScale': 'WidgetsBinding.instance.platformDispatcher.textScaleFactor.toString()',
-      'devicePixelRatio': 'WidgetsBinding.instance.platformDispatcher.views.single.devicePixelRatio.toString()',
+      'textScale':
+          'WidgetsBinding.instance.platformDispatcher.textScaleFactor.toString()',
+      'devicePixelRatio':
+          'WidgetsBinding.instance.platformDispatcher.views.single.devicePixelRatio.toString()',
     };
     final values = <String, String?>{};
     for (final entry in expressions.entries) {

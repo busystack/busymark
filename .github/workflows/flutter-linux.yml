@@ -46,6 +46,7 @@ jobs:
             clang \
             cmake \
             dbus-daemon \
+            gnome-keyring \
             gsettings-desktop-schemas \
             dconf-cli \
             fonts-noto-core \
@@ -68,6 +69,8 @@ jobs:
             rsync \
             xvfb \
             weston \
+            x11-xserver-utils \
+            xdg-desktop-portal-gtk \
             xz-utils
 
       - name: Enable Bubblewrap sandbox for WebKitGTK tests

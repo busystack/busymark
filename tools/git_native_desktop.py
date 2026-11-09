@@ -38,9 +38,20 @@ def require_installed_busyfiles(binary, compiled, env):
         raise RuntimeError('Installed acceptance cannot override native library or daemon paths')
 
 
+class ReplacedAccessibleChild(RuntimeError):
+    pass
+
+
+def accessible_child(parent, index):
+    child = parent.get_child_at_index(index)
+    if child is None:
+        raise ReplacedAccessibleChild(f'AT-SPI child {index} was replaced during enumeration')
+    return child
+
+
 def owned_accessible_nodes(desktop, pid):
     """Inspect only accessibility peers belonging to the launched application."""
-    roots = [desktop.get_child_at_index(i) for i in range(desktop.get_child_count())]
+    roots = [accessible_child(desktop, i) for i in range(desktop.get_child_count())]
     pending = [(node, 0) for node in roots if node.get_process_id() == pid]
     result = []
     while pending:
@@ -50,11 +61,28 @@ def owned_accessible_nodes(desktop, pid):
         node.clear_cache()
         result.append(node)
         if depth < 30:
-            pending.extend((node.get_child_at_index(i), depth + 1)
+            pending.extend((accessible_child(node, i), depth + 1)
                            for i in range(min(node.get_child_count(), 500)))
     if not result:
         raise RuntimeError('Owned application has no AT-SPI accessibility peer')
     return result
+
+
+def retry_accessible_snapshot(collect):
+    from gi.repository import GLib
+    for attempt in range(10):
+        try:
+            return collect()
+        except (GLib.Error, ReplacedAccessibleChild) as error:
+            # Filtering can replace a row between enumeration and Get. Read a
+            # new complete owned snapshot; never omit that node, accept partial
+            # evidence, retry actions, or hide transport/permission failures.
+            stale = isinstance(error, ReplacedAccessibleChild) or (error.domain == 'atspi_error' and
+                     '/org/a11y/atspi/accessible/' in error.message and
+                     'does not exist' in error.message)
+            if not stale or attempt == 9:
+                raise
+            time.sleep(.1)
 
 
 def seed_private_preferences(env, values):
@@ -93,6 +121,38 @@ def native_launch_arguments(binary, repository, env, snap_app=None):
     return ['snap', 'run', '--shell', 'busymark', '-c',
             'exec env -u WAYLAND_DISPLAY -u SSH_AUTH_SOCK -u BUSYSTACK_GIT_EXECUTABLE -u BUSYSTACK_GIT_HELPER_PATH -- "$@"', 'busystack-native-acceptance',
             *values, str(binary), str(repository)]
+
+
+def start_private_secret_service(env, control, log_path):
+    if not env.get('DBUS_SESSION_BUS_ADDRESS', '').startswith(
+            ('unix:path=/tmp/', 'unix:abstract=/tmp/dbus-bsg-native-')):
+        raise RuntimeError('Secret Service acceptance requires a private session bus')
+    keyring_env = dict(env)
+    for key in ['HOME', 'GNOME_KEYRING_CONTROL', 'SSH_AUTH_SOCK']:
+        keyring_env.pop(key, None)
+    with Path(log_path).open('w') as log:
+        # --unlock prepares the login keyring, but does not initialize the
+        # Secret Service on Ubuntu 24.04. Start the same private daemon before
+        # any GTK/portal activation can request its credentials interface.
+        for option, password in [('--unlock', '\n'), ('--start', '')]:
+            subprocess.run(['gnome-keyring-daemon', option, '--components=secrets',
+                            '--control-directory='+str(control)],
+                           input=password, text=True, env=keyring_env,
+                           stdout=log, stderr=log, check=True)
+    deadline = time.monotonic() + 10
+    while True:
+        owner = subprocess.run([
+            'gdbus', 'call', '--session', '--dest', 'org.freedesktop.DBus',
+            '--object-path', '/org/freedesktop/DBus', '--method',
+            'org.freedesktop.DBus.NameHasOwner', 'org.freedesktop.secrets',
+        ], env=env, text=True, capture_output=True, timeout=5)
+        if owner.returncode == 0 and owner.stdout.strip() == '(true,)':
+            return {'provider': 'gnome-keyring', 'ready': True,
+                    'busName': 'org.freedesktop.secrets',
+                    'controlDirectory': str(control)}
+        if time.monotonic() >= deadline:
+            raise RuntimeError('Private Secret Service did not acquire its bus name: '+owner.stderr)
+        time.sleep(.1)
 
 
 def git_fixture_state(executable, repository):
@@ -145,6 +205,29 @@ def plain_directory_state(executable, repository):
             continue
         files[str(path.relative_to(repository))] = hashlib.sha256(data).hexdigest()
     return {'kind': 'plain directory', 'files': files}
+
+
+def configure_native_portals(env):
+    # Headless sessions have no desktop-provided portals.conf. Select the
+    # official GTK settings backend and the already qualified Secret Service
+    # through the supported configuration API, only in this private profile.
+    config = Path(env['XDG_CONFIG_HOME']) / 'xdg-desktop-portal/portals.conf'
+    config.parent.mkdir(parents=True, exist_ok=True)
+    config.write_text('[preferred]\ndefault=gtk\n'
+                      'org.freedesktop.impl.portal.Secret=gnome-keyring\n')
+
+
+def require_portal_text_scale(env, text_scale):
+    from gi.repository import GLib
+    setting = subprocess.run(['gdbus', 'call', '--session', '--dest', 'org.freedesktop.portal.Desktop',
+        '--object-path', '/org/freedesktop/portal/desktop', '--method', 'org.freedesktop.portal.Settings.Read',
+        'org.gnome.desktop.interface', 'text-scaling-factor'],
+        env=env, capture_output=True, text=True, timeout=10, check=True)
+    response = setting.stdout.strip()
+    value = GLib.Variant.parse(None, response, None, None).unpack()[0]
+    if not isinstance(value, float) or value != text_scale:
+        raise RuntimeError(f'Flutter settings portal text scale {value!r} differs from {text_scale!r}')
+    return response
 
 
 def configure_native_text_dpi(env, text_scale):
@@ -258,6 +341,7 @@ def main():
     env['NO_AT_BRIDGE'] = '0'
     env['GTK_MODULES'] = 'gail:atk-bridge'
     env['GSETTINGS_BACKEND'] = 'keyfile'
+    configure_native_portals(env)
     env.pop('WAYLAND_DISPLAY', None)
     if not env.get('DBUS_SESSION_BUS_ADDRESS', '').startswith(('unix:path=/tmp/', 'unix:abstract=/tmp/dbus-bsg-native-')):
         raise RuntimeError('Run inside a dedicated dbus-run-session')
@@ -273,12 +357,12 @@ def main():
     subprocess.run(['dbus-update-activation-environment', 'DISPLAY', 'GDK_BACKEND', 'GSETTINGS_BACKEND',
                     'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME', 'XDG_RUNTIME_DIR',
                     'GNOME_KEYRING_CONTROL'], env=env, check=True)
-    keyring_env = dict(env)
-    keyring_env.pop('HOME', None)
-    keyring_env.pop('GNOME_KEYRING_CONTROL', None)
-    subprocess.run(['gnome-keyring-daemon', '--unlock', '--components=secrets',
-                    '--control-directory='+str(control)], input='\n', text=True,
-                   env=keyring_env, stdout=(output/'keyring.log').open('w'), check=True)
+    try:
+        credential_service = start_private_secret_service(env, control, output/'keyring.log')
+    except BaseException:
+        xvfb.terminate(); xvfb.wait(timeout=10)
+        cleanup_runtime()
+        raise
     # Supported desktop configuration, scoped to this disposable profile and bus.
     # The official Flutter settings portal reads this same GNOME preference.
     text_scale = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0
@@ -398,6 +482,7 @@ def main():
             else 'relocated DEB payload' if installed else 'development bundle'
         )
     receipt['gtkTextMetrics'] = gtk_metrics
+    receipt['credentialService'] = credential_service
     receipt['fixtureKind'] = 'plain directory' if plain_directory else 'Git repository'
     payloads = [binary.parent / 'data/flutter_assets/kernel_blob.bin', binary.parent / 'lib/libapp.so']
     receipt['applicationPayloads'] = {str(p.relative_to(binary.parent)): hashlib.sha256(p.read_bytes()).hexdigest() for p in payloads if p.exists()}
@@ -466,10 +551,7 @@ def main():
             if len(fields) != 7:
                 raise RuntimeError('Cannot verify the installed Snap profile/display')
             receipt['verifiedApplicationProfile'] = fields
-        setting = subprocess.run(['gdbus', 'call', '--session', '--dest', 'org.freedesktop.portal.Desktop',
-            '--object-path', '/org/freedesktop/portal/desktop', '--method', 'org.freedesktop.portal.Settings.Read',
-            'org.gnome.desktop.interface', 'text-scaling-factor'], env=env, capture_output=True, text=True, timeout=10)
-        receipt['portalTextScale'] = setting.stdout.strip() if setting.returncode == 0 else setting.stderr.strip()
+        receipt['portalTextScale'] = require_portal_text_scale(env, text_scale)
         print(json.dumps({'pid': process.pid, 'backend': 'X11/Xvfb', 'display': env['DISPLAY'], 'size': geometry(desktop, window), 'scale': 1}), flush=True)
         for line in sys.stdin:
             command = json.loads(line)
@@ -530,25 +612,44 @@ def main():
                 gi.require_version('Atspi', '2.0')
                 from gi.repository import Atspi
                 Atspi.set_timeout(5000, 10000)
-                nodes = owned_accessible_nodes(Atspi.get_desktop(0), process.pid)
-                rows = []
-                matches = []
-                for node in nodes:
-                    states = node.get_state_set()
-                    visible = states.contains(Atspi.StateType.SHOWING) and states.contains(Atspi.StateType.VISIBLE)
-                    name = node.get_name()
-                    role = Atspi.role_get_name(node.get_role())
-                    enabled = states.contains(Atspi.StateType.ENABLED)
-                    row = {'name': name, 'description': node.get_description(),
-                           'role': role, 'showing': visible, 'enabled': enabled,
-                           'focused': states.contains(Atspi.StateType.FOCUSED),
-                           'selected': states.contains(Atspi.StateType.SELECTED),
-                           'checked': states.contains(Atspi.StateType.CHECKED)}
-                    if visible and name:
-                        rows.append(row)
-                    if visible and enabled and name == command.get('name') and (
-                            command.get('role') is None or role == command['role']):
-                        matches.append(node)
+                def snapshot():
+                    nodes = owned_accessible_nodes(Atspi.get_desktop(0), process.pid)
+                    rows = []
+                    matches = []
+                    for node in nodes:
+                        name = node.get_name()
+                        role = Atspi.role_get_name(node.get_role())
+                        description = node.get_description()
+                        # Property reads/enumeration can refill the AT-SPI
+                        # cache. Fetch current states last, directly before
+                        # materializing the focus/selection/loading flags.
+                        node.clear_cache()
+                        states = node.get_state_set()
+                        visible = states.contains(Atspi.StateType.SHOWING) and states.contains(Atspi.StateType.VISIBLE)
+                        enabled = states.contains(Atspi.StateType.ENABLED)
+                        row = {'name': name, 'description': description,
+                               'role': role, 'showing': visible, 'enabled': enabled,
+                               'focused': states.contains(Atspi.StateType.FOCUSED),
+                               'busy': states.contains(Atspi.StateType.BUSY),
+                               'selected': states.contains(Atspi.StateType.SELECTED),
+                               'checked': states.contains(Atspi.StateType.CHECKED)}
+                        if visible and role == 'text' and name == command.get('textName'):
+                            row['text'] = Atspi.Text.get_text(node, 0, -1)
+                        if visible and role in {'menu item', 'check menu item'}:
+                            row['indexInParent'] = node.get_index_in_parent()
+                        if visible and name:
+                            inspect_bounds = (name == command.get('boundsName') and
+                                              (command.get('boundsRole') is None or role == command['boundsRole']))
+                            component = node.get_component_iface() if inspect_bounds else None
+                            if component is not None:
+                                bounds = component.get_extents(Atspi.CoordType.SCREEN)
+                                row['bounds'] = [bounds.x, bounds.y, bounds.width, bounds.height]
+                            rows.append(row)
+                        if visible and enabled and name == command.get('name') and (
+                                command.get('role') is None or role == command['role']):
+                            matches.append(node)
+                    return rows, matches
+                rows, matches = retry_accessible_snapshot(snapshot)
                 if kind == 'accessibility':
                     target = output / (command['name'] + '-accessibility.json')
                     target.write_text(json.dumps({'pid': process.pid, 'nodes': rows}, indent=2)+'\n')

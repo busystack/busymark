@@ -311,9 +311,11 @@ void _worker(List<dynamic> arguments) {
   final path = arguments[0] as String;
   final ready = arguments[1] as SendPort;
   final replies = arguments[2] as SendPort;
-  late Database db;
+  Database? openedDatabase;
+  late final Database db;
   try {
     db = sqlite3.open(path);
+    openedDatabase = db;
     if (Platform.isLinux &&
         Process.runSync('chmod', ['600', path]).exitCode != 0) {
       throw StateError('Cannot protect the Nextcloud Notes database.');
@@ -383,6 +385,10 @@ void _worker(List<dynamic> arguments) {
       rethrow;
     }
   } catch (_) {
+    // Release database and WAL checkpoint locks before the caller observes
+    // failure and can immediately inspect or reopen the same store. Killing
+    // the isolate after notification does not await SQLite finalizers.
+    openedDatabase?.close();
     ready.send([false, 'Cannot open or migrate the Nextcloud Notes database.']);
     return;
   }

@@ -63,7 +63,8 @@ class OfficialFlutterWorkflowTest(unittest.TestCase):
         commands = [shlex.split(line, comments=True) for line in script.replace('\\\n', '').splitlines()]
         packages = {arg for command in commands if command[:3] == ['sudo', 'apt-get', 'install']
                     for arg in command[3:]}
-        self.assertTrue({'clang', 'cmake', 'python3-yaml'}.issubset(packages))
+        self.assertTrue({'clang', 'cmake', 'python3-yaml', 'gnome-keyring',
+                         'x11-xserver-utils', 'xdg-desktop-portal-gtk'}.issubset(packages))
 
     def test_snap_build_invokes_selected_sdk_with_locked_inputs(self):
         # Execute the real build preamble in a disposable tree. The SDK spy

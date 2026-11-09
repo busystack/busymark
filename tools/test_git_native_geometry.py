@@ -6,13 +6,171 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from application_close_smoke import Desktop
-from git_native_desktop import configure_native_text_dpi, geometry, require_installed_busyfiles, owned_accessible_nodes, native_launch_arguments, git_fixture_state, seed_private_preferences
+from git_native_desktop import configure_native_portals, configure_native_text_dpi, geometry, require_installed_busyfiles, owned_accessible_nodes, native_launch_arguments, git_fixture_state, seed_private_preferences, start_private_secret_service, require_portal_text_scale
 
 
 class NativeGeometryTest(unittest.TestCase):
+    def test_null_child_restarts_the_complete_owned_snapshot(self):
+        from git_native_desktop import retry_accessible_snapshot
+        root, owned, replacement = mock.Mock(), mock.Mock(), mock.Mock()
+        root.get_child_count.return_value = 1
+        root.get_child_at_index.return_value = owned
+        owned.get_process_id.return_value = 42
+        owned.get_child_count.return_value = 1
+        owned.get_child_at_index.side_effect = [None, replacement]
+        replacement.get_child_count.return_value = 0
+        with mock.patch('git_native_desktop.time.sleep'):
+            self.assertEqual(retry_accessible_snapshot(lambda: owned_accessible_nodes(root, 42)),
+                             [owned, replacement])
+        self.assertEqual(owned.clear_cache.call_count, 2)
+
+    def test_persistently_null_accessible_child_fails_closed(self):
+        from git_native_desktop import ReplacedAccessibleChild, retry_accessible_snapshot
+        root = mock.Mock()
+        root.get_child_count.return_value = 1
+        root.get_child_at_index.return_value = None
+        with mock.patch('git_native_desktop.time.sleep'), self.assertRaises(ReplacedAccessibleChild):
+            retry_accessible_snapshot(lambda: owned_accessible_nodes(root, 42))
+        self.assertEqual(root.get_child_at_index.call_count, 10)
+        collect = mock.Mock(side_effect=AttributeError('Unrelated programming error'))
+        with self.assertRaises(AttributeError):
+            retry_accessible_snapshot(collect)
+        collect.assert_called_once()
+
+    def test_flutter_portal_rejects_missing_interface_or_wrong_scale(self):
+        with mock.patch('git_native_desktop.subprocess.run', side_effect=subprocess.CalledProcessError(1, 'gdbus')):
+            with self.assertRaises(subprocess.CalledProcessError):
+                require_portal_text_scale({}, 1.5)
+        for response, requested in [('(<<1.0>>,)', 1.5), ('(<<true>>,)', 1.0),
+                                    ("(<<'1.5'>>,)", 1.5)]:
+            with self.subTest(response=response), mock.patch('git_native_desktop.subprocess.run',
+                    return_value=subprocess.CompletedProcess('gdbus', 0, response, '')):
+                with self.assertRaisesRegex(RuntimeError, 'differs from'):
+                    require_portal_text_scale({}, requested)
+
+    def test_native_graph_bounds_clip_rtl_raster_rounding_and_reject_wrong_columns(self):
+        from git_native_smoke import native_history_graph_bounds
+        # Actual Ubuntu 24.04 Arabic capture: GTK viewport is 45..957, while
+        # independently rounded/ceiled first-column extents end at 958.
+        table, subject = (45, 193, 957, 609), (385, 193, 958, 227)
+        self.assertEqual(native_history_graph_bounds(table, subject, True), (917, 227, 957, 609))
+        self.assertEqual(native_history_graph_bounds((333, 193, 1245, 609),
+                         (333, 193, 922, 227), False), (333, 227, 373, 609))
+        for invalid in [(385, 193, 959, 227), (385, 193, 940, 227),
+                        (0, 193, 958, 227), (930, 193, 958, 227),
+                        (385, 193, 958, 600)]:
+            with self.subTest(subject=invalid), self.assertRaisesRegex(RuntimeError, 'geometry is invalid'):
+                native_history_graph_bounds(table, invalid, True)
+
+    def test_replaced_accessible_row_requires_a_new_complete_snapshot(self):
+        from gi.repository import GLib
+        from git_native_desktop import retry_accessible_snapshot
+        stale = GLib.Error('object /org/a11y/atspi/accessible/319 does not exist',
+                          'atspi_error', 1)
+        complete = {'ownedRows': ['replacement'], 'partial': False}
+        collect = mock.Mock(side_effect=[stale, complete])
+        with mock.patch('git_native_desktop.time.sleep'):
+            self.assertIs(retry_accessible_snapshot(collect), complete)
+        self.assertEqual(collect.call_count, 2)
+
+    def test_perpetually_replaced_accessibility_tree_fails_closed(self):
+        from gi.repository import GLib
+        from git_native_desktop import retry_accessible_snapshot
+        collect = mock.Mock(side_effect=GLib.Error(
+            'object /org/a11y/atspi/accessible/319 does not exist', 'atspi_error', 1))
+        with mock.patch('git_native_desktop.time.sleep'), self.assertRaises(GLib.Error):
+            retry_accessible_snapshot(collect)
+        self.assertEqual(collect.call_count, 10)
+
+    def test_accessibility_transport_and_unrelated_errors_are_never_retried(self):
+        from gi.repository import GLib
+        from git_native_desktop import retry_accessible_snapshot
+        for message, domain in [
+            ('timeout from dbind', 'atspi_error'),
+            ('Permission denied', 'atspi_error'),
+            ('object /unrelated/319 does not exist', 'atspi_error'),
+            ('object /org/a11y/atspi/accessible/319 does not exist', 'other_error'),
+        ]:
+            with self.subTest(message=message, domain=domain):
+                collect = mock.Mock(side_effect=GLib.Error(message, domain, 1))
+                with self.assertRaises(GLib.Error):
+                    retry_accessible_snapshot(collect)
+                self.assertEqual(collect.call_count, 1)
+
+    def test_history_graph_requires_a_rendered_column_across_native_accent_colors(self):
+        from PIL import Image, ImageDraw
+        from git_native_smoke import graph_rendered
+        for color in [(53, 132, 228), (233, 84, 32)]:
+            image = Image.new('RGB', (40, 400), (240, 240, 240))
+            self.assertFalse(graph_rendered(image))
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((2, 5, 37, 30), fill=color)
+            self.assertFalse(graph_rendered(image), 'A button or one selected row is not a graph')
+            draw.line((10, 40, 10, 350), fill=color, width=2)
+            self.assertTrue(graph_rendered(image))
+            draw.rectangle((0, 0, 39, 399), fill=color)
+            self.assertFalse(graph_rendered(image), 'A cleared or solid surface is not a graph')
+
+    def test_secret_service_cannot_use_the_desktop_session_bus(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            env = {'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus'}
+            with mock.patch('git_native_desktop.subprocess.run') as run:
+                with self.assertRaisesRegex(RuntimeError, 'private session bus'):
+                    start_private_secret_service(env, root/'keyring', root/'keyring.log')
+                run.assert_not_called()
+
+    def test_private_secret_service_is_ready_and_its_login_collection_is_unlocked(self):
+        with tempfile.TemporaryDirectory(prefix='bsg-keyring-test-') as temporary:
+            script = '''
+import json, os, sys
+from pathlib import Path
+sys.path.insert(0, str(Path.cwd()/'tools'))
+from git_native_desktop import start_private_secret_service
+from gi.repository import Gio, GLib
+root = Path(sys.argv[1])
+env = dict(os.environ)
+for suffix in ['CONFIG_HOME', 'DATA_HOME', 'CACHE_HOME', 'STATE_HOME', 'RUNTIME_DIR']:
+    directory = root/suffix
+    directory.mkdir(mode=0o700)
+    env['XDG_'+suffix] = str(directory)
+control = root/'RUNTIME_DIR/keyring'
+control.mkdir(mode=0o700)
+service = start_private_secret_service(env, control, root/'keyring.log')
+connection = Gio.DBusConnection.new_for_address_sync(
+    env['DBUS_SESSION_BUS_ADDRESS'],
+    Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT | Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION,
+    None, None)
+flags = Gio.DBusCallFlags.NO_AUTO_START
+owned = connection.call_sync('org.freedesktop.DBus', '/org/freedesktop/DBus',
+    'org.freedesktop.DBus', 'NameHasOwner',
+    GLib.Variant('(s)', ('org.freedesktop.secrets',)),
+    GLib.VariantType('(b)'), flags, 5000, None).unpack()[0]
+if not owned:
+    raise RuntimeError('Private service was not initialized before inspection')
+collection = connection.call_sync('org.freedesktop.secrets', '/org/freedesktop/secrets',
+    'org.freedesktop.Secret.Service', 'ReadAlias', GLib.Variant('(s)', ('default',)),
+    GLib.VariantType('(o)'), flags, 5000, None).unpack()[0]
+if collection == '/':
+    raise RuntimeError('Private login collection was not created')
+locked = connection.call_sync('org.freedesktop.secrets', collection,
+    'org.freedesktop.DBus.Properties', 'Get',
+    GLib.Variant('(ss)', ('org.freedesktop.Secret.Collection', 'Locked')),
+    GLib.VariantType('(v)'), flags, 5000, None).unpack()[0]
+connection.close_sync(None)
+print(json.dumps({'ready': service['ready'], 'collectionUnlocked': not locked}))
+'''
+            result = subprocess.run(
+                ['dbus-run-session', '--', '/usr/bin/python3', '-c', script, temporary],
+                cwd=Path(__file__).resolve().parents[1], text=True,
+                capture_output=True, timeout=60)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(json.loads(result.stdout), {'ready': True, 'collectionUnlocked': True})
+
     def test_private_preferences_cannot_seed_trust_or_overwrite_existing_profile(self):
         with tempfile.TemporaryDirectory() as temporary:
             env = {'XDG_DATA_HOME': temporary}
@@ -104,7 +262,7 @@ class NativeGeometryTest(unittest.TestCase):
 
     def test_enlarged_desktop_scales_real_gtk_text_as_well_as_flutter(self):
         with tempfile.TemporaryDirectory(prefix='bsg-native-dpi-') as temporary:
-            env = dict(os.environ, GDK_BACKEND='x11', GSETTINGS_BACKEND='memory')
+            env = dict(os.environ, GDK_BACKEND='x11', GSETTINGS_BACKEND='keyfile')
             env.pop('WAYLAND_DISPLAY', None)
             for suffix in ['CONFIG_HOME', 'DATA_HOME', 'CACHE_HOME', 'STATE_HOME', 'RUNTIME_DIR']:
                 directory = Path(temporary)/suffix
@@ -115,17 +273,30 @@ class NativeGeometryTest(unittest.TestCase):
                                       stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             env['DISPLAY'] = ':'+server.stdout.readline().decode().strip()
             try:
+                configure_native_portals(env)
                 configure_native_text_dpi(env, 1.5)
                 query = ('import subprocess;subprocess.run(["dbus-update-activation-environment",'
-                         '"DISPLAY","GDK_BACKEND","XDG_CONFIG_HOME","XDG_DATA_HOME",'
+                         '"DISPLAY","GDK_BACKEND","GSETTINGS_BACKEND","XDG_CONFIG_HOME","XDG_DATA_HOME",'
                          '"XDG_CACHE_HOME","XDG_STATE_HOME","XDG_RUNTIME_DIR"],check=True);'
+                         'subprocess.run(["gsettings","set","org.gnome.desktop.interface",'
+                         '"text-scaling-factor","1.5"],check=True);'
+                         'import os,sys;sys.path.insert(0,"tools");'
+                         'from git_native_desktop import require_portal_text_scale;'
+                         'portal=require_portal_text_scale(os.environ,1.5);'
                          'import gi,json;gi.require_version("Gtk","3.0");'
                          'from gi.repository import Gtk,Gdk,GObject;Gtk.init([]);'
-                         'print(json.dumps({"backend":GObject.type_name(Gdk.Display.get_default()),'
-                         '"dpi":Gtk.Settings.get_default().get_property("gtk-xft-dpi")}))')
-                result = json.loads(subprocess.check_output(
-                    ['dbus-run-session', '--', '/usr/bin/python3', '-c', query], env=env, text=True))
-                self.assertEqual(result, {'backend': 'GdkX11Display', 'dpi': 144*1024})
+                         'print("NATIVE_SCALE_RESULT="+json.dumps({"backend":GObject.type_name(Gdk.Display.get_default()),'
+                         '"dpi":Gtk.Settings.get_default().get_property("gtk-xft-dpi"),'
+                         '"portal":portal}))')
+                output = subprocess.check_output(
+                    ['dbus-run-session', '--', '/usr/bin/python3', '-c', query], env=env, text=True)
+                # Activated accessibility services can log to inherited stdout.
+                records = [line.removeprefix('NATIVE_SCALE_RESULT=') for line in output.splitlines()
+                           if line.startswith('NATIVE_SCALE_RESULT=')]
+                self.assertEqual(len(records), 1, output)
+                result = json.loads(records[0])
+                self.assertEqual(result, {'backend': 'GdkX11Display', 'dpi': 144*1024,
+                                          'portal': '(<<1.5>>,)'})
             finally:
                 server.terminate(); server.wait(timeout=10)
                 server.stdout.close()

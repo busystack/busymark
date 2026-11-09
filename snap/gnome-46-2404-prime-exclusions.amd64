@@ -5,6 +5,9 @@
 # desktop-integration prime hook requires each exact path before removing it,
 # so an Ubuntu package layout change fails the clean build for a fresh audit.
 # Do not add retained libav, plugins-bad, or plugins-ugly files to this list.
+# libsecret from the pinentry-gnome3 dependency chain is also supplied by
+# gnome-46-2404 revision 177. Keep the application and credential tools on
+# that shared runtime rather than staging a second copy.
 usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgst1394.so
 usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstaasink.so
 usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstadaptivedemux2.so
@@ -182,6 +185,8 @@ usr/lib/x86_64-linux-gnu/libpangocairo-1.0.so.0
 usr/lib/x86_64-linux-gnu/libpangocairo-1.0.so.0.5200.1
 usr/lib/x86_64-linux-gnu/libpangoft2-1.0.so.0
 usr/lib/x86_64-linux-gnu/libpangoft2-1.0.so.0.5200.1
+usr/lib/x86_64-linux-gnu/libsecret-1.so.0
+usr/lib/x86_64-linux-gnu/libsecret-1.so.0.0.0
 usr/lib/x86_64-linux-gnu/libwayland-client.so.0
 usr/lib/x86_64-linux-gnu/libwayland-client.so.0.22.0
 usr/lib/x86_64-linux-gnu/libwayland-cursor.so.0

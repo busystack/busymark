@@ -302,7 +302,9 @@ jobs:
         if: ${{ !cancelled() && steps.strict-install.outcome == 'success' && steps.strict-session.outcome == 'success' }}
         run: |
           snap run --shell busymark -c '
-            set -eu
+            # Trace assertions so a missing resource or duplicate library names
+            # its exact condition and path before the strict audit exits.
+            set -eux
             inspect_dependencies() {
               dependency_object="$1"
               if dependency_output="$(ldd "$dependency_object" 2>&1)"; then

@@ -15,6 +15,30 @@ from PIL import Image
 def dominant(image):
     return max(image.getcolors(image.width * image.height), key=lambda pair: pair[0])[1]
 
+def graph_rendered(image):
+    rows = [y for y in range(image.height) if any(
+        max(image.getpixel((x, y)))-min(image.getpixel((x, y))) > 60
+        for x in range(image.width))]
+    pixels = sum(count for count, color in image.getcolors(image.width * image.height)
+                 if max(color)-min(color) > 60)
+    return (30 < pixels < image.width*image.height/3 and bool(rows) and
+            rows[-1]-rows[0] > 100)
+
+def native_history_graph_bounds(table, subject, rtl):
+    # The shared GTK bridge rounds a cell origin and ceils its width
+    # independently. In RTL their sum can exceed the integer viewport by one
+    # pixel. Inspect only the painted intersection, and reject larger drift
+    # or a header that is not the table's first logical column.
+    edge = subject[2]-table[2] if rtl else subject[0]-table[0]
+    top = max(table[1], subject[3])
+    if not (table[0]-1 <= subject[0] < subject[2] <= table[2]+1
+            and abs(edge) <= 1 and subject[2]-subject[0] > 40
+            and table[3] > top+100):
+        raise RuntimeError(f'Native history graph column geometry is invalid: table={table}, subject={subject}')
+    left, right = max(table[0], subject[0]), min(table[2], subject[2])
+    return (right-40 if rtl else left, top, right if rtl else left+40,
+            min(table[3], top+400))
+
 import os
 from pathlib import Path
 import select
@@ -62,8 +86,11 @@ def fixture(root, many=False):
 
 
 class DesktopRun:
-    def __init__(self, binary, output, repository, scale):
+    def __init__(self, binary, output, repository, scale, locale='en'):
         self.output = output
+        self.rtl = locale == 'ar'
+        self.catalog = json.loads((Path(__file__).resolve().parents[1] /
+                                   f'lib/l10n/app_{locale}.arb').read_text())
         self.log = (output / 'desktop.log').open('w')
         self.process = subprocess.Popen(['dbus-run-session', '--', '/usr/bin/python3', 'tools/git_native_desktop.py',
             str(binary), str(output), str(repository), str(scale)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.log, text=True, bufsize=1)
@@ -100,6 +127,89 @@ class DesktopRun:
     def checkpoint(self):
         self.send('capture', name='_checkpoint')
         return Image.open(self.output / '_checkpoint.png').convert('RGB')
+    def wait_accessible(self, predicate, name, **request):
+        for _ in range(40):
+            self.send('accessibility', name=name, **request)
+            rows = json.loads((self.output / (name+'-accessibility.json')).read_text())['nodes']
+            if predicate(rows):
+                return rows
+            self.send('wait', seconds=.25)
+        raise RuntimeError('Expected owned native accessibility state did not arrive: '+name)
+    def activate_message(self, key, trim_ellipsis=False):
+        label = self.catalog[key]
+        if trim_ellipsis:
+            label = label.removesuffix('…')
+        self.wait_accessible(lambda rows: len([row for row in rows
+            if row['name'] == label and row['enabled']]) == 1, '_action-ready')
+        self.send('activateAccessible', name=label)
+    def accessible_bounds(self, label, role):
+        if role not in {'table', 'table cell', 'column header'}:
+            raise ValueError('Geometry inspection requires a native GTK table node')
+        self.send('accessibility', name='_geometry', boundsName=label, boundsRole=role)
+        rows = json.loads((self.output / '_geometry-accessibility.json').read_text())['nodes']
+        matches = [row for row in rows if row['name'] == label and row['role'] == role]
+        if len(matches) != 1 or 'bounds' not in matches[0]:
+            raise RuntimeError('Expected exactly one owned native geometry: '+label)
+        x, y, width, height = matches[0]['bounds']
+        if width <= 0 or height <= 0:
+            raise RuntimeError('Owned native control has no visible geometry: '+label)
+        return x, y, x+width, y+height
+    def click_accessible(self, label, role, button=1):
+        if role == 'panel' and button == 1:
+            self.send('activateAccessible', name=label, role=role)
+            return
+        left, top, right, bottom = self.accessible_bounds(label, role)
+        self.send('click', x=(left+right)//2, y=(top+bottom)//2, button=button)
+    def focus_history_field(self, key, trim_ellipsis=False):
+        label = self.catalog[key]
+        if trim_ellipsis:
+            label = label.removesuffix('…')
+        role = 'text'
+        self.wait_accessible(lambda rows: len([row for row in rows if row['name'] == label
+            and row['role'] == role and row['enabled']]) == 1, '_editor-ready')
+        # Flutter text fields expose focus state but no AT-SPI action. Place
+        # real pointer input in the current dialog's filter band, relative to
+        # the measured native table, and require that exact editor to focus.
+        table = self.accessible_bounds(self.catalog['gitUiGitCommits'], 'table')
+        fraction = {'gitUiMessage': 1/6, 'gitUiAuthor': 1/2, 'gitUiPath': 5/6}
+        x = (round(table[0]+(table[2]-table[0])*fraction[key]) if key in fraction else
+             table[0]-140)
+        self.send('click', x=x, y=self.history_box[1]+70)
+    def expect_editor_text(self, key, expected, trim_ellipsis=False):
+        label = self.catalog[key]
+        if trim_ellipsis:
+            label = label.removesuffix('…')
+        # Qualify the real keyboard transaction: its intended owned editor
+        # must report both focus and exactly the received text. A preliminary
+        # focus notification can precede publication of the editable state.
+        self.wait_accessible(lambda rows: len([row for row in rows if row['name'] == label
+            and row['role'] == 'text' and row['enabled'] and row['focused']
+            and row.get('text') == expected]) == 1, '_editor-input-verified', textName=label)
+    def commit_row(self, subject, button=1):
+        rows = self.wait_accessible(lambda rows: any(row['role'] == 'table cell'
+            and row['name'].endswith(subject) for row in rows), '_commit-row-ready')
+        names = [row['name'] for row in rows if row['role'] == 'table cell'
+                 and row['name'].endswith(subject)]
+        if len(names) != 1:
+            raise RuntimeError('Expected one native fixture commit: '+subject)
+        self.click_accessible(names[0], 'table cell', button)
+    def branches(self):
+        self.activate_message('gitUiSelectAnotherBranch')
+        self.branch_box = self.modal(400)
+    def log_view(self, rtl):
+        self.activate_message('sidebarViewMenu')
+        self.wait_accessible(lambda rows: any(row['role'] == 'check menu item'
+            and row['name'] == self.catalog['gitHostGitLog'] for row in rows), '_view-menu-ready')
+        # This fixture is a Markdown folder: Files, Outline, Commit, Git Log.
+        # Retain real keyboard selection, then verify the selected shared view.
+        self.key('Home')
+        for _ in range(3):
+            self.key('Down')
+        self.key('Return')
+        self.wait_accessible(lambda rows: not any(row['role'] == 'check menu item' for row in rows)
+            and any(row['role'] == 'panel' and row['name'].split('\n', 1)[0] ==
+                    self.catalog['gitUiGitLog'] for row in rows), '_log-view-ready')
+        self.wait_sidebar(rtl, information=True)
     def sidebar_menu_x(self, rtl):
         picture = self.checkpoint()
         edge = self.width-8 if rtl else 8
@@ -160,11 +270,18 @@ class DesktopRun:
             self.send('wait', seconds=1)
         raise RuntimeError('Expected native modal did not render; no dependent input was sent')
     def wait_graph(self):
+        self.wait_accessible(lambda rows: any(row['role'] == 'table' and
+            row['name'] == self.catalog['gitUiGitCommits'] and row['busy'] is False
+            for row in rows) and any(row['role'] == 'table cell' for row in rows), '_history-loaded')
+        table = self.accessible_bounds(self.catalog['gitUiGitCommits'], 'table')
+        subject = self.accessible_bounds(self.catalog['gitUiSubjectReferences'], 'column header')
+        # The two-lane fixture fits in the shared graph's minimum 40-pixel
+        # subject-cell inset. Inspect that real native column, mirrored for
+        # RTL, rather than assuming an orange accent across the whole dialog.
+        bounds = native_history_graph_bounds(table, subject, self.rtl)
         for _ in range(60):
-            image = self.checkpoint().crop((50, 200, self.width-50, 600))
-            colors = image.getcolors(image.width * image.height)
-            graph = sum(count for count, (r,g,b) in colors if r > 160 and g < 140 and b < 100)
-            if graph > 30:
+            image = self.checkpoint().crop(bounds)
+            if graph_rendered(image):
                 return
             self.send('wait', seconds=1)
         raise RuntimeError('The real history graph did not render')
@@ -174,46 +291,72 @@ class DesktopRun:
         # typing. A fixed delay alone can photograph a still-loading table.
         previous = None
         for _ in range(60):
+            self.send('accessibility', name='_history-loading')
+            rows = json.loads((self.output / '_history-loading-accessibility.json').read_text())['nodes']
+            ready = any(row['role'] == 'table' and row['name'] == self.catalog['gitUiGitCommits']
+                        and row['busy'] is False for row in rows)
             picture = self.checkpoint()
             area = picture.crop((50, 150, self.width-50, 635))
-            busy = any(sum(1 for x in range(50, self.width-50, 4)
-                           if (lambda c: c[0] > 180 and c[1] < 140 and c[2] < 100)(picture.getpixel((x, y)))) > self.width / 8
-                       for y in range(150, 220))
             signature = area.tobytes()
-            if not busy and signature == previous:
+            if ready and signature == previous:
                 return
             previous = signature
             self.send('wait', seconds=1)
         raise RuntimeError('History results did not settle after native filtering')
     def selector(self, rtl):
-        self.send('click', x=self.sidebar_menu_x(rtl), y=122)
+        self.wait_accessible(lambda rows: any(row['name'] ==
+            self.catalog['gitUiSelectAnotherCommit'].removesuffix('…') and row['enabled']
+            for row in rows), '_inspector-selector-ready')
+        # A surviving comparison also has an Actions button. Exercise the
+        # sidebar's actual pointer target using its measured native boundary.
+        self.send('click', x=self.sidebar_menu_x(rtl), y=130)
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_header-actions-ready')
         self.capture('header-actions')
         self.key('Home')
-        self.key('Return')
+        self.capture('header-actions-keyboard')
+        self.key('Escape')
+        self.wait_accessible(lambda rows: not any(row['role'] == 'menu item' for row in rows),
+                             '_header-actions-closed')
+        self.activate_message('gitUiSelectAnotherCommit', trim_ellipsis=True)
         self.history_box = self.modal(500)
         self.wait_graph()
     def detailed_branches(self):
         left, top, right, _ = self.branch_box
         self.send('click', x=left+145, y=top+103)
+        self.wait_accessible(lambda rows: any(row['name'] == self.catalog['gitUiSearchBranchesAndTags']
+            and row['role'] == 'text' and row['focused'] for row in rows), '_branch-search-focused')
         self.capture('branches-search-focused')
         self.send('text', value='origin')
+        self.expect_editor_text('gitUiSearchBranchesAndTags', 'origin')
         self.capture('branches-search-results')
         self.key('Control_L', 'a')
         self.capture('branches-search-selection')
         self.key('Control_L', 'c')
         self.key('BackSpace')
         self.key('Control_L', 'v')
+        self.expect_editor_text('gitUiSearchBranchesAndTags', 'origin')
         self.capture('branches-search-pasted')
         self.key('Control_L', 'a')
         self.key('BackSpace')
+        self.expect_editor_text('gitUiSearchBranchesAndTags', '')
+        self.key('Down')
+        # The first result can be the Local branches expander. Move into a
+        # branch row before opening its keyboard context menu.
         self.key('Down')
         self.key('Menu')
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_branch-keyboard-menu-ready')
         self.capture('branches-keyboard-menu')
         self.key('Escape')
         self.key('Shift_L', 'F10')
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_branch-shift-f10-ready')
         self.capture('branches-shift-f10')
         self.key('Escape')
         self.send('click', x=left+135, y=top+223, button=3)
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_branch-secondary-menu-ready')
         self.capture('branches-secondary-menu')
         self.key('Escape')
         self.send('move', x=right-120, y=top+103)
@@ -224,17 +367,24 @@ class DesktopRun:
         self.send('press', x=right-120, y=top+103)
         self.capture('new-branch-pressed')
         self.send('release', x=right-120, y=top+103)
+        self.wait_accessible(lambda rows: any(row['name'] == self.catalog['gitUiLocalBranchName']
+            for row in rows), '_create-branch-ready')
         self.capture('existing-create-branch-workflow')
         self.key('Escape')
+        self.wait_accessible(lambda rows: any(row['name'] == self.catalog['gitUiSearchBranchesAndTags']
+            and row['role'] == 'text' for row in rows), '_branches-restored')
         self.send('click', x=right-32, y=top+103)
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_branch-actions-ready')
         self.capture('branches-general-actions')
         self.key('Escape')
     def detailed_history(self):
-        self.send('click', x=500, y=202)
+        self.commit_row('Keep the main line visible beside feature history')
         self.capture('history-unfocused-filters')
-        self.send('click', x=200, y=126)
+        self.focus_history_field('gitUiMessage', trim_ellipsis=True)
         self.capture('history-focused-filter')
         self.send('text', value='native')
+        self.expect_editor_text('gitUiMessage', 'native', trim_ellipsis=True)
         self.send('resize', width=600, height=730)
         self.capture('history-filter-focus-narrow')
         self.send('resize', width=self.width, height=self.height)
@@ -242,104 +392,148 @@ class DesktopRun:
         self.key('Return')
         self.wait_history()
         self.capture('history-message-filtered')
-        self.send('click', x=200, y=126)
+        self.focus_history_field('gitUiMessage', trim_ellipsis=True)
         self.key('Control_L', 'a')
         self.key('BackSpace')
+        self.expect_editor_text('gitUiMessage', '', trim_ellipsis=True)
         self.key('Return')
         self.wait_history()
-        for x, query, name in [(500, 'acceptance', 'author'), (850, 'feature.md', 'path')]:
-            self.send('click', x=x, y=126)
+        for key, query, name in [('gitUiAuthor', 'acceptance', 'author'), ('gitUiPath', 'feature.md', 'path')]:
+            self.focus_history_field(key, trim_ellipsis=True)
             self.send('text', value=query)
+            self.expect_editor_text(key, query, trim_ellipsis=True)
             self.key('Return')
             self.wait_history()
             self.capture(f'history-{name}-filtered')
-            self.send('click', x=x, y=126)
+            self.focus_history_field(key, trim_ellipsis=True)
             self.key('Control_L', 'a')
             self.key('BackSpace')
+            self.expect_editor_text(key, '', trim_ellipsis=True)
             self.key('Return')
             self.wait_history()
-        self.send('click', x=1070, y=126)
+        self.activate_message('gitUiDate')
         self.capture('history-date-dialog')
         self.key('Escape')
-        self.send('click', x=500, y=235, button=3)
+        self.commit_row('Keep the main line visible beside feature history', button=3)
         self.capture('history-commit-context')
         self.key('Escape')
-        self.send('click', x=130, y=168)
+        self.focus_history_field('gitUiSearchBranchesAndTags')
         self.send('text', value='origin')
+        self.expect_editor_text('gitUiSearchBranchesAndTags', 'origin')
         self.capture('history-reference-search')
         self.key('Control_L', 'a')
         self.key('BackSpace')
-        self.send('click', x=500, y=235)
+        self.expect_editor_text('gitUiSearchBranchesAndTags', '')
+        self.commit_row('Keep the main line visible beside feature history')
         self.capture('history-candidate')
         self.reference_interactions()
     def reference_interactions(self):
-        self.send('click', x=130, y=168)
+        self.focus_history_field('gitUiSearchBranchesAndTags')
         self.key('Control_L', 'a')
         self.send('text', value='origin')
+        self.expect_editor_text('gitUiSearchBranchesAndTags', 'origin')
         self.capture('history-reference-search')
-        self.send('click', x=130, y=320, button=3)
+        # Search retains the All/Local/Remote group rows. The matching remote
+        # is the fourth 34-pixel reference row below this dialog's search.
+        table = self.accessible_bounds(self.catalog['gitUiGitCommits'], 'table')
+        self.send('click', x=table[0]-140,
+                  y=self.history_box[1]+214, button=3)
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_reference-context-ready')
         self.capture('history-reference-context')
         self.key('Escape')
         self.key('Shift_L', 'F10')
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_reference-keyboard-context-ready')
         self.capture('history-reference-keyboard-context')
         self.key('Escape')
-        self.send('click', x=130, y=320)
+        self.click_accessible('origin/main', 'panel')
         self.wait_history()
         self.capture('history-remote-filtered')
         self.reset_history_filters()
-        self.send('click', x=130, y=168)
+        self.focus_history_field('gitUiSearchBranchesAndTags')
         self.key('Control_L', 'a')
         self.send('text', value='v')
         self.key('1')
         self.key('period')
         self.key('0')
+        self.expect_editor_text('gitUiSearchBranchesAndTags', 'v1.0')
         self.capture('history-tag-search')
-        self.send('click', x=130, y=355)
+        self.click_accessible('v1.0', 'panel')
         self.wait_history()
         self.capture('history-tag-filtered')
         self.reset_history_filters()
-        self.send('click', x=130, y=168)
+        self.focus_history_field('gitUiSearchBranchesAndTags')
         self.key('Control_L', 'a')
         self.key('BackSpace')
+        self.expect_editor_text('gitUiSearchBranchesAndTags', '')
     def reset_history_filters(self):
-        self.send('click', x=1136, y=126)
+        self.activate_message('gitUiActions')
+        rows = self.wait_accessible(lambda rows: any(row['role'] == 'menu item' and
+            row['name'] == self.catalog['gitUiResetFilters'] for row in rows), '_reset-filters-ready')
+        items = sorted([row for row in rows if row['role'] == 'menu item' and row['enabled']],
+                       key=lambda row: row['indexInParent'])
+        indices = [row['indexInParent'] for row in items]
+        targets = [i for i, row in enumerate(items) if row['name'] == self.catalog['gitUiResetFilters']]
+        if (len(targets) != 1 or any(index < 0 for index in indices)
+                or len(set(indices)) != len(indices)):
+            raise RuntimeError('The native filter menu has no unambiguous keyboard order')
         self.capture('history-navigation-actions')
         self.key('Home')
+        for _ in range(targets[0]):
+            self.key('Down')
         self.key('Return')
         self.wait_history()
+        self.wait_accessible(lambda rows: any(row['name'] == self.catalog['gitUiAllReferences']
+            and row['selected'] for row in rows), '_history-filters-reset')
     def selection_and_comparisons(self):
         self.selector(False)
-        self.send('click', x=500, y=235)
+        self.commit_row('Keep the main line visible beside feature history')
         self.capture('candidate-before-cancel')
         self.key('Escape')
         self.send('move', x=700, y=500)
         self.capture('canceled-candidate-keeps-original')
         self.selector(False)
-        self.send('click', x=500, y=235)
+        self.commit_row('Keep the main line visible beside feature history')
         self.key('Return')
         self.send('move', x=700, y=500)
         self.capture('confirmed-by-keyboard')
-        self.send('click', x=100, y=295)
+        self.open_comparison('README.md')
         self.capture('historical-comparison-one')
         self.selector(False)
-        self.send('click', x=500, y=270)
-        self.send('click', x=1170, y=657)
+        self.commit_row('Improve native history review 7')
+        _, _, right, bottom = self.history_box
+        self.send('click', x=right-90, y=bottom-31)
         self.send('move', x=700, y=500)
         self.capture('confirmed-by-mouse')
-        self.send('click', x=100, y=295)
+        self.open_comparison('README.md')
         self.capture('independent-historical-tabs')
         self.selector(False)
-        self.send('click', x=500, y=201)
+        self.commit_row('Merge native presentation remediation with a deliberately long subject that must truncate in the sidebar and remain readable in history and exact commit details')
         self.key('Return')
-        self.send('click', x=100, y=295)
+        self.open_comparison('feature.md')
         self.capture('merge-first-parent-comparison')
-        self.send('click', x=150, y=238)
+        rows = self.wait_accessible(lambda rows: any(row['role'] == 'panel' and
+            row['enabled'] and row['name'].startswith('Compare parent 1: ') for row in rows), '_parent-ready')
+        parent = [row['name'] for row in rows if row['role'] == 'panel' and
+                  row['enabled'] and row['name'].startswith('Compare parent 1: ')]
+        if len(parent) != 1:
+            raise RuntimeError('Expected the merge inspector parent selector')
+        self.send('activateAccessible', name=parent[0], role='panel')
+        self.wait_accessible(lambda rows: any(row['role'] == 'menu item' for row in rows),
+                             '_parent-menu-ready')
         self.capture('merge-parent-menu')
         self.key('Home')
         self.key('Down')
         self.key('Return')
-        self.send('click', x=100, y=295)
+        self.open_comparison('README.md')
         self.capture('merge-second-parent-comparison')
+    def open_comparison(self, path):
+        self.wait_accessible(lambda rows: len([row for row in rows if row['name'] == path
+            and row['role'] == 'panel' and row['enabled']]) == 1, '_changed-file-ready')
+        self.send('activateAccessible', name=path, role='panel')
+        self.wait_accessible(lambda rows: any(row['name'] == self.catalog['gitUiSearchComparison']
+            for row in rows), '_comparison-ready')
     def close(self):
         self.send('close')
         self.process.stdin.close()
@@ -349,7 +543,9 @@ class DesktopRun:
         status = self.process.wait(timeout=120)
         self.log.close()
         receipt = json.loads((self.output / 'receipt.json').read_text())
-        if status or not receipt.get('naturalExit') or not receipt.get('repositoryUnchanged') or not receipt['engine']['matches']:
+        if (status or not receipt.get('naturalExit') or not receipt.get('repositoryUnchanged')
+                or not receipt['engine']['matches']
+                or receipt.get('credentialService', {}).get('ready') is not True):
             raise RuntimeError(f'Native run failed its lifecycle/integrity checks: {self.output}')
 
 
@@ -378,12 +574,11 @@ def main():
         (settings / 'settings.json').write_text(json.dumps({'themeModePreference': theme, 'localeTag': locale,
             'trustedGitWorkspacePaths': [str(repository)], 'documentViewMode': 'editor'}, ensure_ascii=False))
         print(f'Native capture: {theme} {locale} scale {scale}', flush=True)
-        desktop = DesktopRun(binary, target, repository, scale)
+        desktop = DesktopRun(binary, target, repository, scale, locale=locale)
         rtl = locale == 'ar'
         desktop.key('Control_L', '4')
         desktop.wait_sidebar(rtl)
-        desktop.send('click', x=desktop.width-100 if rtl else 100, y=130)
-        desktop.branch_box = desktop.modal(400)
+        desktop.branches()
         desktop.capture('branches')
         if many:
             desktop.send('scroll', x=650, y=550, direction='down', steps=200)
@@ -392,13 +587,7 @@ def main():
         if locale == 'en' and scale == 1.0 and not many and not references_only:
             desktop.detailed_branches()
         desktop.key('Escape')
-        # Use native keyboard menu navigation, independent of translated labels.
-        desktop.send('click', x=desktop.sidebar_menu_x(rtl), y=82)
-        desktop.key('Home')
-        for _ in range(3):
-            desktop.key('Down')
-        desktop.key('Return')
-        desktop.wait_sidebar(rtl, information=True)
+        desktop.log_view(rtl)
         desktop.send('move', x=desktop.width//2, y=500)
         desktop.capture('inspector')
         desktop.selector(rtl)
@@ -426,8 +615,7 @@ def main():
             desktop.selection_and_comparisons()
         desktop.key('Control_L', '4')
         desktop.wait_sidebar(rtl)
-        desktop.send('click', x=desktop.width-100 if rtl else 100, y=130)
-        desktop.branch_box = desktop.modal(400)
+        desktop.branches()
         desktop.send('resize', width=600, height=730)
         desktop.capture('branches-narrow')
         desktop.key('Escape')
