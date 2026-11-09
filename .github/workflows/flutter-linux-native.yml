@@ -225,7 +225,7 @@ jobs:
         if: ${{ !cancelled() && steps.snap-artifact.outcome == 'success' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session
+          sudo apt-get install -y weston xvfb python3-gi gir1.2-gtk-3.0 gsettings-desktop-schemas dconf-cli dbus-daemon dbus-user-session at-spi2-core xdg-desktop-portal-gtk
 
       - name: Install strict Snap
         id: strict-install
@@ -244,6 +244,32 @@ jobs:
           test -S "$runtime_dir/bus"
           echo "XDG_RUNTIME_DIR=$runtime_dir" >> "$GITHUB_ENV"
           echo "DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime_dir/bus" >> "$GITHUB_ENV"
+          export XDG_RUNTIME_DIR="$runtime_dir"
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus"
+          # The confined clients need the real desktop services to own their
+          # bus names before launch. Keep their display alive across the smoke
+          # steps, which create separate X11 and Wayland application displays.
+          display_file="${RUNNER_TEMP}/strict-session-display"
+          Xvfb -displayfd 3 -screen 0 1280x1024x24 -nolisten tcp \
+            3>"$display_file" >"${RUNNER_TEMP}/strict-session-xvfb.log" 2>&1 &
+          display_pid=$!
+          echo "$display_pid" > "${RUNNER_TEMP}/strict-session-xvfb.pid"
+          for attempt in {1..40}; do
+            if [ -s "$display_file" ]; then break; fi
+            kill -0 "$display_pid"
+            sleep 0.25
+          done
+          test -s "$display_file"
+          export DISPLAY=":$(cat "$display_file")"
+          systemctl --user import-environment DISPLAY
+          systemctl --user start at-spi-dbus-bus.service \
+            xdg-desktop-portal-gtk.service xdg-desktop-portal.service
+          a11y_address="$(gdbus call --session --dest org.a11y.Bus \
+            --object-path /org/a11y/bus --method org.a11y.Bus.GetAddress \
+            | python3 -c 'import ast,sys; print(ast.literal_eval(sys.stdin.read())[0])')"
+          gdbus call --address "$a11y_address" --dest org.a11y.atspi.Registry \
+            --object-path /org/a11y/atspi/registry \
+            --method org.a11y.atspi.Registry.GetRegisteredEvents
 
       - name: Enable parallel Snap instances
         if: ${{ !cancelled() && inputs.run-stress && steps.strict-install.outcome == 'success' }}
@@ -544,6 +570,25 @@ jobs:
           path: |
             ~/snap/busymark_fixture/common/close-live
           if-no-files-found: ignore
+
+      - name: Stop strict-Snap desktop session
+        if: always()
+        run: |
+          pid_file="${RUNNER_TEMP}/strict-session-xvfb.pid"
+          if [ -f "$pid_file" ]; then
+            export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+            export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+            cleanup_status=0
+            systemctl --user stop xdg-desktop-portal.service \
+              xdg-desktop-portal-gtk.service at-spi-dbus-bus.service \
+              || cleanup_status=$?
+            display_pid="$(cat "$pid_file")"
+            if kill -0 "$display_pid" 2>/dev/null; then
+              test "$(ps -p "$display_pid" -o comm=)" = Xvfb
+              kill "$display_pid"
+            fi
+            exit "$cleanup_status"
+          fi
 
   development-modes:
     name: Native release acceptance (${{ matrix.mode }})

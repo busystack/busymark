@@ -532,7 +532,8 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                      if command[:3] == ['sudo', 'apt-get', 'install']
                      for arg in command[3:]}
         self.assertTrue({'xvfb', 'python3-gi', 'gir1.2-gtk-3.0',
-                         'dbus-user-session'}.issubset(installed))
+                         'dbus-user-session', 'at-spi2-core',
+                         'xdg-desktop-portal-gtk'}.issubset(installed))
         self.assertIn("steps.snap-artifact.outcome == 'success'", desktop['if'])
         install = next(s for s in steps if s.get('id') == 'strict-install')
         self.assertLess(steps.index(desktop), steps.index(install))
@@ -623,7 +624,16 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
         self.assertIn('DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime_dir/bus', session['run'])
         self.assertIn('XDG_RUNTIME_DIR=$runtime_dir', session['run'])
         self.assertIn('"$GITHUB_ENV"', session['run'])
+        self.assertIn('Xvfb -displayfd 3', session['run'])
+        self.assertIn('systemctl --user import-environment DISPLAY', session['run'])
+        self.assertIn('systemctl --user start at-spi-dbus-bus.service', session['run'])
+        self.assertIn('xdg-desktop-portal-gtk.service xdg-desktop-portal.service', session['run'])
+        self.assertIn('--method org.a11y.atspi.Registry.GetRegisteredEvents', session['run'])
         self.assertNotIn('continue-on-error', session)
+        cleanup = next(step for step in steps if step.get('name') == 'Stop strict-Snap desktop session')
+        self.assertEqual(cleanup['if'], 'always()')
+        self.assertGreater(steps.index(cleanup), steps.index(session))
+        self.assertIn('kill "$display_pid"', cleanup['run'])
         launches = [step for step in steps if 'snap run' in step.get('run', '') or
                     'tools/application_close_smoke.py' in step.get('run', '')]
         self.assertTrue(launches)
