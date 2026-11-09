@@ -167,8 +167,14 @@ def run(binary, output, root, theme, locale, scale, narrow, baseline):
                 wait_state(desktop, lambda rows: any(n['name'].startswith(catalog['referenceScope']+': ') for n in rows), '_reference-heading-scope')
                 desktop.send('move', x=desktop.width//2, y=500)
                 desktop.capture('references-heading-scope')
-                desktop.key('Control_L', 'p'); desktop.send('text', value='staged.md'); desktop.key('Return')
-                desktop.send('wait', seconds=2)
+                choose(desktop, 0, rtl, labels[0], titles[0])
+                wait_state(desktop, lambda rows: any(n['name']=='staged.md' and n['role']=='panel' for n in rows), '_empty-file-ready')
+                desktop.send('activateAccessible', name='staged.md', role='panel')
+                desktop.send('wait', seconds=.5)
+                choose(desktop, 7, rtl, labels[7], titles[7])
+                wait_state(desktop, lambda rows: any(n['role']=='panel' and n['name'].startswith(titles[7]+'\nstaged.md') for n in rows)
+                    and all(any(n['name']==catalog[key]+' (0)' for n in rows) for key in ['referenceIncoming','referenceOutgoing'])
+                    and sum(n['name']==catalog['referenceNoResults'] for n in rows)==2, '_empty-document-ready')
                 desktop.capture('references-empty-document')
 
         # Close naturally and retain the existing unchanged-Git validation.
