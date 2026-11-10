@@ -178,12 +178,113 @@ jobs:
       - name: Build strict Snap from a clean core24 environment (attempt 1)
         id: snapcraft
         uses: snapcore/action-build@v1
+        with:
+          snapcraft-args: --verbosity=debug
         continue-on-error: true
 
       - name: Retry strict Snap build after an infrastructure failure
         id: snapcraft-retry
         if: steps.snapcraft.outcome == 'failure'
         uses: snapcore/action-build@v1
+        with:
+          snapcraft-args: --verbosity=debug
+
+      - name: Collect official Snapcraft and Snapd failure diagnostics
+        if: ${{ !cancelled() && (steps.snapcraft.outcome == 'failure' || steps.snapcraft-retry.outcome == 'failure') }}
+        env:
+          SNAPCRAFT_DIAGNOSTICS: ${{ runner.temp }}/snapcraft-build-diagnostics
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import shlex
+          import subprocess
+
+          output = Path(os.environ['SNAPCRAFT_DIAGNOSTICS'])
+          output.mkdir(parents=True, exist_ok=True)
+          credentials = [value for key, value in os.environ.items()
+              if len(value) >= 8 and any(word in key.upper()
+                  for word in ('TOKEN', 'PASSWORD', 'SECRET'))]
+
+          def redact(text):
+              for value in credentials:
+                  text = text.replace(value, '[REDACTED]')
+              return text
+
+          source = Path.home() / '.local/state/snapcraft/log'
+          if source.is_dir():
+              for path in source.rglob('*.log'):
+                  if not path.is_file() or path.is_symlink():
+                      continue
+                  target = output / 'snapcraft' / path.relative_to(source)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_text(redact(path.read_text(errors='replace')))
+          records = []
+
+          def capture(argv):
+              print('+ ' + shlex.join(argv), flush=True)
+              try:
+                  result = subprocess.run(argv, stdout=subprocess.PIPE,
+                      stderr=subprocess.STDOUT, text=True, timeout=45)
+                  text, code = result.stdout, result.returncode
+              except subprocess.TimeoutExpired as error:
+                  text = error.stdout or ''
+                  if isinstance(text, bytes):
+                      text = text.decode(errors='replace')
+                  text += '\nDiagnostic command timed out after 45 seconds.\n'
+                  code = 124
+              except OSError as error:
+                  text, code = str(error) + '\n', 127
+              text = redact(text)
+              path = output / f'{len(records):03}.log'
+              path.write_text(text)
+              records.append({'argv': argv, 'exitCode': code, 'log': path.name})
+              (output / 'commands.json').write_text(json.dumps(records, indent=2))
+              print(text, flush=True)
+              return code, text
+
+          def snapd(prefix):
+              capture(prefix + ['snap', 'version'])
+              capture(prefix + ['journalctl', '-u', 'snapd.service',
+                  '--no-pager', '-n', '500'])
+              code, changes = capture(prefix + ['snap', 'changes', '--abs-time'])
+              if code == 0:
+                  for line in changes.splitlines():
+                      fields = line.split()
+                      if fields and fields[0].isdigit():
+                          capture(prefix + ['snap', 'tasks', fields[0]])
+
+          snapd(['sudo', '-n'])
+          lxc = ['sudo', '-n', 'lxc', '--project', 'snapcraft']
+          code, listing = capture(lxc + ['list', '--format', 'json'])
+          if code == 0:
+              for instance in json.loads(listing):
+                  name = instance['name']
+                  if not name.startswith('snapcraft-busymark-'):
+                      continue
+                  started = False
+                  if instance['status'] == 'Stopped':
+                      code, _ = capture(lxc + ['start', name])
+                      if code != 0:
+                          continue
+                      started = True
+                  elif instance['status'] != 'Running':
+                      continue
+                  try:
+                      snapd(lxc + ['exec', name, '--'])
+                  finally:
+                      if started:
+                          capture(lxc + ['stop', name])
+          PY
+
+      - name: Preserve official Snapcraft build diagnostics
+        if: ${{ !cancelled() && (steps.snapcraft.outcome == 'failure' || steps.snapcraft-retry.outcome == 'failure') }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: snapcraft-build-diagnostics
+          path: ${{ runner.temp }}/snapcraft-build-diagnostics
+          if-no-files-found: warn
 
       - name: Select built Snap
         if: ${{ !cancelled() && steps.snap-inspection.outcome == 'success' && (steps.snapcraft.outcome == 'success' || steps.snapcraft-retry.outcome == 'success') }}
