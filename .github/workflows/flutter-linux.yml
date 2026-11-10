@@ -378,9 +378,16 @@ jobs:
         env:
           BUSYMARK_D2_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/d2
           BUSYMARK_TYPST_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/typst
+          BUSYMARK_TEST_SPELLING_ROOT: ${{ github.workspace }}/build/spelling-test
         # Real durable fixtures share the runner's filesystem. Keep the full
         # suite bounded independently of a developer machine's CPU count.
-        run: flutter test --concurrency=2
+        run: |
+          test -s "$BUSYMARK_TEST_SPELLING_ROOT/dictionaries.json"
+          xvfb-run -a -s '-screen 0 1600x1100x24' \
+            bash -euo pipefail <<'TESTS'
+          export BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY="$DISPLAY"
+          exec flutter test --concurrency=2
+          TESTS
 
       - name: Preserve compiled visualization report
         if: always()

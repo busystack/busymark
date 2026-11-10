@@ -400,6 +400,7 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     self.assertIn('test -S "$runtime_dir/wayland-99"', step['run'])
                 else:
                     self.assertIn('xvfb-run', step['run'])
+
                     self.assertIn('GDK_BACKEND=x11', step['run'])
                     self.assertNotIn('|| true', step['run'])
                 if invocation != 'tools/test_gtk_accent_host.sh':
@@ -412,6 +413,61 @@ raise SystemExit(77 if sys.argv[1:] == ['pub', 'get', '--enforce-lockfile'] else
                     self.assertIn('build/linux/x64/release/bundle/busymark', step['run'])
                     self.assertIn('report["ok"]', step['run'])
                     self.assertIn('test -s', step['run'])
+
+    def test_full_corpus_has_real_gtk_and_spelling_inputs_and_preserves_failures(self):
+        steps = self.workflow['jobs']['verify']['steps']
+        corpus = next(s for s in steps if s.get('name') ==
+                      'Test including bundled D2 and Typst paths')
+        resources = next(s for s in steps if s.get('id') == 'spelling-resources')
+        self.assertLess(steps.index(resources), steps.index(corpus))
+        self.assertNotIn('continue-on-error', corpus)
+        for scenario in ['ready', 'failed-test', 'missing-dictionaries']:
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                spelling = root / shlex.split(resources['run'])[-1]
+                spelling.mkdir(parents=True)
+                if scenario != 'missing-dictionaries':
+                    (spelling / 'dictionaries.json').write_text('{}')
+                binary = root / 'bin'
+                binary.mkdir()
+                flutter = binary / 'flutter'
+                flutter.write_text('''#!/usr/bin/python3
+import json, os, sys
+from pathlib import Path
+display = os.environ['DISPLAY']
+number = display.removeprefix(':').split('.')[0]
+Path(os.environ['CONTROLLED_CALLS']).write_text(json.dumps({
+    'argv': sys.argv[1:], 'display': display,
+    'nativeDisplay': os.environ.get('BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY'),
+    'spellingRoot': os.environ.get('BUSYMARK_TEST_SPELLING_ROOT'),
+    'liveXSocket': Path('/tmp/.X11-unix/X' + number).is_socket(),
+}))
+raise SystemExit(int(os.environ['CONTROLLED_FLUTTER_EXIT']))
+''')
+                flutter.chmod(0o700)
+                calls = root / 'calls.json'
+                environment = {key: value.replace('${{ github.workspace }}', str(root))
+                               for key, value in corpus['env'].items()}
+                result = subprocess.run(
+                    ['bash', '-euo', 'pipefail', '-c', corpus['run']], cwd=root,
+                    env={**os.environ, **environment,
+                         'PATH': str(binary) + ':' + os.environ['PATH'],
+                         'DISPLAY': ':inherited-display-must-not-be-used',
+                         'CONTROLLED_CALLS': str(calls),
+                         'CONTROLLED_FLUTTER_EXIT': '73' if scenario == 'failed-test' else '0'},
+                    capture_output=True, text=True, timeout=20)
+                if scenario == 'missing-dictionaries':
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(calls.exists())
+                    continue
+                self.assertEqual(result.returncode, 73 if scenario == 'failed-test' else 0,
+                                 result.stdout + result.stderr)
+                observed = json.loads(calls.read_text())
+                self.assertEqual(observed['argv'], ['test', '--concurrency=2'])
+                self.assertEqual(observed['nativeDisplay'], observed['display'])
+                self.assertNotEqual(observed['display'], ':inherited-display-must-not-be-used')
+                self.assertTrue(observed['liveXSocket'])
+                self.assertEqual(observed['spellingRoot'], str(spelling))
 
     def test_ordinary_standalone_checks_share_one_shipping_build(self):
         self._automatic_product_jobs()
