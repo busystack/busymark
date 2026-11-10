@@ -1,3 +1,4 @@
+import 'package:busystack_git_flutter/busystack_git_flutter.dart' as shared;
 import 'busymark_toast.dart';
 import 'busymark_focus.dart';
 export 'busymark_focus.dart';
@@ -674,44 +675,10 @@ class BusyMarkSyntaxColors extends ThemeExtension<BusyMarkSyntaxColors> {
   }
 }
 
-enum BusyMarkVcsFileColor {
-  modified,
-  added,
-  deleted,
-  untracked,
-  conflicted,
-  copied,
-  renamed,
-}
-
 Color busyMarkDestructiveForeground(BuildContext context) {
   return Theme.of(context).brightness == Brightness.dark
       ? BusyMarkLinuxPalette.destructiveForegroundDark
       : BusyMarkLinuxPalette.destructiveForegroundLight;
-}
-
-Color busyMarkVcsFileStatusColor(
-  BuildContext context,
-  BusyMarkVcsFileColor status,
-) {
-  final brightness = Theme.of(context).brightness;
-  final dark = brightness == Brightness.dark;
-  return switch (status) {
-    BusyMarkVcsFileColor.modified =>
-      dark ? const Color(0xFF99C1F1) : BusyMarkLinuxPalette.ubuntuBlueAccent,
-    BusyMarkVcsFileColor.added =>
-      dark ? const Color(0xFF8FF0A4) : BusyMarkLinuxPalette.ubuntuGreenAccent,
-    BusyMarkVcsFileColor.deleted =>
-      dark ? const Color(0xFFFF7B63) : BusyMarkLinuxPalette.red,
-    BusyMarkVcsFileColor.untracked =>
-      dark ? const Color(0xFFFFBE6F) : BusyMarkLinuxPalette.ubuntuBrownAccent,
-    BusyMarkVcsFileColor.conflicted =>
-      dark ? const Color(0xFFFF7B63) : BusyMarkLinuxPalette.ubuntuRedAccent,
-    BusyMarkVcsFileColor.copied =>
-      dark ? const Color(0xFF8FF0A4) : BusyMarkLinuxPalette.ubuntuOliveAccent,
-    BusyMarkVcsFileColor.renamed =>
-      dark ? const Color(0xFFDC8ADD) : BusyMarkLinuxPalette.ubuntuPurpleAccent,
-  };
 }
 
 BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
@@ -5102,7 +5069,7 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
     this.muted = false,
     this.separateTrailingAction = false,
     this.leadingExtent = BusyMarkSizes.sidebarTreeControl,
-    this.vcsColor,
+    this.gitDecoration,
     this.titleStyle,
     this.onToggle,
     this.onTap,
@@ -5132,7 +5099,7 @@ class BusyMarkSidebarTreeRow extends StatefulWidget {
   /// A sibling action column outside the native selection/activation surface.
   final bool separateTrailingAction;
   final double leadingExtent;
-  final BusyMarkVcsFileColor? vcsColor;
+  final shared.GitTreeDecoration? gitDecoration;
   final TextStyle? titleStyle;
   final VoidCallback? onToggle;
   final VoidCallback? onTap;
@@ -5210,9 +5177,14 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
     final clickable =
         widget.enabled &&
         (widget.onTap != null || widget.onMenuRequested != null);
-    final vcsForeground = widget.vcsColor == null
+    final gitStyle = widget.gitDecoration == null
         ? null
-        : busyMarkVcsFileStatusColor(context, widget.vcsColor!);
+        : shared.gitTreeDecorationStyle(
+            context,
+            widget.gitDecoration!,
+            selected: widget.selected,
+          );
+    final vcsForeground = gitStyle?.color;
     final foreground = !widget.enabled || widget.muted
         ? colors.disabledForeground
         : vcsForeground ??
@@ -5222,7 +5194,7 @@ class BusyMarkSidebarTreeRowState extends State<BusyMarkSidebarTreeRow> {
         : vcsForeground ?? colors.foreground;
     final titleStyle = Theme.of(
       context,
-    ).textTheme.bodyMedium?.copyWith(color: titleColor);
+    ).textTheme.bodyMedium?.merge(gitStyle).copyWith(color: titleColor);
     const depthBase = BusyMarkSizes.sidebarTreeDepthBase;
     const expanderWidth = BusyMarkSizes.sidebarTreeControl;
     const expanderGap = BusyMarkSpacing.xs;

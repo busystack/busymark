@@ -7500,5 +7500,20 @@
   "referenceNoResults": "No references found",
   "@referenceNoResults": {
     "description": "Native sidebar presentation: No references found"
+  },
+  "gitUiDirectoryChanges": "Git changes: {immediate} directly in this directory, {descendant} in nested directories; {deleted} deleted. Review paths in Git Changes.",
+  "@gitUiDirectoryChanges": {
+    "description": "Shared Git interface: Git changes: {immediate} directly in this directory, {descendant} in nested directories; {deleted} deleted. Review paths in Git Changes.",
+    "placeholders": {
+      "immediate": {
+        "type": "String"
+      },
+      "descendant": {
+        "type": "String"
+      },
+      "deleted": {
+        "type": "String"
+      }
+    }
   }
 }

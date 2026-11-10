@@ -9045,6 +9045,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get referenceNoResults => 'Nenhuma referência encontrada';
+
+  @override
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  ) {
+    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).

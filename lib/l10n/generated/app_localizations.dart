@@ -15202,6 +15202,16 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No references found'**
   String get referenceNoResults;
+
+  /// Shared Git interface: Git changes: {immediate} directly in this directory, {descendant} in nested directories; {deleted} deleted. Review paths in Git Changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Git changes: {immediate} directly in this directory, {descendant} in nested directories; {deleted} deleted. Review paths in Git Changes.'**
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  );
 }
 
 class _AppLocalizationsDelegate

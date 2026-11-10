@@ -95,7 +95,7 @@ import '../../export/workspace_export_ui.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
-import '../../git/presentation/git_file_status_colors.dart';
+import '../../git/application/shared_git_decorations.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
 import '../outline_navigation.dart';
@@ -3375,8 +3375,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
       widget.workspace.directories,
     );
     final entries = _visibleFileTreeEntries(tree, _expandedPaths);
-    final vcsStatusColors = _FileTreeVcsStatusColors.fromSnapshot(
-      widget.workspace,
+    final vcsDecorations = busyMarkFileTreeDecorations(
       ref.watch(gitControllerProvider.select((state) => state.statusSnapshot)),
     );
     if (widget.workspace.files.isEmpty &&
@@ -3502,12 +3501,22 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                 );
               }
 
+              final decoration = vcsDecorations?.forUri(
+                Uri.file(
+                  p.join(
+                    widget.workspace.filesystemRootPath ?? '',
+                    node.relativePath,
+                  ),
+                ).toString(),
+                directory: node.isFolder,
+              );
               return BusyMarkSidebarTreeRow(
                 key: selected ? _selectedRowMenuKey : null,
                 title: busyMarkLtrIsolateFor(context, node.name),
                 depth: entry.depth,
                 icon: _fileTreeIcon(node, expanded: expanded),
-                vcsColor: vcsStatusColors.colorForNode(node),
+                gitDecoration: decoration,
+                tooltip: decoration?.description(context),
                 hasChildren: node.isFolder && node.children.isNotEmpty,
                 expanded: expanded,
                 selected: selected,
@@ -4200,108 +4209,6 @@ class _FileTreeEntry {
 
   final _FileTreeNode node;
   final int depth;
-}
-
-class _FileTreeVcsStatusColors {
-  const _FileTreeVcsStatusColors({
-    required Map<String, BusyMarkVcsFileColor> files,
-    required Map<String, BusyMarkVcsFileColor> folders,
-  }) : _files = files,
-       _folders = folders;
-
-  const _FileTreeVcsStatusColors.empty()
-    : _files = const {},
-      _folders = const {};
-
-  final Map<String, BusyMarkVcsFileColor> _files;
-  final Map<String, BusyMarkVcsFileColor> _folders;
-
-  factory _FileTreeVcsStatusColors.fromSnapshot(
-    Workspace workspace,
-    GitStatusSnapshot? snapshot,
-  ) {
-    if (snapshot == null || snapshot.files.isEmpty) {
-      return const _FileTreeVcsStatusColors.empty();
-    }
-    final workspaceRoot = p.normalize((workspace.filesystemRootPath ?? ''));
-    final files = <String, BusyMarkVcsFileColor>{};
-    final folders = <String, BusyMarkVcsFileColor>{};
-
-    for (final status in snapshot.files) {
-      final color = busyMarkVcsFileColorForGitStatus(status);
-      final absolutePath = p.normalize(status.absolutePath);
-      final relativePath = _workspaceRelativePath(
-        workspaceRoot: workspaceRoot,
-        absolutePath: absolutePath,
-      );
-      if (relativePath == null) {
-        continue;
-      }
-      files[absolutePath] = _dominantVcsFileColor(files[absolutePath], color);
-      final parts = p.posix
-          .split(relativePath)
-          .where((part) => part.isNotEmpty)
-          .toList();
-      for (var index = 1; index < parts.length; index += 1) {
-        final folderPath = p.posix.joinAll(parts.take(index));
-        folders[folderPath] = _dominantVcsFileColor(folders[folderPath], color);
-      }
-    }
-
-    return _FileTreeVcsStatusColors(files: files, folders: folders);
-  }
-
-  BusyMarkVcsFileColor? colorForNode(_FileTreeNode node) {
-    if (node.isFolder) {
-      return _folders[node.relativePath];
-    }
-    final file = node.file;
-    if (file == null) {
-      return null;
-    }
-    return _files[p.normalize(file.absolutePath)];
-  }
-}
-
-String? _workspaceRelativePath({
-  required String workspaceRoot,
-  required String absolutePath,
-}) {
-  if (!p.equals(workspaceRoot, absolutePath) &&
-      !p.isWithin(workspaceRoot, absolutePath)) {
-    return null;
-  }
-  final relativePath = p
-      .relative(absolutePath, from: workspaceRoot)
-      .replaceAll(r'\', '/');
-  if (relativePath.isEmpty || relativePath == '.') {
-    return null;
-  }
-  return relativePath;
-}
-
-BusyMarkVcsFileColor _dominantVcsFileColor(
-  BusyMarkVcsFileColor? current,
-  BusyMarkVcsFileColor candidate,
-) {
-  if (current == null) {
-    return candidate;
-  }
-  return _vcsFileColorPriority(candidate) > _vcsFileColorPriority(current)
-      ? candidate
-      : current;
-}
-
-int _vcsFileColorPriority(BusyMarkVcsFileColor color) {
-  return switch (color) {
-    BusyMarkVcsFileColor.modified => 10,
-    BusyMarkVcsFileColor.untracked => 20,
-    BusyMarkVcsFileColor.copied => 30,
-    BusyMarkVcsFileColor.renamed => 40,
-    BusyMarkVcsFileColor.added => 50,
-    BusyMarkVcsFileColor.deleted => 60,
-    BusyMarkVcsFileColor.conflicted => 70,
-  };
 }
 
 List<_FileTreeNode> _buildFileTree(

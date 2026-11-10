@@ -8952,4 +8952,13 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get referenceNoResults => 'कोई संदर्भ नहीं मिला';
+
+  @override
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  ) {
+    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+  }
 }

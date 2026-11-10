@@ -8977,4 +8977,13 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get referenceNoResults => 'ارجاعی یافت نشد';
+
+  @override
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  ) {
+    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+  }
 }

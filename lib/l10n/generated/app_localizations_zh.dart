@@ -8583,6 +8583,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get referenceNoResults => '未找到引用';
+
+  @override
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  ) {
+    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).

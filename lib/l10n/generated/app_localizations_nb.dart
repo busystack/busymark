@@ -8968,4 +8968,13 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get referenceNoResults => 'Ingen referanser funnet';
+
+  @override
+  String gitUiDirectoryChanges(
+    String immediate,
+    String descendant,
+    String deleted,
+  ) {
+    return 'Git changes: $immediate directly in this directory, $descendant in nested directories; $deleted deleted. Review paths in Git Changes.';
+  }
 }

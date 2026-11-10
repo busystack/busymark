@@ -11827,6 +11827,7 @@ code
                     'docs/api.md',
                     category: GitFileStatusCategory.added,
                     indexStatus: GitFileChangeStatus.added,
+                    workTreeStatus: GitFileChangeStatus.unmodified,
                     staged: true,
                     unstaged: false,
                   ),
@@ -11862,11 +11863,148 @@ code
     }
     await tester.pumpAndSettle();
 
-    _expectTextWithVcsColor(tester, 'README.md', BusyMarkVcsFileColor.modified);
-    _expectTextWithVcsColor(tester, 'docs', BusyMarkVcsFileColor.added);
-    _expectTextWithVcsColor(tester, 'api.md', BusyMarkVcsFileColor.added);
-    _expectTextWithVcsColor(tester, 'draft.md', BusyMarkVcsFileColor.untracked);
+    _expectTextWithVcsColor(tester, 'README.md', shared.GitFileStatus.modified);
+    final docsRow = tester.widget<BusyMarkSidebarTreeRow>(
+      find
+          .ancestor(
+            of: find.text('docs'),
+            matching: find.byType(BusyMarkSidebarTreeRow),
+          )
+          .first,
+    );
+    expect(
+      docsRow.gitDecoration?.directoryState,
+      shared.GitDirectoryChangeState.immediate,
+    );
+    expect(docsRow.gitDecoration?.status, isNull);
+    _expectTextWithVcsColor(tester, 'api.md', shared.GitFileStatus.added);
+    _expectTextWithVcsColor(tester, 'draft.md', shared.GitFileStatus.untracked);
   });
+
+  testWidgets(
+    'Files tree explains modified plus deleted topics and clears decorations',
+    (tester) async {
+      final temp = Directory.systemTemp.createTempSync('busymark_topics_vcs_');
+      addTearDown(() {
+        temp.deleteSync(recursive: true);
+      });
+      final docs = Directory('${temp.path}/topics')..createSync();
+      final readme = File('${temp.path}/README.md')..writeAsStringSync('# R\n');
+      final api = File('${docs.path}/named-export-presets.md')
+        ..writeAsStringSync('# API\n');
+      final draft = File('${temp.path}/draft.md')..writeAsStringSync('# D\n');
+      final repository = GitRepositoryInfo(
+        rootPath: temp.path,
+        gitDirPath: '${temp.path}/.git',
+        currentBranch: 'main',
+      );
+      final service = _TabbedWorkspaceService(
+        rootPath: temp.path,
+        paths: [readme.path, api.path, draft.path],
+      );
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue(temp.path),
+          gitControllerProvider.overrideWith(
+            () => _PresetGitController(
+              GitState(
+                availability: const GitAvailability(
+                  available: true,
+                  executablePath: '/usr/bin/git',
+                  version: '2.50.0',
+                ),
+                repositoryInfo: repository,
+                statusSnapshot: GitStatusSnapshot(
+                  repositoryInfo: repository,
+                  files: [
+                    _gitStatusFile(
+                      repository,
+                      'README.md',
+                      category: GitFileStatusCategory.modified,
+                    ),
+                    _gitStatusFile(
+                      repository,
+                      'topics/named-export-presets.md',
+                      category: GitFileStatusCategory.modified,
+                    ),
+                    _gitStatusFile(
+                      repository,
+                      'topics/releasev051.md',
+                      category: GitFileStatusCategory.deleted,
+                      workTreeStatus: GitFileChangeStatus.deleted,
+                    ),
+                    _gitStatusFile(
+                      repository,
+                      'draft.md',
+                      category: GitFileStatusCategory.untracked,
+                      indexStatus: GitFileChangeStatus.untracked,
+                      workTreeStatus: GitFileChangeStatus.untracked,
+                      untracked: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pump();
+      for (var i = 0; i < 30; i += 1) {
+        if (container.read(workspaceControllerProvider).workspace != null) {
+          break;
+        }
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await tester.pumpAndSettle();
+
+      final rowFinder = find.ancestor(
+        of: find.text('topics'),
+        matching: find.byType(BusyMarkSidebarTreeRow),
+      );
+      final row = tester.widget<BusyMarkSidebarTreeRow>(rowFinder.first);
+      expect(
+        row.gitDecoration?.directoryState,
+        shared.GitDirectoryChangeState.immediate,
+      );
+      expect(row.gitDecoration?.status, isNull);
+      expect(row.tooltip, contains('2 directly in this directory'));
+      expect(row.tooltip, contains('1 deleted'));
+      _expectTextWithVcsColor(
+        tester,
+        'named-export-presets.md',
+        shared.GitFileStatus.modified,
+      );
+      expect(find.text('releasev051.md'), findsNothing);
+      final status = container.read(gitControllerProvider).statusSnapshot!;
+      expect(
+        status.files.singleWhere((file) => file.deleted).repoRelativePath,
+        'topics/releasev051.md',
+      );
+      final controller =
+          container.read(gitControllerProvider.notifier)
+              as _PresetGitController;
+      controller.replaceStatus(
+        GitStatusSnapshot(repositoryInfo: repository, files: const []),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<BusyMarkSidebarTreeRow>(rowFinder.first).gitDecoration,
+        isNull,
+      );
+    },
+  );
 
   testWidgets('Files view shows hidden, empty, and unsupported entries', (
     tester,
@@ -22033,11 +22171,11 @@ String _workspaceRelativePath(String rootPath, String filePath) {
 void _expectTextWithVcsColor(
   WidgetTester tester,
   String text,
-  BusyMarkVcsFileColor color,
+  shared.GitFileStatus color,
 ) {
   final elements = find.text(text).evaluate().toList();
   expect(elements, isNotEmpty);
-  final expected = busyMarkVcsFileStatusColor(elements.first, color);
+  final expected = shared.gitFilenameStyle(elements.first, color).color;
   expect(
     elements.where((element) {
       final widget = element.widget;
@@ -22361,6 +22499,10 @@ class _PresetGitController extends GitController {
 
   @override
   GitState build() => initialState;
+
+  void replaceStatus(GitStatusSnapshot status) {
+    state = state.copyWith(statusSnapshot: status);
+  }
 
   @override
   void attachWorkspace(Workspace workspace) {

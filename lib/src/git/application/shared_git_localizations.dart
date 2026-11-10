@@ -1334,6 +1334,11 @@ extension SharedGitLocalizations on AppLocalizations {
       (values['status'] ?? '').toString(),
     ),
     GitMessages.selectAnotherBranch => gitUiSelectAnotherBranch,
+    GitMessages.directoryChanges => gitUiDirectoryChanges(
+      (values['immediate'] ?? '').toString(),
+      (values['descendant'] ?? '').toString(),
+      (values['deleted'] ?? '').toString(),
+    ),
     _ => message,
   };
 }

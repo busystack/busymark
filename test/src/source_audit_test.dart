@@ -1438,13 +1438,13 @@ void main() {
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
-    expect(workspace, contains('_FileTreeVcsStatusColors.fromSnapshot'));
-    expect(workspace, contains('vcsColor: vcsStatusColors.colorForNode(node)'));
-    expect(
-      shared,
-      contains('busyMarkVcsFileStatusColor(context, widget.vcsColor!)'),
-    );
-    expect(workspace, contains('busyMarkVcsFileColorForGitStatus(status)'));
+    expect(workspace, contains('busyMarkFileTreeDecorations('));
+    expect(workspace, isNot(contains('_dominantVcsFileColor')));
+    expect(workspace, isNot(contains('_vcsFileColorPriority')));
+    expect(workspace, contains('gitDecoration: decoration'));
+    expect(workspace, contains('tooltip: decoration?.description(context)'));
+    expect(shared, contains('shared.gitTreeDecorationStyle('));
+    expect(shared, isNot(contains('enum BusyMarkVcsFileColor')));
     expect(workspace, contains('_isOpenableTextDocument(file)'));
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));

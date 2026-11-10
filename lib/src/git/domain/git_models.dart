@@ -1,3 +1,5 @@
+import 'package:busystack_git/busystack_git.dart' as shared;
+
 enum GitFileChangeStatus {
   unmodified,
   modified,
@@ -252,10 +254,14 @@ class GitStatusSnapshot {
     required this.repositoryInfo,
     required this.files,
     this.unrepresentedPathCount = 0,
+    this.source,
   });
 
   final GitRepositoryInfo repositoryInfo;
   final List<GitFileStatus> files;
+
+  /// Retain byte paths and repository identity for shared presentation.
+  final shared.GitSnapshot? source;
 
   /// Byte-named entries are reviewed in the shared Git surfaces. String-only
   /// authoring decorations must not turn their escaped labels into paths.

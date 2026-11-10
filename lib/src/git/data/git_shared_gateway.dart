@@ -124,6 +124,7 @@ class GitCliGateway implements GitRepositoryGateway, GitWorkspaceRootInspector {
     shared.GitSnapshot state, {
     bool hasRemote = false,
   }) => GitStatusSnapshot(
+    source: state,
     repositoryInfo: _info(state, hasRemote: hasRemote),
     unrepresentedPathCount: state.changes
         .where((change) => change.path.utf8Path == null)
